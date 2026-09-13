@@ -1,0 +1,14 @@
+{
+  "friendly_name": "VSCode Light+",
+  "kw": "#0000FF",
+  "func": "#795E26",
+  "ident": "#000000",
+  "string": "#A31515",
+  "number": "#098658",
+  "comment": "#008000",
+  "operator": "#000000",
+  "bracketed_ident": "#0451A5",
+  "quoted_ident": "#0451A5",
+  "kw_bold": true,
+  "func_bold": false
+}

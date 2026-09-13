@@ -1,0 +1,32 @@
+# Environment
+.venv/
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyCharm/IDE
+.idea/
+
+# Distribution
+/build/
+/dist/
+/release/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Test
+.pytest_cache/
+.mypy_cache/
+
+# AI
+.junie/
+.aiassistant/
+
+#Intaller
+/installer.appid
+/RELEASE-NOTES.txt

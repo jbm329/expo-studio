@@ -1,0 +1,14 @@
+{
+  "friendly_name": "Dracula",
+  "kw": "#FF79C6",
+  "func": "#8BE9FD",
+  "ident": "#F8F8F2",
+  "string": "#F1FA8C",
+  "number": "#BD93F9",
+  "comment": "#6272A4",
+  "operator": "#FF79C6",
+  "bracketed_ident": "#8BE9FD",
+  "quoted_ident": "#8BE9FD",
+  "kw_bold": true,
+  "func_bold": false
+}

@@ -1,0 +1,14 @@
+{
+  "friendly_name": "VSCode Dark+",
+  "kw": "#569CD6",
+  "func": "#DCDCAA",
+  "ident": "#D4D4D4",
+  "string": "#CE9178",
+  "number": "#B5CEA8",
+  "comment": "#6A9955",
+  "operator": "#D4D4D4",
+  "bracketed_ident": "#9CDCFE",
+  "quoted_ident": "#9CDCFE",
+  "kw_bold": true,
+  "func_bold": false
+}

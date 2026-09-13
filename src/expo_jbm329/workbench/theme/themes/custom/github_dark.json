@@ -1,0 +1,14 @@
+{
+  "friendly_name": "Github Dark",
+  "kw": "#79C0FF",
+  "func": "#D2A8FF",
+  "ident": "#C9D1D9",
+  "string": "#A5D6FF",
+  "number": "#F2CC60",
+  "comment": "#8B949E",
+  "operator": "#C9D1D9",
+  "bracketed_ident": "#79C0FF",
+  "quoted_ident": "#79C0FF",
+  "kw_bold": true,
+  "func_bold": false
+}

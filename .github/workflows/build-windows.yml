@@ -1,0 +1,82 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: "Build type (dev or release)"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - release
+
+      onefile:
+        description: "Build as onefile executable"
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  build-windows:
+    runs-on: windows-2025
+
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Verify Python
+        run: python --version
+
+      - name: Sync dependencies
+        run: uv sync --extra dev --extra profiling
+
+      - name: Build application
+        shell: pwsh
+        run: |
+          $ONEFILE = "${{ inputs.onefile }}"
+          $BUILD_TYPE = "${{ inputs.build_type }}"
+
+          Write-Host "Build type: $BUILD_TYPE"
+          Write-Host "Onefile: $ONEFILE"
+
+          if ($BUILD_TYPE -eq "release") {
+
+            if ($ONEFILE -eq "true") {
+              uv run python -m expo_jbm329.build --onefile --release
+            }
+            else {
+              uv run build-release
+            }
+
+          }
+          else {
+
+            if ($ONEFILE -eq "true") {
+              uv run python -m expo_jbm329.build --onefile
+            }
+            else {
+              uv run python -m expo_jbm329.build
+            }
+
+          }
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: expo-windows-build
+          path: |
+            dist/**/*
+            release/**/*
