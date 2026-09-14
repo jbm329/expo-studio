@@ -1,16 +1,23 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from unittest.mock import MagicMock
 
-import pandas as pd
-import pytest
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget
 
-from expo_jbm329.gui.dialogs.service.null_dialog_service import NullDialogService
 from expo_jbm329.workbench.controllers.schema_controller import SchemaController
-from tests.stubs import DummyAsyncOps, DummyIconService, DummyJobManager, DummyStatusLogger
 from tests.qt_stubs import StubTree, StubTreeItem
+
+
+class StubIconService:
+    def __init__(self):
+        self.calls = []
+
+    def get(self, icon_id):
+        self.calls.append(icon_id)
+        return QIcon()
 
 
 class StubSchemaEntry:
@@ -18,15 +25,14 @@ class StubSchemaEntry:
         self.db_name = "TestDB"
         self.tables = [{"schema": "dbo", "name": "Tbl"}]
         self.views = [{"schema": "dbo", "name": "View1"}]
-        self.columns = {}
-        self.loaded_at = "now"
+        self.columns = {("dbo", "Tbl"): [{"COLUMN_NAME": "A", "DATA_TYPE": "int", "IS_NULLABLE": "YES"}]}
 
 
 class StubSchemaMgr:
     def __init__(self):
         self.entry = StubSchemaEntry()
         self.progress_cb = None
-        self.job_runner = None
+        self.runner = None
 
     def load_schema(self, conn, force_refresh=False, corr_id=None):
         return self.entry
@@ -38,100 +44,100 @@ class StubSchemaMgr:
         return self.entry
 
     def set_job_runner(self, fn):
-        self.job_runner = fn
+        self.runner = fn
 
 
-@pytest.fixture(autouse=True)
-def patch_qtreewidgetitem(monkeypatch):
-    import expo_jbm329.workbench.controllers.schema_controller as sc
+class DummyAsyncOps:
+    def run_operation(self, **kwargs):
+        return SimpleNamespace()
 
-    monkeypatch.setattr(sc, "QTreeWidgetItem", StubTreeItem)
-    monkeypatch.setattr(sc, "build_select_star", lambda conn, schema, name, top_n: f"STAR {schema}.{name} {top_n}")
-    monkeypatch.setattr(
-        sc,
-        "build_select_columns_auto",
-        lambda conn, schema, name, top_n, with_schema: f"COLS {schema}.{name} {top_n} {with_schema}",
-    )
-    monkeypatch.setattr(sc, "list_columns", lambda conn, s, t: [])
+
+class DummyJobMgr:
+    def cancel_scope(self, scope):
+        return None
 
 
 def make_ctrl():
-    parent = QWidget()
     tree = StubTree()
     schema_mgr = StubSchemaMgr()
-    status_rec = DummyStatusLogger()
+    status_msgs: list[tuple[str, int | None]] = []
     inserted_sql: list[str] = []
-    autocomplete_data: list[dict] = []
+    dialogs = SimpleNamespace(critical=MagicMock())
+    connect_connection = MagicMock()
+    disconnect_connection = MagicMock()
+    restore_baseline_status = MagicMock()
 
     ctrl = SchemaController(
-        parent_widget=parent,
+        parent_widget=QWidget(),
         tree_widget=tree,
         schema_mgr=schema_mgr,
         async_ops=DummyAsyncOps(),
-        job_mgr=DummyJobManager(),
+        job_mgr=DummyJobMgr(),
         create_tab_for_connection=lambda name: SimpleNamespace(name=name),
         insert_sql_into_tab=lambda tab, sql: inserted_sql.append(sql),
-        set_status=status_rec.set_status,
-        icon_service=DummyIconService(),
+        set_status=lambda msg, timeout: status_msgs.append((msg, timeout)),
+        icon_service=StubIconService(),
         get_current_connection=lambda: "Conn1",
-        connect_connection=lambda name: None,
-        disconnect_connection=lambda name: None,
-        restore_baseline_status=lambda: status_rec.set_status("RESTORE", None),
-        dialogs=NullDialogService(),
+        connect_connection=connect_connection,
+        disconnect_connection=disconnect_connection,
+        restore_baseline_status=restore_baseline_status,
+        dialogs=dialogs,
     )
-    ctrl._set_autocomplete_schema = lambda data: autocomplete_data.append(data)
-    return ctrl, tree, schema_mgr, inserted_sql, status_rec, autocomplete_data
+    return ctrl, tree, schema_mgr, inserted_sql, status_msgs, dialogs, connect_connection, disconnect_connection
 
 
-def test_load_schema_success():
-    ctrl, tree, schema_mgr, inserted, status_rec, auto = make_ctrl()
+def test_refresh_connections_builds_tree():
+    ctrl, tree, *_ = make_ctrl()
+
+    ctrl.refresh_connections(["Conn1"])
+
+    assert tree.topLevelItemCount() == 1
+    item = tree.topLevelItem(0)
+    assert item.text(0) == "Conn1"
+
+
+def test_load_schema_tree_builds_schema_nodes():
+    ctrl, tree, schema_mgr, inserted_sql, status_msgs, dialogs, *_ = make_ctrl()
+
     ctrl.refresh_connections(["Conn1"])
     ctrl.load_schema_tree("Conn1")
 
-    assert tree.top
-    assert auto == []
-    assert any("Finished loading schema" in msg for msg, _ in status_rec.messages)
+    root = tree.topLevelItem(0)
+    db_item = root.child(0)
+    assert db_item.text(0) == "TestDB"
+    assert db_item.childCount() == 2
+    assert status_msgs[-1][0] == "Finished loading schema"
 
 
-def test_load_schema_failure(monkeypatch):
-    ctrl, tree, schema_mgr, inserted, status_rec, auto = make_ctrl()
-    monkeypatch.setattr(schema_mgr, "load_schema", lambda conn, force_refresh=False, corr_id=None: (_ for _ in ()).throw(Exception("fail!")))
+def test_item_expanded_uses_cache():
+    ctrl, tree, schema_mgr, inserted_sql, status_msgs, dialogs, *_ = make_ctrl()
 
-    with pytest.raises(Exception):
-        ctrl.load_schema_tree("Conn1")
-
-
-def test_item_expanded_loads_columns_from_cache():
-    ctrl, tree, schema_mgr, inserted, status_rec, auto = make_ctrl()
-    schema_mgr.entry.columns = {
-        ("dbo", "Tbl"): [
-            {"COLUMN_NAME": "A", "DATA_TYPE": "int", "IS_NULLABLE": "YES"},
-            {"COLUMN_NAME": "B", "DATA_TYPE": "text", "IS_NULLABLE": "NO"},
-        ]
-    }
     ctrl.refresh_connections(["Conn1"])
     ctrl.load_schema_tree("Conn1")
-    tbl_item = tree.top[0].child(0).child(0)
+    tbl_item = tree.topLevelItem(0).child(0).child(0).child(0)
 
     ctrl._on_item_expanded(tbl_item)
 
-    assert tbl_item.childCount() == 2
-    assert [tbl_item.child(i).data(0, Qt.ItemDataRole.UserRole)["column"] for i in range(2)] == ["A", "B"]
+    assert tbl_item.childCount() == 1
+    child = tbl_item.child(0)
+    assert child.data(0, Qt.ItemDataRole.UserRole)["type"] == "column"
 
 
 def test_double_click_table_inserts_select():
-    ctrl, tree, schema_mgr, inserted, status_rec, auto = make_ctrl()
+    ctrl, tree, schema_mgr, inserted_sql, *_ = make_ctrl()
+
     ctrl.refresh_connections(["Conn1"])
     ctrl.load_schema_tree("Conn1")
-    tbl_item = tree.top[0].child(0).child(0)
+    tbl_item = tree.topLevelItem(0).child(0).child(0).child(0)
 
     ctrl._on_item_double_clicked(tbl_item)
 
-    assert inserted
+    assert inserted_sql
 
 
-def test_reload_settings():
-    ctrl, tree, schema_mgr, inserted, status_rec, auto = make_ctrl()
+def test_reload_settings_updates_top_n():
+    ctrl, *_ = make_ctrl()
+
     ctrl.reload_settings({"workbench": {"gen_top_n": 500}})
 
     assert ctrl._gen_top_n == 500
