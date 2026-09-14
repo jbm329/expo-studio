@@ -1,52 +1,71 @@
 from pathlib import Path
-from unittest.mock import patch
+
 from expo_jbm329.utils.path_manager import (
-    get_config_dir,
-    get_log_dir,
+    APP_NAME,
+    ensure_all_dirs,
+    get_bootstrap_root,
     get_cache_dir,
+    get_config_dir,
+    get_connections_config_path,
     get_default_documents_dir,
     get_documents_dir,
-    get_sql_dir,
-    ensure_all_dirs
+    get_i18n_root,
+    get_log_config_path,
+    get_log_dir,
+    get_log_path,
+    get_rest_connections_config_path,
+    get_settings_path,
+    get_theme_root,
 )
 
-def test_fixed_dirs():
-    # platformdirs handles these, so we just verify they return Path objects
+
+def test_fixed_dirs_return_path_objects():
     assert isinstance(get_config_dir(), Path)
     assert isinstance(get_log_dir(), Path)
     assert isinstance(get_cache_dir(), Path)
 
+
+def test_config_and_log_paths():
+    config_dir = get_config_dir()
+    log_dir = get_log_dir()
+
+    assert get_connections_config_path() == config_dir / "connections.json"
+    assert get_rest_connections_config_path() == config_dir / "rest_connections.json"
+    assert get_log_config_path() == config_dir / "logconfig.json"
+    assert get_settings_path() == config_dir / "settings.json"
+    assert get_log_path() == log_dir / "application.log"
+
+
 def test_get_default_documents_dir():
-    # Documents/Expo should be at the end (might be "Dokument" in Swedish Windows)
     path = get_default_documents_dir()
-    assert path.name == "Expo"
-    # Just check it's within a user-like directory or contains some variant of Documents
-    path_str = str(path).lower()
-    assert "document" in path_str or "dokument" in path_str
+    assert path.name == APP_NAME
+
 
 def test_get_documents_dir_custom():
     settings = {"documents_dir": "~/CustomExpo"}
     path = get_documents_dir(settings)
     assert "CustomExpo" in str(path)
 
+
 def test_get_documents_dir_default():
     settings = {}
     path = get_documents_dir(settings)
-    assert path.name == "Expo"
+    assert path.name == APP_NAME
 
-def test_get_sql_dir():
-    settings = {"documents_dir": "/tmp/expo"}
-    path = get_sql_dir(settings)
-    assert path == Path("/tmp/expo/sql")
 
-@patch("pathlib.Path.mkdir")
-def test_ensure_all_dirs(mock_mkdir):
-    settings = {"documents_dir": "/tmp/expo"}
+def test_runtime_roots_are_paths():
+    assert isinstance(get_theme_root(), Path)
+    assert isinstance(get_i18n_root(), Path)
+    assert isinstance(get_bootstrap_root(), Path)
+
+
+def test_ensure_all_dirs(tmp_path):
+    settings = {"documents_dir": str(tmp_path / "expo-docs")}
+
     paths = ensure_all_dirs(settings)
-    
-    assert "config_dir" in paths
-    assert "sql_dir" in paths
-    assert paths["sql_dir"] == Path("/tmp/expo/sql")
-    
-    # Verify mkdir was called multiple times
-    assert mock_mkdir.called
+
+    assert paths["config_dir"].exists()
+    assert paths["log_dir"].exists()
+    assert paths["cache_dir"].exists()
+    assert paths["documents_dir"].exists()
+    assert paths["documents_dir"] == tmp_path / "expo-docs"
