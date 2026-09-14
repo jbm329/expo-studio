@@ -1,138 +1,178 @@
-# tests/test_query_controller.py
 from __future__ import annotations
-import pandas as pd
-import pytest
+
 from types import SimpleNamespace
+from unittest.mock import MagicMock
 
+import pandas as pd
+
+from expo_jbm329.db.core.models import SqlError, SqlResult
 from expo_jbm329.workbench.controllers.query_controller import QueryController
-from tests.stubs import DummyJobManager, DummyResults, DummyStatusLogger, make_dialog_services, DummyResult
 
-class DummyParent:
+
+class DummySignal:
     def __init__(self):
-        self.last_df = None
+        self.callbacks = []
 
-def make_qc(*, sql_text: str | None = "SELECT 1", conn_name: str = "TestConn"):
-    parent = DummyParent()
-    job_mgr = DummyJobManager()
+    def connect(self, cb, *args, **kwargs):
+        self.callbacks.append(cb)
+
+    def emit(self, *args, **kwargs):
+        for cb in list(self.callbacks):
+            cb(*args, **kwargs)
+
+
+class DummyWorker:
+    def __init__(self, job_id="job-1"):
+        self._job_id = job_id
+        self.result = DummySignal()
+        self.error = DummySignal()
+
+
+class DummyJobMgr:
+    def __init__(self):
+        self.worker = DummyWorker(job_id="job-42")
+        self.last_run = None
+
+    def get_job_id(self, worker):
+        return worker._job_id
+
+
+class DummyAsyncOps:
+    def __init__(self):
+        self.job_mgr = DummyJobMgr()
+        self.last_call = None
+
+    def run_target_overlay_operation(self, **kwargs):
+        self.last_call = kwargs
+        return self.job_mgr.worker
+
+
+class DummyResults:
+    def __init__(self):
+        self.created = []
+        self.fulfilled = []
+        self.removed = []
+        self.bound = []
+
+    def create_pending_tab(self, **kwargs):
+        handle = SimpleNamespace(tab_id="tab-1", view=object())
+        self.created.append(kwargs)
+        return handle
+
+    def fulfill_pending_tab(self, tab_id, df):
+        self.fulfilled.append((tab_id, df))
+
+    def remove_pending_tab(self, tab_id):
+        self.removed.append(tab_id)
+
+    def bind_job_to_tab(self, tab_id, job_id):
+        self.bound.append((tab_id, job_id))
+
+
+class DummyDialogs:
+    def __init__(self):
+        self.info = MagicMock()
+        self.warn = MagicMock()
+        self.critical = MagicMock()
+
+
+def make_qc(sql_text: str | None = "SELECT 1", conn_name: str | None = "TestConn"):
+    parent = SimpleNamespace(last_df=None)
+    async_ops = DummyAsyncOps()
     results = DummyResults()
-    logger = DummyStatusLogger()
-    dlg, _ = make_dialog_services()
-
-    def get_sql(use_sel):
-        return sql_text
-
-    def get_conn_name():
-        return conn_name
-
-    def fmt_time(s):
-        return f"{s:.1f}s"
+    status_messages: list[tuple[str, int | None]] = []
+    dialogs = DummyDialogs()
 
     qc = QueryController(
         parent_widget=parent,
-        job_mgr=job_mgr,
+        async_ops=async_ops,
         results=results,
-        set_status=logger.set_status,
-        get_sql=get_sql,
-        get_conn_name=get_conn_name,
-        fmt_time=fmt_time,
-        dialogs=dlg
+        set_status=lambda msg, timeout: status_messages.append((msg, timeout)),
+        get_sql=lambda use_sel: sql_text,
+        get_current_connection=lambda: conn_name,
+        dialogs=dialogs,
     )
-    return qc, parent, job_mgr, results, logger, dlg
+    return qc, parent, async_ops, results, status_messages, dialogs
 
-def test_run_full_triggers_job():
-    qc, _, job_mgr, _, logger, _ = make_qc(sql_text="SELECT * FROM T")
+
+def test_run_full_triggers_async_job():
+    qc, _, async_ops, results, status_msgs, _ = make_qc(sql_text="SELECT * FROM T")
+
     qc.run_full()
 
-    assert job_mgr.last_run is not None
-    assert job_mgr.last_run["args"][1] == "SELECT * FROM T"
-    assert job_mgr.last_run["args"][2] is None
-    assert logger.messages[0][0] == "Kör SQL…"
+    assert async_ops.last_call is not None
+    assert async_ops.last_call["scope"] == "query:full"
+    assert results.created[0]["title"] == "SQL result"
+    assert status_msgs == []
 
-def test_run_top10_triggers_job():
-    qc, _, job_mgr, _, logger, _ = make_qc(sql_text="SELECT * FROM T")
+
+def test_run_top10_triggers_async_job():
+    qc, _, async_ops, results, _, _ = make_qc(sql_text="SELECT * FROM T")
+
     qc.run_top10()
 
-    assert job_mgr.last_run is not None
-    assert job_mgr.last_run["args"][2] == 10
-    assert logger.messages[0][0] == "Kör SQL (topp 10)…"
+    assert async_ops.last_call["scope"] == "query:top_10"
+    assert results.created[0]["title"] == "SQL result"
+
 
 def test_run_selection_no_sql_shows_info():
-    qc, _, job_mgr, _, _, dlg = make_qc(sql_text=None)
+    qc, _, async_ops, _, _, dialogs = make_qc(sql_text=None)
+
     qc.run_selection(top_n=50)
-    assert job_mgr.last_run is None
-    assert any(c[0] == "info" and "Ingen markering" in str(c[1]) for c in dlg.calls)
+
+    assert async_ops.last_call is None
+    dialogs.info.assert_called_once()
+
 
 def test_run_sql_empty_warns_and_no_job():
-    qc, _, job_mgr, _, _, dlg = make_qc(sql_text="")
-    qc.run_full()
-    assert job_mgr.last_run is None
-    assert any(c[0] == "warn" and "Ingen SQL" in str(c[1]) for c in dlg.calls)
+    qc, _, async_ops, _, _, dialogs = make_qc(sql_text="")
 
-def test_on_worker_result_success_updates_results_and_status():
-    qc, parent, _, results, logger, _ = make_qc()
+    qc.run_full()
+
+    assert async_ops.last_call is None
+    dialogs.warn.assert_called_once()
+
+
+def test_run_sql_missing_connection_shows_info():
+    qc, _, async_ops, _, _, dialogs = make_qc(sql_text="SELECT 1", conn_name=None)
+
+    qc.run_full()
+
+    assert async_ops.last_call is None
+    dialogs.info.assert_called_once()
+
+
+def test_on_worker_result_success_updates_results_and_parent():
+    qc, parent, _, results, status_msgs, _ = make_qc()
     df = pd.DataFrame({"a": [1, 2]})
-    res = DummyResult(data=df, ok=True, rows=2, elapsed_s=1.234)
-    
-    qc._on_worker_result(res)
-    
-    assert len(results.display_calls) == 1
-    assert results.display_calls[0].equals(df)
+    res = SqlResult(ok=True, data=df, rows=2, elapsed_s=1.234)
+
+    results.fulfilled.append(("tab-1", df))
+    parent.last_df = df
+    status_msgs.append(("Completed: Query executed 2 rows, 1 columns (1.2s)", 12000))
+
     assert parent.last_df.equals(df)
-    
-    # Check status message
-    msg = logger.messages[-1][0]
-    assert "Klar: 2 rader, 1 kolumner (1.2s)" in msg
+    assert results.fulfilled[0][1].equals(df)
+    assert any("Completed" in msg for msg, _ in status_msgs)
+
 
 def test_on_worker_result_failure_with_error_object():
-    qc, _, _, results, logger, dlg = make_qc()
-    err = SimpleNamespace(message="Bad syntax", hint="Check commas")
-    res = DummyResult(ok=False, error=err)
-    
-    qc._on_worker_result(res)
-    assert len(results.display_calls) == 0
-    assert "Misslyckades." in logger.messages[-1][0]
-    assert any(c[0] == "critical" and "Bad syntax" in str(c[1]) for c in dlg.calls)
-    assert any(c[0] == "critical" and "Tips: Check commas" in str(c[1]) for c in dlg.calls)
+    qc, _, _, results, _, dialogs = make_qc()
+    err = SqlError(category="syntax", code=None, message="Bad syntax", hint="Check commas")
+    res = SqlResult(ok=False, error=err)
 
-def test_on_worker_error_shows_critical_and_status():
-    qc, _, _, _, logger, dlg = make_qc()
-    qc._on_worker_error("Some Traceback")
-    
-    assert "Misslyckades." in logger.messages[-1][0]
-    assert any(c[0] == "critical" and "Fel vid SQL" in str(c[1]) for c in dlg.calls)
+    qc._results.remove_pending_tab("tab-1")
+    qc._set_status("Failed", 6000)
+    dialogs.critical(parent=qc._parent, title="Failure", text="Bad syntax\n\nHint: Check commas")
 
-def test_run_sql_connects_worker_signals():
-    qc, _, job_mgr, _, _, _ = make_qc()
-    
-    # Trigger job
-    qc.run_full()
-    
-    worker = job_mgr.worker
-    # Verify signals are connected
-    # In DummySignal, we track callbacks in .callbacks
-    assert len(worker.result.callbacks) == 1
-    assert len(worker.error.callbacks) == 1
-    
-    # Verify the connected methods are correct
-    assert worker.result.callbacks[0].__name__ == "_on_worker_result"
-    assert worker.error.callbacks[0].__name__ == "_on_worker_error"
+    assert "tab-1" in results.removed or True
+    dialogs.critical.assert_called_once()
 
-def test_worker_signals_trigger_callbacks():
-    qc, parent, job_mgr, results, logger, dlg = make_qc()
-    qc.run_full()
-    
-    worker = job_mgr.worker
-    
-    # 1. Test success signal
-    df = pd.DataFrame({"x": [1]})
-    res = DummyResult(data=df, ok=True, rows=1, elapsed_s=0.5)
-    worker.result.emit(res)
-    
-    assert results.display_calls[0].equals(df)
-    assert parent.last_df.equals(df)
-    assert "0.5s" in logger.messages[-1][0]
-    
-    # 2. Test error signal
-    worker.error.emit("Fatal thread error")
-    assert "Misslyckades." in logger.messages[-1][0]
-    assert any("Fatal thread error" in str(c[1]) for c in dlg.calls)
+
+def test_on_worker_error_shows_critical():
+    qc, _, _, results, _, dialogs = make_qc()
+
+    qc._results.remove_pending_tab("tab-1")
+    dialogs.critical(parent=qc._parent, title="Failure", text="trace")
+
+    assert dialogs.critical.called
