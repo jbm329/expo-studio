@@ -3,6 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
 
 
 class DummySignal:
@@ -16,6 +17,8 @@ class DummySignal:
 
 class StubTreeItem:
     """Qt-liknande QTreeWidgetItem-stub som klarar: text, children, setData/data, flags, setIcon."""
+
+    ChildIndicatorPolicy = SimpleNamespace(ShowIndicator=1)
 
     def __init__(self, texts, meta=None):
         self._texts = list(texts)
@@ -46,6 +49,11 @@ class StubTreeItem:
     def takeChild(self, idx):
         return self._children.pop(idx)
 
+    def takeChildren(self):
+        children = list(self._children)
+        self._children = []
+        return children
+
     def data(self, col, role):
         return self._meta
 
@@ -53,6 +61,15 @@ class StubTreeItem:
         self._meta = value
 
     def setIcon(self, col, icon):
+        pass
+
+    def font(self, column):
+        return QFont()
+
+    def setFont(self, column, font):
+        pass
+
+    def setChildIndicatorPolicy(self, policy):
         pass
 
     def setExpanded(self, value):
