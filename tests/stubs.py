@@ -4,8 +4,10 @@ from pathlib import Path
 from types import SimpleNamespace
 from PyQt6.QtCore import QObject, pyqtSignal
 import pandas as pd
-from expo_jbm329.gui.dialogs.service.dialog_service import NullDialogService, ProfileChoice
+from expo_jbm329.gui.dialogs.service.dialog_service import ProfileChoice
+from expo_jbm329.gui.dialogs.service.null_dialog_service import NullDialogService
 from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import NullFileDialogService
+from expo_jbm329.services.job_result import JobResult
 
 class DummyResult:
     """Mock for SqlResult from execute_sql_safe."""
@@ -43,6 +45,19 @@ class DummyJobManager:
     def get_job_id(self):
         return "job_123"
 
+class DummyAsyncOps:
+    def __init__(self):
+        self.calls: list[dict[str, object]] = []
+
+    def run_target_overlay_operation(self, **kwargs):
+        self.calls.append(kwargs)
+        work = kwargs["work"]
+        result = work(progress_cb=None, cancel_cb=None, job_id="job_123", job_scope=kwargs.get("scope"))
+        on_result = kwargs.get("on_result")
+        if callable(on_result):
+            on_result(result if isinstance(result, JobResult) else JobResult(ok=True, elapsed=0.1, path=None))
+        return result
+
 class DummyResults:
     """
     results: has current_df(), tabs.count(), collect_all_tabs_data(), display_dataframe().
@@ -60,6 +75,9 @@ class DummyResults:
 
     def collect_all_tabs_data(self):
         return list(self._data_all)
+
+    def ready_dataset_count(self):
+        return len(self._data_all) if self._data_all else 1 if self._df is not None else 0
 
     def close_tabs_by_title(self, title: str):
         self.closed_titles.append(title)
@@ -133,11 +151,11 @@ class DummyDataIO:
     """
     Minimal data_io with methods called by ExportController.
     """
-    def export_df_csv(self, *a, **k): return object()
-    def export_df_excel(self, *a, **k): return object()
-    def export_df_datafile(self, *a, **k): return object()
-    def export_df_profile(self, *a, **k): return object()
-    def export_dfs_profile(self, *a, **k): return object()
+    def export_df_csv(self, *a, **k): return JobResult(ok=True, elapsed=0.1, path=k.get("path") or (a[1] if len(a) > 1 else None))
+    def export_df_excel(self, *a, **k): return JobResult(ok=True, elapsed=0.1, path=k.get("path") or (a[1] if len(a) > 1 else None))
+    def export_df_datafile(self, *a, **k): return JobResult(ok=True, elapsed=0.1, path=k.get("path") or (a[1] if len(a) > 1 else None))
+    def export_df_profile(self, *a, **k): return JobResult(ok=True, elapsed=0.1, path=k.get("path") or (a[1] if len(a) > 1 else None))
+    def export_dfs_profile(self, *a, **k): return JobResult(ok=True, elapsed=0.1, path=k.get("path") or (a[1] if len(a) > 1 else None))
 
 class DummyStatusLogger:
     """Captures set_status calls."""
@@ -156,6 +174,19 @@ class DummyIconService:
             from PyQt6.QtGui import QIcon
             self.icons[name] = QIcon()
         return self.icons[name]
+
+class DummyDialogState:
+    def __init__(self, directory: str = "C:/tmp") -> None:
+        self.directory = directory
+        self.calls: list[tuple[str, str, str | None]] = []
+
+    def get_dir(self, key: str, fallback: str | None = None) -> str:
+        self.calls.append(("get_dir", key, fallback))
+        return self.directory
+
+    def set_dir(self, key: str, value: str) -> None:
+        self.calls.append(("set_dir", key, value))
+        self.directory = value
 
 def make_dialog_services(profile_choice=ProfileChoice.ACTIVE):
     return NullDialogService(default_profile_choice=profile_choice), NullFileDialogService()
