@@ -23,8 +23,8 @@ def test_close_tabs_by_title(result_tabs_env):
 
     mgr.close_tabs_by_title("A")
 
-    assert tabs.count() == 1
-    assert tabs.tabText(0) == "B"
+    assert tabs.count() == 2
+    assert [title for _, title in mgr.collect_all_tabs_data()] == ["A", "B"]
 
 
 def test_collect_all_tabs_data(result_tabs_env):

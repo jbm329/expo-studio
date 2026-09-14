@@ -163,10 +163,17 @@ class StubTabs:
     def removeTab(self, index):
         if 0 <= index < len(self._widgets):
             self._widgets.pop(index)
-            keys = sorted(self._texts)
-            self._texts = {i: self._texts[k] for i, k in enumerate([k for k in keys if k != index])}
-            keys = sorted(self._data)
-            self._data = {i: self._data[k] for i, k in enumerate([k for k in keys if k != index])}
+            items = [(i, self._texts[i], self._data[i]) for i in sorted(self._texts) if i != index]
+            self._texts = {new_i: text for new_i, (_, text, _) in enumerate(items)}
+            self._data = {new_i: data for new_i, (_, _, data) in enumerate(items)}
+            if self._current >= len(self._widgets):
+                self._current = len(self._widgets) - 1
+
+    def tabData(self, index):
+        return self._data.get(index)
+
+    def setTabData(self, index, value):
+        self._data[index] = value
 
 
 class StubParent(QWidget):
