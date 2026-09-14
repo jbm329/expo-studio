@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pandas as pd
 import pytest
 
@@ -10,9 +12,6 @@ from expo_jbm329.services.data_operations.columns import (
 )
 
 
-# =====================================================================
-# sort_dataframe
-# =====================================================================
 def test_sort_dataframe_ascending():
     df = pd.DataFrame({"a": [3, 1, 2]})
 
@@ -37,15 +36,10 @@ def test_sort_dataframe_invalid_column():
         sort_dataframe(df, "missing")
 
 
-# =====================================================================
-# safe_drop_column
-# =====================================================================
-
 def test_safe_drop_column_basic():
     df = pd.DataFrame({"a": [1], "b": [2]})
 
-    # UI index 1 -> drop "a"
-    out = safe_drop_column(df, 1)
+    out = safe_drop_column(df, 0)
 
     assert out is not df
     assert list(out.columns) == ["b"]
@@ -55,12 +49,8 @@ def test_safe_drop_column_invalid_index():
     df = pd.DataFrame({"a": [1]})
 
     with pytest.raises(IndexError):
-        safe_drop_column(df, 0)
+        safe_drop_column(df, 1)
 
-
-# =====================================================================
-# rename_column
-# =====================================================================
 
 def test_rename_column_basic():
     df = pd.DataFrame({"a": [1], "b": [2]})
@@ -84,10 +74,6 @@ def test_rename_column_missing_column():
         rename_column(df, "missing", "x")
 
 
-# =====================================================================
-# split_column
-# =====================================================================
-
 def test_split_column_first_keep_original():
     df = pd.DataFrame({"a": ["x-y"]})
 
@@ -96,6 +82,8 @@ def test_split_column_first_keep_original():
     assert list(out.columns) == ["a", "a_1", "a_2"]
     assert out["a_1"].iloc[0] == "x"
     assert out["a_2"].iloc[0] == "y"
+    assert str(out["a_1"].dtype) == "string"
+    assert str(out["a_2"].dtype) == "string"
 
 
 def test_split_column_last_replace_original():
@@ -108,13 +96,15 @@ def test_split_column_last_replace_original():
     assert out["a_2"].iloc[0] == "z"
 
 
-def test_split_column_trims_whitespace():
-    df = pd.DataFrame({"a": [" x - y "]})
+def test_split_column_trims_whitespace_and_missing_parts():
+    df = pd.DataFrame({"a": [" x - ", None]})
 
     out = split_column(df, "a", "-", keep_original=False)
 
     assert out["a_1"].iloc[0] == "x"
-    assert out["a_2"].iloc[0] == "y"
+    assert out["a_2"].iloc[0] is pd.NA or pd.isna(out["a_2"].iloc[0])
+    assert pd.isna(out["a_1"].iloc[1])
+    assert pd.isna(out["a_2"].iloc[1])
 
 
 def test_split_column_missing_column():
@@ -124,9 +114,12 @@ def test_split_column_missing_column():
         split_column(df, "missing", "-")
 
 
-# =====================================================================
-# join_columns
-# =====================================================================
+def test_split_column_empty_delimiter():
+    df = pd.DataFrame({"a": ["x-y"]})
+
+    with pytest.raises(ValueError):
+        split_column(df, "a", "")
+
 
 def test_join_columns_keep_original():
     df = pd.DataFrame({"a": ["x"], "b": ["y"]})
@@ -135,6 +128,7 @@ def test_join_columns_keep_original():
 
     assert list(out.columns) == ["a", "b", "a_b"]
     assert out["a_b"].iloc[0] == "x-y"
+    assert str(out["a_b"].dtype) == "string"
 
 
 def test_join_columns_drop_original():
@@ -146,13 +140,21 @@ def test_join_columns_drop_original():
     assert out["a_b"].iloc[0] == "x-y"
 
 
-def test_join_columns_insertion_position():
+def test_join_columns_custom_name():
     df = pd.DataFrame({"a": ["x"], "b": ["y"], "c": ["z"]})
 
-    out = join_columns(df, ["a", "b"], delimiter="-")
+    out = join_columns(df, ["a", "b"], delimiter="-", new_name="joined")
 
-    # New column inserted after last selected ("b")
-    assert list(out.columns) == ["a", "b", "a_b", "c"]
+    assert list(out.columns) == ["a", "b", "joined", "c"]
+    assert out["joined"].iloc[0] == "x-y"
+
+
+def test_join_columns_trims_and_fills_missing():
+    df = pd.DataFrame({"a": [" x "], "b": [None]})
+
+    out = join_columns(df, ["a", "b"], delimiter="-", keep_original=False)
+
+    assert out["a_b"].iloc[0] == "x-"
 
 
 def test_join_columns_missing_column():
