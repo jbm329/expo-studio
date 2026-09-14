@@ -1,0 +1,14 @@
+{
+  "friendly_name": "Github Light",
+  "kw": "#0550AE",
+  "func": "#8250DF",
+  "ident": "#24292F",
+  "string": "#0A3069",
+  "number": "#116329",
+  "comment": "#6E7781",
+  "operator": "#24292F",
+  "bracketed_ident": "#0550AE",
+  "quoted_ident": "#0550AE",
+  "kw_bold": true,
+  "func_bold": false
+}
