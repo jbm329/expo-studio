@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pytest
 from PyQt6.QtWidgets import QWidget
 
-from gui.dialogs.workflows.file.file_dialog_service import (
+from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import (
     DirectoryRequest,
     NullFileDialogService,
     OpenFileRequest,
@@ -54,7 +54,7 @@ def test_null_file_service(null_file_service, parent_widget):
     assert path == "/tmp"
 
 
-@patch("expo_jbm329.gui.dialogs.file_dialog_service.QFileDialog")
+@patch("expo_jbm329.gui.dialogs.workflows.file.file_dialog_service.QFileDialog")
 def test_qt_file_service_open(mock_fd_class, qt_file_service, parent_widget):
     mock_fd_class.getOpenFileName.return_value = ("selected.txt", "Filter")
     
@@ -68,7 +68,7 @@ def test_qt_file_service_open(mock_fd_class, qt_file_service, parent_widget):
     )
 
 
-@patch("expo_jbm329.gui.dialogs.file_dialog_service.QFileDialog")
+@patch("expo_jbm329.gui.dialogs.workflows.file.file_dialog_service.QFileDialog")
 def test_qt_file_service_save(mock_fd_class, qt_file_service, parent_widget):
     mock_fd_class.getSaveFileName.return_value = ("saved.txt", "Filter")
     
@@ -80,7 +80,7 @@ def test_qt_file_service_save(mock_fd_class, qt_file_service, parent_widget):
         parent_widget, "Save File", "default.txt", "All (*.*)"
     )
 
-@patch("expo_jbm329.gui.dialogs.file_dialog_service.QFileDialog")
+@patch("expo_jbm329.gui.dialogs.workflows.file.file_dialog_service.QFileDialog")
 def test_qt_file_service_directory(mock_fd_class, qt_file_service, parent_widget):
     mock_fd_class.getExistingDirectory.return_value = "/some/dir"
     
