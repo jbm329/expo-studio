@@ -42,6 +42,13 @@ class SqlLintController(QObject):
         _timer: Debounce timer.
         _logger: Logger instance.
     """
+    __slots__ = (
+        "_dialect",
+        "_logger",
+        "_schema",
+        "_timer",
+        "editor",
+    )
 
     def __init__(
             self,
@@ -66,6 +73,7 @@ class SqlLintController(QObject):
         self._dialect: str | None = None
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
         self._set_status = set_status
+        self._schema: dict[str, dict[str, list[str]]] = {}
         self._rendered_diagnostics: list[RenderedDiagnostic] = []
         self._viewport: QWidget | None = None
         self._disposed = False
@@ -74,6 +82,11 @@ class SqlLintController(QObject):
         self._timer.setSingleShot(True)
         self._timer.setInterval(max(100, int(delay_ms)))
         self._timer.timeout.connect(self._run_lint)
+
+    def set_schema(self, schema: dict[str, dict[str, list[str]]] | None) -> None:
+        """Set the schema metadata used for schema-aware linting."""
+        self._schema = schema or {}
+        self.schedule_lint()
 
     def install(self) -> None:
         """Install linting behavior on the editor."""
@@ -162,7 +175,7 @@ class SqlLintController(QObject):
             self.clear_diagnostics()
             return
 
-        diagnostics = lint_syntax(sql, self._dialect)
+        diagnostics = lint_syntax(sql, self._dialect, schema=self._schema)
 
         self._logger.debug(
             "SqlLintController: lint complete (dialect=%s, diagnostics=%s, preview=%s)",

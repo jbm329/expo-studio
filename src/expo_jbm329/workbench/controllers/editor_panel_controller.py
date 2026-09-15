@@ -874,6 +874,8 @@ class EditorPanelController(QWidget):
         entry = self._get_cache_for(tab.connection_name)
         if not entry:
             engine.set_schema({})
+            if lint_controller is not None:
+                lint_controller.set_schema({})
             return
 
         schema_dict = self._build_schema_dict({
@@ -900,7 +902,7 @@ class EditorPanelController(QWidget):
                         non_empty_column_tables += 1
 
         self._logger.debug(
-            "EditorPanelController: autocomplete schema rebuilt "
+            "EditorPanelController: autocomplete and lint schema rebuilt "
             "(conn=%s, dialect=%s, schemas=%s, objects=%s, non_empty_column_tables=%s)",
             tab.connection_name,
             dialect,
@@ -910,6 +912,8 @@ class EditorPanelController(QWidget):
         )
 
         engine.set_schema(schema_dict)
+        if lint_controller is not None:
+            lint_controller.set_schema(schema_dict)
    
     def on_tab_context_menu_requested(self, pos: QPoint) -> None:
         """Handle context menu request on the tab bar.
