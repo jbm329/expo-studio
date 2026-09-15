@@ -4,6 +4,7 @@ from expo_jbm329.db.sql_analysis import (
     ColumnRef,
     SqlDiagnostic,
     TableRef,
+    _lint_keyword_typos,
     detect_statement_kind,
     extract_column_refs,
     extract_table_aliases,
@@ -93,3 +94,25 @@ def test_format_sql_and_multiple_statements():
     assert formatted.upper().startswith("SELECT")
     assert format_sql("   ", pretty=False) == "   "
     assert has_multiple_statements("SELECT 1; SELECT 2")
+
+
+def test_lint_editor_rules_catches_from_typos_and_keyword_typos():
+    diagnostics = lint_editor_rules("SELECT * FRM t")
+    assert any(d.message == "Unknown SQL keyword. Did you mean FROM?" for d in diagnostics)
+
+    typo_diagnostics = _lint_keyword_typos("SELCT * GRUP BY x")
+    assert any(d.message == "Unknown SQL keyword. Did you mean SELECT?" for d in typo_diagnostics)
+    assert any(d.message == "Unknown SQL keyword. Did you mean GROUP?" for d in typo_diagnostics)
+
+
+def test_lint_syntax_checks_schema_violations_and_statement_fallbacks():
+    schema = {"by_schema": {"dbo": {"users": ["id", "name"], "orders": ["id", "user_id"]}}}
+
+    diagnostics = lint_syntax("SELECT users.id, missing_col FROM dbo.users", schema=schema)
+    assert any(d.message == "Unknown column 'missing_col' for the current schema context." for d in diagnostics)
+
+    diagnostics = lint_syntax("SELECT * FROM dbo.unknown_table", schema=schema)
+    assert any(d.message == "Unknown table 'unknown_table'." for d in diagnostics)
+
+    assert detect_statement_kind("TRUNCATE TABLE t") == "truncate"
+    assert detect_statement_kind("FOOBAR 1") == "invalid"

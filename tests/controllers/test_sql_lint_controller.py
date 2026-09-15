@@ -152,3 +152,32 @@ def test_publish_status_prefers_error_then_warning():
     )
 
     set_status.assert_called_once_with("SQL error at line 1, column 1: Err", 10000)
+
+
+def test_rendered_diagnostics_and_tooltip_lookup_cover_warning_path():
+    editor = QPlainTextEdit("SELECT 1")
+    set_status = MagicMock()
+    controller = SqlLintController(editor, delay_ms=100, set_status=set_status)
+
+    diagnostic = SqlDiagnostic(severity="warning", message="Warn", line=1, column=1, length=3)
+    controller._render_diagnostics([diagnostic])
+
+    assert controller._diagnostic_at_offset(0) == diagnostic
+    assert controller._diagnostic_at_offset(99) is None
+    assert controller._handle_tooltip_event(SimpleNamespace(pos=lambda: QPoint(0, 0), globalPos=lambda: QPoint(0, 0))) is True
+
+    controller._publish_status([SqlDiagnostic(severity="warning", message="Warn", line=2, column=4)])
+    set_status.assert_called_once_with("SQL warning at line 2, column 4: Warn", 10000)
+
+
+def test_on_editor_destroyed_clears_dashboard_state():
+    editor = QPlainTextEdit("SELECT 1")
+    controller = SqlLintController(editor, delay_ms=100)
+    controller._render_diagnostics([SqlDiagnostic(severity="error", message="Err", line=1, column=1, length=3)])
+
+    controller._on_editor_destroyed()
+
+    assert controller._disposed is True
+    assert controller._rendered_diagnostics == []
+    assert controller._viewport is None
+    assert controller._timer.isActive() is False
