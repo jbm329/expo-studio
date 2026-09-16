@@ -34,6 +34,7 @@ from expo_jbm329.services.rest.models import (
     RestRequestConfig,
 )
 from expo_jbm329.services.rest.normalizer import normalize_json_to_df
+from expo_jbm329.services.rest.schema import build_response_preview
 from expo_jbm329.utils.format_utils import fmt_shape
 from expo_jbm329.workbench.icon.icon_service import IconService
 
@@ -831,6 +832,11 @@ class RestConnectionEditor(QDialog):
                     payload,
                     response_path=config.response_path,
                 )
+                preview = build_response_preview(
+                    payload,
+                    response_path=config.response_path,
+                    limit=5,
+                )
             except Exception as exc:
                 self._dialogs.critical(
                     parent=self,
@@ -842,10 +848,21 @@ class RestConnectionEditor(QDialog):
                 return
 
             rows, cols = fmt_shape(df)
+            column_summary = ", ".join(preview["columns"]) if preview["columns"] else self.tr("none")
+            sample_data = preview["sample"][:1]
+            sample_text = ""
+            if sample_data:
+                sample_text = "\n\nSample row: " + str(sample_data[0])
 
             text = self.tr(
-                "API test successful.\n\nReturned {rows} rows and {cols} columns.\n\nTime: {sec:.2f}s"
-            ).format(rows=rows, cols=cols, sec=_elapsed)
+                "API test successful.\n\nReturned {rows} rows and {cols} columns.\nColumns: {columns}.\nTime: {sec:.2f}s{sample}"
+            ).format(
+                rows=rows,
+                cols=cols,
+                columns=column_summary,
+                sec=_elapsed,
+                sample=sample_text,
+            )
 
             self._dialogs.info(
                 parent=self,
