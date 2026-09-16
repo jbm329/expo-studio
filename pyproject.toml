@@ -29,7 +29,7 @@ classifiers = [
 
 dependencies = [
     "pyqt6>=6.10.2",
-    "sqlalchemy>=2.0.46",
+    "sqlalchemy>=2.0.46,<2.0.54",
     "chardet",
     "pyodbc",
     "openpyxl>=3.1.5",
