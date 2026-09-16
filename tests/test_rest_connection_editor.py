@@ -22,7 +22,7 @@ def test_on_auth_changed_enables_basic_fields_only():
     assert editor.password_edit.isEnabled() is True
     assert editor.auth_section.body.isVisible() is True
     assert editor.token_edit.isEnabled() is False
-    assert editor.auth_section.body_layout.labelForField(editor.token_edit).isVisible() is False
+    assert editor.auth_widget.form_layout.labelForField(editor.token_edit).isVisible() is False
     assert editor.api_key_name_edit.isEnabled() is False
 
 
@@ -38,7 +38,7 @@ def test_on_auth_changed_enables_api_key_fields_only():
     assert editor.auth_section.body.isVisible() is True
     assert editor.token_edit.isEnabled() is False
     assert editor.username_edit.isEnabled() is False
-    assert editor.auth_section.body_layout.labelForField(editor.username_edit).isVisible() is False
+    assert editor.auth_widget.form_layout.labelForField(editor.username_edit).isVisible() is False
 
 
 def test_gather_form_serializes_basic_auth():

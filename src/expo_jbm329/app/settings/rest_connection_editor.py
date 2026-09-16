@@ -29,6 +29,8 @@ from expo_jbm329.app.settings.config_store import (
 )
 from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
+from expo_jbm329.gui.widgets.rest.auth_widget import RestAuthWidget
+from expo_jbm329.gui.widgets.rest.pagination_widget import RestPaginationWidget
 from expo_jbm329.services.rest.client import fetch_json
 from expo_jbm329.services.rest.models import (
     RestAuthConfig,
@@ -127,57 +129,31 @@ class RestConnectionEditor(QDialog):
         self.response_path_edit = QLineEdit()
         self.response_path_edit.setPlaceholderText("e.g. hourly, data.items, 1, results.0.values")
 
-        self.auth_combo = QComboBox()
-        self.auth_combo.addItem(self.tr("None"), userData="none")
-        self.auth_combo.addItem(self.tr("Bearer token"), userData="bearer")
-        self.auth_combo.addItem(self.tr("Basic"), userData="basic")
-        self.auth_combo.addItem(self.tr("API key"), userData="api_key")
-        self.auth_combo.addItem(self.tr("OAuth2"), userData="oauth2")
+        self.auth_widget = RestAuthWidget(self)
+        self.auth_combo = self.auth_widget.auth_combo
         self.auth_combo.currentIndexChanged.connect(self.on_auth_changed)
-
-        self.token_edit = QLineEdit()
-        self.token_edit.setEchoMode(QLineEdit.EchoMode.Password)
-        self.username_edit = QLineEdit()
-        self.password_edit = QLineEdit()
-        self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
-        self.api_key_name_edit = QLineEdit()
-        self.api_key_value_edit = QLineEdit()
-        self.api_key_value_edit.setEchoMode(QLineEdit.EchoMode.Password)
-        self.api_key_location_combo = QComboBox()
-        self.api_key_location_combo.addItem(self.tr("Header"), userData="header")
-        self.api_key_location_combo.addItem(self.tr("Query parameter"), userData="query")
-
-        self.grant_type_combo = QComboBox()
-        self.grant_type_combo.addItem(self.tr("Client credentials"), userData="client_credentials")
-        self.grant_type_combo.addItem(self.tr("Refresh token"), userData="refresh_token")
+        self.token_edit = self.auth_widget.token_edit
+        self.username_edit = self.auth_widget.username_edit
+        self.password_edit = self.auth_widget.password_edit
+        self.api_key_name_edit = self.auth_widget.api_key_name_edit
+        self.api_key_value_edit = self.auth_widget.api_key_value_edit
+        self.api_key_location_combo = self.auth_widget.api_key_location_combo
+        self.grant_type_combo = self.auth_widget.grant_type_combo
         self.grant_type_combo.currentIndexChanged.connect(self.on_oauth2_grant_changed)
+        self.token_url_edit = self.auth_widget.token_url_edit
+        self.client_id_edit = self.auth_widget.client_id_edit
+        self.client_secret_edit = self.auth_widget.client_secret_edit
+        self.scope_edit = self.auth_widget.scope_edit
+        self.refresh_token_edit = self.auth_widget.refresh_token_edit
 
-        self.token_url_edit = QLineEdit()
-        self.token_url_edit.setPlaceholderText("https://example.com/oauth/token")
-        self.client_id_edit = QLineEdit()
-        self.client_secret_edit = QLineEdit()
-        self.client_secret_edit.setEchoMode(QLineEdit.EchoMode.Password)
-        self.scope_edit = QLineEdit()
-        self.scope_edit.setPlaceholderText("read write")
-        self.refresh_token_edit = QLineEdit()
-        self.refresh_token_edit.setEchoMode(QLineEdit.EchoMode.Password)
-        self.refresh_token_edit.setPlaceholderText("paste refresh token")
-
-        self.pagination_combo = QComboBox()
-        self.pagination_combo.addItem(self.tr("None"), userData="none")
-        self.pagination_combo.addItem(self.tr("Page number"), userData="page_number")
+        self.pagination_widget = RestPaginationWidget(self)
+        self.pagination_combo = self.pagination_widget.pagination_combo
         self.pagination_combo.currentIndexChanged.connect(self.on_pagination_changed)
-
-        self.page_param_edit = QLineEdit()
-        self.page_param_edit.setPlaceholderText("page")
-        self.start_page_edit = QLineEdit()
-        self.start_page_edit.setPlaceholderText("1")
-        self.page_size_param_edit = QLineEdit()
-        self.page_size_param_edit.setPlaceholderText("pageSize")
-        self.page_size_edit = QLineEdit()
-        self.page_size_edit.setPlaceholderText("100")
-        self.max_pages_edit = QLineEdit()
-        self.max_pages_edit.setPlaceholderText("10")
+        self.page_param_edit = self.pagination_widget.page_param_edit
+        self.start_page_edit = self.pagination_widget.start_page_edit
+        self.page_size_param_edit = self.pagination_widget.page_size_param_edit
+        self.page_size_edit = self.pagination_widget.page_size_edit
+        self.max_pages_edit = self.pagination_widget.max_pages_edit
 
         self.headers_edit = QLineEdit()
         self.headers_edit.setPlaceholderText('{"Accept": "application/json"}')
@@ -205,27 +181,10 @@ class RestConnectionEditor(QDialog):
         request_panel.body_layout.addRow(self.tr("Query params (JSON):"), self.params_edit)
 
         self.auth_section = _SectionPanel(self.tr("Authentication"), checked=False)
-        self.auth_section.body_layout.addRow(self.tr("Type:"), self.auth_combo)
-        self.auth_section.body_layout.addRow(self.tr("******"), self.token_edit)
-        self.auth_section.body_layout.addRow(self.tr("Basic username"), self.username_edit)
-        self.auth_section.body_layout.addRow(self.tr("Basic password"), self.password_edit)
-        self.auth_section.body_layout.addRow(self.tr("API key name"), self.api_key_name_edit)
-        self.auth_section.body_layout.addRow(self.tr("API key value"), self.api_key_value_edit)
-        self.auth_section.body_layout.addRow(self.tr("API key location"), self.api_key_location_combo)
-        self.auth_section.body_layout.addRow(self.tr("OAuth2 token URL"), self.token_url_edit)
-        self.auth_section.body_layout.addRow(self.tr("OAuth2 client ID"), self.client_id_edit)
-        self.auth_section.body_layout.addRow(self.tr("OAuth2 client secret"), self.client_secret_edit)
-        self.auth_section.body_layout.addRow(self.tr("OAuth2 grant type"), self.grant_type_combo)
-        self.auth_section.body_layout.addRow(self.tr("OAuth2 scope"), self.scope_edit)
-        self.auth_section.body_layout.addRow(self.tr("OAuth2 refresh token"), self.refresh_token_edit)
+        self.auth_section.body_layout.addRow(self.auth_widget)
 
         self.pagination_section = _SectionPanel(self.tr("Pagination"), checked=False)
-        self.pagination_section.body_layout.addRow(self.tr("Type:"), self.pagination_combo)
-        self.pagination_section.body_layout.addRow(self.tr("Page parameter"), self.page_param_edit)
-        self.pagination_section.body_layout.addRow(self.tr("Start page"), self.start_page_edit)
-        self.pagination_section.body_layout.addRow(self.tr("Page size parameter"), self.page_size_param_edit)
-        self.pagination_section.body_layout.addRow(self.tr("Page size"), self.page_size_edit)
-        self.pagination_section.body_layout.addRow(self.tr("Max pages"), self.max_pages_edit)
+        self.pagination_section.body_layout.addRow(self.pagination_widget)
         self.body_edit.setVisible(False)  # default: GET
 
         # ==============================================================
@@ -328,47 +287,21 @@ class RestConnectionEditor(QDialog):
     def on_auth_changed(self):
         """Handles the change in authentication type selection."""
         auth = self.auth_combo.currentData()
-        is_bearer = auth == "bearer"
-        is_basic = auth == "basic"
-        is_api_key = auth == "api_key"
-        is_oauth2 = auth == "oauth2"
-
         self.auth_section.toggle.setChecked(auth != "none")
         self.auth_section.body.setVisible(auth != "none")
-
-        self._set_auth_row_state(self.token_edit, is_bearer)
-        self._set_auth_row_state(self.username_edit, is_basic)
-        self._set_auth_row_state(self.password_edit, is_basic)
-        self._set_auth_row_state(self.api_key_name_edit, is_api_key)
-        self._set_auth_row_state(self.api_key_value_edit, is_api_key)
-        self._set_auth_row_state(self.api_key_location_combo, is_api_key)
-        self._set_auth_row_state(self.token_url_edit, is_oauth2)
-        self._set_auth_row_state(self.client_id_edit, is_oauth2)
-        self._set_auth_row_state(self.client_secret_edit, is_oauth2)
-        self._set_auth_row_state(self.grant_type_combo, is_oauth2)
-        self._set_auth_row_state(self.scope_edit, is_oauth2)
-        self._set_auth_row_state(self.refresh_token_edit, is_oauth2)
+        self.auth_widget.apply_visibility()
         self.on_oauth2_grant_changed()
 
     def on_oauth2_grant_changed(self):
         """Handles the change in OAuth2 grant type selection."""
-        is_refresh = self.grant_type_combo.currentData() == "refresh_token"
-        is_oauth2 = self.auth_combo.currentData() == "oauth2"
-        self.refresh_token_edit.setEnabled(is_refresh and is_oauth2)
-        self._set_row_visible(self.refresh_token_edit, is_oauth2 and is_refresh)
+        self.auth_widget._set_oauth_grant_visibility()
 
     def on_pagination_changed(self):
         """Handles the change in pagination mode selection."""
         is_page_number = self.pagination_combo.currentData() == "page_number"
-
         self.pagination_section.toggle.setChecked(is_page_number)
         self.pagination_section.body.setVisible(is_page_number)
-
-        self._set_pagination_row_state(self.page_param_edit, is_page_number)
-        self._set_pagination_row_state(self.start_page_edit, is_page_number)
-        self._set_pagination_row_state(self.page_size_param_edit, is_page_number)
-        self._set_pagination_row_state(self.page_size_edit, is_page_number)
-        self._set_pagination_row_state(self.max_pages_edit, is_page_number)
+        self.pagination_widget.apply_visibility()
 
     def on_selection_changed(self, current):
         """Loads the selected connection's data into the form fields."""
@@ -706,8 +639,12 @@ class RestConnectionEditor(QDialog):
         """Show or hide a row managed by one of the section form layouts."""
         widget.setVisible(visible)
         label = self.auth_section.body_layout.labelForField(widget)
+        if label is None and hasattr(self.auth_widget, "form_layout"):
+            label = self.auth_widget.form_layout.labelForField(widget)
         if label is None:
             label = self.pagination_section.body_layout.labelForField(widget)
+        if label is None and hasattr(self.pagination_widget, "form_layout"):
+            label = self.pagination_widget.form_layout.labelForField(widget)
         if label is not None:
             label.setVisible(visible)
 
