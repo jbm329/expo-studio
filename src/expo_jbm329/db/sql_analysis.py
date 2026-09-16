@@ -743,25 +743,12 @@ def _is_known_column(
     return False
 
 
-def _lint_schema(
+def _lint_unknown_tables(
     sql: str,
-    *,
-    schema: dict[str, dict[str, list[str]]] | None,
-    dialect: str | None = None,
+    expression: exp.Expression,
+    context: SchemaLintContext,
 ) -> list[SqlDiagnostic]:
-    """Schema-aware lint checks for schema, table, and column names."""
-    if not schema:
-        return []
-
-    expression = parse_one_safe(sql, dialect)
-    if expression is None:
-        return []
-
-    normalized_schema = _normalize_schema_for_lint(schema)
-    if not normalized_schema:
-        return []
-
-    context = _build_schema_lint_context(expression, normalized_schema)
+    """Return diagnostics for unknown schemas and tables."""
     diagnostics: list[SqlDiagnostic] = []
 
     for table in expression.find_all(exp.Table):
@@ -802,6 +789,17 @@ def _lint_schema(
                 )
             )
 
+    return diagnostics
+
+
+def _lint_unknown_columns(
+    sql: str,
+    expression: exp.Expression,
+    context: SchemaLintContext,
+) -> list[SqlDiagnostic]:
+    """Return diagnostics for unknown columns in the current statement context."""
+    diagnostics: list[SqlDiagnostic] = []
+
     for column in expression.find_all(exp.Column):
         name = str(column.name or "").strip()
         if not name or name == "*":
@@ -834,6 +832,32 @@ def _lint_schema(
             )
         )
 
+    return diagnostics
+
+
+def _lint_schema(
+    sql: str,
+    *,
+    schema: dict[str, dict[str, list[str]]] | None,
+    dialect: str | None = None,
+) -> list[SqlDiagnostic]:
+    """Schema-aware lint checks for schema, table, and column names."""
+    if not schema:
+        return []
+
+    expression = parse_one_safe(sql, dialect)
+    if expression is None:
+        return []
+
+    normalized_schema = _normalize_schema_for_lint(schema)
+    if not normalized_schema:
+        return []
+
+    context = _build_schema_lint_context(expression, normalized_schema)
+
+    diagnostics: list[SqlDiagnostic] = []
+    diagnostics.extend(_lint_unknown_tables(sql, expression, context))
+    diagnostics.extend(_lint_unknown_columns(sql, expression, context))
     return diagnostics
 
 
