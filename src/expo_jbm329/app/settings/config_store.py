@@ -478,6 +478,7 @@ def _normalize_rest_entry(cfg: dict) -> dict:
 
     c["url"] = str(c.get("url", "")).strip()
     c["response_path"] = str(c.get("response_path", "")).strip() or None
+    c["method"] = _normalize_rest_method(c.get("method"))
 
     # headers / params
     for key in ("headers", "query_params"):
@@ -493,15 +494,41 @@ def _normalize_rest_entry(cfg: dict) -> dict:
         c["auth"] = {"type": "none"}
     else:
         at = str(auth.get("type", "none")).lower()
-        if at not in ("none", "bearer"):
+        if at not in ("none", "bearer", "basic", "api_key"):
             at = "none"
         c["auth"] = {"type": at}
         if at == "bearer":
             token = auth.get("token")
             if isinstance(token, str) and token:
                 c["auth"]["token"] = token
+        elif at == "basic":
+            username = auth.get("username")
+            password = auth.get("password")
+            if isinstance(username, str) and username:
+                c["auth"]["username"] = username
+            if isinstance(password, str) and password:
+                c["auth"]["password"] = password
+        elif at == "api_key":
+            api_key_name = auth.get("api_key_name")
+            api_key_value = auth.get("api_key_value")
+            api_key_location = str(auth.get("api_key_location", "")).lower()
+            if isinstance(api_key_name, str) and api_key_name:
+                c["auth"]["api_key_name"] = api_key_name
+            if isinstance(api_key_value, str) and api_key_value:
+                c["auth"]["api_key_value"] = api_key_value
+            if api_key_location in ("header", "query"):
+                c["auth"]["api_key_location"] = api_key_location
 
     return c
+
+
+def _normalize_rest_method(value: object) -> str:
+    """Normalize REST method to a supported uppercase value."""
+    if isinstance(value, str):
+        method = value.strip().upper()
+        if method in ("GET", "POST"):
+            return method
+    return "GET"
 
 
 # =====================================================================
@@ -645,5 +672,4 @@ def _validate_log_config_inplace(cfg: dict) -> None:
         cfg["third_party_log_level"] = lvl
     else:
         cfg["third_party_log_level"] = "WARNING"
-
 

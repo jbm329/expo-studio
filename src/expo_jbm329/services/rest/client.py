@@ -44,7 +44,7 @@ def fetch_json(
     headers = dict(config.headers or {})
     params = dict(config.query_params or {})
 
-    _apply_auth(headers, config.auth)
+    _apply_auth(headers, params, config.auth)
 
     # Good default for APIs like SCB / World Bank
     headers.setdefault("Accept", "application/json")
@@ -90,7 +90,11 @@ def fetch_json(
 # Helpers
 # ---------------------------------------------------------------------
 
-def _apply_auth(headers: dict[str, str], auth: RestAuthConfig | None) -> None:
+def _apply_auth(
+    headers: dict[str, str],
+    params: dict[str, str],
+    auth: RestAuthConfig | None,
+) -> None:
     """Apply authentication configuration to request headers."""
     if not auth or auth.type == "none":
         return
@@ -109,5 +113,17 @@ def _apply_auth(headers: dict[str, str], auth: RestAuthConfig | None) -> None:
         headers["Authorization"] = "Basic " + base64.b64encode(raw).decode("ascii")
         return
 
-    raise RestClientError(f"Unsupported auth type: {auth.type}")
+    if auth.type == "api_key":
+        if not auth.api_key_name:
+            raise RestClientError("API key auth requires parameter name")
+        if not auth.api_key_value:
+            raise RestClientError("API key auth requires value")
+        if auth.api_key_location == "header":
+            headers[auth.api_key_name] = auth.api_key_value
+            return
+        if auth.api_key_location == "query":
+            params[auth.api_key_name] = auth.api_key_value
+            return
+        raise RestClientError("API key auth requires location 'header' or 'query'")
 
+    raise RestClientError(f"Unsupported auth type: {auth.type}")
