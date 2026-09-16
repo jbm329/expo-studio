@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import contextlib
 import json
-from typing import Literal
+from typing import Any, Literal
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QIcon, QTextCursor
@@ -96,10 +95,21 @@ class RestConnectionEditor(QDialog):
         self.auth_combo = QComboBox()
         self.auth_combo.addItem(self.tr("None"), userData="none")
         self.auth_combo.addItem(self.tr("Bearer token"), userData="bearer")
+        self.auth_combo.addItem(self.tr("Basic"), userData="basic")
+        self.auth_combo.addItem(self.tr("API key"), userData="api_key")
         self.auth_combo.currentIndexChanged.connect(self.on_auth_changed)
 
         self.token_edit = QLineEdit()
         self.token_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        self.username_edit = QLineEdit()
+        self.password_edit = QLineEdit()
+        self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        self.api_key_name_edit = QLineEdit()
+        self.api_key_value_edit = QLineEdit()
+        self.api_key_value_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        self.api_key_location_combo = QComboBox()
+        self.api_key_location_combo.addItem(self.tr("Header"), userData="header")
+        self.api_key_location_combo.addItem(self.tr("Query parameter"), userData="query")
 
         self.headers_edit = QLineEdit()
         self.headers_edit.setPlaceholderText('{"Accept": "application/json"}')
@@ -211,7 +221,16 @@ class RestConnectionEditor(QDialog):
     def on_auth_changed(self):
         """Handles the change in authentication type selection."""
         auth = self.auth_combo.currentData()
-        self.token_edit.setEnabled(auth == "bearer")
+        is_bearer = auth == "bearer"
+        is_basic = auth == "basic"
+        is_api_key = auth == "api_key"
+
+        self.token_edit.setEnabled(is_bearer)
+        self.username_edit.setEnabled(is_basic)
+        self.password_edit.setEnabled(is_basic)
+        self.api_key_name_edit.setEnabled(is_api_key)
+        self.api_key_value_edit.setEnabled(is_api_key)
+        self.api_key_location_combo.setEnabled(is_api_key)
 
     def on_selection_changed(self, current):
         """Loads the selected connection's data into the form fields."""
@@ -272,6 +291,15 @@ class RestConnectionEditor(QDialog):
 
         token = cfg.get("auth", {}).get("token", "")
         self.token_edit.setText(token)
+        self.username_edit.setText(cfg.get("auth", {}).get("username", ""))
+        self.password_edit.setText(cfg.get("auth", {}).get("password", ""))
+        self.api_key_name_edit.setText(cfg.get("auth", {}).get("api_key_name", ""))
+        self.api_key_value_edit.setText(cfg.get("auth", {}).get("api_key_value", ""))
+
+        api_key_location = cfg.get("auth", {}).get("api_key_location", "header")
+        api_key_ix = self.api_key_location_combo.findData(api_key_location)
+        if api_key_ix >= 0:
+            self.api_key_location_combo.setCurrentIndex(api_key_ix)
 
         self._set_fields_enabled(True)
         self._update_action_buttons()
@@ -280,41 +308,107 @@ class RestConnectionEditor(QDialog):
     # Helpers
     # ==================================================================
     def _gather_form(self) -> dict:
-
+        """Collect and validate the form into a persisted config shape."""
         raw_method = self.method_combo.currentData()
         method: Literal["GET", "POST"] = "POST" if raw_method == "POST" else "GET"
+        auth_type = self.auth_combo.currentData()
 
-        cfg: dict = {
+        cfg: dict[str, Any] = {
             "url": self.url_edit.text().strip(),
             "method": method,
             "response_path": self.response_path_edit.text().strip(),
             "headers": {},
             "query_params": {},
-            "auth": {"type": self.auth_combo.currentData()},
+            "auth": {"type": auth_type},
         }
 
         if cfg["method"] == "POST":
             body_txt = self.body_edit.toPlainText().strip()
             if body_txt:
-                with contextlib.suppress(Exception):
-                    cfg["json_body"] = json.loads(body_txt)
+                cfg["json_body"] = self._parse_json_object(
+                    body_txt,
+                    field_name=self.tr("JSON body"),
+                )
             else:
                 cfg["json_body"] = None
 
-        if cfg["auth"]["type"] == "bearer":
+        if auth_type == "bearer":
             cfg["auth"]["token"] = self.token_edit.text().strip()
+        elif auth_type == "basic":
+            cfg["auth"]["username"] = self.username_edit.text().strip()
+            cfg["auth"]["password"] = self.password_edit.text().strip()
+        elif auth_type == "api_key":
+            cfg["auth"]["api_key_name"] = self.api_key_name_edit.text().strip()
+            cfg["auth"]["api_key_value"] = self.api_key_value_edit.text().strip()
+            cfg["auth"]["api_key_location"] = self.api_key_location_combo.currentData()
 
         headers_txt = self.headers_edit.text().strip()
         if headers_txt:
-            with contextlib.suppress(Exception):
-                cfg["headers"] = json.loads(headers_txt)
+            cfg["headers"] = self._parse_string_map(
+                headers_txt,
+                field_name=self.tr("Headers"),
+            )
 
         params_txt = self.params_edit.toPlainText().strip()
         if params_txt:
-            with contextlib.suppress(Exception):
-                cfg["query_params"] = json.loads(params_txt)
+            cfg["query_params"] = self._parse_string_map(
+                params_txt,
+                field_name=self.tr("Query params"),
+            )
 
         return cfg
+
+    def _build_request_config(self, *, name: str) -> RestRequestConfig:
+        """Build and validate a REST request config from the current form."""
+        cfg_raw = self._gather_form()
+        auth_raw = cfg_raw.get("auth", {}) or {}
+
+        auth = RestAuthConfig(
+            type=auth_raw.get("type", "none"),
+            token=auth_raw.get("token"),
+            username=auth_raw.get("username"),
+            password=auth_raw.get("password"),
+            api_key_name=auth_raw.get("api_key_name"),
+            api_key_value=auth_raw.get("api_key_value"),
+            api_key_location=auth_raw.get("api_key_location"),
+        )
+
+        raw_method = cfg_raw.get("method")
+        method: Literal["GET", "POST"] = "POST" if raw_method == "POST" else "GET"
+
+        config = RestRequestConfig(
+            name=name,
+            url=cfg_raw.get("url", ""),
+            method=method,
+            headers=cfg_raw.get("headers", {}),
+            query_params=cfg_raw.get("query_params", {}),
+            json_body=cfg_raw.get("json_body"),
+            response_path=cfg_raw.get("response_path") or None,
+            auth=auth,
+        )
+        config.validate()
+        return config
+
+    def _parse_json_object(self, text: str, *, field_name: str) -> dict[str, object]:
+        """Parse a JSON object field from the editor."""
+        try:
+            value = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                self.tr("{field} must contain valid JSON.").format(field=field_name)
+            ) from exc
+
+        if not isinstance(value, dict):
+            raise ValueError(
+                self.tr("{field} must be a JSON object.").format(field=field_name)
+            )
+
+        return value
+
+    def _parse_string_map(self, text: str, *, field_name: str) -> dict[str, str]:
+        """Parse a JSON object and coerce keys and values to strings."""
+        value = self._parse_json_object(text, field_name=field_name)
+        return {str(key): str(item) for key, item in value.items()}
 
     def _clear_form_fields(self) -> None:
         self.url_edit.clear()
@@ -322,7 +416,12 @@ class RestConnectionEditor(QDialog):
         self.headers_edit.clear()
         self.params_edit.clear()
         self.token_edit.clear()
+        self.username_edit.clear()
+        self.password_edit.clear()
+        self.api_key_name_edit.clear()
+        self.api_key_value_edit.clear()
         self.auth_combo.setCurrentIndex(self.auth_combo.findData("none"))
+        self.api_key_location_combo.setCurrentIndex(self.api_key_location_combo.findData("header"))
         self._update_action_buttons()
 
     def _set_fields_enabled(self, enabled: bool) -> None:
@@ -338,6 +437,11 @@ class RestConnectionEditor(QDialog):
             self.response_path_edit,
             self.auth_combo,
             self.token_edit,
+            self.username_edit,
+            self.password_edit,
+            self.api_key_name_edit,
+            self.api_key_value_edit,
+            self.api_key_location_combo,
             self.headers_edit,
             self.params_edit,
         ):
@@ -359,11 +463,15 @@ class RestConnectionEditor(QDialog):
             if not body_txt:
                 return False
 
-            # Optional: validate JSON syntax
             try:
-                json.loads(body_txt)
-            except Exception:
+                self._parse_json_object(body_txt, field_name=self.tr("JSON body"))
+            except ValueError:
                 return False
+
+        try:
+            self._build_request_config(name=self.tr("Validation request"))
+        except ValueError:
+            return False
 
         return True
 
@@ -393,15 +501,20 @@ class RestConnectionEditor(QDialog):
         else:
             self.response_path_edit.setToolTip("")
 
-        params_txt = self.params_edit.toPlainText().strip()
-        if params_txt:
+        for editor, field_name in (
+            (self.headers_edit, self.tr("Headers")),
+            (self.params_edit, self.tr("Query params")),
+        ):
+            raw_text = editor.text().strip() if isinstance(editor, QLineEdit) else editor.toPlainText().strip()
+            if not raw_text:
+                editor.setToolTip("")
+                continue
             try:
-                json.loads(params_txt)
-            except Exception:
-                self.params_edit.setToolTip(self.tr("Invalid JSON"))
+                self._parse_string_map(raw_text, field_name=field_name)
+            except ValueError as exc:
+                editor.setToolTip(str(exc))
                 return
-        else:
-            self.params_edit.setToolTip("")
+            editor.setToolTip("")
 
     def _is_valid_response_path_syntax(self, path: str) -> bool:
         """Check basic syntax of response_path."""
@@ -472,39 +585,7 @@ class RestConnectionEditor(QDialog):
     def test_connection(self) -> None:
         """Test the REST API using the current form values without saving."""
         try:
-            cfg_raw = self._gather_form()
-
-            if not cfg_raw.get("url"):
-                self._dialogs.warn(
-                    parent=self,
-                    title=self.tr("Missing URL"),
-                    text=self.tr("URL must be specified before testing."),
-                )
-                return
-
-            auth_raw = cfg_raw.get("auth", {}) or {}
-            auth = RestAuthConfig(
-                type=auth_raw.get("type", "none"),
-                token=auth_raw.get("token"),
-            )
-
-            raw_method = cfg_raw.get("method")
-
-            if raw_method == "POST":
-                method: Literal["GET", "POST"] = "POST"
-            else:
-                method: Literal["GET", "POST"] = "GET"
-
-            config = RestRequestConfig(
-                name=self.tr("Test request"),
-                url=cfg_raw.get("url", ""),
-                method=method,
-                headers=cfg_raw.get("headers", {}),
-                query_params=cfg_raw.get("query_params", {}),
-                json_body=cfg_raw.get("json_body"),
-                response_path=cfg_raw.get("response_path") or None,
-                auth=auth,
-            )
+            config = self._build_request_config(name=self.tr("Test request"))
 
             # --- Perform test ---
             payload, _elapsed = fetch_json(config)
@@ -570,7 +651,8 @@ class RestConnectionEditor(QDialog):
             return
 
         name = item.text()
-        self.data[name] = self._gather_form()
+        config = self._build_request_config(name=name)
+        self.data[name] = self._serialize_request_config(config)
 
         write_rest_connections(self.data)
 
@@ -580,3 +662,32 @@ class RestConnectionEditor(QDialog):
             text=self.tr("REST connection saved successfully."),
         )
         self.connections_changed.emit()
+
+    def _serialize_request_config(self, config: RestRequestConfig) -> dict[str, Any]:
+        """Serialize a request config to the persisted dialog structure."""
+        payload: dict[str, Any] = {
+            "url": config.url,
+            "method": config.method,
+            "response_path": config.response_path or "",
+            "headers": dict(config.headers),
+            "query_params": dict(config.query_params),
+            "auth": {"type": config.auth.type if config.auth else "none"},
+        }
+
+        if config.json_body is not None:
+            payload["json_body"] = dict(config.json_body)
+
+        if config.auth is None:
+            return payload
+
+        if config.auth.type == "bearer" and config.auth.token:
+            payload["auth"]["token"] = config.auth.token
+        elif config.auth.type == "basic":
+            payload["auth"]["username"] = config.auth.username or ""
+            payload["auth"]["password"] = config.auth.password or ""
+        elif config.auth.type == "api_key":
+            payload["auth"]["api_key_name"] = config.auth.api_key_name or ""
+            payload["auth"]["api_key_value"] = config.auth.api_key_value or ""
+            payload["auth"]["api_key_location"] = config.auth.api_key_location or "header"
+
+        return payload
