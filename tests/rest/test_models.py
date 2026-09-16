@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from expo_jbm329.services.rest.models import RestAuthConfig, RestRequestConfig
+from expo_jbm329.services.rest.models import (
+    RestAuthConfig,
+    RestPaginationConfig,
+    RestRequestConfig,
+)
 
 
 def test_rest_request_config_rejects_post_without_body():
@@ -50,3 +54,23 @@ def test_rest_request_config_validates_nested_auth():
 
     with pytest.raises(ValueError, match="API key auth requires parameter name"):
         cfg.validate()
+
+
+def test_rest_pagination_config_validates_page_number_requirements():
+    pagination = RestPaginationConfig(
+        type="page_number",
+        page_param="page",
+        start_page=1,
+        page_size_param="pageSize",
+        page_size=100,
+        max_pages=5,
+    )
+
+    pagination.validate()
+
+
+def test_rest_pagination_config_rejects_missing_page_param():
+    pagination = RestPaginationConfig(type="page_number", page_param="")
+
+    with pytest.raises(ValueError, match="Page-number pagination requires page parameter name"):
+        pagination.validate()

@@ -6,7 +6,11 @@ from typing import Any
 
 import httpx
 
-from expo_jbm329.services.rest.models import RestAuthConfig, RestRequestConfig
+from expo_jbm329.services.rest.models import (
+    RestAuthConfig,
+    RestPaginationConfig,
+    RestRequestConfig,
+)
 
 
 class RestClientError(RuntimeError):
@@ -86,6 +90,35 @@ def fetch_json(
     return payload, elapsed
 
 
+def fetch_json_pages(
+    config: RestRequestConfig,
+    *,
+    progress_cb: Callable[[int], None] | None = None,
+    cancel_cb: Callable[[], bool] | None = None,
+    timeout: float = 30.0,
+) -> tuple[list[Any], float]:
+    """Fetch one or more paged JSON payloads from a REST endpoint."""
+    config.validate()
+
+    pagination = config.pagination
+    if pagination is None or pagination.type == "none":
+        payload, elapsed = fetch_json(
+            config,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+            timeout=timeout,
+        )
+        return [payload], elapsed
+
+    return _fetch_page_number_payloads(
+        config,
+        pagination=pagination,
+        progress_cb=progress_cb,
+        cancel_cb=cancel_cb,
+        timeout=timeout,
+    )
+
+
 # ---------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------
@@ -127,3 +160,78 @@ def _apply_auth(
         raise RestClientError("API key auth requires location 'header' or 'query'")
 
     raise RestClientError(f"Unsupported auth type: {auth.type}")
+
+
+def _fetch_page_number_payloads(
+    config: RestRequestConfig,
+    *,
+    pagination: RestPaginationConfig,
+    progress_cb: Callable[[int], None] | None,
+    cancel_cb: Callable[[], bool] | None,
+    timeout: float,
+) -> tuple[list[Any], float]:
+    """Fetch paginated JSON payloads using page-number query parameters."""
+    payloads: list[Any] = []
+    total_elapsed = 0.0
+    page = pagination.start_page
+    page_limit = pagination.max_pages or 1_000_000
+
+    while len(payloads) < page_limit:
+        if cancel_cb and cancel_cb():
+            raise RestClientError("Request cancelled")
+
+        page_params = dict(config.query_params or {})
+        page_params[pagination.page_param or "page"] = str(page)
+
+        if pagination.page_size is not None and pagination.page_size_param is not None:
+            page_params[pagination.page_size_param] = str(pagination.page_size)
+
+        page_config = RestRequestConfig(
+            name=config.name,
+            url=config.url,
+            json_body=config.json_body,
+            method=config.method,
+            headers=config.headers,
+            query_params=page_params,
+            response_path=config.response_path,
+            auth=config.auth,
+            pagination=None,
+        )
+
+        payload, elapsed = fetch_json(
+            page_config,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+            timeout=timeout,
+        )
+        total_elapsed += elapsed
+        payloads.append(payload)
+
+        if progress_cb and pagination.max_pages:
+            progress = int((len(payloads) / pagination.max_pages) * 100)
+            progress_cb(min(progress, 100))
+
+        if not _should_continue_page_number_pagination(payload):
+            break
+
+        page += 1
+
+    return payloads, total_elapsed
+
+
+def _should_continue_page_number_pagination(payload: Any) -> bool:
+    """Return whether a paged fetch should continue based on payload contents."""
+    if isinstance(payload, list):
+        return len(payload) > 0
+
+    if isinstance(payload, dict):
+        if not payload:
+            return False
+
+        for value in payload.values():
+            if isinstance(value, list):
+                return len(value) > 0
+
+        return True
+
+    return False

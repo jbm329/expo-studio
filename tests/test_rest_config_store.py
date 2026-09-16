@@ -45,3 +45,28 @@ def test_normalize_rest_entry_normalizes_api_key_auth():
         "api_key_value": "secret",
         "api_key_location": "header",
     }
+
+
+def test_normalize_rest_entry_normalizes_page_number_pagination():
+    normalized = _normalize_rest_entry(
+        {
+            "url": "https://example.com",
+            "pagination": {
+                "type": "page_number",
+                "page_param": " page ",
+                "start_page": "2",
+                "page_size_param": " limit ",
+                "page_size": "100",
+                "max_pages": "5",
+            },
+        }
+    )
+
+    assert normalized["pagination"] == {
+        "type": "page_number",
+        "page_param": "page",
+        "start_page": 2,
+        "page_size_param": "limit",
+        "page_size": 100,
+        "max_pages": 5,
+    }

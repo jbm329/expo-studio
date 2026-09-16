@@ -7,7 +7,7 @@ from collections.abc import Callable
 import pandas as pd
 
 from expo_jbm329.services.job_result import JobResult
-from expo_jbm329.services.rest.client import RestClientError, fetch_json
+from expo_jbm329.services.rest.client import RestClientError, fetch_json_pages
 from expo_jbm329.services.rest.models import RestRequestConfig
 from expo_jbm329.services.rest.normalizer import RestNormalizeError, normalize_json_to_df
 
@@ -50,7 +50,7 @@ def fetch_rest_dataset(
             )
 
         # ---------------- HTTP fetch ----------------
-        payload, http_elapsed = fetch_json(
+        payloads, http_elapsed = fetch_json_pages(
             config,
             progress_cb=progress_cb,
             cancel_cb=cancel_cb,
@@ -66,8 +66,8 @@ def fetch_rest_dataset(
 
         # ---------------- Normalize ----------------
 
-        df = normalize_json_to_df(
-            payload,
+        df = _normalize_payloads(
+            payloads,
             response_path=config.response_path,
         )
 
@@ -102,3 +102,26 @@ def fetch_rest_dataset(
             cancelled=False,
             corr_id=corr_id,
         )
+
+
+def _normalize_payloads(
+    payloads: list[object],
+    *,
+    response_path: str | None,
+) -> pd.DataFrame:
+    """Normalize one or more REST payloads into a single dataframe."""
+    if not payloads:
+        raise RestNormalizeError("REST response did not contain any payloads")
+
+    frames = [
+        normalize_json_to_df(
+            payload,
+            response_path=response_path,
+        )
+        for payload in payloads
+    ]
+
+    if len(frames) == 1:
+        return frames[0]
+
+    return pd.concat(frames, ignore_index=True)

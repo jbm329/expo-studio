@@ -8,6 +8,46 @@ from typing import Literal
 RestAuthType = Literal["none", "bearer", "basic", "api_key"]
 RestHttpMethod = Literal["GET", "POST"]
 RestApiKeyLocation = Literal["header", "query"]
+RestPaginationType = Literal["none", "page_number"]
+
+
+@dataclass(frozen=True)
+class RestPaginationConfig:
+    """Pagination configuration for REST requests."""
+
+    type: RestPaginationType = "none"
+    page_param: str | None = None
+    start_page: int = 1
+    page_size_param: str | None = None
+    page_size: int | None = None
+    max_pages: int | None = None
+
+    def validate(self) -> None:
+        """Validate pagination configuration.
+
+        Raises:
+            ValueError: If the pagination configuration is invalid.
+        """
+        if self.type == "none":
+            return
+
+        if self.type != "page_number":
+            raise ValueError(f"Unsupported pagination type: {self.type}")
+
+        if not self.page_param:
+            raise ValueError("Page-number pagination requires page parameter name")
+
+        if self.start_page < 1:
+            raise ValueError("Page-number pagination start page must be >= 1")
+
+        if self.page_size is not None and self.page_size < 1:
+            raise ValueError("Page-number pagination page size must be >= 1")
+
+        if self.page_size is not None and not self.page_size_param:
+            raise ValueError("Page-number pagination page size requires parameter name")
+
+        if self.max_pages is not None and self.max_pages < 1:
+            raise ValueError("Page-number pagination max pages must be >= 1")
 
 
 @dataclass(frozen=True)
@@ -67,6 +107,7 @@ class RestRequestConfig:
 
     response_path: str | None = None
     auth: RestAuthConfig | None = None
+    pagination: RestPaginationConfig | None = None
 
     def validate(self) -> None:
         """Validate request configuration.
@@ -91,3 +132,6 @@ class RestRequestConfig:
 
         if self.auth is not None:
             self.auth.validate()
+
+        if self.pagination is not None:
+            self.pagination.validate()

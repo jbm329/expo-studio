@@ -519,6 +519,33 @@ def _normalize_rest_entry(cfg: dict) -> dict:
             if api_key_location in ("header", "query"):
                 c["auth"]["api_key_location"] = api_key_location
 
+    pagination = c.get("pagination")
+    if not isinstance(pagination, dict):
+        c["pagination"] = {"type": "none"}
+    else:
+        pagination_type = str(pagination.get("type", "none")).lower()
+        if pagination_type != "page_number":
+            c["pagination"] = {"type": "none"}
+        else:
+            normalized_pagination = {
+                "type": "page_number",
+                "page_param": str(pagination.get("page_param", "")).strip(),
+                "start_page": _normalize_positive_int(pagination.get("start_page"), default=1),
+            }
+            page_size_param = str(pagination.get("page_size_param", "")).strip()
+            if page_size_param:
+                normalized_pagination["page_size_param"] = page_size_param
+
+            page_size = _normalize_optional_positive_int(pagination.get("page_size"))
+            if page_size is not None:
+                normalized_pagination["page_size"] = page_size
+
+            max_pages = _normalize_optional_positive_int(pagination.get("max_pages"))
+            if max_pages is not None:
+                normalized_pagination["max_pages"] = max_pages
+
+            c["pagination"] = normalized_pagination
+
     return c
 
 
@@ -529,6 +556,26 @@ def _normalize_rest_method(value: object) -> str:
         if method in ("GET", "POST"):
             return method
     return "GET"
+
+
+def _normalize_positive_int(value: object, *, default: int) -> int:
+    """Normalize a positive integer value with a fallback."""
+    try:
+        normalized = int(value)
+    except (TypeError, ValueError):
+        return default
+    return normalized if normalized >= 1 else default
+
+
+def _normalize_optional_positive_int(value: object) -> int | None:
+    """Normalize an optional positive integer value."""
+    if value in (None, ""):
+        return None
+    try:
+        normalized = int(value)
+    except (TypeError, ValueError):
+        return None
+    return normalized if normalized >= 1 else None
 
 
 # =====================================================================
@@ -672,4 +719,3 @@ def _validate_log_config_inplace(cfg: dict) -> None:
         cfg["third_party_log_level"] = lvl
     else:
         cfg["third_party_log_level"] = "WARNING"
-
