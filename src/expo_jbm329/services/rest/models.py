@@ -5,9 +5,10 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Literal
 
-RestAuthType = Literal["none", "bearer", "basic", "api_key"]
+RestAuthType = Literal["none", "bearer", "basic", "api_key", "oauth2"]
 RestHttpMethod = Literal["GET", "POST"]
 RestApiKeyLocation = Literal["header", "query"]
+RestOAuth2GrantType = Literal["client_credentials", "refresh_token"]
 RestPaginationType = Literal["none", "page_number"]
 
 
@@ -61,6 +62,13 @@ class RestAuthConfig:
     api_key_name: str | None = None
     api_key_value: str | None = None
     api_key_location: RestApiKeyLocation | None = None
+    grant_type: RestOAuth2GrantType | None = None
+    token_url: str | None = None
+    client_id: str | None = None
+    client_secret: str | None = None
+    scope: str | None = None
+    refresh_token: str | None = None
+    access_token: str | None = None
 
     def validate(self) -> None:
         """Validate authentication configuration.
@@ -90,7 +98,25 @@ class RestAuthConfig:
                 raise ValueError("API key auth requires location 'header' or 'query'")
             return
 
+        if self.type == "oauth2":
+            if not self.token_url:
+                raise ValueError("OAuth2 auth requires token URL")
+            if not self.client_id:
+                raise ValueError("OAuth2 auth requires client ID")
+            if not self.client_secret:
+                raise ValueError("OAuth2 auth requires client secret")
+
+            grant_type = self.grant_type or "client_credentials"
+            if grant_type == "client_credentials":
+                return
+            if grant_type == "refresh_token":
+                if not self.refresh_token:
+                    raise ValueError("OAuth2 refresh-token auth requires refresh token")
+                return
+            raise ValueError(f"Unsupported OAuth2 grant type: {grant_type}")
+
         raise ValueError(f"Unsupported auth type: {self.type}")
+
 
 
 @dataclass(frozen=True)

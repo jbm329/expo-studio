@@ -101,6 +101,7 @@ class RestConnectionEditor(QDialog):
         self.auth_combo.addItem(self.tr("Bearer token"), userData="bearer")
         self.auth_combo.addItem(self.tr("Basic"), userData="basic")
         self.auth_combo.addItem(self.tr("API key"), userData="api_key")
+        self.auth_combo.addItem(self.tr("OAuth2"), userData="oauth2")
         self.auth_combo.currentIndexChanged.connect(self.on_auth_changed)
 
         self.token_edit = QLineEdit()
@@ -114,6 +115,22 @@ class RestConnectionEditor(QDialog):
         self.api_key_location_combo = QComboBox()
         self.api_key_location_combo.addItem(self.tr("Header"), userData="header")
         self.api_key_location_combo.addItem(self.tr("Query parameter"), userData="query")
+
+        self.grant_type_combo = QComboBox()
+        self.grant_type_combo.addItem(self.tr("Client credentials"), userData="client_credentials")
+        self.grant_type_combo.addItem(self.tr("Refresh token"), userData="refresh_token")
+        self.grant_type_combo.currentIndexChanged.connect(self.on_oauth2_grant_changed)
+
+        self.token_url_edit = QLineEdit()
+        self.token_url_edit.setPlaceholderText("https://example.com/oauth/token")
+        self.client_id_edit = QLineEdit()
+        self.client_secret_edit = QLineEdit()
+        self.client_secret_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        self.scope_edit = QLineEdit()
+        self.scope_edit.setPlaceholderText("read write")
+        self.refresh_token_edit = QLineEdit()
+        self.refresh_token_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        self.refresh_token_edit.setPlaceholderText("paste refresh token")
 
         self.pagination_combo = QComboBox()
         self.pagination_combo.addItem(self.tr("None"), userData="none")
@@ -158,6 +175,12 @@ class RestConnectionEditor(QDialog):
         form.addRow(self.tr("API key name"), self.api_key_name_edit)
         form.addRow(self.tr("API key value"), self.api_key_value_edit)
         form.addRow(self.tr("API key location"), self.api_key_location_combo)
+        form.addRow(self.tr("OAuth2 token URL"), self.token_url_edit)
+        form.addRow(self.tr("OAuth2 client ID"), self.client_id_edit)
+        form.addRow(self.tr("OAuth2 client secret"), self.client_secret_edit)
+        form.addRow(self.tr("OAuth2 grant type"), self.grant_type_combo)
+        form.addRow(self.tr("OAuth2 scope"), self.scope_edit)
+        form.addRow(self.tr("OAuth2 refresh token"), self.refresh_token_edit)
         form.addRow(self.tr("Pagination:"), self.pagination_combo)
         form.addRow(self.tr("Page parameter"), self.page_param_edit)
         form.addRow(self.tr("Start page"), self.start_page_edit)
@@ -207,6 +230,7 @@ class RestConnectionEditor(QDialog):
         self.setLayout(main)
 
         self.on_auth_changed()
+        self.on_oauth2_grant_changed()
         self.on_pagination_changed()
 
     # ----------------------------------------------------------------------
@@ -255,6 +279,7 @@ class RestConnectionEditor(QDialog):
         is_bearer = auth == "bearer"
         is_basic = auth == "basic"
         is_api_key = auth == "api_key"
+        is_oauth2 = auth == "oauth2"
 
         self.token_edit.setEnabled(is_bearer)
         self.username_edit.setEnabled(is_basic)
@@ -262,6 +287,18 @@ class RestConnectionEditor(QDialog):
         self.api_key_name_edit.setEnabled(is_api_key)
         self.api_key_value_edit.setEnabled(is_api_key)
         self.api_key_location_combo.setEnabled(is_api_key)
+
+        self.token_url_edit.setEnabled(is_oauth2)
+        self.client_id_edit.setEnabled(is_oauth2)
+        self.client_secret_edit.setEnabled(is_oauth2)
+        self.grant_type_combo.setEnabled(is_oauth2)
+        self.scope_edit.setEnabled(is_oauth2)
+        self.refresh_token_edit.setEnabled(is_oauth2 and self.grant_type_combo.currentData() == "refresh_token")
+
+    def on_oauth2_grant_changed(self):
+        """Handles the change in OAuth2 grant type selection."""
+        is_refresh = self.grant_type_combo.currentData() == "refresh_token"
+        self.refresh_token_edit.setEnabled(is_refresh and self.auth_combo.currentData() == "oauth2")
 
     def on_pagination_changed(self):
         """Handles the change in pagination mode selection."""
@@ -336,6 +373,16 @@ class RestConnectionEditor(QDialog):
         self.password_edit.setText(cfg.get("auth", {}).get("password", ""))
         self.api_key_name_edit.setText(cfg.get("auth", {}).get("api_key_name", ""))
         self.api_key_value_edit.setText(cfg.get("auth", {}).get("api_key_value", ""))
+        self.token_url_edit.setText(str(cfg.get("auth", {}).get("token_url", "")))
+        self.client_id_edit.setText(str(cfg.get("auth", {}).get("client_id", "")))
+        self.client_secret_edit.setText(str(cfg.get("auth", {}).get("client_secret", "")))
+        self.scope_edit.setText(str(cfg.get("auth", {}).get("scope", "")))
+        self.refresh_token_edit.setText(str(cfg.get("auth", {}).get("refresh_token", "")))
+
+        grant_type = cfg.get("auth", {}).get("grant_type", "client_credentials")
+        grant_ix = self.grant_type_combo.findData(grant_type)
+        if grant_ix >= 0:
+            self.grant_type_combo.setCurrentIndex(grant_ix)
 
         api_key_location = cfg.get("auth", {}).get("api_key_location", "header")
         api_key_ix = self.api_key_location_combo.findData(api_key_location)
@@ -396,6 +443,13 @@ class RestConnectionEditor(QDialog):
             cfg["auth"]["api_key_name"] = self.api_key_name_edit.text().strip()
             cfg["auth"]["api_key_value"] = self.api_key_value_edit.text().strip()
             cfg["auth"]["api_key_location"] = self.api_key_location_combo.currentData()
+        elif auth_type == "oauth2":
+            cfg["auth"]["token_url"] = self.token_url_edit.text().strip()
+            cfg["auth"]["client_id"] = self.client_id_edit.text().strip()
+            cfg["auth"]["client_secret"] = self.client_secret_edit.text().strip()
+            cfg["auth"]["grant_type"] = self.grant_type_combo.currentData()
+            cfg["auth"]["scope"] = self.scope_edit.text().strip()
+            cfg["auth"]["refresh_token"] = self.refresh_token_edit.text().strip()
 
         if pagination_type == "page_number":
             page_param = self.page_param_edit.text().strip()
@@ -456,6 +510,13 @@ class RestConnectionEditor(QDialog):
             api_key_name=auth_raw.get("api_key_name"),
             api_key_value=auth_raw.get("api_key_value"),
             api_key_location=auth_raw.get("api_key_location"),
+            grant_type=auth_raw.get("grant_type"),
+            token_url=auth_raw.get("token_url"),
+            client_id=auth_raw.get("client_id"),
+            client_secret=auth_raw.get("client_secret"),
+            scope=auth_raw.get("scope"),
+            refresh_token=auth_raw.get("refresh_token"),
+            access_token=auth_raw.get("access_token"),
         )
 
         pagination = None
@@ -517,6 +578,12 @@ class RestConnectionEditor(QDialog):
         self.password_edit.clear()
         self.api_key_name_edit.clear()
         self.api_key_value_edit.clear()
+        self.token_url_edit.clear()
+        self.client_id_edit.clear()
+        self.client_secret_edit.clear()
+        self.scope_edit.clear()
+        self.refresh_token_edit.clear()
+        self.grant_type_combo.setCurrentIndex(self.grant_type_combo.findData("client_credentials"))
         self.page_param_edit.clear()
         self.start_page_edit.clear()
         self.page_size_param_edit.clear()
@@ -524,7 +591,9 @@ class RestConnectionEditor(QDialog):
         self.max_pages_edit.clear()
         self.auth_combo.setCurrentIndex(self.auth_combo.findData("none"))
         self.api_key_location_combo.setCurrentIndex(self.api_key_location_combo.findData("header"))
+        self.grant_type_combo.setCurrentIndex(self.grant_type_combo.findData("client_credentials"))
         self.pagination_combo.setCurrentIndex(self.pagination_combo.findData("none"))
+        self.on_oauth2_grant_changed()
         self.on_pagination_changed()
         self._update_action_buttons()
 
@@ -546,6 +615,12 @@ class RestConnectionEditor(QDialog):
             self.api_key_name_edit,
             self.api_key_value_edit,
             self.api_key_location_combo,
+            self.token_url_edit,
+            self.client_id_edit,
+            self.client_secret_edit,
+            self.grant_type_combo,
+            self.scope_edit,
+            self.refresh_token_edit,
             self.pagination_combo,
             self.page_param_edit,
             self.start_page_edit,
@@ -865,5 +940,12 @@ class RestConnectionEditor(QDialog):
             payload["auth"]["api_key_name"] = config.auth.api_key_name or ""
             payload["auth"]["api_key_value"] = config.auth.api_key_value or ""
             payload["auth"]["api_key_location"] = config.auth.api_key_location or "header"
+        elif config.auth.type == "oauth2":
+            payload["auth"]["token_url"] = config.auth.token_url or ""
+            payload["auth"]["client_id"] = config.auth.client_id or ""
+            payload["auth"]["client_secret"] = config.auth.client_secret or ""
+            payload["auth"]["grant_type"] = config.auth.grant_type or "client_credentials"
+            payload["auth"]["scope"] = config.auth.scope or ""
+            payload["auth"]["refresh_token"] = config.auth.refresh_token or ""
 
         return payload

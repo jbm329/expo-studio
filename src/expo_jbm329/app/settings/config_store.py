@@ -494,7 +494,7 @@ def _normalize_rest_entry(cfg: dict) -> dict:
         c["auth"] = {"type": "none"}
     else:
         at = str(auth.get("type", "none")).lower()
-        if at not in ("none", "bearer", "basic", "api_key"):
+        if at not in ("none", "bearer", "basic", "api_key", "oauth2"):
             at = "none"
         c["auth"] = {"type": at}
         if at == "bearer":
@@ -518,6 +518,29 @@ def _normalize_rest_entry(cfg: dict) -> dict:
                 c["auth"]["api_key_value"] = api_key_value
             if api_key_location in ("header", "query"):
                 c["auth"]["api_key_location"] = api_key_location
+        elif at == "oauth2":
+            token_url = auth.get("token_url")
+            client_id = auth.get("client_id")
+            client_secret = auth.get("client_secret")
+            scope = auth.get("scope")
+            refresh_token = auth.get("refresh_token")
+            access_token = auth.get("access_token")
+            grant_type = str(auth.get("grant_type", "client_credentials")).lower()
+            if grant_type not in ("client_credentials", "refresh_token"):
+                grant_type = "client_credentials"
+            c["auth"]["grant_type"] = grant_type
+            if isinstance(token_url, str) and token_url:
+                c["auth"]["token_url"] = token_url
+            if isinstance(client_id, str) and client_id:
+                c["auth"]["client_id"] = client_id
+            if isinstance(client_secret, str) and client_secret:
+                c["auth"]["client_secret"] = client_secret
+            if isinstance(scope, str) and scope:
+                c["auth"]["scope"] = scope
+            if isinstance(refresh_token, str) and refresh_token:
+                c["auth"]["refresh_token"] = refresh_token
+            if isinstance(access_token, str) and access_token:
+                c["auth"]["access_token"] = access_token
 
     pagination = c.get("pagination")
     if not isinstance(pagination, dict):

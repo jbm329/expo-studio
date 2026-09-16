@@ -48,7 +48,7 @@ def fetch_json(
     headers = dict(config.headers or {})
     params = dict(config.query_params or {})
 
-    _apply_auth(headers, params, config.auth)
+    _apply_auth(headers, params, config.auth, timeout=timeout)
 
     # Good default for APIs like SCB / World Bank
     headers.setdefault("Accept", "application/json")
@@ -123,10 +123,57 @@ def fetch_json_pages(
 # Helpers
 # ---------------------------------------------------------------------
 
+def _fetch_oauth2_access_token(auth: RestAuthConfig, *, timeout: float) -> str:
+    """Acquire an OAuth2 access token using the configured grant flow."""
+    if not auth.token_url:
+        raise RestClientError("OAuth2 auth requires token URL")
+    if not auth.client_id:
+        raise RestClientError("OAuth2 auth requires client ID")
+    if not auth.client_secret:
+        raise RestClientError("OAuth2 auth requires client secret")
+
+    grant_type = auth.grant_type or "client_credentials"
+    payload: dict[str, str] = {"grant_type": grant_type}
+    if grant_type == "refresh_token":
+        if not auth.refresh_token:
+            raise RestClientError("OAuth2 refresh-token auth requires refresh token")
+        payload["refresh_token"] = auth.refresh_token
+    if auth.scope:
+        payload["scope"] = auth.scope
+
+    try:
+        with httpx.Client(timeout=httpx.Timeout(timeout)) as client:
+            response = client.post(
+                auth.token_url,
+                data=payload,
+                headers={"Accept": "application/json"},
+                auth=(auth.client_id, auth.client_secret),
+            )
+    except httpx.RequestError as exc:
+        raise RestClientError(f"OAuth2 token request failed: {exc}") from exc
+
+    if response.status_code != 200:
+        body = response.text[:500] if response.text else ""
+        raise RestClientError(f"OAuth2 token request failed: HTTP {response.status_code}: {body}")
+
+    try:
+        token_payload = response.json()
+    except Exception as exc:
+        raise RestClientError("OAuth2 token response is not valid JSON") from exc
+
+    access_token = token_payload.get("access_token")
+    if not access_token:
+        raise RestClientError("OAuth2 token response missing access_token")
+
+    return str(access_token)
+
+
 def _apply_auth(
     headers: dict[str, str],
     params: dict[str, str],
     auth: RestAuthConfig | None,
+    *,
+    timeout: float = 30.0,
 ) -> None:
     """Apply authentication configuration to request headers."""
     if not auth or auth.type == "none":
@@ -159,8 +206,18 @@ def _apply_auth(
             return
         raise RestClientError("API key auth requires location 'header' or 'query'")
 
-    raise RestClientError(f"Unsupported auth type: {auth.type}")
+    if auth.type == "oauth2":
+        if not auth.token_url:
+            raise RestClientError("OAuth2 auth requires token URL")
+        if not auth.client_id:
+            raise RestClientError("OAuth2 auth requires client ID")
+        if not auth.client_secret:
+            raise RestClientError("OAuth2 auth requires client secret")
+        access_token = auth.access_token or _fetch_oauth2_access_token(auth, timeout=timeout)
+        headers["Authorization"] = f"Bearer {access_token}"
+        return
 
+    raise RestClientError(f"Unsupported auth type: {auth.type}")
 
 def _fetch_page_number_payloads(
     config: RestRequestConfig,
