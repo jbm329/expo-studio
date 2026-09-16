@@ -8,6 +8,7 @@ from typing import Any, Literal
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QIcon, QTextCursor
 from PyQt6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QDialog,
     QFormLayout,
@@ -17,6 +18,7 @@ from PyQt6.QtWidgets import (
     QListWidget,
     QPlainTextEdit,
     QPushButton,
+    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
@@ -37,6 +39,34 @@ from expo_jbm329.services.rest.normalizer import normalize_json_to_df
 from expo_jbm329.services.rest.schema import build_response_preview
 from expo_jbm329.utils.format_utils import fmt_shape
 from expo_jbm329.workbench.icon.icon_service import IconService
+
+
+class _SectionPanel(QWidget):
+    """Small collapsible panel used to group editor fields."""
+
+    def __init__(
+        self,
+        title: str,
+        *,
+        checked: bool = True,
+        parent: QWidget | None = None,
+    ) -> None:
+        super().__init__(parent)
+        self.toggle = QCheckBox(title)
+        self.toggle.setChecked(checked)
+        self.body = QWidget()
+        self.body_layout = QFormLayout()
+        self.body_layout.setContentsMargins(16, 0, 0, 0)
+        self.body.setLayout(self.body_layout)
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.toggle)
+        layout.addWidget(self.body)
+        self.setLayout(layout)
+
+        self.toggle.toggled.connect(self.body.setVisible)
+        self.body.setVisible(checked)
 
 
 class RestConnectionEditor(QDialog):
@@ -164,32 +194,38 @@ class RestConnectionEditor(QDialog):
         # ==============================================================
         # Layout (form)
         # ==============================================================
-        form = QFormLayout()
-        form.addRow(self.tr("URL:"), self.url_edit)
-        form.addRow(self.tr("Method:"), self.method_combo)
-        form.addRow(self.tr("JSON body:"), self.body_edit)
-        form.addRow(self.tr("Response path:"), self.response_path_edit)
-        form.addRow(self.tr("Authentication:"), self.auth_combo)
-        form.addRow(self.tr("Bearer token"), self.token_edit)
-        form.addRow(self.tr("Basic username"), self.username_edit)
-        form.addRow(self.tr("Basic password"), self.password_edit)
-        form.addRow(self.tr("API key name"), self.api_key_name_edit)
-        form.addRow(self.tr("API key value"), self.api_key_value_edit)
-        form.addRow(self.tr("API key location"), self.api_key_location_combo)
-        form.addRow(self.tr("OAuth2 token URL"), self.token_url_edit)
-        form.addRow(self.tr("OAuth2 client ID"), self.client_id_edit)
-        form.addRow(self.tr("OAuth2 client secret"), self.client_secret_edit)
-        form.addRow(self.tr("OAuth2 grant type"), self.grant_type_combo)
-        form.addRow(self.tr("OAuth2 scope"), self.scope_edit)
-        form.addRow(self.tr("OAuth2 refresh token"), self.refresh_token_edit)
-        form.addRow(self.tr("Pagination:"), self.pagination_combo)
-        form.addRow(self.tr("Page parameter"), self.page_param_edit)
-        form.addRow(self.tr("Start page"), self.start_page_edit)
-        form.addRow(self.tr("Page size parameter"), self.page_size_param_edit)
-        form.addRow(self.tr("Page size"), self.page_size_edit)
-        form.addRow(self.tr("Max pages"), self.max_pages_edit)
-        form.addRow(self.tr("Headers (JSON):"), self.headers_edit)
-        form.addRow(self.tr("Query params (JSON):"), self.params_edit)
+        general_panel = _SectionPanel(self.tr("General"), checked=True)
+        general_panel.body_layout.addRow(self.tr("URL:"), self.url_edit)
+        general_panel.body_layout.addRow(self.tr("Method:"), self.method_combo)
+        general_panel.body_layout.addRow(self.tr("Response path:"), self.response_path_edit)
+
+        request_panel = _SectionPanel(self.tr("Request"), checked=True)
+        request_panel.body_layout.addRow(self.tr("JSON body:"), self.body_edit)
+        request_panel.body_layout.addRow(self.tr("Headers (JSON):"), self.headers_edit)
+        request_panel.body_layout.addRow(self.tr("Query params (JSON):"), self.params_edit)
+
+        self.auth_section = _SectionPanel(self.tr("Authentication"), checked=False)
+        self.auth_section.body_layout.addRow(self.tr("Type:"), self.auth_combo)
+        self.auth_section.body_layout.addRow(self.tr("******"), self.token_edit)
+        self.auth_section.body_layout.addRow(self.tr("Basic username"), self.username_edit)
+        self.auth_section.body_layout.addRow(self.tr("Basic password"), self.password_edit)
+        self.auth_section.body_layout.addRow(self.tr("API key name"), self.api_key_name_edit)
+        self.auth_section.body_layout.addRow(self.tr("API key value"), self.api_key_value_edit)
+        self.auth_section.body_layout.addRow(self.tr("API key location"), self.api_key_location_combo)
+        self.auth_section.body_layout.addRow(self.tr("OAuth2 token URL"), self.token_url_edit)
+        self.auth_section.body_layout.addRow(self.tr("OAuth2 client ID"), self.client_id_edit)
+        self.auth_section.body_layout.addRow(self.tr("OAuth2 client secret"), self.client_secret_edit)
+        self.auth_section.body_layout.addRow(self.tr("OAuth2 grant type"), self.grant_type_combo)
+        self.auth_section.body_layout.addRow(self.tr("OAuth2 scope"), self.scope_edit)
+        self.auth_section.body_layout.addRow(self.tr("OAuth2 refresh token"), self.refresh_token_edit)
+
+        self.pagination_section = _SectionPanel(self.tr("Pagination"), checked=False)
+        self.pagination_section.body_layout.addRow(self.tr("Type:"), self.pagination_combo)
+        self.pagination_section.body_layout.addRow(self.tr("Page parameter"), self.page_param_edit)
+        self.pagination_section.body_layout.addRow(self.tr("Start page"), self.start_page_edit)
+        self.pagination_section.body_layout.addRow(self.tr("Page size parameter"), self.page_size_param_edit)
+        self.pagination_section.body_layout.addRow(self.tr("Page size"), self.page_size_edit)
+        self.pagination_section.body_layout.addRow(self.tr("Max pages"), self.max_pages_edit)
         self.body_edit.setVisible(False)  # default: GET
 
         # ==============================================================
@@ -220,8 +256,23 @@ class RestConnectionEditor(QDialog):
         left.addWidget(QLabel(self.tr("Connections:")))
         left.addWidget(self.list_widget)
 
+        form_container = QWidget()
+        form_layout = QVBoxLayout()
+        form_layout.setContentsMargins(0, 0, 0, 0)
+        form_layout.addWidget(general_panel)
+        form_layout.addWidget(request_panel)
+        form_layout.addWidget(self.auth_section)
+        form_layout.addWidget(self.pagination_section)
+        form_layout.addStretch(1)
+        form_container.setLayout(form_layout)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(form_container)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+
         right = QVBoxLayout()
-        right.addLayout(form)
+        right.addWidget(scroll)
         right.addLayout(btns)
 
         main = QHBoxLayout()
@@ -282,34 +333,42 @@ class RestConnectionEditor(QDialog):
         is_api_key = auth == "api_key"
         is_oauth2 = auth == "oauth2"
 
-        self.token_edit.setEnabled(is_bearer)
-        self.username_edit.setEnabled(is_basic)
-        self.password_edit.setEnabled(is_basic)
-        self.api_key_name_edit.setEnabled(is_api_key)
-        self.api_key_value_edit.setEnabled(is_api_key)
-        self.api_key_location_combo.setEnabled(is_api_key)
+        self.auth_section.toggle.setChecked(auth != "none")
+        self.auth_section.body.setVisible(auth != "none")
 
-        self.token_url_edit.setEnabled(is_oauth2)
-        self.client_id_edit.setEnabled(is_oauth2)
-        self.client_secret_edit.setEnabled(is_oauth2)
-        self.grant_type_combo.setEnabled(is_oauth2)
-        self.scope_edit.setEnabled(is_oauth2)
-        self.refresh_token_edit.setEnabled(is_oauth2 and self.grant_type_combo.currentData() == "refresh_token")
+        self._set_auth_row_state(self.token_edit, is_bearer)
+        self._set_auth_row_state(self.username_edit, is_basic)
+        self._set_auth_row_state(self.password_edit, is_basic)
+        self._set_auth_row_state(self.api_key_name_edit, is_api_key)
+        self._set_auth_row_state(self.api_key_value_edit, is_api_key)
+        self._set_auth_row_state(self.api_key_location_combo, is_api_key)
+        self._set_auth_row_state(self.token_url_edit, is_oauth2)
+        self._set_auth_row_state(self.client_id_edit, is_oauth2)
+        self._set_auth_row_state(self.client_secret_edit, is_oauth2)
+        self._set_auth_row_state(self.grant_type_combo, is_oauth2)
+        self._set_auth_row_state(self.scope_edit, is_oauth2)
+        self._set_auth_row_state(self.refresh_token_edit, is_oauth2)
+        self.on_oauth2_grant_changed()
 
     def on_oauth2_grant_changed(self):
         """Handles the change in OAuth2 grant type selection."""
         is_refresh = self.grant_type_combo.currentData() == "refresh_token"
-        self.refresh_token_edit.setEnabled(is_refresh and self.auth_combo.currentData() == "oauth2")
+        is_oauth2 = self.auth_combo.currentData() == "oauth2"
+        self.refresh_token_edit.setEnabled(is_refresh and is_oauth2)
+        self._set_row_visible(self.refresh_token_edit, is_oauth2 and is_refresh)
 
     def on_pagination_changed(self):
         """Handles the change in pagination mode selection."""
         is_page_number = self.pagination_combo.currentData() == "page_number"
 
-        self.page_param_edit.setEnabled(is_page_number)
-        self.start_page_edit.setEnabled(is_page_number)
-        self.page_size_param_edit.setEnabled(is_page_number)
-        self.page_size_edit.setEnabled(is_page_number)
-        self.max_pages_edit.setEnabled(is_page_number)
+        self.pagination_section.toggle.setChecked(is_page_number)
+        self.pagination_section.body.setVisible(is_page_number)
+
+        self._set_pagination_row_state(self.page_param_edit, is_page_number)
+        self._set_pagination_row_state(self.start_page_edit, is_page_number)
+        self._set_pagination_row_state(self.page_size_param_edit, is_page_number)
+        self._set_pagination_row_state(self.page_size_edit, is_page_number)
+        self._set_pagination_row_state(self.max_pages_edit, is_page_number)
 
     def on_selection_changed(self, current):
         """Loads the selected connection's data into the form fields."""
@@ -632,6 +691,25 @@ class RestConnectionEditor(QDialog):
             self.params_edit,
         ):
             w.setEnabled(enabled)
+
+    def _set_auth_row_state(self, widget: QWidget, visible: bool) -> None:
+        """Show or hide an authentication detail row."""
+        widget.setEnabled(visible)
+        self._set_row_visible(widget, visible)
+
+    def _set_pagination_row_state(self, widget: QWidget, visible: bool) -> None:
+        """Show or hide a pagination detail row."""
+        widget.setEnabled(visible)
+        self._set_row_visible(widget, visible)
+
+    def _set_row_visible(self, widget: QWidget, visible: bool) -> None:
+        """Show or hide a row managed by one of the section form layouts."""
+        widget.setVisible(visible)
+        label = self.auth_section.body_layout.labelForField(widget)
+        if label is None:
+            label = self.pagination_section.body_layout.labelForField(widget)
+        if label is not None:
+            label.setVisible(visible)
 
     def _parse_positive_int(self, raw_value: str, *, field_name: str, default: int) -> int:
         """Parse a positive integer field from the form."""

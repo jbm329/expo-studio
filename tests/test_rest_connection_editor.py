@@ -7,7 +7,9 @@ from expo_jbm329.gui.dialogs.service.null_dialog_service import NullDialogServic
 
 
 def make_editor() -> RestConnectionEditor:
-    return RestConnectionEditor(dialogs=NullDialogService())
+    editor = RestConnectionEditor(dialogs=NullDialogService())
+    editor.show()
+    return editor
 
 
 def test_on_auth_changed_enables_basic_fields_only():
@@ -18,7 +20,9 @@ def test_on_auth_changed_enables_basic_fields_only():
 
     assert editor.username_edit.isEnabled() is True
     assert editor.password_edit.isEnabled() is True
+    assert editor.auth_section.body.isVisible() is True
     assert editor.token_edit.isEnabled() is False
+    assert editor.auth_section.body_layout.labelForField(editor.token_edit).isVisible() is False
     assert editor.api_key_name_edit.isEnabled() is False
 
 
@@ -31,8 +35,10 @@ def test_on_auth_changed_enables_api_key_fields_only():
     assert editor.api_key_name_edit.isEnabled() is True
     assert editor.api_key_value_edit.isEnabled() is True
     assert editor.api_key_location_combo.isEnabled() is True
+    assert editor.auth_section.body.isVisible() is True
     assert editor.token_edit.isEnabled() is False
     assert editor.username_edit.isEnabled() is False
+    assert editor.auth_section.body_layout.labelForField(editor.username_edit).isVisible() is False
 
 
 def test_gather_form_serializes_basic_auth():
@@ -84,8 +90,18 @@ def test_gather_form_rejects_invalid_headers_json():
 
 def test_save_changes_persists_valid_api_key_auth(monkeypatch):
     editor = make_editor()
-    editor.data = {"Example": {}}
+    editor.data = {
+        "Example": {
+            "url": "",
+            "headers": {},
+            "query_params": {},
+            "response_path": "",
+            "auth": {"type": "none"},
+            "pagination": {"type": "none"},
+        }
+    }
     editor.list_widget.addItem(QListWidgetItem("Example"))
+    editor.on_selection_changed(editor.list_widget.item(0))
     editor.list_widget.setCurrentRow(0)
     editor.url_edit.setText("https://example.com")
     editor.auth_combo.setCurrentIndex(editor.auth_combo.findData("api_key"))
@@ -105,6 +121,7 @@ def test_save_changes_persists_valid_api_key_auth(monkeypatch):
 
     editor.save_changes()
 
+    assert editor.data["Example"]["auth"]["type"] == "api_key"
     assert written["Example"]["auth"] == {
         "type": "api_key",
         "api_key_name": "X-API-Key",
@@ -124,6 +141,27 @@ def test_on_pagination_changed_enables_page_number_fields_only():
     assert editor.page_size_param_edit.isEnabled() is True
     assert editor.page_size_edit.isEnabled() is True
     assert editor.max_pages_edit.isEnabled() is True
+    assert editor.pagination_section.body.isVisible() is True
+
+
+def test_on_auth_changed_hides_auth_section_when_none_selected():
+    editor = make_editor()
+
+    editor.auth_combo.setCurrentIndex(editor.auth_combo.findData("none"))
+    editor.on_auth_changed()
+
+    assert editor.auth_section.body.isVisible() is False
+    assert editor.auth_section.toggle.isChecked() is False
+
+
+def test_on_pagination_changed_hides_pagination_section_when_none_selected():
+    editor = make_editor()
+
+    editor.pagination_combo.setCurrentIndex(editor.pagination_combo.findData("none"))
+    editor.on_pagination_changed()
+
+    assert editor.pagination_section.body.isVisible() is False
+    assert editor.pagination_section.toggle.isChecked() is False
 
 
 def test_gather_form_serializes_page_number_pagination():
@@ -150,8 +188,18 @@ def test_gather_form_serializes_page_number_pagination():
 
 def test_save_changes_persists_valid_page_number_pagination(monkeypatch):
     editor = make_editor()
-    editor.data = {"Example": {}}
+    editor.data = {
+        "Example": {
+            "url": "",
+            "headers": {},
+            "query_params": {},
+            "response_path": "",
+            "auth": {"type": "none"},
+            "pagination": {"type": "none"},
+        }
+    }
     editor.list_widget.addItem(QListWidgetItem("Example"))
+    editor.on_selection_changed(editor.list_widget.item(0))
     editor.list_widget.setCurrentRow(0)
     editor.url_edit.setText("https://example.com")
     editor.pagination_combo.setCurrentIndex(editor.pagination_combo.findData("page_number"))

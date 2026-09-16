@@ -79,8 +79,8 @@ class RestConnectionRegistry:
         """Load persistent REST connections from config_store."""
         for name, cfg in raw.items():
             url = cfg.get("url")
-            if not url or not isinstance(url, str):
-                url = ""
+            if not isinstance(url, str) or not url.strip():
+                continue
 
             # Invalid or missing HTTP method defaults to GET (safe fallback)
             method = self._normalize_method(cfg.get("method"))
