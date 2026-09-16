@@ -104,6 +104,25 @@ class ColumnRef:
     catalog: str | None = None
 
 
+@dataclass(frozen=True)
+class ResolvedTable:
+    """Resolved schema information for a table visible in a statement."""
+
+    schema_name: str | None
+    table_name: str
+    columns: set[str]
+
+
+@dataclass(frozen=True)
+class SchemaLintContext:
+    """Resolved schema context for schema-aware linting."""
+
+    known_schemas: set[str]
+    visible_tables: set[str]
+    resolved_tables: dict[str, ResolvedTable]
+    unresolved_tables: set[str]
+
+
 def sqlglot_dialect(engine_or_dialect: str | None) -> str | None:
     """Return the sqlglot dialect name for an internal engine/dialect name.
 
@@ -641,26 +660,13 @@ def _normalize_schema_for_lint(
     return normalized
 
 
-def _lint_schema(
-    sql: str,
-    *,
-    schema: dict[str, dict[str, list[str]]] | None,
-    dialect: str | None = None,
-) -> list[SqlDiagnostic]:
-    """Schema-aware lint checks for table and column names."""
-    if not schema:
-        return []
-
-    expression = parse_one_safe(sql, dialect)
-    if expression is None:
-        return []
-
-    normalized_schema = _normalize_schema_for_lint(schema)
-    if not normalized_schema:
-        return []
-
+def _build_schema_lint_context(
+    expression: exp.Expression,
+    normalized_schema: dict[str, dict[str, set[str]]],
+) -> SchemaLintContext:
+    """Resolve visible tables from a parsed SQL statement."""
     visible_tables: set[str] = set()
-    resolved_tables: dict[str, set[str]] = {}
+    resolved_tables: dict[str, ResolvedTable] = {}
     unresolved_tables: set[str] = set()
     known_schemas = set(normalized_schema.keys())
 
@@ -672,10 +678,9 @@ def _lint_schema(
         table_key = _normalize_identifier(table_name)
         visible_tables.add(table_key)
 
-        schema_name = str(table.db or table.catalog or "").strip()
+        schema_name = str(table.db or table.catalog or "").strip() or None
         schema_key = _normalize_identifier(schema_name) if schema_name else ""
 
-        # Explicit schema qualifier: validate that schema only.
         if schema_key:
             if schema_key not in known_schemas:
                 unresolved_tables.add(table_key)
@@ -683,26 +688,82 @@ def _lint_schema(
 
             table_columns = normalized_schema.get(schema_key, {}).get(table_key, set())
             if table_columns:
-                resolved_tables[table_key] = table_columns
+                resolved_tables[table_key] = ResolvedTable(
+                    schema_name=schema_name,
+                    table_name=table_name,
+                    columns=table_columns,
+                )
             else:
                 unresolved_tables.add(table_key)
             continue
 
-        # Unqualified table: search across all schemas.
-        table_columns: set[str] = set()
-        for tables in normalized_schema.values():
-            table_columns = tables.get(table_key, set())
-            if table_columns:
+        matched_schema_name: str | None = None
+        matched_columns: set[str] = set()
+
+        for candidate_schema_name, tables in normalized_schema.items():
+            candidate_columns = tables.get(table_key, set())
+            if candidate_columns:
+                matched_schema_name = candidate_schema_name
+                matched_columns = candidate_columns
                 break
 
-        if table_columns:
-            resolved_tables[table_key] = table_columns
+        if matched_columns:
+            resolved_tables[table_key] = ResolvedTable(
+                schema_name=matched_schema_name,
+                table_name=table_name,
+                columns=matched_columns,
+            )
         else:
             unresolved_tables.add(table_key)
 
+    return SchemaLintContext(
+        known_schemas=known_schemas,
+        visible_tables=visible_tables,
+        resolved_tables=resolved_tables,
+        unresolved_tables=unresolved_tables,
+    )
+
+
+def _is_known_column(
+    normalized_name: str,
+    table_qualifier: str | None,
+    context: SchemaLintContext,
+) -> bool:
+    """Return True if the column can be resolved in the current statement context."""
+    if table_qualifier:
+        resolved_table = context.resolved_tables.get(table_qualifier)
+        if resolved_table is None:
+            return False
+        return normalized_name in resolved_table.columns
+
+    for resolved_table in context.resolved_tables.values():
+        if normalized_name in resolved_table.columns:
+            return True
+
+    return False
+
+
+def _lint_schema(
+    sql: str,
+    *,
+    schema: dict[str, dict[str, list[str]]] | None,
+    dialect: str | None = None,
+) -> list[SqlDiagnostic]:
+    """Schema-aware lint checks for schema, table, and column names."""
+    if not schema:
+        return []
+
+    expression = parse_one_safe(sql, dialect)
+    if expression is None:
+        return []
+
+    normalized_schema = _normalize_schema_for_lint(schema)
+    if not normalized_schema:
+        return []
+
+    context = _build_schema_lint_context(expression, normalized_schema)
     diagnostics: list[SqlDiagnostic] = []
 
-    # Unknown table validation.
     for table in expression.find_all(exp.Table):
         table_name = str(table.name or "").strip()
         if not table_name:
@@ -712,7 +773,7 @@ def _lint_schema(
         schema_name = str(table.db or table.catalog or "").strip()
         schema_key = _normalize_identifier(schema_name) if schema_name else ""
 
-        if schema_key and schema_key not in known_schemas:
+        if schema_key and schema_key not in context.known_schemas:
             start, length = _find_identifier_span_in_sql(sql, schema_name)
             line, column = _offset_to_line_column(sql, start)
 
@@ -727,7 +788,7 @@ def _lint_schema(
             )
             continue
 
-        if table_key in unresolved_tables:
+        if table_key in context.unresolved_tables:
             start, length = _find_identifier_span_in_sql(sql, table_name)
             line, column = _offset_to_line_column(sql, start)
 
@@ -741,7 +802,6 @@ def _lint_schema(
                 )
             )
 
-    # Unknown column validation only on known tables.
     for column in expression.find_all(exp.Column):
         name = str(column.name or "").strip()
         if not name or name == "*":
@@ -752,54 +812,27 @@ def _lint_schema(
         if column.table:
             table_qualifier = _normalize_identifier(str(column.table))
 
-        valid = False
-
-        if table_qualifier:
-            for tables in normalized_schema.values():
-                for table_key, cols in tables.items():
-                    if table_key == table_qualifier and normalized_name in cols:
-                        valid = True
-                        break
-                if valid:
-                    break
-        else:
-            for cols in resolved_tables.values():
-                if normalized_name in cols:
-                    valid = True
-                    break
-
-        if valid:
+        if _is_known_column(normalized_name, table_qualifier, context):
             continue
 
-        if table_qualifier:
-            if table_qualifier in visible_tables:
-                start, length = _find_identifier_span_in_sql(sql, name)
-                line, column_no = _offset_to_line_column(sql, start)
-
-                diagnostics.append(
-                    SqlDiagnostic(
-                        severity="error",
-                        message=f"Unknown column '{name}' for the current schema context.",
-                        line=line,
-                        column=column_no,
-                        length=max(1, length),
-                    )
-                )
+        if table_qualifier is not None:
+            if table_qualifier not in context.visible_tables:
+                continue
+        elif not context.resolved_tables:
             continue
 
-        if resolved_tables:
-            start, length = _find_identifier_span_in_sql(sql, name)
-            line, column_no = _offset_to_line_column(sql, start)
+        start, length = _find_identifier_span_in_sql(sql, name)
+        line, column_no = _offset_to_line_column(sql, start)
 
-            diagnostics.append(
-                SqlDiagnostic(
-                    severity="error",
-                    message=f"Unknown column '{name}' for the current schema context.",
-                    line=line,
-                    column=column_no,
-                    length=max(1, length),
-                )
+        diagnostics.append(
+            SqlDiagnostic(
+                severity="error",
+                message=f"Unknown column '{name}' for the current schema context.",
+                line=line,
+                column=column_no,
+                length=max(1, length),
             )
+        )
 
     return diagnostics
 
