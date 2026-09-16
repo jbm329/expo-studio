@@ -661,29 +661,44 @@ def _lint_schema(
 
     visible_tables: set[str] = set()
     resolved_tables: dict[str, set[str]] = {}
+    unresolved_tables: set[str] = set()
+    known_schemas = set(normalized_schema.keys())
 
     for table in expression.find_all(exp.Table):
         table_name = str(table.name or "").strip()
         if not table_name:
             continue
 
-        key = _normalize_identifier(table_name)
-        visible_tables.add(key)
+        table_key = _normalize_identifier(table_name)
+        visible_tables.add(table_key)
 
-        schema_key = _normalize_identifier(str(table.db or table.catalog or ""))
+        schema_name = str(table.db or table.catalog or "").strip()
+        schema_key = _normalize_identifier(schema_name) if schema_name else ""
+
+        # Explicit schema qualifier: validate that schema only.
+        if schema_key:
+            if schema_key not in known_schemas:
+                unresolved_tables.add(table_key)
+                continue
+
+            table_columns = normalized_schema.get(schema_key, {}).get(table_key, set())
+            if table_columns:
+                resolved_tables[table_key] = table_columns
+            else:
+                unresolved_tables.add(table_key)
+            continue
+
+        # Unqualified table: search across all schemas.
         table_columns: set[str] = set()
-
-        if schema_key and schema_key in normalized_schema:
-            table_columns = normalized_schema[schema_key].get(key, set())
-
-        if not table_columns:
-            for current_schema, tables in normalized_schema.items():
-                table_columns = tables.get(key, set())
-                if table_columns:
-                    break
+        for tables in normalized_schema.values():
+            table_columns = tables.get(table_key, set())
+            if table_columns:
+                break
 
         if table_columns:
-            resolved_tables[key] = table_columns
+            resolved_tables[table_key] = table_columns
+        else:
+            unresolved_tables.add(table_key)
 
     diagnostics: list[SqlDiagnostic] = []
 
@@ -693,14 +708,27 @@ def _lint_schema(
         if not table_name:
             continue
 
-        key = _normalize_identifier(table_name)
-        if key in visible_tables and key not in resolved_tables:
-            from_hint = 0
-            from_match = re.search(r"(?is)\bfrom\b|\bjoin\b", sql)
-            if from_match is not None:
-                from_hint = from_match.start()
+        table_key = _normalize_identifier(table_name)
+        schema_name = str(table.db or table.catalog or "").strip()
+        schema_key = _normalize_identifier(schema_name) if schema_name else ""
 
-            start, length = _find_identifier_span_in_sql(sql, table_name, start_hint=from_hint)
+        if schema_key and schema_key not in known_schemas:
+            start, length = _find_identifier_span_in_sql(sql, schema_name)
+            line, column = _offset_to_line_column(sql, start)
+
+            diagnostics.append(
+                SqlDiagnostic(
+                    severity="error",
+                    message=f"Unknown schema '{schema_name}'.",
+                    line=line,
+                    column=column,
+                    length=max(1, length),
+                )
+            )
+            continue
+
+        if table_key in unresolved_tables:
+            start, length = _find_identifier_span_in_sql(sql, table_name)
             line, column = _offset_to_line_column(sql, start)
 
             diagnostics.append(
