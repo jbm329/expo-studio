@@ -13,6 +13,7 @@ It is intentionally UI-free so it can be reused by:
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal, cast
 
@@ -178,12 +179,6 @@ def lint_editor_rules(sql: str) -> list[SqlDiagnostic]:
 
     These rules catch cases that may be accepted or ambiguously parsed by a SQL
     parser but are not useful in the editor.
-
-    Args:
-        sql: SQL text to lint.
-
-    Returns:
-        Editor rule diagnostics.
     """
     if not isinstance(sql, str) or not sql.strip():
         return []
@@ -262,6 +257,34 @@ def lint_editor_rules(sql: str) -> list[SqlDiagnostic]:
             )
         )
 
+    incomplete_clause = _find_incomplete_trailing_clause(sql)
+    if incomplete_clause is not None:
+        start, length, message = incomplete_clause
+        line, column = _offset_to_line_column(sql, start)
+        diagnostics.append(
+            SqlDiagnostic(
+                severity="error",
+                message=message,
+                line=line,
+                column=column,
+                length=length,
+            )
+        )
+
+    incomplete_top = _find_incomplete_top_clause(sql)
+    if incomplete_top is not None:
+        start, length, message = incomplete_top
+        line, column = _offset_to_line_column(sql, start)
+        diagnostics.append(
+            SqlDiagnostic(
+                severity="error",
+                message=message,
+                line=line,
+                column=column,
+                length=length,
+            )
+        )
+
     return diagnostics
 
 
@@ -281,14 +304,7 @@ _COMMON_LEADING_KEYWORDS = {
 
 
 def _find_suspicious_leading_keyword(sql: str) -> tuple[int, int, str] | None:
-    """Find common misspellings of leading SQL keywords.
-
-    Args:
-        sql: SQL text.
-
-    Returns:
-        Tuple of (offset, length, suggested_keyword), or None.
-    """
+    """Find common misspellings of leading SQL keywords."""
     text = _strip_leading_sql_comments_and_whitespace(sql)
     leading_offset = len(sql) - len(text)
 
@@ -302,7 +318,6 @@ def _find_suspicious_leading_keyword(sql: str) -> tuple[int, int, str] | None:
     if token_l in _COMMON_LEADING_KEYWORDS:
         return None
 
-    # Most useful case for your editor: SELECT misspellings while typing.
     if _looks_like_keyword_typo(token_l, "select"):
         return leading_offset + match.start(), len(token), "SELECT"
 
@@ -310,6 +325,7 @@ def _find_suspicious_leading_keyword(sql: str) -> tuple[int, int, str] | None:
         return leading_offset + match.start(), len(token), "WITH"
 
     return None
+
 
 def _find_suspicious_from_keyword(sql: str) -> tuple[int, int, str] | None:
     """Find common misspellings of FROM in SQL text."""
@@ -327,17 +343,7 @@ def _find_suspicious_from_keyword(sql: str) -> tuple[int, int, str] | None:
 
 
 def _looks_like_keyword_typo(token: str, keyword: str) -> bool:
-    """Return True if token appears to be a typo of keyword.
-
-    Uses a small edit-distance check, restricted to reasonably similar tokens.
-
-    Args:
-        token: User-written token.
-        keyword: Expected keyword.
-
-    Returns:
-        True if token is likely a typo of keyword.
-    """
+    """Return True if token appears to be a typo of keyword."""
     if not token or not keyword:
         return False
 
@@ -362,7 +368,6 @@ def _levenshtein_distance_at_most_one(a: str, b: str) -> bool:
         differences = sum(1 for ca, cb in zip(a, b, strict=False) if ca != cb)
         return differences <= 1
 
-    # Ensure a is the shorter string.
     if len(a) > len(b):
         a, b = b, a
 
@@ -410,25 +415,28 @@ def _strip_leading_sql_comments_and_whitespace(sql: str) -> str:
 
 
 def _find_empty_select_list(sql: str) -> int | None:
-    """Return offset of SELECT when SELECT has no expression before FROM.
-
-    Examples caught:
-        SELECT FROM table
-        SELECT
-        FROM table
-        SELECT          FROM table
-
-    Args:
-        sql: SQL text.
-
-    Returns:
-        Zero-based offset of SELECT, or None.
-    """
+    """Return offset of SELECT when SELECT has no expression before FROM."""
     match = _EMPTY_SELECT_LIST_RE.search(sql)
     if match is None:
         return None
 
     return match.start()
+
+
+def _find_incomplete_top_clause(sql: str) -> tuple[int, int, str] | None:
+    """Return a diagnostic when TOP is missing its row count."""
+    match = re.search(r"(?is)\btop\b", sql)
+    if match is None:
+        return None
+
+    remainder = sql[match.end():]
+
+    if re.match(r"^\s*(\(\s*(\d+|@\w+)\s*\)|\d+|@\w+)", remainder):
+        return None
+
+    start = match.start()
+    length = max(1, match.end() - match.start())
+    return start, length, "TOP is missing a row count."
 
 
 def _offset_to_line_column(sql: str, offset: int) -> tuple[int, int]:
@@ -444,36 +452,394 @@ def _offset_to_line_column(sql: str, offset: int) -> tuple[int, int]:
     return line, column
 
 
-def lint_syntax(sql: str, dialect: str | None = None) -> list[SqlDiagnostic]:
-    """Return syntax diagnostics for SQL text.
+def _dedupe_diagnostics(diagnostics: list[SqlDiagnostic]) -> list[SqlDiagnostic]:
+    """Remove duplicate diagnostics by message + location."""
+    seen: set[tuple[str, int | None, int | None, int, str]] = set()
+    deduped: list[SqlDiagnostic] = []
 
-    This reports:
-    - lightweight editor rules for common incomplete SQL,
-    - sqlglot parse diagnostics.
+    for diagnostic in diagnostics:
+        key = (
+            diagnostic.message,
+            diagnostic.line,
+            diagnostic.column,
+            diagnostic.length,
+            diagnostic.severity,
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(diagnostic)
 
-    Schema-aware checks should be layered on top later.
+    return deduped
 
-    Args:
-        sql: SQL text to lint.
-        dialect: Optional internal engine name or sqlglot dialect name.
 
-    Returns:
-        A list of diagnostics. Empty means no syntax diagnostics were found.
+_COMMON_SQL_KEYWORDS = {
+    "select",
+    "with",
+    "insert",
+    "update",
+    "delete",
+    "from",
+    "join",
+    "where",
+    "group",
+    "order",
+    "by",
+    "having",
+    "on",
+    "as",
+    "and",
+    "or",
+    "limit",
+    "offset",
+    "union",
+    "intersect",
+    "except",
+    "into",
+    "values",
+    "case",
+    "when",
+    "then",
+    "else",
+    "end",
+    "distinct",
+    "top",
+    "desc",
+    "asc",
+}
+
+_COMMON_SQL_KEYWORD_ALIASES = {
+    "orderby": "ORDER BY",
+    "groupby": "GROUP BY",
+    "orderbyby": "ORDER BY",
+    "groupbyby": "GROUP BY",
+}
+
+
+def _lint_keyword_typos(sql: str) -> list[SqlDiagnostic]:
+    """Return diagnostics for likely SQL keyword typos.
+
+    This is intentionally generic and small. It catches common cases like ORDR,
+    GRUP, FRMO, etc. without schema dependence.
     """
     if not isinstance(sql, str) or not sql.strip():
         return []
 
-    diagnostics = lint_editor_rules(sql)
+    diagnostics: list[SqlDiagnostic] = []
 
-    # If our editor rules found a concrete error, prefer that location over
-    # parser diagnostics, which are sometimes later in the query.
+    for match in re.finditer(r"(?is)\b[A-Za-z_][A-Za-z0-9_]*\b", sql):
+        token = match.group(0)
+        token_l = token.lower()
+
+        if token_l in _COMMON_SQL_KEYWORDS:
+            continue
+
+        suggestion = _suggest_keyword(token_l)
+        if suggestion is None:
+            continue
+
+        start = match.start()
+        length = max(1, len(token))
+        line, column = _offset_to_line_column(sql, start)
+
+        diagnostics.append(
+            SqlDiagnostic(
+                severity="error",
+                message=f"Unknown SQL keyword. Did you mean {suggestion}?",
+                line=line,
+                column=column,
+                length=length,
+            )
+        )
+
+    return diagnostics
+
+
+def _suggest_keyword(token: str) -> str | None:
+    """Return a likely SQL keyword for a token typo."""
+    if not token:
+        return None
+
+    token_l = token.lower()
+
+    if token_l in _COMMON_SQL_KEYWORD_ALIASES:
+        return _COMMON_SQL_KEYWORD_ALIASES[token_l]
+
+    for candidate in _COMMON_SQL_KEYWORDS:
+        if _looks_like_keyword_typo(token_l, candidate):
+            return candidate.upper()
+
+    return None
+
+
+_INCOMPLETE_TRAILING_CLAUSE_PATTERNS: tuple[tuple[str, str], ...] = (
+    (r"(?is)\bwhere\s*$", "WHERE is missing a condition."),
+    (r"(?is)\border\s+by\s*$", "ORDER BY is missing a sort expression."),
+    (r"(?is)\border\s*$", "ORDER is incomplete. Did you mean ORDER BY?"),
+    (r"(?is)\bgroup\s+by\s*$", "GROUP BY is missing an expression."),
+    (r"(?is)\bgroup\s*$", "GROUP is incomplete. Did you mean GROUP BY?"),
+    (r"(?is)\bhaving\s*$", "HAVING is missing a condition."),
+    (r"(?is)\bjoin\s*$", "JOIN is missing a table."),
+    (r"(?is)\bon\s*$", "ON is missing a join condition."),
+)
+
+
+def _find_incomplete_trailing_clause(sql: str) -> tuple[int, int, str] | None:
+    """Return a diagnostic span for a common incomplete trailing clause."""
+    for pattern, message in _INCOMPLETE_TRAILING_CLAUSE_PATTERNS:
+        match = re.search(pattern, sql)
+        if match is None:
+            continue
+        return match.start(), max(1, match.end() - match.start()), message
+
+    return None
+
+
+def _normalize_identifier(value: str | None) -> str:
+    """Normalize SQL identifiers for case-insensitive comparison."""
+    if value is None:
+        return ""
+    return str(value).strip().strip("[]`\"").casefold()
+
+
+def _normalize_schema_for_lint(
+    schema: dict[str, dict[str, list[str]]] | None,
+) -> dict[str, dict[str, set[str]]]:
+    """Normalize schema metadata to a table -> set(columns) map.
+
+    Accepts both:
+        {"dbo": {"Table": ["A", "B"]}}
+    and:
+        {"by_schema": {"dbo": {"Table": ["A", "B"]}}}
+    """
+    if not isinstance(schema, Mapping):
+        return {}
+
+    source = schema.get("by_schema") if isinstance(schema.get("by_schema"), Mapping) else schema
+
+    normalized: dict[str, dict[str, set[str]]] = {}
+
+    for schema_name, tables in source.items():
+        if not isinstance(tables, Mapping):
+            continue
+
+        schema_key = _normalize_identifier(str(schema_name))
+        normalized.setdefault(schema_key, {})
+
+        for table_name, columns in tables.items():
+            if not isinstance(columns, (list, tuple, set)):
+                continue
+
+            table_key = _normalize_identifier(str(table_name))
+            normalized[schema_key].setdefault(table_key, set())
+
+            for column in columns:
+                if column is None:
+                    continue
+                normalized[schema_key][table_key].add(_normalize_identifier(str(column)))
+
+    return normalized
+
+
+def _lint_schema(
+    sql: str,
+    *,
+    schema: dict[str, dict[str, list[str]]] | None,
+    dialect: str | None = None,
+) -> list[SqlDiagnostic]:
+    """Schema-aware lint checks for table and column names."""
+    if not schema:
+        return []
+
+    expression = parse_one_safe(sql, dialect)
+    if expression is None:
+        return []
+
+    normalized_schema = _normalize_schema_for_lint(schema)
+    if not normalized_schema:
+        return []
+
+    visible_tables: set[str] = set()
+    resolved_tables: dict[str, set[str]] = {}
+
+    for table in expression.find_all(exp.Table):
+        table_name = str(table.name or "").strip()
+        if not table_name:
+            continue
+
+        key = _normalize_identifier(table_name)
+        visible_tables.add(key)
+
+        schema_key = _normalize_identifier(str(table.db or table.catalog or ""))
+        table_columns: set[str] = set()
+
+        if schema_key and schema_key in normalized_schema:
+            table_columns = normalized_schema[schema_key].get(key, set())
+
+        if not table_columns:
+            for current_schema, tables in normalized_schema.items():
+                table_columns = tables.get(key, set())
+                if table_columns:
+                    break
+
+        if table_columns:
+            resolved_tables[key] = table_columns
+
+    diagnostics: list[SqlDiagnostic] = []
+
+    # Unknown table validation.
+    for table in expression.find_all(exp.Table):
+        table_name = str(table.name or "").strip()
+        if not table_name:
+            continue
+
+        key = _normalize_identifier(table_name)
+        if key in visible_tables and key not in resolved_tables:
+            from_hint = 0
+            from_match = re.search(r"(?is)\bfrom\b|\bjoin\b", sql)
+            if from_match is not None:
+                from_hint = from_match.start()
+
+            start, length = _find_identifier_span_in_sql(sql, table_name, start_hint=from_hint)
+            line, column = _offset_to_line_column(sql, start)
+
+            diagnostics.append(
+                SqlDiagnostic(
+                    severity="error",
+                    message=f"Unknown table '{table_name}'.",
+                    line=line,
+                    column=column,
+                    length=max(1, length),
+                )
+            )
+
+    # Unknown column validation only on known tables.
+    for column in expression.find_all(exp.Column):
+        name = str(column.name or "").strip()
+        if not name or name == "*":
+            continue
+
+        normalized_name = _normalize_identifier(name)
+        table_qualifier = None
+        if column.table:
+            table_qualifier = _normalize_identifier(str(column.table))
+
+        valid = False
+
+        if table_qualifier:
+            for tables in normalized_schema.values():
+                for table_key, cols in tables.items():
+                    if table_key == table_qualifier and normalized_name in cols:
+                        valid = True
+                        break
+                if valid:
+                    break
+        else:
+            for cols in resolved_tables.values():
+                if normalized_name in cols:
+                    valid = True
+                    break
+
+        if valid:
+            continue
+
+        if table_qualifier:
+            if table_qualifier in visible_tables:
+                start, length = _find_identifier_span_in_sql(sql, name)
+                line, column_no = _offset_to_line_column(sql, start)
+
+                diagnostics.append(
+                    SqlDiagnostic(
+                        severity="error",
+                        message=f"Unknown column '{name}' for the current schema context.",
+                        line=line,
+                        column=column_no,
+                        length=max(1, length),
+                    )
+                )
+            continue
+
+        if resolved_tables:
+            start, length = _find_identifier_span_in_sql(sql, name)
+            line, column_no = _offset_to_line_column(sql, start)
+
+            diagnostics.append(
+                SqlDiagnostic(
+                    severity="error",
+                    message=f"Unknown column '{name}' for the current schema context.",
+                    line=line,
+                    column=column_no,
+                    length=max(1, length),
+                )
+            )
+
+    return diagnostics
+
+
+def _find_identifier_span_in_sql(
+    sql: str,
+    identifier: str,
+    *,
+    start_hint: int = 0,
+) -> tuple[int, int]:
+    """Return the token span for a SQL identifier.
+
+    This avoids matching partial substrings inside longer identifiers such as
+    matching Ref_Yrkesrol inside [Ref_Yrkesroll_ID].
+    """
+    if not isinstance(sql, str):
+        return 0, 1
+
+    text = (identifier or "").strip()
+    if not text:
+        return max(0, start_hint), 1
+
+    safe_start = max(0, min(start_hint, len(sql)))
+
+    patterns = [
+        re.escape(f"[{text}]"),
+        re.escape(f"`{text}`"),
+        re.escape(f'"{text}"'),
+        rf"(?<![A-Za-z0-9_]){re.escape(text)}(?![A-Za-z0-9_])",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, sql[safe_start:], re.IGNORECASE)
+        if match is not None:
+            start = safe_start + match.start()
+            length = max(1, match.end() - match.start())
+            return start, length
+
+    return max(0, safe_start), max(1, len(text))
+
+
+def lint_syntax(
+    sql: str,
+    dialect: str | None = None,
+    *,
+    schema: dict[str, dict[str, list[str]]] | None = None,
+) -> list[SqlDiagnostic]:
+    """Lint SQL with layered checks.
+
+    Order matters:
+    1. editor-level quick checks
+    2. keyword typo detection
+    3. syntax parse validation
+    4. schema-aware table/column checks
+    """
+    if not isinstance(sql, str) or not sql.strip():
+        return []
+
+    diagnostics: list[SqlDiagnostic] = []
+
+    diagnostics.extend(lint_editor_rules(sql))
+    diagnostics.extend(_lint_keyword_typos(sql))
+
     if any(diagnostic.severity == "error" for diagnostic in diagnostics):
-        return diagnostics
+        return _dedupe_diagnostics(diagnostics)
 
     try:
         sqlglot.parse(sql, read=sqlglot_dialect(dialect))
-        return diagnostics
-
     except ParseError as exc:
         for error in getattr(exc, "errors", []) or []:
             message = str(error.get("description") or exc)
@@ -491,11 +857,11 @@ def lint_syntax(sql: str, dialect: str | None = None) -> list[SqlDiagnostic]:
             )
 
         if diagnostics:
-            return diagnostics
+            return _dedupe_diagnostics(diagnostics)
 
         start, length = _last_meaningful_token_span(sql)
         line, column = _offset_to_line_column(sql, start)
-        return [
+        diagnostics.append(
             SqlDiagnostic(
                 severity="error",
                 message=str(exc),
@@ -503,7 +869,8 @@ def lint_syntax(sql: str, dialect: str | None = None) -> list[SqlDiagnostic]:
                 column=column,
                 length=length,
             )
-        ]
+        )
+        return _dedupe_diagnostics(diagnostics)
 
     except SqlglotError as exc:
         diagnostics.append(
@@ -513,7 +880,10 @@ def lint_syntax(sql: str, dialect: str | None = None) -> list[SqlDiagnostic]:
                 length=1,
             )
         )
-        return diagnostics
+        return _dedupe_diagnostics(diagnostics)
+
+    diagnostics.extend(_lint_schema(sql, schema=schema, dialect=dialect))
+    return _dedupe_diagnostics(diagnostics)
 
 
 def detect_statement_kind(sql: str, dialect: str | None = None) -> SqlStatementKind:  # noqa: C901
@@ -521,13 +891,6 @@ def detect_statement_kind(sql: str, dialect: str | None = None) -> SqlStatementK
 
     This uses sqlglot when possible and falls back to lightweight textual checks
     for statements that may not parse cleanly in every dialect, especially EXEC.
-
-    Args:
-        sql: SQL text to classify.
-        dialect: Optional internal engine name or sqlglot dialect name.
-
-    Returns:
-        A broad statement kind string.
     """
     if not isinstance(sql, str) or not sql.strip():
         return "empty"
@@ -577,16 +940,7 @@ def detect_statement_kind(sql: str, dialect: str | None = None) -> SqlStatementK
 
 
 def extract_table_refs(sql: str, dialect: str | None = None) -> list[TableRef]:
-    """Extract table references and aliases from SQL.
-
-    Args:
-        sql: SQL text to inspect.
-        dialect: Optional internal engine name or sqlglot dialect name.
-
-    Returns:
-        Table references discovered in parsed SQL. Returns an empty list when
-        parsing fails.
-    """
+    """Extract table references and aliases from SQL."""
     expressions = parse_many_safe(sql, dialect)
     refs: list[TableRef] = []
 
@@ -613,16 +967,7 @@ def extract_table_refs(sql: str, dialect: str | None = None) -> list[TableRef]:
 
 
 def extract_column_refs(sql: str, dialect: str | None = None) -> list[ColumnRef]:
-    """Extract column references from SQL.
-
-    Args:
-        sql: SQL text to inspect.
-        dialect: Optional internal engine name or sqlglot dialect name.
-
-    Returns:
-        Column references discovered in parsed SQL. Returns an empty list when
-        parsing fails.
-    """
+    """Extract column references from SQL."""
     expressions = parse_many_safe(sql, dialect)
     refs: list[ColumnRef] = []
 
@@ -645,18 +990,7 @@ def extract_column_refs(sql: str, dialect: str | None = None) -> list[ColumnRef]
 
 
 def extract_table_aliases(sql: str, dialect: str | None = None) -> dict[str, TableRef]:
-    """Return a mapping of visible table alias/name to table reference.
-
-    For unaliased tables, the table name is used as the key. For aliased tables,
-    the alias is used as the key.
-
-    Args:
-        sql: SQL text to inspect.
-        dialect: Optional internal engine name or sqlglot dialect name.
-
-    Returns:
-        Mapping of alias-or-table-name to table reference.
-    """
+    """Return a mapping of visible table alias/name to table reference."""
     aliases: dict[str, TableRef] = {}
 
     for ref in extract_table_refs(sql, dialect):
@@ -673,16 +1007,7 @@ def format_sql(
     *,
     pretty: bool = True,
 ) -> str:
-    """Format SQL using sqlglot.
-
-    Args:
-        sql: SQL text to format.
-        dialect: Optional internal engine name or sqlglot dialect name.
-        pretty: Whether to use multi-line pretty formatting.
-
-    Returns:
-        Formatted SQL. If formatting fails, returns the original SQL unchanged.
-    """
+    """Format SQL using sqlglot."""
     if not isinstance(sql, str) or not sql.strip():
         return sql
 
@@ -806,12 +1131,6 @@ def _find_unmatched_square_bracket(sql: str) -> int | None:
     """Return offset of an unmatched SQL Server-style '[' bracket.
 
     Ignores brackets inside single-quoted string literals.
-
-    Args:
-        sql: SQL text.
-
-    Returns:
-        Zero-based offset of the unmatched '[' bracket, or None.
     """
     stack: list[int] = []
     in_single_quote = False
@@ -821,7 +1140,6 @@ def _find_unmatched_square_bracket(sql: str) -> int | None:
         char = sql[i]
 
         if char == "'":
-            # T-SQL escapes single quotes as doubled single quotes.
             if in_single_quote and i + 1 < len(sql) and sql[i + 1] == "'":
                 i += 2
                 continue
@@ -854,15 +1172,7 @@ def _find_unmatched_square_bracket(sql: str) -> int | None:
 
 
 def _identifier_like_span_from_offset(sql: str, offset: int) -> tuple[int, int]:
-    """Return a useful underline span starting at offset.
-
-    Args:
-        sql: SQL text.
-        offset: Start offset.
-
-    Returns:
-        Tuple of (start_offset, length).
-    """
+    """Return a useful underline span starting at offset."""
     if offset < 0 or offset >= len(sql):
         return max(0, min(offset, len(sql))), 1
 
@@ -881,22 +1191,10 @@ _ADJACENT_BRACKET_IDENTIFIERS_RE = re.compile(
 def _find_suspicious_adjacent_select_identifier(sql: str) -> tuple[int, int] | None:
     """Find suspicious adjacent bracket identifiers in a SELECT list.
 
-    In T-SQL, this can be valid alias syntax:
-
-        SELECT [Column] [Alias]
-
-    But it is also a common missing-comma typo:
-
+    This catches cases like:
         SELECT [Column1]
                [Column2]
-
-    This returns the offset and length of the second identifier.
-
-    Args:
-        sql: SQL text.
-
-    Returns:
-        Tuple of (offset, length), or None.
+    which is often a missing comma.
     """
     select_match = re.search(r"(?is)\bselect\b", sql)
     from_match = re.search(r"(?is)\bfrom\b", sql)
@@ -915,14 +1213,7 @@ def _find_suspicious_adjacent_select_identifier(sql: str) -> tuple[int, int] | N
 
 
 def _last_meaningful_token_span(sql: str) -> tuple[int, int]:
-    """Return span for the last meaningful token in SQL text.
-
-    Args:
-        sql: SQL text.
-
-    Returns:
-        Tuple of (offset, length).
-    """
+    """Return span for the last meaningful token in SQL text."""
     match = None
     for match in re.finditer(r"[A-Za-z_][A-Za-z0-9_]*|\[[^\]]*$|\[[^\]]+\]|`[^`]*$|`[^`]+`|\"[^\"]*$|\"[^\"]+\"", sql):
         pass

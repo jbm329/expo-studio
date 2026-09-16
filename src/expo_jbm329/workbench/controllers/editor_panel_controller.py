@@ -12,6 +12,7 @@ The controller is responsible for UI orchestration only. It does not:
 - manage editor text logic
 - decide connection policy
 """
+
 from __future__ import annotations
 
 import functools
@@ -117,7 +118,7 @@ class EditorPanelController(QWidget):
             get_connection_engine: Callable for retrieving the connection engine.
             save_sql: Callable for saving SQL to a file.
             save_sql_as: Callable for saving SQL to a file with a custom name.
-            set_status: Callable  for setting status messages in the UI.    
+            set_status: Callable  for setting status messages in the UI.
             dialogs: Optional DialogService instance.
             parent: Optional parent widget.
             logger: Optional logger instance.
@@ -239,10 +240,8 @@ class EditorPanelController(QWidget):
         editor_widget.set_highlighter(highlighter)
 
         # React to SQL highlighter theme changes
-        self._highlighter_theme_service.theme_changed.connect(
-            highlighter.set_theme
-        )
-        highlighter.rehighlight()       
+        self._highlighter_theme_service.theme_changed.connect(highlighter.set_theme)
+        highlighter.rehighlight()
 
         # --- SQL autocomplete (per editor tab) ---
         autocomplete_engine = SqlAutoCompleter()
@@ -874,6 +873,8 @@ class EditorPanelController(QWidget):
         entry = self._get_cache_for(tab.connection_name)
         if not entry:
             engine.set_schema({})
+            if lint_controller is not None:
+                lint_controller.set_schema({})
             return
 
         schema_dict = self._build_schema_dict({
@@ -900,7 +901,7 @@ class EditorPanelController(QWidget):
                         non_empty_column_tables += 1
 
         self._logger.debug(
-            "EditorPanelController: autocomplete schema rebuilt "
+            "EditorPanelController: autocomplete and lint schema rebuilt "
             "(conn=%s, dialect=%s, schemas=%s, objects=%s, non_empty_column_tables=%s)",
             tab.connection_name,
             dialect,
@@ -910,7 +911,9 @@ class EditorPanelController(QWidget):
         )
 
         engine.set_schema(schema_dict)
-   
+        if lint_controller is not None:
+            lint_controller.set_schema(schema_dict)
+
     def on_tab_context_menu_requested(self, pos: QPoint) -> None:
         """Handle context menu request on the tab bar.
 
