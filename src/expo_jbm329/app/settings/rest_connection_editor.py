@@ -28,7 +28,11 @@ from expo_jbm329.app.settings.config_store import (
 from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.services.rest.client import fetch_json
-from expo_jbm329.services.rest.models import RestAuthConfig, RestRequestConfig
+from expo_jbm329.services.rest.models import (
+    RestAuthConfig,
+    RestPaginationConfig,
+    RestRequestConfig,
+)
 from expo_jbm329.services.rest.normalizer import normalize_json_to_df
 from expo_jbm329.utils.format_utils import fmt_shape
 from expo_jbm329.workbench.icon.icon_service import IconService
@@ -111,6 +115,22 @@ class RestConnectionEditor(QDialog):
         self.api_key_location_combo.addItem(self.tr("Header"), userData="header")
         self.api_key_location_combo.addItem(self.tr("Query parameter"), userData="query")
 
+        self.pagination_combo = QComboBox()
+        self.pagination_combo.addItem(self.tr("None"), userData="none")
+        self.pagination_combo.addItem(self.tr("Page number"), userData="page_number")
+        self.pagination_combo.currentIndexChanged.connect(self.on_pagination_changed)
+
+        self.page_param_edit = QLineEdit()
+        self.page_param_edit.setPlaceholderText("page")
+        self.start_page_edit = QLineEdit()
+        self.start_page_edit.setPlaceholderText("1")
+        self.page_size_param_edit = QLineEdit()
+        self.page_size_param_edit.setPlaceholderText("pageSize")
+        self.page_size_edit = QLineEdit()
+        self.page_size_edit.setPlaceholderText("100")
+        self.max_pages_edit = QLineEdit()
+        self.max_pages_edit.setPlaceholderText("10")
+
         self.headers_edit = QLineEdit()
         self.headers_edit.setPlaceholderText('{"Accept": "application/json"}')
 
@@ -132,10 +152,20 @@ class RestConnectionEditor(QDialog):
         form.addRow(self.tr("JSON body:"), self.body_edit)
         form.addRow(self.tr("Response path:"), self.response_path_edit)
         form.addRow(self.tr("Authentication:"), self.auth_combo)
-        form.addRow(self.tr("Bearer token:"), self.token_edit)
+        form.addRow(self.tr("Bearer token"), self.token_edit)
+        form.addRow(self.tr("Basic username"), self.username_edit)
+        form.addRow(self.tr("Basic password"), self.password_edit)
+        form.addRow(self.tr("API key name"), self.api_key_name_edit)
+        form.addRow(self.tr("API key value"), self.api_key_value_edit)
+        form.addRow(self.tr("API key location"), self.api_key_location_combo)
+        form.addRow(self.tr("Pagination:"), self.pagination_combo)
+        form.addRow(self.tr("Page parameter"), self.page_param_edit)
+        form.addRow(self.tr("Start page"), self.start_page_edit)
+        form.addRow(self.tr("Page size parameter"), self.page_size_param_edit)
+        form.addRow(self.tr("Page size"), self.page_size_edit)
+        form.addRow(self.tr("Max pages"), self.max_pages_edit)
         form.addRow(self.tr("Headers (JSON):"), self.headers_edit)
         form.addRow(self.tr("Query params (JSON):"), self.params_edit)
-
         self.body_edit.setVisible(False)  # default: GET
 
         # ==============================================================
@@ -177,6 +207,7 @@ class RestConnectionEditor(QDialog):
         self.setLayout(main)
 
         self.on_auth_changed()
+        self.on_pagination_changed()
 
     # ----------------------------------------------------------------------
     # Update icon
@@ -231,6 +262,16 @@ class RestConnectionEditor(QDialog):
         self.api_key_name_edit.setEnabled(is_api_key)
         self.api_key_value_edit.setEnabled(is_api_key)
         self.api_key_location_combo.setEnabled(is_api_key)
+
+    def on_pagination_changed(self):
+        """Handles the change in pagination mode selection."""
+        is_page_number = self.pagination_combo.currentData() == "page_number"
+
+        self.page_param_edit.setEnabled(is_page_number)
+        self.start_page_edit.setEnabled(is_page_number)
+        self.page_size_param_edit.setEnabled(is_page_number)
+        self.page_size_edit.setEnabled(is_page_number)
+        self.max_pages_edit.setEnabled(is_page_number)
 
     def on_selection_changed(self, current):
         """Loads the selected connection's data into the form fields."""
@@ -301,9 +342,21 @@ class RestConnectionEditor(QDialog):
         if api_key_ix >= 0:
             self.api_key_location_combo.setCurrentIndex(api_key_ix)
 
+        pagination = cfg.get("pagination") or {"type": "none"}
+        pagination_type = pagination.get("type", "none")
+        pagination_ix = self.pagination_combo.findData(pagination_type)
+        if pagination_ix >= 0:
+            self.pagination_combo.setCurrentIndex(pagination_ix)
+
+        self.page_param_edit.setText(str(pagination.get("page_param", "")))
+        self.start_page_edit.setText(str(pagination.get("start_page", "1")))
+        self.page_size_param_edit.setText(str(pagination.get("page_size_param", "")))
+        self.page_size_edit.setText(str(pagination.get("page_size", "")))
+        self.max_pages_edit.setText(str(pagination.get("max_pages", "")))
+
         self._set_fields_enabled(True)
+        self.on_pagination_changed()
         self._update_action_buttons()
-    
     # ==================================================================
     # Helpers
     # ==================================================================
@@ -312,6 +365,7 @@ class RestConnectionEditor(QDialog):
         raw_method = self.method_combo.currentData()
         method: Literal["GET", "POST"] = "POST" if raw_method == "POST" else "GET"
         auth_type = self.auth_combo.currentData()
+        pagination_type = self.pagination_combo.currentData()
 
         cfg: dict[str, Any] = {
             "url": self.url_edit.text().strip(),
@@ -320,6 +374,7 @@ class RestConnectionEditor(QDialog):
             "headers": {},
             "query_params": {},
             "auth": {"type": auth_type},
+            "pagination": {"type": "none"},
         }
 
         if cfg["method"] == "POST":
@@ -342,6 +397,35 @@ class RestConnectionEditor(QDialog):
             cfg["auth"]["api_key_value"] = self.api_key_value_edit.text().strip()
             cfg["auth"]["api_key_location"] = self.api_key_location_combo.currentData()
 
+        if pagination_type == "page_number":
+            page_param = self.page_param_edit.text().strip()
+            if not page_param:
+                raise ValueError(self.tr("Page-number pagination requires a page parameter name"))
+            cfg["pagination"] = {
+                "type": "page_number",
+                "page_param": page_param,
+                "start_page": self._parse_positive_int(
+                    self.start_page_edit.text(),
+                    field_name=self.tr("Start page"),
+                    default=1,
+                ),
+            }
+            page_size_param = self.page_size_param_edit.text().strip()
+            if page_size_param:
+                cfg["pagination"]["page_size_param"] = page_size_param
+            page_size = self._parse_optional_positive_int(
+                self.page_size_edit.text(),
+                field_name=self.tr("Page size"),
+            )
+            if page_size is not None:
+                cfg["pagination"]["page_size"] = page_size
+            max_pages = self._parse_optional_positive_int(
+                self.max_pages_edit.text(),
+                field_name=self.tr("Max pages"),
+            )
+            if max_pages is not None:
+                cfg["pagination"]["max_pages"] = max_pages
+
         headers_txt = self.headers_edit.text().strip()
         if headers_txt:
             cfg["headers"] = self._parse_string_map(
@@ -362,6 +446,7 @@ class RestConnectionEditor(QDialog):
         """Build and validate a REST request config from the current form."""
         cfg_raw = self._gather_form()
         auth_raw = cfg_raw.get("auth", {}) or {}
+        pagination_raw = cfg_raw.get("pagination") or {"type": "none"}
 
         auth = RestAuthConfig(
             type=auth_raw.get("type", "none"),
@@ -372,6 +457,17 @@ class RestConnectionEditor(QDialog):
             api_key_value=auth_raw.get("api_key_value"),
             api_key_location=auth_raw.get("api_key_location"),
         )
+
+        pagination = None
+        if pagination_raw.get("type") == "page_number":
+            pagination = RestPaginationConfig(
+                type="page_number",
+                page_param=pagination_raw.get("page_param"),
+                start_page=int(pagination_raw.get("start_page", 1)),
+                page_size_param=pagination_raw.get("page_size_param"),
+                page_size=pagination_raw.get("page_size"),
+                max_pages=pagination_raw.get("max_pages"),
+            )
 
         raw_method = cfg_raw.get("method")
         method: Literal["GET", "POST"] = "POST" if raw_method == "POST" else "GET"
@@ -385,6 +481,7 @@ class RestConnectionEditor(QDialog):
             json_body=cfg_raw.get("json_body"),
             response_path=cfg_raw.get("response_path") or None,
             auth=auth,
+            pagination=pagination,
         )
         config.validate()
         return config
@@ -420,8 +517,15 @@ class RestConnectionEditor(QDialog):
         self.password_edit.clear()
         self.api_key_name_edit.clear()
         self.api_key_value_edit.clear()
+        self.page_param_edit.clear()
+        self.start_page_edit.clear()
+        self.page_size_param_edit.clear()
+        self.page_size_edit.clear()
+        self.max_pages_edit.clear()
         self.auth_combo.setCurrentIndex(self.auth_combo.findData("none"))
         self.api_key_location_combo.setCurrentIndex(self.api_key_location_combo.findData("header"))
+        self.pagination_combo.setCurrentIndex(self.pagination_combo.findData("none"))
+        self.on_pagination_changed()
         self._update_action_buttons()
 
     def _set_fields_enabled(self, enabled: bool) -> None:
@@ -442,10 +546,42 @@ class RestConnectionEditor(QDialog):
             self.api_key_name_edit,
             self.api_key_value_edit,
             self.api_key_location_combo,
+            self.pagination_combo,
+            self.page_param_edit,
+            self.start_page_edit,
+            self.page_size_param_edit,
+            self.page_size_edit,
+            self.max_pages_edit,
             self.headers_edit,
             self.params_edit,
         ):
             w.setEnabled(enabled)
+
+    def _parse_positive_int(self, raw_value: str, *, field_name: str, default: int) -> int:
+        """Parse a positive integer field from the form."""
+        trimmed = raw_value.strip()
+        if not trimmed:
+            return default
+        try:
+            value = int(trimmed)
+        except ValueError as exc:
+            raise ValueError(self.tr("{field} must be an integer").format(field=field_name)) from exc
+        if value < 1:
+            raise ValueError(self.tr("{field} must be >= 1").format(field=field_name))
+        return value
+
+    def _parse_optional_positive_int(self, raw_value: str, *, field_name: str) -> int | None:
+        """Parse an optional positive integer field from the form."""
+        trimmed = raw_value.strip()
+        if not trimmed:
+            return None
+        try:
+            value = int(trimmed)
+        except ValueError as exc:
+            raise ValueError(self.tr("{field} must be an integer").format(field=field_name)) from exc
+        if value < 1:
+            raise ValueError(self.tr("{field} must be >= 1").format(field=field_name))
+        return value
 
     def _is_form_executable(self) -> bool:
         """Return True if the current form state allows Save/Test."""
@@ -465,6 +601,17 @@ class RestConnectionEditor(QDialog):
 
             try:
                 self._parse_json_object(body_txt, field_name=self.tr("JSON body"))
+            except ValueError:
+                return False
+
+        if self.pagination_combo.currentData() == "page_number":
+            page_param = self.page_param_edit.text().strip()
+            if not page_param:
+                return False
+            try:
+                self._parse_positive_int(self.start_page_edit.text(), field_name=self.tr("Start page"), default=1)
+                self._parse_optional_positive_int(self.page_size_edit.text(), field_name=self.tr("Page size"))
+                self._parse_optional_positive_int(self.max_pages_edit.text(), field_name=self.tr("Max pages"))
             except ValueError:
                 return False
 
@@ -515,6 +662,20 @@ class RestConnectionEditor(QDialog):
                 editor.setToolTip(str(exc))
                 return
             editor.setToolTip("")
+
+        if self.pagination_combo.currentData() == "page_number":
+            if not self.page_param_edit.text().strip():
+                self.page_param_edit.setToolTip(self.tr("Page-number pagination requires a page parameter name"))
+                return
+            self.page_param_edit.setToolTip("")
+            try:
+                self._parse_positive_int(self.start_page_edit.text(), field_name=self.tr("Start page"), default=1)
+                self._parse_optional_positive_int(self.page_size_edit.text(), field_name=self.tr("Page size"))
+                self._parse_optional_positive_int(self.max_pages_edit.text(), field_name=self.tr("Max pages"))
+            except ValueError as exc:
+                self.page_size_edit.setToolTip(str(exc))
+                return
+            self.page_size_edit.setToolTip("")
 
     def _is_valid_response_path_syntax(self, path: str) -> bool:
         """Check basic syntax of response_path."""
@@ -572,6 +733,7 @@ class RestConnectionEditor(QDialog):
             "query_params": {},
             "response_path": "",
             "auth": {"type": "none"},
+            "pagination": {"type": "none"},
         }
 
         self.list_widget.addItem(name)
@@ -672,10 +834,24 @@ class RestConnectionEditor(QDialog):
             "headers": dict(config.headers),
             "query_params": dict(config.query_params),
             "auth": {"type": config.auth.type if config.auth else "none"},
+            "pagination": {"type": "none"},
         }
 
         if config.json_body is not None:
             payload["json_body"] = dict(config.json_body)
+
+        if config.pagination is not None and config.pagination.type == "page_number":
+            payload["pagination"] = {
+                "type": "page_number",
+                "page_param": config.pagination.page_param or "",
+                "start_page": config.pagination.start_page,
+            }
+            if config.pagination.page_size_param:
+                payload["pagination"]["page_size_param"] = config.pagination.page_size_param
+            if config.pagination.page_size is not None:
+                payload["pagination"]["page_size"] = config.pagination.page_size
+            if config.pagination.max_pages is not None:
+                payload["pagination"]["max_pages"] = config.pagination.max_pages
 
         if config.auth is None:
             return payload

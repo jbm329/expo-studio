@@ -111,3 +111,73 @@ def test_save_changes_persists_valid_api_key_auth(monkeypatch):
         "api_key_value": "secret",
         "api_key_location": "header",
     }
+
+
+def test_on_pagination_changed_enables_page_number_fields_only():
+    editor = make_editor()
+
+    editor.pagination_combo.setCurrentIndex(editor.pagination_combo.findData("page_number"))
+    editor.on_pagination_changed()
+
+    assert editor.page_param_edit.isEnabled() is True
+    assert editor.start_page_edit.isEnabled() is True
+    assert editor.page_size_param_edit.isEnabled() is True
+    assert editor.page_size_edit.isEnabled() is True
+    assert editor.max_pages_edit.isEnabled() is True
+
+
+def test_gather_form_serializes_page_number_pagination():
+    editor = make_editor()
+    editor.url_edit.setText("https://example.com")
+    editor.pagination_combo.setCurrentIndex(editor.pagination_combo.findData("page_number"))
+    editor.page_param_edit.setText("page")
+    editor.start_page_edit.setText("2")
+    editor.page_size_param_edit.setText("limit")
+    editor.page_size_edit.setText("50")
+    editor.max_pages_edit.setText("10")
+
+    cfg = editor._gather_form()
+
+    assert cfg["pagination"] == {
+        "type": "page_number",
+        "page_param": "page",
+        "start_page": 2,
+        "page_size_param": "limit",
+        "page_size": 50,
+        "max_pages": 10,
+    }
+
+
+def test_save_changes_persists_valid_page_number_pagination(monkeypatch):
+    editor = make_editor()
+    editor.data = {"Example": {}}
+    editor.list_widget.addItem(QListWidgetItem("Example"))
+    editor.list_widget.setCurrentRow(0)
+    editor.url_edit.setText("https://example.com")
+    editor.pagination_combo.setCurrentIndex(editor.pagination_combo.findData("page_number"))
+    editor.page_param_edit.setText("page")
+    editor.start_page_edit.setText("2")
+    editor.page_size_param_edit.setText("limit")
+    editor.page_size_edit.setText("50")
+    editor.max_pages_edit.setText("10")
+
+    written: dict[str, dict] = {}
+
+    def fake_write_rest_connections(value: dict[str, dict]) -> None:
+        written.update(value)
+
+    monkeypatch.setattr(
+        "expo_jbm329.app.settings.rest_connection_editor.write_rest_connections",
+        fake_write_rest_connections,
+    )
+
+    editor.save_changes()
+
+    assert written["Example"]["pagination"] == {
+        "type": "page_number",
+        "page_param": "page",
+        "start_page": 2,
+        "page_size_param": "limit",
+        "page_size": 50,
+        "max_pages": 10,
+    }
