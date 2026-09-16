@@ -6,6 +6,7 @@ from expo_jbm329.services.rest.models import (
     RestAuthConfig,
     RestPaginationConfig,
     RestRequestConfig,
+    RestRetryConfig,
 )
 
 
@@ -74,3 +75,10 @@ def test_rest_pagination_config_rejects_missing_page_param():
 
     with pytest.raises(ValueError, match="Page-number pagination requires page parameter name"):
         pagination.validate()
+
+
+def test_rest_retry_config_validates_retry_policy():
+    retry = RestRetryConfig(max_retries=-1)
+
+    with pytest.raises(ValueError, match="Retry policy max retries must be >= 0"):
+        retry.validate()

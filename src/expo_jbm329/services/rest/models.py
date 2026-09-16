@@ -52,6 +52,31 @@ class RestPaginationConfig:
 
 
 @dataclass(frozen=True)
+class RestRetryConfig:
+    """Retry policy for REST transport failures and rate-limited responses."""
+
+    max_retries: int = 3
+    initial_delay: float = 0.5
+    max_delay: float = 30.0
+    backoff_factor: float = 2.0
+    retry_status_codes: tuple[int, ...] = (429, 500, 502, 503, 504)
+    respect_retry_after: bool = True
+
+    def validate(self) -> None:
+        """Validate retry configuration."""
+        if self.max_retries < 0:
+            raise ValueError("Retry policy max retries must be >= 0")
+        if self.initial_delay < 0:
+            raise ValueError("Retry policy initial delay must be >= 0")
+        if self.max_delay < 0:
+            raise ValueError("Retry policy max delay must be >= 0")
+        if self.backoff_factor < 1:
+            raise ValueError("Retry policy backoff factor must be >= 1")
+        if not self.retry_status_codes:
+            raise ValueError("Retry policy must include at least one retryable status code")
+
+
+@dataclass(frozen=True)
 class RestAuthConfig:
     """Authentication configuration for REST requests."""
 
@@ -134,6 +159,7 @@ class RestRequestConfig:
     response_path: str | None = None
     auth: RestAuthConfig | None = None
     pagination: RestPaginationConfig | None = None
+    retry: RestRetryConfig | None = None
 
     def validate(self) -> None:
         """Validate request configuration.
@@ -161,3 +187,6 @@ class RestRequestConfig:
 
         if self.pagination is not None:
             self.pagination.validate()
+
+        if self.retry is not None:
+            self.retry.validate()

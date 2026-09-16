@@ -10,6 +10,7 @@ from expo_jbm329.services.rest.models import (
     RestAuthConfig,
     RestPaginationConfig,
     RestRequestConfig,
+    RestRetryConfig,
 )
 
 
@@ -42,52 +43,61 @@ def fetch_json(
     """
     config.validate()
 
+    retry_cfg = config.retry or RestRetryConfig()
+
     if cancel_cb and cancel_cb():
         raise RestClientError("Request cancelled before start")
 
-    headers = dict(config.headers or {})
-    params = dict(config.query_params or {})
+    for attempt in range(retry_cfg.max_retries + 1):
+        headers = dict(config.headers or {})
+        params = dict(config.query_params or {})
 
-    _apply_auth(headers, params, config.auth, timeout=timeout)
+        _apply_auth(headers, params, config.auth, timeout=timeout)
+        headers.setdefault("Accept", "application/json")
 
-    # Good default for APIs like SCB / World Bank
-    headers.setdefault("Accept", "application/json")
+        t0 = time.perf_counter()
 
-    t0 = time.perf_counter()
+        try:
+            with httpx.Client(timeout=httpx.Timeout(timeout)) as client:
+                if config.method == "POST":
+                    response = client.post(
+                        config.url,
+                        headers=headers,
+                        params=params,
+                        json=config.json_body,
+                    )
+                else:
+                    response = client.get(
+                        config.url,
+                        headers=headers,
+                        params=params,
+                    )
+        except httpx.RequestError as exc:
+            if attempt < retry_cfg.max_retries:
+                _sleep_for_retry(attempt, retry_cfg, None, cancel_cb=cancel_cb)
+                continue
+            raise RestClientError(f"Request failed: {exc}") from exc
 
-    try:
-        with httpx.Client(timeout=httpx.Timeout(timeout)) as client:
-            if config.method == "POST":
-                response = client.post(
-                    config.url,
-                    headers=headers,
-                    params=params,
-                    json=config.json_body,
-                )
-            else:
-                response = client.get(
-                    config.url,
-                    headers=headers,
-                    params=params,
-                )
-    except httpx.RequestError as exc:
-        raise RestClientError(f"Request failed: {exc}") from exc
+        if cancel_cb and cancel_cb():
+            raise RestClientError("Request cancelled")
 
-    if cancel_cb and cancel_cb():
-        raise RestClientError("Request cancelled")
+        if response.status_code in retry_cfg.retry_status_codes and attempt < retry_cfg.max_retries:
+            _sleep_for_retry(attempt, retry_cfg, response, cancel_cb=cancel_cb)
+            continue
 
-    if response.status_code != 200:
-        body = response.text[:500] if response.text else ""
-        raise RestClientError(f"HTTP {response.status_code}: {body}")
+        if response.status_code != 200:
+            body = response.text[:500] if response.text else ""
+            raise RestClientError(f"HTTP {response.status_code}: {body}")
 
-    try:
-        payload = response.json()
-    except Exception as exc:
-        raise RestClientError("Response is not valid JSON") from exc
+        try:
+            payload = response.json()
+        except Exception as exc:
+            raise RestClientError("Response is not valid JSON") from exc
 
-    elapsed = time.perf_counter() - t0
+        elapsed = time.perf_counter() - t0
+        return payload, elapsed
 
-    return payload, elapsed
+    raise RestClientError("Request failed after retries")
 
 
 def fetch_json_pages(
@@ -122,6 +132,31 @@ def fetch_json_pages(
 # ---------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------
+
+def _sleep_for_retry(
+    attempt: int,
+    retry_cfg: RestRetryConfig,
+    response: httpx.Response | None,
+    *,
+    cancel_cb: Callable[[], bool] | None = None,
+) -> None:
+    """Sleep using the configured retry delay and optional Retry-After header."""
+    if cancel_cb and cancel_cb():
+        raise RestClientError("Request cancelled")
+
+    if retry_cfg.respect_retry_after and response is not None:
+        retry_after = response.headers.get("Retry-After")
+        if retry_after:
+            try:
+                delay = float(retry_after)
+            except ValueError:
+                delay = 0.0
+            time.sleep(delay)
+            return
+
+    delay = min(retry_cfg.initial_delay * (retry_cfg.backoff_factor ** attempt), retry_cfg.max_delay)
+    time.sleep(delay)
+
 
 def _fetch_oauth2_access_token(auth: RestAuthConfig, *, timeout: float) -> str:
     """Acquire an OAuth2 access token using the configured grant flow."""
@@ -253,6 +288,7 @@ def _fetch_page_number_payloads(
             response_path=config.response_path,
             auth=config.auth,
             pagination=None,
+            retry=config.retry,
         )
 
         payload, elapsed = fetch_json(
