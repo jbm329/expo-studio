@@ -538,29 +538,31 @@ _COMMON_SQL_KEYWORD_ALIASES = {
 def _lint_keyword_typos(sql: str) -> list[SqlDiagnostic]:
     """Return diagnostics for likely SQL keyword typos.
 
-    This is intentionally generic and small. It catches common cases like ORDR,
-    GRUP, FRMO, etc. without schema dependence.
+    This is intentionally lightweight. It focuses on positions where SQL
+    keywords are actually expected so valid identifiers such as column names do
+    not get flagged as keyword typos.
     """
     if not isinstance(sql, str) or not sql.strip():
         return []
 
     diagnostics: list[SqlDiagnostic] = []
 
-    for match in re.finditer(r"(?is)\b[A-Za-z_][A-Za-z0-9_]*\b", sql):
-        token = match.group(0)
-        token_l = token.lower()
-
-        if token_l in _COMMON_SQL_KEYWORDS:
-            continue
-
-        suggestion = _suggest_keyword(token_l)
-        if suggestion is None:
-            continue
-
-        start = match.start()
-        length = max(1, len(token))
+    leading_keyword = _find_suspicious_leading_keyword(sql)
+    if leading_keyword is not None:
+        start, length, suggestion = leading_keyword
         line, column = _offset_to_line_column(sql, start)
+        diagnostics.append(
+            SqlDiagnostic(
+                severity="error",
+                message=f"Unknown SQL keyword. Did you mean {suggestion}?",
+                line=line,
+                column=column,
+                length=length,
+            )
+        )
 
+    for start, length, suggestion in _find_suspicious_clause_keywords(sql):
+        line, column = _offset_to_line_column(sql, start)
         diagnostics.append(
             SqlDiagnostic(
                 severity="error",
@@ -579,16 +581,72 @@ def _suggest_keyword(token: str) -> str | None:
     if not token:
         return None
 
-    token_l = token.lower()
+        token_l = token.lower()
 
-    if token_l in _COMMON_SQL_KEYWORD_ALIASES:
-        return _COMMON_SQL_KEYWORD_ALIASES[token_l]
+        if token_l in _COMMON_SQL_KEYWORD_ALIASES:
+            return _COMMON_SQL_KEYWORD_ALIASES[token_l]
 
-    for candidate in _COMMON_SQL_KEYWORDS:
-        if _looks_like_keyword_typo(token_l, candidate):
-            return candidate.upper()
+        for candidate in _COMMON_SQL_KEYWORDS:
+            if _looks_like_keyword_typo(token_l, candidate):
+                return candidate.upper()
 
-    return None
+        return None
+
+
+def _find_suspicious_clause_keywords(sql: str) -> list[tuple[int, int, str]]:
+        """Find likely clause-keyword typos after valid SQL clause anchors."""
+        diagnostics: list[tuple[int, int, str]] = []
+
+        for match in re.finditer(r"(?is)\b[A-Za-z_][A-Za-z0-9_]*\b", sql):
+            token = match.group(0)
+            token_l = token.lower()
+
+            if token_l in _COMMON_SQL_KEYWORDS:
+                continue
+
+            previous_keyword = _previous_meaningful_keyword(sql, match.start())
+            suggestion = _suggest_keyword_for_context(token_l, previous_keyword)
+            if suggestion is None:
+                continue
+
+            diagnostics.append((match.start(), len(token), suggestion))
+
+        return diagnostics
+
+
+def _previous_meaningful_keyword(sql: str, token_start: int) -> str | None:
+        """Return the nearest preceding SQL keyword-like token."""
+        previous_keyword: str | None = None
+
+        for match in re.finditer(r"(?is)\b[A-Za-z_][A-Za-z0-9_]*\b", sql[:token_start]):
+            candidate = match.group(0).lower()
+            if candidate in _COMMON_SQL_KEYWORDS:
+                previous_keyword = candidate
+
+        return previous_keyword
+
+
+def _suggest_keyword_for_context(token: str, previous_keyword: str | None) -> str | None:
+        """Return a keyword suggestion when the surrounding clause expects one."""
+        if not token:
+            return None
+
+        if previous_keyword == "select" and _levenshtein_distance_at_most_one(token, "from"):
+            return "FROM"
+
+        if previous_keyword == "group" and _levenshtein_distance_at_most_one(token, "by"):
+            return "BY"
+
+        if previous_keyword == "order" and _levenshtein_distance_at_most_one(token, "by"):
+            return "BY"
+
+        if _looks_like_keyword_typo(token, "group"):
+            return "GROUP"
+
+        if _looks_like_keyword_typo(token, "order"):
+            return "ORDER"
+
+        return None
 
 
 _INCOMPLETE_TRAILING_CLAUSE_PATTERNS: tuple[tuple[str, str], ...] = (

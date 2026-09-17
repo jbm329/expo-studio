@@ -15,6 +15,7 @@ from expo_jbm329.db.sql_analysis import (
     _find_incomplete_top_clause,
     _find_incomplete_trailing_clause,
     _find_suspicious_adjacent_select_identifier,
+    _find_suspicious_clause_keywords,
     _find_suspicious_from_keyword,
     _find_suspicious_leading_keyword,
     _find_unmatched_square_bracket,
@@ -31,6 +32,8 @@ from expo_jbm329.db.sql_analysis import (
     _normalize_identifier,
     _normalize_schema_for_lint,
     _offset_to_line_column,
+    _previous_meaningful_keyword,
+    _suggest_keyword_for_context,
     _strip_leading_comments_and_whitespace,
     _strip_leading_sql_comments_and_whitespace,
     detect_statement_kind,
@@ -118,6 +121,11 @@ def test_lint_editor_rules_detect_common_cases() -> None:
 def test_keyword_typo_helpers_cover_common_keywords() -> None:
     assert _find_suspicious_leading_keyword("-- comment\nSELEC 1") == (11, 5, "SELECT")
     assert _find_suspicious_from_keyword("SELECT * FRM t") == (9, 3, "FROM")
+    assert _previous_meaningful_keyword("SELECT * FROM dbo.users GRUP BY id", 24) == "from"
+    assert _suggest_keyword_for_context("frm", "select") == "FROM"
+    assert _suggest_keyword_for_context("bi", "order") == "BY"
+    assert _find_suspicious_clause_keywords("SELECT * FROM dbo.users GRUP BY id") == [(24, 4, "GROUP")]
+    assert _find_suspicious_clause_keywords("SELECT * FROM dbo.users ORDER BI id") == [(30, 2, "BY")]
     assert _looks_like_keyword_typo("grup", "group")
     assert not _looks_like_keyword_typo("table", "group")
     assert _levenshtein_distance_at_most_one("where", "where")
@@ -129,6 +137,13 @@ def test_keyword_typo_helpers_cover_common_keywords() -> None:
     assert "Unknown SQL keyword. Did you mean SELECT?" in messages
     assert "Unknown SQL keyword. Did you mean GROUP?" in messages
     assert "Unknown SQL keyword. Did you mean ORDER?" in messages
+
+
+def test_keyword_typo_lint_skips_valid_identifiers() -> None:
+    assert _lint_keyword_typos("SELECT [ATC] FROM [dbo].[Ref_ATC]") == []
+    assert _lint_keyword_typos("SELECT ATC FROM dbo.Ref_ATC") == []
+    assert lint_syntax("SELECT [ATC] FROM [dbo].[Ref_ATC]", "tsql") == []
+    assert lint_syntax("SELECT ATC FROM dbo.Ref_ATC", "tsql") == []
 
 
 def test_editor_rule_helpers_find_incomplete_clauses() -> None:
