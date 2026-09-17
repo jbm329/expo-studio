@@ -9,6 +9,7 @@ class RestPaginationWidget(QWidget):
     """Compact editor for REST pagination settings."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize the pagination widget."""
         super().__init__(parent)
 
         self.pagination_combo = QComboBox()

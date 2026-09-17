@@ -27,6 +27,7 @@ from expo_jbm329.app.settings.config_store import (
     read_rest_connections,
     write_rest_connections,
 )
+from expo_jbm329.gui.dialogs.rest.scb_browser_dialog import ScbBrowserDialog
 from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.widgets.rest.auth_widget import RestAuthWidget
@@ -113,6 +114,10 @@ class RestConnectionEditor(QDialog):
         # ==============================================================
         # Right: form fields
         # ==============================================================
+
+        self.btn_scb_browser = QPushButton(self.tr("SCB query builder…"))
+        self.btn_scb_browser.clicked.connect(self.open_scb_browser)
+        
         self.url_edit = QLineEdit()
 
         self.method_combo = QComboBox()
@@ -170,7 +175,11 @@ class RestConnectionEditor(QDialog):
         # ==============================================================
         # Layout (form)
         # ==============================================================
-        general_panel = _SectionPanel(self.tr("General"), checked=True)
+        wizard_panel = _SectionPanel(self.tr("Wizards"), checked=True)
+        wizard_btns = QHBoxLayout()
+        wizard_btns.addWidget(self.btn_scb_browser)
+        wizard_panel.body_layout.addRow(wizard_btns)
+        general_panel = _SectionPanel(self.tr("General"), checked=True)        
         general_panel.body_layout.addRow(self.tr("URL:"), self.url_edit)
         general_panel.body_layout.addRow(self.tr("Method:"), self.method_combo)
         general_panel.body_layout.addRow(self.tr("Response path:"), self.response_path_edit)
@@ -192,6 +201,7 @@ class RestConnectionEditor(QDialog):
         # ==============================================================
         self.btn_add = QPushButton(self.tr("Add"))
         self.btn_test = QPushButton(self.tr("Test"))
+
         self.btn_delete = QPushButton(self.tr("Delete"))
         self.btn_save = QPushButton(self.tr("Save"))
         self.btn_close = QPushButton(self.tr("Close"))
@@ -218,6 +228,7 @@ class RestConnectionEditor(QDialog):
         form_container = QWidget()
         form_layout = QVBoxLayout()
         form_layout.setContentsMargins(0, 0, 0, 0)
+        form_layout.addWidget(wizard_panel)
         form_layout.addWidget(general_panel)
         form_layout.addWidget(request_panel)
         form_layout.addWidget(self.auth_section)
@@ -294,7 +305,7 @@ class RestConnectionEditor(QDialog):
 
     def on_oauth2_grant_changed(self):
         """Handles the change in OAuth2 grant type selection."""
-        self.auth_widget._set_oauth_grant_visibility()
+        self.auth_widget.set_oauth_grant_visibility()
 
     def on_pagination_changed(self):
         """Handles the change in pagination mode selection."""
@@ -302,6 +313,23 @@ class RestConnectionEditor(QDialog):
         self.pagination_section.toggle.setChecked(is_page_number)
         self.pagination_section.body.setVisible(is_page_number)
         self.pagination_widget.apply_visibility()
+
+    def _apply_helper_result(self, result: dict[str, Any] | None) -> None:
+        """Apply an SCB helper result to the generic REST form."""
+        if not result:
+            return
+
+        self.url_edit.setText(result["url"])
+        self.method_combo.setCurrentIndex(self.method_combo.findData("GET"))
+        self.params_edit.setPlainText(json.dumps(result["query_params"], indent=2))
+        self.params_edit.moveCursor(QTextCursor.MoveOperation.Start)
+
+    def open_scb_browser(self) -> None:
+        """Open the SCB browser and apply a selected query to the form."""
+        dialog = ScbBrowserDialog(self, dialogs=self._dialogs)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        self._apply_helper_result(dialog.get_result())
 
     def on_selection_changed(self, current):
         """Loads the selected connection's data into the form fields."""

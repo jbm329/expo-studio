@@ -40,13 +40,14 @@ class ScbSelection:
 class ScbQueryBuilder:
     """Build valid SCB PxWeb query parameters for table downloads."""
 
+    MAX_SELECTED_CELLS = 10_000
+
     def build(
         self,
         *,
         table_id: str,
         selections: list[ScbSelection] | tuple[ScbSelection, ...],
         lang: str = "sv",
-        output_format: str = "json-stat2",
     ) -> dict[str, str]:
         """Build SCB query parameters from a table id and selected values.
 
@@ -71,10 +72,10 @@ class ScbQueryBuilder:
 
         params: dict[str, str] = {
             "lang": str(lang).strip() or "sv",
-            "outputFormat": output_format,
         }
 
         seen: set[str] = set()
+        selected_cells = 1
         for selection in selections:
             name = str(selection.variable).strip()
             if not name:
@@ -83,9 +84,17 @@ class ScbQueryBuilder:
                 raise ScbQueryError(f"Duplicate SCB selection for '{name}'")
             seen.add(name)
 
+            selected_cells *= len(selection.values)
             params[f"valueCodes[{name}]"] = ",".join(selection.values)
             if selection.codelist:
                 params[f"codelist[{name}]"] = str(selection.codelist).strip()
+
+        if selected_cells > self.MAX_SELECTED_CELLS:
+            raise ScbQueryError(
+                "SCB query exceeds the maximum allowed number of selected cells "
+                f"({selected_cells} > {self.MAX_SELECTED_CELLS}). Reduce the selections "
+                "or split the query into smaller parts."
+            )
 
         return params
 

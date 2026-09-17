@@ -229,3 +229,36 @@ def test_save_changes_persists_valid_page_number_pagination(monkeypatch):
         "page_size": 50,
         "max_pages": 10,
     }
+
+
+def test_open_scb_browser_applies_generated_query(monkeypatch):
+    editor = make_editor()
+
+    class FakeDialog:
+        def __init__(self, parent=None, dialogs=None):
+            self.parent = parent
+            self.dialogs = dialogs
+
+        def exec(self):
+            return 1
+
+        def get_result(self):
+            return {
+                "url": "https://statistikdatabasen.scb.se/api/v2/tables/TAB6471/data",
+                "query_params": {
+                    "lang": "sv",
+                    "outputFormat": "json-stat2",
+                    "valueCodes[Region]": "01,03",
+                },
+            }
+
+    monkeypatch.setattr(
+        "expo_jbm329.app.settings.rest_connection_editor.ScbBrowserDialog",
+        FakeDialog,
+    )
+
+    editor.open_scb_browser()
+
+    assert editor.url_edit.text() == "https://statistikdatabasen.scb.se/api/v2/tables/TAB6471/data"
+    assert '"lang": "sv"' in editor.params_edit.toPlainText()
+    assert '"valueCodes[Region]": "01,03"' in editor.params_edit.toPlainText()

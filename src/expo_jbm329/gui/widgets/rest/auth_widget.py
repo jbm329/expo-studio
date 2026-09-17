@@ -9,6 +9,7 @@ class RestAuthWidget(QWidget):
     """Compact editor for REST authentication settings."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize the authentication widget."""
         super().__init__(parent)
 
         self.auth_combo = QComboBox()
@@ -83,9 +84,9 @@ class RestAuthWidget(QWidget):
         self._set_state(self.grant_type_combo, is_oauth2)
         self._set_state(self.scope_edit, is_oauth2)
         self._set_state(self.refresh_token_edit, is_oauth2)
-        self._set_oauth_grant_visibility()
+        self.set_oauth_grant_visibility()
 
-    def _set_oauth_grant_visibility(self) -> None:
+    def set_oauth_grant_visibility(self) -> None:
         """Hide refresh-token field unless the selected grant requires it."""
         is_refresh = self.grant_type_combo.currentData() == "refresh_token"
         is_oauth2 = self.auth_combo.currentData() == "oauth2"
