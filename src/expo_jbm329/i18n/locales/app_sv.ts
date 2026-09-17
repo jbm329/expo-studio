@@ -29,7 +29,12 @@
         <translation>Licens: %1</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="128"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="90"/>
+        <source>Source code: &lt;a href=&apos;%1&apos;&gt;%1&lt;/a&gt;</source>
+        <translation>Källkod: &lt;a href=&apos;%1&apos;&gt;%1&lt;/a&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/about_dialog.py" line="133"/>
         <source>Close</source>
         <translation>Stäng</translation>
     </message>
@@ -1536,27 +1541,27 @@ Vänligen se loggfil för mer information.</translation>
 <context>
     <name>EditorPanelController</name>
     <message>
-        <location filename="../../workbench/controllers/editor_panel_controller.py" line="48"/>
+        <location filename="../../workbench/controllers/editor_panel_controller.py" line="51"/>
         <source>Close tab</source>
         <translation>Stäng flik</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/editor_panel_controller.py" line="49"/>
+        <location filename="../../workbench/controllers/editor_panel_controller.py" line="52"/>
         <source>Unsaved changes</source>
         <translation>Ej sparade ändringar</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/editor_panel_controller.py" line="50"/>
+        <location filename="../../workbench/controllers/editor_panel_controller.py" line="53"/>
         <source>There are unsaved changes in {tab_name}. Close anyway?</source>
         <translation>Det finns ej sparade ändringar i fliken {tab_name}. Stäng ändå?</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/editor_panel_controller.py" line="51"/>
+        <location filename="../../workbench/controllers/editor_panel_controller.py" line="54"/>
         <source>{base_title} (copy)</source>
         <translation>{base_title} (kopia)</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/editor_panel_controller.py" line="52"/>
+        <location filename="../../workbench/controllers/editor_panel_controller.py" line="55"/>
         <source>You are about to close {count_tabs} tabs.
 Unsaved changes in {dirty_tabs} tabs.
 Continue?</source>
@@ -1565,12 +1570,12 @@ Osparade ändringar i {dirty_tabs} flikar.
 Fortsätt?</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/editor_panel_controller.py" line="55"/>
+        <location filename="../../workbench/controllers/editor_panel_controller.py" line="58"/>
         <source>Rename tab</source>
         <translation>Byt namn på flik</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/editor_panel_controller.py" line="56"/>
+        <location filename="../../workbench/controllers/editor_panel_controller.py" line="59"/>
         <source>New name:</source>
         <translation>Nytt namn:</translation>
     </message>
@@ -1659,25 +1664,25 @@ Fortsätt?</translation>
 <context>
     <name>ExpoStudio</name>
     <message>
-        <location filename="../../app/expo_studio.py" line="448"/>
+        <location filename="../../app/expo_studio.py" line="452"/>
         <location filename="../../app/expo_studio.py" line="102"/>
         <source>Expo studio</source>
         <translation>Expo studio</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="451"/>
+        <location filename="../../app/expo_studio.py" line="455"/>
         <location filename="../../app/expo_studio.py" line="159"/>
         <source>Database connections</source>
         <translation>Databasanslutningar</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="452"/>
+        <location filename="../../app/expo_studio.py" line="456"/>
         <location filename="../../app/expo_studio.py" line="182"/>
         <source>Files</source>
         <translation>Filer</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="453"/>
+        <location filename="../../app/expo_studio.py" line="457"/>
         <location filename="../../app/expo_studio.py" line="202"/>
         <source>REST connections</source>
         <translation>REST anslutningar</translation>
@@ -1693,22 +1698,22 @@ Fortsätt?</translation>
         <translation>Inställningar omladdade.</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="500"/>
+        <location filename="../../app/expo_studio.py" line="504"/>
         <source>No active jobs to cancel.</source>
         <translation>Inga aktiva jobb att avbryta.</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="516"/>
+        <location filename="../../app/expo_studio.py" line="520"/>
         <source>Cancelling active jobs…</source>
         <translation>Avbryter aktiva jobb…</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="545"/>
+        <location filename="../../app/expo_studio.py" line="549"/>
         <source>Confirm exit</source>
         <translation>Bekräfta avslut</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="546"/>
+        <location filename="../../app/expo_studio.py" line="550"/>
         <source>Do you want to quit the application?</source>
         <translation>Vill du avsluta applikationen?</translation>
     </message>
@@ -3314,100 +3319,300 @@ Tips: {error_hint}</translation>
     </message>
 </context>
 <context>
-    <name>RestConnectionEditor</name>
+    <name>RestAuthWidget</name>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="59"/>
-        <source>REST API connections</source>
-        <translation>REST API anslutningar</translation>
-    </message>
-    <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="97"/>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="16"/>
         <source>None</source>
-        <translation>None</translation>
+        <translation>Ingen</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="98"/>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="17"/>
+        <source>Bearer</source>
+        <translation>Bearer</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="18"/>
+        <source>Basic</source>
+        <translation>Basic</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="19"/>
+        <source>API key</source>
+        <translation>API key</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="20"/>
+        <source>OAuth2</source>
+        <translation>OAuth2</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="31"/>
+        <source>Header</source>
+        <translation>Header</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="32"/>
+        <source>Query parameter</source>
+        <translation>Query parameter</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="35"/>
+        <source>Client credentials</source>
+        <translation>Client credentials</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="36"/>
+        <source>Refresh token</source>
+        <translation>Refresh token</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="47"/>
+        <source>paste refresh token</source>
+        <translation>klistra in refresh token</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="51"/>
+        <source>Type:</source>
+        <translation>Typ:</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="52"/>
         <source>Bearer token</source>
         <translation>Bearer token</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="120"/>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="53"/>
+        <source>Basic username</source>
+        <translation>Basic användarnamn</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="54"/>
+        <source>Basic password</source>
+        <translation>Basic lösenord</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="55"/>
+        <source>API key name</source>
+        <translation>API key-namn</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="56"/>
+        <source>API key value</source>
+        <translation>API key-värde</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="57"/>
+        <source>API key location</source>
+        <translation>API key-plats</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="58"/>
+        <source>OAuth2 token URL</source>
+        <translation>OAuth2 token URL</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="59"/>
+        <source>OAuth2 client ID</source>
+        <translation>OAuth2 client ID</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="60"/>
+        <source>OAuth2 client secret</source>
+        <translation>OAuth2 client secret</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="61"/>
+        <source>OAuth2 grant type</source>
+        <translation>OAuth2 grant type</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="62"/>
+        <source>OAuth2 scope</source>
+        <translation>OAuth2 scope</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/auth_widget.py" line="63"/>
+        <source>OAuth2 refresh token</source>
+        <translation>OAuth2 refresh token</translation>
+    </message>
+</context>
+<context>
+    <name>RestConnectionEditor</name>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="96"/>
+        <source>REST API connections</source>
+        <translation>REST API anslutningar</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="118"/>
+        <source>SCB query builder…</source>
+        <translation>SCB frågeguide…</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="178"/>
+        <source>Wizards</source>
+        <translation>Guider</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="182"/>
+        <source>General</source>
+        <translation>Allmänt</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="183"/>
         <source>URL:</source>
         <translation>URL:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="121"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="184"/>
         <source>Method:</source>
         <translation>Metod:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="122"/>
-        <source>JSON body:</source>
-        <translation>JSON body:</translation>
-    </message>
-    <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="123"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="185"/>
         <source>Response path:</source>
         <translation>Svarssökväg:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="124"/>
-        <source>Authentication:</source>
-        <translation>Autentisering:</translation>
+        <location filename="../../app/settings/rest_connection_editor.py" line="187"/>
+        <source>Request</source>
+        <translation>Anrop(Request)</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="125"/>
-        <source>Bearer token:</source>
-        <translation>Bearer token:</translation>
+        <location filename="../../app/settings/rest_connection_editor.py" line="188"/>
+        <source>JSON body:</source>
+        <translation>JSON body:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="126"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="189"/>
         <source>Headers (JSON):</source>
         <translation>Headers (JSON):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="127"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="190"/>
         <source>Query params (JSON):</source>
         <translation>Query params (JSON):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="134"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="192"/>
+        <source>Authentication</source>
+        <translation>Autentisering</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="195"/>
+        <source>Pagination</source>
+        <translation>Paginering</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="202"/>
         <source>Add</source>
         <translation>Lägg till</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="135"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="203"/>
         <source>Test</source>
         <translation>Testa</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="554"/>
-        <location filename="../../app/settings/rest_connection_editor.py" line="136"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="932"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="205"/>
         <source>Delete</source>
         <translation>Radera</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="137"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="206"/>
         <source>Save</source>
         <translation>Spara</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="138"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="207"/>
         <source>Close</source>
         <translation>Stäng</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="156"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="225"/>
         <source>Connections:</source>
         <translation>Anslutningar:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="376"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="722"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="453"/>
+        <source>JSON body</source>
+        <translation>JSON body</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="787"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="478"/>
+        <source>Page-number pagination requires a page parameter name</source>
+        <translation>Sidnummerbaserad paginering kräver ett sidparameternamn</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="791"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="731"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="484"/>
+        <source>Start page</source>
+        <translation>Startsida</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="792"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="732"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="493"/>
+        <source>Page size</source>
+        <translation>Sidstorlek</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="793"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="733"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="499"/>
+        <source>Max pages</source>
+        <translation>Max antal sidor</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="771"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="508"/>
+        <source>Headers</source>
+        <translation>Headers</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="772"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="515"/>
+        <source>Query params</source>
+        <translation>Query params</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="577"/>
+        <source>{field} must contain valid JSON.</source>
+        <translation>{field} måste innehålla giltig JSON.</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="582"/>
+        <source>{field} must be a JSON object.</source>
+        <translation>{field} måste vara ett JSON objekt.</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="700"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="687"/>
+        <source>{field} must be an integer</source>
+        <translation>{field} måste vara en siffra</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="702"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="689"/>
+        <source>{field} must be &gt;= 1</source>
+        <translation>{field} måste vara &gt;= 1</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="738"/>
+        <source>Validation request</source>
+        <translation>Validation request</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="750"/>
         <source>POST requests require a valid JSON body</source>
         <translation>POST‑anrop kräver en giltig JSON‑body</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="383"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="757"/>
         <source>Invalid response path.
 Use dot-separated keys or numeric indices.
 Examples:
@@ -3424,52 +3629,37 @@ Exempel:
   results.0.values</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="401"/>
-        <source>Invalid JSON</source>
-        <translation>Ogiltig JSON</translation>
-    </message>
-    <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="439"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="832"/>
         <source>New REST connection</source>
         <translation>Ny REST anslutning</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="440"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="833"/>
         <source>Name:</source>
         <translation>Namn:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="450"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="843"/>
         <source>Failure</source>
         <translation>Fel</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="451"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="844"/>
         <source>A REST connection with that name already exists.</source>
         <translation>Det finns redan en REST anslutning med det namnet.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="480"/>
-        <source>Missing URL</source>
-        <translation>URL saknas</translation>
-    </message>
-    <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="481"/>
-        <source>URL must be specified before testing.</source>
-        <translation>URL måste vara specificerad före test.</translation>
-    </message>
-    <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="499"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="869"/>
         <source>Test request</source>
         <translation>Testförfrågan</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="519"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="886"/>
         <source>Invalid response path</source>
         <translation>Ogiltig svarssökväg</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="520"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="887"/>
         <source>The response path could not be applied to the API response.
 
 {error}</source>
@@ -3478,42 +3668,87 @@ Exempel:
 {error}</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="528"/>
+        <location filename="../../app/settings/rest_connection_editor.py" line="894"/>
+        <source>none</source>
+        <translation>ingen</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="900"/>
+        <source>API test successful.
+
+Returned {rows} rows and {cols} columns.
+Columns: {columns}.
+Time: {sec:.2f}s{sample}</source>
+        <translation>API test lyckades.
+
+Returnerade {rows} rader och {cols} kolumner.
+Kolumner: {columns}.
+Tid: {sec:.2f}s{sample}</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="912"/>
+        <source>Test successful</source>
+        <translation>Test lyckades</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="919"/>
+        <source>Test failed</source>
+        <translation>Test misslyckades</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="933"/>
+        <source>Do you want to delete &apos;{name}&apos;?</source>
+        <translation>Vill du ta bort &apos;{name}&apos;?</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="958"/>
+        <source>Saved</source>
+        <translation>Sparat</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="959"/>
+        <source>REST connection saved successfully.</source>
+        <translation>REST anslutningen sparades.</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="vanished">None</translation>
+    </message>
+    <message>
+        <source>Bearer token</source>
+        <translation type="vanished">Bearer token</translation>
+    </message>
+    <message>
+        <source>Authentication:</source>
+        <translation type="vanished">Autentisering:</translation>
+    </message>
+    <message>
+        <source>Bearer token:</source>
+        <translation type="vanished">Bearer token:</translation>
+    </message>
+    <message>
+        <source>Invalid JSON</source>
+        <translation type="vanished">Ogiltig JSON</translation>
+    </message>
+    <message>
+        <source>Missing URL</source>
+        <translation type="vanished">URL saknas</translation>
+    </message>
+    <message>
+        <source>URL must be specified before testing.</source>
+        <translation type="vanished">URL måste vara specificerad före test.</translation>
+    </message>
+    <message>
         <source>API test successful.
 
 Returned {rows} rows and {cols} columns.
 
 Time: {sec:.2f}s</source>
-        <translation>API test lyckades.
+        <translation type="vanished">API test lyckades.
 
 Returnerade {rows} rader och {cols} kolumner.
 
 Tid: {sec:.2f}s</translation>
-    </message>
-    <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="534"/>
-        <source>Test successful</source>
-        <translation>Test lyckades</translation>
-    </message>
-    <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="541"/>
-        <source>Test failed</source>
-        <translation>Test misslyckades</translation>
-    </message>
-    <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="555"/>
-        <source>Do you want to delete &apos;{name}&apos;?</source>
-        <translation>Vill du ta bort &apos;{name}&apos;?</translation>
-    </message>
-    <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="579"/>
-        <source>Saved</source>
-        <translation>Sparat</translation>
-    </message>
-    <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="580"/>
-        <source>REST connection saved successfully.</source>
-        <translation>REST anslutningen sparades.</translation>
     </message>
 </context>
 <context>
@@ -3549,6 +3784,59 @@ Tid: {sec:.2f}s</translation>
 {error}</source>
         <translation>Kunde inte ladda data från API:
 {error}</translation>
+    </message>
+</context>
+<context>
+    <name>RestPaginationWidget</name>
+    <message>
+        <location filename="../../gui/widgets/rest/pagination_widget.py" line="16"/>
+        <source>None</source>
+        <translation>Ingen</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/pagination_widget.py" line="17"/>
+        <source>Page number</source>
+        <translation>Sidnummer</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/pagination_widget.py" line="20"/>
+        <source>page</source>
+        <translation>sida</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/pagination_widget.py" line="24"/>
+        <source>pageSize</source>
+        <translation>sidstorlek</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/pagination_widget.py" line="32"/>
+        <source>Type:</source>
+        <translation>Typ:</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/pagination_widget.py" line="33"/>
+        <source>Page parameter</source>
+        <translation>Sidparameter</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/pagination_widget.py" line="34"/>
+        <source>Start page</source>
+        <translation>Startsida</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/pagination_widget.py" line="35"/>
+        <source>Page size parameter</source>
+        <translation>Sidstorlek parameter</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/pagination_widget.py" line="36"/>
+        <source>Page size</source>
+        <translation>Sidstorlek</translation>
+    </message>
+    <message>
+        <location filename="../../gui/widgets/rest/pagination_widget.py" line="37"/>
+        <source>Max pages</source>
+        <translation>Max antal sidor</translation>
     </message>
 </context>
 <context>
@@ -5746,6 +6034,136 @@ Vänligen se loggfil för mer information.</translation>
     </message>
 </context>
 <context>
+    <name>ScbBrowserDialog</name>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="50"/>
+        <source>SCB query builder</source>
+        <translation>SCB frågeguide</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="56"/>
+        <source>Table:</source>
+        <translation>Tabell:</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="59"/>
+        <source>Search table...</source>
+        <translation>Sök tabell...</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="73"/>
+        <source>Language:</source>
+        <translation>Språk:</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="77"/>
+        <source>Swedish</source>
+        <translation>Svenska</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="78"/>
+        <source>English</source>
+        <translation>Engelska</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="389"/>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="243"/>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="81"/>
+        <source>No table selected</source>
+        <translation>Ingen tabell vald</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="97"/>
+        <source>Selected cells: 0 / {0}</source>
+        <translation>Valda celler: 0 / {0}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="103"/>
+        <source>Select all</source>
+        <translation>Välj alla</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="105"/>
+        <source>Clear</source>
+        <translation>Rensa</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="108"/>
+        <source>Apply to REST connection</source>
+        <translation>Lägg till REST anslutning</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="110"/>
+        <source>Cancel</source>
+        <translation>Avbryt</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="143"/>
+        <source>Variables</source>
+        <translation>Variabler</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="145"/>
+        <source>Variable values</source>
+        <translation>Variabelvärden</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="188"/>
+        <source>SCB browser error</source>
+        <translation>SCB browser fel</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="225"/>
+        <source>No matching tables found</source>
+        <translation>Inga matchande tabeller hittades</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="261"/>
+        <source>Selected cells: {0} / {1}</source>
+        <translation>Valda celler: {0} / {1}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="267"/>
+        <source>This selection exceeds the SCB limit.</source>
+        <translation>Detta urval överskrider SCBs gräns.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="299"/>
+        <source>SCB metadata error</source>
+        <translation>SCB metadata fel</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="390"/>
+        <source>Please select an SCB table first.</source>
+        <translation>Vänligen välj en SCB tabell först.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="398"/>
+        <source>No metadata loaded</source>
+        <translation>Ingen metadata är laddad</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="399"/>
+        <source>Please load a table before applying it.</source>
+        <translation>Vänligen ladda en tabell innan den läggs till.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="413"/>
+        <source>No values selected</source>
+        <translation>Inga värden valda</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="414"/>
+        <source>Select at least one value before applying the query.</source>
+        <translation>Välj minst ett värde innan frågan läggs till.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="432"/>
+        <source>SCB query error</source>
+        <translation>SCB fråga fel</translation>
+    </message>
+</context>
+<context>
     <name>SchemaCacheManager</name>
     <message>
         <location filename="../../services/schema_cache.py" line="175"/>
@@ -5955,8 +6373,8 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <location filename="../../app/settings/settings_editor.py" line="319"/>
-        <source>SELECT TOP N value:</source>
-        <translation>SELECT TOP N värde:</translation>
+        <source>SELECT TOP N value (0 = no limit):</source>
+        <translation>SELECT TOP N värde (0 = ingen gräns):</translation>
     </message>
     <message>
         <location filename="../../app/settings/settings_editor.py" line="467"/>
@@ -6004,6 +6422,10 @@ Vänligen se loggfil för mer information.</translation>
         <location filename="../../app/settings/settings_editor.py" line="550"/>
         <source>Settings have been saved.</source>
         <translation>Inställningarna har sparats.</translation>
+    </message>
+    <message>
+        <source>SELECT TOP N value:</source>
+        <translation type="vanished">SELECT TOP N värde:</translation>
     </message>
     <message>
         <source>GUI file type behaviour</source>

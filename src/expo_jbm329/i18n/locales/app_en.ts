@@ -29,7 +29,12 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\about_dialog.py" line="128" />
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="90" />
+        <source>Source code: &lt;a href='%1'&gt;%1&lt;/a&gt;</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="133" />
         <source>Close</source>
         <translation type="unfinished" />
     </message>
@@ -1430,39 +1435,39 @@ Please see logs for more information.</source>
 </context><context>
     <name>EditorPanelController</name>
     <message>
-        <location filename="..\..\workbench\controllers\editor_panel_controller.py" line="48" />
+        <location filename="..\..\workbench\controllers\editor_panel_controller.py" line="51" />
         <source>Close tab</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\editor_panel_controller.py" line="49" />
+        <location filename="..\..\workbench\controllers\editor_panel_controller.py" line="52" />
         <source>Unsaved changes</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\editor_panel_controller.py" line="50" />
+        <location filename="..\..\workbench\controllers\editor_panel_controller.py" line="53" />
         <source>There are unsaved changes in {tab_name}. Close anyway?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\editor_panel_controller.py" line="51" />
+        <location filename="..\..\workbench\controllers\editor_panel_controller.py" line="54" />
         <source>{base_title} (copy)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\editor_panel_controller.py" line="52" />
+        <location filename="..\..\workbench\controllers\editor_panel_controller.py" line="55" />
         <source>You are about to close {count_tabs} tabs.
 Unsaved changes in {dirty_tabs} tabs.
 Continue?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\editor_panel_controller.py" line="55" />
+        <location filename="..\..\workbench\controllers\editor_panel_controller.py" line="58" />
         <source>Rename tab</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\editor_panel_controller.py" line="56" />
+        <location filename="..\..\workbench\controllers\editor_panel_controller.py" line="59" />
         <source>New name:</source>
         <translation type="unfinished" />
     </message>
@@ -1548,25 +1553,25 @@ Continue?</source>
 </context><context>
     <name>ExpoStudio</name>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="448" />
+        <location filename="..\..\app\expo_studio.py" line="452" />
         <location filename="..\..\app\expo_studio.py" line="102" />
         <source>Expo studio</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="451" />
+        <location filename="..\..\app\expo_studio.py" line="455" />
         <location filename="..\..\app\expo_studio.py" line="159" />
         <source>Database connections</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="452" />
+        <location filename="..\..\app\expo_studio.py" line="456" />
         <location filename="..\..\app\expo_studio.py" line="182" />
         <source>Files</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="453" />
+        <location filename="..\..\app\expo_studio.py" line="457" />
         <location filename="..\..\app\expo_studio.py" line="202" />
         <source>REST connections</source>
         <translation type="unfinished" />
@@ -1582,22 +1587,22 @@ Continue?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="500" />
+        <location filename="..\..\app\expo_studio.py" line="504" />
         <source>No active jobs to cancel.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="516" />
+        <location filename="..\..\app\expo_studio.py" line="520" />
         <source>Cancelling active jobs…</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="545" />
+        <location filename="..\..\app\expo_studio.py" line="549" />
         <source>Confirm exit</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="546" />
+        <location filename="..\..\app\expo_studio.py" line="550" />
         <source>Do you want to quit the application?</source>
         <translation type="unfinished" />
     </message>
@@ -2706,100 +2711,299 @@ Hint: {error_hint}</source>
         <translation type="unfinished" />
     </message>
 </context><context>
-    <name>RestConnectionEditor</name>
+    <name>RestAuthWidget</name>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="59" />
-        <source>REST API connections</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="97" />
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="16" />
         <source>None</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="98" />
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="17" />
+        <source>Bearer</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="18" />
+        <source>Basic</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="19" />
+        <source>API key</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="20" />
+        <source>OAuth2</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="31" />
+        <source>Header</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="32" />
+        <source>Query parameter</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="35" />
+        <source>Client credentials</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="36" />
+        <source>Refresh token</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="47" />
+        <source>paste refresh token</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="51" />
+        <source>Type:</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="52" />
         <source>Bearer token</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="120" />
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="53" />
+        <source>Basic username</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="54" />
+        <source>Basic password</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="55" />
+        <source>API key name</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="56" />
+        <source>API key value</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="57" />
+        <source>API key location</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="58" />
+        <source>OAuth2 token URL</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="59" />
+        <source>OAuth2 client ID</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="60" />
+        <source>OAuth2 client secret</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="61" />
+        <source>OAuth2 grant type</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="62" />
+        <source>OAuth2 scope</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\auth_widget.py" line="63" />
+        <source>OAuth2 refresh token</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>RestConnectionEditor</name>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="96" />
+        <source>REST API connections</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="118" />
+        <source>SCB query builder…</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="178" />
+        <source>Wizards</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="182" />
+        <source>General</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="183" />
         <source>URL:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="121" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="184" />
         <source>Method:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="122" />
-        <source>JSON body:</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="123" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="185" />
         <source>Response path:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="124" />
-        <source>Authentication:</source>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="187" />
+        <source>Request</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="125" />
-        <source>Bearer token:</source>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="188" />
+        <source>JSON body:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="126" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="189" />
         <source>Headers (JSON):</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="127" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="190" />
         <source>Query params (JSON):</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="134" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="192" />
+        <source>Authentication</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="195" />
+        <source>Pagination</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="202" />
         <source>Add</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="135" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="203" />
         <source>Test</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="554" />
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="136" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="932" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="205" />
         <source>Delete</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="137" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="206" />
         <source>Save</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="138" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="207" />
         <source>Close</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="156" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="225" />
         <source>Connections:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="376" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="722" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="453" />
+        <source>JSON body</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="787" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="478" />
+        <source>Page-number pagination requires a page parameter name</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="791" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="731" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="484" />
+        <source>Start page</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="792" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="732" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="493" />
+        <source>Page size</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="793" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="733" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="499" />
+        <source>Max pages</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="771" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="508" />
+        <source>Headers</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="772" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="515" />
+        <source>Query params</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="577" />
+        <source>{field} must contain valid JSON.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="582" />
+        <source>{field} must be a JSON object.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="700" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="687" />
+        <source>{field} must be an integer</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="702" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="689" />
+        <source>{field} must be &gt;= 1</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="738" />
+        <source>Validation request</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="750" />
         <source>POST requests require a valid JSON body</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="383" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="757" />
         <source>Invalid response path.
 Use dot-separated keys or numeric indices.
 Examples:
@@ -2810,88 +3014,78 @@ Examples:
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="401" />
-        <source>Invalid JSON</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="439" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="832" />
         <source>New REST connection</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="440" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="833" />
         <source>Name:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="450" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="843" />
         <source>Failure</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="451" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="844" />
         <source>A REST connection with that name already exists.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="480" />
-        <source>Missing URL</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="481" />
-        <source>URL must be specified before testing.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="499" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="869" />
         <source>Test request</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="519" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="886" />
         <source>Invalid response path</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="520" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="887" />
         <source>The response path could not be applied to the API response.
 
 {error}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="528" />
-        <source>API test successful.
-
-Returned {rows} rows and {cols} columns.
-
-Time: {sec:.2f}s</source>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="894" />
+        <source>none</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="534" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="900" />
+        <source>API test successful.
+
+Returned {rows} rows and {cols} columns.
+Columns: {columns}.
+Time: {sec:.2f}s{sample}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="912" />
         <source>Test successful</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="541" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="919" />
         <source>Test failed</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="555" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="933" />
         <source>Do you want to delete '{name}'?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="579" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="958" />
         <source>Saved</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\settings\rest_connection_editor.py" line="580" />
+        <location filename="..\..\app\settings\rest_connection_editor.py" line="959" />
         <source>REST connection saved successfully.</source>
         <translation type="unfinished" />
     </message>
@@ -2926,6 +3120,58 @@ Time: {sec:.2f}s</source>
         <location filename="..\..\workbench\controllers\rest_controller.py" line="50" />
         <source>Could not load data from API:
 {error}</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>RestPaginationWidget</name>
+    <message>
+        <location filename="..\..\gui\widgets\rest\pagination_widget.py" line="16" />
+        <source>None</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\pagination_widget.py" line="17" />
+        <source>Page number</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\pagination_widget.py" line="20" />
+        <source>page</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\pagination_widget.py" line="24" />
+        <source>pageSize</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\pagination_widget.py" line="32" />
+        <source>Type:</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\pagination_widget.py" line="33" />
+        <source>Page parameter</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\pagination_widget.py" line="34" />
+        <source>Start page</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\pagination_widget.py" line="35" />
+        <source>Page size parameter</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\pagination_widget.py" line="36" />
+        <source>Page size</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\widgets\rest\pagination_widget.py" line="37" />
+        <source>Max pages</source>
         <translation type="unfinished" />
     </message>
 </context><context>
@@ -4428,6 +4674,135 @@ Time: {sec:.2f}s</source>
         <translation type="unfinished" />
     </message>
 </context><context>
+    <name>ScbBrowserDialog</name>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="50" />
+        <source>SCB query builder</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="56" />
+        <source>Table:</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="59" />
+        <source>Search table...</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="73" />
+        <source>Language:</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="77" />
+        <source>Swedish</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="78" />
+        <source>English</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="389" />
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="243" />
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="81" />
+        <source>No table selected</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="97" />
+        <source>Selected cells: 0 / {0}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="103" />
+        <source>Select all</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="105" />
+        <source>Clear</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="108" />
+        <source>Apply to REST connection</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="110" />
+        <source>Cancel</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="143" />
+        <source>Variables</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="145" />
+        <source>Variable values</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="188" />
+        <source>SCB browser error</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="225" />
+        <source>No matching tables found</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="261" />
+        <source>Selected cells: {0} / {1}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="267" />
+        <source>This selection exceeds the SCB limit.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="299" />
+        <source>SCB metadata error</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="390" />
+        <source>Please select an SCB table first.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="398" />
+        <source>No metadata loaded</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="399" />
+        <source>Please load a table before applying it.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="413" />
+        <source>No values selected</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="414" />
+        <source>Select at least one value before applying the query.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="432" />
+        <source>SCB query error</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
     <name>SchemaCacheManager</name>
     <message>
         <location filename="..\..\services\schema_cache.py" line="175" />
@@ -4633,7 +5008,7 @@ Time: {sec:.2f}s</source>
     </message>
     <message>
         <location filename="..\..\app\settings\settings_editor.py" line="319" />
-        <source>SELECT TOP N value:</source>
+        <source>SELECT TOP N value (0 = no limit):</source>
         <translation type="unfinished" />
     </message>
     <message>

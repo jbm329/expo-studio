@@ -32,6 +32,7 @@ from expo_jbm329.services.rest.scb.browser import (
     fetch_scb_tables,
 )
 from expo_jbm329.services.rest.scb.service import ScbQueryBuilder, ScbSelection
+from expo_jbm329.utils.format_utils import fmt_int
 
 
 class ScbBrowserDialog(QDialog):
@@ -92,7 +93,9 @@ class ScbBrowserDialog(QDialog):
         self.value_list.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
         self.value_list.itemChanged.connect(self._on_value_checked)
 
-        self.selection_counter = QLabel(self.tr("Selected cells: 0 / {0}").format(ScbQueryBuilder.MAX_SELECTED_CELLS))
+        self.selection_counter = QLabel(
+            self.tr("Selected cells: 0 / {0}").format(fmt_int(ScbQueryBuilder.MAX_SELECTED_CELLS))
+        )
         self.selection_counter.setWordWrap(False)
         self.selection_warning = QLabel("")
         self.selection_warning.setWordWrap(False)
@@ -137,9 +140,9 @@ class ScbBrowserDialog(QDialog):
         main.addWidget(self.current_table_label)
         
         variable_labels = QHBoxLayout()
-        variable_labels.addWidget(QLabel("Variables"), 1)
+        variable_labels.addWidget(QLabel(self.tr("Variables")), 1)
         variable_value_label = QHBoxLayout()
-        variable_value_label.addWidget(QLabel("Variable values"), 1)
+        variable_value_label.addWidget(QLabel(self.tr("Variable values")), 1)
 
         body = QHBoxLayout()        
         body.addWidget(self.variable_list, 1)
@@ -255,7 +258,7 @@ class ScbBrowserDialog(QDialog):
         max_cells = ScbQueryBuilder.MAX_SELECTED_CELLS
 
         self.selection_counter.setText(
-            self.tr("Selected cells: {0} / {1}").format(selected_cells, max_cells)
+            self.tr("Selected cells: {0} / {1}").format(fmt_int(selected_cells), fmt_int(max_cells))
         )
 
         if selected_cells > max_cells:

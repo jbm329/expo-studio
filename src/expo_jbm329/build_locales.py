@@ -1,5 +1,4 @@
-# src/expo_jbm329/build_locales.py
-from __future__ import annotations
+"""Build Qt translation (.qm) files from .ts sources using pyside6-lrelease."""
 
 import pathlib
 import subprocess

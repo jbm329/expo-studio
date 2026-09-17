@@ -1,3 +1,5 @@
+
+"""REST client implementation."""
 from __future__ import annotations
 
 import time
@@ -16,6 +18,7 @@ from expo_jbm329.services.rest.models import (
 
 class RestClientError(RuntimeError):
     """Raised when a REST request fails."""
+
 
 def fetch_json(
     config: RestRequestConfig,
