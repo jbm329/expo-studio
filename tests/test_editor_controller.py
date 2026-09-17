@@ -114,6 +114,34 @@ def test_compute_next_line_indent_does_not_add_level_when_parentheses_are_balanc
     assert ctrl.compute_next_line_indent() == "    "
 
 
+def test_compute_next_line_indent_adds_level_after_with_clause():
+    editor = make_editor("WITH cte AS")
+    ctrl = EditorController(editor)
+
+    assert ctrl.compute_next_line_indent() == "    "
+
+
+def test_compute_next_line_indent_adds_level_after_join_on_clause():
+    editor = make_editor("    JOIN sales.orders o ON")
+    ctrl = EditorController(editor)
+
+    assert ctrl.compute_next_line_indent() == "        "
+
+
+def test_compute_next_line_indent_adds_level_after_where_clause():
+    editor = make_editor("WHERE")
+    ctrl = EditorController(editor)
+
+    assert ctrl.compute_next_line_indent() == "    "
+
+
+def test_compute_next_line_indent_does_not_add_level_after_complete_from_clause():
+    editor = make_editor("    FROM dbo.users")
+    ctrl = EditorController(editor)
+
+    assert ctrl.compute_next_line_indent() == "    "
+
+
 def test_handle_keypress_inserts_newline_with_existing_indentation():
     editor = make_editor("SELECT 1\n    FROM dual")
     ctrl = EditorController(editor)

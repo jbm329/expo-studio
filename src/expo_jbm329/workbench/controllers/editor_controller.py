@@ -19,6 +19,12 @@ class EditorController(QObject):
     """Handle SQL editor interactions for ExpoStudio."""
 
     _INDENT_UNIT = "    "
+    _CONTINUATION_LINE_PATTERNS = (
+        re.compile(r"\bWITH\s+\S+(?:\s*\([^)]*\))?\s+AS\s*$", re.IGNORECASE),
+        re.compile(r"\bWHERE\s*$", re.IGNORECASE),
+        re.compile(r"\bON\s*$", re.IGNORECASE),
+        re.compile(r"\bJOIN\b.*\bON\s*$", re.IGNORECASE),
+    )
 
     def __init__(self, editor: QPlainTextEdit):
         """Initialize the editor controller.
@@ -95,12 +101,24 @@ class EditorController(QObject):
         if self._has_unmatched_open_parenthesis(line_text):
             return f"{base_indent}{self._INDENT_UNIT}"
 
+        if self._should_increase_indent_for_sql_continuation(line_text):
+            return f"{base_indent}{self._INDENT_UNIT}"
+
         return base_indent
 
     @staticmethod
     def _has_unmatched_open_parenthesis(line_text: str) -> bool:
         """Return whether the line has more opening than closing parentheses."""
         return line_text.count("(") > line_text.count(")")
+
+    @classmethod
+    def _should_increase_indent_for_sql_continuation(cls, line_text: str) -> bool:
+        """Return whether a SQL continuation pattern should add one indent level."""
+        stripped_line = line_text.rstrip()
+        if not stripped_line:
+            return False
+
+        return any(pattern.search(stripped_line) for pattern in cls._CONTINUATION_LINE_PATTERNS)
 
     def install(self) -> None:
         """Install editor event filtering handled by this controller."""
