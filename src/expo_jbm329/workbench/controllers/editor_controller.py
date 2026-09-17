@@ -7,13 +7,15 @@ of the main application flow.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 import re
+from collections.abc import Callable
 
+from PyQt6.QtCore import QEvent, QObject, Qt
+from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QPlainTextEdit
 
 
-class EditorController:
+class EditorController(QObject):
     """Handle SQL editor interactions for ExpoStudio."""
 
     _INDENT_UNIT = "    "
@@ -24,6 +26,7 @@ class EditorController:
         Args:
             editor: The SQL editor widget managed by this controller.
         """
+        super().__init__(editor)
         self._editor = editor
         self._on_change: Callable[[], None] | None = None
         self._suppress_change: bool = False
@@ -98,6 +101,29 @@ class EditorController:
     def _has_unmatched_open_parenthesis(line_text: str) -> bool:
         """Return whether the line has more opening than closing parentheses."""
         return line_text.count("(") > line_text.count(")")
+
+    def install(self) -> None:
+        """Install editor event filtering handled by this controller."""
+        self._editor.installEventFilter(self)
+
+    def eventFilter(self, obj: QObject | None, event: QEvent | None) -> bool:
+        """Handle Enter-key indentation for the managed editor."""
+        if obj is self._editor and event is not None and event.type() == QEvent.Type.KeyPress:
+            assert isinstance(event, QKeyEvent)
+            if self.handle_keypress(event):
+                return True
+
+        return super().eventFilter(obj, event)
+
+    def handle_keypress(self, event: QKeyEvent) -> bool:
+        """Handle editor key presses owned by this controller."""
+        if event.key() not in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            return False
+
+        cursor = self._editor.textCursor()
+        cursor.insertText(f"\n{self.compute_next_line_indent()}")
+        self._editor.setTextCursor(cursor)
+        return True
 
     # ------------------------------------------------------------------
     # Handle dirty tab state
