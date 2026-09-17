@@ -50,3 +50,29 @@ def test_change_notifications_can_be_suppressed():
     ctrl.notify_text_changed()
     on_change.assert_called_once_with()
 
+
+def test_current_line_text_returns_line_before_cursor():
+    editor = make_editor("SELECT 1\n    FROM dual")
+    ctrl = EditorController(editor)
+    cursor = editor.textCursor()
+    cursor.setPosition(len("SELECT 1\n    FR"))
+    editor.setTextCursor(cursor)
+
+    assert ctrl.get_current_line_text() == "    FROM dual"
+
+
+def test_current_line_indent_returns_leading_whitespace():
+    editor = make_editor("SELECT 1\n    FROM dual")
+    ctrl = EditorController(editor)
+    cursor = editor.textCursor()
+    cursor.setPosition(len("SELECT 1\n    FR"))
+    editor.setTextCursor(cursor)
+
+    assert ctrl.get_current_line_indent() == "    "
+
+
+def test_current_line_indent_returns_empty_string_without_leading_whitespace():
+    editor = make_editor("SELECT 1")
+    ctrl = EditorController(editor)
+
+    assert ctrl.get_current_line_indent() == ""

@@ -8,6 +8,7 @@ of the main application flow.
 from __future__ import annotations
 
 from collections.abc import Callable
+import re
 
 from PyQt6.QtWidgets import QPlainTextEdit
 
@@ -68,6 +69,18 @@ class EditorController:
 
         full = self._editor.toPlainText().strip()
         return full or None
+
+    def get_current_line_text(self) -> str:
+        """Return the full text of the line containing the cursor."""
+        cursor = self._editor.textCursor()
+        block = cursor.block()
+        return block.text()
+
+    def get_current_line_indent(self) -> str:
+        """Return leading whitespace for the current cursor line."""
+        line_text = self.get_current_line_text()
+        match = re.match(r"[ \t]*", line_text)
+        return match.group(0) if match else ""
 
     # ------------------------------------------------------------------
     # Handle dirty tab state
