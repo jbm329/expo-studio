@@ -133,6 +133,27 @@ def test_double_click_table_inserts_select():
     ctrl._on_item_double_clicked(tbl_item)
 
     assert inserted_sql
+    assert inserted_sql[0] == "SELECT * FROM [dbo].[Tbl]"
+
+
+def test_insert_select_columns_uses_single_indent_for_projected_columns(monkeypatch):
+    ctrl, tree, schema_mgr, inserted_sql, *_ = make_ctrl()
+    ctrl.refresh_connections(["Conn1"])
+    ctrl.load_schema_tree("Conn1")
+    tbl_item = tree.topLevelItem(0).child(0).child(0).child(0)
+
+    monkeypatch.setattr(
+        "expo_jbm329.workbench.controllers.schema_controller.build_select_columns_auto",
+        lambda *args, **kwargs: "SELECT\n    [A],\n    [B]\nFROM [dbo].[Tbl];",
+    )
+
+    ctrl._insert_select_columns(
+        tbl_item,
+        {"schema": "dbo", "name": "Tbl", "type": "table"},
+        with_schema=False,
+    )
+
+    assert inserted_sql == ["SELECT\n    [A],\n    [B]\nFROM [dbo].[Tbl];"]
 
 
 def test_reload_settings_updates_top_n():

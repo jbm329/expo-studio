@@ -538,12 +538,13 @@ class DbService:
         else:
             exprs = [self.dialect.quote_ident(c) for c in col_names]
 
-        proj = ",\n              ".join(exprs)
+        indent = "    "
+        proj = f",\n{indent}".join(exprs)
         qtable = self.dialect.qualify(schema, object_name)
 
         sql = (
-            "SELECT \n"
-            f"              {proj}\n"
+            "SELECT\n"
+            f"{indent}{proj}\n"
             f"FROM {qtable};"
         )
 

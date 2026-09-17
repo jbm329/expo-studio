@@ -171,3 +171,4 @@ def test_build_select_columns_auto(db_service, mock_driver, conn_config):
     assert "[id]" in sql
     assert "[name]" in sql
     assert "FROM dbo.table1" in sql
+    assert "    [id],\n    [name]" in sql
