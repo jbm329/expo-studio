@@ -57,6 +57,7 @@ class EditorWidget(QWidget):
         self._editor.textChanged.connect(self._on_text_changed)
 
         self.editor_controller = EditorController(self._editor)
+        self.editor_controller.install()
 
         self._highlighter: SqlHighlighter | None = None
         self._autocomplete: SqlAutocompleteController | None = None
@@ -181,5 +182,4 @@ class EditorWidget(QWidget):
         """Handle text change in the editor."""
         if self.editor_controller:
             self.editor_controller.notify_text_changed()
-
 
