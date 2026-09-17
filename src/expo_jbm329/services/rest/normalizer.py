@@ -150,10 +150,14 @@ def _normalize_jsonstat2(payload: dict) -> pd.DataFrame:
     if not isinstance(dimensions, dict):
         raise RestNormalizeError("JSON-stat v2: missing 'dimension' object")
 
-    # Build ordered dimension value lists
+    # Build ordered dimension value lists. Prefer the user-facing labels provided by
+    # the SCB/PxWeb API over the raw technical keys when they are present.
     dim_names: list[str] = []
+    display_dim_names: list[str] = []
     dim_values: list[list[str]] = []
+    dim_labels_by_code: dict[str, dict[str, str]] = {}
 
+    seen_names: set[str] = set()
     for dim_id in ids:
         dim = dimensions.get(dim_id)
         if not isinstance(dim, dict):
@@ -166,15 +170,28 @@ def _normalize_jsonstat2(payload: dict) -> pd.DataFrame:
         index = category.get("index")
         if not isinstance(index, dict):
             continue
+        label_map = category.get("label")
+        labels: dict[str, str] = {}
+        if isinstance(label_map, dict):
+            labels = {str(code): str(text) for code, text in label_map.items()}
 
         # index: code -> position
         codes = sorted(index.keys(), key=lambda k: index[k])
+        display_name = _display_dimension_name(dim_id, dim)
+        unique_name = display_name
+        counter = 2
+        while unique_name in seen_names:
+            unique_name = f"{display_name}_{counter}"
+            counter += 1
+        seen_names.add(unique_name)
 
         dim_names.append(dim_id)
+        display_dim_names.append(unique_name)
         dim_values.append(codes)
+        dim_labels_by_code[dim_id] = labels
 
     if not dim_names or not dim_values:
-        raise RestNormalizeError("JSON-stat v2: no dimensions found")   
+        raise RestNormalizeError("JSON-stat v2: no dimensions found")
 
     records: list[dict] = []
 
@@ -183,8 +200,20 @@ def _normalize_jsonstat2(payload: dict) -> pd.DataFrame:
         values,
         strict=True,
     ):
-        rec = dict(zip(dim_names, coords, strict=True))
+        rec = {}
+        for raw_dim_name, display_name, code in zip(dim_names, display_dim_names, coords, strict=True):
+            label = dim_labels_by_code.get(raw_dim_name, {}).get(code)
+            rec[display_name] = label if label is not None else code
         rec["Value"] = val
         records.append(rec)
 
     return pd.DataFrame(records)
+
+
+def _display_dimension_name(dim_id: str, dim_config: dict[str, Any]) -> str:
+    """Return the user-visible name for a JSON-stat dimension."""
+    raw_name = str(dim_id).strip()
+    label = str(dim_config.get("label") or "").strip()
+    if label and label.casefold() != raw_name.casefold():
+        return label
+    return raw_name

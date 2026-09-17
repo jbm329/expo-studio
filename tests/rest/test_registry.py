@@ -36,3 +36,52 @@ def test_registry_load_and_reload_user_connections():
 
     registry.reload_user_connections({})
     assert registry.exists("User") is False
+
+
+def test_registry_load_user_connections_supports_api_key_auth():
+    registry = RestConnectionRegistry()
+    raw = {
+        "User": {
+            "url": "https://example.com",
+            "method": "GET",
+            "headers": {},
+            "query_params": {},
+            "response_path": None,
+            "auth": {
+                "type": "api_key",
+                "api_key_name": "X-API-Key",
+                "api_key_value": "secret",
+                "api_key_location": "header",
+            },
+        }
+    }
+
+    registry.load_user_connections(raw)
+    entry = registry.get("User")
+
+    assert entry is not None
+    assert entry.request.auth == RestAuthConfig(
+        type="api_key",
+        api_key_name="X-API-Key",
+        api_key_value="secret",
+        api_key_location="header",
+    )
+
+
+def test_registry_skips_incomplete_user_connections_with_empty_url():
+    registry = RestConnectionRegistry()
+
+    registry.load_user_connections(
+        {
+            "Draft": {
+                "url": "",
+                "method": "GET",
+                "headers": {},
+                "query_params": {},
+                "response_path": None,
+                "auth": {"type": "none"},
+            }
+        }
+    )
+
+    assert registry.exists("Draft") is False

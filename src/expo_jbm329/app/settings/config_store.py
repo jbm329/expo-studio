@@ -478,6 +478,7 @@ def _normalize_rest_entry(cfg: dict) -> dict:
 
     c["url"] = str(c.get("url", "")).strip()
     c["response_path"] = str(c.get("response_path", "")).strip() or None
+    c["method"] = _normalize_rest_method(c.get("method"))
 
     # headers / params
     for key in ("headers", "query_params"):
@@ -493,15 +494,111 @@ def _normalize_rest_entry(cfg: dict) -> dict:
         c["auth"] = {"type": "none"}
     else:
         at = str(auth.get("type", "none")).lower()
-        if at not in ("none", "bearer"):
+        if at not in ("none", "bearer", "basic", "api_key", "oauth2"):
             at = "none"
         c["auth"] = {"type": at}
         if at == "bearer":
             token = auth.get("token")
             if isinstance(token, str) and token:
                 c["auth"]["token"] = token
+        elif at == "basic":
+            username = auth.get("username")
+            password = auth.get("password")
+            if isinstance(username, str) and username:
+                c["auth"]["username"] = username
+            if isinstance(password, str) and password:
+                c["auth"]["password"] = password
+        elif at == "api_key":
+            api_key_name = auth.get("api_key_name")
+            api_key_value = auth.get("api_key_value")
+            api_key_location = str(auth.get("api_key_location", "")).lower()
+            if isinstance(api_key_name, str) and api_key_name:
+                c["auth"]["api_key_name"] = api_key_name
+            if isinstance(api_key_value, str) and api_key_value:
+                c["auth"]["api_key_value"] = api_key_value
+            if api_key_location in ("header", "query"):
+                c["auth"]["api_key_location"] = api_key_location
+        elif at == "oauth2":
+            token_url = auth.get("token_url")
+            client_id = auth.get("client_id")
+            client_secret = auth.get("client_secret")
+            scope = auth.get("scope")
+            refresh_token = auth.get("refresh_token")
+            access_token = auth.get("access_token")
+            grant_type = str(auth.get("grant_type", "client_credentials")).lower()
+            if grant_type not in ("client_credentials", "refresh_token"):
+                grant_type = "client_credentials"
+            c["auth"]["grant_type"] = grant_type
+            if isinstance(token_url, str) and token_url:
+                c["auth"]["token_url"] = token_url
+            if isinstance(client_id, str) and client_id:
+                c["auth"]["client_id"] = client_id
+            if isinstance(client_secret, str) and client_secret:
+                c["auth"]["client_secret"] = client_secret
+            if isinstance(scope, str) and scope:
+                c["auth"]["scope"] = scope
+            if isinstance(refresh_token, str) and refresh_token:
+                c["auth"]["refresh_token"] = refresh_token
+            if isinstance(access_token, str) and access_token:
+                c["auth"]["access_token"] = access_token
+
+    pagination = c.get("pagination")
+    if not isinstance(pagination, dict):
+        c["pagination"] = {"type": "none"}
+    else:
+        pagination_type = str(pagination.get("type", "none")).lower()
+        if pagination_type != "page_number":
+            c["pagination"] = {"type": "none"}
+        else:
+            normalized_pagination = {
+                "type": "page_number",
+                "page_param": str(pagination.get("page_param", "")).strip(),
+                "start_page": _normalize_positive_int(pagination.get("start_page"), default=1),
+            }
+            page_size_param = str(pagination.get("page_size_param", "")).strip()
+            if page_size_param:
+                normalized_pagination["page_size_param"] = page_size_param
+
+            page_size = _normalize_optional_positive_int(pagination.get("page_size"))
+            if page_size is not None:
+                normalized_pagination["page_size"] = page_size
+
+            max_pages = _normalize_optional_positive_int(pagination.get("max_pages"))
+            if max_pages is not None:
+                normalized_pagination["max_pages"] = max_pages
+
+            c["pagination"] = normalized_pagination
 
     return c
+
+
+def _normalize_rest_method(value: object) -> str:
+    """Normalize REST method to a supported uppercase value."""
+    if isinstance(value, str):
+        method = value.strip().upper()
+        if method in ("GET", "POST"):
+            return method
+    return "GET"
+
+
+def _normalize_positive_int(value: object, *, default: int) -> int:
+    """Normalize a positive integer value with a fallback."""
+    try:
+        normalized = int(value)
+    except (TypeError, ValueError):
+        return default
+    return normalized if normalized >= 1 else default
+
+
+def _normalize_optional_positive_int(value: object) -> int | None:
+    """Normalize an optional positive integer value."""
+    if value in (None, ""):
+        return None
+    try:
+        normalized = int(value)
+    except (TypeError, ValueError):
+        return None
+    return normalized if normalized >= 1 else None
 
 
 # =====================================================================
@@ -645,5 +742,3 @@ def _validate_log_config_inplace(cfg: dict) -> None:
         cfg["third_party_log_level"] = lvl
     else:
         cfg["third_party_log_level"] = "WARNING"
-
-

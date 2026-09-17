@@ -28,3 +28,33 @@ def test_normalize_json_to_df_rejects_unsupported_root():
     with pytest.raises(RestNormalizeError):
         normalize_json_to_df("bad")
 
+
+def test_normalize_json_to_df_uses_friendly_labels_for_coded_dimensions():
+    payload = {
+        "class": "dataset",
+        "id": ["Kon", "Tid"],
+        "size": [2, 1],
+        "value": [10, 20],
+        "dimension": {
+            "Kon": {
+                "label": "kön",
+                "category": {
+                    "index": {"1": 0, "2": 1},
+                    "label": {"1": "män", "2": "kvinnor"},
+                },
+            },
+            "Tid": {
+                "label": "månad",
+                "category": {
+                    "index": {"2026M01": 0},
+                    "label": {"2026M01": "2026M01"},
+                },
+            },
+        },
+    }
+
+    df = normalize_json_to_df(payload)
+
+    assert df["kön"].tolist() == ["män", "kvinnor"]
+    assert df["månad"].tolist() == ["2026M01", "2026M01"]
+    assert "Kon_label" not in df.columns

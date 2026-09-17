@@ -109,43 +109,61 @@ The REST functionality is designed for **read-only data access** and focuses on:
 REST support is intentionally **generic** and not tied to specific vendors or services.
 
 #### Supported API patterns
-The REST loader currently works best with APIs that return:
 
-- **JSON-stat v2**  
-  (e.g. statistical APIs such as SCB Statistikdatabasen, Eurostat, OECD)
-- **List-of-objects JSON**  
-  (common REST APIs returning records)
-- **Dictionary-of-lists JSON**  
-  (e.g. time series or metric-based APIs)
+The REST loader supports APIs that return:
 
-Responses are automatically normalized into a “long” tabular format when possible.
+- **JSON-stat v2**
+Commonly used by statistical APIs such as SCB Statistikdatabasen
+- **List-of-objects JSON**
+Common REST responses containing records
+- **Dictionary-of-lists JSON**
+Common for time series and metric-based APIs
+
+Responses are normalized into a tabular format when possible. Response
+schemas can be validated against required columns before data is loaded.
 
 #### Configuration
-REST connections are configured interactively in the UI and allow:
-- HTTP method selection (GET / POST)
-- Query parameters and headers
-- Optional JSON request bodies
-- Optional response path extraction for nested payloads
 
-Authentication mechanisms such as **Bearer tokens** can be supplied via HTTP headers.
+REST connections are configured interactively in the UI and support:
+
+- HTTP method selection (GET / POST)
+- Query parameters, headers, and optional JSON request bodies
+- Response path extraction for nested payloads
+- Bearer, Basic, API key, and OAuth2 authentication
+- Page-number pagination with configurable page and page-size parameters
+- Retry and backoff handling for transient failures and rate limiting
+- Response validation and preview before saving a connection
+
+The connection test displays normalized columns, row and column totals,
+and a sample record preview.
+
+#### SCB integration
+
+Expo Studio includes a guided connection wizard for
+**SCB Statistikdatabasen**. It allows users to search and browse available
+tables, select variables and values, and generate a valid REST connection
+without manually constructing the PxWeb request.
+
+The generated URL and query parameters are transferred to the generic
+REST connection editor, where they can be reviewed and adjusted before
+the connection is saved.
 
 #### Limitations
-REST support is still evolving and comes with several limitations:
+
+REST support is still evolving and currently has some limitations:
 
 - No support for streaming or incremental loading
-- No built-in pagination handling
-- No authentication flows (OAuth, refresh tokens, etc.)
-- Limited validation of API schemas
-- Error handling is basic and may surface raw API errors
+- Pagination is limited to page-number based APIs
+- No next-link or cursor-based pagination
+- API-specific response formats may require manual configuration
+- The SCB wizard currently targets SCB Statistikdatabasen and its PxWeb API
 
-The REST feature should be considered **experimental** and subject to change.
+The REST feature is intended primarily for:
 
-It is primarily intended for:
 - public data APIs
 - internal APIs with stable response formats
+- statistical APIs, including SCB Statistikdatabasen
 - exploratory and analytical workflows
-
-
 
 ### 🌍 Internationalization
 - **Multilingual UI**: Built-in i18n support using Qt translations.
