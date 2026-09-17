@@ -16,6 +16,8 @@ from PyQt6.QtWidgets import QPlainTextEdit
 class EditorController:
     """Handle SQL editor interactions for ExpoStudio."""
 
+    _INDENT_UNIT = "    "
+
     def __init__(self, editor: QPlainTextEdit):
         """Initialize the editor controller.
 
@@ -81,6 +83,21 @@ class EditorController:
         line_text = self.get_current_line_text()
         match = re.match(r"[ \t]*", line_text)
         return match.group(0) if match else ""
+
+    def compute_next_line_indent(self) -> str:
+        """Return the indentation to use for a new line at the cursor."""
+        base_indent = self.get_current_line_indent()
+        line_text = self.get_current_line_text()
+
+        if self._has_unmatched_open_parenthesis(line_text):
+            return f"{base_indent}{self._INDENT_UNIT}"
+
+        return base_indent
+
+    @staticmethod
+    def _has_unmatched_open_parenthesis(line_text: str) -> bool:
+        """Return whether the line has more opening than closing parentheses."""
+        return line_text.count("(") > line_text.count(")")
 
     # ------------------------------------------------------------------
     # Handle dirty tab state

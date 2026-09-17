@@ -76,3 +76,37 @@ def test_current_line_indent_returns_empty_string_without_leading_whitespace():
     ctrl = EditorController(editor)
 
     assert ctrl.get_current_line_indent() == ""
+
+
+def test_compute_next_line_indent_preserves_existing_indentation():
+    editor = make_editor("SELECT 1\n    FROM dual")
+    ctrl = EditorController(editor)
+    cursor = editor.textCursor()
+    cursor.setPosition(len("SELECT 1\n    FROM"))
+    editor.setTextCursor(cursor)
+
+    assert ctrl.compute_next_line_indent() == "    "
+
+
+def test_compute_next_line_indent_adds_one_level_after_open_parenthesis():
+    editor = make_editor("SELECT (\n    value")
+    ctrl = EditorController(editor)
+    cursor = editor.textCursor()
+    cursor.setPosition(len("SELECT ("))
+    editor.setTextCursor(cursor)
+
+    assert ctrl.compute_next_line_indent() == "    "
+
+
+def test_compute_next_line_indent_keeps_existing_indent_and_adds_one_level_after_open_parenthesis():
+    editor = make_editor("    SELECT (")
+    ctrl = EditorController(editor)
+
+    assert ctrl.compute_next_line_indent() == "        "
+
+
+def test_compute_next_line_indent_does_not_add_level_when_parentheses_are_balanced():
+    editor = make_editor("    SELECT (value)")
+    ctrl = EditorController(editor)
+
+    assert ctrl.compute_next_line_indent() == "    "
