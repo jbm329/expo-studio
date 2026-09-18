@@ -358,7 +358,9 @@ class SettingsEditor(QDialog):
 
         editor_defaults = DEFAULT_SETTINGS.get("workbench", {})
         editor = s.get("workbench", editor_defaults)
-        assert editor is not None
+        if editor is None:
+            msg = "Workbench settings are unavailable."
+            raise RuntimeError(msg)
 
         # Language
         current_lang = editor.get("language", editor_defaults.get("language", "en"))
@@ -377,7 +379,9 @@ class SettingsEditor(QDialog):
         self.cmb_theme.setCurrentText(editor.get("theme", editor_defaults.get("theme", "system")))
 
         # Highlighter theme (dynamic list)
-        assert self.highlighter_theme_service is not None
+        if self.highlighter_theme_service is None:
+            msg = "Highlighter theme service is not configured."
+            raise RuntimeError(msg)
         pairs = self.highlighter_theme_service.available_themes_with_labels()
 
         self.cmb_highlighter.clear()

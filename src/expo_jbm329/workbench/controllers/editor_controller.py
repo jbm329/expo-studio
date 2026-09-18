@@ -132,7 +132,8 @@ class EditorController(QObject):
     def eventFilter(self, obj: QObject | None, event: QEvent | None) -> bool:
         """Handle Enter-key indentation for the managed editor."""
         if obj is self._editor and event is not None and event.type() == QEvent.Type.KeyPress:
-            assert isinstance(event, QKeyEvent)
+            if not isinstance(event, QKeyEvent):
+                return super().eventFilter(obj, event)
             if self.handle_keypress(event):
                 return True
 

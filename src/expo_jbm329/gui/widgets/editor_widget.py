@@ -93,7 +93,9 @@ class EditorWidget(QWidget):
 
         This method assumes the engine has been set during widget initialization.
         """
-        assert self._autocomplete_engine is not None, "Autocomplete engine not initialized for EditorWidget"
+        if self._autocomplete_engine is None:
+            msg = "Autocomplete engine not initialized for EditorWidget"
+            raise RuntimeError(msg)
         return self._autocomplete_engine
 
     def set_autocomplete(self, autocomplete: SqlAutocompleteController) -> None:
@@ -105,7 +107,9 @@ class EditorWidget(QWidget):
 
         This method assumes the controller has been set during widget initialization.
         """
-        assert self._autocomplete is not None, "Autocomplete controller not initialized for EditorWidget"
+        if self._autocomplete is None:
+            msg = "Autocomplete controller not initialized for EditorWidget"
+            raise RuntimeError(msg)
         return self._autocomplete
 
     def apply_tab_state(self, tab: EditorTab) -> None:
@@ -161,7 +165,9 @@ class EditorWidget(QWidget):
     def get_document(self) -> QTextDocument:
         """Return the editor's document (for syntax highlighting)."""
         doc = self._editor.document()
-        assert doc is not None
+        if doc is None:
+            msg = "Editor document is not available."
+            raise RuntimeError(msg)
         return doc
 
     # ------------------------------------------------------------------

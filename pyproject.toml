@@ -138,18 +138,19 @@ select = [
     "I",    # isort
     "N",    # pep8-naming
     "Q",    # quotes consistency
+#    "S",    # flake8-bandit
     "W",    # pycodestyle (warnings)
     "UP",   # pyupgrade
     "C90",  # complexity (mccabe)
     "RET",  # return statements
     "SIM",  # simplify
     "ARG",  # unused args
-    "RUF",  # Ruff's own rules
+#    "RUF",  # Ruff's own rules
     "FURB", # flake8-ruff
     "PLE",  # flake8-pie
     "PLC",  # flake8-pie
     "PD",   # pandas-vet
-#    "PTH",  # flake8-use-pathlib
+    "PTH",  # flake8-use-pathlib
     "NPY",  # numpy
     "TC",   # flake8-type-checking
     "TID",  # flake8-tidy-imports
@@ -165,17 +166,17 @@ select = [
     "EM",  # flake8-errmsg
 #    "DTZ",  # flake8-datetimez
     "BLE",  # flake8-blind-except
+#    "ASYNC",  # flake8-async
 ]
 
 ignore = [
-#    "E501",     # line length → handled by formatter
     "ARG",      # unused callback args are common in PyQt/UI flows
     "C90",      # complexity warnings are intentionally not enforced project-wide
     "FURB171",
-    "PLC0415"
+    "PLC0415",
 ]
 [tool.ruff.lint.per-file-ignores]
-"tests/*.py" = ["W", "D", "S101", "RUF", "D104", "ARG", "PLC", "N", "SLF", "EM", "BLE", "E501"]
+"tests/*.py" = ["W", "D", "S", "S101", "RUF", "D104", "ARG", "PLC", "N", "SLF", "EM", "BLE", "E501"]
 "__init__.py" = ["D107", "D104"]
 
 

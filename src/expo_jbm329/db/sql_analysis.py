@@ -370,7 +370,7 @@ def _find_suspicious_from_keyword(sql: str) -> tuple[int, int, str] | None:
         token = match.group(0)
         token_l = token.lower()
 
-        if token_l == "from":
+        if token_l == "from":  # noqa S105
             continue
 
         if _looks_like_keyword_typo(token_l, "from"):
@@ -1093,7 +1093,7 @@ def detect_statement_kind(sql: str, dialect: str | None = None) -> SqlStatementK
         if command_name in {"truncate", "exec", "execute"}:
             return "truncate" if command_name == "truncate" else "exec"
 
-    if leading_token == "with":
+    if leading_token == "with":  # noqa S105
         return "with"
 
     return _fallback_statement_kind(leading_token, invalid=False)
