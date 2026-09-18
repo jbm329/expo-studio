@@ -3,6 +3,7 @@
 This module provides a tooltip-style popup window that displays and manages
 a list of SQL autocomplete suggestions.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -68,7 +69,18 @@ class SqlEditorAutoCompletePopup(QFrame):
             cursor_rect: QRect = self.editor.cursorRect()
             global_pos = self.editor.mapToGlobal(cursor_rect.bottomLeft())
             self.move(global_pos + QPoint(0, 4))
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             pass
 
         self.show()

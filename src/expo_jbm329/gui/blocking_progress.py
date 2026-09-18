@@ -3,6 +3,7 @@
 This module provides a modal dialog that shows a progress bar and a status message,
 blocking the UI while a long-running job is in progress.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -101,6 +102,7 @@ class BlockingProgressDialog(QDialog):
             job_id: The ID of the job to cancel.
             job_manager: The manager responsible for the job.
         """
+
         def do_cancel():
             self.btn_cancel.setEnabled(False)
             self.btn_cancel.setText("Avbryter…")
@@ -109,6 +111,3 @@ class BlockingProgressDialog(QDialog):
                 job_manager.cancel_job(job_id)
 
         self.btn_cancel.clicked.connect(do_cancel)
-
-
-

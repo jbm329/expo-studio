@@ -11,6 +11,7 @@ executables), without relying on direct access to ``pyproject.toml``.
 The module intentionally avoids file system access and build-time assumptions
 to ensure robustness in frozen and deployed environments.
 """
+
 from __future__ import annotations
 
 from importlib.metadata import PackageNotFoundError, metadata

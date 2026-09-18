@@ -46,23 +46,17 @@ class ResultTabHeaderDtypeActions:
     # Generic dtype
     TR_CONVERT_TO_TEXT_OPERATION = QT_TR_NOOP("convert to text")
     TR_CONVERTING_TO_TEXT = QT_TR_NOOP("Converting column to text: {column_name}")
-    TR_CONVERTED_TO_TEXT = QT_TR_NOOP(
-        "Converted column to text (string): {column_name}"
-    )
+    TR_CONVERTED_TO_TEXT = QT_TR_NOOP("Converted column to text (string): {column_name}")
 
     # Int
     TR_CONVERT_TO_INT_OPERATION = QT_TR_NOOP("convert to integer")
     TR_CONVERTING_TO_INT = QT_TR_NOOP("Converting to integer: {column_name}")
-    TR_CONVERTED_TO_INT = QT_TR_NOOP(
-        "Converted column to integer (Int64): {column_name}"
-    )
+    TR_CONVERTED_TO_INT = QT_TR_NOOP("Converted column to integer (Int64): {column_name}")
 
     # Float
     TR_CONVERT_TO_FLOAT_OPERATION = QT_TR_NOOP("convert to float")
     TR_CONVERTING_TO_FLOAT = QT_TR_NOOP("Converting to float: {column_name}")
-    TR_CONVERTED_TO_FLOAT = QT_TR_NOOP(
-        "Converted column to float (Float64): {column_name}"
-    )
+    TR_CONVERTED_TO_FLOAT = QT_TR_NOOP("Converted column to float (Float64): {column_name}")
 
     # Datetime
     TR_CONVERT_TO_DATETIME_OPERATION = QT_TR_NOOP("convert to datetime")
@@ -70,9 +64,7 @@ class ResultTabHeaderDtypeActions:
     TR_CONVERT_TO_DATETIME = QT_TR_NOOP("Convert to datetime")
     TR_DATE = QT_TR_NOOP("date")
     TR_DATETIME = QT_TR_NOOP("datetime")
-    TR_CONVERTED_TO_DATETIME = QT_TR_NOOP(
-        "Converted column to {mode}: {column_name}"
-    )
+    TR_CONVERTED_TO_DATETIME = QT_TR_NOOP("Converted column to {mode}: {column_name}")
 
     # Boolean
     TR_CONVERT_TO_BOOL_OPERATION = QT_TR_NOOP("convert to boolean")
@@ -80,9 +72,7 @@ class ResultTabHeaderDtypeActions:
     TR_CONVERT_TO_BOOL = QT_TR_NOOP("Convert to bool")
     TR_UNKNOWN_ERROR_LABEL_NA = QT_TR_NOOP("unknown → NA")
     TR_UNKNOWN_ERROR_LABEL_ERROR = QT_TR_NOOP("unknown → error")
-    TR_CONVERTED_TO_BOOL = QT_TR_NOOP(
-        "Converted column to bool ({error_label}): {column_name}"
-    )
+    TR_CONVERTED_TO_BOOL = QT_TR_NOOP("Converted column to bool ({error_label}): {column_name}")
 
     # Category
     TR_CONVERT_TO_CATEGORIES_OPERATION = QT_TR_NOOP("convert to categories")
@@ -93,9 +83,7 @@ class ResultTabHeaderDtypeActions:
     TR_ORDER_LABEL_PRESERVE = QT_TR_NOOP("preserve order")
     TR_ORDERED = QT_TR_NOOP("ordered")
     TR_UNORDERED = QT_TR_NOOP("unordered")
-    TR_CONVERTED_TO_CATEGORIES = QT_TR_NOOP(
-        "Converted column to categories: {column_name} ({order}, {ordered})"
-    )
+    TR_CONVERTED_TO_CATEGORIES = QT_TR_NOOP("Converted column to categories: {column_name} ({order}, {ordered})")
 
     # ------------------------------------------------------------------
     # Order labels
@@ -181,9 +169,7 @@ class ResultTabHeaderDtypeActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -246,9 +232,7 @@ class ResultTabHeaderDtypeActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -315,9 +299,7 @@ class ResultTabHeaderDtypeActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -395,7 +377,8 @@ class ResultTabHeaderDtypeActions:
 
         self._logger.debug(
             "ResultTabHeaderDtypeActions: convert to datetime (mode=%s) requested for column '%s'.",
-            opts["target"], safe_col,
+            opts["target"],
+            safe_col,
         )
 
         from expo_jbm329.services.data_operations.convert import to_datetime
@@ -561,9 +544,7 @@ class ResultTabHeaderDtypeActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -603,9 +584,7 @@ class ResultTabHeaderDtypeActions:
 
         order_label = self._tr(self._CATEGORY_ORDER_LABELS[opts["order"]])
 
-        ordered_label = (
-            self._tr(self.TR_ORDERED) if opts["ordered"] else self._tr(self.TR_UNORDERED)
-        )
+        ordered_label = self._tr(self.TR_ORDERED) if opts["ordered"] else self._tr(self.TR_UNORDERED)
 
         def _apply_result(new_df):
             if new_df is None:

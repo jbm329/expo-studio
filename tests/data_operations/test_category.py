@@ -11,6 +11,7 @@ from expo_jbm329.services.data_operations.category import (
 # category_remove_unused
 # =====================================================================
 
+
 def test_category_remove_unused_basic():
     s = pd.Series(
         pd.Categorical(
@@ -39,15 +40,14 @@ def test_category_remove_unused_non_categorical_noop():
 # category_rename_single
 # =====================================================================
 
+
 def test_category_rename_single_simple():
-    df = pd.DataFrame(
-        {
-            "col": pd.Categorical(
-                ["a", "b", "a"],
-                categories=["a", "b"],
-            )
-        }
-    )
+    df = pd.DataFrame({
+        "col": pd.Categorical(
+            ["a", "b", "a"],
+            categories=["a", "b"],
+        )
+    })
 
     out = category_rename_single(df, "col", "a", "x")
 
@@ -56,14 +56,12 @@ def test_category_rename_single_simple():
 
 
 def test_category_rename_single_collision():
-    df = pd.DataFrame(
-        {
-            "col": pd.Categorical(
-                ["a", "b", "a"],
-                categories=["a", "b"],
-            )
-        }
-    )
+    df = pd.DataFrame({
+        "col": pd.Categorical(
+            ["a", "b", "a"],
+            categories=["a", "b"],
+        )
+    })
 
     # Renaming "a" -> "b" causes a collision
     out = category_rename_single(df, "col", "a", "b")
@@ -84,6 +82,7 @@ def test_category_rename_single_non_categorical():
 # =====================================================================
 # category_set_order
 # =====================================================================
+
 
 def test_category_set_order_strict():
     df = pd.DataFrame({"col": ["b", "a", "c"]})

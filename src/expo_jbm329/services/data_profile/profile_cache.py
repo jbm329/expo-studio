@@ -3,6 +3,7 @@
 This module provides the ColumnProfileCache class, which uses an LRU-based approach
 to store and manage column profile results.
 """
+
 from __future__ import annotations
 
 from collections import OrderedDict
@@ -67,4 +68,3 @@ class ColumnProfileCache:
     def clear(self):
         """Remove all entries from the cache."""
         self._store.clear()
-

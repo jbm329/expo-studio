@@ -161,7 +161,18 @@ def parse_one_safe(sql: str, dialect: str | None = None) -> exp.Expression | Non
 
     try:
         return sqlglot.parse_one(sql, read=sqlglot_dialect(dialect))
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         return None
 
 
@@ -181,18 +192,23 @@ def parse_many_safe(sql: str, dialect: str | None = None) -> list[Expression]:
 
     try:
         parsed = sqlglot.parse(sql, read=sqlglot_dialect(dialect))
-        return [
-            cast("Expression", expression)
-            for expression in parsed
-            if expression is not None
-        ]
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        return [cast("Expression", expression) for expression in parsed if expression is not None]
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         return []
 
 
-_EMPTY_SELECT_LIST_RE = re.compile(
-    r"(?is)\bselect\b\s*\bfrom\b"
-)
+_EMPTY_SELECT_LIST_RE = re.compile(r"(?is)\bselect\b\s*\bfrom\b")
 
 
 def lint_editor_rules(sql: str) -> list[SqlDiagnostic]:
@@ -422,14 +438,14 @@ def _strip_leading_sql_comments_and_whitespace(sql: str) -> str:
             newline_index = stripped.find("\n")
             if newline_index < 0:
                 return ""
-            text = stripped[newline_index + 1:]
+            text = stripped[newline_index + 1 :]
             continue
 
         if stripped.startswith("/*"):
             end_index = stripped.find("*/")
             if end_index < 0:
                 return ""
-            text = stripped[end_index + 2:]
+            text = stripped[end_index + 2 :]
             continue
 
         return stripped
@@ -450,7 +466,7 @@ def _find_incomplete_top_clause(sql: str) -> tuple[int, int, str] | None:
     if match is None:
         return None
 
-    remainder = sql[match.end():]
+    remainder = sql[match.end() :]
 
     if re.match(r"^\s*(\(\s*(\d+|@\w+)\s*\)|\d+|@\w+)", remainder):
         return None
@@ -596,59 +612,59 @@ def _suggest_keyword(token: str) -> str | None:
 
 
 def _find_suspicious_clause_keywords(sql: str) -> list[tuple[int, int, str]]:
-        """Find likely clause-keyword typos after valid SQL clause anchors."""
-        diagnostics: list[tuple[int, int, str]] = []
+    """Find likely clause-keyword typos after valid SQL clause anchors."""
+    diagnostics: list[tuple[int, int, str]] = []
 
-        for match in re.finditer(r"(?is)\b[A-Za-z_][A-Za-z0-9_]*\b", sql):
-            token = match.group(0)
-            token_l = token.lower()
+    for match in re.finditer(r"(?is)\b[A-Za-z_][A-Za-z0-9_]*\b", sql):
+        token = match.group(0)
+        token_l = token.lower()
 
-            if token_l in _COMMON_SQL_KEYWORDS:
-                continue
+        if token_l in _COMMON_SQL_KEYWORDS:
+            continue
 
-            previous_keyword = _previous_meaningful_keyword(sql, match.start())
-            suggestion = _suggest_keyword_for_context(token_l, previous_keyword)
-            if suggestion is None:
-                continue
+        previous_keyword = _previous_meaningful_keyword(sql, match.start())
+        suggestion = _suggest_keyword_for_context(token_l, previous_keyword)
+        if suggestion is None:
+            continue
 
-            diagnostics.append((match.start(), len(token), suggestion))
+        diagnostics.append((match.start(), len(token), suggestion))
 
-        return diagnostics
+    return diagnostics
 
 
 def _previous_meaningful_keyword(sql: str, token_start: int) -> str | None:
-        """Return the nearest preceding SQL keyword-like token."""
-        previous_keyword: str | None = None
+    """Return the nearest preceding SQL keyword-like token."""
+    previous_keyword: str | None = None
 
-        for match in re.finditer(r"(?is)\b[A-Za-z_][A-Za-z0-9_]*\b", sql[:token_start]):
-            candidate = match.group(0).lower()
-            if candidate in _COMMON_SQL_KEYWORDS:
-                previous_keyword = candidate
+    for match in re.finditer(r"(?is)\b[A-Za-z_][A-Za-z0-9_]*\b", sql[:token_start]):
+        candidate = match.group(0).lower()
+        if candidate in _COMMON_SQL_KEYWORDS:
+            previous_keyword = candidate
 
-        return previous_keyword
+    return previous_keyword
 
 
 def _suggest_keyword_for_context(token: str, previous_keyword: str | None) -> str | None:
-        """Return a keyword suggestion when the surrounding clause expects one."""
-        if not token:
-            return None
-
-        if previous_keyword == "select" and _levenshtein_distance_at_most_one(token, "from"):
-            return "FROM"
-
-        if previous_keyword == "group" and _levenshtein_distance_at_most_one(token, "by"):
-            return "BY"
-
-        if previous_keyword == "order" and _levenshtein_distance_at_most_one(token, "by"):
-            return "BY"
-
-        if _looks_like_keyword_typo(token, "group"):
-            return "GROUP"
-
-        if _looks_like_keyword_typo(token, "order"):
-            return "ORDER"
-
+    """Return a keyword suggestion when the surrounding clause expects one."""
+    if not token:
         return None
+
+    if previous_keyword == "select" and _levenshtein_distance_at_most_one(token, "from"):
+        return "FROM"
+
+    if previous_keyword == "group" and _levenshtein_distance_at_most_one(token, "by"):
+        return "BY"
+
+    if previous_keyword == "order" and _levenshtein_distance_at_most_one(token, "by"):
+        return "BY"
+
+    if _looks_like_keyword_typo(token, "group"):
+        return "GROUP"
+
+    if _looks_like_keyword_typo(token, "order"):
+        return "ORDER"
+
+    return None
 
 
 _INCOMPLETE_TRAILING_CLAUSE_PATTERNS: tuple[tuple[str, str], ...] = (
@@ -796,11 +812,10 @@ def _is_known_column(
             return False
         return normalized_name in resolved_table.columns
 
-    for resolved_table in context.resolved_tables.values():
-        if normalized_name in resolved_table.columns:
-            return True
-
-    return False
+    return any(
+        normalized_name in resolved_table.columns
+        for resolved_table in context.resolved_tables.values()
+    )
 
 
 def _lint_unknown_tables(
@@ -1196,7 +1211,18 @@ def _coerce_int_or_none(value: object) -> int | None:
     if isinstance(value, float | str | bytes | bytearray):
         try:
             return int(value)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return None
 
     return None
@@ -1259,14 +1285,14 @@ def _strip_leading_comments_and_whitespace(sql: str | None) -> str:
             newline_index = stripped.find("\n")
             if newline_index < 0:
                 return ""
-            text = stripped[newline_index + 1:]
+            text = stripped[newline_index + 1 :]
             continue
 
         if stripped.startswith("/*"):
             end_index = stripped.find("*/")
             if end_index < 0:
                 return ""
-            text = stripped[end_index + 2:]
+            text = stripped[end_index + 2 :]
             continue
 
         return stripped
@@ -1328,9 +1354,7 @@ def _identifier_like_span_from_offset(sql: str, offset: int) -> tuple[int, int]:
     return offset, max(1, end - offset)
 
 
-_ADJACENT_BRACKET_IDENTIFIERS_RE = re.compile(
-    r"(?is)(\[[^\]]+\])\s+(\[[^\]]+\])"
-)
+_ADJACENT_BRACKET_IDENTIFIERS_RE = re.compile(r"(?is)(\[[^\]]+\])\s+(\[[^\]]+\])")
 
 
 def _find_suspicious_adjacent_select_identifier(sql: str) -> tuple[int, int] | None:
@@ -1347,7 +1371,7 @@ def _find_suspicious_adjacent_select_identifier(sql: str) -> tuple[int, int] | N
     if select_match is None or from_match is None or from_match.start() <= select_match.end():
         return None
 
-    select_list = sql[select_match.end():from_match.start()]
+    select_list = sql[select_match.end() : from_match.start()]
     match = _ADJACENT_BRACKET_IDENTIFIERS_RE.search(select_list)
     if match is None:
         return None

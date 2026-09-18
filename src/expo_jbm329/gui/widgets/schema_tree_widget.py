@@ -5,6 +5,7 @@ information in a tree structure, with support for drag-and-drop operations
 to export SQL identifiers. It includes utilities for validating and formatting
 schema metadata.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, override

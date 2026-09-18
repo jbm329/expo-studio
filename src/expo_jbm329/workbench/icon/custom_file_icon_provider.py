@@ -4,6 +4,7 @@ This module provides a QFileIconProvider implementation that resolves icons
 through the application's IconService so file and folder icons can follow the
 current GUI theme at runtime.
 """
+
 from __future__ import annotations
 
 import logging
@@ -28,6 +29,7 @@ def _normalize_ext(ext: str) -> str:
 
 class CustomFileIconProvider(QFileIconProvider):
     """Provide themed icons for files, folders, and symbolic links."""
+
     __slots__ = (
         "_file_icon",
         "_folder_icon",
@@ -156,7 +158,18 @@ class CustomFileIconProvider(QFileIconProvider):
             # Fallback
             return super().icon(type_or_info)
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return super().icon(type_or_info)
 
     # ------------------------------------------------------------------ #

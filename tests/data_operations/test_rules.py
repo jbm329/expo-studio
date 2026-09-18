@@ -13,6 +13,7 @@ from expo_jbm329.services.data_operations.rules import (
 # ReplaceRule
 # =====================================================================
 
+
 def test_replace_rule_literal():
     df = pd.DataFrame({"a": ["foo", "bar", "foo"]})
 
@@ -47,6 +48,7 @@ def test_replace_rule_missing_column():
 # RemoveValueRule
 # =====================================================================
 
+
 def test_remove_value_rule_basic():
     df = pd.DataFrame({"a": [1, 2, 1]})
 
@@ -71,6 +73,7 @@ def test_remove_value_rule_missing_column():
 # StripRule
 # =====================================================================
 
+
 def test_strip_rule_basic():
     df = pd.DataFrame({"a": ["  foo ", " bar"]})
 
@@ -84,6 +87,7 @@ def test_strip_rule_basic():
 # =====================================================================
 # apply_rules (pipeline behavior)
 # =====================================================================
+
 
 def test_apply_rules_sequential():
     df = pd.DataFrame({"a": [" foo ", "bar", " foo "]})
@@ -120,6 +124,7 @@ def test_apply_rules_does_not_mutate_input():
 # =====================================================================
 # Rule base class
 # =====================================================================
+
 
 def test_rule_base_class_not_implemented():
     df = pd.DataFrame({"a": [1]})

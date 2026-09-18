@@ -4,6 +4,7 @@ This module provides a thin orchestration layer that opens the CONCAT dialog,
 collects the selected input tables, and delegates the actual DataFrame
 concatenation to the service layer.
 """
+
 from __future__ import annotations
 
 import logging
@@ -112,9 +113,7 @@ class ConcatController:
         left_df = self._get_df(left_tab)
         left_cols = list(left_df.columns)
 
-        right_cols_map = {
-            tab: list(self._get_df(tab).columns) for tab in right_tabs
-        }
+        right_cols_map = {tab: list(self._get_df(tab).columns) for tab in right_tabs}
 
         dlg = ConcatDialog(
             parent=self._parent,
@@ -182,8 +181,7 @@ class ConcatController:
             """Handle CONCAT result for the pending tab."""
             if result_df is None:
                 self._logger.info(
-                    "ConcatController: CONCAT cancelled "
-                    "(left=%s, right=%s, corr=%s, tab_id=%s)",
+                    "ConcatController: CONCAT cancelled (left=%s, right=%s, corr=%s, tab_id=%s)",
                     cfg.left_tab_title,
                     cfg.right_tab_title,
                     corr_id,
@@ -196,8 +194,7 @@ class ConcatController:
 
             if not isinstance(result_df, pd.DataFrame):
                 self._logger.error(
-                    "ConcatController: CONCAT returned non-DataFrame result "
-                    "(corr=%s, tab_id=%s, type=%s)",
+                    "ConcatController: CONCAT returned non-DataFrame result (corr=%s, tab_id=%s, type=%s)",
                     corr_id,
                     pending_tab_id,
                     type(result_df).__name__,
@@ -218,8 +215,7 @@ class ConcatController:
             )
 
             self._logger.info(
-                "ConcatController: CONCAT completed: %s + %s "
-                "(remove_duplicates=%s corr=%s tab_id=%s)",
+                "ConcatController: CONCAT completed: %s + %s (remove_duplicates=%s corr=%s tab_id=%s)",
                 cfg.left_tab_title,
                 cfg.right_tab_title,
                 cfg.remove_duplicates,
@@ -232,8 +228,7 @@ class ConcatController:
             record = self._results.tabs_by_id.get(pending_tab_id)
             if record is not None and record.is_pending:
                 self._logger.debug(
-                    "ConcatController: removing stale pending CONCAT tab on finished "
-                    "(corr=%s, tab_id=%s)",
+                    "ConcatController: removing stale pending CONCAT tab on finished (corr=%s, tab_id=%s)",
                     corr_id,
                     pending_tab_id,
                 )
@@ -266,8 +261,7 @@ class ConcatController:
             self._results.bind_job_to_tab(pending_tab_id, jobid)
         else:
             self._logger.warning(
-                "ConcatController: could not bind CONCAT job to pending tab "
-                "(corr=%s, tab_id=%s)",
+                "ConcatController: could not bind CONCAT job to pending tab (corr=%s, tab_id=%s)",
                 corr_id,
                 pending_tab_id,
             )

@@ -9,7 +9,6 @@ It MUST NOT:
 - contain UI text
 """
 
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -88,17 +87,12 @@ def infer_series_capabilities(sem: SeriesSemantics, storage_dtype: str) -> Serie
         # Type conversions
         # -----------------------------
         can_convert_to_int=(sem.can_be_int and not storage_dtype.startswith("int")),
-
         can_convert_to_float=(sem.can_be_float and not storage_dtype.startswith("float")),
-
         can_convert_to_datetime=(
             sem.can_be_datetime and not storage_dtype.startswith("datetime64") and not sem.is_year_like
         ),
-
         can_convert_to_bool=(sem.can_be_bool and storage_dtype != "bool"),
-
         can_convert_to_string=storage_dtype != "string",
-
         can_convert_to_category=(
             sem.semantic_dtype in ("string", "category")
             and sem.cardinality_ratio is not None

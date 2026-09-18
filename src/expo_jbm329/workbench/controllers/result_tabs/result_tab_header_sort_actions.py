@@ -1,4 +1,5 @@
 """Header (column) sort actions with explicit dependency injection."""
+
 from __future__ import annotations
 
 import logging
@@ -30,19 +31,13 @@ class ResultTabHeaderSortActions:
     # ------------------------------------------------------------------
     TR_SORT_OPERATION_ASC = QT_TR_NOOP("sort ascending")
     TR_SORTING_COLUMN_ASC = QT_TR_NOOP("Sorting ascending: {column_name}")
-    TR_SORTED_ASC = QT_TR_NOOP(
-        "Sorted ascending by column: {column_name}"
-    )
+    TR_SORTED_ASC = QT_TR_NOOP("Sorted ascending by column: {column_name}")
     TR_SORT_OPERATION_DESC = QT_TR_NOOP("sort descending")
     TR_SORTING_COLUMN_DESC = QT_TR_NOOP("Sorting descending: {column_name}")
-    TR_SORTED_DESC = QT_TR_NOOP(
-        "Sorted descending by column: {column_name}"
-    )
+    TR_SORTED_DESC = QT_TR_NOOP("Sorted descending by column: {column_name}")
 
     TR_FAILURE = QT_TR_NOOP("Failure")
-    TR_COULD_NOT_PERFORM = QT_TR_NOOP(
-        "Could not perform the operation:\n{error}"
-    )
+    TR_COULD_NOT_PERFORM = QT_TR_NOOP("Could not perform the operation:\n{error}")
 
     # ------------------------------------------------------------------
     # i18n helpers
@@ -66,7 +61,7 @@ class ResultTabHeaderSortActions:
         "_dialogs",
         "_logger",
         "_parent",
-        "_resolve_df_col_series"
+        "_resolve_df_col_series",
     )
 
     def __init__(

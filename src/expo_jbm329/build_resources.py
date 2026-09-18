@@ -53,4 +53,3 @@ if __name__ == "__main__":
     except subprocess.CalledProcessError as e:
         print(f"❌ Error running pyside6-rcc: {e}")
         sys.exit(1)
-

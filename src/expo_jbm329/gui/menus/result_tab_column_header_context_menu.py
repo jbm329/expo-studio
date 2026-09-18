@@ -53,6 +53,7 @@ This module belongs to the GUI layer and sits below controllers
 (e.g. ResultTabManager) but above the service layer. It is a pure
 presentation component.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

@@ -9,6 +9,7 @@ Language Policy:
 - UI Strings (menus, dialogs, labels): Swedish.
 - Documentation and Comments: English.
 """
+
 from __future__ import annotations
 
 import time
@@ -92,6 +93,7 @@ class ExpoStudio(QMainWindow):
         - The window uses a two-phase initialization: UI construction in __init__,
           service initialization in init_services().
     """
+
     # ------------------------------------------------------------------
     # Constructor & Initialization
     # ------------------------------------------------------------------
@@ -327,15 +329,11 @@ class ExpoStudio(QMainWindow):
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, self._toolbar)
         self.toolbar_controller.apply_has_data_state(False)
         self.toolbar_controller.apply_connection_state(False)
-        self.workbench_services.results.apply_toolbar_data_state(
-            self.toolbar_controller.apply_has_data_state
-        )
+        self.workbench_services.results.apply_toolbar_data_state(self.toolbar_controller.apply_has_data_state)
         self.workbench_services.results.apply_toolbar_multiple_dataset_state(
             self.toolbar_controller.apply_has_multiple_datasets_state
         )
-        self.workbench_services.icon_service.icons_updated.connect(
-            self.toolbar_controller.apply_icons
-        )
+        self.workbench_services.icon_service.icons_updated.connect(self.toolbar_controller.apply_icons)
 
         # ------------------------------------------------
         # Editor tab → toolbar Run-state
@@ -369,9 +367,7 @@ class ExpoStudio(QMainWindow):
             show_about_dialog=self._show_about_dialog,
         )
         self.menu_controller.apply_has_data_state(False)
-        self.workbench_services.results.apply_toolbar_data_state(
-            self.menu_controller.apply_has_data_state
-        )
+        self.workbench_services.results.apply_toolbar_data_state(self.menu_controller.apply_has_data_state)
 
         # Apply initial translations
         self.retranslate_ui()
@@ -487,17 +483,13 @@ class ExpoStudio(QMainWindow):
         services = self.services
         if services is None:
             if self.ui_logger is not None:
-                self.ui_logger.warning(
-                    "MainWindow: cancel-all requested but no services were available."
-                )
+                self.ui_logger.warning("MainWindow: cancel-all requested but no services were available.")
             return
 
         job_mgr = cast("object", services.job_mgr)
         if job_mgr is None:
             if self.ui_logger is not None:
-                self.ui_logger.warning(
-                    "MainWindow: cancel-all requested but no JobManager was available."
-                )
+                self.ui_logger.warning("MainWindow: cancel-all requested but no JobManager was available.")
             return
 
         active_jobs = services.job_mgr.active_jobs
@@ -554,7 +546,18 @@ class ExpoStudio(QMainWindow):
                 informative=None,
                 default_yes=False,
             )
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             ok = False
 
         if not ok:
@@ -578,7 +581,18 @@ class ExpoStudio(QMainWindow):
                         still_running,
                     )
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             if self.ui_logger is not None:
                 self.ui_logger.exception("Error initiating application shutdown.")
 
@@ -613,7 +627,18 @@ class ExpoStudio(QMainWindow):
             try:
                 if self.services.job_mgr is not None:
                     self.services.job_mgr.abort_all(wait_ms=250)
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 if self.ui_logger is not None:
                     self.ui_logger.exception("Error retrying abort_all during shutdown.")
 
@@ -633,10 +658,20 @@ class ExpoStudio(QMainWindow):
             if self.services is not None and self.services.job_mgr is not None:
                 self.services.job_mgr.shutdown(wait=False)
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             if self.ui_logger is not None:
                 self.ui_logger.exception("Error completing application shutdown.")
         finally:
             self._allow_close = True
             self.close()
-

@@ -74,7 +74,18 @@ def test_fetch_json_pages_stops_on_cancellation(monkeypatch):
             ),
             cancel_cb=cancel_cb,
         )
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as exc:
         assert str(exc) == "Request cancelled"
     else:
         raise AssertionError("Expected cancellation")

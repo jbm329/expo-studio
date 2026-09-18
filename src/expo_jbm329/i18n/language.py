@@ -1,9 +1,11 @@
 """Language enum."""
+
 from enum import StrEnum
 
 
 class Language(StrEnum):
     """Supported languages."""
+
     SWEDISH = "sv"
     ENGLISH = "en"
 

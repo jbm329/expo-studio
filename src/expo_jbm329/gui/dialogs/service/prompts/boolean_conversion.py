@@ -1,4 +1,5 @@
 """Boolean conversion prompt."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -41,6 +42,7 @@ TR_HELP_TEXT = QT_TR_NOOP(
 # ======================================================================
 # Public API
 # ======================================================================
+
 
 def prompt_boolean_conversion(
     parent: QWidget,
@@ -109,11 +111,7 @@ def prompt_boolean_conversion(
         }
 
     def _parse_values(text: str) -> list[str]:
-        return [
-            v.strip()
-            for v in text.split(",")
-            if v.strip()
-        ]
+        return [v.strip() for v in text.split(",") if v.strip()]
 
     true_values = _parse_values(edit_true.text())
     false_values = _parse_values(edit_false.text())

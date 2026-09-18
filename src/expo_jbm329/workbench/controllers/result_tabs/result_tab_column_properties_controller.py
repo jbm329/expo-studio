@@ -140,21 +140,27 @@ class ResultTabColumnPropertiesController:
         # --------------------------------------------------------------
         cached = self._cache.get(key)
         if cached is not None:
-            self._logger.debug(
-                "ColumnPropertiesController: cache hit (key=%s).", key
-            )
+            self._logger.debug("ColumnPropertiesController: cache hit (key=%s).", key)
             try:
                 from expo_jbm329.gui.dialogs.column_properties_dialog import ColumnPropertiesDialog
 
                 sem = self._get_series_semantics(view, column)
 
-                dlg = ColumnPropertiesDialog(
-                    parent=self._parent,
-                    profile=cached,
-                    semantics=sem)
+                dlg = ColumnPropertiesDialog(parent=self._parent, profile=cached, semantics=sem)
                 dlg.show()
 
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as e:
                 self._fail(e)
             return
 

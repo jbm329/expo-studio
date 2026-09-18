@@ -40,4 +40,3 @@ def test_build_schema_dict_skips_invalid_rows():
     res = build_schema_dict(cache)
 
     assert res == {"tables": {}, "by_schema": {}}
-

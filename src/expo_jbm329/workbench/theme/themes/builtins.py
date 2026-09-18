@@ -30,5 +30,3 @@ DARK_THEME = Theme(
     kw_bold=True,
     func_bold=False,
 )
-
-

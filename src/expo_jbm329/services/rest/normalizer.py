@@ -1,4 +1,5 @@
 """REST data source normalization helpers."""
+
 from __future__ import annotations
 
 import itertools
@@ -65,6 +66,7 @@ def normalize_json_to_df(
 # Internal helpers
 # ---------------------------------------------------------------------
 
+
 def _extract_records(payload: Any, response_path: str | None) -> Any:
     """Extract the record container from a JSON payload.
 
@@ -89,9 +91,7 @@ def _extract_records(payload: Any, response_path: str | None) -> Any:
         if isinstance(payload, (list, dict)):
             return payload
         msg = f"Unsupported JSON root type: {type(payload).__name__}"
-        raise RestNormalizeError(
-            msg
-        )
+        raise RestNormalizeError(msg)
 
     current = payload
 
@@ -100,9 +100,7 @@ def _extract_records(payload: Any, response_path: str | None) -> Any:
         if isinstance(current, dict):
             if part not in current:
                 msg = f"Invalid response_path '{response_path}': '{part}' not found"
-                raise RestNormalizeError(
-                    msg
-                )
+                raise RestNormalizeError(msg)
             current = current[part]
             continue
 
@@ -112,35 +110,21 @@ def _extract_records(payload: Any, response_path: str | None) -> Any:
                 idx = int(part)
             except ValueError as err:
                 msg = f"Invalid response_path '{response_path}': '{part}' is not a valid list index"
-                raise RestNormalizeError(
-                    msg
-                ) from err
+                raise RestNormalizeError(msg) from err
 
             try:
                 current = current[idx]
             except IndexError as err:
                 msg = f"Invalid response_path '{response_path}': list index {idx} out of range"
-                raise RestNormalizeError(
-                    msg
-                ) from err
+                raise RestNormalizeError(msg) from err
             continue
 
-        msg = (
-            f"Invalid response_path '{response_path}': "
-            f"cannot traverse object of type {type(current).__name__}"
-        )
-        raise RestNormalizeError(
-            msg
-        )
+        msg = f"Invalid response_path '{response_path}': cannot traverse object of type {type(current).__name__}"
+        raise RestNormalizeError(msg)
 
     if not isinstance(current, (list, dict)):
-        msg = (
-            f"Extracted object at '{response_path}' is not list or dict "
-            f"(got {type(current).__name__})"
-        )
-        raise RestNormalizeError(
-            msg
-        )
+        msg = f"Extracted object at '{response_path}' is not list or dict (got {type(current).__name__})"
+        raise RestNormalizeError(msg)
 
     return current
 

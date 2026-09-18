@@ -3,6 +3,7 @@
 This module provides a repository that loads built-in themes and discovers
 custom themes from the theme directory.
 """
+
 from __future__ import annotations
 
 from expo_jbm329.utils.path_manager import get_theme_root
@@ -13,6 +14,7 @@ from expo_jbm329.workbench.theme.themes.json_loader import load_theme_from_json
 
 class HighlighterThemeRepository:
     """Load, store, and look up available syntax highlighter themes."""
+
     def __init__(self) -> None:
         """Initialize the repository and load all available themes."""
         self._themes: dict[str, Theme] = {}
@@ -52,7 +54,18 @@ class HighlighterThemeRepository:
 
             try:
                 theme = load_theme_from_json(file)
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as ex:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as ex:
                 # Skip broken themes, do not crash the app
                 print(f"[theme] Skipping invalid theme '{file.name}': {ex}")
                 continue

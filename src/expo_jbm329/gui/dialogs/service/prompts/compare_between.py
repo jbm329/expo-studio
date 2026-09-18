@@ -1,4 +1,5 @@
 """Prompt the user for a comparison operator and value and between-range."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -41,6 +42,7 @@ _OPERATOR_LABELS = {
     "==": QCoreApplication.translate("QtDialogService", "Equal to"),
     "!=": QCoreApplication.translate("QtDialogService", "Not equal to"),
 }
+
 
 # ----------------------------------------------------------------------
 # prompt_compare
@@ -153,9 +155,11 @@ def prompt_compare(
         "ok": True,
     }
 
+
 # ----------------------------------------------------------------------
 # prompt_between
 # ----------------------------------------------------------------------
+
 
 def prompt_between(
     parent: QWidget,
@@ -184,9 +188,7 @@ def prompt_between(
     rev_map = {v: k for k, v in incl_map.items()}
 
     row_incl = QHBoxLayout()
-    row_incl.addWidget(QLabel(
-        QCoreApplication.translate("QtDialogService", "Inclusivity:"), dlg
-    ))
+    row_incl.addWidget(QLabel(QCoreApplication.translate("QtDialogService", "Inclusivity:"), dlg))
     cmb_incl = QComboBox(dlg)
     cmb_incl.addItems(incl_map.keys())
     if inclusive_default in rev_map:

@@ -4,6 +4,7 @@ This module provides common utility functions for GUI-related tasks,
 such as scheduling functions to run on the UI thread and applying
 standard window hints to dialogs.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -73,11 +74,7 @@ def apply_window_hints_strict(
         show_close_button: Whether to show the close button.
     """
     # Base flags: dialog + custom + title
-    flags = (
-        Qt.WindowType.Dialog
-        | Qt.WindowType.CustomizeWindowHint
-        | Qt.WindowType.WindowTitleHint
-    )
+    flags = Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | Qt.WindowType.WindowTitleHint
 
     # Add close button if allowed
     if show_close_button:

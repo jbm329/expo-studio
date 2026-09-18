@@ -156,9 +156,7 @@ class QueryController:
         sql = self._get_sql(True)
         if not sql:
             self._dialogs.info(
-                parent=self._parent,
-                title=self._tr(self.TR_NO_SELECTION),
-                text=self._tr(self.TR_SELECT_SQL_TO_RUN)
+                parent=self._parent, title=self._tr(self.TR_NO_SELECTION), text=self._tr(self.TR_SELECT_SQL_TO_RUN)
             )
             return
 
@@ -278,9 +276,7 @@ class QueryController:
             if not res.ok:
                 err = res.error if isinstance(res.error, SqlError) else None
 
-                msg = (
-                    tr("DbErrors", err.message) if err is not None else self._tr(self.TR_SQL_FAILED)
-                )
+                msg = tr("DbErrors", err.message) if err is not None else self._tr(self.TR_SQL_FAILED)
 
                 hint_str = tr("DbErrors", err.hint) if err is not None and err.hint else ""
                 hint = self._tr_fmt(self.TR_SQL_ERROR_HINT, error_hint=hint_str) if hint_str else ""
@@ -354,6 +350,7 @@ class QueryController:
                     traceback_str=traceback_str,
                 ),
             )
+
         query_type = ":full"
         if use_sel:
             query_type = ":selection"

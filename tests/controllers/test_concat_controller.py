@@ -128,4 +128,3 @@ def test_concat_result_updates_pending_tab(controller):
 
     assert results.fulfill_calls
     assert status.called
-

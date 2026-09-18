@@ -1,4 +1,5 @@
 """Dialog service."""
+
 from __future__ import annotations
 
 from enum import Enum
@@ -18,6 +19,7 @@ DateTimeTarget = Literal["date", "datetime"]
 
 class ProfileChoice(Enum):
     """Enum for profile scope confirmation."""
+
     ACTIVE = "active"
     ALL = "all"
     CANCEL = "cancel"
@@ -25,6 +27,7 @@ class ProfileChoice(Enum):
 
 class BetweenResult(TypedDict):
     """Result of a numeric or datetime range prompt."""
+
     low: object
     high: object
     inclusive: str
@@ -33,6 +36,7 @@ class BetweenResult(TypedDict):
 
 class CompareResult(TypedDict):
     """Result of a numeric or datetime compare prompt."""
+
     op: str
     value: object
     ok: bool
@@ -40,6 +44,7 @@ class CompareResult(TypedDict):
 
 class DateTimeConversionResult(TypedDict):
     """Result of a datetime conversion prompt."""
+
     format_key: DateFormatKey
     target: DateTimeTarget
     ok: bool
@@ -47,6 +52,7 @@ class DateTimeConversionResult(TypedDict):
 
 class BooleanConversionResult(TypedDict):
     """Result of a boolean conversion prompt."""
+
     true_values: list[str]
     false_values: list[str]
     ok: bool
@@ -54,6 +60,7 @@ class BooleanConversionResult(TypedDict):
 
 class CategoryConversionResult(TypedDict):
     """Result of a category conversion prompt."""
+
     order: CategoryOrderKey
     ordered: bool
     strict: bool
@@ -62,6 +69,7 @@ class CategoryConversionResult(TypedDict):
 
 class CategoryRenameResult(TypedDict):
     """Result of a category rename prompt."""
+
     old: str
     new: str
     ok: bool
@@ -69,6 +77,7 @@ class CategoryRenameResult(TypedDict):
 
 class CategoryOrderResult(TypedDict):
     """Result of a category order prompt."""
+
     order_list: list[str]
     ordered: bool
     strict: bool
@@ -78,6 +87,7 @@ class CategoryOrderResult(TypedDict):
 
 class TextReplaceResult(TypedDict):
     """Result of a text replace prompt."""
+
     old: str
     new: str
     case: bool
@@ -86,6 +96,7 @@ class TextReplaceResult(TypedDict):
 
 class TextInsertResult(TypedDict):
     """Result of a text insert prompt."""
+
     insert: str
     position: int
     ok: bool
@@ -93,6 +104,7 @@ class TextInsertResult(TypedDict):
 
 class ValueReplaceResult(TypedDict):
     """Result of a value replace prompt."""
+
     new_value: str
     replace_all: bool
     ok: bool
@@ -100,6 +112,7 @@ class ValueReplaceResult(TypedDict):
 
 class TextFilterMatchResult(TypedDict):
     """Result of a text contains filter prompt."""
+
     value: str
     case_sensitive: bool
     ok: bool
@@ -107,6 +120,7 @@ class TextFilterMatchResult(TypedDict):
 
 class SplitColumnResult(TypedDict):
     """Result of the split column dialog."""
+
     delimiter: str
     keep_original: bool
     mode: Literal["first", "last"]
@@ -115,6 +129,7 @@ class SplitColumnResult(TypedDict):
 
 class MergeColumnsResult(TypedDict):
     """Result of a merge columns prompt."""
+
     columns: list[str]
     delimiter: str
     new_name: str
@@ -125,6 +140,7 @@ class MergeColumnsResult(TypedDict):
 @runtime_checkable
 class DialogService(Protocol):
     """Abstraction for dialogs."""
+
     # --- Message boxes ---
     def info(self, parent: QWidget, title: str, text: str) -> None:
         """Show an informational message box."""
@@ -269,14 +285,14 @@ class DialogService(Protocol):
         ...
 
     def prompt_category_set_order(
-            self,
-            parent: QWidget,
-            *,
-            title: str,
-            default_order_list: list[str],
-            default_ordered: bool,
-            default_strict: bool,
-            default_append_missing_tail: bool,
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        default_order_list: list[str],
+        default_ordered: bool,
+        default_strict: bool,
+        default_append_missing_tail: bool,
     ) -> CategoryOrderResult:
         """Show a prompt for category ordering."""
         ...

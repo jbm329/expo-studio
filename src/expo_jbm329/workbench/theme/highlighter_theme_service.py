@@ -4,6 +4,7 @@ This module resolves the active syntax highlighter theme from application
 settings and the current OS theme, and emits updates when the selected theme
 changes.
 """
+
 from __future__ import annotations
 
 import logging
@@ -21,6 +22,7 @@ if TYPE_CHECKING:
 
 class HighlighterThemeService(QObject):
     """Resolve and publish the active syntax highlighter theme."""
+
     __slots__ = (
         "_current_theme",
         "_logger",
@@ -31,11 +33,7 @@ class HighlighterThemeService(QObject):
 
     theme_changed = pyqtSignal(Theme)
 
-    def __init__(
-            self,
-            theme_service: ThemeService,
-            logger: logging.Logger | None = None
-    ) -> None:
+    def __init__(self, theme_service: ThemeService, logger: logging.Logger | None = None) -> None:
         """Initialize the highlighter theme service.
 
         Args:
@@ -170,9 +168,18 @@ class HighlighterThemeService(QObject):
             self._logger.debug(
                 "HighlighterThemeService: settings reloaded (theme=%s)",
                 self._settings_theme,
-
             )
             self.apply_theme()
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.exception("HighlighterThemeService: failed reloading settings")
-

@@ -7,6 +7,7 @@ This module ensures that:
   automatically adds defaults in existing user files).
 - All caches inside config_store.py are synchronized.
 """
+
 from __future__ import annotations
 
 import os

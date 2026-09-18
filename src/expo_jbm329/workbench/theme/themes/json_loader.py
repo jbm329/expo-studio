@@ -50,9 +50,7 @@ def load_theme_from_json(path: Path) -> Theme:
     friendly = data.get("friendly_name")
     if not isinstance(friendly, str):
         msg = f"Theme JSON '{path.name}' is missing required friendly_name:string"
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
     kwargs["friendly_name"] = friendly
 
     # Handle remaining Theme fields
@@ -76,4 +74,3 @@ def load_theme_from_json(path: Path) -> Theme:
             kwargs[field_name] = val
 
     return Theme(**kwargs)
-

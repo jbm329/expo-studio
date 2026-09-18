@@ -1,4 +1,5 @@
 """Window hints for dialogs."""
+
 from PyQt6.QtWidgets import QWidget
 
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict

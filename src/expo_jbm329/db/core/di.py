@@ -4,6 +4,7 @@ This module provides a lightweight service registry for managing and
 instantiating database-specific driver and dialect components. It allows
 for decoupling the database core from specific implementations.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

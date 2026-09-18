@@ -171,9 +171,7 @@ class JoinController:
         )
 
         # Optional: connect preview
-        dlg.btn_preview.clicked.connect(
-            lambda: self._on_preview(dlg)
-        )
+        dlg.btn_preview.clicked.connect(lambda: self._on_preview(dlg))
 
         if dlg.exec() == QDialog.DialogCode.Accepted:
             result = dlg.build_result()
@@ -262,8 +260,7 @@ class JoinController:
 
             if not isinstance(result_df, pd.DataFrame):
                 self._logger.error(
-                    "JoinController: JOIN returned non-DataFrame result "
-                    "(corr=%s, tab_id=%s, type=%s)",
+                    "JoinController: JOIN returned non-DataFrame result (corr=%s, tab_id=%s, type=%s)",
                     corr_id,
                     pending_tab_id,
                     type(result_df).__name__,
@@ -284,8 +281,7 @@ class JoinController:
             )
 
             self._logger.info(
-                "JoinController: JOIN completed on (%s = %s) type=%s "
-                "estimated_rows=%s corr=%s tab_id=%s",
+                "JoinController: JOIN completed on (%s = %s) type=%s estimated_rows=%s corr=%s tab_id=%s",
                 cfg.left_on,
                 cfg.right_on,
                 cfg.join_type,
@@ -317,8 +313,7 @@ class JoinController:
             record = self._results.tabs_by_id.get(pending_tab_id)
             if record is not None and record.is_pending:
                 self._logger.debug(
-                    "JoinController: removing stale pending JOIN tab on finished "
-                    "(corr=%s, tab_id=%s)",
+                    "JoinController: removing stale pending JOIN tab on finished (corr=%s, tab_id=%s)",
                     corr_id,
                     pending_tab_id,
                 )
@@ -388,9 +383,7 @@ class JoinController:
                 default_yes=False,
             )
             if not proceed:
-                self._logger.warning(
-                    "Join preview aborted: too large (%s estimated rows)", est_rows
-                )
+                self._logger.warning("Join preview aborted: too large (%s estimated rows)", est_rows)
                 return
 
         if est_rows > 50_000_000:

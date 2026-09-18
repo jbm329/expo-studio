@@ -41,9 +41,7 @@ class ResultTabHeaderCategoryActions:
     # ------------------------------------------------------------------
 
     TR_IS_NOT_CATEGORY = QT_TR_NOOP("Not category")
-    TR_COLUMN_IS_NOT_CATEGORY = QT_TR_NOOP(
-        "Column '{column_name}' is not categorical."
-    )
+    TR_COLUMN_IS_NOT_CATEGORY = QT_TR_NOOP("Column '{column_name}' is not categorical.")
 
     TR_ORDER_CATEGORIES_OPERATION = QT_TR_NOOP("order categories")
     TR_ORDERING_CATEGORIES = QT_TR_NOOP("Ordering categories: {column_name}")
@@ -55,24 +53,18 @@ class ResultTabHeaderCategoryActions:
     TR_ORDER_CATEGORIES = QT_TR_NOOP("Order categories")
     TR_INVALID_ORDER = QT_TR_NOOP("Invalid order")
     TR_ORDER_CAN_NOT_BE_EMPTY = QT_TR_NOOP("Order can not be empty.")
-    TR_ORDERED_CATEGORIES_IN_COLUMN = QT_TR_NOOP(
-        "Category order set for column: {column_name} ({ordered})"
-    )
+    TR_ORDERED_CATEGORIES_IN_COLUMN = QT_TR_NOOP("Category order set for column: {column_name} ({ordered})")
 
     TR_REMOVE_UNUSED_CATEGORY_OPERATION = QT_TR_NOOP("remove unused categories")
     TR_REMOVING_UNUSED_CATEGORIES = QT_TR_NOOP("Removing unused categories: {column_name}")
-    TR_REMOVED_UNUSED_CATEGORIES = QT_TR_NOOP(
-        "Removed unused categories in column: {column_name}"
-    )
+    TR_REMOVED_UNUSED_CATEGORIES = QT_TR_NOOP("Removed unused categories in column: {column_name}")
 
     TR_RENAME_CATEGORY_OPERATION = QT_TR_NOOP("rename category")
     TR_RENAMING_CATEGORY = QT_TR_NOOP("Renaming category: {column_name}")
     TR_RENAME_CATEGORY = QT_TR_NOOP("Rename category")
     TR_CATEGORY_RENAMED = QT_TR_NOOP("Renamed category: {old_name} → {new_name}")
     TR_NO_CATEGORIES = QT_TR_NOOP("No categories")
-    TR_NO_CATEGORIES_TO_RENAME = QT_TR_NOOP(
-        "There are no categories to rename."
-    )
+    TR_NO_CATEGORIES_TO_RENAME = QT_TR_NOOP("There are no categories to rename.")
 
     # ------------------------------------------------------------------
     # i18n helpers
@@ -171,10 +163,7 @@ class ResultTabHeaderCategoryActions:
         Returns:
             None
         """
-        ok, df, col, s = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, s = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None or s is None:
             return
 
@@ -386,9 +375,7 @@ class ResultTabHeaderCategoryActions:
         ordered = opts["ordered"]
         strict = opts["strict"]
         append_missing_tail = opts["append_missing_tail"]
-        ordered_label = (
-            self._tr(self.TR_ORDERED) if opts["ordered"] else self._tr(self.TR_UNORDERED)
-        )
+        ordered_label = self._tr(self.TR_ORDERED) if opts["ordered"] else self._tr(self.TR_UNORDERED)
 
         from expo_jbm329.services.data_operations.category import (
             category_set_order,

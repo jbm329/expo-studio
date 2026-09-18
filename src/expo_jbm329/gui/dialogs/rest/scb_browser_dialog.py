@@ -185,11 +185,7 @@ class ScbBrowserDialog(QDialog):
         try:
             tables = fetch_scb_tables(lang=self._current_language())
         except ScbBrowserError as exc:
-            self._dialogs.critical(
-                self,
-                title=self.tr("SCB browser error"),
-                text=str(exc)
-            )
+            self._dialogs.critical(self, title=self.tr("SCB browser error"), text=str(exc))
 
             self.result_data = None
             self.reject()
@@ -265,9 +261,7 @@ class ScbBrowserDialog(QDialog):
 
         if selected_cells > max_cells:
             self.selection_counter.setStyleSheet("color: #ff6b6b; font-weight: bold;")
-            self.selection_warning.setText(
-                self.tr("This selection exceeds the SCB limit.")
-            )
+            self.selection_warning.setText(self.tr("This selection exceeds the SCB limit."))
             self.selection_warning.setStyleSheet("color: #ff6b6b; font-weight: bold;")
             self.apply_button.setEnabled(False)
         elif selected_cells == 0:
@@ -296,11 +290,7 @@ class ScbBrowserDialog(QDialog):
                     lang=self._current_language(),
                 )
             except ScbBrowserError as exc:
-                self._dialogs.critical(
-                    self,
-                    title=self.tr("SCB metadata error"),
-                    text=str(exc)
-                )
+                self._dialogs.critical(self, title=self.tr("SCB metadata error"), text=str(exc))
                 return
             self._metadata_by_id[table_id] = metadata
 
@@ -345,7 +335,8 @@ class ScbBrowserDialog(QDialog):
             check_item = QListWidgetItem(label)
             check_item.setFlags(check_item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             check_item.setCheckState(
-                Qt.CheckState.Checked if value.code in self._selected_codes.get(variable.name, [])
+                Qt.CheckState.Checked
+                if value.code in self._selected_codes.get(variable.name, [])
                 else Qt.CheckState.Unchecked
             )
             check_item.setData(Qt.ItemDataRole.UserRole, value.code)
@@ -413,7 +404,7 @@ class ScbBrowserDialog(QDialog):
             self._dialogs.warn(
                 self,
                 title=self.tr("No values selected"),
-                text=self.tr("Select at least one value before applying the query.")
+                text=self.tr("Select at least one value before applying the query."),
             )
             return
 
@@ -428,7 +419,18 @@ class ScbBrowserDialog(QDialog):
                 "url": builder.table_url(table_id),
                 "query_params": params,
             }
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - UI safety net
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:  # pragma: no cover - UI safety net
             self._dialogs.critical(
                 self,
                 title=self.tr("SCB query error"),

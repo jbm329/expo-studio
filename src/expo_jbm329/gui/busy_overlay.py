@@ -43,9 +43,7 @@ class BusyOverlayWidget(QWidget):
 
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-        self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint | Qt.WindowType.SubWindow
-        )
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.SubWindow)
 
         self.setStyleSheet(
             """
@@ -192,7 +190,5 @@ class BusyOverlayWidget(QWidget):
         x = margin_w
         y = max(16, (self.height() - container_height) // 2)
 
-        self._container.setGeometry(
-            QRect(QPoint(x, y), self._container.sizeHint())
-        )
+        self._container.setGeometry(QRect(QPoint(x, y), self._container.sizeHint()))
         self._container.resize(container_width, container_height)

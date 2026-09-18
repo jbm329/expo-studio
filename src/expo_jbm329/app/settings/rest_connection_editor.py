@@ -128,9 +128,7 @@ class RestConnectionEditor(QDialog):
         self.method_combo.currentIndexChanged.connect(self.on_method_changed)
 
         self.body_edit = QPlainTextEdit()
-        self.body_edit.setPlaceholderText(
-            '{\n  "query": [],\n  "response": { "format": "JSON" }\n}'
-        )
+        self.body_edit.setPlaceholderText('{\n  "query": [],\n  "response": { "format": "JSON" }\n}')
         self.body_edit.setMinimumHeight(120)
 
         self.response_path_edit = QLineEdit()
@@ -262,10 +260,7 @@ class RestConnectionEditor(QDialog):
     # ----------------------------------------------------------------------
     def _update_icon(self):
         """Updates the window icon using the IconService or a fallback path."""
-        if self._icon_service:
-            icon = self._icon_service.get("rest")
-        else:
-            icon = QIcon(":/icons/dark/themes/dark/rest.png")  # fallback
+        icon = self._icon_service.get("rest") if self._icon_service else QIcon(":/icons/dark/themes/dark/rest.png")
         self.setWindowIcon(icon)
 
     # ------------------------------------------------------------------
@@ -376,9 +371,7 @@ class RestConnectionEditor(QDialog):
             self.response_path_edit.setToolTip("")
 
         headers = cfg.get("headers") or {}
-        self.headers_edit.setText(
-            json.dumps(headers) if headers else ""
-        )
+        self.headers_edit.setText(json.dumps(headers) if headers else "")
 
         params = cfg.get("query_params") or {}
 
@@ -428,6 +421,7 @@ class RestConnectionEditor(QDialog):
         self._set_fields_enabled(True)
         self.on_pagination_changed()
         self._update_action_buttons()
+
     # ==================================================================
     # Helpers
     # ==================================================================
@@ -576,14 +570,10 @@ class RestConnectionEditor(QDialog):
         try:
             value = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise ValueError(
-                self.tr("{field} must contain valid JSON.").format(field=field_name)
-            ) from exc
+            raise ValueError(self.tr("{field} must contain valid JSON.").format(field=field_name)) from exc
 
         if not isinstance(value, dict):
-            raise ValueError(
-                self.tr("{field} must be a JSON object.").format(field=field_name)
-            )
+            raise ValueError(self.tr("{field} must be a JSON object.").format(field=field_name))
 
         return value
 
@@ -883,13 +873,24 @@ class RestConnectionEditor(QDialog):
                     response_path=config.response_path,
                     limit=5,
                 )
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as exc:
                 self._dialogs.critical(
                     parent=self,
                     title=self.tr("Invalid response path"),
-                    text=self.tr(
-                        "The response path could not be applied to the API response.\n\n{error}"
-                    ).format(error=str(exc)),
+                    text=self.tr("The response path could not be applied to the API response.\n\n{error}").format(
+                        error=str(exc)
+                    ),
                 )
                 return
 
@@ -901,7 +902,8 @@ class RestConnectionEditor(QDialog):
                 sample_text = "\n\nSample row: " + str(sample_data[0])
 
             text = self.tr(
-                "API test successful.\n\nReturned {rows} rows and {cols} columns.\nColumns: {columns}.\nTime: {sec:.2f}s{sample}"
+                "API test successful.\n\nReturned {rows} rows and {cols} columns.\n"
+                "Columns: {columns}.\nTime: {sec:.2f}s{sample}"
             ).format(
                 rows=rows,
                 cols=cols,
@@ -910,13 +912,20 @@ class RestConnectionEditor(QDialog):
                 sample=sample_text,
             )
 
-            self._dialogs.info(
-                parent=self,
-                title=self.tr("Test successful"),
-                text=text
-            )
+            self._dialogs.info(parent=self, title=self.tr("Test successful"), text=text)
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
             self._dialogs.critical(
                 parent=self,
                 title=self.tr("Test failed"),

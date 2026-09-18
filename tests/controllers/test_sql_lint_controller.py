@@ -80,6 +80,7 @@ class DummyEditor:
     def setExtraSelections(self, selections) -> None:
         self.extra_selections = selections
 
+
 @pytest.fixture
 def editor() -> DummyEditor:
     return DummyEditor("SELECT 1")
@@ -144,12 +145,10 @@ def test_publish_status_prefers_error_then_warning():
     set_status = MagicMock()
     controller = SqlLintController(editor, delay_ms=100, set_status=set_status)
 
-    controller._publish_status(
-        [
-            SqlDiagnostic(severity="warning", message="Warn", line=2, column=3),
-            SqlDiagnostic(severity="error", message="Err", line=1, column=1),
-        ]
-    )
+    controller._publish_status([
+        SqlDiagnostic(severity="warning", message="Warn", line=2, column=3),
+        SqlDiagnostic(severity="error", message="Err", line=1, column=1),
+    ])
 
     set_status.assert_called_once_with("SQL error at line 1, column 1: Err", 10000)
 
@@ -164,7 +163,10 @@ def test_rendered_diagnostics_and_tooltip_lookup_cover_warning_path():
 
     assert controller._diagnostic_at_offset(0) == diagnostic
     assert controller._diagnostic_at_offset(99) is None
-    assert controller._handle_tooltip_event(SimpleNamespace(pos=lambda: QPoint(0, 0), globalPos=lambda: QPoint(0, 0))) is True
+    assert (
+        controller._handle_tooltip_event(SimpleNamespace(pos=lambda: QPoint(0, 0), globalPos=lambda: QPoint(0, 0)))
+        is True
+    )
 
     controller._publish_status([SqlDiagnostic(severity="warning", message="Warn", line=2, column=4)])
     set_status.assert_called_once_with("SQL warning at line 2, column 4: Warn", 10000)

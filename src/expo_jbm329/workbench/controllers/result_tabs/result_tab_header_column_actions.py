@@ -45,34 +45,22 @@ class ResultTabHeaderColumnActions:
     TR_SPLIT_COLUMN = QT_TR_NOOP("Split column")
     TR_SPLITTING_COLUMN = QT_TR_NOOP("Splitting column: {column_name}")
     TR_SPLIT_COLUMN_BY = QT_TR_NOOP("Split '{column_name}' by:")
-    TR_SPLIT_INTO_N_COLUMNS = QT_TR_NOOP(
-        "Split column '{column_name}' into {count} columns"
-    )
+    TR_SPLIT_INTO_N_COLUMNS = QT_TR_NOOP("Split column '{column_name}' into {count} columns")
     TR_INVALID_SPLIT = QT_TR_NOOP("Invalid split")
-    TR_SPLIT_RESULTED_IN_NO_NEW_COLUMNS = QT_TR_NOOP(
-        "The split did not produce any new columns."
-    )
+    TR_SPLIT_RESULTED_IN_NO_NEW_COLUMNS = QT_TR_NOOP("The split did not produce any new columns.")
     TR_SPLIT_COLUMN_DONE = QT_TR_NOOP("Split column: {column_name} ({original})")
 
     # Merge
     TR_MERGE_OPERATION = QT_TR_NOOP("merge columns")
     TR_MERGE_COLUMNS = QT_TR_NOOP("Merge columns")
     TR_MERGING_COLUMNS = QT_TR_NOOP("Merging columns: {columns_merged}")
-    TR_SELECT_COLUMNS_TO_MERGE = QT_TR_NOOP(
-        "Select columns to merge:"
-    )
-    TR_MERGED_COLUMNS = QT_TR_NOOP(
-        "Merged columns into '{column_name}'"
-    )
-    TR_NEED_AT_LEAST_TWO_COLUMNS = QT_TR_NOOP(
-        "You must select at least two columns to merge."
-    )
+    TR_SELECT_COLUMNS_TO_MERGE = QT_TR_NOOP("Select columns to merge:")
+    TR_MERGED_COLUMNS = QT_TR_NOOP("Merged columns into '{column_name}'")
+    TR_NEED_AT_LEAST_TWO_COLUMNS = QT_TR_NOOP("You must select at least two columns to merge.")
     TR_KEPT_ORIGINAL = QT_TR_NOOP("kept original")
     TR_REMOVED_ORIGINAL = QT_TR_NOOP("removed original")
     TR_SELECT_TWO = QT_TR_NOOP("Select at least two columns.")
-    TR_MERGE_COLUMNS_DONE = QT_TR_NOOP(
-        "Merged columns '{columns_merged}' → '{new_name}' ({original})"
-    )
+    TR_MERGE_COLUMNS_DONE = QT_TR_NOOP("Merged columns '{columns_merged}' → '{new_name}' ({original})")
 
     # Rename
     TR_RENAME_OPERATION = QT_TR_NOOP("rename column")
@@ -161,10 +149,7 @@ class ResultTabHeaderColumnActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -284,17 +269,12 @@ class ResultTabHeaderColumnActions:
             )
 
         cols_merged = ", ".join(res["columns"])
-        original = (
-            self._tr(self.TR_KEPT_ORIGINAL)
-            if res["keep_original"]
-            else self._tr(self.TR_REMOVED_ORIGINAL)
-        )
+        original = self._tr(self.TR_KEPT_ORIGINAL) if res["keep_original"] else self._tr(self.TR_REMOVED_ORIGINAL)
 
         new_name = res["new_name"]
 
         self._logger.debug(
-            "ResultTabHeaderColumnActions: merge requested for columns '%s -> %s'.",
-            cols_merged, new_name
+            "ResultTabHeaderColumnActions: merge requested for columns '%s -> %s'.", cols_merged, new_name
         )
 
         corr_id = uuid.uuid4().hex
@@ -314,9 +294,7 @@ class ResultTabHeaderColumnActions:
                 ),
             )
 
-            self._logger.info(
-                "Merged columns: '%s' -> '%s' (corr=%s).", cols_merged, new_name, corr_id
-            )
+            self._logger.info("Merged columns: '%s' -> '%s' (corr=%s).", cols_merged, new_name, corr_id)
 
         self._async_ops.run_dataframe_operation(
             view=view,
@@ -349,10 +327,7 @@ class ResultTabHeaderColumnActions:
         Returns:
             None
         """
-        ok, df, col_name, _ = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col_name, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col_name is None:
             return
 
@@ -416,9 +391,7 @@ class ResultTabHeaderColumnActions:
             runner="pool",
             work=_work,
             apply_result=_apply_result,
-            busy_message=self._tr_fmt(
-                self.TR_RENAMING_COLUMN, column_name=col_name, new_name=new_name
-            ),
+            busy_message=self._tr_fmt(self.TR_RENAMING_COLUMN, column_name=col_name, new_name=new_name),
             scope=f"rename:{safe_col}",
             operation_name=self._tr(self.TR_RENAME_OPERATION),
             corr_id=corr_id,
@@ -488,9 +461,7 @@ class ResultTabHeaderColumnActions:
                 ),
             )
 
-            self._logger.info(
-                "ResultTabHeaderColumnActions: column '%s' removed (corr=%s).", col_name, corr_id
-            )
+            self._logger.info("ResultTabHeaderColumnActions: column '%s' removed (corr=%s).", col_name, corr_id)
 
         self._async_ops.run_dataframe_operation(
             view=view,

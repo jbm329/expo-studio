@@ -30,4 +30,3 @@ def test_column_actions_schedule_async():
     ctrl.remove_column(QTableView(), 0)
 
     assert async_ops.run_dataframe_operation.call_count == 2
-

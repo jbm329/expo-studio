@@ -1,4 +1,5 @@
 """Schema-aware validation helpers for REST responses."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -39,9 +40,7 @@ def validate_response_columns(
     if required_columns:
         missing = [column for column in required_columns if column not in columns]
         if missing:
-            raise RestSchemaValidationError(
-                "Response is missing required columns: " + ", ".join(missing)
-            )
+            raise RestSchemaValidationError("Response is missing required columns: " + ", ".join(missing))
 
     return columns
 

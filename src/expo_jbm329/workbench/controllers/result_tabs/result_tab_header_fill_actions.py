@@ -45,44 +45,28 @@ class ResultTabHeaderFillActions:
     TR_COULD_NOT_PERFORM = QT_TR_NOOP("Could not perform the operation:\n{error}")
 
     TR_NO_NA = QT_TR_NOOP("No missing values")
-    TR_NO_NA_IN_COLUMN = QT_TR_NOOP(
-        "No missing values in column: {column_name}"
-    )
+    TR_NO_NA_IN_COLUMN = QT_TR_NOOP("No missing values in column: {column_name}")
 
     TR_FILL_NA = QT_TR_NOOP("Fill missing values")
-    TR_FILL_NA_IN_COLUMN = QT_TR_NOOP(
-        "Select value for column '{column_name}':"
-    )
+    TR_FILL_NA_IN_COLUMN = QT_TR_NOOP("Select value for column '{column_name}':")
 
     TR_FILL_NA_MEAN_OPERATION = QT_TR_NOOP("fill missing with mean")
     TR_FILLING_NA_MEAN = QT_TR_NOOP("Filling missing values with mean: {column_name}")
-    TR_FILLED_NA_MEAN = QT_TR_NOOP(
-        "Filled missing values with mean in column: {column_name}"
-    )
+    TR_FILLED_NA_MEAN = QT_TR_NOOP("Filled missing values with mean in column: {column_name}")
 
     TR_FILL_NA_MEDIAN_OPERATION = QT_TR_NOOP("fill missing with median")
     TR_FILLING_NA_MEDIAN = QT_TR_NOOP("Filling missing values with median: {column_name}")
-    TR_FILLED_NA_MEDIAN = QT_TR_NOOP(
-        "Filled missing values with median in column: {column_name}"
-    )
+    TR_FILLED_NA_MEDIAN = QT_TR_NOOP("Filled missing values with median in column: {column_name}")
 
     TR_FILL_NA_MODE_OPERATION = QT_TR_NOOP("fill missing with mode")
     TR_FILLING_NA_MODE = QT_TR_NOOP("Filling missing values with mode: {column_name}")
-    TR_FILLED_NA_MODE = QT_TR_NOOP(
-        "Filled missing values with mode in column: {column_name}"
-    )
+    TR_FILLED_NA_MODE = QT_TR_NOOP("Filled missing values with mode in column: {column_name}")
 
     TR_FILL_NA_CUSTOM_OPERATION = QT_TR_NOOP("fill missing with custom value")
-    TR_FILLING_NA_CUSTOM = QT_TR_NOOP(
-        "Filling missing values with '{custom_value}' in column: {column_name}"
-    )
-    TR_FILLED_NA_CUSTOM = QT_TR_NOOP(
-        "Filled missing values with '{custom_value}' in column: {column_name}"
-    )
+    TR_FILLING_NA_CUSTOM = QT_TR_NOOP("Filling missing values with '{custom_value}' in column: {column_name}")
+    TR_FILLED_NA_CUSTOM = QT_TR_NOOP("Filled missing values with '{custom_value}' in column: {column_name}")
     TR_NOT_SUPPORTED_DATATYPE_TITLE = QT_TR_NOOP("Datatype not supported")
-    TR_NOT_SUPPORTED_DATATYPE_TEXT = QT_TR_NOOP(
-        "Column '{column_name}' can not be filled with a custom value."
-    )
+    TR_NOT_SUPPORTED_DATATYPE_TEXT = QT_TR_NOOP("Column '{column_name}' can not be filled with a custom value.")
 
     # ------------------------------------------------------------------
     # i18n helpers
@@ -120,7 +104,10 @@ class ResultTabHeaderFillActions:
             [QTableView, int],
             tuple[bool, pd.DataFrame | None, str | None, pd.Series | None],
         ],
-        get_series_semantics: Callable[[QTableView, int], SeriesSemantics | None, ],
+        get_series_semantics: Callable[
+            [QTableView, int],
+            SeriesSemantics | None,
+        ],
         apply_new_dataframe: Callable[
             [QTableView, pd.DataFrame, str],
             None,
@@ -201,10 +188,7 @@ class ResultTabHeaderFillActions:
         Returns:
             None
         """
-        ok, df, col, s = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, s = self._resolve_df_col_series(view, column)
 
         if not ok or df is None or col is None or s is None:
             return
@@ -272,10 +256,7 @@ class ResultTabHeaderFillActions:
         Returns:
             None
         """
-        ok, df, col, s = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, s = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None or s is None:
             return
 
@@ -342,10 +323,7 @@ class ResultTabHeaderFillActions:
         Returns:
             None
         """
-        ok, df, col, s = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, s = self._resolve_df_col_series(view, column)
 
         if not ok or df is None or col is None or s is None:
             return
@@ -413,10 +391,7 @@ class ResultTabHeaderFillActions:
         Returns:
             None
         """
-        ok, df, col, s = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, s = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None or s is None:
             return
 
@@ -500,7 +475,18 @@ class ResultTabHeaderFillActions:
                 if not ok:
                     return
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._fail(e)
             return
 

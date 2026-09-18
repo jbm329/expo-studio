@@ -4,6 +4,7 @@ This module provides a unified interface for displaying file and directory
 dialogs to the user, allowing them to open files, save files, and select
 directories.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -246,4 +247,3 @@ class NullFileDialogService(FileDialogService):
         if self._queue_dir:
             return self._queue_dir.pop(0)
         return ""  # simulate cancel
-

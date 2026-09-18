@@ -58,7 +58,7 @@ def test_fmt_num():
 
 def test_fmt_int():
     result = fmt_int(1234)
-    assert any(s in result for s in ["1 234", "1\u00A0234", "1,234", "1.234"])
+    assert any(s in result for s in ["1 234", "1\u00a0234", "1,234", "1.234"])
 
 
 def test_fmt_shape():

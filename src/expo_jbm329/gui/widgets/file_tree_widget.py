@@ -1,4 +1,5 @@
 """File tree widget."""
+
 from __future__ import annotations
 
 from PyQt6.QtCore import QDir, Qt
@@ -18,11 +19,7 @@ class FileTreeWidget(QTreeView):
 
         self._model = QFileSystemModel(self)
         self._model.setRootPath("")
-        self._model.setFilter(
-            QDir.Filter.AllDirs
-            | QDir.Filter.NoDotAndDotDot
-            | QDir.Filter.Files
-        )
+        self._model.setFilter(QDir.Filter.AllDirs | QDir.Filter.NoDotAndDotDot | QDir.Filter.Files)
 
         self.setModel(self._model)
 

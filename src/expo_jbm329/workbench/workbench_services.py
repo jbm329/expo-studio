@@ -49,6 +49,7 @@ if TYPE_CHECKING:
 
 class WorkbenchServices:
     """Container for workbench controllers and UI-facing services."""
+
     def __init__(
         self,
         busy_overlay: BusyOverlayController,
@@ -72,7 +73,7 @@ class WorkbenchServices:
         highlighter_theme_service: HighlighterThemeService,
         join: JoinController,
         concat: ConcatController,
-        dialog_state: DialogState
+        dialog_state: DialogState,
     ):
         """Initialize the workbench service container.
 
@@ -499,12 +500,8 @@ class WorkbenchServices:
             parent_widget=ui.parent,
             async_ops=async_ops,
             results=results,
-            get_active_tab_title=lambda: ui.result_tabs.tabText(
-                ui.result_tabs.currentIndex()
-            ).strip(),
-            list_tab_titles=lambda: [
-                ui.result_tabs.tabText(i).strip() for i in range(ui.result_tabs.count())
-            ],
+            get_active_tab_title=lambda: ui.result_tabs.tabText(ui.result_tabs.currentIndex()).strip(),
+            list_tab_titles=lambda: [ui.result_tabs.tabText(i).strip() for i in range(ui.result_tabs.count())],
             get_df_for_tab=lambda title: results.get_df_by_title(title),
             set_status=ui.set_status,
             logger=app.log_ui,

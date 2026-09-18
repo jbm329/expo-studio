@@ -44,10 +44,7 @@ def gui_main() -> int:
     # segfault during interpreter shutdown. Avoid that native teardown path.
     # closeEvent has already stopped jobs, closed DB connections, and flushed app cleanup.
     # This only skips final Python/PyQt wrapper destruction.
-    if (
-        sys.platform.startswith("linux")
-        and os.environ.get("EXPO_HARD_EXIT_AFTER_QT", "1") == "1"
-    ):
+    if sys.platform.startswith("linux") and os.environ.get("EXPO_HARD_EXIT_AFTER_QT", "1") == "1":
         logging.shutdown()
         os._exit(exit_code)
 

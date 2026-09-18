@@ -39,4 +39,3 @@ def test_save_csv_can_be_cancelled_before_write(tmp_path: Path, writer: FileWrit
 
     with pytest.raises(ExportCancelledError):
         writer.save_csv(df, path, cancel_cb=lambda: True)
-

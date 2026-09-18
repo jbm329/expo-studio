@@ -26,4 +26,3 @@ def test_sort_actions_call_async_and_apply():
     ctrl.sort_ascending(QTableView(), 0)
 
     assert async_ops.run_dataframe_operation.called
-

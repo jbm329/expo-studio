@@ -59,6 +59,7 @@ Important invariants:
 This separation is intentional and should be preserved when extending
 status, progress, or UI feedback behavior.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -82,6 +83,7 @@ class StatusBarController:
     managing permanent and transient status messages, displaying data shape
     (rows/columns), and controlling the progress bar.
     """
+
     # --- i18n markers (pylupdate6-visible) -----------------------------
     TR_SET_SHAPE_STATUS_DEFAULT = QT_TR_NOOP("Rows: -  |  Columns: -")
     TR_SET_SHAPE_STATUS = QT_TR_NOOP("Rows: {rows}  |  Columns: {columns}")
@@ -134,9 +136,7 @@ class StatusBarController:
 
         # Shape label
         self.shape_label.setObjectName("shapeLabel")
-        self.shape_label.setStyleSheet(
-            "QLabel#shapeLabel { padding-left: 12px; color: #444; }"
-        )
+        self.shape_label.setStyleSheet("QLabel#shapeLabel { padding-left: 12px; color: #444; }")
         sb.addPermanentWidget(self.shape_label)
 
         # Optional progress label

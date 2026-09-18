@@ -50,9 +50,7 @@ def make_controller(tmp_path: Path):
     set_file_path = MagicMock()
     update_tab_ui = MagicMock()
     get_editor_text = MagicMock(return_value="SELECT 1")
-    create_tab = MagicMock(
-        return_value=EditorTab(tab_id="tab-1", base_title="query.sql")
-    )
+    create_tab = MagicMock(return_value=EditorTab(tab_id="tab-1", base_title="query.sql"))
     insert_sql_into_tab = MagicMock()
     open_data_file = MagicMock()
     dialog_state = DialogState()
@@ -137,4 +135,3 @@ def test_open_html_file_returns_browser_result(tmp_path: Path, monkeypatch):
 
     assert ctrl.open_html_file(path=html_path) is True
     assert mocks["status"].called
-

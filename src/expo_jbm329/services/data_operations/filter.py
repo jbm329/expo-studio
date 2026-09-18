@@ -36,6 +36,7 @@ logger = logging.getLogger("applogger.service")
 # Basic equality filters
 # =====================================================================
 
+
 def filter_equals(
     df: pd.DataFrame,
     column: str,
@@ -127,6 +128,7 @@ def filter_not_equals(
 # String-based filters
 # =====================================================================
 
+
 def filter_contains(
     df: pd.DataFrame,
     column: str,
@@ -161,14 +163,13 @@ def filter_contains(
 
     s = df[column].astype("string")
 
-    return df.loc[
-        s.str.contains(substring, case=case, na=False)
-    ].copy()
+    return df.loc[s.str.contains(substring, case=case, na=False)].copy()
 
 
 # =====================================================================
 # NA filters
 # =====================================================================
+
 
 def filter_isna(
     df: pd.DataFrame,
@@ -224,6 +225,7 @@ def filter_notna(
 # Comparison-based filters
 # =====================================================================
 
+
 def filter_compare(
     df: pd.DataFrame,
     column: str,
@@ -272,9 +274,7 @@ def filter_compare(
         return df.query(f"`{column}` {op} @query_value", local_dict={"query_value": query_value}).copy()
 
     msg = f"Column '{column}' must be numeric or datetime for filter_compare."
-    raise TypeError(
-        msg
-    )
+    raise TypeError(msg)
 
 
 def filter_between(
@@ -318,9 +318,7 @@ def filter_between(
 
     if inclusive not in {"both", "left", "right", "neither"}:
         msg = "inclusive must be one of: both | left | right | neither"
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
 
     s = df[column]
 
@@ -334,9 +332,7 @@ def filter_between(
 
     else:
         msg_0 = f"Column '{column}' must be numeric or datetime for filter_between."
-        raise TypeError(
-            msg_0
-        )
+        raise TypeError(msg_0)
 
     mask = s.between(low_val, high_val, inclusive=inclusive)
 
@@ -346,6 +342,7 @@ def filter_between(
 # =====================================================================
 # Custom predicate
 # =====================================================================
+
 
 def filter_custom(
     df: pd.DataFrame,
@@ -373,8 +370,6 @@ def filter_custom(
 
     if not isinstance(mask, pd.Series):
         msg = "filter_custom predicate must return a pandas Series."
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
 
     return df.loc[mask].copy()

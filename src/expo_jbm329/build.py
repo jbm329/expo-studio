@@ -50,11 +50,7 @@ def _build_metadata() -> dict:
         meta = metadata("expo_jbm329")
 
         version = meta.get("Version", "unknown")
-        license_ = (
-            meta.get("License-Expression")
-            or meta.get("License")
-            or "GPL-3.0-or-later"
-        )
+        license_ = meta.get("License-Expression") or meta.get("License") or "GPL-3.0-or-later"
     except PackageNotFoundError:
         version = "dev"
         license_ = "GPL-3.0-or-later"
@@ -123,7 +119,18 @@ def _onerror(func, path, _exc_info):
     _chmod_writable(Path(path))
     try:
         func(path)
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         raise
 
 
@@ -148,7 +155,18 @@ def _safe_rmtree(path: Path, retries: int = 6, backoff: float = 0.2) -> bool:
         try:
             shutil.rmtree(path, onerror=_onerror)
             return True
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             time.sleep(backoff * (i + 1))
 
     return False
@@ -185,10 +203,7 @@ def _pre_clean(root: Path):
             print(f"[pre-clean] Removing {p} ...")
             ok = _safe_rmtree(p)
             if not ok:
-                print(
-                    "[pre-clean] WARNING: Could not fully clean directory "
-                    "(locked files?) - continuing anyway."
-                )
+                print("[pre-clean] WARNING: Could not fully clean directory (locked files?) - continuing anyway.")
 
 
 def _ensure_app_ico(root: Path) -> Path:
@@ -203,29 +218,14 @@ def _ensure_app_ico(root: Path) -> Path:
     Returns:
         Path to the generated or existing ICO file.
     """
-    png_path = (
-        root
-        / "src"
-        / "expo_jbm329"
-        / "workbench"
-        / "icon"
-        / "themes"
-        / "light"
-        / "app.png"
-    )
+    png_path = root / "src" / "expo_jbm329" / "workbench" / "icon" / "themes" / "light" / "app.png"
     ico_path = root / "src" / "expo_jbm329" / "workbench" / "icon" / "app.ico"
 
     if not png_path.exists():
-        print(
-            f"[icon] Source PNG not found: {png_path} "
-            "- skipping ICO generation."
-        )
+        print(f"[icon] Source PNG not found: {png_path} - skipping ICO generation.")
         return ico_path
 
-    regenerate = (
-        not ico_path.exists()
-        or png_path.stat().st_mtime > ico_path.stat().st_mtime
-    )
+    regenerate = not ico_path.exists() or png_path.stat().st_mtime > ico_path.stat().st_mtime
 
     if regenerate:
         print(f"[icon] Generating ICO from {png_path} -> {ico_path}")
@@ -259,9 +259,7 @@ def _archive_onedir_with_docs(
     root_name = src_dir.name  # "expo"
 
     if platform == "windows":
-        with zipfile.ZipFile(
-            archive_path, "w", compression=zipfile.ZIP_DEFLATED
-        ) as zf:
+        with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
             # Application files
             for p in src_dir.rglob("*"):
                 if p.is_file():
@@ -286,6 +284,7 @@ def _archive_onedir_with_docs(
 
             # RELEASE-NOTES
             import io
+
             data = release_notes.encode("utf-8")
             info = tarfile.TarInfo(name=f"{root_name}/RELEASE-NOTES.txt")
             info.size = len(data)
@@ -534,9 +533,7 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:
 
     # Generate a basic onedir spec file on first run
     if not spec_path.exists():
-        print(
-            "[build-exe] expo.spec not found - generating base spec (onedir) ..."
-        )
+        print("[build-exe] expo.spec not found - generating base spec (onedir) ...")
         cmd_gen = [
             "uv",
             "run",
@@ -597,10 +594,7 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:
     if exe_path.exists():
         print(f"[build-exe] SUCCESS: {exe_path}")
     else:
-        print(
-            "[build-exe] Build completed but executable was not found "
-            "at the expected location."
-        )
+        print("[build-exe] Build completed but executable was not found at the expected location.")
         for p in sorted(default_dist_root.rglob("*.exe")):
             print(" -", p.relative_to(root))
 
@@ -616,9 +610,7 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:
                 shutil.copy2(exe_onefile, out_exe)
                 print(f"[release] Copied onefile executable to: {out_exe}")
             else:
-                print(
-                    "[release] WARNING: Onefile artifact was not found."
-                )
+                print("[release] WARNING: Onefile artifact was not found.")
         else:
             # ONEDIR -> create platform-specific archive (zip or tar.gz)
             onedir_dir = default_dist_root / "expo"
@@ -639,9 +631,7 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:
                     if installer_out_dir is not None:
                         print(f"[release] Created Windows installer in: {installer_out_dir}")
                     else:
-                        archive_name = (
-                            f"{meta['app_slug']}-{meta['version']}-windows-onedir-{date_str}.zip"
-                        )
+                        archive_name = f"{meta['app_slug']}-{meta['version']}-windows-onedir-{date_str}.zip"
                         archive_path = rel_root / archive_name
                         _archive_onedir_with_docs(
                             src_dir=onedir_dir,
@@ -663,9 +653,7 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:
                     )
                     print(f"[release] Created archive: {archive_path}")
             else:
-                print(
-                    "[release] WARNING: onedir artifact was not found."
-                )
+                print("[release] WARNING: onedir artifact was not found.")
 
     return 0
 

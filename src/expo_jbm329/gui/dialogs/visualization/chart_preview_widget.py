@@ -1,4 +1,5 @@
 """Chart preview widget for visualization dialog."""
+
 from __future__ import annotations
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg

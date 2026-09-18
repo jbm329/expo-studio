@@ -95,4 +95,3 @@ def test_copy_requested_opens_dialog():
 
     rest_controller.copy_preset.assert_called_once_with("preset")
     open_dialog.assert_called_once_with("new")
-

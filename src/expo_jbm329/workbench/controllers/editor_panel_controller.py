@@ -228,9 +228,7 @@ class EditorPanelController(QWidget):
         editor_widget = EditorWidget(self._tab_widget)
         editor_widget.tab_id = tab.tab_id
         editor_widget.editor_controller.suppress_change()
-        editor_widget.editor_controller.set_on_change(
-            functools.partial(self._on_editor_text_changed, tab.tab_id)
-        )
+        editor_widget.editor_controller.set_on_change(functools.partial(self._on_editor_text_changed, tab.tab_id))
 
         editor_widget.apply_tab_state(tab)
 
@@ -549,11 +547,7 @@ class EditorPanelController(QWidget):
             keep_tab_id: The ID of the tab to keep open, if any.
         """
         tabs = list(self._widgets.keys())
-        dirty = [
-            tid
-            for tid in tabs
-            if self._tab_manager.get_tab(tid) and self._tab_manager.get_tab(tid).is_dirty
-        ]
+        dirty = [tid for tid in tabs if self._tab_manager.get_tab(tid) and self._tab_manager.get_tab(tid).is_dirty]
         count_tabs = len(tabs)
         dirty_tabs = len(dirty)
         msg = self._tr_fmt(
@@ -791,7 +785,18 @@ class EditorPanelController(QWidget):
 
         try:
             engine = self._get_connection_engine(connection_name)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.debug(
                 "EditorPanelController: failed to resolve autocomplete dialect (conn=%s)",
                 connection_name,
@@ -825,16 +830,14 @@ class EditorPanelController(QWidget):
 
         if not tab:
             self._logger.debug(
-                "EditorPanelController: autocomplete rebuild skipped "
-                "(changed_conn=%s, reason=no active tab)",
+                "EditorPanelController: autocomplete rebuild skipped (changed_conn=%s, reason=no active tab)",
                 connection_name,
             )
             return
 
         if tab.connection_name != connection_name:
             self._logger.debug(
-                "EditorPanelController: autocomplete rebuild skipped "
-                "(changed_conn=%s, active_conn=%s)",
+                "EditorPanelController: autocomplete rebuild skipped (changed_conn=%s, active_conn=%s)",
                 connection_name,
                 tab.connection_name,
             )

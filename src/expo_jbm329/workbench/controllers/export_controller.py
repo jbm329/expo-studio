@@ -42,6 +42,7 @@ if TYPE_CHECKING:
 
 class ExportKind(Enum):
     """Enumeration of export kinds."""
+
     CSV = auto()
     EXCEL = auto()
     DATAFILE = auto()
@@ -57,6 +58,7 @@ class ExportController:
     multiple datasets. It manages file dialogs, coordinates with FileJobService
     for background processing, and provides comprehensive logging and error handling.
     """
+
     # --- i18n markers (pylupdate6-visible) -----------------------------
     # No dataset
     TR_NO_DATASET_TITLE = QT_TR_NOOP("No dataset")
@@ -73,10 +75,9 @@ class ExportController:
 
     # Datafile Export
     TR_KIND_DATAFILE = QT_TR_NOOP("Export data to binary data file")
-    TR_EXPORT_DATAFILE_DIALOG_FILTER = QT_TR_NOOP("All data files (*.df *.feather *.ft *.parquet);;"
-                                                  "Pickle (*.df);;"
-                                                  "Feather (*.feather *.ft);;"
-                                                  "Parquet (*.parquet)")
+    TR_EXPORT_DATAFILE_DIALOG_FILTER = QT_TR_NOOP(
+        "All data files (*.df *.feather *.ft *.parquet);;Pickle (*.df);;Feather (*.feather *.ft);;Parquet (*.parquet)"
+    )
 
     # Profile report
     TR_KIND_PROFILE = QT_TR_NOOP("Generate data profile report")
@@ -95,7 +96,8 @@ class ExportController:
     # TR_EXPORT_COMPARISON_PROFILE_DIALOG_TITLE = QT_TR_NOOP("Save data comparison profile report")
     TR_EXPORT_COMPARISON_PROFILE_DIALOG_FILTER = QT_TR_NOOP("HTML files (*.html)")
     TR_EXPORT_COMPARISON_PROFILE_STARTED_MSG = QT_TR_NOOP(
-        "Generating data profile comparison report with {datasets_cnt} datasets…")
+        "Generating data profile comparison report with {datasets_cnt} datasets…"
+    )
 
     # General messages
     TR_EXPORT_STARTED_MSG = QT_TR_NOOP("Exporting data to {file_name}…")
@@ -147,21 +149,21 @@ class ExportController:
     # Initialization
     # ------------------------------------------------------------------
     def __init__(
-            self,
-            *,
-            parent_widget: QWidget,
-            async_ops: AsyncOperationController,
-            operation_target: QWidget,
-            results,
-            set_status: Callable[[str, int | None], None],
-            file_jobs,
-            get_tab_title: Callable[[], str],
-            open_url: Callable[[str], bool],
-            data_io,
-            dialogs: DialogService | None = None,
-            file_dialogs: FileDialogService | None = None,
-            dialog_state: DialogState,
-            logger: logging.Logger | None = None,
+        self,
+        *,
+        parent_widget: QWidget,
+        async_ops: AsyncOperationController,
+        operation_target: QWidget,
+        results,
+        set_status: Callable[[str, int | None], None],
+        file_jobs,
+        get_tab_title: Callable[[], str],
+        open_url: Callable[[str], bool],
+        data_io,
+        dialogs: DialogService | None = None,
+        file_dialogs: FileDialogService | None = None,
+        dialog_state: DialogState,
+        logger: logging.Logger | None = None,
     ):
         """Initialize the ExportController.
 
@@ -215,13 +217,21 @@ class ExportController:
         try:
             self._documents_dir = get_documents_dir(settings)
             self._logger.debug(
-                "ExportController: settings reloaded (documents_dir=%s).",
-                fmt_path(self._get_documents_dir())
+                "ExportController: settings reloaded (documents_dir=%s).", fmt_path(self._get_documents_dir())
             )
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
-            self._logger.exception(
-                "ExportController: failed to reload settings: %s", e
-            )
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
+            self._logger.exception("ExportController: failed to reload settings: %s", e)
 
     # ==================================================================
     # Logging helpers (corr-id & safe shape)
@@ -232,14 +242,7 @@ class ExportController:
         return uuid.uuid4().hex
 
     def _log_start_export(
-            self,
-            *,
-            corr_id: str,
-            kind: ExportKind,
-            suggested_path: str,
-            rows: str,
-            cols: str,
-            scope: str | None = None
+        self, *, corr_id: str, kind: ExportKind, suggested_path: str, rows: str, cols: str, scope: str | None = None
     ) -> None:
         """Unified start log for exports.
 
@@ -248,7 +251,12 @@ class ExportController:
         """
         self._logger.info(
             "ExportController: export requested (corr=%s, kind=%s, scope=%s, rows=%s, cols=%s, suggested_path=%s)",
-            corr_id, kind, scope or "-", rows, cols, fmt_path(suggested_path)
+            corr_id,
+            kind,
+            scope or "-",
+            rows,
+            cols,
+            fmt_path(suggested_path),
         )
 
     # ==================================================================
@@ -275,15 +283,8 @@ class ExportController:
             tuple[str, str]: The (chosen_path, selected_filter) or ("", "") if cancelled.
         """
         initial = str(Path(base_dir) / default_name)
-        req = SaveFileRequest(
-            title=title,
-            initial_path=initial,
-            filter_str=filter_str
-        )
-        return self._file_dialogs.get_save_filename(
-            parent=self._parent,
-            req=req
-        )
+        req = SaveFileRequest(title=title, initial_path=initial, filter_str=filter_str)
+        return self._file_dialogs.get_save_filename(parent=self._parent, req=req)
 
     def _run_export_job(
         self,
@@ -314,8 +315,7 @@ class ExportController:
             corr_id: Correlation ID for logging.
         """
         self._logger.debug(
-            "ExportController: scheduling async export job "
-            "(corr=%s, kind=%s, scope=%s, suffix=%s, indeterminate=%s)",
+            "ExportController: scheduling async export job (corr=%s, kind=%s, scope=%s, suffix=%s, indeterminate=%s)",
             corr_id,
             kind,
             scope,
@@ -365,13 +365,8 @@ class ExportController:
     def _get_documents_dir(self) -> Path:
         """Return documents directory, guaranteed to be initialized."""
         if self._documents_dir is None:
-            msg = (
-                "ExportController: documents_dir not initialized. "
-                "reload_settings() must be called before export."
-            )
-            raise RuntimeError(
-                msg
-            )
+            msg = "ExportController: documents_dir not initialized. reload_settings() must be called before export."
+            raise RuntimeError(msg)
         return self._documents_dir
 
     # ==================================================================
@@ -421,7 +416,10 @@ class ExportController:
 
         self._logger.debug(
             "ExportController: save dialog result (corr=%s, kind=%s, selected_filter=%r, chosen=%s)",
-            corr, kind, selected_filter, fmt_path(path)
+            corr,
+            kind,
+            selected_filter,
+            fmt_path(path),
         )
 
         path = self._file_jobs.coerce_save_suffix(path, selected_filter, fallback=".csv")
@@ -431,9 +429,7 @@ class ExportController:
             Path(path).parent,
         )
 
-        self._logger.debug(
-            "ExportController: coerced path (corr=%s, kind=%s, out=%s)",
-            corr, kind, fmt_path(path))
+        self._logger.debug("ExportController: coerced path (corr=%s, kind=%s, out=%s)", corr, kind, fmt_path(path))
 
         def job(df_in, dest, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None):
             return self._data_io.export_df_csv(
@@ -505,7 +501,10 @@ class ExportController:
 
         self._logger.debug(
             "ExportController: save dialog result (corr=%s, kind=%s, selected_filter=%r, chosen=%s)",
-            corr, kind, selected_filter, fmt_path(path)
+            corr,
+            kind,
+            selected_filter,
+            fmt_path(path),
         )
 
         path = self._file_jobs.coerce_save_suffix(path, selected_filter, fallback=".xlsx")
@@ -515,8 +514,7 @@ class ExportController:
             Path(path).parent,
         )
 
-        self._logger.debug(
-            "ExportController: coerced path (corr=%s, kind=%s, out=%s)", corr, kind, fmt_path(path))
+        self._logger.debug("ExportController: coerced path (corr=%s, kind=%s, out=%s)", corr, kind, fmt_path(path))
 
         def job(df_in, dest, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None):
             return self._data_io.export_df_excel(
@@ -585,7 +583,10 @@ class ExportController:
 
         self._logger.debug(
             "ExportController: save dialog result (corr=%s, kind=%s, selected_filter=%r, chosen=%s)",
-            corr, kind, selected_filter, fmt_path(path)
+            corr,
+            kind,
+            selected_filter,
+            fmt_path(path),
         )
 
         path = self._file_jobs.coerce_save_suffix(path, selected_filter, fallback=".df")
@@ -597,11 +598,7 @@ class ExportController:
 
         suffix = Path(path).suffix.lower()
         self._logger.debug(
-            "ExportController: coerced path (corr=%s, kind=%s, out=%s, suffix=%s)",
-            corr,
-            kind,
-            fmt_path(path),
-            suffix
+            "ExportController: coerced path (corr=%s, kind=%s, out=%s, suffix=%s)", corr, kind, fmt_path(path), suffix
         )
 
         def job(df_in, dest, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None):
@@ -684,7 +681,10 @@ class ExportController:
 
         self._logger.debug(
             "ExportController: save dialog result (corr=%s, kind=%s, selected_filter=%r, chosen=%s)",
-            corr, kind, selected_filter, fmt_path(path)
+            corr,
+            kind,
+            selected_filter,
+            fmt_path(path),
         )
 
         path = self._file_jobs.coerce_save_suffix(path, selected_filter, fallback=".html")
@@ -697,11 +697,7 @@ class ExportController:
         suffix = Path(path).suffix.lower()
 
         self._logger.debug(
-            "ExportController: coerced path (corr=%s, kind=%s, out=%s, suffix=%s)",
-            corr,
-            kind,
-            fmt_path(path),
-            suffix
+            "ExportController: coerced path (corr=%s, kind=%s, out=%s, suffix=%s)", corr, kind, fmt_path(path), suffix
         )
 
         title = self._get_tab_title() or "Dataset"
@@ -780,14 +776,18 @@ class ExportController:
 
         self._logger.info(
             "ExportController: export requested (corr=%s, kind=%s, scope=%s, datasets=%s, suggested_path=%s)",
-            corr, kind, scope or "-", len(data_all), fmt_path(suggested)
+            corr,
+            kind,
+            scope or "-",
+            len(data_all),
+            fmt_path(suggested),
         )
 
         path, selected_filter = self._choose_export_path(
             title=self._tr(self._EXPORT_LABELS[kind]),
             base_dir=str(start_dir),
             default_name=default_name,
-            filter_str=self._tr(self.TR_EXPORT_COMPARISON_PROFILE_DIALOG_FILTER)
+            filter_str=self._tr(self.TR_EXPORT_COMPARISON_PROFILE_DIALOG_FILTER),
         )
         if not path:
             self._logger.debug("ExportController: export canceled by user (corr=%s, kind=%s)", corr, kind)
@@ -795,18 +795,17 @@ class ExportController:
 
         self._logger.debug(
             "ExportController: save dialog result (corr=%s, kind=%s, selected_filter=%r, chosen=%s)",
-            corr, kind, selected_filter, fmt_path(path)
+            corr,
+            kind,
+            selected_filter,
+            fmt_path(path),
         )
 
         path = self._file_jobs.coerce_save_suffix(path, selected_filter, fallback=".html")
 
         suffix = Path(path).suffix.lower()
         self._logger.debug(
-            "ExportController: coerced path (corr=%s, kind=%s, out=%s, suffix=%s)",
-            corr,
-            kind,
-            fmt_path(path),
-            suffix
+            "ExportController: coerced path (corr=%s, kind=%s, out=%s, suffix=%s)", corr, kind, fmt_path(path), suffix
         )
 
         # titles_str = ", ".join([name for _, name in data_all])
@@ -863,15 +862,22 @@ class ExportController:
                     elapsed=None,
                     path=out_path,
                     cancelled=False,
-                    error=self._tr(self.TR_EXCEPT_UNKNOWN_RESULT)
+                    error=self._tr(self.TR_EXCEPT_UNKNOWN_RESULT),
                 )
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             res = JobResult(
-                ok=False,
-                elapsed=None,
-                path=out_path,
-                cancelled=False,
-                error=self._tr(self.TR_EXCEPT_UNKNOWN_RESULT)
+                ok=False, elapsed=None, path=out_path, cancelled=False, error=self._tr(self.TR_EXCEPT_UNKNOWN_RESULT)
             )
 
         corr = res.corr_id or "-"
@@ -881,20 +887,14 @@ class ExportController:
             file_name = Path(out_path).name
 
             self._logger.info(
-                "ExportController: export done (corr=%s, kind=%s, out=%s)",
-                corr,
-                kind,
-                fmt_path(out_path)
+                "ExportController: export done (corr=%s, kind=%s, out=%s)", corr, kind, fmt_path(out_path)
             )
 
             if res.elapsed:
                 time_str = fmt_time(res.elapsed)
                 msg_str = self._tr_fmt(
-                    self.TR_DONE_STATUS_TIME_FILE,
-                    kind_label=kind_label,
-                    time_str=time_str,
-                    file_name=file_name
-                    )
+                    self.TR_DONE_STATUS_TIME_FILE, kind_label=kind_label, time_str=time_str, file_name=file_name
+                )
             else:
                 msg_str = self._tr_fmt(self.TR_DONE_STATUS_FILE, kind_label=kind_label, file_name=file_name)
 
@@ -907,11 +907,7 @@ class ExportController:
         if res.cancelled:
             self._logger.info("ExportController: export cancelled (corr=%s, kind=%s)", corr, kind)
             self._set_status(self._tr_fmt(self.TR_DONE_STATUS_CANCEL, kind_label=kind_label), 8000)
-            self._dialogs.info(
-                parent=self._parent,
-                title=kind_label,
-                text=self._tr(self.TR_DONE_CANCEL_DIALOG_TEXT)
-            )
+            self._dialogs.info(parent=self._parent, title=kind_label, text=self._tr(self.TR_DONE_CANCEL_DIALOG_TEXT))
             return
 
         # Failed export
@@ -920,12 +916,10 @@ class ExportController:
             "ExportController: export failed (corr=%s, kind=%s): %s",
             corr,
             kind,
-            res.error or self._tr(self.TR_EXCEPT_UNKNOWN_ERROR)
+            res.error or self._tr(self.TR_EXCEPT_UNKNOWN_ERROR),
         )
         self._set_status(fail_status, 8000)
-        self._dialogs.warn(
-            parent=self._parent, title=kind_label, text=res.error or fail_status
-        )
+        self._dialogs.warn(parent=self._parent, title=kind_label, text=res.error or fail_status)
 
     def _on_export_error(self, err: str, kind: ExportKind):
         corr = "-"
@@ -939,8 +933,4 @@ class ExportController:
         self._logger.error("ExportController: export failed (corr=%s, kind=%s): %s", corr, kind, msg)
         self._set_status(self._tr_fmt(self.TR_DONE_STATUS_FAIL, kind_label=kind_label), 8000)
 
-        self._dialogs.critical(
-            parent=self._parent,
-            title=kind_label,
-            text=msg
-        )
+        self._dialogs.critical(parent=self._parent, title=kind_label, text=msg)

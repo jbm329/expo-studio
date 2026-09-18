@@ -36,6 +36,7 @@ def dialogs() -> NullDialogService:
 # Basic behaviour
 # ----------------------------------------------------------------------
 
+
 def test_info_is_logged(dialogs: NullDialogService, parent: QWidget) -> None:
     dialogs.info(parent, "Title", "Text")
     assert dialogs.calls[-1][0] == "info"
@@ -163,6 +164,7 @@ def test_prompt_filter_match_override_used_once(
 # Category rename
 # ----------------------------------------------------------------------
 
+
 def test_prompt_category_rename_cancel(
     dialogs: NullDialogService,
     parent: QWidget,
@@ -209,6 +211,7 @@ def test_prompt_category_rename_override(
 # Category set order
 # ----------------------------------------------------------------------
 
+
 def test_prompt_category_set_order_override(
     dialogs: NullDialogService,
     parent: QWidget,
@@ -239,6 +242,7 @@ def test_prompt_category_set_order_override(
 # Category conversion
 # ----------------------------------------------------------------------
 
+
 def test_prompt_category_conversion_override(
     dialogs: NullDialogService,
     parent: QWidget,
@@ -266,6 +270,7 @@ def test_prompt_category_conversion_override(
 # ----------------------------------------------------------------------
 # Boolean conversion
 # ----------------------------------------------------------------------
+
 
 def test_prompt_boolean_conversion_override(
     dialogs: NullDialogService,
@@ -321,10 +326,9 @@ def test_prompt_datetime_conversion_override(
 # One‑shot behaviour is consistent
 # ----------------------------------------------------------------------
 
+
 def test_override_is_consumed(dialogs: NullDialogService, parent: QWidget) -> None:
-    dialogs.set_next_prompt_filter_match(
-        {"value": "x", "case_sensitive": False, "ok": True}
-    )
+    dialogs.set_next_prompt_filter_match({"value": "x", "case_sensitive": False, "ok": True})
 
     dialogs.prompt_filter_match(
         parent,

@@ -39,8 +39,10 @@ def test_sqlite_driver_reuses_engine_and_executes_df():
     engine = MagicMock()
     engine.connect.return_value.__enter__.return_value = object()
 
-    with patch("expo_jbm329.db.drivers.sa_sqlite.create_engine", return_value=engine) as mock_create, \
-         patch("expo_jbm329.db.drivers.sa_sqlite.pd.read_sql", return_value=pd.DataFrame({"x": [1]})) as mock_read:
+    with (
+        patch("expo_jbm329.db.drivers.sa_sqlite.create_engine", return_value=engine) as mock_create,
+        patch("expo_jbm329.db.drivers.sa_sqlite.pd.read_sql", return_value=pd.DataFrame({"x": [1]})) as mock_read,
+    ):
         df = driver.execute_df(cfg, "SELECT 1")
         df2 = driver.execute_df(cfg, "SELECT 1")
 
@@ -67,8 +69,10 @@ def test_mysql_driver_builds_url_and_connect_args():
     engine = MagicMock()
     engine.connect.return_value.__enter__.return_value = object()
 
-    with patch("expo_jbm329.db.drivers.sa_mysql.create_engine", return_value=engine) as mock_create, \
-         patch("expo_jbm329.db.drivers.sa_mysql.pd.read_sql", return_value=pd.DataFrame({"x": [1]})):
+    with (
+        patch("expo_jbm329.db.drivers.sa_mysql.create_engine", return_value=engine) as mock_create,
+        patch("expo_jbm329.db.drivers.sa_mysql.pd.read_sql", return_value=pd.DataFrame({"x": [1]})),
+    ):
         driver.execute_df(cfg, "SELECT 1")
 
     _, kwargs = mock_create.call_args
@@ -90,10 +94,11 @@ def test_odbc_driver_cancels_and_executes_df():
     engine = MagicMock()
     engine.raw_connection.return_value = raw_conn
 
-    with patch("expo_jbm329.db.drivers.sa_odbc.create_engine", return_value=engine), \
-         patch("expo_jbm329.db.drivers.sa_odbc.time.sleep", side_effect=RuntimeError("stop")):
+    with (
+        patch("expo_jbm329.db.drivers.sa_odbc.create_engine", return_value=engine),
+        patch("expo_jbm329.db.drivers.sa_odbc.time.sleep", side_effect=RuntimeError("stop")),
+    ):
         df = driver.execute_df(cfg, "SELECT 1", job_id="job-1")
 
     assert list(df.columns) == ["id"]
     assert driver.cancel_execution("job-1") is False
-

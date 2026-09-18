@@ -3,6 +3,7 @@
 This module provides the FileJobService class, which coordinates importing, exporting,
 profiling, and classification of files within the application.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -44,6 +45,7 @@ class FileJobService:
     Notes:
       - All heavy I/O is executed through AsyncOperationController, which delegates execution to JobManager.
     """
+
     # --- i18n markers (pylupdate6-visible) -----------------------------
     TR_OPENED_SQL_FILE = QT_TR_NOOP("Opened SQL file: {file_name}")
     TR_SAVED_SQL_FILE = QT_TR_NOOP("Saved SQL file: {file_name}")
@@ -63,9 +65,7 @@ class FileJobService:
     TR_OPENED_DATA_FILE_ELAPSED = QT_TR_NOOP(
         "Completed: Opened file {file_name} - {rows} rows, {columns} columns ({elapsed_time})"
     )
-    TR_OPENED_DATA_FILE = QT_TR_NOOP(
-        "Completed: Opened file {file_name} - {rows} rows, {columns} columns"
-    )
+    TR_OPENED_DATA_FILE = QT_TR_NOOP("Completed: Opened file {file_name} - {rows} rows, {columns} columns")
     TR_PROCESSING = QT_TR_NOOP("Processing…")
 
     TR_MISSING = QT_TR_NOOP("(missing)")
@@ -176,8 +176,7 @@ class FileJobService:
         )
 
         self._logger.info(
-            "FileJobService: loading data file requested "
-            "(path=%s, suffix=%s, indeterminate=%s, corr=%s)",
+            "FileJobService: loading data file requested (path=%s, suffix=%s, indeterminate=%s, corr=%s)",
             fmt_path(p),
             suffix,
             indeterminate,
@@ -197,8 +196,7 @@ class FileJobService:
 
         def _work(*, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None, **_):
             self._logger.debug(
-                "FileJobService: data file job started "
-                "(corr=%s, job_id=%s, scope=%s, path=%s, tab_id=%s)",
+                "FileJobService: data file job started (corr=%s, job_id=%s, scope=%s, path=%s, tab_id=%s)",
                 corr,
                 job_id,
                 job_scope,
@@ -257,8 +255,7 @@ class FileJobService:
             self._results.bind_job_to_tab(pending_tab_id, jobid)
         else:
             self._logger.warning(
-                "FileJobService: could not bind file load job to pending tab "
-                "(corr=%s, tab_id=%s, path=%s).",
+                "FileJobService: could not bind file load job to pending tab (corr=%s, tab_id=%s, path=%s).",
                 corr,
                 pending_tab_id,
                 fmt_path(p),
@@ -288,9 +285,7 @@ class FileJobService:
 
         from expo_jbm329.services.job_result import JobResult
 
-        corr_eff = (
-                       getattr(payload, "corr_id", None) if isinstance(payload, JobResult) else None
-                   ) or corr
+        corr_eff = (getattr(payload, "corr_id", None) if isinstance(payload, JobResult) else None) or corr
 
         if self._is_shutting_down():
             self._logger.info(
@@ -302,8 +297,7 @@ class FileJobService:
 
         if not isinstance(payload, JobResult):
             self._logger.error(
-                "FileJobService: unexpected non-JobResult payload received "
-                "(corr=%s, path=%s, type=%s).",
+                "FileJobService: unexpected non-JobResult payload received (corr=%s, path=%s, type=%s).",
                 corr_eff,
                 fmt_path(path),
                 type(payload).__name__,
@@ -357,8 +351,7 @@ class FileJobService:
         df_obj = payload.data
         if not isinstance(df_obj, pd.DataFrame):
             self._logger.error(
-                "FileJobService: expected DataFrame in successful job result "
-                "(corr=%s, path=%s, tab_id=%s, type=%s)",
+                "FileJobService: expected DataFrame in successful job result (corr=%s, path=%s, tab_id=%s, type=%s)",
                 corr_eff,
                 fmt_path(path),
                 pending_tab_id,
@@ -435,8 +428,7 @@ class FileJobService:
         """
         if self._is_shutting_down():
             self._logger.info(
-                "FileJobService: data load error ignored during shutdown "
-                "(corr=%s, path=%s, tab_id=%s)",
+                "FileJobService: data load error ignored during shutdown (corr=%s, path=%s, tab_id=%s)",
                 corr,
                 fmt_path(path),
                 pending_tab_id,
@@ -624,7 +616,18 @@ class FileJobService:
 
         try:
             old_path.rename(new_path)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             msg = self._tr_fmt(self.TR_RENAME_FILE_FAILED_ERROR, error=str(e))
             self._set_status(self._tr(self.TR_RENAME_FILE_FAILED), 6000)
             return False, msg
@@ -644,7 +647,18 @@ class FileJobService:
 
         try:
             return bool(cb())
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.debug(
                 "FileJobService: shutdown state callback failed.",
                 exc_info=True,

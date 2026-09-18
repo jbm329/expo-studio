@@ -1,4 +1,5 @@
 """Dataframe join and concatenation operations."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -37,6 +38,7 @@ class JoinRequest:
         how: Join type: 'inner', 'left', 'right', 'outer'.
         suffixes: Suffixes for conflicting column names.
     """
+
     left: pd.DataFrame
     right: pd.DataFrame
     left_on: Sequence[str]
@@ -60,9 +62,7 @@ def join_dataframes(cfg: JoinRequest) -> pd.DataFrame:
     """
     if len(cfg.left_on) != len(cfg.right_on):
         msg = f"left_on and right_on must have same length (got {len(cfg.left_on)} vs {len(cfg.right_on)})"
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
 
     return cfg.left.merge(
         cfg.right,

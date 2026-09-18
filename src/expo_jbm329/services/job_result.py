@@ -3,6 +3,7 @@
 This module defines the JobResult class, which encapsulates the outcome of a
 background job, including success status, elapsed time, and data payload.
 """
+
 from dataclasses import dataclass
 from typing import Any
 
@@ -20,6 +21,7 @@ class JobResult:
         data: Optional payload returned by the job (e.g., a DataFrame).
         corr_id: Correlation identifier for logging.
     """
+
     ok: bool
     elapsed: float | None
     path: str | None = None

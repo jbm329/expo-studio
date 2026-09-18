@@ -13,13 +13,12 @@ from expo_jbm329.services.data_operations.analytics import (
 # summarize
 # =====================================================================
 
+
 def test_summarize_basic_structure():
-    df = pd.DataFrame(
-        {
-            "a": [1, 2, 3],
-            "b": ["x", "y", "z"],
-        }
-    )
+    df = pd.DataFrame({
+        "a": [1, 2, 3],
+        "b": ["x", "y", "z"],
+    })
 
     out = summarize(df)
 
@@ -42,13 +41,12 @@ def test_summarize_empty_dataframe():
 # null_stats
 # =====================================================================
 
+
 def test_null_stats_basic():
-    df = pd.DataFrame(
-        {
-            "a": [1, None, 2],
-            "b": [None, None, "x"],
-        }
-    )
+    df = pd.DataFrame({
+        "a": [1, None, 2],
+        "b": [None, None, "x"],
+    })
 
     out = null_stats(df)
 
@@ -74,6 +72,7 @@ def test_null_stats_empty_dataframe():
 # =====================================================================
 # get_column_profile
 # =====================================================================
+
 
 @patch("expo_jbm329.services.data_operations.analytics.profile_series")
 def test_get_column_profile_calls_profile_series(mock_profile_series):

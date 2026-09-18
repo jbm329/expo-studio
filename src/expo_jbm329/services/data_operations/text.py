@@ -34,6 +34,7 @@ logger = logging.getLogger("applogger.service")
 # Cell-level operations
 # =====================================================================
 
+
 def set_cell_value_text(
     df: pd.DataFrame,
     column: str,
@@ -74,6 +75,7 @@ def set_cell_value_text(
 # =====================================================================
 # Replacement helpers
 # =====================================================================
+
 
 def replace_values(
     df: pd.DataFrame,
@@ -131,6 +133,7 @@ def replace_values(
 # =====================================================================
 # Text normalization
 # =====================================================================
+
 
 def clean_text(
     df: pd.DataFrame,
@@ -225,12 +228,7 @@ def normalize_whitespace(df: pd.DataFrame, column: str) -> pd.DataFrame:
         msg = f"Column '{column}' not found."
         raise KeyError(msg)
 
-    s = (
-        df[column]
-        .astype("string")
-        .str.replace(r"\s+", " ", regex=True)
-        .str.strip()
-    )
+    s = df[column].astype("string").str.replace(r"\s+", " ", regex=True).str.strip()
 
     new_df = df.copy()
     new_df[column] = s
@@ -268,6 +266,7 @@ def strip_chars(df: pd.DataFrame, column: str, chars: str) -> pd.DataFrame:
 # Character filtering
 # =====================================================================
 
+
 def extract_digits(df: pd.DataFrame, column: str) -> pd.DataFrame:
     """Remove all non-digit characters from a column.
 
@@ -290,11 +289,7 @@ def extract_digits(df: pd.DataFrame, column: str) -> pd.DataFrame:
         raise KeyError(msg)
 
     new_df = df.copy()
-    new_df[column] = (
-        new_df[column]
-        .astype("string")
-        .str.replace(r"\D+", "", regex=True)
-    )
+    new_df[column] = new_df[column].astype("string").str.replace(r"\D+", "", regex=True)
 
     return new_df
 
@@ -332,11 +327,7 @@ def extract_letters(
     pattern = rf"[^{allowed}]+"
 
     new_df = df.copy()
-    new_df[column] = (
-        new_df[column]
-        .astype("string")
-        .str.replace(pattern, "", regex=True)
-    )
+    new_df[column] = new_df[column].astype("string").str.replace(pattern, "", regex=True)
 
     return new_df
 
@@ -344,6 +335,7 @@ def extract_letters(
 # =====================================================================
 # Case transformations
 # =====================================================================
+
 
 def to_title_case(df: pd.DataFrame, column: str) -> pd.DataFrame:
     """Convert text to title case.
@@ -409,6 +401,7 @@ def capitalize_first(df: pd.DataFrame, column: str) -> pd.DataFrame:
 # Substring operations
 # =====================================================================
 
+
 def replace_text(
     df: pd.DataFrame,
     column: str,
@@ -446,10 +439,7 @@ def replace_text(
 
     s = df[column].astype("string")
 
-    if case:
-        out = s.str.replace(old, new, regex=False)
-    else:
-        out = s.str.replace(old, new, case=False, regex=True)
+    out = s.str.replace(old, new, regex=False) if case else s.str.replace(old, new, case=False, regex=True)
 
     new_df = df.copy()
     new_df[column] = out.astype("string")
@@ -495,7 +485,18 @@ def insert_text(
             return pd.NA
         try:
             return value[:position] + insert + value[position:]
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return value
 
     new_df = df.copy()
@@ -507,6 +508,7 @@ def insert_text(
 # =====================================================================
 # Remove text
 # =====================================================================
+
 
 def remove_regex(
     df: pd.DataFrame,
@@ -537,13 +539,6 @@ def remove_regex(
         raise KeyError(msg)
 
     new_df = df.copy()
-    new_df[column] = (
-        new_df[column]
-        .astype("string")
-        .str.replace(pattern, "", regex=True)
-    )
+    new_df[column] = new_df[column].astype("string").str.replace(pattern, "", regex=True)
 
     return new_df
-
-
-

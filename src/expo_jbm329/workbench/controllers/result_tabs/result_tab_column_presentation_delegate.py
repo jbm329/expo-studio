@@ -1,4 +1,5 @@
 """Delegate controlling how column values are displayed."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, override

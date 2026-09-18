@@ -3,6 +3,7 @@
 This module provides a customized tab bar that supports theme-aware close
 buttons, per-tab closability flags, and Swedish translations.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -44,11 +45,7 @@ class TabBarProxyStyle(QProxyStyle):
             base = self.TAB_PADDING * 2
 
             # Wider padding for selected tab bold to prevent crowding
-            if (
-                option is not None
-                and hasattr(option, "state")
-                and option.state & QStyle.StateFlag.State_Selected
-            ):
+            if option is not None and hasattr(option, "state") and option.state & QStyle.StateFlag.State_Selected:
                 return base + 4  # 2px per sida
 
             return base
@@ -247,7 +244,18 @@ class CustomTabBar(QTabBar):
         """Load the theme-aware 'close' icon from IconService."""
         try:
             icon = self._icon_service.get("close")
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             icon = QIcon()
 
         if icon.isNull():
@@ -289,7 +297,18 @@ class CustomTabBar(QTabBar):
             data = self.tabData(index)
             if isinstance(data, dict):
                 closable = bool(data.get("closable", True))
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             pass
 
         pos = self._trailing_button_position()
@@ -357,4 +376,3 @@ class CustomTabBar(QTabBar):
         """
         super().tabRemoved(index)
         # Qt cleans up automatically
-

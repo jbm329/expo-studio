@@ -3,6 +3,7 @@
 This module contains the DataIOService class which handles high-level data operations
 using FileLoader and FileWriter.
 """
+
 from __future__ import annotations
 
 import logging
@@ -40,12 +41,7 @@ class DataIOService:
       - Load returns JobResult with `data` (the DataFrame payload).
     """
 
-    def __init__(
-            self,
-            loader: FileLoader,
-            writer: FileWriter,
-            logger: logging.Logger | None = None
-    ):
+    def __init__(self, loader: FileLoader, writer: FileWriter, logger: logging.Logger | None = None):
         """Initialize the DataIOService.
 
         Args:
@@ -72,7 +68,18 @@ class DataIOService:
             if self._writer:
                 self._writer.reload_settings(settings)
             self._logger.debug("DataIOService: settings reloaded into loader & writer.")
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.exception("DataIOService: failed to reload settings")
 
     # ------------------------------------------------------------------
@@ -177,7 +184,18 @@ class DataIOService:
                 corr_id=corr_id,
             )
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             dt = time.perf_counter() - t0
             return JobResult(
                 ok=False,
@@ -193,15 +211,15 @@ class DataIOService:
     # Export: CSV
     # ------------------------------------------------------------------
     def export_df_csv(
-            self,
-            df: pd.DataFrame,
-            dest: str | Path,
-            *,
-            progress_cb: Callable[[int], None] | None = None,
-            cancel_cb: Callable[[], bool] | None = None,
-            job_id: str | None = None,
-            job_scope: str | None = None,
-            corr_id: str | None = None,
+        self,
+        df: pd.DataFrame,
+        dest: str | Path,
+        *,
+        progress_cb: Callable[[int], None] | None = None,
+        cancel_cb: Callable[[], bool] | None = None,
+        job_id: str | None = None,
+        job_scope: str | None = None,
+        corr_id: str | None = None,
     ) -> JobResult:
         """Exports a DataFrame to CSV and returns JobResult.
 
@@ -222,26 +240,31 @@ class DataIOService:
 
         self._logger.debug(
             "DataIOService: export CSV start (corr=%s, path=%s, rows=%s, cols=%s, job_id=%s, scope=%s)",
-            corr_id, fmt_path(dest_str), rows, columns, job_id, job_scope
+            corr_id,
+            fmt_path(dest_str),
+            rows,
+            columns,
+            job_id,
+            job_scope,
         )
 
         if cancel_cb and cancel_cb():
             self._logger.debug(
-                "DataIOService: export CSV cancelled early (corr=%s, path=%s)", corr_id, fmt_path(dest_str))
+                "DataIOService: export CSV cancelled early (corr=%s, path=%s)", corr_id, fmt_path(dest_str)
+            )
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=True, error=None, corr_id=corr_id)
 
         t0 = time.perf_counter()
         try:
-            self._writer.save_csv(
-                df, dest_str,
-                progress_cb=progress_cb,
-                cancel_cb=cancel_cb,
-                corr_id=corr_id
-            )
+            self._writer.save_csv(df, dest_str, progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id)
             dt = time.perf_counter() - t0
             self._logger.info(
                 "DataIOService: CSV written (corr=%s, path=%s, ms=%.1f, rows=%s, cols=%s)",
-                corr_id, fmt_path(dest_str), dt * 1000, rows, columns
+                corr_id,
+                fmt_path(dest_str),
+                dt * 1000,
+                rows,
+                columns,
             )
             return JobResult(ok=True, elapsed=dt, path=dest_str, corr_id=corr_id)
 
@@ -249,30 +272,44 @@ class DataIOService:
             dt = time.perf_counter() - t0
             self._logger.info(
                 "DataIOService: export CSV cancelled (corr=%s, path=%s, ms=%.1f, rows_written=%s of %s)",
-                corr_id, fmt_path(dest_str), dt * 1000, getattr(ce, "rows_written", None), rows
+                corr_id,
+                fmt_path(dest_str),
+                dt * 1000,
+                getattr(ce, "rows_written", None),
+                rows,
             )
-            return JobResult(
-                ok=False, elapsed=dt, path=dest_str, cancelled=True, error=None, corr_id=corr_id
-            )
+            return JobResult(ok=False, elapsed=dt, path=dest_str, cancelled=True, error=None, corr_id=corr_id)
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._logger.exception(
-                "DataIOService: export CSV failed (corr=%s, path=%s): %s", corr_id, fmt_path(dest_str), e)
+                "DataIOService: export CSV failed (corr=%s, path=%s): %s", corr_id, fmt_path(dest_str), e
+            )
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)
 
     # ------------------------------------------------------------------
     # Export: Excel
     # ------------------------------------------------------------------
     def export_df_excel(
-            self,
-            df: pd.DataFrame,
-            dest: str | Path,
-            *,
-            progress_cb: Callable[[int], None] | None = None,
-            cancel_cb: Callable[[], bool] | None = None,
-            job_id: str | None = None,
-            job_scope: str | None = None,
-            corr_id: str | None = None,
+        self,
+        df: pd.DataFrame,
+        dest: str | Path,
+        *,
+        progress_cb: Callable[[int], None] | None = None,
+        cancel_cb: Callable[[], bool] | None = None,
+        job_id: str | None = None,
+        job_scope: str | None = None,
+        corr_id: str | None = None,
     ) -> JobResult:
         """Exports a DataFrame to Excel and returns JobResult.
 
@@ -302,13 +339,19 @@ class DataIOService:
 
         self._logger.debug(
             "DataIOService: export excel start (corr=%s, path=%s, rows=%s, cols=%s, job_id=%s, scope=%s)",
-            corr_id, fmt_path(dest_str), rows, columns, job_id, job_scope
+            corr_id,
+            fmt_path(dest_str),
+            rows,
+            columns,
+            job_id,
+            job_scope,
         )
 
         # Early cancellation before any I/O
         if cancel_cb and cancel_cb():
             self._logger.debug(
-                "DataIOService: export excel cancelled early (corr=%s, path=%s)", corr_id, fmt_path(dest_str))
+                "DataIOService: export excel cancelled early (corr=%s, path=%s)", corr_id, fmt_path(dest_str)
+            )
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=True, error=None, corr_id=corr_id)
 
         t0 = time.perf_counter()
@@ -326,7 +369,11 @@ class DataIOService:
             dt = time.perf_counter() - t0
             self._logger.info(
                 "DataIOService: excel written (corr=%s, path=%s, ms=%.1f, rows=%s, cols=%s)",
-                corr_id, fmt_path(dest_str), dt * 1000, rows, columns
+                corr_id,
+                fmt_path(dest_str),
+                dt * 1000,
+                rows,
+                columns,
             )
             return JobResult(ok=True, elapsed=dt, path=dest_str, corr_id=corr_id)
 
@@ -340,17 +387,28 @@ class DataIOService:
                 self._logger.info(
                     "DataIOService: export excel cancelled "
                     "(corr=%s, path=%s, ms=%.1f, rows_written=%s of %s, sheets_written=%s)",
-                    corr_id, fmt_path(dest_str), dt * 1000, rows_written, rows, sheets_written
+                    corr_id,
+                    fmt_path(dest_str),
+                    dt * 1000,
+                    rows_written,
+                    rows,
+                    sheets_written,
                 )
             elif rows_written is not None:
                 self._logger.info(
                     "DataIOService: export excel cancelled (corr=%s, path=%s, ms=%.1f, rows_written=%s of %s)",
-                    corr_id, fmt_path(dest_str), dt * 1000, rows_written, rows
+                    corr_id,
+                    fmt_path(dest_str),
+                    dt * 1000,
+                    rows_written,
+                    rows,
                 )
             else:
                 self._logger.info(
                     "DataIOService: export excel cancelled (corr=%s, path=%s, ms=%.1f)",
-                    corr_id, fmt_path(dest_str), dt * 1000
+                    corr_id,
+                    fmt_path(dest_str),
+                    dt * 1000,
                 )
 
             return JobResult(
@@ -362,11 +420,21 @@ class DataIOService:
                 corr_id=corr_id,
             )
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             # Unexpected failure path
             self._logger.exception(
-                "DataIOService: export excel failed (corr=%s, path=%s): %s",
-                corr_id, fmt_path(dest_str), e
+                "DataIOService: export excel failed (corr=%s, path=%s): %s", corr_id, fmt_path(dest_str), e
             )
             return JobResult(
                 ok=False,
@@ -381,15 +449,15 @@ class DataIOService:
     # Export: Datafile (suffix-routed)
     # ------------------------------------------------------------------
     def export_df_datafile(
-            self,
-            df: pd.DataFrame,
-            dest: str | Path,
-            *,
-            progress_cb: Callable[[int], None] | None = None,
-            cancel_cb: Callable[[], bool] | None = None,
-            job_id: str | None = None,
-            job_scope: str | None = None,
-            corr_id: str | None = None,
+        self,
+        df: pd.DataFrame,
+        dest: str | Path,
+        *,
+        progress_cb: Callable[[int], None] | None = None,
+        cancel_cb: Callable[[], bool] | None = None,
+        job_id: str | None = None,
+        job_scope: str | None = None,
+        corr_id: str | None = None,
     ) -> JobResult:
         """Exports a DataFrame to a data file based on suffix and returns JobResult.
 
@@ -410,14 +478,20 @@ class DataIOService:
 
         self._logger.debug(
             "DataIOService: export data file start (corr=%s, path=%s, rows=%s, cols=%s, job_id=%s, scope=%s)",
-            corr_id, fmt_path(dest_str), rows, columns, job_id, job_scope
+            corr_id,
+            fmt_path(dest_str),
+            rows,
+            columns,
+            job_id,
+            job_scope,
         )
 
         if progress_cb:
             progress_cb(0)
         if cancel_cb and cancel_cb():
             self._logger.debug(
-                "DataIOService: export data file cancelled early (corr=%s, path=%s)", corr_id, fmt_path(dest_str))
+                "DataIOService: export data file cancelled early (corr=%s, path=%s)", corr_id, fmt_path(dest_str)
+            )
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=True, error=None, corr_id=corr_id)
 
         t0 = time.perf_counter()
@@ -428,9 +502,25 @@ class DataIOService:
                 progress_cb(100)
             self._logger.info(
                 "DataIOService: data file written (corr=%s, path=%s, ms=%.1f, rows=%s, cols=%s)",
-                corr_id, fmt_path(dest_str), dt * 1000, rows, columns)
+                corr_id,
+                fmt_path(dest_str),
+                dt * 1000,
+                rows,
+                columns,
+            )
             return JobResult(ok=True, elapsed=dt, path=dest_str, corr_id=corr_id)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             if progress_cb:
                 progress_cb(100)
             self._logger.exception(
@@ -438,23 +528,23 @@ class DataIOService:
                 corr_id,
                 fmt_path(dest_str),
                 e,
-                )
+            )
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)
 
     # ------------------------------------------------------------------
     # Export: Profiling (single)
     # ------------------------------------------------------------------
     def export_df_profile(
-            self,
-            df: pd.DataFrame,
-            dest: str | Path,
-            title: str,
-            *,
-            progress_cb: Callable[[int], None] | None = None,
-            cancel_cb: Callable[[], bool] | None = None,
-            job_id: str | None = None,
-            job_scope: str | None = None,
-            corr_id: str | None = None,
+        self,
+        df: pd.DataFrame,
+        dest: str | Path,
+        title: str,
+        *,
+        progress_cb: Callable[[int], None] | None = None,
+        cancel_cb: Callable[[], bool] | None = None,
+        job_id: str | None = None,
+        job_scope: str | None = None,
+        corr_id: str | None = None,
     ) -> JobResult:
         """Generates a ydata-profiling report for one DataFrame and returns JobResult.
 
@@ -477,12 +567,19 @@ class DataIOService:
 
         self._logger.debug(
             "DataIOService: export profile report (corr=%s, path=%s, title=%r, rows=%s, cols=%s, job_id=%s, scope=%s)",
-            corr_id, fmt_path(dest_str), title, rows, columns, job_id, job_scope
+            corr_id,
+            fmt_path(dest_str),
+            title,
+            rows,
+            columns,
+            job_id,
+            job_scope,
         )
 
         if cancel_cb and cancel_cb():
             self._logger.debug(
-                "DataIOService: export profile report cancelled early (corr=%s, path=%s)", corr_id, fmt_path(dest_str))
+                "DataIOService: export profile report cancelled early (corr=%s, path=%s)", corr_id, fmt_path(dest_str)
+            )
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=True, error=None, corr_id=corr_id)
 
         t0 = time.perf_counter()
@@ -497,28 +594,39 @@ class DataIOService:
                 corr_id,
                 fmt_path(dest_str),
                 dt * 1000,
-                title
+                title,
             )
             return JobResult(ok=True, elapsed=dt, path=dest_str, corr_id=corr_id)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._logger.exception(
-                "DataIOService: export profile report failed (corr=%s, path=%s): %s",
-                corr_id, fmt_path(dest_str), e)
+                "DataIOService: export profile report failed (corr=%s, path=%s): %s", corr_id, fmt_path(dest_str), e
+            )
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)
 
     # ------------------------------------------------------------------
     # Export: Profiling (comparison)
     # ------------------------------------------------------------------
     def export_dfs_profile(
-            self,
-            data: list[tuple[pd.DataFrame, str]],
-            dest: str | Path,
-            *,
-            progress_cb: Callable[[int], None] | None = None,
-            cancel_cb: Callable[[], bool] | None = None,
-            job_id: str | None = None,
-            job_scope: str | None = None,
-            corr_id: str | None = None,
+        self,
+        data: list[tuple[pd.DataFrame, str]],
+        dest: str | Path,
+        *,
+        progress_cb: Callable[[int], None] | None = None,
+        cancel_cb: Callable[[], bool] | None = None,
+        job_id: str | None = None,
+        job_scope: str | None = None,
+        corr_id: str | None = None,
     ) -> JobResult:
         """Generates a ydata-comparison profile for multiple datasets and returns JobResult.
 
@@ -541,20 +649,36 @@ class DataIOService:
         try:
             number_of_datasets = len(data) if data else 0
             titles_preview = ", ".join([nm for _, nm in (data[:3] if data else [])])
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             number_of_datasets, titles_preview = 0, ""
 
         self._logger.debug(
             "DataIOService: export comparison profile start "
             "(corr=%s, path=%s, datasets=%s, preview=%r, job_id=%s, scope=%s)",
-            corr_id, dest_str, number_of_datasets, titles_preview, job_id, job_scope
+            corr_id,
+            dest_str,
+            number_of_datasets,
+            titles_preview,
+            job_id,
+            job_scope,
         )
 
         if cancel_cb and cancel_cb():
             self._logger.debug(
                 "DataIOService: export comparison profile cancelled early (corr=%s, path=%s)",
                 corr_id,
-                fmt_path(dest_str)
+                fmt_path(dest_str),
             )
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=True, error=None, corr_id=corr_id)
 
@@ -566,7 +690,7 @@ class DataIOService:
                 self._logger.debug(
                     "DataIOService: export comparison profile cancelled mid-run (corr=%s, path=%s)",
                     corr_id,
-                    fmt_path(dest_str)
+                    fmt_path(dest_str),
                 )
                 return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=True, error=None, corr_id=corr_id)
             self._writer.save_profile(report, dest_str, corr_id=corr_id)
@@ -577,10 +701,21 @@ class DataIOService:
                 corr_id,
                 fmt_path(dest_str),
                 dt * 1000,
-                number_of_datasets
+                number_of_datasets,
             )
             return JobResult(ok=True, elapsed=dt, path=dest_str, corr_id=corr_id)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._logger.exception(
                 "DataIOService: export comparison profile failed (corr=%s, path=%s): %s",
                 corr_id,
@@ -588,4 +723,3 @@ class DataIOService:
                 e,
             )
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)
-

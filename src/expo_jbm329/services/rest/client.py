@@ -1,5 +1,5 @@
-
 """REST client implementation."""
+
 from __future__ import annotations
 
 import time
@@ -100,7 +100,18 @@ def fetch_json(
 
         try:
             payload = response.json()
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
             msg = "Response is not valid JSON"
             raise RestClientError(msg) from exc
 
@@ -144,6 +155,7 @@ def fetch_json_pages(
 # Helpers
 # ---------------------------------------------------------------------
 
+
 def _sleep_for_retry(
     attempt: int,
     retry_cfg: RestRetryConfig,
@@ -166,7 +178,7 @@ def _sleep_for_retry(
             time.sleep(delay)
             return
 
-    delay = min(retry_cfg.initial_delay * (retry_cfg.backoff_factor ** attempt), retry_cfg.max_delay)
+    delay = min(retry_cfg.initial_delay * (retry_cfg.backoff_factor**attempt), retry_cfg.max_delay)
     time.sleep(delay)
 
 
@@ -211,7 +223,18 @@ def _fetch_oauth2_access_token(auth: RestAuthConfig, *, timeout: float) -> str:
 
     try:
         token_payload = response.json()
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as exc:
         msg = "OAuth2 token response is not valid JSON"
         raise RestClientError(msg) from exc
 
@@ -246,6 +269,7 @@ def _apply_auth(
             msg = "Basic auth requires username and password"
             raise RestClientError(msg)
         import base64
+
         raw = f"{auth.username}:{auth.password}".encode()
         headers["Authorization"] = "Basic " + base64.b64encode(raw).decode("ascii")
         return
@@ -282,6 +306,7 @@ def _apply_auth(
 
     msg_0 = f"Unsupported auth type: {auth.type}"
     raise RestClientError(msg_0)
+
 
 def _fetch_page_number_payloads(
     config: RestRequestConfig,

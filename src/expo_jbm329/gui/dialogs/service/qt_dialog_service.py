@@ -1,4 +1,5 @@
 """Facade implementation delegating to dialog modules."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal

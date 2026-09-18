@@ -14,6 +14,7 @@ The widget is intentionally "dumb":
 - No JobManager interaction
 - No configuration mutation
 """
+
 from __future__ import annotations
 
 from PyQt6.QtCore import QT_TR_NOOP, QPoint, QPointF, Qt, pyqtSignal
@@ -43,16 +44,16 @@ class RestTreeWidget(QTreeWidget):
     # ------------------------------------------------------------------
     # Signals (Qt-idiomatic API)
     # ------------------------------------------------------------------
-    load_requested = pyqtSignal(str)     # preset name
-    edit_requested = pyqtSignal(str)     # preset name
-    copy_requested = pyqtSignal(str)     # preset name
+    load_requested = pyqtSignal(str)  # preset name
+    edit_requested = pyqtSignal(str)  # preset name
+    copy_requested = pyqtSignal(str)  # preset name
 
     # ------------------------------------------------------------------
     # Initialization
     # ------------------------------------------------------------------
     def __init__(
-            self,
-            parent: QWidget | None = None,
+        self,
+        parent: QWidget | None = None,
     ) -> None:
         """Initialize the RestWidget."""
         super().__init__(parent)

@@ -32,6 +32,7 @@ class SqlAlchemyMySqlDriver(DriverProtocol):
         * connect_timeout: seconds to wait for initial connection.
         * read_timeout/write_timeout: I/O timeouts (not server execution limits).
     """
+
     def __init__(self, driver_name: str) -> None:
         """Initialize the SqlAlchemyMySqlDriver.
 
@@ -51,7 +52,9 @@ class SqlAlchemyMySqlDriver(DriverProtocol):
             timeouts: A dictionary of timeout values.
         """
         # We treat login/connect timeout via connect_args later in _get_engine.
-        self._connect_timeout_s = int(timeouts.get("login_timeout_s")) if (timeouts and timeouts.get("login_timeout_s") is not None) else None
+        self._connect_timeout_s = (
+            int(timeouts.get("login_timeout_s")) if (timeouts and timeouts.get("login_timeout_s") is not None) else None
+        )
 
     def dispose(self) -> None:
         """Dispose of the driver and release all cached engines."""
@@ -133,9 +136,7 @@ class SqlAlchemyMySqlDriver(DriverProtocol):
                     connect_args["read_timeout"] = self._query_timeout_s
                     connect_args["write_timeout"] = self._query_timeout_s
                 log.debug(
-                    "SqlAlchemyMySqlDriver: creating SQLAlchemy Engine for %s (driver=%s)",
-                    cfg.name,
-                    self._driver_name
+                    "SqlAlchemyMySqlDriver: creating SQLAlchemy Engine for %s (driver=%s)", cfg.name, self._driver_name
                 )
                 eng = create_engine(url, pool_pre_ping=True, connect_args=connect_args)
                 self._engines[key] = eng

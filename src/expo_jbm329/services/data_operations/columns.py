@@ -31,6 +31,7 @@ logger = logging.getLogger("applogger.service")
 # Core column operations
 # =====================================================================
 
+
 def sort_dataframe(
     df: pd.DataFrame,
     column: str,
@@ -127,6 +128,7 @@ def rename_column(
 # Column composition helpers
 # =====================================================================
 
+
 def split_column(
     df: pd.DataFrame,
     column: str,
@@ -175,10 +177,11 @@ def split_column(
     # Preserve missing values as pd.NA instead of converting them to empty strings.
     s = df[column].astype("string")
 
-    if mode == "last":
-        parts = s.str.rsplit(delimiter, n=1, expand=True)
-    else:
-        parts = s.str.split(delimiter, n=1, expand=True)
+    parts = (
+        s.str.rsplit(delimiter, n=1, expand=True)
+        if mode == "last"
+        else s.str.split(delimiter, n=1, expand=True)
+    )
 
     if parts.shape[1] == 1:
         parts[1] = pd.NA
@@ -266,10 +269,7 @@ def join_columns(
     if not new_name:
         new_name = "_".join(columns)
 
-    parts = [
-        df[col].astype("string").fillna("").str.strip()
-        for col in columns
-    ]
+    parts = [df[col].astype("string").fillna("").str.strip() for col in columns]
 
     joined = parts[0]
     for part in parts[1:]:
@@ -283,9 +283,7 @@ def join_columns(
         loc = df.columns.get_loc(col)
         if not isinstance(loc, int):
             msg = f"Expected unique column location for '{col}', got {type(loc).__name__}"
-            raise TypeError(
-                msg
-            )
+            raise TypeError(msg)
         positions.append(loc)
 
     last_pos = max(positions)

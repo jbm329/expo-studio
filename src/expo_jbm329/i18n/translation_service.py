@@ -1,4 +1,5 @@
 """Translation service."""
+
 from __future__ import annotations
 
 import logging
@@ -24,12 +25,8 @@ class TranslationService(QObject):
         - This service does not update UI widgets directly; callers are
           responsible for triggering UI retranslation.
     """
-    __slots__ = (
-        "_current_language",
-        "_locales_dir",
-        "_logger",
-        "_translator"
-    )
+
+    __slots__ = ("_current_language", "_locales_dir", "_logger", "_translator")
 
     def __init__(self, logger: logging.Logger | None) -> None:
         """Initialize the translation service.
@@ -75,11 +72,22 @@ class TranslationService(QObject):
 
             self.switch_language(lang)
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
             self._logger.exception("TranslationService: failed to reload language: %s", exc)
 
     def switch_language(self, language: str) -> None:
-        """"Switch the application language at runtime.
+        """Switch the application language at runtime.
 
         Loads the corresponding Qt translation file (``app_<language>.qm``)
         from the locales directory and installs it into the current

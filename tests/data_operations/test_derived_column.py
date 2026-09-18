@@ -25,25 +25,21 @@ from expo_jbm329.services.data_operations.dtypes import get_numeric_columns
 
 @pytest.fixture
 def numeric_df() -> pd.DataFrame:
-    return pd.DataFrame(
-        {
-            "A": pd.Series([10, 20, 30], dtype="Int64"),
-            "B": pd.Series([2, 4, 5], dtype="Int64"),
-            "C": pd.Series([1.5, 2.5, 3.5], dtype="Float64"),
-        }
-    )
+    return pd.DataFrame({
+        "A": pd.Series([10, 20, 30], dtype="Int64"),
+        "B": pd.Series([2, 4, 5], dtype="Int64"),
+        "C": pd.Series([1.5, 2.5, 3.5], dtype="Float64"),
+    })
 
 
 @pytest.fixture
 def mixed_df() -> pd.DataFrame:
-    return pd.DataFrame(
-        {
-            "int_col": pd.Series([1, 2, 3], dtype="Int64"),
-            "float_col": pd.Series([1.1, 2.2, 3.3], dtype="Float64"),
-            "bool_col": pd.Series([True, False, True], dtype="boolean"),
-            "string_col": pd.Series(["a", "b", "c"], dtype="string"),
-        }
-    )
+    return pd.DataFrame({
+        "int_col": pd.Series([1, 2, 3], dtype="Int64"),
+        "float_col": pd.Series([1.1, 2.2, 3.3], dtype="Float64"),
+        "bool_col": pd.Series([True, False, True], dtype="boolean"),
+        "string_col": pd.Series(["a", "b", "c"], dtype="string"),
+    })
 
 
 def test_get_numeric_columns_excludes_bool_and_text(mixed_df: pd.DataFrame):

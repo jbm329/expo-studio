@@ -14,6 +14,7 @@ class SqliteDialect(DialectProtocol):
         Metadata via sqlite_master and PRAGMA table_info.
         No whole-database one-shot column SQL (returns None to force batch).
     """
+
     name = "sqlite"
 
     def quote_ident(self, name: str) -> str:

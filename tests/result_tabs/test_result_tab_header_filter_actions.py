@@ -27,4 +27,3 @@ def test_cell_filter_and_replace_actions():
     ctrl.replace_value(QTableView(), df, row_index=0, column_name="a", raw_value=1)
 
     assert async_ops.run_dataframe_operation.call_count == 2
-

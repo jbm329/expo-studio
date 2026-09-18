@@ -1,4 +1,5 @@
 """REST connection registry."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -60,9 +61,7 @@ class RestConnectionRegistry:
 
     def unregister_user_connections(self) -> None:
         """Remove all user-defined (non-sample) connections from the registry."""
-        self._entries = {
-            name: entry for name, entry in self._entries.items() if entry.source != "user"
-        }
+        self._entries = {name: entry for name, entry in self._entries.items() if entry.source != "user"}
 
     # ------------------------------------------------------------------
     # Bulk loaders

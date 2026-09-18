@@ -71,17 +71,15 @@ def test_registry_load_user_connections_supports_api_key_auth():
 def test_registry_skips_incomplete_user_connections_with_empty_url():
     registry = RestConnectionRegistry()
 
-    registry.load_user_connections(
-        {
-            "Draft": {
-                "url": "",
-                "method": "GET",
-                "headers": {},
-                "query_params": {},
-                "response_path": None,
-                "auth": {"type": "none"},
-            }
+    registry.load_user_connections({
+        "Draft": {
+            "url": "",
+            "method": "GET",
+            "headers": {},
+            "query_params": {},
+            "response_path": None,
+            "auth": {"type": "none"},
         }
-    )
+    })
 
     assert registry.exists("Draft") is False

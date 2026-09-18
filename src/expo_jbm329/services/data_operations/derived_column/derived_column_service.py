@@ -50,6 +50,7 @@ logger = logging.getLogger("applogger.service")
 # Exceptions
 # =====================================================================
 
+
 class DerivedColumnError(ValueError):
     """Structured error for derived column operations."""
 
@@ -150,9 +151,7 @@ def validate_derived_column_spec(
         return validate_formula(spec.formula, numeric_columns)
 
     except DerivedColumnError as exc:
-        return FormulaValidationResult(
-            ok=False, error=DerivedColumnFormulaError(exc.code, context=exc.context)
-        )
+        return FormulaValidationResult(ok=False, error=DerivedColumnFormulaError(exc.code, context=exc.context))
 
 
 def create_derived_column(
@@ -191,7 +190,18 @@ def create_derived_column(
     except DerivedColumnFormulaError:
         raise  # propagate unchanged
 
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as exc:
         logger.exception(
             "Failed evaluating derived column formula (column=%r, formula=%r)",
             output_column,
@@ -479,7 +489,18 @@ def _apply_operator(
         if operator == "/":
             return _safe_divide(left=left, right=right, index=index)
 
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as err:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as err:
         msg = "operator_application_failed"
         raise DerivedColumnError(
             msg,
@@ -575,7 +596,18 @@ def _normalize_result_series(
             context={"dtype": output_dtype},
         )
 
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as err:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as err:
         msg = "result_conversion_failed"
         raise DerivedColumnError(
             msg,

@@ -131,12 +131,7 @@ class AppServices:
         # 4) Background infrastructure
         # -------------------------
         job_mgr = JobManager(logger=log_jobs)  # UI parent injected later
-        schema_cache = SchemaCacheManager(
-            status_cb=None,
-            progress_cb=None,
-            autocomplete_cb=None,
-            logger=log_service
-        )
+        schema_cache = SchemaCacheManager(status_cb=None, progress_cb=None, autocomplete_cb=None, logger=log_service)
         profile_cache = ColumnProfileCache(capacity=256)
 
         # -------------------------

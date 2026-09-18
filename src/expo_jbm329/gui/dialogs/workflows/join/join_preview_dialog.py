@@ -3,6 +3,7 @@
 Shows a preview of the joined DataFrame along with metadata
 such as match rate, unmatched rows, and join type.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

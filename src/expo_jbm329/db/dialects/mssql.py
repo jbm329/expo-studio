@@ -9,6 +9,7 @@ from expo_jbm329.db.core.interfaces import DialectProtocol
 
 class MssqlDialect(DialectProtocol):
     """MSSQL dialect: quoting, limit injection, metadata SQL builders."""
+
     name = "mssql"
 
     _LIMIT_RE = re.compile(
@@ -94,7 +95,7 @@ class MssqlDialect(DialectProtocol):
 
         while i < n:
             ch = sql[i]
-            ch2 = sql[i:i + 2]
+            ch2 = sql[i : i + 2]
 
             if not in_sq and not in_dq and not in_br:
                 if not in_block and ch2 == "--":
@@ -154,7 +155,7 @@ class MssqlDialect(DialectProtocol):
                 i += 1
                 continue
 
-            if depth == 0 and sql[i:i + 6].lower() == "select":
+            if depth == 0 and sql[i : i + 6].lower() == "select":
                 before = sql[i - 1] if i > 0 else " "
                 after = sql[i + 6] if i + 6 < n else " "
                 if not (before.isalnum() or before == "_") and not (after.isalnum() or after == "_"):
@@ -205,9 +206,11 @@ class MssqlDialect(DialectProtocol):
         Returns:
             A SQL query string to list tables from INFORMATION_SCHEMA.
         """
-        return ("SELECT TABLE_SCHEMA AS schema_name, TABLE_NAME AS object_name "
-                "FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' "
-                "ORDER BY TABLE_SCHEMA, TABLE_NAME")
+        return (
+            "SELECT TABLE_SCHEMA AS schema_name, TABLE_NAME AS object_name "
+            "FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' "
+            "ORDER BY TABLE_SCHEMA, TABLE_NAME"
+        )
 
     def sql_list_views(self) -> str:
         """Generate SQL for listing views in MSSQL.
@@ -215,8 +218,10 @@ class MssqlDialect(DialectProtocol):
         Returns:
             A SQL query string to list views from INFORMATION_SCHEMA.
         """
-        return ("SELECT TABLE_SCHEMA AS schema_name, TABLE_NAME AS object_name "
-                "FROM INFORMATION_SCHEMA.VIEWS ORDER BY TABLE_SCHEMA, TABLE_NAME")
+        return (
+            "SELECT TABLE_SCHEMA AS schema_name, TABLE_NAME AS object_name "
+            "FROM INFORMATION_SCHEMA.VIEWS ORDER BY TABLE_SCHEMA, TABLE_NAME"
+        )
 
     def sql_list_columns(self, schema: str, object_name: str) -> str:
         """Generate SQL for listing columns of a table or view in MSSQL.
@@ -228,9 +233,11 @@ class MssqlDialect(DialectProtocol):
         Returns:
             A SQL query string to list columns from INFORMATION_SCHEMA.
         """
-        return ("SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE "
-                f"FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='{schema}' "
-                f"AND TABLE_NAME='{object_name}' ORDER BY ORDINAL_POSITION")
+        return (
+            "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE "
+            f"FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='{schema}' "
+            f"AND TABLE_NAME='{object_name}' ORDER BY ORDINAL_POSITION"
+        )
 
     def sql_all_columns(self) -> str | None:
         """Generate SQL for selecting all columns from all tables/views in MSSQL.

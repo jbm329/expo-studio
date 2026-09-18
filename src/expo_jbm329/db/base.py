@@ -76,6 +76,7 @@ _query_timeout_s: int | None = 30
 # Timeout Configuration
 # =============================================================================
 
+
 def configure_timeouts(*, login_timeout_s: int | None = None, query_timeout_s: int | None = None) -> None:
     """Configure global default timeouts for newly created DbService instances.
 
@@ -106,6 +107,7 @@ def configure_timeouts(*, login_timeout_s: int | None = None, query_timeout_s: i
 # =============================================================================
 # ConnectionConfig Builder
 # =============================================================================
+
 
 def _build_connection_config(connection_name: str) -> ConnectionConfig:
     """Construct a ConnectionConfig from user configuration.
@@ -148,7 +150,18 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
     port_raw = rec.get("port", None)
     try:
         port = int(port_raw) if port_raw not in (None, "") else None
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         port = None
 
     database = rec.get("database") or None
@@ -221,6 +234,7 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
 # DbService Factory & Lifetime Management
 # =============================================================================
 
+
 def _get_service_with_config(connection_name: str) -> tuple[DbService, ConnectionConfig]:
     """Retrieve (or create) a DbService instance and its config.
 
@@ -279,6 +293,7 @@ def close_all_connections() -> None:
 # Public Execution API
 # =============================================================================
 
+
 def execute_sql_safe(
     connection_name: str,
     sql_text: str,
@@ -318,7 +333,18 @@ def execute_sql_safe(
             job_id=job_id,
         )
 
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as e:
         logger.error(
             "Failed to initialize database service for '%s': %s",
             connection_name,
@@ -356,6 +382,7 @@ def fetch_df(connection_name: str, sql: str) -> pd.DataFrame | None:
 # Public Metadata API (Facade over DbService)
 # =============================================================================
 
+
 def list_tables(connection_name: str, corr_id: str | None = None) -> list[dict[str, str]]:
     """List all tables for the given connection.
 
@@ -384,7 +411,9 @@ def list_views(connection_name: str, corr_id: str | None = None) -> list[dict[st
     return svc.list_views(cfg, corr_id=corr_id)
 
 
-def list_columns(connection_name: str, schema: str, object_name: str, corr_id: str | None = None) -> list[dict[str, str]]:
+def list_columns(
+    connection_name: str, schema: str, object_name: str, corr_id: str | None = None
+) -> list[dict[str, str]]:
     """List all columns for a specific table or view.
 
     Args:
@@ -404,6 +433,7 @@ def list_columns(connection_name: str, schema: str, object_name: str, corr_id: s
 # High-Level Builders & Extended Metadata (Dialect-aware)
 # =============================================================================
 
+
 def get_db_name(connection_name: str, corr_id: str | None = None) -> str:
     """Return the database name for the connection using dialect-aware rules.
 
@@ -419,18 +449,24 @@ def get_db_name(connection_name: str, corr_id: str | None = None) -> str:
     try:
         svc, cfg = _get_service_with_config(connection_name)
         return svc.get_db_name(cfg, corr_id=corr_id)
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         # Fallback if initialization fails
         return connection_name
 
 
 def build_select_star(
-        connection_name: str,
-        schema: str,
-        object_name: str,
-        *,
-        top_n: int | None = None,
-        corr_id: str | None = None
+    connection_name: str, schema: str, object_name: str, *, top_n: int | None = None, corr_id: str | None = None
 ) -> str:
     """Build a SELECT * query with dialect quoting and optional TOP/LIMIT.
 
@@ -447,35 +483,57 @@ def build_select_star(
     try:
         svc, _ = _get_service_with_config(connection_name)
         return svc.build_select_star(schema, object_name, top_n=top_n, corr_id=corr_id)
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         # Fallback quoting if service initialization fails
         return f"SELECT * FROM [{schema}].[{object_name}]"
 
 
 def build_select_distinct(
-   connection_name: str,
-   schema: str,
-   object_name: str,
-   column_name: str,
-   corr_id: str | None = None,
+    connection_name: str,
+    schema: str,
+    object_name: str,
+    column_name: str,
+    corr_id: str | None = None,
 ) -> str:
     """Build a SELECT DISTINCT query with dialect-aware quoting."""
     try:
         svc, _ = _get_service_with_config(connection_name)
         return svc.build_select_distinct(schema, object_name, column_name)
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         # Fallback (MSSQL-style)
         return f"SELECT DISTINCT [{column_name}]\nFROM [{schema}].[{object_name}]"
 
 
 def build_select_columns_auto(
-        connection_name: str,
-        schema: str,
-        object_name: str,
-        *,
-        top_n: int | None = None,
-        with_schema: bool = False,
-        corr_id: str | None = None,
+    connection_name: str,
+    schema: str,
+    object_name: str,
+    *,
+    top_n: int | None = None,
+    with_schema: bool = False,
+    corr_id: str | None = None,
 ) -> str:
     """Auto-generate a SELECT statement listing all columns for the object.
 
@@ -502,11 +560,24 @@ def build_select_columns_auto(
             with_schema=with_schema,
             corr_id=corr_id,
         )
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         return build_select_star(connection_name, schema, object_name, top_n=top_n, corr_id=corr_id)
 
 
-def list_all_columns_map(connection_name: str, corr_id: str | None = None) -> dict[tuple[str, str], list[dict[str, str]]]:
+def list_all_columns_map(
+    connection_name: str, corr_id: str | None = None
+) -> dict[tuple[str, str], list[dict[str, str]]]:
     """Return a mapping of (schema, table) to lists of column metadata.
 
     If the dialect does not support whole-database listing, raises AttributeError,

@@ -27,6 +27,7 @@ class ToolbarController:
     This class builds and owns all toolbar actions, ensuring no parent coupling
     and no business logic. All command callbacks are injected by ExpoStudio.
     """
+
     # --- i18n markers (pylupdate6-visible) -----------------------------
     TR_NEW = QT_TR_NOOP("New file")
     TR_OPEN = QT_TR_NOOP("Open")

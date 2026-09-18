@@ -1,4 +1,5 @@
 """Models for REST data source services."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -165,7 +166,6 @@ class RestAuthConfig:
 
         msg_0 = f"Unsupported auth type: {self.type}"
         raise ValueError(msg_0)
-
 
 
 @dataclass(frozen=True)

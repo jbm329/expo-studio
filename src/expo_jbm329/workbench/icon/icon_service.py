@@ -94,7 +94,7 @@ class IconService(QObject):
         icon.addPixmap(base_pix, QIcon.Mode.Normal, QIcon.State.Off)
 
         # create disabled variant
-        dark_mode = (theme == "dark")
+        dark_mode = theme == "dark"
         disabled_pix = self._make_disabled_pixmap(base_pix, dark_mode=dark_mode)
         icon.addPixmap(disabled_pix, QIcon.Mode.Disabled, QIcon.State.Off)
 
@@ -105,6 +105,3 @@ class IconService(QObject):
     def current_theme(self) -> str:
         """Return the currently resolved theme name."""
         return self._theme_service.resolve_theme()
-
-
-

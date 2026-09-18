@@ -102,7 +102,18 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
             )
             return False
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             log.debug(
                 "SqlAlchemyOdbcDriver: cursor cancel failed (job_id=%s).",
                 job_id,
@@ -200,7 +211,18 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
                 return False
             try:
                 return bool(cancel_cb())
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 log.debug(
                     "SqlAlchemyOdbcDriver: cancel callback failed (corr=%s, job_id=%s).",
                     corr_id,
@@ -235,7 +257,18 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
             if self._query_timeout_s is not None:
                 try:
                     raw_conn.timeout = int(self._query_timeout_s)
-                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ):
                     log.debug("SqlAlchemyOdbcDriver: driver does not support per-operation timeout.")
 
             cursor = raw_conn.cursor()

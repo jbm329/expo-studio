@@ -9,12 +9,26 @@ from expo_jbm329.workbench.controllers.menu_controller import MenuController
 
 def test_menu_actions_wire_callbacks():
     menubar = QMenuBar()
-    callbacks = {name: MagicMock() for name in [
-        "new_file", "open_file", "save_file", "save_file_as", "quit_app",
-        "export_csv", "export_excel", "export_data", "export_profile",
-        "clear_editor", "open_settings_dialog", "open_log_settings_dialog",
-        "open_connection_dialog", "open_rest_connection_dialog", "show_about_dialog",
-    ]}
+    callbacks = {
+        name: MagicMock()
+        for name in [
+            "new_file",
+            "open_file",
+            "save_file",
+            "save_file_as",
+            "quit_app",
+            "export_csv",
+            "export_excel",
+            "export_data",
+            "export_profile",
+            "clear_editor",
+            "open_settings_dialog",
+            "open_log_settings_dialog",
+            "open_connection_dialog",
+            "open_rest_connection_dialog",
+            "show_about_dialog",
+        ]
+    }
 
     ctrl = MenuController(menubar=menubar, **callbacks)
     ctrl._act_new.trigger()
@@ -61,4 +75,3 @@ def test_has_data_state_and_retranslate():
     assert not ctrl._act_export_csv.isEnabled()
     ctrl.retranslate_ui()
     assert ctrl._menu_file.title()
-

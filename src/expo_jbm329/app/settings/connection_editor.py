@@ -52,7 +52,7 @@ _DEFAULT_PORTS = {
 
 _DEFAULT_PROTOCOL = {
     "mssql": "odbc",
-    "postgresql": "psycopg2",     # framtida stöd
+    "postgresql": "psycopg2",  # framtida stöd
     "mysql": "pymysql",
     "mariadb": "pymysql",
     "sqlite": "sqlite",
@@ -64,6 +64,7 @@ _DEFAULT_PROTOCOL = {
 # =============================================================================
 # Helper functions
 # =============================================================================
+
 
 def _default_port_for(db_type: str) -> int | None:
     """Returns the default port number for a given database type.
@@ -104,6 +105,7 @@ def _infer_db_type_from_driver_text(driver_text: str) -> str:
 # Dialog Class
 # =============================================================================
 
+
 class ConnectionEditor(QDialog):
     """Enterprise-level connection workbench.
 
@@ -122,10 +124,10 @@ class ConnectionEditor(QDialog):
     # ----------------------------------------------------------------------
 
     def __init__(
-            self,
-            parent: QWidget | None = None,
-            dialogs: DialogService | None = None,
-            icon_service: IconService | None = None
+        self,
+        parent: QWidget | None = None,
+        dialogs: DialogService | None = None,
+        icon_service: IconService | None = None,
     ):
         """Initializes the ConnectionEditor dialog.
 
@@ -183,7 +185,18 @@ class ConnectionEditor(QDialog):
         try:
             for d in pyodbc.drivers():
                 self.system_drivers.addItem(d)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self.system_drivers.addItem(self.tr("(No ODBC-drivers found)"))
 
         self.driver_edit = QLineEdit()
@@ -301,8 +314,7 @@ class ConnectionEditor(QDialog):
         if self.parent():
             pg = self.parent().geometry()
             dg = self.geometry()
-            self.move(pg.x() + (pg.width() - dg.width()) // 2,
-                      pg.y() + (pg.height() - dg.height()) // 2)
+            self.move(pg.x() + (pg.width() - dg.width()) // 2, pg.y() + (pg.height() - dg.height()) // 2)
 
         # Load connections
         self.data = read_connections()
@@ -326,13 +338,20 @@ class ConnectionEditor(QDialog):
             enabled: Whether to enable (True) or disable (False) the fields.
         """
         for w in (
-            self.db_type_combo, self.protocol_combo,
-            self.system_drivers, self.driver_edit, self.btn_add_driver,
-            self.server_edit, self.port_edit, self.db_edit,
+            self.db_type_combo,
+            self.protocol_combo,
+            self.system_drivers,
+            self.driver_edit,
+            self.btn_add_driver,
+            self.server_edit,
+            self.port_edit,
+            self.db_edit,
             self.sqlite_browse_btn,
-            self.user_edit, self.password_edit,
+            self.user_edit,
+            self.password_edit,
             self.trusted_checkbox,
-            self.dsn_edit, self.extra_edit,
+            self.dsn_edit,
+            self.extra_edit,
         ):
             w.setEnabled(enabled)
 
@@ -482,7 +501,18 @@ class ConnectionEditor(QDialog):
         extra = conn.get("extra", {})
         try:
             self.extra_edit.setText(json.dumps(extra))
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self.extra_edit.setText("{}")
 
         self.on_protocol_changed()
@@ -491,8 +521,14 @@ class ConnectionEditor(QDialog):
     def clear_fields(self):
         """Clears all input fields in the connection form."""
         for w in (
-            self.driver_edit, self.server_edit, self.port_edit, self.db_edit,
-            self.user_edit, self.password_edit, self.dsn_edit, self.extra_edit,
+            self.driver_edit,
+            self.server_edit,
+            self.port_edit,
+            self.db_edit,
+            self.user_edit,
+            self.password_edit,
+            self.dsn_edit,
+            self.extra_edit,
         ):
             w.clear()
 
@@ -550,9 +586,7 @@ class ConnectionEditor(QDialog):
         name = name.strip()
         if name in self.data:
             self._dialogs.warn(
-                parent=self,
-                title=self.tr("Failure"),
-                text=self.tr("There is already a connection with that name.")
+                parent=self, title=self.tr("Failure"), text=self.tr("There is already a connection with that name.")
             )
             return
 
@@ -613,11 +647,7 @@ class ConnectionEditor(QDialog):
         self.data[name] = self._gather_current_form()
 
         write_connections(self.data)
-        self._dialogs.info(
-            parent=self,
-            title=self.tr("Saved"),
-            text=self.tr("Changes saved successfully.")
-        )
+        self._dialogs.info(parent=self, title=self.tr("Saved"), text=self.tr("Changes saved successfully."))
         self.connections_changed.emit()
 
     # =============================================================================
@@ -628,11 +658,7 @@ class ConnectionEditor(QDialog):
         """Tests the current connection configuration using execute_sql_safe."""
         item = self.list_widget.currentItem()
         if not item:
-            self._dialogs.warn(
-                parent=self,
-                title=self.tr("Failure"),
-                text=self.tr("No connection selected.")
-            )
+            self._dialogs.warn(parent=self, title=self.tr("Failure"), text=self.tr("No connection selected."))
             return
 
         name = item.text()

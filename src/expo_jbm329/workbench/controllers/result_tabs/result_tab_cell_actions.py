@@ -56,14 +56,10 @@ class ResultTabCellActions:
     TR_REPLACING_VALUES = QT_TR_NOOP("Replacing '{old_value}' → '{new_value}' in '{column_name}'")
 
     TR_REPLACE_ALL_OPERATION = QT_TR_NOOP("replace all values")
-    TR_REPLACED_ALL_VALUES = QT_TR_NOOP(
-        "Replaced all '{old_value}' → '{new_value}' in column: {column_name}"
-    )
+    TR_REPLACED_ALL_VALUES = QT_TR_NOOP("Replaced all '{old_value}' → '{new_value}' in column: {column_name}")
 
     TR_REPLACE_SINGLE_OPERATION = QT_TR_NOOP("replace single cell value")
-    TR_REPLACED_SINGLE_VALUE = QT_TR_NOOP(
-        "Replaced '{old_value}' → '{new_value}' on row {row} in '{column_name}'"
-    )
+    TR_REPLACED_SINGLE_VALUE = QT_TR_NOOP("Replaced '{old_value}' → '{new_value}' on row {row} in '{column_name}'")
 
     # ------------------------------------------------------------------
     @staticmethod
@@ -437,10 +433,7 @@ class ResultTabCellActions:
             work=_work,
             apply_result=_apply_result,
             busy_message=self._tr_fmt(
-                self.TR_REPLACING_VALUES,
-                old_value=old_value_str,
-                new_value=new_value_str,
-                column_name=column_name
+                self.TR_REPLACING_VALUES, old_value=old_value_str, new_value=new_value_str, column_name=column_name
             ),
             scope=f"replace_value:{column_name}",
             operation_name=operation,

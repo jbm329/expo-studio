@@ -3,6 +3,7 @@
 This module provides the build_schema_dict function, which converts cached
 schema information into a format suitable for autocompletion and UI display.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -80,6 +81,6 @@ def build_schema_dict(cache: dict) -> dict:
         flat_tables[f"{s}.{t}"] = cols
 
     return {
-        "tables": flat_tables,   # <- primary map for autocomplete: "schema.table" -> [cols]
+        "tables": flat_tables,  # <- primary map for autocomplete: "schema.table" -> [cols]
         "by_schema": by_schema,  # <- secondary nested map (optional consumers)
     }

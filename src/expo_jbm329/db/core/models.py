@@ -69,7 +69,9 @@ class SqlError:
         hint: English hint (key for i18n).
     """
 
-    category: str  # 'syntax'|'missing_proc'|'missing_object'|'permission'|'timeout'|'connection'|'unsupported'|'unknown'
+    category: (
+        str  # 'syntax'|'missing_proc'|'missing_object'|'permission'|'timeout'|'connection'|'unsupported'|'unknown'
+    )
     code: int | None  # vendor-specific error code (e.g., 2812)
     message: str  # English message for logging and i18n key
     hint: str | None = None  # English hint for logging and i18n key
@@ -96,4 +98,3 @@ class SqlResult:
     rows: int = 0
     elapsed_s: float = 0.0
     sql_signature: str | None = None
-

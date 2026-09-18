@@ -88,7 +88,18 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
 
         x_num = x_raw if isinstance(x_raw, pd.Series) else pd.Series(x_raw, index=non_null.index)
 
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         pass
 
     if x_num is not None:
@@ -140,7 +151,18 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
 
             can_be_datetime = bool(success_ratio > 0.9)
 
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         pass
 
     # ------------------------------------------------------------------
@@ -156,7 +178,18 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
         elif x_num is not None:
             can_be_bool = bool(x_num.isin({0, 1}).all())
 
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         pass
 
     # ------------------------------------------------------------------
@@ -169,19 +202,15 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
 
     return SeriesSemantics(
         semantic_dtype=semantic_dtype,
-
         # Numeric
         is_integer_like=is_integer_like,
         is_year_like=is_year_like,
-
         # Datetime
         has_time_component=has_time_component,
         is_date_only=is_date_only,
-
         # Text
         cardinality_ratio=cardinality_ratio,
         sample_size=sample_size,
-
         # Convertibility
         can_be_int=can_be_int,
         can_be_float=can_be_float,

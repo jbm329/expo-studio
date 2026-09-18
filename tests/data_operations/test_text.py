@@ -20,6 +20,7 @@ from expo_jbm329.services.data_operations.text import (
 # set_cell_value_text
 # =====================================================================
 
+
 def test_set_cell_value_text_basic():
     df = pd.DataFrame({"a": ["x", "y"]})
 
@@ -41,6 +42,7 @@ def test_set_cell_value_text_invalid_column():
 # replace_values
 # =====================================================================
 
+
 def test_replace_values_literal():
     df = pd.DataFrame({"a": ["foo", "bar", "foo"]})
 
@@ -61,6 +63,7 @@ def test_replace_values_regex():
 # remove_regex
 # =====================================================================
 
+
 def test_remove_regex_basic():
     df = pd.DataFrame({"a": ["ab12", "cd34"]})
 
@@ -72,6 +75,7 @@ def test_remove_regex_basic():
 # =====================================================================
 # clean_text
 # =====================================================================
+
 
 def test_clean_text_strip_lower():
     df = pd.DataFrame({"a": ["  Foo  ", " BAR"]})
@@ -93,6 +97,7 @@ def test_clean_text_remove_literal():
 # normalize_whitespace
 # =====================================================================
 
+
 def test_normalize_whitespace():
     df = pd.DataFrame({"a": ["  a   b  c ", "x    y"]})
 
@@ -104,6 +109,7 @@ def test_normalize_whitespace():
 # =====================================================================
 # strip_chars
 # =====================================================================
+
 
 def test_strip_chars():
     df = pd.DataFrame({"a": ["--abc--", "##x##"]})
@@ -117,6 +123,7 @@ def test_strip_chars():
 # extract_digits
 # =====================================================================
 
+
 def test_extract_digits():
     df = pd.DataFrame({"a": ["tel: 070-123", "id42"]})
 
@@ -128,6 +135,7 @@ def test_extract_digits():
 # =====================================================================
 # extract_letters
 # =====================================================================
+
 
 def test_extract_letters_keep_swedish():
     df = pd.DataFrame({"a": ["Åsa123", "Bo!"]})
@@ -149,6 +157,7 @@ def test_extract_letters_ascii_only():
 # to_title_case
 # =====================================================================
 
+
 def test_to_title_case():
     df = pd.DataFrame({"a": ["hello world", "FOO bar"]})
 
@@ -161,6 +170,7 @@ def test_to_title_case():
 # capitalize_first
 # =====================================================================
 
+
 def test_capitalize_first_basic():
     df = pd.DataFrame({"a": ["aNNa", "BO", None]})
 
@@ -172,6 +182,7 @@ def test_capitalize_first_basic():
 # =====================================================================
 # replace_text
 # =====================================================================
+
 
 def test_replace_text_case_sensitive():
     df = pd.DataFrame({"a": ["Hello", "hello"]})
@@ -192,6 +203,7 @@ def test_replace_text_case_insensitive():
 # =====================================================================
 # insert_text
 # =====================================================================
+
 
 def test_insert_text_positive_position():
     df = pd.DataFrame({"a": ["abcd"]})

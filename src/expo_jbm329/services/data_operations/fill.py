@@ -57,6 +57,7 @@ def fillna(
 # Statistical fill strategies
 # =====================================================================
 
+
 def fillna_mean(df: pd.DataFrame, column: str) -> pd.DataFrame:
     """Fill missing values with the column mean.
 
@@ -126,6 +127,7 @@ def fillna_mode(df: pd.DataFrame, column: str) -> pd.DataFrame:
 # =====================================================================
 # String-specific helpers
 # =====================================================================
+
 
 def replace_empty_with_nan(
     df: pd.DataFrame,

@@ -411,9 +411,9 @@ class SettingsEditor(QDialog):
             csv.get("read_chunk_size_rows", DEFAULT_SETTINGS["csv"]["read_chunk_size_rows"])
         )
         self.spin_csv_write_chunk_size.setValue(
-            csv.get("write_chunk_size_rows", DEFAULT_SETTINGS["csv"]["write_chunk_size_rows"]))
-        self.cmb_csv_encoding.setCurrentText(
-            csv.get("default_encoding", DEFAULT_SETTINGS["csv"]["default_encoding"]))
+            csv.get("write_chunk_size_rows", DEFAULT_SETTINGS["csv"]["write_chunk_size_rows"])
+        )
+        self.cmb_csv_encoding.setCurrentText(csv.get("default_encoding", DEFAULT_SETTINGS["csv"]["default_encoding"]))
 
         sniff_default = DEFAULT_SETTINGS["csv"].get("sniff_delimiter", True)
         self.chk_csv_sniff.setChecked(bool(csv.get("sniff_delimiter", sniff_default)))
@@ -432,32 +432,22 @@ class SettingsEditor(QDialog):
 
         # Excel settings
         excel = s.get("excel", DEFAULT_SETTINGS["excel"])
-        self.spin_excel_chunk_size.setValue(
-            excel.get("chunk_size_rows", DEFAULT_SETTINGS["excel"]["chunk_size_rows"])
-        )
+        self.spin_excel_chunk_size.setValue(excel.get("chunk_size_rows", DEFAULT_SETTINGS["excel"]["chunk_size_rows"]))
         self.spin_excel_max_rows.setValue(
             excel.get("max_rows_per_sheet", DEFAULT_SETTINGS["excel"]["max_rows_per_sheet"])
         )
-        self.chk_excel_streaming.setChecked(
-            excel.get("streaming", DEFAULT_SETTINGS["excel"]["streaming"])
-        )
+        self.chk_excel_streaming.setChecked(excel.get("streaming", DEFAULT_SETTINGS["excel"]["streaming"]))
 
         # schema cache
         sc = s.get("schema_cache", DEFAULT_SETTINGS["schema_cache"])
-        self.spin_schema_limit.setValue(
-            sc.get("prefetch_limit", DEFAULT_SETTINGS["schema_cache"]["prefetch_limit"])
-        )
+        self.spin_schema_limit.setValue(sc.get("prefetch_limit", DEFAULT_SETTINGS["schema_cache"]["prefetch_limit"]))
         self.spin_schema_batch.setValue(
             sc.get("prefetch_batch_size", DEFAULT_SETTINGS["schema_cache"]["prefetch_batch_size"])
         )
-        self.spin_schema_ttl.setValue(
-            sc.get("ttl_seconds", DEFAULT_SETTINGS["schema_cache"].get("ttl_seconds", 300))
-        )
+        self.spin_schema_ttl.setValue(sc.get("ttl_seconds", DEFAULT_SETTINGS["schema_cache"].get("ttl_seconds", 300)))
 
         # (workbench - remaining)
-        self.spin_editor_topn.setValue(
-            editor.get("gen_top_n", editor_defaults.get("gen_top_n", 10))
-        )
+        self.spin_editor_topn.setValue(editor.get("gen_top_n", editor_defaults.get("gen_top_n", 10)))
 
     # -------------------------------------------------------------------------
     # Reset button
@@ -544,7 +534,18 @@ class SettingsEditor(QDialog):
         try:
             save_settings(new_s)
             ensure_all_dirs(new_s)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             title = self.tr("Failure")
             msg = self.tr("Could not save settings:\n%1").replace("%1", str(e))
             self._dialogs.critical(self, title, msg)

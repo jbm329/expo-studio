@@ -113,8 +113,7 @@ All new code should include type hints.
 Example:
 
 ```python
-def load_dataset(path: Path) -> pd.DataFrame:
-    ...
+def load_dataset(path: Path) -> pd.DataFrame: ...
 ```
 
 Avoid untyped public APIs.

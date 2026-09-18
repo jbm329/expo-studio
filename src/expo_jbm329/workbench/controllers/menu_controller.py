@@ -5,6 +5,7 @@ creation, action setup, and callback wiring for the main application window.
 It encapsulates all Qt menu boilerplate, allowing the main application to
 remain focused on business logic.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -59,24 +60,24 @@ class MenuController:
         return tr("MenuController", text)
 
     def __init__(
-            self,
-            *,
-            menubar: QMenuBar,
-            new_file: Callable[[], None],
-            open_file: Callable[[], None],
-            save_file: Callable[[], None],
-            save_file_as: Callable[[], None],
-            quit_app: Callable[[], Any],
-            export_csv: Callable[[], None],
-            export_excel: Callable[[], None],
-            export_data: Callable[[], None],
-            export_profile: Callable[[], None],
-            clear_editor: Callable[[], None],
-            open_settings_dialog: Callable[[], None],
-            open_log_settings_dialog: Callable[[], None],
-            open_connection_dialog: Callable[[], None],
-            open_rest_connection_dialog: Callable[[], None],
-            show_about_dialog: Callable[[], None],
+        self,
+        *,
+        menubar: QMenuBar,
+        new_file: Callable[[], None],
+        open_file: Callable[[], None],
+        save_file: Callable[[], None],
+        save_file_as: Callable[[], None],
+        quit_app: Callable[[], Any],
+        export_csv: Callable[[], None],
+        export_excel: Callable[[], None],
+        export_data: Callable[[], None],
+        export_profile: Callable[[], None],
+        clear_editor: Callable[[], None],
+        open_settings_dialog: Callable[[], None],
+        open_log_settings_dialog: Callable[[], None],
+        open_connection_dialog: Callable[[], None],
+        open_rest_connection_dialog: Callable[[], None],
+        show_about_dialog: Callable[[], None],
     ):
         """Initialize the MenuController.
 

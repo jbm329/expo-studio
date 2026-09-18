@@ -42,8 +42,9 @@ class SqlAlchemySqliteDriver(DriverProtocol):
         Args:
             timeouts: A dictionary of timeout values.
         """
-        self._connect_timeout_s = int(timeouts.get("login_timeout_s")) if (
-                    timeouts and timeouts.get("login_timeout_s") is not None) else None
+        self._connect_timeout_s = (
+            int(timeouts.get("login_timeout_s")) if (timeouts and timeouts.get("login_timeout_s") is not None) else None
+        )
 
     def dispose(self) -> None:
         """Dispose of the driver and release all cached engines."""

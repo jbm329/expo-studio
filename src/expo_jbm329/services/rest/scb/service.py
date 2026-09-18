@@ -1,4 +1,5 @@
 """Helpers for building SCB PxWeb queries."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -27,14 +28,10 @@ class ScbSelection:
             msg = "SCB variable name must not be empty"
             raise ScbQueryError(msg)
 
-        cleaned_values = tuple(
-            str(value).strip() for value in self.values if str(value).strip()
-        )
+        cleaned_values = tuple(str(value).strip() for value in self.values if str(value).strip())
         if not cleaned_values:
             msg_0 = f"SCB selection for '{variable_name}' requires at least one selected values entry"
-            raise ScbQueryError(
-                msg_0
-            )
+            raise ScbQueryError(msg_0)
 
         object.__setattr__(self, "variable", variable_name)
         object.__setattr__(self, "values", cleaned_values)
@@ -102,9 +99,7 @@ class ScbQueryBuilder:
                 f"({selected_cells} > {self.MAX_SELECTED_CELLS}). Reduce the selections "
                 "or split the query into smaller parts."
             )
-            raise ScbQueryError(
-                msg_0
-            )
+            raise ScbQueryError(msg_0)
 
         return params
 

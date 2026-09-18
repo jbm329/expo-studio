@@ -33,13 +33,25 @@ def fmt_pct(x: float, decimals: int = 2) -> str:
         if QLocale.system().decimalPoint() == ",":
             return s.replace(".", ",")
         return s
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         return f"{x * 100:.{decimals}f}%"
 
 
 # ---------------------------------------------------------------------
 #  Bytes formatting
 # ---------------------------------------------------------------------
+
 
 def fmt_bytes(b: int) -> str:
     """Format a byte size using binary units (B, KB, MB, GB, TB).
@@ -98,7 +110,18 @@ def fmt_path_size(p: Path | str | None) -> str:
             return ""
 
         size_bytes = path.stat().st_size
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         return ""
 
     return f" ({fmt_bytes(size_bytes)})"
@@ -126,7 +149,18 @@ def fmt_num(val: float | None, *, sig: int = 4) -> str:
 
     try:
         xf = float(val)
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         return ""
 
     if np.isnan(xf):
@@ -138,12 +172,7 @@ def fmt_num(val: float | None, *, sig: int = 4) -> str:
 
     # Float formatting with significant digits
     # np.format_float_positional produces clean scientific/positional format
-    formatted = np.format_float_positional(
-        xf,
-        precision=sig,
-        unique=False,
-        trim="k"
-    )
+    formatted = np.format_float_positional(xf, precision=sig, unique=False, trim="k")
 
     # Apply locale decimal separator
     if QLocale.system().decimalPoint() == ",":
@@ -163,7 +192,18 @@ def fmt_int(n: int) -> str:
     """
     try:
         return QLocale.system().toString(int(n))
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         return f"{int(n):,}".replace(",", " ")
 
 
@@ -179,7 +219,18 @@ def fmt_shape(df: pd.DataFrame | None) -> tuple[str, str]:
         else:
             rows = "?"
             columns = "?"
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         rows = "?"
         columns = "?"
     return rows, columns
@@ -188,6 +239,7 @@ def fmt_shape(df: pd.DataFrame | None) -> tuple[str, str]:
 # ---------------------------------------------------------------------
 #  Date / datetime formatting
 # ---------------------------------------------------------------------
+
 
 def fmt_date(dt: datetime.date | datetime.datetime | None) -> str:
     """Format date according to the user's locale (Qt / OS).
@@ -257,6 +309,7 @@ def fmt_timedelta(td: datetime.timedelta | pd.Timedelta | None) -> str:
 #  Category-safe formatting
 # ---------------------------------------------------------------------
 
+
 def fmt_category(val) -> str:
     """Safely format categorical values.
 
@@ -277,6 +330,7 @@ def fmt_category(val) -> str:
 #  Path format to posix
 # ---------------------------------------------------------------------
 
+
 def fmt_path(p: Any) -> str:
     """Return a POSIX-style string for any path-like input.
 
@@ -290,7 +344,18 @@ def fmt_path(p: Any) -> str:
     """
     try:
         return Path(p).as_posix()
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         s = str(p)
         return s.replace("\\", "/")
 

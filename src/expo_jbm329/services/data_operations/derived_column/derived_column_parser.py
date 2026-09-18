@@ -33,6 +33,7 @@ from typing import Final
 
 class DerivedColumnFormulaError(ValueError):
     """Structured error for derived column formulas."""
+
     def __init__(
         self,
         code: str,
@@ -118,14 +119,13 @@ _OPERATOR_PRECEDENCE: Final[dict[str, int]] = {
 _SUPPORTED_OPERATORS: Final[set[str]] = set(_OPERATOR_PRECEDENCE)
 
 
-_NUMBER_RE: Final[re.Pattern[str]] = re.compile(
-    r"\d+(?:\.\d*)?|\.\d+"
-)
+_NUMBER_RE: Final[re.Pattern[str]] = re.compile(r"\d+(?:\.\d*)?|\.\d+")
 
 
 # =====================================================================
 # Public API
 # =====================================================================
+
 
 def tokenize_formula(formula: str) -> list[FormulaToken]:
     """Tokenize a derived column formula.
@@ -165,22 +165,12 @@ def tokenize_formula(formula: str) -> list[FormulaToken]:
             end = text.find("]", i + 1)
             if end == -1:
                 msg = "unclosed_column_reference"
-                raise DerivedColumnFormulaError(
-                    msg,
-                    context={
-                        "position": i
-                    }
-                )
+                raise DerivedColumnFormulaError(msg, context={"position": i})
 
-            column_name = text[i + 1:end].strip()
+            column_name = text[i + 1 : end].strip()
             if not column_name:
                 msg = "empty_column_reference"
-                raise DerivedColumnFormulaError(
-                    msg,
-                    context={
-                        "position": i
-                    }
-                )
+                raise DerivedColumnFormulaError(msg, context={"position": i})
 
             tokens.append(
                 FormulaToken(
@@ -354,7 +344,7 @@ def parse_formula_to_rpn(formula: str, available_columns: set[str]) -> list[Form
                     msg,
                     context={
                         "position": token.position,
-                    }
+                    },
                 )
 
     while operators:
@@ -366,7 +356,7 @@ def parse_formula_to_rpn(formula: str, available_columns: set[str]) -> list[Form
                 msg,
                 context={
                     "position": top.position,
-                }
+                },
             )
 
         output.append(top)
@@ -431,11 +421,7 @@ def extract_referenced_columns_from_tokens(tokens: list[FormulaToken]) -> set[st
     Returns:
         Set of referenced column names.
     """
-    return {
-        token.value
-        for token in tokens
-        if token.token_type == FormulaTokenType.COLUMN
-    }
+    return {token.value for token in tokens if token.token_type == FormulaTokenType.COLUMN}
 
 
 def validate_tokens(tokens: list[FormulaToken], available_columns: set[str]) -> None:
@@ -482,7 +468,7 @@ def _operator_precedence(token: FormulaToken) -> int:
             context={
                 "token": token.value,
                 "position": token.position,
-            }
+            },
         ) from exc
 
 
@@ -552,7 +538,7 @@ def _validate_syntax(tokens: list[FormulaToken]) -> None:
                     msg,
                     context={
                         "position": token.position,
-                    }
+                    },
                 )
 
             paren_balance += 1
@@ -588,7 +574,7 @@ def _validate_syntax(tokens: list[FormulaToken]) -> None:
                     context={
                         "operator": token.value,
                         "position": token.position,
-                    }
+                    },
                 )
 
             expecting_operand = True
@@ -611,10 +597,7 @@ def _validate_syntax(tokens: list[FormulaToken]) -> None:
     if expecting_operand:
         if previous and previous.token_type == FormulaTokenType.OPERATOR:
             msg = "formula_ends_with_operator"
-            raise DerivedColumnFormulaError(
-                msg,
-                context={"operator": previous.value}
-            )
+            raise DerivedColumnFormulaError(msg, context={"operator": previous.value})
 
         msg = "formula_incomplete"
         raise DerivedColumnFormulaError(msg)

@@ -49,12 +49,14 @@ RunnerKind = Literal["thread", "pool"]
 # Protocols and type definitions
 # =============================================================================
 
+
 class _ConnectableSignal(Protocol):
     """Protocol for Qt-like signals exposing connect()."""
 
     def connect(self, slot: Any, connection_type: Qt.ConnectionType = ...) -> Any:
         """Connect a slot to the signal."""
         ...
+
 
 # =============================================================================
 # Data structures
@@ -256,9 +258,7 @@ class Worker(QObject):
         self._dispatch_error.connect(self.error.emit, Qt.ConnectionType.QueuedConnection)
 
         # When the worker is finished, emit the final finished signal.
-        self._dispatch_finished.connect(
-            self._handle_final_cleanup, Qt.ConnectionType.QueuedConnection
-        )
+        self._dispatch_finished.connect(self._handle_final_cleanup, Qt.ConnectionType.QueuedConnection)
 
     def _handle_final_cleanup(self) -> None:
         """Safely emit finished and release self-ownership."""
@@ -279,7 +279,18 @@ class Worker(QObject):
         try:
             clamped = max(0, min(100, int(value)))
             self._dispatch_progress.emit(clamped)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             # Never allow progress reporting to crash job execution.
             self._logger.debug(
                 "Worker: failed to emit progress (job_id=%s, corr=%s).",
@@ -306,7 +317,18 @@ class Worker(QObject):
             result = self._fn(*self._args, **call_kwargs)
             self._dispatch_result.emit(result)
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             tb = traceback.format_exc()
             self._logger.error(
                 "Worker: callable raised (job_id=%s, scope=%s, corr=%s): %s",
@@ -408,10 +430,7 @@ def _build_injected_call_kwargs(
     try:
         signature = inspect.signature(fn)
         parameters = signature.parameters
-        accepts_var_kwargs = any(
-            parameter.kind is inspect.Parameter.VAR_KEYWORD
-            for parameter in parameters.values()
-        )
+        accepts_var_kwargs = any(parameter.kind is inspect.Parameter.VAR_KEYWORD for parameter in parameters.values())
     except (TypeError, ValueError):
         parameters = {}
         accepts_var_kwargs = False
@@ -519,14 +538,36 @@ class JobManager:
             job_id = getattr(obj, "job_id", None)
             if isinstance(job_id, str) and job_id:
                 return job_id
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             pass
 
         try:
             raw_job_id = getattr(obj, "_job_id", None)
             if isinstance(raw_job_id, str) and raw_job_id:
                 return raw_job_id
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             pass
 
         return None
@@ -606,7 +647,18 @@ class JobManager:
                 lambda jid=job_id: self._finalize_job(jid),
                 Qt.ConnectionType.QueuedConnection,
             )
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.debug(
                 "JobManager: failed to connect thread.finished finalizer (job_id=%s).",
                 job_id,
@@ -624,12 +676,12 @@ class JobManager:
         return worker
 
     def run_pool(
-            self,
-            fn: Callable[..., Any],
-            *args: Any,
-            scope: str | None = None,
-            corr_id: str | None = None,
-            **kwargs: Any,
+        self,
+        fn: Callable[..., Any],
+        *args: Any,
+        scope: str | None = None,
+        corr_id: str | None = None,
+        **kwargs: Any,
     ) -> _FutureBridge:
         """Launch a callable on a shared ThreadPoolExecutor.
 
@@ -668,7 +720,18 @@ class JobManager:
                 lambda jid=job_id: self._finalize_job(jid),
                 Qt.ConnectionType.QueuedConnection,
             )
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.debug(
                 "JobManager: failed to connect pool finished finalizer (job_id=%s).",
                 job_id,
@@ -695,7 +758,18 @@ class JobManager:
                 )
                 result = fn(*args, **call_kwargs)
                 return "ok", result
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 return "err", traceback.format_exc()
 
         # Queue started instead of emitting directly. This keeps signal delivery
@@ -713,7 +787,18 @@ class JobManager:
                     bridge.post_result(payload)
                 else:
                     bridge.post_error(payload)
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 bridge.post_error(traceback.format_exc())
             finally:
                 bridge.post_finished()
@@ -841,7 +926,18 @@ class JobManager:
                         meta.corr_id if meta is not None else None,
                         wait_ms,
                     )
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.debug(
                     "JobManager: failed to stop thread job during abort (job_id=%s).",
                     job_id,
@@ -851,7 +947,18 @@ class JobManager:
         if self._pool is not None:
             try:
                 self._pool.shutdown(wait=False, cancel_futures=True)
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.debug(
                     "JobManager: pool shutdown failed during abort.",
                     exc_info=True,
@@ -875,7 +982,18 @@ class JobManager:
 
         try:
             self._pool.shutdown(wait=wait, cancel_futures=True)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.debug("JobManager: pool shutdown failed.", exc_info=True)
         finally:
             self._pool = None
@@ -943,7 +1061,18 @@ class JobManager:
                     lambda jid=job_id: self._on_job_started(jid),
                     Qt.ConnectionType.QueuedConnection,
                 )
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.debug(
                     "JobManager: failed to connect started logger (job_id=%s).",
                     job_id,
@@ -957,7 +1086,18 @@ class JobManager:
                     lambda tb, jid=job_id: self._on_job_error(jid, tb),
                     Qt.ConnectionType.QueuedConnection,
                 )
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.debug(
                     "JobManager: failed to connect error logger (job_id=%s).",
                     job_id,
@@ -971,7 +1111,18 @@ class JobManager:
                     lambda jid=job_id: self._on_job_finished(jid),
                     Qt.ConnectionType.QueuedConnection,
                 )
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.debug(
                     "JobManager: failed to connect finished logger (job_id=%s).",
                     job_id,

@@ -1,4 +1,5 @@
 """REST controller for loading datasets from REST APIs."""
+
 from __future__ import annotations
 
 import logging
@@ -33,6 +34,7 @@ if TYPE_CHECKING:
 
 class DisplayDataFrameProtocol(Protocol):
     """Protocol for displaying a DataFrame in results tab."""
+
     def __call__(self, df: pd.DataFrame, *, title: str | None) -> None:
         """Display a DataFrame in results tab."""
         ...
@@ -202,8 +204,7 @@ class RestController:
             self._results.bind_job_to_tab(pending_tab_id, jobid)
         else:
             self._logger.warning(
-                "RestController: could not bind REST job to pending tab "
-                "(corr=%s, name=%s, tab_id=%s)",
+                "RestController: could not bind REST job to pending tab (corr=%s, name=%s, tab_id=%s)",
                 corr,
                 config.name,
                 pending_tab_id,
@@ -223,7 +224,18 @@ class RestController:
             config.validate()
             self.load_from_api(config=config)
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
             self._logger.exception(
                 "Failed to load REST preset '%s': %s",
                 preset_name,
@@ -331,8 +343,7 @@ class RestController:
 
         if not isinstance(payload, JobResult):
             self._logger.error(
-                "RestController: REST result is not JobResult "
-                "(corr=%s, name=%s, tab_id=%s, type=%s)",
+                "RestController: REST result is not JobResult (corr=%s, name=%s, tab_id=%s, type=%s)",
                 corr,
                 name,
                 pending_tab_id,
@@ -384,8 +395,7 @@ class RestController:
         df_obj = payload.data
         if not isinstance(df_obj, pd.DataFrame):
             self._logger.error(
-                "RestController: REST load returned non-DataFrame payload "
-                "(corr=%s, name=%s, tab_id=%s, type=%s)",
+                "RestController: REST load returned non-DataFrame payload (corr=%s, name=%s, tab_id=%s, type=%s)",
                 corr,
                 name,
                 pending_tab_id,
@@ -428,12 +438,12 @@ class RestController:
         )
 
     def _on_rest_error(
-            self,
-            err: str | JobResult,
-            name: str,
-            *,
-            corr: str | None = None,
-            pending_tab_id: str | None = None,
+        self,
+        err: str | JobResult,
+        name: str,
+        *,
+        corr: str | None = None,
+        pending_tab_id: str | None = None,
     ) -> None:
         """Handle REST job error for a pending result tab."""
         if pending_tab_id is not None:

@@ -63,7 +63,3 @@ def expand(p: str | Path) -> Path:
 #
 #     # fallback: använd Documents/Expo
 #     return get_documents_dir(settings)
-
-
-
-

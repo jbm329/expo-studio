@@ -3,6 +3,7 @@
 This module provides the FileWriter class, which supports exporting data to CSV,
 Excel, Parquet, Feather, Pickle, and JSON formats.
 """
+
 from __future__ import annotations
 
 import json
@@ -30,6 +31,7 @@ class ExportCancelledError(Exception):
         sheets_written: Number of completed/active sheets written (Excel streaming).
         corr_id: Correlation id for logging correlation.
     """
+
     def __init__(
         self,
         message: str,
@@ -55,6 +57,7 @@ class FileWriter:
     - cancel_cb is a callable returning True if the operation should be aborted.
     - On user-initiated cancellation, writers raise ExportCancelledError (a partial file may exist).
     """
+
     __slots__ = (
         "_csv_encoding_default",
         "_csv_max_rows_per_sheet_default",
@@ -104,25 +107,39 @@ class FileWriter:
         """
         try:
             csv_settings = settings.get("csv", {}) or {}
-            self._csv_encoding_default = (csv_settings.get(
-                "default_encoding", self._csv_encoding_default) or "").strip() or "utf-8"
-            self._csv_write_chunk_size = int(csv_settings.get(
-                "write_chunk_size_rows",
-                self._csv_write_chunk_size_default)
+            self._csv_encoding_default = (
+                csv_settings.get("default_encoding", self._csv_encoding_default) or ""
+            ).strip() or "utf-8"
+            self._csv_write_chunk_size = int(
+                csv_settings.get("write_chunk_size_rows", self._csv_write_chunk_size_default)
             )
 
             excel_settings = settings.get("excel", {}) or {}
             self._excel_chunk_size = int(excel_settings.get("chunk_size_rows", self._excel_chunk_size_default))
-            self._excel_max_rows_per_sheet = int(excel_settings.get(
-                "max_rows_per_sheet", self._excel_max_rows_per_sheet_default))
+            self._excel_max_rows_per_sheet = int(
+                excel_settings.get("max_rows_per_sheet", self._excel_max_rows_per_sheet_default)
+            )
             self._excel_streaming = bool(excel_settings.get("streaming", self._excel_streaming_default))
 
             self._logger.debug(
                 "FileWriter: settings reloaded (csv_chunk=%s, excel_chunk=%s, excel_streaming=%s, excel_max_rows=%s)",
                 self._csv_write_chunk_size,
-                self._excel_chunk_size, self._excel_streaming, self._excel_max_rows_per_sheet
+                self._excel_chunk_size,
+                self._excel_streaming,
+                self._excel_max_rows_per_sheet,
             )
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.exception("FileWriter: failed reloading settings")
 
     # noinspection PyMethodMayBeStatic
@@ -171,18 +188,18 @@ class FileWriter:
     # CSV (chunked for large datasets)
     # ----------------------------------------------------------------------
     def save_csv(
-            self,
-            df: pd.DataFrame,
-            dest: str | Path,
-            *,
-            encoding: str = "utf-8",
-            sep: str = ",",
-            index: bool = False,
-            na_rep: str | None = None,
-            chunk_size_rows: int | None = None,
-            progress_cb: Callable[[int], None] | None = None,
-            cancel_cb: Callable[[], bool] | None = None,
-            corr_id: str | None = None,
+        self,
+        df: pd.DataFrame,
+        dest: str | Path,
+        *,
+        encoding: str = "utf-8",
+        sep: str = ",",
+        index: bool = False,
+        na_rep: str | None = None,
+        chunk_size_rows: int | None = None,
+        progress_cb: Callable[[int], None] | None = None,
+        cancel_cb: Callable[[], bool] | None = None,
+        corr_id: str | None = None,
     ) -> Path:
         """Writes CSV to disk.
 
@@ -203,7 +220,13 @@ class FileWriter:
         rows, columns = fmt_shape(df)
         self._logger.debug(
             "FileWriter: save CSV (corr=%s, path=%s, rows=%s, cols=%s, chunk_size_rows=%s, sep=%r, index=%s)",
-            corr_id, fmt_path(path), rows, columns, chunk_size_rows, sep, index
+            corr_id,
+            fmt_path(path),
+            rows,
+            columns,
+            chunk_size_rows,
+            sep,
+            index,
         )
 
         total = len(df.index)
@@ -216,7 +239,9 @@ class FileWriter:
         if total == 0 or not chunk_size_rows or total <= chunk_size_rows:
             self._logger.debug(
                 "FileWriter: save CSV no-chunk path (corr=%s, total=%s, chunk_size_rows=%s)",
-                corr_id, total, chunk_size_rows
+                corr_id,
+                total,
+                chunk_size_rows,
             )
             if progress_cb:
                 progress_cb(0)
@@ -240,14 +265,17 @@ class FileWriter:
             dt = (time.perf_counter() - t0) * 1000.0
             self._logger.info(
                 "FileWriter: CSV written (corr=%s, path=%s, ms=%.1f, rows=%s, cols=%s)",
-                corr_id, fmt_path(path), dt, rows, columns
+                corr_id,
+                fmt_path(path),
+                dt,
+                rows,
+                columns,
             )
             return path
 
         # Chunked path
         self._logger.debug(
-            "FileWriter: save CSV chunked path (corr=%s, total=%s, chunk_size_rows=%s)",
-            corr_id, total, chunk_size_rows
+            "FileWriter: save CSV chunked path (corr=%s, total=%s, chunk_size_rows=%s)", corr_id, total, chunk_size_rows
         )
 
         if progress_cb:
@@ -264,7 +292,9 @@ class FileWriter:
             if cancel_cb and cancel_cb():
                 self._logger.debug(
                     "FileWriter: save CSV cancelled mid-run (corr=%s, path=%s, rows_written=%s)",
-                    corr_id, fmt_path(path), rows_written
+                    corr_id,
+                    fmt_path(path),
+                    rows_written,
                 )
                 msg = "FileWriter: CSV export cancelled during write"
                 raise ExportCancelledError(
@@ -293,7 +323,11 @@ class FileWriter:
         dt = (time.perf_counter() - t0) * 1000.0
         self._logger.info(
             "FileWriter: CSV written (corr=%s, path=%s, ms=%.1f, rows=%s, cols=%s)",
-            corr_id, fmt_path(path), dt, rows, columns
+            corr_id,
+            fmt_path(path),
+            dt,
+            rows,
+            columns,
         )
         return path
 
@@ -301,19 +335,19 @@ class FileWriter:
     # Excel (pandas fallback or write-only streaming via openpyxl)
     # ----------------------------------------------------------------------
     def save_excel(
-            self,
-            df: pd.DataFrame,
-            dest: str | Path,
-            *,
-            sheet_name: str = "Data",
-            index: bool = False,
-            na_rep: Any = None,
-            streaming: bool | None = None,
-            max_rows_per_sheet: int | None = None,
-            chunk_size_rows: int | None = None,
-            progress_cb: Callable[[int], None] | None = None,
-            cancel_cb: Callable[[], bool] | None = None,
-            corr_id: str | None = None,
+        self,
+        df: pd.DataFrame,
+        dest: str | Path,
+        *,
+        sheet_name: str = "Data",
+        index: bool = False,
+        na_rep: Any = None,
+        streaming: bool | None = None,
+        max_rows_per_sheet: int | None = None,
+        chunk_size_rows: int | None = None,
+        progress_cb: Callable[[int], None] | None = None,
+        cancel_cb: Callable[[], bool] | None = None,
+        corr_id: str | None = None,
     ) -> Path:
         """Writes Excel to disk.
 
@@ -342,7 +376,15 @@ class FileWriter:
         self._logger.debug(
             "FileWriter: save excel start (corr=%s, path=%s, rows=%s, cols=%s, streaming=%s, "
             "sheet=%r, index=%s, max_rows_per_sheet=%s, chunk_size_rows=%s)",
-            corr_id, fmt_path(path), rows, columns, streaming, sheet_name, index, max_rows_per_sheet, chunk_size_rows
+            corr_id,
+            fmt_path(path),
+            rows,
+            columns,
+            streaming,
+            sheet_name,
+            index,
+            max_rows_per_sheet,
+            chunk_size_rows,
         )
 
         t0 = time.perf_counter()
@@ -350,8 +392,7 @@ class FileWriter:
         # Pandas fallback (single call)
         if not streaming:
             self._logger.debug(
-                "FileWriter: save excel (pandas) path (corr=%s, rows=%s, columns=%s)",
-                corr_id, rows, columns
+                "FileWriter: save excel (pandas) path (corr=%s, rows=%s, columns=%s)", corr_id, rows, columns
             )
             if progress_cb:
                 progress_cb(0)
@@ -369,7 +410,18 @@ class FileWriter:
             try:
                 with pd.ExcelWriter(path, engine="openpyxl") as excel_writer:
                     df.to_excel(excel_writer, sheet_name=sheet_name, index=index, na_rep=na_rep)
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.exception(
                     "FileWriter: save excel (pandas) failed (corr=%s, path=%s)",
                     corr_id,
@@ -388,7 +440,7 @@ class FileWriter:
                 fmt_path(path),
                 dt,
                 rows,
-                columns
+                columns,
             )
             return path
 
@@ -413,21 +465,21 @@ class FileWriter:
     # Excel streaming
     # ----------------------------------------------------------------------
     def _save_excel_streaming(
-            self,
-            df: pd.DataFrame,
-            path: Path,
-            *,
-            sheet_name: str = "Data",
-            index: bool = False,
-            na_rep: Any = None,
-            max_rows_per_sheet: int | None = None,
-            chunk_size_rows: int | None = None,
-            progress_cb: Callable[[int], None] | None = None,
-            cancel_cb: Callable[[], bool] | None = None,
-            corr_id: str | None = None,
-            t0: float | None = None,
-            rows: str = "?",
-            cols: str = "?",
+        self,
+        df: pd.DataFrame,
+        path: Path,
+        *,
+        sheet_name: str = "Data",
+        index: bool = False,
+        na_rep: Any = None,
+        max_rows_per_sheet: int | None = None,
+        chunk_size_rows: int | None = None,
+        progress_cb: Callable[[int], None] | None = None,
+        cancel_cb: Callable[[], bool] | None = None,
+        corr_id: str | None = None,
+        t0: float | None = None,
+        rows: str = "?",
+        cols: str = "?",
     ) -> Path:
         """Streamed Excel export using openpyxl (write_only mode).
 
@@ -462,18 +514,36 @@ class FileWriter:
             try:
                 if pd.isna(value):
                     return _na_rep if _na_rep is not None else None
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 pass
 
             # Pandas Timestamp → timezone-naive datetime
             try:
                 if isinstance(value, pd.Timestamp):
-                    return (
-                        value.tz_localize(None).to_pydatetime()
-                        if value.tz is not None
-                        else value.to_pydatetime()
-                    )
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+                    return value.tz_localize(None).to_pydatetime() if value.tz is not None else value.to_pydatetime()
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 pass
 
             # Native datetime/date/timedelta
@@ -495,14 +565,36 @@ class FileWriter:
             if isinstance(value, (bytes, bytearray)):
                 try:
                     return value.decode("utf-8", errors="replace")
-                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ):
                     return str(value)
 
             # Interval / Period → string
             try:
                 if isinstance(value, (pd.Interval, pd.Period)):
                     return str(value)
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 pass
 
             return value
@@ -521,7 +613,13 @@ class FileWriter:
         self._logger.debug(
             "FileWriter: save excel (streaming) start "
             "(corr=%s, path=%s, sheet=%r, index=%s, total_rows=%s, rows_limit_for_data=%s, chunk_size_rows=%s)",
-            corr_id, fmt_path(path), sheet_name, index, total, rows_limit_for_data, chunk_size_rows
+            corr_id,
+            fmt_path(path),
+            sheet_name,
+            index,
+            total,
+            rows_limit_for_data,
+            chunk_size_rows,
         )
 
         t_start = t0 if t0 is not None else time.perf_counter()
@@ -554,7 +652,13 @@ class FileWriter:
             self._logger.info(
                 "FileWriter: excel written (streaming) "
                 "(corr=%s, engine=%s, sheets=%s, path=%s, ms=%.1f, rows=%s, cols=%s)",
-                corr_id, "openpyxl-writeonly", 1, fmt_path(path), dt_ms, rows, cols
+                corr_id,
+                "openpyxl-writeonly",
+                1,
+                fmt_path(path),
+                dt_ms,
+                rows,
+                cols,
             )
             return path
 
@@ -596,7 +700,7 @@ class FileWriter:
                     corr_id,
                     fmt_path(path),
                     written,
-                    sheet_ix
+                    sheet_ix,
                 )
                 msg = "Excel export cancelled during streaming write"
                 raise ExportCancelledError(
@@ -623,7 +727,18 @@ class FileWriter:
                         chunk.loc[:, col] = col_vals.map(
                             lambda v: v.decode("utf-8", "replace") if isinstance(v, (bytes, bytearray)) else v
                         )
-                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ):
                     pass
 
             ws_append = current_ws.append
@@ -640,7 +755,10 @@ class FileWriter:
                         self._logger.debug(
                             "FileWriter: save excel (streaming) cancelled mid-run "
                             "(corr=%s, path=%s, rows_written=%s, sheets_written=%s)",
-                            corr_id, fmt_path(path), written, sheet_ix
+                            corr_id,
+                            fmt_path(path),
+                            written,
+                            sheet_ix,
                         )
                         msg = "Excel export cancelled during streaming write"
                         raise ExportCancelledError(
@@ -671,7 +789,10 @@ class FileWriter:
                         self._logger.debug(
                             "FileWriter: save excel (streaming) cancelled mid-run "
                             "(corr=%s, path=%s, rows_written=%s, sheets_written=%s)",
-                            corr_id, fmt_path(path), written, sheet_ix
+                            corr_id,
+                            fmt_path(path),
+                            written,
+                            sheet_ix,
                         )
                         msg = "Excel export cancelled during streaming write"
                         raise ExportCancelledError(
@@ -703,7 +824,13 @@ class FileWriter:
         dt_ms = (time.perf_counter() - t_start) * 1000.0
         self._logger.info(
             "FileWriter: excel written (streaming) (corr=%s, engine=%s, sheets=%s, path=%s, ms=%.1f, rows=%s, cols=%s)",
-            corr_id, "openpyxl-writeonly", sheet_ix, fmt_path(path), dt_ms, rows, cols
+            corr_id,
+            "openpyxl-writeonly",
+            sheet_ix,
+            fmt_path(path),
+            dt_ms,
+            rows,
+            cols,
         )
         return path
 
@@ -731,7 +858,12 @@ class FileWriter:
         rows, columns = fmt_shape(df)
         self._logger.debug(
             "FileWriter: save datafile entry (corr=%s, path=%s, rows=%s, cols=%s, suffix=%s)",
-            corr_id, fmt_path(dest), rows, columns, suffix)
+            corr_id,
+            fmt_path(dest),
+            rows,
+            columns,
+            suffix,
+        )
 
         if suffix == ".df":
             out = self._save_pickle(df, dest, corr_id=corr_id)
@@ -743,8 +875,9 @@ class FileWriter:
             msg = f"Unsupported data file suffix: {suffix}"
             raise ValueError(msg)
 
-        self._logger.info("FileWriter: data file written (corr=%s, path=%s, rows=%s, cols=%s)",
-                          corr_id, fmt_path(out), rows, columns)
+        self._logger.info(
+            "FileWriter: data file written (corr=%s, path=%s, rows=%s, cols=%s)", corr_id, fmt_path(out), rows, columns
+        )
         return out
 
     # ----------------------------------------------------------------------
@@ -762,7 +895,7 @@ class FileWriter:
             "FileWriter: JSON written (corr=%s, path=%s, bytes=%s)",
             corr_id,
             fmt_path(path),
-            path.stat().st_size if path.exists() else "?"
+            path.stat().st_size if path.exists() else "?",
         )
         return path
 

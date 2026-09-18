@@ -3,6 +3,7 @@
 This module manages the interaction between the editor, the completion engine,
 and the popup window to provide a smooth SQL autocompletion experience.
 """
+
 from __future__ import annotations
 
 import logging
@@ -117,8 +118,10 @@ class SqlAutocompleteController(QObject):
         # Navigation + accept + escape when popup visible
         if self.popup.isVisible():
             if key in (
-                Qt.Key.Key_Up, Qt.Key.Key_Down,
-                Qt.Key.Key_PageUp, Qt.Key.Key_PageDown,
+                Qt.Key.Key_Up,
+                Qt.Key.Key_Down,
+                Qt.Key.Key_PageUp,
+                Qt.Key.Key_PageDown,
             ):
                 return self.popup.handle_key(event)
             if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Tab):
@@ -142,18 +145,14 @@ class SqlAutocompleteController(QObject):
         # Qt6: '.' as Key_Period
         if key == Qt.Key.Key_Period:
             if self._debug:
-                self._logger.debug(
-                    "SqlAutocompleteController: period key detected; scheduling suggestions."
-                )
+                self._logger.debug("SqlAutocompleteController: period key detected; scheduling suggestions.")
             QTimer.singleShot(0, self._update_suggestions)
             return False
 
         # '.' via text
         if text == ".":
             if self._debug:
-                self._logger.debug(
-                    "SqlAutocompleteController: period text detected; scheduling suggestions."
-                )
+                self._logger.debug("SqlAutocompleteController: period text detected; scheduling suggestions.")
             QTimer.singleShot(0, self._update_suggestions)
             return False
 
@@ -186,7 +185,18 @@ class SqlAutocompleteController(QObject):
                 )
 
             return prefix
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             if self._debug:
                 self._logger.debug(
                     "SqlAutocompleteController: prefix extraction failed.",
@@ -226,10 +236,19 @@ class SqlAutocompleteController(QObject):
             self._debug_log(prefix, suggestions)
             self._show_or_hide(suggestions)
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
-            self._logger.debug(
-                "SqlAutocompleteController: autocomplete update failed: %s", str(e), exc_info=True
-            )
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
+            self._logger.debug("SqlAutocompleteController: autocomplete update failed: %s", str(e), exc_info=True)
             self.popup.hide()
             QTimer.singleShot(1000, lambda: self._force_suggestions_now())
 
@@ -247,7 +266,18 @@ class SqlAutocompleteController(QObject):
             self._debug_log(prefix, suggestions)
             self._show_or_hide(suggestions)
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._logger.debug("SqlAutocompleteController: forced autocomplete failed: %s", str(e))
             self.popup.hide()
 

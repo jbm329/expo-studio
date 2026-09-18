@@ -43,6 +43,7 @@ class SqlLintController(QObject):
         _timer: Debounce timer.
         _logger: Logger instance.
     """
+
     __slots__ = (
         "_dialect",
         "_logger",
@@ -52,13 +53,13 @@ class SqlLintController(QObject):
     )
 
     def __init__(
-            self,
-            editor: QPlainTextEdit,
-            parent: QObject | None = None,
-            *,
-            delay_ms: int = 700,
-            logger: logging.Logger | None = None,
-            set_status: StatusCallback | None = None,
+        self,
+        editor: QPlainTextEdit,
+        parent: QObject | None = None,
+        *,
+        delay_ms: int = 700,
+        logger: logging.Logger | None = None,
+        set_status: StatusCallback | None = None,
     ) -> None:
         """Initialize the lint controller.
 
@@ -215,8 +216,8 @@ class SqlLintController(QObject):
             self.editor.setExtraSelections(selections)
 
     def _selection_for_diagnostic(
-            self,
-            diagnostic: SqlDiagnostic,
+        self,
+        diagnostic: SqlDiagnostic,
     ) -> tuple[QTextEdit.ExtraSelection | None, RenderedDiagnostic | None]:
         """Create an ExtraSelection for a diagnostic.
 

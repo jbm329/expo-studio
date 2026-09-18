@@ -1,4 +1,5 @@
 """Manage per-tab undo stacks for result tabs."""
+
 from __future__ import annotations
 
 import contextlib
@@ -155,7 +156,18 @@ class ResultTabUndoManager:
 
         try:
             snapshot = df.copy(deep=True)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.debug(
                 "ResultTabUndoManager: failed to copy snapshot for tab=%s.",
                 tab_id,
@@ -237,13 +249,23 @@ class ResultTabUndoManager:
             )
 
             self._logger.info(
-                "ResultTabUndoManager: settings reloaded "
-                "(undo_limit=%s, max_undo_mb=%s).",
+                "ResultTabUndoManager: settings reloaded (undo_limit=%s, max_undo_mb=%s).",
                 self._undo_limit_per_tab,
                 self._max_size_allow_undo_mb,
             )
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
             self._logger.error(
                 "ResultTabUndoManager: failed to reload settings %s",
                 exc,
@@ -313,7 +335,18 @@ class ResultTabUndoManager:
         """
         try:
             return int(df.memory_usage(deep=True).sum())
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return 0
 
     def _notify_state_changed(self) -> None:

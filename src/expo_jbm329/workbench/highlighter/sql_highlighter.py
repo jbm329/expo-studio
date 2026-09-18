@@ -4,6 +4,7 @@ This module provides a Qt syntax highlighter for SQL text, including support
 for keywords, functions, identifiers, numbers, operators, comments, and
 multi-line string and block-comment highlighting.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -26,17 +27,18 @@ if TYPE_CHECKING:
 @dataclass(frozen=True)
 class Theme:
     """Highlighter color palette (tweak per brand/theme)."""
+
     friendly_name: str
     # Core token colors (use default_factory because QColor is mutable)
-    kw: QColor = field(default_factory=lambda: QColor("#0B6CAD"))        # Keywords
-    func: QColor = field(default_factory=lambda: QColor("#7A3E9D"))      # Functions (COUNT, SUM)
-    ident: QColor = field(default_factory=lambda: QColor("#333333"))     # Identifiers (fallback)
-    string: QColor = field(default_factory=lambda: QColor("#AA5500"))    # String literals
-    number: QColor = field(default_factory=lambda: QColor("#2B7A0B"))    # Numeric literals
-    comment: QColor = field(default_factory=lambda: QColor("#888888"))   # Comments
+    kw: QColor = field(default_factory=lambda: QColor("#0B6CAD"))  # Keywords
+    func: QColor = field(default_factory=lambda: QColor("#7A3E9D"))  # Functions (COUNT, SUM)
+    ident: QColor = field(default_factory=lambda: QColor("#333333"))  # Identifiers (fallback)
+    string: QColor = field(default_factory=lambda: QColor("#AA5500"))  # String literals
+    number: QColor = field(default_factory=lambda: QColor("#2B7A0B"))  # Numeric literals
+    comment: QColor = field(default_factory=lambda: QColor("#888888"))  # Comments
 
     # Additional styling
-    operator: QColor = field(default_factory=lambda: QColor("#005A5A"))        # Operators/symbols
+    operator: QColor = field(default_factory=lambda: QColor("#005A5A"))  # Operators/symbols
     bracketed_ident: QColor = field(default_factory=lambda: QColor("#333333"))
     quoted_ident: QColor = field(default_factory=lambda: QColor("#2F4F4F"))
 
@@ -112,12 +114,73 @@ class SqlHighlighter(QSyntaxHighlighter):
             kw.upper()
             for kw in (
                 keywords
-                or ["SELECT", "FROM", "WHERE", "AND", "OR", "NOT", "NULL", "LIKE", "ILIKE", "JOIN", "INNER", "LEFT",
-                    "RIGHT", "FULL", "OUTER", "ON", "GROUP", "BY", "ORDER", "ASC", "DESC", "INSERT", "INTO", "VALUES",
-                    "UPDATE", "SET", "DELETE", "CREATE", "TABLE", "ALTER", "DROP", "VIEW", "INDEX", "CONSTRAINT",
-                    "PRIMARY", "KEY", "FOREIGN", "DISTINCT", "TOP", "HAVING", "CASE", "WHEN", "THEN", "ELSE", "END",
-                    "UNION", "ALL", "EXCEPT", "INTERSECT", "IS", "BETWEEN", "IN", "EXISTS", "OVER", "PARTITION",
-                    "ROWS", "RANGE", "CAST", "CONVERT", "COALESCE", "NVL", "WITH", "AS", "MATERIALIZED", "RECURSIVE"]
+                or [
+                    "SELECT",
+                    "FROM",
+                    "WHERE",
+                    "AND",
+                    "OR",
+                    "NOT",
+                    "NULL",
+                    "LIKE",
+                    "ILIKE",
+                    "JOIN",
+                    "INNER",
+                    "LEFT",
+                    "RIGHT",
+                    "FULL",
+                    "OUTER",
+                    "ON",
+                    "GROUP",
+                    "BY",
+                    "ORDER",
+                    "ASC",
+                    "DESC",
+                    "INSERT",
+                    "INTO",
+                    "VALUES",
+                    "UPDATE",
+                    "SET",
+                    "DELETE",
+                    "CREATE",
+                    "TABLE",
+                    "ALTER",
+                    "DROP",
+                    "VIEW",
+                    "INDEX",
+                    "CONSTRAINT",
+                    "PRIMARY",
+                    "KEY",
+                    "FOREIGN",
+                    "DISTINCT",
+                    "TOP",
+                    "HAVING",
+                    "CASE",
+                    "WHEN",
+                    "THEN",
+                    "ELSE",
+                    "END",
+                    "UNION",
+                    "ALL",
+                    "EXCEPT",
+                    "INTERSECT",
+                    "IS",
+                    "BETWEEN",
+                    "IN",
+                    "EXISTS",
+                    "OVER",
+                    "PARTITION",
+                    "ROWS",
+                    "RANGE",
+                    "CAST",
+                    "CONVERT",
+                    "COALESCE",
+                    "NVL",
+                    "WITH",
+                    "AS",
+                    "MATERIALIZED",
+                    "RECURSIVE",
+                ]
             )
         )
 
@@ -125,9 +188,34 @@ class SqlHighlighter(QSyntaxHighlighter):
             fn.upper()
             for fn in (
                 functions
-                or ["COUNT", "SUM", "AVG", "MIN", "MAX", "LOWER", "UPPER", "SUBSTRING", "LEFT", "RIGHT", "LEN",
-                    "LENGTH", "TRIM", "RTRIM", "LTRIM", "ROUND", "FLOOR", "CEILING", "ABS", "POWER", "GETDATE",
-                    "CURRENT_TIMESTAMP", "NOW", "DATEADD", "DATEDIFF", "DATE_TRUNC"]
+                or [
+                    "COUNT",
+                    "SUM",
+                    "AVG",
+                    "MIN",
+                    "MAX",
+                    "LOWER",
+                    "UPPER",
+                    "SUBSTRING",
+                    "LEFT",
+                    "RIGHT",
+                    "LEN",
+                    "LENGTH",
+                    "TRIM",
+                    "RTRIM",
+                    "LTRIM",
+                    "ROUND",
+                    "FLOOR",
+                    "CEILING",
+                    "ABS",
+                    "POWER",
+                    "GETDATE",
+                    "CURRENT_TIMESTAMP",
+                    "NOW",
+                    "DATEADD",
+                    "DATEDIFF",
+                    "DATE_TRUNC",
+                ]
             )
         )
 

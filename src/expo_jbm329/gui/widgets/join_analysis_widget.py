@@ -93,6 +93,7 @@ class JoinAnalysisWidget(QWidget):
                 - cardinality: str
                 - estimated_rows: int (optional)
         """
+
         def to_pct(val: float) -> int:
             return int(max(0.0, min(1.0, val)) * 100)
 
@@ -142,14 +143,8 @@ class JoinAnalysisWidget(QWidget):
         }
         """
 
-        self.pb_match.setStyleSheet(
-            base_style + "QProgressBar::chunk { background-color: #4CAF50; }"
-        )
+        self.pb_match.setStyleSheet(base_style + "QProgressBar::chunk { background-color: #4CAF50; }")
 
-        self.pb_left.setStyleSheet(
-            base_style + "QProgressBar::chunk { background-color: #FFC107; }"
-        )
+        self.pb_left.setStyleSheet(base_style + "QProgressBar::chunk { background-color: #FFC107; }")
 
-        self.pb_right.setStyleSheet(
-            base_style + "QProgressBar::chunk { background-color: #F44336; }"
-        )
+        self.pb_right.setStyleSheet(base_style + "QProgressBar::chunk { background-color: #F44336; }")

@@ -33,6 +33,7 @@ logger = logging.getLogger("applogger.service")
 # Category maintenance
 # =====================================================================
 
+
 def category_remove_unused(
     df: pd.DataFrame,
     column: str,
@@ -68,6 +69,7 @@ def category_remove_unused(
 # =====================================================================
 # Category value manipulation
 # =====================================================================
+
 
 def category_rename_single(
     df: pd.DataFrame,
@@ -107,9 +109,7 @@ def category_rename_single(
 
     if is_categorical_series(s):
         try:
-            new_s = s.cat.rename_categories(
-                lambda c: new if c == old else c
-            )
+            new_s = s.cat.rename_categories(lambda c: new if c == old else c)
         except (ValueError, TypeError):
             # Collision or invalid mapping -> rebuild categories
             tmp = s.astype("string").replace({old: new})
@@ -135,6 +135,7 @@ def category_rename_single(
 # =====================================================================
 # Explicit ordering
 # =====================================================================
+
 
 def category_set_order(
     df: pd.DataFrame,
@@ -187,10 +188,7 @@ def category_set_order(
             categories.append(c_str)
 
     if not strict and append_missing_tail:
-        extras = [
-            v for v in pd.unique(s.dropna())
-            if v not in categories
-        ]
+        extras = [v for v in pd.unique(s.dropna()) if v not in categories]
         categories = categories + extras
 
     dtype = CategoricalDtype(categories=categories, ordered=ordered)

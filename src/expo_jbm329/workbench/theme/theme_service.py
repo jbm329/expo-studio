@@ -3,6 +3,7 @@
 This module resolves the active GUI theme from application settings and the OS
 theme, and emits notifications when the resolved theme changes.
 """
+
 from __future__ import annotations
 
 import logging
@@ -13,12 +14,8 @@ from PyQt6.QtWidgets import QApplication
 
 class ThemeService(QObject):
     """Provide the resolved GUI theme and notify listeners when it changes."""
-    __slots__ = (
-        "_current_theme",
-        "_logger",
-        "_settings_theme",
-        "_settings_theme_default"
-    )
+
+    __slots__ = ("_current_theme", "_logger", "_settings_theme", "_settings_theme_default")
 
     theme_changed = pyqtSignal(str)  # "light" or "dark"
 
@@ -35,9 +32,7 @@ class ThemeService(QObject):
         self._current_theme: str | None = None
 
         # Listen for OS-level theme changes
-        QApplication.styleHints().colorSchemeChanged.connect(
-            self._on_os_theme_changed
-        )
+        QApplication.styleHints().colorSchemeChanged.connect(self._on_os_theme_changed)
         self._settings_theme_default: str = "system"
         self._settings_theme: str | None = self._settings_theme_default
 
@@ -100,10 +95,20 @@ class ThemeService(QObject):
             self._logger.debug(
                 "ThemeService: settings reloaded (theme=%s)",
                 self._settings_theme,
-
             )
             self.apply_theme()
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.exception("ThemeService: failed reloading settings")
 
     # ------------------------------------------------------------------

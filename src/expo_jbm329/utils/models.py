@@ -66,7 +66,7 @@ class DataFrameModel(QAbstractTableModel):
         parent=None,
         *,
         na_rep: str = "",
-        formatters: dict[str, Callable[[Any], str]] | None = None
+        formatters: dict[str, Callable[[Any], str]] | None = None,
     ):
         """Initialize the DataFrameModel.
 
@@ -145,7 +145,18 @@ class DataFrameModel(QAbstractTableModel):
                 if col_name in self._formatters:
                     try:
                         return self._formatters[col_name](val)
-                    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+                    except (
+                        AttributeError,
+                        ConnectionError,
+                        FileNotFoundError,
+                        IndexError,
+                        KeyError,
+                        LookupError,
+                        OSError,
+                        RuntimeError,
+                        TypeError,
+                        ValueError,
+                    ):
                         # Fall back to defaults on formatter failure
                         pass
 
@@ -181,14 +192,28 @@ class DataFrameModel(QAbstractTableModel):
 
                         return QLocale().toString(qdt, QLocale.FormatType.ShortFormat)
 
-                    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+                    except (
+                        AttributeError,
+                        ConnectionError,
+                        FileNotFoundError,
+                        IndexError,
+                        KeyError,
+                        LookupError,
+                        OSError,
+                        RuntimeError,
+                        TypeError,
+                        ValueError,
+                    ):
                         return self._na_rep
 
                 # Category OR object/string -> safe text
                 import pandas.api.types as pdt
-                if isinstance(self._df[col_name].dtype, pd.CategoricalDtype) or \
-                   pdt.is_object_dtype(self._df[col_name]) or \
-                   pdt.is_string_dtype(self._df[col_name]):
+
+                if (
+                    isinstance(self._df[col_name].dtype, pd.CategoricalDtype)
+                    or pdt.is_object_dtype(self._df[col_name])
+                    or pdt.is_string_dtype(self._df[col_name])
+                ):
                     return fmt_category(val)
 
                 # Numeric (and other) -> raw string representation
@@ -210,7 +235,18 @@ class DataFrameModel(QAbstractTableModel):
 
             return None
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             # Defensive: never crash the delegate/view due to bad data
             return None
 
@@ -299,7 +335,18 @@ class DataFrameModel(QAbstractTableModel):
                 else:
                     try:
                         fill_val = np.iinfo(arr.dtype).max
-                    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+                    except (
+                        AttributeError,
+                        ConnectionError,
+                        FileNotFoundError,
+                        IndexError,
+                        KeyError,
+                        LookupError,
+                        OSError,
+                        RuntimeError,
+                        TypeError,
+                        ValueError,
+                    ):
                         fill_val = np.iinfo(np.int64).max
 
                 key = arr.copy()
@@ -311,7 +358,18 @@ class DataFrameModel(QAbstractTableModel):
 
             self._row_ix = sorted_pos.astype(np.int64)
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             # Fallback: string sort
             arr_fallback = s.astype(str).to_numpy()
             sorted_pos = np.argsort(arr_fallback)
@@ -321,6 +379,7 @@ class DataFrameModel(QAbstractTableModel):
 
         # Let Qt know sorting is complete
         self.layoutChanged.emit()
+
     # ------------------------------------------------------------------
     # PUBLIC API
     # ------------------------------------------------------------------
@@ -353,6 +412,7 @@ class JoinPreviewModel(DataFrameModel):
 
     Inherits from DataFrameModel and adds specific functionality for joined data.
     """
+
     @override
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         """Return the data for the given index and role."""

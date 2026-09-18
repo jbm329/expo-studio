@@ -44,6 +44,7 @@ def summarize(df: pd.DataFrame) -> pd.DataFrame:
 # Missing-data statistics
 # =====================================================================
 
+
 def null_stats(df: pd.DataFrame) -> pd.DataFrame:
     """Return null counts and percentages per column.
 
@@ -61,9 +62,7 @@ def null_stats(df: pd.DataFrame) -> pd.DataFrame:
 
     data = {
         "nulls": df.isna().sum(),
-        "pct_null": (df.isna().sum() / total_rows * 100)
-        if total_rows > 0
-        else 0.0,
+        "pct_null": (df.isna().sum() / total_rows * 100) if total_rows > 0 else 0.0,
     }
 
     return pd.DataFrame(data)
@@ -72,6 +71,7 @@ def null_stats(df: pd.DataFrame) -> pd.DataFrame:
 # =====================================================================
 # Column profiling
 # =====================================================================
+
 
 def get_column_profile(
     df: pd.DataFrame,

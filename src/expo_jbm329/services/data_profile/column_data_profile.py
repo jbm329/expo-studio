@@ -4,6 +4,7 @@ This module provides robust and UI-independent profiling logic for
 computing descriptive statistics and simple visualization specs
 (histograms, top-N bars, weekday bars, boolean bars).
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -44,6 +45,7 @@ DISPLAY_DTYPE = {
 # Plot specification model
 # =====================================================================
 
+
 @dataclass
 class PlotSpec:
     """Lightweight descriptor for plotting instructions.
@@ -54,6 +56,7 @@ class PlotSpec:
         counts: Corresponding counts for each bin/bar.
         labels: Category/weekday labels when applicable.
     """
+
     kind: Literal["hist", "bar_topn", "bar_weekday", "bar_bool"] | None = None
     bins: list[float] | None = None
     counts: list[int] | None = None
@@ -71,6 +74,7 @@ class ColumnProfile:
         stats: Dictionary of computed metrics (e.g., counts, missingness).
         plot: A PlotSpec describing how to visualize the data, if applicable.
     """
+
     name: str
     semantic_dtype: SemanticDType
     storage_dtype: str
@@ -82,6 +86,7 @@ class ColumnProfile:
 # Internal helpers
 # =====================================================================
 
+
 def _safe_memory_usage(series: pd.Series) -> int:
     """Compute memory usage (bytes) for a Series with maximum safety.
 
@@ -89,10 +94,32 @@ def _safe_memory_usage(series: pd.Series) -> int:
     """
     try:
         return int(series.memory_usage(deep=True))
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         try:
             return int(series.memory_usage(deep=False))
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return 0
 
 
@@ -128,7 +155,18 @@ def _format_samples(series: pd.Series) -> list[Any]:
         # Keep original order, unique values
         return list(non_null.unique()[:3])
 
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         return []
 
 
@@ -139,7 +177,18 @@ def _any_bool_safe(bools: pd.Series) -> bool:
     """
     try:
         return bool(pd.Series(bools, copy=False).to_numpy(dtype=bool, na_value=False).any())
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         # Last-resort fallback (very robust, slightly slower for huge series)
         return any(bool(x) for x in pd.Series(bools, copy=False).astype(object).tolist())
 
@@ -160,7 +209,18 @@ def _dget_scalar(desc: pd.Series, key: str, default: float = np.nan) -> float:
         if isinstance(val, Real):
             return float(val)
         return float(default)
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         return float(default)
 
 
@@ -190,6 +250,7 @@ def _name_to_str(value: Hashable | None) -> str:
 # =====================================================================
 # Numeric profiling
 # =====================================================================
+
 
 def _numeric_profile(s: pd.Series) -> tuple[dict[str, Any], PlotSpec]:
     """Perform numeric profiling on a Series.
@@ -265,6 +326,7 @@ def _numeric_profile(s: pd.Series) -> tuple[dict[str, Any], PlotSpec]:
 # Datetime profiling
 # =====================================================================
 
+
 def _datetime_profile(s: pd.Series):
     """Datetime profiling with date-only detection.
 
@@ -308,6 +370,7 @@ def _datetime_profile(s: pd.Series):
 # =====================================================================
 # Boolean profiling
 # =====================================================================
+
 
 def _bool_profile(s: pd.Series):
     """Profile a boolean series.
@@ -353,6 +416,7 @@ def _bool_profile(s: pd.Series):
 # Text / object / category profiling
 # =====================================================================
 
+
 def _text_or_category_profile(s: pd.Series):
     """Profile textual or categorical data.
 
@@ -367,7 +431,18 @@ def _text_or_category_profile(s: pd.Series):
     # Safe coercion to string
     try:
         x = s.dropna().astype(str)
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         out["note.bytes"] = True
         return out, plot
 
@@ -401,6 +476,7 @@ def _text_or_category_profile(s: pd.Series):
 # =====================================================================
 # Public API
 # =====================================================================
+
 
 def profile_series(s: pd.Series, name: str | None = None) -> ColumnProfile:
     """Produce a full profile for a pandas Series.
@@ -488,11 +564,12 @@ def profile_series(s: pd.Series, name: str | None = None) -> ColumnProfile:
 
     # Constant?
     with contextlib.suppress(Exception):
-        base["constant.flag"] = (n_unique <= 1)
+        base["constant.flag"] = n_unique <= 1
 
     # If categorical, add transparent metadata (even if displayed as "string")
     with contextlib.suppress(Exception):
         from pandas import CategoricalDtype
+
         if isinstance(s.dtype, CategoricalDtype):
             dt: CategoricalDtype = s.dtype  # type: ignore
             cats = dt.categories

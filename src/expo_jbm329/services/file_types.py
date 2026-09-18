@@ -31,9 +31,7 @@ FileType = Literal["sql", "data", "html", "unknown"]
 # Configuration (centralized and explicit)
 # ---------------------------------------------------------------------
 
-SQL_SUFFIXES: tuple[str, ...] = (
-    ".sql",
-)
+SQL_SUFFIXES: tuple[str, ...] = (".sql",)
 
 DATA_SUFFIXES: tuple[str, ...] = (
     ".df",
@@ -58,6 +56,7 @@ HTML_SUFFIXES: tuple[str, ...] = (
 # ---------------------------------------------------------------------
 # Core classification API
 # ---------------------------------------------------------------------
+
 
 def classify_file(path: str | Path) -> FileType:
     """Classify a file path into a semantic file type.
@@ -93,6 +92,7 @@ def classify_file(path: str | Path) -> FileType:
 # ---------------------------------------------------------------------
 # Convenience helpers (optional, but explicit)
 # ---------------------------------------------------------------------
+
 
 def is_sql_file(path: str | Path) -> bool:
     """Return True if the path represents a SQL file."""

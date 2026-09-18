@@ -4,6 +4,7 @@ This module provides functionality to create, manage, and interact with result t
 It includes classes for handling cell actions, column properties, and header context menus,
 as well as integration with the GUI and data services.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -408,7 +409,18 @@ class ResultTabManager:
         if not isinstance(df, pd.DataFrame):
             try:
                 df = pd.DataFrame(df)
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as e:
                 self._dialogs.critical(
                     self._parent,
                     self._tr(self.TR_FAILURE),
@@ -432,10 +444,7 @@ class ResultTabManager:
 
         self.fulfill_pending_tab(handle.tab_id, df)
 
-        self._logger.debug(
-            "ResultTabManager: display dataframe after creating tab (tab_count=%s)",
-            self._tabs.count()
-        )
+        self._logger.debug("ResultTabManager: display dataframe after creating tab (tab_count=%s)", self._tabs.count())
 
     def apply_to_active_tab(
         self,
@@ -482,13 +491,13 @@ class ResultTabManager:
         self.display_dataframe(df, title=title)
 
     def create_pending_tab(
-            self,
-            *,
-            title: str | None,
-            origin_type: ResultOrigin = "unknown",
-            remove_on_cancel: bool = True,
-            remove_on_error: bool = True,
-            close_cancels_job: bool = True,
+        self,
+        *,
+        title: str | None,
+        origin_type: ResultOrigin = "unknown",
+        remove_on_cancel: bool = True,
+        remove_on_error: bool = True,
+        close_cancels_job: bool = True,
     ) -> ResultTabHandle:
         """Create a new pending result tab.
 
@@ -575,8 +584,7 @@ class ResultTabManager:
         record = self._get_tab_record(tab_id)
         if record is None:
             self._logger.warning(
-                "ResultTabManager: bind_job_to_tab ignored because tab was not found "
-                "(tab_id=%s, job_id=%s).",
+                "ResultTabManager: bind_job_to_tab ignored because tab was not found (tab_id=%s, job_id=%s).",
                 tab_id,
                 job_id,
             )
@@ -592,9 +600,9 @@ class ResultTabManager:
         )
 
     def fulfill_pending_tab(
-            self,
-            tab_id: str,
-            df: pd.DataFrame,
+        self,
+        tab_id: str,
+        df: pd.DataFrame,
     ) -> None:
         """Fill an existing pending tab with a DataFrame and mark it ready.
 
@@ -608,8 +616,7 @@ class ResultTabManager:
         record = self._get_tab_record(tab_id)
         if record is None:
             self._logger.warning(
-                "ResultTabManager: fulfill_pending_tab ignored because tab was not found "
-                "(tab_id=%s).",
+                "ResultTabManager: fulfill_pending_tab ignored because tab was not found (tab_id=%s).",
                 tab_id,
             )
             return
@@ -617,7 +624,18 @@ class ResultTabManager:
         if not isinstance(df, pd.DataFrame):
             try:
                 df = pd.DataFrame(df)
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as e:
                 self._dialogs.critical(
                     parent=self._parent,
                     title=self._tr(self.TR_FAILURE),
@@ -677,8 +695,7 @@ class ResultTabManager:
         record = self._get_tab_record(tab_id)
         if record is None:
             self._logger.debug(
-                "ResultTabManager: remove_pending_tab ignored because tab was not found "
-                "(tab_id=%s).",
+                "ResultTabManager: remove_pending_tab ignored because tab was not found (tab_id=%s).",
                 tab_id,
             )
             return
@@ -686,8 +703,7 @@ class ResultTabManager:
         tab_index = self._find_tab_index_by_id(tab_id)
         if tab_index is None:
             self._logger.debug(
-                "ResultTabManager: remove_pending_tab ignored because tab index was not found "
-                "(tab_id=%s).",
+                "ResultTabManager: remove_pending_tab ignored because tab index was not found (tab_id=%s).",
                 tab_id,
             )
             return
@@ -725,9 +741,7 @@ class ResultTabManager:
             return
 
         current_title = self._tabs.tabText(index)
-        self._logger.debug(
-            "ResultTabManager: rename tab requested (index=%s, old_title=%s).", index, current_title
-        )
+        self._logger.debug("ResultTabManager: rename tab requested (index=%s, old_title=%s).", index, current_title)
         new_title, ok = self._dialogs.prompt_text(
             parent=self._parent,
             title=self._tr(self.TR_RENAME_TAB),
@@ -737,9 +751,7 @@ class ResultTabManager:
 
         if ok and new_title.strip():
             self._tabs.setTabText(index, new_title.strip())
-            self._logger.info(
-                "ResultTabManager: renamed tab index=%s to '%s'.", index, new_title.strip()
-            )
+            self._logger.info("ResultTabManager: renamed tab index=%s to '%s'.", index, new_title.strip())
 
     def current_df(self, index: int | None = None) -> pd.DataFrame | None:
         """Return the DataFrame for the current tab or a given tab index.
@@ -785,7 +797,18 @@ class ResultTabManager:
                     continue
                 title_i = self._tabs.tabText(i).strip() or f"Dataset{i + 1}"
                 data.append((df_i, title_i))
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             pass
 
         return data
@@ -836,9 +859,7 @@ class ResultTabManager:
                 f"Tab '{record.title}' does not currently hold a DataFrame "
                 f"(tab_id={tab_id}, state={record.state.value})"
             )
-            raise KeyError(
-                msg
-            )
+            raise KeyError(msg)
 
         return record.df
 
@@ -914,7 +935,18 @@ class ResultTabManager:
 
             return self._undo.has_undo(tab_id)
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return False
 
     def set_join_controller(self, controller: JoinController) -> None:
@@ -966,8 +998,7 @@ class ResultTabManager:
         has_multiple = ready_count > 1
 
         self._logger.debug(
-            "ResultTabManager: emit multi-dataset state "
-            "(cb_exists=%s ready_count=%s tab_count=%s has_multiple=%s)",
+            "ResultTabManager: emit multi-dataset state (cb_exists=%s ready_count=%s tab_count=%s has_multiple=%s)",
             True,
             ready_count,
             self._tabs.count(),
@@ -1039,20 +1070,53 @@ class ResultTabManager:
         elif chosen == act_derived:
             try:
                 self._derived_column_controller.create_derived_column()
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.exception("Derived column failed to start.")
             return
 
         elif chosen == act_join:
             try:
                 self._join_controller.open_join_dialog()
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.exception("ResultTabManager: join could not be started.")
             return
         elif chosen == act_concatenate:
             try:
                 self._concat_controller.open_concat_dialog()
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.exception("ResultTabManager: concatenate could not be started.")
             return
 
@@ -1076,9 +1140,7 @@ class ResultTabManager:
         column = header.logicalIndexAt(pos)
         if column < 0:
             return
-        self._logger.debug(
-            "ResultTabManager: header context menu opened (column_index=%s).", column
-        )
+        self._logger.debug("ResultTabManager: header context menu opened (column_index=%s).", column)
 
         sel_model = header.selectionModel()
         if sel_model is None:
@@ -1392,7 +1454,18 @@ class ResultTabManager:
                 )
                 return
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._dialogs.critical(
                 parent=self._parent,
                 title=self._tr(self.TR_FAILURE),
@@ -1424,7 +1497,18 @@ class ResultTabManager:
             col_name = str(df.columns[view_col])
             raw_value = df.iloc[index.row()][col_name]
             return True, df, index.row(), col_name, raw_value
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return False, None, None, None, None
 
     # ==================================================================
@@ -1611,18 +1695,18 @@ class ResultTabManager:
         )
 
     def _make_tab_record(
-            self,
-            *,
-            tab_id: str,
-            view: QTableView,
-            title: str,
-            df: pd.DataFrame | None,
-            state: ResultTabState = ResultTabState.READY,
-            job_id: str | None = None,
-            origin_type: ResultOrigin = "unknown",
-            remove_on_cancel: bool = True,
-            remove_on_error: bool = True,
-            close_cancels_job: bool = True,
+        self,
+        *,
+        tab_id: str,
+        view: QTableView,
+        title: str,
+        df: pd.DataFrame | None,
+        state: ResultTabState = ResultTabState.READY,
+        job_id: str | None = None,
+        origin_type: ResultOrigin = "unknown",
+        remove_on_cancel: bool = True,
+        remove_on_error: bool = True,
+        close_cancels_job: bool = True,
     ) -> ResultTabRecord:
         """Create a new internal tab record.
 
@@ -1763,8 +1847,7 @@ class ResultTabManager:
             push_undo: Whether to push the previous DataFrame onto the undo stack.
         """
         self._logger.debug(
-            "ResultTabManager: applying new DataFrame to view "
-            "(rows=%s, cols=%s, invalidate_cache=%s, push_undo=%s).",
+            "ResultTabManager: applying new DataFrame to view (rows=%s, cols=%s, invalidate_cache=%s, push_undo=%s).",
             len(new_df),
             len(new_df.columns),
             invalidate_cache,
@@ -1773,9 +1856,7 @@ class ResultTabManager:
 
         model = view.model()
         if not isinstance(model, DataFrameModel):
-            self._logger.warning(
-                "ResultTabManager: apply ignored because view model was not a DataFrameModel."
-            )
+            self._logger.warning("ResultTabManager: apply ignored because view model was not a DataFrameModel.")
             return
 
         record = self._get_tab_record_for_view(view)
@@ -1792,7 +1873,18 @@ class ResultTabManager:
                             "ResultTabManager: pushed previous DataFrame to undo stack for tab=%s.",
                             tab_id,
                         )
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.debug(
                     "ResultTabManager: failed to push undo snapshot for tab=%s.",
                     tab_id,
@@ -1809,7 +1901,18 @@ class ResultTabManager:
             else:
                 self._clear_presentation_delegate(view)
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._dialogs.critical(
                 parent=self._parent,
                 title=self._tr(self.TR_FAILURE),
@@ -1827,9 +1930,7 @@ class ResultTabManager:
                     self._col_profile_cache.invalidate_tab(record.tab_id)
 
         else:
-            self._logger.warning(
-                "ResultTabManager: no tab record found while applying new DataFrame."
-            )
+            self._logger.warning("ResultTabManager: no tab record found while applying new DataFrame.")
 
         tab_idx = self._find_tab_index_for_view(view)
         if tab_idx is not None and self._tabs.currentIndex() == tab_idx:
@@ -1880,7 +1981,18 @@ class ResultTabManager:
                     tab_id = self._find_tab_id_for_view(view)
                     if tab_id is not None:
                         self._col_profile_cache.invalidate_tab(tab_id)
-                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ):
                     pass
 
             with contextlib.suppress(Exception):
@@ -1891,10 +2003,10 @@ class ResultTabManager:
         return model
 
     def _apply_with_cache_invalidation(
-            self,
-            view: QTableView,
-            df: pd.DataFrame,
-            status: str,
+        self,
+        view: QTableView,
+        df: pd.DataFrame,
+        status: str,
     ):
         """Wrapper to enforce cache invalidation."""
         self._apply_new_dataframe_to_view(
@@ -1905,10 +2017,10 @@ class ResultTabManager:
         )
 
     def _apply_without_cache_invalidation(
-            self,
-            view,
-            df,
-            status,
+        self,
+        view,
+        df,
+        status,
     ):
         """Adapter for controllers that should not force cache invalidation."""
         self._apply_new_dataframe_to_view(
@@ -1939,7 +2051,18 @@ class ResultTabManager:
 
             view.setItemDelegate(delegate)
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.exception("ResultTabManager: failed to apply presentation delegate")
 
     def handle_format_view_toggle(self, is_checked: bool) -> None:
@@ -1962,7 +2085,7 @@ class ResultTabManager:
                     self._run_with_busy_overlay(
                         view,
                         lambda: self._apply_presentation_delegate(view, active_record),
-                        message=self._tr(self.TR_FORMATTING_CELLS)
+                        message=self._tr(self.TR_FORMATTING_CELLS),
                     )
 
     def _adjust_column_widths_to_header(
@@ -1994,7 +2117,18 @@ class ResultTabManager:
         try:
             delegate = QStyledItemDelegate(view)
             view.setItemDelegate(delegate)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.exception("Failed to clear presentation delegate.")
 
     def _update_last_df_from_tab(self, index: int) -> None:
@@ -2020,7 +2154,18 @@ class ResultTabManager:
             record = self._tabs_by_id.get(tab_id)
             self._last_df = record.df if record is not None else None
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._last_df = None
 
         self._emit_shape(self._last_df)
@@ -2036,7 +2181,18 @@ class ResultTabManager:
                 self._set_shape(None, None)
             else:
                 self._set_shape(len(df), len(df.columns))
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             pass
 
     # ==============================================================
@@ -2102,9 +2258,7 @@ class ResultTabManager:
     # ==============================================================
 
     def _resolve_df_col_series(
-        self,
-        view: QTableView,
-        column: int
+        self, view: QTableView, column: int
     ) -> tuple[bool, pd.DataFrame | None, str | None, pd.Series | None]:
         """Resolve (DataFrame, column name, Series) from QTableView + column index.
 
@@ -2172,7 +2326,16 @@ class ResultTabManager:
             )
             return False, None, None, None
 
-        except (AttributeError, ConnectionError, FileNotFoundError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._logger.error(
                 "ResultTabManager: resolve failed - unexpected error (column=%s): %s",
                 column,
@@ -2242,12 +2405,9 @@ class ResultTabManager:
 
             if record.df is None:
                 msg_0 = (
-                    f"Tab '{title}' does not currently hold a DataFrame "
-                    f"(tab_id={tab_id}, state={record.state.value})"
+                    f"Tab '{title}' does not currently hold a DataFrame (tab_id={tab_id}, state={record.state.value})"
                 )
-                raise KeyError(
-                    msg_0
-                )
+                raise KeyError(msg_0)
 
             return record.df
 
@@ -2263,14 +2423,36 @@ class ResultTabManager:
             for i in reversed(range(self._tabs.count())):
                 if self._tabs.tabText(i).strip() == title.strip():
                     self.close_tab(i)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             pass
 
     def _has_any_data(self) -> bool:
         """Return True if ANY tab contains a non-empty DataFrame."""
         try:
             return len(self._ready_records()) > 0
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return False
 
     def _ready_records(self) -> list[ResultTabRecord]:
@@ -2413,8 +2595,7 @@ class ResultTabManager:
         cancel_job = self._cancel_job
         if cancel_job is None:
             self._logger.debug(
-                "ResultTabManager: pending tab close had no cancel callback "
-                "(tab_id=%s, job_id=%s).",
+                "ResultTabManager: pending tab close had no cancel callback (tab_id=%s, job_id=%s).",
                 record.tab_id,
                 job_id,
             )
@@ -2423,16 +2604,25 @@ class ResultTabManager:
         try:
             cancelled = bool(cancel_job(job_id))
             self._logger.info(
-                "ResultTabManager: pending tab close requested job cancellation "
-                "(tab_id=%s, job_id=%s, cancelled=%s).",
+                "ResultTabManager: pending tab close requested job cancellation (tab_id=%s, job_id=%s, cancelled=%s).",
                 record.tab_id,
                 job_id,
                 cancelled,
             )
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.exception(
-                "ResultTabManager: failed to cancel pending job on tab close "
-                "(tab_id=%s, job_id=%s).",
+                "ResultTabManager: failed to cancel pending job on tab close (tab_id=%s, job_id=%s).",
                 record.tab_id,
                 job_id,
             )

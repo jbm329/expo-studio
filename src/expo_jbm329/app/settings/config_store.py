@@ -8,6 +8,7 @@ Attributes:
     DEFAULT_SETTINGS (dict): Default application settings.
     DEFAULT_LOG_CONFIG (dict): Default logging configuration.
 """
+
 from __future__ import annotations
 
 import copy
@@ -35,13 +36,13 @@ DEFAULT_SETTINGS = {
         "undo_limit_per_tab": 20,
         "max_size_allow_undo_mb": 100,
     },
-    "documents_dir": None,   # None => use default
+    "documents_dir": None,  # None => use default
     "csv": {
         "read_chunk_size_rows": 100000,
         "write_chunk_size_rows": 100000,
         "default_encoding": "utf-8",
         "sniff_delimiter": True,
-        "default_sep": ","
+        "default_sep": ",",
     },
     "excel": {
         "chunk_size_rows": 25000,
@@ -50,8 +51,8 @@ DEFAULT_SETTINGS = {
     },
     "schema_cache": {
         "ttl_seconds": 300,
-        "prefetch_limit": 600,         # 0 => No limit
-        "prefetch_batch_size": 100,    # objects/batch
+        "prefetch_limit": 600,  # 0 => No limit
+        "prefetch_batch_size": 100,  # objects/batch
     },
 }
 
@@ -136,7 +137,18 @@ def load_settings() -> dict:
             user = json.loads(p.read_text(encoding="utf-8"))
             if not isinstance(user, dict):
                 raise ValueError
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             # Corrupt → reset
             merged = copy.deepcopy(DEFAULT_SETTINGS)
             _atomic_write_json(p, merged)
@@ -175,6 +187,7 @@ def _validate_settings_inplace(s: dict) -> None:
     Args:
         s: The settings dictionary to validate.
     """
+
     # --- Helpers ---------------------------------------------------------------
     def _coerce_int(val, default, min_value=None, max_value=None) -> int:
         """Coerces a value to an integer with optional clamping.
@@ -195,7 +208,18 @@ def _validate_settings_inplace(s: dict) -> None:
             if max_value is not None and iv > max_value:
                 iv = max_value
             return iv
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return default
 
     def _coerce_bool(val, default) -> bool:
@@ -279,75 +303,73 @@ def _validate_settings_inplace(s: dict) -> None:
     ed["gen_top_n"] = _coerce_int(
         ed.get("gen_top_n", DEFAULT_SETTINGS["workbench"]["gen_top_n"]),
         DEFAULT_SETTINGS["workbench"]["gen_top_n"],
-        min_value=0   # allow 0 to indicate "no limit"
+        min_value=0,  # allow 0 to indicate "no limit"
     )
     ed["undo_limit_per_tab"] = _coerce_int(
         ed.get("undo_limit_per_tab", DEFAULT_SETTINGS["workbench"]["undo_limit_per_tab"]),
         DEFAULT_SETTINGS["workbench"]["undo_limit_per_tab"],
-        min_value=1
+        min_value=1,
     )
     ed["max_size_allow_undo_mb"] = _coerce_int(
         ed.get("max_size_allow_undo_mb", DEFAULT_SETTINGS["workbench"]["max_size_allow_undo_mb"]),
         DEFAULT_SETTINGS["workbench"]["max_size_allow_undo_mb"],
-        min_value=1
+        min_value=1,
     )
 
     # --- csv -------------------------------------------------------------------
     csv_block["read_chunk_size_rows"] = _coerce_int(
         csv_block.get("read_chunk_size_rows", DEFAULT_SETTINGS["csv"]["read_chunk_size_rows"]),
         DEFAULT_SETTINGS["csv"]["read_chunk_size_rows"],
-        min_value=1
+        min_value=1,
     )
     csv_block["write_chunk_size_rows"] = _coerce_int(
         csv_block.get("write_chunk_size_rows", DEFAULT_SETTINGS["csv"]["write_chunk_size_rows"]),
         DEFAULT_SETTINGS["csv"]["write_chunk_size_rows"],
-        min_value=1
+        min_value=1,
     )
     csv_block["default_encoding"] = _coerce_str(
         csv_block.get("default_encoding", DEFAULT_SETTINGS["csv"]["default_encoding"]),
-        DEFAULT_SETTINGS["csv"]["default_encoding"]
+        DEFAULT_SETTINGS["csv"]["default_encoding"],
     ).lower()
     csv_block["sniff_delimiter"] = _coerce_bool(
         csv_block.get("sniff_delimiter", DEFAULT_SETTINGS["csv"]["sniff_delimiter"]),
-        DEFAULT_SETTINGS["csv"]["sniff_delimiter"]
+        DEFAULT_SETTINGS["csv"]["sniff_delimiter"],
     )
     csv_block["default_sep"] = _coerce_str(
-        csv_block.get("default_sep", DEFAULT_SETTINGS["csv"]["default_sep"]),
-        DEFAULT_SETTINGS["csv"]["default_sep"]
+        csv_block.get("default_sep", DEFAULT_SETTINGS["csv"]["default_sep"]), DEFAULT_SETTINGS["csv"]["default_sep"]
     )
 
     # --- excel -----------------------------------------------------------------
     excel_block["chunk_size_rows"] = _coerce_int(
         excel_block.get("chunk_size_rows", DEFAULT_SETTINGS["excel"]["chunk_size_rows"]),
         DEFAULT_SETTINGS["excel"]["chunk_size_rows"],
-        min_value=1
+        min_value=1,
     )
     # Clamp to Excel's row limit per sheet (1,048,576)
     excel_block["max_rows_per_sheet"] = _coerce_int(
         excel_block.get("max_rows_per_sheet", DEFAULT_SETTINGS["excel"]["max_rows_per_sheet"]),
         DEFAULT_SETTINGS["excel"]["max_rows_per_sheet"],
         min_value=1,
-        max_value=DEFAULT_SETTINGS["excel"]["max_rows_per_sheet"]
+        max_value=DEFAULT_SETTINGS["excel"]["max_rows_per_sheet"],
     )
     excel_block["streaming"] = _coerce_bool(
-        excel_block.get("streaming", DEFAULT_SETTINGS["excel"]["streaming"]),
-        DEFAULT_SETTINGS["excel"]["streaming"]
+        excel_block.get("streaming", DEFAULT_SETTINGS["excel"]["streaming"]), DEFAULT_SETTINGS["excel"]["streaming"]
     )
     # --- schema_cache ----------------------------------------------------------
     sc["ttl_seconds"] = _coerce_int(
         sc.get("ttl_seconds", DEFAULT_SETTINGS["schema_cache"]["ttl_seconds"]),
         DEFAULT_SETTINGS["schema_cache"]["ttl_seconds"],
-        min_value=1
+        min_value=1,
     )
     sc["prefetch_limit"] = _coerce_int(
         sc.get("prefetch_limit", DEFAULT_SETTINGS["schema_cache"]["prefetch_limit"]),
         DEFAULT_SETTINGS["schema_cache"]["prefetch_limit"],
-        min_value=0  # 0 => no limit
+        min_value=0,  # 0 => no limit
     )
     sc["prefetch_batch_size"] = _coerce_int(
         sc.get("prefetch_batch_size", DEFAULT_SETTINGS["schema_cache"]["prefetch_batch_size"]),
         DEFAULT_SETTINGS["schema_cache"]["prefetch_batch_size"],
-        min_value=1
+        min_value=1,
     )
 
 
@@ -385,7 +407,18 @@ def read_connections() -> dict[str, dict]:
             if "port" in c:
                 try:
                     c["port"] = int(c["port"])
-                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ):
                     c.pop("port", None)
 
             return c
@@ -412,7 +445,18 @@ def read_connections() -> dict[str, dict]:
             _atomic_write_json(p, out)
             return out
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             _atomic_write_json(p, {})
             return {}
 
@@ -424,8 +468,9 @@ def write_connections(conns: dict[str, dict]) -> None:
         conns: A dictionary mapping connection names to configurations.
     """
     with _lock:
-        out = {name: dict(cfg) for name, cfg in (conns or {}).items()
-               if isinstance(name, str) and isinstance(cfg, dict)}
+        out = {
+            name: dict(cfg) for name, cfg in (conns or {}).items() if isinstance(name, str) and isinstance(cfg, dict)
+        }
         _atomic_write_json(get_connections_config_path(), out)
 
 
@@ -459,7 +504,18 @@ def read_rest_connections() -> dict[str, dict]:
             _atomic_write_json(p, out)
             return out
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             _atomic_write_json(p, {})
             return {}
 
@@ -468,9 +524,7 @@ def write_rest_connections(conns: dict[str, dict]) -> None:
     """Atomically writes rest_connections.json."""
     with _lock:
         out = {
-            name: dict(cfg)
-            for name, cfg in (conns or {}).items()
-            if isinstance(name, str) and isinstance(cfg, dict)
+            name: dict(cfg) for name, cfg in (conns or {}).items() if isinstance(name, str) and isinstance(cfg, dict)
         }
         _atomic_write_json(get_rest_connections_config_path(), out)
 
@@ -623,10 +677,10 @@ DEFAULT_LOG_CONFIG = {
         },
     },
     "loggers": {
-        "applogger.ui":      {"level": "INFO",    "propagate": True},
+        "applogger.ui": {"level": "INFO", "propagate": True},
         "applogger.service": {"level": "WARNING", "propagate": True},
-        "applogger.jobs":    {"level": "INFO",    "propagate": True},
-        "applogger.db":      {"level": "WARNING", "propagate": True},
+        "applogger.jobs": {"level": "INFO", "propagate": True},
+        "applogger.db": {"level": "WARNING", "propagate": True},
     },
     "third_party_log_level": "WARNING",
 }
@@ -650,7 +704,18 @@ def read_log_config() -> dict:
             data = json.loads(p.read_text("utf-8"))
             if not isinstance(data, dict):
                 raise ValueError
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             _atomic_write_json(p, DEFAULT_LOG_CONFIG)
             return copy.deepcopy(DEFAULT_LOG_CONFIG)
 

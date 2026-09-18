@@ -1,4 +1,5 @@
 """Dialogs for category conversion."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

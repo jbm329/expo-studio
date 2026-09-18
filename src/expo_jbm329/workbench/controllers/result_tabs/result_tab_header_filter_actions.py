@@ -49,37 +49,25 @@ class ResultTabHeaderFilterActions:
     TR_FILTER_EQUAL_OPERATION = QT_TR_NOOP("filter equal")
     TR_FILTER_TITLE_EQUAL_TO = QT_TR_NOOP("Filter column equal to")
     TR_FILTERING_COLUMN_EQUAL_TO = QT_TR_NOOP("Filtering column '{column_name}' equal to '{value}'")
-    TR_SELECT_FILTER_VALUE_IN_COLUMN = QT_TR_NOOP(
-        "Select value for '{column_name}':"
-    )
-    TR_FILTERED_ROWS_WHERE_COLUMN_IS_VALUE = QT_TR_NOOP(
-        "Filtered rows where '{column_name}' = '{value}'"
-    )
+    TR_SELECT_FILTER_VALUE_IN_COLUMN = QT_TR_NOOP("Select value for '{column_name}':")
+    TR_FILTERED_ROWS_WHERE_COLUMN_IS_VALUE = QT_TR_NOOP("Filtered rows where '{column_name}' = '{value}'")
     TR_FILTER_CONTAINS_OPERATION = QT_TR_NOOP("filter contains")
     TR_FILTER_TITLE_CONTAINS = QT_TR_NOOP("Filter column contains")
     TR_FILTERING_COLUMN_CONTAINS = QT_TR_NOOP("Filtering column '{column_name}' contains '{value}'")
-    TR_SELECT_FILTER_SEARCH_STRING_IN_COLUMN = QT_TR_NOOP(
-        "Select search string for '{column_name}':"
-    )
+    TR_SELECT_FILTER_SEARCH_STRING_IN_COLUMN = QT_TR_NOOP("Select search string for '{column_name}':")
     TR_CASE_SENSITIVITY = QT_TR_NOOP("Case sensitivity")
     TR_MATCH_CASE = QT_TR_NOOP("Match case?")
     TR_CASE_SENSITIVE = QT_TR_NOOP("Yes (case sensitive)")
     TR_CASE_INSENSITIVE = QT_TR_NOOP("No (case insensitive)")
-    TR_FILTERED_ROWS_WHERE_COLUMN_CONTAINS_VALUE = QT_TR_NOOP(
-        "Filtered rows where '{column_name}' contains '{value}'"
-    )
+    TR_FILTERED_ROWS_WHERE_COLUMN_CONTAINS_VALUE = QT_TR_NOOP("Filtered rows where '{column_name}' contains '{value}'")
 
     # NA
     TR_FILTER_NA_OPERATION = QT_TR_NOOP("filter NA")
     TR_FILTERING_COLUMN_IS_NA = QT_TR_NOOP("Filtering column '{column_name}' is empty/NA")
-    TR_FILTERED_ROWS_WHERE_COLUMN_IS_NA = QT_TR_NOOP(
-        "Filtered rows where '{column_name}' is empty/NA"
-    )
+    TR_FILTERED_ROWS_WHERE_COLUMN_IS_NA = QT_TR_NOOP("Filtered rows where '{column_name}' is empty/NA")
     TR_FILTER_NOT_NA_OPERATION = QT_TR_NOOP("filter not NA")
     TR_FILTERING_COLUMN_IS_NOT_NA = QT_TR_NOOP("Filtering column '{column_name}' is not empty/NA")
-    TR_FILTERED_ROWS_WHERE_COLUMN_IS_NOT_NA = QT_TR_NOOP(
-        "Filtered rows where '{column_name}' is not empty/NA"
-    )
+    TR_FILTERED_ROWS_WHERE_COLUMN_IS_NOT_NA = QT_TR_NOOP("Filtered rows where '{column_name}' is not empty/NA")
 
     # Compare
     TR_FILTER_COMPARE_OPERATION = QT_TR_NOOP("filter compare")
@@ -88,12 +76,8 @@ class ResultTabHeaderFilterActions:
     TR_OPERATOR_FOR_COLUMN = QT_TR_NOOP("Operator for column '{column_name}':")
     TR_VALUE_FOR_COLUMN = QT_TR_NOOP("Value for column '{column_name}':")
     TR_NOT_SUPPORTED_DATATYPE_TITLE = QT_TR_NOOP("Datatype not supported")
-    TR_NOT_SUPPORTED_DATATYPE_TEXT = QT_TR_NOOP(
-        "The column '{column_name}' does not support range filtering"
-    )
-    TR_FILTERED_ROWS_WHERE_COLUMN_COMPARED_TO = QT_TR_NOOP(
-        "Filtered rows where '{column_name}' {operator} '{value}'"
-    )
+    TR_NOT_SUPPORTED_DATATYPE_TEXT = QT_TR_NOOP("The column '{column_name}' does not support range filtering")
+    TR_FILTERED_ROWS_WHERE_COLUMN_COMPARED_TO = QT_TR_NOOP("Filtered rows where '{column_name}' {operator} '{value}'")
 
     # Between
     TR_FILTER_BETWEEN_OPERATION = QT_TR_NOOP("filter between")
@@ -104,9 +88,7 @@ class ResultTabHeaderFilterActions:
     TR_START_LIMIT_FOR_COLUMN = QT_TR_NOOP("Start for '{column_name}':")
     TR_END_LIMIT_FOR_COLUMN = QT_TR_NOOP("End for '{column_name}':")
     TR_INVALID_INTERVAL_TITLE = QT_TR_NOOP("Invalid interval")
-    TR_INVALID_INTERVAL_TEXT = QT_TR_NOOP(
-        "Upper limit has to be greater than or equal to lower limit."
-    )
+    TR_INVALID_INTERVAL_TEXT = QT_TR_NOOP("Upper limit has to be greater than or equal to lower limit.")
     TR_BOTH_LIMITS = QT_TR_NOOP("both limits")
     TR_ONLY_LOWER_LIMIT = QT_TR_NOOP("only lower limit")
     TR_ONLY_UPPER_LIMIT = QT_TR_NOOP("only upper limit")
@@ -137,7 +119,7 @@ class ResultTabHeaderFilterActions:
         "_get_series_semantics",
         "_logger",
         "_parent",
-        "_resolve_df_col_series"
+        "_resolve_df_col_series",
     )
 
     def __init__(
@@ -151,7 +133,10 @@ class ResultTabHeaderFilterActions:
             [QTableView, int],
             tuple[bool, pd.DataFrame | None, str | None, pd.Series | None],
         ],
-        get_series_semantics: Callable[[QTableView, int], SeriesSemantics | None,],
+        get_series_semantics: Callable[
+            [QTableView, int],
+            SeriesSemantics | None,
+        ],
         apply_new_dataframe: Callable[
             [QTableView, pd.DataFrame, str],
             None,
@@ -296,7 +281,18 @@ class ResultTabHeaderFilterActions:
                 value = opts["value"]
                 case_sensitive = opts["case_sensitive"]
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._fail(e)
             return
 
@@ -377,7 +373,7 @@ class ResultTabHeaderFilterActions:
                 self.TR_SELECT_FILTER_SEARCH_STRING_IN_COLUMN,
                 column_name=safe_col,
             ),
-            default_value=""
+            default_value="",
         )
         if not opts["ok"] or not opts["value"]:
             return
@@ -447,10 +443,7 @@ class ResultTabHeaderFilterActions:
 
     def filter_isna(self, view: QTableView, column: int) -> None:
         """Filter rows where column is NA."""
-        ok, df, col, _ = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -504,10 +497,7 @@ class ResultTabHeaderFilterActions:
 
     def filter_notna(self, view: QTableView, column: int) -> None:
         """Filter rows where column is not NA."""
-        ok, df, col, _ = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
 
         if not ok or df is None or col is None:
             return
@@ -566,10 +556,7 @@ class ResultTabHeaderFilterActions:
 
     def filter_compare(self, view: QTableView, column: int) -> None:
         """Filter rows using a comparison operator."""
-        ok, df, col, s = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, s = self._resolve_df_col_series(view, column)
 
         if not ok or df is None or col is None or s is None:
             return
@@ -612,7 +599,18 @@ class ResultTabHeaderFilterActions:
             op = result["op"]
             value = result["value"]
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._fail(e)
             return
 
@@ -663,10 +661,7 @@ class ResultTabHeaderFilterActions:
             work=_work,
             apply_result=_apply_result,
             busy_message=self._tr_fmt(
-                self.TR_FILTERING_COLUMN_COMPARED_TO,
-                column_name=safe_col,
-                operator=op,
-                value=value_str
+                self.TR_FILTERING_COLUMN_COMPARED_TO, column_name=safe_col, operator=op, value=value_str
             ),
             scope=f"filter_compare:{safe_col}",
             operation_name=self._tr(self.TR_FILTER_COMPARE_OPERATION),
@@ -679,10 +674,7 @@ class ResultTabHeaderFilterActions:
 
     def filter_between(self, view: QTableView, column: int) -> None:
         """Filter rows where column values fall within a range."""
-        ok, df, col, s = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, s = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None or s is None:
             return
 
@@ -734,7 +726,18 @@ class ResultTabHeaderFilterActions:
                 )
                 return
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._fail(e)
             return
 
@@ -797,10 +800,7 @@ class ResultTabHeaderFilterActions:
             work=_work,
             apply_result=_apply_result,
             busy_message=self._tr_fmt(
-                self.TR_FILTERING_COLUMN_BETWEEN,
-                column_name=safe_col,
-                low=low_str,
-                high=high_str
+                self.TR_FILTERING_COLUMN_BETWEEN, column_name=safe_col, low=low_str, high=high_str
             ),
             scope=f"filter_between:{safe_col}",
             operation_name=self._tr(self.TR_FILTER_BETWEEN_OPERATION),

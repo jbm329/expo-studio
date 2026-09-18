@@ -1,4 +1,5 @@
 """Localization functions for dialogs."""
+
 from PyQt6.QtCore import QT_TRANSLATE_NOOP, QCoreApplication
 from PyQt6.QtWidgets import QDialogButtonBox, QMessageBox
 
@@ -35,7 +36,7 @@ def localize_messagebox_buttons(msg: QMessageBox) -> None:
     for btn, text in (
         (QMessageBox.StandardButton.Ok, TR_OK),
         (QMessageBox.StandardButton.Yes, TR_YES),
-        (QMessageBox.StandardButton.No, TR_NO ),
+        (QMessageBox.StandardButton.No, TR_NO),
     ):
         b = msg.button(btn)
         if b:

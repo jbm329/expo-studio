@@ -106,7 +106,8 @@ include = [
 # Ruff
 # -------------------------------
 [tool.ruff]
-line-length = 100
+# Allow lines to be as long as 120.
+line-length = 120
 target-version = "py313"
 src = ["src", "tests"]
 exclude = [
@@ -167,14 +168,14 @@ select = [
 ]
 
 ignore = [
-    "E501",     # line length → handled by formatter
+#    "E501",     # line length → handled by formatter
     "ARG",      # unused callback args are common in PyQt/UI flows
     "C90",      # complexity warnings are intentionally not enforced project-wide
     "FURB171",
     "PLC0415"
 ]
 [tool.ruff.lint.per-file-ignores]
-"tests/*.py" = ["W", "D", "S101", "RUF", "D104", "ARG", "PLC", "N", "SLF", "EM", "BLE"]
+"tests/*.py" = ["W", "D", "S101", "RUF", "D104", "ARG", "PLC", "N", "SLF", "EM", "BLE", "E501"]
 "__init__.py" = ["D107", "D104"]
 
 

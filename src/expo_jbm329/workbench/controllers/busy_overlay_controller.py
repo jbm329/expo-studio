@@ -50,9 +50,7 @@ class BusyOverlayController:
 
     TR_TIME_LIMIT_REACHED = QT_TR_NOOP("Time limit reached")
 
-    TR_TOO_LONG_TIME = QT_TR_NOOP(
-        "The time limit was reached.\nPlease see logs for more information."
-    )
+    TR_TOO_LONG_TIME = QT_TR_NOOP("The time limit was reached.\nPlease see logs for more information.")
 
     # ------------------------------------------------------------------
     @staticmethod
@@ -86,13 +84,9 @@ class BusyOverlayController:
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
 
-        self._overlays: WeakKeyDictionary[QWidget, BusyOverlayWidget] = (
-            WeakKeyDictionary()
-        )
+        self._overlays: WeakKeyDictionary[QWidget, BusyOverlayWidget] = WeakKeyDictionary()
 
-        self._watchdogs: WeakKeyDictionary[QWidget, QTimer] = (
-            WeakKeyDictionary()
-        )
+        self._watchdogs: WeakKeyDictionary[QWidget, QTimer] = WeakKeyDictionary()
 
     # ==================================================================
     # Public API
@@ -241,7 +235,18 @@ class BusyOverlayController:
 
         try:
             return overlay.isVisible()
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return False
 
     # ==================================================================
@@ -314,9 +319,7 @@ class BusyOverlayController:
         timer.setInterval(timeout_ms)
 
         def _watchdog_fire():
-            self._logger.warning(
-                "BusyOverlayController: watchdog timeout reached."
-            )
+            self._logger.warning("BusyOverlayController: watchdog timeout reached.")
 
             self.hide(target)
 

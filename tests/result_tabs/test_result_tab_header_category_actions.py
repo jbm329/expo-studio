@@ -20,7 +20,9 @@ def test_category_actions_schedule_async():
         dialogs=dialogs,
         logger=MagicMock(),
         async_ops=async_ops,
-        resolve_df_col_series=MagicMock(return_value=(True, pd.DataFrame({"a": pd.Categorical(["x"])}), "a", pd.Series(pd.Categorical(["x"])))),
+        resolve_df_col_series=MagicMock(
+            return_value=(True, pd.DataFrame({"a": pd.Categorical(["x"])}), "a", pd.Series(pd.Categorical(["x"])))
+        ),
         apply_new_dataframe=MagicMock(),
     )
 

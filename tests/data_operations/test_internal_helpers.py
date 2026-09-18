@@ -34,4 +34,3 @@ def test_drop_column_removes_column_and_raises_for_missing():
 
     with pytest.raises(KeyError, match="not found"):
         drop_column(df, "missing")
-

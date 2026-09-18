@@ -35,6 +35,7 @@ logger = logging.getLogger("applogger.service")
 # Base rule abstraction
 # =====================================================================
 
+
 @dataclass(frozen=True)
 class Rule:
     """Base class for DataFrame transformation rules.
@@ -66,6 +67,7 @@ class Rule:
 # =====================================================================
 # Concrete rules
 # =====================================================================
+
 
 @dataclass(frozen=True)
 class ReplaceRule(Rule):
@@ -132,6 +134,7 @@ class StripRule(Rule):
 # =====================================================================
 # Rule application
 # =====================================================================
+
 
 def apply_rules(
     df: pd.DataFrame,

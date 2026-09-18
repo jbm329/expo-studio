@@ -6,6 +6,7 @@ The manager is intentionally UI-agnostic and does not depend on Qt widgets.
 It acts as the single source of truth for which SQL tabs exist, which one is
 active, and which database connection (if any) each tab is bound to.
 """
+
 from __future__ import annotations
 
 import logging
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
 
 class EditorTabState(Enum):
     """Lifecycle state of an editor tab."""
+
     UNBOUND = auto()
     DISCONNECTED = auto()
     BOUND = auto()
@@ -46,6 +48,7 @@ class EditorTab:
         file_path: Path to the associated file, if any.
         is_dirty: Flag indicating if the tab has unsaved changes.
     """
+
     tab_id: str
     base_title: str
     sql_text: str = ""
@@ -89,7 +92,10 @@ class EditorTabManager:
         "_tabs",
     )
 
-    def __init__(self, logger: logging.Logger | None = None,) -> None:
+    def __init__(
+        self,
+        logger: logging.Logger | None = None,
+    ) -> None:
         """Initialize an empty EditorTabManager."""
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
         self._tabs: dict[str, EditorTab] = {}
@@ -123,11 +129,7 @@ class EditorTabManager:
             self._query_counter += 1
             title = f"{self._tr(self.TR_QUERY_BASE_NAME)} {self._query_counter}"
 
-        state = (
-            EditorTabState.BOUND
-            if connection_name
-            else EditorTabState.UNBOUND
-        )
+        state = EditorTabState.BOUND if connection_name else EditorTabState.UNBOUND
 
         tab = EditorTab(
             tab_id=tab_id,

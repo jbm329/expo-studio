@@ -14,6 +14,7 @@ from expo_jbm329.services.data_operations.convert import (
 # to_string
 # =====================================================================
 
+
 def test_to_string_preserves_na():
     df = pd.DataFrame({"a": [1, None, "x"]})
 
@@ -26,6 +27,7 @@ def test_to_string_preserves_na():
 # =====================================================================
 # to_integer
 # =====================================================================
+
 
 def test_to_integer_basic():
     df = pd.DataFrame({"a": ["1", "2", None]})
@@ -55,6 +57,7 @@ def test_to_integer_invalid_raise():
 # to_float
 # =====================================================================
 
+
 def test_to_float_basic():
     df = pd.DataFrame({"a": ["1.5", "2"]})
 
@@ -67,6 +70,7 @@ def test_to_float_basic():
 # =====================================================================
 # to_boolean
 # =====================================================================
+
 
 def test_to_boolean_default_values():
     df = pd.DataFrame({"a": ["yes", "no", "ja", "nej", None]})
@@ -100,6 +104,7 @@ def test_to_boolean_raise_on_unknown():
 # =====================================================================
 # to_datetime
 # =====================================================================
+
 
 def test_to_datetime_basic():
     df = pd.DataFrame({"d": ["2024-01-01", "2024-01-02"]})
@@ -137,6 +142,7 @@ def test_to_datetime_coerce_invalid():
 # =====================================================================
 # to_category
 # =====================================================================
+
 
 def test_to_category_alpha_order():
     df = pd.DataFrame({"a": ["b", "a", "c", "a"]})

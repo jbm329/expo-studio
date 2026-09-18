@@ -33,8 +33,20 @@ if TYPE_CHECKING:
 try:
     from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
+
     _HAS_MPL = True
-except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+except (
+    AttributeError,
+    ConnectionError,
+    FileNotFoundError,
+    IndexError,
+    KeyError,
+    LookupError,
+    OSError,
+    RuntimeError,
+    TypeError,
+    ValueError,
+):
     _HAS_MPL = False
 
 
@@ -61,9 +73,7 @@ class ColumnPropertiesDialog(QDialog):
     # ------------------------------------------------------------------
 
     def _build(self) -> None:
-        self.setWindowTitle(
-            self.tr("Properties - {name}").format(name=self._profile.name)
-        )
+        self.setWindowTitle(self.tr("Properties - {name}").format(name=self._profile.name))
 
         self._build_header()
         self._build_stats_table()
@@ -89,20 +99,16 @@ class ColumnPropertiesDialog(QDialog):
 
         is_text_storage = is_object or is_string
 
-        is_mismatch = (
-            self._semantics is not None
-            and sem.value in ("int", "float", "datetime")
-            and is_text_storage
-        )
+        is_mismatch = self._semantics is not None and sem.value in ("int", "float", "datetime") and is_text_storage
 
         if is_mismatch:
-            text = self.tr(
-                "Type: <b>{sem}</b> ⚠ <span style='color:#666;'>({storage})</span>"
-            ).format(sem=semantic_label, storage=storage_label)
+            text = self.tr("Type: <b>{sem}</b> ⚠ <span style='color:#666;'>({storage})</span>").format(
+                sem=semantic_label, storage=storage_label
+            )
         else:
-            text = self.tr(
-                "Type: <b>{sem}</b> <span style='color:#666;'>({storage})</span>"
-            ).format(sem=semantic_label, storage=storage_label)
+            text = self.tr("Type: <b>{sem}</b> <span style='color:#666;'>({storage})</span>").format(
+                sem=semantic_label, storage=storage_label
+            )
 
         dtype_label = QLabel(text)
         dtype_label.setStyleSheet("font-size: 14px; margin-bottom: 4px;")
@@ -188,9 +194,7 @@ class ColumnPropertiesDialog(QDialog):
         table.resizeColumnsToContents()
         self._layout.addWidget(table)
 
-    def _format_stats_for_display(
-        self, stats: dict[str, Any]
-    ) -> list[tuple[str, str]]:
+    def _format_stats_for_display(self, stats: dict[str, Any]) -> list[tuple[str, str]]:
         out: list[tuple[str, str]] = []
 
         for key, value in stats.items():
@@ -224,16 +228,12 @@ class ColumnPropertiesDialog(QDialog):
                         parts = []
                         for item in value:
                             if len(item) == 3:
-                                parts.append(
-                                    f"{item[0]} ({fmt_int(item[1])}, {fmt_pct(item[2])})"
-                                )
+                                parts.append(f"{item[0]} ({fmt_int(item[1])}, {fmt_pct(item[2])})")
                             elif len(item) == 2:
                                 parts.append(f"{item[0]} ({fmt_int(item[1])})")
                         text = "; ".join(parts)
                     else:
-                        text = ", ".join(map(str, value[:5])) + (
-                            " …" if len(value) > 5 else ""
-                        )
+                        text = ", ".join(map(str, value[:5])) + (" …" if len(value) > 5 else "")
                 else:
                     text = ""
             else:
@@ -263,8 +263,8 @@ class ColumnPropertiesDialog(QDialog):
 
         if plot.kind == "hist" and plot.bins and plot.counts:
             import numpy as np
-            ax.bar(plot.bins[:-1], plot.counts, width=np.diff(plot.bins),
-                   align="edge", edgecolor="#333")
+
+            ax.bar(plot.bins[:-1], plot.counts, width=np.diff(plot.bins), align="edge", edgecolor="#333")
             ax.set_title(self.tr("Histogram"))
 
         elif plot.kind == "bar_topn" and plot.labels and plot.counts:
@@ -373,7 +373,6 @@ class ColumnPropertiesDialog(QDialog):
             # Category
             "cat.count": self.tr("Categories (n)"),
             "cat.ordered": self.tr("Categories ordered"),
-
             # Notes
             "note.bytes": self.tr("Column contains binary data (bytes) and cannot be profiled."),
             # Samples

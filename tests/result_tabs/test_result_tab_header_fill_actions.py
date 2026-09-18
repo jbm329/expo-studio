@@ -28,4 +28,3 @@ def test_fill_actions_schedule_async():
     ctrl.fill_mode(QTableView(), 0)
 
     assert async_ops.run_dataframe_operation.call_count >= 1
-

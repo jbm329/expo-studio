@@ -87,10 +87,10 @@ class LogConfigEditor(QDialog):
     """
 
     def __init__(
-            self,
-            parent: QWidget | None = None,
-            dialogs: DialogService | None = None,
-            icon_service: IconService | None = None,
+        self,
+        parent: QWidget | None = None,
+        dialogs: DialogService | None = None,
+        icon_service: IconService | None = None,
     ):
         """Initializes the LogConfigEditor dialog.
 
@@ -219,8 +219,7 @@ class LogConfigEditor(QDialog):
 
         bind_enable(
             self.chk_file_enabled,
-            [self.cb_file_level, self.cb_file_formatter,
-             self.spin_file_maxbytes, self.spin_file_backup],
+            [self.cb_file_level, self.cb_file_formatter, self.spin_file_maxbytes, self.spin_file_backup],
         )
 
         cols.addWidget(gb_file, 1)
@@ -367,7 +366,7 @@ class LogConfigEditor(QDialog):
 
         # --- NAMESPACE LOGGERS ---
 
-        ns_cfg = (self.log_cfg.get("loggers", {}) or {})
+        ns_cfg = self.log_cfg.get("loggers", {}) or {}
 
         ns_def = DEFAULT_LOG_CONFIG.get("loggers", {}) or {}
         for lname, (chk, cb) in self.ns_widgets.items():
@@ -385,12 +384,13 @@ class LogConfigEditor(QDialog):
     def _on_reset_defaults(self) -> None:
         """Resets only the logging configuration to DEFAULT_LOG_CONFIG."""
         import copy
+
         self.log_cfg = copy.deepcopy(DEFAULT_LOG_CONFIG)
         self._populate()
         self._dialogs.info(
             parent=self,
             title=self.tr("Reset defaults"),
-            text=self.tr("Log configuration has been reset to default values.")
+            text=self.tr("Log configuration has been reset to default values."),
         )
 
     # -------------------------------------------------------------------------
@@ -443,19 +443,24 @@ class LogConfigEditor(QDialog):
 
         try:
             write_log_config(new_log)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             title = self.tr("Failure")
             msg = self.tr("Could not save log configuration:\n{error}").format(error=str(e))
-            self._dialogs.critical(
-                parent=self,
-                title=title,
-                text=msg
-            )
+            self._dialogs.critical(parent=self, title=title, text=msg)
             return
 
         self._dialogs.info(
-            parent=self,
-            title=self.tr("Log configuration saved"),
-            text=self.tr("Log configuration has been saved.")
+            parent=self, title=self.tr("Log configuration saved"), text=self.tr("Log configuration has been saved.")
         )
         self.accept()

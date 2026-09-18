@@ -47,11 +47,9 @@ class AboutDialog(QDialog):
         logo_label = QLabel()
         pixmap = QPixmap(":/splash/splash.png")
         if not pixmap.isNull():
-            logo_label.setPixmap(pixmap.scaled(
-                120, 120,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation
-            ))
+            logo_label.setPixmap(
+                pixmap.scaled(120, 120, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            )
         else:
             # Placeholder if pixmap fails
             logo_label.setText("🚀")
@@ -87,7 +85,9 @@ class AboutDialog(QDialog):
         license_label = QLabel(self.tr("License: %1").replace("%1", metadata.get("license", "GPL-3.0-or-later")))
         info_layout.addWidget(license_label)
         source_code_label = QLabel(
-            self.tr("Source code: <a href='%1'>%1</a>").replace("%1", metadata.get("repository", "https://github.com/jbm329/expo-studio"))
+            self.tr("Source code: <a href='%1'>%1</a>").replace(
+                "%1", metadata.get("repository", "https://github.com/jbm329/expo-studio")
+            )
         )
         source_code_label.setTextFormat(Qt.TextFormat.RichText)
         source_code_label.setOpenExternalLinks(True)
@@ -141,10 +141,7 @@ class AboutDialog(QDialog):
         file_path = Path(link)
         if not file_path.is_absolute():
             # Try to resolve relative to project root
-            potential_roots = [
-                Path(),
-                Path(__file__).resolve().parents[4]
-            ]
+            potential_roots = [Path(), Path(__file__).resolve().parents[4]]
             for root in potential_roots:
                 full_path = root / file_path
                 if full_path.exists():

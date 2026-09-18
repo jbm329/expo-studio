@@ -166,7 +166,18 @@ class DocumentController:
                 "DocumentController: settings reloaded (documents_dir=%s).",
                 fmt_path(self._get_documents_dir()),
             )
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._logger.exception("DocumentController: failed to reload settings: %s", e)
 
     # ----------------------------------------------------------------------
@@ -180,10 +191,19 @@ class DocumentController:
         try:
             with p.open(encoding="utf-8") as f:
                 sql = f.read()
-                self._logger.info(
-                    "DocumentController: SQL file opened successfully: %s", fmt_path(p)
-                )
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+                self._logger.info("DocumentController: SQL file opened successfully: %s", fmt_path(p))
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             status = self._tr(self.TR_OPEN_SQL_FILE_FAILED)
             self._set_status(status, 6000)
             self._logger.exception(
@@ -216,13 +236,8 @@ class DocumentController:
     def _get_documents_dir(self) -> Path:
         """Return documents directory, guaranteed to be initialized."""
         if self._documents_dir is None:
-            msg = (
-                "DocumentController: documents_dir not initialized. "
-                "reload_settings() must be called before export."
-            )
-            raise RuntimeError(
-                msg
-            )
+            msg = "DocumentController: documents_dir not initialized. reload_settings() must be called before export."
+            raise RuntimeError(msg)
         return self._documents_dir
 
     def _build_incremented_path(self, path: Path) -> Path:
@@ -272,15 +287,8 @@ class DocumentController:
             fallback=self._get_documents_dir(),
         )
 
-        req = OpenFileRequest(
-            title=self._tr(self.TR_OPEN_FILE),
-            initial_path=str(start_dir),
-            filter_str=filter_str
-        )
-        path, _ = self._file_dialogs.get_open_filename(
-            parent=self._parent,
-            req=req
-        )
+        req = OpenFileRequest(title=self._tr(self.TR_OPEN_FILE), initial_path=str(start_dir), filter_str=filter_str)
+        path, _ = self._file_dialogs.get_open_filename(parent=self._parent, req=req)
 
         if not path:
             return
@@ -336,13 +344,22 @@ class DocumentController:
 
         try:
             Path(tab.file_path).write_text(text, encoding="utf-8")
-            self._logger.info(
-                "DocumentController: SQL file saved as successfully: %s", fmt_path(tab.file_path)
-            )
+            self._logger.info("DocumentController: SQL file saved as successfully: %s", fmt_path(tab.file_path))
             status = self._tr(self.TR_SAVED_SQL_FILE)
             self._set_status(status, 3000)
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._logger.exception(
                 "DocumentController: Failed to save as SQL file '%s': %s",
                 fmt_path(tab.file_path),
@@ -415,7 +432,18 @@ class DocumentController:
             self._logger.info("DocumentController: SQL file saved as successfully: %s", fmt_path(path))
             status = self._tr(self.TR_SAVED_SQL_FILE)
             self._set_status(status, 3000)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._logger.exception(
                 "DocumentController: Failed to save as SQL file '%s': %s",
                 fmt_path(path),
@@ -451,6 +479,7 @@ class DocumentController:
         p = Path(path)
         self._logger.info("DocumentController: opening HTML file: %s", fmt_path(p))
         import webbrowser
+
         ok = False
         try:
             uri = p.resolve().as_uri()
@@ -460,16 +489,28 @@ class DocumentController:
             self._logger.info("DocumentController: HTML file opened: %s", fmt_path(p))
             return ok
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             status = self._tr(self.TR_OPEN_HTML_FILE_FAILED)
             self._set_status(status, 6000)
             self._logger.exception(
                 "DocumentController: failed to open HTML file '%s': %s",
                 fmt_path(p),
-                e,            )
+                e,
+            )
             self._dialogs.critical(
                 parent=self._parent,
                 title=self._tr(self.TR_FAILURE),
-                text=self._tr_fmt(self.TR_OPEN_HTML_FILE_FAILED_ERROR, error=str(e))
+                text=self._tr_fmt(self.TR_OPEN_HTML_FILE_FAILED_ERROR, error=str(e)),
             )
             return ok

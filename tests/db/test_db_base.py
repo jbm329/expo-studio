@@ -26,9 +26,7 @@ def test_configure_timeouts():
 
 def test_build_connection_config_sqlite():
     with patch("expo_jbm329.db.base.read_connections") as mock_read:
-        mock_read.return_value = {
-            "my_sqlite": {"name": "my_sqlite", "db_type": "sqlite", "database": "test.db"}
-        }
+        mock_read.return_value = {"my_sqlite": {"name": "my_sqlite", "db_type": "sqlite", "database": "test.db"}}
 
         cfg = base._build_connection_config("my_sqlite")
 

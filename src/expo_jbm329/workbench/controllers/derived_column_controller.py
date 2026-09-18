@@ -38,6 +38,7 @@ if TYPE_CHECKING:
 
 class ApplyToActiveTab(Protocol):
     """Protocol for applying a result to an active tab."""
+
     def __call__(
         self,
         df: pd.DataFrame,
@@ -78,12 +79,8 @@ class DerivedColumnController:
     TR_MISSING_OPERAND_BEFORE_OPERATOR = QT_TR_NOOP(
         "Missing operand before operator '{operator}' at position {position}."
     )
-    TR_MISSING_OPERAND_BEFORE_CLOSING_PAREN = QT_TR_NOOP(
-        "Missing operand before ')' at position {position}."
-    )
-    TR_MISSING_OPERATOR_BEFORE_OPENING_PAREN = QT_TR_NOOP(
-        "Missing operator before '(' at position {position}."
-    )
+    TR_MISSING_OPERAND_BEFORE_CLOSING_PAREN = QT_TR_NOOP("Missing operand before ')' at position {position}.")
+    TR_MISSING_OPERATOR_BEFORE_OPENING_PAREN = QT_TR_NOOP("Missing operator before '(' at position {position}.")
     TR_UNMATCHED_CLOSING_PAREN = QT_TR_NOOP("Unmatched closing parenthesis at position {position}.")
     TR_UNMATCHED_OPENING_PAREN = QT_TR_NOOP("Unmatched opening parenthesis.")
     TR_FORMULA_ENDS_WITH_OPERATOR = QT_TR_NOOP("Formula cannot end with operator '{operator}'.")
@@ -250,9 +247,7 @@ class DerivedColumnController:
         """Create a derived column asynchronously and apply the result."""
         view = self._get_active_view()
         if view is None:
-            self._logger.warning(
-                "DerivedColumnController: no active view available for async derived column."
-            )
+            self._logger.warning("DerivedColumnController: no active view available for async derived column.")
             self._dialogs.info(
                 parent=self._main_window,
                 title=self._tr(self.TR_DERIVED_COLUMN),
@@ -265,8 +260,7 @@ class DerivedColumnController:
         corr_id = uuid.uuid4().hex
 
         self._logger.debug(
-            "DerivedColumnController: scheduling derived column creation "
-            "(column=%s, formula=%s, corr=%s).",
+            "DerivedColumnController: scheduling derived column creation (column=%s, formula=%s, corr=%s).",
             safe_spec.column_name,
             safe_spec.formula,
             corr_id,
@@ -345,7 +339,18 @@ class DerivedColumnController:
 
             return df
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
             self._logger.exception("Failed to get active DataFrame")
             self._dialogs.critical(
                 parent=self._main_window,
@@ -385,7 +390,18 @@ class DerivedColumnController:
             #     title=f"{self._rtm.get_active_title()} (beräknad)",
             # )
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
             self._logger.exception("Failed to apply derived column result")
 
             self._dialogs.critical(

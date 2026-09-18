@@ -13,6 +13,7 @@ class MySqlDialect(DialectProtocol):
     Note:
         In MySQL the concept of "schema" is equivalent to "database".
     """
+
     name = "mysql"  # We'll reuse for MariaDB as well via registry
 
     # Detect if a query already has a LIMIT clause (supports "LIMIT n" or "LIMIT offset, n")

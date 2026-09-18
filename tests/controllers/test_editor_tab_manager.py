@@ -46,4 +46,3 @@ def test_file_path_and_close():
 
     assert mgr.close_tab(tab.tab_id) is True
     assert mgr.tab_count() == 0
-

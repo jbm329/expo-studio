@@ -96,4 +96,3 @@ def test_connect_without_schema_loader_raises():
 
     with pytest.raises(RuntimeError, match="load_schema is missing"):
         ctrl.connect("Conn1")
-

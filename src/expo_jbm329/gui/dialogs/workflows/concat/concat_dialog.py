@@ -3,6 +3,7 @@
 This module provides a dialog for configuring the concatenation of two
 datasets (tabs) in the workbench.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -32,27 +32,68 @@ class StubHeader:
         self.customContextMenuRequested = SimpleNamespace(connect=lambda cb: None)
         self._font = QFont()
 
-    def setContextMenuPolicy(self, p): pass
-    def logicalIndexAt(self, pos): return 0
-    def setStretchLastSection(self, *a): pass
-    def setSectionResizeMode(self, *a): pass
-    def mapToGlobal(self, p): return p
-    def setHorizontalScrollBarPolicy(self, p): pass
-    def setVerticalScrollBarPolicy(self, p): pass
-    def setModel(self, m): pass
-    def setSectionsClickable(self, b): pass
-    def setSectionsMovable(self, b): pass
-    def setHighlightSections(self, b): pass
-    def selectionModel(self): return SimpleNamespace(selectedColumns=list)
-    def setSortIndicator(self, i, o): pass
-    def setSortIndicatorShown(self, b): pass
-    def viewport(self): return SimpleNamespace(installEventFilter=lambda f: None)
-    def installEventFilter(self, f): pass
-    def setDefaultAlignment(self, a): pass
-    def setDefaultSectionSize(self, s): pass
-    def font(self): return self._font
-    def sectionSize(self, i): return 100
-    def resizeSection(self, i, size): pass
+    def setContextMenuPolicy(self, p):
+        pass
+
+    def logicalIndexAt(self, pos):
+        return 0
+
+    def setStretchLastSection(self, *a):
+        pass
+
+    def setSectionResizeMode(self, *a):
+        pass
+
+    def mapToGlobal(self, p):
+        return p
+
+    def setHorizontalScrollBarPolicy(self, p):
+        pass
+
+    def setVerticalScrollBarPolicy(self, p):
+        pass
+
+    def setModel(self, m):
+        pass
+
+    def setSectionsClickable(self, b):
+        pass
+
+    def setSectionsMovable(self, b):
+        pass
+
+    def setHighlightSections(self, b):
+        pass
+
+    def selectionModel(self):
+        return SimpleNamespace(selectedColumns=list)
+
+    def setSortIndicator(self, i, o):
+        pass
+
+    def setSortIndicatorShown(self, b):
+        pass
+
+    def viewport(self):
+        return SimpleNamespace(installEventFilter=lambda f: None)
+
+    def installEventFilter(self, f):
+        pass
+
+    def setDefaultAlignment(self, a):
+        pass
+
+    def setDefaultSectionSize(self, s):
+        pass
+
+    def font(self):
+        return self._font
+
+    def sectionSize(self, i):
+        return 100
+
+    def resizeSection(self, i, size):
+        pass
 
 
 class StubView:
@@ -91,19 +132,44 @@ class StubView:
         if self._model is not None:
             self._model._df = df
 
-    def setSortingEnabled(self, b): pass
-    def sortByColumn(self, column, order): pass
-    def setSelectionBehavior(self, b): pass
-    def setSelectionMode(self, m): pass
-    def setEditTriggers(self, t): pass
-    def setAlternatingRowColors(self, b): pass
-    def setContextMenuPolicy(self, p): pass
-    def setWordWrap(self, b): pass
-    def setItemDelegate(self, d): pass
-    def viewport(self): return SimpleNamespace(installEventFilter=lambda f: None)
-    def installEventFilter(self, f): pass
-    def setHorizontalHeader(self, h): self._header = h
-    def setShowGrid(self, b): pass
+    def setSortingEnabled(self, b):
+        pass
+
+    def sortByColumn(self, column, order):
+        pass
+
+    def setSelectionBehavior(self, b):
+        pass
+
+    def setSelectionMode(self, m):
+        pass
+
+    def setEditTriggers(self, t):
+        pass
+
+    def setAlternatingRowColors(self, b):
+        pass
+
+    def setContextMenuPolicy(self, p):
+        pass
+
+    def setWordWrap(self, b):
+        pass
+
+    def setItemDelegate(self, d):
+        pass
+
+    def viewport(self):
+        return SimpleNamespace(installEventFilter=lambda f: None)
+
+    def installEventFilter(self, f):
+        pass
+
+    def setHorizontalHeader(self, h):
+        self._header = h
+
+    def setShowGrid(self, b):
+        pass
 
 
 class StubTabs:
@@ -168,7 +234,6 @@ class StubTabs:
             self._data = {new_i: data for new_i, (_, _, data) in enumerate(items)}
             if self._current >= len(self._widgets):
                 self._current = len(self._widgets) - 1
-
 
 
 class StubParent(QWidget):

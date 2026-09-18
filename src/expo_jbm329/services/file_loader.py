@@ -3,6 +3,7 @@
 This module provides the FileLoader class, which supports loading CSV, Excel,
 Parquet, Feather, Pickle, and JSON files into pandas DataFrames.
 """
+
 from __future__ import annotations
 
 import logging
@@ -27,6 +28,7 @@ if TYPE_CHECKING:
 @dataclass(frozen=True)
 class ReadRequest:
     """Dataclass for read requests."""
+
     path: Path
     index_col: int | str | None = None
     sheet_name: str | int | None = None
@@ -40,6 +42,7 @@ class OperationCancelledError(Exception):
 
 class DataFrameReader(Protocol):
     """Protocol for functions that read a DataFrame from a file path."""
+
     def __call__(self, req: ReadRequest) -> pd.DataFrame:
         """Read a DataFrame from a file path."""
         ...
@@ -144,27 +147,56 @@ class FileLoader:
                     self._csv_read_chunk_size = int(
                         csv_settings.get("read_chunk_size_rows", self._csv_read_chunk_size_default)
                     )
-                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ):
                     self._csv_read_chunk_size = self._csv_read_chunk_size_default
 
                 # CSV sniff toggle and default sep
                 try:
-                    self._csv_sniff_delimiter = bool(
-                        csv_settings.get("sniff_delimiter", True)
-                    )
+                    self._csv_sniff_delimiter = bool(csv_settings.get("sniff_delimiter", True))
 
-                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ):
                     self._csv_sniff_delimiter = True
 
                 # Optional default separator if sniff is disabled (or as a fallback)
                 sep_val = csv_settings.get("default_sep")
-                self._csv_default_sep = (sep_val if isinstance(sep_val, str) and sep_val else None)
+                self._csv_default_sep = sep_val if isinstance(sep_val, str) and sep_val else None
 
                 try:
-                    self._excel_chunk_size = int(
-                        excel_settings.get("chunk_size_rows", self._excel_chunk_size_default)
-                    )
-                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+                    self._excel_chunk_size = int(excel_settings.get("chunk_size_rows", self._excel_chunk_size_default))
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ):
                     self._excel_chunk_size = self._excel_chunk_size_default
 
                 # Used for Documents fallback resolution
@@ -177,9 +209,19 @@ class FileLoader:
                     self._csv_sniff_delimiter,
                     self._csv_default_sep,
                     self._excel_chunk_size,
-
                 )
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 # Developer diagnostics: keep stack trace
                 self._logger.exception("FileLoader: failed reloading settings")
 
@@ -206,7 +248,18 @@ class FileLoader:
             candidate = expand(docs) / Path(file_name_or_path).name
             if candidate.exists():
                 return candidate
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             # Non-fatal; simply return None if fallback fails
             pass
 
@@ -311,7 +364,18 @@ class FileLoader:
             )
             raise
 
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._logger.exception(
                 "FileLoader: could not read file (corr=%s, path=%s, suffix=%s): %s",
                 corr_id,
@@ -415,7 +479,18 @@ class FileLoader:
                     if req.progress_cb is not None and pct != last_pct:
                         req.progress_cb(pct)
                         last_pct = pct
-                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ):
                     # Never fail on progress reporting.
                     pass
 
@@ -442,7 +517,18 @@ class FileLoader:
         # Try streaming path first
         try:
             from openpyxl import load_workbook
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             # Fallback: pandas (fast; usually 0→100 progress)
             if req.progress_cb:
                 req.progress_cb(0)
@@ -460,14 +546,36 @@ class FileLoader:
             if isinstance(req.sheet_name, int):
                 try:
                     ws = wb.worksheets[req.sheet_name]
-                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as e:
                     msg = f"Sheet index out of range: {req.sheet_name}"
                     raise ValueError(msg) from e
             else:
                 name = str(req.sheet_name) if req.sheet_name is not None else str(wb.worksheets[0].title)
                 try:
                     ws = wb[name]
-                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as e:
                     msg = f"Sheet name not found: {req.sheet_name}"
                     raise ValueError(msg) from e
 
@@ -486,7 +594,18 @@ class FileLoader:
                 dim = ws.calculate_dimension()
                 _, _, _, max_row = range_boundaries(dim)
                 total_rows = max(0, int(max_row) - 1)  # exclude header
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 total_rows = 0
 
             # If dimension unreliable (0 or 1), quickly recount
@@ -558,10 +677,23 @@ class FileLoader:
                         df = df.set_index(df.columns[req.index_col])
                     else:
                         df = df.set_index(req.index_col)
-                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as e:
                     self._logger.warning(
                         "FileLoader: excel index assignment failed (index_col=%r, cols=%s): %s",
-                        req.index_col, list(df.columns), e
+                        req.index_col,
+                        list(df.columns),
+                        e,
                     )
 
             if req.progress_cb:
@@ -708,10 +840,22 @@ class FileLoader:
         r"""Heuristic delimiter detection for CSV. Returns one of , ; \\t | or None."""
         try:
             import csv
+
             with path.open("r", encoding=encoding, newline="") as f:
                 sample = f.read(2048)
             return csv.Sniffer().sniff(sample, delimiters=",;\t|").delimiter
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return None
 
     def _default_detect_encoding(self, path: Path) -> str:
@@ -739,7 +883,18 @@ class FileLoader:
                 return "utf-16le"
             if head.startswith(b"\xfe\xff"):
                 return "utf-16be"
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             pass
 
         for enc in candidates:
@@ -749,6 +904,17 @@ class FileLoader:
                         if not f.readline():
                             break
                 return enc
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 continue
         return "iso-8859-1"

@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 # Context object
 # =====================================================================
 
+
 @dataclass(frozen=True)
 class ResultTabHeaderContext:
     """Immutable context for header-related operations.
@@ -52,6 +53,7 @@ class ResultTabHeaderContext:
 # =====================================================================
 # Context builder
 # =====================================================================
+
 
 def build_header_context(
     *,

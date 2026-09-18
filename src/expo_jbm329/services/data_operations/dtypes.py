@@ -101,6 +101,7 @@ def classify_series_dtype(s: pd.Series) -> SemanticDType:
 # Semantic dtype helpers
 # =====================================================================
 
+
 def is_text_like_dtype(series: pd.Series) -> bool:
     """Check whether a Series is semantically text-like.
 
@@ -134,7 +135,18 @@ def is_text_like_dtype(series: pd.Series) -> bool:
 
         return False
 
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         return False
 
 

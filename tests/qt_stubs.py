@@ -10,9 +10,11 @@ class DummySignal:
     def __init__(self):
         self.cbs = []
 
-    def connect(self, cb): self.cbs.append(cb)
+    def connect(self, cb):
+        self.cbs.append(cb)
 
-    def emit(self, *a): [cb(*a) for cb in self.cbs]
+    def emit(self, *a):
+        [cb(*a) for cb in self.cbs]
 
 
 class StubTreeItem:
@@ -78,7 +80,18 @@ class StubTreeItem:
     def setFlags(self, flags):
         try:
             self._flags = Qt.ItemFlag(int(flags))
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._flags = flags
 
     def flags(self):

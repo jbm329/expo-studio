@@ -156,9 +156,7 @@ class EditorTabContextMenu:
         # --------------------------------------------------------------
         rename_action = QAction(self._tr(self.TR_RENAME), menu)
         menu.addAction(rename_action)
-        rename_action.triggered.connect(
-            lambda: self._prompt_rename(tab_id, tab.base_title)
-        )
+        rename_action.triggered.connect(lambda: self._prompt_rename(tab_id, tab.base_title))
 
         menu.addSeparator()
 
@@ -186,16 +184,12 @@ class EditorTabContextMenu:
         close_others_action = QAction(self._tr(self.TR_CLOSE_OTHERS), menu)
         menu.addAction(close_others_action)
         close_others_action.setEnabled(has_multiple)
-        close_others_action.triggered.connect(
-            lambda: self._close_other_tabs(tab_id)
-        )
+        close_others_action.triggered.connect(lambda: self._close_other_tabs(tab_id))
 
         close_right_action = QAction(self._tr(self.TR_CLOSE_RIGHT), menu)
         menu.addAction(close_right_action)
         close_right_action.setEnabled(has_multiple)
-        close_right_action.triggered.connect(
-            lambda: self._close_tabs_to_right(tab_id)
-        )
+        close_right_action.triggered.connect(lambda: self._close_tabs_to_right(tab_id))
 
         close_all_action = QAction(self._tr(self.TR_CLOSE_ALL), menu)
         menu.addAction(close_all_action)
@@ -206,9 +200,7 @@ class EditorTabContextMenu:
 
         duplicate_action = QAction(self._tr(self.TR_DUPLICATE_TAB), menu)
         menu.addAction(duplicate_action)
-        duplicate_action.triggered.connect(
-            lambda: self._duplicate_tab(tab_id)
-        )
+        duplicate_action.triggered.connect(lambda: self._duplicate_tab(tab_id))
 
         menu.addSeparator()
 

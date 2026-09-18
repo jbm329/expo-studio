@@ -35,6 +35,7 @@ logger = logging.getLogger("applogger.service")
 # Numeric conversions
 # =====================================================================
 
+
 def to_integer(
     df: pd.DataFrame,
     column: str,
@@ -66,15 +67,21 @@ def to_integer(
     new_df = df.copy()
 
     try:
-        new_df[column] = (
-            pd.to_numeric(df[column], errors=errors)
-            .astype("Int64")
-        )
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+        new_df[column] = pd.to_numeric(df[column], errors=errors).astype("Int64")
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as exc:
         msg = f"Could not convert column '{column}' to Int64: {exc}"
-        raise TypeError(
-            msg
-        ) from exc
+        raise TypeError(msg) from exc
 
     return new_df
 
@@ -114,11 +121,20 @@ def to_float(
             df[column],
             errors=errors,
         ).astype("float64")
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as exc:
         msg = f"Could not convert column '{column}' to float64: {exc}"
-        raise TypeError(
-            msg
-        ) from exc
+        raise TypeError(msg) from exc
 
     return new_df
 
@@ -148,7 +164,18 @@ def to_nullable_float_series(
 
         return numeric.astype("Float64")
 
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as exc:
         msg = f"Could not convert Series to Float64: {exc}"
         raise TypeError(msg) from exc
 
@@ -156,6 +183,7 @@ def to_nullable_float_series(
 # =====================================================================
 # Datetime conversion
 # =====================================================================
+
 
 def to_datetime(
     df: pd.DataFrame,
@@ -186,8 +214,7 @@ def to_datetime(
         TypeError: If conversion fails and errors="raise".
     """
     logger.debug(
-        "to_datetime: col='%s' fmt=%r dayfirst=%s yearfirst=%s "
-        "errors=%s date_only=%s",
+        "to_datetime: col='%s' fmt=%r dayfirst=%s yearfirst=%s errors=%s date_only=%s",
         column,
         fmt,
         dayfirst,
@@ -236,12 +263,21 @@ def to_datetime(
 
         new_df[column] = out
 
-    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as exc:
         logger.error("to_datetime failed col='%s': %s", column, exc)
         msg = f"Could not convert column '{column}' to datetime64[ns]: {exc}"
-        raise TypeError(
-            msg
-        ) from exc
+        raise TypeError(msg) from exc
 
     return new_df
 
@@ -249,6 +285,7 @@ def to_datetime(
 # =====================================================================
 # Boolean conversion
 # =====================================================================
+
 
 def to_boolean(
     df: pd.DataFrame,
@@ -300,12 +337,21 @@ def to_boolean(
             mapped = x.map({0: False, 1: True})
             new_df[column] = mapped.astype("boolean")
             return new_df
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
             if errors == "raise":
                 msg = f"Could not convert numeric column '{column}' to boolean"
-                raise ValueError(
-                    msg
-                ) from exc
+                raise ValueError(msg) from exc
             # fall through to NA
 
     # --------------------------------------------------
@@ -313,15 +359,8 @@ def to_boolean(
     # --------------------------------------------------
     s_str = s.astype("string").str.lower()
 
-    if true_values is None:
-        true_set = {"true", "1", "yes", "y", "ja"}
-    else:
-        true_set = {v.lower() for v in true_values}
-
-    if false_values is None:
-        false_set = {"false", "0", "no", "n", "nej"}
-    else:
-        false_set = {v.lower() for v in false_values}
+    true_set = {"true", "1", "yes", "y", "ja"} if true_values is None else {v.lower() for v in true_values}
+    false_set = {"false", "0", "no", "n", "nej"} if false_values is None else {v.lower() for v in false_values}
 
     result = pd.Series(pd.NA, index=s.index, dtype="boolean")
 
@@ -345,6 +384,7 @@ def to_boolean(
 # =====================================================================
 # String & categorical conversions
 # =====================================================================
+
 
 def to_string(df: pd.DataFrame, column: str) -> pd.DataFrame:
     """Cast a column to pandas StringDtype.
@@ -421,16 +461,11 @@ def to_category(
         categories = list(pd.unique(non_null))
     else:
         msg = "order must be one of: 'alpha' | 'freq' | 'preserve'"
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
 
     dtype = CategoricalDtype(categories=categories, ordered=ordered)
 
-    if strict:
-        cat = pd.Categorical(s, dtype=dtype)
-    else:
-        cat = pd.Categorical(s, categories=categories, ordered=ordered)
+    cat = pd.Categorical(s, dtype=dtype) if strict else pd.Categorical(s, categories=categories, ordered=ordered)
 
     new_df = df.copy()
     new_df[column] = pd.Series(cat, index=s.index, name=s.name)

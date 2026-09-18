@@ -11,6 +11,7 @@ The widget is intentionally dumb:
 
 Its sole responsibility is to render editor UI state.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -92,9 +93,7 @@ class EditorWidget(QWidget):
 
         This method assumes the engine has been set during widget initialization.
         """
-        assert self._autocomplete_engine is not None, (
-            "Autocomplete engine not initialized for EditorWidget"
-        )
+        assert self._autocomplete_engine is not None, "Autocomplete engine not initialized for EditorWidget"
         return self._autocomplete_engine
 
     def set_autocomplete(self, autocomplete: SqlAutocompleteController) -> None:
@@ -106,9 +105,7 @@ class EditorWidget(QWidget):
 
         This method assumes the controller has been set during widget initialization.
         """
-        assert self._autocomplete is not None, (
-            "Autocomplete controller not initialized for EditorWidget"
-        )
+        assert self._autocomplete is not None, "Autocomplete controller not initialized for EditorWidget"
         return self._autocomplete
 
     def apply_tab_state(self, tab: EditorTab) -> None:
@@ -187,4 +184,3 @@ class EditorWidget(QWidget):
         """Handle text change in the editor."""
         if self.editor_controller:
             self.editor_controller.notify_text_changed()
-

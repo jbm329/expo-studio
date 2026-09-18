@@ -4,6 +4,7 @@ This module provides the SettingsService class, which manages application
 settings, allows components to subscribe to changes, and handles reloading
 from configuration stores.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -128,7 +129,18 @@ class SettingsService:
                 msg = "load_settings returned non-dict"
                 raise ValueError(msg)
             return s
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._logger.exception("SettingsService: failed to load settings; falling back to empty dict. Error: %s", e)
             return {}
 
@@ -144,14 +156,36 @@ class SettingsService:
         def _invoke():
             try:
                 cb(copy.deepcopy(s))
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.exception("SettingsService subscriber raised.")
 
         if self._dispatcher is not None:
             # Marshal to UI thread (or provided dispatcher)
             try:
                 self._dispatcher(_invoke)
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.exception("SettingsService dispatcher failed; invoking directly.")
                 _invoke()
         else:

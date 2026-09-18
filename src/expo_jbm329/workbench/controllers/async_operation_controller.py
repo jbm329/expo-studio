@@ -42,9 +42,7 @@ class AsyncOperationController:
 
     TR_FAILURE = QT_TR_NOOP("Failure")
     TR_OPERATION_FAILED = QT_TR_NOOP("Could not {operation}.\n\n{error}")
-    TR_COULD_NOT_PERFORM = QT_TR_NOOP(
-        "Could not perform the operation:\n{error}"
-    )
+    TR_COULD_NOT_PERFORM = QT_TR_NOOP("Could not perform the operation:\n{error}")
 
     # ------------------------------------------------------------------
     # i18n helpers
@@ -98,17 +96,9 @@ class AsyncOperationController:
 
         self._busy = busy
 
-        self._dialogs = (
-            dialogs
-            if dialogs is not None
-            else QtDialogService()
-        )
+        self._dialogs = dialogs if dialogs is not None else QtDialogService()
 
-        self._logger = (
-            logger
-            if logger is not None
-            else logging.getLogger("applogger.ui")
-        )
+        self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
 
     # ==================================================================
     # Properties
@@ -203,8 +193,7 @@ class AsyncOperationController:
 
             if job_id is None:
                 self._logger.warning(
-                    "AsyncOperationController: cancel requested but no job_id was available "
-                    "(scope=%s corr=%s).",
+                    "AsyncOperationController: cancel requested but no job_id was available (scope=%s corr=%s).",
                     scope,
                     corr_id,
                 )
@@ -213,8 +202,7 @@ class AsyncOperationController:
             cancelled = self._job_mgr.cancel_job(job_id)
             if cancelled:
                 self._logger.info(
-                    "AsyncOperationController: cancel requested from overlay "
-                    "(scope=%s corr=%s job_id=%s).",
+                    "AsyncOperationController: cancel requested from overlay (scope=%s corr=%s job_id=%s).",
                     scope,
                     corr_id,
                     job_id,
@@ -252,7 +240,18 @@ class AsyncOperationController:
                 if on_progress is not None:
                     on_progress(value_i)
 
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.exception(
                     "AsyncOperationController: progress handler failed (scope=%s corr=%s).",
                     scope,
@@ -272,7 +271,18 @@ class AsyncOperationController:
 
                 on_result(result)
 
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as e:
                 self._logger.exception(
                     "AsyncOperationController: result handler failed (scope=%s corr=%s).",
                     scope,
@@ -301,10 +311,20 @@ class AsyncOperationController:
                     try:
                         on_error(tb)
                         return
-                    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+                    except (
+                        AttributeError,
+                        ConnectionError,
+                        FileNotFoundError,
+                        IndexError,
+                        KeyError,
+                        LookupError,
+                        OSError,
+                        RuntimeError,
+                        TypeError,
+                        ValueError,
+                    ):
                         self._logger.exception(
-                            "AsyncOperationController: custom error handler failed "
-                            "(scope=%s corr=%s).",
+                            "AsyncOperationController: custom error handler failed (scope=%s corr=%s).",
                             scope,
                             corr_id,
                         )
@@ -323,7 +343,18 @@ class AsyncOperationController:
                 if on_finished is not None:
                     on_finished()
 
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.exception(
                     "AsyncOperationController: finished handler failed (scope=%s corr=%s).",
                     scope,
@@ -700,5 +731,16 @@ class AsyncOperationController:
         """Return True if the view is stale/deleted."""
         try:
             return view is None or view.model() is None
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return True

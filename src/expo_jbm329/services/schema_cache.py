@@ -3,6 +3,7 @@
 This module provides the SchemaCacheManager class to manage and prefetch schema
 metadata for different database connections.
 """
+
 from __future__ import annotations
 
 import logging
@@ -48,6 +49,7 @@ class SchemaCacheEntry:
         columns: Mapping of (schema, table) to column metadata.
         loaded_at: Timestamp when the entry was loaded.
     """
+
     db_name: str = ""
     tables: list[dict[str, str]] = field(default_factory=list)
     views: list[dict[str, str]] = field(default_factory=list)
@@ -59,6 +61,7 @@ class SchemaCacheEntry:
 #   SCHEMA CACHE MANAGER
 # =============================================================================
 
+
 class SchemaCacheManager:
     """Connection-aware manager for caching database schema metadata.
 
@@ -69,13 +72,14 @@ class SchemaCacheManager:
         _progress_cb: Callback for progress updates.
         _autocomplete_cb: Callback for autocomplete rebuilding.
     """
+
     def __init__(
-            self,
-            *,
-            status_cb: StatusCb | None = None,
-            progress_cb: ProgressCb | None = None,
-            autocomplete_cb: AutocompleteRebuildCb | None = None,
-            logger: logging.Logger | None = None,
+        self,
+        *,
+        status_cb: StatusCb | None = None,
+        progress_cb: ProgressCb | None = None,
+        autocomplete_cb: AutocompleteRebuildCb | None = None,
+        logger: logging.Logger | None = None,
     ):
         """Initialize the schema cache manager.
 
@@ -168,15 +172,24 @@ class SchemaCacheManager:
                 "SchemaCacheManager: settings reloaded (prefetch_limit=%s, batch_size=%s, ttl_seconds=%s)",
                 self._prefetch_limit,
                 self._batch_size,
-                self._ttl_seconds
+                self._ttl_seconds,
             )
 
             if self._status_cb:
                 self._status_cb(tr("DbErrors", "Settings for schema cache updated."), 4000)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
-            self._logger.exception(
-                "SchemaCacheManager: failed to reload settings: %s", e
-            )
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
+            self._logger.exception("SchemaCacheManager: failed to reload settings: %s", e)
 
     # -------------------------------------------------------------------------
     # Public API
@@ -231,7 +244,11 @@ class SchemaCacheManager:
 
         self._logger.info(
             "SchemaCacheManager: schema loaded: '%s' (%d tables, %d views, corr=%s).",
-            connection_name, len(tables), len(views), corr_id)
+            connection_name,
+            len(tables),
+            len(views),
+            corr_id,
+        )
 
         return entry
 
@@ -286,21 +303,41 @@ class SchemaCacheManager:
         """Run fn() on UI thread using QTimer.singleShot."""
         try:
             from PyQt6.QtCore import QTimer
+
             QTimer.singleShot(0, fn)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             try:
                 fn()
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as ex:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as ex:
                 self._logger.warning("SchemaCacheManager: UI callback failed: %s", ex)
 
     # -----------------------------------------------------------------------------
     # BULK HANDLER
     # -----------------------------------------------------------------------------
     def _handle_bulk_error(self, connection_name: str, token: str, err: str, corr_id: str | None = None):
-        self._logger.warning(
-            "SchemaCacheManager: bulk error (conn=%s, corr=%s): %s",
-            connection_name, corr_id, err
-        )
+        self._logger.warning("SchemaCacheManager: bulk error (conn=%s, corr=%s): %s", connection_name, corr_id, err)
 
         if self._status_cb:
             self._status_cb(tr("DbErrors", TR_BULK_FAILED_TRYING_BATCH), 5000)
@@ -321,7 +358,18 @@ class SchemaCacheManager:
                 t = key.get("name")
                 if isinstance(sch, str) and isinstance(t, str):
                     return (sch, t)
-        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             pass
         return None
 
@@ -337,7 +385,18 @@ class SchemaCacheManager:
             try:
                 lst = list(cols) if cols else []
                 lst = [c for c in lst if isinstance(c, dict)]
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 lst = []
             out[key] = lst
         return out
@@ -357,13 +416,9 @@ class SchemaCacheManager:
             self._start_batch_prefetch(connection_name, token, corr_id)
             return
 
-        wanted = {
-                     (tbl["schema"], tbl["name"])
-                     for tbl in entry.tables
-                 } | {
-                     (vw["schema"], vw["name"])
-                     for vw in entry.views
-                 }
+        wanted = {(tbl["schema"], tbl["name"]) for tbl in entry.tables} | {
+            (vw["schema"], vw["name"]) for vw in entry.views
+        }
 
         merged = 0
         for key, cols in bulk_map.items():
@@ -375,7 +430,11 @@ class SchemaCacheManager:
 
         self._logger.info(
             "SchemaCacheManager: bulk done (conn=%s, merged=%d/%d, total_columns=%d, corr=%s)",
-            connection_name, merged, len(bulk_map), total_cols, corr_id
+            connection_name,
+            merged,
+            len(bulk_map),
+            total_cols,
+            corr_id,
         )
 
         if merged == 0:
@@ -383,8 +442,11 @@ class SchemaCacheManager:
             self._start_batch_prefetch(connection_name, token, corr_id)
             return
 
-        self._logger.debug("SchemaCacheManager: autocomplete_cb is %s for '%s'",
-                     "SET" if self._autocomplete_cb else "NONE", connection_name)
+        self._logger.debug(
+            "SchemaCacheManager: autocomplete_cb is %s for '%s'",
+            "SET" if self._autocomplete_cb else "NONE",
+            connection_name,
+        )
 
         # UI rebuild (IMPORTANT: pass connection_name)
         if self._autocomplete_cb:
@@ -392,7 +454,7 @@ class SchemaCacheManager:
             self._logger.debug(
                 "SchemaCacheManager: autocomplete rebuild (bulk) requested for '%s' (corr=%s).",
                 connection_name,
-                corr_id
+                corr_id,
             )
 
         if self._status_cb:
@@ -430,30 +492,27 @@ class SchemaCacheManager:
             return
 
         if self._prefetch_limit > 0:
-            missing = missing[:self._prefetch_limit]
+            missing = missing[: self._prefetch_limit]
 
         total = len(missing)
         if self._progress_cb:
             self._progress_cb(0, total)
 
         self._logger.debug(
-            "SchemaCacheManager: starting batch (objects=%d, batch=%d, corr=%s)",
-            total,
-            self._batch_size,
-            corr_id
+            "SchemaCacheManager: starting batch (objects=%d, batch=%d, corr=%s)", total, self._batch_size, corr_id
         )
 
         self._run_next_batch(connection_name, token, missing, self._batch_size, 0, total, corr_id)
 
     def _run_next_batch(
-            self,
-            connection_name: str,
-            token: str,
-            remaining: list[tuple[str, str]],
-            batch_size: int,
-            done: int,
-            total: int,
-            corr_id: str | None = None
+        self,
+        connection_name: str,
+        token: str,
+        remaining: list[tuple[str, str]],
+        batch_size: int,
+        done: int,
+        total: int,
+        corr_id: str | None = None,
     ):
         if not remaining:
             if self._autocomplete_cb:
@@ -461,7 +520,7 @@ class SchemaCacheManager:
                 self._logger.debug(
                     "SchemaCacheManager: autocomplete rebuild (batch final) for '%s' (corr=%s)",
                     connection_name,
-                    corr_id
+                    corr_id,
                 )
 
             if self._status_cb:
@@ -470,11 +529,7 @@ class SchemaCacheManager:
             if self._progress_cb:
                 self._progress_cb(total, total)
 
-            self._logger.info(
-                "SchemaCacheManager: batch complete for '%s' (corr=%s)",
-                connection_name,
-                corr_id
-            )
+            self._logger.info("SchemaCacheManager: batch complete for '%s' (corr=%s)", connection_name, corr_id)
             return
 
         batch = remaining[:batch_size]
@@ -485,9 +540,26 @@ class SchemaCacheManager:
             for sch, name in pairs:
                 try:
                     cols = list_columns(conn, sch, name, corr_id) or []
-                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as ex:
-                    self._logger.warning("SchemaCacheManager: list columns failed for %s.%s (%s): %s (corr=%s).)",
-                                   sch, name, conn, ex, corr_id)
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as ex:
+                    self._logger.warning(
+                        "SchemaCacheManager: list columns failed for %s.%s (%s): %s (corr=%s).)",
+                        sch,
+                        name,
+                        conn,
+                        ex,
+                        corr_id,
+                    )
                     cols = []
                 result[(sch, name)] = cols
             return result
@@ -495,7 +567,9 @@ class SchemaCacheManager:
         if not self._runner:
             self._logger.warning(
                 "SchemaCacheManager: no runner → synchronous batch (conn=%s, remaining=%d, corr=%s).",
-                connection_name, len(remaining), corr_id
+                connection_name,
+                len(remaining),
+                corr_id,
             )
             entry = self._cache.get(connection_name)
             if entry:
@@ -513,7 +587,7 @@ class SchemaCacheManager:
             connection_name,
             batch,
             started_msg=tr_fmt("DbErrors", TR_PREPARING_AUTOCOMPLETE_BATCH, done=str(done), total=str(total)),
-            corr_id=corr_id
+            corr_id=corr_id,
         )
 
         def _on_ok(payload):
@@ -531,22 +605,33 @@ class SchemaCacheManager:
                 self._logger.debug(
                     "SchemaCacheManager: autocomplete rebuild (batch increment) for '%s' (corr=%s)",
                     connection_name,
-                    corr_id
+                    corr_id,
                 )
 
             # schedule next batch
             try:
                 from PyQt6.QtCore import QTimer
-                QTimer.singleShot(0,
-                                  lambda: self._run_next_batch(connection_name, token, rest, batch_size, new_done,
-                                                               total, corr_id))
-            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
+
+                QTimer.singleShot(
+                    0, lambda: self._run_next_batch(connection_name, token, rest, batch_size, new_done, total, corr_id)
+                )
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._run_next_batch(connection_name, token, rest, batch_size, new_done, total, corr_id)
 
         def _on_err(err: str):
             self._logger.warning(
-                "SchemaCacheManager: batch error (conn=%s, corr=%s): %s",
-                connection_name, corr_id, err
+                "SchemaCacheManager: batch error (conn=%s, corr=%s): %s", connection_name, corr_id, err
             )
 
             # continue anyway

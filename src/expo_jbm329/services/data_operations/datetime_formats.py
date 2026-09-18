@@ -1,4 +1,5 @@
 """Module for handling datetime formats and parsing dates."""
+
 from typing import Literal
 
 DateFormatKey = Literal[

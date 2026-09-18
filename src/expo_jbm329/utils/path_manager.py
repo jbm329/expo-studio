@@ -20,6 +20,7 @@ dirs = PlatformDirs(appname=APP_NAME, appauthor=False, roaming=False)
 
 # --------- Fixed directories ----------
 
+
 def get_config_dir() -> Path:
     """Return the user configuration directory.
 
@@ -107,6 +108,7 @@ def get_settings_path() -> Path:
 
 # --------- Active documents dir ----------
 
+
 def get_documents_dir(settings: dict) -> Path:
     """Return the active documents directory from settings or the default.
 
@@ -181,8 +183,7 @@ def ensure_all_dirs(settings: dict) -> dict[str, Path]:
     }
 
     # Skapa kataloger
-    for key in ("config_dir", "log_dir", "cache_dir",
-                "documents_dir"):
+    for key in ("config_dir", "log_dir", "cache_dir", "documents_dir"):
         paths[key].mkdir(parents=True, exist_ok=True)
 
     return paths

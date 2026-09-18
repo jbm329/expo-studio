@@ -101,7 +101,13 @@ def controller(monkeypatch):
     )
     monkeypatch.setattr(
         "expo_jbm329.workbench.controllers.editor_panel_controller.SqlLintController",
-        lambda **kwargs: SimpleNamespace(install=lambda: None, schedule_lint=lambda: None, dispose=lambda: None, deleteLater=lambda: None, clear_diagnostics=lambda: None),
+        lambda **kwargs: SimpleNamespace(
+            install=lambda: None,
+            schedule_lint=lambda: None,
+            dispose=lambda: None,
+            deleteLater=lambda: None,
+            clear_diagnostics=lambda: None,
+        ),
     )
     monkeypatch.setattr(
         "expo_jbm329.workbench.controllers.editor_panel_controller.EditorTabContextMenu",
@@ -147,4 +153,3 @@ def test_active_tab_text_helpers(controller):
     assert ctrl.get_active_tab_text() == "SELECT 1"
     ctrl.set_active_tab_text("SELECT 2")
     assert widget.get_sql_text() == "SELECT 2"
-

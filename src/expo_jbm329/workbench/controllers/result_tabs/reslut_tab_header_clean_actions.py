@@ -90,9 +90,7 @@ class ResultTabHeaderCleanActions:
     TR_INSERT_TEXT_OPERATION = QT_TR_NOOP("insert text")
     TR_INSERTING_TEXT = QT_TR_NOOP("Inserting text in column: {column_name}")
     TR_INSERT_TEXT = QT_TR_NOOP("Insert text")
-    TR_INSERTED_TEXT = QT_TR_NOOP(
-        "Inserted '{insert_text}' at position {position} in column: {column_name}"
-    )
+    TR_INSERTED_TEXT = QT_TR_NOOP("Inserted '{insert_text}' at position {position} in column: {column_name}")
 
     # ------------------------------------------------------------------
     # i18n helpers
@@ -224,9 +222,7 @@ class ResultTabHeaderCleanActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -285,9 +281,7 @@ class ResultTabHeaderCleanActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -346,9 +340,7 @@ class ResultTabHeaderCleanActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -407,9 +399,7 @@ class ResultTabHeaderCleanActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -472,9 +462,7 @@ class ResultTabHeaderCleanActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -533,9 +521,7 @@ class ResultTabHeaderCleanActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -654,9 +640,7 @@ class ResultTabHeaderCleanActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
 
         if not ok or df is None or col is None:
             return
@@ -887,9 +871,7 @@ class ResultTabHeaderCleanActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 

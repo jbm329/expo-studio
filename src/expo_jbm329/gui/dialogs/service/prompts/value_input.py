@@ -1,4 +1,5 @@
 """Prompt the user for a single numeric or datetime value."""
+
 from __future__ import annotations
 
 from datetime import datetime
