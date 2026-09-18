@@ -79,7 +79,7 @@ class SettingsEditor(QDialog):
         file_dialogs: FileDialogService | None = None,
         highlighter_theme_service: HighlighterThemeService | None = None,
         icon_service: IconService | None = None,
-    ):
+    ) -> None:
         """Initializes the SettingsEditor dialog.
 
         Args:

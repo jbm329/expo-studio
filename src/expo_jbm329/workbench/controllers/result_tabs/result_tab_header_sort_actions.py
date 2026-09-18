@@ -79,7 +79,7 @@ class ResultTabHeaderSortActions:
             [QTableView, pd.DataFrame, str],
             None,
         ],
-    ):
+    ) -> None:
         """Initialize ResultTabHeaderSortActions with dependencies.
 
         Args:

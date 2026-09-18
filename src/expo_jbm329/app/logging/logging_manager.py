@@ -43,7 +43,7 @@ class ThirdPartyMinLevelFilter(logging.Filter):
     to pass through, while enforcing a minimum log level for all other loggers.
     """
 
-    def __init__(self, min_level: int, app_prefixes: tuple[str, ...]):
+    def __init__(self, min_level: int, app_prefixes: tuple[str, ...]) -> None:
         """Initializes the filter.
 
         Args:
@@ -96,7 +96,7 @@ class LoggingManager:
 
     APP_PREFIXES = ("applogger",)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the LoggingManager with pre-configured logger instances."""
         self.ui_logger: logging.Logger = logging.getLogger("applogger.ui")
         self.service_logger: logging.Logger = logging.getLogger("applogger.service")

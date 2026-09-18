@@ -80,7 +80,7 @@ class SchemaCacheManager:
         progress_cb: ProgressCb | None = None,
         autocomplete_cb: AutocompleteRebuildCb | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize the schema cache manager.
 
         Args:

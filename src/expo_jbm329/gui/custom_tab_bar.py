@@ -203,7 +203,7 @@ class CustomTabBar(QTabBar):
     CLOSE_BUTTON_SIZE = 18
     CLOSE_TOOLTIP = "Stäng flik"
 
-    def __init__(self, icon_service: IconService, parent: QTabWidget | None = None):
+    def __init__(self, icon_service: IconService, parent: QTabWidget | None = None) -> None:
         """Initialize the custom tab bar.
 
         Args:

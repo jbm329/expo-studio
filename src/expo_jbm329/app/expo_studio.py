@@ -97,7 +97,7 @@ class ExpoStudio(QMainWindow):
     # ------------------------------------------------------------------
     # Constructor & Initialization
     # ------------------------------------------------------------------
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the main window."""
         super().__init__(parent)
         # -----------------------------------------------------------

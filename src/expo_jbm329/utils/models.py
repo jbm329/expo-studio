@@ -67,7 +67,7 @@ class DataFrameModel(QAbstractTableModel):
         *,
         na_rep: str = "",
         formatters: dict[str, Callable[[Any], str]] | None = None,
-    ):
+    ) -> None:
         """Initialize the DataFrameModel.
 
         Args:

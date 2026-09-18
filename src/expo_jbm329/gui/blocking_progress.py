@@ -25,7 +25,7 @@ class BlockingProgressDialog(QDialog):
         btn_cancel: The cancel button.
     """
 
-    def __init__(self, parent=None, title: str = "Arbetar...", started_msg: str = ""):
+    def __init__(self, parent=None, title: str = "Arbetar...", started_msg: str = "") -> None:
         """Initialize the progress dialog.
 
         Args:

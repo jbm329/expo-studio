@@ -72,7 +72,7 @@ class BusyOverlayController:
         parent: QWidget,
         dialogs: DialogService | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize BusyOverlayController.
 
         Args:

@@ -41,7 +41,7 @@ class DataIOService:
       - Load returns JobResult with `data` (the DataFrame payload).
     """
 
-    def __init__(self, loader: FileLoader, writer: FileWriter, logger: logging.Logger | None = None):
+    def __init__(self, loader: FileLoader, writer: FileWriter, logger: logging.Logger | None = None) -> None:
         """Initialize the DataIOService.
 
         Args:

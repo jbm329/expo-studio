@@ -19,7 +19,7 @@ class ThemeService(QObject):
 
     theme_changed = pyqtSignal(str)  # "light" or "dark"
 
-    def __init__(self, logger: logging.Logger | None = None):
+    def __init__(self, logger: logging.Logger | None = None) -> None:
         """Initialize the theme service.
 
         Args:

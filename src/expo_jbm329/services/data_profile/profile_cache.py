@@ -21,7 +21,7 @@ class ColumnProfileCache:
         _store: An OrderedDict mapping (tab_id, column_name) tuples to ColumnProfile.
     """
 
-    def __init__(self, capacity: int = 128):
+    def __init__(self, capacity: int = 128) -> None:
         """Initialize the ColumnProfileCache.
 
         Args:

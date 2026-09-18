@@ -78,7 +78,7 @@ class MenuController:
         open_connection_dialog: Callable[[], None],
         open_rest_connection_dialog: Callable[[], None],
         show_about_dialog: Callable[[], None],
-    ):
+    ) -> None:
         """Initialize the MenuController.
 
         Args:

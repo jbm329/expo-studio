@@ -80,7 +80,7 @@ class AsyncOperationController:
         busy: BusyOverlayController,
         dialogs: DialogService | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize AsyncOperationController.
 
         Args:

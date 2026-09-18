@@ -97,7 +97,7 @@ class FilePanelController:
         file_icon_provider,
         dialogs: DialogService | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize the file panel controller.
 
         Args:

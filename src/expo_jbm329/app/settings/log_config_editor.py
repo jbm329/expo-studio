@@ -91,7 +91,7 @@ class LogConfigEditor(QDialog):
         parent: QWidget | None = None,
         dialogs: DialogService | None = None,
         icon_service: IconService | None = None,
-    ):
+    ) -> None:
         """Initializes the LogConfigEditor dialog.
 
         Args:

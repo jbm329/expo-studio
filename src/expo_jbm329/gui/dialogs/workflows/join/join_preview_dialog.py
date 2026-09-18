@@ -38,7 +38,7 @@ class JoinPreviewDialog(QDialog):
         *,
         df: pd.DataFrame,
         metadata: JoinMetadata,
-    ):
+    ) -> None:
         """Initialize the JoinPreviewDialog.
 
         Args:

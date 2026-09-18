@@ -112,7 +112,7 @@ class ResultTabHeaderFillActions:
             [QTableView, pd.DataFrame, str],
             None,
         ],
-    ):
+    ) -> None:
         """Initialize ResultTabHeaderFillActions with dependencies.
 
         Args:

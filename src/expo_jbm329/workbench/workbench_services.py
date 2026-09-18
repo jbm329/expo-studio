@@ -46,7 +46,6 @@ if TYPE_CHECKING:
     from expo_jbm329.services.settings_service import SettingsService
     from expo_jbm329.workbench.ui_refs import WorkbenchUIRefs
 
-
 class WorkbenchServices:
     """Container for workbench controllers and UI-facing services."""
 
@@ -74,7 +73,7 @@ class WorkbenchServices:
         join: JoinController,
         concat: ConcatController,
         dialog_state: DialogState,
-    ):
+    ) -> None:
         """Initialize the workbench service container.
 
         Args:
@@ -100,6 +99,9 @@ class WorkbenchServices:
             join: Controller for JOIN operations.
             concat: Controller for CONCAT operations.
             dialog_state: Service for managing dialog state.
+
+        Returns:
+            None
         """
         self.busy_overlay = busy_overlay
         self.async_ops = async_ops

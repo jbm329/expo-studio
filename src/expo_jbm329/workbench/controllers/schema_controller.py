@@ -113,7 +113,7 @@ class SchemaController:
         restore_baseline_status: Callable[[], None],
         dialogs: DialogService | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize the SchemaController.
 
         Args:

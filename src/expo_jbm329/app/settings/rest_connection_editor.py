@@ -88,7 +88,7 @@ class RestConnectionEditor(QDialog):
         preset_name: str | None = None,
         dialogs: DialogService | None = None,
         icon_service: IconService | None = None,
-    ):
+    ) -> None:
         """Initializes the RestConnectionEditor dialog."""
         super().__init__(parent)
         self._preset_name = preset_name

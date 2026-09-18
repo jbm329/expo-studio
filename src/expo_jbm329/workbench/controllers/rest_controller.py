@@ -91,7 +91,7 @@ class RestController:
         set_status: Callable[[str, int | None], None],
         dialogs,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize RestController.
 
         Args:

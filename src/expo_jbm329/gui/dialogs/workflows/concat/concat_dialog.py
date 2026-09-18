@@ -67,7 +67,7 @@ class ConcatDialog(QDialog):
         right_tab_titles: Sequence[str],
         left_columns: Sequence[str],
         right_columns_map: dict[str, Sequence[str]],
-    ):
+    ) -> None:
         """Initialize the concatenation dialog.
 
         Args:

@@ -105,7 +105,7 @@ class ToolbarController:
         undo: Callable[[], None],
         visualize_data: Callable[[], None],
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize the ToolbarController.
 
         Args:

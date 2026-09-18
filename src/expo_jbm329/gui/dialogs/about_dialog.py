@@ -26,7 +26,7 @@ from expo_jbm329.app.metadata import get_app_metadata
 class AboutDialog(QDialog):
     """About dialog for Expo Studio."""
 
-    def __init__(self, parent: QWidget | None = None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the About dialog."""
         super().__init__(parent)
         self.setWindowTitle(self.tr("About Expo studio"))

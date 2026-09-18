@@ -84,7 +84,7 @@ class FileLoader:
         *,
         logger: logging.Logger | None = None,
         encoding_detector: Callable[[Path], str] | None = None,
-    ):
+    ) -> None:
         """Initialize the FileLoader.
 
         Args:

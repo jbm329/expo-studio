@@ -115,7 +115,7 @@ class FileJobService:
         dialogs: DialogService,
         is_shutting_down: Callable[[], bool] | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize FileJobService.
 
         Args:

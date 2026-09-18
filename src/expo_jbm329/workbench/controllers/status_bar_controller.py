@@ -97,7 +97,7 @@ class StatusBarController:
     def _tr_fmt(text: str, **kwargs: str) -> str:
         return tr_fmt("StatusBarController", text, **kwargs)
 
-    def __init__(self, parent: QWidget, status_bar: QStatusBar):
+    def __init__(self, parent: QWidget, status_bar: QStatusBar) -> None:
         """Initialize the StatusBarController.
 
         Args:

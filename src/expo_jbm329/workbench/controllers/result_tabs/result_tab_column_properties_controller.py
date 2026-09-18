@@ -78,7 +78,7 @@ class ResultTabColumnPropertiesController:
         col_profile_cache: ColumnProfileCache,
         find_tab_id_for_view: Callable[[QTableView], str | None],
         get_series_semantics: Callable[[QTableView, int], SeriesSemantics | None],
-    ):
+    ) -> None:
         """Initialize the controller.
 
         Args:

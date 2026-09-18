@@ -97,7 +97,7 @@ class QueryController:
         get_current_connection: Callable[[], str | None],
         dialogs: DialogService | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize the QueryController.
 
         Args:

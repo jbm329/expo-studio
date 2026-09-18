@@ -53,7 +53,7 @@ except (
 class ColumnPropertiesDialog(QDialog):
     """Dialog showing properties and statistics for a single column."""
 
-    def __init__(self, parent: QWidget, profile: ColumnProfile, semantics: SeriesSemantics | None):
+    def __init__(self, parent: QWidget, profile: ColumnProfile, semantics: SeriesSemantics | None) -> None:
         """Initialize the dialog.
 
         Args:

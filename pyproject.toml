@@ -162,11 +162,12 @@ select = [
     "LOG",  # flake8-logging-format
     "ISC",  # flake8-implicit-str-concat
     "INT",  # flake8-interpreted-string
-    "FA",  # flake8-future-import
-    "EM",  # flake8-errmsg
+    "FA",   # flake8-future-import
+    "EM",   # flake8-errmsg
 #    "DTZ",  # flake8-datetimez
     "BLE",  # flake8-blind-except
-#    "ASYNC",  # flake8-async
+    "ASYNC",# flake8-async
+    "ANN204",  # flake8-annotations
 ]
 
 ignore = [
@@ -176,7 +177,7 @@ ignore = [
     "PLC0415",
 ]
 [tool.ruff.lint.per-file-ignores]
-"tests/*.py" = ["W", "D", "S", "S101", "RUF", "D104", "ARG", "PLC", "N", "SLF", "EM", "BLE", "E501"]
+"tests/*.py" = ["W", "D", "S", "S101", "RUF", "D104", "ARG", "PLC", "N", "SLF", "EM", "BLE", "E501", "ANN"]
 "__init__.py" = ["D107", "D104"]
 
 

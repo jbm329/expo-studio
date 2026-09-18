@@ -117,7 +117,7 @@ class ResultTabHeaderColumnActions:
             [QTableView, pd.DataFrame, str],
             None,
         ],
-    ):
+    ) -> None:
         """Initialize ResultTabHeaderColumnActions with dependencies.
 
         Args:

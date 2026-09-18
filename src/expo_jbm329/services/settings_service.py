@@ -41,7 +41,7 @@ class SettingsService:
         dispatcher: Dispatcher | None = None,
         loader: Callable[[], dict] = load_settings,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize the SettingsService.
 
         Args:

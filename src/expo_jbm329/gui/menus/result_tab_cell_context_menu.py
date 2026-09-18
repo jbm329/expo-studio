@@ -43,7 +43,7 @@ class ResultTabCellContextMenu:
         return tr("ResultTabCellContextMenu", text)
 
     # ------------------------------------------------------------------
-    def __init__(self, *, parent: QWidget):
+    def __init__(self, *, parent: QWidget) -> None:
         """Initialize the cell context menu builder.
 
         Args:

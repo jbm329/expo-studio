@@ -90,7 +90,7 @@ class ResultTabCellActions:
             [QTableView, pd.DataFrame, str],
             None,
         ],
-    ):
+    ) -> None:
         """Initialize cell actions.
 
         Args:

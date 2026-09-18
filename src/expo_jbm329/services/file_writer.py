@@ -40,7 +40,7 @@ class ExportCancelledError(Exception):
         rows_written: int | None = None,
         sheets_written: int | None = None,
         corr_id: str | None = None,
-    ):
+    ) -> None:
         """Initialize ExportCancelledError."""
         super().__init__(message)
         self.path = path
@@ -73,7 +73,7 @@ class FileWriter:
         "_logger",
     )
 
-    def __init__(self, logger: logging.Logger | None = None):
+    def __init__(self, logger: logging.Logger | None = None) -> None:
         """Initialize FileWriter.
 
         Args:

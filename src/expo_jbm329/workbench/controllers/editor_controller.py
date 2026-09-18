@@ -30,7 +30,7 @@ class EditorController(QObject):
         re.compile(r"\bJOIN\b.*\bON\s*$", re.IGNORECASE),
     )
 
-    def __init__(self, editor: QPlainTextEdit):
+    def __init__(self, editor: QPlainTextEdit) -> None:
         """Initialize the editor controller.
 
         Args:

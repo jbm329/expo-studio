@@ -164,7 +164,7 @@ class ExportController:
         file_dialogs: FileDialogService | None = None,
         dialog_state: DialogState,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize the ExportController.
 
         Args:

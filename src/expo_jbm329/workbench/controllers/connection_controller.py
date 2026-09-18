@@ -55,7 +55,7 @@ class ConnectionController:
         clear_schema_cache: Callable[[str], None],
         close_db_connection: Callable[[str], None],
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize the ConnectionController.
 
         Args:

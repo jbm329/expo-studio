@@ -267,7 +267,7 @@ class ResultTabManager:
         update_undo_enabled: Callable[[], None] | None = None,
         cancel_job: Callable[[str], bool] | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize a ResultTabManager."""
         self._parent = parent_widget
         self._tabs = tabs

@@ -166,7 +166,7 @@ class NullFileDialogService(FileDialogService):
     specific selections for testing purposes.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the null file dialog service."""
         self.calls: list[SaveFileRequest] = []
         self._queue_open: list[tuple[str, str]] = []

@@ -141,7 +141,7 @@ class ResultTabHeaderFilterActions:
             [QTableView, pd.DataFrame, str],
             None,
         ],
-    ):
+    ) -> None:
         """Initialize the ResultTabHeaderFilterActions with dependencies.
 
         Args:

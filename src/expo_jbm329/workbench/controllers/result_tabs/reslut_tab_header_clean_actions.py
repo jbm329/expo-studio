@@ -131,7 +131,7 @@ class ResultTabHeaderCleanActions:
             [QTableView, pd.DataFrame, str],
             None,
         ],
-    ):
+    ) -> None:
         """Initialize ResultTabHeaderCleanActions with dependencies.
 
         Args:

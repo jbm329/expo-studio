@@ -21,7 +21,7 @@ class IconService(QObject):
 
     icons_updated = pyqtSignal()
 
-    def __init__(self, theme_service: ThemeService, logger: logging.Logger | None = None):
+    def __init__(self, theme_service: ThemeService, logger: logging.Logger | None = None) -> None:
         """Initialize the icon service.
 
         Args:
