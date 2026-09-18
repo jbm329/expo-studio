@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import httpx
 import pytest
 
-from expo_jbm329.services.rest.client import RestClientError, fetch_json
+from expo_jbm329.services.rest.client import fetch_json
 from expo_jbm329.services.rest.models import RestAuthConfig, RestRequestConfig, RestRetryConfig
 
 

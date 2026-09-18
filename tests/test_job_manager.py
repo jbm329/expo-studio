@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from expo_jbm329.services.job_manager import JobManager, Worker, run_in_thread
 

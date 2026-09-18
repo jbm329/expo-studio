@@ -1,11 +1,16 @@
-# tests/test_custom_file_icon_provider.py
-import pytest
+
 from unittest.mock import MagicMock, patch
-from pathlib import Path
+
+import pytest
 from PyQt6.QtCore import QFileInfo
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QFileIconProvider
-from expo_jbm329.workbench.icon.custom_file_icon_provider import CustomFileIconProvider, _normalize_ext
+
+from expo_jbm329.workbench.icon.custom_file_icon_provider import (
+    CustomFileIconProvider,
+    _normalize_ext,
+)
+
 
 @pytest.fixture
 def icon_service():

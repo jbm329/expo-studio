@@ -8,7 +8,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget
 
 from expo_jbm329.workbench.controllers.schema_controller import SchemaController
-from tests.qt_stubs import StubTree, StubTreeItem
+from tests.qt_stubs import StubTree
 
 
 class StubIconService:

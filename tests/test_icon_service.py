@@ -1,10 +1,13 @@
-# tests/test_icon_service.py
-import pytest
+
 from unittest.mock import MagicMock, patch
-from PyQt6.QtGui import QIcon, QPixmap, QColor
+
+import pytest
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon, QPixmap
+
 from expo_jbm329.workbench.icon.icon_service import IconService
 from tests.stubs import DummyThemeService
+
 
 @pytest.fixture
 def theme_service():

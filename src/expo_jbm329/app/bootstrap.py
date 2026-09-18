@@ -17,8 +17,8 @@ from expo_jbm329.app.settings.config_store import (
     save_settings,
     write_log_config,
 )
-from expo_jbm329.workbench.icon import icons_rc
-from expo_jbm329.workbench.splash import splash_rc
+from expo_jbm329.workbench.icon import icons_rc  # noqa: F401 - required for PyInstaller
+from expo_jbm329.workbench.splash import splash_rc  # noqa: F401 - required for PyInstaller
 
 
 def run_bootstrap() -> None:

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable
 
 import pandas as pd
@@ -25,8 +24,6 @@ from expo_jbm329.gui.gui_utils import apply_window_hints_strict
 from expo_jbm329.services.data_operations.derived_column.derived_column_service import (
     DerivedColumnSpec,
 )
-
-# logger = logging.getLogger("applogger.gui")
 
 
 class DerivedColumnDialog(QDialog):

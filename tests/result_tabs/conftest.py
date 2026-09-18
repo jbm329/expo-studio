@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QWidget
 from expo_jbm329.gui.dialogs.service.null_dialog_service import NullDialogService
 from expo_jbm329.services.data_profile.profile_cache import ColumnProfileCache
 from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
-from tests.stubs import DummyAsyncOps, DummyDialogState, DummyJobManager
+from tests.stubs import DummyAsyncOps
 
 
 class StubModel:

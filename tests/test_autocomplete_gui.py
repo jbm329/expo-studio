@@ -1,12 +1,14 @@
-import pytest
-from PyQt6.QtWidgets import QPlainTextEdit
-from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtCore import Qt, QEvent, QTimer
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-from expo_jbm329.gui.autocomplete.engine import SqlAutoCompleter
+import pytest
+from PyQt6.QtCore import QEvent, Qt
+from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtWidgets import QPlainTextEdit
+
 from expo_jbm329.gui.autocomplete.controller import SqlAutocompleteController
+from expo_jbm329.gui.autocomplete.engine import SqlAutoCompleter
 from expo_jbm329.gui.autocomplete.popup import SqlEditorAutoCompletePopup
+
 
 @pytest.fixture
 def editor(qt_app):

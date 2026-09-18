@@ -23,7 +23,6 @@ from expo_jbm329.services.job_manager import JobManager
 from expo_jbm329.services.rest.registry import rest_registry
 from expo_jbm329.services.schema_cache import SchemaCacheManager
 from expo_jbm329.services.settings_service import SettingsService
-from expo_jbm329.utils.format_utils import fmt_path
 
 
 @dataclass

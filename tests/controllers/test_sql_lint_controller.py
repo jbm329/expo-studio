@@ -4,8 +4,8 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
-from PyQt6.QtCore import QEvent, QPoint
-from PyQt6.QtWidgets import QPlainTextEdit, QToolTip, QWidget
+from PyQt6.QtCore import QPoint
+from PyQt6.QtWidgets import QPlainTextEdit, QWidget
 
 from expo_jbm329.db.sql_analysis import SqlDiagnostic
 from expo_jbm329.gui.linting.sql_lint_controller import SqlLintController

@@ -1,7 +1,7 @@
-import pytest
 from expo_jbm329.db.dialects.mssql import MssqlDialect
 from expo_jbm329.db.dialects.mysql import MySqlDialect
 from expo_jbm329.db.dialects.sqlite import SqliteDialect
+
 
 def test_mssql_dialect():
     dialect = MssqlDialect()

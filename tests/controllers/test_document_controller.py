@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-import pytest
 from PyQt6.QtWidgets import QWidget
 
 from expo_jbm329.utils.dialog_state import DialogState

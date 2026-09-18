@@ -103,7 +103,7 @@ def generate_comparison_profile_report(
 
     t0 = time.perf_counter()
     try:
-        from ydata_profiling import ProfileReport, compare
+        from ydata_profiling import compare
         reports: list[ProfileReport] = []
         for (df, title) in data or []:
             reports.append(generate_profile_report(df, title, corr_id=corr_id))

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget
 
 from expo_jbm329.workbench.controllers.rest_panel_controller import RestPanelController

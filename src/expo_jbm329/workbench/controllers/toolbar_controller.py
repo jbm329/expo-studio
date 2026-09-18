@@ -13,7 +13,7 @@ from collections.abc import Callable
 
 from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtGui import QAction
-from PyQt6.QtWidgets import QSizePolicy, QToolBar, QWidget, QWidgetAction
+from PyQt6.QtWidgets import QToolBar, QWidget
 
 from expo_jbm329.utils.i18n_utils import tr
 
