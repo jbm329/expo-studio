@@ -100,7 +100,7 @@ def fetch_json(
 
         try:
             payload = response.json()
-        except Exception as exc:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
             msg = "Response is not valid JSON"
             raise RestClientError(msg) from exc
 
@@ -211,7 +211,7 @@ def _fetch_oauth2_access_token(auth: RestAuthConfig, *, timeout: float) -> str:
 
     try:
         token_payload = response.json()
-    except Exception as exc:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
         msg = "OAuth2 token response is not valid JSON"
         raise RestClientError(msg) from exc
 

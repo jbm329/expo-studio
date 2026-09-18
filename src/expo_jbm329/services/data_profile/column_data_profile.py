@@ -89,10 +89,10 @@ def _safe_memory_usage(series: pd.Series) -> int:
     """
     try:
         return int(series.memory_usage(deep=True))
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         try:
             return int(series.memory_usage(deep=False))
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             return 0
 
 
@@ -128,7 +128,7 @@ def _format_samples(series: pd.Series) -> list[Any]:
         # Keep original order, unique values
         return list(non_null.unique()[:3])
 
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         return []
 
 
@@ -139,7 +139,7 @@ def _any_bool_safe(bools: pd.Series) -> bool:
     """
     try:
         return bool(pd.Series(bools, copy=False).to_numpy(dtype=bool, na_value=False).any())
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         # Last-resort fallback (very robust, slightly slower for huge series)
         return any(bool(x) for x in pd.Series(bools, copy=False).astype(object).tolist())
 
@@ -160,7 +160,7 @@ def _dget_scalar(desc: pd.Series, key: str, default: float = np.nan) -> float:
         if isinstance(val, Real):
             return float(val)
         return float(default)
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         return float(default)
 
 
@@ -367,7 +367,7 @@ def _text_or_category_profile(s: pd.Series):
     # Safe coercion to string
     try:
         x = s.dropna().astype(str)
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         out["note.bytes"] = True
         return out, plot
 

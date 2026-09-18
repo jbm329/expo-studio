@@ -72,7 +72,7 @@ class DataIOService:
             if self._writer:
                 self._writer.reload_settings(settings)
             self._logger.debug("DataIOService: settings reloaded into loader & writer.")
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.exception("DataIOService: failed to reload settings")
 
     # ------------------------------------------------------------------
@@ -177,7 +177,7 @@ class DataIOService:
                 corr_id=corr_id,
             )
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             dt = time.perf_counter() - t0
             return JobResult(
                 ok=False,
@@ -255,7 +255,7 @@ class DataIOService:
                 ok=False, elapsed=dt, path=dest_str, cancelled=True, error=None, corr_id=corr_id
             )
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.exception(
                 "DataIOService: export CSV failed (corr=%s, path=%s): %s", corr_id, fmt_path(dest_str), e)
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)
@@ -362,7 +362,7 @@ class DataIOService:
                 corr_id=corr_id,
             )
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             # Unexpected failure path
             self._logger.exception(
                 "DataIOService: export excel failed (corr=%s, path=%s): %s",
@@ -430,7 +430,7 @@ class DataIOService:
                 "DataIOService: data file written (corr=%s, path=%s, ms=%.1f, rows=%s, cols=%s)",
                 corr_id, fmt_path(dest_str), dt * 1000, rows, columns)
             return JobResult(ok=True, elapsed=dt, path=dest_str, corr_id=corr_id)
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             if progress_cb:
                 progress_cb(100)
             self._logger.exception(
@@ -500,8 +500,7 @@ class DataIOService:
                 title
             )
             return JobResult(ok=True, elapsed=dt, path=dest_str, corr_id=corr_id)
-        except Exception as e:
-
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.exception(
                 "DataIOService: export profile report failed (corr=%s, path=%s): %s",
                 corr_id, fmt_path(dest_str), e)
@@ -542,7 +541,7 @@ class DataIOService:
         try:
             number_of_datasets = len(data) if data else 0
             titles_preview = ", ".join([nm for _, nm in (data[:3] if data else [])])
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             number_of_datasets, titles_preview = 0, ""
 
         self._logger.debug(
@@ -581,8 +580,7 @@ class DataIOService:
                 number_of_datasets
             )
             return JobResult(ok=True, elapsed=dt, path=dest_str, corr_id=corr_id)
-        except Exception as e:
-
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.exception(
                 "DataIOService: export comparison profile failed (corr=%s, path=%s): %s",
                 corr_id,

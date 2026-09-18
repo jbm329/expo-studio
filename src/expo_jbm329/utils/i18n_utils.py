@@ -50,6 +50,6 @@ def tr_fmt(context: str, text: str, /, **kwargs) -> str:
 
     try:
         return translated.format(**kwargs)
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         # UI must never crash due to translation formatting issues
         return translated

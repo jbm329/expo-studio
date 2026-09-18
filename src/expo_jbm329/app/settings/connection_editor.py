@@ -183,7 +183,7 @@ class ConnectionEditor(QDialog):
         try:
             for d in pyodbc.drivers():
                 self.system_drivers.addItem(d)
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self.system_drivers.addItem(self.tr("(No ODBC-drivers found)"))
 
         self.driver_edit = QLineEdit()
@@ -482,7 +482,7 @@ class ConnectionEditor(QDialog):
         extra = conn.get("extra", {})
         try:
             self.extra_edit.setText(json.dumps(extra))
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self.extra_edit.setText("{}")
 
         self.on_protocol_changed()

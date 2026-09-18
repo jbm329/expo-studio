@@ -128,7 +128,7 @@ class SettingsService:
                 msg = "load_settings returned non-dict"
                 raise ValueError(msg)
             return s
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.exception("SettingsService: failed to load settings; falling back to empty dict. Error: %s", e)
             return {}
 
@@ -144,14 +144,14 @@ class SettingsService:
         def _invoke():
             try:
                 cb(copy.deepcopy(s))
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.exception("SettingsService subscriber raised.")
 
         if self._dispatcher is not None:
             # Marshal to UI thread (or provided dispatcher)
             try:
                 self._dispatcher(_invoke)
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.exception("SettingsService dispatcher failed; invoking directly.")
                 _invoke()
         else:

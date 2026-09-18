@@ -98,7 +98,7 @@ def fetch_rest_dataset(
             corr_id=corr_id,
         )
 
-    except Exception as exc:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
         # Defensive fallback: never let the worker crash
         return JobResult(
             ok=False,

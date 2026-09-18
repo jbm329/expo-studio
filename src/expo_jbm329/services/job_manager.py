@@ -279,7 +279,7 @@ class Worker(QObject):
         try:
             clamped = max(0, min(100, int(value)))
             self._dispatch_progress.emit(clamped)
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             # Never allow progress reporting to crash job execution.
             self._logger.debug(
                 "Worker: failed to emit progress (job_id=%s, corr=%s).",
@@ -306,7 +306,7 @@ class Worker(QObject):
             result = self._fn(*self._args, **call_kwargs)
             self._dispatch_result.emit(result)
 
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             tb = traceback.format_exc()
             self._logger.error(
                 "Worker: callable raised (job_id=%s, scope=%s, corr=%s): %s",
@@ -519,14 +519,14 @@ class JobManager:
             job_id = getattr(obj, "job_id", None)
             if isinstance(job_id, str) and job_id:
                 return job_id
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             pass
 
         try:
             raw_job_id = getattr(obj, "_job_id", None)
             if isinstance(raw_job_id, str) and raw_job_id:
                 return raw_job_id
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             pass
 
         return None
@@ -606,7 +606,7 @@ class JobManager:
                 lambda jid=job_id: self._finalize_job(jid),
                 Qt.ConnectionType.QueuedConnection,
             )
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.debug(
                 "JobManager: failed to connect thread.finished finalizer (job_id=%s).",
                 job_id,
@@ -668,7 +668,7 @@ class JobManager:
                 lambda jid=job_id: self._finalize_job(jid),
                 Qt.ConnectionType.QueuedConnection,
             )
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.debug(
                 "JobManager: failed to connect pool finished finalizer (job_id=%s).",
                 job_id,
@@ -695,7 +695,7 @@ class JobManager:
                 )
                 result = fn(*args, **call_kwargs)
                 return "ok", result
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 return "err", traceback.format_exc()
 
         # Queue started instead of emitting directly. This keeps signal delivery
@@ -713,7 +713,7 @@ class JobManager:
                     bridge.post_result(payload)
                 else:
                     bridge.post_error(payload)
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 bridge.post_error(traceback.format_exc())
             finally:
                 bridge.post_finished()
@@ -841,7 +841,7 @@ class JobManager:
                         meta.corr_id if meta is not None else None,
                         wait_ms,
                     )
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.debug(
                     "JobManager: failed to stop thread job during abort (job_id=%s).",
                     job_id,
@@ -851,7 +851,7 @@ class JobManager:
         if self._pool is not None:
             try:
                 self._pool.shutdown(wait=False, cancel_futures=True)
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.debug(
                     "JobManager: pool shutdown failed during abort.",
                     exc_info=True,
@@ -875,7 +875,7 @@ class JobManager:
 
         try:
             self._pool.shutdown(wait=wait, cancel_futures=True)
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.debug("JobManager: pool shutdown failed.", exc_info=True)
         finally:
             self._pool = None
@@ -943,7 +943,7 @@ class JobManager:
                     lambda jid=job_id: self._on_job_started(jid),
                     Qt.ConnectionType.QueuedConnection,
                 )
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.debug(
                     "JobManager: failed to connect started logger (job_id=%s).",
                     job_id,
@@ -957,7 +957,7 @@ class JobManager:
                     lambda tb, jid=job_id: self._on_job_error(jid, tb),
                     Qt.ConnectionType.QueuedConnection,
                 )
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.debug(
                     "JobManager: failed to connect error logger (job_id=%s).",
                     job_id,
@@ -971,7 +971,7 @@ class JobManager:
                     lambda jid=job_id: self._on_job_finished(jid),
                     Qt.ConnectionType.QueuedConnection,
                 )
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.debug(
                     "JobManager: failed to connect finished logger (job_id=%s).",
                     job_id,

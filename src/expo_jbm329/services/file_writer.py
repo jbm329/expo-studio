@@ -122,7 +122,7 @@ class FileWriter:
                 self._csv_write_chunk_size,
                 self._excel_chunk_size, self._excel_streaming, self._excel_max_rows_per_sheet
             )
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.exception("FileWriter: failed reloading settings")
 
     # noinspection PyMethodMayBeStatic
@@ -369,7 +369,7 @@ class FileWriter:
             try:
                 with pd.ExcelWriter(path, engine="openpyxl") as excel_writer:
                     df.to_excel(excel_writer, sheet_name=sheet_name, index=index, na_rep=na_rep)
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.exception(
                     "FileWriter: save excel (pandas) failed (corr=%s, path=%s)",
                     corr_id,
@@ -462,7 +462,7 @@ class FileWriter:
             try:
                 if pd.isna(value):
                     return _na_rep if _na_rep is not None else None
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 pass
 
             # Pandas Timestamp → timezone-naive datetime
@@ -473,7 +473,7 @@ class FileWriter:
                         if value.tz is not None
                         else value.to_pydatetime()
                     )
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 pass
 
             # Native datetime/date/timedelta
@@ -495,14 +495,14 @@ class FileWriter:
             if isinstance(value, (bytes, bytearray)):
                 try:
                     return value.decode("utf-8", errors="replace")
-                except Exception:
+                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                     return str(value)
 
             # Interval / Period → string
             try:
                 if isinstance(value, (pd.Interval, pd.Period)):
                     return str(value)
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 pass
 
             return value
@@ -623,7 +623,7 @@ class FileWriter:
                         chunk.loc[:, col] = col_vals.map(
                             lambda v: v.decode("utf-8", "replace") if isinstance(v, (bytes, bytearray)) else v
                         )
-                except Exception:
+                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                     pass
 
             ws_append = current_ws.append

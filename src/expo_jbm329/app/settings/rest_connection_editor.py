@@ -883,7 +883,7 @@ class RestConnectionEditor(QDialog):
                     response_path=config.response_path,
                     limit=5,
                 )
-            except Exception as exc:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
                 self._dialogs.critical(
                     parent=self,
                     title=self.tr("Invalid response path"),
@@ -916,7 +916,7 @@ class RestConnectionEditor(QDialog):
                 text=text
             )
 
-        except Exception as exc:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
             self._dialogs.critical(
                 parent=self,
                 title=self.tr("Test failed"),

@@ -174,7 +174,7 @@ class DbService:
                 return False
             try:
                 return bool(cancel_cb())
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 log.debug("DbService: cancel callback failed.", exc_info=True)
                 return False
 
@@ -230,7 +230,7 @@ class DbService:
                     effective_sql = limited
                     limit_injected = True
                     log.debug("DbService: applied server-side limit n=%s", top_n)
-            except Exception as e:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
                 log.debug("DbService: limit injection failed: %s", e)
 
         # ---- Cancellation before execution ----
@@ -303,7 +303,7 @@ class DbService:
                 sql_signature=signature,
             )
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             elapsed = time.time() - start
 
             # If cancellation is already requested when the driver/DB layer raises,
@@ -457,7 +457,7 @@ class DbService:
                         and "name" in res.data.columns
                 ):
                     return str(res.data.iloc[0]["name"])
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 pass
 
         return conn.database or conn.name

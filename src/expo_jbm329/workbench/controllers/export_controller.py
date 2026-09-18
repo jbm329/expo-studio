@@ -218,7 +218,7 @@ class ExportController:
                 "ExportController: settings reloaded (documents_dir=%s).",
                 fmt_path(self._get_documents_dir())
             )
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.exception(
                 "ExportController: failed to reload settings: %s", e
             )
@@ -865,7 +865,7 @@ class ExportController:
                     cancelled=False,
                     error=self._tr(self.TR_EXCEPT_UNKNOWN_RESULT)
                 )
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             res = JobResult(
                 ok=False,
                 elapsed=None,

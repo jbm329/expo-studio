@@ -88,7 +88,7 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
 
         x_num = x_raw if isinstance(x_raw, pd.Series) else pd.Series(x_raw, index=non_null.index)
 
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         pass
 
     if x_num is not None:
@@ -140,7 +140,7 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
 
             can_be_datetime = bool(success_ratio > 0.9)
 
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         pass
 
     # ------------------------------------------------------------------
@@ -156,7 +156,7 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
         elif x_num is not None:
             can_be_bool = bool(x_num.isin({0, 1}).all())
 
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         pass
 
     # ------------------------------------------------------------------

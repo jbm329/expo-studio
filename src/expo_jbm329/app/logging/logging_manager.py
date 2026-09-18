@@ -138,7 +138,7 @@ class LoggingManager:
                 h = self._create_file_handler(cfg)
                 h.addFilter(tp_filter)
                 root.addHandler(h)
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 logging.getLogger("applogger").exception("Failed to init file handler")
 
         # Stdout handler
@@ -147,7 +147,7 @@ class LoggingManager:
                 h = self._create_stdout_handler(cfg)
                 h.addFilter(tp_filter)
                 root.addHandler(h)
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 logging.getLogger("applogger").exception("Failed to init stdout handler")
 
         # Per-namespace overrides
@@ -251,7 +251,7 @@ class LoggingManager:
             return v
         try:
             return getattr(logging, str(v).upper())
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             return logging.INFO
 
     @staticmethod
@@ -267,7 +267,7 @@ class LoggingManager:
         """
         try:
             return int(v)
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             return default
 
     @staticmethod

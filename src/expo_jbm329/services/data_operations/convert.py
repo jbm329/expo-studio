@@ -70,7 +70,7 @@ def to_integer(
             pd.to_numeric(df[column], errors=errors)
             .astype("Int64")
         )
-    except Exception as exc:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
         msg = f"Could not convert column '{column}' to Int64: {exc}"
         raise TypeError(
             msg
@@ -114,7 +114,7 @@ def to_float(
             df[column],
             errors=errors,
         ).astype("float64")
-    except Exception as exc:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
         msg = f"Could not convert column '{column}' to float64: {exc}"
         raise TypeError(
             msg
@@ -148,7 +148,7 @@ def to_nullable_float_series(
 
         return numeric.astype("Float64")
 
-    except Exception as exc:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
         msg = f"Could not convert Series to Float64: {exc}"
         raise TypeError(msg) from exc
 
@@ -236,7 +236,7 @@ def to_datetime(
 
         new_df[column] = out
 
-    except Exception as exc:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
         logger.error("to_datetime failed col='%s': %s", column, exc)
         msg = f"Could not convert column '{column}' to datetime64[ns]: {exc}"
         raise TypeError(
@@ -300,7 +300,7 @@ def to_boolean(
             mapped = x.map({0: False, 1: True})
             new_df[column] = mapped.astype("boolean")
             return new_df
-        except Exception as exc:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
             if errors == "raise":
                 msg = f"Could not convert numeric column '{column}' to boolean"
                 raise ValueError(

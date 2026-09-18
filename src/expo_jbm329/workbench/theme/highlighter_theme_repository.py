@@ -52,7 +52,7 @@ class HighlighterThemeRepository:
 
             try:
                 theme = load_theme_from_json(file)
-            except Exception as ex:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as ex:
                 # Skip broken themes, do not crash the app
                 print(f"[theme] Skipping invalid theme '{file.name}': {ex}")
                 continue

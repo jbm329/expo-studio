@@ -408,7 +408,7 @@ class ResultTabManager:
         if not isinstance(df, pd.DataFrame):
             try:
                 df = pd.DataFrame(df)
-            except Exception as e:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
                 self._dialogs.critical(
                     self._parent,
                     self._tr(self.TR_FAILURE),
@@ -617,7 +617,7 @@ class ResultTabManager:
         if not isinstance(df, pd.DataFrame):
             try:
                 df = pd.DataFrame(df)
-            except Exception as e:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
                 self._dialogs.critical(
                     parent=self._parent,
                     title=self._tr(self.TR_FAILURE),
@@ -785,7 +785,7 @@ class ResultTabManager:
                     continue
                 title_i = self._tabs.tabText(i).strip() or f"Dataset{i + 1}"
                 data.append((df_i, title_i))
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             pass
 
         return data
@@ -914,7 +914,7 @@ class ResultTabManager:
 
             return self._undo.has_undo(tab_id)
 
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             return False
 
     def set_join_controller(self, controller: JoinController) -> None:
@@ -1039,20 +1039,20 @@ class ResultTabManager:
         elif chosen == act_derived:
             try:
                 self._derived_column_controller.create_derived_column()
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.exception("Derived column failed to start.")
             return
 
         elif chosen == act_join:
             try:
                 self._join_controller.open_join_dialog()
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.exception("ResultTabManager: join could not be started.")
             return
         elif chosen == act_concatenate:
             try:
                 self._concat_controller.open_concat_dialog()
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.exception("ResultTabManager: concatenate could not be started.")
             return
 
@@ -1392,7 +1392,7 @@ class ResultTabManager:
                 )
                 return
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._dialogs.critical(
                 parent=self._parent,
                 title=self._tr(self.TR_FAILURE),
@@ -1424,7 +1424,7 @@ class ResultTabManager:
             col_name = str(df.columns[view_col])
             raw_value = df.iloc[index.row()][col_name]
             return True, df, index.row(), col_name, raw_value
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             return False, None, None, None, None
 
     # ==================================================================
@@ -1792,7 +1792,7 @@ class ResultTabManager:
                             "ResultTabManager: pushed previous DataFrame to undo stack for tab=%s.",
                             tab_id,
                         )
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.debug(
                     "ResultTabManager: failed to push undo snapshot for tab=%s.",
                     tab_id,
@@ -1809,7 +1809,7 @@ class ResultTabManager:
             else:
                 self._clear_presentation_delegate(view)
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._dialogs.critical(
                 parent=self._parent,
                 title=self._tr(self.TR_FAILURE),
@@ -1880,7 +1880,7 @@ class ResultTabManager:
                     tab_id = self._find_tab_id_for_view(view)
                     if tab_id is not None:
                         self._col_profile_cache.invalidate_tab(tab_id)
-                except Exception:
+                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                     pass
 
             with contextlib.suppress(Exception):
@@ -1939,7 +1939,7 @@ class ResultTabManager:
 
             view.setItemDelegate(delegate)
 
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.exception("ResultTabManager: failed to apply presentation delegate")
 
     def handle_format_view_toggle(self, is_checked: bool) -> None:
@@ -1994,7 +1994,7 @@ class ResultTabManager:
         try:
             delegate = QStyledItemDelegate(view)
             view.setItemDelegate(delegate)
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.exception("Failed to clear presentation delegate.")
 
     def _update_last_df_from_tab(self, index: int) -> None:
@@ -2020,7 +2020,7 @@ class ResultTabManager:
             record = self._tabs_by_id.get(tab_id)
             self._last_df = record.df if record is not None else None
 
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._last_df = None
 
         self._emit_shape(self._last_df)
@@ -2036,7 +2036,7 @@ class ResultTabManager:
                 self._set_shape(None, None)
             else:
                 self._set_shape(len(df), len(df.columns))
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             pass
 
     # ==============================================================
@@ -2172,7 +2172,7 @@ class ResultTabManager:
             )
             return False, None, None, None
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.error(
                 "ResultTabManager: resolve failed - unexpected error (column=%s): %s",
                 column,
@@ -2263,14 +2263,14 @@ class ResultTabManager:
             for i in reversed(range(self._tabs.count())):
                 if self._tabs.tabText(i).strip() == title.strip():
                     self.close_tab(i)
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             pass
 
     def _has_any_data(self) -> bool:
         """Return True if ANY tab contains a non-empty DataFrame."""
         try:
             return len(self._ready_records()) > 0
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             return False
 
     def _ready_records(self) -> list[ResultTabRecord]:
@@ -2429,7 +2429,7 @@ class ResultTabManager:
                 job_id,
                 cancelled,
             )
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.exception(
                 "ResultTabManager: failed to cancel pending job on tab close "
                 "(tab_id=%s, job_id=%s).",

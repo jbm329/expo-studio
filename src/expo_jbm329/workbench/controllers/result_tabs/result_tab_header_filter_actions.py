@@ -296,7 +296,7 @@ class ResultTabHeaderFilterActions:
                 value = opts["value"]
                 case_sensitive = opts["case_sensitive"]
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._fail(e)
             return
 
@@ -612,7 +612,7 @@ class ResultTabHeaderFilterActions:
             op = result["op"]
             value = result["value"]
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._fail(e)
             return
 
@@ -734,7 +734,7 @@ class ResultTabHeaderFilterActions:
                 )
                 return
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._fail(e)
             return
 

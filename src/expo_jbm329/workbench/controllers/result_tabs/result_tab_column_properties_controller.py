@@ -154,7 +154,7 @@ class ResultTabColumnPropertiesController:
                     semantics=sem)
                 dlg.show()
 
-            except Exception as e:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
                 self._fail(e)
             return
 

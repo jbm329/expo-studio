@@ -75,7 +75,7 @@ class TranslationService(QObject):
 
             self.switch_language(lang)
 
-        except Exception as exc:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
             self._logger.exception("TranslationService: failed to reload language: %s", exc)
 
     def switch_language(self, language: str) -> None:

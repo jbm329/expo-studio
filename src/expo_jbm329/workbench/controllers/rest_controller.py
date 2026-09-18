@@ -223,7 +223,7 @@ class RestController:
             config.validate()
             self.load_from_api(config=config)
 
-        except Exception as exc:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
             self._logger.exception(
                 "Failed to load REST preset '%s': %s",
                 preset_name,

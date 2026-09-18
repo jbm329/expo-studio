@@ -191,7 +191,7 @@ def create_derived_column(
     except DerivedColumnFormulaError:
         raise  # propagate unchanged
 
-    except Exception as exc:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
         logger.exception(
             "Failed evaluating derived column formula (column=%r, formula=%r)",
             output_column,
@@ -479,7 +479,7 @@ def _apply_operator(
         if operator == "/":
             return _safe_divide(left=left, right=right, index=index)
 
-    except Exception as err:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as err:
         msg = "operator_application_failed"
         raise DerivedColumnError(
             msg,
@@ -575,7 +575,7 @@ def _normalize_result_series(
             context={"dtype": output_dtype},
         )
 
-    except Exception as err:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as err:
         msg = "result_conversion_failed"
         raise DerivedColumnError(
             msg,

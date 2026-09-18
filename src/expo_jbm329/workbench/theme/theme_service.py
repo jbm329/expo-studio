@@ -103,7 +103,7 @@ class ThemeService(QObject):
 
             )
             self.apply_theme()
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.exception("ThemeService: failed reloading settings")
 
     # ------------------------------------------------------------------

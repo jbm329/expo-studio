@@ -33,7 +33,7 @@ def fmt_pct(x: float, decimals: int = 2) -> str:
         if QLocale.system().decimalPoint() == ",":
             return s.replace(".", ",")
         return s
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         return f"{x * 100:.{decimals}f}%"
 
 
@@ -98,7 +98,7 @@ def fmt_path_size(p: Path | str | None) -> str:
             return ""
 
         size_bytes = path.stat().st_size
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         return ""
 
     return f" ({fmt_bytes(size_bytes)})"
@@ -126,7 +126,7 @@ def fmt_num(val: float | None, *, sig: int = 4) -> str:
 
     try:
         xf = float(val)
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         return ""
 
     if np.isnan(xf):
@@ -163,7 +163,7 @@ def fmt_int(n: int) -> str:
     """
     try:
         return QLocale.system().toString(int(n))
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         return f"{int(n):,}".replace(",", " ")
 
 
@@ -179,7 +179,7 @@ def fmt_shape(df: pd.DataFrame | None) -> tuple[str, str]:
         else:
             rows = "?"
             columns = "?"
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         rows = "?"
         columns = "?"
     return rows, columns
@@ -290,7 +290,7 @@ def fmt_path(p: Any) -> str:
     """
     try:
         return Path(p).as_posix()
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         s = str(p)
         return s.replace("\\", "/")
 

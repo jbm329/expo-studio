@@ -7,7 +7,7 @@ ignore = {".git", ".idea", ".venv", "venv", "__pycache__", ".mypy_cache",
 def walk(d, prefix=""):
     try:
         entries = sorted(os.listdir(d))
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         return
     for i, name in enumerate(entries):
         if name in ignore or name.startswith(".DS_Store"):

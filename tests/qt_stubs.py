@@ -78,7 +78,7 @@ class StubTreeItem:
     def setFlags(self, flags):
         try:
             self._flags = Qt.ItemFlag(int(flags))
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._flags = flags
 
     def flags(self):

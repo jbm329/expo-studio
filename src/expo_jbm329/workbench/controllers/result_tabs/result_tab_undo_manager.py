@@ -155,7 +155,7 @@ class ResultTabUndoManager:
 
         try:
             snapshot = df.copy(deep=True)
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.debug(
                 "ResultTabUndoManager: failed to copy snapshot for tab=%s.",
                 tab_id,
@@ -243,7 +243,7 @@ class ResultTabUndoManager:
                 self._max_size_allow_undo_mb,
             )
 
-        except Exception as exc:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
             self._logger.error(
                 "ResultTabUndoManager: failed to reload settings %s",
                 exc,
@@ -313,7 +313,7 @@ class ResultTabUndoManager:
         """
         try:
             return int(df.memory_usage(deep=True).sum())
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             return 0
 
     def _notify_state_changed(self) -> None:

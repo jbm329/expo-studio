@@ -166,7 +166,7 @@ class DocumentController:
                 "DocumentController: settings reloaded (documents_dir=%s).",
                 fmt_path(self._get_documents_dir()),
             )
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.exception("DocumentController: failed to reload settings: %s", e)
 
     # ----------------------------------------------------------------------
@@ -183,7 +183,7 @@ class DocumentController:
                 self._logger.info(
                     "DocumentController: SQL file opened successfully: %s", fmt_path(p)
                 )
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             status = self._tr(self.TR_OPEN_SQL_FILE_FAILED)
             self._set_status(status, 6000)
             self._logger.exception(
@@ -342,7 +342,7 @@ class DocumentController:
             status = self._tr(self.TR_SAVED_SQL_FILE)
             self._set_status(status, 3000)
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.exception(
                 "DocumentController: Failed to save as SQL file '%s': %s",
                 fmt_path(tab.file_path),
@@ -415,7 +415,7 @@ class DocumentController:
             self._logger.info("DocumentController: SQL file saved as successfully: %s", fmt_path(path))
             status = self._tr(self.TR_SAVED_SQL_FILE)
             self._set_status(status, 3000)
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.exception(
                 "DocumentController: Failed to save as SQL file '%s': %s",
                 fmt_path(path),
@@ -460,7 +460,7 @@ class DocumentController:
             self._logger.info("DocumentController: HTML file opened: %s", fmt_path(p))
             return ok
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             status = self._tr(self.TR_OPEN_HTML_FILE_FAILED)
             self._set_status(status, 6000)
             self._logger.exception(

@@ -495,7 +495,7 @@ def insert_text(
             return pd.NA
         try:
             return value[:position] + insert + value[position:]
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             return value
 
     new_df = df.copy()

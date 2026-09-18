@@ -544,7 +544,7 @@ class SettingsEditor(QDialog):
         try:
             save_settings(new_s)
             ensure_all_dirs(new_s)
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             title = self.tr("Failure")
             msg = self.tr("Could not save settings:\n%1").replace("%1", str(e))
             self._dialogs.critical(self, title, msg)

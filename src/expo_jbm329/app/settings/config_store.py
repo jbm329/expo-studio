@@ -136,7 +136,7 @@ def load_settings() -> dict:
             user = json.loads(p.read_text(encoding="utf-8"))
             if not isinstance(user, dict):
                 raise ValueError
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             # Corrupt → reset
             merged = copy.deepcopy(DEFAULT_SETTINGS)
             _atomic_write_json(p, merged)
@@ -195,7 +195,7 @@ def _validate_settings_inplace(s: dict) -> None:
             if max_value is not None and iv > max_value:
                 iv = max_value
             return iv
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             return default
 
     def _coerce_bool(val, default) -> bool:
@@ -385,7 +385,7 @@ def read_connections() -> dict[str, dict]:
             if "port" in c:
                 try:
                     c["port"] = int(c["port"])
-                except Exception:
+                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                     c.pop("port", None)
 
             return c
@@ -412,7 +412,7 @@ def read_connections() -> dict[str, dict]:
             _atomic_write_json(p, out)
             return out
 
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             _atomic_write_json(p, {})
             return {}
 
@@ -459,7 +459,7 @@ def read_rest_connections() -> dict[str, dict]:
             _atomic_write_json(p, out)
             return out
 
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             _atomic_write_json(p, {})
             return {}
 
@@ -650,7 +650,7 @@ def read_log_config() -> dict:
             data = json.loads(p.read_text("utf-8"))
             if not isinstance(data, dict):
                 raise ValueError
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             _atomic_write_json(p, DEFAULT_LOG_CONFIG)
             return copy.deepcopy(DEFAULT_LOG_CONFIG)
 

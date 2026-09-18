@@ -124,7 +124,7 @@ class VisualizationController:
 
             dialog.show_empty_preview()
 
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.exception(
                 "VisualizationController: failed to update visualization dialog columns for dataset '%s'.",
                 tab_id,
@@ -163,7 +163,7 @@ class VisualizationController:
             )
             dialog.show_error_preview(self._map_error_code_to_ui_message(e.code))
 
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.exception("VisualizationController: unexpected visualization rendering failure.")
             dialog.show_error_preview(self._tr(self.TR_GENERIC_PREVIEW_ERROR))
 
@@ -179,7 +179,7 @@ class VisualizationController:
             try:
                 if is_numeric_dtype(df[col]) and not is_bool_dtype(df[col]):
                     numeric.append(str(col))
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 continue
 
         return numeric
@@ -193,7 +193,7 @@ class VisualizationController:
                     return str(col)
                 if not is_numeric_dtype(series):
                     return str(col)
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 continue
         return None
 
@@ -204,7 +204,7 @@ class VisualizationController:
                 series = df[col]
                 if is_numeric_dtype(series) and not is_bool_dtype(series):
                     return str(col)
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 continue
         return None
 

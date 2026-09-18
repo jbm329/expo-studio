@@ -345,7 +345,7 @@ class DerivedColumnController:
 
             return df
 
-        except Exception as exc:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
             self._logger.exception("Failed to get active DataFrame")
             self._dialogs.critical(
                 parent=self._main_window,
@@ -385,7 +385,7 @@ class DerivedColumnController:
             #     title=f"{self._rtm.get_active_title()} (beräknad)",
             # )
 
-        except Exception as exc:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
             self._logger.exception("Failed to apply derived column result")
 
             self._dialogs.critical(

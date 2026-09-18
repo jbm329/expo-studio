@@ -173,7 +173,7 @@ class SchemaCacheManager:
 
             if self._status_cb:
                 self._status_cb(tr("DbErrors", "Settings for schema cache updated."), 4000)
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.exception(
                 "SchemaCacheManager: failed to reload settings: %s", e
             )
@@ -287,10 +287,10 @@ class SchemaCacheManager:
         try:
             from PyQt6.QtCore import QTimer
             QTimer.singleShot(0, fn)
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             try:
                 fn()
-            except Exception as ex:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as ex:
                 self._logger.warning("SchemaCacheManager: UI callback failed: %s", ex)
 
     # -----------------------------------------------------------------------------
@@ -321,7 +321,7 @@ class SchemaCacheManager:
                 t = key.get("name")
                 if isinstance(sch, str) and isinstance(t, str):
                     return (sch, t)
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             pass
         return None
 
@@ -337,7 +337,7 @@ class SchemaCacheManager:
             try:
                 lst = list(cols) if cols else []
                 lst = [c for c in lst if isinstance(c, dict)]
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 lst = []
             out[key] = lst
         return out
@@ -485,7 +485,7 @@ class SchemaCacheManager:
             for sch, name in pairs:
                 try:
                     cols = list_columns(conn, sch, name, corr_id) or []
-                except Exception as ex:
+                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as ex:
                     self._logger.warning("SchemaCacheManager: list columns failed for %s.%s (%s): %s (corr=%s).)",
                                    sch, name, conn, ex, corr_id)
                     cols = []
@@ -540,7 +540,7 @@ class SchemaCacheManager:
                 QTimer.singleShot(0,
                                   lambda: self._run_next_batch(connection_name, token, rest, batch_size, new_done,
                                                                total, corr_id))
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._run_next_batch(connection_name, token, rest, batch_size, new_done, total, corr_id)
 
         def _on_err(err: str):

@@ -186,7 +186,7 @@ class SqlAutocompleteController(QObject):
                 )
 
             return prefix
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             if self._debug:
                 self._logger.debug(
                     "SqlAutocompleteController: prefix extraction failed.",
@@ -226,7 +226,7 @@ class SqlAutocompleteController(QObject):
             self._debug_log(prefix, suggestions)
             self._show_or_hide(suggestions)
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.debug(
                 "SqlAutocompleteController: autocomplete update failed: %s", str(e), exc_info=True
             )
@@ -247,7 +247,7 @@ class SqlAutocompleteController(QObject):
             self._debug_log(prefix, suggestions)
             self._show_or_hide(suggestions)
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.debug("SqlAutocompleteController: forced autocomplete failed: %s", str(e))
             self.popup.hide()
 

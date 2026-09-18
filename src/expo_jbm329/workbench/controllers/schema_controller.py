@@ -250,7 +250,7 @@ class SchemaController:
             self._gen_top_n = gen_top_n
             self._logger.info("SchemaController: settings reloaded (gen_top_n=%s).", self._gen_top_n)
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.exception(
                 "SchemaController: failed to reload settings: %s", e
             )
@@ -452,7 +452,7 @@ class SchemaController:
                 connection_name, entry.db_name, fmt_int(tbl_count), fmt_int(vw_count), corr_id
             )
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._handle_schema_error(e, connection_name, self._tr(self.TR_FAILED_TO_LOAD_SCHEMA_STATUS))
             raise
 
@@ -478,12 +478,12 @@ class SchemaController:
         try:
             if hasattr(self._job_mgr, "cancel_scope"):
                 self._job_mgr.cancel_scope(f"load:{conn}")
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.debug("SchemaController: cancel_scope failed", exc_info=True)
 
         try:
             self.load_schema_tree(conn, force_refresh=True, corr_id=corr_id)
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             # Already handled via _handle_schema_error
             self._logger.debug("SchemaController: refresh failed (handled)")
 
@@ -586,7 +586,7 @@ class SchemaController:
             )
             try:
                 cols = list_columns(conn, schema_name, table_name) or []
-            except Exception as e:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
                 self._handle_schema_error(e, conn, self._tr(self.TR_FAILED_TO_LOAD_SCHEMA_STATUS))
                 return
 
@@ -639,7 +639,7 @@ class SchemaController:
 
         try:
             self._connect_connection(str(name))
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             # Error already reported via dialog in load_schema_tree
             # and state reverted in ConnectionController.connect.
             # We catch it here to prevent the UI from crashing.
@@ -868,14 +868,14 @@ class SchemaController:
             # 1. Disconnect backend connection
             try:
                 self._disconnect_connection(connection_name)
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.debug("SchemaController: disconnect failed during reset (ignored)", exc_info=True)
 
             # 2. Cancel jobs for this scope (if you support this)
             try:
                 if hasattr(self._job_mgr, "cancel_scope"):
                     self._job_mgr.cancel_scope(f"load:{connection_name}")
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.debug("SchemaController: job cancel failed (ignored)", exc_info=True)
 
             # 3. Reset UI node
@@ -904,10 +904,10 @@ class SchemaController:
             try:
                 if hasattr(self._schema_mgr, "invalidate"):
                     self._schema_mgr.invalidate(connection_name)
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.debug("SchemaController: cache invalidate failed (ignored)", exc_info=True)
 
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.exception("SchemaController: failed to reset connection state")
 
     # ==================================================================

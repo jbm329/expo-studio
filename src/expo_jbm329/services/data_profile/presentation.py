@@ -100,7 +100,7 @@ def _format_date_only(value: Any) -> str:
         if hasattr(value, "to_pydatetime"):
             return value.to_pydatetime().date().isoformat()
 
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         pass
 
     return str(value)
@@ -111,7 +111,7 @@ def _format_integer_like(value: Any) -> str:
     try:
         if isinstance(value, (int, float, np.integer, np.floating)):
             return fmt_int(int(value))
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         pass
     return str(value)
 
@@ -121,7 +121,7 @@ def _format_float_like(value: Any, *, decimals: int = 2) -> str:
     try:
         if isinstance(value, (float, np.floating)):
             return fmt_num(float(value), sig=decimals)
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         pass
     return str(value)
 
@@ -131,6 +131,6 @@ def _format_year_like(value: Any) -> str:
     try:
         if isinstance(value, (int, float, np.integer, np.floating)):
             return str(int(value))
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         pass
     return str(value)

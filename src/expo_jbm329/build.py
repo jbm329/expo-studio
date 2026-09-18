@@ -123,7 +123,7 @@ def _onerror(func, path, _exc_info):
     _chmod_writable(Path(path))
     try:
         func(path)
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         raise
 
 
@@ -148,7 +148,7 @@ def _safe_rmtree(path: Path, retries: int = 6, backoff: float = 0.2) -> bool:
         try:
             shutil.rmtree(path, onerror=_onerror)
             return True
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             time.sleep(backoff * (i + 1))
 
     return False

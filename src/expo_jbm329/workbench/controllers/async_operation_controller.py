@@ -252,7 +252,7 @@ class AsyncOperationController:
                 if on_progress is not None:
                     on_progress(value_i)
 
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.exception(
                     "AsyncOperationController: progress handler failed (scope=%s corr=%s).",
                     scope,
@@ -272,7 +272,7 @@ class AsyncOperationController:
 
                 on_result(result)
 
-            except Exception as e:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
                 self._logger.exception(
                     "AsyncOperationController: result handler failed (scope=%s corr=%s).",
                     scope,
@@ -301,7 +301,7 @@ class AsyncOperationController:
                     try:
                         on_error(tb)
                         return
-                    except Exception:
+                    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                         self._logger.exception(
                             "AsyncOperationController: custom error handler failed "
                             "(scope=%s corr=%s).",
@@ -323,7 +323,7 @@ class AsyncOperationController:
                 if on_finished is not None:
                     on_finished()
 
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.exception(
                     "AsyncOperationController: finished handler failed (scope=%s corr=%s).",
                     scope,
@@ -700,5 +700,5 @@ class AsyncOperationController:
         """Return True if the view is stale/deleted."""
         try:
             return view is None or view.model() is None
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             return True

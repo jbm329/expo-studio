@@ -140,7 +140,7 @@ def extract_code(msg: str) -> int | None:
     if m:
         try:
             return int(m.group(1))
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             return None
     return None
 

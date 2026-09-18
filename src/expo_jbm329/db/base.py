@@ -148,7 +148,7 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
     port_raw = rec.get("port", None)
     try:
         port = int(port_raw) if port_raw not in (None, "") else None
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         port = None
 
     database = rec.get("database") or None
@@ -318,7 +318,7 @@ def execute_sql_safe(
             job_id=job_id,
         )
 
-    except Exception as e:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
         logger.error(
             "Failed to initialize database service for '%s': %s",
             connection_name,
@@ -419,7 +419,7 @@ def get_db_name(connection_name: str, corr_id: str | None = None) -> str:
     try:
         svc, cfg = _get_service_with_config(connection_name)
         return svc.get_db_name(cfg, corr_id=corr_id)
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         # Fallback if initialization fails
         return connection_name
 
@@ -447,7 +447,7 @@ def build_select_star(
     try:
         svc, _ = _get_service_with_config(connection_name)
         return svc.build_select_star(schema, object_name, top_n=top_n, corr_id=corr_id)
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         # Fallback quoting if service initialization fails
         return f"SELECT * FROM [{schema}].[{object_name}]"
 
@@ -463,7 +463,7 @@ def build_select_distinct(
     try:
         svc, _ = _get_service_with_config(connection_name)
         return svc.build_select_distinct(schema, object_name, column_name)
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         # Fallback (MSSQL-style)
         return f"SELECT DISTINCT [{column_name}]\nFROM [{schema}].[{object_name}]"
 
@@ -502,7 +502,7 @@ def build_select_columns_auto(
             with_schema=with_schema,
             corr_id=corr_id,
         )
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         return build_select_star(connection_name, schema, object_name, top_n=top_n, corr_id=corr_id)
 
 

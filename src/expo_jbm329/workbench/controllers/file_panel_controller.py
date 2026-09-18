@@ -153,7 +153,7 @@ class FilePanelController:
                 fmt_path(root_dir)
             )
 
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.exception("FilePanelController: failed to reload settings: %s", e)
 
     def update_icons(self):
@@ -167,7 +167,7 @@ class FilePanelController:
                 vp.update()
 
             self._logger.info("FilePanelController: icons refreshed due to theme change.")
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.exception("FilePanelController: failed to update icons: %s", e)
 
     # ==================================================================
@@ -406,7 +406,7 @@ class FilePanelController:
         try:
             p = Path(self._files_model.filePath(index))
             fp = fmt_path(p)
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.error("FilePanelController: delete-via-model: failed to resolve path")
             return False
 
@@ -417,7 +417,7 @@ class FilePanelController:
             if ok:
                 self._logger.debug("FilePanelController: delete-via-model succeeded (path=%s)", fp)
                 return True
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.debug("FilePanelController: delete-via-model failed, trying unlink (path=%s)", fp)
 
         # Fallback: try direct unlink to get a precise exception (e.g., PermissionError)
@@ -443,7 +443,7 @@ class FilePanelController:
                 text=err_msg
             )
             return False
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             self._logger.error("FilePanelController: delete-via-unlink failed (path=%s, err=%s)", fp, e)
             err_msg = self._tr_fmt(
                 self.TR_SOMETHING_WENT_WRONG_DELETE_FILE_ERROR,

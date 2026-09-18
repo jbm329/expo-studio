@@ -624,7 +624,7 @@ class FileJobService:
 
         try:
             old_path.rename(new_path)
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             msg = self._tr_fmt(self.TR_RENAME_FILE_FAILED_ERROR, error=str(e))
             self._set_status(self._tr(self.TR_RENAME_FILE_FAILED), 6000)
             return False, msg
@@ -644,7 +644,7 @@ class FileJobService:
 
         try:
             return bool(cb())
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.debug(
                 "FileJobService: shutdown state callback failed.",
                 exc_info=True,

@@ -791,7 +791,7 @@ class EditorPanelController(QWidget):
 
         try:
             engine = self._get_connection_engine(connection_name)
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.debug(
                 "EditorPanelController: failed to resolve autocomplete dialect (conn=%s)",
                 connection_name,

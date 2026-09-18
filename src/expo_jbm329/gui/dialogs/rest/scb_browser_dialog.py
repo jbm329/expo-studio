@@ -428,7 +428,7 @@ class ScbBrowserDialog(QDialog):
                 "url": builder.table_url(table_id),
                 "query_params": params,
             }
-        except Exception as exc:  # pragma: no cover - UI safety net
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - UI safety net
             self._dialogs.critical(
                 self,
                 title=self.tr("SCB query error"),

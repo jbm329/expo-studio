@@ -9,7 +9,7 @@ os.environ.setdefault("TYPEGUARD_IMPORTHOOK", "0")  # säkerställ att import-ho
 
 try:
     import typeguard  # noqa
-except Exception:
+except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
     # typeguard kanske inte finns i miljön -> inget att göra
     pass
 else:
@@ -25,5 +25,5 @@ else:
     # Ersätt dekoratorn med vår no-op som hanterar båda fallen
     try:
         typeguard.typechecked = _typechecked  # type: ignore[attr-defined]
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         pass

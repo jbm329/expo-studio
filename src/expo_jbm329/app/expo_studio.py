@@ -554,7 +554,7 @@ class ExpoStudio(QMainWindow):
                 informative=None,
                 default_yes=False,
             )
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             ok = False
 
         if not ok:
@@ -578,7 +578,7 @@ class ExpoStudio(QMainWindow):
                         still_running,
                     )
 
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             if self.ui_logger is not None:
                 self.ui_logger.exception("Error initiating application shutdown.")
 
@@ -613,7 +613,7 @@ class ExpoStudio(QMainWindow):
             try:
                 if self.services.job_mgr is not None:
                     self.services.job_mgr.abort_all(wait_ms=250)
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 if self.ui_logger is not None:
                     self.ui_logger.exception("Error retrying abort_all during shutdown.")
 
@@ -633,7 +633,7 @@ class ExpoStudio(QMainWindow):
             if self.services is not None and self.services.job_mgr is not None:
                 self.services.job_mgr.shutdown(wait=False)
 
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             if self.ui_logger is not None:
                 self.ui_logger.exception("Error completing application shutdown.")
         finally:

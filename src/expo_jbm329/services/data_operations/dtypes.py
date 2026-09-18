@@ -134,7 +134,7 @@ def is_text_like_dtype(series: pd.Series) -> bool:
 
         return False
 
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         return False
 
 

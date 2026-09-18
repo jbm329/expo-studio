@@ -443,7 +443,7 @@ class LogConfigEditor(QDialog):
 
         try:
             write_log_config(new_log)
-        except Exception as e:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
             title = self.tr("Failure")
             msg = self.tr("Could not save log configuration:\n{error}").format(error=str(e))
             self._dialogs.critical(

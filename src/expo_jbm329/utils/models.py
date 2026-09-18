@@ -145,7 +145,7 @@ class DataFrameModel(QAbstractTableModel):
                 if col_name in self._formatters:
                     try:
                         return self._formatters[col_name](val)
-                    except Exception:
+                    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                         # Fall back to defaults on formatter failure
                         pass
 
@@ -181,7 +181,7 @@ class DataFrameModel(QAbstractTableModel):
 
                         return QLocale().toString(qdt, QLocale.FormatType.ShortFormat)
 
-                    except Exception:
+                    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                         return self._na_rep
 
                 # Category OR object/string -> safe text
@@ -210,7 +210,7 @@ class DataFrameModel(QAbstractTableModel):
 
             return None
 
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             # Defensive: never crash the delegate/view due to bad data
             return None
 
@@ -299,7 +299,7 @@ class DataFrameModel(QAbstractTableModel):
                 else:
                     try:
                         fill_val = np.iinfo(arr.dtype).max
-                    except Exception:
+                    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                         fill_val = np.iinfo(np.int64).max
 
                 key = arr.copy()
@@ -311,7 +311,7 @@ class DataFrameModel(QAbstractTableModel):
 
             self._row_ix = sorted_pos.astype(np.int64)
 
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             # Fallback: string sort
             arr_fallback = s.astype(str).to_numpy()
             sorted_pos = np.argsort(arr_fallback)

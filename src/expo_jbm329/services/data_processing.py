@@ -61,7 +61,7 @@ def generate_profile_report(df: pd.DataFrame, title: str, corr_id: str) -> Profi
         )
         return profile
 
-    except Exception as e:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
         logger.exception(
             "Generate profile report failed (corr=%s, title=%r): %s",
             corr_id, title, e
@@ -92,7 +92,7 @@ def generate_comparison_profile_report(
     try:
         number_of_datasets = len(data) if data else 0
         titles_preview = ", ".join([nm for _, nm in (data[:3] if data else [])])
-    except Exception:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
         pass
 
     logger.debug(
@@ -115,7 +115,7 @@ def generate_comparison_profile_report(
         )
         return comp
 
-    except Exception as e:
+    except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError) as e:
         logger.exception(
             "Generate comparison profile report failed (corr=%s, datasets=%s): %s",
             corr_id, number_of_datasets, e

@@ -103,7 +103,7 @@ class ConnectionController:
 
         try:
             self._load_schema(name, False)
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             self._logger.debug("ConnectionController: connection failed, reverting state for %s", name)
             self._active_connection = previous
             raise
@@ -111,7 +111,7 @@ class ConnectionController:
         for cb in self._on_active_connection_changed:
             try:
                 cb(previous, name)
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.exception("ConnectionController: callback failed")
 
     def disconnect(self, name: str | None = None) -> None:
@@ -137,7 +137,7 @@ class ConnectionController:
             for cb in self._on_active_connection_changed:
                 try:
                     cb(previous, None)
-                except Exception:
+                except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                     self._logger.exception("ConnectionController: callback failed")
 
         else:
@@ -174,5 +174,5 @@ class ConnectionController:
         for cb in callbacks:
             try:
                 cb()
-            except Exception:
+            except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
                 self._logger.exception("ConnectionController callback failed")

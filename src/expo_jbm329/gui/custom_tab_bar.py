@@ -247,7 +247,7 @@ class CustomTabBar(QTabBar):
         """Load the theme-aware 'close' icon from IconService."""
         try:
             icon = self._icon_service.get("close")
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             icon = QIcon()
 
         if icon.isNull():
@@ -289,7 +289,7 @@ class CustomTabBar(QTabBar):
             data = self.tabData(index)
             if isinstance(data, dict):
                 closable = bool(data.get("closable", True))
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             pass
 
         pos = self._trailing_button_position()

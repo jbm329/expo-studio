@@ -241,7 +241,7 @@ class BusyOverlayController:
 
         try:
             return overlay.isVisible()
-        except Exception:
+        except (AttributeError, ConnectionError, FileNotFoundError, IndexError, KeyError, LookupError, OSError, RuntimeError, TypeError, ValueError):
             return False
 
     # ==================================================================
