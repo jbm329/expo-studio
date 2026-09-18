@@ -230,7 +230,8 @@ class EditorTabManager:
         """
         tab = self._tabs.get(tab_id)
         if not tab:
-            raise KeyError(f"Unknown tab_id: {tab_id}")
+            msg = f"Unknown tab_id: {tab_id}"
+            raise KeyError(msg)
 
         title = new_base_title.strip()
         if not title:
@@ -263,7 +264,8 @@ class EditorTabManager:
             KeyError: If the tab does not exist.
         """
         if tab_id not in self._tabs:
-            raise KeyError(f"Unknown tab_id: {tab_id}")
+            msg = f"Unknown tab_id: {tab_id}"
+            raise KeyError(msg)
 
         self._active_tab_id = tab_id
 
@@ -298,7 +300,8 @@ class EditorTabManager:
         """
         tab = self._tabs.get(tab_id)
         if not tab:
-            raise KeyError(f"Unknown tab_id: {tab_id}")
+            msg = f"Unknown tab_id: {tab_id}"
+            raise KeyError(msg)
 
         tab.connection_name = connection_name
         tab.last_used_connection = connection_name

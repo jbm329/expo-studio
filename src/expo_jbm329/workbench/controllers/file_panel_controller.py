@@ -419,7 +419,6 @@ class FilePanelController:
                 return True
         except Exception:
             self._logger.debug("FilePanelController: delete-via-model failed, trying unlink (path=%s)", fp)
-            pass
 
         # Fallback: try direct unlink to get a precise exception (e.g., PermissionError)
         try:

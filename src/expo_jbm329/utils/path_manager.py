@@ -130,7 +130,7 @@ def get_theme_root() -> Path:
     """
     # PyInstaller runtime
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        return Path(sys._MEIPASS) / "theme"
+        return Path(sys._MEIPASS) / "theme"  # noqa: SLF001
 
     return Path(__file__).resolve().parents[1] / "workbench" / "theme"
 
@@ -143,7 +143,7 @@ def get_i18n_root() -> Path:
     """
     # PyInstaller runtime
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        return Path(sys._MEIPASS) / "i18n"
+        return Path(sys._MEIPASS) / "i18n"  # noqa: SLF001
 
     return Path(__file__).resolve().parents[1] / "i18n"
 
@@ -156,7 +156,7 @@ def get_bootstrap_root() -> Path:
     """
     # PyInstaller runtime
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        return Path(sys._MEIPASS) / "bootstrap"
+        return Path(sys._MEIPASS) / "bootstrap"  # noqa: SLF001
 
     return Path(__file__).resolve().parents[1] / "bootstrap"
 

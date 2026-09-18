@@ -64,7 +64,7 @@ class MySqlDialect(DialectProtocol):
             True if the query starts with 'SELECT' or 'WITH', False otherwise.
         """
         s = sql.lstrip().lower()
-        return s.startswith("select") or s.startswith("with")
+        return s.startswith(("select", "with"))
 
     def _already_limited(self, sql: str) -> bool:
         """Check if a SQL query already contains a LIMIT clause.

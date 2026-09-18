@@ -186,11 +186,10 @@ class DocumentController:
         except Exception as e:
             status = self._tr(self.TR_OPEN_SQL_FILE_FAILED)
             self._set_status(status, 6000)
-            self._logger.error(
+            self._logger.exception(
                 "DocumentController: Failed to open SQL file '%s': %s",
                 fmt_path(p),
                 e,
-                exc_info=True,
             )
             self._dialogs.critical(
                 self._parent,
@@ -217,9 +216,12 @@ class DocumentController:
     def _get_documents_dir(self) -> Path:
         """Return documents directory, guaranteed to be initialized."""
         if self._documents_dir is None:
-            raise RuntimeError(
+            msg = (
                 "DocumentController: documents_dir not initialized. "
                 "reload_settings() must be called before export."
+            )
+            raise RuntimeError(
+                msg
             )
         return self._documents_dir
 
@@ -341,11 +343,10 @@ class DocumentController:
             self._set_status(status, 3000)
 
         except Exception as e:
-            self._logger.error(
+            self._logger.exception(
                 "DocumentController: Failed to save as SQL file '%s': %s",
                 fmt_path(tab.file_path),
                 e,
-                exc_info=True,
             )
             status = self._tr(self.TR_SAVE_SQL_FILE_FAILED)
             self._set_status(status, 6000)
@@ -415,11 +416,10 @@ class DocumentController:
             status = self._tr(self.TR_SAVED_SQL_FILE)
             self._set_status(status, 3000)
         except Exception as e:
-            self._logger.error(
+            self._logger.exception(
                 "DocumentController: Failed to save as SQL file '%s': %s",
                 fmt_path(path),
                 e,
-                exc_info=True,
             )
             status = self._tr(self.TR_SAVE_SQL_FILE_FAILED)
             self._set_status(status, 6000)
@@ -463,12 +463,10 @@ class DocumentController:
         except Exception as e:
             status = self._tr(self.TR_OPEN_HTML_FILE_FAILED)
             self._set_status(status, 6000)
-            self._logger.error(
+            self._logger.exception(
                 "DocumentController: failed to open HTML file '%s': %s",
                 fmt_path(p),
-                e,
-                exc_info=True
-            )
+                e,            )
             self._dialogs.critical(
                 parent=self._parent,
                 title=self._tr(self.TR_FAILURE),

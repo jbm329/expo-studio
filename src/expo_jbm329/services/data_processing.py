@@ -62,9 +62,9 @@ def generate_profile_report(df: pd.DataFrame, title: str, corr_id: str) -> Profi
         return profile
 
     except Exception as e:
-        logger.error(
+        logger.exception(
             "Generate profile report failed (corr=%s, title=%r): %s",
-            corr_id, title, e, exc_info=True
+            corr_id, title, e
         )
         raise
 
@@ -116,9 +116,9 @@ def generate_comparison_profile_report(
         return comp
 
     except Exception as e:
-        logger.error(
+        logger.exception(
             "Generate comparison profile report failed (corr=%s, datasets=%s): %s",
-            corr_id, number_of_datasets, e, exc_info=True
+            corr_id, number_of_datasets, e
         )
         raise
 

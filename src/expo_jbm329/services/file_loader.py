@@ -260,7 +260,8 @@ class FileLoader:
                 corr_id,
                 fmt_path(file_name_or_path),
             )
-            raise FileNotFoundError(f"Could not resolve file: {file_name_or_path}")
+            msg = f"Could not resolve file: {file_name_or_path}"
+            raise FileNotFoundError(msg)
 
         suffix = path.suffix.lower()
         reader = self._readers.get(suffix)
@@ -271,10 +272,12 @@ class FileLoader:
                 fmt_path(path),
                 suffix,
             )
-            raise ValueError(f"Unsupported file format: {suffix}")
+            msg = f"Unsupported file format: {suffix}"
+            raise ValueError(msg)
 
         if cancel_cb is not None and cancel_cb():
-            raise OperationCancelledError("Loading was cancelled before start.")
+            msg = "Loading was cancelled before start."
+            raise OperationCancelledError(msg)
 
         req = ReadRequest(
             path=path,
@@ -291,7 +294,8 @@ class FileLoader:
             df = reader(req)
 
             if cancel_cb is not None and cancel_cb():
-                raise OperationCancelledError("Loading was cancelled during read.")
+                msg = "Loading was cancelled during read."
+                raise OperationCancelledError(msg)
 
             if progress_cb is not None:
                 progress_cb(100)
@@ -308,13 +312,12 @@ class FileLoader:
             raise
 
         except Exception as e:
-            self._logger.error(
+            self._logger.exception(
                 "FileLoader: could not read file (corr=%s, path=%s, suffix=%s): %s",
                 corr_id,
                 fmt_path(path),
                 suffix,
                 e,
-                exc_info=True,
             )
             raise
 
@@ -352,7 +355,8 @@ class FileLoader:
 
         def _raise_if_cancelled() -> None:
             if req.cancel_cb is not None and req.cancel_cb():
-                raise OperationCancelledError("CSV loading cancelled.")
+                msg = "CSV loading cancelled."
+                raise OperationCancelledError(msg)
 
         # If cancellation support is present, prefer chunked reading even for
         # relatively small files. A single-shot pd.read_csv() call is not
@@ -457,13 +461,15 @@ class FileLoader:
                 try:
                     ws = wb.worksheets[req.sheet_name]
                 except Exception as e:
-                    raise ValueError(f"Sheet index out of range: {req.sheet_name}") from e
+                    msg = f"Sheet index out of range: {req.sheet_name}"
+                    raise ValueError(msg) from e
             else:
                 name = str(req.sheet_name) if req.sheet_name is not None else str(wb.worksheets[0].title)
                 try:
                     ws = wb[name]
                 except Exception as e:
-                    raise ValueError(f"Sheet name not found: {req.sheet_name}") from e
+                    msg = f"Sheet name not found: {req.sheet_name}"
+                    raise ValueError(msg) from e
 
             rows_iter = ws.iter_rows(values_only=True)
 
@@ -588,7 +594,8 @@ class FileLoader:
         df = pd.read_pickle(req.path)
 
         if not isinstance(df, pd.DataFrame):
-            raise TypeError("Pickle file did not contain a pandas DataFrame")
+            msg = "Pickle file did not contain a pandas DataFrame"
+            raise TypeError(msg)
 
         if req.index_col is not None:
             df = df.set_index(req.index_col)

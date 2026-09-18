@@ -65,7 +65,8 @@ def filter_equals(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column]
 
@@ -111,7 +112,8 @@ def filter_not_equals(
     logger.debug("filter_not_equals: col='%s' value=%r", column, value)
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column]
 
@@ -154,7 +156,8 @@ def filter_contains(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column].astype("string")
 
@@ -186,7 +189,8 @@ def filter_isna(
     logger.debug("filter_isna: col='%s'", column)
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     return df.loc[df[column].isna()].copy()
 
@@ -210,7 +214,8 @@ def filter_notna(
     logger.debug("filter_notna: col='%s'", column)
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     return df.loc[df[column].notna()].copy()
 
@@ -254,7 +259,8 @@ def filter_compare(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column]
 
@@ -265,8 +271,9 @@ def filter_compare(
         query_value = pd.to_datetime(value)
         return df.query(f"`{column}` {op} @query_value", local_dict={"query_value": query_value}).copy()
 
+    msg = f"Column '{column}' must be numeric or datetime for filter_compare."
     raise TypeError(
-        f"Column '{column}' must be numeric or datetime for filter_compare."
+        msg
     )
 
 
@@ -306,11 +313,13 @@ def filter_between(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     if inclusive not in {"both", "left", "right", "neither"}:
+        msg = "inclusive must be one of: both | left | right | neither"
         raise ValueError(
-            "inclusive must be one of: both | left | right | neither"
+            msg
         )
 
     s = df[column]
@@ -324,8 +333,9 @@ def filter_between(
         high_val = high
 
     else:
+        msg_0 = f"Column '{column}' must be numeric or datetime for filter_between."
         raise TypeError(
-            f"Column '{column}' must be numeric or datetime for filter_between."
+            msg_0
         )
 
     mask = s.between(low_val, high_val, inclusive=inclusive)
@@ -362,8 +372,9 @@ def filter_custom(
     mask = predicate(df)
 
     if not isinstance(mask, pd.Series):
+        msg = "filter_custom predicate must return a pandas Series."
         raise ValueError(
-            "filter_custom predicate must return a pandas Series."
+            msg
         )
 
     return df.loc[mask].copy()

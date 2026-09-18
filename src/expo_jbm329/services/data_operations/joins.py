@@ -59,8 +59,9 @@ def join_dataframes(cfg: JoinRequest) -> pd.DataFrame:
         * Multi-key joins are supported.
     """
     if len(cfg.left_on) != len(cfg.right_on):
+        msg = f"left_on and right_on must have same length (got {len(cfg.left_on)} vs {len(cfg.right_on)})"
         raise ValueError(
-            f"left_on and right_on must have same length (got {len(cfg.left_on)} vs {len(cfg.right_on)})"
+            msg
         )
 
     return cfg.left.merge(
@@ -131,7 +132,8 @@ def concat_rows(*frames: pd.DataFrame, join: Literal["outer", "inner"] = "outer"
         Combined dataframe with reset index.
     """
     if not frames:
-        raise ValueError("No dataframes were provided for concat_rows().")
+        msg = "No dataframes were provided for concat_rows()."
+        raise ValueError(msg)
 
     return pd.concat(frames, axis=0, join=join).reset_index(drop=True)
 
@@ -147,6 +149,7 @@ def concat_columns(*frames: pd.DataFrame, join: Literal["outer", "inner"] = "out
         Combined dataframe by columns.
     """
     if not frames:
-        raise ValueError("No dataframes were provided for concat_columns().")
+        msg = "No dataframes were provided for concat_columns()."
+        raise ValueError(msg)
 
     return pd.concat(frames, axis=1, join=join)

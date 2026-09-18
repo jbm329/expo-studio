@@ -56,7 +56,8 @@ def sort_dataframe(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     return df.sort_values(by=column, ascending=ascending).copy()
 
@@ -111,11 +112,13 @@ def rename_column(
     logger.debug("Renaming column '%s' -> '%s'", old_name, new_name)
 
     if old_name not in df.columns:
-        raise KeyError(f"Column '{old_name}' not found.")
+        msg = f"Column '{old_name}' not found."
+        raise KeyError(msg)
 
     new_name = str(new_name)
     if new_name in df.columns and new_name != old_name:
-        raise ValueError(f"Column '{new_name}' already exists.")
+        msg = f"Column '{new_name}' already exists."
+        raise ValueError(msg)
 
     return df.copy().rename(columns={old_name: new_name})
 
@@ -162,10 +165,12 @@ def split_column(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     if delimiter == "":
-        raise ValueError("Delimiter must not be empty.")
+        msg = "Delimiter must not be empty."
+        raise ValueError(msg)
 
     # Preserve missing values as pd.NA instead of converting them to empty strings.
     s = df[column].astype("string")
@@ -189,7 +194,8 @@ def split_column(
     pos = df.columns.get_loc(column)
 
     if not isinstance(pos, int):
-        raise TypeError(f"Expected unique column location for '{column}', got {type(pos).__name__}")
+        msg_0 = f"Expected unique column location for '{column}', got {type(pos).__name__}"
+        raise TypeError(msg_0)
 
     def _unique_name(base: str) -> str:
         if base not in new_df.columns:
@@ -254,7 +260,8 @@ def join_columns(
 
     for col in columns:
         if col not in df.columns:
-            raise KeyError(f"Column '{col}' not found.")
+            msg = f"Column '{col}' not found."
+            raise KeyError(msg)
 
     if not new_name:
         new_name = "_".join(columns)
@@ -275,8 +282,9 @@ def join_columns(
     for col in columns:
         loc = df.columns.get_loc(col)
         if not isinstance(loc, int):
+            msg = f"Expected unique column location for '{col}', got {type(loc).__name__}"
             raise TypeError(
-                f"Expected unique column location for '{col}', got {type(loc).__name__}"
+                msg
             )
         positions.append(loc)
 

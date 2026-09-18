@@ -256,8 +256,8 @@ class DataIOService:
             )
 
         except Exception as e:
-            self._logger.error(
-                "DataIOService: export CSV failed (corr=%s, path=%s): %s", corr_id, fmt_path(dest_str), e, exc_info=True)
+            self._logger.exception(
+                "DataIOService: export CSV failed (corr=%s, path=%s): %s", corr_id, fmt_path(dest_str), e)
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)
 
     # ------------------------------------------------------------------
@@ -364,9 +364,9 @@ class DataIOService:
 
         except Exception as e:
             # Unexpected failure path
-            self._logger.error(
+            self._logger.exception(
                 "DataIOService: export excel failed (corr=%s, path=%s): %s",
-                corr_id, fmt_path(dest_str), e, exc_info=True
+                corr_id, fmt_path(dest_str), e
             )
             return JobResult(
                 ok=False,
@@ -433,8 +433,12 @@ class DataIOService:
         except Exception as e:
             if progress_cb:
                 progress_cb(100)
-            self._logger.error(
-                "DataIOService: export data file failed (corr=%s, path=%s): %s", corr_id, fmt_path(dest_str), e, exc_info=True)
+            self._logger.exception(
+                "DataIOService: export data file failed (corr=%s, path=%s): %s",
+                corr_id,
+                fmt_path(dest_str),
+                e,
+                )
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)
 
     # ------------------------------------------------------------------
@@ -498,9 +502,9 @@ class DataIOService:
             return JobResult(ok=True, elapsed=dt, path=dest_str, corr_id=corr_id)
         except Exception as e:
 
-            self._logger.error(
+            self._logger.exception(
                 "DataIOService: export profile report failed (corr=%s, path=%s): %s",
-                corr_id, fmt_path(dest_str), e, exc_info=True)
+                corr_id, fmt_path(dest_str), e)
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)
 
     # ------------------------------------------------------------------
@@ -579,12 +583,11 @@ class DataIOService:
             return JobResult(ok=True, elapsed=dt, path=dest_str, corr_id=corr_id)
         except Exception as e:
 
-            self._logger.error(
+            self._logger.exception(
                 "DataIOService: export comparison profile failed (corr=%s, path=%s): %s",
                 corr_id,
                 fmt_path(dest_str),
                 e,
-                exc_info=True
             )
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)
 

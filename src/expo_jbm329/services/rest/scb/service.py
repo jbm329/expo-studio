@@ -24,14 +24,16 @@ class ScbSelection:
         """Normalize and validate the selection data during dataclass initialization."""
         variable_name = str(self.variable).strip()
         if not variable_name:
-            raise ScbQueryError("SCB variable name must not be empty")
+            msg = "SCB variable name must not be empty"
+            raise ScbQueryError(msg)
 
         cleaned_values = tuple(
             str(value).strip() for value in self.values if str(value).strip()
         )
         if not cleaned_values:
+            msg_0 = f"SCB selection for '{variable_name}' requires at least one selected values entry"
             raise ScbQueryError(
-                f"SCB selection for '{variable_name}' requires at least one selected values entry"
+                msg_0
             )
 
         object.__setattr__(self, "variable", variable_name)
@@ -66,10 +68,12 @@ class ScbQueryBuilder:
         """
         cleaned_table_id = str(table_id).strip()
         if not cleaned_table_id:
-            raise ScbQueryError("SCB table id must not be empty")
+            msg = "SCB table id must not be empty"
+            raise ScbQueryError(msg)
 
         if not selections:
-            raise ScbQueryError("At least one SCB selection is required")
+            msg = "At least one SCB selection is required"
+            raise ScbQueryError(msg)
 
         params: dict[str, str] = {
             "lang": str(lang).strip() or "sv",
@@ -80,9 +84,11 @@ class ScbQueryBuilder:
         for selection in selections:
             name = str(selection.variable).strip()
             if not name:
-                raise ScbQueryError("SCB selection variable name must not be empty")
+                msg = "SCB selection variable name must not be empty"
+                raise ScbQueryError(msg)
             if name in seen:
-                raise ScbQueryError(f"Duplicate SCB selection for '{name}'")
+                msg_0 = f"Duplicate SCB selection for '{name}'"
+                raise ScbQueryError(msg_0)
             seen.add(name)
 
             selected_cells *= len(selection.values)
@@ -91,10 +97,13 @@ class ScbQueryBuilder:
                 params[f"codelist[{name}]"] = str(selection.codelist).strip()
 
         if selected_cells > self.MAX_SELECTED_CELLS:
-            raise ScbQueryError(
+            msg_0 = (
                 "SCB query exceeds the maximum allowed number of selected cells "
                 f"({selected_cells} > {self.MAX_SELECTED_CELLS}). Reduce the selections "
                 "or split the query into smaller parts."
+            )
+            raise ScbQueryError(
+                msg_0
             )
 
         return params
@@ -104,5 +113,6 @@ class ScbQueryBuilder:
         """Return the SCB table data endpoint for a table id."""
         cleaned_table_id = str(table_id).strip()
         if not cleaned_table_id:
-            raise ScbQueryError("SCB table id must not be empty")
+            msg = "SCB table id must not be empty"
+            raise ScbQueryError(msg)
         return f"https://statistikdatabasen.scb.se/api/v2/tables/{cleaned_table_id}/data"

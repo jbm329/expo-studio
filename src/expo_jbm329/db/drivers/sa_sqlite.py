@@ -63,7 +63,6 @@ class SqlAlchemySqliteDriver(DriverProtocol):
         Args:
             seconds: The timeout in seconds, or None to reset.
         """
-        pass
 
     def cancel_execution(self, job_id: str) -> bool:
         """Attempt to cancel an active execution associated with a job id."""

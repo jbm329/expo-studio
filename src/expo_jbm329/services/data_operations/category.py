@@ -51,7 +51,8 @@ def category_remove_unused(
     logger.debug("category_remove_unused: col='%s'", column)
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column]
 
@@ -99,7 +100,8 @@ def category_rename_single(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column]
 
@@ -169,7 +171,8 @@ def category_set_order(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column].astype("string")
 

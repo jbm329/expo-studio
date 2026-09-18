@@ -89,7 +89,8 @@ class ConnectionController:
         if not name:
             return
         if self._load_schema is None:
-            raise RuntimeError("ConnectionController not wired: load_schema is missing")
+            msg = "ConnectionController not wired: load_schema is missing"
+            raise RuntimeError(msg)
 
         if self._active_connection == name:
             self._logger.debug("ConnectionController: already connected (%s)", name)

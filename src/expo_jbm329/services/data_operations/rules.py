@@ -59,7 +59,8 @@ class Rule:
         Raises:
             NotImplementedError: If not implemented by subclass.
         """
-        raise NotImplementedError("Rule.apply must be implemented by subclasses")
+        msg = "Rule.apply must be implemented by subclasses"
+        raise NotImplementedError(msg)
 
 
 # =====================================================================
@@ -111,7 +112,8 @@ class RemoveValueRule(Rule):
         )
 
         if self.column not in df.columns:
-            raise KeyError(f"Column '{self.column}' not found.")
+            msg = f"Column '{self.column}' not found."
+            raise KeyError(msg)
 
         return df.loc[df[self.column].ne(self.value)].copy()
 

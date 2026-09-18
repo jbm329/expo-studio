@@ -43,7 +43,7 @@ class StubHeader:
     def setSectionsClickable(self, b): pass
     def setSectionsMovable(self, b): pass
     def setHighlightSections(self, b): pass
-    def selectionModel(self): return SimpleNamespace(selectedColumns=lambda: [])
+    def selectionModel(self): return SimpleNamespace(selectedColumns=list)
     def setSortIndicator(self, i, o): pass
     def setSortIndicatorShown(self, b): pass
     def viewport(self): return SimpleNamespace(installEventFilter=lambda f: None)
@@ -71,7 +71,7 @@ class StubView:
             setSectionResizeMode=lambda *a: None,
             setDefaultSectionSize=lambda s: None,
         )
-        self.selectionModel = lambda: SimpleNamespace(selectedColumns=lambda: [])
+        self.selectionModel = lambda: SimpleNamespace(selectedColumns=list)
 
     def horizontalHeader(self):
         return self._header

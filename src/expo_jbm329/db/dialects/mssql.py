@@ -63,7 +63,7 @@ class MssqlDialect(DialectProtocol):
             True if the query starts with 'SELECT' or 'WITH', False otherwise.
         """
         s = sql.lstrip().lower()
-        return s.startswith("select") or s.startswith("with")
+        return s.startswith(("select", "with"))
 
     def _already_limited(self, sql: str) -> bool:
         """Check if a SQL query already contains a limit-like clause.
@@ -249,4 +249,3 @@ class MssqlDialect(DialectProtocol):
             "FROM INFORMATION_SCHEMA.COLUMNS AS c "
             "ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.ORDINAL_POSITION"
         )
-

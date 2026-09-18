@@ -57,7 +57,8 @@ def normalize_json_to_df(
     if isinstance(data, dict):
         return pd.json_normalize(data)
 
-    raise RestNormalizeError("Unsupported JSON structure")
+    msg = "Unsupported JSON structure"
+    raise RestNormalizeError(msg)
 
 
 # ---------------------------------------------------------------------
@@ -87,8 +88,9 @@ def _extract_records(payload: Any, response_path: str | None) -> Any:
     if response_path is None:
         if isinstance(payload, (list, dict)):
             return payload
+        msg = f"Unsupported JSON root type: {type(payload).__name__}"
         raise RestNormalizeError(
-            f"Unsupported JSON root type: {type(payload).__name__}"
+            msg
         )
 
     current = payload
@@ -97,8 +99,9 @@ def _extract_records(payload: Any, response_path: str | None) -> Any:
         # dict access
         if isinstance(current, dict):
             if part not in current:
+                msg = f"Invalid response_path '{response_path}': '{part}' not found"
                 raise RestNormalizeError(
-                    f"Invalid response_path '{response_path}': '{part}' not found"
+                    msg
                 )
             current = current[part]
             continue
@@ -108,27 +111,35 @@ def _extract_records(payload: Any, response_path: str | None) -> Any:
             try:
                 idx = int(part)
             except ValueError as err:
+                msg = f"Invalid response_path '{response_path}': '{part}' is not a valid list index"
                 raise RestNormalizeError(
-                    f"Invalid response_path '{response_path}': '{part}' is not a valid list index"
+                    msg
                 ) from err
 
             try:
                 current = current[idx]
             except IndexError as err:
+                msg = f"Invalid response_path '{response_path}': list index {idx} out of range"
                 raise RestNormalizeError(
-                    f"Invalid response_path '{response_path}': list index {idx} out of range"
+                    msg
                 ) from err
             continue
 
-        raise RestNormalizeError(
+        msg = (
             f"Invalid response_path '{response_path}': "
             f"cannot traverse object of type {type(current).__name__}"
         )
+        raise RestNormalizeError(
+            msg
+        )
 
     if not isinstance(current, (list, dict)):
-        raise RestNormalizeError(
+        msg = (
             f"Extracted object at '{response_path}' is not list or dict "
             f"(got {type(current).__name__})"
+        )
+        raise RestNormalizeError(
+            msg
         )
 
     return current
@@ -144,11 +155,14 @@ def _normalize_jsonstat2(payload: dict) -> pd.DataFrame:
     dimensions = payload.get("dimension")
 
     if not isinstance(ids, list):
-        raise RestNormalizeError("JSON-stat v2: missing 'id' array")
+        msg = "JSON-stat v2: missing 'id' array"
+        raise RestNormalizeError(msg)
     if not isinstance(values, list):
-        raise RestNormalizeError("JSON-stat v2: missing 'value' array")
+        msg = "JSON-stat v2: missing 'value' array"
+        raise RestNormalizeError(msg)
     if not isinstance(dimensions, dict):
-        raise RestNormalizeError("JSON-stat v2: missing 'dimension' object")
+        msg = "JSON-stat v2: missing 'dimension' object"
+        raise RestNormalizeError(msg)
 
     # Build ordered dimension value lists. Prefer the user-facing labels provided by
     # the SCB/PxWeb API over the raw technical keys when they are present.
@@ -191,7 +205,8 @@ def _normalize_jsonstat2(payload: dict) -> pd.DataFrame:
         dim_labels_by_code[dim_id] = labels
 
     if not dim_names or not dim_values:
-        raise RestNormalizeError("JSON-stat v2: no dimensions found")
+        msg = "JSON-stat v2: no dimensions found"
+        raise RestNormalizeError(msg)
 
     records: list[dict] = []
 

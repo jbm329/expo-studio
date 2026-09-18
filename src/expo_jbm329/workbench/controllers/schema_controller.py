@@ -831,8 +831,11 @@ class SchemaController:
             connection_name: The connection name.
             status_text: The status text to show.
         """
-        self._logger.error("SchemaController: failure (conn=%s): %s", connection_name, e)
-        self._logger.debug("Stack trace:", exc_info=True)
+        self._logger.error(
+            "SchemaController: failure (conn=%s): %s",
+            connection_name,
+            e
+        )
 
         self._reset_connection_state(connection_name)
 

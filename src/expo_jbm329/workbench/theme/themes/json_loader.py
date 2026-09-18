@@ -33,7 +33,8 @@ def _parse_color(value: str | dict | None) -> QColor:
             int(value.get("a", 255)),
         )
 
-    raise ValueError(f"Unsupported color format: {value}")
+    msg = f"Unsupported color format: {value}"
+    raise ValueError(msg)
 
 
 def load_theme_from_json(path: Path) -> Theme:
@@ -48,8 +49,9 @@ def load_theme_from_json(path: Path) -> Theme:
     # Handle friendly_name first (string, no color parsing)
     friendly = data.get("friendly_name")
     if not isinstance(friendly, str):
+        msg = f"Theme JSON '{path.name}' is missing required friendly_name:string"
         raise ValueError(
-            f"Theme JSON '{path.name}' is missing required friendly_name:string"
+            msg
         )
     kwargs["friendly_name"] = friendly
 

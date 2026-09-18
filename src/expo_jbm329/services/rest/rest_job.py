@@ -76,7 +76,8 @@ def fetch_rest_dataset(
         )
 
         if not isinstance(df, pd.DataFrame):
-            raise RuntimeError("Normalizer did not return a DataFrame")
+            msg = "Normalizer did not return a DataFrame"
+            raise RuntimeError(msg)
 
         elapsed = time.perf_counter() - t0
 
@@ -115,7 +116,8 @@ def _normalize_payloads(
 ) -> pd.DataFrame:
     """Normalize one or more REST payloads into a single dataframe."""
     if not payloads:
-        raise RestNormalizeError("REST response did not contain any payloads")
+        msg = "REST response did not contain any payloads"
+        raise RestNormalizeError(msg)
 
     frames = [
         normalize_json_to_df(

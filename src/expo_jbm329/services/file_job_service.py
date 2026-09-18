@@ -308,7 +308,8 @@ class FileJobService:
                 fmt_path(path),
                 type(payload).__name__,
             )
-            raise TypeError("FileJobService expected JobResult")
+            msg = "FileJobService expected JobResult"
+            raise TypeError(msg)
 
         if payload.cancelled:
             self._logger.info(

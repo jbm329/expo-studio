@@ -91,7 +91,7 @@ class NullDialogService(DialogService):
         """Set the next value returned by prompt_yes_no."""
         self._next_prompt_yes_no = value
 
-    def set_next_prompt_number(self, value: float | int | None, ok: bool) -> None:
+    def set_next_prompt_number(self, value: float | None, ok: bool) -> None:
         """Set the next value returned by prompt_number."""
         self._next_prompt_number = (value, ok)
 
@@ -222,7 +222,7 @@ class NullDialogService(DialogService):
         *,
         title: str,
         label: str,
-        default: float | int | None,
+        default: float | None,
         semantics: SeriesSemantics,
     ) -> tuple[float | int | None, bool]:
         """Show a prompt for numeric input."""

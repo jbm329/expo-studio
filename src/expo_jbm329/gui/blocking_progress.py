@@ -59,7 +59,6 @@ class BlockingProgressDialog(QDialog):
     def on_started(self):
         """Handle the job start event."""
         # Can update text...
-        pass
 
     @pyqtSlot(int)
     def on_progress(self, v: int):

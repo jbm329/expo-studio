@@ -490,7 +490,7 @@ class WorkbenchServices:
             set_status=ui.set_status,
             logger=app.log_ui,
         )
-        results._join_controller = join
+        results.set_join_controller(join)
 
         # ============================================================
         # CONCAT CONTROLLER
@@ -509,7 +509,7 @@ class WorkbenchServices:
             set_status=ui.set_status,
             logger=app.log_ui,
         )
-        results._concat_controller = concat
+        results.set_concat_controller(concat)
 
         # ============================================================
         # DERIVED COLUMN
@@ -523,7 +523,7 @@ class WorkbenchServices:
             main_window=ui.parent,
             logger=app.log_ui,
         )
-        results._derived_column_controller = derived_column
+        results.set_derived_column_controller(derived_column)
 
         # ============================================================
         # Workbench settings subscriptions

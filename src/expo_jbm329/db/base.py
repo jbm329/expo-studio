@@ -90,12 +90,14 @@ def configure_timeouts(*, login_timeout_s: int | None = None, query_timeout_s: i
 
     if login_timeout_s is not None:
         if login_timeout_s < 0:
-            raise ValueError("login_timeout_s cannot be negative.")
+            msg = "login_timeout_s cannot be negative."
+            raise ValueError(msg)
         _login_timeout_s = int(login_timeout_s)
 
     if query_timeout_s is not None:
         if query_timeout_s < 0:
-            raise ValueError("query_timeout_s cannot be negative.")
+            msg = "query_timeout_s cannot be negative."
+            raise ValueError(msg)
         _query_timeout_s = int(query_timeout_s)
 
     logger.debug("DB timeouts configured: login=%s, query=%s", _login_timeout_s, _query_timeout_s)
@@ -127,7 +129,8 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
     conns = read_connections()
     rec = conns.get(connection_name)
     if not isinstance(rec, dict):
-        raise RuntimeError(f"Missing config for '{connection_name}'")
+        msg = f"Missing config for '{connection_name}'"
+        raise RuntimeError(msg)
 
     # --- Engine normalization -------------------------------------------------
     engine = (rec.get("db_type") or "mssql").lower()

@@ -572,7 +572,8 @@ class JobManager:
             TypeError: If fn is not callable.
         """
         if not callable(fn):
-            raise TypeError("fn must be callable")
+            msg = "fn must be callable"
+            raise TypeError(msg)
 
         job_id = uuid.uuid4().hex
         self._register_job(
@@ -592,7 +593,7 @@ class JobManager:
             logger=self._logger,
             **kwargs,
         )
-        worker._cancel_func = lambda jid=job_id: self.is_cancelled(jid)
+        worker.cancel_func = lambda jid=job_id: self.is_cancelled(jid)
 
         with contextlib.suppress(Exception):
             thread.setObjectName(f"job-{job_id}")
@@ -646,7 +647,8 @@ class JobManager:
             TypeError: If fn is not callable.
         """
         if not callable(fn):
-            raise TypeError("fn must be callable")
+            msg = "fn must be callable"
+            raise TypeError(msg)
 
         job_id = uuid.uuid4().hex
         self._register_job(

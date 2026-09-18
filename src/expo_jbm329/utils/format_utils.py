@@ -107,7 +107,7 @@ def fmt_path_size(p: Path | str | None) -> str:
 # ---------------------------------------------------------------------
 #  Number formatting
 # ---------------------------------------------------------------------
-def fmt_num(val: float | int | None, *, sig: int = 4) -> str:
+def fmt_num(val: float | None, *, sig: int = 4) -> str:
     """Format a numeric value using significant digits.
 
     - If val is integer-like, return integer using locale formatting.

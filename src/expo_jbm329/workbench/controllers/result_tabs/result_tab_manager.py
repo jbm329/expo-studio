@@ -85,6 +85,9 @@ if TYPE_CHECKING:
         AsyncOperationController,
     )
     from expo_jbm329.workbench.controllers.busy_overlay_controller import BusyOverlayController
+    from expo_jbm329.workbench.controllers.concat_controller import ConcatController
+    from expo_jbm329.workbench.controllers.derived_column_controller import DerivedColumnController
+    from expo_jbm329.workbench.controllers.join_controller import JoinController
 
 
 # ======================================================================
@@ -825,12 +828,16 @@ class ResultTabManager:
         """
         record = self._get_tab_record(tab_id)
         if record is None:
-            raise KeyError(f"No tab found for tab_id='{tab_id}'")
+            msg = f"No tab found for tab_id='{tab_id}'"
+            raise KeyError(msg)
 
         if record.df is None:
-            raise KeyError(
+            msg = (
                 f"Tab '{record.title}' does not currently hold a DataFrame "
                 f"(tab_id={tab_id}, state={record.state.value})"
+            )
+            raise KeyError(
+                msg
             )
 
         return record.df
@@ -909,6 +916,18 @@ class ResultTabManager:
 
         except Exception:
             return False
+
+    def set_join_controller(self, controller: JoinController) -> None:
+        """Set the join controller for the result tab manager."""
+        self._join_controller = controller
+
+    def set_concat_controller(self, controller: ConcatController) -> None:
+        """Set the concatenate controller for the result tab manager."""
+        self._concat_controller = controller
+
+    def set_derived_column_controller(self, controller: DerivedColumnController) -> None:
+        """Set the derived column controller for the result tab manager."""
+        self._derived_column_controller = controller
 
     # ==============================================================
     # TOOLBAR / UI STATE NOTIFICATIONS
@@ -2115,10 +2134,12 @@ class ResultTabManager:
         try:
             df = model.data_frame()
             if not isinstance(df, pd.DataFrame):
-                raise TypeError("Model returned non-DataFrame.")
+                msg = "Model returned non-DataFrame."
+                raise TypeError(msg)
 
             if column < 0 or column >= df.shape[1]:
-                raise IndexError(f"Invalid column index: {column}")
+                msg_0 = f"Invalid column index: {column}"
+                raise IndexError(msg_0)
 
             col_name = str(df.columns[column])
             s = df[col_name]
@@ -2200,7 +2221,8 @@ class ResultTabManager:
         """
         tab_bar = self._tabs.tabBar()
         if tab_bar is None:
-            raise KeyError("Tab bar is not available")
+            msg = "Tab bar is not available"
+            raise KeyError(msg)
 
         target = title.strip()
 
@@ -2210,21 +2232,27 @@ class ResultTabManager:
 
             tab_id = tab_bar.tabData(i)
             if not isinstance(tab_id, str):
-                raise KeyError(f"Tab '{title}' has no valid tab_id")
+                msg_0 = f"Tab '{title}' has no valid tab_id"
+                raise KeyError(msg_0)
 
             record = self._tabs_by_id.get(tab_id)
             if record is None:
-                raise KeyError(f"No tab record stored for tab id={tab_id} (title='{title}')")
+                msg_0 = f"No tab record stored for tab id={tab_id} (title='{title}')"
+                raise KeyError(msg_0)
 
             if record.df is None:
-                raise KeyError(
+                msg_0 = (
                     f"Tab '{title}' does not currently hold a DataFrame "
                     f"(tab_id={tab_id}, state={record.state.value})"
+                )
+                raise KeyError(
+                    msg_0
                 )
 
             return record.df
 
-        raise KeyError(f"No tab with title '{title}' found")
+        msg_0 = f"No tab with title '{title}' found"
+        raise KeyError(msg_0)
 
     def close_tabs_by_title(self, title: str):
         """Closes all tabs whose visible title matches the given string.

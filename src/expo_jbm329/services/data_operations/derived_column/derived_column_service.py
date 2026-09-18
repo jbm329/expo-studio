@@ -198,8 +198,9 @@ def create_derived_column(
             spec.formula,
         )
 
+        msg = "evaluation_failed"
         raise DerivedColumnError(
-            "evaluation_failed",
+            msg,
             context={"error": str(exc)},
         ) from exc
 
@@ -296,8 +297,9 @@ def evaluate_rpn(
 
         if token.token_type == FormulaTokenType.OPERATOR:
             if len(stack) < 2:
+                msg = "missing_operand_runtime"
                 raise DerivedColumnError(
-                    "missing_operand_runtime",
+                    msg,
                     context={"operator": token.value},
                 )
 
@@ -314,13 +316,15 @@ def evaluate_rpn(
             )
             continue
 
+        msg = "unsupported_token_runtime"
         raise DerivedColumnError(
-            "unsupported_token_runtime",
+            msg,
             context={"token": token.value},
         )
 
     if len(stack) != 1:
-        raise DerivedColumnError("invalid_evaluation_result")
+        msg = "invalid_evaluation_result"
+        raise DerivedColumnError(msg)
 
     return stack[0]
 
@@ -358,14 +362,17 @@ def _validate_column_name(
     column_name = _normalized_column_name(spec)
 
     if not column_name:
-        raise DerivedColumnError("missing_output_column_name")
+        msg = "missing_output_column_name"
+        raise DerivedColumnError(msg)
 
     if "[" in column_name or "]" in column_name:
-        raise DerivedColumnError("invalid_output_column_name_characters")
+        msg = "invalid_output_column_name_characters"
+        raise DerivedColumnError(msg)
 
     if column_name in df.columns and not spec.overwrite_existing:
+        msg = "output_column_exists"
         raise DerivedColumnError(
-            "output_column_exists",
+            msg,
             context={"column": column_name},
         )
 
@@ -387,8 +394,9 @@ def _numeric_series(df: pd.DataFrame, column: str) -> pd.Series:
     series = _get_unique_series(df, column)
 
     if not is_numeric_series(series, include_bool=False):
+        msg = "non_numeric_column"
         raise DerivedColumnError(
-            "non_numeric_column",
+            msg,
             context={"column": column},
         )
 
@@ -414,16 +422,18 @@ def _get_unique_series(df: pd.DataFrame, column: str) -> pd.Series:
         DerivedColumnError: If the column does not exist or is not unique.
     """
     if column not in df.columns:
+        msg = "unknown_column_runtime"
         raise DerivedColumnError(
-            "unknown_column_runtime",
+            msg,
             context={"column": column},
         )
 
     location = df.columns.get_loc(column)
 
     if not isinstance(location, int):
+        msg = "column_not_unique"
         raise DerivedColumnError(
-            "column_not_unique",
+            msg,
             context={"column": column},
         )
 
@@ -470,16 +480,18 @@ def _apply_operator(
             return _safe_divide(left=left, right=right, index=index)
 
     except Exception as err:
+        msg = "operator_application_failed"
         raise DerivedColumnError(
-            "operator_application_failed",
+            msg,
             context={
                 "operator": operator,
                 "error": str(err),
             },
         ) from err
 
+    msg = "unsupported_operator_runtime"
     raise DerivedColumnError(
-        "unsupported_operator_runtime",
+        msg,
         context={"operator": operator},
     )
 
@@ -557,14 +569,16 @@ def _normalize_result_series(
         if output_dtype == "Float64":
             return to_nullable_float_series(numeric, errors="coerce")
 
+        msg = "unsupported_output_dtype"
         raise DerivedColumnError(
-            "unsupported_output_dtype",
+            msg,
             context={"dtype": output_dtype},
         )
 
     except Exception as err:
+        msg = "result_conversion_failed"
         raise DerivedColumnError(
-            "result_conversion_failed",
+            msg,
             context={"dtype": output_dtype},
         ) from err
 

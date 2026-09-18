@@ -227,7 +227,8 @@ def prompt_between(
                 edit.setValue(float(default))
             return edit
 
-        raise RuntimeError("Unsupported semantics")
+        msg = "Unsupported semantics"
+        raise RuntimeError(msg)
 
     # Low
     row_low = QHBoxLayout()

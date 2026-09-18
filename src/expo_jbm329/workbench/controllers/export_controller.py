@@ -365,9 +365,12 @@ class ExportController:
     def _get_documents_dir(self) -> Path:
         """Return documents directory, guaranteed to be initialized."""
         if self._documents_dir is None:
-            raise RuntimeError(
+            msg = (
                 "ExportController: documents_dir not initialized. "
                 "reload_settings() must be called before export."
+            )
+            raise RuntimeError(
+                msg
             )
         return self._documents_dir
 

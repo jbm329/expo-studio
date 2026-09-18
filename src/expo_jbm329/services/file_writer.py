@@ -139,27 +139,33 @@ class FileWriter:
             ValueError on invalid input.
         """
         if not isinstance(name, str):
-            raise ValueError("Invalid sheet name: not a string")
+            msg = "Invalid sheet name: not a string"
+            raise ValueError(msg)
 
         # Trim only for validation of emptiness; Excel behåller mellanslag om man vill
         if name.strip() == "":
-            raise ValueError("Invalid sheet name: empty or whitespace only")
+            msg = "Invalid sheet name: empty or whitespace only"
+            raise ValueError(msg)
 
         if len(name) > 31:
-            raise ValueError(f"Invalid sheet name (too long): '{name}' (max 31)")
+            msg_0 = f"Invalid sheet name (too long): '{name}' (max 31)"
+            raise ValueError(msg_0)
 
         # Explicit illegal character set (Excel)
         illegal_chars = {":", "\\", "/", "?", "*", "[", "]"}
         if any(ch in illegal_chars for ch in name):
-            raise ValueError(f"Invalid sheet name (illegal chars): '{name}'")
+            msg_0 = f"Invalid sheet name (illegal chars): '{name}'"
+            raise ValueError(msg_0)
 
         # Cannot start or end with single quote
         if name.startswith("'") or name.endswith("'"):
-            raise ValueError(f"Invalid sheet name (leading/trailing apostrophe): '{name}'")
+            msg_0 = f"Invalid sheet name (leading/trailing apostrophe): '{name}'"
+            raise ValueError(msg_0)
 
         # Disallow ASCII control characters (0x00..0x1F)
         if any(ord(ch) < 32 for ch in name):
-            raise ValueError(f"Invalid sheet name (control characters): '{name}'")
+            msg_0 = f"Invalid sheet name (control characters): '{name}'"
+            raise ValueError(msg_0)
 
     # ----------------------------------------------------------------------
     # CSV (chunked for large datasets)
@@ -218,8 +224,9 @@ class FileWriter:
                 self._logger.debug(
                     "FileWriter: save CSV cancelled before write (corr=%s, path=%s)", corr_id, fmt_path(path)
                 )
+                msg = "CSV export cancelled before write"
                 raise ExportCancelledError(
-                    "CSV export cancelled before write",
+                    msg,
                     path=fmt_path(path),
                     rows_written=0,
                     corr_id=corr_id,
@@ -259,8 +266,9 @@ class FileWriter:
                     "FileWriter: save CSV cancelled mid-run (corr=%s, path=%s, rows_written=%s)",
                     corr_id, fmt_path(path), rows_written
                 )
+                msg = "FileWriter: CSV export cancelled during write"
                 raise ExportCancelledError(
-                    "FileWriter: CSV export cancelled during write",
+                    msg,
                     path=fmt_path(path),
                     rows_written=rows_written,
                     corr_id=corr_id,
@@ -351,8 +359,9 @@ class FileWriter:
                 self._logger.debug(
                     "FileWriter: save excel (pandas) cancelled before write (corr=%s, path=%s)", corr_id, fmt_path(path)
                 )
+                msg = "FileWriter: excel export cancelled before write (pandas path)"
                 raise ExportCancelledError(
-                    "FileWriter: excel export cancelled before write (pandas path)",
+                    msg,
                     path=fmt_path(path),
                     rows_written=0,
                     corr_id=corr_id,
@@ -361,11 +370,10 @@ class FileWriter:
                 with pd.ExcelWriter(path, engine="openpyxl") as excel_writer:
                     df.to_excel(excel_writer, sheet_name=sheet_name, index=index, na_rep=na_rep)
             except Exception:
-                self._logger.error(
+                self._logger.exception(
                     "FileWriter: save excel (pandas) failed (corr=%s, path=%s)",
                     corr_id,
                     fmt_path(path),
-                    exc_info=True
                 )
                 raise
             if progress_cb:
@@ -590,8 +598,9 @@ class FileWriter:
                     written,
                     sheet_ix
                 )
+                msg = "Excel export cancelled during streaming write"
                 raise ExportCancelledError(
-                    "Excel export cancelled during streaming write",
+                    msg,
                     path=fmt_path(path),
                     rows_written=written,
                     sheets_written=sheet_ix,
@@ -633,8 +642,9 @@ class FileWriter:
                             "(corr=%s, path=%s, rows_written=%s, sheets_written=%s)",
                             corr_id, fmt_path(path), written, sheet_ix
                         )
+                        msg = "Excel export cancelled during streaming write"
                         raise ExportCancelledError(
-                            "Excel export cancelled during streaming write",
+                            msg,
                             path=fmt_path(path),
                             rows_written=written,
                             sheets_written=sheet_ix,
@@ -663,8 +673,9 @@ class FileWriter:
                             "(corr=%s, path=%s, rows_written=%s, sheets_written=%s)",
                             corr_id, fmt_path(path), written, sheet_ix
                         )
+                        msg = "Excel export cancelled during streaming write"
                         raise ExportCancelledError(
-                            "Excel export cancelled during streaming write",
+                            msg,
                             path=fmt_path(path),
                             rows_written=written,
                             sheets_written=sheet_ix,
@@ -729,7 +740,8 @@ class FileWriter:
         elif suffix == ".parquet":
             out = self._save_parquet(df, dest, corr_id=corr_id)
         else:
-            raise ValueError(f"Unsupported data file suffix: {suffix}")
+            msg = f"Unsupported data file suffix: {suffix}"
+            raise ValueError(msg)
 
         self._logger.info("FileWriter: data file written (corr=%s, path=%s, rows=%s, cols=%s)",
                           corr_id, fmt_path(out), rows, columns)

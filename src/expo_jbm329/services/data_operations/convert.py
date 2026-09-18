@@ -60,7 +60,8 @@ def to_integer(
     logger.debug("to_integer: col='%s' errors=%s", column, errors)
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     new_df = df.copy()
 
@@ -70,8 +71,9 @@ def to_integer(
             .astype("Int64")
         )
     except Exception as exc:
+        msg = f"Could not convert column '{column}' to Int64: {exc}"
         raise TypeError(
-            f"Could not convert column '{column}' to Int64: {exc}"
+            msg
         ) from exc
 
     return new_df
@@ -102,7 +104,8 @@ def to_float(
     logger.debug("to_float: col='%s' errors=%s", column, errors)
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     new_df = df.copy()
 
@@ -112,8 +115,9 @@ def to_float(
             errors=errors,
         ).astype("float64")
     except Exception as exc:
+        msg = f"Could not convert column '{column}' to float64: {exc}"
         raise TypeError(
-            f"Could not convert column '{column}' to float64: {exc}"
+            msg
         ) from exc
 
     return new_df
@@ -145,7 +149,8 @@ def to_nullable_float_series(
         return numeric.astype("Float64")
 
     except Exception as exc:
-        raise TypeError(f"Could not convert Series to Float64: {exc}") from exc
+        msg = f"Could not convert Series to Float64: {exc}"
+        raise TypeError(msg) from exc
 
 
 # =====================================================================
@@ -192,7 +197,8 @@ def to_datetime(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     new_df = df.copy()
     series = new_df[column]
@@ -232,8 +238,9 @@ def to_datetime(
 
     except Exception as exc:
         logger.error("to_datetime failed col='%s': %s", column, exc)
+        msg = f"Could not convert column '{column}' to datetime64[ns]: {exc}"
         raise TypeError(
-            f"Could not convert column '{column}' to datetime64[ns]: {exc}"
+            msg
         ) from exc
 
     return new_df
@@ -278,7 +285,8 @@ def to_boolean(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column]
     new_df = df.copy()
@@ -294,8 +302,9 @@ def to_boolean(
             return new_df
         except Exception as exc:
             if errors == "raise":
+                msg = f"Could not convert numeric column '{column}' to boolean"
                 raise ValueError(
-                    f"Could not convert numeric column '{column}' to boolean"
+                    msg
                 ) from exc
             # fall through to NA
 
@@ -326,7 +335,8 @@ def to_boolean(
 
     if bool(mask_unmatched.any(skipna=True)) and errors == "raise":
         bad = s[mask_unmatched].unique()
-        raise ValueError(f"Unrecognized boolean values: {bad}")
+        msg = f"Unrecognized boolean values: {bad}"
+        raise ValueError(msg)
 
     new_df[column] = result
     return new_df
@@ -352,7 +362,8 @@ def to_string(df: pd.DataFrame, column: str) -> pd.DataFrame:
     logger.debug("to_string: col='%s'", column)
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     new_df = df.copy()
     new_df[column] = new_df[column].astype("string")
@@ -396,7 +407,8 @@ def to_category(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column].astype("string")
     non_null = s.dropna()
@@ -408,8 +420,9 @@ def to_category(
     elif order == "preserve":
         categories = list(pd.unique(non_null))
     else:
+        msg = "order must be one of: 'alpha' | 'freq' | 'preserve'"
         raise ValueError(
-            "order must be one of: 'alpha' | 'freq' | 'preserve'"
+            msg
         )
 
     dtype = CategoricalDtype(categories=categories, ordered=ordered)

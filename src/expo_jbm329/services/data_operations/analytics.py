@@ -96,6 +96,7 @@ def get_column_profile(
     logger.debug("get_column_profile: col='%s'", column)
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     return profile_series(df[column], name=column)

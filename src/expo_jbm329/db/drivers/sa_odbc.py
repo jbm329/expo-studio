@@ -226,7 +226,8 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
                 time.sleep(0.05)
 
         if _is_cancelled():
-            raise RuntimeError("SqlAlchemyOdbcDriver: SQL execution cancelled before start.")
+            msg = "SqlAlchemyOdbcDriver: SQL execution cancelled before start."
+            raise RuntimeError(msg)
 
         try:
             raw_conn = engine.raw_connection()
@@ -261,14 +262,16 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
             cursor.execute(sql)
 
             if _is_cancelled():
-                raise RuntimeError("SqlAlchemyOdbcDriver: SQL execution cancelled after execute().")
+                msg = "SqlAlchemyOdbcDriver: SQL execution cancelled after execute()."
+                raise RuntimeError(msg)
 
             rows = cursor.fetchall()
             description = cursor.description or []
             columns = [str(col[0]) for col in description]
 
             if _is_cancelled():
-                raise RuntimeError("SqlAlchemyOdbcDriver: SQL execution cancelled after fetchall().")
+                msg = "SqlAlchemyOdbcDriver: SQL execution cancelled after fetchall()."
+                raise RuntimeError(msg)
 
             if not rows:
                 return pd.DataFrame(columns=columns)

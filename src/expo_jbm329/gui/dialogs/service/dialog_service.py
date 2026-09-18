@@ -311,7 +311,7 @@ class DialogService(Protocol):
         *,
         title: str,
         label: str,
-        default: float | int | None,
+        default: float | None,
         semantics: SeriesSemantics,
     ) -> tuple[float | int | None, bool]:
         """Show a prompt for numeric input."""

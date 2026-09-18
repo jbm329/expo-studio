@@ -78,7 +78,7 @@ def _detect_sql_kind(sql: str) -> str:
         return "select"
     if s.startswith("with"):
         return "with"
-    if s.startswith("exec") or s.startswith("execute"):
+    if s.startswith(("exec", "execute")):
         return "exec"
     return "other"
 
@@ -580,11 +580,13 @@ class DbService:
         """
         sql_all_fn = getattr(self.dialect, "sql_all_columns", None)
         if not callable(sql_all_fn):
-            raise AttributeError("Dialect does not implement sql_all_columns().")
+            msg = "Dialect does not implement sql_all_columns()."
+            raise AttributeError(msg)
 
         stmt = str(sql_all_fn())
         if not stmt:
-            raise AttributeError("Dialect does not support whole-database column listing.")
+            msg = "Dialect does not support whole-database column listing."
+            raise AttributeError(msg)
 
         res = self.execute_sql(conn, stmt, corr_id=corr_id)
         result: dict[tuple[str, str], list[dict[str, str]]] = {}

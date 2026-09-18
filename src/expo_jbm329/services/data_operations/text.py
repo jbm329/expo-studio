@@ -56,10 +56,12 @@ def set_cell_value_text(
         IndexError: If the row index is out of bounds.
     """
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     if row_index < 0 or row_index >= len(df):
-        raise IndexError(f"Row index out of range: {row_index}")
+        msg = f"Row index out of range: {row_index}"
+        raise IndexError(msg)
 
     new_df = df.copy()
     s = new_df[column].astype("string")
@@ -110,7 +112,8 @@ def replace_values(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column].astype("string")
 
@@ -171,7 +174,8 @@ def clean_text(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column].astype("string")
 
@@ -218,7 +222,8 @@ def normalize_whitespace(df: pd.DataFrame, column: str) -> pd.DataFrame:
     logger.debug("normalize_whitespace: col='%s'", column)
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = (
         df[column]
@@ -250,7 +255,8 @@ def strip_chars(df: pd.DataFrame, column: str, chars: str) -> pd.DataFrame:
         KeyError: If the column does not exist.
     """
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     new_df = df.copy()
     new_df[column] = new_df[column].astype("string").str.strip(chars)
@@ -280,7 +286,8 @@ def extract_digits(df: pd.DataFrame, column: str) -> pd.DataFrame:
     logger.debug("extract_digits: col='%s'", column)
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     new_df = df.copy()
     new_df[column] = (
@@ -318,7 +325,8 @@ def extract_letters(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     allowed = r"A-Za-zÅÄÖåäö" if keep_swedish else r"A-Za-z"
     pattern = rf"[^{allowed}]+"
@@ -351,7 +359,8 @@ def to_title_case(df: pd.DataFrame, column: str) -> pd.DataFrame:
         KeyError: If the column does not exist.
     """
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     new_df = df.copy()
     new_df[column] = new_df[column].astype("string").str.title()
@@ -378,7 +387,8 @@ def capitalize_first(df: pd.DataFrame, column: str) -> pd.DataFrame:
         KeyError: If the column does not exist.
     """
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column].astype("string")
 
@@ -431,7 +441,8 @@ def replace_text(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column].astype("string")
 
@@ -474,7 +485,8 @@ def insert_text(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column].astype("string")
 
@@ -521,7 +533,8 @@ def remove_regex(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     new_df = df.copy()
     new_df[column] = (

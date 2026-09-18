@@ -129,27 +129,39 @@ respect-gitignore = true
 [tool.ruff.lint]
 
 select = [
+    "B",    # bugbear
+    "D",    # docstrings
     "E",    # pycodestyle (errors)
     "F",    # pyflakes
+    "G",    # flake8-logging-format
     "I",    # isort
-    "UP",   # pyupgrade
-    "B",    # bugbear
-    "C90",  # complexity (mccabe)
+    "N",    # pep8-naming
     "Q",    # quotes consistency
+    "W",    # pycodestyle (warnings)
+    "UP",   # pyupgrade
+    "C90",  # complexity (mccabe)
     "RET",  # return statements
     "SIM",  # simplify
     "ARG",  # unused args
     "RUF",  # Ruff's own rules
-    "D",    # docstrings
-    "W",    # pycodestyle (warnings)
     "FURB", # flake8-ruff
     "PLE",  # flake8-pie
     "PLC",  # flake8-pie
-    "N",    # pep8-naming
     "PD",   # pandas-vet
 #    "PTH",  # flake8-use-pathlib
     "NPY",  # numpy
     "TC",   # flake8-type-checking
+    "TID",  # flake8-tidy-imports
+    "SLOT", # flake8-slots
+    "SIM",  # flake8-simplify
+    "SLF",  # flake8-self
+    "PYI",  # flake8-pyi
+    "PIE",  # flake8-pie
+    "LOG",  # flake8-logging-format
+    "ISC",  # flake8-implicit-str-concat
+    "INT",  # flake8-interpreted-string
+    "FA",  # flake8-future-import
+    "EM",  # flake8-errmsg
 ]
 
 ignore = [
@@ -160,7 +172,7 @@ ignore = [
     "PLC0415"
 ]
 [tool.ruff.lint.per-file-ignores]
-"tests/*.py" = ["W", "D", "S101", "RUF", "D104", "ARG", "PLC", "N"]
+"tests/*.py" = ["W", "D", "S101", "RUF", "D104", "ARG", "PLC", "N", "SLF", "EM"]
 "__init__.py" = ["D107", "D104"]
 
 
@@ -192,10 +204,10 @@ testpaths = ["tests"]
 # -------------------------------
 [tool.mypy]
 python_version = "3.13"
-strict = false
-ignore_missing_imports = true
-warn_unused_ignores = true
-mypy_path = ["src"]
+strict = true
+#ignore_missing_imports = true
+#warn_unused_ignores = true
+#mypy_path = ["src"]
 
 
 

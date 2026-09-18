@@ -72,7 +72,8 @@ class SettingsService:
         settings (via dispatcher if provided).
         """
         if not callable(callback):
-            raise TypeError("SettingsService.subscribe requires a callable")
+            msg = "SettingsService.subscribe requires a callable"
+            raise TypeError(msg)
 
         with self._lock:
             if callback not in self._subs:
@@ -107,7 +108,8 @@ class SettingsService:
         you can call reload().
         """
         if not isinstance(new_settings, dict):
-            raise TypeError("new_settings must be a dict")
+            msg = "new_settings must be a dict"
+            raise TypeError(msg)
 
         with self._lock:
             self._settings = copy.deepcopy(new_settings)
@@ -123,7 +125,8 @@ class SettingsService:
         try:
             s = self._loader()
             if not isinstance(s, dict):
-                raise ValueError("load_settings returned non-dict")
+                msg = "load_settings returned non-dict"
+                raise ValueError(msg)
             return s
         except Exception as e:
             self._logger.exception("SettingsService: failed to load settings; falling back to empty dict. Error: %s", e)
