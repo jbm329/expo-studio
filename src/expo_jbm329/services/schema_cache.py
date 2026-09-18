@@ -100,7 +100,7 @@ class SchemaCacheManager:
         self._prefetch_limit: int | None = None
         self._batch_size: int | None = None
         self._ttl_seconds: int | None = None
-        self._logger = logger if logger else logging.getLogger("applogger.service")
+        self._logger = logger or logging.getLogger("applogger.service")
 
     # -------------------------------------------------------------------------
     # Public properties

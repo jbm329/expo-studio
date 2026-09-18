@@ -227,7 +227,7 @@ def _apply_auth(
         if not auth.username or not auth.password:
             raise RestClientError("Basic auth requires username and password")
         import base64
-        raw = f"{auth.username}:{auth.password}".encode("utf-8")
+        raw = f"{auth.username}:{auth.password}".encode()
         headers["Authorization"] = "Basic " + base64.b64encode(raw).decode("ascii")
         return
 

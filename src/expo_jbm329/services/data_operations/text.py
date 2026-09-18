@@ -63,7 +63,7 @@ def set_cell_value_text(
 
     new_df = df.copy()
     s = new_df[column].astype("string")
-    s.iat[row_index] = str(new_value)
+    s.iloc[row_index] = str(new_value)
     new_df[column] = s
 
     return new_df

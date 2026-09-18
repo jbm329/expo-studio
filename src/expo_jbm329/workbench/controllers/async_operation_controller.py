@@ -619,7 +619,7 @@ class AsyncOperationController:
             show_status_progress=show_status_progress,
             show_started_in_status=show_started_in_status,
             corr_id=corr_id,
-        )   
+        )
 
     # ==================================================================
     # Internal helpers

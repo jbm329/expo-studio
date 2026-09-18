@@ -14,4 +14,3 @@ class Language(StrEnum):
             Language.SWEDISH: "Svenska",
             Language.ENGLISH: "English",
         }[self]
-    

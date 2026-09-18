@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Literal
+from typing import Any, Literal, override
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QIcon, QTextCursor
@@ -90,7 +90,7 @@ class RestConnectionEditor(QDialog):
         """Initializes the RestConnectionEditor dialog."""
         super().__init__(parent)
         self._preset_name = preset_name
-        self._dialogs = dialogs if dialogs else QtDialogService()
+        self._dialogs = dialogs or QtDialogService()
         self._icon_service = icon_service
 
         self.setWindowTitle(self.tr("REST API connections"))
@@ -117,7 +117,7 @@ class RestConnectionEditor(QDialog):
 
         self.btn_scb_browser = QPushButton(self.tr("SCB query builder…"))
         self.btn_scb_browser.clicked.connect(self.open_scb_browser)
-        
+
         self.url_edit = QLineEdit()
 
         self.method_combo = QComboBox()
@@ -179,7 +179,7 @@ class RestConnectionEditor(QDialog):
         wizard_btns = QHBoxLayout()
         wizard_btns.addWidget(self.btn_scb_browser)
         wizard_panel.body_layout.addRow(wizard_btns)
-        general_panel = _SectionPanel(self.tr("General"), checked=True)        
+        general_panel = _SectionPanel(self.tr("General"), checked=True)
         general_panel.body_layout.addRow(self.tr("URL:"), self.url_edit)
         general_panel.body_layout.addRow(self.tr("Method:"), self.method_combo)
         general_panel.body_layout.addRow(self.tr("Response path:"), self.response_path_edit)
@@ -269,6 +269,7 @@ class RestConnectionEditor(QDialog):
     # ------------------------------------------------------------------
     # showEvent
     # ------------------------------------------------------------------
+    @override
     def showEvent(self, event):
         """Loads connection data and populates list."""
         super().showEvent(event)

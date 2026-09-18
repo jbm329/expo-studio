@@ -8,7 +8,7 @@ schema metadata.
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
-from typing import Any
+from typing import Any, override
 
 from PyQt6.QtCore import QMimeData, Qt
 from PyQt6.QtWidgets import (
@@ -180,6 +180,7 @@ class SchemaTreeWidget(QTreeWidget):
     # --------------------------------------------------------------------------
     # Qt override: build mime data for drag
     # --------------------------------------------------------------------------
+    @override
     def mimeData(self, items: Iterable[QTreeWidgetItem]) -> QMimeData:
         """Builds MIME data for drag operations.
 

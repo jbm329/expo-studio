@@ -112,7 +112,7 @@ class ResultTabColumnPropertiesController:
         if not isinstance(model, DataFrameModel):
             return
 
-        df = model.dataFrame()
+        df = model.data_frame()
         if not isinstance(df, pd.DataFrame):
             return
 

@@ -28,7 +28,7 @@ class IconService(QObject):
         """
         super().__init__()
         self._theme_service = theme_service
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._logger = logger or logging.getLogger("applogger.ui")
 
         # react to GUI theme changes
         theme_service.theme_changed.connect(self._on_theme_changed)

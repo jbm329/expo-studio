@@ -266,7 +266,7 @@ class ResultTabHeaderCleanActions:
             scope=f"lowercase:{safe_col}",
             operation_name=self._tr(self.TR_LOWERCASE_OPERATION),
             corr_id=corr_id,
-        )        
+        )
 
     def clean_upper(self, view: QTableView, column: int) -> None:
         """Convert a column in the result table to uppercase.
@@ -388,7 +388,7 @@ class ResultTabHeaderCleanActions:
             scope=f"titlecase:{safe_col}",
             operation_name=self._tr(self.TR_TITLECASE_OPERATION),
             corr_id=corr_id,
-        )      
+        )
 
     def clean_capitalize(self, view: QTableView, column: int) -> None:
         """Convert a column in the result table to capitalize.
@@ -514,7 +514,7 @@ class ResultTabHeaderCleanActions:
             scope=f"keep_digits:{safe_col}",
             operation_name=self._tr(self.TR_KEEP_DIGITS_OPERATION),
             corr_id=corr_id,
-        )        
+        )
 
     def clean_keep_letters(self, view: QTableView, column: int) -> None:
         """Keep only letters in a column in the result table.
@@ -579,16 +579,16 @@ class ResultTabHeaderCleanActions:
 
     def clean_whitespace(self, view: QTableView, column: int) -> None:
         """Normalizes whitespace in a column in the result table.
-        
+
         Args:
             view: The QTableView instance where the action is performed.
             column: The index of the column to clean whitespace from.
-            
+
         Returns:
             None
         """
         ok, df, col, _ = self._resolve_df_col_series(view, column)
-        
+
         if not ok or df is None or col is None:
             return
 
@@ -635,22 +635,22 @@ class ResultTabHeaderCleanActions:
             scope=f"normalize_whitespace:{safe_col}",
             operation_name=self._tr(self.TR_NORMALIZE_WHITESPACE_OPERATION),
             corr_id=corr_id,
-        )        
+        )
 
     def clean_remove(self, view: QTableView, column: int) -> None:
         """Remove text from a column in the result table.
-                                
+
         Args:
             view: The QTableView instance.
-            column: The index of the column to remove text from.            
-            
+            column: The index of the column to remove text from.
+
         Returns:
             None
         """
         ok, df, col, _ = self._resolve_df_col_series(
             view, column
         )
-        
+
         if not ok or df is None or col is None:
             return
 
@@ -715,20 +715,20 @@ class ResultTabHeaderCleanActions:
             scope=f"remove_text:{safe_col}",
             operation_name=self._tr(self.TR_REMOVE_TEXT_OPERATION),
             corr_id=corr_id,
-        )        
+        )
 
     def clean_remove_regex(self, view: QTableView, column: int) -> None:
         """Remove text from a column in the result table using a regular expression.
-        
+
         Args:
             view: The QTableView instance.
             column: The index of the column to remove text from.
-            
+
         Returns:
             None
         """
         ok, df, col, _ = self._resolve_df_col_series(view, column)
-        
+
         if not ok or df is None or col is None:
             return
 
@@ -784,11 +784,11 @@ class ResultTabHeaderCleanActions:
             scope=f"remove_regex:{safe_col}",
             operation_name=self._tr(self.TR_REMOVE_REGEX_OPERATION),
             corr_id=corr_id,
-        )        
+        )
 
     def clean_replace(self, view: QTableView, column: int) -> None:
         """Replace text in a column in the result table.
-        
+
         Args:
             view: The QTableView instance.
             column: The index of the column to perform the operation on.
@@ -797,7 +797,7 @@ class ResultTabHeaderCleanActions:
             None
         """
         ok, df, col, _ = self._resolve_df_col_series(view, column)
-        
+
         if not ok or df is None or col is None:
             return
 

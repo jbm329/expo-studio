@@ -72,7 +72,7 @@ class SqlError:
     code: int | None  # vendor-specific error code (e.g., 2812)
     message: str  # English message for logging and i18n key
     hint: str | None = None  # English hint for logging and i18n key
-    
+
 
 @dataclass
 class SqlResult:

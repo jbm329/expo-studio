@@ -6,7 +6,7 @@ and the popup window to provide a smooth SQL autocompletion experience.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, override
 
 from PyQt6.QtCore import QEvent, QObject, Qt, QTimer
 from PyQt6.QtGui import QKeyEvent
@@ -83,6 +83,7 @@ class SqlAutocompleteController(QObject):
             )
 
     # ------------------------------------------------------------------ #
+    @override
     def eventFilter(self, obj: Any, event: QEvent) -> bool:
         """Filter events for the editor and popup.
 
@@ -98,7 +99,7 @@ class SqlAutocompleteController(QObject):
         return super().eventFilter(obj, event)
 
     # ------------------------------------------------------------------ #
-    def _handle_keypress(self, event: QKeyEvent) -> bool:  # noqa: C901
+    def _handle_keypress(self, event: QKeyEvent) -> bool:
         key = event.key()
         text = event.text() or ""
 

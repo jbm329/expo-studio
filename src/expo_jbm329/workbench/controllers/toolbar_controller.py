@@ -141,12 +141,12 @@ class ToolbarController:
         self._action_export_data_cb = export_data
         self._action_join_data_cb = join_data
         self._action_concatenate_data_cb = concatenate_data
-        self._action_format_view_cb = format_view       
+        self._action_format_view_cb = format_view
         self._action_clear_cb = clear_editor
         self._action_refresh_schema_cb = refresh_schema
         self._action_undo_cb = undo
         self._action_visualize_cb = visualize_data
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._logger = logger or logging.getLogger("applogger.ui")
 
     # ------------------------------------------------------------------
     def build(self, parent: QWidget) -> QToolBar:
@@ -242,11 +242,11 @@ class ToolbarController:
         tb.addAction(self._action_undo)
 
         tb.addSeparator()
-        
+
         # Format
         self._action_format_view = QAction(self._tr(self.TR_FROMAT_VIEW), tb)
         self._action_format_view.setCheckable(True)
-        tb.addAction(self._action_format_view)       
+        tb.addAction(self._action_format_view)
 
         self._connect_callbacks()
         self.apply_icons()
@@ -272,7 +272,7 @@ class ToolbarController:
 
         self._action_join_data.triggered.connect(self._action_join_data_cb)
         self._action_concatenate_data.triggered.connect(self._action_concatenate_data_cb)
-        self._action_visualize.triggered.connect(self._action_visualize_cb)        
+        self._action_visualize.triggered.connect(self._action_visualize_cb)
 
         self._action_clear.triggered.connect(self._action_clear_cb)
         self._action_refresh_schema.triggered.connect(self._action_refresh_schema_cb)
@@ -299,7 +299,7 @@ class ToolbarController:
 
         self._action_join_data.setIcon(self._icons.get("join"))
         self._action_concatenate_data.setIcon(self._icons.get("concatenate"))
-        self._action_visualize.setIcon(self._icons.get("chart"))        
+        self._action_visualize.setIcon(self._icons.get("chart"))
 
         self._action_clear.setIcon(self._icons.get("file_clear"))
         self._action_refresh_schema.setIcon(self._icons.get("refresh"))
@@ -362,7 +362,7 @@ class ToolbarController:
 
         self._action_run10.setText(self._tr(self.TR_RUN_TOP10))
         self._action_run10.setToolTip(self._tr(self.TR_RUN_TOP10_SHORTCUT))
-        
+
         self._action_export_csv.setText(self._tr(self.TR_EXPORT_CSV))
         self._action_export_excel.setText(self._tr(self.TR_EXPORT_EXCEL))
         self._action_export_data.setText(self._tr(self.TR_EXPORT_DATA))

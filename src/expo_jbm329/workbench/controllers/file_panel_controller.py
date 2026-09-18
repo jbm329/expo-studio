@@ -27,7 +27,7 @@ from expo_jbm329.utils.i18n_utils import tr, tr_fmt
 
 class FilePanelController:
     """Coordinate file-panel interactions in the left dock."""
-   
+
     # --- i18n markers (pylupdate6-visible) -----------------------------
     TR_UNKNOWN_FILE_FORMAT = QT_TR_NOOP("Unknown file format")
     TR_CANNOT_OPEN_FILE = QT_TR_NOOP("The file can not be opened:\n\n{file}")
@@ -347,13 +347,13 @@ class FilePanelController:
         ok = self._delete_via_model(index)
 
         if ok:
-            self._logger.info("FilePanelController: file deleted (path=%s)", p)           
-           
+            self._logger.info("FilePanelController: file deleted (path=%s)", p)
+
             self._set_status(self._tr_fmt(self.TR_FILE_DELETED, file=path.name), 8000)
 
         else:
             self._logger.error("FilePanelController: delete failed (path=%s)", p)
-            
+
             self._set_status(self._tr(self.TR_FAILED_TO_DELETE_FILE), 8000)
 
             err_msg = self._tr_fmt(self.TR_SOMETHING_WENT_WRONG_DELETE_FILE, path=str(path))

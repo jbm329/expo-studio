@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from expo_jbm329.app.settings.config_store import DEFAULT_SETTINGS, _validate_settings_inplace, merge_defaults
+from expo_jbm329.app.settings.config_store import (
+    DEFAULT_SETTINGS,
+    _validate_settings_inplace,
+    merge_defaults,
+)
 
 
 def test_settings_validation_clamps_numeric_bounds():

@@ -21,6 +21,7 @@ class ScbSelection:
     codelist: str | None = None
 
     def __post_init__(self) -> None:
+        """Normalize and validate the selection data during dataclass initialization."""
         variable_name = str(self.variable).strip()
         if not variable_name:
             raise ScbQueryError("SCB variable name must not be empty")

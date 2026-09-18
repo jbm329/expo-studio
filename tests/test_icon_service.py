@@ -33,7 +33,7 @@ def test_init(theme_service, qt_app):
 
 def test_on_theme_changed(qt_app, icon_service):
     """Verifies QPixmapCache clear and icons_updated signal."""
-    with patch('PyQt6.QtGui.QPixmapCache.clear') as mock_clear:
+    with patch("PyQt6.QtGui.QPixmapCache.clear") as mock_clear:
         # Connect a spy to the signal
         spy = MagicMock()
         icon_service.icons_updated.connect(spy)
@@ -72,14 +72,14 @@ def test_get_icon(qt_app, icon_service, theme_service):
     """Verifies icon retrieval and disabled variant generation."""
     # We need to mock QPixmap to avoid looking for real files in QRC
     # Patching at the module level where IconService is defined
-    with patch('expo_jbm329.workbench.icon.icon_service.QPixmap') as mock_pixmap_cls:
+    with patch("expo_jbm329.workbench.icon.icon_service.QPixmap") as mock_pixmap_cls:
         # Create a REAL QPixmap but empty, so QIcon.addPixmap doesn't complain about MagicMock
         mock_pix = QPixmap(16, 16)
         mock_pixmap_cls.return_value = mock_pix
         
         # Also need to mock _make_disabled_pixmap because it uses QPainter on real Pixmaps
         disabled_pix = QPixmap(16, 16)
-        with patch.object(icon_service, '_make_disabled_pixmap', return_value=disabled_pix) as mock_make_disabled:
+        with patch.object(icon_service, "_make_disabled_pixmap", return_value=disabled_pix) as mock_make_disabled:
             icon = icon_service.get("test_icon")
             
             assert isinstance(icon, QIcon)

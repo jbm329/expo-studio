@@ -140,7 +140,7 @@ def test_bind_and_update_tab(controller):
 
 def test_active_tab_text_helpers(controller):
     ctrl, _, _ = controller
-    tab = ctrl.create_tab(base_title="MyQuery")
+    ctrl.create_tab(base_title="MyQuery")
     widget = ctrl.get_active_editor_widget()
     widget.set_sql_text("SELECT 1")
 

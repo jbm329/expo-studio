@@ -128,7 +128,7 @@ def test_icon_fallback_on_exception(icon_provider):
     """Verifies graceful fallback to super().icon() on unexpected errors."""
     # Pass something that might cause an error in our logic but is handled by QFileIconProvider
     # or just trigger an exception by mocking _icon_for_name to fail
-    with patch.object(icon_provider, '_icon_for_name', side_effect=Exception("Test Error")):
+    with patch.object(icon_provider, "_icon_for_name", side_effect=Exception("Test Error")):
         # We need a real QFileInfo to trigger Case 2
         info = QFileInfo("test.txt")
         

@@ -1,3 +1,5 @@
+"""GUI entry point for the Expo Studio desktop application."""
+
 from __future__ import annotations
 
 import logging
@@ -54,4 +56,3 @@ def gui_main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(gui_main())
-

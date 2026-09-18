@@ -35,7 +35,7 @@ class ResultTabHeaderFillActions:
     # ------------------------------------------------------------------
 
     TR_FAILURE = QT_TR_NOOP("Failure")
-    TR_COULD_NOT_PERFORM = QT_TR_NOOP("Could not perform the operation:\n{error}")    
+    TR_COULD_NOT_PERFORM = QT_TR_NOOP("Could not perform the operation:\n{error}")
 
     TR_NO_NA = QT_TR_NOOP("No missing values")
     TR_NO_NA_IN_COLUMN = QT_TR_NOOP(
@@ -197,17 +197,17 @@ class ResultTabHeaderFillActions:
         ok, df, col, s = self._resolve_df_col_series(
             view,
             column
-        )        
-        
+        )
+
         if not ok or df is None or col is None or s is None:
             return
 
         safe_df = df
         safe_col = col
         safe_s = s
-        
+
         if not self._ensure_missing(safe_s, safe_col):
-            return        
+            return
 
         self._logger.debug(
             "ResultTabHeaderFillActions: fill NA with mean requested for column '%s'.",
@@ -275,7 +275,7 @@ class ResultTabHeaderFillActions:
         safe_df = df
         safe_col = col
         safe_s = s
-        
+
         if not self._ensure_missing(safe_s, safe_col):
             return
 
@@ -339,14 +339,14 @@ class ResultTabHeaderFillActions:
             view,
             column
         )
-        
+
         if not ok or df is None or col is None or s is None:
             return
 
         safe_df = df
         safe_col = col
         safe_s = s
-        
+
         if not self._ensure_missing(safe_s, safe_col):
             return
 
@@ -416,7 +416,7 @@ class ResultTabHeaderFillActions:
         safe_df = df
         safe_col = col
         safe_s = s
-        
+
         if not self._ensure_missing(safe_s, safe_col):
             return
 
@@ -491,7 +491,7 @@ class ResultTabHeaderFillActions:
                     default="",
                 )
                 if not ok:
-                    return          
+                    return
 
         except Exception as e:
             self._fail(e)

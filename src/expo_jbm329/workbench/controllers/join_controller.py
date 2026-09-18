@@ -120,7 +120,7 @@ class JoinController:
         self._list_tab_titles = list_tab_titles
         self._get_df = get_df_for_tab
         self._set_status = set_status
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._logger = logger or logging.getLogger("applogger.ui")
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
 
     # ------------------------------------------------------------------
@@ -146,10 +146,10 @@ class JoinController:
                     continue
 
                 for c1 in df1.columns:
-                    s1 = cast(pd.Series, df1[c1])
+                    s1 = cast("pd.Series", df1[c1])
 
                     for c2 in df2.columns:
-                        s2 = cast(pd.Series, df2[c2])
+                        s2 = cast("pd.Series", df2[c2])
 
                         if self._are_joinable(s1, s2):
                             joinable_map_dd[(t1, c1, t2)].add(c2)

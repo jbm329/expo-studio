@@ -53,7 +53,7 @@ class DerivedColumnController:
     TR_CREATING_COLUMN = QT_TR_NOOP("Creating derived column '{column_name}'")
     TR_NO_ACTIVE_TAB = QT_TR_NOOP("No active tab found.")
     TR_VALID_FORMULA = QT_TR_NOOP("Valid formula.")
-    
+
     # Errors
     TR_FAILURE = QT_TR_NOOP("Failure")
 

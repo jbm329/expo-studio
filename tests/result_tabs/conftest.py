@@ -18,10 +18,10 @@ class StubModel:
         self._df = df
         self.parent_view = parent
 
-    def dataFrame(self):
+    def data_frame(self):
         return self._df
 
-    def setDataFrame(self, new_df, **kwargs):
+    def set_data_frame(self, new_df, **kwargs):
         self._df = new_df
         if self.parent_view is not None:
             self.parent_view._df = new_df
@@ -78,15 +78,15 @@ class StubView:
 
     def setModel(self, m):
         self._model = m
-        if hasattr(m, "dataFrame"):
-            self._df = m.dataFrame()
-            if hasattr(m, "setDataFrame"):
+        if hasattr(m, "data_frame"):
+            self._df = m.data_frame()
+            if hasattr(m, "set_data_frame"):
                 m.parent_view = self
 
     def model(self):
         return self._model
 
-    def setDataFrame(self, df):
+    def set_data_frame(self, df):
         self._df = df
         if self._model is not None:
             self._model._df = df
@@ -169,11 +169,6 @@ class StubTabs:
             if self._current >= len(self._widgets):
                 self._current = len(self._widgets) - 1
 
-    def tabData(self, index):
-        return self._data.get(index)
-
-    def setTabData(self, index, value):
-        self._data[index] = value
 
 
 class StubParent(QWidget):

@@ -509,7 +509,7 @@ class FileJobService:
         new_ext = allowed_list[0]
         fixed = p.with_name(base_name + new_ext)
 
-        # “Toast” via statusbar (non-modal, 5s)        
+        # “Toast” via statusbar (non-modal, 5s)
         with contextlib.suppress(Exception):
             old_ext = old or self._tr(self.TR_MISSING)
             status = self._tr_fmt(self.TR_FILE_EXT_ADJUSTED, old_ext=old_ext, new_ext=new_ext)

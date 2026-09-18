@@ -395,7 +395,7 @@ def _numeric_series(df: pd.DataFrame, column: str) -> pd.Series:
     if not isinstance(numeric, pd.Series):
         numeric = pd.Series(numeric, index=series.index, name=series.name)
 
-    return cast(pd.Series, numeric)
+    return cast("pd.Series", numeric)
 
 
 def _get_unique_series(df: pd.DataFrame, column: str) -> pd.Series:
@@ -425,7 +425,7 @@ def _get_unique_series(df: pd.DataFrame, column: str) -> pd.Series:
             context={"column": column},
         )
 
-    return cast(pd.Series, df.iloc[:, location])
+    return cast("pd.Series", df.iloc[:, location])
 
 
 # =====================================================================
@@ -503,8 +503,8 @@ def _safe_divide(
     """
     # Scalar / scalar is the only case where Python would raise immediately.
     if not isinstance(left, pd.Series) and not isinstance(right, pd.Series):
-        left_value = cast(float, left)
-        right_value = cast(float, right)
+        left_value = cast("float", left)
+        right_value = cast("float", right)
 
         if right_value == 0:
             return pd.Series(pd.NA, index=index, dtype="Float64")
@@ -546,7 +546,7 @@ def _normalize_result_series(
     if not isinstance(numeric_raw, pd.Series):
         numeric_raw = pd.Series(numeric_raw, index=index, name=series.name)
 
-    numeric = cast(pd.Series, numeric_raw)
+    numeric = cast("pd.Series", numeric_raw)
 
     if replace_inf_with_na:
         numeric = _replace_infinite_with_na(numeric)

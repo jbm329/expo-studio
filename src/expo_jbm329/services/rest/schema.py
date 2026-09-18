@@ -67,7 +67,7 @@ def build_response_preview(
     sample = df.head(limit).to_dict(orient="records")
 
     return {
-        "row_count": int(len(df)),
+        "row_count": len(df),
         "columns": list(df.columns),
         "sample": sample,
         "empty": bool(df.empty),

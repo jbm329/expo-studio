@@ -43,7 +43,7 @@ class TranslationService(QObject):
         self._translator = QTranslator()
         self._locales_dir = get_i18n_root() / "locales"
         self._current_language: str | None = None
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._logger = logger or logging.getLogger("applogger.ui")
 
     def reload_settings(self, settings: dict) -> None:
         """Reload language configuration from application settings.

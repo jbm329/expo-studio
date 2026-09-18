@@ -130,7 +130,7 @@ class SqlAutoCompleter:
         return fallback
 
     # ------------------------------------------------------------------ #
-    def get_suggestions(self, text: str) -> list[str]:  # noqa: C901
+    def get_suggestions(self, text: str) -> list[str]:
         """Get autocomplete suggestions based on the provided text.
 
         Parses the text to determine if it's a schema, table, or column prefix

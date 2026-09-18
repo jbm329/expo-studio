@@ -91,7 +91,7 @@ class VisualizationDialog(QDialog):
 
         self._dataset_combo = QComboBox(panel)
         for ds in self._datasets:
-            label = f"{ds.title} ({ds.row_count} × {ds.column_count})"
+            label = f"{ds.title} ({ds.row_count} x {ds.column_count})"
             self._dataset_combo.addItem(label, ds.tab_id)
 
         if active_tab_id:

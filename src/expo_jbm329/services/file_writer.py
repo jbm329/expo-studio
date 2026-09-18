@@ -19,7 +19,7 @@ import pandas as pd
 from expo_jbm329.utils.format_utils import fmt_path, fmt_shape
 
 
-class ExportCancelled(Exception):
+class ExportCancelledError(Exception):
     """Raised when a user-initiated cancellation occurs during export.
 
     Attributes:
@@ -37,7 +37,7 @@ class ExportCancelled(Exception):
         sheets_written: int | None = None,
         corr_id: str | None = None,
     ):
-        """Initialize ExportCancelled."""
+        """Initialize ExportCancelledError."""
         super().__init__(message)
         self.path = path
         self.rows_written = rows_written
@@ -51,7 +51,7 @@ class FileWriter:
     Progress & cancel:
     - progress_cb is a callable that accepts integer values [0..100].
     - cancel_cb is a callable returning True if the operation should be aborted.
-    - On user-initiated cancellation, writers raise ExportCancelled (a partial file may exist).
+    - On user-initiated cancellation, writers raise ExportCancelledError (a partial file may exist).
     """
     __slots__ = (
         "_csv_encoding_default",
@@ -74,7 +74,7 @@ class FileWriter:
         Args:
             logger: Optional logger instance.
         """
-        self._logger = logger if logger else logging.getLogger("applogger.service")
+        self._logger = logger or logging.getLogger("applogger.service")
 
         # Settings
         self._csv_encoding_default = "utf-8"
@@ -175,12 +175,12 @@ class FileWriter:
             progress_cb: Callable[[int], None] | None = None,
             cancel_cb: Callable[[], bool] | None = None,
             corr_id: str | None = None,
-    ) -> Path:  
+    ) -> Path:
         """Writes CSV to disk.
 
         - For large datasets, writes in row chunks to reduce memory pressure.
         - Emits progress (0..100) when possible.
-        - If cancellation is requested, raises ExportCancelled (a partial file may exist).
+        - If cancellation is requested, raises ExportCancelledError (a partial file may exist).
 
         Cancellation semantics:
             * No-chunk path (single pandas call): only honored before the write begins.
@@ -216,7 +216,7 @@ class FileWriter:
                 self._logger.debug(
                     "FileWriter: save CSV cancelled before write (corr=%s, path=%s)", corr_id, fmt_path(path)
                 )
-                raise ExportCancelled(
+                raise ExportCancelledError(
                     "CSV export cancelled before write",
                     path=fmt_path(path),
                     rows_written=0,
@@ -257,7 +257,7 @@ class FileWriter:
                     "FileWriter: save CSV cancelled mid-run (corr=%s, path=%s, rows_written=%s)",
                     corr_id, fmt_path(path), rows_written
                 )
-                raise ExportCancelled(
+                raise ExportCancelledError(
                     "FileWriter: CSV export cancelled during write",
                     path=fmt_path(path),
                     rows_written=rows_written,
@@ -314,7 +314,7 @@ class FileWriter:
         Behavior:
           - If rows exceed Excel's limit, automatically split across sheets: 'Data', 'Data_2', ...
           - Emits progress (0..100) when possible.
-          - On cancellation, raises ExportCancelled (a partial file may exist in streaming mode).
+          - On cancellation, raises ExportCancelledError (a partial file may exist in streaming mode).
         """
         path = Path(dest)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -349,7 +349,7 @@ class FileWriter:
                 self._logger.debug(
                     "FileWriter: save excel (pandas) cancelled before write (corr=%s, path=%s)", corr_id, fmt_path(path)
                 )
-                raise ExportCancelled(
+                raise ExportCancelledError(
                     "FileWriter: excel export cancelled before write (pandas path)",
                     path=fmt_path(path),
                     rows_written=0,
@@ -443,7 +443,7 @@ class FileWriter:
             Rules:
                 - pd.NA/NaN/NaT -> None (or na_rep if provided)
                 - tz-aware datetime -> timezone-naive datetime
-                - bytes/bytearray -> UTF‑8 decoded string (errors='replace')
+                - bytes/bytearray -> UTF-8 decoded string (errors='replace')
                 - numpy scalar types -> converted to Python native types
                 - float NaN/Inf -> None/na_rep
                 - pd.Interval / pd.Period -> string
@@ -588,7 +588,7 @@ class FileWriter:
                     written,
                     sheet_ix
                 )
-                raise ExportCancelled(
+                raise ExportCancelledError(
                     "Excel export cancelled during streaming write",
                     path=fmt_path(path),
                     rows_written=written,
@@ -631,7 +631,7 @@ class FileWriter:
                             "(corr=%s, path=%s, rows_written=%s, sheets_written=%s)",
                             corr_id, fmt_path(path), written, sheet_ix
                         )
-                        raise ExportCancelled(
+                        raise ExportCancelledError(
                             "Excel export cancelled during streaming write",
                             path=fmt_path(path),
                             rows_written=written,
@@ -661,7 +661,7 @@ class FileWriter:
                             "(corr=%s, path=%s, rows_written=%s, sheets_written=%s)",
                             corr_id, fmt_path(path), written, sheet_ix
                         )
-                        raise ExportCancelled(
+                        raise ExportCancelledError(
                             "Excel export cancelled during streaming write",
                             path=fmt_path(path),
                             rows_written=written,

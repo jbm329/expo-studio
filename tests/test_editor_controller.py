@@ -3,8 +3,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from PyQt6.QtCore import QEvent, Qt
-from PyQt6.QtGui import QTextCursor
-from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtGui import QKeyEvent, QTextCursor
 from PyQt6.QtWidgets import QPlainTextEdit
 
 from expo_jbm329.workbench.controllers.editor_controller import EditorController

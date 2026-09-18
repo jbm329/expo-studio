@@ -1,13 +1,17 @@
 # tests/stubs.py
 from __future__ import annotations
+
 from pathlib import Path
 from types import SimpleNamespace
-from PyQt6.QtCore import QObject, pyqtSignal
+
 import pandas as pd
+from PyQt6.QtCore import QObject, pyqtSignal
+
 from expo_jbm329.gui.dialogs.service.dialog_service import ProfileChoice
 from expo_jbm329.gui.dialogs.service.null_dialog_service import NullDialogService
 from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import NullFileDialogService
 from expo_jbm329.services.job_result import JobResult
+
 
 class DummyResult:
     """Mock for SqlResult from execute_sql_safe."""

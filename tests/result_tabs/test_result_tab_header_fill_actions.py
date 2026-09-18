@@ -3,7 +3,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pandas as pd
-from PyQt6.QtWidgets import QWidget, QTableView
+from PyQt6.QtWidgets import QTableView, QWidget
 
 from expo_jbm329.workbench.controllers.result_tabs.result_tab_header_fill_actions import (
     ResultTabHeaderFillActions,

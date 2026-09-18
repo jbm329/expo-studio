@@ -240,7 +240,7 @@ class ResultTabCellActions:
             filter_not_equals,
             filter_notna,
         )
-        
+
         def _work(*, progress_cb=None, cancel_cb=None, **_):
             if cancel_cb and cancel_cb():
                 return None
@@ -400,7 +400,7 @@ class ResultTabCellActions:
 
         def _apply_result(new_df):
             if new_df is None:
-                return           
+                return
 
             self._apply_new_dataframe(
                 view,
@@ -423,7 +423,7 @@ class ResultTabCellActions:
                     column_name,
                     str(row_index + 1),
                     corr_id,
-                )            
+                )
 
         self._async_ops.run_dataframe_operation(
             view=view,

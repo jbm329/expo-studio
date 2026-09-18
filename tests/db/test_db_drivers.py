@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from expo_jbm329.db.core.models import ConnectionConfig
 from expo_jbm329.db.core.di import ServiceRegistry
+from expo_jbm329.db.core.models import ConnectionConfig
 from expo_jbm329.db.drivers.sa_mysql import SqlAlchemyMySqlDriver
 from expo_jbm329.db.drivers.sa_odbc import SqlAlchemyOdbcDriver
 from expo_jbm329.db.drivers.sa_sqlite import SqlAlchemySqliteDriver

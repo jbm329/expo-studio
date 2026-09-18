@@ -31,7 +31,7 @@ class WorkbenchUIRefs:
     schema_tree: SchemaTreeWidget
     files_tree: FileTreeWidget
     rest_tree: RestTreeWidget
-    files_model: QFileSystemModel    
+    files_model: QFileSystemModel
 
     # UI callbacks
     set_status: Callable[[str, int | None], None]

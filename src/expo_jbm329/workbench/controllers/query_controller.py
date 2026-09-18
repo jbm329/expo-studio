@@ -109,8 +109,8 @@ class QueryController:
         self._set_status = set_status
         self._get_sql = get_sql
         self._get_current_connection = get_current_connection
-        self._dialogs = dialogs if dialogs else QtDialogService()
-        self._logger = logger if logger else logging.getLogger("applogger.service")
+        self._dialogs = dialogs or QtDialogService()
+        self._logger = logger or logging.getLogger("applogger.service")
 
     # ==================================================================
     # Public API - invoked by toolbar buttons / shortcuts

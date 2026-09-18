@@ -17,7 +17,7 @@ from expo_jbm329.services.data_processing import (
     generate_profile_report,
 )
 from expo_jbm329.services.file_loader import FileLoader, OperationCancelledError
-from expo_jbm329.services.file_writer import ExportCancelled, FileWriter
+from expo_jbm329.services.file_writer import ExportCancelledError, FileWriter
 from expo_jbm329.services.job_result import JobResult
 from expo_jbm329.utils.format_utils import fmt_path, fmt_shape
 
@@ -52,7 +52,7 @@ class DataIOService:
         """
         self._loader = loader
         self._writer = writer
-        self._logger = logger if logger else logging.getLogger("applogger.service")
+        self._logger = logger or logging.getLogger("applogger.service")
 
     # ==================================================================
     # Settings (propagate to loader/writer)
@@ -242,7 +242,7 @@ class DataIOService:
             )
             return JobResult(ok=True, elapsed=dt, path=dest_str, corr_id=corr_id)
 
-        except ExportCancelled as ce:
+        except ExportCancelledError as ce:
             dt = time.perf_counter() - t0
             self._logger.info(
                 "DataIOService: export CSV cancelled (corr=%s, path=%s, ms=%.1f, rows_written=%s of %s)",
@@ -310,7 +310,7 @@ class DataIOService:
 
         t0 = time.perf_counter()
         try:
-            # Delegate to FileWriter; it will raise ExportCancelled on user cancellation.
+            # Delegate to FileWriter; it will raise ExportCancelledError on user cancellation.
             self._writer.save_excel(
                 df,
                 dest_str,
@@ -327,7 +327,7 @@ class DataIOService:
             )
             return JobResult(ok=True, elapsed=dt, path=dest_str, corr_id=corr_id)
 
-        except ExportCancelled as ce:
+        except ExportCancelledError as ce:
             # Cancellation path: provide informative logging including partial counters if available.
             dt = time.perf_counter() - t0
             rows_written = getattr(ce, "rows_written", None)

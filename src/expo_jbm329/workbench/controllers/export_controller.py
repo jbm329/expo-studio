@@ -76,7 +76,7 @@ class ExportController:
     TR_KIND_PROFILE = QT_TR_NOOP("Generate data profile report")
     TR_EXPORT_PROFILE_DIALOG_FILTER = QT_TR_NOOP("HTML files (*.html)")
     TR_EXPORT_PROFILE_STARTED_MSG = QT_TR_NOOP("Generating data profile report {title}…")
-    
+
     # Multiple tabs
     TR_EXPORT_DATA_MULTIPLE_TABS_DIALOG_TITLE = QT_TR_NOOP("Multiple datasets open")
     TR_EXPORT_DATA_MULTIPLE_TABS_DIALOG_TEXT = QT_TR_NOOP("Multiple datasets are open. What do you want to profile?")
@@ -90,7 +90,7 @@ class ExportController:
     TR_EXPORT_COMPARISON_PROFILE_DIALOG_FILTER = QT_TR_NOOP("HTML files (*.html)")
     TR_EXPORT_COMPARISON_PROFILE_STARTED_MSG = QT_TR_NOOP(
         "Generating data profile comparison report with {datasets_cnt} datasets…")
-    
+
     # General messages
     TR_EXPORT_STARTED_MSG = QT_TR_NOOP("Exporting data to {file_name}…")
     TR_DONE_STATUS_FILE = QT_TR_NOOP("{kind_label} completed: {file_name}")
@@ -489,7 +489,7 @@ class ExportController:
             default_name=default_name,
             filter_str=self._tr(self.TR_EXPORT_EXCEL_DIALOG_FILTER),
         )
-        
+
         if not path:
             self._logger.debug("ExportController: export canceled by user (corr=%s, kind=%s)", corr, kind)
             return
@@ -668,7 +668,7 @@ class ExportController:
             default_name=default_name,
             filter_str=self._tr(self.TR_EXPORT_PROFILE_DIALOG_FILTER),
         )
-        
+
         if not path:
             self._logger.debug("ExportController: export canceled by user (corr=%s, kind=%s)", corr, kind)
             return
@@ -707,7 +707,7 @@ class ExportController:
                 job_id=job_id,
                 job_scope=job_scope,
                 corr_id=corr,
-            )       
+            )
 
         started_msg = self._tr_fmt(self.TR_EXPORT_PROFILE_STARTED_MSG, title=title)
         self._run_export_job(
@@ -908,7 +908,7 @@ class ExportController:
         # Failed export
         fail_status = self._tr_fmt(self.TR_DONE_STATUS_FAIL, kind_label=kind_label)
         self._logger.error(
-            "ExportController: export failed (corr=%s, kind=%s): %s", 
+            "ExportController: export failed (corr=%s, kind=%s): %s",
             corr,
             kind,
             res.error or self._tr(self.TR_EXCEPT_UNKNOWN_ERROR)

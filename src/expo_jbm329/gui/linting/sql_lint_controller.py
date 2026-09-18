@@ -11,6 +11,7 @@ import contextlib
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import override
 
 from PyQt6.QtCore import QEvent, QObject, QTimer
 from PyQt6.QtGui import QColor, QTextCharFormat, QTextCursor
@@ -149,6 +150,7 @@ class SqlLintController(QObject):
         with contextlib.suppress(RuntimeError):
             self.editor.setExtraSelections([])
 
+    @override
     def eventFilter(self, obj: object, event: QEvent) -> bool:
         """Show diagnostic tooltip when hovering over a rendered diagnostic."""
         if self._disposed:

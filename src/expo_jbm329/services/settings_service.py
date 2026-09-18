@@ -54,7 +54,7 @@ class SettingsService:
         self._dispatcher = dispatcher
         self._subs: list[Subscriber] = []
         self._settings: dict = initial_settings if initial_settings is not None else self._safe_load()
-        self._logger = logger if logger else logging.getLogger("applogger.service")
+        self._logger = logger or logging.getLogger("applogger.service")
         self._logger.debug("SettingsService initialized.")
 
     # -----------------------------

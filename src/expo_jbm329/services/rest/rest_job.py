@@ -50,7 +50,7 @@ def fetch_rest_dataset(
             )
 
         # ---------------- HTTP fetch ----------------
-        payloads, http_elapsed = fetch_json_pages(
+        payloads, _ = fetch_json_pages(
             config,
             progress_cb=progress_cb,
             cancel_cb=cancel_cb,

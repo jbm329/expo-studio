@@ -1,6 +1,8 @@
 """Delegate controlling how column values are displayed."""
 from __future__ import annotations
 
+from typing import override
+
 import pandas as pd
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
@@ -27,6 +29,7 @@ class ResultTabColumnPresentationDelegate(QStyledItemDelegate):
         super().__init__(parent)
         self._semantics_by_column_index = semantics_by_column_index
 
+    @override
     def initStyleOption(
         self,
         option: QStyleOptionViewItem,

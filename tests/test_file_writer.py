@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from expo_jbm329.services.file_writer import ExportCancelled, FileWriter
+from expo_jbm329.services.file_writer import ExportCancelledError, FileWriter
 
 
 @pytest.fixture
@@ -34,6 +34,6 @@ def test_save_csv_can_be_cancelled_before_write(tmp_path: Path, writer: FileWrit
     path = tmp_path / "out.csv"
     df = pd.DataFrame({"X": [1]})
 
-    with pytest.raises(ExportCancelled):
+    with pytest.raises(ExportCancelledError):
         writer.save_csv(df, path, cancel_cb=lambda: True)
 

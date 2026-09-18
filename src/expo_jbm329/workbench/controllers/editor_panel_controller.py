@@ -135,7 +135,7 @@ class EditorPanelController(QWidget):
         self._save_sql = save_sql
         self._save_sql_as = save_sql_as
         self._set_status = set_status
-        self._dialogs = dialogs if dialogs else QtDialogService()
+        self._dialogs = dialogs or QtDialogService()
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
 
         self._tab_context_menu: EditorTabContextMenu | None = None

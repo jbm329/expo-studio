@@ -74,7 +74,7 @@ class RestConnectionRegistry:
         """
         self.unregister_user_connections()
         self.load_user_connections(raw)
-    
+
     def load_user_connections(self, raw: dict[str, dict]) -> None:
         """Load persistent REST connections from config_store."""
         for name, cfg in raw.items():
@@ -164,7 +164,7 @@ class RestConnectionRegistry:
             if v in ("GET", "POST"):
                 return v
         return "GET"
-    
+
 
 # ----------------------------------------------------------------------
 # Singleton instance

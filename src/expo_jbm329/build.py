@@ -112,10 +112,10 @@ def _chmod_writable(path: Path):
     This is primarily used to handle read-only files on Windows.
     """
     with contextlib.suppress(Exception):
-        os.chmod(path, stat.S_IWRITE)
+        path.chmod(stat.S_IWRITE)
 
 
-def _onerror(func, path, exc_info):
+def _onerror(func, path, _exc_info):
     """Error handler for shutil.rmtree.
 
     Attempts to make the path writable and retry the original operation.
@@ -187,7 +187,7 @@ def _pre_clean(root: Path):
             if not ok:
                 print(
                     "[pre-clean] WARNING: Could not fully clean directory "
-                    "(locked files?) – continuing anyway."
+                    "(locked files?) - continuing anyway."
                 )
 
 
@@ -218,7 +218,7 @@ def _ensure_app_ico(root: Path) -> Path:
     if not png_path.exists():
         print(
             f"[icon] Source PNG not found: {png_path} "
-            "– skipping ICO generation."
+            "- skipping ICO generation."
         )
         return ico_path
 
@@ -496,7 +496,7 @@ def _build_windows_installer(root: Path, onedir_dir: Path) -> Path | None:
     return out_dir
 
 
-def build_exe(onefile: bool = False, make_release: bool = False) -> int:  # noqa: C901
+def build_exe(onefile: bool = False, make_release: bool = False) -> int:
     """Build the Windows executable using PyInstaller.
 
     The build is performed via `uv run` to ensure a clean environment with
@@ -535,7 +535,7 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:  # noqa
     # Generate a basic onedir spec file on first run
     if not spec_path.exists():
         print(
-            "[build-exe] expo.spec not found – generating base spec (onedir) ..."
+            "[build-exe] expo.spec not found - generating base spec (onedir) ..."
         )
         cmd_gen = [
             "uv",

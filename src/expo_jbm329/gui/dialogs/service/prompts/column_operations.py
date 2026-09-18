@@ -144,7 +144,7 @@ def prompt_split_column(
 
     def _validate() -> None:
         if btn_ok is not None:
-            btn_ok.setEnabled(bool(txt_delim.text()))            
+            btn_ok.setEnabled(bool(txt_delim.text()))
 
     txt_delim.textChanged.connect(_validate)
 

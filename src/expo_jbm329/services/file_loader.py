@@ -86,7 +86,7 @@ class FileLoader:
             logger: Optional logger instance.
             encoding_detector: Optional callable to detect file encoding.
         """
-        self._logger = logger if logger else logging.getLogger("applogger.service")
+        self._logger = logger or logging.getLogger("applogger.service")
 
         # Settings (hydrated in reload_settings)
         self._config: dict = {}
@@ -95,7 +95,7 @@ class FileLoader:
         self._csv_read_chunk_size_default = 100_000
         self._csv_read_chunk_size = self._csv_read_chunk_size_default
         self._csv_sniff_delimiter: bool = True
-        self._csv_default_sep: str | None = None  
+        self._csv_default_sep: str | None = None
 
         self._excel_chunk_size_default = 25_000
         self._excel_chunk_size = self._excel_chunk_size_default
@@ -320,7 +320,7 @@ class FileLoader:
     # CSV reader
     # ================================================================
 
-    def _read_csv(self, req: ReadRequest) -> pd.DataFrame:  # noqa: C901
+    def _read_csv(self, req: ReadRequest) -> pd.DataFrame:
         """Read a CSV file with cooperative cancellation support.
 
         This method prefers chunked reading whenever cancellation support is needed,
@@ -384,7 +384,7 @@ class FileLoader:
         from typing import BinaryIO, cast
 
         with req.path.open("rb") as raw_f:
-            f = cast(BinaryIO, raw_f)
+            f = cast("BinaryIO", raw_f)
             it = pd.read_csv(
                 f,
                 sep=(sep or None),
@@ -427,7 +427,7 @@ class FileLoader:
     # ================================================================
     # Excel reader (streaming)
     # ================================================================
-    def _read_excel(self, req: ReadRequest) -> pd.DataFrame:  # noqa: C901
+    def _read_excel(self, req: ReadRequest) -> pd.DataFrame:
         """Read XLSX with a streaming approach (openpyxl read_only).
 
         Keeps memory usage reasonable and emits progress periodically.
@@ -547,9 +547,9 @@ class FileLoader:
             if req.index_col is not None and not df.empty:
                 try:
                     if isinstance(req.index_col, int):
-                        df.set_index(df.columns[req.index_col], inplace=True)
+                        df = df.set_index(df.columns[req.index_col])
                     else:
-                        df.set_index(req.index_col, inplace=True)
+                        df = df.set_index(req.index_col)
                 except Exception as e:
                     self._logger.warning(
                         "FileLoader: excel index assignment failed (index_col=%r, cols=%s): %s",
@@ -573,7 +573,7 @@ class FileLoader:
         df = pd.read_json(req.path)
 
         if req.index_col is not None:
-            df.set_index(req.index_col, inplace=True)
+            df = df.set_index(req.index_col)
 
         return df
 
@@ -589,7 +589,7 @@ class FileLoader:
             raise TypeError("Pickle file did not contain a pandas DataFrame")
 
         if req.index_col is not None:
-            df.set_index(req.index_col, inplace=True)
+            df = df.set_index(req.index_col)
 
         return df
 
@@ -602,7 +602,7 @@ class FileLoader:
         df = pd.read_feather(req.path)
 
         if req.index_col is not None:
-            df.set_index(req.index_col, inplace=True)
+            df = df.set_index(req.index_col)
 
         return df
 
@@ -615,7 +615,7 @@ class FileLoader:
         df = pd.read_parquet(req.path)
 
         if req.index_col is not None:
-            df.set_index(req.index_col, inplace=True)
+            df = df.set_index(req.index_col)
 
         return df
 
@@ -630,7 +630,7 @@ class FileLoader:
             fmt_path(req.path),
             fmt_path_size(req.path),
         )
-        
+
         if req.cancel_cb and req.cancel_cb():
             return pd.DataFrame()
 
@@ -665,7 +665,7 @@ class FileLoader:
         df = pd.read_spss(req.path)
 
         if req.index_col is not None:
-            df.set_index(req.index_col, inplace=True)
+            df = df.set_index(req.index_col)
 
         return df
 

@@ -42,7 +42,7 @@ class HighlighterThemeService(QObject):
         super().__init__()
 
         self._repo = HighlighterThemeRepository()
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._logger = logger or logging.getLogger("applogger.ui")
 
         # Track last resolved theme to avoid duplicate signals
         self._current_theme: Theme | None = None
@@ -85,7 +85,7 @@ class HighlighterThemeService(QObject):
             chosen = "dark" if os_dark else "light"
             return self._repo.get(chosen)
 
-        # Case 2: built‑in light/dark
+        # Case 2: built-in light/dark
         if self._settings_theme in ("light", "dark"):
             self._logger.debug("HighlighterThemeService: using explicit theme=%s", self._settings_theme)
             return self._repo.get(self._settings_theme)

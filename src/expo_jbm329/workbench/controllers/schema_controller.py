@@ -715,7 +715,7 @@ class SchemaController:
     def _on_column_context_menu(self, item: QTreeWidgetItem, meta: dict, pos: QPoint) -> None:
         """Handle context menu request for a column node."""
         name = meta.get("column")
-        if not name:            
+        if not name:
             return
 
         self._logger.debug(
@@ -743,7 +743,7 @@ class SchemaController:
 
         if chosen == act_distinct:
             self._insert_select_distinct(item, meta)
-    
+
     def _on_context_menu(self, pos: QPoint):
         """Handle context menu request."""
         item = self._tree.itemAt(pos)
@@ -817,7 +817,7 @@ class SchemaController:
     # ==================================================================
     # Error & state
     # ==================================================================
-    
+
     def _handle_schema_error(self, e: Exception, connection_name: str, status_text: str) -> None:
         """Handle schema loading error by logging and showing a dialog.
 

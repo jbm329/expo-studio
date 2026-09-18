@@ -1,5 +1,7 @@
 import pytest
+
 from expo_jbm329.gui.autocomplete.engine import SqlAutoCompleter
+
 
 @pytest.fixture
 def completer():

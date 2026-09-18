@@ -206,7 +206,7 @@ class RestController:
     def load_preset(self, preset_name: str) -> None:
         """Load a REST dataset from a named preset (user or sample)."""
         entry = rest_registry.get(preset_name)
-        
+
         if not entry:
             self._logger.error("RestController: REST preset not found: %s", preset_name)
             return
@@ -243,7 +243,7 @@ class RestController:
         """
         entry = rest_registry.get(preset_name)
         if not entry:
-            self._logger.error("RestController: copy_preset — preset not found: %s", preset_name)
+            self._logger.error("RestController: copy_preset - preset not found: %s", preset_name)
             return None
 
         # Build a unique default name

@@ -39,18 +39,18 @@ class ResultTabHeaderDtypeActions:
 
     # Generic dtype
     TR_CONVERT_TO_TEXT_OPERATION = QT_TR_NOOP("convert to text")
-    TR_CONVERTING_TO_TEXT = QT_TR_NOOP("Converting column to text: {column_name}")    
+    TR_CONVERTING_TO_TEXT = QT_TR_NOOP("Converting column to text: {column_name}")
     TR_CONVERTED_TO_TEXT = QT_TR_NOOP(
         "Converted column to text (string): {column_name}"
     )
-    
+
     # Int
     TR_CONVERT_TO_INT_OPERATION = QT_TR_NOOP("convert to integer")
     TR_CONVERTING_TO_INT = QT_TR_NOOP("Converting to integer: {column_name}")
     TR_CONVERTED_TO_INT = QT_TR_NOOP(
         "Converted column to integer (Int64): {column_name}"
     )
-    
+
     # Float
     TR_CONVERT_TO_FLOAT_OPERATION = QT_TR_NOOP("convert to float")
     TR_CONVERTING_TO_FLOAT = QT_TR_NOOP("Converting to float: {column_name}")
@@ -153,8 +153,8 @@ class ResultTabHeaderDtypeActions:
             apply_new_dataframe: Function to apply a new DataFrame to the view.
         """
         self._parent = parent
-        self._dialogs = dialogs if dialogs else QtDialogService()
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._dialogs = dialogs or QtDialogService()
+        self._logger = logger or logging.getLogger("applogger.ui")
         self._async_ops = async_ops
         self._resolve_df_col_series = resolve_df_col_series
         self._apply_new_dataframe = apply_new_dataframe
@@ -186,7 +186,7 @@ class ResultTabHeaderDtypeActions:
 
         self._logger.debug(
             "ResultTabHeaderDtypeActions: convert to string requested for column '%s'.",
-            safe_col,            
+            safe_col,
         )
 
         from expo_jbm329.services.data_operations.convert import to_string
@@ -198,7 +198,7 @@ class ResultTabHeaderDtypeActions:
             return to_string(safe_df, safe_col)
 
         corr_id = uuid.uuid4().hex
-        
+
         def _apply_result(new_df):
             if new_df is None:
                 return

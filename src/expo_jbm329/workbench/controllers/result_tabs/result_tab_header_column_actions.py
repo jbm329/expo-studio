@@ -61,7 +61,7 @@ class ResultTabHeaderColumnActions:
         "You must select at least two columns to merge."
     )
     TR_KEPT_ORIGINAL = QT_TR_NOOP("kept original")
-    TR_REMOVED_ORIGINAL = QT_TR_NOOP("removed original")    
+    TR_REMOVED_ORIGINAL = QT_TR_NOOP("removed original")
     TR_SELECT_TWO = QT_TR_NOOP("Select at least two columns.")
     TR_MERGE_COLUMNS_DONE = QT_TR_NOOP(
         "Merged columns '{columns_merged}' → '{new_name}' ({original})"
@@ -129,7 +129,7 @@ class ResultTabHeaderColumnActions:
             parent: The parent widget for dialogs and logging.
             dialogs: Service for showing dialogs, defaults to QtDialogService.
             logger: Logger for logging, defaults to applogger.ui logger.
-            async_ops: Controller for managing async operations.            
+            async_ops: Controller for managing async operations.
             resolve_df_col_series: Callable to resolve dataframe, column, and series.
             apply_new_dataframe: Callable to apply new dataframe to view.
         """
@@ -263,18 +263,18 @@ class ResultTabHeaderColumnActions:
         safe_df = df
 
         from expo_jbm329.services.data_operations.columns import join_columns
-        
+
         def _work(*, progress_cb=None, cancel_cb=None, **_):
             if cancel_cb and cancel_cb():
                 return None
-            
+
             return join_columns(
                 safe_df,
                 res["columns"],
                 delimiter=res["delimiter"],
                 new_name=res["new_name"],
                 keep_original=res["keep_original"],
-            )        
+            )
 
         cols_merged = ", ".join(res["columns"])
         original = (
@@ -291,7 +291,7 @@ class ResultTabHeaderColumnActions:
         )
 
         corr_id = uuid.uuid4().hex
-        
+
         def _apply_result(new_df):
             if new_df is None:
                 return
@@ -334,11 +334,11 @@ class ResultTabHeaderColumnActions:
 
         Prompts the user for a new column name and applies the rename
         operation using the service layer.
-                
+
         Args:
             view: The QTableView instance where the column is located.
             column: The index of the column to be renamed.
-            
+
         Returns:
             None
         """
@@ -347,7 +347,7 @@ class ResultTabHeaderColumnActions:
             column
         )
         if not ok or df is None or col_name is None:
-            return        
+            return
 
         new_name, ok = self._dialogs.prompt_text(
             parent=self._parent,
@@ -415,7 +415,7 @@ class ResultTabHeaderColumnActions:
             scope=f"rename:{safe_col}",
             operation_name=self._tr(self.TR_RENAME_OPERATION),
             corr_id=corr_id,
-        )        
+        )
 
     # ==================================================================
     # Remove column
@@ -467,7 +467,7 @@ class ResultTabHeaderColumnActions:
             return safe_drop_column(safe_df, column)
 
         corr_id = uuid.uuid4().hex
-        
+
         def _apply_result(new_df):
             if new_df is None:
                 return

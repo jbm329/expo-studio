@@ -37,3 +37,13 @@ def test_load_df_auto_can_be_cancelled_before_read(tmp_path: Path, loader: FileL
 
     with pytest.raises(OperationCancelledError):
         loader.load_df_auto(str(path), cancel_cb=lambda: True)
+
+
+def test_load_df_auto_sets_index_col(tmp_path: Path, loader: FileLoader):
+    path = tmp_path / "test.json"
+    pd.DataFrame({"id": [1, 2], "value": [10, 20]}).to_json(path, orient="records")
+
+    df = loader.load_df_auto(str(path), index_col="id")
+
+    assert list(df.index) == [1, 2]
+    assert list(df.columns) == ["value"]

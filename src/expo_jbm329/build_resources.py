@@ -1,4 +1,5 @@
-# src/expo_jbm329/build_resources.py
+"""Utilities for compiling UI resource files into PyQt-compatible Python modules."""
+
 import pathlib
 import re
 import subprocess
@@ -32,6 +33,7 @@ def patch_imports(py_file: pathlib.Path) -> None:
 
 
 def main() -> None:
+    """Compile the bundled Qt resource files into Python modules."""
     print("=== Building .qrc resources ===")
 
     for qrc in QRC_FILES:

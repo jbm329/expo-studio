@@ -444,7 +444,7 @@ def build_select_star(
     except Exception:
         # Fallback quoting if service initialization fails
         return f"SELECT * FROM [{schema}].[{object_name}]"
-    
+
 
 def build_select_distinct(
    connection_name: str,

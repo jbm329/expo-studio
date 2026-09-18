@@ -1,4 +1,4 @@
-# expo_jbm329/workbench/theme/themes/json_loader.py
+"""Load Qt theme definitions from JSON files into the app's Theme dataclass."""
 
 from __future__ import annotations
 
@@ -13,10 +13,9 @@ from expo_jbm329.workbench.highlighter.sql_highlighter import Theme
 
 
 def _parse_color(value: str | dict | None) -> QColor:
-    """
-    Parse a color from:
-      - "#RRGGBB"
-      - {"r":..,"g":..,"b":..,"a":..}
+    """Parse a color from supported JSON representations.
+
+    Supported values include a hex string like "#RRGGBB" and a dict of RGBA values.
     """
     if value is None:
         return QColor(0, 0, 0, 0)
@@ -36,10 +35,9 @@ def _parse_color(value: str | dict | None) -> QColor:
 
 
 def load_theme_from_json(path: Path) -> Theme:
-    """
-    Load a Theme from a JSON file.
-    Friendly name and values must match Theme dataclass fields.
-    Unknown keys are ignored.
+    """Load a Theme from a JSON file.
+
+    Friendly name and values must match Theme dataclass fields. Unknown keys are ignored.
     """
     data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
 

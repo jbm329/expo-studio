@@ -5,8 +5,7 @@ import pytest
 
 from expo_jbm329.gui.dialogs.service.dialog_service import ProfileChoice
 from expo_jbm329.services.job_result import JobResult
-from expo_jbm329.workbench.controllers.export_controller import ExportController
-from expo_jbm329.workbench.controllers.export_controller import ExportKind
+from expo_jbm329.workbench.controllers.export_controller import ExportController, ExportKind
 from tests.stubs import (
     DummyAsyncOps,
     DummyDataIO,

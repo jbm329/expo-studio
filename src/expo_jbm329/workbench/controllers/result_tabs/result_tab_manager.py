@@ -156,7 +156,7 @@ class ResultTabHandle:
 
 class ResultTabManager:
     """Controller for managing result tabs in the Expo workbench."""
-    
+
     # --------------------------------------------------------------
     # i18n markers
     # --------------------------------------------------------------
@@ -172,13 +172,13 @@ class ResultTabManager:
     TR_NO_DATA_AVAILABLE = QT_TR_NOOP("No data available for this view")
     TR_INVALID_INDEX = QT_TR_NOOP("Invalid column index: {column}")
     TR_COLUMN_NOT_AVAILABLE = QT_TR_NOOP("Column not available anymore.")
-    
+
     # Undo
     TR_UNDO = QT_TR_NOOP("Undo")
     TR_NOTHING_TO_UNDO = QT_TR_NOOP("Nothing to undo.")
     TR_LAST_ACTION_UNDONE = QT_TR_NOOP("Last action undone")
     TR_RESTORING_STATE = QT_TR_NOOP("Restoring previous state…")
-    
+
     # Tab context menu
     TR_RENAME_TAB = QT_TR_NOOP("Rename tab")
     TR_NEW_NAME = QT_TR_NOOP("New name:")
@@ -204,7 +204,7 @@ class ResultTabManager:
     @staticmethod
     def _tr_fmt(text: str, **kwargs: str) -> str:
         return tr_fmt("ResultTabManager", text, **kwargs)
-    
+
     __slots__ = (
         "__weakref__",
         "_async_ops",
@@ -314,7 +314,7 @@ class ResultTabManager:
         """Initialize menus."""
         self._header_menu = ResultTabColumnHeaderContextMenu(parent=self._parent)
         self._cell_context_menu = ResultTabCellContextMenu(parent=self._parent)
-    
+
     def _init_header_actions(self) -> None:
         """Initialize all header-related action controllers."""
         self._header_clean_actions = self._make_header_action(ResultTabHeaderCleanActions)
@@ -468,7 +468,7 @@ class ResultTabManager:
                 invalidate_cache=invalidate_cache,
                 status=status,
             ),
-            message=message if message else self._tr(self.TR_UPDATING_TABLE),
+            message=message or self._tr(self.TR_UPDATING_TABLE),
         )
 
     def create_new_result_tab(self, df: pd.DataFrame, title: str | None = None):
@@ -623,9 +623,9 @@ class ResultTabManager:
         model = view.model()
 
         if isinstance(model, DataFrameModel):
-            model.setDataFrame(df)
+            model.set_data_frame(df)
         else:
-            self._create_dataframe_model(view, df)       
+            self._create_dataframe_model(view, df)
 
         if self._should_apply_formatting(df):
             self._apply_presentation_delegate(view, df)
@@ -1395,7 +1395,7 @@ class ResultTabManager:
         if not isinstance(model, DataFrameModel):
             return False, None, None, None, None
 
-        df = model.dataFrame()
+        df = model.data_frame()
         view_col = index.column()
 
         try:
@@ -1762,7 +1762,7 @@ class ResultTabManager:
         # Push previous dataframe onto undo stack before replacing it.
         if push_undo and tab_id is not None:
             try:
-                old_df = model.dataFrame()
+                old_df = model.data_frame()
                 if isinstance(old_df, pd.DataFrame):
                     pushed = self._undo.push_snapshot(tab_id, old_df)
                     if pushed:
@@ -1778,7 +1778,7 @@ class ResultTabManager:
                 )
 
         try:
-            model.setDataFrame(new_df)
+            model.set_data_frame(new_df)
             with contextlib.suppress(Exception):
                 view.setModel(model)
 
@@ -1862,7 +1862,7 @@ class ResultTabManager:
                     pass
 
             with contextlib.suppress(Exception):
-                model.dataFrameReplaced.connect(invalidate_cache)
+                model.data_frame_replaced.connect(invalidate_cache)
 
         view.setModel(model)
 
@@ -2110,7 +2110,7 @@ class ResultTabManager:
             return False, None, None, None
 
         try:
-            df = model.dataFrame()
+            df = model.data_frame()
             if not isinstance(df, pd.DataFrame):
                 raise TypeError("Model returned non-DataFrame.")
 

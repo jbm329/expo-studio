@@ -12,7 +12,7 @@ Language Policy:
 from __future__ import annotations
 
 import time
-from typing import cast
+from typing import cast, override
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QCloseEvent
@@ -160,11 +160,11 @@ class ExpoStudio(QMainWindow):
         dock.setObjectName("Dock_Databas")
         dock.setWidget(self.schema_tree)
         dock.setAllowedAreas(Qt.DockWidgetArea.LeftDockWidgetArea)
-        
+
         features = QDockWidget.DockWidgetFeature.DockWidgetMovable
         features |= QDockWidget.DockWidgetFeature.DockWidgetFloatable
         dock.setFeatures(features)
-        
+
         dock.setMinimumWidth(300)
 
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock)
@@ -264,7 +264,7 @@ class ExpoStudio(QMainWindow):
         # Backend services
         # -------------------------------------------
         self.services = AppServices.build(self.settings)
-        self.ui_logger = self.services.log_ui        
+        self.ui_logger = self.services.log_ui
 
         # -------------------------------------------
         # Dialogs
@@ -336,7 +336,7 @@ class ExpoStudio(QMainWindow):
         )
 
         # ------------------------------------------------
-        # Editor tab → toolbar Run-state 
+        # Editor tab → toolbar Run-state
         # ------------------------------------------------
         def update_run_state_from_editor_tab() -> None:
             can_run = self.workbench_services.editor_panel.can_execute_sql()
@@ -469,6 +469,7 @@ class ExpoStudio(QMainWindow):
         if self.schema_tree:
             self.workbench_services.schema.retranslate_ui()
 
+    @override
     def changeEvent(self, event):
         """Handle Qt language change events."""
         if event.type() == event.Type.LanguageChange:
@@ -489,7 +490,7 @@ class ExpoStudio(QMainWindow):
                 )
             return
 
-        job_mgr = cast(object, services.job_mgr)
+        job_mgr = cast("object", services.job_mgr)
         if job_mgr is None:
             if self.ui_logger is not None:
                 self.ui_logger.warning(
@@ -524,7 +525,7 @@ class ExpoStudio(QMainWindow):
     # ==================================================================
     # Close application
     # ==================================================================
-
+    @override
     def closeEvent(self, event: QCloseEvent) -> None:
         """Coordinate application shutdown with background job teardown.
 

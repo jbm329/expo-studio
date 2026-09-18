@@ -59,7 +59,7 @@ def prompt_choice(
     buttons = QDialogButtonBox(parent=dlg)
     buttons.addButton(QDialogButtonBox.StandardButton.Ok)
     buttons.addButton(QDialogButtonBox.StandardButton.Cancel)
-    
+
     localize_dialog_buttons(buttons)
     buttons.accepted.connect(dlg.accept)
     buttons.rejected.connect(dlg.reject)

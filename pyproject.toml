@@ -141,16 +141,27 @@ select = [
     "ARG",  # unused args
     "RUF",  # Ruff's own rules
     "D",    # docstrings
+    "W",    # pycodestyle (warnings)
+    "FURB", # flake8-ruff
+    "PLE",  # flake8-pie
+    "PLC",  # flake8-pie
+    "N",    # pep8-naming
+    "PD",   # pandas-vet
+    "PTH",  # flake8-use-pathlib
+    "NPY",  # numpy
+#    "TC",   # flake8-type-checking
 ]
 
 ignore = [
     "E501",     # line length → handled by formatter
-    "ARG002",   # unused method arguments (common in PyQt slots)
-    "D104",     # missing docstring in public package
-    "PLR6301"
+    "ARG",      # unused callback args are common in PyQt/UI flows
+    "C90",      # complexity warnings are intentionally not enforced project-wide
+    "FURB171",
+    "PLC0415"
 ]
 [tool.ruff.lint.per-file-ignores]
-"tests/*.py" = ["D", "S101"]
+"tests/*.py" = ["W", "D", "S101", "RUF", "D104", "ARG", "PLC", "N"]
+"__init__.py" = ["D107", "D104"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

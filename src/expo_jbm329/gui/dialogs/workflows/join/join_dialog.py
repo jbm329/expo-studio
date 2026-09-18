@@ -275,7 +275,7 @@ class JoinDialog(QDialog):
 
     # ---------------------------------------------------------
     # ComboBox change handlers
-    # --------------------------------------------------------- 
+    # ---------------------------------------------------------
     def _on_dataset_changed(self, changed: _SideWidgets, other: _SideWidgets) -> None:
         """Handle dataset change for either left or right side."""
         # 1. Populate the changed side
@@ -476,7 +476,7 @@ class JoinDialog(QDialog):
 
         # 1. Exact name match
         common = set(left_cols) & set(right_cols)
-        
+
         for col in sorted(common):
 
             right_candidates = self._joinable_map.get((left_tab, col, right_tab), set())

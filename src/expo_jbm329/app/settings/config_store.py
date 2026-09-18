@@ -225,7 +225,7 @@ def _validate_settings_inplace(s: dict) -> None:
         """
         if isinstance(val, str):
             v = val.strip()
-            return v if v else default
+            return v or default
         return default
 
     def _ensure_dict(root: dict, key: str, default_dict: dict) -> dict:
@@ -256,7 +256,7 @@ def _validate_settings_inplace(s: dict) -> None:
         s["documents_dir"] = None
     elif isinstance(docdir, str):
         docdir = docdir.strip()
-        s["documents_dir"] = docdir if docdir else None
+        s["documents_dir"] = docdir or None
     else:
         s["documents_dir"] = None
 

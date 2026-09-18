@@ -231,7 +231,7 @@ class ResultTabColumnHeaderContextMenu:
             "clean.strip",
             enabled=one and caps.can_clean_text,
         )
-        
+
         self._add_menu_action(
             clean_menu,
             action_map,

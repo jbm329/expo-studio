@@ -6,6 +6,7 @@ buttons, per-tab closability flags, and Swedish translations.
 from __future__ import annotations
 
 import contextlib
+from typing import override
 
 from PyQt6.QtCore import QRect, Qt
 from PyQt6.QtGui import QIcon, QPainter, QPainterPath
@@ -32,6 +33,7 @@ class TabBarProxyStyle(QProxyStyle):
     # --------------------------------------------------
     # Spacing / padding
     # --------------------------------------------------
+    @override
     def pixelMetric(self, metric, option=None, widget=None):
         """Custom pixelMetric override to provide consistent spacing."""
         if metric in (
@@ -55,6 +57,7 @@ class TabBarProxyStyle(QProxyStyle):
     # --------------------------------------------------
     # Tab shape + background
     # --------------------------------------------------
+    @override
     def drawControl(self, element, option, painter, widget=None):
         """Custom drawControl override for tab shape and background."""
         # Tab background / shape
@@ -152,6 +155,7 @@ class TabBarProxyStyle(QProxyStyle):
 
         painter.restore()
 
+    @override
     def drawPrimitive(self, element, option, painter, widget=None):
         """Custom drawPrimitive override for hover effects."""
         if option is None or painter is None:
@@ -212,7 +216,7 @@ class CustomTabBar(QTabBar):
 
         self._icon_service = icon_service
         self._close_icon: QIcon = QIcon()
-        
+
         # Style
         self.setStyle(TabBarProxyStyle(QApplication.style()))
 
@@ -316,6 +320,7 @@ class CustomTabBar(QTabBar):
     # ----------------------------------------------------------------------
     # OVERRIDES
     # ----------------------------------------------------------------------
+    @override
     def tabInserted(self, index: int):
         """Called when a new tab is inserted.
 
@@ -327,6 +332,7 @@ class CustomTabBar(QTabBar):
         super().tabInserted(index)
         self._install_close_button(index)
 
+    @override
     def tabMoved(self, from_index: int, to_index: int):
         """Called when a tab is moved.
 
@@ -341,6 +347,7 @@ class CustomTabBar(QTabBar):
             if 0 <= i < self.count():
                 self._install_close_button(i)
 
+    @override
     def tabRemoved(self, index: int):
         """Called when a tab is removed.
 

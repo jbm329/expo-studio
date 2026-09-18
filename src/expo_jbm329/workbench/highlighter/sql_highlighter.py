@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
+from typing import override
 
 from PyQt6.QtCore import QRegularExpression
 from PyQt6.QtGui import (
@@ -209,7 +210,8 @@ class SqlHighlighter(QSyntaxHighlighter):
         self.rehighlight()
 
     # ---------------------- QSyntaxHighlighter ------------------------ #
-    def highlightBlock(self, text: str) -> None:  # noqa: N802 (Qt API name)
+    @override
+    def highlightBlock(self, text: str) -> None:
         """Highlight one document block.
 
         Args:

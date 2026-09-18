@@ -933,7 +933,7 @@ class JobManager:
         finished_signal = getattr(job, "finished", None)
 
         if started_signal is not None:
-            started = cast(_ConnectableSignal, started_signal)
+            started = cast("_ConnectableSignal", started_signal)
             try:
                 started.connect(
                     lambda jid=job_id: self._on_job_started(jid),
@@ -947,7 +947,7 @@ class JobManager:
                 )
 
         if error_signal is not None:
-            error = cast(_ConnectableSignal, error_signal)
+            error = cast("_ConnectableSignal", error_signal)
             try:
                 error.connect(
                     lambda tb, jid=job_id: self._on_job_error(jid, tb),
@@ -961,7 +961,7 @@ class JobManager:
                 )
 
         if finished_signal is not None:
-            finished = cast(_ConnectableSignal, finished_signal)
+            finished = cast("_ConnectableSignal", finished_signal)
             try:
                 finished.connect(
                     lambda jid=job_id: self._on_job_finished(jid),

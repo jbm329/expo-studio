@@ -12,7 +12,6 @@ from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import (
 )
 
 
-
 @pytest.fixture
 def qt_file_service():
     return QtFileDialogService()

@@ -34,8 +34,8 @@ class MenuController:
     TR_EXPORT = QT_TR_NOOP("Export…")
     TR_EXPORT_TO_CSV = QT_TR_NOOP("Export to CSV…")
     TR_EXPORT_TO_EXCEL = QT_TR_NOOP("Export to Excel…")
-    TR_EXPORT_TO_DATA = QT_TR_NOOP("Export to binary data file…")    
-    
+    TR_EXPORT_TO_DATA = QT_TR_NOOP("Export to binary data file…")
+
     TR_QUIT = QT_TR_NOOP("Quit")
     TR_EDIT = QT_TR_NOOP("Edit")
     TR_CLEAR_EDITOR = QT_TR_NOOP("Clear editor")
@@ -55,7 +55,7 @@ class MenuController:
     @staticmethod
     def _tr(text: str) -> str:
         return tr("MenuController", text)
-    
+
     def __init__(
             self,
             *,
@@ -206,7 +206,7 @@ class MenuController:
         self._act_new.triggered.connect(self._new_file)
         self._act_open.triggered.connect(self._open_file)
         self._act_save.triggered.connect(self._save_file)
-        self._act_save_as.triggered.connect(self._save_file_as)       
+        self._act_save_as.triggered.connect(self._save_file_as)
         self._act_quit.triggered.connect(self._quit_app)
 
         # Export

@@ -95,7 +95,7 @@ TR_COULD_NOT_INIT_CONN = QT_TRANSLATE_NOOP("DbErrors", "Could not initialize con
 
 # Schema Cache / Autocomplete
 TR_PREPARING_AUTOCOMPLETE_BULK = QT_TRANSLATE_NOOP("DbErrors", "Preparing autocomplete (bulk)…")
-TR_BULK_FAILED_TRYING_BATCH = QT_TRANSLATE_NOOP("DbErrors", "Could not read schema in bulk – trying batch.")
+TR_BULK_FAILED_TRYING_BATCH = QT_TRANSLATE_NOOP("DbErrors", "Could not read schema in bulk - trying batch.")
 TR_AUTOCOMPLETE_READY_BULK = QT_TRANSLATE_NOOP("DbErrors", "Autocomplete for columns ready ({count} objects via bulk).")
 TR_AUTOCOMPLETE_READY = QT_TRANSLATE_NOOP("DbErrors", "Autocomplete for columns ready.")
 TR_PREPARING_AUTOCOMPLETE_BATCH = QT_TRANSLATE_NOOP("DbErrors", "Preparing autocomplete… {done}/{total}")

@@ -203,7 +203,7 @@ class WorkbenchServices:
             update_undo_enabled=update_undo,
             cancel_job=app.job_mgr.cancel_job,
             logger=app.log_ui,
-        )      
+        )
 
         # ============================================================
         # RESULT TABS WIRING
@@ -293,7 +293,7 @@ class WorkbenchServices:
             display_dataframe=results.display_dataframe,
             dialogs=app.dialogs,
             logger=app.log_service,
-        )       
+        )
 
         # ============================================================
         # DOCUMENT
@@ -470,7 +470,7 @@ class WorkbenchServices:
             file_dialogs=app.file_dialogs,
             dialog_state=dialog_state,
             logger=app.log_service,
-        )       
+        )
 
         # ============================================================
         # JOIN CONTROLLER

@@ -87,7 +87,7 @@ class ConcatController:
         self._list_tab_titles = list_tab_titles
         self._get_df = get_df_for_tab
         self._set_status = set_status
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._logger = logger or logging.getLogger("applogger.ui")
 
     # ------------------------------------------------------------------
     # Public API

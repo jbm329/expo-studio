@@ -45,7 +45,7 @@ class ScbBrowserDialog(QDialog):
     ) -> None:
         """Initialize the dialog."""
         super().__init__(parent)
-        self._dialogs = dialogs if dialogs else QtDialogService()
+        self._dialogs = dialogs or QtDialogService()
 
         self.setWindowTitle(self.tr("SCB query builder"))
         self.setFixedSize(700, 525)
@@ -62,8 +62,8 @@ class ScbBrowserDialog(QDialog):
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed,
         )
-        
-        self.table_combo = QComboBox()        
+
+        self.table_combo = QComboBox()
         self.table_combo.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed,
@@ -76,7 +76,7 @@ class ScbBrowserDialog(QDialog):
         self.language_combo.setFixedWidth(125)
         self.language_combo.addItem(self.tr("Swedish"), userData="sv")
         self.language_combo.addItem(self.tr("English"), userData="en")
-        self.language_combo.currentIndexChanged.connect(self._on_language_changed)        
+        self.language_combo.currentIndexChanged.connect(self._on_language_changed)
 
         self.current_table_label = QLabel(self.tr("No table selected"))
         self.current_table_label.setWordWrap(True)
@@ -138,13 +138,13 @@ class ScbBrowserDialog(QDialog):
         main.addLayout(form_grid)
 
         main.addWidget(self.current_table_label)
-        
+
         variable_labels = QHBoxLayout()
         variable_labels.addWidget(QLabel(self.tr("Variables")), 1)
         variable_value_label = QHBoxLayout()
         variable_value_label.addWidget(QLabel(self.tr("Variable values")), 1)
 
-        body = QHBoxLayout()        
+        body = QHBoxLayout()
         body.addWidget(self.variable_list, 1)
         value_side = QHBoxLayout()
         value_side.addWidget(self.value_list, 1)
@@ -339,7 +339,7 @@ class ScbBrowserDialog(QDialog):
         self._current_variable = variable.name
         self.value_list.clear()
         for value in variable.values:
-            label = value.label.strip() if value.label.strip() else value.code
+            label = value.label.strip() if value.label.strip() else value.code  # noqa: FURB110
             check_item = QListWidgetItem(label)
             check_item.setFlags(check_item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             check_item.setCheckState(

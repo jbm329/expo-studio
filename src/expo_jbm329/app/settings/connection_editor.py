@@ -11,6 +11,7 @@ from __future__ import annotations
 import contextlib
 import json
 import uuid
+from typing import override
 
 import pyodbc
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -133,7 +134,7 @@ class ConnectionEditor(QDialog):
         """
         super().__init__(parent)
 
-        self._dialogs = dialogs if dialogs else QtDialogService()
+        self._dialogs = dialogs or QtDialogService()
         self._icon_service = icon_service
 
         # --- Dialog setup ---
@@ -279,10 +280,11 @@ class ConnectionEditor(QDialog):
         else:
             icon = QIcon(":/icons/dark/themes/dark/connection.png")  # fallback
         self.setWindowIcon(icon)
-    # ----------------------------------------------------------------------
-    # showEvent — only positioning + loading data
-    # ----------------------------------------------------------------------
 
+    # ----------------------------------------------------------------------
+    # showEvent - only positioning + loading data
+    # ----------------------------------------------------------------------
+    @override
     def showEvent(self, event):
         """Load connection data and populate list.
 

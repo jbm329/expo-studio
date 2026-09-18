@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
+from typing import override
 
 from PyQt6.QtCore import QEvent, QObject, Qt
 from PyQt6.QtGui import QKeyEvent
@@ -124,6 +125,7 @@ class EditorController(QObject):
         """Install editor event filtering handled by this controller."""
         self._editor.installEventFilter(self)
 
+    @override
     def eventFilter(self, obj: QObject | None, event: QEvent | None) -> bool:
         """Handle Enter-key indentation for the managed editor."""
         if obj is self._editor and event is not None and event.type() == QEvent.Type.KeyPress:

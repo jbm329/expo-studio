@@ -80,7 +80,7 @@ def _detect_sql_kind(sql: str) -> str:
 
 
 # =============================================================================
-# DbService — core execution component
+# DbService - core execution component
 # =============================================================================
 
 class DbService:
@@ -278,7 +278,7 @@ class DbService:
 
             row_count = int(df.shape[0]) if isinstance(df, pd.DataFrame) else 0
             log.info(
-                "DbService: SQL completed (signature=%s, corr=%s) in %.3fs – %s rows",
+                "DbService: SQL completed (signature=%s, corr=%s) in %.3fs - %s rows",
                 signature,
                 corr_id,
                 elapsed,
@@ -323,11 +323,11 @@ class DbService:
             err = self._classify_error(e)
             if should_log(signature):
                 log.error(
-                    "DbService: SQL error (signature=%s, corr=%s): %s %s – %s",
+                    "DbService: SQL error (signature=%s, corr=%s): %s %s - %s",
                     signature,
                     corr_id,
                     err.category,
-                    err.code if err.code else "",
+                    err.code or "",
                     err.message,
                 )
                 if err.category == "unknown":
@@ -426,7 +426,7 @@ class DbService:
         ]
 
     # -------------------------------------------------------------------------
-    # High‑level helpers (DB name, SELECT builders, bulk columns)
+    # High-level helpers (DB name, SELECT builders, bulk columns)
     # -------------------------------------------------------------------------
 
     def get_db_name(self, conn: ConnectionConfig, corr_id: str | None = None) -> str:

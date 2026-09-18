@@ -148,7 +148,7 @@ class ResultTabHeaderCategoryActions:
                 ),
             )
             return False
-        return True   
+        return True
 
     # ==================================================================
     # Remove unused categories
@@ -156,11 +156,11 @@ class ResultTabHeaderCategoryActions:
 
     def remove_unused(self, view: QTableView, column: int) -> None:
         """Remove unused categories from a categorical column.
-        
+
         Args:
             view (QTableView): View containing the DataFrame.
             column (int): Column index to process.
-        
+
         Returns:
             None
         """
@@ -170,7 +170,7 @@ class ResultTabHeaderCategoryActions:
         )
         if not ok or df is None or col is None or s is None:
             return
-        
+
         if not self._ensure_categorical(s, col):
             return
 

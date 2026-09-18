@@ -192,7 +192,7 @@ class ResultTabHeaderFilterActions:
     def filter_equals(self, view: QTableView, column: int) -> None:
         """Filter rows where column equals a user-provided value."""
         ok, df, col, _ = self._resolve_df_col_series(view, column)
-        
+
         if not ok or df is None or col is None:
             return
 
@@ -374,7 +374,7 @@ class ResultTabHeaderFilterActions:
         )
         if not opts["ok"] or not opts["value"]:
             return
-        
+
         value = opts["value"]
         case_sensitive = opts["case_sensitive"]
 
@@ -501,7 +501,7 @@ class ResultTabHeaderFilterActions:
             view,
             column
         )
-        
+
         if not ok or df is None or col is None:
             return
 
@@ -514,7 +514,7 @@ class ResultTabHeaderFilterActions:
         )
 
         from expo_jbm329.services.data_operations.filter import filter_notna
-        
+
         def _work(*, progress_cb=None, cancel_cb=None, **_):
             if cancel_cb and cancel_cb():
                 return None
@@ -580,7 +580,7 @@ class ResultTabHeaderFilterActions:
                     column_name=safe_col,
                 ),
             )
-            return                
+            return
 
         try:
             result = self._dialogs.prompt_compare(
@@ -603,7 +603,7 @@ class ResultTabHeaderFilterActions:
                 return
 
             op = result["op"]
-            value = result["value"]            
+            value = result["value"]
 
         except Exception as e:
             self._fail(e)
@@ -629,7 +629,7 @@ class ResultTabHeaderFilterActions:
 
         def _apply_result(new_df):
             if new_df is None:
-                return            
+                return
 
             self._apply_new_dataframe(
                 view,
@@ -657,7 +657,7 @@ class ResultTabHeaderFilterActions:
             apply_result=_apply_result,
             busy_message=self._tr_fmt(
                 self.TR_FILTERING_COLUMN_COMPARED_TO,
-                column_name=safe_col, 
+                column_name=safe_col,
                 operator=op,
                 value=value_str
             ),
@@ -692,7 +692,7 @@ class ResultTabHeaderFilterActions:
                     column_name=safe_col,
                 ),
             )
-            return               
+            return
 
         try:
             result = self._dialogs.prompt_between(

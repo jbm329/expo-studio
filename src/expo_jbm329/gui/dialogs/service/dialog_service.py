@@ -27,7 +27,7 @@ class BetweenResult(TypedDict):
     high: object
     inclusive: str
     ok: bool
-    
+
 
 class CompareResult(TypedDict):
     """Result of a numeric or datetime compare prompt."""
@@ -109,7 +109,7 @@ class SplitColumnResult(TypedDict):
     keep_original: bool
     mode: Literal["first", "last"]
     ok: bool
-    
+
 
 class MergeColumnsResult(TypedDict):
     """Result of a merge columns prompt."""

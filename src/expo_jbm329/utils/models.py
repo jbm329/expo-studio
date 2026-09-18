@@ -20,7 +20,7 @@ from __future__ import annotations
 import contextlib
 import datetime
 from collections.abc import Callable
-from typing import Any
+from typing import Any, override
 
 import numpy as np
 import pandas as pd
@@ -34,7 +34,7 @@ from expo_jbm329.utils.format_utils import (
 
 
 # ======================================================================
-# DataFrameModel — read-only display with safe datetime/text formatting
+# DataFrameModel - read-only display with safe datetime/text formatting
 # ======================================================================
 class DataFrameModel(QAbstractTableModel):
     """Read-only model for pandas.DataFrame in QTableView.
@@ -53,10 +53,10 @@ class DataFrameModel(QAbstractTableModel):
       - Numeric sorted with dtype max sentinels for NA to sink on ascending.
 
     Signals:
-      - dataFrameReplaced: emitted after setDataFrame completes.
+      - data_frame_replaced: emitted after set_data_frame completes.
     """
 
-    dataFrameReplaced = pyqtSignal()
+    data_frame_replaced = pyqtSignal()
 
     def __init__(
         self,
@@ -91,6 +91,7 @@ class DataFrameModel(QAbstractTableModel):
     # ------------------------------------------------------------------
     # Basic model API
     # ------------------------------------------------------------------
+    @override
     def rowCount(self, parent: QModelIndex | None = None) -> int:
         """Number of rows; returns 0 for child indexes."""
         parent = parent or QModelIndex()
@@ -98,6 +99,7 @@ class DataFrameModel(QAbstractTableModel):
             return 0
         return len(self._row_ix)
 
+    @override
     def columnCount(self, parent: QModelIndex | None = None) -> int:
         """Number of columns; includes synthetic leading '#' column."""
         parent = parent or QModelIndex()
@@ -108,6 +110,7 @@ class DataFrameModel(QAbstractTableModel):
     # ------------------------------------------------------------------
     # DATA
     # ------------------------------------------------------------------
+    @override
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole):
         """Return the data for the given index and role.
 
@@ -132,7 +135,7 @@ class DataFrameModel(QAbstractTableModel):
             # ----- Data columns -----
             df_col_ix = c
             col_name = self._df.columns[df_col_ix]
-            val = self._df.iat[real_r, df_col_ix]
+            val = self._df.iloc[real_r, df_col_ix]
 
             # DISPLAY
             if role == Qt.ItemDataRole.DisplayRole:
@@ -212,6 +215,7 @@ class DataFrameModel(QAbstractTableModel):
     # ------------------------------------------------------------------
     # HEADER
     # ------------------------------------------------------------------
+    @override
     def headerData(
         self,
         section: int,
@@ -244,11 +248,12 @@ class DataFrameModel(QAbstractTableModel):
     # ------------------------------------------------------------------
     # SORTING
     # ------------------------------------------------------------------
+    @override
     def sort(self, column: int, order: Qt.SortOrder = Qt.SortOrder.AscendingOrder) -> None:
         """Sort the model by the given column and order.
 
         Efficiently reorders row indexes using layoutAboutToBeChanged/layoutChanged.
-        No beginResetModel/endResetModel is used — avoids empty-table bug.
+        No beginResetModel/endResetModel is used - avoids empty-table bug.
 
         Args:
             column: The column index to sort by.
@@ -314,16 +319,15 @@ class DataFrameModel(QAbstractTableModel):
 
         # Let Qt know sorting is complete
         self.layoutChanged.emit()
-
     # ------------------------------------------------------------------
     # PUBLIC API
     # ------------------------------------------------------------------
-    def setDataFrame(self, df: pd.DataFrame):
+    def set_data_frame(self, df: pd.DataFrame):
         """Replace the underlying DataFrame and reset all cached metadata.
 
         Emits
         -----
-        dataFrameReplaced : pyqtSignal
+        data_frame_replaced : pyqtSignal
             Emitted after the model is reset and new data is active.
         """
         self.beginResetModel()
@@ -335,10 +339,10 @@ class DataFrameModel(QAbstractTableModel):
 
         self.endResetModel()
         with contextlib.suppress(Exception):
-            self.dataFrameReplaced.emit()
+            self.data_frame_replaced.emit()
 
-    def dataFrame(self) -> pd.DataFrame:
-        """Returns the underlying DataFrame reference."""
+    def data_frame(self) -> pd.DataFrame:
+        """Return the underlying DataFrame reference."""
         return self._df
 
 
@@ -347,6 +351,7 @@ class JoinPreviewModel(DataFrameModel):
 
     Inherits from DataFrameModel and adds specific functionality for joined data.
     """
+    @override
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         """Return the data for the given index and role."""
         # --- custom preview logic ---
@@ -355,7 +360,7 @@ class JoinPreviewModel(DataFrameModel):
                 return None
 
             col_name = self._df.columns[index.column()]
-            raw = self._df.iat[self._row_ix[index.row()], index.column()]
+            raw = self._df.iloc[self._row_ix[index.row()], index.column()]
 
             if col_name == "join_status":
                 if raw == "left_only":

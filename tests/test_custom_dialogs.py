@@ -11,6 +11,7 @@ from expo_jbm329.gui.dialogs.workflows.join.join_dialog import (
     JoinDialogResult,
 )
 
+
 @pytest.fixture
 def parent_widget(qt_app):
     return QWidget()

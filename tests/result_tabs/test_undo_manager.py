@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import pandas as pd
 
-from expo_jbm329.workbench.controllers.result_tabs.result_tab_undo_manager import ResultTabUndoManager
+from expo_jbm329.workbench.controllers.result_tabs.result_tab_undo_manager import (
+    ResultTabUndoManager,
+)
 
 
 def test_register_push_pop_clear():

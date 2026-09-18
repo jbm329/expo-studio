@@ -3,12 +3,13 @@ from __future__ import annotations
 
 import pandas as pd
 import pytest
+
 from expo_jbm329.services.data_operations.joins import (
     JoinRequest,
-    join_dataframes,
-    detect_join_keys,
-    concat_rows,
     concat_columns,
+    concat_rows,
+    detect_join_keys,
+    join_dataframes,
 )
 
 

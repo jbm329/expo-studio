@@ -48,15 +48,15 @@ class AboutDialog(QDialog):
         pixmap = QPixmap(":/splash/splash.png")
         if not pixmap.isNull():
             logo_label.setPixmap(pixmap.scaled(
-                120, 120, 
-                Qt.AspectRatioMode.KeepAspectRatio, 
+                120, 120,
+                Qt.AspectRatioMode.KeepAspectRatio,
                 Qt.TransformationMode.SmoothTransformation
             ))
         else:
             # Placeholder if pixmap fails
             logo_label.setText("🚀")
             logo_label.setStyleSheet("font-size: 64pt;")
-            
+
         content_layout.addWidget(logo_label, alignment=Qt.AlignmentFlag.AlignTop)
 
         # Text information
@@ -66,7 +66,7 @@ class AboutDialog(QDialog):
         info_layout.setSpacing(5)
 
         metadata = get_app_metadata()
-        
+
         name_label = QLabel(f"<b>{metadata.get('name', 'Expo studio')}</b>")
         name_label.setStyleSheet("font-size: 16pt; font-weight: bold;")
         info_layout.addWidget(name_label)
@@ -114,7 +114,7 @@ class AboutDialog(QDialog):
         sys_info_layout = QVBoxLayout(sys_info_group)
         sys_info_layout.setContentsMargins(0, 10, 0, 0)
         sys_info_layout.setSpacing(2)
-        
+
         sys_info = (
             f"Python: {platform.python_version()}<br/>"
             f"Qt: {QT_VERSION_STR} | PyQt: {PYQT_VERSION_STR}<br/>"
@@ -124,7 +124,7 @@ class AboutDialog(QDialog):
         sys_info_label.setStyleSheet("color: #777; font-size: 9pt;")
         sys_info_label.setTextFormat(Qt.TextFormat.RichText)
         sys_info_layout.addWidget(sys_info_label)
-        
+
         layout.addWidget(sys_info_group)
 
         # OK Button
@@ -142,7 +142,7 @@ class AboutDialog(QDialog):
         if not file_path.is_absolute():
             # Try to resolve relative to project root
             potential_roots = [
-                Path("."),
+                Path(),
                 Path(__file__).resolve().parents[4]
             ]
             for root in potential_roots:

@@ -68,7 +68,7 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
     can_be_float = False
     can_be_datetime = False
     can_be_bool = False
-    
+
     non_null = s.dropna()
     sample_size = len(non_null)
     x_num: pd.Series | None = None
@@ -164,8 +164,8 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
     # ------------------------------------------------------------------
     cardinality_ratio: float | None = None
 
-    if semantic_dtype in ("string", "category"):        
-        cardinality_ratio = non_null.nunique() / sample_size   
+    if semantic_dtype in ("string", "category"):
+        cardinality_ratio = non_null.nunique() / sample_size
 
     return SeriesSemantics(
         semantic_dtype=semantic_dtype,

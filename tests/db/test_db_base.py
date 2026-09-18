@@ -121,9 +121,11 @@ def test_execute_sql_safe_initialization_failure():
 
 
 def test_list_tables_failure():
-    with patch("expo_jbm329.db.base._get_service_with_config", side_effect=Exception("Service fail")):
-        with pytest.raises(Exception, match="Service fail"):
-            base.list_tables("broken_conn")
+    with (
+        patch("expo_jbm329.db.base._get_service_with_config", side_effect=Exception("Service fail")),
+        pytest.raises(Exception, match="Service fail"),
+    ):
+        base.list_tables("broken_conn")
 
 
 def test_fetch_df_returns_none_on_failure():

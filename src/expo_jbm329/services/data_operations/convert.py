@@ -201,7 +201,7 @@ def to_datetime(
         else:
             if fmt is not None:
                 # When format is provided, pandas typing does NOT allow errors="ignore"
-                errors_fmt = cast(Literal["raise", "coerce"], errors)
+                errors_fmt = cast("Literal['raise', 'coerce']", errors)
 
                 out = pd.to_datetime(
                     series,
@@ -210,7 +210,7 @@ def to_datetime(
                 )
             else:
                 # For Series input, pandas typing does not allow errors="ignore"
-                errors_series = cast(Literal["raise", "coerce"], errors)
+                errors_series = cast("Literal['raise', 'coerce']", errors)
 
                 out = pd.to_datetime(
                     series,

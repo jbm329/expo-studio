@@ -180,7 +180,7 @@ def parse_many_safe(sql: str, dialect: str | None = None) -> list[Expression]:
     try:
         parsed = sqlglot.parse(sql, read=sqlglot_dialect(dialect))
         return [
-            cast(Expression, expression)
+            cast("Expression", expression)
             for expression in parsed
             if expression is not None
         ]
@@ -581,16 +581,16 @@ def _suggest_keyword(token: str) -> str | None:
     if not token:
         return None
 
-        token_l = token.lower()
+    token_l = token.lower()
 
-        if token_l in _COMMON_SQL_KEYWORD_ALIASES:
-            return _COMMON_SQL_KEYWORD_ALIASES[token_l]
+    if token_l in _COMMON_SQL_KEYWORD_ALIASES:
+        return _COMMON_SQL_KEYWORD_ALIASES[token_l]
 
-        for candidate in _COMMON_SQL_KEYWORDS:
-            if _looks_like_keyword_typo(token_l, candidate):
-                return candidate.upper()
+    for candidate in _COMMON_SQL_KEYWORDS:
+        if _looks_like_keyword_typo(token_l, candidate):
+            return candidate.upper()
 
-        return None
+    return None
 
 
 def _find_suspicious_clause_keywords(sql: str) -> list[tuple[int, int, str]]:
@@ -676,7 +676,7 @@ def _normalize_identifier(value: str | None) -> str:
     """Normalize SQL identifiers for case-insensitive comparison."""
     if value is None:
         return ""
-    return str(value).strip().strip("[]`\"").casefold()
+    return str(value).strip().strip('[]`"').casefold()
 
 
 def _normalize_schema_for_lint(
@@ -1029,7 +1029,7 @@ def lint_syntax(
     return _dedupe_diagnostics(diagnostics)
 
 
-def detect_statement_kind(sql: str, dialect: str | None = None) -> SqlStatementKind:  # noqa: C901
+def detect_statement_kind(sql: str, dialect: str | None = None) -> SqlStatementKind:
     """Detect the broad kind of a SQL statement.
 
     This uses sqlglot when possible and falls back to lightweight textual checks
@@ -1357,17 +1357,17 @@ def _find_suspicious_adjacent_select_identifier(sql: str) -> tuple[int, int] | N
 
 def _last_meaningful_token_span(sql: str) -> tuple[int, int]:
     """Return span for the last meaningful token in SQL text."""
-    match = None
+    last_match = None
     for match in re.finditer(r"[A-Za-z_][A-Za-z0-9_]*|\[[^\]]*$|\[[^\]]+\]|`[^`]*$|`[^`]+`|\"[^\"]*$|\"[^\"]+\"", sql):
-        pass
+        last_match = match
 
-    if match is None:
+    if last_match is None:
         return 0, 1
 
-    return match.start(), max(1, match.end() - match.start())
+    return last_match.start(), max(1, last_match.end() - last_match.start())
 
 
-def _fallback_statement_kind(  # noqa: C901
+def _fallback_statement_kind(
     leading_token: str,
     *,
     invalid: bool,

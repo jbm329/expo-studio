@@ -62,7 +62,7 @@ class DocumentController:
     TR_OPEN_SQL_FILE_FAILED_ERROR = QT_TR_NOOP("Open SQL file failed:\n{error}")
     TR_SAVE_SQL_FILE_FAILED_ERROR = QT_TR_NOOP("Save SQL file failed:\n{error}")
     TR_OPEN_HTML_FILE_FAILED_ERROR = QT_TR_NOOP("Open HTML file failed:\n{error}")
-    
+
     TR_SQL_FILE_FILTER = QT_TR_NOOP("SQL files (*.sql)")
     TR_COULD_NOT_OPEN_FILE = QT_TR_NOOP("Could not open file:\n\n{error}")
     TR_NO_SQL = QT_TR_NOOP("No SQL")
@@ -173,8 +173,8 @@ class DocumentController:
         p = Path(path)
         self._logger.info("DocumentController: opening SQL file: %s", fmt_path(p))
         try:
-            with open(p, encoding="utf-8") as f:
-                sql = f.read()                
+            with p.open(encoding="utf-8") as f:
+                sql = f.read()
                 self._logger.info(
                     "DocumentController: SQL file opened successfully: %s", fmt_path(p)
                 )
@@ -208,7 +208,7 @@ class DocumentController:
         self._update_tab_ui(tab)
         status = self._tr_fmt(self.TR_OPENED_SQL_FILE, file_name=p.name)
         self._set_status(status, 5000)
-            
+
     def _get_documents_dir(self) -> Path:
         """Return documents directory, guaranteed to be initialized."""
         if self._documents_dir is None:
@@ -216,7 +216,7 @@ class DocumentController:
                 "DocumentController: documents_dir not initialized. "
                 "reload_settings() must be called before export."
             )
-        return self._documents_dir   
+        return self._documents_dir
 
     def _build_incremented_path(self, path: Path) -> Path:
         """Return a non-existing path by appending (n) before suffix.
@@ -334,7 +334,7 @@ class DocumentController:
             )
             status = self._tr(self.TR_SAVED_SQL_FILE)
             self._set_status(status, 3000)
-            
+
         except Exception as e:
             self._logger.error(
                 "DocumentController: Failed to save as SQL file '%s': %s",
@@ -470,4 +470,3 @@ class DocumentController:
                 text=self._tr_fmt(self.TR_OPEN_HTML_FILE_FAILED_ERROR, error=str(e))
             )
             return ok
-        

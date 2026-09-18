@@ -257,17 +257,15 @@ def filter_compare(
     s = df[column]
 
     if pdt.is_numeric_dtype(s):
-        compare_value = value
+        return df.query(f"`{column}` {op} @value").copy()
 
-    elif pdt.is_datetime64_any_dtype(s):
-        compare_value = pd.to_datetime(value)
+    if pdt.is_datetime64_any_dtype(s):
+        query_value = pd.to_datetime(value)
+        return df.query(f"`{column}` {op} @query_value", local_dict={"query_value": query_value}).copy()
 
-    else:
-        raise TypeError(
-            f"Column '{column}' must be numeric or datetime for filter_compare."
-        )
-
-    return df.query(f"`{column}` {op} @compare_value").copy()
+    raise TypeError(
+        f"Column '{column}' must be numeric or datetime for filter_compare."
+    )
 
 
 def filter_between(

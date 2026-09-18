@@ -33,9 +33,9 @@ from expo_jbm329.db.sql_analysis import (
     _normalize_schema_for_lint,
     _offset_to_line_column,
     _previous_meaningful_keyword,
-    _suggest_keyword_for_context,
     _strip_leading_comments_and_whitespace,
     _strip_leading_sql_comments_and_whitespace,
+    _suggest_keyword_for_context,
     detect_statement_kind,
     extract_column_refs,
     extract_table_aliases,
@@ -49,7 +49,6 @@ from expo_jbm329.db.sql_analysis import (
     parse_one_safe,
     sqlglot_dialect,
 )
-
 
 SCHEMA = {
     "by_schema": {
@@ -190,7 +189,7 @@ def test_location_helpers_cover_offsets_and_identifier_matching() -> None:
 
 
 def test_normalization_and_scalar_helpers() -> None:
-    assert _normalize_identifier('[AbC]') == "abc"
+    assert _normalize_identifier("[AbC]") == "abc"
     assert _normalize_schema_for_lint(SCHEMA) == {
         "dbo": {
             "ref_yrkesroll": {"ref_yrkesroll_id", "yrkesroll", "source"},

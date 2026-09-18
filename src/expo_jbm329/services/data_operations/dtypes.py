@@ -124,7 +124,7 @@ def is_text_like_dtype(series: pd.Series) -> bool:
         if isinstance(series.dtype, CategoricalDtype):
             from typing import cast
 
-            cat_dtype = cast(CategoricalDtype, series.dtype)
+            cat_dtype = cast("CategoricalDtype", series.dtype)
             cats = cat_dtype.categories
             return pdt.is_string_dtype(cats) or pdt.is_object_dtype(cats)
 

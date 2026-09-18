@@ -67,7 +67,7 @@ class HighlighterThemeRepository:
 
         Returns:
             A dictionary mapping theme names to Theme objects.
-        """        
+        """
         return dict(self._themes)
 
     def get(self, name: str) -> Theme:

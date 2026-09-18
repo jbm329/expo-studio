@@ -90,7 +90,7 @@ def build_header_context(
     # --------------------------------------------------------------
     # Normal case
     # --------------------------------------------------------------
-    series = df[column_name]    
+    series = df[column_name]
 
     semantics = infer_series_semantics(series)
     storage_dtype = series.dtype.name

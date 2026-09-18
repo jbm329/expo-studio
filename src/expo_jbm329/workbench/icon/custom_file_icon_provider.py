@@ -46,7 +46,7 @@ class CustomFileIconProvider(QFileIconProvider):
         """
         super().__init__()
         self._icon_service = icon_service
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._logger = logger or logging.getLogger("applogger.ui")
 
         # These are set via update_theme()
         self._folder_icon = QIcon()

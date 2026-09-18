@@ -224,7 +224,7 @@ class EditorTabContextMenu:
         unbind_action = QAction(self._tr(self.TR_UNBIND_TAB), conn_menu)
         unbind_action.setEnabled(tab.connection_name is not None)
         conn_menu.addAction(unbind_action)
-        unbind_action.triggered.connect(lambda: self._unbind_tab(tab_id))          
+        unbind_action.triggered.connect(lambda: self._unbind_tab(tab_id))
 
     # ------------------------------------------------------------------
     # Helpers

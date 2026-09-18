@@ -131,7 +131,7 @@ class SettingsEditor(QDialog):
         main_layout = QVBoxLayout(self)
 
         # ================================================================
-        # GROUP: Basic settings 
+        # GROUP: Basic settings
         # ================================================================
         box_top = QGroupBox(self.tr("Basic settings"), self)
         form_top = QFormLayout(box_top)
@@ -451,7 +451,7 @@ class SettingsEditor(QDialog):
             sc.get("ttl_seconds", DEFAULT_SETTINGS["schema_cache"].get("ttl_seconds", 300))
         )
 
-        # (workbench – remaining)
+        # (workbench - remaining)
         self.spin_editor_topn.setValue(
             editor.get("gen_top_n", editor_defaults.get("gen_top_n", 10))
         )

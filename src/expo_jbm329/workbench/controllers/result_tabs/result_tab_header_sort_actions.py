@@ -79,14 +79,14 @@ class ResultTabHeaderSortActions:
         ],
     ):
         """Initialize ResultTabHeaderSortActions with dependencies.
-        
+
         Args:
-            parent (QWidget): Parent widget for dialogs.
-            dialogs (DialogService, optional): Service for showing dialogs. Defaults to QtDialogService.
-            logger (logging.Logger, optional): Logger for logging errors. Defaults to applogger.ui logger.
-            async_ops (AsyncOperationController): Controller for managing async operations.
-            resolve_df_col_series (Callable): Function to resolve DataFrame, column, and series.
-            apply_new_dataframe (Callable): Function to apply new DataFrame to view.
+        parent (QWidget): Parent widget for dialogs.
+        dialogs (DialogService, optional): Service for showing dialogs. Defaults to QtDialogService.
+        logger (logging.Logger, optional): Logger for logging errors. Defaults to applogger.ui logger.
+        async_ops (AsyncOperationController): Controller for managing async operations.
+        resolve_df_col_series (Callable): Function to resolve DataFrame, column, and series.
+        apply_new_dataframe (Callable): Function to apply new DataFrame to view.
         """
         self._parent = parent
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
@@ -97,11 +97,11 @@ class ResultTabHeaderSortActions:
 
     def sort_ascending(self, view: QTableView, column: int) -> None:
         """Sort rows in ascending order by column.
-        
+
         Args:
             view (QTableView): The table view containing the data.
             column (int): The column index to sort by.
-        
+
         Returns:
             None: This method does not return a value.
         """
@@ -170,11 +170,11 @@ class ResultTabHeaderSortActions:
 
     def sort_descending(self, view: QTableView, column: int) -> None:
         """Sort rows in descending order by column.
-        
+
         Args:
             view (QTableView): The table view containing the data.
             column (int): The column index to sort by.
-        
+
         Returns:
             None: This method does not return a value.
         """
@@ -236,4 +236,3 @@ class ResultTabHeaderSortActions:
             ),
             corr_id=corr_id,
         )
-        
