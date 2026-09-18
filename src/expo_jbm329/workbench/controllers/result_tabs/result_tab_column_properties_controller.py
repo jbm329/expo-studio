@@ -200,7 +200,7 @@ class ResultTabColumnPropertiesController:
 
             return get_column_profile(df, col_name)
 
-        def _apply_result(profile):
+        def _apply_result(profile) -> None:
             if profile is None:
                 return
 

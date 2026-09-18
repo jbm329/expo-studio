@@ -103,7 +103,7 @@ class BlockingProgressDialog(QDialog):
             job_manager: The manager responsible for the job.
         """
 
-        def do_cancel():
+        def do_cancel() -> None:
             self.btn_cancel.setEnabled(False)
             self.btn_cancel.setText("Avbryter…")
 

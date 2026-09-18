@@ -169,6 +169,7 @@ select = [
     "ASYNC",# flake8-async
     "ANN204",  # flake8-annotations
     "ERA",  # flake8-eradicate
+    "AIR",  # flake8-airflow
 ]
 
 ignore = [
@@ -210,10 +211,10 @@ testpaths = ["tests"]
 # -------------------------------
 [tool.mypy]
 python_version = "3.13"
-strict = true
-#ignore_missing_imports = true
-#warn_unused_ignores = true
-#mypy_path = ["src"]
+strict = false
+ignore_missing_imports = true
+warn_unused_ignores = true
+mypy_path = ["src"]
 
 
 

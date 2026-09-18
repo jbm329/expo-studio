@@ -185,7 +185,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -244,7 +244,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -303,7 +303,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -362,7 +362,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -421,7 +421,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -484,7 +484,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -543,7 +543,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -603,7 +603,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -675,7 +675,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -749,7 +749,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -827,7 +827,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -908,7 +908,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 

@@ -246,7 +246,7 @@ class JoinDialog(QDialog):
     # Populate left/right based on selected dataset
     # ---------------------------------------------------------
 
-    def _populate_side(self, side: _SideWidgets):
+    def _populate_side(self, side: _SideWidgets) -> None:
         tab = side.cb_dataset.currentText()
         cols = sorted(self._get_cols[tab])
 
@@ -297,7 +297,7 @@ class JoinDialog(QDialog):
         self._on_left_key_changed(self._left.cb_key.currentText())
 
     # noinspection PyMethodMayBeStatic
-    def _set_combobox_item_enabled(self, cb: QComboBox, index: int, enabled: bool, tooltip: str = ""):
+    def _set_combobox_item_enabled(self, cb: QComboBox, index: int, enabled: bool, tooltip: str = "") -> None:
         model = cb.model()
         if isinstance(model, QStandardItemModel):
             item = model.item(index)
@@ -305,7 +305,7 @@ class JoinDialog(QDialog):
                 item.setEnabled(enabled)
                 item.setToolTip(tooltip)
 
-    def _on_left_key_changed(self, col: str):
+    def _on_left_key_changed(self, col: str) -> None:
         """Handle change of the left join key.
 
         Updates the availability of keys in the right dataset based on
@@ -378,7 +378,7 @@ class JoinDialog(QDialog):
     # Toggle select all columns
     # ---------------------------------------------------------
 
-    def _toggle_all(self, side: _SideWidgets):
+    def _toggle_all(self, side: _SideWidgets) -> None:
         total = side.columns_list.count()
         checked = sum(
             1
@@ -397,7 +397,7 @@ class JoinDialog(QDialog):
         self._update_select_all(side)
 
     # noinspection PyMethodMayBeStatic
-    def _update_select_all(self, side: _SideWidgets):
+    def _update_select_all(self, side: _SideWidgets) -> None:
         total = side.columns_list.count()
         checked = sum(
             1

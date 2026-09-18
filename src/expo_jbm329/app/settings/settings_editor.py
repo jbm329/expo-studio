@@ -115,7 +115,7 @@ class SettingsEditor(QDialog):
     # -------------------------------------------------------------------------
     # Update icon
     # -------------------------------------------------------------------------
-    def _update_icon(self):
+    def _update_icon(self) -> None:
         """Updates the window icon using the IconService or a fallback path."""
         if self._icon_service:
             icon = self._icon_service.get("settings")

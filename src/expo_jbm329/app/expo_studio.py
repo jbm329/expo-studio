@@ -142,7 +142,7 @@ class ExpoStudio(QMainWindow):
     # ==================================================================
     # UI Construction
     # ==================================================================
-    def _build_central_widget(self):
+    def _build_central_widget(self) -> None:
         """Builds central splitter layout for docks + workbench."""
         central = QWidget(self)
         layout = QVBoxLayout(central)
@@ -156,7 +156,7 @@ class ExpoStudio(QMainWindow):
         self._central_layout = layout
         self._splitter = splitter
 
-    def _build_schema_dock(self):
+    def _build_schema_dock(self) -> None:
         """Builds left dock containing the schema tree."""
         self.schema_tree = SchemaTreeWidget(self)
 
@@ -174,7 +174,7 @@ class ExpoStudio(QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock)
         self._schema_dock = dock
 
-    def _build_files_dock(self):
+    def _build_files_dock(self) -> None:
         """Builds file browser dock below schema panel."""
         self.files_tree = FileTreeWidget(self)
         self.files_model = self.files_tree.model
@@ -199,7 +199,7 @@ class ExpoStudio(QMainWindow):
         self.resizeDocks([self._schema_dock, dock], [3, 1], Qt.Orientation.Vertical)
         self._files_dock = dock
 
-    def _build_rest_dock(self):
+    def _build_rest_dock(self) -> None:
         """Builds REST API connections dock below files panel."""
         self.rest_tree = RestTreeWidget(self)
 
@@ -226,7 +226,7 @@ class ExpoStudio(QMainWindow):
         )
         self._rest_dock = dock
 
-    def _build_editor_and_tabs(self):
+    def _build_editor_and_tabs(self) -> None:
         """Builds the SQL workbench editor/result area with a movable splitter."""
         container = QWidget(self)
         layout = QVBoxLayout(container)
@@ -375,7 +375,7 @@ class ExpoStudio(QMainWindow):
     # ==================================================================
     # Dialogs
     # ==================================================================
-    def _open_log_dialog(self):
+    def _open_log_dialog(self) -> None:
         """Open the log configuration dialog and reload settings if changed."""
         dlg = LogConfigEditor(
             parent=self,
@@ -386,7 +386,7 @@ class ExpoStudio(QMainWindow):
             self._reload_logging()
             self.status_controller.set_status(self.tr("Logg settings reloaded."), 4000)
 
-    def _open_settings_dialog(self):
+    def _open_settings_dialog(self) -> None:
         """Open the general settings dialog and reload settings if changed."""
         dlg = SettingsEditor(
             parent=self,
@@ -399,7 +399,7 @@ class ExpoStudio(QMainWindow):
             self.services.settings_service.reload()
             self.status_controller.set_status(self.tr("Settings reloaded."), 4000)
 
-    def _open_connection_dialog(self):
+    def _open_connection_dialog(self) -> None:
         """Open the database connection editor dialog."""
         dlg = ConnectionEditor(
             parent=self,
@@ -424,7 +424,7 @@ class ExpoStudio(QMainWindow):
         dlg.connections_changed.connect(self.workbench_services.rest_panel.reload)
         dlg.exec()
 
-    def _show_about_dialog(self):
+    def _show_about_dialog(self) -> None:
         """Show the professional About dialog."""
         dlg = AboutDialog(parent=self)
         dlg.exec()
@@ -432,7 +432,7 @@ class ExpoStudio(QMainWindow):
     # ==================================================================
     # Logging and undo
     # ==================================================================
-    def _reload_logging(self):
+    def _reload_logging(self) -> None:
         """Reload logging configuration from logconfig.json without restarting."""
         self.services.logging_manager.setup()
         self.ui_logger.info("Logg settings reloaded.")
@@ -625,7 +625,7 @@ class ExpoStudio(QMainWindow):
 
             # Retry cooperative abort once more, then keep polling.
             try:
-                if self.services.job_mgr is not None:
+                if self.services is not None and self.services.job_mgr is not None:
                     self.services.job_mgr.abort_all(wait_ms=250)
             except (
                 AttributeError,

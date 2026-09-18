@@ -275,7 +275,7 @@ class SchemaController:
 
         self._logger.debug("SchemaController: icons refreshed due to theme change.")
 
-        def apply_icon(item_x: QTreeWidgetItem):
+        def apply_icon(item_x: QTreeWidgetItem) -> None:
             meta = item_x.data(0, Qt.ItemDataRole.UserRole)
 
             if isinstance(meta, dict):
@@ -584,7 +584,7 @@ class SchemaController:
     # ==================================================================
     # Lazy loading of columns
     # ==================================================================
-    def _on_item_expanded(self, item: QTreeWidgetItem):
+    def _on_item_expanded(self, item: QTreeWidgetItem) -> None:
         """Handle item expansion for lazy loading columns."""
         meta = item.data(0, Qt.ItemDataRole.UserRole)
         if not isinstance(meta, dict) or meta.get("type") not in {"table", "view"}:
@@ -824,7 +824,7 @@ class SchemaController:
         if chosen == act_distinct:
             self._insert_select_distinct(item, meta)
 
-    def _on_context_menu(self, pos: QPoint):
+    def _on_context_menu(self, pos: QPoint) -> None:
         """Handle context menu request."""
         item = self._tree.itemAt(pos)
         if not item:
@@ -1023,7 +1023,7 @@ class SchemaController:
     # Double-click
     # ==================================================================
 
-    def _on_item_double_clicked(self, item: QTreeWidgetItem):
+    def _on_item_double_clicked(self, item: QTreeWidgetItem) -> None:
         """Handle item double-click."""
         meta = item.data(0, Qt.ItemDataRole.UserRole)
         if not isinstance(meta, dict):
@@ -1072,7 +1072,7 @@ class SchemaController:
 
         self._insert_sql_into_tab(tab, sql)
 
-    def _insert_select_star(self, item: QTreeWidgetItem, meta: dict[str, Any]):
+    def _insert_select_star(self, item: QTreeWidgetItem, meta: dict[str, Any]) -> None:
         """Insert SELECT * SQL snippet."""
         conn = self._resolve_connection_for_item(item)
 
@@ -1097,7 +1097,7 @@ class SchemaController:
 
         self._insert_sql_into_tab(tab, sql)
 
-    def _insert_select_columns(self, item: QTreeWidgetItem, meta: dict[str, Any], with_schema: bool):
+    def _insert_select_columns(self, item: QTreeWidgetItem, meta: dict[str, Any], with_schema: bool) -> None:
         """Insert SELECT columns SQL snippet.
 
         Args:
@@ -1161,7 +1161,7 @@ class SchemaController:
         """
         ui_invoke(self._on_schema_progress_ui, done, total)
 
-    def _on_schema_progress_ui(self, done: int, total: int):
+    def _on_schema_progress_ui(self, done: int, total: int) -> None:
         """Update UI for schema progress.
 
         Args:

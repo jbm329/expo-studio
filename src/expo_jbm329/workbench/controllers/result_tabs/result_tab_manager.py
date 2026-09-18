@@ -976,7 +976,7 @@ class ResultTabManager:
             self._notify_toolbar_multi_dataset_cb = cb
             self._emit_toolbar_multi_dataset_state()
 
-    def _emit_toolbar_data_state(self):
+    def _emit_toolbar_data_state(self) -> None:
         """Emit toolbar data state change event."""
         for cb in self._notify_has_data_cbs:
             if not callable(cb):
@@ -1124,7 +1124,7 @@ class ResultTabManager:
     # HEADER CONTEXT MENU
     # ==================================================================
 
-    def _on_header_context_menu(self, view: QTableView, pos: QPoint):
+    def _on_header_context_menu(self, view: QTableView, pos: QPoint) -> None:
         """Column header context menu.
 
         Args:
@@ -1389,7 +1389,7 @@ class ResultTabManager:
     # CELL CONTEXT MENU
     # ==================================================================
 
-    def _on_cell_context_menu(self, view: QTableView, pos: QPoint):
+    def _on_cell_context_menu(self, view: QTableView, pos: QPoint) -> None:
         """Clean, modular cell context menu.
 
         Mirrored structure from header context menu.
@@ -1568,7 +1568,7 @@ class ResultTabManager:
 
         self._logger.info("ResultTabManager: undo applied for tab=%s.", tab_id)
 
-    def _notify_undo_state_changed(self):
+    def _notify_undo_state_changed(self) -> None:
         """Tell parent window to refresh undo-button enabled state."""
         cb = self._update_undo_enabled
         if callable(cb):
@@ -1968,7 +1968,7 @@ class ResultTabManager:
 
         if isinstance(model, DataFrameModel):
 
-            def invalidate_cache():
+            def invalidate_cache() -> None:
                 tab_bar = self._tabs.tabBar()
                 if tab_bar is None:
                     return
@@ -2003,7 +2003,7 @@ class ResultTabManager:
         view: QTableView,
         df: pd.DataFrame,
         status: str,
-    ):
+    ) -> None:
         """Wrapper to enforce cache invalidation."""
         self._apply_new_dataframe_to_view(
             view,
@@ -2017,7 +2017,7 @@ class ResultTabManager:
         view,
         df,
         status,
-    ):
+    ) -> None:
         """Adapter for controllers that should not force cache invalidation."""
         self._apply_new_dataframe_to_view(
             view,
@@ -2480,7 +2480,7 @@ class ResultTabManager:
         fn: Callable[[], None],
         *,
         message: str | None = None,
-    ):
+    ) -> None:
         """Run a potentially heavy operation with a busy overlay.
 
         This MUST be used for operations that block the UI thread

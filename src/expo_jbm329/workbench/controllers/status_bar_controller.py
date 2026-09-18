@@ -127,7 +127,7 @@ class StatusBarController:
     # ------------------------------------------------------------------
     # UI BUILDING
     # ------------------------------------------------------------------
-    def _build_widgets(self):
+    def _build_widgets(self) -> None:
         """Build and configure the status bar widgets."""
         sb = self._status_bar
 

@@ -313,7 +313,7 @@ class ColumnPropertiesDialog(QDialog):
 
         rows = self._format_stats_for_display(self._profile.stats)
 
-        def copy():
+        def copy() -> None:
             clipboard = QApplication.clipboard()
             if clipboard is not None:
                 clipboard.setText(to_markdown(rows))

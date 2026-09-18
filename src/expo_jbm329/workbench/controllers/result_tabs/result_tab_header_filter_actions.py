@@ -316,7 +316,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -401,7 +401,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -465,7 +465,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -520,7 +520,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -632,7 +632,7 @@ class ResultTabHeaderFilterActions:
         value_str = format_value_for_display(value, sem)
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -768,7 +768,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 

@@ -288,7 +288,7 @@ class ConnectionEditor(QDialog):
     # ----------------------------------------------------------------------
     # Update icon
     # ----------------------------------------------------------------------
-    def _update_icon(self):
+    def _update_icon(self) -> None:
         """Updates the window icon using the IconService or a fallback path."""
         if self._icon_service:
             icon = self._icon_service.get("connection")
@@ -331,7 +331,7 @@ class ConnectionEditor(QDialog):
     # Field enable/disable logic
     # =============================================================================
 
-    def _set_fields_enabled(self, enabled: bool):
+    def _set_fields_enabled(self, enabled: bool) -> None:
         """Enables or disables all input fields in the connection form.
 
         Args:

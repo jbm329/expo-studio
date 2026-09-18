@@ -142,7 +142,7 @@ class HighlighterThemeService(QObject):
     # ------------------------------------------------------------------
     # OS theme change handler
     # ------------------------------------------------------------------
-    def _on_gui_theme_changed(self, gui_theme: str):
+    def _on_gui_theme_changed(self, gui_theme: str) -> None:
         """Re-apply the theme when the GUI theme changes.
 
         Args:

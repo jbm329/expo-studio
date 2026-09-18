@@ -258,7 +258,7 @@ class RestConnectionEditor(QDialog):
     # ----------------------------------------------------------------------
     # Update icon
     # ----------------------------------------------------------------------
-    def _update_icon(self):
+    def _update_icon(self) -> None:
         """Updates the window icon using the IconService or a fallback path."""
         icon = self._icon_service.get("rest") if self._icon_service else QIcon(":/icons/dark/themes/dark/rest.png")
         self.setWindowIcon(icon)

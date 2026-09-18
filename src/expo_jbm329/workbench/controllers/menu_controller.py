@@ -120,7 +120,7 @@ class MenuController:
         self._connect_menu_logic()
 
     # ----------------------------------------------------------------------
-    def _build_menu_bar(self):
+    def _build_menu_bar(self) -> None:
         """Build the complete menu bar structure with all menus and actions."""
         mb = self._menubar
 
@@ -203,7 +203,7 @@ class MenuController:
         self._menu_help.addAction(self._act_about)
 
     # ----------------------------------------------------------------------
-    def _connect_menu_logic(self):
+    def _connect_menu_logic(self) -> None:
         """Wire all menu actions to their respective callbacks."""
         # File
         self._act_new.triggered.connect(self._new_file)

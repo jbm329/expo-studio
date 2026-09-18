@@ -141,7 +141,7 @@ class LogConfigEditor(QDialog):
     # -------------------------------------------------------------------------
     # Update icon
     # -------------------------------------------------------------------------
-    def _update_icon(self):
+    def _update_icon(self) -> None:
         """Updates the window icon using the IconService or a fallback path."""
         if self._icon_service:
             icon = self._icon_service.get("logging")
@@ -183,7 +183,7 @@ class LogConfigEditor(QDialog):
         cols = QHBoxLayout()
 
         def bind_enable(chk: QCheckBox, widgets: list[QWidget]) -> None:
-            def _apply():
+            def _apply() -> None:
                 e = chk.isChecked()
                 for w in widgets:
                     w.setEnabled(e)
@@ -269,7 +269,7 @@ class LogConfigEditor(QDialog):
 
             # Styr enable/disable på nivålådan
             def bind_ns_enable(_chk: QCheckBox, _cb: QComboBox) -> None:
-                def _apply():
+                def _apply() -> None:
                     _cb.setEnabled(_chk.isChecked())
 
                 _chk.stateChanged.connect(_apply)
@@ -316,7 +316,7 @@ class LogConfigEditor(QDialog):
     # Populate UI
     # -------------------------------------------------------------------------
 
-    def _ensure_custom_formatter(self, name: str | None):
+    def _ensure_custom_formatter(self, name: str | None) -> None:
         """Ensures the UI combo boxes include a custom formatter name if it exists.
 
         Args:

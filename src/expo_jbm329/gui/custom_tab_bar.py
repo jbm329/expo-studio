@@ -70,7 +70,7 @@ class TabBarProxyStyle(QProxyStyle):
 
         super().drawControl(element, option, painter, widget)
 
-    def _draw_tab_shape(self, option: QStyleOptionTab, painter: QPainter, widget: QTabBar):
+    def _draw_tab_shape(self, option: QStyleOptionTab, painter: QPainter, widget: QTabBar) -> None:
         """Draw a rounded rectangle tab shape."""
         rect: QRect = option.rect
         palette = option.palette
@@ -240,7 +240,7 @@ class CustomTabBar(QTabBar):
     # ----------------------------------------------------------------------
     # INTERNAL HELPERS
     # ----------------------------------------------------------------------
-    def _reload_close_icon(self):
+    def _reload_close_icon(self) -> None:
         """Load the theme-aware 'close' icon from IconService."""
         try:
             icon = self._icon_service.get("close")
@@ -286,7 +286,7 @@ class CustomTabBar(QTabBar):
         btn.clicked.connect(lambda: self._emit_close_for(btn))
         return btn
 
-    def _install_close_button(self, index: int):
+    def _install_close_button(self, index: int) -> None:
         """Attach close button if allowed."""
         if not (0 <= index < self.count()):
             return
@@ -329,7 +329,7 @@ class CustomTabBar(QTabBar):
             else QTabBar.ButtonPosition.RightSide
         )
 
-    def _emit_close_for(self, btn: QToolButton):
+    def _emit_close_for(self, btn: QToolButton) -> None:
         pos = self._trailing_button_position()
         for i in range(self.count()):
             if self.tabButton(i, pos) is btn:

@@ -102,7 +102,7 @@ def _stamp() -> str:
 # -----------------------------
 # Pre-clean helpers
 # -----------------------------
-def _chmod_writable(path: Path):
+def _chmod_writable(path: Path) -> None:
     """Ensure a filesystem path is writable.
 
     This is primarily used to handle read-only files on Windows.
@@ -111,7 +111,7 @@ def _chmod_writable(path: Path):
         path.chmod(stat.S_IWRITE)
 
 
-def _onerror(func, path, _exc_info):
+def _onerror(func, path, _exc_info) -> None:
     """Error handler for shutil.rmtree.
 
     Attempts to make the path writable and retry the original operation.
@@ -172,7 +172,7 @@ def _safe_rmtree(path: Path, retries: int = 6, backoff: float = 0.2) -> bool:
     return False
 
 
-def _kill_running_expo():
+def _kill_running_expo() -> None:
     """Terminate running expo.exe processes on Windows.
 
     This is a silent no-op on non-Windows platforms.
@@ -189,7 +189,7 @@ def _kill_running_expo():
         )
 
 
-def _pre_clean(root: Path):
+def _pre_clean(root: Path) -> None:
     """Perform pre-build cleanup steps.
 
     This function:
@@ -245,7 +245,7 @@ def _archive_onedir_with_docs(
     platform: str,
     docs: dict[str, Path],
     release_notes: str,
-):
+) -> None:
     """Archive an onedir build and include documentation files.
 
     The archive will contain:

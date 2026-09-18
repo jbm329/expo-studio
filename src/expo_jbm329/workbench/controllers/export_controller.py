@@ -643,7 +643,7 @@ class ExportController:
     # ------------------------------------------------------------------
     # Internal: profile single tab
     # ------------------------------------------------------------------
-    def _profile_single(self, df):
+    def _profile_single(self, df) -> None:
         corr = self._new_corr()
 
         start_dir = self._dialog_state.get_dir(
@@ -730,7 +730,7 @@ class ExportController:
     # ------------------------------------------------------------------
     # Internal: profile multi-tab
     # ------------------------------------------------------------------
-    def _profile_multi(self, df):
+    def _profile_multi(self, df) -> None:
         profile_kind = self._tr(self.TR_KIND_PROFILE)
         comparison_kind = self._tr(self.TR_KIND_COMPARISON_PROFILE)
         choice = self._dialogs.confirm_profile_scope(
@@ -750,7 +750,7 @@ class ExportController:
     # ------------------------------------------------------------------
     # Internal: profile all tabs
     # ------------------------------------------------------------------
-    def _profile_all_tabs(self):
+    def _profile_all_tabs(self) -> None:
         data_all = self._results.collect_all_tabs_data()
         if not data_all:
             self._dialogs.info(
@@ -840,7 +840,7 @@ class ExportController:
     # Callbacks
     # ==================================================================
 
-    def _on_export_done(self, payload, kind: ExportKind, out_path):
+    def _on_export_done(self, payload, kind: ExportKind, out_path) -> None:
         # Build JobResult robustly
         try:
             if isinstance(payload, JobResult):
@@ -919,7 +919,7 @@ class ExportController:
         self._set_status(fail_status, 8000)
         self._dialogs.warn(parent=self._parent, title=kind_label, text=res.error or fail_status)
 
-    def _on_export_error(self, err: str, kind: ExportKind):
+    def _on_export_error(self, err: str, kind: ExportKind) -> None:
         corr = "-"
         kind_label = self._tr(self._EXPORT_LABELS[kind])
         if isinstance(err, JobResult):

@@ -277,7 +277,7 @@ class DerivedColumnController:
             except DerivedColumnError as exc:
                 return False, None, exc
 
-        def _apply_result(result):
+        def _apply_result(result) -> None:
             if result is None:
                 return
 

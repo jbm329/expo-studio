@@ -668,7 +668,7 @@ class FileWriter:
         written = 0
         last_pct = -1
 
-        def maybe_progress():
+        def maybe_progress() -> None:
             nonlocal last_pct
             if not progress_cb:
                 return
@@ -677,7 +677,7 @@ class FileWriter:
                 last_pct = pct
                 progress_cb(pct)
 
-        def ensure_new_sheet_if_needed():
+        def ensure_new_sheet_if_needed() -> None:
             nonlocal sheet_ix, current_ws, rows_in_current_sheet
             if rows_in_current_sheet >= rows_limit_for_data:
                 sheet_ix += 1

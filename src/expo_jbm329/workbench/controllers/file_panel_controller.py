@@ -189,7 +189,7 @@ class FilePanelController:
     # ==================================================================
     # Double click handling
     # ==================================================================
-    def _on_file_double_clicked(self, index: QModelIndex):
+    def _on_file_double_clicked(self, index: QModelIndex) -> None:
         """Handle double-clicks on files in the tree view.
 
         Args:
@@ -209,7 +209,7 @@ class FilePanelController:
     # ==================================================================
     # Context menu
     # ==================================================================
-    def _on_context_menu(self, pos: QPoint):
+    def _on_context_menu(self, pos: QPoint) -> None:
         """Show the file panel context menu.
 
         Args:
@@ -277,7 +277,7 @@ class FilePanelController:
     # ==================================================================
     # Rename file
     # ==================================================================
-    def _rename(self, index: QModelIndex):
+    def _rename(self, index: QModelIndex) -> None:
         """Handle rename requests from the context menu.
 
         Args:
@@ -324,7 +324,7 @@ class FilePanelController:
     # ==================================================================
     # Delete file
     # ==================================================================
-    def _delete_file(self, index: QModelIndex):
+    def _delete_file(self, index: QModelIndex) -> None:
         """Delete a file after user confirmation.
 
         Args:

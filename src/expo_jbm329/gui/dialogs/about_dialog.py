@@ -33,7 +33,7 @@ class AboutDialog(QDialog):
         self.setFixedSize(565, 370)
         self._init_ui()
 
-    def _init_ui(self):
+    def _init_ui(self) -> None:
         """Set up the dialog user interface."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -136,7 +136,7 @@ class AboutDialog(QDialog):
         btn_layout.addWidget(ok_button)
         layout.addLayout(btn_layout)
 
-    def _open_file_link(self, link: str):
+    def _open_file_link(self, link: str) -> None:
         """Open a local file link using the system default application."""
         file_path = Path(link)
         if not file_path.is_absolute():

@@ -191,7 +191,7 @@ class ResultTabHeaderDtypeActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -258,7 +258,7 @@ class ResultTabHeaderDtypeActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -325,7 +325,7 @@ class ResultTabHeaderDtypeActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -408,7 +408,7 @@ class ResultTabHeaderDtypeActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -499,7 +499,7 @@ class ResultTabHeaderDtypeActions:
             "raise": self._tr(self.TR_UNKNOWN_ERROR_LABEL_ERROR),
         }[self._conversion_error_handling]
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -586,7 +586,7 @@ class ResultTabHeaderDtypeActions:
 
         ordered_label = self._tr(self.TR_ORDERED) if opts["ordered"] else self._tr(self.TR_UNORDERED)
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 

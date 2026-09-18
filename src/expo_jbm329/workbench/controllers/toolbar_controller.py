@@ -259,7 +259,7 @@ class ToolbarController:
 
     # ------------------------------------------------------------------
 
-    def _connect_callbacks(self):
+    def _connect_callbacks(self) -> None:
         """Connect all toolbar actions to their respective callbacks."""
         self._action_new.triggered.connect(self._action_new_cb)
         self._action_open.triggered.connect(self._action_open_cb)

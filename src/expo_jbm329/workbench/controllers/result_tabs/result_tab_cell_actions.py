@@ -183,7 +183,7 @@ class ResultTabCellActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -254,7 +254,7 @@ class ResultTabCellActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 
@@ -400,7 +400,7 @@ class ResultTabCellActions:
                 column_name=column_name,
             )
 
-        def _apply_result(new_df):
+        def _apply_result(new_df) -> None:
             if new_df is None:
                 return
 

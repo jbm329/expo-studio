@@ -150,14 +150,14 @@ class ConcatDialog(QDialog):
     # ---------------------------------------------------------
     # Populate
     # ---------------------------------------------------------
-    def _populate_left_columns(self):
+    def _populate_left_columns(self) -> None:
         self.left_columns_list.clear()
         for col in self._left_cols:
             item = QListWidgetItem(col)
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)  # read-only
             self.left_columns_list.addItem(item)
 
-    def _populate_right_columns(self, tab: str):
+    def _populate_right_columns(self, tab: str) -> None:
         cols = self._right_cols_map.get(tab, [])
         self.right_columns_list.clear()
         for col in cols:
@@ -165,7 +165,7 @@ class ConcatDialog(QDialog):
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
             self.right_columns_list.addItem(item)
 
-    def _on_right_dataset_changed(self, tab: str):
+    def _on_right_dataset_changed(self, tab: str) -> None:
         self._populate_right_columns(tab)
 
     # ---------------------------------------------------------

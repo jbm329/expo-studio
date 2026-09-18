@@ -153,7 +153,7 @@ class SettingsService:
             self._notify_one(cb, s)
 
     def _notify_one(self, cb: Subscriber, s: dict) -> None:
-        def _invoke():
+        def _invoke() -> None:
             try:
                 cb(copy.deepcopy(s))
             except (

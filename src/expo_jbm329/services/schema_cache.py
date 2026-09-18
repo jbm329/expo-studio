@@ -336,7 +336,7 @@ class SchemaCacheManager:
     # -----------------------------------------------------------------------------
     # BULK HANDLER
     # -----------------------------------------------------------------------------
-    def _handle_bulk_error(self, connection_name: str, token: str, err: str, corr_id: str | None = None):
+    def _handle_bulk_error(self, connection_name: str, token: str, err: str, corr_id: str | None = None) -> None:
         self._logger.warning("SchemaCacheManager: bulk error (conn=%s, corr=%s): %s", connection_name, corr_id, err)
 
         if self._status_cb:
@@ -467,7 +467,7 @@ class SchemaCacheManager:
     # -----------------------------------------------------------------------------
     # BATCH HANDLER
     # -----------------------------------------------------------------------------
-    def _start_batch_prefetch(self, connection_name: str, token: str, corr_id: str | None = None):
+    def _start_batch_prefetch(self, connection_name: str, token: str, corr_id: str | None = None) -> None:
         entry = self._cache.get(connection_name)
         if not entry:
             return
@@ -513,7 +513,7 @@ class SchemaCacheManager:
         done: int,
         total: int,
         corr_id: str | None = None,
-    ):
+    ) -> None:
         if not remaining:
             if self._autocomplete_cb:
                 self._invoke_ui(lambda: self._autocomplete_cb(connection_name))
@@ -590,7 +590,7 @@ class SchemaCacheManager:
             corr_id=corr_id,
         )
 
-        def _on_ok(payload):
+        def _on_ok(payload) -> None:
             entry = self._cache.get(connection_name) or None
             if entry:
                 entry.columns.update(payload or {})
@@ -629,7 +629,7 @@ class SchemaCacheManager:
             ):
                 self._run_next_batch(connection_name, token, rest, batch_size, new_done, total, corr_id)
 
-        def _on_err(err: str):
+        def _on_err(err: str) -> None:
             self._logger.warning(
                 "SchemaCacheManager: batch error (conn=%s, corr=%s): %s", connection_name, corr_id, err
             )

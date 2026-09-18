@@ -144,7 +144,7 @@ class BusyOverlayController:
             timeout_ms=timeout_ms,
         )
 
-        def _execute():
+        def _execute() -> None:
             try:
                 fn()
             finally:
@@ -318,7 +318,7 @@ class BusyOverlayController:
         timer.setSingleShot(True)
         timer.setInterval(timeout_ms)
 
-        def _watchdog_fire():
+        def _watchdog_fire() -> None:
             self._logger.warning("BusyOverlayController: watchdog timeout reached.")
 
             self.hide(target)

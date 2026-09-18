@@ -420,7 +420,7 @@ class JoinController:
 
             return preview_df, metadata
 
-        def _show_preview(result):
+        def _show_preview(result) -> None:
             if result is None:
                 return
 
