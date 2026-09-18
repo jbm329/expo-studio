@@ -108,7 +108,7 @@ class ResultTabHeaderDtypeActions:
         return tr_fmt("ResultTabHeaderDtypeActions", text, **kwargs)
 
     # ------------------------------------------------------------------
-    # Init (DI)
+    # Init
     # ------------------------------------------------------------------
     __slots__ = (
         "_apply_new_dataframe",

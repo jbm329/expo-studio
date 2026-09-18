@@ -161,18 +161,7 @@ def parse_one_safe(sql: str, dialect: str | None = None) -> exp.Expression | Non
 
     try:
         return sqlglot.parse_one(sql, read=sqlglot_dialect(dialect))
-    except (
-        AttributeError,
-        ConnectionError,
-        FileNotFoundError,
-        IndexError,
-        KeyError,
-        LookupError,
-        OSError,
-        RuntimeError,
-        TypeError,
-        ValueError,
-    ):
+    except (ParseError, SqlglotError, ValueError):
         return None
 
 
@@ -193,18 +182,7 @@ def parse_many_safe(sql: str, dialect: str | None = None) -> list[Expression]:
     try:
         parsed = sqlglot.parse(sql, read=sqlglot_dialect(dialect))
         return [cast("Expression", expression) for expression in parsed if expression is not None]
-    except (
-        AttributeError,
-        ConnectionError,
-        FileNotFoundError,
-        IndexError,
-        KeyError,
-        LookupError,
-        OSError,
-        RuntimeError,
-        TypeError,
-        ValueError,
-    ):
+    except (ParseError, SqlglotError, ValueError):
         return []
 
 

@@ -59,10 +59,6 @@ class CustomFileIconProvider(QFileIconProvider):
         self._icons_by_ext: dict[str, QIcon] = {}
         self._icons_by_multi_ext: dict[str, QIcon] = {}
 
-        # Optional early initialization
-        # if icon_service is not None:
-        #     self.update_theme()
-
     # ------------------------------------------------------------------ #
     # Theme update API (called by SqlEditor)
     # ------------------------------------------------------------------ #
@@ -158,18 +154,7 @@ class CustomFileIconProvider(QFileIconProvider):
             # Fallback
             return super().icon(type_or_info)
 
-        except (
-            AttributeError,
-            ConnectionError,
-            FileNotFoundError,
-            IndexError,
-            KeyError,
-            LookupError,
-            OSError,
-            RuntimeError,
-            TypeError,
-            ValueError,
-        ):
+        except Exception:  # noqa: BLE001
             return super().icon(type_or_info)
 
     # ------------------------------------------------------------------ #

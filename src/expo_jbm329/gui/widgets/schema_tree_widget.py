@@ -177,9 +177,6 @@ class SchemaTreeWidget(QTreeWidget):
         self.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)  # drop: no
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)  # multi-select
 
-        # Optional: disable default sorting (SchemaController controls structure)
-        # self.setSortingEnabled(False)
-
     # --------------------------------------------------------------------------
     # Qt override: build mime data for drag
     # --------------------------------------------------------------------------

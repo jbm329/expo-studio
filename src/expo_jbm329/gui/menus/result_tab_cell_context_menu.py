@@ -75,7 +75,7 @@ class ResultTabCellContextMenu:
         actions: dict[QAction, str] = {}
 
         # --------------------------------------------------------------
-        # Header (preview)
+        # Header preview
         # --------------------------------------------------------------
         preview = str(raw_value)
         if len(preview) > 80:

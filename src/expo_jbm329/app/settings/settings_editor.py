@@ -154,7 +154,7 @@ class SettingsEditor(QDialog):
 
         row_theme.addSpacing(20)
 
-        # GUI-Theme (light/dark/system)
+        # GUI-Theme light/dark/system
         row_theme.addWidget(QLabel(self.tr("GUI theme:"), self))
 
         self.cmb_theme = QComboBox(self)
@@ -216,7 +216,7 @@ class SettingsEditor(QDialog):
         main_layout.addWidget(box_top)
 
         # ================================================================
-        # GROUPS: CSV and Excel
+        # Groups CSV and Excel
         # ================================================================
         row_csv_excel = QHBoxLayout()
 
@@ -283,12 +283,12 @@ class SettingsEditor(QDialog):
         main_layout.addLayout(row_csv_excel)
 
         # ================================================================
-        # GROUP: Schema-cache
+        # Group Schema-cache
         # ================================================================
         row_schema = QHBoxLayout()
 
         # -------------------------
-        # VÄNSTER: Schema-cache
+        # Left Schema-cache
         # -------------------------
         box_sc = QGroupBox(self.tr("Schema cache"), self)
         form_sc = QFormLayout(box_sc)
@@ -311,7 +311,7 @@ class SettingsEditor(QDialog):
         row_schema.addWidget(box_sc, 1)
 
         # -------------------------
-        # HÖGER: Editor
+        # Right Editor
         # -------------------------
         box_editor = QGroupBox(self.tr("SQL editor"), self)
         form_editor = QFormLayout(box_editor)
@@ -450,7 +450,7 @@ class SettingsEditor(QDialog):
         )
         self.spin_schema_ttl.setValue(sc.get("ttl_seconds", DEFAULT_SETTINGS["schema_cache"].get("ttl_seconds", 300)))
 
-        # (workbench - remaining)
+        # workbench - remaining
         self.spin_editor_topn.setValue(editor.get("gen_top_n", editor_defaults.get("gen_top_n", 10)))
 
     # -------------------------------------------------------------------------

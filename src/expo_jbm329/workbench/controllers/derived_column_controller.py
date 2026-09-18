@@ -381,15 +381,6 @@ class DerivedColumnController:
                 message=self._tr_fmt(self.TR_CREATING_COLUMN, column_name=spec.column_name),
             )
 
-            # ------------------------------------------------------
-            # OPTION B:
-            # create new result tab
-            # ------------------------------------------------------
-            # self._rtm.add_result_tab(
-            #     new_df,
-            #     title=f"{self._rtm.get_active_title()} (beräknad)",
-            # )
-
         except (
             AttributeError,
             ConnectionError,

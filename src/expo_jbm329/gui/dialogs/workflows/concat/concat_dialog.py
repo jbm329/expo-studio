@@ -122,7 +122,7 @@ class ConcatDialog(QDialog):
         right_layout.addRow(QLabel(self.tr("Columns:")), self.right_columns_list)
 
         # ======================================================
-        # GRID: Left + Right
+        # Grid Left + Right
         # ======================================================
         row = QHBoxLayout()
         row.addWidget(left_box)

@@ -79,7 +79,7 @@ class ResultTabHeaderCategoryActions:
         return tr_fmt("ResultTabHeaderCategoryActions", text, **kwargs)
 
     # ------------------------------------------------------------------
-    # Init (DI)
+    # Init
     # ------------------------------------------------------------------
     __slots__ = (
         "_apply_new_dataframe",

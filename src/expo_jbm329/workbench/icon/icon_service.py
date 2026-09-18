@@ -98,8 +98,6 @@ class IconService(QObject):
         disabled_pix = self._make_disabled_pixmap(base_pix, dark_mode=dark_mode)
         icon.addPixmap(disabled_pix, QIcon.Mode.Disabled, QIcon.State.Off)
 
-        # DEBUG available if needed, but disabled by default
-        # self._logger.debug("IconService.get('%s') → theme=%s, path=%s", name, theme, path)
         return icon
 
     def current_theme(self) -> str:

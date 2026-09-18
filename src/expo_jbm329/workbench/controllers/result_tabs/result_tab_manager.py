@@ -1323,10 +1323,6 @@ class ResultTabManager:
             self._header_dtype_actions.to_datetime(view, column)
             return
 
-        # if action_id == "dtype.to_date_only":
-        #     self._header_dtype_actions.to_datetime(view, column, date_only=True)
-        #     return
-
         if action_id == "dtype.to_bool":
             self._header_dtype_actions.to_boolean(view, column)
             return

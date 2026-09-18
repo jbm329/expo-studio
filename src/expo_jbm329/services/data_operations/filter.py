@@ -82,7 +82,7 @@ def filter_equals(
         return df.loc[mask].copy()
 
     # --------------------------------------------------
-    # Fallback: numeric / datetime / bool
+    # Fallback numeric / datetime / bool
     # --------------------------------------------------
 
     mask: pd.Series[bool] = s == value

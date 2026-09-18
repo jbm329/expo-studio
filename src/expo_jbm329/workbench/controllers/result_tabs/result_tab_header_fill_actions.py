@@ -81,7 +81,7 @@ class ResultTabHeaderFillActions:
         return tr_fmt("ResultTabHeaderFillActions", text, **kwargs)
 
     # ------------------------------------------------------------------
-    # Init (DI)
+    # Init
     # ------------------------------------------------------------------
     __slots__ = (
         "_apply_new_dataframe",
@@ -175,7 +175,7 @@ class ResultTabHeaderFillActions:
         return True
 
     # ==================================================================
-    # Fill: mean
+    # Fill mean
     # ==================================================================
 
     def fill_mean(self, view: QTableView, column: int) -> None:
@@ -243,7 +243,7 @@ class ResultTabHeaderFillActions:
         )
 
     # ==================================================================
-    # Fill: median
+    # Fill median
     # ==================================================================
 
     def fill_median(self, view: QTableView, column: int) -> None:
@@ -310,7 +310,7 @@ class ResultTabHeaderFillActions:
         )
 
     # ==================================================================
-    # Fill: mode
+    # Fill mode
     # ==================================================================
 
     def fill_mode(self, view: QTableView, column: int) -> None:

@@ -208,7 +208,7 @@ class DataIOService:
             )
 
     # ------------------------------------------------------------------
-    # Export: CSV
+    # Export CSV
     # ------------------------------------------------------------------
     def export_df_csv(
         self,
@@ -298,7 +298,7 @@ class DataIOService:
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)
 
     # ------------------------------------------------------------------
-    # Export: Excel
+    # Export Excel
     # ------------------------------------------------------------------
     def export_df_excel(
         self,
@@ -446,7 +446,7 @@ class DataIOService:
             )
 
     # ------------------------------------------------------------------
-    # Export: Datafile (suffix-routed)
+    # Export Datafile suffix-routed
     # ------------------------------------------------------------------
     def export_df_datafile(
         self,
@@ -532,7 +532,7 @@ class DataIOService:
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)
 
     # ------------------------------------------------------------------
-    # Export: Profiling (single)
+    # Export Profiling single
     # ------------------------------------------------------------------
     def export_df_profile(
         self,
@@ -615,7 +615,7 @@ class DataIOService:
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)
 
     # ------------------------------------------------------------------
-    # Export: Profiling (comparison)
+    # Export Profiling comparison
     # ------------------------------------------------------------------
     def export_dfs_profile(
         self,

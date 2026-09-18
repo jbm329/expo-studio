@@ -181,20 +181,6 @@ class LoggingManager:
         self.system_logger.info("Logging initialized.")
 
     # =====================================================================
-    # Public helpers
-    # =====================================================================
-    # def get_logger(self, name: str) -> logging.Logger:
-    #     """Returns a logger instance for the given name.
-    #
-    #     Args:
-    #         name: The name of the logger.
-    #
-    #     Returns:
-    #         A logging.Logger instance.
-    #     """
-    #     return logging.getLogger(name)
-
-    # =====================================================================
     # Handler builders
     # =====================================================================
     def _create_file_handler(self, cfg: dict) -> logging.Handler:

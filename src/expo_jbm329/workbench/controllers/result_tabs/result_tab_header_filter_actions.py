@@ -110,7 +110,7 @@ class ResultTabHeaderFilterActions:
         return tr_fmt("ResultTabHeaderFilterActions", text, **kwargs)
 
     # ------------------------------------------------------------------
-    # Init (DI)
+    # Init
     # ------------------------------------------------------------------
     __slots__ = (
         "_apply_new_dataframe",
@@ -178,7 +178,7 @@ class ResultTabHeaderFilterActions:
         )
 
     # ==================================================================
-    # Filter: equals
+    # Filter equals
     # ==================================================================
 
     def filter_equals(self, view: QTableView, column: int) -> None:
@@ -353,7 +353,7 @@ class ResultTabHeaderFilterActions:
         )
 
     # ==================================================================
-    # Filter: contains
+    # Filter contains
     # ==================================================================
 
     def filter_contains(self, view: QTableView, column: int) -> None:
@@ -438,7 +438,7 @@ class ResultTabHeaderFilterActions:
         )
 
     # ==================================================================
-    # Filter: isna / notna
+    # Filter isna / notna
     # ==================================================================
 
     def filter_isna(self, view: QTableView, column: int) -> None:
@@ -551,7 +551,7 @@ class ResultTabHeaderFilterActions:
         )
 
     # ==================================================================
-    # Filter: compare
+    # Filter compare
     # ==================================================================
 
     def filter_compare(self, view: QTableView, column: int) -> None:
@@ -669,7 +669,7 @@ class ResultTabHeaderFilterActions:
         )
 
     # ==================================================================
-    # Filter: between
+    # Filter between
     # ==================================================================
 
     def filter_between(self, view: QTableView, column: int) -> None:

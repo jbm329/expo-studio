@@ -78,7 +78,7 @@ class RestTreeWidget(QTreeWidget):
         entries = rest_registry.list_all()
 
         # -------------------------------
-        # Folder: samples
+        # Folder samples
         # -------------------------------
         samples_item = QTreeWidgetItem([self._tr("samples")])
         samples_item.setData(0, Qt.ItemDataRole.UserRole, self.FOLDER_ROLE)

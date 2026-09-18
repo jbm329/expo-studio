@@ -522,7 +522,7 @@ def build_select_distinct(
         TypeError,
         ValueError,
     ):
-        # Fallback (MSSQL-style)
+        # Fallback MSSQL-style
         return f"SELECT DISTINCT [{column_name}]\nFROM [{schema}].[{object_name}]"
 
 

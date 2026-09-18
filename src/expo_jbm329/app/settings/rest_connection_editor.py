@@ -173,7 +173,7 @@ class RestConnectionEditor(QDialog):
         self.params_edit.textChanged.connect(self._update_action_buttons)
 
         # ==============================================================
-        # Layout (form)
+        # Layout form
         # ==============================================================
         wizard_panel = _SectionPanel(self.tr("Wizards"), checked=True)
         wizard_btns = QHBoxLayout()

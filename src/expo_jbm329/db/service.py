@@ -327,18 +327,7 @@ class DbService:
                 sql_signature=signature,
             )
 
-        except (
-            AttributeError,
-            ConnectionError,
-            FileNotFoundError,
-            IndexError,
-            KeyError,
-            LookupError,
-            OSError,
-            RuntimeError,
-            TypeError,
-            ValueError,
-        ) as e:
+        except Exception as e:  # noqa: BLE001
             elapsed = time.time() - start
 
             # If cancellation is already requested when the driver/DB layer raises,

@@ -93,7 +93,7 @@ class FileLoader:
         """
         self._logger = logger or logging.getLogger("applogger.service")
 
-        # Settings (hydrated in reload_settings)
+        # Settings
         self._config: dict = {}
 
         self._csv_encoding_default = "utf-8"
@@ -855,6 +855,7 @@ class FileLoader:
             RuntimeError,
             TypeError,
             ValueError,
+            csv.Error,
         ):
             return None
 

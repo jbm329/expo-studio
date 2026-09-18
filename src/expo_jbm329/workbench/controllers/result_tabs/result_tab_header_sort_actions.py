@@ -52,7 +52,7 @@ class ResultTabHeaderSortActions:
         return tr_fmt("ResultTabHeaderSortActions", text, **kwargs)
 
     # ------------------------------------------------------------------
-    # Init (DI)
+    # Init
     # ------------------------------------------------------------------
     __slots__ = (
         "__weakref__",

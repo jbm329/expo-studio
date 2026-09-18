@@ -93,7 +93,6 @@ class ExportController:
     # Comparison profile report
     TR_KIND_COMPARISON_PROFILE = QT_TR_NOOP("Generate data profile comparison report")
     TR_EXPORT_COMPARISON_PROFILE_FILE_EXT = QT_TR_NOOP("_comparison.html")
-    # TR_EXPORT_COMPARISON_PROFILE_DIALOG_TITLE = QT_TR_NOOP("Save data comparison profile report")
     TR_EXPORT_COMPARISON_PROFILE_DIALOG_FILTER = QT_TR_NOOP("HTML files (*.html)")
     TR_EXPORT_COMPARISON_PROFILE_STARTED_MSG = QT_TR_NOOP(
         "Generating data profile comparison report with {datasets_cnt} datasets…"
@@ -198,7 +197,7 @@ class ExportController:
         self._documents_dir: Path | None = None
 
     # ==================================================================
-    # Properties (read-only)
+    # Properties read-only
     # ==================================================================
     @property
     def file_jobs(self):
@@ -370,7 +369,7 @@ class ExportController:
         return self._documents_dir
 
     # ==================================================================
-    # EXPORT: CSV
+    # Export CSV
     # ==================================================================
     def export_csv(self):
         """Export the current DataFrame to CSV format.
@@ -458,7 +457,7 @@ class ExportController:
         )
 
     # ==================================================================
-    # EXPORT: Excel
+    # Export Excel
     # ==================================================================
     def export_excel(self):
         """Export the current DataFrame to Excel format."""
@@ -626,7 +625,7 @@ class ExportController:
         )
 
     # ==================================================================
-    # PROFILING: ydata (single-tab / multi-tab)
+    # PROFILING ydata (single-tab / multi-tab)
     # ==================================================================
     def profile_report(self) -> None:
         """Generate a profile report for the active dataset or compare multiple ready datasets."""
@@ -808,7 +807,6 @@ class ExportController:
             "ExportController: coerced path (corr=%s, kind=%s, out=%s, suffix=%s)", corr, kind, fmt_path(path), suffix
         )
 
-        # titles_str = ", ".join([name for _, name in data_all])
         datasets_cnt = len(data_all)
         started_msg = self._tr_fmt(self.TR_EXPORT_COMPARISON_PROFILE_STARTED_MSG, datasets_cnt=str(datasets_cnt))
 

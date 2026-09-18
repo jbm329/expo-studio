@@ -74,7 +74,7 @@ class JoinAnalysisWidget(QWidget):
         root.addWidget(meta_box)
 
         # ======================================================
-        # Styling (colors)
+        # Styling colors
         # ======================================================
         self._apply_styles()
 

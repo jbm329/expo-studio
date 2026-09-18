@@ -1050,7 +1050,6 @@ class JobManager:
             job: Worker or _FutureBridge instance.
         """
         started_signal = getattr(job, "started", None)
-        # progress_signal = getattr(job, "progress", None)
         error_signal = getattr(job, "error", None)
         finished_signal = getattr(job, "finished", None)
 

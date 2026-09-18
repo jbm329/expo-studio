@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
 
 # ----------------------------------------------------------------------
-# prompt_text (generic)
+# prompt_text generic
 # ----------------------------------------------------------------------
 def prompt_text(
     parent: QWidget,

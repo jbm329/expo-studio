@@ -28,7 +28,7 @@ FileType = Literal["sql", "data", "html", "unknown"]
 
 
 # ---------------------------------------------------------------------
-# Configuration (centralized and explicit)
+# Configuration centralized and explicit
 # ---------------------------------------------------------------------
 
 SQL_SUFFIXES: tuple[str, ...] = (".sql",)
