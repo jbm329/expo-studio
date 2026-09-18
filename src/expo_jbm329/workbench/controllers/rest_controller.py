@@ -3,12 +3,10 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QWidget
 
 from expo_jbm329.app.settings.config_store import (
     read_rest_connections,
@@ -16,13 +14,21 @@ from expo_jbm329.app.settings.config_store import (
 )
 from expo_jbm329.gui.gui_utils import ui_invoke
 from expo_jbm329.services.job_result import JobResult
-from expo_jbm329.services.rest.models import RestRequestConfig
 from expo_jbm329.services.rest.registry import rest_registry
 from expo_jbm329.services.rest.rest_job import fetch_rest_dataset
 from expo_jbm329.utils.format_utils import fmt_shape, fmt_time
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
-from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from PyQt6.QtWidgets import QWidget
+
+    from expo_jbm329.services.rest.models import RestRequestConfig
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
 
 
 class DisplayDataFrameProtocol(Protocol):

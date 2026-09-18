@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import copy
 import json
-from pathlib import Path
 from threading import RLock
+from typing import TYPE_CHECKING
 
 from expo_jbm329.i18n.language import Language
 from expo_jbm329.utils.path_manager import (
@@ -22,6 +22,9 @@ from expo_jbm329.utils.path_manager import (
     get_rest_connections_config_path,
     get_settings_path,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 DEFAULT_SETTINGS = {
     "workbench": {

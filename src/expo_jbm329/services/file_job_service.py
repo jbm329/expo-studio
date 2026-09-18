@@ -8,21 +8,27 @@ from __future__ import annotations
 import contextlib
 import logging
 import re
-from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.gui_utils import ui_invoke
 from expo_jbm329.utils.format_utils import fmt_path, fmt_shape, fmt_time
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
-from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from PyQt6.QtWidgets import QWidget
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
 
 
 class FileJobService:

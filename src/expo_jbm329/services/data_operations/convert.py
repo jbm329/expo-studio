@@ -19,12 +19,14 @@ Design principles:
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
-from typing import Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 import pandas as pd
 import pandas.api.types as pdt
 from pandas import CategoricalDtype
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 logger = logging.getLogger("applogger.service")
 

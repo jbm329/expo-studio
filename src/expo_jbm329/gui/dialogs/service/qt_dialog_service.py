@@ -1,8 +1,7 @@
 """Facade implementation delegating to dialog modules."""
 from __future__ import annotations
 
-import datetime
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from PyQt6.QtWidgets import QMessageBox, QWidget
 
@@ -25,9 +24,13 @@ from expo_jbm329.gui.dialogs.service.dialog_service import (
     SplitColumnResult,
     TextFilterMatchResult,
 )
-from expo_jbm329.services.data_operations.category_orders import CategoryOrderKey
-from expo_jbm329.services.data_operations.datetime_formats import DateFormatKey
-from expo_jbm329.services.data_profile.semantics import SeriesSemantics
+
+if TYPE_CHECKING:
+    import datetime
+
+    from expo_jbm329.services.data_operations.category_orders import CategoryOrderKey
+    from expo_jbm329.services.data_operations.datetime_formats import DateFormatKey
+    from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 
 
 class QtDialogService(DialogService):

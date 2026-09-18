@@ -1,9 +1,11 @@
 """Models for REST data source services."""
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 RestAuthType = Literal["none", "bearer", "basic", "api_key", "oauth2"]
 RestHttpMethod = Literal["GET", "POST"]

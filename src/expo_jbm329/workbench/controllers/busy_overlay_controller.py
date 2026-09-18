@@ -25,16 +25,20 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 from weakref import WeakKeyDictionary
 
 from PyQt6.QtCore import QT_TR_NOOP, QTimer
 from PyQt6.QtWidgets import QApplication, QTableView, QWidget
 
 from expo_jbm329.gui.busy_overlay import BusyOverlayWidget
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.i18n_utils import tr
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 
 
 class BusyOverlayController:

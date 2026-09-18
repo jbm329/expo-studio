@@ -6,16 +6,16 @@ autocomplete, result tabs, and file handling into a single dependency container.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from PyQt6.QtCore import Qt
 
-from expo_jbm329.app.app_services import AppServices
 from expo_jbm329.app.settings.config_store import read_connections
 from expo_jbm329.db.base import close_connection
 from expo_jbm329.gui.custom_tab_bar import CustomTabBar
 from expo_jbm329.gui.gui_utils import ui_invoke
 from expo_jbm329.services.file_job_service import FileJobService
 from expo_jbm329.services.schema_model import build_schema_dict
-from expo_jbm329.services.settings_service import SettingsService
 from expo_jbm329.utils.dialog_state import DialogState
 from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
 from expo_jbm329.workbench.controllers.busy_overlay_controller import BusyOverlayController
@@ -40,7 +40,11 @@ from expo_jbm329.workbench.icon.custom_file_icon_provider import CustomFileIconP
 from expo_jbm329.workbench.icon.icon_service import IconService
 from expo_jbm329.workbench.theme.highlighter_theme_service import HighlighterThemeService
 from expo_jbm329.workbench.theme.theme_service import ThemeService
-from expo_jbm329.workbench.ui_refs import WorkbenchUIRefs
+
+if TYPE_CHECKING:
+    from expo_jbm329.app.app_services import AppServices
+    from expo_jbm329.services.settings_service import SettingsService
+    from expo_jbm329.workbench.ui_refs import WorkbenchUIRefs
 
 
 class WorkbenchServices:

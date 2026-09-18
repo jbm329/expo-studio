@@ -9,6 +9,7 @@ interacts with logconfig.json.
 from __future__ import annotations
 
 import sys
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
@@ -32,10 +33,12 @@ from expo_jbm329.app.settings.config_store import (
     read_log_config,
     write_log_config,
 )
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.path_manager import get_log_path
-from expo_jbm329.workbench.icon.icon_service import IconService
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.icon.icon_service import IconService
 
 # =============================================================================
 # Helper utilities

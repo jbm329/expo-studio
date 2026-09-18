@@ -20,9 +20,8 @@ Examples:
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -40,6 +39,9 @@ from expo_jbm329.services.data_operations.dtypes import (
     get_numeric_columns,
     is_numeric_series,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 logger = logging.getLogger("applogger.service")
 

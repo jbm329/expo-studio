@@ -13,8 +13,10 @@ It MUST NOT:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from expo_jbm329.services.data_profile.semantics import SeriesSemantics
+if TYPE_CHECKING:
+    from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 
 
 @dataclass(frozen=True)

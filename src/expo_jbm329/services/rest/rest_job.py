@@ -2,14 +2,18 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
 from expo_jbm329.services.job_result import JobResult
 from expo_jbm329.services.rest.client import RestClientError, fetch_json_pages
-from expo_jbm329.services.rest.models import RestRequestConfig
 from expo_jbm329.services.rest.normalizer import RestNormalizeError, normalize_json_to_df
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.services.rest.models import RestRequestConfig
 
 
 def fetch_rest_dataset(

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Literal, override
+from typing import TYPE_CHECKING, Any, Literal, override
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QIcon, QTextCursor
@@ -28,7 +28,6 @@ from expo_jbm329.app.settings.config_store import (
     write_rest_connections,
 )
 from expo_jbm329.gui.dialogs.rest.scb_browser_dialog import ScbBrowserDialog
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.widgets.rest.auth_widget import RestAuthWidget
 from expo_jbm329.gui.widgets.rest.pagination_widget import RestPaginationWidget
@@ -41,7 +40,10 @@ from expo_jbm329.services.rest.models import (
 from expo_jbm329.services.rest.normalizer import normalize_json_to_df
 from expo_jbm329.services.rest.schema import build_response_preview
 from expo_jbm329.utils.format_utils import fmt_shape
-from expo_jbm329.workbench.icon.icon_service import IconService
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.icon.icon_service import IconService
 
 
 class _SectionPanel(QWidget):

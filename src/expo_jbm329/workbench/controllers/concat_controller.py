@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
@@ -20,8 +20,14 @@ from expo_jbm329.gui.dialogs.workflows.concat.concat_dialog import (
 )
 from expo_jbm329.services.data_operations.concat import ConcatRequest, concat_dataframes
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
-from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
 
 
 class ConcatController:

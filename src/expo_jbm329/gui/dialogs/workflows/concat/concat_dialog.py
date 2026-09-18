@@ -5,8 +5,8 @@ datasets (tabs) in the workbench.
 """
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -25,6 +25,9 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 @dataclass

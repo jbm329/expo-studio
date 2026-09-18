@@ -3,16 +3,23 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QTableView, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    import pandas as pd
+    from PyQt6.QtWidgets import QTableView, QWidget
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
 
 
 class ResultTabHeaderSortActions:

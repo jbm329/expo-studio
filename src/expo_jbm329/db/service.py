@@ -25,7 +25,7 @@ import contextlib
 import hashlib
 import logging
 import time
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
@@ -40,13 +40,17 @@ from expo_jbm329.db.core.errors import (
     TR_UNKNOWN_DATABASE_FAIL_HINT,
     should_log,
 )
-from expo_jbm329.db.core.interfaces import DialectProtocol, DriverProtocol
 from expo_jbm329.db.core.models import (
     ConnectionConfig,
     SqlError,
     SqlResult,
     TimeoutConfig,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.db.core.interfaces import DialectProtocol, DriverProtocol
 
 log = logging.getLogger("applogger.db")
 

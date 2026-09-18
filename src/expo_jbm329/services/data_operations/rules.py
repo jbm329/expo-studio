@@ -18,13 +18,15 @@ Design principles:
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any
-
-import pandas as pd
+from typing import TYPE_CHECKING, Any
 
 from .text import clean_text, replace_values
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    import pandas as pd
 
 logger = logging.getLogger("applogger.service")
 

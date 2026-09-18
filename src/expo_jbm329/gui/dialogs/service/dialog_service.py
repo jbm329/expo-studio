@@ -1,15 +1,17 @@
 """Dialog service."""
 from __future__ import annotations
 
-from datetime import datetime
 from enum import Enum
-from typing import Literal, Protocol, TypedDict, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, TypedDict, runtime_checkable
 
-from PyQt6.QtWidgets import QWidget
+if TYPE_CHECKING:
+    from datetime import datetime
 
-from expo_jbm329.services.data_operations.category_orders import CategoryOrderKey
-from expo_jbm329.services.data_operations.datetime_formats import DateFormatKey
-from expo_jbm329.services.data_profile.semantics import SeriesSemantics
+    from PyQt6.QtWidgets import QWidget
+
+    from expo_jbm329.services.data_operations.category_orders import CategoryOrderKey
+    from expo_jbm329.services.data_operations.datetime_formats import DateFormatKey
+    from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 
 DateTimeTarget = Literal["date", "datetime"]
 

@@ -10,9 +10,8 @@ import logging
 import time
 from typing import TYPE_CHECKING
 
-import pandas as pd
-
 if TYPE_CHECKING:
+    import pandas as pd
     from ydata_profiling import ProfileReport
 
 logger = logging.getLogger("applogger.service")

@@ -1,10 +1,12 @@
 """Schema-aware validation helpers for REST responses."""
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from expo_jbm329.services.rest.normalizer import normalize_json_to_df
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class RestSchemaValidationError(ValueError):

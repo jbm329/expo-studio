@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import pandas as pd
-from matplotlib.axes import Axes
 from pandas.api.types import is_numeric_dtype
 
 from expo_jbm329.utils.visualization_models import (
@@ -13,6 +13,9 @@ from expo_jbm329.utils.visualization_models import (
     MeasureType,
     VisualizationConfig,
 )
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
 
 
 class VisualizationError(ValueError):

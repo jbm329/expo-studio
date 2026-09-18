@@ -8,16 +8,21 @@ any REST execution logic.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QWidget
 
 from expo_jbm329.app.settings.config_store import read_rest_connections
 from expo_jbm329.gui.widgets.rest_tree_widget import RestTreeWidget
 from expo_jbm329.services.rest.registry import rest_registry
-from expo_jbm329.workbench.controllers.rest_controller import RestController
-from expo_jbm329.workbench.icon.icon_service import IconService
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from PyQt6.QtWidgets import QWidget
+
+    from expo_jbm329.workbench.controllers.rest_controller import RestController
+    from expo_jbm329.workbench.icon.icon_service import IconService
 
 
 class RestPanelController:

@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import httpx
 
@@ -14,6 +13,9 @@ from expo_jbm329.services.rest.models import (
     RestRequestConfig,
     RestRetryConfig,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class RestClientError(RuntimeError):

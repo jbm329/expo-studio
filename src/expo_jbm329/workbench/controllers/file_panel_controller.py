@@ -7,8 +7,8 @@ appropriate services.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP, QModelIndex, QPoint, Qt
 from PyQt6.QtGui import QAction, QFileSystemModel
@@ -18,11 +18,15 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.services.file_types import classify_file
 from expo_jbm329.utils.format_utils import fmt_path, fmt_path_size
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 
 
 class FilePanelController:

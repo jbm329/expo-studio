@@ -21,11 +21,13 @@ Design principles:
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 import pandas.api.types as pdt
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger("applogger.service")
 

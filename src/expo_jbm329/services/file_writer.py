@@ -9,14 +9,16 @@ import json
 import logging
 import pickle
 import time
-from collections.abc import Callable
 from contextlib import suppress
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
 from expo_jbm329.utils.format_utils import fmt_path, fmt_shape
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class ExportCancelledError(Exception):

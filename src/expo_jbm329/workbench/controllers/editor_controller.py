@@ -8,12 +8,15 @@ of the main application flow.
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QEvent, QObject, Qt
 from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtWidgets import QPlainTextEdit
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from PyQt6.QtWidgets import QPlainTextEdit
 
 
 class EditorController(QObject):

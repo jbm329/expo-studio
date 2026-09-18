@@ -7,11 +7,13 @@ refreshes cached icon usage whenever the theme changes.
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QObject, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QIcon, QPainter, QPixmap, QPixmapCache
 
-from expo_jbm329.workbench.theme.theme_service import ThemeService
+if TYPE_CHECKING:
+    from expo_jbm329.workbench.theme.theme_service import ThemeService
 
 
 class IconService(QObject):

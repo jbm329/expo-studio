@@ -9,13 +9,16 @@ while maintaining full testability through dependency injection.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QToolBar, QWidget
 
 from expo_jbm329.utils.i18n_utils import tr
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class ToolbarController:

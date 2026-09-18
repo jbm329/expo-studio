@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import pytest
 
 from expo_jbm329.services.file_loader import FileLoader, OperationCancelledError
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture

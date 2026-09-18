@@ -19,8 +19,7 @@ from __future__ import annotations
 
 import contextlib
 import datetime
-from collections.abc import Callable
-from typing import Any, override
+from typing import TYPE_CHECKING, Any, override
 
 import numpy as np
 import pandas as pd
@@ -31,6 +30,9 @@ from PyQt6.QtGui import QColor
 from expo_jbm329.utils.format_utils import (
     fmt_category,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 # ======================================================================

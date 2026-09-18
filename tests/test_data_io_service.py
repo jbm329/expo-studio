@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -9,6 +9,9 @@ import pytest
 from expo_jbm329.services.data_io_service import DataIOService
 from expo_jbm329.services.file_loader import FileLoader
 from expo_jbm329.services.file_writer import FileWriter
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture

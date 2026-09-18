@@ -9,14 +9,12 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable, Sequence
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtWidgets import QDialog, QTableView, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.join.join_dialog import (
     JoinDialog,
@@ -29,8 +27,15 @@ from expo_jbm329.services.data_operations.joins import (
     join_dataframes,
 )
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
-from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
 
 
 class JoinController:

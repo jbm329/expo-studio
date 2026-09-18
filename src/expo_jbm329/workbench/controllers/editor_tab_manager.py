@@ -10,14 +10,17 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP
 
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class EditorTabState(Enum):

@@ -7,13 +7,11 @@ operation to the appropriate workbench service.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import (
     FileDialogService,
@@ -21,11 +19,18 @@ from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import (
     SaveFileRequest,
 )
 from expo_jbm329.services.file_types import FileType, classify_file
-from expo_jbm329.utils.dialog_state import DialogState
 from expo_jbm329.utils.format_utils import fmt_path
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
 from expo_jbm329.utils.path_manager import get_documents_dir
-from expo_jbm329.workbench.controllers.editor_tab_manager import EditorTab
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from PyQt6.QtWidgets import QWidget
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.utils.dialog_state import DialogState
+    from expo_jbm329.workbench.controllers.editor_tab_manager import EditorTab
 
 
 class DocumentController:

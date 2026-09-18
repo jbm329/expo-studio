@@ -6,7 +6,7 @@ buttons, per-tab closability flags, and Swedish translations.
 from __future__ import annotations
 
 import contextlib
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QRect, Qt
 from PyQt6.QtGui import QIcon, QPainter, QPainterPath
@@ -20,7 +20,8 @@ from PyQt6.QtWidgets import (
     QToolButton,
 )
 
-from expo_jbm329.workbench.icon.icon_service import IconService
+if TYPE_CHECKING:
+    from expo_jbm329.workbench.icon.icon_service import IconService
 
 
 class TabBarProxyStyle(QProxyStyle):

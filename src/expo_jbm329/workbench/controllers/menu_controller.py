@@ -7,14 +7,16 @@ remain focused on business logic.
 """
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QMenu, QMenuBar
 
 from expo_jbm329.utils.i18n_utils import tr
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class MenuController:

@@ -3,14 +3,17 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
+from typing import TYPE_CHECKING
 
-import pandas as pd
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from expo_jbm329.gui.dialogs.service.dialog_service import ProfileChoice
 from expo_jbm329.gui.dialogs.service.null_dialog_service import NullDialogService
 from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import NullFileDialogService
 from expo_jbm329.services.job_result import JobResult
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 class DummyResult:

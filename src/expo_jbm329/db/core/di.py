@@ -6,9 +6,12 @@ for decoupling the database core from specific implementations.
 """
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-from .interfaces import DialectProtocol, DriverProtocol
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from .interfaces import DialectProtocol, DriverProtocol
 
 
 class ServiceRegistry:

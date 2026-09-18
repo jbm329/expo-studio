@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-import pandas as pd
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -24,6 +23,11 @@ from expo_jbm329.gui.gui_utils import apply_window_hints_strict
 from expo_jbm329.services.data_operations.derived_column.derived_column_service import (
     DerivedColumnSpec,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    import pandas as pd
 
 
 class DerivedColumnDialog(QDialog):

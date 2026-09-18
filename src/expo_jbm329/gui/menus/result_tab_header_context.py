@@ -9,8 +9,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-import pandas as pd
-
 from expo_jbm329.services.data_profile.capabilities import (
     SeriesCapabilities,
     infer_series_capabilities,
@@ -21,6 +19,7 @@ from expo_jbm329.services.data_profile.semantics import (
 )
 
 if TYPE_CHECKING:
+    import pandas as pd
     from PyQt6.QtWidgets import QTableView
 
 

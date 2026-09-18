@@ -6,14 +6,17 @@ and the popup window to provide a smooth SQL autocompletion experience.
 from __future__ import annotations
 
 import logging
-from typing import Any, override
+from typing import TYPE_CHECKING, Any, override
 
 from PyQt6.QtCore import QEvent, QObject, Qt, QTimer
-from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtWidgets import QPlainTextEdit
 
-from .engine import SqlAutoCompleter
 from .popup import SqlEditorAutoCompletePopup
+
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QKeyEvent
+    from PyQt6.QtWidgets import QPlainTextEdit
+
+    from .engine import SqlAutoCompleter
 
 
 class SqlAutocompleteController(QObject):

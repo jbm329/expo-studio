@@ -13,19 +13,24 @@ Its sole responsibility is to render editor UI state.
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QTextDocument
 from PyQt6.QtWidgets import (
     QPlainTextEdit,
     QVBoxLayout,
     QWidget,
 )
 
-from expo_jbm329.gui.autocomplete.controller import SqlAutocompleteController
-from expo_jbm329.gui.autocomplete.engine import SqlAutoCompleter
 from expo_jbm329.workbench.controllers.editor_controller import EditorController
 from expo_jbm329.workbench.controllers.editor_tab_manager import EditorTab, EditorTabState
-from expo_jbm329.workbench.highlighter.sql_highlighter import SqlHighlighter
+
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QTextDocument
+
+    from expo_jbm329.gui.autocomplete.controller import SqlAutocompleteController
+    from expo_jbm329.gui.autocomplete.engine import SqlAutoCompleter
+    from expo_jbm329.workbench.highlighter.sql_highlighter import SqlHighlighter
 
 
 class EditorWidget(QWidget):

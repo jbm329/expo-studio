@@ -10,16 +10,20 @@ ResultTabColumnHeaderContextMenu.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP, QPoint
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QMenu
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.editor_tab_manager import EditorTab
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.controllers.editor_tab_manager import EditorTab
 
 
 class EditorTabContextMenu:

@@ -2,23 +2,27 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
-import pandas as pd
 from pandas.api.types import (
     is_bool_dtype,
     is_datetime64_any_dtype,
     is_numeric_dtype,
 )
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QWidget
 
 from expo_jbm329.gui.dialogs.visualization.visualization_dialog import VisualizationDialog
 from expo_jbm329.utils.i18n_utils import tr
-from expo_jbm329.utils.visualization_models import VisualizationConfig
 from expo_jbm329.workbench.controllers.visualization.visualization_chart_builder import (
     VisualizationChartBuilder,
     VisualizationError,
 )
+
+if TYPE_CHECKING:
+    import pandas as pd
+    from PyQt6.QtWidgets import QWidget
+
+    from expo_jbm329.utils.visualization_models import VisualizationConfig
 
 
 class VisualizationController:

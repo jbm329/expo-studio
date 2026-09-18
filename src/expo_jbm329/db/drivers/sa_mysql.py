@@ -5,14 +5,18 @@ from __future__ import annotations
 import contextlib
 import logging
 import threading
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL, Engine
 
 from expo_jbm329.db.core.interfaces import DriverProtocol
-from expo_jbm329.db.core.models import ConnectionConfig
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.db.core.models import ConnectionConfig
 
 log = logging.getLogger("applogger.db.driver.mysql")
 

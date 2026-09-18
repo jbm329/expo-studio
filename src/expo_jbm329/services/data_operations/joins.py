@@ -1,13 +1,15 @@
 """Dataframe join and concatenation operations."""
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 from pandas import CategoricalDtype
 from pandas.api.types import is_numeric_dtype, is_string_dtype
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 JoinHow = Literal["inner", "left", "right", "outer"]
 

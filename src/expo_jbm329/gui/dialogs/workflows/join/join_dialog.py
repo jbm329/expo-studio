@@ -7,9 +7,8 @@ columns to include, and the join type.
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QStandardItemModel
@@ -31,6 +30,9 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 @dataclass

@@ -33,12 +33,14 @@ import logging
 import time
 import traceback
 import uuid
-from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Any, Literal, Protocol, cast
+from typing import TYPE_CHECKING, Any, Literal, Protocol, cast
 
 from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 RunnerKind = Literal["thread", "pool"]
 

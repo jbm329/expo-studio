@@ -1,7 +1,7 @@
 """Visualization dialog with a three-pane workspace layout."""
 from __future__ import annotations
 
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
@@ -27,6 +27,9 @@ from expo_jbm329.utils.visualization_models import (
     VisualizationConfig,
     VisualizationDatasetRef,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class VisualizationDialog(QDialog):

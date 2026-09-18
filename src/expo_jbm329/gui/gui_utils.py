@@ -7,11 +7,14 @@ standard window hints to dialogs.
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QCoreApplication, Qt, QTimer
-from PyQt6.QtWidgets import QDialog
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from PyQt6.QtWidgets import QDialog
 
 _APP_CLOSING = False
 

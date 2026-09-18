@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 from PyQt6.QtWidgets import QWidget
@@ -8,6 +8,9 @@ from PyQt6.QtWidgets import QWidget
 from expo_jbm329.utils.dialog_state import DialogState
 from expo_jbm329.workbench.controllers.document_controller import DocumentController
 from expo_jbm329.workbench.controllers.editor_tab_manager import EditorTab
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class DummyDialogService:

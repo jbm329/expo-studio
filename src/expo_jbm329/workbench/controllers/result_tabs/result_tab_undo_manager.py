@@ -3,9 +3,12 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pandas as pd
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class ResultTabUndoManager:

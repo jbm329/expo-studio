@@ -7,8 +7,7 @@ schema metadata.
 """
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
-from typing import Any, override
+from typing import TYPE_CHECKING, Any, override
 
 from PyQt6.QtCore import QMimeData, Qt
 from PyQt6.QtWidgets import (
@@ -17,6 +16,9 @@ from PyQt6.QtWidgets import (
     QTreeWidgetItem,
     QWidget,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
 
 
 def _is_valid_meta(meta: Any) -> bool:

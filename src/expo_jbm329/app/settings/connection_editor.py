@@ -11,7 +11,7 @@ from __future__ import annotations
 import contextlib
 import json
 import uuid
-from typing import override
+from typing import TYPE_CHECKING, override
 
 import pyodbc
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -33,10 +33,12 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.app.settings.config_store import read_connections, write_connections
 from expo_jbm329.db.base import execute_sql_safe
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.i18n_utils import tr
-from expo_jbm329.workbench.icon.icon_service import IconService
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.icon.icon_service import IconService
 
 # =============================================================================
 # Constants

@@ -11,8 +11,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QT_TR_NOOP, QPoint, Qt
 from PyQt6.QtGui import QAction
@@ -29,14 +28,20 @@ from expo_jbm329.db.base import (
     build_select_star,
     list_columns,
 )
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.gui_utils import ui_invoke
 from expo_jbm329.utils.format_utils import fmt_int
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
-from expo_jbm329.workbench.controllers.editor_tab_manager import EditorTab
-from expo_jbm329.workbench.icon.icon_service import IconService
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
+    from expo_jbm329.workbench.controllers.editor_tab_manager import EditorTab
+    from expo_jbm329.workbench.icon.icon_service import IconService
 
 
 class SchemaController:

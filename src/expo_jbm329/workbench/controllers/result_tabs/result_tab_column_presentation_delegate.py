@@ -1,14 +1,16 @@
 """Delegate controlling how column values are displayed."""
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 import pandas as pd
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
 
 from expo_jbm329.services.data_profile.presentation import format_value_for_display
-from expo_jbm329.services.data_profile.semantics import SeriesSemantics
+
+if TYPE_CHECKING:
+    from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 
 
 class ResultTabColumnPresentationDelegate(QStyledItemDelegate):

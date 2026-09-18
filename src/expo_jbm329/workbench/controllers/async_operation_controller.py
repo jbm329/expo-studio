@@ -12,19 +12,22 @@ This controller standardizes:
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
-from typing import Literal, TypeVar
+from typing import TYPE_CHECKING, Literal, TypeVar
 
 from PyQt6.QtCore import QT_TR_NOOP, QTimer
 from PyQt6.QtWidgets import QApplication, QTableView, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
-from expo_jbm329.services.job_manager import JobManager
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.busy_overlay_controller import (
-    BusyOverlayController,
-)
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.services.job_manager import JobManager
+    from expo_jbm329.workbench.controllers.busy_overlay_controller import (
+        BusyOverlayController,
+    )
 
 T = TypeVar("T")
 RunnerKind = Literal["pool", "thread"]

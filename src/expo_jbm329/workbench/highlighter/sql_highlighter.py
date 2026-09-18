@@ -6,9 +6,8 @@ multi-line string and block-comment highlighting.
 """
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QRegularExpression
 from PyQt6.QtGui import (
@@ -19,6 +18,9 @@ from PyQt6.QtGui import (
     QTextCharFormat,
     QTextDocument,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
 
 
 @dataclass(frozen=True)

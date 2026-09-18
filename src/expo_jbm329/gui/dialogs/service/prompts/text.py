@@ -1,6 +1,8 @@
 """Dialog prompts for text-based input."""
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from PyQt6.QtCore import QCoreApplication
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -16,11 +18,13 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.common.window_hints import apply_dialog_window_hints
-from expo_jbm329.gui.dialogs.service.dialog_service import (
-    TextInsertResult,
-    TextReplaceResult,
-    ValueReplaceResult,
-)
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import (
+        TextInsertResult,
+        TextReplaceResult,
+        ValueReplaceResult,
+    )
 
 
 # ----------------------------------------------------------------------

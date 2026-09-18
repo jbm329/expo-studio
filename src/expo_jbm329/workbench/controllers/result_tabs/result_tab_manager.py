@@ -9,10 +9,9 @@ from __future__ import annotations
 import contextlib
 import logging
 import uuid
-from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP, QPoint, Qt, QThread
@@ -27,7 +26,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.gui_utils import ui_invoke
 from expo_jbm329.gui.menus.result_tab_cell_context_menu import (
@@ -40,15 +38,10 @@ from expo_jbm329.gui.menus.result_tab_header_context import (
     ResultTabHeaderContext,
     build_header_context,
 )
-from expo_jbm329.services.data_profile.profile_cache import ColumnProfileCache
 from expo_jbm329.services.data_profile.semantics import SeriesSemantics, infer_series_semantics
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
 from expo_jbm329.utils.models import DataFrameModel
 from expo_jbm329.utils.visualization_models import VisualizationDatasetRef
-from expo_jbm329.workbench.controllers.async_operation_controller import (
-    AsyncOperationController,
-)
-from expo_jbm329.workbench.controllers.busy_overlay_controller import BusyOverlayController
 from expo_jbm329.workbench.controllers.result_tabs.reslut_tab_header_clean_actions import (
     ResultTabHeaderCleanActions,
 )
@@ -82,6 +75,16 @@ from expo_jbm329.workbench.controllers.result_tabs.result_tab_header_sort_action
 from expo_jbm329.workbench.controllers.result_tabs.result_tab_undo_manager import (
     ResultTabUndoManager,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.services.data_profile.profile_cache import ColumnProfileCache
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
+    from expo_jbm329.workbench.controllers.busy_overlay_controller import BusyOverlayController
 
 
 # ======================================================================

@@ -15,12 +15,14 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 import sqlglot
 from sqlglot import exp
 from sqlglot.errors import ParseError, SqlglotError
-from sqlglot.expressions import Expression
+
+if TYPE_CHECKING:
+    from sqlglot.expressions import Expression
 
 SqlStatementKind = Literal[
     "select",

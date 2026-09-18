@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-import pandas as pd
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
-from .models import ConnectionConfig
+    import pandas as pd
+
+    from .models import ConnectionConfig
 
 
 @runtime_checkable

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from PyQt6.QtWidgets import (
     QDateEdit,
@@ -21,7 +22,9 @@ from expo_jbm329.gui.dialogs.service.common.localization import (
 from expo_jbm329.gui.dialogs.service.common.window_hints import (
     apply_dialog_window_hints,
 )
-from expo_jbm329.services.data_profile.semantics import SeriesSemantics
+
+if TYPE_CHECKING:
+    from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 
 
 # ----------------------------------------------------------------------

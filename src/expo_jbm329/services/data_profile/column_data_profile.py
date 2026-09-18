@@ -7,15 +7,17 @@ computing descriptive statistics and simple visualization specs
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Hashable
 from dataclasses import dataclass, field
 from numbers import Real
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pandas as pd
 
 from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
+
+if TYPE_CHECKING:
+    from collections.abc import Hashable
 
 # ============================================================
 # Error handling

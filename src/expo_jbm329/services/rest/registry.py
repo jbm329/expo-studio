@@ -1,11 +1,13 @@
 """REST connection registry."""
 from __future__ import annotations
 
-from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from expo_jbm329.services.rest.models import RestAuthConfig, RestRequestConfig
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 @dataclass(frozen=True)

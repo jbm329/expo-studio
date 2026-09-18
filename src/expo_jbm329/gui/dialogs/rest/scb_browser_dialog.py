@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from math import prod
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -22,7 +22,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict
 from expo_jbm329.services.rest.scb.browser import (
@@ -33,6 +32,9 @@ from expo_jbm329.services.rest.scb.browser import (
 )
 from expo_jbm329.services.rest.scb.service import ScbQueryBuilder, ScbSelection
 from expo_jbm329.utils.format_utils import fmt_int
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 
 
 class ScbBrowserDialog(QDialog):

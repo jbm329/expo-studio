@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -19,14 +19,16 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.services.data_operations.dtypes import SemanticDType
-from expo_jbm329.services.data_profile.column_data_profile import ColumnProfile
 from expo_jbm329.services.data_profile.presentation import format_value_for_display
-from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 from expo_jbm329.services.data_profile.stat_defs import (
     STAT_DEFS,
     StatFormat,
 )
 from expo_jbm329.utils.format_utils import fmt_bytes, fmt_int, fmt_num, fmt_pct
+
+if TYPE_CHECKING:
+    from expo_jbm329.services.data_profile.column_data_profile import ColumnProfile
+    from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 
 try:
     from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas

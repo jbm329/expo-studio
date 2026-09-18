@@ -7,11 +7,10 @@ from __future__ import annotations
 
 import logging
 import threading
-from collections.abc import Callable
 from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 import pandas as pd
 from openpyxl.utils.cell import range_boundaries
@@ -20,6 +19,9 @@ from pyqvd import QvdTable
 from expo_jbm329.utils.format_utils import fmt_path, fmt_path_size
 from expo_jbm329.utils.path_manager import get_documents_dir
 from expo_jbm329.utils.paths import expand
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @dataclass(frozen=True)

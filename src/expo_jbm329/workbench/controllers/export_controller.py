@@ -10,14 +10,11 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable, Sequence
 from enum import Enum, auto
 from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
-import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QWidget
 
 from expo_jbm329.gui.dialogs.service.dialog_service import DialogService, ProfileChoice
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
@@ -27,11 +24,20 @@ from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import (
     SaveFileRequest,
 )
 from expo_jbm329.services.job_result import JobResult
-from expo_jbm329.utils.dialog_state import DialogState
 from expo_jbm329.utils.format_utils import fmt_path, fmt_shape, fmt_time
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
 from expo_jbm329.utils.path_manager import get_documents_dir
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    import pandas as pd
+    from PyQt6.QtWidgets import QWidget
+
+    from expo_jbm329.utils.dialog_state import DialogState
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
 
 
 class ExportKind(Enum):

@@ -5,7 +5,8 @@ such as match rate, unmatched rows, and join type.
 """
 from __future__ import annotations
 
-import pandas as pd
+from typing import TYPE_CHECKING
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -19,8 +20,12 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.widgets.join_analysis_widget import JoinAnalysisWidget
-from expo_jbm329.services.data_operations.joins import JoinMetadata
 from expo_jbm329.utils.models import JoinPreviewModel
+
+if TYPE_CHECKING:
+    import pandas as pd
+
+    from expo_jbm329.services.data_operations.joins import JoinMetadata
 
 
 class JoinPreviewDialog(QDialog):

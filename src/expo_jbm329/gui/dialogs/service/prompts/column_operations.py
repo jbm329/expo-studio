@@ -5,7 +5,7 @@ such as splitting a column or joining multiple columns.
 """
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from PyQt6.QtCore import QCoreApplication
 from PyQt6.QtWidgets import (
@@ -27,7 +27,9 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.common.window_hints import apply_dialog_window_hints
-from expo_jbm329.gui.dialogs.service.dialog_service import MergeColumnsResult, SplitColumnResult
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import MergeColumnsResult, SplitColumnResult
 
 
 # ----------------------------------------------------------------------

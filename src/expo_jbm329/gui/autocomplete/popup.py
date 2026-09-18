@@ -5,9 +5,13 @@ a list of SQL autocomplete suggestions.
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from PyQt6.QtCore import QPoint, QRect, Qt
-from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QFrame, QListWidget, QListWidgetItem, QPlainTextEdit
+
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QKeyEvent
 
 
 class SqlEditorAutoCompletePopup(QFrame):

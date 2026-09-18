@@ -7,10 +7,7 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Callable
-from pathlib import Path
-
-import pandas as pd
+from typing import TYPE_CHECKING
 
 from expo_jbm329.services.data_processing import (
     generate_comparison_profile_report,
@@ -20,6 +17,12 @@ from expo_jbm329.services.file_loader import FileLoader, OperationCancelledError
 from expo_jbm329.services.file_writer import ExportCancelledError, FileWriter
 from expo_jbm329.services.job_result import JobResult
 from expo_jbm329.utils.format_utils import fmt_path, fmt_shape
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
+    import pandas as pd
 
 
 class DataIOService:

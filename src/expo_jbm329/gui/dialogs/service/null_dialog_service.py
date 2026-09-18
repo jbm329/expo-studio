@@ -1,10 +1,7 @@
 """Test implementation of DialogService."""
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Literal
-
-from PyQt6.QtWidgets import QWidget
+from typing import TYPE_CHECKING, Literal
 
 from expo_jbm329.gui.dialogs.service.dialog_service import (
     BetweenResult,
@@ -24,9 +21,15 @@ from expo_jbm329.gui.dialogs.service.dialog_service import (
     TextReplaceResult,
     ValueReplaceResult,
 )
-from expo_jbm329.services.data_operations.category_orders import CategoryOrderKey
-from expo_jbm329.services.data_operations.datetime_formats import DateFormatKey
-from expo_jbm329.services.data_profile.semantics import SeriesSemantics
+
+if TYPE_CHECKING:
+    from datetime import datetime
+
+    from PyQt6.QtWidgets import QWidget
+
+    from expo_jbm329.services.data_operations.category_orders import CategoryOrderKey
+    from expo_jbm329.services.data_operations.datetime_formats import DateFormatKey
+    from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 
 
 class NullDialogService(DialogService):

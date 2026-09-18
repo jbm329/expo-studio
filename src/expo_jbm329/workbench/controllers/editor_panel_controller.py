@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import functools
 import logging
-from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP, QPoint
 from PyQt6.QtWidgets import (
@@ -28,7 +28,6 @@ from PyQt6.QtWidgets import (
 from expo_jbm329.db.sql_analysis import sqlglot_dialect
 from expo_jbm329.gui.autocomplete.controller import SqlAutocompleteController
 from expo_jbm329.gui.autocomplete.engine import SqlAutoCompleter
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.linting.sql_lint_controller import SqlLintController
 from expo_jbm329.gui.menus.editor_tab_context_menu import EditorTabContextMenu
@@ -40,8 +39,13 @@ from expo_jbm329.workbench.controllers.editor_tab_manager import (
     EditorTabState,
 )
 from expo_jbm329.workbench.highlighter.sql_highlighter import SqlHighlighter
-from expo_jbm329.workbench.icon.icon_service import IconService
-from expo_jbm329.workbench.theme.highlighter_theme_service import HighlighterThemeService
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.icon.icon_service import IconService
+    from expo_jbm329.workbench.theme.highlighter_theme_service import HighlighterThemeService
 
 
 class EditorPanelController(QWidget):

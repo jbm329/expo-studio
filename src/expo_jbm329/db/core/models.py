@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
-import pandas as pd
+if TYPE_CHECKING:
+    import pandas as pd
 
 EngineKey = Literal["mssql", "postgresql", "mysql", "sqlite", "oracle"]
 ProtocolKey = Literal["odbc", "psycopg2", "pymysql", "mysqlconnector", "pytds", "pymssql", "sqlite"]

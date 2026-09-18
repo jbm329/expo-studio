@@ -13,13 +13,15 @@ Responsibilities:
 from __future__ import annotations
 
 import datetime as _dt
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
 
-from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num
+
+if TYPE_CHECKING:
+    from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 
 
 # =====================================================================

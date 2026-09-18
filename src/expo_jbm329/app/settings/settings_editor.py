@@ -11,6 +11,7 @@ follow Google-style English conventions.
 from __future__ import annotations
 
 import contextlib
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
@@ -34,7 +35,6 @@ from expo_jbm329.app.settings.config_store import (
     load_settings,
     save_settings,
 )
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import (
     DirectoryRequest,
@@ -45,8 +45,11 @@ from expo_jbm329.utils.path_manager import (
     ensure_all_dirs,
     get_documents_dir,
 )
-from expo_jbm329.workbench.icon.icon_service import IconService
-from expo_jbm329.workbench.theme.highlighter_theme_service import HighlighterThemeService
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.icon.icon_service import IconService
+    from expo_jbm329.workbench.theme.highlighter_theme_service import HighlighterThemeService
 
 THEMES = ["system"]
 

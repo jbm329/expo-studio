@@ -24,9 +24,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from collections.abc import Callable
-
-import pandas as pd
+from typing import TYPE_CHECKING
 
 from expo_jbm329.app.settings.config_store import read_connections
 from expo_jbm329.db.core.di import ServiceRegistry
@@ -39,6 +37,11 @@ from expo_jbm329.db.drivers.sa_mysql import SqlAlchemyMySqlDriver
 from expo_jbm329.db.drivers.sa_odbc import SqlAlchemyOdbcDriver
 from expo_jbm329.db.drivers.sa_sqlite import SqlAlchemySqliteDriver
 from expo_jbm329.db.service import DbService
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    import pandas as pd
 
 logger = logging.getLogger("applogger.db")
 

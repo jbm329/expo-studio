@@ -1,6 +1,8 @@
 """Boolean conversion prompt."""
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtWidgets import (
     QDialog,
@@ -17,10 +19,12 @@ from expo_jbm329.gui.dialogs.service.common.localization import (
 from expo_jbm329.gui.dialogs.service.common.window_hints import (
     apply_dialog_window_hints,
 )
-from expo_jbm329.gui.dialogs.service.dialog_service import (
-    BooleanConversionResult,
-)
 from expo_jbm329.utils.i18n_utils import tr
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import (
+        BooleanConversionResult,
+    )
 
 # ======================================================================
 # i18n keys

@@ -12,10 +12,9 @@ Language Policy:
 from __future__ import annotations
 
 import time
-from typing import cast, override
+from typing import TYPE_CHECKING, cast, override
 
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import (
     QDockWidget,
     QMainWindow,
@@ -46,6 +45,9 @@ from expo_jbm329.workbench.controllers.status_bar_controller import StatusBarCon
 from expo_jbm329.workbench.controllers.toolbar_controller import ToolbarController
 from expo_jbm329.workbench.ui_refs import WorkbenchUIRefs
 from expo_jbm329.workbench.workbench_services import WorkbenchServices
+
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QCloseEvent
 
 
 # ======================================================================

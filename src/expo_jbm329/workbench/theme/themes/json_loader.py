@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import json
 from dataclasses import fields
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtGui import QColor
 
 from expo_jbm329.workbench.highlighter.sql_highlighter import Theme
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _parse_color(value: str | dict | None) -> QColor:

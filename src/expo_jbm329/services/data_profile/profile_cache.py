@@ -6,8 +6,10 @@ to store and manage column profile results.
 from __future__ import annotations
 
 from collections import OrderedDict
+from typing import TYPE_CHECKING
 
-from expo_jbm329.services.data_profile.column_data_profile import ColumnProfile
+if TYPE_CHECKING:
+    from expo_jbm329.services.data_profile.column_data_profile import ColumnProfile
 
 
 class ColumnProfileCache:
