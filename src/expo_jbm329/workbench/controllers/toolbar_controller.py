@@ -85,7 +85,7 @@ class ToolbarController:
 
     def __init__(
         self,
-        icon_service,
+        icon_service: object,
         *,
         new_file: Callable[[], None],
         open_file: Callable[[], None],
@@ -286,7 +286,7 @@ class ToolbarController:
 
     # ------------------------------------------------------------------
 
-    def apply_icons(self):
+    def apply_icons(self) -> None:
         """Apply icons to all toolbar actions using the icon service."""
         self._action_new.setIcon(self._icons.get("file_new"))
         self._action_open.setIcon(self._icons.get("folder_open"))

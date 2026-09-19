@@ -44,7 +44,7 @@ class ColumnProfileCache:
             self._store.move_to_end(key)
         return v
 
-    def set(self, key: tuple[str, str], value: ColumnProfile):
+    def set(self, key: tuple[str, str], value: ColumnProfile) -> None:
         """Store a column profile in the cache.
 
         Args:
@@ -56,7 +56,7 @@ class ColumnProfileCache:
         if len(self._store) > self._capacity:
             self._store.popitem(last=False)
 
-    def invalidate_tab(self, tab_id: str):
+    def invalidate_tab(self, tab_id: str) -> None:
         """Remove all cached profiles associated with a given tab.
 
         Args:
@@ -65,6 +65,6 @@ class ColumnProfileCache:
         for k in [k for k in self._store if k[0] == tab_id]:
             self._store.pop(k, None)
 
-    def clear(self):
+    def clear(self) -> None:
         """Remove all entries from the cache."""
         self._store.clear()

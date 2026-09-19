@@ -76,7 +76,7 @@ def null_stats(df: pd.DataFrame) -> pd.DataFrame:
 def get_column_profile(
     df: pd.DataFrame,
     column: str,
-):
+) -> object:
     """Return a profile object for a DataFrame column.
 
     This function delegates to `profile_series` and exists primarily

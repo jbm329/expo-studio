@@ -145,7 +145,7 @@ select = [
     "RET",  # return statements
     "SIM",  # simplify
     "ARG",  # unused args
-#    "RUF",  # Ruff's own rules
+    "RUF",  # Ruff's own rules
     "FURB", # flake8-ruff
     "PLE",  # flake8-pie
     "PLC",  # flake8-pie
@@ -167,7 +167,7 @@ select = [
 #    "DTZ",  # flake8-datetimez
     "BLE",  # flake8-blind-except
     "ASYNC",# flake8-async
-    "ANN204",  # flake8-annotations
+    "ANN",  # flake8-annotations
     "ERA",  # flake8-eradicate
     "AIR",  # flake8-airflow
 ]

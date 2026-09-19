@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP, QPoint, Qt
 from PyQt6.QtGui import QAction
@@ -37,6 +37,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.services.job_manager import JobManager
+    from expo_jbm329.services.schema_cache import SchemaCacheManager
     from expo_jbm329.workbench.controllers.async_operation_controller import (
         AsyncOperationController,
     )
@@ -99,10 +101,10 @@ class SchemaController:
         self,
         *,
         parent_widget: QWidget,
-        tree_widget,
-        schema_mgr,
+        tree_widget: object,
+        schema_mgr: SchemaCacheManager,
         async_ops: AsyncOperationController,
-        job_mgr,
+        job_mgr: JobManager,
         create_tab_for_connection: Callable[[str], EditorTab],
         insert_sql_into_tab: Callable[[EditorTab, str], None],
         set_status: Callable[[str, int | None], None],
@@ -119,7 +121,7 @@ class SchemaController:
         Args:
             parent_widget: The parent widget.
             tree_widget: The tree widget for the schema.
-            schema_mgr: The schema manager.
+            schema_mgr: The schema cache manager.
             async_ops: The async operation controller.
             job_mgr: The job manager.
             create_tab_for_connection: Callback to activate a tab for a connection.
@@ -163,7 +165,7 @@ class SchemaController:
     # Properties (read only, clean public API)
     # ==================================================================
     @property
-    def schema_mgr(self):
+    def schema_mgr(self) -> SchemaCacheManager:
         """Get the schema manager."""
         return self._schema_mgr
 
@@ -179,12 +181,12 @@ class SchemaController:
 
     def _run_schema_prefetch_job(
         self,
-        parent,
+        parent: object,
         fn: Callable,
-        *args,
+        *args: object,
         started_msg: str = "",
         corr_id: str | None = None,
-    ):
+    ) -> object:
         """Run schema prefetch work through AsyncOperationController.
 
         SchemaCacheManager owns worker result/error signal handling, so this
@@ -198,7 +200,14 @@ class SchemaController:
 
         scope = "schema:prefetch"
 
-        def _work(*, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None, **_):
+        def _work(
+            *,
+            progress_cb: object = None,
+            cancel_cb: object = None,
+            job_id: object = None,
+            job_scope: object = None,
+            **_: object,
+        ) -> object:
             _ = progress_cb, job_id, job_scope
             if cancel_cb and cancel_cb():
                 return None
@@ -351,7 +360,9 @@ class SchemaController:
     # ==================================================================
     # Load & refresh schema
     # ==================================================================
-    def load_schema_tree(self, connection_name: str, force_refresh: bool = False, corr_id: str | None = None) -> None:
+    def load_schema_tree(
+        self, connection_name: str, force_refresh: bool = False, corr_id: str | None = None
+    ) -> None:
         """Load the schema tree for a connection.
 
         Args:
@@ -619,7 +630,7 @@ class SchemaController:
         # Try cache first
         entry = self._schema_mgr.get_cache_for(conn)
 
-        cols: list[dict[str, Any]] | None = entry.columns.get((schema_name, table_name)) if entry else None
+        cols: list[dict[str, object]] | None = entry.columns.get((schema_name, table_name)) if entry else None
 
         if cols is not None:
             self._logger.debug(
@@ -1072,7 +1083,7 @@ class SchemaController:
 
         self._insert_sql_into_tab(tab, sql)
 
-    def _insert_select_star(self, item: QTreeWidgetItem, meta: dict[str, Any]) -> None:
+    def _insert_select_star(self, item: QTreeWidgetItem, meta: dict[str, object]) -> None:
         """Insert SELECT * SQL snippet."""
         conn = self._resolve_connection_for_item(item)
 
@@ -1097,7 +1108,7 @@ class SchemaController:
 
         self._insert_sql_into_tab(tab, sql)
 
-    def _insert_select_columns(self, item: QTreeWidgetItem, meta: dict[str, Any], with_schema: bool) -> None:
+    def _insert_select_columns(self, item: QTreeWidgetItem, meta: dict[str, object], with_schema: bool) -> None:
         """Insert SELECT columns SQL snippet.
 
         Args:
@@ -1152,12 +1163,16 @@ class SchemaController:
     # ==================================================================
     # Prefetch progress
     # ==================================================================
-    def on_schema_progress(self, done: int, total: int):
+
+    def on_schema_progress(self, done: int, total: int) -> None:
         """Handle schema prefetch progress.
 
         Args:
             done: Number of items done.
             total: Total number of items.
+
+        Returns:
+            None
         """
         ui_invoke(self._on_schema_progress_ui, done, total)
 

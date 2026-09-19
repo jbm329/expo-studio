@@ -362,7 +362,7 @@ class SqlAutoCompleter:
 
     # ------------------------------------------------------------------ #
     @classmethod
-    def _normalize_identifier(cls, value: str | None) -> str:
+    def _normalize_identifier(cls: object, value: str | None) -> str:
         """Normalize an SQL identifier for lookup.
 
         Removes common SQL quoting styles used by supported dialects:
@@ -391,7 +391,7 @@ class SqlAutoCompleter:
         return text
 
     @classmethod
-    def _normalize_qualified_identifier(cls, value: str | None) -> str:
+    def _normalize_qualified_identifier(cls: object, value: str | None) -> str:
         """Normalize a possibly qualified SQL identifier.
 
         Examples:

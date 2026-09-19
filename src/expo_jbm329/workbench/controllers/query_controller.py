@@ -29,6 +29,9 @@ if TYPE_CHECKING:
     from expo_jbm329.workbench.controllers.async_operation_controller import (
         AsyncOperationController,
     )
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import (
+        ResultTabManager,
+    )
 
 
 class QueryController:
@@ -91,7 +94,7 @@ class QueryController:
         *,
         parent_widget: QWidget,
         async_ops: AsyncOperationController,
-        results,
+        results: ResultTabManager,
         set_status: Callable[[str, int | None], None],
         get_sql: Callable[[bool], str | None],
         get_current_connection: Callable[[], str | None],
@@ -122,7 +125,7 @@ class QueryController:
     # ==================================================================
     # Public API - invoked by toolbar buttons / shortcuts
     # ==================================================================
-    def run_top10(self):
+    def run_top10(self) -> None:
         """Execute the full SQL query limited to TOP 10 rows."""
         self._logger.info(
             "QueryController: run_top10 called (active_connection=%s)",
@@ -131,7 +134,7 @@ class QueryController:
 
         self._run_sql(use_sel=False, top_n=10, started_msg=self._tr(self.TR_RUNNING_SQL_TOP10))
 
-    def run_full(self):
+    def run_full(self) -> None:
         """Execute the entire SQL query with no row limit."""
         self._logger.info(
             "QueryController: run_full called (active_connection=%s)",
@@ -140,7 +143,7 @@ class QueryController:
 
         self._run_sql(use_sel=False, top_n=None, started_msg=self._tr(self.TR_RUNNING_SQL))
 
-    def run_selection(self, top_n: int | None):
+    def run_selection(self, top_n: int | None) -> None:
         """Execute only the selected SQL in the workbench.
 
         If no text is selected, the user is notified via dialog.
@@ -229,7 +232,14 @@ class QueryController:
         pending_tab_id = pending_handle.tab_id
         pending_view = pending_handle.view
 
-        def _work(*, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None, **_):
+        def _work(
+            *,
+            progress_cb: object = None,
+            cancel_cb: object = None,
+            job_id: object = None,
+            job_scope: object = None,
+            **_: object,
+        ) -> object:
             _ = progress_cb
             _ = job_scope
 
@@ -242,7 +252,7 @@ class QueryController:
                 job_id=job_id,
             )
 
-        def _on_result(payload) -> None:
+        def _on_result(payload: object) -> None:
             """Handle SQL result for the pending result tab."""
             res = payload
 

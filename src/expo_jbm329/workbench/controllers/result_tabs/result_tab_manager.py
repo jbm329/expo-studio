@@ -382,7 +382,7 @@ class ResultTabManager:
     # ==============================================================
     # PUBLIC API (ENTRY POINTS)
     # ==============================================================
-    def display_dataframe(self, df: pd.DataFrame, *, title: str | None = None):
+    def display_dataframe(self, df: pd.DataFrame, *, title: str | None = None) -> None:
         """Display a pandas DataFrame inside a new QTableView tab.
 
         Args:
@@ -486,7 +486,7 @@ class ResultTabManager:
             message=message or self._tr(self.TR_UPDATING_TABLE),
         )
 
-    def create_new_result_tab(self, df: pd.DataFrame, title: str | None = None):
+    def create_new_result_tab(self, df: pd.DataFrame, title: str | None = None) -> None:
         """Create a new result tab with given dataframe."""
         self.display_dataframe(df, title=title)
 
@@ -728,7 +728,7 @@ class ResultTabManager:
         """
         self._close_tab_internal(index, request_cancel=True)
 
-    def rename_tab(self, index: int):
+    def rename_tab(self, index: int) -> None:
         """Renames the tab at the given index.
 
         Args:
@@ -1011,7 +1011,7 @@ class ResultTabManager:
     # ==================================================================
     # TAB BAR CONTEXT MEN
     # ==================================================================
-    def on_tabbar_context_menu(self, pos: QPoint):
+    def on_tabbar_context_menu(self, pos: QPoint) -> None:
         """Right-click menu on tabs.
 
         Args:
@@ -1468,7 +1468,9 @@ class ResultTabManager:
                 text=self._tr_fmt(self.TR_COULD_NOT_PERFORM, error=str(e)),
             )
 
-    def _cell_context_get(self, view: QTableView, pos: QPoint):
+    def _cell_context_get(
+        self, view: QTableView, pos: QPoint
+    ) -> tuple[bool, pd.DataFrame | None, int | None, str | None, object]:
         """Resolve cell, df, row, col_name, and raw_value.
 
         Args:
@@ -1511,7 +1513,7 @@ class ResultTabManager:
     # UNDO SYSTEM
     # ==================================================================
 
-    def undo(self):
+    def undo(self) -> None:
         """Undo the last action on the current result tab."""
         tab_idx = self._tabs.currentIndex()
         tab_bar = self._tabs.tabBar()
@@ -2014,9 +2016,9 @@ class ResultTabManager:
 
     def _apply_without_cache_invalidation(
         self,
-        view,
-        df,
-        status,
+        view: object,
+        df: object,
+        status: object,
     ) -> None:
         """Adapter for controllers that should not force cache invalidation."""
         self._apply_new_dataframe_to_view(
@@ -2238,7 +2240,7 @@ class ResultTabManager:
 
         return view
 
-    def _make_header_action(self, cls):
+    def _make_header_action(self, cls: object) -> object:
         """Factory for header action controllers."""
         return cls(
             parent=self._parent,
@@ -2410,7 +2412,7 @@ class ResultTabManager:
         msg_0 = f"No tab with title '{title}' found"
         raise KeyError(msg_0)
 
-    def close_tabs_by_title(self, title: str):
+    def close_tabs_by_title(self, title: str) -> None:
         """Closes all tabs whose visible title matches the given string.
 
         Used by FilePanelController when deleting files.
@@ -2627,7 +2629,7 @@ class ResultTabManager:
     # EVENTS / CALLBACKS
     # ==============================================================
 
-    def on_tab_changed(self, index: int):
+    def on_tab_changed(self, index: int) -> None:
         """Active tab changed.
 
         Updates last_df and emits signals for toolbar state.

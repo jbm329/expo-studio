@@ -184,7 +184,7 @@ class ResultTabHeaderColumnActions:
 
         from expo_jbm329.services.data_operations.columns import split_column
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -198,7 +198,7 @@ class ResultTabHeaderColumnActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -256,7 +256,7 @@ class ResultTabHeaderColumnActions:
 
         from expo_jbm329.services.data_operations.columns import join_columns
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -279,7 +279,7 @@ class ResultTabHeaderColumnActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -357,7 +357,7 @@ class ResultTabHeaderColumnActions:
 
         from expo_jbm329.services.data_operations.columns import rename_column
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -365,7 +365,7 @@ class ResultTabHeaderColumnActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -441,14 +441,14 @@ class ResultTabHeaderColumnActions:
 
         from expo_jbm329.services.data_operations.columns import safe_drop_column
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
             return safe_drop_column(safe_df, column)
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 

@@ -29,6 +29,7 @@ import zipfile
 from datetime import datetime
 from importlib.metadata import PackageNotFoundError, metadata
 from pathlib import Path
+from typing import Never
 
 from PIL import Image
 
@@ -111,7 +112,7 @@ def _chmod_writable(path: Path) -> None:
         path.chmod(stat.S_IWRITE)
 
 
-def _onerror(func, path, _exc_info) -> None:
+def _onerror(func: object, path: object, _exc_info: object) -> None:
     """Error handler for shutil.rmtree.
 
     Attempts to make the path writable and retry the original operation.
@@ -658,7 +659,7 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:
     return 0
 
 
-def build_release():
+def build_release() -> Never:
     """Entry point for `uv run build-release`.
 
     Performs an onedir build and packages the result as a versioned ZIP.

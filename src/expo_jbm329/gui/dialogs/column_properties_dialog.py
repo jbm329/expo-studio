@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -194,7 +194,7 @@ class ColumnPropertiesDialog(QDialog):
         table.resizeColumnsToContents()
         self._layout.addWidget(table)
 
-    def _format_stats_for_display(self, stats: dict[str, Any]) -> list[tuple[str, str]]:
+    def _format_stats_for_display(self, stats: dict[str, object]) -> list[tuple[str, str]]:
         out: list[tuple[str, str]] = []
 
         for key, value in stats.items():

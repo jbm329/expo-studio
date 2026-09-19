@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import contextlib
 import datetime
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, override
 
 import numpy as np
 import pandas as pd
@@ -63,10 +63,10 @@ class DataFrameModel(QAbstractTableModel):
     def __init__(
         self,
         df: pd.DataFrame,
-        parent=None,
+        parent: object=None,
         *,
         na_rep: str = "",
-        formatters: dict[str, Callable[[Any], str]] | None = None,
+        formatters: dict[str, Callable[[object], str]] | None = None,
     ) -> None:
         """Initialize the DataFrameModel.
 
@@ -113,7 +113,7 @@ class DataFrameModel(QAbstractTableModel):
     # DATA
     # ------------------------------------------------------------------
     @override
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole):
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> object:
         """Return the data for the given index and role.
 
         Args:
@@ -259,7 +259,7 @@ class DataFrameModel(QAbstractTableModel):
         section: int,
         orientation: Qt.Orientation,
         role: int = Qt.ItemDataRole.DisplayRole,
-    ):
+    ) -> object:
         """Return the header data for the given section and orientation.
 
         Args:
@@ -383,7 +383,7 @@ class DataFrameModel(QAbstractTableModel):
     # ------------------------------------------------------------------
     # PUBLIC API
     # ------------------------------------------------------------------
-    def set_data_frame(self, df: pd.DataFrame):
+    def set_data_frame(self, df: pd.DataFrame) -> None:
         """Replace the underlying DataFrame and reset all cached metadata.
 
         Emits
@@ -414,7 +414,7 @@ class JoinPreviewModel(DataFrameModel):
     """
 
     @override
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> object:
         """Return the data for the given index and role."""
         # --- custom preview logic ---
         if role == Qt.ItemDataRole.BackgroundRole:

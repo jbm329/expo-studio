@@ -14,8 +14,6 @@ Design principles:
 
 from __future__ import annotations
 
-from typing import Any
-
 from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QMenu, QWidget
@@ -58,7 +56,7 @@ class ResultTabCellContextMenu:
         self,
         *,
         column_name: str,
-        raw_value: Any,
+        raw_value: object,
     ) -> tuple[QMenu, dict[QAction, str]]:
         """Build the cell context menu.
 

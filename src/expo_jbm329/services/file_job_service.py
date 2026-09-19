@@ -10,7 +10,7 @@ import contextlib
 import logging
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
@@ -110,7 +110,7 @@ class FileJobService:
         results: ResultTabManager,
         set_status: Callable[[str, int | None], None],
         get_active_tab_title: Callable[[], str],
-        resolve_and_load_df: Callable[..., Any],
+        resolve_and_load_df: Callable[..., object],
         display_dataframe: Callable[..., None],
         dialogs: DialogService,
         is_shutting_down: Callable[[], bool] | None = None,
@@ -194,7 +194,14 @@ class FileJobService:
         pending_tab_id = pending_handle.tab_id
         pending_view = pending_handle.view
 
-        def _work(*, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None, **_):
+        def _work(
+            *,
+            progress_cb: object = None,
+            cancel_cb: object = None,
+            job_id: object = None,
+            job_scope: object = None,
+            **_: object,
+        ) -> pd.DataFrame:
             self._logger.debug(
                 "FileJobService: data file job started (corr=%s, job_id=%s, scope=%s, path=%s, tab_id=%s)",
                 corr,
@@ -213,7 +220,7 @@ class FileJobService:
                 corr_id=corr,
             )
 
-        def _on_result(payload: Any) -> None:
+        def _on_result(payload: object) -> None:
             """Handle file load result for the pending result tab."""
             self._on_data_loaded(
                 payload,
@@ -267,7 +274,7 @@ class FileJobService:
 
     def _on_data_loaded(
         self,
-        payload: Any,
+        payload: object,
         path: str,
         *,
         corr: str | None = None,

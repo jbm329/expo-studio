@@ -134,7 +134,7 @@ class DerivedColumnController:
         get_active_view: Callable[[], QTableView | None],
         apply_to_active_tab: ApplyToActiveTab,
         dialogs: DialogService | None = None,
-        main_window,
+        main_window: object,
         logger: logging.Logger | None = None,
     ) -> None:
         """Initialize controller.
@@ -266,7 +266,9 @@ class DerivedColumnController:
             corr_id,
         )
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *, progress_cb: object=None, cancel_cb: object=None, **_: object
+        ) -> tuple[bool, pd.DataFrame | None, Exception | None] | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -277,7 +279,7 @@ class DerivedColumnController:
             except DerivedColumnError as exc:
                 return False, None, exc
 
-        def _apply_result(result) -> None:
+        def _apply_result(result: object) -> None:
             if result is None:
                 return
 

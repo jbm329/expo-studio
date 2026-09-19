@@ -183,7 +183,7 @@ class ResultTabHeaderDtypeActions:
 
         from expo_jbm329.services.data_operations.convert import to_string
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -191,7 +191,7 @@ class ResultTabHeaderDtypeActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -246,7 +246,7 @@ class ResultTabHeaderDtypeActions:
 
         from expo_jbm329.services.data_operations.convert import to_integer
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -258,7 +258,7 @@ class ResultTabHeaderDtypeActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -313,7 +313,7 @@ class ResultTabHeaderDtypeActions:
 
         from expo_jbm329.services.data_operations.convert import to_float
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -325,7 +325,7 @@ class ResultTabHeaderDtypeActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -392,7 +392,7 @@ class ResultTabHeaderDtypeActions:
         fmt_cfg = FORMAT_MAP[format_key]
         date_only = target == "date"
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -408,7 +408,7 @@ class ResultTabHeaderDtypeActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -480,7 +480,7 @@ class ResultTabHeaderDtypeActions:
 
         from expo_jbm329.services.data_operations.convert import to_boolean
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -499,7 +499,7 @@ class ResultTabHeaderDtypeActions:
             "raise": self._tr(self.TR_UNKNOWN_ERROR_LABEL_ERROR),
         }[self._conversion_error_handling]
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -568,7 +568,7 @@ class ResultTabHeaderDtypeActions:
 
         from expo_jbm329.services.data_operations.convert import to_category
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -586,7 +586,7 @@ class ResultTabHeaderDtypeActions:
 
         ordered_label = self._tr(self.TR_ORDERED) if opts["ordered"] else self._tr(self.TR_UNORDERED)
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 

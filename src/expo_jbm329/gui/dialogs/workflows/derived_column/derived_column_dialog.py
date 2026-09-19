@@ -39,7 +39,7 @@ class DerivedColumnDialog(QDialog):
         df: pd.DataFrame,
         numeric_columns: list[str],
         validate_callback: Callable[[str, str], tuple[bool, str]],
-        parent=None,
+        parent: object=None,
     ) -> None:
         """Initialize dialog.
 

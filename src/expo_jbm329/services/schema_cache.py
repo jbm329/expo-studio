@@ -10,7 +10,6 @@ import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
 
 from expo_jbm329.db.base import (
     get_db_name,
@@ -215,7 +214,9 @@ class SchemaCacheManager:
             return False
         return (time.time() - entry.loaded_at) < self._ttl_seconds
 
-    def load_schema(self, connection_name: str, force_refresh: bool = False, corr_id=None) -> SchemaCacheEntry:
+    def load_schema(
+        self, connection_name: str, force_refresh: bool = False, corr_id: object = None
+    ) -> SchemaCacheEntry:
         """Load db_name + tables/views. (Columns loaded separately by async prefetch.)."""
         if force_refresh:
             self.clear_for(connection_name)
@@ -252,7 +253,7 @@ class SchemaCacheManager:
 
         return entry
 
-    def set_job_runner(self, runner_callable: Callable, corr_id=None) -> None:
+    def set_job_runner(self, runner_callable: Callable, corr_id: object = None) -> None:
         """Register a callable to run database jobs asynchronously."""
         self._runner = runner_callable
         self._logger.debug("SchemaCacheManager: job runner registered (corr=%s).", corr_id)
@@ -260,7 +261,9 @@ class SchemaCacheManager:
     # -----------------------------------------------------------------------------
     # PREFETCH (async)
     # -----------------------------------------------------------------------------
-    def prefetch_columns_async(self, connection_name: str, run_job_fn: Callable | None = None, corr_id=None) -> None:
+    def prefetch_columns_async(
+        self, connection_name: str, run_job_fn: Callable | None = None, corr_id: object = None
+    ) -> None:
         """Prefetch column metadata for all tables and views in a connection."""
         entry = self._cache.get(connection_name)
         if not entry:
@@ -336,7 +339,9 @@ class SchemaCacheManager:
     # -----------------------------------------------------------------------------
     # BULK HANDLER
     # -----------------------------------------------------------------------------
-    def _handle_bulk_error(self, connection_name: str, token: str, err: str, corr_id: str | None = None) -> None:
+    def _handle_bulk_error(
+        self, connection_name: str, token: str, err: str, corr_id: str | None = None
+    ) -> None:
         self._logger.warning("SchemaCacheManager: bulk error (conn=%s, corr=%s): %s", connection_name, corr_id, err)
 
         if self._status_cb:
@@ -344,7 +349,7 @@ class SchemaCacheManager:
 
         self._start_batch_prefetch(connection_name, token, corr_id)
 
-    def _normalize_key(self, key: Any) -> tuple[str, str] | None:
+    def _normalize_key(self, key: object) -> tuple[str, str] | None:
         try:
             if isinstance(key, tuple) and len(key) == 2:
                 return key
@@ -373,7 +378,7 @@ class SchemaCacheManager:
             pass
         return None
 
-    def _normalize_bulk_map(self, payload: Any) -> dict[tuple[str, str], list[dict]]:
+    def _normalize_bulk_map(self, payload: object) -> dict[tuple[str, str], list[dict]]:
         if not isinstance(payload, dict):
             return {}
 
@@ -401,7 +406,9 @@ class SchemaCacheManager:
             out[key] = lst
         return out
 
-    def _on_bulk_done(self, connection_name: str, token: str, payload: Any, corr_id: str | None = None) -> None:
+    def _on_bulk_done(
+        self, connection_name: str, token: str, payload: object, corr_id: str | None = None
+    ) -> None:
         if not self._token_matches(connection_name, token):
             return
 
@@ -535,7 +542,7 @@ class SchemaCacheManager:
         batch = remaining[:batch_size]
         rest = remaining[batch_size:]
 
-        def batch_job(conn: str, pairs: list[tuple[str, str]]):
+        def batch_job(conn: str, pairs: list[tuple[str, str]]) -> dict[tuple[str, str], list[str]]:
             result = {}
             for sch, name in pairs:
                 try:
@@ -590,7 +597,7 @@ class SchemaCacheManager:
             corr_id=corr_id,
         )
 
-        def _on_ok(payload) -> None:
+        def _on_ok(payload: object) -> None:
             entry = self._cache.get(connection_name) or None
             if entry:
                 entry.columns.update(payload or {})

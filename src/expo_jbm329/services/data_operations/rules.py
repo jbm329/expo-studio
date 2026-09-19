@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from .text import clean_text, replace_values
 
@@ -76,8 +76,8 @@ class ReplaceRule(Rule):
     Supports both literal and regex-based replacement.
     """
 
-    pattern: Any
-    replacement: Any
+    pattern: object
+    replacement: object
     regex: bool = False
 
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -103,7 +103,7 @@ class ReplaceRule(Rule):
 class RemoveValueRule(Rule):
     """Remove rows where a column equals a specific value."""
 
-    value: Any
+    value: object
 
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:
         """Remove rows matching the configured value."""

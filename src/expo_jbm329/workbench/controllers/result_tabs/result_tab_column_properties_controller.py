@@ -190,7 +190,7 @@ class ResultTabColumnPropertiesController:
         """Run async column profiling."""
         corr_id = uuid.uuid4().hex
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> object:
             from expo_jbm329.services.data_operations.analytics import (
                 get_column_profile,
             )
@@ -200,7 +200,7 @@ class ResultTabColumnPropertiesController:
 
             return get_column_profile(df, col_name)
 
-        def _apply_result(profile) -> None:
+        def _apply_result(profile: object) -> None:
             if profile is None:
                 return
 

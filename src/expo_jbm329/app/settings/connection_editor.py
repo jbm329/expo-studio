@@ -300,7 +300,7 @@ class ConnectionEditor(QDialog):
     # showEvent - only positioning + loading data
     # ----------------------------------------------------------------------
     @override
-    def showEvent(self, event):
+    def showEvent(self, event: object) -> None:
         """Load connection data and populate list.
 
         Centers the dialog on its parent and reads existing connections from storage.
@@ -355,7 +355,7 @@ class ConnectionEditor(QDialog):
         ):
             w.setEnabled(enabled)
 
-    def on_protocol_changed(self):
+    def on_protocol_changed(self) -> None:
         """Updates the enabled state of UI fields based on the selected protocol."""
         protocol = self.protocol_combo.currentText()
 
@@ -393,7 +393,7 @@ class ConnectionEditor(QDialog):
             self.trusted_checkbox.setEnabled(False)
             self.sqlite_browse_btn.setEnabled(False)
 
-    def on_db_type_changed(self):
+    def on_db_type_changed(self) -> None:
         """Updates default protocol and port when the database type changes."""
         db_type = self.db_type_combo.currentData()
 
@@ -416,7 +416,7 @@ class ConnectionEditor(QDialog):
     # Handlers
     # =============================================================================
 
-    def on_add_driver(self):
+    def on_add_driver(self) -> None:
         """Applies the selected system ODBC driver to the driver edit field."""
         self.driver_edit.setText(self.system_drivers.currentText())
 
@@ -426,7 +426,7 @@ class ConnectionEditor(QDialog):
                 self.db_type_combo.setCurrentIndex(i)
                 break
 
-    def on_trusted_changed(self):
+    def on_trusted_changed(self) -> None:
         """Enables or disables credential fields if Trusted Connection is toggled."""
         if self.trusted_checkbox.isChecked():
             self.user_edit.clear()
@@ -437,7 +437,7 @@ class ConnectionEditor(QDialog):
             self.user_edit.setEnabled(True)
             self.password_edit.setEnabled(True)
 
-    def on_sqlite_browse(self):
+    def on_sqlite_browse(self) -> None:
         """Opens a file dialog to select an SQLite database file."""
         path, _ = QFileDialog.getOpenFileName(
             self,
@@ -449,7 +449,7 @@ class ConnectionEditor(QDialog):
         if path:
             self.db_edit.setText(path)
 
-    def on_selection_changed(self, current):
+    def on_selection_changed(self, current: object) -> None:
         """Loads the selected connection's data into the form fields.
 
         Args:
@@ -518,7 +518,7 @@ class ConnectionEditor(QDialog):
         self.on_protocol_changed()
         self.on_trusted_changed()
 
-    def clear_fields(self):
+    def clear_fields(self) -> None:
         """Clears all input fields in the connection form."""
         for w in (
             self.driver_edit,
@@ -572,7 +572,7 @@ class ConnectionEditor(QDialog):
 
         return d
 
-    def add_connection(self):
+    def add_connection(self) -> None:
         """Prompts for a name and adds a new connection entry with default values."""
         name, ok = self._dialogs.prompt_text(
             parent=self,
@@ -610,7 +610,7 @@ class ConnectionEditor(QDialog):
         self.list_widget.setCurrentRow(self.list_widget.count() - 1)
         self._set_fields_enabled(True)
 
-    def delete_connection(self):
+    def delete_connection(self) -> None:
         """Deletes the currently selected connection after confirmation."""
         item = self.list_widget.currentItem()
         if not item:
@@ -637,7 +637,7 @@ class ConnectionEditor(QDialog):
         if self.list_widget.count() == 0:
             self._set_fields_enabled(False)
 
-    def save_changes(self):
+    def save_changes(self) -> None:
         """Saves the current form values to the selected connection entry."""
         item = self.list_widget.currentItem()
         if not item:
@@ -654,7 +654,7 @@ class ConnectionEditor(QDialog):
     # Connection Testing
     # =============================================================================
 
-    def test_connection(self):
+    def test_connection(self) -> None:
         """Tests the current connection configuration using execute_sql_safe."""
         item = self.list_widget.currentItem()
         if not item:

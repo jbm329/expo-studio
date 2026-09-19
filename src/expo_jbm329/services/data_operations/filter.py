@@ -21,7 +21,7 @@ Design principles:
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import pandas.api.types as pdt
@@ -40,7 +40,7 @@ logger = logging.getLogger("applogger.service")
 def filter_equals(
     df: pd.DataFrame,
     column: str,
-    value: Any,
+    value: object,
     *,
     case: bool = True,
 ) -> pd.DataFrame:
@@ -92,7 +92,7 @@ def filter_equals(
 def filter_not_equals(
     df: pd.DataFrame,
     column: str,
-    value: Any,
+    value: object,
 ) -> pd.DataFrame:
     """Return rows where df[column] != value.
 
@@ -230,7 +230,7 @@ def filter_compare(
     df: pd.DataFrame,
     column: str,
     op: str,
-    value: Any,
+    value: object,
 ) -> pd.DataFrame:
     """Filter rows by comparing a column to a value.
 
@@ -280,8 +280,8 @@ def filter_compare(
 def filter_between(
     df: pd.DataFrame,
     column: str,
-    low: Any,
-    high: Any,
+    low: object,
+    high: object,
     *,
     inclusive: str = "both",
 ) -> pd.DataFrame:

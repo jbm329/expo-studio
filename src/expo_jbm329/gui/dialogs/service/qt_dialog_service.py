@@ -86,7 +86,7 @@ class QtDialogService(DialogService):
     def confirm_profile_scope(
         self,
         parent: QWidget,
-        **kwargs,
+        **kwargs: object,
     ) -> ProfileChoice:
         """Show a confirmation dialog for profile scope."""
         from expo_jbm329.gui.dialogs.service.prompts.choice import (
@@ -95,7 +95,7 @@ class QtDialogService(DialogService):
 
         return confirm_profile_scope(parent, **kwargs)
 
-    def confirm_delete(self, parent: QWidget, **kwargs) -> bool:
+    def confirm_delete(self, parent: QWidget, **kwargs: object) -> bool:
         """Show a confirmation dialog for deletion."""
         from expo_jbm329.gui.dialogs.service.prompts.choice import (
             confirm_delete,
@@ -103,7 +103,7 @@ class QtDialogService(DialogService):
 
         return confirm_delete(parent, **kwargs)
 
-    def prompt_choice(self, parent: QWidget, **kwargs) -> tuple[str, bool]:
+    def prompt_choice(self, parent: QWidget, **kwargs: object) -> tuple[str, bool]:
         """Show a prompt for a choice from a list of options."""
         from expo_jbm329.gui.dialogs.service.prompts.choice import (
             prompt_choice,
@@ -111,7 +111,7 @@ class QtDialogService(DialogService):
 
         return prompt_choice(parent, **kwargs)
 
-    def prompt_yes_no(self, parent: QWidget, **kwargs) -> bool:
+    def prompt_yes_no(self, parent: QWidget, **kwargs: object) -> bool:
         """Show a yes/no confirmation dialog."""
         from expo_jbm329.gui.dialogs.service.prompts.choice import (
             prompt_yes_no,
@@ -166,7 +166,7 @@ class QtDialogService(DialogService):
         default_high: object,
         inclusive_default: str,
         semantics: SeriesSemantics,
-    ):
+    ) -> object:
         """Prompt for numeric or datetime range."""
         from expo_jbm329.gui.dialogs.service.prompts.compare_between import prompt_between
 
@@ -191,7 +191,7 @@ class QtDialogService(DialogService):
         default_op: str,
         default_value: object,
         semantics: SeriesSemantics,
-    ):
+    ) -> object:
         """Prompt for comparison between two values."""
         from expo_jbm329.gui.dialogs.service.prompts.compare_between import (
             prompt_compare,
@@ -233,7 +233,7 @@ class QtDialogService(DialogService):
     # Text prompts
     # ------------------------------------------------------------------
 
-    def prompt_text(self, parent: QWidget, **kwargs) -> tuple[str, bool]:
+    def prompt_text(self, parent: QWidget, **kwargs: object) -> tuple[str, bool]:
         """Show a prompt for text input."""
         from expo_jbm329.gui.dialogs.service.prompts.text import (
             prompt_text,
@@ -241,7 +241,7 @@ class QtDialogService(DialogService):
 
         return prompt_text(parent, **kwargs)
 
-    def prompt_text_replace(self, parent: QWidget, **kwargs):
+    def prompt_text_replace(self, parent: QWidget, **kwargs: object) -> object:
         """Show a prompt for text replacement."""
         from expo_jbm329.gui.dialogs.service.prompts.text import (
             prompt_text_replace,
@@ -249,7 +249,7 @@ class QtDialogService(DialogService):
 
         return prompt_text_replace(parent, **kwargs)
 
-    def prompt_text_insert(self, parent: QWidget, **kwargs):
+    def prompt_text_insert(self, parent: QWidget, **kwargs: object) -> object:
         """Show a prompt for text insertion."""
         from expo_jbm329.gui.dialogs.service.prompts.text import (
             prompt_text_insert,
@@ -257,7 +257,7 @@ class QtDialogService(DialogService):
 
         return prompt_text_insert(parent, **kwargs)
 
-    def prompt_value_replace(self, parent: QWidget, **kwargs):
+    def prompt_value_replace(self, parent: QWidget, **kwargs: object) -> object:
         """Show a prompt for value replacement."""
         from expo_jbm329.gui.dialogs.service.prompts.text import (
             prompt_value_replace,

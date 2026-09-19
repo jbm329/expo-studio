@@ -8,7 +8,7 @@ schema metadata.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QMimeData, Qt
 from PyQt6.QtWidgets import (
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
 
-def _is_valid_meta(meta: Any) -> bool:
+def _is_valid_meta(meta: object) -> bool:
     """Validates the structure of metadata dicts placed in UserRole.
 
     Checks if the provided metadata dict conforms to the expected shapes for
@@ -74,7 +74,7 @@ def _qualify_column(schema: str, table: str, column: str) -> str:
 
 
 def build_drag_text_from_meta(
-    metas: Iterable[dict[str, Any]],
+    metas: Iterable[dict[str, object]],
     *,
     prefer_multiline_for_same_table: bool = True,
     indent: str = "    ",
@@ -198,7 +198,7 @@ class SchemaTreeWidget(QTreeWidget):
         selected: Sequence[QTreeWidgetItem] = list(items) if items else self.selectedItems()
 
         # Extract and normalize meta dicts
-        metas: list[dict[str, Any]] = []
+        metas: list[dict[str, object]] = []
         for it in selected:
             meta = it.data(0, Qt.ItemDataRole.UserRole)
             if _is_valid_meta(meta):

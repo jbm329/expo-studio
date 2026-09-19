@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import datetime
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -310,7 +309,7 @@ def fmt_timedelta(td: datetime.timedelta | pd.Timedelta | None) -> str:
 # ---------------------------------------------------------------------
 
 
-def fmt_category(val) -> str:
+def fmt_category(val: object) -> str:
     """Safely format categorical values.
 
     Handles NaN/None by returning an empty string.
@@ -331,7 +330,7 @@ def fmt_category(val) -> str:
 # ---------------------------------------------------------------------
 
 
-def fmt_path(p: Any) -> str:
+def fmt_path(p: object) -> str:
     """Return a POSIX-style string for any path-like input.
 
     Ensures no backslashes are present. Safe for logging and UI.

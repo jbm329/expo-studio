@@ -36,7 +36,7 @@ class TabBarProxyStyle(QProxyStyle):
     # Spacing / padding
     # --------------------------------------------------
     @override
-    def pixelMetric(self, metric, option=None, widget=None):
+    def pixelMetric(self, metric: object, option: object=None, widget: object=None) -> object:
         """Custom pixelMetric override to provide consistent spacing."""
         if metric in (
             QStyle.PixelMetric.PM_TabBarTabHSpace,
@@ -56,7 +56,7 @@ class TabBarProxyStyle(QProxyStyle):
     # Tab shape + background
     # --------------------------------------------------
     @override
-    def drawControl(self, element, option, painter, widget=None):
+    def drawControl(self, element: object, option: object, painter: object, widget: object=None) -> None:
         """Custom drawControl override for tab shape and background."""
         # Tab background / shape
         if (
@@ -154,7 +154,7 @@ class TabBarProxyStyle(QProxyStyle):
         painter.restore()
 
     @override
-    def drawPrimitive(self, element, option, painter, widget=None):
+    def drawPrimitive(self, element: object, option: object, painter: object, widget: object=None) -> None:
         """Custom drawPrimitive override for hover effects."""
         if option is None or painter is None:
             return
@@ -227,12 +227,12 @@ class CustomTabBar(QTabBar):
     # ----------------------------------------------------------------------
     # PUBLIC API (called by EditorServices when theme changes)
     # ----------------------------------------------------------------------
-    def update_icons(self):
+    def update_icons(self) -> None:
         """Reload icons from IconService and rebuild close buttons."""
         self._reload_close_icon()
         self.refresh_close_buttons()
 
-    def refresh_close_buttons(self):
+    def refresh_close_buttons(self) -> None:
         """Recreate close buttons for all tabs."""
         for i in range(self.count()):
             self._install_close_button(i)
@@ -341,7 +341,7 @@ class CustomTabBar(QTabBar):
     # OVERRIDES
     # ----------------------------------------------------------------------
     @override
-    def tabInserted(self, index: int):
+    def tabInserted(self, index: int) -> None:
         """Called when a new tab is inserted.
 
         Installs the close button for the new tab.
@@ -353,7 +353,7 @@ class CustomTabBar(QTabBar):
         self._install_close_button(index)
 
     @override
-    def tabMoved(self, from_index: int, to_index: int):
+    def tabMoved(self, from_index: int, to_index: int) -> None:
         """Called when a tab is moved.
 
         Updates the close buttons for the affected tabs.
@@ -368,7 +368,7 @@ class CustomTabBar(QTabBar):
                 self._install_close_button(i)
 
     @override
-    def tabRemoved(self, index: int):
+    def tabRemoved(self, index: int) -> None:
         """Called when a tab is removed.
 
         Args:

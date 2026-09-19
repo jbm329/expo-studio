@@ -33,9 +33,9 @@ import logging
 import time
 import traceback
 import uuid
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Literal, Protocol, cast
+from typing import TYPE_CHECKING, Literal, Protocol, cast
 
 from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
 
@@ -53,7 +53,7 @@ RunnerKind = Literal["thread", "pool"]
 class _ConnectableSignal(Protocol):
     """Protocol for Qt-like signals exposing connect()."""
 
-    def connect(self, slot: Any, connection_type: Qt.ConnectionType = ...) -> Any:
+    def connect(self, slot: Callable[..., object], connection_type: Qt.ConnectionType = ...) -> object:
         """Connect a slot to the signal."""
         ...
 
@@ -155,7 +155,7 @@ class _FutureBridge(QObject):
         """
         self._dispatch_progress.emit(int(value))
 
-    def post_result(self, payload: Any) -> None:
+    def post_result(self, payload: object) -> None:
         """Queue a result signal on the bridge thread.
 
         Args:
@@ -217,13 +217,13 @@ class Worker(QObject):
 
     def __init__(
         self,
-        fn: Callable[..., Any],
-        *args: Any,
+        fn: Callable[..., object],
+        *args: object,
         job_id: str,
         job_scope: str | None,
         corr_id: str | None,
         logger: logging.Logger | None = None,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> None:
         """Initialize the Worker.
 
@@ -349,13 +349,13 @@ class Worker(QObject):
 
 
 def run_in_thread(
-    fn: Callable[..., Any],
-    *args: Any,
+    fn: Callable[..., object],
+    *args: object,
     job_id: str,
     job_scope: str | None,
     corr_id: str | None,
     logger: logging.Logger | None = None,
-    **kwargs: Any,
+    **kwargs: object,
 ) -> tuple[QThread, Worker]:
     """Create and wire a QThread + Worker pair.
 
@@ -398,14 +398,14 @@ def run_in_thread(
 
 def _build_injected_call_kwargs(
     *,
-    fn: Callable[..., Any],
-    base_kwargs: dict[str, Any],
+    fn: Callable[..., object],
+    base_kwargs: dict[str, object],
     progress_cb: Callable[[int], None] | None,
     cancel_cb: Callable[[], bool] | None,
     job_id: str,
     job_scope: str | None,
     corr_id: str | None,
-) -> dict[str, Any]:
+) -> dict[str, object]:
     """Build callable kwargs with supported runtime context injected.
 
     Injection is conservative:
@@ -591,11 +591,11 @@ class JobManager:
 
     def run(
         self,
-        fn: Callable[..., Any],
-        *args: Any,
+        fn: Callable[..., object],
+        *args: object,
         scope: str | None = None,
         corr_id: str | None = None,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> Worker:
         """Launch a callable in a dedicated QThread.
 
@@ -677,11 +677,11 @@ class JobManager:
 
     def run_pool(
         self,
-        fn: Callable[..., Any],
-        *args: Any,
+        fn: Callable[..., object],
+        *args: object,
         scope: str | None = None,
         corr_id: str | None = None,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> _FutureBridge:
         """Launch a callable on a shared ThreadPoolExecutor.
 
@@ -745,7 +745,7 @@ class JobManager:
             corr_id,
         )
 
-        def wrapped() -> tuple[str, Any]:
+        def wrapped() -> tuple[str, object]:
             try:
                 call_kwargs = _build_injected_call_kwargs(
                     fn=fn,
@@ -780,7 +780,7 @@ class JobManager:
         pool = self._ensure_pool()
         future = pool.submit(wrapped)
 
-        def on_done(done_future: Any) -> None:
+        def on_done(done_future: Future[object]) -> None:
             try:
                 tag, payload = done_future.result()
                 if tag == "ok":

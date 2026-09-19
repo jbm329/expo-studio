@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import fields
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from PyQt6.QtGui import QColor
 
@@ -42,7 +42,7 @@ def load_theme_from_json(path: Path) -> Theme:
 
     Friendly name and values must match Theme dataclass fields. Unknown keys are ignored.
     """
-    data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    data: dict[str, object] = json.loads(path.read_text(encoding="utf-8"))
 
     kwargs = {}
 

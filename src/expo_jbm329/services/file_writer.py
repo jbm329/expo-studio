@@ -12,7 +12,7 @@ import pickle
 import time
 from contextlib import suppress
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
@@ -341,7 +341,7 @@ class FileWriter:
         *,
         sheet_name: str = "Data",
         index: bool = False,
-        na_rep: Any = None,
+        na_rep: object = None,
         streaming: bool | None = None,
         max_rows_per_sheet: int | None = None,
         chunk_size_rows: int | None = None,
@@ -471,7 +471,7 @@ class FileWriter:
         *,
         sheet_name: str = "Data",
         index: bool = False,
-        na_rep: Any = None,
+        na_rep: object = None,
         max_rows_per_sheet: int | None = None,
         chunk_size_rows: int | None = None,
         progress_cb: Callable[[int], None] | None = None,
@@ -499,7 +499,7 @@ class FileWriter:
         # ----------------------------------------------------------------------
         # Per-cell Excel-safe normalizer
         # ----------------------------------------------------------------------
-        def clean_cell(value, *, _na_rep=na_rep):
+        def clean_cell(value: object, *, _na_rep: object=na_rep) -> object:
             """Normalize a single cell value into a type compatible with openpyxl/Excel.
 
             Rules:
@@ -629,7 +629,7 @@ class FileWriter:
             default_ws = wb.active
             wb.remove(default_ws)
 
-        def start_new_sheet(name: str):
+        def start_new_sheet(name: str) -> None:
             self._validate_excel_sheet_name(name)
             ws = wb.create_sheet(title=name)
             headers = []
@@ -883,7 +883,7 @@ class FileWriter:
     # ----------------------------------------------------------------------
     # Other formats (atomic JSON; data formats via pandas)
     # ----------------------------------------------------------------------
-    def save_json(self, data: Any, dest: str | Path, *, indent: int = 2, corr_id: str | None = None) -> Path:
+    def save_json(self, data: object, dest: str | Path, *, indent: int = 2, corr_id: str | None = None) -> Path:
         """Writes JSON to disk via atomic replace (tmp + move)."""
         path = Path(dest)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -899,7 +899,7 @@ class FileWriter:
         )
         return path
 
-    def _save_pickle(self, obj: Any, dest: str | Path, *, corr_id: str | None = None) -> Path:
+    def _save_pickle(self, obj: object, dest: str | Path, *, corr_id: str | None = None) -> Path:
         """Writes a pickle (.df is used upstream for DataFrame pickles)."""
         path = Path(dest)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -924,7 +924,7 @@ class FileWriter:
         df.to_parquet(path, engine="pyarrow", index=False)
         return path
 
-    def save_profile(self, profile, dest: str | Path, *, corr_id: str | None = None) -> Path:
+    def save_profile(self, profile: object, dest: str | Path, *, corr_id: str | None = None) -> Path:
         """Writes a ydata-profiling ProfileReport to HTML."""
         path = Path(dest)
         path.parent.mkdir(parents=True, exist_ok=True)

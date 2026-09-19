@@ -94,7 +94,7 @@ class FilePanelController:
         close_result_tabs: Callable[[str], None],
         rename_file: Callable[[Path, str], tuple[bool, str | None]],
         set_status: Callable[[str, int | None], None],
-        file_icon_provider,
+        file_icon_provider: object,
         dialogs: DialogService | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
@@ -161,7 +161,7 @@ class FilePanelController:
         ) as e:
             self._logger.exception("FilePanelController: failed to reload settings: %s", e)
 
-    def update_icons(self):
+    def update_icons(self) -> None:
         """Refresh file icons after a theme or icon-provider change."""
         try:
             self._logger.debug("FilePanelController: updating icons")

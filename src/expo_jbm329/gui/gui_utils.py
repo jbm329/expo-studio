@@ -8,7 +8,7 @@ standard window hints to dialogs.
 from __future__ import annotations
 
 import contextlib
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QCoreApplication, Qt, QTimer
 
@@ -29,7 +29,7 @@ def set_app_closing(value: bool = True) -> None:
     _APP_CLOSING = value
 
 
-def ui_invoke(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> None:
+def ui_invoke(fn: Callable[..., object], *args: object, **kwargs: object) -> None:
     """Schedule a function to be executed on the UI thread as soon as possible.
 
     This acts as a trampoline to ensure UI updates are always performed on

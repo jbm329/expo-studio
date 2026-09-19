@@ -82,7 +82,7 @@ class JoinAnalysisWidget(QWidget):
     # Public API
     # ---------------------------------------------------------
 
-    def set_metadata(self, metadata) -> None:
+    def set_metadata(self, metadata: object) -> None:
         """Populate widget with join metadata.
 
         Args:

@@ -150,7 +150,14 @@ class ConcatController:
         pending_tab_id = pending_handle.tab_id
         pending_view = pending_handle.view
 
-        def _work(*, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None, **_):
+        def _work(
+            *,
+            progress_cb: object = None,
+            cancel_cb: object = None,
+            job_id: object = None,
+            job_scope: object = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             _ = progress_cb
             _ = job_scope
             _ = job_id

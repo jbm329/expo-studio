@@ -111,7 +111,7 @@ class RestTreeWidget(QTreeWidget):
     # Internal helpers
     # ==================================================================
 
-    def _apply_tooltip(self, item: QTreeWidgetItem, entry) -> None:
+    def _apply_tooltip(self, item: QTreeWidgetItem, entry: object) -> None:
         """Apply tooltip information from a RestConnectionEntry."""
         tooltip = []
         url = entry.request.url.strip()
@@ -134,7 +134,7 @@ class RestTreeWidget(QTreeWidget):
         if isinstance(name, str):
             self.load_requested.emit(name)
 
-    def _on_context_menu(self, pos) -> None:
+    def _on_context_menu(self, pos: object) -> None:
         """Show context menu for REST presets."""
         item = self.itemAt(pos)
         if not item:

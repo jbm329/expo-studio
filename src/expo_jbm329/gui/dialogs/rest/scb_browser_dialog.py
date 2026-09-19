@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from math import prod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -53,7 +53,7 @@ class ScbBrowserDialog(QDialog):
         self.setFixedSize(700, 525)
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
 
-        self.result_data: dict[str, Any] | None = None
+        self.result_data: dict[str, object] | None = None
 
         self.table_label = QLabel(self.tr("Table:"))
         self.table_label.setFixedWidth(90)
@@ -440,6 +440,6 @@ class ScbBrowserDialog(QDialog):
 
         self.accept()
 
-    def get_result(self) -> dict[str, Any] | None:
+    def get_result(self) -> dict[str, object] | None:
         """Return the built SCB query data if accepted."""
         return self.result_data

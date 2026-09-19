@@ -103,7 +103,7 @@ class RestPanelController:
             if child is not None:
                 self._update_item_icons_recursive(child)
 
-    def _update_item_icons_recursive(self, item) -> None:
+    def _update_item_icons_recursive(self, item: object) -> None:
         role = item.data(0, Qt.ItemDataRole.UserRole)
 
         if role == RestTreeWidget.FOLDER_ROLE:

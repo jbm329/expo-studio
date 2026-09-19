@@ -5,7 +5,6 @@ background job, including success status, elapsed time, and data payload.
 """
 
 from dataclasses import dataclass
-from typing import Any
 
 
 @dataclass
@@ -27,5 +26,5 @@ class JobResult:
     path: str | None = None
     cancelled: bool = False
     error: str | None = None
-    data: Any | None = None
+    data: object | None = None
     corr_id: str | None = None

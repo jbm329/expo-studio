@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import itertools
-from typing import Any
 
 import pandas as pd
 
@@ -13,7 +12,7 @@ class RestNormalizeError(RuntimeError):
 
 
 def normalize_json_to_df(
-    payload: Any,
+    payload: object,
     *,
     response_path: str | None = None,
 ) -> pd.DataFrame:
@@ -67,7 +66,7 @@ def normalize_json_to_df(
 # ---------------------------------------------------------------------
 
 
-def _extract_records(payload: Any, response_path: str | None) -> Any:
+def _extract_records(payload: object, response_path: str | None) -> object:
     """Extract the record container from a JSON payload.
 
     If response_path is None:
@@ -209,7 +208,7 @@ def _normalize_jsonstat2(payload: dict) -> pd.DataFrame:
     return pd.DataFrame(records)
 
 
-def _display_dimension_name(dim_id: str, dim_config: dict[str, Any]) -> str:
+def _display_dimension_name(dim_id: str, dim_config: dict[str, object]) -> str:
     """Return the user-visible name for a JSON-stat dimension."""
     raw_name = str(dim_id).strip()
     label = str(dim_config.get("label") or "").strip()

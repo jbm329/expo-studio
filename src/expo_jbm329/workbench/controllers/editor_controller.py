@@ -116,7 +116,7 @@ class EditorController(QObject):
         return line_text.count("(") > line_text.count(")")
 
     @classmethod
-    def _should_increase_indent_for_sql_continuation(cls, line_text: str) -> bool:
+    def _should_increase_indent_for_sql_continuation(cls: object, line_text: str) -> bool:
         """Return whether a SQL continuation pattern should add one indent level."""
         stripped_line = line_text.rstrip()
         if not stripped_line:

@@ -7,7 +7,7 @@ and the popup window to provide a smooth SQL autocompletion experience.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QEvent, QObject, Qt, QTimer
 
@@ -38,7 +38,7 @@ class SqlAutocompleteController(QObject):
         self,
         editor: QPlainTextEdit,
         completer: SqlAutoCompleter,
-        parent=None,
+        parent: object=None,
         *,
         debug: bool = False,
         logger: logging.Logger | None = None,
@@ -88,7 +88,7 @@ class SqlAutocompleteController(QObject):
 
     # ------------------------------------------------------------------ #
     @override
-    def eventFilter(self, obj: Any, event: QEvent) -> bool:
+    def eventFilter(self, obj: object, event: QEvent) -> bool:
         """Filter events for the editor and popup.
 
         Args:

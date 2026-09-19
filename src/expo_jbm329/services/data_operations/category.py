@@ -19,7 +19,6 @@ Design principles:
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 import pandas as pd
 from pandas import CategoricalDtype
@@ -74,8 +73,8 @@ def category_remove_unused(
 def category_rename_single(
     df: pd.DataFrame,
     column: str,
-    old: Any,
-    new: Any,
+    old: object,
+    new: object,
 ) -> pd.DataFrame:
     """Rename a single category value.
 

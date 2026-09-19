@@ -297,27 +297,27 @@ class DialogService(Protocol):
         """Show a prompt for category ordering."""
         ...
 
-    def prompt_text_replace(self, parent: QWidget, **kwargs) -> TextReplaceResult:
+    def prompt_text_replace(self, parent: QWidget, **kwargs: object) -> TextReplaceResult:
         """Show a prompt for text replacement."""
         ...
 
-    def prompt_text_insert(self, parent: QWidget, **kwargs) -> TextInsertResult:
+    def prompt_text_insert(self, parent: QWidget, **kwargs: object) -> TextInsertResult:
         """Show a prompt for text insertion."""
         ...
 
-    def prompt_value_replace(self, parent: QWidget, **kwargs) -> ValueReplaceResult:
+    def prompt_value_replace(self, parent: QWidget, **kwargs: object) -> ValueReplaceResult:
         """Show a prompt for value replacement."""
         ...
 
-    def prompt_text(self, parent: QWidget, **kwargs) -> tuple[str, bool]:
+    def prompt_text(self, parent: QWidget, **kwargs: object) -> tuple[str, bool]:
         """Show a prompt for text input."""
         ...
 
-    def prompt_choice(self, parent: QWidget, **kwargs) -> tuple[str, bool]:
+    def prompt_choice(self, parent: QWidget, **kwargs: object) -> tuple[str, bool]:
         """Show a prompt for a choice from a list of options."""
         ...
 
-    def prompt_yes_no(self, parent: QWidget, **kwargs) -> bool:
+    def prompt_yes_no(self, parent: QWidget, **kwargs: object) -> bool:
         """Show a yes/no confirmation dialog."""
         ...
 

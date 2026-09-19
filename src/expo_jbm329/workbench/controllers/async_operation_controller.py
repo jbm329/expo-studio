@@ -53,7 +53,7 @@ class AsyncOperationController:
         return tr("AsyncOperationController", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt(
             "AsyncOperationController",
             text,
@@ -136,7 +136,7 @@ class AsyncOperationController:
         show_status_progress: bool = False,
         show_started_in_status: bool = False,
         corr_id: str | None = None,
-    ):
+    ) -> object:
         """Run an async operation through the centralized workbench facade.
 
         This is the generic entry point for async work. It supports both
@@ -395,7 +395,7 @@ class AsyncOperationController:
         show_started_in_status: bool = False,
         corr_id: str | None = None,
         runner: RunnerKind = "pool",
-    ):
+    ) -> object:
         """Run async work with BusyOverlay handling for a QTableView."""
         return self.run_operation(
             target=self._target_for_view(view),
@@ -443,7 +443,7 @@ class AsyncOperationController:
         show_started_in_status: bool = False,
         corr_id: str | None = None,
         runner: RunnerKind = "pool",
-    ):
+    ) -> object:
         """Run a DataFrame operation with overlay kept during GUI apply."""
         target = self._target_for_view(view)
 
@@ -534,7 +534,7 @@ class AsyncOperationController:
         show_started_in_status: bool = False,
         corr_id: str | None = None,
         runner: RunnerKind = "pool",
-    ):
+    ) -> object:
         """Run async DataFrame-producing work that creates a new result tab."""
         target = self._target_for_view(view)
 
@@ -625,7 +625,7 @@ class AsyncOperationController:
         show_started_in_status: bool = False,
         corr_id: str | None = None,
         runner: RunnerKind = "thread",
-    ):
+    ) -> object:
         """Run an async operation with overlay on any QWidget target.
 
         Intended for first-load file operations, exports, SQL result area
@@ -671,7 +671,7 @@ class AsyncOperationController:
         show_status_progress: bool,
         show_started_in_status: bool,
         corr_id: str | None,
-    ):
+    ) -> object:
         """Start a job using the selected backend.
 
         JobManager is treated as execution infrastructure here.

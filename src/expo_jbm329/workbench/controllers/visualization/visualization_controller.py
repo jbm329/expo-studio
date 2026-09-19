@@ -24,6 +24,9 @@ if TYPE_CHECKING:
     from PyQt6.QtWidgets import QWidget
 
     from expo_jbm329.utils.visualization_models import VisualizationConfig
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import (
+        ResultTabManager,
+    )
 
 
 class VisualizationController:
@@ -57,7 +60,7 @@ class VisualizationController:
     def __init__(
         self,
         *,
-        results,
+        results: ResultTabManager,
         chart_builder: VisualizationChartBuilder | None = None,
         logger: logging.Logger | None = None,
     ) -> None:

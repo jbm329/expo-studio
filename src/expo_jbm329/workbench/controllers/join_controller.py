@@ -223,7 +223,14 @@ class JoinController:
         pending_tab_id = pending_handle.tab_id
         pending_view = pending_handle.view
 
-        def _work(*, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None, **_):
+        def _work(
+            *,
+            progress_cb: object = None,
+            cancel_cb: object = None,
+            job_id: object = None,
+            job_scope: object = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             _ = progress_cb
             _ = job_scope
             _ = job_id
@@ -396,7 +403,9 @@ class JoinController:
 
         corr_id = uuid.uuid4().hex
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *, progress_cb: object = None, cancel_cb: object = None, **_: object
+        ) -> tuple[pd.DataFrame, dict[str, object]] | None:
             _ = progress_cb
             if cancel_cb and cancel_cb():
                 return None
@@ -420,7 +429,7 @@ class JoinController:
 
             return preview_df, metadata
 
-        def _show_preview(result) -> None:
+        def _show_preview(result: object) -> None:
             if result is None:
                 return
 
@@ -458,7 +467,7 @@ class JoinController:
         )
 
     # noinspection PyMethodMayBeStatic
-    def _filter_joined_columns(self, result_df, cfg):
+    def _filter_joined_columns(self, result_df: pd.DataFrame, cfg: object) -> pd.DataFrame:
         """Filter join result columns according to dialog selection."""
         left_suffix = f"_{cfg.left_tab_title}"
         right_suffix = f"_{cfg.right_tab_title}"

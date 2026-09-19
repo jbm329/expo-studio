@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import override
 
 from PyQt6.QtCore import QFileInfo
 from PyQt6.QtGui import QIcon
@@ -39,7 +40,7 @@ class CustomFileIconProvider(QFileIconProvider):
         "_link_icon",
     )
 
-    def __init__(self, icon_service=None, logger: logging.Logger | None = None) -> None:
+    def __init__(self, icon_service: object=None, logger: logging.Logger | None = None) -> None:
         """Initialize the icon provider.
 
         Args:
@@ -120,7 +121,8 @@ class CustomFileIconProvider(QFileIconProvider):
     # ------------------------------------------------------------------ #
     # QFileIconProvider override
     # ------------------------------------------------------------------ #
-    def icon(self, type_or_info) -> QIcon:  # type: ignore[override]
+    @override
+    def icon(self, type_or_info: QFileIconProvider.IconType | QFileInfo) -> QIcon:
         """Return an icon for a file type or QFileInfo instance.
 
         Args:

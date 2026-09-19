@@ -207,7 +207,7 @@ class ResultTabHeaderFillActions:
 
         from expo_jbm329.services.data_operations.fill import fillna_mean
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -215,7 +215,7 @@ class ResultTabHeaderFillActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -274,7 +274,7 @@ class ResultTabHeaderFillActions:
 
         from expo_jbm329.services.data_operations.fill import fillna_median
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -282,7 +282,7 @@ class ResultTabHeaderFillActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -342,7 +342,7 @@ class ResultTabHeaderFillActions:
 
         from expo_jbm329.services.data_operations.fill import fillna_mode
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -350,7 +350,7 @@ class ResultTabHeaderFillActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -497,7 +497,7 @@ class ResultTabHeaderFillActions:
 
         from expo_jbm329.services.data_operations.fill import fillna
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -508,7 +508,7 @@ class ResultTabHeaderFillActions:
         value_str = format_value_for_display(typed_value, sem)
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 

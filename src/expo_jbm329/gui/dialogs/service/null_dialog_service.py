@@ -175,12 +175,12 @@ class NullDialogService(DialogService):
     # Confirms
     # ------------------------------------------------------------------
 
-    def confirm_profile_scope(self, parent: QWidget, **kwargs) -> ProfileChoice:
+    def confirm_profile_scope(self, parent: QWidget, **kwargs: object) -> ProfileChoice:
         """Show a confirmation dialog for profile scope."""
         self.calls.append(("confirm_profile_scope", (), kwargs))
         return self.default_profile_choice
 
-    def confirm_delete(self, parent: QWidget, **kwargs) -> bool:
+    def confirm_delete(self, parent: QWidget, **kwargs: object) -> bool:
         """Show a confirmation dialog for deletion."""
         self.calls.append(("confirm_delete", (), kwargs))
         return self.default_confirm_delete
@@ -189,7 +189,7 @@ class NullDialogService(DialogService):
     # Prompts
     # ------------------------------------------------------------------
 
-    def prompt_text(self, parent: QWidget, **kwargs) -> tuple[str, bool]:
+    def prompt_text(self, parent: QWidget, **kwargs: object) -> tuple[str, bool]:
         """Show a prompt for text input."""
         self.calls.append(("prompt_text", (), kwargs))
         if self._next_prompt_text is not None:
@@ -198,7 +198,7 @@ class NullDialogService(DialogService):
             return val
         return "", True
 
-    def prompt_choice(self, parent: QWidget, **kwargs) -> tuple[str, bool]:
+    def prompt_choice(self, parent: QWidget, **kwargs: object) -> tuple[str, bool]:
         """Show a prompt for a choice from a list of options."""
         self.calls.append(("prompt_choice", (), kwargs))
         if self._next_prompt_choice is not None:
@@ -208,7 +208,7 @@ class NullDialogService(DialogService):
         choices = kwargs.get("choices") or []
         return (choices[0], True) if choices else ("", False)
 
-    def prompt_yes_no(self, parent: QWidget, **kwargs) -> bool:
+    def prompt_yes_no(self, parent: QWidget, **kwargs: object) -> bool:
         """Show a yes/no confirmation dialog."""
         self.calls.append(("prompt_yes_no", (), kwargs))
         if self._next_prompt_yes_no is not None:
@@ -546,7 +546,7 @@ class NullDialogService(DialogService):
             "ok": False,
         }
 
-    def prompt_text_replace(self, parent: QWidget, **kwargs) -> TextReplaceResult:
+    def prompt_text_replace(self, parent: QWidget, **kwargs: object) -> TextReplaceResult:
         """Show a prompt for text replacement."""
         self.calls.append(("prompt_text_replace", (), kwargs))
         if self._next_prompt_text_replace is not None:
@@ -555,7 +555,7 @@ class NullDialogService(DialogService):
             return val
         return {"old": "", "new": "", "case": True, "ok": False}
 
-    def prompt_text_insert(self, parent: QWidget, **kwargs) -> TextInsertResult:
+    def prompt_text_insert(self, parent: QWidget, **kwargs: object) -> TextInsertResult:
         """Show a prompt for text insertion."""
         self.calls.append(("prompt_text_insert", (), kwargs))
         if self._next_prompt_text_insert is not None:
@@ -564,7 +564,7 @@ class NullDialogService(DialogService):
             return val
         return {"insert": "", "position": 0, "ok": False}
 
-    def prompt_value_replace(self, parent: QWidget, **kwargs) -> ValueReplaceResult:
+    def prompt_value_replace(self, parent: QWidget, **kwargs: object) -> ValueReplaceResult:
         """Show a prompt for value replacement."""
         self.calls.append(("prompt_value_replace", (), kwargs))
         if self._next_prompt_value_replace is not None:

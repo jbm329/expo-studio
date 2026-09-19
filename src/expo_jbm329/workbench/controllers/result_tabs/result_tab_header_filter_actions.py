@@ -303,7 +303,7 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_equals
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -316,7 +316,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -388,7 +388,7 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_contains
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -401,7 +401,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -457,7 +457,7 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_isna
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -465,7 +465,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -512,7 +512,7 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_notna
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -520,7 +520,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -621,7 +621,7 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_compare
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -632,7 +632,7 @@ class ResultTabHeaderFilterActions:
         value_str = format_value_for_display(value, sem)
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -748,7 +748,7 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_between
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -768,7 +768,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 

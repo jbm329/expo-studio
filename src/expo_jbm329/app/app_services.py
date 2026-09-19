@@ -7,7 +7,6 @@ injection container for the application's core services and infrastructure.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 from expo_jbm329.app.logging.logging_manager import LoggingManager
 from expo_jbm329.app.settings.config_store import read_rest_connections
@@ -56,11 +55,11 @@ class AppServices:
 
     # Logging
     logging_manager: LoggingManager
-    log_ui: Any
-    log_service: Any
-    log_jobs: Any
-    log_db: Any
-    log_system: Any  # applogger
+    log_ui: object
+    log_service: object
+    log_jobs: object
+    log_db: object
+    log_system: object  # applogger
 
     # Settings
     settings_service: SettingsService
@@ -86,7 +85,7 @@ class AppServices:
     # Factory
     # ==================================================================
     @classmethod
-    def build(cls, settings: dict) -> AppServices:
+    def build(cls: object, settings: dict) -> AppServices:
         """Builds the full application infrastructure layer.
 
         This factory method initializes and configures all core services,

@@ -13,7 +13,7 @@ Responsibilities:
 from __future__ import annotations
 
 import datetime as _dt
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 # Public API
 # =====================================================================
 def format_value_for_display(
-    value: Any,
+    value: object,
     sem: SeriesSemantics | None,
 ) -> str:
     """Format a single value for display using series semantics.
@@ -87,7 +87,7 @@ def format_value_for_display(
 # =====================================================================
 
 
-def _format_date_only(value: Any) -> str:
+def _format_date_only(value: object) -> str:
     """Format datetime-like values as YYYY-MM-DD."""
     try:
         # Python datetime
@@ -118,7 +118,7 @@ def _format_date_only(value: Any) -> str:
     return str(value)
 
 
-def _format_integer_like(value: Any) -> str:
+def _format_integer_like(value: object) -> str:
     """Format integer-like numeric values using locale grouping."""
     try:
         if isinstance(value, (int, float, np.integer, np.floating)):
@@ -139,7 +139,7 @@ def _format_integer_like(value: Any) -> str:
     return str(value)
 
 
-def _format_float_like(value: Any, *, decimals: int = 2) -> str:
+def _format_float_like(value: object, *, decimals: int = 2) -> str:
     """Format non-integer float values with fixed decimal precision."""
     try:
         if isinstance(value, (float, np.floating)):
@@ -160,7 +160,7 @@ def _format_float_like(value: Any, *, decimals: int = 2) -> str:
     return str(value)
 
 
-def _format_year_like(value: Any) -> str:
+def _format_year_like(value: object) -> str:
     """Format year-like values without thousand separators."""
     try:
         if isinstance(value, (int, float, np.integer, np.floating)):

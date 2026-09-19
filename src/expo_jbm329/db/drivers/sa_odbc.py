@@ -6,7 +6,7 @@ import contextlib
 import logging
 import threading
 import time
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from sqlalchemy import create_engine
@@ -35,7 +35,7 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
         self._lock = threading.Lock()
         self._query_timeout_s: int | None = None
 
-        self._active_cursors: dict[str, Any] = {}
+        self._active_cursors: dict[str, object] = {}
         self._active_lock = threading.Lock()
 
     def initialize(self, *, timeouts: dict | None = None) -> None:
@@ -194,13 +194,13 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
             A pandas DataFrame containing the query results.
 
         Raises:
-            Exception: Any DBAPI or execution exception is allowed to bubble up
+            Exception: object DBAPI or execution exception is allowed to bubble up
                 to DbService for classification.
         """
         engine = self._get_engine(conn)
 
-        raw_conn: Any | None = None
-        cursor: Any | None = None
+        raw_conn: object | None = None
+        cursor: object | None = None
 
         stop_event = threading.Event()
         watcher_thread: threading.Thread | None = None

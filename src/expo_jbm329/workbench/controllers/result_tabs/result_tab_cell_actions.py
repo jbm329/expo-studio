@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
@@ -146,7 +146,7 @@ class ResultTabCellActions:
         df: pd.DataFrame,
         *,
         column_name: str,
-        raw_value: Any,
+        raw_value: object,
     ) -> None:
         """Keep rows where column equals the given cell value.
 
@@ -172,7 +172,7 @@ class ResultTabCellActions:
             filter_isna,
         )
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -183,7 +183,7 @@ class ResultTabCellActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -217,7 +217,7 @@ class ResultTabCellActions:
         df: pd.DataFrame,
         *,
         column_name: str,
-        raw_value: Any,
+        raw_value: object,
     ) -> None:
         """Remove rows where column equals the given cell value.
 
@@ -243,7 +243,7 @@ class ResultTabCellActions:
             filter_notna,
         )
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -254,7 +254,7 @@ class ResultTabCellActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -292,7 +292,7 @@ class ResultTabCellActions:
         *,
         row_index: int,
         column_name: str,
-        raw_value: Any,
+        raw_value: object,
     ) -> None:
         """Replace a value in a cell or column.
 
@@ -355,7 +355,7 @@ class ResultTabCellActions:
             set_cell_value_text,
         )
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -400,7 +400,7 @@ class ResultTabCellActions:
                 column_name=column_name,
             )
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 

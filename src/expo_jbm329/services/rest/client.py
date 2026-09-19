@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import httpx
 
@@ -28,7 +28,7 @@ def fetch_json(
     progress_cb: Callable[[int], None] | None = None,
     cancel_cb: Callable[[], bool] | None = None,
     timeout: float = 30.0,
-) -> tuple[Any, float]:
+) -> tuple[object, float]:
     """Fetch JSON data from a REST endpoint.
 
     This function performs a synchronous HTTP GET request and returns
@@ -128,7 +128,7 @@ def fetch_json_pages(
     progress_cb: Callable[[int], None] | None = None,
     cancel_cb: Callable[[], bool] | None = None,
     timeout: float = 30.0,
-) -> tuple[list[Any], float]:
+) -> tuple[list[object], float]:
     """Fetch one or more paged JSON payloads from a REST endpoint."""
     config.validate()
 
@@ -315,9 +315,9 @@ def _fetch_page_number_payloads(
     progress_cb: Callable[[int], None] | None,
     cancel_cb: Callable[[], bool] | None,
     timeout: float,
-) -> tuple[list[Any], float]:
+) -> tuple[list[object], float]:
     """Fetch paginated JSON payloads using page-number query parameters."""
-    payloads: list[Any] = []
+    payloads: list[object] = []
     total_elapsed = 0.0
     page = pagination.start_page
     page_limit = pagination.max_pages or 1_000_000
@@ -367,7 +367,7 @@ def _fetch_page_number_payloads(
     return payloads, total_elapsed
 
 
-def _should_continue_page_number_pagination(payload: Any) -> bool:
+def _should_continue_page_number_pagination(payload: object) -> bool:
     """Return whether a paged fetch should continue based on payload contents."""
     if isinstance(payload, list):
         return len(payload) > 0

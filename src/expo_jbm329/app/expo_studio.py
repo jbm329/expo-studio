@@ -97,7 +97,7 @@ class ExpoStudio(QMainWindow):
     # ------------------------------------------------------------------
     # Constructor & Initialization
     # ------------------------------------------------------------------
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: object=None) -> None:
         """Initialize the main window."""
         super().__init__(parent)
         # -----------------------------------------------------------
@@ -255,7 +255,7 @@ class ExpoStudio(QMainWindow):
     # ==================================================================
     # Init services and controllers
     # ==================================================================
-    def init_services(self):
+    def init_services(self) -> None:
         """Initializes services."""
         # -------------------------------------------
         # Status bar + controller (Must be before backend services to provide status_cb)
@@ -413,7 +413,7 @@ class ExpoStudio(QMainWindow):
         )
         dlg.exec()
 
-    def open_rest_connection_dialog(self, preset_name: str | None = None):
+    def open_rest_connection_dialog(self, preset_name: str | None = None) -> None:
         """Open the REST connection editor dialog."""
         dlg = RestConnectionEditor(
             parent=self,
@@ -437,7 +437,7 @@ class ExpoStudio(QMainWindow):
         self.services.logging_manager.setup()
         self.ui_logger.info("Logg settings reloaded.")
 
-    def update_undo_enabled(self):
+    def update_undo_enabled(self) -> None:
         """Enable/disable the Undo button depending on current tab's undo stack."""
         enabled = bool(self.workbench_services.results.can_undo_current())
         self.toolbar_controller.set_undo_enabled(enabled)
@@ -468,7 +468,7 @@ class ExpoStudio(QMainWindow):
             self.workbench_services.schema.retranslate_ui()
 
     @override
-    def changeEvent(self, event):
+    def changeEvent(self, event: object) -> None:
         """Handle Qt language change events."""
         if event.type() == event.Type.LanguageChange:
             self.retranslate_ui()

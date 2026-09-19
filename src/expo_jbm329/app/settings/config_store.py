@@ -189,7 +189,7 @@ def _validate_settings_inplace(s: dict) -> None:
     """
 
     # --- Helpers ---------------------------------------------------------------
-    def _coerce_int(val, default, min_value=None, max_value=None) -> int:
+    def _coerce_int(val: object, default: object, min_value: object=None, max_value: object=None) -> int:
         """Coerces a value to an integer with optional clamping.
 
         Args:
@@ -222,7 +222,7 @@ def _validate_settings_inplace(s: dict) -> None:
         ):
             return default
 
-    def _coerce_bool(val, default) -> bool:
+    def _coerce_bool(val: object, default: object) -> bool:
         """Coerces a value to a boolean.
 
         Args:
@@ -240,7 +240,7 @@ def _validate_settings_inplace(s: dict) -> None:
             return bool(val)
         return default
 
-    def _coerce_str(val, default) -> str:
+    def _coerce_str(val: object, default: object) -> str:
         """Coerces a value to a non-empty string.
 
         Args:

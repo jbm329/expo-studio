@@ -10,7 +10,6 @@ from __future__ import annotations
 import logging
 import sys
 from logging.handlers import RotatingFileHandler
-from typing import Any
 
 from expo_jbm329.app.settings.config_store import read_log_config
 from expo_jbm329.utils.path_manager import get_log_path
@@ -244,7 +243,7 @@ class LoggingManager:
         return logging.Formatter(tpl["format"], tpl["datefmt"])
 
     @staticmethod
-    def _to_level(v: Any) -> int:
+    def _to_level(v: object) -> int:
         """Converts a value to a logging level integer.
 
         Args:
@@ -272,7 +271,7 @@ class LoggingManager:
             return logging.INFO
 
     @staticmethod
-    def _to_int(v: Any, default: int) -> int:
+    def _to_int(v: object, default: int) -> int:
         """Converts a value to an integer.
 
         Args:

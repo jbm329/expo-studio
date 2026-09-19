@@ -46,6 +46,7 @@ if TYPE_CHECKING:
     from expo_jbm329.services.settings_service import SettingsService
     from expo_jbm329.workbench.ui_refs import WorkbenchUIRefs
 
+
 class WorkbenchServices:
     """Container for workbench controllers and UI-facing services."""
 
@@ -127,7 +128,9 @@ class WorkbenchServices:
         self.dialog_state = dialog_state
 
     @classmethod
-    def build(cls, app: AppServices, ui: WorkbenchUIRefs, settings_service: SettingsService) -> WorkbenchServices:
+    def build(
+        cls: object, app: AppServices, ui: WorkbenchUIRefs, settings_service: SettingsService
+    ) -> WorkbenchServices:
         """Construct all workbench-level controllers and services.
 
         Args:

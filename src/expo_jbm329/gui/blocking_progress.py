@@ -25,7 +25,7 @@ class BlockingProgressDialog(QDialog):
         btn_cancel: The cancel button.
     """
 
-    def __init__(self, parent=None, title: str = "Arbetar...", started_msg: str = "") -> None:
+    def __init__(self, parent: object=None, title: str = "Arbetar...", started_msg: str = "") -> None:
         """Initialize the progress dialog.
 
         Args:
@@ -57,12 +57,12 @@ class BlockingProgressDialog(QDialog):
         apply_window_hints_strict(self, min_width=420, fixed_size=True, show_close_button=False)
 
     @pyqtSlot()
-    def on_started(self):
+    def on_started(self) -> None:
         """Handle the job start event."""
         # Can update text...
 
     @pyqtSlot(int)
-    def on_progress(self, v: int):
+    def on_progress(self, v: int) -> None:
         """Update the progress bar value.
 
         Args:
@@ -74,12 +74,12 @@ class BlockingProgressDialog(QDialog):
         self.progress.setValue(v)
 
     @pyqtSlot()
-    def on_finished(self):
+    def on_finished(self) -> None:
         """Handle the job completion event."""
         self.accept()
 
     @pyqtSlot(str)
-    def on_error(self, traceback_str: str):
+    def on_error(self, traceback_str: str) -> None:
         """Handle the job error event.
 
         Args:
@@ -87,7 +87,7 @@ class BlockingProgressDialog(QDialog):
         """
         self.reject()
 
-    def set_started_msg(self, text: str):
+    def set_started_msg(self, text: str) -> None:
         """Set the initial status message.
 
         Args:
@@ -95,7 +95,7 @@ class BlockingProgressDialog(QDialog):
         """
         self.label.setText(text or "")
 
-    def attach_cancel(self, job_id: str, job_manager):
+    def attach_cancel(self, job_id: str, job_manager: object) -> None:
         """Connect the cancel button to the job manager.
 
         Args:

@@ -150,7 +150,7 @@ class StatusBarController:
         sb.addPermanentWidget(self.progress)
 
     # ------------------------------------------------------------------
-    def init_baseline(self):
+    def init_baseline(self) -> None:
         """Initialize the baseline status message.
 
         Sets the default status message indicating to select a connection.
@@ -170,7 +170,7 @@ class StatusBarController:
         """Thread-safe entry point for updating the status bar."""
         ui_invoke(self._set_status_ui, text, timeout_ms)
 
-    def restore_baseline(self):
+    def restore_baseline(self) -> None:
         """Restore the permanent status text in the status bar."""
         ui_invoke(self._restore_baseline_ui)
 
@@ -197,7 +197,7 @@ class StatusBarController:
     # SHAPE DISPLAY
     # ------------------------------------------------------------------
 
-    def set_shape_status(self, rows: int | None, cols: int | None):
+    def set_shape_status(self, rows: int | None, cols: int | None) -> None:
         """Update the rows/columns summary indicator.
 
         Args:

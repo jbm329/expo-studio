@@ -11,7 +11,7 @@ import threading
 from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Protocol
 
 import pandas as pd
 from openpyxl.utils.cell import range_boundaries
@@ -624,8 +624,8 @@ class FileLoader:
 
             read_rows = 0
             last_emitted = -1
-            data: list[list[Any]] = []
-            batch: list[tuple[Any, ...] | None] = []
+            data: list[list[object]] = []
+            batch: list[tuple[object, ...] | None] = []
 
             def emit_progress(force: bool = False) -> None:
                 """Emit bounded progress [1..99] while streaming; 100 is sent at exit."""

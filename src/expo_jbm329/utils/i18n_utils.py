@@ -21,7 +21,7 @@ def tr(context: str, text: str) -> str:
     return QCoreApplication.translate(context, text)
 
 
-def tr_fmt(context: str, text: str, /, **kwargs) -> str:
+def tr_fmt(context: str, text: str, /, **kwargs: object) -> str:
     r"""Translate and format a string using named placeholders.
 
     Uses Python's ``str.format`` after Qt translation, avoiding

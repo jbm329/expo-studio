@@ -17,8 +17,6 @@ Design principles:
 
 from __future__ import annotations
 
-from typing import Any
-
 import pandas as pd
 
 
@@ -28,7 +26,7 @@ import pandas as pd
 def fillna(
     df: pd.DataFrame,
     column: str,
-    value: Any,
+    value: object,
 ) -> pd.DataFrame:
     """Fill missing values in a column with a given value.
 

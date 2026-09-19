@@ -48,7 +48,7 @@ class ResultTabHeaderSortActions:
         return tr("ResultTabHeaderSortActions", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabHeaderSortActions", text, **kwargs)
 
     # ------------------------------------------------------------------
@@ -119,7 +119,7 @@ class ResultTabHeaderSortActions:
             sort_dataframe,
         )
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -131,7 +131,7 @@ class ResultTabHeaderSortActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 
@@ -192,7 +192,7 @@ class ResultTabHeaderSortActions:
             sort_dataframe,
         )
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -204,7 +204,7 @@ class ResultTabHeaderSortActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df) -> None:
+        def _apply_result(new_df: object) -> None:
             if new_df is None:
                 return
 

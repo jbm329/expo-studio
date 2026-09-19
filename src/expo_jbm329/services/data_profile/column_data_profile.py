@@ -10,7 +10,7 @@ from __future__ import annotations
 import contextlib
 from dataclasses import dataclass, field
 from numbers import Real
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
@@ -78,7 +78,7 @@ class ColumnProfile:
     name: str
     semantic_dtype: SemanticDType
     storage_dtype: str
-    stats: dict[str, Any] = field(default_factory=dict)
+    stats: dict[str, object] = field(default_factory=dict)
     plot: PlotSpec = field(default_factory=PlotSpec)
 
 
@@ -137,7 +137,7 @@ def _topn_text(series: pd.Series, n: int = 3) -> list[tuple[str, int]]:
     return [(str(k), int(v)) for k, v in vc.items()]
 
 
-def _format_samples(series: pd.Series) -> list[Any]:
+def _format_samples(series: pd.Series) -> list[object]:
     """Return up to three raw example values from the series.
 
     This function MUST NOT:
@@ -252,7 +252,7 @@ def _name_to_str(value: Hashable | None) -> str:
 # =====================================================================
 
 
-def _numeric_profile(s: pd.Series) -> tuple[dict[str, Any], PlotSpec]:
+def _numeric_profile(s: pd.Series) -> tuple[dict[str, object], PlotSpec]:
     """Perform numeric profiling on a Series.
 
     Includes:
@@ -264,7 +264,7 @@ def _numeric_profile(s: pd.Series) -> tuple[dict[str, Any], PlotSpec]:
     x = x.replace([np.inf, -np.inf], np.nan).dropna()
 
     m = int(x.shape[0])
-    out: dict[str, Any] = {}
+    out: dict[str, object] = {}
     plot = PlotSpec()
 
     if m == 0:
@@ -327,7 +327,7 @@ def _numeric_profile(s: pd.Series) -> tuple[dict[str, Any], PlotSpec]:
 # =====================================================================
 
 
-def _datetime_profile(s: pd.Series):
+def _datetime_profile(s: pd.Series) -> tuple[dict[str, object], PlotSpec]:
     """Datetime profiling with date-only detection.
 
     - min/max
@@ -335,7 +335,7 @@ def _datetime_profile(s: pd.Series):
     - weekday distribution
     """
     x = pd.to_datetime(s, errors=errors).dropna()
-    out: dict[str, Any] = {}
+    out: dict[str, object] = {}
     plot = PlotSpec()
 
     if x.empty:
@@ -372,17 +372,17 @@ def _datetime_profile(s: pd.Series):
 # =====================================================================
 
 
-def _bool_profile(s: pd.Series):
+def _bool_profile(s: pd.Series) -> tuple[dict[str, object], PlotSpec]:
     """Profile a boolean series.
 
     Args:
         s: The boolean series to profile.
 
     Returns:
-        tuple[dict[str, Any], PlotSpec]: The profile results and plot specification.
+        tuple[dict[str, object], PlotSpec]: The profile results and plot specification.
     """
     x = s.dropna()
-    out: dict[str, Any] = {}
+    out: dict[str, object] = {}
     plot = PlotSpec()
 
     if x.empty:
@@ -417,7 +417,7 @@ def _bool_profile(s: pd.Series):
 # =====================================================================
 
 
-def _text_or_category_profile(s: pd.Series):
+def _text_or_category_profile(s: pd.Series) -> tuple[dict[str, object], PlotSpec]:
     """Profile textual or categorical data.
 
     Includes:
@@ -425,7 +425,7 @@ def _text_or_category_profile(s: pd.Series):
     - string-length metrics (min/median/max/mean)
     - robust handling of non-string coercion issues.
     """
-    out: dict[str, Any] = {}
+    out: dict[str, object] = {}
     plot = PlotSpec()
 
     # Safe coercion to string
@@ -507,7 +507,7 @@ def profile_series(s: pd.Series, name: str | None = None) -> ColumnProfile:
     n_unique = int(s.nunique(dropna=True))
     mem = _safe_memory_usage(s)
 
-    base: dict[str, Any] = {
+    base: dict[str, object] = {
         "count.n": n,
         "missing.n": n_missing,
         "missing.pct": (n_missing / n) if n else 0.0,

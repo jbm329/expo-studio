@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from expo_jbm329.services.rest.normalizer import normalize_json_to_df
 
@@ -15,7 +15,7 @@ class RestSchemaValidationError(ValueError):
 
 
 def validate_response_columns(
-    payload: Any,
+    payload: object,
     *,
     response_path: str | None = None,
     required_columns: Sequence[str] | None = None,
@@ -46,11 +46,11 @@ def validate_response_columns(
 
 
 def build_response_preview(
-    payload: Any,
+    payload: object,
     *,
     response_path: str | None = None,
     limit: int = 5,
-) -> dict[str, Any]:
+) -> dict[str, object]:
     """Build a compact preview of a normalized REST response.
 
     Args:

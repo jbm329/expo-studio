@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any
 
 import pandas as pd
 
@@ -39,7 +38,7 @@ def set_cell_value_text(
     df: pd.DataFrame,
     column: str,
     row_index: int,
-    new_value: Any,
+    new_value: object,
 ) -> pd.DataFrame:
     """Set the value of a single cell, forcing text semantics.
 
@@ -80,8 +79,8 @@ def set_cell_value_text(
 def replace_values(
     df: pd.DataFrame,
     column: str,
-    pattern: Any,
-    replacement: Any,
+    pattern: object,
+    replacement: object,
     *,
     regex: bool = False,
 ) -> pd.DataFrame:
@@ -384,7 +383,7 @@ def capitalize_first(df: pd.DataFrame, column: str) -> pd.DataFrame:
 
     s = df[column].astype("string")
 
-    def _cap(value: Any) -> Any:
+    def _cap(value: object) -> object:
         if value is pd.NA:
             return pd.NA
         if len(value) == 0:
@@ -480,7 +479,7 @@ def insert_text(
 
     s = df[column].astype("string")
 
-    def _insert(value: Any) -> Any:
+    def _insert(value: object) -> object:
         if value is pd.NA:
             return pd.NA
         try:

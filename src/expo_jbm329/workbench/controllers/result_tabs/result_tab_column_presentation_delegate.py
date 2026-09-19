@@ -21,7 +21,7 @@ class ResultTabColumnPresentationDelegate(QStyledItemDelegate):
         self,
         *,
         semantics_by_column_index: dict[int, SeriesSemantics],
-        parent=None,
+        parent: object=None,
     ) -> None:
         """Initialize delegate.
 
@@ -36,7 +36,7 @@ class ResultTabColumnPresentationDelegate(QStyledItemDelegate):
     def initStyleOption(
         self,
         option: QStyleOptionViewItem,
-        index,
+        index: object,
     ) -> None:
         """Initialize style option with semantic-aware text."""
         super().initStyleOption(option, index)

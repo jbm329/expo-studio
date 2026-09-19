@@ -92,7 +92,7 @@ class EditorTabContextMenu:
         unbind_tab: Callable[[str]],
         close_all_tabs: Callable[[str | None], None],
         dialogs: DialogService | None = None,
-        parent,
+        parent: object,
     ) -> None:
         """Initialize the context menu."""
         self._get_tab = get_tab

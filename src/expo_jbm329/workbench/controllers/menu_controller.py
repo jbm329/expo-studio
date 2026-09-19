@@ -8,7 +8,7 @@ remain focused on business logic.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtGui import QAction
@@ -67,7 +67,7 @@ class MenuController:
         open_file: Callable[[], None],
         save_file: Callable[[], None],
         save_file_as: Callable[[], None],
-        quit_app: Callable[[], Any],
+        quit_app: Callable[[], object],
         export_csv: Callable[[], None],
         export_excel: Callable[[], None],
         export_data: Callable[[], None],
@@ -232,7 +232,7 @@ class MenuController:
 
     # ----------------------------------------------------------------------
 
-    def apply_has_data_state(self, has_data: bool):
+    def apply_has_data_state(self, has_data: bool) -> None:
         """Enable/disable export actions based on dataset availability.
 
         Args:

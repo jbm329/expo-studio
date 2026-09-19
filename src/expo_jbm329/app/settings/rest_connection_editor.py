@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any, Literal, override
+from typing import TYPE_CHECKING, Literal, override
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QIcon, QTextCursor
@@ -267,7 +267,7 @@ class RestConnectionEditor(QDialog):
     # showEvent
     # ------------------------------------------------------------------
     @override
-    def showEvent(self, event):
+    def showEvent(self, event: object) -> None:
         """Loads connection data and populates list."""
         super().showEvent(event)
 
@@ -293,7 +293,7 @@ class RestConnectionEditor(QDialog):
         if not is_post:
             self.body_edit.clear()
 
-    def on_auth_changed(self):
+    def on_auth_changed(self) -> None:
         """Handles the change in authentication type selection."""
         auth = self.auth_combo.currentData()
         self.auth_section.toggle.setChecked(auth != "none")
@@ -301,18 +301,18 @@ class RestConnectionEditor(QDialog):
         self.auth_widget.apply_visibility()
         self.on_oauth2_grant_changed()
 
-    def on_oauth2_grant_changed(self):
+    def on_oauth2_grant_changed(self) -> None:
         """Handles the change in OAuth2 grant type selection."""
         self.auth_widget.set_oauth_grant_visibility()
 
-    def on_pagination_changed(self):
+    def on_pagination_changed(self) -> None:
         """Handles the change in pagination mode selection."""
         is_page_number = self.pagination_combo.currentData() == "page_number"
         self.pagination_section.toggle.setChecked(is_page_number)
         self.pagination_section.body.setVisible(is_page_number)
         self.pagination_widget.apply_visibility()
 
-    def _apply_helper_result(self, result: dict[str, Any] | None) -> None:
+    def _apply_helper_result(self, result: dict[str, object] | None) -> None:
         """Apply an SCB helper result to the generic REST form."""
         if not result:
             return
@@ -329,7 +329,7 @@ class RestConnectionEditor(QDialog):
             return
         self._apply_helper_result(dialog.get_result())
 
-    def on_selection_changed(self, current):
+    def on_selection_changed(self, current: object) -> None:
         """Loads the selected connection's data into the form fields."""
         if not current:
             self._clear_form_fields()
@@ -432,7 +432,7 @@ class RestConnectionEditor(QDialog):
         auth_type = self.auth_combo.currentData()
         pagination_type = self.pagination_combo.currentData()
 
-        cfg: dict[str, Any] = {
+        cfg: dict[str, object] = {
             "url": self.url_edit.text().strip(),
             "method": method,
             "response_path": self.response_path_edit.text().strip(),
@@ -932,7 +932,7 @@ class RestConnectionEditor(QDialog):
                 text=str(exc),
             )
 
-    def delete_connection(self):
+    def delete_connection(self) -> None:
         """Deletes the currently selected connection after confirmation."""
         item = self.list_widget.currentItem()
         if not item:
@@ -953,7 +953,7 @@ class RestConnectionEditor(QDialog):
         write_rest_connections(self.data)
         self.connections_changed.emit()
 
-    def save_changes(self):
+    def save_changes(self) -> None:
         """Saves the current form values to the selected connection entry."""
         item = self.list_widget.currentItem()
         if not item:
@@ -972,9 +972,9 @@ class RestConnectionEditor(QDialog):
         )
         self.connections_changed.emit()
 
-    def _serialize_request_config(self, config: RestRequestConfig) -> dict[str, Any]:
+    def _serialize_request_config(self, config: RestRequestConfig) -> dict[str, object]:
         """Serialize a request config to the persisted dialog structure."""
-        payload: dict[str, Any] = {
+        payload: dict[str, object] = {
             "url": config.url,
             "method": config.method,
             "response_path": config.response_path or "",
