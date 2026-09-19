@@ -117,7 +117,7 @@ def prompt_value(
     # --------------------------------------------------
     if isinstance(editor, QDateEdit):
         d = editor.date()
-        return datetime(d.year(), d.month(), d.day()), True
+        return datetime(d.year(), d.month(), d.day()), True  # noqa: DTZ001 - calendar-only dialog value
 
     if isinstance(editor, QDateTimeEdit):
         return editor.dateTime().toPyDateTime(), True

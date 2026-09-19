@@ -26,7 +26,7 @@ import time
 import uuid
 import winreg
 import zipfile
-from datetime import datetime
+from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError, metadata
 from pathlib import Path
 from typing import Never
@@ -68,7 +68,7 @@ def _build_metadata() -> dict:
 
 def _build_release_notes(meta: dict[str, str], build_type: str) -> str:
     """Return release notes text for packaged release artifacts."""
-    now = datetime.now()
+    now = datetime.now(UTC).astimezone()
     return (
         f"{meta['app_name']}\n"
         f"Version: {meta['version']}\n\n"
@@ -97,7 +97,7 @@ def _site_packages() -> str | None:
 
 def _stamp() -> str:
     """Return a timestamp suitable for naming release artifacts."""
-    return datetime.now().strftime("%Y%m%d-%H%M")
+    return datetime.now(UTC).astimezone().strftime("%Y%m%d-%H%M")
 
 
 # -----------------------------
@@ -183,7 +183,7 @@ def _kill_running_expo() -> None:
 
     with contextlib.suppress(Exception):
         subprocess.run(
-            ["taskkill", "/IM", "expo.exe", "/F"],
+            ["taskkill", "/IM", "expo.exe", "/F"],  # noqa: S607 - Windows system utility
             check=False,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -491,7 +491,7 @@ def _build_windows_installer(root: Path, onedir_dir: Path) -> Path | None:
 
     cmd = [iscc, str(script_path)]
     print("[installer] Running:", " ".join(cmd))
-    subprocess.run(cmd, check=True, cwd=root)
+    subprocess.run(cmd, check=True, cwd=root)  # noqa: S603 - trusted build command
 
     return out_dir
 
@@ -547,7 +547,7 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:
             str(entry),
         ]
         print("[build-exe] Running:", " ".join(cmd_gen))
-        subprocess.run(cmd_gen, check=True, cwd=root)
+        subprocess.run(cmd_gen, check=True, cwd=root)  # noqa: S603 - trusted build command
 
         if not spec_path.exists():
             print(
@@ -580,7 +580,7 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:
         str(spec_path),
     ]
     print("[build-exe] Running:", " ".join(cmd_build))
-    subprocess.run(cmd_build, check=True, cwd=root, env=env)
+    subprocess.run(cmd_build, check=True, cwd=root, env=env)  # noqa: S603 - trusted build command
 
     # Locate resulting executable
     exe_onedir = default_dist_root / "expo" / "expo.exe"
@@ -617,7 +617,7 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:
             onedir_dir = default_dist_root / "expo"
             if onedir_dir.exists():
                 meta = _build_metadata()
-                date_str = datetime.now().strftime("%Y-%m-%d")
+                date_str = datetime.now(UTC).astimezone().strftime("%Y-%m-%d")
                 _write_release_notes_file(root=root, meta=meta, build_type="onedir")
 
                 docs = {

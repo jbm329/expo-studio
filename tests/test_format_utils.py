@@ -71,7 +71,7 @@ def test_fmt_date():
     dt = datetime.date(2023, 10, 5)
     assert fmt_date(dt) == "2023-10-05"
 
-    dttm = datetime.datetime(2023, 10, 5, 12, 30)
+    dttm = datetime.datetime(2023, 10, 5, 12, 30)  # noqa: DTZ001 - deterministic naive formatting fixture
     assert fmt_date(dttm) == "2023-10-05"
     assert fmt_date(None) == ""
 

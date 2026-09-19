@@ -496,7 +496,7 @@ def build_select_star(
         ValueError,
     ):
         # Fallback quoting if service initialization fails
-        return f"SELECT * FROM [{schema}].[{object_name}]"
+        return f"SELECT * FROM [{schema}].[{object_name}]"  # noqa: S608 - deferred SQL construction refactor
 
 
 def build_select_distinct(

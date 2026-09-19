@@ -138,7 +138,7 @@ select = [
     "I",    # isort
     "N",    # pep8-naming
     "Q",    # quotes consistency
-#    "S",    # flake8-bandit
+    "S",    # flake8-bandit
     "W",    # pycodestyle (warnings)
     "UP",   # pyupgrade
     "C90",  # complexity (mccabe)
@@ -164,7 +164,7 @@ select = [
     "INT",  # flake8-interpreted-string
     "FA",   # flake8-future-import
     "EM",   # flake8-errmsg
-#    "DTZ",  # flake8-datetimez
+    "DTZ",  # flake8-datetimez
     "BLE",  # flake8-blind-except
     "ASYNC",# flake8-async
     "ANN",  # flake8-annotations

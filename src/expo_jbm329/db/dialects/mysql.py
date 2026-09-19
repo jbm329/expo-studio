@@ -134,7 +134,7 @@ class MySqlDialect(DialectProtocol):
         """
         # Strong filter by provided schema (database) + table
         return (
-            "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE "
+            "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE "  # noqa: S608 - deferred SQL construction refactor
             f"FROM INFORMATION_SCHEMA.COLUMNS "
             f"WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{object_name}' "
             "ORDER BY ORDINAL_POSITION"

@@ -723,7 +723,7 @@ class FileLoader:
     # noinspection PyMethodMayBeStatic
     def _read_pickle(self, req: ReadRequest) -> pd.DataFrame:
         """Read a Pickle file into a pandas DataFrame."""
-        df = pd.read_pickle(req.path)
+        df = pd.read_pickle(req.path)  # noqa: S301 - local file format intentionally supports pickle
 
         if not isinstance(df, pd.DataFrame):
             msg = "Pickle file did not contain a pandas DataFrame"

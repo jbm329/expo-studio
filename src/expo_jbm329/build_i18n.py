@@ -37,7 +37,7 @@ def run_pylupdate(ts_file: pathlib.Path) -> None:
     print(f"Extracting strings → {ts_file.name}")
     print("  " + " ".join(cmd))
 
-    subprocess.check_call(cmd)
+    subprocess.check_call(cmd)  # noqa: S603 - trusted build command
 
 
 def main() -> None:

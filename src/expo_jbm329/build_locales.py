@@ -33,7 +33,7 @@ def compile_ts(ts_path: pathlib.Path) -> pathlib.Path:
     cmd = ["pyside6-lrelease", str(ts_path)]
     print(f"Compiling: {' '.join(cmd)}")
 
-    subprocess.check_call(cmd)
+    subprocess.check_call(cmd)  # noqa: S603 - trusted build command
     return qm_path
 
 

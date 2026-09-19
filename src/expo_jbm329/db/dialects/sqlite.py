@@ -111,7 +111,7 @@ class SqliteDialect(DialectProtocol):
         # Note: PRAGMA does not support parameters. We interpolate object_name safely.
         tbl = object_name.replace('"', '""')
         return (
-            "SELECT "
+            "SELECT "  # noqa: S608 - deferred SQL construction refactor
             "  name AS COLUMN_NAME, "
             "  LOWER(type) AS DATA_TYPE, "
             "  CASE WHEN \"notnull\" = 0 THEN 'YES' ELSE 'NO' END AS IS_NULLABLE "

@@ -143,7 +143,7 @@ def prompt_compare(
     # Read value
     if isinstance(editor, QDateEdit):
         d = editor.date()
-        value = datetime(d.year(), d.month(), d.day())
+        value = datetime(d.year(), d.month(), d.day())  # noqa: DTZ001 - calendar-only dialog value
     elif isinstance(editor, QDateTimeEdit):
         value = editor.dateTime().toPyDateTime()
     else:
@@ -264,7 +264,7 @@ def prompt_between(
     def _read(edit: QWidget) -> object:
         if isinstance(edit, QDateEdit):
             d = edit.date()
-            return datetime(d.year(), d.month(), d.day())
+            return datetime(d.year(), d.month(), d.day())  # noqa: DTZ001 - calendar-only dialog value
         if isinstance(edit, QDateTimeEdit):
             return edit.dateTime().toPyDateTime()
         return edit.value()

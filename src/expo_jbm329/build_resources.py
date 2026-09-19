@@ -19,7 +19,7 @@ def compile_qrc(qrc_path: pathlib.Path) -> pathlib.Path:
 
     cmd = ["pyside6-rcc", str(qrc_path), "-o", str(out_py)]
     print(f"Compiling: {' '.join(cmd)}")
-    subprocess.check_call(cmd)
+    subprocess.check_call(cmd)  # noqa: S603 - trusted build command
 
     return out_py
 

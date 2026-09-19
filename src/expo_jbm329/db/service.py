@@ -327,7 +327,7 @@ class DbService:
                 sql_signature=signature,
             )
 
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             elapsed = time.time() - start
 
             # If cancellation is already requested when the driver/DB layer raises,

@@ -234,7 +234,7 @@ class MssqlDialect(DialectProtocol):
             A SQL query string to list columns from INFORMATION_SCHEMA.
         """
         return (
-            "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE "
+            "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE "  # noqa: S608 - deferred SQL construction refactor
             f"FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='{schema}' "
             f"AND TABLE_NAME='{object_name}' ORDER BY ORDINAL_POSITION"
         )
