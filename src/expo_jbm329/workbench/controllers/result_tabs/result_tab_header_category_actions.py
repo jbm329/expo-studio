@@ -75,7 +75,7 @@ class ResultTabHeaderCategoryActions:
         return tr("ResultTabHeaderCategoryActions", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabHeaderCategoryActions", text, **kwargs)
 
     # ------------------------------------------------------------------
@@ -182,7 +182,12 @@ class ResultTabHeaderCategoryActions:
             category_remove_unused,
         )
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -190,7 +195,7 @@ class ResultTabHeaderCategoryActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -276,7 +281,12 @@ class ResultTabHeaderCategoryActions:
             category_rename_single,
         )
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -284,7 +294,7 @@ class ResultTabHeaderCategoryActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -381,7 +391,12 @@ class ResultTabHeaderCategoryActions:
             category_set_order,
         )
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -396,7 +411,7 @@ class ResultTabHeaderCategoryActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 

@@ -9,10 +9,10 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import pandas as pd
-from PyQt6.QtCore import QT_TR_NOOP
+from PyQt6.QtCore import QT_TR_NOOP, QObject
 from PyQt6.QtWidgets import QDialog, QWidget
 
 from expo_jbm329.gui.dialogs.workflows.concat.concat_dialog import (
@@ -49,7 +49,7 @@ class ConcatController:
         return tr("ConcatController", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ConcatController", text, **kwargs)
 
     __slots__ = (
@@ -113,7 +113,7 @@ class ConcatController:
         left_df = self._get_df(left_tab)
         left_cols = list(left_df.columns)
 
-        right_cols_map = {tab: list(self._get_df(tab).columns) for tab in right_tabs}
+        right_cols_map: dict[str, Sequence[str]] = {tab: list(self._get_df(tab).columns) for tab in right_tabs}
 
         dlg = ConcatDialog(
             parent=self._parent,
@@ -152,15 +152,13 @@ class ConcatController:
 
         def _work(
             *,
-            progress_cb: object = None,
-            cancel_cb: object = None,
-            job_id: object = None,
-            job_scope: object = None,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
-            _ = progress_cb
-            _ = job_scope
-            _ = job_id
+            del progress_cb, job_scope, job_id
 
             if cancel_cb is not None and cancel_cb():
                 return None
@@ -263,7 +261,7 @@ class ConcatController:
             corr_id=corr_id,
         )
 
-        jobid = self._async_ops.job_mgr.get_job_id(job)
+        jobid = self._async_ops.job_mgr.get_job_id(cast("QObject | None", job))
         if jobid is not None:
             self._results.bind_job_to_tab(pending_tab_id, jobid)
         else:

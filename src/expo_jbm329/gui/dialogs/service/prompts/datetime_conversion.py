@@ -25,10 +25,10 @@ from expo_jbm329.gui.dialogs.service.common.window_hints import (
 
 if TYPE_CHECKING:
     from expo_jbm329.gui.dialogs.service.dialog_service import (
-        DateFormatKey,
         DateTimeConversionResult,
         DateTimeTarget,
     )
+    from expo_jbm329.services.data_operations.datetime_formats import DateFormatKey
 
 # ======================================================================
 # Public API

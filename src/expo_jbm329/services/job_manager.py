@@ -40,7 +40,7 @@ from typing import TYPE_CHECKING, Literal, Protocol, cast
 from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Mapping
 
 RunnerKind = Literal["thread", "pool"]
 
@@ -56,6 +56,11 @@ class _ConnectableSignal(Protocol):
     def connect(self, slot: Callable[..., object], connection_type: Qt.ConnectionType = ...) -> object:
         """Connect a slot to the signal."""
         ...
+
+
+def _connect_queued(signal: object, slot: Callable[..., object]) -> object:
+    """Connect a Qt signal using a queued connection."""
+    return cast("_ConnectableSignal", signal).connect(slot, Qt.ConnectionType.QueuedConnection)
 
 
 # =============================================================================
@@ -117,26 +122,11 @@ class _FutureBridge(QObject):
         super().__init__()
         self._job_id = job_id
 
-        self._dispatch_started.connect(
-            self.started.emit,
-            Qt.ConnectionType.QueuedConnection,
-        )
-        self._dispatch_progress.connect(
-            self.progress.emit,
-            Qt.ConnectionType.QueuedConnection,
-        )
-        self._dispatch_result.connect(
-            self.result.emit,
-            Qt.ConnectionType.QueuedConnection,
-        )
-        self._dispatch_error.connect(
-            self.error.emit,
-            Qt.ConnectionType.QueuedConnection,
-        )
-        self._dispatch_finished.connect(
-            self.finished.emit,
-            Qt.ConnectionType.QueuedConnection,
-        )
+        _connect_queued(self._dispatch_started, self.started.emit)
+        _connect_queued(self._dispatch_progress, self.progress.emit)
+        _connect_queued(self._dispatch_result, self.result.emit)
+        _connect_queued(self._dispatch_error, self.error.emit)
+        _connect_queued(self._dispatch_finished, self.finished.emit)
 
     @property
     def job_id(self) -> str:
@@ -252,13 +242,13 @@ class Worker(QObject):
         self._keep_alive: Worker | None = self
 
         # Connect internal dispatch signals to the public signals with queued connections to ensure thread-safe.
-        self._dispatch_started.connect(self.started.emit, Qt.ConnectionType.QueuedConnection)
-        self._dispatch_progress.connect(self.progress.emit, Qt.ConnectionType.QueuedConnection)
-        self._dispatch_result.connect(self.result.emit, Qt.ConnectionType.QueuedConnection)
-        self._dispatch_error.connect(self.error.emit, Qt.ConnectionType.QueuedConnection)
+        _connect_queued(self._dispatch_started, self.started.emit)
+        _connect_queued(self._dispatch_progress, self.progress.emit)
+        _connect_queued(self._dispatch_result, self.result.emit)
+        _connect_queued(self._dispatch_error, self.error.emit)
 
         # When the worker is finished, emit the final finished signal.
-        self._dispatch_finished.connect(self._handle_final_cleanup, Qt.ConnectionType.QueuedConnection)
+        _connect_queued(self._dispatch_finished, self._handle_final_cleanup)
 
     def _handle_final_cleanup(self) -> None:
         """Safely emit finished and release self-ownership."""
@@ -269,6 +259,16 @@ class Worker(QObject):
     def job_id(self) -> str:
         """Return the worker job id."""
         return self._job_id
+
+    @property
+    def cancel_func(self) -> Callable[[], bool] | None:
+        """Return the cooperative cancellation callback."""
+        return self._cancel_func
+
+    @cancel_func.setter
+    def cancel_func(self, callback: Callable[[], bool] | None) -> None:
+        """Set the cooperative cancellation callback."""
+        self._cancel_func = callback
 
     def _emit_progress(self, value: int) -> None:
         """Clamp and emit a progress value.
@@ -385,8 +385,8 @@ def run_in_thread(
 
     thread.started.connect(worker.run)
     worker.finished.connect(thread.quit)
-    worker.finished.connect(worker.deleteLater, Qt.ConnectionType.QueuedConnection)
-    thread.finished.connect(thread.deleteLater, Qt.ConnectionType.QueuedConnection)
+    _connect_queued(worker.finished, worker.deleteLater)
+    _connect_queued(thread.finished, thread.deleteLater)
 
     return thread, worker
 
@@ -429,7 +429,7 @@ def _build_injected_call_kwargs(
 
     try:
         signature = inspect.signature(fn)
-        parameters = signature.parameters
+        parameters: Mapping[str, inspect.Parameter] = signature.parameters
         accepts_var_kwargs = any(parameter.kind is inspect.Parameter.VAR_KEYWORD for parameter in parameters.values())
     except (TypeError, ValueError):
         parameters = {}
@@ -643,9 +643,9 @@ class JobManager:
         self._connect_job_lifecycle_signals(job_id=job_id, job=worker)
 
         try:
-            thread.finished.connect(
+            _connect_queued(
+                thread.finished,
                 lambda jid=job_id: self._finalize_job(jid),
-                Qt.ConnectionType.QueuedConnection,
             )
         except (
             AttributeError,
@@ -716,9 +716,9 @@ class JobManager:
         self._connect_job_lifecycle_signals(job_id=job_id, job=bridge)
 
         try:
-            bridge.finished.connect(
+            _connect_queued(
+                bridge.finished,
                 lambda jid=job_id: self._finalize_job(jid),
-                Qt.ConnectionType.QueuedConnection,
             )
         except (
             AttributeError,
@@ -745,13 +745,19 @@ class JobManager:
             corr_id,
         )
 
+        def _post_pool_progress(value: int) -> None:
+            bridge.post_progress(int(value))
+
+        def _is_pool_cancelled() -> bool:
+            return self.is_cancelled(job_id)
+
         def wrapped() -> tuple[str, object]:
             try:
                 call_kwargs = _build_injected_call_kwargs(
                     fn=fn,
                     base_kwargs=dict(kwargs),
-                    progress_cb=lambda value: bridge.post_progress(int(value)),
-                    cancel_cb=lambda jid=job_id: self.is_cancelled(jid),
+                    progress_cb=_post_pool_progress,
+                    cancel_cb=_is_pool_cancelled,
                     job_id=job_id,
                     job_scope=scope,
                     corr_id=corr_id,
@@ -778,15 +784,15 @@ class JobManager:
         bridge.post_started()
 
         pool = self._ensure_pool()
-        future = pool.submit(wrapped)
+        future: Future[tuple[str, object]] = pool.submit(wrapped)
 
-        def on_done(done_future: Future[object]) -> None:
+        def on_done(done_future: Future[tuple[str, object]]) -> None:
             try:
                 tag, payload = done_future.result()
                 if tag == "ok":
                     bridge.post_result(payload)
                 else:
-                    bridge.post_error(payload)
+                    bridge.post_error(str(payload))
             except (
                 AttributeError,
                 ConnectionError,
@@ -1054,11 +1060,10 @@ class JobManager:
         finished_signal = getattr(job, "finished", None)
 
         if started_signal is not None:
-            started = cast("_ConnectableSignal", started_signal)
             try:
-                started.connect(
+                _connect_queued(
+                    started_signal,
                     lambda jid=job_id: self._on_job_started(jid),
-                    Qt.ConnectionType.QueuedConnection,
                 )
             except (
                 AttributeError,
@@ -1079,11 +1084,10 @@ class JobManager:
                 )
 
         if error_signal is not None:
-            error = cast("_ConnectableSignal", error_signal)
             try:
-                error.connect(
+                _connect_queued(
+                    error_signal,
                     lambda tb, jid=job_id: self._on_job_error(jid, tb),
-                    Qt.ConnectionType.QueuedConnection,
                 )
             except (
                 AttributeError,
@@ -1104,11 +1108,10 @@ class JobManager:
                 )
 
         if finished_signal is not None:
-            finished = cast("_ConnectableSignal", finished_signal)
             try:
-                finished.connect(
+                _connect_queued(
+                    finished_signal,
                     lambda jid=job_id: self._on_job_finished(jid),
-                    Qt.ConnectionType.QueuedConnection,
                 )
             except (
                 AttributeError,

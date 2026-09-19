@@ -127,7 +127,7 @@ class VisualizationChartBuilder:
 
         ax.pie(
             prepared.y,
-            labels=prepared.x.astype(str),
+            labels=list(prepared.x.astype(str)),
             autopct="%1.1f%%",
         )
         ax.set_title(self._chart_title(config))

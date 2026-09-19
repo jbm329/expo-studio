@@ -20,7 +20,7 @@ class DriverProtocol(Protocol):
     The service controls error handling; drivers just execute and bubble exceptions.
     """
 
-    def initialize(self, *, timeouts: dict | None = None) -> None:
+    def initialize(self, *, timeouts: dict[str, int | None] | None = None) -> None:
         """Initialize the driver with optional timeouts.
 
         Args:

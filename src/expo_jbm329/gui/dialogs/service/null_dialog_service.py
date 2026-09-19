@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, cast
 
 from expo_jbm329.gui.dialogs.service.dialog_service import (
     BetweenResult,
@@ -49,7 +49,7 @@ class NullDialogService(DialogService):
         default_confirm_delete: bool = False,
     ) -> None:
         """Initialize the NullDialogService."""
-        self.calls: list[tuple[str, tuple, dict]] = []
+        self.calls: list[tuple[str, tuple[object, ...], dict[str, object]]] = []
 
         self.default_profile_choice = default_profile_choice
         self.default_confirm_delete = default_confirm_delete
@@ -205,7 +205,8 @@ class NullDialogService(DialogService):
             val = self._next_prompt_choice
             self._next_prompt_choice = None
             return val
-        choices = kwargs.get("choices") or []
+        choices_obj = kwargs.get("choices")
+        choices = cast("list[str]", choices_obj) if isinstance(choices_obj, list) else []
         return (choices[0], True) if choices else ("", False)
 
     def prompt_yes_no(self, parent: QWidget, **kwargs: object) -> bool:
@@ -355,7 +356,7 @@ class NullDialogService(DialogService):
         title: str,
         label: str,
         default_value: str,
-        default_case_sensitive: bool,
+        default_case_sensitive: bool = True,
     ) -> TextFilterMatchResult:
         """Test implementation of filter contains dialog."""
         self.calls.append((

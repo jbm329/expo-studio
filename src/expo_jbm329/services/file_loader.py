@@ -11,7 +11,7 @@ import threading
 from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import pandas as pd
 from openpyxl.utils.cell import range_boundaries
@@ -94,7 +94,7 @@ class FileLoader:
         self._logger = logger or logging.getLogger("applogger.service")
 
         # Settings
-        self._config: dict = {}
+        self._config: dict[str, object] = {}
 
         self._csv_encoding_default = "utf-8"
         self._csv_read_chunk_size_default = 100_000
@@ -128,7 +128,7 @@ class FileLoader:
     # ================================================================
     # Settings hydration
     # ================================================================
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Apply runtime settings for CSV/Excel reading.
 
         Args:
@@ -136,11 +136,13 @@ class FileLoader:
         """
         with self._lock:
             try:
-                csv_settings = settings.get("csv", {}) or {}
-                excel_settings = settings.get("excel", {}) or {}
+                raw_csv_settings = settings.get("csv", {}) or {}
+                csv_settings = raw_csv_settings if isinstance(raw_csv_settings, dict) else {}
+                raw_excel_settings = settings.get("excel", {}) or {}
+                excel_settings = raw_excel_settings if isinstance(raw_excel_settings, dict) else {}
 
                 enc = csv_settings.get("default_encoding", self._csv_encoding_default)
-                self._csv_encoding_default = (enc or "").strip() or "utf-8"
+                self._csv_encoding_default = enc.strip() if isinstance(enc, str) and enc.strip() else "utf-8"
 
                 # Guard: ensure these are ints and > 0 if used
                 try:
@@ -778,13 +780,13 @@ class FileLoader:
         table = QvdTable.from_qvd(req.path)
 
         if isinstance(table, QvdTable):
-            df = table.to_pandas()
+            df: pd.DataFrame = cast("pd.DataFrame", table.to_pandas())
         else:
             # fallback om library faktiskt returnerar iterator
             tables = list(table)
             if not tables:
                 return pd.DataFrame()
-            df = tables[0].to_pandas()
+            df = cast("pd.DataFrame", cast("Any", tables[0]).to_pandas())
 
         return df
 

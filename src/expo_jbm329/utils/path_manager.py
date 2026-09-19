@@ -9,8 +9,12 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from platformdirs import PlatformDirs
+
+if TYPE_CHECKING:
+    from expo_jbm329.app.settings.json_types import JsonObject
 
 APP_NAME = "Expo"
 
@@ -109,7 +113,7 @@ def get_settings_path() -> Path:
 # --------- Active documents dir ----------
 
 
-def get_documents_dir(settings: dict) -> Path:
+def get_documents_dir(settings: JsonObject) -> Path:
     """Return the active documents directory from settings or the default.
 
     Args:
@@ -163,7 +167,7 @@ def get_bootstrap_root() -> Path:
     return Path(__file__).resolve().parents[1] / "bootstrap"
 
 
-def ensure_all_dirs(settings: dict) -> dict[str, Path]:
+def ensure_all_dirs(settings: JsonObject) -> dict[str, Path]:
     """Create the directory structure and necessary configuration files.
 
     Args:

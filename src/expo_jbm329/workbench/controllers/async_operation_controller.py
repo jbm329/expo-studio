@@ -12,9 +12,9 @@ This controller standardizes:
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Literal, TypeVar
+from typing import TYPE_CHECKING, Literal, Protocol, TypeVar, cast
 
-from PyQt6.QtCore import QT_TR_NOOP, QTimer
+from PyQt6.QtCore import QT_TR_NOOP, QObject, QTimer
 from PyQt6.QtWidgets import QApplication, QTableView, QWidget
 
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
@@ -31,6 +31,23 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 RunnerKind = Literal["pool", "thread"]
+
+
+class _Signal(Protocol):
+    """Protocol for Qt-like signals used by async job handles."""
+
+    def connect(self, slot: Callable[..., object]) -> object:
+        """Connect a slot to the signal."""
+        ...
+
+
+class _AsyncJobHandle(Protocol):
+    """Signal contract exposed by JobManager worker handles."""
+
+    progress: _Signal
+    result: _Signal
+    error: _Signal
+    finished: _Signal
 
 
 class AsyncOperationController:
@@ -136,7 +153,7 @@ class AsyncOperationController:
         show_status_progress: bool = False,
         show_started_in_status: bool = False,
         corr_id: str | None = None,
-    ) -> object:
+    ) -> QObject:
         """Run an async operation through the centralized workbench facade.
 
         This is the generic entry point for async work. It supports both
@@ -172,7 +189,7 @@ class AsyncOperationController:
         Returns:
             Job handle returned by JobManager.
         """
-        job = self._start_job(
+        job_obj = self._start_job(
             runner=runner,
             work=work,
             busy_message=busy_message,
@@ -183,8 +200,9 @@ class AsyncOperationController:
             show_started_in_status=show_started_in_status,
             corr_id=corr_id,
         )
+        job = cast("_AsyncJobHandle", job_obj)
 
-        job_id = self._job_mgr.get_job_id(job)
+        job_id = self._job_mgr.get_job_id(job_obj)
 
         def _handle_overlay_cancel() -> None:
             """Handle cancel button clicks from the overlay."""
@@ -369,7 +387,7 @@ class AsyncOperationController:
         job.error.connect(_handle_error)
         job.finished.connect(_handle_finished)
 
-        return job
+        return job_obj
 
     def run_with_overlay(
         self,
@@ -395,7 +413,7 @@ class AsyncOperationController:
         show_started_in_status: bool = False,
         corr_id: str | None = None,
         runner: RunnerKind = "pool",
-    ) -> object:
+    ) -> QObject:
         """Run async work with BusyOverlay handling for a QTableView."""
         return self.run_operation(
             target=self._target_for_view(view),
@@ -443,7 +461,7 @@ class AsyncOperationController:
         show_started_in_status: bool = False,
         corr_id: str | None = None,
         runner: RunnerKind = "pool",
-    ) -> object:
+    ) -> QObject:
         """Run a DataFrame operation with overlay kept during GUI apply."""
         target = self._target_for_view(view)
 
@@ -671,7 +689,7 @@ class AsyncOperationController:
         show_status_progress: bool,
         show_started_in_status: bool,
         corr_id: str | None,
-    ) -> object:
+    ) -> QObject:
         """Start a job using the selected backend.
 
         JobManager is treated as execution infrastructure here.

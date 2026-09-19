@@ -8,7 +8,7 @@ of the main application flow.
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, Self, override
 
 from PyQt6.QtCore import QEvent, QObject, Qt
 from PyQt6.QtGui import QKeyEvent
@@ -116,7 +116,7 @@ class EditorController(QObject):
         return line_text.count("(") > line_text.count(")")
 
     @classmethod
-    def _should_increase_indent_for_sql_continuation(cls: object, line_text: str) -> bool:
+    def _should_increase_indent_for_sql_continuation(cls: type[Self], line_text: str) -> bool:
         """Return whether a SQL continuation pattern should add one indent level."""
         stripped_line = line_text.rstrip()
         if not stripped_line:

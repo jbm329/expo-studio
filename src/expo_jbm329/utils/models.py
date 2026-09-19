@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING, override
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype, is_numeric_dtype
-from PyQt6.QtCore import QAbstractTableModel, QDateTime, QLocale, QModelIndex, Qt, pyqtSignal
+from PyQt6.QtCore import QAbstractTableModel, QDateTime, QLocale, QModelIndex, QObject, Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 
 from expo_jbm329.utils.format_utils import (
@@ -63,7 +63,7 @@ class DataFrameModel(QAbstractTableModel):
     def __init__(
         self,
         df: pd.DataFrame,
-        parent: object=None,
+        parent: QObject | None = None,
         *,
         na_rep: str = "",
         formatters: dict[str, Callable[[object], str]] | None = None,
@@ -313,7 +313,7 @@ class DataFrameModel(QAbstractTableModel):
         try:
             # Datetime
             if is_datetime64_any_dtype(s):
-                arr64 = s.astype("int64", copy=False).to_numpy()
+                arr64 = s.astype("int64").to_numpy(copy=False)
                 nan_mask = s.isna().to_numpy()
                 key = arr64.copy()
                 key[nan_mask] = np.iinfo(np.int64).max
@@ -331,10 +331,10 @@ class DataFrameModel(QAbstractTableModel):
             else:
                 nan_mask = pd.isna(arr)
                 if np.issubdtype(arr.dtype, np.floating):
-                    fill_val = np.finfo(arr.dtype).max
+                    fill_val = float(np.finfo(arr.dtype).max)
                 else:
                     try:
-                        fill_val = np.iinfo(arr.dtype).max
+                        fill_val = int(np.iinfo(arr.dtype).max)
                     except (
                         AttributeError,
                         ConnectionError,
@@ -347,7 +347,7 @@ class DataFrameModel(QAbstractTableModel):
                         TypeError,
                         ValueError,
                     ):
-                        fill_val = np.iinfo(np.int64).max
+                        fill_val = int(np.iinfo(np.int64).max)
 
                 key = arr.copy()
                 key[nan_mask] = fill_val

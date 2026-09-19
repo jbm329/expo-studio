@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.gui.widgets.schema_tree_widget import SchemaTreeWidget
     from expo_jbm329.services.job_manager import JobManager
     from expo_jbm329.services.schema_cache import SchemaCacheManager
     from expo_jbm329.workbench.controllers.async_operation_controller import (
@@ -101,7 +102,7 @@ class SchemaController:
         self,
         *,
         parent_widget: QWidget,
-        tree_widget: object,
+        tree_widget: SchemaTreeWidget,
         schema_mgr: SchemaCacheManager,
         async_ops: AsyncOperationController,
         job_mgr: JobManager,
@@ -182,7 +183,7 @@ class SchemaController:
     def _run_schema_prefetch_job(
         self,
         parent: object,
-        fn: Callable,
+        fn: Callable[..., object],
         *args: object,
         started_msg: str = "",
         corr_id: str | None = None,
@@ -203,12 +204,12 @@ class SchemaController:
         def _work(
             *,
             progress_cb: object = None,
-            cancel_cb: object = None,
-            job_id: object = None,
-            job_scope: object = None,
-            **_: object,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
+            **extra_context: object,
         ) -> object:
-            _ = progress_cb, job_id, job_scope
+            _ = progress_cb, job_id, job_scope, extra_context
             if cancel_cb and cancel_cb():
                 return None
 
@@ -242,7 +243,7 @@ class SchemaController:
     # Settings
     # ==================================================================
 
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Reload settings for the SchemaController.
 
         Synchronizes with updated global settings, controlling TOP_N.
@@ -251,7 +252,9 @@ class SchemaController:
             settings: The settings dictionary.
         """
         try:
-            editor = settings.get("workbench", {}) or {}
+            editor = settings.get("workbench", {})
+            if not isinstance(editor, dict):
+                editor = {}
             gen_top_n = int(editor.get("gen_top_n", self._gen_top_n_default))
 
             if gen_top_n < 0 or gen_top_n is None:  # Allow 0, reject only negative
@@ -293,19 +296,19 @@ class SchemaController:
                 if t == "connection":
                     connected = meta.get("connected", False)
                     icon_id = "connected" if connected else "disconnected"
-                    item.setIcon(0, self._icon_service.get(icon_id))
+                    item_x.setIcon(0, self._icon_service.get(icon_id))
 
                 elif t == "database":
-                    item.setIcon(0, self._icon_service.get("database"))
+                    item_x.setIcon(0, self._icon_service.get("database"))
                 elif t == "group":
-                    item.setIcon(0, self._icon_service.get("folder"))
+                    item_x.setIcon(0, self._icon_service.get("folder"))
                 elif t in ("table", "view"):
-                    item.setIcon(0, self._icon_service.get(t))
+                    item_x.setIcon(0, self._icon_service.get(t))
                 elif t == "column":
-                    item.setIcon(0, self._icon_service.get("column"))
+                    item_x.setIcon(0, self._icon_service.get("column"))
 
-            for item_no in range(item.childCount()):
-                child = item.child(item_no)
+            for item_no in range(item_x.childCount()):
+                child = item_x.child(item_no)
                 if child is not None:
                     apply_icon(child)
 
@@ -630,7 +633,7 @@ class SchemaController:
         # Try cache first
         entry = self._schema_mgr.get_cache_for(conn)
 
-        cols: list[dict[str, object]] | None = entry.columns.get((schema_name, table_name)) if entry else None
+        cols: list[dict[str, str]] | None = entry.columns.get((schema_name, table_name)) if entry else None
 
         if cols is not None:
             self._logger.debug(
@@ -773,8 +776,11 @@ class SchemaController:
     # ==================================================================
     # Context menu
     # ==================================================================
-    def _on_connection_context_menu(self, item: QTreeWidgetItem, meta: dict, pos: QPoint) -> None:
-        name = meta["name"]
+    def _on_connection_context_menu(self, item: QTreeWidgetItem, meta: dict[str, object], pos: QPoint) -> None:
+        name_obj = meta.get("name")
+        if not isinstance(name_obj, str):
+            return
+        name = name_obj
         connected = meta.get("connected", False)
 
         self._logger.debug(
@@ -790,24 +796,29 @@ class SchemaController:
         header.setEnabled(False)
         menu.addSeparator()
 
+        viewport = self._tree.viewport()
+        if viewport is None:
+            return
+
         if connected:
             act_disconnect = menu.addAction(self._tr(self.TR_DISCONNECT))
-            chosen = menu.exec(self._tree.viewport().mapToGlobal(pos))
+            chosen = menu.exec(viewport.mapToGlobal(pos))
             if chosen == act_disconnect:
                 self._logger.debug("SchemaController: disconnect requested (conn=%s)", name)
                 self._on_disconnect_requested(item)
         else:
             act_connect = menu.addAction(self._tr(self.TR_CONNECT))
-            chosen = menu.exec(self._tree.viewport().mapToGlobal(pos))
+            chosen = menu.exec(viewport.mapToGlobal(pos))
             if chosen == act_connect:
                 self._logger.debug("SchemaController: connect requested (conn=%s)", name)
                 self._on_connect_requested(item)
 
-    def _on_column_context_menu(self, item: QTreeWidgetItem, meta: dict, pos: QPoint) -> None:
+    def _on_column_context_menu(self, item: QTreeWidgetItem, meta: dict[str, object], pos: QPoint) -> None:
         """Handle context menu request for a column node."""
-        name = meta.get("column")
-        if not name:
+        name_obj = meta.get("column")
+        if not isinstance(name_obj, str) or not name_obj:
             return
+        name = name_obj
 
         self._logger.debug(
             "SchemaController: context menu requested (type=%s, obj=%s.%s.%s)",
@@ -827,7 +838,10 @@ class SchemaController:
         act_distinct = QAction("SELECT DISTINCT", menu)
         menu.addAction(act_distinct)
 
-        chosen = menu.exec(self._tree.viewport().mapToGlobal(pos))
+        viewport = self._tree.viewport()
+        if viewport is None:
+            return
+        chosen = menu.exec(viewport.mapToGlobal(pos))
 
         if not chosen:
             return
@@ -843,9 +857,12 @@ class SchemaController:
 
         meta = item.data(0, Qt.ItemDataRole.UserRole)
 
+        if not isinstance(meta, dict):
+            return
+
         meta_type = meta.get("type")
 
-        if isinstance(meta, dict) and meta_type in ("database", "group"):
+        if meta_type in ("database", "group"):
             return
 
         if isinstance(meta, dict) and meta_type == "column":
@@ -853,7 +870,7 @@ class SchemaController:
             return
 
         name = meta.get("name")
-        if not name:
+        if not isinstance(name, str) or not name:
             return
 
         if isinstance(meta, dict) and meta_type == "connection":
@@ -883,7 +900,10 @@ class SchemaController:
             act_cols = menu.addAction(f"SELECT TOP {top_n}")
             act_cols_schema = menu.addAction(f"SELECT TOP {top_n} (schema)")
 
-        chosen = menu.exec(self._tree.viewport().mapToGlobal(pos))
+        viewport = self._tree.viewport()
+        if viewport is None:
+            return
+        chosen = menu.exec(viewport.mapToGlobal(pos))
         if not chosen:
             return
 
@@ -1060,11 +1080,13 @@ class SchemaController:
     # ==================================================================
     # SQL generation
     # ==================================================================
-    def _insert_select_distinct(self, item: QTreeWidgetItem, meta: dict) -> None:
+    def _insert_select_distinct(self, item: QTreeWidgetItem, meta: dict[str, object]) -> None:
         """Insert SELECT DISTINCT statement into tab."""
-        schema = meta["schema"]
-        table = meta["table"]
-        column = meta["column"]
+        schema = meta.get("schema")
+        table = meta.get("table")
+        column = meta.get("column")
+        if not isinstance(schema, str) or not isinstance(table, str) or not isinstance(column, str):
+            return
 
         self._logger.debug(
             "SchemaController: insert select distinct values requested (obj=%s.%s, col=%s)", schema, table, column
@@ -1085,6 +1107,11 @@ class SchemaController:
 
     def _insert_select_star(self, item: QTreeWidgetItem, meta: dict[str, object]) -> None:
         """Insert SELECT * SQL snippet."""
+        schema = meta.get("schema")
+        name = meta.get("name")
+        if not isinstance(schema, str) or not isinstance(name, str):
+            return
+
         conn = self._resolve_connection_for_item(item)
 
         if not conn:
@@ -1099,12 +1126,12 @@ class SchemaController:
         self._logger.debug(
             "SchemaController: generating SELECT * (conn=%s, obj=%s.%s, top_n=%s)",
             conn,
-            meta["schema"],
-            meta["name"],
+            schema,
+            name,
             top_label,
         )
 
-        sql = build_select_star(conn, meta["schema"], meta["name"], top_n=self._gen_top_n)
+        sql = build_select_star(conn, schema, name, top_n=self._gen_top_n)
 
         self._insert_sql_into_tab(tab, sql)
 
@@ -1117,7 +1144,9 @@ class SchemaController:
             with_schema: Whether to include schema in SQL.
         """
         corr_id = uuid.uuid4().hex
-        if "schema" not in meta or "name" not in meta:
+        schema = meta.get("schema")
+        name = meta.get("name")
+        if not isinstance(schema, str) or not isinstance(name, str):
             return
 
         conn = self._resolve_connection_for_item(item)
@@ -1134,16 +1163,16 @@ class SchemaController:
         self._logger.debug(
             "SchemaController: generating SELECT TOP (conn=%s, obj=%s.%s, top_n=%s, with_schema=%s, corr=%s)",
             conn,
-            meta["schema"],
-            meta["name"],
+            schema,
+            name,
             top_label,
             with_schema,
             corr_id,
         )
         sql = build_select_columns_auto(
             conn,
-            meta["schema"],
-            meta["name"],
+            schema,
+            name,
             top_n=self._gen_top_n,
             with_schema=with_schema,
             corr_id=corr_id,
@@ -1153,11 +1182,13 @@ class SchemaController:
 
     def _resolve_connection_for_item(self, item: QTreeWidgetItem) -> str | None:
         """Walk up tree to find owning connection."""
-        while item:
-            meta = item.data(0, Qt.ItemDataRole.UserRole)
+        current: QTreeWidgetItem | None = item
+        while current is not None:
+            meta = current.data(0, Qt.ItemDataRole.UserRole)
             if isinstance(meta, dict) and meta.get("type") == "connection":
-                return meta.get("name")
-            item = item.parent()
+                name = meta.get("name")
+                return name if isinstance(name, str) else None
+            current = current.parent()
         return None
 
     # ==================================================================
@@ -1202,16 +1233,20 @@ class SchemaController:
                 continue
 
             # Connection name is data, not translated
-            conn_item.setText(0, conn_meta.get("name", ""))
+            conn_name = conn_meta.get("name")
+            conn_item.setText(0, conn_name if isinstance(conn_name, str) else "")
 
             # Database node (if connected)
             if conn_item.childCount() == 0:
                 continue
 
             db_item = conn_item.child(0)
+            if db_item is None:
+                continue
             db_meta = db_item.data(0, Qt.ItemDataRole.UserRole)
             if isinstance(db_meta, dict) and db_meta.get("type") == "database":
-                db_item.setText(0, db_meta.get("name", ""))
+                db_name = db_meta.get("name")
+                db_item.setText(0, db_name if isinstance(db_name, str) else "")
 
                 # Translate groups and placeholders under database
                 for gi in range(db_item.childCount()):

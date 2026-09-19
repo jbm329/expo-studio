@@ -8,7 +8,7 @@ schema metadata.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, TypeGuard, override
 
 from PyQt6.QtCore import QMimeData, Qt
 from PyQt6.QtWidgets import (
@@ -22,7 +22,10 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
 
-def _is_valid_meta(meta: object) -> bool:
+SchemaItemMeta = dict[str, str]
+
+
+def _is_valid_meta(meta: object) -> TypeGuard[SchemaItemMeta]:
     """Validates the structure of metadata dicts placed in UserRole.
 
     Checks if the provided metadata dict conforms to the expected shapes for
@@ -40,9 +43,9 @@ def _is_valid_meta(meta: object) -> bool:
         return False
     t = meta.get("type")
     if t in {"table", "view"}:
-        return all(k in meta for k in ("schema", "name"))
+        return all(isinstance(meta.get(k), str) for k in ("type", "schema", "name"))
     if t == "column":
-        return all(k in meta for k in ("schema", "table", "column"))
+        return all(isinstance(meta.get(k), str) for k in ("type", "schema", "table", "column"))
     return False
 
 
@@ -74,7 +77,7 @@ def _qualify_column(schema: str, table: str, column: str) -> str:
 
 
 def build_drag_text_from_meta(
-    metas: Iterable[dict[str, object]],
+    metas: Iterable[SchemaItemMeta],
     *,
     prefer_multiline_for_same_table: bool = True,
     indent: str = "    ",
@@ -198,7 +201,7 @@ class SchemaTreeWidget(QTreeWidget):
         selected: Sequence[QTreeWidgetItem] = list(items) if items else self.selectedItems()
 
         # Extract and normalize meta dicts
-        metas: list[dict[str, object]] = []
+        metas: list[SchemaItemMeta] = []
         for it in selected:
             meta = it.data(0, Qt.ItemDataRole.UserRole)
             if _is_valid_meta(meta):

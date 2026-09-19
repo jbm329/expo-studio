@@ -56,7 +56,7 @@ class DataIOService:
     # ==================================================================
     # Settings (propagate to loader/writer)
     # ==================================================================
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Propagate new settings into FileLoader and FileWriter.
 
         Args:

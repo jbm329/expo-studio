@@ -168,7 +168,7 @@ class NullFileDialogService(FileDialogService):
 
     def __init__(self) -> None:
         """Initialize the null file dialog service."""
-        self.calls: list[SaveFileRequest] = []
+        self.calls: list[OpenFileRequest | SaveFileRequest | DirectoryRequest] = []
         self._queue_open: list[tuple[str, str]] = []
         self._queue_save: list[tuple[str, str]] = []
         self._queue_dir: list[str] = []

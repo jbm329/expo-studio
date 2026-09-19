@@ -213,7 +213,7 @@ class ResultTabUndoManager:
         )
         return snapshot
 
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Reload undo-related settings from the global settings structure.
 
         Expected structure:
@@ -228,7 +228,8 @@ class ResultTabUndoManager:
             settings: Application settings dictionary.
         """
         try:
-            workbench = settings.get("workbench", {}) or {}
+            workbench_obj = settings.get("workbench", {})
+            workbench = workbench_obj if isinstance(workbench_obj, dict) else {}
 
             undo_limit_per_tab = int(
                 workbench.get(

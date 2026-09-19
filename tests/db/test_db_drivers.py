@@ -29,7 +29,7 @@ def test_service_registry_rejects_invalid_registration():
         registry.register_driver("", lambda: "driver")
 
     with pytest.raises(ValueError):
-        registry.register_dialect("sqlite", None)  # type: ignore[arg-type]
+        registry.register_dialect("sqlite", None)
 
 
 def test_sqlite_driver_reuses_engine_and_executes_df():

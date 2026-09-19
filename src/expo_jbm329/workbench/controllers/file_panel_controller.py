@@ -13,11 +13,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP, QModelIndex, QPoint, Qt
 from PyQt6.QtGui import QAction, QFileSystemModel
-from PyQt6.QtWidgets import (
-    QMenu,
-    QTreeView,
-    QWidget,
-)
+from PyQt6.QtWidgets import QMenu, QTreeView, QWidget
 
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.services.file_types import classify_file
@@ -132,7 +128,7 @@ class FilePanelController:
     # Settings
     # ==================================================================
 
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Reload controller state from updated application settings.
 
         Args:
@@ -165,7 +161,7 @@ class FilePanelController:
         """Refresh file icons after a theme or icon-provider change."""
         try:
             self._logger.debug("FilePanelController: updating icons")
-            self._files_model.setIconProvider(self._file_icon_provider)
+            self._files_model.setIconProvider(self._file_icon_provider)  # type: ignore[arg-type]
 
             vp = self._files_tree.viewport()
             if vp is not None:

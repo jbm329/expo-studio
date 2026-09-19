@@ -20,7 +20,7 @@ class ChartPreviewWidget(QWidget):
         super().__init__(parent)
 
         self._figure = Figure(constrained_layout=True)
-        self._canvas = FigureCanvasQTAgg(self._figure)
+        self._canvas = FigureCanvasQTAgg(self._figure)  # type: ignore[no-untyped-call]
 
         self._message_label = QLabel(self.tr("No visualization yet."), self)
         self._message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -51,7 +51,7 @@ class ChartPreviewWidget(QWidget):
         """Display the chart canvas."""
         self._message_label.hide()
         self._canvas.show()
-        self._canvas.draw_idle()
+        self._canvas.draw_idle()  # type: ignore[no-untyped-call]
 
     def clear_chart(self) -> None:
         """Clear the current figure and show placeholder message."""
@@ -60,4 +60,4 @@ class ChartPreviewWidget(QWidget):
 
     def refresh(self) -> None:
         """Redraw the chart canvas."""
-        self._canvas.draw_idle()
+        self._canvas.draw_idle()  # type: ignore[no-untyped-call]

@@ -24,12 +24,12 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from expo_jbm329.app.settings.config_store import read_connections
 from expo_jbm329.db.core.di import ServiceRegistry
 from expo_jbm329.db.core.errors import TR_COULD_NOT_INIT_CONN
-from expo_jbm329.db.core.models import ConnectionConfig, SqlError, SqlResult, TimeoutConfig
+from expo_jbm329.db.core.models import ConnectionConfig, EngineKey, ProtocolKey, SqlError, SqlResult, TimeoutConfig
 from expo_jbm329.db.dialects.mssql import MssqlDialect
 from expo_jbm329.db.dialects.mysql import MySqlDialect
 from expo_jbm329.db.dialects.sqlite import SqliteDialect
@@ -135,7 +135,8 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
         raise RuntimeError(msg)
 
     # --- Engine normalization -------------------------------------------------
-    engine = (rec.get("db_type") or "mssql").lower()
+    raw_engine = rec.get("db_type")
+    engine = raw_engine.lower() if isinstance(raw_engine, str) and raw_engine else "mssql"
     if engine in ("postgres", "postgresql"):
         engine = "postgresql"
     allowed = ("mssql", "postgresql", "mysql", "mariadb", "sqlite", "oracle")
@@ -143,13 +144,19 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
         engine = "mssql"
 
     # --- Protocol selection ---------------------------------------------------
-    protocol = (rec.get("protocol") or ("sqlite" if engine == "sqlite" else "odbc")).lower()
+    raw_protocol = rec.get("protocol")
+    protocol = (
+        raw_protocol.lower()
+        if isinstance(raw_protocol, str) and raw_protocol
+        else ("sqlite" if engine == "sqlite" else "odbc")
+    )
 
     # --- Common fields --------------------------------------------------------
-    server = rec.get("server", "")
+    raw_server = rec.get("server", "")
+    server = raw_server if isinstance(raw_server, str) else ""
     port_raw = rec.get("port", None)
     try:
-        port = int(port_raw) if port_raw not in (None, "") else None
+        port = int(cast("str | int", port_raw)) if port_raw not in (None, "") else None
     except (
         AttributeError,
         ConnectionError,
@@ -164,18 +171,23 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
     ):
         port = None
 
-    database = rec.get("database") or None
-    user = rec.get("user") or None
-    password = rec.get("password") or None
-    dsn = rec.get("dsn") or None
-    extra = rec.get("extra") or {}
+    def _optional_str(value: object) -> str | None:
+        return value if isinstance(value, str) and value else None
+
+    database = _optional_str(rec.get("database"))
+    user = _optional_str(rec.get("user"))
+    password = _optional_str(rec.get("password"))
+    dsn = _optional_str(rec.get("dsn"))
+    raw_extra = rec.get("extra")
+    extra = raw_extra if isinstance(raw_extra, dict) else {}
 
     # --- Protocol-specific connection string handling ------------------------
     odbc_connect = None
 
     if protocol == "odbc":
         # Build an ODBC connection string (e.g., for SQL Server)
-        driver = rec.get("driver", "")
+        raw_driver = rec.get("driver", "")
+        driver = raw_driver if isinstance(raw_driver, str) else ""
         if driver and not (driver.startswith("{") and driver.endswith("}")):
             driver = "{" + driver + "}"
 
@@ -202,12 +214,12 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
                 parts.append(f"PWD={password};")
 
         candidate = "".join(parts)
-        odbc_connect = candidate or rec.get("odbc_connect") or None
+        odbc_connect = candidate or _optional_str(rec.get("odbc_connect"))
 
     elif protocol == "sqlite":
         # SQLite uses no ODBC. database is filepath or ':memory:'.
         if not database:
-            fp = rec.get("filepath") or rec.get("path")
+            fp = _optional_str(rec.get("filepath")) or _optional_str(rec.get("path"))
             if fp:
                 database = fp
 
@@ -217,8 +229,8 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
 
     return ConnectionConfig(
         name=connection_name,
-        engine=engine,
-        protocol=protocol,
+        engine=cast("EngineKey", engine),
+        protocol=cast("ProtocolKey", protocol),
         database=database,
         server=server,
         port=port,
@@ -226,7 +238,7 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
         password=password,
         odbc_connect=odbc_connect,
         dsn=dsn,
-        extra=extra,
+        extra=cast("dict[str, object]", extra),
     )
 
 

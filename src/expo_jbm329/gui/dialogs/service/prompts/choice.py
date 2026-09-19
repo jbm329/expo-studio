@@ -125,7 +125,10 @@ def confirm_profile_scope(
 
     # Icon
     icon_label = QLabel(dlg)
-    icon = dlg.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxQuestion)
+    style = dlg.style()
+    if style is None:
+        return ProfileChoice.CANCEL
+    icon = style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxQuestion)
     icon_label.setPixmap(icon.pixmap(34, 34))
     icon_label.setAlignment(Qt.AlignmentFlag.AlignTop)
     content.addWidget(icon_label)

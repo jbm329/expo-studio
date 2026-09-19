@@ -35,6 +35,7 @@ from expo_jbm329.app.settings.config_store import (
     load_settings,
     save_settings,
 )
+from expo_jbm329.app.settings.json_types import JsonObject, bool_value, int_value, object_or_empty, string_value
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import (
     DirectoryRequest,
@@ -105,8 +106,9 @@ class SettingsEditor(QDialog):
             self._icon_service.icons_updated.connect(self._update_icon)
 
         # Load user settings
-        self.settings: dict = load_settings()
+        self.settings: JsonObject = load_settings()
         self.highlighter_theme_service = highlighter_theme_service
+        self._theme_key_map: dict[str, str] = {}
 
         # Build UI + populate fields
         self._build_ui()
@@ -356,14 +358,11 @@ class SettingsEditor(QDialog):
         """
         s = self.settings
 
-        editor_defaults = DEFAULT_SETTINGS.get("workbench", {})
-        editor = s.get("workbench", editor_defaults)
-        if editor is None:
-            msg = "Workbench settings are unavailable."
-            raise RuntimeError(msg)
+        editor_defaults = object_or_empty(DEFAULT_SETTINGS.get("workbench"))
+        editor = object_or_empty(s.get("workbench")) or editor_defaults
 
         # Language
-        current_lang = editor.get("language", editor_defaults.get("language", "en"))
+        current_lang = string_value(editor.get("language"), string_value(editor_defaults.get("language"), "en"))
 
         found = False
         for i in range(self.cmb_language.count()):
@@ -376,7 +375,9 @@ class SettingsEditor(QDialog):
             self.cmb_language.setCurrentIndex(0)
 
         # Theme
-        self.cmb_theme.setCurrentText(editor.get("theme", editor_defaults.get("theme", "system")))
+        self.cmb_theme.setCurrentText(
+            string_value(editor.get("theme"), string_value(editor_defaults.get("theme"), "system"))
+        )
 
         # Highlighter theme (dynamic list)
         if self.highlighter_theme_service is None:
@@ -392,7 +393,7 @@ class SettingsEditor(QDialog):
             self._theme_key_map[friendly] = key
 
         # Select current theme (from settings)
-        current_key = editor.get("highlighter_theme", "system")
+        current_key = string_value(editor.get("highlighter_theme"), "system")
         for friendly, key in self._theme_key_map.items():
             if key == current_key:
                 self.cmb_highlighter.setCurrentText(friendly)
@@ -403,29 +404,35 @@ class SettingsEditor(QDialog):
 
         # Undo settings
         self.spin_undo_limit.setValue(
-            int(editor.get("undo_limit_per_tab", editor_defaults.get("undo_limit_per_tab", 20)))
+            int_value(editor.get("undo_limit_per_tab"), int_value(editor_defaults.get("undo_limit_per_tab"), 20))
         )
         self.spin_undo_max_mb.setValue(
-            int(editor.get("max_size_allow_undo_mb", editor_defaults.get("max_size_allow_undo_mb", 100)))
+            int_value(
+                editor.get("max_size_allow_undo_mb"),
+                int_value(editor_defaults.get("max_size_allow_undo_mb"), 100),
+            )
         )
 
         # CSV settings
-        csv = s.get("csv", DEFAULT_SETTINGS["csv"])
+        csv_defaults = object_or_empty(DEFAULT_SETTINGS.get("csv"))
+        csv = object_or_empty(s.get("csv")) or csv_defaults
         self.spin_csv_read_chunksize.setValue(
-            csv.get("read_chunk_size_rows", DEFAULT_SETTINGS["csv"]["read_chunk_size_rows"])
+            int_value(csv.get("read_chunk_size_rows"), int_value(csv_defaults.get("read_chunk_size_rows"), 100000))
         )
         self.spin_csv_write_chunk_size.setValue(
-            csv.get("write_chunk_size_rows", DEFAULT_SETTINGS["csv"]["write_chunk_size_rows"])
+            int_value(csv.get("write_chunk_size_rows"), int_value(csv_defaults.get("write_chunk_size_rows"), 100000))
         )
-        self.cmb_csv_encoding.setCurrentText(csv.get("default_encoding", DEFAULT_SETTINGS["csv"]["default_encoding"]))
+        self.cmb_csv_encoding.setCurrentText(
+            string_value(csv.get("default_encoding"), string_value(csv_defaults.get("default_encoding"), "utf-8"))
+        )
 
-        sniff_default = DEFAULT_SETTINGS["csv"].get("sniff_delimiter", True)
-        self.chk_csv_sniff.setChecked(bool(csv.get("sniff_delimiter", sniff_default)))
+        sniff_default = bool_value(csv_defaults.get("sniff_delimiter"), True)
+        self.chk_csv_sniff.setChecked(bool_value(csv.get("sniff_delimiter"), sniff_default))
         self._sync_csv_sep_enabled()
 
         # Map 'default_sep' from settings -> combobox index
-        default_sep_default = DEFAULT_SETTINGS["csv"].get("default_sep", ",")
-        sep_val = csv.get("default_sep", default_sep_default)
+        default_sep_default = string_value(csv_defaults.get("default_sep"), ",")
+        sep_val = string_value(csv.get("default_sep"), default_sep_default)
 
         # Normalize None / "" → "Auto"
         index = self.cmb_csv_default_sep.findData(sep_val)
@@ -435,23 +442,35 @@ class SettingsEditor(QDialog):
         self.cmb_csv_default_sep.setCurrentIndex(index)
 
         # Excel settings
-        excel = s.get("excel", DEFAULT_SETTINGS["excel"])
-        self.spin_excel_chunk_size.setValue(excel.get("chunk_size_rows", DEFAULT_SETTINGS["excel"]["chunk_size_rows"]))
-        self.spin_excel_max_rows.setValue(
-            excel.get("max_rows_per_sheet", DEFAULT_SETTINGS["excel"]["max_rows_per_sheet"])
+        excel_defaults = object_or_empty(DEFAULT_SETTINGS.get("excel"))
+        excel = object_or_empty(s.get("excel")) or excel_defaults
+        self.spin_excel_chunk_size.setValue(
+            int_value(excel.get("chunk_size_rows"), int_value(excel_defaults.get("chunk_size_rows"), 25000))
         )
-        self.chk_excel_streaming.setChecked(excel.get("streaming", DEFAULT_SETTINGS["excel"]["streaming"]))
+        self.spin_excel_max_rows.setValue(
+            int_value(excel.get("max_rows_per_sheet"), int_value(excel_defaults.get("max_rows_per_sheet"), 1048576))
+        )
+        self.chk_excel_streaming.setChecked(
+            bool_value(excel.get("streaming"), bool_value(excel_defaults.get("streaming"), True))
+        )
 
         # schema cache
-        sc = s.get("schema_cache", DEFAULT_SETTINGS["schema_cache"])
-        self.spin_schema_limit.setValue(sc.get("prefetch_limit", DEFAULT_SETTINGS["schema_cache"]["prefetch_limit"]))
-        self.spin_schema_batch.setValue(
-            sc.get("prefetch_batch_size", DEFAULT_SETTINGS["schema_cache"]["prefetch_batch_size"])
+        schema_defaults = object_or_empty(DEFAULT_SETTINGS.get("schema_cache"))
+        sc = object_or_empty(s.get("schema_cache")) or schema_defaults
+        self.spin_schema_limit.setValue(
+            int_value(sc.get("prefetch_limit"), int_value(schema_defaults.get("prefetch_limit"), 600))
         )
-        self.spin_schema_ttl.setValue(sc.get("ttl_seconds", DEFAULT_SETTINGS["schema_cache"].get("ttl_seconds", 300)))
+        self.spin_schema_batch.setValue(
+            int_value(sc.get("prefetch_batch_size"), int_value(schema_defaults.get("prefetch_batch_size"), 100))
+        )
+        self.spin_schema_ttl.setValue(
+            int_value(sc.get("ttl_seconds"), int_value(schema_defaults.get("ttl_seconds"), 300))
+        )
 
         # workbench - remaining
-        self.spin_editor_topn.setValue(editor.get("gen_top_n", editor_defaults.get("gen_top_n", 10)))
+        self.spin_editor_topn.setValue(
+            int_value(editor.get("gen_top_n"), int_value(editor_defaults.get("gen_top_n"), 10))
+        )
 
     # -------------------------------------------------------------------------
     # Reset button
@@ -514,15 +533,16 @@ class SettingsEditor(QDialog):
 
         # workbench settings
         # NOTE: Keep all workbench-related values together
-        editor_defaults = DEFAULT_SETTINGS.get("workbench", {})
-        editor_existing = dict(new_s.get("workbench", {}))
+        editor_defaults = object_or_empty(DEFAULT_SETTINGS.get("workbench"))
+        editor_existing = dict(object_or_empty(new_s.get("workbench")))
 
         label = self.cmb_highlighter.currentText()
         key = self._theme_key_map.get(label, "system")
 
-        editor_updated = {
+        language_data = self.cmb_language.currentData()
+        editor_updated: JsonObject = {
             # From top row (Language, Theme, Highlighter)
-            "language": self.cmb_language.currentData(),
+            "language": language_data if isinstance(language_data, str) else "en",
             "theme": self.cmb_theme.currentText(),
             "highlighter_theme": key,
             # Core workbench features

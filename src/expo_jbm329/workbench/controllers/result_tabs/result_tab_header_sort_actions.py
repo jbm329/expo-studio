@@ -119,7 +119,12 @@ class ResultTabHeaderSortActions:
             sort_dataframe,
         )
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -131,7 +136,7 @@ class ResultTabHeaderSortActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -192,7 +197,12 @@ class ResultTabHeaderSortActions:
             sort_dataframe,
         )
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -204,7 +214,7 @@ class ResultTabHeaderSortActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 

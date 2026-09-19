@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 import uuid
 from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar, Literal
+from typing import TYPE_CHECKING, ClassVar, Literal, cast
 
 from PyQt6.QtCore import QT_TR_NOOP
 
@@ -104,7 +104,7 @@ class ResultTabHeaderDtypeActions:
         return tr("ResultTabHeaderDtypeActions", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabHeaderDtypeActions", text, **kwargs)
 
     # ------------------------------------------------------------------
@@ -183,7 +183,12 @@ class ResultTabHeaderDtypeActions:
 
         from expo_jbm329.services.data_operations.convert import to_string
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -191,7 +196,7 @@ class ResultTabHeaderDtypeActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -246,7 +251,12 @@ class ResultTabHeaderDtypeActions:
 
         from expo_jbm329.services.data_operations.convert import to_integer
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -258,7 +268,7 @@ class ResultTabHeaderDtypeActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -313,7 +323,12 @@ class ResultTabHeaderDtypeActions:
 
         from expo_jbm329.services.data_operations.convert import to_float
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -325,7 +340,7 @@ class ResultTabHeaderDtypeActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -389,26 +404,32 @@ class ResultTabHeaderDtypeActions:
         format_key = opts["format_key"]
         target = opts["target"]
 
-        fmt_cfg = FORMAT_MAP[format_key]
+        fmt_cfg = cast("dict[str, object]", FORMAT_MAP[format_key])
+        fmt_obj = fmt_cfg["fmt"]
         date_only = target == "date"
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
             return to_datetime(
                 safe_df,
                 safe_col,
-                fmt=fmt_cfg["fmt"],
-                dayfirst=fmt_cfg["dayfirst"],
-                yearfirst=fmt_cfg["yearfirst"],
+                fmt=fmt_obj if isinstance(fmt_obj, str) else None,
+                dayfirst=bool(fmt_cfg["dayfirst"]),
+                yearfirst=bool(fmt_cfg["yearfirst"]),
                 date_only=date_only,
                 errors=self._conversion_error_handling,
             )
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -480,7 +501,12 @@ class ResultTabHeaderDtypeActions:
 
         from expo_jbm329.services.data_operations.convert import to_boolean
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -499,7 +525,7 @@ class ResultTabHeaderDtypeActions:
             "raise": self._tr(self.TR_UNKNOWN_ERROR_LABEL_ERROR),
         }[self._conversion_error_handling]
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -568,7 +594,12 @@ class ResultTabHeaderDtypeActions:
 
         from expo_jbm329.services.data_operations.convert import to_category
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -586,7 +617,7 @@ class ResultTabHeaderDtypeActions:
 
         ordered_label = self._tr(self.TR_ORDERED) if opts["ordered"] else self._tr(self.TR_UNORDERED)
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 

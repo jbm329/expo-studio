@@ -63,6 +63,7 @@ status, progress, or UI feedback behavior.
 from __future__ import annotations
 
 import contextlib
+from typing import Any, cast
 
 from PyQt6.QtCore import QT_TR_NOOP, QTimer
 from PyQt6.QtWidgets import (
@@ -118,9 +119,10 @@ class StatusBarController:
         self._shape_has_data = False
 
         self._build_widgets()
-        self._parent.progress = self.progress
-        self._parent.progress_label = self.progress_label
-        self._parent.shape_label = self.shape_label
+        parent_for_legacy = cast("Any", self._parent)
+        parent_for_legacy.progress = self.progress
+        parent_for_legacy.progress_label = self.progress_label
+        parent_for_legacy.shape_label = self.shape_label
 
         self.init_baseline()
 

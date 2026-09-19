@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from PyQt6.QtWidgets import QTableView, QWidget
 
     from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.services.data_profile.column_data_profile import ColumnProfile
     from expo_jbm329.services.data_profile.profile_cache import ColumnProfileCache
     from expo_jbm329.services.data_profile.semantics import SeriesSemantics
     from expo_jbm329.workbench.controllers.async_operation_controller import (
@@ -54,7 +55,7 @@ class ResultTabColumnPropertiesController:
         return tr("ResultTabColumnPropertiesController", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabColumnPropertiesController", text, **kwargs)
 
     # ------------------------------------------------------------------
@@ -190,17 +191,23 @@ class ResultTabColumnPropertiesController:
         """Run async column profiling."""
         corr_id = uuid.uuid4().hex
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> object:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> ColumnProfile | None:
             from expo_jbm329.services.data_operations.analytics import (
                 get_column_profile,
             )
 
+            del progress_cb
             if cancel_cb and cancel_cb():
                 return None
 
-            return get_column_profile(df, col_name)
+            return cast("ColumnProfile", get_column_profile(df, col_name))
 
-        def _apply_result(profile: object) -> None:
+        def _apply_result(profile: ColumnProfile | None) -> None:
             if profile is None:
                 return
 

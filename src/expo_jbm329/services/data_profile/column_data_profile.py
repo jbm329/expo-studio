@@ -571,7 +571,7 @@ def profile_series(s: pd.Series, name: str | None = None) -> ColumnProfile:
         from pandas import CategoricalDtype
 
         if isinstance(s.dtype, CategoricalDtype):
-            dt: CategoricalDtype = s.dtype  # type: ignore
+            dt: CategoricalDtype = s.dtype
             cats = dt.categories
             base["cat.count"] = len(cats)
             base["cat.ordered"] = bool(getattr(s.dtype, "ordered", False))

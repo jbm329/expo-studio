@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
     from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.services.schema_cache import SchemaCacheEntry
     from expo_jbm329.workbench.icon.icon_service import IconService
     from expo_jbm329.workbench.theme.highlighter_theme_service import HighlighterThemeService
 
@@ -100,8 +101,8 @@ class EditorPanelController(QWidget):
         tab_widget: QTabWidget,
         icon_service: IconService,
         highlighter_theme_service: HighlighterThemeService,
-        get_cache_for: Callable[[str]],
-        build_schema_dict: Callable[[dict], dict],
+        get_cache_for: Callable[[str], SchemaCacheEntry | None],
+        build_schema_dict: Callable[[dict[str, object]], dict[str, object]],
         get_connection_engine: Callable[[str], str | None] | None = None,
         save_sql: Callable[[], None] | None = None,
         save_sql_as: Callable[[], None] | None = None,
@@ -532,7 +533,7 @@ class EditorPanelController(QWidget):
         widget_to_id = {w: tid for tid, w in self._widgets.items()}
 
         for w in widgets_to_close:
-            tid = widget_to_id.get(w)
+            tid = widget_to_id.get(w) if isinstance(w, EditorWidget) else None
             if tid:
                 tab_ids_to_close.append(tid)
 
@@ -547,7 +548,7 @@ class EditorPanelController(QWidget):
             keep_tab_id: The ID of the tab to keep open, if any.
         """
         tabs = list(self._widgets.keys())
-        dirty = [tid for tid in tabs if self._tab_manager.get_tab(tid) and self._tab_manager.get_tab(tid).is_dirty]
+        dirty = [tid for tid in tabs if (tab := self._tab_manager.get_tab(tid)) is not None and tab.is_dirty]
         count_tabs = len(tabs)
         dirty_tabs = len(dirty)
         msg = self._tr_fmt(
@@ -919,7 +920,8 @@ class EditorPanelController(QWidget):
 
         engine.set_schema(schema_dict)
         if lint_controller is not None:
-            lint_controller.set_schema(schema_dict)
+            lint_schema = by_schema if isinstance(by_schema, dict) else {}
+            lint_controller.set_schema(lint_schema)
 
     def on_tab_context_menu_requested(self, pos: QPoint) -> None:
         """Handle context menu request on the tab bar.

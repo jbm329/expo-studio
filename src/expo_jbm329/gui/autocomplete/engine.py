@@ -8,6 +8,7 @@ UI framework.
 from __future__ import annotations
 
 import logging
+from typing import Self
 
 from expo_jbm329.db.sql_analysis import TableRef, extract_table_refs
 
@@ -35,7 +36,7 @@ class SqlAutoCompleter:
         self._log = logging.getLogger("applogger.ui.autocomplete")
 
     # ------------------------------------------------------------------ #
-    def set_schema(self, schema_dict: dict) -> None:
+    def set_schema(self, schema_dict: dict[str, object]) -> None:
         """Set the schema metadata used for generating suggestions.
 
         Args:
@@ -182,15 +183,15 @@ class SqlAutoCompleter:
         # table. (no schema)
         if text.endswith("."):
             table = text[:-1]
-            schema = self._find_schema_for_table(table)
-            return self._list_columns(schema, table) if schema else []
+            table_schema = self._find_schema_for_table(table)
+            return self._list_columns(table_schema, table) if table_schema else []
 
         # table.prefix (no schema)
         if "." in text:
             table, colprefix = text.split(".", 1)
-            schema = self._find_schema_for_table(table)
-            if schema:
-                return self._filter_starts_with(self._list_columns(schema, table), colprefix)
+            table_schema = self._find_schema_for_table(table)
+            if table_schema:
+                return self._filter_starts_with(self._list_columns(table_schema, table), colprefix)
 
         # fallback → global prefix
         return self.get_global_suggestions(text)
@@ -362,7 +363,7 @@ class SqlAutoCompleter:
 
     # ------------------------------------------------------------------ #
     @classmethod
-    def _normalize_identifier(cls: object, value: str | None) -> str:
+    def _normalize_identifier(cls: type[Self], value: str | None) -> str:
         """Normalize an SQL identifier for lookup.
 
         Removes common SQL quoting styles used by supported dialects:
@@ -391,7 +392,7 @@ class SqlAutoCompleter:
         return text
 
     @classmethod
-    def _normalize_qualified_identifier(cls: object, value: str | None) -> str:
+    def _normalize_qualified_identifier(cls: type[Self], value: str | None) -> str:
         """Normalize a possibly qualified SQL identifier.
 
         Examples:
@@ -540,7 +541,7 @@ class SqlAutoCompleter:
 
         # ------------------------------------------------------------------ #
 
-    def _normalize_schema_dict(self, schema_dict: dict) -> dict[str, dict[str, list[str]]]:
+    def _normalize_schema_dict(self, schema_dict: dict[str, object]) -> dict[str, dict[str, list[str]]]:
         """Normalize supported schema-cache shapes into the autocomplete shape.
 
         The autocomplete engine internally expects:
@@ -568,7 +569,7 @@ class SqlAutoCompleter:
 
         return self._normalize_direct_schema_shape(schema_dict)
 
-    def _normalize_direct_schema_shape(self, schema_dict: dict) -> dict[str, dict[str, list[str]]]:
+    def _normalize_direct_schema_shape(self, schema_dict: dict[str, object]) -> dict[str, dict[str, list[str]]]:
         """Normalize a direct schema -> table -> columns mapping."""
         normalized: dict[str, dict[str, list[str]]] = {}
 
@@ -597,7 +598,7 @@ class SqlAutoCompleter:
 
         return normalized
 
-    def _normalize_by_schema_shape(self, by_schema: dict) -> dict[str, dict[str, list[str]]]:
+    def _normalize_by_schema_shape(self, by_schema: dict[object, object]) -> dict[str, dict[str, list[str]]]:
         """Normalize a by_schema mapping into schema -> table -> columns."""
         normalized: dict[str, dict[str, list[str]]] = {}
 

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-def _parse_color(value: str | dict | None) -> QColor:
+def _parse_color(value: str | dict[str, object] | None) -> QColor:
     """Parse a color from supported JSON representations.
 
     Supported values include a hex string like "#RRGGBB" and a dict of RGBA values.
@@ -26,11 +26,21 @@ def _parse_color(value: str | dict | None) -> QColor:
         return QColor(value)
 
     if isinstance(value, dict):
+        r = value.get("r", 0)
+        g = value.get("g", 0)
+        b = value.get("b", 0)
+        a = value.get("a", 255)
+        if not isinstance(r, int | str) or not isinstance(g, int | str):
+            msg = f"Unsupported color format: {value}"
+            raise ValueError(msg)
+        if not isinstance(b, int | str) or not isinstance(a, int | str):
+            msg = f"Unsupported color format: {value}"
+            raise ValueError(msg)
         return QColor(
-            int(value.get("r", 0)),
-            int(value.get("g", 0)),
-            int(value.get("b", 0)),
-            int(value.get("a", 255)),
+            int(r),
+            int(g),
+            int(b),
+            int(a),
         )
 
     msg = f"Unsupported color format: {value}"
@@ -44,7 +54,7 @@ def load_theme_from_json(path: Path) -> Theme:
     """
     data: dict[str, object] = json.loads(path.read_text(encoding="utf-8"))
 
-    kwargs = {}
+    kwargs: dict[str, object] = {}
 
     # Handle friendly_name first (string, no color parsing)
     friendly = data.get("friendly_name")
@@ -73,4 +83,4 @@ def load_theme_from_json(path: Path) -> Theme:
             # Booleans, numbers etc.
             kwargs[field_name] = val
 
-    return Theme(**kwargs)
+    return Theme(**kwargs)  # type: ignore[arg-type]

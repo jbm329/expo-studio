@@ -49,7 +49,12 @@ def format_value_for_display(
     # --------------------------------------------------------------
     # Missing values (None, np.nan, pd.NA, NaT)
     # --------------------------------------------------------------
-    if value is None or pd.isna(value):
+    if value is None:
+        return ""
+    try:
+        if bool(pd.isna(value)):  # type: ignore[call-overload]
+            return ""
+    except (TypeError, ValueError):
         return ""
 
     # No semantics available → fallback
@@ -99,7 +104,7 @@ def _format_date_only(value: object) -> str:
 
         # pandas Timestamp / NaT-safe
         if hasattr(value, "to_pydatetime"):
-            return value.to_pydatetime().date().isoformat()
+            return str(value.to_pydatetime().date().isoformat())
 
     except (
         AttributeError,

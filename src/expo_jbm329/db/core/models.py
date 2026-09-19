@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Literal
 if TYPE_CHECKING:
     import pandas as pd
 
-EngineKey = Literal["mssql", "postgresql", "mysql", "sqlite", "oracle"]
+EngineKey = Literal["mssql", "postgresql", "mysql", "mariadb", "sqlite", "oracle"]
 ProtocolKey = Literal["odbc", "psycopg2", "pymysql", "mysqlconnector", "pytds", "pymssql", "sqlite"]
 
 
@@ -55,7 +55,7 @@ class ConnectionConfig:
     password: str | None = None
     odbc_connect: str | None = None
     dsn: str | None = None
-    extra: dict | None = None
+    extra: dict[str, object] | None = None
 
 
 @dataclass

@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QTextEdit,
     QVBoxLayout,
+    QWidget,
 )
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
@@ -39,7 +40,7 @@ class DerivedColumnDialog(QDialog):
         df: pd.DataFrame,
         numeric_columns: list[str],
         validate_callback: Callable[[str, str], tuple[bool, str]],
-        parent: object=None,
+        parent: QWidget | None = None,
     ) -> None:
         """Initialize dialog.
 

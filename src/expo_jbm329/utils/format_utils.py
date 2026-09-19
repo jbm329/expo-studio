@@ -342,7 +342,9 @@ def fmt_path(p: object) -> str:
         POSIX-formatted path string.
     """
     try:
-        return Path(p).as_posix()
+        if isinstance(p, str | Path):
+            return Path(p).as_posix()
+        return str(p).replace("\\", "/")
     except (
         AttributeError,
         ConnectionError,
@@ -359,7 +361,7 @@ def fmt_path(p: object) -> str:
         return s.replace("\\", "/")
 
 
-def tuple_to_posix(args: tuple) -> tuple:
+def tuple_to_posix(args: tuple[object, ...]) -> tuple[object, ...]:
     """Convert a tuple of mixed args to POSIX-formatted strings.
 
     Only str or Path entries are converted. Non-path args are unchanged.
@@ -370,7 +372,7 @@ def tuple_to_posix(args: tuple) -> tuple:
     Returns:
         Tuple with POSIX-formatted path strings where applicable.
     """
-    out = []
+    out: list[object] = []
     for a in args:
         if isinstance(a, (str, Path)):
             out.append(fmt_path(a))

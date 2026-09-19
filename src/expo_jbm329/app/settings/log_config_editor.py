@@ -33,6 +33,7 @@ from expo_jbm329.app.settings.config_store import (
     read_log_config,
     write_log_config,
 )
+from expo_jbm329.app.settings.json_types import JsonObject, int_value, object_or_empty, string_value
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.path_manager import get_log_path
 
@@ -114,7 +115,7 @@ class LogConfigEditor(QDialog):
             self._icon_service.icons_updated.connect(self._update_icon)
 
         # Current config
-        self.log_cfg: dict = read_log_config() or {}
+        self.log_cfg: JsonObject = read_log_config()
 
         # Widgets declared here; instantiated in _build_ui
         self.lbl_logfile: QLabel
@@ -334,7 +335,10 @@ class LogConfigEditor(QDialog):
         self.lbl_logfile.setText(str(get_log_path()))
 
         # Root
-        root_level = self.log_cfg.get("logger_level", DEFAULT_LOG_CONFIG["logger_level"])
+        root_level = string_value(
+            self.log_cfg.get("logger_level"),
+            string_value(DEFAULT_LOG_CONFIG.get("logger_level"), "INFO"),
+        )
         self.cb_logger_level.setCurrentText(root_level)
 
         # Third-party (wildcard) level
@@ -342,37 +346,50 @@ class LogConfigEditor(QDialog):
         self.cb_thirdparty_level.setCurrentText(str(tp_level).upper())
 
         # Handlers
-        handlers = self.log_cfg.get("handlers", {}) or {}
+        handlers = object_or_empty(self.log_cfg.get("handlers"))
+        handler_defaults = object_or_empty(DEFAULT_LOG_CONFIG.get("handlers"))
 
         # --- FILE ---
-        file_def = DEFAULT_LOG_CONFIG["handlers"]["file"]
-        h_file = handlers.get("file", {})
-        self._ensure_custom_formatter(h_file.get("formatter"))
+        file_def = object_or_empty(handler_defaults.get("file"))
+        h_file = object_or_empty(handlers.get("file"))
+        file_formatter = h_file.get("formatter")
+        self._ensure_custom_formatter(file_formatter if isinstance(file_formatter, str) else None)
 
         self.chk_file_enabled.setChecked(bool(h_file))
-        self.cb_file_level.setCurrentText(h_file.get("level", file_def["level"]))
-        self.cb_file_formatter.setCurrentText(h_file.get("formatter", file_def["formatter"]))
-        self.spin_file_maxbytes.setValue(int(h_file.get("maxBytes", file_def["maxBytes"])))
-        self.spin_file_backup.setValue(int(h_file.get("backupCount", file_def["backupCount"])))
+        self.cb_file_level.setCurrentText(
+            string_value(h_file.get("level"), string_value(file_def.get("level"), "INFO"))
+        )
+        self.cb_file_formatter.setCurrentText(
+            string_value(h_file.get("formatter"), string_value(file_def.get("formatter"), "default"))
+        )
+        self.spin_file_maxbytes.setValue(
+            int_value(h_file.get("maxBytes"), int_value(file_def.get("maxBytes"), 5_000_000))
+        )
+        self.spin_file_backup.setValue(int_value(h_file.get("backupCount"), int_value(file_def.get("backupCount"), 3)))
 
         # --- STDOUT ---
-        out_def = DEFAULT_LOG_CONFIG["handlers"]["stdout"]
-        h_out = handlers.get("stdout", {})
-        self._ensure_custom_formatter(h_out.get("formatter"))
+        out_def = object_or_empty(handler_defaults.get("stdout"))
+        h_out = object_or_empty(handlers.get("stdout"))
+        stdout_formatter = h_out.get("formatter")
+        self._ensure_custom_formatter(stdout_formatter if isinstance(stdout_formatter, str) else None)
 
         self.chk_console_enabled.setChecked(bool(h_out) and not _is_frozen())
-        self.cb_stdout_level.setCurrentText(h_out.get("level", out_def["level"]))
-        self.cb_stdout_formatter.setCurrentText(h_out.get("formatter", out_def["formatter"]))
+        self.cb_stdout_level.setCurrentText(
+            string_value(h_out.get("level"), string_value(out_def.get("level"), "WARNING"))
+        )
+        self.cb_stdout_formatter.setCurrentText(
+            string_value(h_out.get("formatter"), string_value(out_def.get("formatter"), "default"))
+        )
 
         # --- NAMESPACE LOGGERS ---
 
-        ns_cfg = self.log_cfg.get("loggers", {}) or {}
+        ns_cfg = object_or_empty(self.log_cfg.get("loggers"))
 
-        ns_def = DEFAULT_LOG_CONFIG.get("loggers", {}) or {}
+        ns_def = object_or_empty(DEFAULT_LOG_CONFIG.get("loggers"))
         for lname, (chk, cb) in self.ns_widgets.items():
-            spec = ns_cfg.get(lname, {})
+            spec = object_or_empty(ns_cfg.get(lname))
             if not spec and lname in ns_def:
-                spec = ns_def.get(lname, {})
+                spec = object_or_empty(ns_def.get(lname))
             enabled = bool(spec)
             chk.setChecked(enabled)
             cb.setCurrentText(str(spec.get("level", "INFO")).upper())
@@ -400,7 +417,7 @@ class LogConfigEditor(QDialog):
     def _on_save(self) -> None:
         """Persists the current UI state to logconfig.json."""
         new_log = dict(self.log_cfg)
-        handlers: dict = {}
+        handlers: JsonObject = {}
 
         # Root
         new_log["logger_level"] = self.cb_logger_level.currentText()
@@ -427,7 +444,7 @@ class LogConfigEditor(QDialog):
         new_log["handlers"] = handlers
 
         # NAMESPACE LOGGERS
-        loggers: dict[str, dict] = {}
+        loggers: dict[str, JsonObject] = {}
         for lname, (chk, cb) in self.ns_widgets.items():
             if chk.isChecked():
                 # Vår enkla modell: bara level; propagate=True styrs i config/manager

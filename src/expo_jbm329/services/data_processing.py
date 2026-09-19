@@ -122,7 +122,7 @@ def generate_comparison_profile_report(
 
         reports: list[ProfileReport] = []
         for df, title in data or []:
-            reports.append(generate_profile_report(df, title, corr_id=corr_id))
+            reports.append(generate_profile_report(df, title, corr_id=corr_id or ""))
 
         comp = compare(reports)
         dt_ms = (time.perf_counter() - t0) * 1000.0

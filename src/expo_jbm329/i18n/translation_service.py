@@ -42,7 +42,7 @@ class TranslationService(QObject):
         self._current_language: str | None = None
         self._logger = logger or logging.getLogger("applogger.ui")
 
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Reload language configuration from application settings.
 
         This method is intended to be registered as a subscriber to the
@@ -56,15 +56,16 @@ class TranslationService(QObject):
             settings: The complete application settings dictionary.
         """
         try:
-            wb = settings.get("workbench", {}) or {}
+            wb = settings.get("workbench", {})
+            if not isinstance(wb, dict):
+                wb = {}
 
             lang = wb.get("language", Language.ENGLISH.value)
+            if not isinstance(lang, str):
+                return
             lang = lang.strip().lower()
 
             if lang not in {_lang.value for _lang in Language}:
-                return
-
-            if not isinstance(lang, str):
                 return
 
             if lang == self._current_language:

@@ -18,7 +18,7 @@ Design principles:
 from __future__ import annotations
 
 import logging
-from typing import Literal
+from typing import Any, Literal, cast
 
 import pandas as pd
 
@@ -188,7 +188,9 @@ def split_column(
 
     def _normalize_split_part(series: pd.Series) -> pd.Series:
         """Trim whitespace and normalize empty strings to pandas missing values."""
-        return series.astype("string").str.strip().replace("", pd.NA).astype("string")
+        return cast("pd.Series[Any]", series.astype("string").str.strip().replace("", cast("Any", pd.NA))).astype(
+            "string"
+        )
 
     left = _normalize_split_part(parts[0])
     right = _normalize_split_part(parts[1])

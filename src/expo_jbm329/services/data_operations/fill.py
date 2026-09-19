@@ -17,6 +17,8 @@ Design principles:
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import pandas as pd
 
 
@@ -46,7 +48,7 @@ def fillna(
         raise KeyError(msg)
 
     new_df = df.copy()
-    new_df[column] = new_df[column].fillna(value)
+    new_df[column] = new_df[column].fillna(cast("Any", value))
 
     return new_df
 
@@ -153,7 +155,7 @@ def replace_empty_with_nan(
         msg = f"Column '{column}' not found."
         raise KeyError(msg)
 
-    s = df[column].replace(r"^\s*$", pd.NA, regex=True)
+    s = df[column].replace(r"^\s*$", cast("Any", pd.NA), regex=True)
 
     new_df = df.copy()
     new_df[column] = s

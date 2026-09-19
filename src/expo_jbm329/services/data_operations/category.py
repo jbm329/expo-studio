@@ -19,6 +19,7 @@ Design principles:
 from __future__ import annotations
 
 import logging
+from typing import Any, cast
 
 import pandas as pd
 from pandas import CategoricalDtype
@@ -105,13 +106,15 @@ def category_rename_single(
         raise KeyError(msg)
 
     s = df[column]
+    replacement_map = cast("Any", {old: new})
+    new_s: pd.Series
 
     if is_categorical_series(s):
         try:
             new_s = s.cat.rename_categories(lambda c: new if c == old else c)
         except (ValueError, TypeError):
             # Collision or invalid mapping -> rebuild categories
-            tmp = s.astype("string").replace({old: new})
+            tmp = s.astype("string").replace(replacement_map)
             categories = list(pd.unique(tmp.dropna()))
             dtype = CategoricalDtype(
                 categories=categories,
@@ -123,7 +126,7 @@ def category_rename_single(
                 name=s.name,
             )
     else:
-        new_s = s.astype("string").replace({old: new})
+        new_s = s.astype("string").replace(replacement_map)
 
     new_df = df.copy()
     new_df[column] = new_s

@@ -9,11 +9,14 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QFileInfo
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QFileIconProvider, QStyle
+
+if TYPE_CHECKING:
+    from expo_jbm329.workbench.icon.icon_service import IconService
 
 
 def _normalize_ext(ext: str) -> str:
@@ -38,9 +41,10 @@ class CustomFileIconProvider(QFileIconProvider):
         "_icons_by_ext",
         "_icons_by_multi_ext",
         "_link_icon",
+        "_logger",
     )
 
-    def __init__(self, icon_service: object=None, logger: logging.Logger | None = None) -> None:
+    def __init__(self, icon_service: IconService | None = None, logger: logging.Logger | None = None) -> None:
         """Initialize the icon provider.
 
         Args:
@@ -65,6 +69,10 @@ class CustomFileIconProvider(QFileIconProvider):
     # ------------------------------------------------------------------ #
     def update_theme(self) -> None:
         """Refresh all icons according to the current GUI theme."""
+        if self._icon_service is None:
+            self._logger.warning("CustomFileIconProvider: no icon service configured; using fallback icons.")
+            return
+
         theme = self._icon_service.current_theme()
         # Base icons
         self._folder_icon = self._icon_service.get("folder")
@@ -176,7 +184,10 @@ class CustomFileIconProvider(QFileIconProvider):
         if t == QFileIconProvider.IconType.File:
             return self._file_icon
         # Rare fallback
-        return QApplication.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon)
+        style = QApplication.style()
+        if style is None:
+            return QIcon()
+        return style.standardIcon(QStyle.StandardPixmap.SP_FileIcon)
 
     def _icon_for_name(self, file_name: str) -> QIcon | None:
         """Resolve an icon using file-name extension rules.

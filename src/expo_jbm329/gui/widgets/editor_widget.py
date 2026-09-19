@@ -46,6 +46,7 @@ class EditorWidget(QWidget):
         "_editor",
         "_highlighter",
         "editor_controller",
+        "tab_id",
     )
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -68,6 +69,7 @@ class EditorWidget(QWidget):
         self._highlighter: SqlHighlighter | None = None
         self._autocomplete: SqlAutocompleteController | None = None
         self._autocomplete_engine: SqlAutoCompleter | None = None
+        self.tab_id: str | None = None
 
         # --- Layout ----------------------------------------------------
         layout = QVBoxLayout(self)

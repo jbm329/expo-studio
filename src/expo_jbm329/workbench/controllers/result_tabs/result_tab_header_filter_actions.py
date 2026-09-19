@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 from PyQt6.QtCore import QT_TR_NOOP
 
@@ -106,7 +106,7 @@ class ResultTabHeaderFilterActions:
         return tr("ResultTabHeaderFilterActions", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabHeaderFilterActions", text, **kwargs)
 
     # ------------------------------------------------------------------
@@ -205,7 +205,7 @@ class ResultTabHeaderFilterActions:
 
         # Defaults
         case_sensitive = True
-        value = None
+        value: object | None = None
 
         try:
             # --------------------------------------------------
@@ -303,7 +303,12 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_equals
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -316,7 +321,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -388,7 +393,12 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_contains
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -401,7 +411,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -457,7 +467,12 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_isna
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -465,7 +480,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -512,7 +527,12 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_notna
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -520,7 +540,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -621,7 +641,12 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_compare
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -632,7 +657,7 @@ class ResultTabHeaderFilterActions:
         value_str = format_value_for_display(value, sem)
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -718,7 +743,7 @@ class ResultTabHeaderFilterActions:
             high = result["high"]
             inclusive = result.get("inclusive", "both")
 
-            if low is not None and high is not None and high < low:
+            if low is not None and high is not None and cast("Any", high) < cast("Any", low):
                 self._dialogs.warn(
                     parent=self._parent,
                     title=self._tr(self.TR_INVALID_INTERVAL_TITLE),
@@ -748,7 +773,12 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_between
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -768,7 +798,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 

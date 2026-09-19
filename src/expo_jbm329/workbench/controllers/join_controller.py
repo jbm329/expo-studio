@@ -12,7 +12,7 @@ import uuid
 from typing import TYPE_CHECKING, cast
 
 import pandas as pd
-from PyQt6.QtCore import QT_TR_NOOP
+from PyQt6.QtCore import QT_TR_NOOP, QObject
 from PyQt6.QtWidgets import QDialog, QTableView, QWidget
 
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
@@ -73,7 +73,7 @@ class JoinController:
         return tr("JoinController", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("JoinController", text, **kwargs)
 
     __slots__ = (
@@ -137,7 +137,7 @@ class JoinController:
 
         all_tabs = list(self._list_tab_titles())
 
-        columns_map = {t: list(self._get_df(t).columns) for t in all_tabs}
+        columns_map: dict[str, Sequence[str]] = {t: list(self._get_df(t).columns) for t in all_tabs}
 
         dfs = {t: self._get_df(t) for t in all_tabs}
 
@@ -151,10 +151,10 @@ class JoinController:
                     continue
 
                 for c1 in df1.columns:
-                    s1 = cast("pd.Series", df1[c1])
+                    s1 = df1[c1]
 
                     for c2 in df2.columns:
-                        s2 = cast("pd.Series", df2[c2])
+                        s2 = df2[c2]
 
                         if self._are_joinable(s1, s2):
                             joinable_map_dd[(t1, c1, t2)].add(c2)
@@ -225,15 +225,13 @@ class JoinController:
 
         def _work(
             *,
-            progress_cb: object = None,
-            cancel_cb: object = None,
-            job_id: object = None,
-            job_scope: object = None,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
-            _ = progress_cb
-            _ = job_scope
-            _ = job_id
+            del progress_cb, job_scope, job_id
 
             if cancel_cb is not None and cancel_cb():
                 return None
@@ -349,7 +347,7 @@ class JoinController:
             corr_id=corr_id,
         )
 
-        jobid = self._async_ops.job_mgr.get_job_id(job)
+        jobid = self._async_ops.job_mgr.get_job_id(cast("QObject | None", job))
         if jobid is not None:
             self._results.bind_job_to_tab(pending_tab_id, jobid)
         else:
@@ -404,9 +402,12 @@ class JoinController:
         corr_id = uuid.uuid4().hex
 
         def _work(
-            *, progress_cb: object = None, cancel_cb: object = None, **_: object
-        ) -> tuple[pd.DataFrame, dict[str, object]] | None:
-            _ = progress_cb
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> tuple[pd.DataFrame, JoinMetadata] | None:
+            del progress_cb
             if cancel_cb and cancel_cb():
                 return None
 
@@ -429,7 +430,7 @@ class JoinController:
 
             return preview_df, metadata
 
-        def _show_preview(result: object) -> None:
+        def _show_preview(result: tuple[pd.DataFrame, JoinMetadata] | None) -> None:
             if result is None:
                 return
 
@@ -467,7 +468,7 @@ class JoinController:
         )
 
     # noinspection PyMethodMayBeStatic
-    def _filter_joined_columns(self, result_df: pd.DataFrame, cfg: object) -> pd.DataFrame:
+    def _filter_joined_columns(self, result_df: pd.DataFrame, cfg: JoinDialogResult) -> pd.DataFrame:
         """Filter join result columns according to dialog selection."""
         left_suffix = f"_{cfg.left_tab_title}"
         right_suffix = f"_{cfg.right_tab_title}"

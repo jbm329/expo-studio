@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 from .text import clean_text, replace_values
 
@@ -117,7 +117,7 @@ class RemoveValueRule(Rule):
             msg = f"Column '{self.column}' not found."
             raise KeyError(msg)
 
-        return df.loc[df[self.column].ne(self.value)].copy()
+        return df.loc[df[self.column].ne(cast("Any", self.value))].copy()
 
 
 @dataclass(frozen=True)

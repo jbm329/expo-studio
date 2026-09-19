@@ -7,10 +7,13 @@ cancel button.
 
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QPoint, QRect, Qt, pyqtSignal
 from PyQt6.QtWidgets import QLabel, QProgressBar, QPushButton, QVBoxLayout, QWidget
+
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QResizeEvent
 
 
 class BusyOverlayWidget(QWidget):
@@ -163,7 +166,7 @@ class BusyOverlayWidget(QWidget):
         self._bar.setValue(max(0, min(100, int(value))))
 
     @override
-    def resizeEvent(self, event: object) -> None:
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
         """Handle resize events and reposition the overlay.
 
         Args:

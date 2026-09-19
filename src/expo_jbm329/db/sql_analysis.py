@@ -160,7 +160,7 @@ def parse_one_safe(sql: str, dialect: str | None = None) -> exp.Expression | Non
         return None
 
     try:
-        return sqlglot.parse_one(sql, read=sqlglot_dialect(dialect))
+        return cast("exp.Expression", sqlglot.parse_one(sql, read=sqlglot_dialect(dialect)))
     except (ParseError, SqlglotError, ValueError):
         return None
 
@@ -676,7 +676,7 @@ def _normalize_identifier(value: str | None) -> str:
 
 
 def _normalize_schema_for_lint(
-    schema: dict[str, dict[str, list[str]]] | None,
+    schema: Mapping[str, object] | None,
 ) -> dict[str, dict[str, set[str]]]:
     """Normalize schema metadata to a table -> set(columns) map.
 
@@ -688,7 +688,8 @@ def _normalize_schema_for_lint(
     if not isinstance(schema, Mapping):
         return {}
 
-    source = schema.get("by_schema") if isinstance(schema.get("by_schema"), Mapping) else schema
+    maybe_by_schema = schema.get("by_schema")
+    source: Mapping[str, object] = maybe_by_schema if isinstance(maybe_by_schema, Mapping) else schema
 
     normalized: dict[str, dict[str, set[str]]] = {}
 
@@ -891,7 +892,7 @@ def _lint_unknown_columns(
 def _lint_schema(
     sql: str,
     *,
-    schema: dict[str, dict[str, list[str]]] | None,
+    schema: Mapping[str, object] | None,
     dialect: str | None = None,
 ) -> list[SqlDiagnostic]:
     """Schema-aware lint checks for schema, table, and column names."""
@@ -955,7 +956,7 @@ def lint_syntax(
     sql: str,
     dialect: str | None = None,
     *,
-    schema: dict[str, dict[str, list[str]]] | None = None,
+    schema: Mapping[str, object] | None = None,
 ) -> list[SqlDiagnostic]:
     """Lint SQL with layered checks.
 
@@ -1219,9 +1220,9 @@ def _expression_name_or_none(value: object) -> str | None:
         return name if isinstance(name, str) and name else None
 
     if isinstance(value, exp.Expression):
-        name = getattr(value, "name", None)
-        if isinstance(name, str) and name:
-            return name
+        expr_name = getattr(value, "name", None)
+        if isinstance(expr_name, str) and expr_name:
+            return expr_name
 
         text = value.sql()
         if isinstance(text, str) and text:

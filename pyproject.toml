@@ -211,13 +211,66 @@ testpaths = ["tests"]
 # -------------------------------
 [tool.mypy]
 python_version = "3.13"
-strict = false
+strict = true
 ignore_missing_imports = true
 warn_unused_ignores = true
 mypy_path = ["src"]
+exclude = [
+    "^hooks/",
+    "^src/expo_jbm329/workbench/icon/icons_rc\\.py$",
+    "^src/expo_jbm329/workbench/splash/splash_rc\\.py$",
+]
 
-
-
+[[tool.mypy.overrides]]
+module = [
+    "tests.*",
+    "__init__",
+    "conftest",
+    "controllers.*",
+    "data_operations.*",
+    "data_profile.*",
+    "db.*",
+    "qt_stubs",
+    "rest.*",
+    "result_tabs.*",
+    "stubs",
+    "test_autocomplete_engine",
+    "test_autocomplete_gui",
+    "test_bootstrap",
+    "test_config_merge",
+    "test_config_validation",
+    "test_connection_controller",
+    "test_custom_dialogs",
+    "test_custom_file_icon_provider",
+    "test_data_io_service",
+    "test_data_processing",
+    "test_data_profile",
+    "test_dialog_service",
+    "test_editor_controller",
+    "test_file_dialog_service",
+    "test_file_job_service",
+    "test_file_loader",
+    "test_file_types",
+    "test_file_writer",
+    "test_format_utils",
+    "test_icon_service",
+    "test_job_manager",
+    "test_logging_manager",
+    "test_path_manager",
+    "test_paths",
+    "test_profile_cache",
+    "test_rest_config_store",
+    "test_rest_connection_editor",
+    "test_rest_panel_controller",
+    "test_schema_cache_manager",
+    "test_schema_model",
+    "test_settings_service",
+    "test_sql_highlighter",
+    "test_utils_models",
+]
+disallow_untyped_defs = false
+check_untyped_defs = false
+ignore_errors = true
 
 
 

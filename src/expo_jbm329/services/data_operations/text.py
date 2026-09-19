@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import logging
 import re
+from typing import Any, cast
 
 import pandas as pd
 
@@ -119,9 +120,9 @@ def replace_values(
     s = df[column].astype("string")
 
     if regex:
-        new_s = s.replace(to_replace=pattern, value=replacement, regex=True)
+        new_s = s.replace(to_replace=cast("Any", pattern), value=cast("Any", replacement), regex=True)
     else:
-        new_s = s.replace(to_replace=pattern, value=replacement)
+        new_s = s.replace(to_replace=cast("Any", pattern), value=cast("Any", replacement))
 
     new_df = df.copy()
     new_df[column] = new_s.astype("string")
@@ -383,9 +384,11 @@ def capitalize_first(df: pd.DataFrame, column: str) -> pd.DataFrame:
 
     s = df[column].astype("string")
 
-    def _cap(value: object) -> object:
+    def _cap(value: object) -> str | None:
         if value is pd.NA:
-            return pd.NA
+            return None
+        if not isinstance(value, str):
+            return str(value)
         if len(value) == 0:
             return value
         return value[0].upper() + value[1:].lower()
@@ -479,9 +482,11 @@ def insert_text(
 
     s = df[column].astype("string")
 
-    def _insert(value: object) -> object:
+    def _insert(value: object) -> str | None:
         if value is pd.NA:
-            return pd.NA
+            return None
+        if not isinstance(value, str):
+            return str(value)
         try:
             return value[:position] + insert + value[position:]
         except (

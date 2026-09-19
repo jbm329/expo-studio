@@ -10,11 +10,11 @@ import logging
 from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QEvent, QObject, Qt, QTimer
+from PyQt6.QtGui import QKeyEvent
 
 from .popup import SqlEditorAutoCompletePopup
 
 if TYPE_CHECKING:
-    from PyQt6.QtGui import QKeyEvent
     from PyQt6.QtWidgets import QPlainTextEdit
 
     from .engine import SqlAutoCompleter
@@ -38,7 +38,7 @@ class SqlAutocompleteController(QObject):
         self,
         editor: QPlainTextEdit,
         completer: SqlAutoCompleter,
-        parent: object=None,
+        parent: QObject | None = None,
         *,
         debug: bool = False,
         logger: logging.Logger | None = None,
@@ -67,7 +67,7 @@ class SqlAutocompleteController(QObject):
         self.popup.installEventFilter(self)
         self.popup.list.installEventFilter(self)
 
-    def set_schema(self, schema_dict: dict[str, dict[str, list[str]]]) -> None:
+    def set_schema(self, schema_dict: dict[str, object]) -> None:
         """Update the schema metadata used for suggestions.
 
         Args:
@@ -88,7 +88,7 @@ class SqlAutocompleteController(QObject):
 
     # ------------------------------------------------------------------ #
     @override
-    def eventFilter(self, obj: object, event: QEvent) -> bool:
+    def eventFilter(self, obj: QObject | None, event: QEvent | None) -> bool:
         """Filter events for the editor and popup.
 
         Args:
@@ -98,7 +98,13 @@ class SqlAutocompleteController(QObject):
         Returns:
             True if the event was handled, False otherwise.
         """
-        if event.type() == QEvent.Type.KeyPress and obj in (self.editor, self.popup, self.popup.list):
+        if (
+            event is not None
+            and event.type() == QEvent.Type.KeyPress
+            and obj in (self.editor, self.popup, self.popup.list)
+        ):
+            if not isinstance(event, QKeyEvent):
+                return super().eventFilter(obj, event)
             return self._handle_keypress(event)
         return super().eventFilter(obj, event)
 

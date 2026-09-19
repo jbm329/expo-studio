@@ -67,7 +67,7 @@ class ResultTabCellActions:
         return tr("ResultTabCellActions", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabCellActions", text, **kwargs)
 
     # ------------------------------------------------------------------
@@ -172,18 +172,23 @@ class ResultTabCellActions:
             filter_isna,
         )
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
-            if pd.isna(raw_value):
+            if bool(pd.isna([raw_value])[0]):
                 return filter_isna(df, column_name)
 
             return filter_equals(df, column_name, raw_value)
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -243,18 +248,23 @@ class ResultTabCellActions:
             filter_notna,
         )
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
-            if pd.isna(raw_value):
+            if bool(pd.isna([raw_value])[0]):
                 return filter_notna(df, column_name)
 
             return filter_not_equals(df, column_name, raw_value)
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -337,7 +347,7 @@ class ResultTabCellActions:
             title=self._tr(self.TR_REPLACE_VALUE),
             column=column_name,
             current_value=str(raw_value),
-            default_new_value="" if pd.isna(raw_value) else str(raw_value),
+            default_new_value="" if bool(pd.isna([raw_value])[0]) else str(raw_value),
             default_replace_all=False,
         )
 
@@ -355,7 +365,12 @@ class ResultTabCellActions:
             set_cell_value_text,
         )
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -400,7 +415,7 @@ class ResultTabCellActions:
                 column_name=column_name,
             )
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 

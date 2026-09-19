@@ -301,12 +301,13 @@ class SqlHighlighter(QSyntaxHighlighter):
 
     # ---------------------- QSyntaxHighlighter ------------------------ #
     @override
-    def highlightBlock(self, text: str) -> None:
+    def highlightBlock(self, text: str | None) -> None:
         """Highlight one document block.
 
         Args:
             text: The current text block to highlight.
         """
+        text = text or ""
         self.setCurrentBlockState(self._STATE_NONE)
 
         # 1) Continue multi-line constructs if needed

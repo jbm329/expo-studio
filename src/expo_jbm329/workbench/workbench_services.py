@@ -6,7 +6,7 @@ autocomplete, result tabs, and file handling into a single dependency container.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from PyQt6.QtCore import Qt
 
@@ -129,8 +129,8 @@ class WorkbenchServices:
 
     @classmethod
     def build(
-        cls: object, app: AppServices, ui: WorkbenchUIRefs, settings_service: SettingsService
-    ) -> WorkbenchServices:
+        cls: type[Self], app: AppServices, ui: WorkbenchUIRefs, settings_service: SettingsService
+    ) -> Self:
         """Construct all workbench-level controllers and services.
 
         Args:

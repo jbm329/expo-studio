@@ -7,7 +7,7 @@ import uuid
 from typing import TYPE_CHECKING, Protocol
 
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QDialog, QTableView
+from PyQt6.QtWidgets import QDialog, QTableView, QWidget
 
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.derived_column.derived_column_dialog import (
@@ -113,7 +113,7 @@ class DerivedColumnController:
         return tr("DerivedColumnController", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("DerivedColumnController", text, **kwargs)
 
     __slots__ = (
@@ -134,7 +134,7 @@ class DerivedColumnController:
         get_active_view: Callable[[], QTableView | None],
         apply_to_active_tab: ApplyToActiveTab,
         dialogs: DialogService | None = None,
-        main_window: object,
+        main_window: QWidget,
         logger: logging.Logger | None = None,
     ) -> None:
         """Initialize controller.
@@ -267,8 +267,12 @@ class DerivedColumnController:
         )
 
         def _work(
-            *, progress_cb: object=None, cancel_cb: object=None, **_: object
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
         ) -> tuple[bool, pd.DataFrame | None, Exception | None] | None:
+            del progress_cb
             if cancel_cb and cancel_cb():
                 return None
 
@@ -279,13 +283,15 @@ class DerivedColumnController:
             except DerivedColumnError as exc:
                 return False, None, exc
 
-        def _apply_result(result: object) -> None:
+        def _apply_result(result: tuple[bool, pd.DataFrame | None, Exception | None] | None) -> None:
             if result is None:
                 return
 
             ok, new_df, exc = result
 
             if not ok:
+                if exc is None:
+                    exc = DerivedColumnError(code="unknown")
                 self._logger.warning(
                     "DerivedColumnController: derived column failed (column=%s, corr=%s): %s",
                     safe_spec.column_name,

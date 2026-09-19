@@ -7,11 +7,20 @@ blocking the UI while a long-running job is in progress.
 from __future__ import annotations
 
 import contextlib
+from typing import Protocol
 
 from PyQt6.QtCore import pyqtSlot
-from PyQt6.QtWidgets import QDialog, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout
+from PyQt6.QtWidgets import QDialog, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict
+
+
+class _CancellableJobManager(Protocol):
+    """Protocol for job managers that support cancellation."""
+
+    def cancel_job(self, job_id: str) -> bool:
+        """Cancel a job by id."""
+        ...
 
 
 class BlockingProgressDialog(QDialog):
@@ -25,7 +34,7 @@ class BlockingProgressDialog(QDialog):
         btn_cancel: The cancel button.
     """
 
-    def __init__(self, parent: object=None, title: str = "Arbetar...", started_msg: str = "") -> None:
+    def __init__(self, parent: QWidget | None = None, title: str = "Arbetar...", started_msg: str = "") -> None:
         """Initialize the progress dialog.
 
         Args:
@@ -95,7 +104,7 @@ class BlockingProgressDialog(QDialog):
         """
         self.label.setText(text or "")
 
-    def attach_cancel(self, job_id: str, job_manager: object) -> None:
+    def attach_cancel(self, job_id: str, job_manager: _CancellableJobManager) -> None:
         """Connect the cancel button to the job manager.
 
         Args:

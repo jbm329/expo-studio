@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP, QPoint
 from PyQt6.QtGui import QAction
-from PyQt6.QtWidgets import QMenu
+from PyQt6.QtWidgets import QMenu, QWidget
 
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
@@ -88,11 +88,11 @@ class EditorTabContextMenu:
         save_tab_as: Callable[[], None],
         duplicate_tab: Callable[[str], None],
         get_connections: Callable[[], Iterable[str]],
-        bind_tab_to_connection: Callable[[str, str]],
-        unbind_tab: Callable[[str]],
+        bind_tab_to_connection: Callable[[str, str], None],
+        unbind_tab: Callable[[str], None],
         close_all_tabs: Callable[[str | None], None],
         dialogs: DialogService | None = None,
-        parent: object,
+        parent: QWidget,
     ) -> None:
         """Initialize the context menu."""
         self._get_tab = get_tab

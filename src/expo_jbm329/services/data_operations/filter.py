@@ -21,7 +21,7 @@ Design principles:
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import pandas as pd
 import pandas.api.types as pdt
@@ -85,7 +85,7 @@ def filter_equals(
     # Fallback numeric / datetime / bool
     # --------------------------------------------------
 
-    mask: pd.Series[bool] = s == value
+    mask = s == value
     return df.loc[mask].copy()
 
 
@@ -118,10 +118,10 @@ def filter_not_equals(
 
     s = df[column]
 
-    if pd.isna(value):
+    if pd.isna(cast("Any", value)):
         return df.loc[s.notna()].copy()
 
-    return df.loc[s.ne(value)].copy()
+    return df.loc[s.ne(cast("Any", value))].copy()
 
 
 # =====================================================================
@@ -270,7 +270,7 @@ def filter_compare(
         return df.query(f"`{column}` {op} @value").copy()
 
     if pdt.is_datetime64_any_dtype(s):
-        query_value = pd.to_datetime(value)
+        query_value = pd.to_datetime(cast("Any", value))
         return df.query(f"`{column}` {op} @query_value", local_dict={"query_value": query_value}).copy()
 
     msg = f"Column '{column}' must be numeric or datetime for filter_compare."
@@ -323,8 +323,8 @@ def filter_between(
     s = df[column]
 
     if pdt.is_datetime64_any_dtype(s):
-        low_val = pd.to_datetime(low)
-        high_val = pd.to_datetime(high)
+        low_val = pd.to_datetime(cast("Any", low))
+        high_val = pd.to_datetime(cast("Any", high))
 
     elif pdt.is_numeric_dtype(s):
         low_val = low
@@ -334,7 +334,8 @@ def filter_between(
         msg_0 = f"Column '{column}' must be numeric or datetime for filter_between."
         raise TypeError(msg_0)
 
-    mask = s.between(low_val, high_val, inclusive=inclusive)
+    inclusive_mode = cast("Literal['both', 'left', 'right', 'neither']", inclusive)
+    mask = s.between(low_val, high_val, inclusive=inclusive_mode)
 
     return df.loc[mask].copy()
 

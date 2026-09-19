@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, cast
 
 from expo_jbm329.services.rest.models import RestAuthConfig, RestRequestConfig
 
@@ -66,7 +66,7 @@ class RestConnectionRegistry:
     # ------------------------------------------------------------------
     # Bulk loaders
     # ------------------------------------------------------------------
-    def reload_user_connections(self, raw: dict[str, dict]) -> None:
+    def reload_user_connections(self, raw: dict[str, dict[str, object]]) -> None:
         """Replace all user connections from a fresh config store read.
 
         Samples are preserved. Intended to be called after a write to the
@@ -76,7 +76,7 @@ class RestConnectionRegistry:
         self.unregister_user_connections()
         self.load_user_connections(raw)
 
-    def load_user_connections(self, raw: dict[str, dict]) -> None:
+    def load_user_connections(self, raw: dict[str, dict[str, object]]) -> None:
         """Load persistent REST connections from config_store."""
         for name, cfg in raw.items():
             url = cfg.get("url")
@@ -94,13 +94,22 @@ class RestConnectionRegistry:
             if not isinstance(auth_raw, dict):
                 auth_raw = {"type": "none"}
 
+            json_body_raw = cfg.get("json_body")
+            json_body = cast("dict[str, object] | None", json_body_raw if isinstance(json_body_raw, dict) else None)
+            headers_raw = cfg.get("headers", {})
+            headers = {str(k): str(v) for k, v in headers_raw.items()} if isinstance(headers_raw, dict) else {}
+            query_params_raw = cfg.get("query_params", {})
+            query_params = (
+                {str(k): str(v) for k, v in query_params_raw.items()} if isinstance(query_params_raw, dict) else {}
+            )
+
             req = RestRequestConfig(
                 name=name,
                 url=url,
                 method=method,
-                json_body=cfg.get("json_body"),
-                headers=cfg.get("headers", {}),
-                query_params=cfg.get("query_params", {}),
+                json_body=json_body,
+                headers=headers,
+                query_params=query_params,
                 response_path=response_path,
                 auth=RestAuthConfig(**auth_raw),
             )
@@ -163,7 +172,7 @@ class RestConnectionRegistry:
         if isinstance(val, str):
             v = val.strip().upper()
             if v in ("GET", "POST"):
-                return v
+                return cast("Literal['GET', 'POST']", v)
         return "GET"
 
 

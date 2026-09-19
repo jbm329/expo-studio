@@ -29,7 +29,10 @@ import zipfile
 from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError, metadata
 from pathlib import Path
-from typing import Never
+from typing import TYPE_CHECKING, Never
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from PIL import Image
 
@@ -45,7 +48,7 @@ def _detect_platform() -> str:
     return sys.platform.replace(" ", "_")
 
 
-def _build_metadata() -> dict:
+def _build_metadata() -> dict[str, str]:
     """Return normalized metadata used for release artifacts."""
     try:
         meta = metadata("expo_jbm329")
@@ -112,7 +115,7 @@ def _chmod_writable(path: Path) -> None:
         path.chmod(stat.S_IWRITE)
 
 
-def _onerror(func: object, path: object, _exc_info: object) -> None:
+def _onerror(func: Callable[[str], object], path: str, _exc_info: object) -> None:
     """Error handler for shutil.rmtree.
 
     Attempts to make the path writable and retry the original operation.

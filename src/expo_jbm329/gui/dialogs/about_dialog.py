@@ -69,7 +69,7 @@ class AboutDialog(QDialog):
         name_label.setStyleSheet("font-size: 16pt; font-weight: bold;")
         info_layout.addWidget(name_label)
 
-        version_label = QLabel(self.tr("Version: %1").replace("%1", metadata.get("version", self.tr("Unknown"))))
+        version_label = QLabel(self.tr("Version: %1").replace("%1", str(metadata.get("version", self.tr("Unknown")))))
         version_label.setStyleSheet("font-weight: bold;")
         info_layout.addWidget(version_label)
 
@@ -79,14 +79,14 @@ class AboutDialog(QDialog):
 
         info_layout.addSpacing(10)
 
-        author_label = QLabel(self.tr("Author: %1").replace("%1", metadata.get("author", "Jonas Brännström")))
+        author_label = QLabel(self.tr("Author: %1").replace("%1", str(metadata.get("author", "Jonas Brännström"))))
         info_layout.addWidget(author_label)
 
-        license_label = QLabel(self.tr("License: %1").replace("%1", metadata.get("license", "GPL-3.0-or-later")))
+        license_label = QLabel(self.tr("License: %1").replace("%1", str(metadata.get("license", "GPL-3.0-or-later"))))
         info_layout.addWidget(license_label)
         source_code_label = QLabel(
             self.tr("Source code: <a href='%1'>%1</a>").replace(
-                "%1", metadata.get("repository", "https://github.com/jbm329/expo-studio")
+                "%1", str(metadata.get("repository", "https://github.com/jbm329/expo-studio"))
             )
         )
         source_code_label.setTextFormat(Qt.TextFormat.RichText)

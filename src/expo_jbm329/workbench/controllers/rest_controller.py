@@ -7,7 +7,7 @@ import uuid
 from typing import TYPE_CHECKING, Protocol
 
 import pandas as pd
-from PyQt6.QtCore import QT_TR_NOOP
+from PyQt6.QtCore import QT_TR_NOOP, QObject
 
 from expo_jbm329.app.settings.config_store import (
     read_rest_connections,
@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 
     from PyQt6.QtWidgets import QWidget
 
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
     from expo_jbm329.services.rest.models import RestRequestConfig
     from expo_jbm329.workbench.controllers.async_operation_controller import (
         AsyncOperationController,
@@ -89,7 +90,7 @@ class RestController:
         results: ResultTabManager,
         display_dataframe: DisplayDataFrameProtocol,
         set_status: Callable[[str, int | None], None],
-        dialogs: object,
+        dialogs: DialogService,
         logger: logging.Logger | None = None,
     ) -> None:
         """Initialize RestController.
@@ -145,10 +146,10 @@ class RestController:
 
         def _work(
             *,
-            progress_cb: object = None,
-            cancel_cb: object = None,
-            job_id: object = None,
-            job_scope: object = None,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
             **_: object,
         ) -> object:
             if cancel_cb is not None and cancel_cb():
@@ -206,7 +207,7 @@ class RestController:
             corr_id=corr,
         )
 
-        jobid = self._async_ops.job_mgr.get_job_id(job)
+        jobid = self._async_ops.job_mgr.get_job_id(job if isinstance(job, QObject) else None)
         if jobid is not None:
             self._results.bind_job_to_tab(pending_tab_id, jobid)
         else:
@@ -320,7 +321,7 @@ class RestController:
             preset_name,
             new_name,
         )
-        return new_name
+        return str(new_name)
 
     # ==================================================================
     # Internal handlers

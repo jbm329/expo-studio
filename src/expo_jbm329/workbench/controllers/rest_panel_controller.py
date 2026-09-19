@@ -19,7 +19,7 @@ from expo_jbm329.services.rest.registry import rest_registry
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from PyQt6.QtWidgets import QWidget
+    from PyQt6.QtWidgets import QTreeWidgetItem, QWidget
 
     from expo_jbm329.workbench.controllers.rest_controller import RestController
     from expo_jbm329.workbench.icon.icon_service import IconService
@@ -103,7 +103,7 @@ class RestPanelController:
             if child is not None:
                 self._update_item_icons_recursive(child)
 
-    def _update_item_icons_recursive(self, item: object) -> None:
+    def _update_item_icons_recursive(self, item: QTreeWidgetItem) -> None:
         role = item.data(0, Qt.ItemDataRole.UserRole)
 
         if role == RestTreeWidget.FOLDER_ROLE:

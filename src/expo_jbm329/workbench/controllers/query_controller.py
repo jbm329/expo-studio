@@ -10,12 +10,13 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
-from PyQt6.QtCore import QT_TR_NOOP
+import pandas as pd
+from PyQt6.QtCore import QT_TR_NOOP, QObject
 
 from expo_jbm329.db.base import execute_sql_safe
-from expo_jbm329.db.core.models import SqlError
+from expo_jbm329.db.core.models import SqlError, SqlResult
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.format_utils import fmt_shape, fmt_time
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
@@ -235,13 +236,14 @@ class QueryController:
         def _work(
             *,
             progress_cb: object = None,
-            cancel_cb: object = None,
-            job_id: object = None,
-            job_scope: object = None,
-            **_: object,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
+            **extra_context: object,
         ) -> object:
             _ = progress_cb
             _ = job_scope
+            _ = extra_context
 
             return execute_sql_safe(
                 safe_connection_name,
@@ -254,7 +256,7 @@ class QueryController:
 
         def _on_result(payload: object) -> None:
             """Handle SQL result for the pending result tab."""
-            res = payload
+            res = payload if isinstance(payload, SqlResult) else None
 
             if res is None:
                 self._logger.error(
@@ -321,6 +323,15 @@ class QueryController:
                 )
                 self._results.remove_pending_tab(pending_tab_id)
                 return
+            if not isinstance(df, pd.DataFrame):
+                self._logger.warning(
+                    "QueryController: SQL returned non-DataFrame payload (corr=%s, tab_id=%s, type=%s).",
+                    corr_id,
+                    pending_tab_id,
+                    type(df).__name__,
+                )
+                self._results.remove_pending_tab(pending_tab_id)
+                return
 
             rows = df.shape[0]
 
@@ -332,7 +343,7 @@ class QueryController:
                 pending_tab_id,
             )
 
-            self._parent.last_df = df
+            cast("Any", self._parent).last_df = df
 
             self._results.fulfill_pending_tab(pending_tab_id, df)
 
@@ -388,7 +399,9 @@ class QueryController:
             corr_id=corr_id,
         )
 
-        jobid = self._async_ops.job_mgr.get_job_id(job)
+        jobid = self._async_ops.job_mgr.get_job_id(job) if isinstance(job, QObject) else getattr(job, "job_id", None)
+        if jobid is None:
+            jobid = getattr(job, "_job_id", None)
         if jobid is not None:
             self._results.bind_job_to_tab(pending_tab_id, jobid)
         else:

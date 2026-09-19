@@ -12,7 +12,7 @@ import pickle
 import time
 from contextlib import suppress
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import pandas as pd
 
@@ -20,6 +20,8 @@ from expo_jbm329.utils.format_utils import fmt_path, fmt_shape
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from openpyxl.worksheet._write_only import WriteOnlyWorksheet
 
 
 class ExportCancelledError(Exception):
@@ -96,7 +98,7 @@ class FileWriter:
     # ----------------------------------------------------------------------
     # Settings reload
     # ----------------------------------------------------------------------
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Reload configuration for CSV/Excel writing.
 
         Updates:
@@ -106,15 +108,18 @@ class FileWriter:
             • excel_max_rows_per_sheet
         """
         try:
-            csv_settings = settings.get("csv", {}) or {}
+            raw_csv_settings = settings.get("csv", {}) or {}
+            csv_settings = raw_csv_settings if isinstance(raw_csv_settings, dict) else {}
+            encoding_value = csv_settings.get("default_encoding", self._csv_encoding_default)
             self._csv_encoding_default = (
-                csv_settings.get("default_encoding", self._csv_encoding_default) or ""
-            ).strip() or "utf-8"
+                encoding_value.strip() if isinstance(encoding_value, str) and encoding_value.strip() else "utf-8"
+            )
             self._csv_write_chunk_size = int(
                 csv_settings.get("write_chunk_size_rows", self._csv_write_chunk_size_default)
             )
 
-            excel_settings = settings.get("excel", {}) or {}
+            raw_excel_settings = settings.get("excel", {}) or {}
+            excel_settings = raw_excel_settings if isinstance(raw_excel_settings, dict) else {}
             self._excel_chunk_size = int(excel_settings.get("chunk_size_rows", self._excel_chunk_size_default))
             self._excel_max_rows_per_sheet = int(
                 excel_settings.get("max_rows_per_sheet", self._excel_max_rows_per_sheet_default)
@@ -234,6 +239,7 @@ class FileWriter:
             chunk_size_rows = self._csv_write_chunk_size
 
         t0 = time.perf_counter()
+        csv_na_rep = "" if na_rep is None else na_rep
 
         # No-chunk (single call) path
         if total == 0 or not chunk_size_rows or total <= chunk_size_rows:
@@ -257,7 +263,7 @@ class FileWriter:
                     corr_id=corr_id,
                 )
 
-            df.to_csv(path, encoding=encoding, sep=sep, index=index, na_rep=na_rep)
+            df.to_csv(path, encoding=encoding, sep=sep, index=index, na_rep=csv_na_rep)
 
             if progress_cb:
                 progress_cb(100)
@@ -285,7 +291,7 @@ class FileWriter:
         last_pct = -1
 
         # Write header once
-        df.head(0).to_csv(path, encoding=encoding, sep=sep, index=index, na_rep=na_rep, mode="w")
+        df.head(0).to_csv(path, encoding=encoding, sep=sep, index=index, na_rep=csv_na_rep, mode="w")
 
         step = chunk_size_rows
         for start in range(0, total, step):
@@ -308,7 +314,7 @@ class FileWriter:
             chunk = df.iloc[start:end]
 
             # Append without header
-            chunk.to_csv(path, encoding=encoding, sep=sep, index=index, na_rep=na_rep, header=False, mode="a")
+            chunk.to_csv(path, encoding=encoding, sep=sep, index=index, na_rep=csv_na_rep, header=False, mode="a")
 
             rows_written += len(chunk)
             if progress_cb:
@@ -373,6 +379,7 @@ class FileWriter:
             chunk_size_rows = self._excel_chunk_size
 
         rows, columns = fmt_shape(df)
+        excel_na_rep = "" if na_rep is None else str(na_rep)
         self._logger.debug(
             "FileWriter: save excel start (corr=%s, path=%s, rows=%s, cols=%s, streaming=%s, "
             "sheet=%r, index=%s, max_rows_per_sheet=%s, chunk_size_rows=%s)",
@@ -409,7 +416,7 @@ class FileWriter:
                 )
             try:
                 with pd.ExcelWriter(path, engine="openpyxl") as excel_writer:
-                    df.to_excel(excel_writer, sheet_name=sheet_name, index=index, na_rep=na_rep)
+                    df.to_excel(excel_writer, sheet_name=sheet_name, index=index, na_rep=excel_na_rep)
             except (
                 AttributeError,
                 ConnectionError,
@@ -499,7 +506,7 @@ class FileWriter:
         # ----------------------------------------------------------------------
         # Per-cell Excel-safe normalizer
         # ----------------------------------------------------------------------
-        def clean_cell(value: object, *, _na_rep: object=na_rep) -> object:
+        def clean_cell(value: object, *, _na_rep: object = na_rep) -> object:
             """Normalize a single cell value into a type compatible with openpyxl/Excel.
 
             Rules:
@@ -512,7 +519,7 @@ class FileWriter:
                 - everything else returned unchanged
             """
             try:
-                if pd.isna(value):
+                if pd.isna(cast("Any", value)):
                     return _na_rep if _na_rep is not None else None
             except (
                 AttributeError,
@@ -629,7 +636,7 @@ class FileWriter:
             default_ws = wb.active
             wb.remove(default_ws)
 
-        def start_new_sheet(name: str) -> None:
+        def start_new_sheet(name: str) -> WriteOnlyWorksheet:
             self._validate_excel_sheet_name(name)
             ws = wb.create_sheet(title=name)
             headers = []
@@ -929,6 +936,6 @@ class FileWriter:
         path = Path(dest)
         path.parent.mkdir(parents=True, exist_ok=True)
         self._logger.debug("FileWriter: save profile start (corr=%s, path=%s)", corr_id, fmt_path(path))
-        profile.to_file(path)
+        cast("Any", profile).to_file(path)
         self._logger.info("FileWriter: profile (HTML) written (corr=%s, path=%s)", corr_id, fmt_path(path))
         return path

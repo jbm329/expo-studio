@@ -6,7 +6,7 @@ import contextlib
 import logging
 import threading
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import pandas as pd
 from sqlalchemy import create_engine
@@ -38,7 +38,7 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
         self._active_cursors: dict[str, object] = {}
         self._active_lock = threading.Lock()
 
-    def initialize(self, *, timeouts: dict | None = None) -> None:
+    def initialize(self, *, timeouts: dict[str, int | None] | None = None) -> None:
         """Initialize the driver with optional timeouts.
 
         Args:
@@ -256,7 +256,7 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
 
             if self._query_timeout_s is not None:
                 try:
-                    raw_conn.timeout = int(self._query_timeout_s)
+                    cast("Any", raw_conn).timeout = int(self._query_timeout_s)
                 except (
                     AttributeError,
                     ConnectionError,
@@ -325,8 +325,8 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
 
             if cursor is not None:
                 with contextlib.suppress(Exception):
-                    cursor.close()
+                    cast("Any", cursor).close()
 
             if raw_conn is not None:
                 with contextlib.suppress(Exception):
-                    raw_conn.close()
+                    cast("Any", raw_conn).close()

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
@@ -29,6 +30,28 @@ from expo_jbm329.utils.format_utils import fmt_bytes, fmt_int, fmt_num, fmt_pct
 if TYPE_CHECKING:
     from expo_jbm329.services.data_profile.column_data_profile import ColumnProfile
     from expo_jbm329.services.data_profile.semantics import SeriesSemantics
+
+
+def _as_int(value: object, default: int = 0) -> int:
+    """Return value coerced to int for profile display."""
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        with contextlib.suppress(ValueError):
+            return int(value)
+    return default
+
+
+def _as_float(value: object, default: float = 0.0) -> float:
+    """Return value coerced to float for profile display."""
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        with contextlib.suppress(ValueError):
+            return float(value)
+    return default
 
 try:
     from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
@@ -132,11 +155,11 @@ class ColumnPropertiesDialog(QDialog):
 
         stats = self._profile.stats
 
-        n = int(stats.get("count.n", 0))
-        missing = int(stats.get("missing.n", 0))
-        missing_pct = float(stats.get("missing.pct", 0.0))
-        unique = int(stats.get("unique.n", 0))
-        unique_pct = float(stats.get("unique.pct", 0.0))
+        n = _as_int(stats.get("count.n", 0))
+        missing = _as_int(stats.get("missing.n", 0))
+        missing_pct = _as_float(stats.get("missing.pct", 0.0))
+        unique = _as_int(stats.get("unique.n", 0))
+        unique_pct = _as_float(stats.get("unique.pct", 0.0))
 
         summary = QLabel(
             f"{self.tr('Rows')}: <b>{fmt_int(n)}</b> &nbsp;&nbsp; "
@@ -208,16 +231,16 @@ class ColumnPropertiesDialog(QDialog):
             label = self._tr_stat_label(key)
 
             if stat.fmt == StatFormat.INT:
-                text = fmt_int(value)
+                text = fmt_int(_as_int(value))
 
             elif stat.fmt == StatFormat.FLOAT:
-                text = fmt_num(value, sig=2)
+                text = fmt_num(_as_float(value), sig=2)
 
             elif stat.fmt == StatFormat.PERCENT:
-                text = fmt_pct(value)
+                text = fmt_pct(_as_float(value))
 
             elif stat.fmt == StatFormat.BYTES:
-                text = fmt_bytes(value)
+                text = fmt_bytes(_as_int(value))
 
             elif stat.fmt == StatFormat.VALUE:
                 text = format_value_for_display(value, self._semantics)
@@ -294,7 +317,7 @@ class ColumnPropertiesDialog(QDialog):
             ax.set_title(self.tr("Distribution"))
 
         ax.grid(True, axis="y", alpha=0.25)
-        self._layout.addWidget(FigureCanvas(fig))
+        self._layout.addWidget(FigureCanvas(fig))  # type: ignore[no-untyped-call]
 
     # ------------------------------------------------------------------
     # Buttons

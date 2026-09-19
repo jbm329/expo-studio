@@ -209,7 +209,7 @@ class ResultTabManager:
         return tr("ResultTabManager", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabManager", text, **kwargs)
 
     __slots__ = (
@@ -274,9 +274,9 @@ class ResultTabManager:
         self._busy_overlay = busy_overlay
         self._async_ops = async_ops
         self._col_profile_cache = col_profile_cache
-        self._join_controller = None
-        self._concat_controller = None
-        self._derived_column_controller = None
+        self._join_controller: JoinController | None = None
+        self._concat_controller: ConcatController | None = None
+        self._derived_column_controller: DerivedColumnController | None = None
         self._set_status = set_status
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
         self._set_shape = set_shape if set_shape is not None else (lambda r, c: None)
@@ -324,11 +324,46 @@ class ResultTabManager:
 
     def _init_header_actions(self) -> None:
         """Initialize all header-related action controllers."""
-        self._header_clean_actions = self._make_header_action(ResultTabHeaderCleanActions)
-        self._header_dtype_actions = self._make_header_action(ResultTabHeaderDtypeActions)
-        self._header_category_actions = self._make_header_action(ResultTabHeaderCategoryActions)
-        self._header_column_actions = self._make_header_action(ResultTabHeaderColumnActions)
-        self._header_sort_actions = self._make_header_action(ResultTabHeaderSortActions)
+        self._header_clean_actions = ResultTabHeaderCleanActions(
+            parent=self._parent,
+            dialogs=self._dialogs,
+            logger=self._logger,
+            async_ops=self._async_ops,
+            resolve_df_col_series=self._resolve_df_col_series,
+            apply_new_dataframe=self._apply_with_cache_invalidation,
+        )
+        self._header_dtype_actions = ResultTabHeaderDtypeActions(
+            parent=self._parent,
+            dialogs=self._dialogs,
+            logger=self._logger,
+            async_ops=self._async_ops,
+            resolve_df_col_series=self._resolve_df_col_series,
+            apply_new_dataframe=self._apply_with_cache_invalidation,
+        )
+        self._header_category_actions = ResultTabHeaderCategoryActions(
+            parent=self._parent,
+            dialogs=self._dialogs,
+            logger=self._logger,
+            async_ops=self._async_ops,
+            resolve_df_col_series=self._resolve_df_col_series,
+            apply_new_dataframe=self._apply_with_cache_invalidation,
+        )
+        self._header_column_actions = ResultTabHeaderColumnActions(
+            parent=self._parent,
+            dialogs=self._dialogs,
+            logger=self._logger,
+            async_ops=self._async_ops,
+            resolve_df_col_series=self._resolve_df_col_series,
+            apply_new_dataframe=self._apply_with_cache_invalidation,
+        )
+        self._header_sort_actions = ResultTabHeaderSortActions(
+            parent=self._parent,
+            dialogs=self._dialogs,
+            logger=self._logger,
+            async_ops=self._async_ops,
+            resolve_df_col_series=self._resolve_df_col_series,
+            apply_new_dataframe=self._apply_with_cache_invalidation,
+        )
 
         # Special cases
         self._header_filter_actions = ResultTabHeaderFilterActions(
@@ -375,7 +410,7 @@ class ResultTabManager:
     # Settings
     # ==================================================================
 
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Synchronize ResultTabManager with updated global settings."""
         self._undo.reload_settings(settings)
 
@@ -813,7 +848,7 @@ class ResultTabManager:
 
         return data
 
-    def list_ready_datasets(self) -> list:
+    def list_ready_datasets(self) -> list[VisualizationDatasetRef]:
         """Return metadata for all ready datasets.
 
         Returns:
@@ -1068,6 +1103,8 @@ class ResultTabManager:
                 self.close_tab(i)
 
         elif chosen == act_derived:
+            if self._derived_column_controller is None:
+                return
             try:
                 self._derived_column_controller.create_derived_column()
             except (
@@ -1086,6 +1123,8 @@ class ResultTabManager:
             return
 
         elif chosen == act_join:
+            if self._join_controller is None:
+                return
             try:
                 self._join_controller.open_join_dialog()
             except (
@@ -1103,6 +1142,8 @@ class ResultTabManager:
                 self._logger.exception("ResultTabManager: join could not be started.")
             return
         elif chosen == act_concatenate:
+            if self._concat_controller is None:
+                return
             try:
                 self._concat_controller.open_concat_dialog()
             except (
@@ -1397,6 +1438,8 @@ class ResultTabManager:
         ok, df, row_index, col_name, raw_value = self._cell_context_get(view, pos)
         if not ok:
             return
+        if df is None or row_index is None or col_name is None:
+            return
 
         menu, amap = self._cell_context_menu.build(
             column_name=col_name,
@@ -1556,15 +1599,18 @@ class ResultTabManager:
 
         view: QTableView = widget
 
-        self._run_with_busy_overlay(
-            view,
-            lambda v=view: self._apply_new_dataframe_to_view(
-                v,
+        def _apply_undo_result() -> None:
+            self._apply_new_dataframe_to_view(
+                view,
                 prev_df,
                 invalidate_cache=True,
                 status=self._tr(self.TR_LAST_ACTION_UNDONE),
                 push_undo=False,
-            ),
+            )
+
+        self._run_with_busy_overlay(
+            view,
+            _apply_undo_result,
             message=self._tr(self.TR_RESTORING_STATE),
         )
 
@@ -2016,9 +2062,9 @@ class ResultTabManager:
 
     def _apply_without_cache_invalidation(
         self,
-        view: object,
-        df: object,
-        status: object,
+        view: QTableView,
+        df: pd.DataFrame,
+        status: str,
     ) -> None:
         """Adapter for controllers that should not force cache invalidation."""
         self._apply_new_dataframe_to_view(
@@ -2239,17 +2285,6 @@ class ResultTabManager:
             header.customContextMenuRequested.connect(partial(self._on_header_context_menu, view))
 
         return view
-
-    def _make_header_action(self, cls: object) -> object:
-        """Factory for header action controllers."""
-        return cls(
-            parent=self._parent,
-            dialogs=self._dialogs,
-            logger=self._logger,
-            async_ops=self._async_ops,
-            resolve_df_col_series=self._resolve_df_col_series,
-            apply_new_dataframe=self._apply_with_cache_invalidation,
-        )
 
     # ==============================================================
     # DATA ACCESS HELPERS

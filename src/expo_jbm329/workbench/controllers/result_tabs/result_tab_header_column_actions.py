@@ -87,7 +87,7 @@ class ResultTabHeaderColumnActions:
         return tr("ResultTabHeaderColumnActions", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabHeaderColumnActions", text, **kwargs)
 
     # ------------------------------------------------------------------
@@ -184,7 +184,12 @@ class ResultTabHeaderColumnActions:
 
         from expo_jbm329.services.data_operations.columns import split_column
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -198,7 +203,7 @@ class ResultTabHeaderColumnActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -256,7 +261,12 @@ class ResultTabHeaderColumnActions:
 
         from expo_jbm329.services.data_operations.columns import join_columns
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -279,7 +289,7 @@ class ResultTabHeaderColumnActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -357,7 +367,12 @@ class ResultTabHeaderColumnActions:
 
         from expo_jbm329.services.data_operations.columns import rename_column
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -365,7 +380,7 @@ class ResultTabHeaderColumnActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -430,7 +445,7 @@ class ResultTabHeaderColumnActions:
                 self.TR_COLUMN_AND_NAME,
                 column_name=col_name,
             ),
-            full_path=None,
+            full_path="",
             size_hint=None,
         )
         if not confirm:
@@ -441,14 +456,19 @@ class ResultTabHeaderColumnActions:
 
         from expo_jbm329.services.data_operations.columns import safe_drop_column
 
-        def _work(*, progress_cb: object=None, cancel_cb: object=None, **_: object) -> pd.DataFrame | None:
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
             return safe_drop_column(safe_df, column)
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df: object) -> None:
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 

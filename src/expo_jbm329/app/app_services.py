@@ -7,6 +7,7 @@ injection container for the application's core services and infrastructure.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Self
 
 from expo_jbm329.app.logging.logging_manager import LoggingManager
 from expo_jbm329.app.settings.config_store import read_rest_connections
@@ -22,6 +23,9 @@ from expo_jbm329.services.job_manager import JobManager
 from expo_jbm329.services.rest.registry import rest_registry
 from expo_jbm329.services.schema_cache import SchemaCacheManager
 from expo_jbm329.services.settings_service import SettingsService
+
+if TYPE_CHECKING:
+    from logging import Logger
 
 
 @dataclass
@@ -51,15 +55,15 @@ class AppServices:
     """
 
     # Core static data
-    settings: dict
+    settings: dict[str, object]
 
     # Logging
     logging_manager: LoggingManager
-    log_ui: object
-    log_service: object
-    log_jobs: object
-    log_db: object
-    log_system: object  # applogger
+    log_ui: Logger
+    log_service: Logger
+    log_jobs: Logger
+    log_db: Logger
+    log_system: Logger  # applogger
 
     # Settings
     settings_service: SettingsService
@@ -85,7 +89,7 @@ class AppServices:
     # Factory
     # ==================================================================
     @classmethod
-    def build(cls: object, settings: dict) -> AppServices:
+    def build(cls: type[Self], settings: dict[str, object]) -> Self:
         """Builds the full application infrastructure layer.
 
         This factory method initializes and configures all core services,

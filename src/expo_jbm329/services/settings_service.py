@@ -14,8 +14,9 @@ from collections.abc import Callable
 from threading import RLock
 
 from expo_jbm329.app.settings.config_store import load_settings
+from expo_jbm329.app.settings.json_types import JsonObject
 
-Subscriber = Callable[[dict], None]
+Subscriber = Callable[[JsonObject], None]
 Dispatcher = Callable[[Callable[[], None]], None]
 
 
@@ -37,9 +38,9 @@ class SettingsService:
     def __init__(
         self,
         *,
-        initial_settings: dict | None = None,
+        initial_settings: JsonObject | None = None,
         dispatcher: Dispatcher | None = None,
-        loader: Callable[[], dict] = load_settings,
+        loader: Callable[[], JsonObject] = load_settings,
         logger: logging.Logger | None = None,
     ) -> None:
         """Initialize the SettingsService.
@@ -54,14 +55,14 @@ class SettingsService:
         self._loader = loader
         self._dispatcher = dispatcher
         self._subs: list[Subscriber] = []
-        self._settings: dict = initial_settings if initial_settings is not None else self._safe_load()
+        self._settings: JsonObject = initial_settings if initial_settings is not None else self._safe_load()
         self._logger = logger or logging.getLogger("applogger.service")
         self._logger.debug("SettingsService initialized.")
 
     # -----------------------------
     # Public API
     # -----------------------------
-    def get(self) -> dict:
+    def get(self) -> JsonObject:
         """Return a deep copy of current settings."""
         with self._lock:
             return copy.deepcopy(self._settings)
@@ -88,7 +89,7 @@ class SettingsService:
         with self._lock, contextlib.suppress(ValueError):
             self._subs.remove(callback)
 
-    def reload(self) -> dict:
+    def reload(self) -> JsonObject:
         """Reload settings from disk and notify subscribers.
 
         Returns the new settings dict.
@@ -102,7 +103,7 @@ class SettingsService:
         self._notify_all(snapshot)
         return snapshot
 
-    def set_and_notify(self, new_settings: dict) -> None:
+    def set_and_notify(self, new_settings: JsonObject) -> None:
         """Force-set settings and notify subscribers.
 
         Typically you don't need this because SettingsEditor writes to disk and
@@ -122,7 +123,7 @@ class SettingsService:
     # -----------------------------
     # Internals
     # -----------------------------
-    def _safe_load(self) -> dict:
+    def _safe_load(self) -> JsonObject:
         try:
             s = self._loader()
             if not isinstance(s, dict):
@@ -144,7 +145,7 @@ class SettingsService:
             self._logger.exception("SettingsService: failed to load settings; falling back to empty dict. Error: %s", e)
             return {}
 
-    def _notify_all(self, s: dict) -> None:
+    def _notify_all(self, s: JsonObject) -> None:
         subs_snapshot: list[Subscriber]
         with self._lock:
             subs_snapshot = list(self._subs)
@@ -152,7 +153,7 @@ class SettingsService:
         for cb in subs_snapshot:
             self._notify_one(cb, s)
 
-    def _notify_one(self, cb: Subscriber, s: dict) -> None:
+    def _notify_one(self, cb: Subscriber, s: JsonObject) -> None:
         def _invoke() -> None:
             try:
                 cb(copy.deepcopy(s))

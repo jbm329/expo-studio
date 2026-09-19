@@ -21,9 +21,9 @@ class DummyJob:
 
 class DummyJobManager:
     def __init__(self) -> None:
-        self.run_calls = []
-        self.run_pool_calls = []
-        self.cancel_calls = []
+        self.run_calls: list[object] = []
+        self.run_pool_calls: list[object] = []
+        self.cancel_calls: list[object] = []
         self.job = DummyJob()
 
     def run(self, work, **kwargs):
@@ -44,9 +44,9 @@ class DummyJobManager:
 
 class DummyBusy:
     def __init__(self) -> None:
-        self.show_calls = []
-        self.hide_calls = []
-        self.progress_calls = []
+        self.show_calls: list[object] = []
+        self.hide_calls: list[object] = []
+        self.progress_calls: list[object] = []
 
     def show(self, *args, **kwargs):
         self.show_calls.append((args, kwargs))
@@ -60,7 +60,7 @@ class DummyBusy:
 
 class DummyDialogService:
     def __init__(self) -> None:
-        self.warn_calls = []
+        self.warn_calls: list[object] = []
 
     def warn(self, parent, title, text):
         self.warn_calls.append((parent, title, text))

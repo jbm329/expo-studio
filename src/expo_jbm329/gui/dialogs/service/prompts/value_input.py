@@ -51,46 +51,46 @@ def prompt_value(
     layout = QVBoxLayout(dlg)
     layout.addWidget(QLabel(label, dlg))
 
-    editor: QWidget
+    editor: QDateEdit | QDateTimeEdit | QSpinBox | QDoubleSpinBox
 
     # --------------------------------------------------
     # Datetime
     # --------------------------------------------------
     if semantics.semantic_dtype == "datetime":
         if semantics.is_date_only:
-            edit = QDateEdit(dlg)
-            edit.setCalendarPopup(True)
-            edit.setDisplayFormat("yyyy-MM-dd")
+            date_edit = QDateEdit(dlg)
+            date_edit.setCalendarPopup(True)
+            date_edit.setDisplayFormat("yyyy-MM-dd")
             if isinstance(default, datetime):
-                edit.setDate(default.date())
+                date_edit.setDate(default.date())
+            editor = date_edit
         else:
-            edit = QDateTimeEdit(dlg)
-            edit.setCalendarPopup(True)
-            edit.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
+            datetime_edit = QDateTimeEdit(dlg)
+            datetime_edit.setCalendarPopup(True)
+            datetime_edit.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
             if isinstance(default, datetime):
-                edit.setDateTime(default)
-
-        editor = edit
+                datetime_edit.setDateTime(default)
+            editor = datetime_edit
 
     # --------------------------------------------------
     # Numeric
     # --------------------------------------------------
     elif semantics.semantic_dtype in ("int", "float"):
         if semantics.is_integer_like:
-            edit = QSpinBox(dlg)
-            edit.setMinimum(-2_147_483_648)
-            edit.setMaximum(2_147_483_647)
+            int_edit = QSpinBox(dlg)
+            int_edit.setMinimum(-2_147_483_648)
+            int_edit.setMaximum(2_147_483_647)
             if isinstance(default, (int, float)):
-                edit.setValue(int(default))
+                int_edit.setValue(int(default))
+            editor = int_edit
         else:
-            edit = QDoubleSpinBox(dlg)
-            edit.setDecimals(6)
-            edit.setMinimum(-1e12)
-            edit.setMaximum(1e12)
+            float_edit = QDoubleSpinBox(dlg)
+            float_edit.setDecimals(6)
+            float_edit.setMinimum(-1e12)
+            float_edit.setMaximum(1e12)
             if isinstance(default, (int, float)):
-                edit.setValue(float(default))
-
-        editor = edit
+                float_edit.setValue(float(default))
+            editor = float_edit
 
     else:
         # Unsupported semantic type

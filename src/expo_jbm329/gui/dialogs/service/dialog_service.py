@@ -25,7 +25,7 @@ class ProfileChoice(Enum):
     CANCEL = "cancel"
 
 
-class BetweenResult(TypedDict):
+class BetweenResult(TypedDict, total=False):
     """Result of a numeric or datetime range prompt."""
 
     low: object
@@ -34,7 +34,7 @@ class BetweenResult(TypedDict):
     ok: bool
 
 
-class CompareResult(TypedDict):
+class CompareResult(TypedDict, total=False):
     """Result of a numeric or datetime compare prompt."""
 
     op: str
@@ -297,27 +297,75 @@ class DialogService(Protocol):
         """Show a prompt for category ordering."""
         ...
 
-    def prompt_text_replace(self, parent: QWidget, **kwargs: object) -> TextReplaceResult:
+    def prompt_text_replace(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        default_old: str = "",
+        default_new: str = "",
+        default_case: bool = True,
+    ) -> TextReplaceResult:
         """Show a prompt for text replacement."""
         ...
 
-    def prompt_text_insert(self, parent: QWidget, **kwargs: object) -> TextInsertResult:
+    def prompt_text_insert(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        default_insert: str = "",
+        default_position: int = 0,
+    ) -> TextInsertResult:
         """Show a prompt for text insertion."""
         ...
 
-    def prompt_value_replace(self, parent: QWidget, **kwargs: object) -> ValueReplaceResult:
+    def prompt_value_replace(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        column: str,
+        current_value: str,
+        default_new_value: str = "",
+        default_replace_all: bool = False,
+    ) -> ValueReplaceResult:
         """Show a prompt for value replacement."""
         ...
 
-    def prompt_text(self, parent: QWidget, **kwargs: object) -> tuple[str, bool]:
+    def prompt_text(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        label: str,
+        default: str | None = None,
+    ) -> tuple[str, bool]:
         """Show a prompt for text input."""
         ...
 
-    def prompt_choice(self, parent: QWidget, **kwargs: object) -> tuple[str, bool]:
+    def prompt_choice(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        label: str,
+        choices: list[str],
+        default_index: int = 0,
+        editable: bool = False,
+    ) -> tuple[str, bool]:
         """Show a prompt for a choice from a list of options."""
         ...
 
-    def prompt_yes_no(self, parent: QWidget, **kwargs: object) -> bool:
+    def prompt_yes_no(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        text: str,
+        informative: str | None = None,
+        default_yes: bool = False,
+    ) -> bool:
         """Show a yes/no confirmation dialog."""
         ...
 

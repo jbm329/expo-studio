@@ -554,7 +554,7 @@ class DbService:
         cols = self.list_columns(conn, schema, object_name, corr_id=corr_id)
         if not cols:
             return self.build_select_star(schema, object_name, top_n=top_n, corr_id=corr_id)
-        col_names = [c.get("COLUMN_NAME") for c in cols if c.get("COLUMN_NAME")]
+        col_names = [str(column_name) for c in cols if (column_name := c.get("COLUMN_NAME"))]
 
         if not col_names:
             return self.build_select_star(schema, object_name, top_n=top_n, corr_id=corr_id)

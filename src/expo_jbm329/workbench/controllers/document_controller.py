@@ -113,7 +113,7 @@ class DocumentController:
         get_editor_text: Callable[[], str | None],
         create_tab: Callable[..., EditorTab],
         insert_sql_into_tab: Callable[[EditorTab, str], None],
-        open_data_file: Callable,
+        open_data_file: Callable[..., None],
         dialog_state: DialogState,
         logger: logging.Logger | None = None,
     ) -> None:
@@ -154,7 +154,7 @@ class DocumentController:
     # ==================================================================
     # Settings
     # ==================================================================
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Synchronize ExportController with updated global settings.
 
         Things controlled by settings:

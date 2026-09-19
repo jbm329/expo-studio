@@ -10,6 +10,7 @@ import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Any, cast
 
 from expo_jbm329.db.base import (
     get_db_name,
@@ -95,14 +96,14 @@ class SchemaCacheManager:
         self._progress_cb = progress_cb
         self._autocomplete_cb = autocomplete_cb
 
-        self._runner: Callable | None = None
+        self._runner: Callable[..., Any] | None = None
 
         self._prefetch_limit_default = 600
         self._batch_size_default = 100
         self._ttl_seconds_default = 300
-        self._prefetch_limit: int | None = None
-        self._batch_size: int | None = None
-        self._ttl_seconds: int | None = None
+        self._prefetch_limit = self._prefetch_limit_default
+        self._batch_size = self._batch_size_default
+        self._ttl_seconds = self._ttl_seconds_default
         self._logger = logger or logging.getLogger("applogger.service")
 
     # -------------------------------------------------------------------------
@@ -143,7 +144,7 @@ class SchemaCacheManager:
     # Settings
     # ==================================================================
 
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Synchronize SchemaCacheManager with updated global settings.
 
         Things controlled by settings:
@@ -151,7 +152,8 @@ class SchemaCacheManager:
             • batch_size
         """
         try:
-            schema_cache = settings.get("schema_cache", {}) or {}
+            raw_schema_cache = settings.get("schema_cache", {}) or {}
+            schema_cache = raw_schema_cache if isinstance(raw_schema_cache, dict) else {}
             prefetch_limit = int(schema_cache.get("prefetch_limit", self._prefetch_limit_default))
             batch_size = int(schema_cache.get("prefetch_batch_size", self._batch_size_default))
             ttl_seconds = int(schema_cache.get("ttl_seconds", self._ttl_seconds_default))
@@ -215,7 +217,7 @@ class SchemaCacheManager:
         return (time.time() - entry.loaded_at) < self._ttl_seconds
 
     def load_schema(
-        self, connection_name: str, force_refresh: bool = False, corr_id: object = None
+        self, connection_name: str, force_refresh: bool = False, corr_id: str | None = None
     ) -> SchemaCacheEntry:
         """Load db_name + tables/views. (Columns loaded separately by async prefetch.)."""
         if force_refresh:
@@ -253,7 +255,7 @@ class SchemaCacheManager:
 
         return entry
 
-    def set_job_runner(self, runner_callable: Callable, corr_id: object = None) -> None:
+    def set_job_runner(self, runner_callable: Callable[..., Any], corr_id: str | None = None) -> None:
         """Register a callable to run database jobs asynchronously."""
         self._runner = runner_callable
         self._logger.debug("SchemaCacheManager: job runner registered (corr=%s).", corr_id)
@@ -262,7 +264,7 @@ class SchemaCacheManager:
     # PREFETCH (async)
     # -----------------------------------------------------------------------------
     def prefetch_columns_async(
-        self, connection_name: str, run_job_fn: Callable | None = None, corr_id: object = None
+        self, connection_name: str, run_job_fn: Callable[..., Any] | None = None, corr_id: str | None = None
     ) -> None:
         """Prefetch column metadata for all tables and views in a connection."""
         entry = self._cache.get(connection_name)
@@ -336,6 +338,14 @@ class SchemaCacheManager:
             ) as ex:
                 self._logger.warning("SchemaCacheManager: UI callback failed: %s", ex)
 
+    def _request_autocomplete_rebuild(self, connection_name: str) -> bool:
+        """Schedule an autocomplete rebuild if a callback is registered."""
+        autocomplete_cb = self._autocomplete_cb
+        if autocomplete_cb is None:
+            return False
+        self._invoke_ui(lambda: autocomplete_cb(connection_name))
+        return True
+
     # -----------------------------------------------------------------------------
     # BULK HANDLER
     # -----------------------------------------------------------------------------
@@ -352,17 +362,17 @@ class SchemaCacheManager:
     def _normalize_key(self, key: object) -> tuple[str, str] | None:
         try:
             if isinstance(key, tuple) and len(key) == 2:
-                return key
+                return str(key[0]), str(key[1])
             if isinstance(key, list) and len(key) == 2:
-                return key[0], key[1]
+                return str(key[0]), str(key[1])
             if isinstance(key, str) and "." in key:
                 sch, t = key.split(".", 1)
                 return sch.strip(), t.strip()
             if isinstance(key, dict):
-                sch = key.get("schema")
-                t = key.get("name")
-                if isinstance(sch, str) and isinstance(t, str):
-                    return (sch, t)
+                schema_value = key.get("schema")
+                name_value = key.get("name")
+                if isinstance(schema_value, str) and isinstance(name_value, str):
+                    return (schema_value, name_value)
         except (
             AttributeError,
             ConnectionError,
@@ -378,18 +388,18 @@ class SchemaCacheManager:
             pass
         return None
 
-    def _normalize_bulk_map(self, payload: object) -> dict[tuple[str, str], list[dict]]:
+    def _normalize_bulk_map(self, payload: object) -> dict[tuple[str, str], list[dict[str, str]]]:
         if not isinstance(payload, dict):
             return {}
 
-        out = {}
+        out: dict[tuple[str, str], list[dict[str, str]]] = {}
         for raw_key, cols in payload.items():
             key = self._normalize_key(raw_key)
             if not key:
                 continue
             try:
-                lst = list(cols) if cols else []
-                lst = [c for c in lst if isinstance(c, dict)]
+                raw_lst = list(cols) if cols else []
+                lst = [cast("dict[str, str]", c) for c in raw_lst if isinstance(c, dict)]
             except (
                 AttributeError,
                 ConnectionError,
@@ -456,8 +466,7 @@ class SchemaCacheManager:
         )
 
         # UI rebuild (IMPORTANT: pass connection_name)
-        if self._autocomplete_cb:
-            self._invoke_ui(lambda: self._autocomplete_cb(connection_name))
+        if self._request_autocomplete_rebuild(connection_name):
             self._logger.debug(
                 "SchemaCacheManager: autocomplete rebuild (bulk) requested for '%s' (corr=%s).",
                 connection_name,
@@ -522,8 +531,7 @@ class SchemaCacheManager:
         corr_id: str | None = None,
     ) -> None:
         if not remaining:
-            if self._autocomplete_cb:
-                self._invoke_ui(lambda: self._autocomplete_cb(connection_name))
+            if self._request_autocomplete_rebuild(connection_name):
                 self._logger.debug(
                     "SchemaCacheManager: autocomplete rebuild (batch final) for '%s' (corr=%s)",
                     connection_name,
@@ -542,8 +550,8 @@ class SchemaCacheManager:
         batch = remaining[:batch_size]
         rest = remaining[batch_size:]
 
-        def batch_job(conn: str, pairs: list[tuple[str, str]]) -> dict[tuple[str, str], list[str]]:
-            result = {}
+        def batch_job(conn: str, pairs: list[tuple[str, str]]) -> dict[tuple[str, str], list[dict[str, str]]]:
+            result: dict[tuple[str, str], list[dict[str, str]]] = {}
             for sch, name in pairs:
                 try:
                     cols = list_columns(conn, sch, name, corr_id) or []
@@ -599,16 +607,15 @@ class SchemaCacheManager:
 
         def _on_ok(payload: object) -> None:
             entry = self._cache.get(connection_name) or None
-            if entry:
-                entry.columns.update(payload or {})
+            if entry and isinstance(payload, dict):
+                entry.columns.update(cast("dict[tuple[str, str], list[dict[str, str]]]", payload))
 
             new_done = done + len(batch)
 
             if self._progress_cb:
                 self._progress_cb(new_done, total)
 
-            if self._autocomplete_cb:
-                self._invoke_ui(lambda: self._autocomplete_cb(connection_name))
+            if self._request_autocomplete_rebuild(connection_name):
                 self._logger.debug(
                     "SchemaCacheManager: autocomplete rebuild (batch increment) for '%s' (corr=%s)",
                     connection_name,

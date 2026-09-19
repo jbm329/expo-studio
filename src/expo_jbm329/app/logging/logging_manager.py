@@ -12,6 +12,7 @@ import sys
 from logging.handlers import RotatingFileHandler
 
 from expo_jbm329.app.settings.config_store import read_log_config
+from expo_jbm329.app.settings.json_types import JsonObject, int_value, object_or_empty, string_value
 from expo_jbm329.utils.path_manager import get_log_path
 
 BUILTIN_FORMATTERS = {
@@ -113,7 +114,7 @@ class LoggingManager:
         and initializes the logger instances. This method should be called once
         during application startup.
         """
-        cfg = read_log_config() or {}
+        cfg = read_log_config()
         root = logging.getLogger()
 
         # Root level
@@ -123,7 +124,7 @@ class LoggingManager:
         for h in list(root.handlers):
             root.removeHandler(h)
 
-        handlers_cfg = cfg.get("handlers", {}) or {}
+        handlers_cfg = object_or_empty(cfg.get("handlers"))
 
         # Wildcard filter
         third_party_level = self._to_level(cfg.get("third_party_log_level", "WARNING"))
@@ -170,9 +171,10 @@ class LoggingManager:
                 logging.getLogger("applogger").exception("Failed to init stdout handler")
 
         # Per-namespace overrides
-        for lname, spec in (cfg.get("loggers", {}) or {}).items():
+        for lname, spec_value in object_or_empty(cfg.get("loggers")).items():
             if not isinstance(lname, str):
                 continue
+            spec = object_or_empty(spec_value)
             lg = logging.getLogger(lname)
             lg.setLevel(self._to_level(spec.get("level", "INFO")))
             lg.propagate = bool(spec.get("propagate", True))
@@ -182,7 +184,7 @@ class LoggingManager:
     # =====================================================================
     # Handler builders
     # =====================================================================
-    def _create_file_handler(self, cfg: dict) -> logging.Handler:
+    def _create_file_handler(self, cfg: JsonObject) -> logging.Handler:
         """Creates a rotating file handler based on configuration.
 
         Args:
@@ -194,7 +196,7 @@ class LoggingManager:
         params = self._subcfg(cfg, "handlers", "file")
 
         level = self._to_level(params.get("level", "INFO"))
-        fmt = self._formatter(params.get("formatter", "default"))
+        fmt = self._formatter(string_value(params.get("formatter"), "default"))
         max_bytes = self._to_int(params.get("maxBytes"), 5_000_000)
         backup = self._to_int(params.get("backupCount"), 3)
 
@@ -208,7 +210,7 @@ class LoggingManager:
         h.setFormatter(fmt)
         return h
 
-    def _create_stdout_handler(self, cfg: dict) -> logging.Handler:
+    def _create_stdout_handler(self, cfg: JsonObject) -> logging.Handler:
         """Creates a stdout stream handler based on configuration.
 
         Args:
@@ -220,7 +222,7 @@ class LoggingManager:
         params = self._subcfg(cfg, "handlers", "stdout")
 
         level = self._to_level(params.get("level", "WARNING"))
-        fmt = self._formatter(params.get("formatter", "default"))
+        fmt = self._formatter(string_value(params.get("formatter"), "default"))
 
         h = logging.StreamHandler()
         h.setLevel(level)
@@ -255,7 +257,8 @@ class LoggingManager:
         if isinstance(v, int):
             return v
         try:
-            return getattr(logging, str(v).upper())
+            level: object = getattr(logging, str(v).upper())
+            return level if isinstance(level, int) else logging.INFO
         except (
             AttributeError,
             ConnectionError,
@@ -282,23 +285,12 @@ class LoggingManager:
             The converted integer value, or default if conversion fails.
         """
         try:
-            return int(v)
-        except (
-            AttributeError,
-            ConnectionError,
-            FileNotFoundError,
-            IndexError,
-            KeyError,
-            LookupError,
-            OSError,
-            RuntimeError,
-            TypeError,
-            ValueError,
-        ):
+            return int_value(v, default)
+        except TypeError:
             return default
 
     @staticmethod
-    def _subcfg(cfg: dict, *keys: str) -> dict:
+    def _subcfg(cfg: JsonObject, *keys: str) -> JsonObject:
         """Retrieves a sub-configuration from a nested dict.
 
         Args:
@@ -308,9 +300,9 @@ class LoggingManager:
         Returns:
             The sub-configuration dict at the specified keys, or an empty dict if not found.
         """
-        cur = cfg
+        cur: object = cfg
         for k in keys:
             if not isinstance(cur, dict):
                 return {}
             cur = cur.get(k, {})
-        return cur if isinstance(cur, dict) else {}
+        return object_or_empty(cur)

@@ -7,7 +7,7 @@ schema information into a format suitable for autocompletion and UI display.
 from __future__ import annotations
 
 
-def build_schema_dict(cache: dict) -> dict:
+def build_schema_dict(cache: dict[str, object]) -> dict[str, object]:
     """Build an autocomplete-friendly schema dictionary from the cache structure.
 
     Args:
@@ -21,9 +21,12 @@ def build_schema_dict(cache: dict) -> dict:
     if not cache:
         return {"tables": {}, "by_schema": {}}
 
-    tables_list = cache.get("tables", []) or []
-    views_list = cache.get("views", []) or []
-    columns_map: dict[tuple[str, str], list[dict[str, object]]] = cache.get("columns", {}) or {}
+    raw_tables = cache.get("tables", [])
+    tables_list = raw_tables if isinstance(raw_tables, list) else []
+    raw_views = cache.get("views", [])
+    views_list = raw_views if isinstance(raw_views, list) else []
+    raw_columns = cache.get("columns", {})
+    columns_map: dict[tuple[str, str], list[dict[str, object]]] = raw_columns if isinstance(raw_columns, dict) else {}
 
     def _col_names_for(schema: str, table: str) -> list[str]:
         """Extract a list of column names for (schema, table) from columns_map.

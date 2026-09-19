@@ -32,9 +32,11 @@ class ThemeService(QObject):
         self._current_theme: str | None = None
 
         # Listen for OS-level theme changes
-        QApplication.styleHints().colorSchemeChanged.connect(self._on_os_theme_changed)
+        style_hints = QApplication.styleHints()
+        if style_hints is not None:
+            style_hints.colorSchemeChanged.connect(self._on_os_theme_changed)
         self._settings_theme_default: str = "system"
-        self._settings_theme: str | None = self._settings_theme_default
+        self._settings_theme: str = self._settings_theme_default
 
         # Initial resolution
         QTimer.singleShot(0, self.apply_theme)
@@ -48,7 +50,10 @@ class ThemeService(QObject):
         Returns:
             True if Qt reports a dark color scheme, otherwise False.
         """
-        return QApplication.styleHints().colorScheme() == Qt.ColorScheme.Dark
+        style_hints = QApplication.styleHints()
+        if style_hints is None:
+            return False
+        return style_hints.colorScheme() == Qt.ColorScheme.Dark
 
     # ------------------------------------------------------------------
     # Public API
@@ -81,16 +86,18 @@ class ThemeService(QObject):
     # ----------------------------------------------------------------------
     # Settings reload
     # ----------------------------------------------------------------------
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Reload the theme setting from application settings.
 
         Args:
             settings: Application settings dictionary.
         """
         try:
-            workbench_settings = settings.get("workbench", {}) or {}
+            workbench_settings = settings.get("workbench", {})
+            if not isinstance(workbench_settings, dict):
+                workbench_settings = {}
             val = workbench_settings.get("theme", self._settings_theme_default)
-            self._settings_theme = (val or self._settings_theme_default).strip()
+            self._settings_theme = val.strip() if isinstance(val, str) and val else self._settings_theme_default
 
             self._logger.debug(
                 "ThemeService: settings reloaded (theme=%s)",

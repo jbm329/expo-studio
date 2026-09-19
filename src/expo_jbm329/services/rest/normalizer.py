@@ -128,7 +128,7 @@ def _extract_records(payload: object, response_path: str | None) -> object:
     return current
 
 
-def _normalize_jsonstat2(payload: dict) -> pd.DataFrame:
+def _normalize_jsonstat2(payload: dict[str, object]) -> pd.DataFrame:
     """Normalize JSON-stat v2 dataset into a flat DataFrame.
 
     This handles PxWebApi v2 responses with outputFormat=json-stat2.
@@ -191,14 +191,14 @@ def _normalize_jsonstat2(payload: dict) -> pd.DataFrame:
         msg = "JSON-stat v2: no dimensions found"
         raise RestNormalizeError(msg)
 
-    records: list[dict] = []
+    records: list[dict[str, object]] = []
 
     for coords, val in zip(
         itertools.product(*dim_values),
         values,
         strict=True,
     ):
-        rec = {}
+        rec: dict[str, object] = {}
         for raw_dim_name, display_name, code in zip(dim_names, display_dim_names, coords, strict=True):
             label = dim_labels_by_code.get(raw_dim_name, {}).get(code)
             rec[display_name] = label if label is not None else code

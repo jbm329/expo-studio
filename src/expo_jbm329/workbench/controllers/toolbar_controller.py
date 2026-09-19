@@ -20,6 +20,8 @@ from expo_jbm329.utils.i18n_utils import tr
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from expo_jbm329.workbench.icon.icon_service import IconService
+
 
 class ToolbarController:
     """Controller for managing toolbar actions in the Expo application.
@@ -85,7 +87,7 @@ class ToolbarController:
 
     def __init__(
         self,
-        icon_service: object,
+        icon_service: IconService,
         *,
         new_file: Callable[[], None],
         open_file: Callable[[], None],

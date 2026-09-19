@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 import pandas as pd
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QModelIndex, QObject, Qt
 from PyQt6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
 
 from expo_jbm329.services.data_profile.presentation import format_value_for_display
@@ -21,7 +21,7 @@ class ResultTabColumnPresentationDelegate(QStyledItemDelegate):
         self,
         *,
         semantics_by_column_index: dict[int, SeriesSemantics],
-        parent: object=None,
+        parent: QObject | None = None,
     ) -> None:
         """Initialize delegate.
 
@@ -35,11 +35,13 @@ class ResultTabColumnPresentationDelegate(QStyledItemDelegate):
     @override
     def initStyleOption(
         self,
-        option: QStyleOptionViewItem,
-        index: object,
+        option: QStyleOptionViewItem | None,
+        index: QModelIndex,
     ) -> None:
         """Initialize style option with semantic-aware text."""
         super().initStyleOption(option, index)
+        if option is None:
+            return
 
         value = index.data(Qt.ItemDataRole.EditRole)
         if value is None or pd.isna(value):

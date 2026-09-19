@@ -62,7 +62,10 @@ class HighlighterThemeService(QObject):
         Returns:
             True if the OS theme is dark, otherwise False.
         """
-        cs = QApplication.styleHints().colorScheme()
+        style_hints = QApplication.styleHints()
+        if style_hints is None:
+            return False
+        cs = style_hints.colorScheme()
         return cs == Qt.ColorScheme.Dark
 
     # ------------------------------------------------------------------
@@ -154,16 +157,18 @@ class HighlighterThemeService(QObject):
     # ------------------------------------------------------------------
     # Settings update API
     # ------------------------------------------------------------------
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Reload the theme setting from application settings.
 
         Args:
             settings: Application settings dictionary.
         """
         try:
-            workbench_settings = settings.get("workbench", {}) or {}
+            workbench_settings = settings.get("workbench", {})
+            if not isinstance(workbench_settings, dict):
+                workbench_settings = {}
             val = workbench_settings.get("highlighter_theme", self._settings_theme_default)
-            self._settings_theme = (val or self._settings_theme_default).strip()
+            self._settings_theme = val.strip() if isinstance(val, str) and val else self._settings_theme_default
 
             self._logger.debug(
                 "HighlighterThemeService: settings reloaded (theme=%s)",

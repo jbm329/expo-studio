@@ -131,7 +131,7 @@ def is_text_like_dtype(series: pd.Series) -> bool:
 
         if pdt.is_object_dtype(series):
             sample = series[series.notna()].head(1000)
-            return sample.map(lambda v: isinstance(v, str)).all()
+            return bool(sample.map(lambda v: isinstance(v, str)).all())
 
         return False
 

@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
+from typing import cast
 
 from expo_jbm329.services.rest.models import (
     RestAuthConfig,
+    RestAuthType,
     RestRequestConfig,
 )
 from expo_jbm329.utils.path_manager import get_bootstrap_root
@@ -31,8 +33,11 @@ def load_rest_samples() -> list[RestRequestConfig]:
         auth_cfg = None
         auth_raw = rec.get("auth")
         if isinstance(auth_raw, dict):
+            auth_type = str(auth_raw.get("type", "none"))
+            if auth_type not in {"none", "bearer", "basic", "api_key", "oauth2"}:
+                auth_type = "none"
             auth_cfg = RestAuthConfig(
-                type=str(auth_raw.get("type", "none")),
+                type=cast("RestAuthType", auth_type),
                 token=auth_raw.get("token"),
                 username=auth_raw.get("username"),
                 password=auth_raw.get("password"),

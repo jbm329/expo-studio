@@ -15,10 +15,12 @@ from PyQt6.QtWidgets import (
     QApplication,
     QProxyStyle,
     QStyle,
+    QStyleOption,
     QStyleOptionTab,
     QTabBar,
     QTabWidget,
     QToolButton,
+    QWidget,
 )
 
 if TYPE_CHECKING:
@@ -36,7 +38,12 @@ class TabBarProxyStyle(QProxyStyle):
     # Spacing / padding
     # --------------------------------------------------
     @override
-    def pixelMetric(self, metric: object, option: object=None, widget: object=None) -> object:
+    def pixelMetric(
+        self,
+        metric: QStyle.PixelMetric,
+        option: QStyleOption | None = None,
+        widget: QWidget | None = None,
+    ) -> int:
         """Custom pixelMetric override to provide consistent spacing."""
         if metric in (
             QStyle.PixelMetric.PM_TabBarTabHSpace,
@@ -56,7 +63,13 @@ class TabBarProxyStyle(QProxyStyle):
     # Tab shape + background
     # --------------------------------------------------
     @override
-    def drawControl(self, element: object, option: object, painter: object, widget: object=None) -> None:
+    def drawControl(
+        self,
+        element: QStyle.ControlElement,
+        option: QStyleOption | None,
+        painter: QPainter | None,
+        widget: QWidget | None = None,
+    ) -> None:
         """Custom drawControl override for tab shape and background."""
         # Tab background / shape
         if (
@@ -154,7 +167,13 @@ class TabBarProxyStyle(QProxyStyle):
         painter.restore()
 
     @override
-    def drawPrimitive(self, element: object, option: object, painter: object, widget: object=None) -> None:
+    def drawPrimitive(
+        self,
+        element: QStyle.PrimitiveElement,
+        option: QStyleOption | None,
+        painter: QPainter | None,
+        widget: QWidget | None = None,
+    ) -> None:
         """Custom drawPrimitive override for hover effects."""
         if option is None or painter is None:
             return
@@ -223,6 +242,7 @@ class CustomTabBar(QTabBar):
 
         # Initial icon load
         self._reload_close_icon()
+        self.tabMoved.connect(self._handle_tab_moved)
 
     # ----------------------------------------------------------------------
     # PUBLIC API (called by EditorServices when theme changes)
@@ -352,17 +372,13 @@ class CustomTabBar(QTabBar):
         super().tabInserted(index)
         self._install_close_button(index)
 
-    @override
-    def tabMoved(self, from_index: int, to_index: int) -> None:
-        """Called when a tab is moved.
-
-        Updates the close buttons for the affected tabs.
+    def _handle_tab_moved(self, from_index: int, to_index: int) -> None:
+        """Refresh close buttons after a tab is moved.
 
         Args:
             from_index: The original index of the tab.
             to_index: The new index of the tab.
         """
-        super().tabMoved(from_index, to_index)
         for i in (from_index, to_index):
             if 0 <= i < self.count():
                 self._install_close_button(i)

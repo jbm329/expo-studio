@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING, Literal
 
 from PyQt6.QtWidgets import QMessageBox, QWidget
@@ -13,10 +14,12 @@ from expo_jbm329.gui.dialogs.service.common.window_hints import (
     apply_dialog_window_hints,
 )
 from expo_jbm329.gui.dialogs.service.dialog_service import (
+    BetweenResult,
     BooleanConversionResult,
     CategoryConversionResult,
     CategoryOrderResult,
     CategoryRenameResult,
+    CompareResult,
     DateTimeConversionResult,
     DateTimeTarget,
     DialogService,
@@ -24,11 +27,12 @@ from expo_jbm329.gui.dialogs.service.dialog_service import (
     ProfileChoice,
     SplitColumnResult,
     TextFilterMatchResult,
+    TextInsertResult,
+    TextReplaceResult,
+    ValueReplaceResult,
 )
 
 if TYPE_CHECKING:
-    import datetime
-
     from expo_jbm329.services.data_operations.category_orders import CategoryOrderKey
     from expo_jbm329.services.data_operations.datetime_formats import DateFormatKey
     from expo_jbm329.services.data_profile.semantics import SeriesSemantics
@@ -86,38 +90,86 @@ class QtDialogService(DialogService):
     def confirm_profile_scope(
         self,
         parent: QWidget,
-        **kwargs: object,
+        *,
+        title: str,
+        text: str,
+        active_tab_text: str,
+        all_tabs_text: str,
     ) -> ProfileChoice:
         """Show a confirmation dialog for profile scope."""
         from expo_jbm329.gui.dialogs.service.prompts.choice import (
             confirm_profile_scope,
         )
 
-        return confirm_profile_scope(parent, **kwargs)
+        return confirm_profile_scope(
+            parent,
+            title=title,
+            text=text,
+            active_tab_text=active_tab_text,
+            all_tabs_text=all_tabs_text,
+        )
 
-    def confirm_delete(self, parent: QWidget, **kwargs: object) -> bool:
+    def confirm_delete(
+        self,
+        parent: QWidget,
+        *,
+        title: str | None,
+        name: str,
+        full_path: str,
+        size_hint: str | None = None,
+    ) -> bool:
         """Show a confirmation dialog for deletion."""
         from expo_jbm329.gui.dialogs.service.prompts.choice import (
             confirm_delete,
         )
 
-        return confirm_delete(parent, **kwargs)
+        return confirm_delete(parent, title=title, name=name, full_path=full_path, size_hint=size_hint)
 
-    def prompt_choice(self, parent: QWidget, **kwargs: object) -> tuple[str, bool]:
+    def prompt_choice(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        label: str,
+        choices: list[str],
+        default_index: int = 0,
+        editable: bool = False,
+    ) -> tuple[str, bool]:
         """Show a prompt for a choice from a list of options."""
         from expo_jbm329.gui.dialogs.service.prompts.choice import (
             prompt_choice,
         )
 
-        return prompt_choice(parent, **kwargs)
+        return prompt_choice(
+            parent,
+            title=title,
+            label=label,
+            choices=choices,
+            default_index=default_index,
+            editable=editable,
+        )
 
-    def prompt_yes_no(self, parent: QWidget, **kwargs: object) -> bool:
+    def prompt_yes_no(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        text: str,
+        informative: str | None = None,
+        default_yes: bool = False,
+    ) -> bool:
         """Show a yes/no confirmation dialog."""
         from expo_jbm329.gui.dialogs.service.prompts.choice import (
             prompt_yes_no,
         )
 
-        return prompt_yes_no(parent, **kwargs)
+        return prompt_yes_no(
+            parent,
+            title=title,
+            text=text,
+            informative=informative,
+            default_yes=default_yes,
+        )
 
     # ------------------------------------------------------------------
     # Numeric / datetime prompts
@@ -166,7 +218,7 @@ class QtDialogService(DialogService):
         default_high: object,
         inclusive_default: str,
         semantics: SeriesSemantics,
-    ) -> object:
+    ) -> BetweenResult:
         """Prompt for numeric or datetime range."""
         from expo_jbm329.gui.dialogs.service.prompts.compare_between import prompt_between
 
@@ -191,7 +243,7 @@ class QtDialogService(DialogService):
         default_op: str,
         default_value: object,
         semantics: SeriesSemantics,
-    ) -> object:
+    ) -> CompareResult:
         """Prompt for comparison between two values."""
         from expo_jbm329.gui.dialogs.service.prompts.compare_between import (
             prompt_compare,
@@ -221,49 +273,103 @@ class QtDialogService(DialogService):
             prompt_value,
         )
 
-        return prompt_value(
+        value, ok = prompt_value(
             parent,
             title=title,
             label=label,
             default=default,
             semantics=semantics,
         )
+        if not ok:
+            return None, False
+        if isinstance(value, datetime) or value is None:
+            return value, True
+        return None, False
 
     # ------------------------------------------------------------------
     # Text prompts
     # ------------------------------------------------------------------
 
-    def prompt_text(self, parent: QWidget, **kwargs: object) -> tuple[str, bool]:
+    def prompt_text(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        label: str,
+        default: str | None = None,
+    ) -> tuple[str, bool]:
         """Show a prompt for text input."""
         from expo_jbm329.gui.dialogs.service.prompts.text import (
             prompt_text,
         )
 
-        return prompt_text(parent, **kwargs)
+        return prompt_text(parent, title=title, label=label, default=default)
 
-    def prompt_text_replace(self, parent: QWidget, **kwargs: object) -> object:
+    def prompt_text_replace(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        default_old: str = "",
+        default_new: str = "",
+        default_case: bool = True,
+    ) -> TextReplaceResult:
         """Show a prompt for text replacement."""
         from expo_jbm329.gui.dialogs.service.prompts.text import (
             prompt_text_replace,
         )
 
-        return prompt_text_replace(parent, **kwargs)
+        return prompt_text_replace(
+            parent,
+            title=title,
+            default_old=default_old,
+            default_new=default_new,
+            default_case=default_case,
+        )
 
-    def prompt_text_insert(self, parent: QWidget, **kwargs: object) -> object:
+    def prompt_text_insert(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        default_insert: str = "",
+        default_position: int = 0,
+    ) -> TextInsertResult:
         """Show a prompt for text insertion."""
         from expo_jbm329.gui.dialogs.service.prompts.text import (
             prompt_text_insert,
         )
 
-        return prompt_text_insert(parent, **kwargs)
+        return prompt_text_insert(
+            parent,
+            title=title,
+            default_insert=default_insert,
+            default_position=default_position,
+        )
 
-    def prompt_value_replace(self, parent: QWidget, **kwargs: object) -> object:
+    def prompt_value_replace(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        column: str,
+        current_value: str,
+        default_new_value: str = "",
+        default_replace_all: bool = False,
+    ) -> ValueReplaceResult:
         """Show a prompt for value replacement."""
         from expo_jbm329.gui.dialogs.service.prompts.text import (
             prompt_value_replace,
         )
 
-        return prompt_value_replace(parent, **kwargs)
+        return prompt_value_replace(
+            parent,
+            title=title,
+            column=column,
+            current_value=current_value,
+            default_new_value=default_new_value,
+            default_replace_all=default_replace_all,
+        )
 
     def prompt_filter_match(
         self,

@@ -21,6 +21,10 @@ if TYPE_CHECKING:
     from expo_jbm329.gui.widgets.schema_tree_widget import SchemaTreeWidget
     from expo_jbm329.workbench.controllers.editor_panel_controller import EditorPanelController
     from expo_jbm329.workbench.highlighter.sql_highlighter import SqlHighlighter
+    from expo_jbm329.workbench.icon.custom_file_icon_provider import CustomFileIconProvider
+    from expo_jbm329.workbench.icon.icon_service import IconService
+    from expo_jbm329.workbench.theme.highlighter_theme_service import HighlighterThemeService
+    from expo_jbm329.workbench.theme.theme_service import ThemeService
 
 
 @dataclass
@@ -45,10 +49,10 @@ class WorkbenchUIRefs:
     editor_panel: EditorPanelController | None = None
 
     # GUI infrastructure services
-    theme_service: object | None = None
-    highlighter_theme_service: object | None = None
-    icon_service: object | None = None
-    file_icon_provider: object | None = None
+    theme_service: ThemeService | None = None
+    highlighter_theme_service: HighlighterThemeService | None = None
+    icon_service: IconService | None = None
+    file_icon_provider: CustomFileIconProvider | None = None
 
     # SQL workbench highlighter instance
     editor_highlighter: SqlHighlighter | None = None
