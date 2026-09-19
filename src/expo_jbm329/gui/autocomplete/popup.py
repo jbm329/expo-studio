@@ -33,6 +33,7 @@ class SqlEditorAutoCompletePopup(QFrame):
             editor: The editor widget to position the popup relative to.
             parent: Optional parent widget.
         """
+        _ = parent
         super().__init__(editor)
         self.editor = editor
 

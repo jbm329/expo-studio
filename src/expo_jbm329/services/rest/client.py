@@ -46,6 +46,7 @@ def fetch_json(
     Raises:
         RestClientError: If the request fails or returns a non-200 status.
     """
+    _ = progress_cb
     config.validate()
 
     retry_cfg = config.retry or RestRetryConfig()

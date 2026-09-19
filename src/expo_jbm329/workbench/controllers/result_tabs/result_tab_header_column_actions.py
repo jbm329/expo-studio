@@ -186,7 +186,7 @@ class ResultTabHeaderColumnActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
@@ -263,7 +263,7 @@ class ResultTabHeaderColumnActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
@@ -369,7 +369,7 @@ class ResultTabHeaderColumnActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
@@ -458,12 +458,13 @@ class ResultTabHeaderColumnActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
+
             return safe_drop_column(safe_df, column)
 
         corr_id = uuid.uuid4().hex

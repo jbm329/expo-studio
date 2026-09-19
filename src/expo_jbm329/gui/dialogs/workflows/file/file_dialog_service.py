@@ -196,6 +196,7 @@ class NullFileDialogService(FileDialogService):
         self.calls.append(req)
         if self._queue_open:
             return self._queue_open.pop(0)
+        _ = parent
         return "", ""
 
     # --- Save ----------------------------------------------------
@@ -218,6 +219,7 @@ class NullFileDialogService(FileDialogService):
         Returns:
             The enqueued response or ("", "").
         """
+        _ = parent
         self.calls.append(req)
         if self._queue_save:
             return self._queue_save.pop(0)
@@ -243,6 +245,7 @@ class NullFileDialogService(FileDialogService):
         Returns:
             The enqueued response or "".
         """
+        _ = parent
         self.calls.append(req)
         if self._queue_dir:
             return self._queue_dir.pop(0)

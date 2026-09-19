@@ -58,6 +58,7 @@ if TYPE_CHECKING:
     from expo_jbm329.workbench.controllers.connection_controller import ConnectionController
     from expo_jbm329.workbench.controllers.editor_panel_controller import EditorPanelController
 
+
 # ======================================================================
 #  SqlEditor Main Window
 # ======================================================================

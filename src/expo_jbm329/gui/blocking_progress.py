@@ -94,6 +94,7 @@ class BlockingProgressDialog(QDialog):
         Args:
             traceback_str: The error traceback string.
         """
+        _ = traceback_str  # For logging or future use
         self.reject()
 
     def set_started_msg(self, text: str) -> None:

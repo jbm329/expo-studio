@@ -43,6 +43,9 @@ def fetch_rest_dataset(
     Returns:
         JobResult
     """
+    _ = job_id
+    _ = job_scope
+
     t0 = time.perf_counter()
 
     try:

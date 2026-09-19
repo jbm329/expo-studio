@@ -519,6 +519,7 @@ def build_select_distinct(
     corr_id: str | None = None,
 ) -> str:
     """Build a SELECT DISTINCT query with dialect-aware quoting."""
+    _ = corr_id  # For future logging or tracing
     try:
         svc, _ = _get_service_with_config(connection_name)
         return svc.build_select_distinct(schema, object_name, column_name)

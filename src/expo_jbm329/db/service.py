@@ -506,6 +506,7 @@ class DbService:
         Returns:
             A SQL query string.
         """
+        _ = corr_id  # For future logging or tracing
         qtable = self.dialect.qualify(schema, object_name)
         sql = f"SELECT *\nFROM {qtable};"
 

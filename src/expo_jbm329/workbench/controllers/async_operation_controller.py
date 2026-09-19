@@ -695,6 +695,7 @@ class AsyncOperationController:
         JobManager is treated as execution infrastructure here.
         AsyncOperationController owns UI behavior for facade-based jobs.
         """
+        _ = busy_message
         _ = foreground
         _ = indeterminate
         _ = show_status_progress

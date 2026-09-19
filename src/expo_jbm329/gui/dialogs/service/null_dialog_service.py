@@ -161,14 +161,17 @@ class NullDialogService(DialogService):
 
     def info(self, parent: QWidget, title: str, text: str) -> None:
         """Show an informational message box."""
+        _ = parent
         self.calls.append(("info", (title, text), {}))
 
     def warn(self, parent: QWidget, title: str, text: str) -> None:
         """Show a warning message box."""
+        _ = parent
         self.calls.append(("warn", (title, text), {}))
 
     def critical(self, parent: QWidget, title: str, text: str) -> None:
         """Show a critical error message box."""
+        _ = parent
         self.calls.append(("critical", (title, text), {}))
 
     # ------------------------------------------------------------------
@@ -177,11 +180,13 @@ class NullDialogService(DialogService):
 
     def confirm_profile_scope(self, parent: QWidget, **kwargs: object) -> ProfileChoice:
         """Show a confirmation dialog for profile scope."""
+        _ = parent
         self.calls.append(("confirm_profile_scope", (), kwargs))
         return self.default_profile_choice
 
     def confirm_delete(self, parent: QWidget, **kwargs: object) -> bool:
         """Show a confirmation dialog for deletion."""
+        _ = parent
         self.calls.append(("confirm_delete", (), kwargs))
         return self.default_confirm_delete
 
@@ -191,6 +196,7 @@ class NullDialogService(DialogService):
 
     def prompt_text(self, parent: QWidget, **kwargs: object) -> tuple[str, bool]:
         """Show a prompt for text input."""
+        _ = parent
         self.calls.append(("prompt_text", (), kwargs))
         if self._next_prompt_text is not None:
             val = self._next_prompt_text
@@ -200,6 +206,7 @@ class NullDialogService(DialogService):
 
     def prompt_choice(self, parent: QWidget, **kwargs: object) -> tuple[str, bool]:
         """Show a prompt for a choice from a list of options."""
+        _ = parent
         self.calls.append(("prompt_choice", (), kwargs))
         if self._next_prompt_choice is not None:
             val = self._next_prompt_choice
@@ -211,6 +218,7 @@ class NullDialogService(DialogService):
 
     def prompt_yes_no(self, parent: QWidget, **kwargs: object) -> bool:
         """Show a yes/no confirmation dialog."""
+        _ = parent
         self.calls.append(("prompt_yes_no", (), kwargs))
         if self._next_prompt_yes_no is not None:
             val = self._next_prompt_yes_no
@@ -228,6 +236,7 @@ class NullDialogService(DialogService):
         semantics: SeriesSemantics,
     ) -> tuple[float | int | None, bool]:
         """Show a prompt for numeric input."""
+        _ = parent
         self.calls.append((
             "prompt_number",
             (),
@@ -256,6 +265,7 @@ class NullDialogService(DialogService):
         semantics: SeriesSemantics,
     ) -> tuple[datetime | None, bool]:
         """Show a prompt for datetime input."""
+        _ = parent
         self.calls.append((
             "prompt_datetime",
             (),
@@ -287,6 +297,7 @@ class NullDialogService(DialogService):
         semantics: SeriesSemantics,
     ) -> BetweenResult:
         """Show a prompt for a range."""
+        _ = parent
         self.calls.append((
             "prompt_between",
             (),
@@ -325,6 +336,7 @@ class NullDialogService(DialogService):
         semantics: SeriesSemantics,
     ) -> CompareResult:
         """Show a prompt for a comparison."""
+        _ = parent
         self.calls.append((
             "prompt_compare",
             (),
@@ -359,6 +371,7 @@ class NullDialogService(DialogService):
         default_case_sensitive: bool = True,
     ) -> TextFilterMatchResult:
         """Test implementation of filter contains dialog."""
+        _ = parent
         self.calls.append((
             "prompt_filter_match",
             (),
@@ -390,6 +403,7 @@ class NullDialogService(DialogService):
         default_target: DateTimeTarget,
     ) -> DateTimeConversionResult:
         """Test implementation of datetime conversion dialog."""
+        _ = parent
         self.calls.append((
             "prompt_datetime_conversion",
             (),
@@ -421,6 +435,8 @@ class NullDialogService(DialogService):
         default_false_values: list[str],
     ) -> BooleanConversionResult:
         """Test implementation of boolean conversion dialog."""
+        _ = parent
+
         self.calls.append((
             "prompt_boolean_conversion",
             (),
@@ -453,6 +469,7 @@ class NullDialogService(DialogService):
         default_strict: bool,
     ) -> CategoryConversionResult:
         """Test implementation of category conversion dialog."""
+        _ = parent
         self.calls.append((
             "prompt_category_conversion",
             (),
@@ -487,6 +504,7 @@ class NullDialogService(DialogService):
         default_new_value: str,
     ) -> CategoryRenameResult:
         """Test implementation of category rename dialog."""
+        _ = parent
         self.calls.append((
             "prompt_category_rename",
             (),
@@ -521,6 +539,7 @@ class NullDialogService(DialogService):
         default_append_missing_tail: bool,
     ) -> CategoryOrderResult:
         """Test implementation of category set order dialog."""
+        _ = parent
         self.calls.append((
             "prompt_category_set_order",
             (),
@@ -549,6 +568,7 @@ class NullDialogService(DialogService):
 
     def prompt_text_replace(self, parent: QWidget, **kwargs: object) -> TextReplaceResult:
         """Show a prompt for text replacement."""
+        _ = parent
         self.calls.append(("prompt_text_replace", (), kwargs))
         if self._next_prompt_text_replace is not None:
             val = self._next_prompt_text_replace
@@ -558,6 +578,7 @@ class NullDialogService(DialogService):
 
     def prompt_text_insert(self, parent: QWidget, **kwargs: object) -> TextInsertResult:
         """Show a prompt for text insertion."""
+        _ = parent
         self.calls.append(("prompt_text_insert", (), kwargs))
         if self._next_prompt_text_insert is not None:
             val = self._next_prompt_text_insert
@@ -567,6 +588,7 @@ class NullDialogService(DialogService):
 
     def prompt_value_replace(self, parent: QWidget, **kwargs: object) -> ValueReplaceResult:
         """Show a prompt for value replacement."""
+        _ = parent
         self.calls.append(("prompt_value_replace", (), kwargs))
         if self._next_prompt_value_replace is not None:
             val = self._next_prompt_value_replace
@@ -585,6 +607,7 @@ class NullDialogService(DialogService):
         default_mode: Literal["first", "last"],
     ) -> SplitColumnResult:
         """Test implementation of split column dialog."""
+        _ = parent
         self.calls.append((
             "prompt_split_column",
             (),
@@ -622,6 +645,7 @@ class NullDialogService(DialogService):
         default_keep_original: bool,
     ) -> MergeColumnsResult:
         """Test implementation of merge columns dialog."""
+        _ = parent
         self.calls.append((
             "prompt_merge_columns",
             (),

@@ -151,6 +151,7 @@ class HighlighterThemeService(QObject):
         Args:
             gui_theme: Name of the GUI theme that was applied.
         """
+        _ = gui_theme
         if self._settings_theme == "system":
             self.apply_theme()
 

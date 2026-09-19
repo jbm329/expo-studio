@@ -279,7 +279,7 @@ class ResultTabManager:
         self._derived_column_controller: DerivedColumnController | None = None
         self._set_status = set_status
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
-        self._set_shape = set_shape if set_shape is not None else (lambda r, c: None)
+        self._set_shape = set_shape if set_shape is not None else (lambda r, c: None)  # noqa: ARG005
         self._update_undo_enabled = update_undo_enabled
         self._cancel_job = cancel_job
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")

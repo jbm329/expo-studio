@@ -179,7 +179,7 @@ class ResultTabHeaderCleanActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
@@ -243,7 +243,7 @@ class ResultTabHeaderCleanActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
@@ -307,7 +307,7 @@ class ResultTabHeaderCleanActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
@@ -371,7 +371,7 @@ class ResultTabHeaderCleanActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
@@ -435,7 +435,7 @@ class ResultTabHeaderCleanActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
@@ -503,7 +503,7 @@ class ResultTabHeaderCleanActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
@@ -567,7 +567,7 @@ class ResultTabHeaderCleanActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
@@ -632,7 +632,7 @@ class ResultTabHeaderCleanActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
@@ -709,7 +709,7 @@ class ResultTabHeaderCleanActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
@@ -788,7 +788,7 @@ class ResultTabHeaderCleanActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
@@ -865,7 +865,7 @@ class ResultTabHeaderCleanActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
@@ -952,7 +952,7 @@ class ResultTabHeaderCleanActions:
 
         def _work(
             *,
-            progress_cb: Callable[[int], None] | None = None,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:

@@ -109,6 +109,7 @@ class SqliteDialect(DialectProtocol):
         """
         # We must use PRAGMA; we return a SELECT that wraps pragma for consistency.
         # Note: PRAGMA does not support parameters. We interpolate object_name safely.
+        _ = schema  # unused, but kept for signature consistency
         tbl = object_name.replace('"', '""')
         return (
             "SELECT "  # noqa: S608 - deferred SQL construction refactor

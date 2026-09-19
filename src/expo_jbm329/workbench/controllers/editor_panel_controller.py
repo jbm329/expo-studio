@@ -547,6 +547,7 @@ class EditorPanelController(QWidget):
         Args:
             keep_tab_id: The ID of the tab to keep open, if any.
         """
+        _ = keep_tab_id
         tabs = list(self._widgets.keys())
         dirty = [tid for tid in tabs if (tab := self._tab_manager.get_tab(tid)) is not None and tab.is_dirty]
         count_tabs = len(tabs)
