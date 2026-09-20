@@ -166,13 +166,13 @@ class BusyOverlayWidget(QWidget):
         self._bar.setValue(max(0, min(100, int(value))))
 
     @override
-    def resizeEvent(self, event: QResizeEvent | None) -> None:
+    def resizeEvent(self, a0: QResizeEvent | None) -> None:
         """Handle resize events and reposition the overlay.
 
         Args:
-            event: Resize event.
+            a0: Resize event.
         """
-        super().resizeEvent(event)
+        super().resizeEvent(a0)
         self._relayout()
 
     def _relayout(self) -> None:

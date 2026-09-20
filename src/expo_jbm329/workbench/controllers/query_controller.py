@@ -12,7 +12,6 @@ import logging
 import uuid
 from typing import TYPE_CHECKING, Any, cast
 
-import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP, QObject
 
 from expo_jbm329.db.base import execute_sql_safe
@@ -74,6 +73,13 @@ class QueryController:
     @staticmethod
     def _tr_fmt(text: str, **kwargs: str) -> str:
         return tr_fmt("QueryController", text, **kwargs)
+
+    def reload_settings(self, _settings: dict[str, object]) -> None:
+        """Handle workbench settings changes.
+
+        QueryController currently has no dynamic settings, but the hook keeps
+        settings subscriptions explicit and typed.
+        """
 
     __slots__ = (
         "__weakref__",
@@ -323,16 +329,6 @@ class QueryController:
                 )
                 self._results.remove_pending_tab(pending_tab_id)
                 return
-            if not isinstance(df, pd.DataFrame):
-                self._logger.warning(
-                    "QueryController: SQL returned non-DataFrame payload (corr=%s, tab_id=%s, type=%s).",
-                    corr_id,
-                    pending_tab_id,
-                    type(df).__name__,
-                )
-                self._results.remove_pending_tab(pending_tab_id)
-                return
-
             rows = df.shape[0]
 
             self._logger.info(

@@ -91,8 +91,14 @@ class VisualizationController:
             active_tab_id=self._results.active_tab_id(),
         )
 
-        dialog.dataset_changed.connect(lambda tab_id: self._on_dataset_changed(dialog, tab_id))
-        dialog.preview_requested.connect(lambda config: self._on_preview_requested(dialog, config))
+        def _handle_dataset_changed(tab_id: str) -> None:
+            self._on_dataset_changed(dialog, tab_id)
+
+        def _handle_preview_requested(config: VisualizationConfig) -> None:
+            self._on_preview_requested(dialog, config)
+
+        dialog.dataset_changed.connect(_handle_dataset_changed)
+        dialog.preview_requested.connect(_handle_preview_requested)
 
         initial_tab_id = dialog.selected_dataset_tab_id()
         if initial_tab_id:

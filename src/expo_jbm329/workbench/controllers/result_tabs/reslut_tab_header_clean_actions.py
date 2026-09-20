@@ -120,8 +120,8 @@ class ResultTabHeaderCleanActions:
         self,
         *,
         parent: QWidget,
-        dialogs: DialogService,
-        logger: logging.Logger,
+        dialogs: DialogService | None,
+        logger: logging.Logger | None,
         async_ops: AsyncOperationController,
         resolve_df_col_series: Callable[
             [QTableView, int],

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from PyQt6.QtWidgets import QDialog
 
-_APP_CLOSING = False
+_app_closing = False
 
 
 def set_app_closing(value: bool = True) -> None:
@@ -25,8 +25,8 @@ def set_app_closing(value: bool = True) -> None:
 
     This prevents queued UI callbacks from running during Qt teardown.
     """
-    global _APP_CLOSING  # noqa: PLW0603 - process-wide Qt shutdown flag.
-    _APP_CLOSING = value
+    global _app_closing  # noqa: PLW0603 - process-wide Qt shutdown flag.
+    _app_closing = value
 
 
 def ui_invoke(fn: Callable[..., object], *args: object, **kwargs: object) -> None:
@@ -41,11 +41,11 @@ def ui_invoke(fn: Callable[..., object], *args: object, **kwargs: object) -> Non
         **kwargs: Keyword arguments for the function.
     """
     app = QCoreApplication.instance()
-    if app is None or _APP_CLOSING:
+    if app is None or _app_closing:
         return
 
     def _invoke() -> None:
-        if _APP_CLOSING or QCoreApplication.instance() is None:
+        if _app_closing or QCoreApplication.instance() is None:
             return
         fn(*args, **kwargs)
 

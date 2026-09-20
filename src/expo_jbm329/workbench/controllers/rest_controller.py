@@ -66,6 +66,13 @@ class RestController:
     def _tr_fmt(text: str, **kwargs: str) -> str:
         return tr_fmt("RestController", text, **kwargs)
 
+    def reload_settings(self, _settings: dict[str, object]) -> None:
+        """Handle workbench settings changes.
+
+        RestController currently has no dynamic settings, but the hook keeps
+        settings subscriptions explicit and typed.
+        """
+
     _SCOPE_LOAD_REST = "load:rest"
 
     __slots__ = (

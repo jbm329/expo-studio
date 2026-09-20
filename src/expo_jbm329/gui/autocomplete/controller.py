@@ -88,25 +88,21 @@ class SqlAutocompleteController(QObject):
 
     # ------------------------------------------------------------------ #
     @override
-    def eventFilter(self, obj: QObject | None, event: QEvent | None) -> bool:
+    def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
         """Filter events for the editor and popup.
 
         Args:
-            obj: The object being filtered.
-            event: The event to process.
+            a0: The object being filtered.
+            a1: The event to process.
 
         Returns:
             True if the event was handled, False otherwise.
         """
-        if (
-            event is not None
-            and event.type() == QEvent.Type.KeyPress
-            and obj in (self.editor, self.popup, self.popup.list)
-        ):
-            if not isinstance(event, QKeyEvent):
-                return super().eventFilter(obj, event)
-            return self._handle_keypress(event)
-        return super().eventFilter(obj, event)
+        if a1 is not None and a1.type() == QEvent.Type.KeyPress and a0 in (self.editor, self.popup, self.popup.list):
+            if not isinstance(a1, QKeyEvent):
+                return super().eventFilter(a0, a1)
+            return self._handle_keypress(a1)
+        return super().eventFilter(a0, a1)
 
     # ------------------------------------------------------------------ #
     def _handle_keypress(self, event: QKeyEvent) -> bool:

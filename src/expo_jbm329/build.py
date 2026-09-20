@@ -143,7 +143,7 @@ def _safe_rmtree(path: Path, retries: int = 6, backoff: float = 0.2) -> bool:
 
     for i in range(retries):
         try:
-            shutil.rmtree(path, onerror=_onerror)
+            shutil.rmtree(path, onexc=_onerror)
         except (
             AttributeError,
             ConnectionError,

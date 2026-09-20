@@ -68,7 +68,7 @@ class ResultTabUndoManager:
     # Public API
     # ==================================================================
 
-    def register_tab(self, tab_id: str) -> None:
+    def register_tab(self, tab_id: object) -> None:
         """Ensure an undo stack exists for a tab.
 
         Args:
@@ -80,7 +80,7 @@ class ResultTabUndoManager:
         self._stacks.setdefault(tab_id, [])
         self._notify_state_changed()
 
-    def unregister_tab(self, tab_id: str) -> None:
+    def unregister_tab(self, tab_id: object) -> None:
         """Remove all undo state for a tab.
 
         Args:
@@ -97,7 +97,7 @@ class ResultTabUndoManager:
         self._stacks.clear()
         self._notify_state_changed()
 
-    def reset_tab(self, tab_id: str) -> None:
+    def reset_tab(self, tab_id: object) -> None:
         """Clear undo history for a specific tab."""
         if not isinstance(tab_id, str) or not tab_id:
             return
@@ -131,7 +131,7 @@ class ResultTabUndoManager:
         stack = self._stacks.get(tab_id)
         return len(stack) if isinstance(stack, list) else 0
 
-    def push_snapshot(self, tab_id: str, df: pd.DataFrame) -> bool:
+    def push_snapshot(self, tab_id: object, df: object) -> bool:
         """Push a deep copy snapshot for a tab if allowed by current limits.
 
         Args:
@@ -187,7 +187,7 @@ class ResultTabUndoManager:
         )
         return True
 
-    def pop_snapshot(self, tab_id: str) -> pd.DataFrame | None:
+    def pop_snapshot(self, tab_id: object) -> pd.DataFrame | None:
         """Pop and return the latest undo snapshot for a tab.
 
         Args:

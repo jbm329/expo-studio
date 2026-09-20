@@ -431,9 +431,7 @@ class DataIOService:
             ValueError,
         ) as e:
             # Unexpected failure path
-            self._logger.exception(
-                "DataIOService: export excel failed (corr=%s, path=%s)", corr_id, fmt_path(dest_str)
-            )
+            self._logger.exception("DataIOService: export excel failed (corr=%s, path=%s)", corr_id, fmt_path(dest_str))
             return JobResult(
                 ok=False,
                 elapsed=None,

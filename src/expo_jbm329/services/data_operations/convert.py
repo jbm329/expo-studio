@@ -159,9 +159,6 @@ def to_nullable_float_series(
     try:
         numeric = pd.to_numeric(series, errors=errors)
 
-        if not isinstance(numeric, pd.Series):
-            numeric = pd.Series(numeric, index=series.index, name=series.name)
-
         return numeric.astype("Float64")
 
     except (
@@ -232,30 +229,32 @@ def to_datetime(
 
     try:
         if pdt.is_datetime64_any_dtype(series):
-            out = series
+            out: pd.Series = series
         elif fmt is not None:
             # When format is provided, pandas typing does NOT allow errors="ignore"
             errors_fmt = cast("Literal['raise', 'coerce']", errors)
 
-            out = pd.to_datetime(
-                series,
-                format=fmt,
-                errors=errors_fmt,
+            out = cast(
+                "pd.Series",
+                pd.to_datetime(
+                    series,
+                    format=fmt,
+                    errors=errors_fmt,
+                ),
             )
         else:
             # For Series input, pandas typing does not allow errors="ignore"
             errors_series = cast("Literal['raise', 'coerce']", errors)
 
-            out = pd.to_datetime(
-                series,
-                errors=errors_series,
-                dayfirst=dayfirst,
-                yearfirst=yearfirst,
+            out = cast(
+                "pd.Series",
+                pd.to_datetime(
+                    series,
+                    errors=errors_series,
+                    dayfirst=dayfirst,
+                    yearfirst=yearfirst,
+                ),
             )
-
-        # Ensure Series output (column semantics)
-        if not isinstance(out, pd.Series):
-            out = pd.Series(out, index=new_df.index)
 
         if date_only:
             out = out.dt.normalize()

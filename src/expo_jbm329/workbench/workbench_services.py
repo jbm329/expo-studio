@@ -230,7 +230,11 @@ class WorkbenchServices:
         result_tab_bar.customContextMenuRequested.connect(results.on_tabbar_context_menu)
 
         ui_invoke(result_tabs.currentChanged.connect, results.on_tab_changed)
-        ui_invoke(result_tabs.currentChanged.connect, lambda _: ui.update_undo_enabled())
+
+        def _update_undo_enabled(_index: int) -> None:
+            ui.update_undo_enabled()
+
+        ui_invoke(result_tabs.currentChanged.connect, _update_undo_enabled)
         # ============================================================
         # VISUALIZATION
         # ============================================================

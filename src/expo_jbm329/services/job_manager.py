@@ -35,6 +35,7 @@ import traceback
 import uuid
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
+from functools import partial
 from typing import TYPE_CHECKING, Literal, Protocol, cast
 
 from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
@@ -634,7 +635,7 @@ class JobManager:
             logger=self._logger,
             **kwargs,
         )
-        worker.cancel_func = lambda jid=job_id: self.is_cancelled(jid)
+        worker.cancel_func = partial(self.is_cancelled, job_id)
 
         with contextlib.suppress(Exception):
             thread.setObjectName(f"job-{job_id}")
@@ -645,7 +646,7 @@ class JobManager:
         try:
             _connect_queued(
                 thread.finished,
-                lambda jid=job_id: self._finalize_job(jid),
+                partial(self._finalize_job, job_id),
             )
         except (
             AttributeError,
@@ -718,7 +719,7 @@ class JobManager:
         try:
             _connect_queued(
                 bridge.finished,
-                lambda jid=job_id: self._finalize_job(jid),
+                partial(self._finalize_job, job_id),
             )
         except (
             AttributeError,
@@ -1064,7 +1065,7 @@ class JobManager:
             try:
                 _connect_queued(
                     started_signal,
-                    lambda jid=job_id: self._on_job_started(jid),
+                    partial(self._on_job_started, job_id),
                 )
             except (
                 AttributeError,
@@ -1088,7 +1089,7 @@ class JobManager:
             try:
                 _connect_queued(
                     error_signal,
-                    lambda tb, jid=job_id: self._on_job_error(jid, tb),
+                    partial(self._on_job_error, job_id),
                 )
             except (
                 AttributeError,
@@ -1112,7 +1113,7 @@ class JobManager:
             try:
                 _connect_queued(
                     finished_signal,
-                    lambda jid=job_id: self._on_job_finished(jid),
+                    partial(self._on_job_finished, job_id),
                 )
             except (
                 AttributeError,

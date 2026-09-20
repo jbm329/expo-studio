@@ -213,7 +213,10 @@ class EditorTabContextMenu:
             act.setChecked(conn == tab.connection_name)
             conn_menu.addAction(act)
 
-            act.triggered.connect(lambda _, c=conn: self._bind_tab_to_connection(tab_id, c))
+            def _bind_connection(_checked: bool = False, connection_name: str = conn) -> None:
+                self._bind_tab_to_connection(tab_id, connection_name)
+
+            act.triggered.connect(_bind_connection)
 
         conn_menu.addSeparator()
 

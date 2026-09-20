@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-def _parse_color(value: str | dict[str, object] | None) -> QColor:
+def _parse_color(value: object) -> QColor:
     """Parse a color from supported JSON representations.
 
     Supported values include a hex string like "#RRGGBB" and a dict of RGBA values.

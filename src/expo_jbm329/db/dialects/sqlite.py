@@ -53,7 +53,7 @@ class SqliteDialect(DialectProtocol):
         Returns:
             The modified SQL query with the LIMIT clause applied.
         """
-        if not sql or not isinstance(n, int) or n <= 0:
+        if not sql or n <= 0:
             return sql
         s = sql.rstrip().rstrip(";")
         # Naive but safe: SQLite supports simple '... LIMIT n'

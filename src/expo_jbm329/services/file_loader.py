@@ -6,6 +6,7 @@ Parquet, Feather, Pickle, and JSON files into pandas DataFrames.
 
 from __future__ import annotations
 
+import csv
 import logging
 import threading
 from contextlib import suppress
@@ -22,7 +23,7 @@ from expo_jbm329.utils.path_manager import get_documents_dir
 from expo_jbm329.utils.paths import expand
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
 
 
 @dataclass(frozen=True)
@@ -426,7 +427,7 @@ class FileLoader:
         # If cancellation support is present, prefer chunked reading even for
         # relatively small files. A single-shot pd.read_csv() call is not
         # cooperatively cancellable while parsing is in progress.
-        use_chunking = self._csv_read_chunk_size is not None and self._csv_read_chunk_size > 0
+        use_chunking = self._csv_read_chunk_size > 0
         if req.cancel_cb is not None:
             use_chunking = True
 
@@ -594,7 +595,7 @@ class FileLoader:
             try:
                 dim = ws.calculate_dimension()
                 _, _, _, max_row = range_boundaries(dim)
-                total_rows = max(0, int(max_row) - 1)  # exclude header
+                total_rows = 0 if max_row is None else max(0, int(max_row) - 1)  # exclude header
             except (
                 AttributeError,
                 ConnectionError,
@@ -776,16 +777,16 @@ class FileLoader:
         if req.cancel_cb and req.cancel_cb():
             return pd.DataFrame()
 
-        table = QvdTable.from_qvd(req.path)
+        table: QvdTable | Iterable[Any] = cast("Any", QvdTable.from_qvd(req.path))
 
         if isinstance(table, QvdTable):
-            df: pd.DataFrame = cast("pd.DataFrame", table.to_pandas())
+            df: pd.DataFrame = table.to_pandas()
         else:
             # fallback om library faktiskt returnerar iterator
             tables = list(table)
             if not tables:
                 return pd.DataFrame()
-            df = cast("pd.DataFrame", cast("Any", tables[0]).to_pandas())
+            df = cast("pd.DataFrame", tables[0].to_pandas())
 
         return df
 
@@ -826,12 +827,12 @@ class FileLoader:
         if req.cancel_cb and req.cancel_cb():
             return pd.DataFrame()
 
-        df_or_iter = pd.read_stata(req.path)
+        df_or_iter: pd.DataFrame | Iterable[Any] = cast("Any", pd.read_stata(req.path))
 
         if isinstance(df_or_iter, pd.DataFrame):
             return df_or_iter
 
-        return pd.concat(list(df_or_iter), ignore_index=True)
+        return cast("pd.DataFrame", pd.concat(list(df_or_iter), ignore_index=True))
 
     # ================================================================
     # Utility helpers
@@ -840,8 +841,6 @@ class FileLoader:
     def _sniff_delimiter(self, path: Path, encoding: str) -> str | None:
         r"""Heuristic delimiter detection for CSV. Returns one of , ; \\t | or None."""
         try:
-            import csv
-
             with path.open("r", encoding=encoding, newline="") as f:
                 sample = f.read(2048)
             return csv.Sniffer().sniff(sample, delimiters=",;\t|").delimiter

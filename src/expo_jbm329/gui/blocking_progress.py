@@ -65,12 +65,12 @@ class BlockingProgressDialog(QDialog):
 
         apply_window_hints_strict(self, min_width=420, fixed_size=True, show_close_button=False)
 
-    @pyqtSlot()
+    @pyqtSlot()  # pyright: ignore[reportUntypedFunctionDecorator]
     def on_started(self) -> None:
         """Handle the job start event."""
         # Can update text...
 
-    @pyqtSlot(int)
+    @pyqtSlot(int)  # pyright: ignore[reportUntypedFunctionDecorator]
     def on_progress(self, v: int) -> None:
         """Update the progress bar value.
 
@@ -82,12 +82,12 @@ class BlockingProgressDialog(QDialog):
             self.progress.setRange(0, 100)
         self.progress.setValue(v)
 
-    @pyqtSlot()
+    @pyqtSlot()  # pyright: ignore[reportUntypedFunctionDecorator]
     def on_finished(self) -> None:
         """Handle the job completion event."""
         self.accept()
 
-    @pyqtSlot(str)
+    @pyqtSlot(str)  # pyright: ignore[reportUntypedFunctionDecorator]
     def on_error(self, traceback_str: str) -> None:
         """Handle the job error event.
 

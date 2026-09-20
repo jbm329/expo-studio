@@ -40,7 +40,7 @@ class SqlAutoCompleter:
         self._log = logging.getLogger("applogger.ui.autocomplete")
 
     # ------------------------------------------------------------------ #
-    def set_schema(self, schema_dict: dict[str, object]) -> None:
+    def set_schema(self, schema_dict: dict[str, object] | None) -> None:
         """Set the schema metadata used for generating suggestions.
 
         Args:
@@ -55,7 +55,7 @@ class SqlAutoCompleter:
             For compatibility, this method also accepts richer schema dictionaries
             containing a "by_schema" key.
         """
-        raw_keys = list(schema_dict.keys()) if isinstance(schema_dict, dict) else []
+        raw_keys = list(schema_dict.keys()) if schema_dict is not None else []
         self._schema = self._normalize_schema_dict(schema_dict or {})
 
         non_empty_column_tables = 0
@@ -96,7 +96,7 @@ class SqlAutoCompleter:
         Returns:
             A list of matching suggestions.
         """
-        safe_sql = sql if isinstance(sql, str) else ""
+        safe_sql = sql
         safe_cursor_pos = max(0, min(int(cursor_pos), len(safe_sql)))
         safe_prefix = (prefix or "").strip()
 
@@ -228,9 +228,9 @@ class SqlAutoCompleter:
                     if col.lower().startswith(pref):
                         col_set.add(col)
 
-        col_list = sorted(col_set, key=lambda x: x.lower())
-        tables.sort(key=lambda x: x.lower())
-        schemas.sort(key=lambda x: x.lower())
+        col_list = sorted(col_set, key=str.lower)
+        tables.sort(key=str.lower)
+        schemas.sort(key=str.lower)
         return col_list + tables + schemas
 
     # ------------------------------------------------------------------ #
@@ -247,9 +247,9 @@ class SqlAutoCompleter:
                 for col in cols:
                     col_set.add(col)
 
-        col_list = sorted(col_set, key=lambda x: x.lower())
-        tables.sort(key=lambda x: x.lower())
-        schemas.sort(key=lambda x: x.lower())
+        col_list = sorted(col_set, key=str.lower)
+        tables.sort(key=str.lower)
+        schemas.sort(key=str.lower)
         return col_list + tables + schemas
 
     # ------------------------------------------------------------------ #
@@ -533,7 +533,7 @@ class SqlAutoCompleter:
         Returns:
             SQL text that is more likely to parse successfully.
         """
-        safe_sql = sql if isinstance(sql, str) else ""
+        safe_sql = sql
         safe_cursor_pos = max(0, min(int(cursor_pos), len(safe_sql)))
         start = max(0, safe_cursor_pos - len(prefix))
 
@@ -562,9 +562,6 @@ class SqlAutoCompleter:
         Returns:
             Normalized schema -> table -> columns mapping.
         """
-        if not isinstance(schema_dict, dict):
-            return {}
-
         by_schema = schema_dict.get("by_schema")
         if isinstance(by_schema, dict):
             normalized = self._normalize_by_schema_shape(by_schema)
@@ -578,9 +575,6 @@ class SqlAutoCompleter:
         normalized: dict[str, dict[str, list[str]]] = {}
 
         for schema_name, tables in schema_dict.items():
-            if not isinstance(schema_name, str):
-                continue
-
             # Ignore richer top-level metadata keys if they reached this path.
             if schema_name in {"tables", "views", "columns", "loaded_at", "db_name", "by_schema"}:
                 continue

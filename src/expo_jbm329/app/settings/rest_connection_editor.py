@@ -312,9 +312,9 @@ class RestConnectionEditor(QDialog):
     # showEvent
     # ------------------------------------------------------------------
     @override
-    def showEvent(self, event: QShowEvent | None) -> None:
+    def showEvent(self, a0: QShowEvent | None) -> None:
         """Loads connection data and populates list."""
-        super().showEvent(event)
+        super().showEvent(a0)
 
         self.data = read_rest_connections()
 

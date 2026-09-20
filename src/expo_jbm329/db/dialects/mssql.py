@@ -175,7 +175,7 @@ class MssqlDialect(DialectProtocol):
         Returns:
             The modified SQL query with the TOP clause applied.
         """
-        if not sql or not isinstance(n, int) or n <= 0:
+        if not sql or n <= 0:
             return sql
 
         sql0 = self._strip_semicolon(sql)

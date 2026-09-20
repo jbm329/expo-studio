@@ -113,7 +113,7 @@ class FileJobService:
         get_active_tab_title: Callable[[], str],
         resolve_and_load_df: Callable[..., JobResult],
         display_dataframe: Callable[..., None],
-        dialogs: DialogService,
+        dialogs: DialogService | None,
         is_shutting_down: Callable[[], bool] | None = None,
         logger: logging.Logger | None = None,
     ) -> None:

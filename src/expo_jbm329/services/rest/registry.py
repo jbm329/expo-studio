@@ -5,7 +5,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal, cast
 
-from expo_jbm329.services.rest.models import RestAuthConfig, RestRequestConfig
+from expo_jbm329.services.rest.models import (
+    RestApiKeyLocation,
+    RestAuthConfig,
+    RestAuthType,
+    RestOAuth2GrantType,
+    RestRequestConfig,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -111,7 +117,22 @@ class RestConnectionRegistry:
                 headers=headers,
                 query_params=query_params,
                 response_path=response_path,
-                auth=RestAuthConfig(**auth_raw),
+                auth=RestAuthConfig(
+                    type=self._normalize_auth_type(auth_raw.get("type")),
+                    token=self._optional_str(auth_raw.get("token")),
+                    username=self._optional_str(auth_raw.get("username")),
+                    password=self._optional_str(auth_raw.get("password")),
+                    api_key_name=self._optional_str(auth_raw.get("api_key_name")),
+                    api_key_value=self._optional_str(auth_raw.get("api_key_value")),
+                    api_key_location=self._normalize_api_key_location(auth_raw.get("api_key_location")),
+                    grant_type=self._normalize_oauth2_grant_type(auth_raw.get("grant_type")),
+                    token_url=self._optional_str(auth_raw.get("token_url")),
+                    client_id=self._optional_str(auth_raw.get("client_id")),
+                    client_secret=self._optional_str(auth_raw.get("client_secret")),
+                    scope=self._optional_str(auth_raw.get("scope")),
+                    refresh_token=self._optional_str(auth_raw.get("refresh_token")),
+                    access_token=self._optional_str(auth_raw.get("access_token")),
+                ),
             )
             self.register(
                 name=name,
@@ -164,6 +185,63 @@ class RestConnectionRegistry:
     # Helpers
     # ------------------------------------------------------------------
     @staticmethod
+    def _optional_str(value: object) -> str | None:
+        """Return a stripped string value or None."""
+        if value is None:
+            return None
+        text = str(value).strip()
+        return text or None
+
+    @staticmethod
+    def _normalize_auth_type(value: object) -> RestAuthType:
+        """Normalize persisted auth type values."""
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            match normalized:
+                case "none":
+                    return "none"
+                case "bearer":
+                    return "bearer"
+                case "basic":
+                    return "basic"
+                case "api_key":
+                    return "api_key"
+                case "oauth2":
+                    return "oauth2"
+                case _:
+                    pass
+        return "none"
+
+    @staticmethod
+    def _normalize_api_key_location(value: object) -> RestApiKeyLocation | None:
+        """Normalize persisted API-key location values."""
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            match normalized:
+                case "header":
+                    return "header"
+                case "query":
+                    return "query"
+                case _:
+                    pass
+        return None
+
+    @staticmethod
+    def _normalize_oauth2_grant_type(value: object) -> RestOAuth2GrantType | None:
+        """Normalize persisted OAuth2 grant type values."""
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            match normalized:
+                case "client_credentials":
+                    return "client_credentials"
+                case "refresh_token":
+                    return "refresh_token"
+                case _:
+                    pass
+        return None
+
+    # ------------------------------------------------------------------
+    @staticmethod
     def _normalize_method(val: object) -> Literal["GET", "POST"]:
         """Normalize HTTP method value.
 
@@ -171,8 +249,13 @@ class RestConnectionRegistry:
         """
         if isinstance(val, str):
             v = val.strip().upper()
-            if v in ("GET", "POST"):
-                return cast("Literal['GET', 'POST']", v)
+            match v:
+                case "GET":
+                    return "GET"
+                case "POST":
+                    return "POST"
+                case _:
+                    pass
         return "GET"
 
 

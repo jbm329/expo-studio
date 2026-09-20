@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import importlib.util
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
@@ -59,24 +60,10 @@ def _as_float(value: object, default: float = 0.0) -> float:
     return default
 
 
-try:
-    from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.figure import Figure
-
-    _HAS_MPL = True
-except (
-    AttributeError,
-    ConnectionError,
-    FileNotFoundError,
-    IndexError,
-    KeyError,
-    LookupError,
-    OSError,
-    RuntimeError,
-    TypeError,
-    ValueError,
-):
-    _HAS_MPL = False
+_has_mpl = (
+    importlib.util.find_spec("matplotlib.backends.backend_qtagg") is not None
+    and importlib.util.find_spec("matplotlib.figure") is not None
+)
 
 
 class ColumnPropertiesDialog(QDialog):
@@ -279,11 +266,14 @@ class ColumnPropertiesDialog(QDialog):
     # ------------------------------------------------------------------
 
     def _build_plot(self) -> None:
-        if not _HAS_MPL:
+        if not _has_mpl:
             lbl = QLabel(self.tr("Plot not available (matplotlib missing)."))
             lbl.setStyleSheet("color: #666;")
             self._layout.addWidget(lbl)
             return
+
+        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+        from matplotlib.figure import Figure
 
         plot = self._profile.plot
         if not plot or not plot.kind:
@@ -328,7 +318,7 @@ class ColumnPropertiesDialog(QDialog):
             ax.set_title(self.tr("Distribution"))
 
         ax.grid(True, axis="y", alpha=0.25)
-        self._layout.addWidget(FigureCanvas(fig))  # type: ignore[no-untyped-call]
+        self._layout.addWidget(FigureCanvasQTAgg(fig))  # type: ignore[no-untyped-call]
 
     # ------------------------------------------------------------------
     # Buttons

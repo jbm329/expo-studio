@@ -90,7 +90,7 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
             warnings.simplefilter("ignore", UserWarning)
             x_raw = pd.to_numeric(non_null, errors="raise")
 
-        x_num = x_raw if isinstance(x_raw, pd.Series) else pd.Series(x_raw, index=non_null.index)
+        x_num = x_raw
 
     except (
         AttributeError,

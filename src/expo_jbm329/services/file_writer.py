@@ -151,7 +151,7 @@ class FileWriter:
             self._logger.exception("FileWriter: failed reloading settings")
 
     # noinspection PyMethodMayBeStatic
-    def _validate_excel_sheet_name(self, name: str) -> None:
+    def _validate_excel_sheet_name(self, name: object) -> None:
         """Validate sheet name per Excel constraints.
 
           - Non-empty, not only whitespace
@@ -637,7 +637,8 @@ class FileWriter:
 
         with suppress(Exception):
             default_ws = wb.active
-            wb.remove(default_ws)
+            if default_ws is not None:
+                wb.remove(default_ws)
 
         def start_new_sheet(name: str) -> WriteOnlyWorksheet:
             self._validate_excel_sheet_name(name)

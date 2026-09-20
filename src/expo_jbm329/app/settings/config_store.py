@@ -458,7 +458,7 @@ def read_connections() -> ConnectionsConfig:
             data = _require_json_object(loaded)
             out: ConnectionsConfig = {}
             for name, conn in data.items():
-                if isinstance(name, str) and isinstance(conn, dict):
+                if isinstance(conn, dict):
                     out[name] = normalize_entry(object_from_mapping(conn))
 
             _atomic_write_json(p, out)
@@ -488,7 +488,7 @@ def write_connections(conns: ConnectionsConfig) -> None:
         conns: A dictionary mapping connection names to configurations.
     """
     with _lock:
-        out = {name: dict(cfg) for name, cfg in conns.items() if isinstance(name, str) and isinstance(cfg, dict)}
+        out = {name: dict(cfg) for name, cfg in conns.items()}
         _atomic_write_json(get_connections_config_path(), out)
 
 
@@ -514,7 +514,7 @@ def read_rest_connections() -> RestConnectionsConfig:
             data = _require_json_object(loaded)
             out: RestConnectionsConfig = {}
             for name, cfg in data.items():
-                if isinstance(name, str) and isinstance(cfg, dict):
+                if isinstance(cfg, dict):
                     out[name] = _normalize_rest_entry(object_from_mapping(cfg))
 
             _atomic_write_json(p, out)
@@ -540,7 +540,7 @@ def read_rest_connections() -> RestConnectionsConfig:
 def write_rest_connections(conns: RestConnectionsConfig) -> None:
     """Atomically writes rest_connections.json."""
     with _lock:
-        out = {name: dict(cfg) for name, cfg in conns.items() if isinstance(name, str) and isinstance(cfg, dict)}
+        out = {name: dict(cfg) for name, cfg in conns.items()}
         _atomic_write_json(get_rest_connections_config_path(), out)
 
 
@@ -798,7 +798,7 @@ def _validate_log_config_inplace(cfg: LogConfig) -> None:
     loggers = object_from_mapping(loggers_value)
 
     for lname, spec_value in list(loggers.items()):
-        if not isinstance(lname, str) or not isinstance(spec_value, dict):
+        if not isinstance(spec_value, dict):
             loggers.pop(lname, None)
             continue
         spec = object_from_mapping(spec_value)

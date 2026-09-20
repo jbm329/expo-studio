@@ -126,8 +126,8 @@ class ResultTabHeaderFilterActions:
         self,
         *,
         parent: QWidget,
-        dialogs: DialogService,
-        logger: logging.Logger,
+        dialogs: DialogService | None,
+        logger: logging.Logger | None,
         async_ops: AsyncOperationController,
         resolve_df_col_series: Callable[
             [QTableView, int],
@@ -616,8 +616,10 @@ class ResultTabHeaderFilterActions:
             if not result.get("ok", False):
                 return
 
-            op = result["op"]
-            value = result["value"]
+            op = result.get("op")
+            if not isinstance(op, str):
+                return
+            value = result.get("value")
 
         except (
             AttributeError,
@@ -739,8 +741,8 @@ class ResultTabHeaderFilterActions:
             if not result.get("ok", False):
                 return
 
-            low = result["low"]
-            high = result["high"]
+            low = result.get("low")
+            high = result.get("high")
             inclusive = result.get("inclusive", "both")
 
             if low is not None and high is not None and cast("Any", high) < cast("Any", low):

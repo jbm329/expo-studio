@@ -528,11 +528,11 @@ class ExpoStudio(QMainWindow):
             self._require_workbench_services().schema.retranslate_ui()
 
     @override
-    def changeEvent(self, event: QEvent | None) -> None:
+    def changeEvent(self, a0: QEvent | None) -> None:
         """Handle Qt language change events."""
-        if event is not None and event.type() == QEvent.Type.LanguageChange:
+        if a0 is not None and a0.type() == QEvent.Type.LanguageChange:
             self.retranslate_ui()
-        super().changeEvent(event)
+        super().changeEvent(a0)
 
     # ==================================================================
     # Cancel all jobs
@@ -576,7 +576,7 @@ class ExpoStudio(QMainWindow):
     # Close application
     # ==================================================================
     @override
-    def closeEvent(self, event: QCloseEvent | None) -> None:
+    def closeEvent(self, a0: QCloseEvent | None) -> None:
         """Coordinate application shutdown with background job teardown.
 
         The window is not allowed to close immediately after the user confirms exit.
@@ -584,18 +584,18 @@ class ExpoStudio(QMainWindow):
         active background jobs are finalized before the close is accepted.
 
         Args:
-            event: The Qt close event.
+            a0: The Qt close event.
         """
-        if event is None:
-            super().closeEvent(event)
+        if a0 is None:
+            super().closeEvent(a0)
             return
 
         if self._allow_close:
-            event.accept()
+            a0.accept()
             return
 
         if self._shutdown_in_progress:
-            event.ignore()
+            a0.ignore()
             return
 
         try:
@@ -621,7 +621,7 @@ class ExpoStudio(QMainWindow):
             ok = False
 
         if not ok:
-            event.ignore()
+            a0.ignore()
             return
 
         self._shutdown_in_progress = True
@@ -633,7 +633,7 @@ class ExpoStudio(QMainWindow):
 
             set_app_closing(True)
 
-            if self.services is not None and self.services.job_mgr is not None:
+            if self.services is not None:
                 still_running = self.services.job_mgr.abort_all(wait_ms=250)
                 if self.ui_logger is not None and still_running:
                     self.ui_logger.warning(
@@ -658,16 +658,16 @@ class ExpoStudio(QMainWindow):
 
             # Fail safe: allow close if shutdown coordination itself crashes.
             self._allow_close = True
-            event.accept()
+            a0.accept()
             return
 
-        event.ignore()
+        a0.ignore()
         QTimer.singleShot(100, self._continue_shutdown_poll)
 
     def _continue_shutdown_poll(self) -> None:
         """Poll background job teardown until shutdown can complete safely."""
         services = self.services
-        active_jobs = services.job_mgr.active_jobs if services is not None and services.job_mgr is not None else 0
+        active_jobs = services.job_mgr.active_jobs if services is not None else 0
 
         if active_jobs == 0:
             self._finalize_shutdown_and_close()
@@ -677,9 +677,7 @@ class ExpoStudio(QMainWindow):
         if deadline is not None and time.monotonic() >= deadline:
             if not self._shutdown_timeout_logged:
                 if self.ui_logger is not None:
-                    active_ids = (
-                        services.job_mgr.active_job_ids if services is not None and services.job_mgr is not None else ()
-                    )
+                    active_ids = services.job_mgr.active_job_ids if services is not None else ()
                     self.ui_logger.error(
                         "MainWindow: shutdown timeout with active jobs still present: %s",
                         active_ids,
@@ -688,7 +686,7 @@ class ExpoStudio(QMainWindow):
 
             # Retry cooperative abort once more, then keep polling.
             try:
-                if self.services is not None and self.services.job_mgr is not None:
+                if self.services is not None:
                     self.services.job_mgr.abort_all(wait_ms=250)
             except (
                 AttributeError,
@@ -718,7 +716,7 @@ class ExpoStudio(QMainWindow):
 
             close_all_connections()
 
-            if self.services is not None and self.services.job_mgr is not None:
+            if self.services is not None:
                 self.services.job_mgr.shutdown(wait=False)
 
         except (

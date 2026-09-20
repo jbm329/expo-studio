@@ -412,12 +412,7 @@ def _numeric_series(df: pd.DataFrame, column: str) -> pd.Series:
             context={"column": column},
         )
 
-    numeric = pd.to_numeric(series, errors="coerce")
-
-    if not isinstance(numeric, pd.Series):
-        numeric = pd.Series(numeric, index=series.index, name=series.name)
-
-    return numeric
+    return pd.to_numeric(series, errors="coerce")
 
 
 def _get_unique_series(df: pd.DataFrame, column: str) -> pd.Series:
@@ -579,9 +574,6 @@ def _normalize_result_series(
         series = series.reindex(index)
 
     numeric_raw = pd.to_numeric(series, errors="coerce")
-
-    if not isinstance(numeric_raw, pd.Series):
-        numeric_raw = pd.Series(numeric_raw, index=index, name=series.name)
 
     numeric = numeric_raw
 

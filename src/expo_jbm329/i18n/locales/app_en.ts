@@ -180,338 +180,338 @@ Please see logs for more information.</source>
 </context><context>
     <name>ColumnPropertiesDialog</name>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="105" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="92" />
         <source>Properties - {name}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="134" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="121" />
         <source>Type: &lt;b&gt;{sem}&lt;/b&gt; ⚠ &lt;span style='color:#666;'&gt;({storage})&lt;/span&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="138" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="125" />
         <source>Type: &lt;b&gt;{sem}&lt;/b&gt; &lt;span style='color:#666;'&gt;({storage})&lt;/span&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="148" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="135" />
         <source>⚠ Column appears to contain dates but is stored as text.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="150" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="137" />
         <source>⚠ Column appears numeric but is stored as text.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="152" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="139" />
         <source>⚠ Column is stored as text but may require conversion.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="158" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="145" />
         <source>⚠ Column contains binary data and cannot be profiled.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="171" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="158" />
         <source>Rows</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="172" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="159" />
         <source>Missing</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="173" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="160" />
         <source>Unique</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="413" />
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="182" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="403" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="169" />
         <source>Sample values</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="207" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="194" />
         <source>Property</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="208" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="195" />
         <source>Value</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="283" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="270" />
         <source>Plot not available (matplotlib missing).</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="299" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="289" />
         <source>Histogram</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="312" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="302" />
         <source>Top values</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="320" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="310" />
         <source>Weekday distribution</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="328" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="318" />
         <source>Distribution</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="339" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="329" />
         <source>Copy as Markdown</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="367" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="357" />
         <source>Count (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="368" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="358" />
         <source>Missing (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="369" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="359" />
         <source>Missing (%)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="370" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="360" />
         <source>Unique (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="371" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="361" />
         <source>Unique (%)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="372" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="362" />
         <source>Memory (bytes)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="373" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="363" />
         <source>Constant</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="375" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="365" />
         <source>Min</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="376" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="366" />
         <source>Q1</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="377" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="367" />
         <source>Median</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="378" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="368" />
         <source>Q3</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="379" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="369" />
         <source>Max</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="380" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="370" />
         <source>Mean</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="381" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="371" />
         <source>Std deviation</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="382" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="372" />
         <source>MAD (median absolute deviation)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="383" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="373" />
         <source>Skewness</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="384" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="374" />
         <source>Kurtosis</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="385" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="375" />
         <source>Zeros (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="386" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="376" />
         <source>Zeros (%)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="387" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="377" />
         <source>Negatives (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="388" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="378" />
         <source>Negatives (%)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="389" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="379" />
         <source>Positives (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="390" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="380" />
         <source>Positives (%)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="392" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="382" />
         <source>True (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="393" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="383" />
         <source>True (%)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="394" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="384" />
         <source>False (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="395" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="385" />
         <source>False (%)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="397" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="387" />
         <source>Top 3</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="398" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="388" />
         <source>Length min</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="399" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="389" />
         <source>Length median</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="400" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="390" />
         <source>Length max</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="401" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="391" />
         <source>Length mean</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="402" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="392" />
         <source>Empty strings (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="404" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="394" />
         <source>Min datetime</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="405" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="395" />
         <source>Max datetime</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="406" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="396" />
         <source>Span (seconds)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="408" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="398" />
         <source>Categories (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="409" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="399" />
         <source>Categories ordered</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="411" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="401" />
         <source>Column contains binary data (bytes) and cannot be profiled.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="419" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="409" />
         <source>Mon</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="420" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="410" />
         <source>Tue</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="421" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="411" />
         <source>Wed</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="422" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="412" />
         <source>Thu</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="423" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="413" />
         <source>Fri</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="424" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="414" />
         <source>Sat</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="425" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="415" />
         <source>Sun</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="426" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="416" />
         <source>True</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="427" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="417" />
         <source>False</source>
         <translation type="unfinished" />
     </message>
@@ -862,242 +862,242 @@ Please see logs for more information.</source>
 </context><context>
     <name>DbErrors</name>
     <message>
-        <location filename="..\..\db\core\errors.py" line="74" />
-        <location filename="..\..\db\core\errors.py" line="40" />
+        <location filename="..\..\db\core\errors.py" line="72" />
+        <location filename="..\..\db\core\errors.py" line="38" />
         <source>The stored procedure does not exist.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="41" />
+        <location filename="..\..\db\core\errors.py" line="39" />
         <source>Check name and schema (ex: EXEC dbo.MyProc ...).</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\db\core\errors.py" line="90" />
-        <location filename="..\..\db\core\errors.py" line="70" />
-        <location filename="..\..\db\core\errors.py" line="44" />
-        <source>The table or view does not exist.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\db\core\errors.py" line="45" />
-        <source>Check name and schema (ex: dbo.MyTable).</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\db\core\errors.py" line="88" />
         <location filename="..\..\db\core\errors.py" line="68" />
-        <location filename="..\..\db\core\errors.py" line="47" />
+        <location filename="..\..\db\core\errors.py" line="42" />
+        <source>The table or view does not exist.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="43" />
+        <source>Check name and schema (ex: dbo.MyTable).</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="86" />
+        <location filename="..\..\db\core\errors.py" line="66" />
+        <location filename="..\..\db\core\errors.py" line="45" />
         <source>SQL syntax error.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="89" />
-        <location filename="..\..\db\core\errors.py" line="69" />
-        <location filename="..\..\db\core\errors.py" line="48" />
+        <location filename="..\..\db\core\errors.py" line="87" />
+        <location filename="..\..\db\core\errors.py" line="67" />
+        <location filename="..\..\db\core\errors.py" line="46" />
         <source>Check keywords, commas and parentheses.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="76" />
-        <location filename="..\..\db\core\errors.py" line="49" />
+        <location filename="..\..\db\core\errors.py" line="74" />
+        <location filename="..\..\db\core\errors.py" line="47" />
         <source>Permission denied.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="50" />
+        <location filename="..\..\db\core\errors.py" line="48" />
         <source>Check SELECT/EXEC permissions or use another connection.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="53" />
+        <location filename="..\..\db\core\errors.py" line="51" />
         <source>Timeout exceeded.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="54" />
+        <location filename="..\..\db\core\errors.py" line="52" />
         <source>Try reducing the result set (TOP) or adding filters.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="80" />
-        <location filename="..\..\db\core\errors.py" line="55" />
+        <location filename="..\..\db\core\errors.py" line="78" />
+        <location filename="..\..\db\core\errors.py" line="53" />
         <source>Connection failed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="81" />
-        <location filename="..\..\db\core\errors.py" line="56" />
+        <location filename="..\..\db\core\errors.py" line="79" />
+        <location filename="..\..\db\core\errors.py" line="54" />
         <source>Check network, host/port and firewall settings.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="92" />
-        <location filename="..\..\db\core\errors.py" line="72" />
-        <location filename="..\..\db\core\errors.py" line="57" />
+        <location filename="..\..\db\core\errors.py" line="90" />
+        <location filename="..\..\db\core\errors.py" line="70" />
+        <location filename="..\..\db\core\errors.py" line="55" />
         <source>Unknown column.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="93" />
-        <location filename="..\..\db\core\errors.py" line="73" />
-        <location filename="..\..\db\core\errors.py" line="58" />
+        <location filename="..\..\db\core\errors.py" line="91" />
+        <location filename="..\..\db\core\errors.py" line="71" />
+        <location filename="..\..\db\core\errors.py" line="56" />
         <source>Check spelling/alias or qualify the column.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="59" />
+        <location filename="..\..\db\core\errors.py" line="57" />
         <source>Unknown SQL identifier/alias.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="60" />
+        <location filename="..\..\db\core\errors.py" line="58" />
         <source>Check table/column alias and qualification (schema.table.column).</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="108" />
-        <location filename="..\..\db\core\errors.py" line="98" />
-        <location filename="..\..\db\core\errors.py" line="84" />
-        <location filename="..\..\db\core\errors.py" line="64" />
+        <location filename="..\..\db\core\errors.py" line="106" />
+        <location filename="..\..\db\core\errors.py" line="96" />
+        <location filename="..\..\db\core\errors.py" line="82" />
+        <location filename="..\..\db\core\errors.py" line="62" />
         <source>Unknown database failure.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="109" />
-        <location filename="..\..\db\core\errors.py" line="99" />
-        <location filename="..\..\db\core\errors.py" line="85" />
-        <location filename="..\..\db\core\errors.py" line="65" />
+        <location filename="..\..\db\core\errors.py" line="107" />
+        <location filename="..\..\db\core\errors.py" line="97" />
+        <location filename="..\..\db\core\errors.py" line="83" />
+        <location filename="..\..\db\core\errors.py" line="63" />
         <source>Show details in log (DEBUG) or try again.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="71" />
+        <location filename="..\..\db\core\errors.py" line="69" />
         <source>Check database and object name.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="75" />
+        <location filename="..\..\db\core\errors.py" line="73" />
         <source>Check name and schema (database).</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="77" />
+        <location filename="..\..\db\core\errors.py" line="75" />
         <source>Check user/password and permissions.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="78" />
+        <location filename="..\..\db\core\errors.py" line="76" />
         <source>Unknown database.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="79" />
+        <location filename="..\..\db\core\errors.py" line="77" />
         <source>Check connection 'database' and permissions.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="82" />
+        <location filename="..\..\db\core\errors.py" line="80" />
         <source>Locked table - timeout exceeded.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="83" />
+        <location filename="..\..\db\core\errors.py" line="81" />
         <source>Try reducing locks or splitting transactions.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="91" />
+        <location filename="..\..\db\core\errors.py" line="89" />
         <source>Check file/database and table name.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="94" />
+        <location filename="..\..\db\core\errors.py" line="92" />
         <source>Database is locked.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="95" />
+        <location filename="..\..\db\core\errors.py" line="93" />
         <source>Try again later or close other database processes.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="96" />
+        <location filename="..\..\db\core\errors.py" line="94" />
         <source>Could not open database file.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="97" />
+        <location filename="..\..\db\core\errors.py" line="95" />
         <source>Check database file path and permissions.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="102" />
+        <location filename="..\..\db\core\errors.py" line="100" />
         <source>SQL statement is empty.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="103" />
+        <location filename="..\..\db\core\errors.py" line="101" />
         <source>Write a SELECT or EXEC.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="104" />
+        <location filename="..\..\db\core\errors.py" line="102" />
         <source>Only SELECT, WITH (CTE) and EXEC are supported here.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="105" />
+        <location filename="..\..\db\core\errors.py" line="103" />
         <source>Start with SELECT/WITH or run procedure with EXEC.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="106" />
+        <location filename="..\..\db\core\errors.py" line="104" />
         <source>EXEC is disabled in this mode.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="107" />
+        <location filename="..\..\db\core\errors.py" line="105" />
         <source>Enable EXEC in settings or run a SELECT.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="110" />
+        <location filename="..\..\db\core\errors.py" line="108" />
         <source>Could not initialize connection.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="113" />
+        <location filename="..\..\db\core\errors.py" line="111" />
         <source>Preparing autocomplete (bulk)…</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="114" />
+        <location filename="..\..\db\core\errors.py" line="112" />
         <source>Could not read schema in bulk - trying batch.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="115" />
+        <location filename="..\..\db\core\errors.py" line="113" />
         <source>Autocomplete for columns ready ({count} objects via bulk).</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="116" />
+        <location filename="..\..\db\core\errors.py" line="114" />
         <source>Autocomplete for columns ready.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="117" />
+        <location filename="..\..\db\core\errors.py" line="115" />
         <source>Preparing autocomplete… {done}/{total}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="118" />
+        <location filename="..\..\db\core\errors.py" line="116" />
         <source>Loading schema…</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="119" />
+        <location filename="..\..\db\core\errors.py" line="117" />
         <source>Schema ready.</source>
         <translation type="unfinished" />
     </message>
@@ -2555,27 +2555,27 @@ Continue?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\service\prompts\compare_between.py" line="189" />
+        <location filename="..\..\gui\dialogs\service\prompts\compare_between.py" line="187" />
         <source>Both limits</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\service\prompts\compare_between.py" line="190" />
+        <location filename="..\..\gui\dialogs\service\prompts\compare_between.py" line="188" />
         <source>Only lower limit</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\service\prompts\compare_between.py" line="191" />
+        <location filename="..\..\gui\dialogs\service\prompts\compare_between.py" line="189" />
         <source>Only upper limit</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\service\prompts\compare_between.py" line="192" />
+        <location filename="..\..\gui\dialogs\service\prompts\compare_between.py" line="190" />
         <source>No limits</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\service\prompts\compare_between.py" line="197" />
+        <location filename="..\..\gui\dialogs\service\prompts\compare_between.py" line="195" />
         <source>Inclusivity:</source>
         <translation type="unfinished" />
     </message>
@@ -2622,91 +2622,91 @@ Continue?</source>
 </context><context>
     <name>QueryController</name>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="52" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="51" />
         <source>SQL result</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="53" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="52" />
         <source>Running SQL…</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="54" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="53" />
         <source>Running SQL (top 10)…</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="55" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="54" />
         <source>Running SQL (selection)…</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="56" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="55" />
         <source>No selection</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="57" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="56" />
         <source>Select SQL to run.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="58" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="57" />
         <source>No SQL</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="59" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="58" />
         <source>SQL editor is empty. Write SQL to run.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="60" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="59" />
         <source>Completed: Query executed {rows} rows, {cols} columns ({elapsed_time})</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="61" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="60" />
         <source>SQL execution cancelled.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="62" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="61" />
         <source>SQL failed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="63" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="62" />
         <source>Failed to run SQL</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="64" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="63" />
         <source>Failed to run SQL.
 
 {traceback_str}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="65" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="64" />
         <source>Failure</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="66" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="65" />
         <source>
 
 Hint: {error_hint}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="67" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="66" />
         <source>No connection</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\query_controller.py" line="68" />
+        <location filename="..\..\workbench\controllers\query_controller.py" line="67" />
         <source>Please select a database connection.</source>
         <translation type="unfinished" />
     </message>

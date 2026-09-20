@@ -15,14 +15,12 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal, cast
+from typing import Literal, cast
 
 import sqlglot
 from sqlglot import exp
 from sqlglot.errors import ParseError, SqlglotError
-
-if TYPE_CHECKING:
-    from sqlglot.expressions import Expression
+from sqlglot.expressions.core import Expression
 
 SqlStatementKind = Literal[
     "select",
@@ -159,7 +157,7 @@ def sqlglot_dialect(engine_or_dialect: str | None) -> str | None:
 
 
 # noinspection PyBroadException
-def parse_one_safe(sql: str, dialect: str | None = None) -> exp.Expression | None:
+def parse_one_safe(sql: str, dialect: str | None = None) -> Expression | None:
     """Parse one SQL statement safely.
 
     Args:
@@ -169,11 +167,11 @@ def parse_one_safe(sql: str, dialect: str | None = None) -> exp.Expression | Non
     Returns:
         The parsed sqlglot expression, or None if parsing fails.
     """
-    if not isinstance(sql, str) or not sql.strip():
+    if not sql.strip():
         return None
 
     try:
-        return cast("exp.Expression", sqlglot.parse_one(sql, read=sqlglot_dialect(dialect)))
+        return cast("Expression", sqlglot.parse_one(sql, read=sqlglot_dialect(dialect)))
     except (ParseError, SqlglotError, ValueError):
         return None
 
@@ -189,7 +187,7 @@ def parse_many_safe(sql: str, dialect: str | None = None) -> list[Expression]:
     Returns:
         A list of parsed sqlglot expressions. Returns an empty list on failure.
     """
-    if not isinstance(sql, str) or not sql.strip():
+    if not sql.strip():
         return []
 
     try:
@@ -208,7 +206,7 @@ def lint_editor_rules(sql: str) -> list[SqlDiagnostic]:
     These rules catch cases that may be accepted or ambiguously parsed by a SQL
     parser but are not useful in the editor.
     """
-    if not isinstance(sql, str) or not sql.strip():
+    if not sql.strip():
         return []
 
     diagnostics: list[SqlDiagnostic] = []
@@ -551,7 +549,7 @@ def _lint_keyword_typos(sql: str) -> list[SqlDiagnostic]:
     keywords are actually expected so valid identifiers such as column names do
     not get flagged as keyword typos.
     """
-    if not isinstance(sql, str) or not sql.strip():
+    if not sql.strip():
         return []
 
     diagnostics: list[SqlDiagnostic] = []
@@ -583,23 +581,6 @@ def _lint_keyword_typos(sql: str) -> list[SqlDiagnostic]:
         )
 
     return diagnostics
-
-
-def _suggest_keyword(token: str) -> str | None:
-    """Return a likely SQL keyword for a token typo."""
-    if not token:
-        return None
-
-    token_l = token.lower()
-
-    if token_l in _COMMON_SQL_KEYWORD_ALIASES:
-        return _COMMON_SQL_KEYWORD_ALIASES[token_l]
-
-    for candidate in _COMMON_SQL_KEYWORDS:
-        if _looks_like_keyword_typo(token_l, candidate):
-            return candidate.upper()
-
-    return None
 
 
 def _find_suspicious_clause_keywords(sql: str) -> list[tuple[int, int, str]]:
@@ -729,7 +710,7 @@ def _normalize_schema_for_lint(
 
 
 def _build_schema_lint_context(
-    expression: exp.Expression,
+    expression: Expression,
     normalized_schema: dict[str, dict[str, set[str]]],
 ) -> SchemaLintContext:
     """Resolve visible tables from a parsed SQL statement."""
@@ -809,7 +790,7 @@ def _is_known_column(
 
 def _lint_unknown_tables(
     sql: str,
-    expression: exp.Expression,
+    expression: Expression,
     context: SchemaLintContext,
 ) -> list[SqlDiagnostic]:
     """Return diagnostics for unknown schemas and tables."""
@@ -858,7 +839,7 @@ def _lint_unknown_tables(
 
 def _lint_unknown_columns(
     sql: str,
-    expression: exp.Expression,
+    expression: Expression,
     context: SchemaLintContext,
 ) -> list[SqlDiagnostic]:
     """Return diagnostics for unknown columns in the current statement context."""
@@ -936,9 +917,6 @@ def _find_identifier_span_in_sql(
     This avoids matching partial substrings inside longer identifiers such as
     matching Ref_Yrkesrol inside [Ref_Yrkesroll_ID].
     """
-    if not isinstance(sql, str):
-        return 0, 1
-
     text = (identifier or "").strip()
     if not text:
         return max(0, start_hint), 1
@@ -976,7 +954,7 @@ def lint_syntax(
     3. syntax parse validation
     4. schema-aware table/column checks
     """
-    if not isinstance(sql, str) or not sql.strip():
+    if not sql.strip():
         return []
 
     diagnostics: list[SqlDiagnostic] = []
@@ -1041,7 +1019,7 @@ def detect_statement_kind(sql: str, dialect: str | None = None) -> SqlStatementK
     This uses sqlglot when possible and falls back to lightweight textual checks
     for statements that may not parse cleanly in every dialect, especially EXEC.
     """
-    if not isinstance(sql, str) or not sql.strip():
+    if not sql.strip():
         return "empty"
 
     leading_token = _first_meaningful_token(sql)
@@ -1157,7 +1135,7 @@ def format_sql(
     pretty: bool = True,
 ) -> str:
     """Format SQL using sqlglot."""
-    if not isinstance(sql, str) or not sql.strip():
+    if not sql.strip():
         return sql
 
     resolved_dialect = sqlglot_dialect(dialect)
@@ -1227,15 +1205,15 @@ def _expression_name_or_none(value: object) -> str | None:
 
     if isinstance(value, exp.Identifier):
         name = value.name
-        return name if isinstance(name, str) and name else None
+        return name or None
 
-    if isinstance(value, exp.Expression):
+    if isinstance(value, Expression):
         expr_name = getattr(value, "name", None)
         if isinstance(expr_name, str) and expr_name:
             return expr_name
 
         text = value.sql()
-        if isinstance(text, str) and text:
+        if text:
             return text
 
     return None

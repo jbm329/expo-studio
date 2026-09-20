@@ -183,7 +183,7 @@ class ConcatController:
 
             return result_df
 
-        def _on_result(result_df: pd.DataFrame | None) -> None:
+        def _on_result(result_df: object) -> None:
             """Handle CONCAT result for the pending tab."""
             if result_df is None:
                 self._logger.info(

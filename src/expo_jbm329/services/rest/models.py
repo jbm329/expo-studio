@@ -207,10 +207,6 @@ class RestRequestConfig:
             msg = "POST requests require a JSON body"
             raise ValueError(msg)
 
-        if self.response_path is not None and not isinstance(self.response_path, str):
-            msg = "REST response path must be a string or None"
-            raise ValueError(msg)
-
         if self.auth is not None:
             self.auth.validate()
 

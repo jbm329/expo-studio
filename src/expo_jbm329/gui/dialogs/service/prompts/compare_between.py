@@ -150,10 +150,8 @@ def prompt_compare(
         value = datetime(d.year(), d.month(), d.day())  # noqa: DTZ001 - calendar-only dialog value
     elif isinstance(editor, QDateTimeEdit):
         value = editor.dateTime().toPyDateTime()
-    elif isinstance(editor, (QSpinBox, QDoubleSpinBox)):
-        value = editor.value()
     else:
-        return {"ok": False}
+        value = editor.value()
 
     return {
         "op": cmb_op.currentData(),
@@ -273,10 +271,7 @@ def prompt_between(
             return datetime(d.year(), d.month(), d.day())  # noqa: DTZ001 - calendar-only dialog value
         if isinstance(edit, QDateTimeEdit):
             return edit.dateTime().toPyDateTime()
-        if isinstance(edit, (QSpinBox, QDoubleSpinBox)):
-            return edit.value()
-        msg = "Unsupported editor"
-        raise RuntimeError(msg)
+        return edit.value()
 
     return {
         "low": _read(low_edit),

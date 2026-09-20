@@ -152,15 +152,15 @@ class SqlLintController(QObject):
             self.editor.setExtraSelections([])
 
     @override
-    def eventFilter(self, obj: QObject | None, event: QEvent | None) -> bool:
+    def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
         """Show diagnostic tooltip when hovering over a rendered diagnostic."""
         if self._disposed:
             return False
 
-        if obj is self._viewport and event is not None and event.type() == QEvent.Type.ToolTip:
-            return self._handle_tooltip_event(event)
+        if a0 is self._viewport and a1 is not None and a1.type() == QEvent.Type.ToolTip:
+            return self._handle_tooltip_event(a1)
 
-        return super().eventFilter(obj, event)
+        return super().eventFilter(a0, a1)
 
     def _run_lint(self) -> None:
         """Run SQL syntax linting and render diagnostics."""

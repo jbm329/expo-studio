@@ -88,7 +88,7 @@ class MySqlDialect(DialectProtocol):
         Returns:
             The modified SQL query with the LIMIT clause applied.
         """
-        if not sql or not isinstance(n, int) or n <= 0:
+        if not sql or n <= 0:
             return sql
         sql0 = self._strip_semicolon(sql)
         if not self._is_likely_select(sql0) or self._already_limited(sql0):

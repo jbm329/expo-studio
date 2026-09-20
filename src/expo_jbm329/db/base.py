@@ -138,18 +138,27 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
     # --- Engine normalization -------------------------------------------------
     raw_engine = rec.get("db_type")
     engine = raw_engine.lower() if isinstance(raw_engine, str) and raw_engine else "mssql"
-    if engine in ("postgres", "postgresql"):
-        engine = "postgresql"
-    allowed = ("mssql", "postgresql", "mysql", "mariadb", "sqlite", "oracle")
-    if engine not in allowed:
-        engine = "mssql"
+    engine_key: EngineKey
+    match engine:
+        case "postgres" | "postgresql":
+            engine_key = "postgresql"
+        case "mysql":
+            engine_key = "mysql"
+        case "mariadb":
+            engine_key = "mariadb"
+        case "sqlite":
+            engine_key = "sqlite"
+        case "oracle":
+            engine_key = "oracle"
+        case _:
+            engine_key = "mssql"
 
     # --- Protocol selection ---------------------------------------------------
     raw_protocol = rec.get("protocol")
     protocol = (
         raw_protocol.lower()
         if isinstance(raw_protocol, str) and raw_protocol
-        else ("sqlite" if engine == "sqlite" else "odbc")
+        else ("sqlite" if engine_key == "sqlite" else "odbc")
     )
 
     # --- Common fields --------------------------------------------------------
@@ -230,7 +239,7 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
 
     return ConnectionConfig(
         name=connection_name,
-        engine=cast("EngineKey", engine),
+        engine=engine_key,
         protocol=cast("ProtocolKey", protocol),
         database=database,
         server=server,

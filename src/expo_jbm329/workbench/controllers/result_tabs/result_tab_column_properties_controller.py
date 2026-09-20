@@ -15,7 +15,6 @@ import logging
 import uuid
 from typing import TYPE_CHECKING, cast
 
-import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
 
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
@@ -25,6 +24,7 @@ from expo_jbm329.utils.models import DataFrameModel
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    import pandas as pd
     from PyQt6.QtWidgets import QTableView, QWidget
 
     from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
@@ -73,8 +73,8 @@ class ResultTabColumnPropertiesController:
         self,
         *,
         parent: QWidget,
-        dialogs: DialogService,
-        logger: logging.Logger,
+        dialogs: DialogService | None,
+        logger: logging.Logger | None,
         async_ops: AsyncOperationController,
         col_profile_cache: ColumnProfileCache,
         find_tab_id_for_view: Callable[[QTableView], str | None],
@@ -103,7 +103,7 @@ class ResultTabColumnPropertiesController:
     # Public API
     # ==================================================================
 
-    def open(self, view: QTableView, column: int) -> None:
+    def open(self, view: QTableView | None, column: int) -> None:
         """Open the column properties dialog for a given view and column.
 
         Args:
@@ -121,9 +121,6 @@ class ResultTabColumnPropertiesController:
             return
 
         df = model.data_frame()
-        if not isinstance(df, pd.DataFrame):
-            return
-
         if column >= df.shape[1]:
             return
 

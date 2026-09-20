@@ -14,8 +14,6 @@ import time
 
 from PyQt6.QtCore import QT_TRANSLATE_NOOP
 
-from expo_jbm329.utils.i18n_utils import tr
-
 from .models import SqlError
 
 _CODE_RE = re.compile(r"\((\d{3,6})\)")
@@ -117,10 +115,6 @@ TR_AUTOCOMPLETE_READY = QT_TRANSLATE_NOOP("DbErrors", "Autocomplete for columns 
 TR_PREPARING_AUTOCOMPLETE_BATCH = QT_TRANSLATE_NOOP("DbErrors", "Preparing autocomplete… {done}/{total}")
 TR_LOADING_SCHEMA = QT_TRANSLATE_NOOP("DbErrors", "Loading schema…")
 TR_SCHEMA_READY = QT_TRANSLATE_NOOP("DbErrors", "Schema ready.")
-
-
-def _tr(text: str) -> str:
-    return tr("DbErrors", text)
 
 
 def should_log(signature: str, window_s: float = 5.0) -> bool:

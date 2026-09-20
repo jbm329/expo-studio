@@ -283,16 +283,25 @@ class SchemaCacheManager:
 
         token = self._make_token(connection_name)
 
+        def _load_all_columns(conn: str) -> dict[tuple[str, str], list[dict[str, str]]]:
+            return list_all_columns_map(conn, corr_id=corr_id)
+
+        def _handle_result(payload: dict[tuple[str, str], list[dict[str, str]]]) -> None:
+            self._on_bulk_done(connection_name, token, payload, corr_id)
+
+        def _handle_error(err: str) -> None:
+            self._handle_bulk_error(connection_name, token, err, corr_id)
+
         worker = self._runner(
             None,
-            lambda conn: list_all_columns_map(conn, corr_id=corr_id),
+            _load_all_columns,
             connection_name,
             started_msg=tr("DbErrors", TR_PREPARING_AUTOCOMPLETE_BULK),
             corr_id=corr_id,
         )
 
-        worker.result.connect(lambda payload: self._on_bulk_done(connection_name, token, payload, corr_id))
-        worker.error.connect(lambda err: self._handle_bulk_error(connection_name, token, err, corr_id))
+        worker.result.connect(_handle_result)
+        worker.error.connect(_handle_error)
 
     # -----------------------------------------------------------------------------
     # INTERNAL HELPERS

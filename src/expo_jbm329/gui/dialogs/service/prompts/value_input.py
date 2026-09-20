@@ -125,7 +125,4 @@ def prompt_value(
     if isinstance(editor, QSpinBox):
         return editor.value(), True
 
-    if isinstance(editor, QDoubleSpinBox):
-        return editor.value(), True
-
-    return None, False
+    return editor.value(), True

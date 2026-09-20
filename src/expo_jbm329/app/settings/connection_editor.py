@@ -302,15 +302,15 @@ class ConnectionEditor(QDialog):
     # showEvent - only positioning + loading data
     # ----------------------------------------------------------------------
     @override
-    def showEvent(self, event: QShowEvent | None) -> None:
+    def showEvent(self, a0: QShowEvent | None) -> None:
         """Load connection data and populate list.
 
         Centers the dialog on its parent and reads existing connections from storage.
 
         Args:
-            event: The QShowEvent.
+            a0: The QShowEvent.
         """
-        super().showEvent(event)
+        super().showEvent(a0)
 
         # Center window on parent
         parent = self.parent()

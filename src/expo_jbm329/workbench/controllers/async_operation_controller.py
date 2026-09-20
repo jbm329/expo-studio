@@ -246,7 +246,8 @@ class AsyncOperationController:
 
         def _hide_overlay_later() -> None:
             if show_overlay and auto_hide_overlay and target is not None:
-                QTimer.singleShot(0, lambda: self._busy.hide(target))
+                overlay_target = target
+                QTimer.singleShot(0, lambda: self._busy.hide(overlay_target))
 
         def _handle_progress(value: int) -> None:
             try:
@@ -747,7 +748,7 @@ class AsyncOperationController:
         return viewport if viewport is not None else view
 
     @staticmethod
-    def _is_stale(view: QTableView) -> bool:
+    def _is_stale(view: QTableView | None) -> bool:
         """Return True if the view is stale/deleted."""
         try:
             return view is None or view.model() is None

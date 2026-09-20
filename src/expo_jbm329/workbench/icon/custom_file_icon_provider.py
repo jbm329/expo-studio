@@ -11,24 +11,25 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, override
 
-from PyQt6.QtCore import QFileInfo
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QFileIconProvider, QStyle
 
 if TYPE_CHECKING:
+    from PyQt6.QtCore import QFileInfo
+
     from expo_jbm329.workbench.icon.icon_service import IconService
 
 
 def _normalize_ext(ext: str) -> str:
-    """Normalize file extensions: ensure leading dot, lower-case."""
+    """Normalize file extensions to lower-case with a leading dot."""
     if not ext:
         return ""
-    s = ext.strip().lower()
-    if not s:
+    normalized = ext.strip().lower()
+    if not normalized:
         return ""
-    if not s.startswith("."):
-        s = "." + s
-    return s
+    if not normalized.startswith("."):
+        normalized = f".{normalized}"
+    return normalized
 
 
 class CustomFileIconProvider(QFileIconProvider):
@@ -130,42 +131,41 @@ class CustomFileIconProvider(QFileIconProvider):
     # QFileIconProvider override
     # ------------------------------------------------------------------ #
     @override
-    def icon(self, type_or_info: QFileIconProvider.IconType | QFileInfo) -> QIcon:
+    def icon(  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        info: QFileIconProvider.IconType | QFileInfo,
+    ) -> QIcon:
         """Return an icon for a file type or QFileInfo instance.
 
         Args:
-            type_or_info: QFileIconProvider.IconType or QFileInfo input.
+            info: QFileIconProvider.IconType or QFileInfo input.
 
         Returns:
             The themed QIcon for the given item.
         """
         try:
             # Case 1: system type (Folder/File)
-            if isinstance(type_or_info, QFileIconProvider.IconType):
-                return self._icon_for_type(type_or_info)
+            if isinstance(info, QFileIconProvider.IconType):
+                return self._icon_for_type(info)
 
             # Case 2: QFileInfo
-            if isinstance(type_or_info, QFileInfo):
-                info: QFileInfo = type_or_info
+            file_info: QFileInfo = info
 
-                if info.isDir():
-                    return self._folder_icon
+            if file_info.isDir():
+                return self._folder_icon
 
-                if info.isSymLink():
-                    return self._link_icon if not info.isDir() else self._folder_icon
+            if file_info.isSymLink():
+                return self._link_icon if not file_info.isDir() else self._folder_icon
 
-                # Determine file icon by extension
-                name = info.fileName() or ""
+            # Determine file icon by extension
+            name = file_info.fileName() or ""
 
-                icon = self._icon_for_name(name)
-
-                return icon or self._file_icon
-
-            # Fallback
-            return super().icon(type_or_info)
+            icon = self._icon_for_name(name)
 
         except Exception:  # noqa: BLE001
-            return super().icon(type_or_info)
+            return super().icon(info)
+        else:
+            return icon or self._file_icon
 
     # ------------------------------------------------------------------ #
     # Internals
@@ -209,7 +209,7 @@ class CustomFileIconProvider(QFileIconProvider):
                 return self._icons_by_multi_ext[key]
 
         # Single extension
-        ext = Path(file_name).suffix.lower()
+        ext = _normalize_ext(Path(file_name).suffix)
         if ext in self._icons_by_ext:
             return self._icons_by_ext[ext]
 

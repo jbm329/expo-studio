@@ -12,7 +12,7 @@ import logging
 import uuid
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP, QPoint, Qt, QThread
@@ -280,7 +280,11 @@ class ResultTabManager:
         self._derived_column_controller: DerivedColumnController | None = None
         self._set_status = set_status
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
-        self._set_shape = set_shape if set_shape is not None else (lambda r, c: None)  # noqa: ARG005
+
+        def _noop_set_shape(_rows: int | None, _columns: int | None) -> None:
+            return None
+
+        self._set_shape = set_shape if set_shape is not None else _noop_set_shape
         self._update_undo_enabled = update_undo_enabled
         self._cancel_job = cancel_job
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
@@ -418,7 +422,7 @@ class ResultTabManager:
     # ==============================================================
     # PUBLIC API (ENTRY POINTS)
     # ==============================================================
-    def display_dataframe(self, df: pd.DataFrame, *, title: str | None = None) -> None:
+    def display_dataframe(self, df: object, *, title: str | None = None) -> None:
         """Display a pandas DataFrame inside a new QTableView tab.
 
         Args:
@@ -444,7 +448,7 @@ class ResultTabManager:
         # Defensive DataFrame coercion
         if not isinstance(df, pd.DataFrame):
             try:
-                df = pd.DataFrame(df)
+                df = pd.DataFrame(cast("Any", df))
             except (
                 AttributeError,
                 ConnectionError,
@@ -638,7 +642,7 @@ class ResultTabManager:
     def fulfill_pending_tab(
         self,
         tab_id: str,
-        df: pd.DataFrame,
+        df: object,
     ) -> None:
         """Fill an existing pending tab with a DataFrame and mark it ready.
 
@@ -659,7 +663,7 @@ class ResultTabManager:
 
         if not isinstance(df, pd.DataFrame):
             try:
-                df = pd.DataFrame(df)
+                df = pd.DataFrame(cast("Any", df))
             except (
                 AttributeError,
                 ConnectionError,
@@ -801,7 +805,7 @@ class ResultTabManager:
         if index is None:
             index = self._tabs.currentIndex()
 
-        if index is None or index < 0:
+        if index < 0:
             return None
 
         tab_bar = self._tabs.tabBar()
@@ -1811,7 +1815,7 @@ class ResultTabManager:
             return None
         return self._get_tab_record(tab_id)
 
-    def _find_tab_index_by_id(self, tab_id: str) -> int | None:
+    def _find_tab_index_by_id(self, tab_id: object) -> int | None:
         """Return the tab index for a tab id.
 
         Args:
@@ -1911,13 +1915,12 @@ class ResultTabManager:
         if push_undo and tab_id is not None:
             try:
                 old_df = model.data_frame()
-                if isinstance(old_df, pd.DataFrame):
-                    pushed = self._undo.push_snapshot(tab_id, old_df)
-                    if pushed:
-                        self._logger.debug(
-                            "ResultTabManager: pushed previous DataFrame to undo stack for tab=%s.",
-                            tab_id,
-                        )
+                pushed = self._undo.push_snapshot(tab_id, old_df)
+                if pushed:
+                    self._logger.debug(
+                        "ResultTabManager: pushed previous DataFrame to undo stack for tab=%s.",
+                        tab_id,
+                    )
             except (
                 AttributeError,
                 ConnectionError,
@@ -2014,34 +2017,31 @@ class ResultTabManager:
         )
 
         # Invalidate column profile cache when DataFrame is replaced
+        def invalidate_cache() -> None:
+            tab_bar = self._tabs.tabBar()
+            if tab_bar is None:
+                return
 
-        if isinstance(model, DataFrameModel):
+            try:
+                tab_id = self._find_tab_id_for_view(view)
+                if tab_id is not None:
+                    self._col_profile_cache.invalidate_tab(tab_id)
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
+                pass
 
-            def invalidate_cache() -> None:
-                tab_bar = self._tabs.tabBar()
-                if tab_bar is None:
-                    return
-
-                try:
-                    tab_id = self._find_tab_id_for_view(view)
-                    if tab_id is not None:
-                        self._col_profile_cache.invalidate_tab(tab_id)
-                except (
-                    AttributeError,
-                    ConnectionError,
-                    FileNotFoundError,
-                    IndexError,
-                    KeyError,
-                    LookupError,
-                    OSError,
-                    RuntimeError,
-                    TypeError,
-                    ValueError,
-                ):
-                    pass
-
-            with contextlib.suppress(Exception):
-                model.data_frame_replaced.connect(invalidate_cache)
+        with contextlib.suppress(Exception):
+            model.data_frame_replaced.connect(invalidate_cache)
 
         view.setModel(model)
 
@@ -2178,7 +2178,7 @@ class ResultTabManager:
     def _update_last_df_from_tab(self, index: int) -> None:
         """Update the cached last DataFrame from the active tab."""
         try:
-            if index is None or index < 0 or self._tabs.widget(index) is None:
+            if index < 0 or self._tabs.widget(index) is None:
                 self._last_df = None
                 self._emit_shape(self._last_df)
                 return
@@ -2502,8 +2502,6 @@ class ResultTabManager:
         records: list[ResultTabRecord] = []
 
         for record in self._tabs_by_id.values():
-            if not isinstance(record, ResultTabRecord):
-                continue
             if not record.is_ready:
                 continue
             if record.df is None:
@@ -2676,7 +2674,10 @@ class ResultTabManager:
         """
         self._logger.debug("ResultTabManager: active tab changed to index=%s.", index)
 
-        ui_invoke(lambda idx=index: self._update_last_df_from_tab(idx))
+        def _update_last_df() -> None:
+            self._update_last_df_from_tab(index)
+
+        ui_invoke(_update_last_df)
 
         self._notify_undo_state_changed()
         self._emit_toolbar_data_state()

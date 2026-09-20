@@ -151,7 +151,7 @@ class TabBarProxyStyle(QProxyStyle):
             )
             painter.fillRect(indicator, palette.highlight())
 
-        if not selected and widget is not None:
+        if not selected:
             current = widget.currentIndex()
             index = option.tabIndex
 
@@ -185,11 +185,7 @@ class TabBarProxyStyle(QProxyStyle):
         ):
             return
 
-        if (
-            element == QStyle.PrimitiveElement.PE_FrameTabBarBase
-            and isinstance(widget, QTabBar)
-            and isinstance(painter, QPainter)
-        ):
+        if element == QStyle.PrimitiveElement.PE_FrameTabBarBase and isinstance(widget, QTabBar):
             painter.save()
             color = option.palette.mid().color()
             painter.setPen(color)

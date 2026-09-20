@@ -172,8 +172,6 @@ class LoggingManager:
 
         # Per-namespace overrides
         for lname, spec_value in object_or_empty(cfg.get("loggers")).items():
-            if not isinstance(lname, str):
-                continue
             spec = object_or_empty(spec_value)
             lg = logging.getLogger(lname)
             lg.setLevel(self._to_level(spec.get("level", "INFO")))

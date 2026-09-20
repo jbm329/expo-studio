@@ -83,8 +83,8 @@ class ResultTabCellActions:
         self,
         *,
         parent: QWidget,
-        dialogs: DialogService,
-        logger: logging.Logger,
+        dialogs: DialogService | None,
+        logger: logging.Logger | None,
         async_ops: AsyncOperationController,
         apply_new_dataframe: Callable[
             [QTableView, pd.DataFrame, str],
@@ -113,9 +113,9 @@ class ResultTabCellActions:
 
     def _validate(
         self,
-        view: QTableView,
-        df: pd.DataFrame,
-        column_name: str,
+        view: QTableView | None,
+        df: object,
+        column_name: object,
     ) -> bool:
         """Common defensive validation for cell actions.
 
@@ -297,11 +297,11 @@ class ResultTabCellActions:
     # ------------------------------------------------------------------
     def replace_value(
         self,
-        view: QTableView,
-        df: pd.DataFrame,
+        view: QTableView | None,
+        df: object,
         *,
         row_index: int,
-        column_name: str,
+        column_name: object,
         raw_value: object,
     ) -> None:
         """Replace a value in a cell or column.

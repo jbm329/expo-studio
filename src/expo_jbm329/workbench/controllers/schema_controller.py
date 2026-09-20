@@ -259,7 +259,7 @@ class SchemaController:
                 editor = {}
             gen_top_n = int(editor.get("gen_top_n", self._gen_top_n_default))
 
-            if gen_top_n < 0 or gen_top_n is None:  # Allow 0, reject only negative
+            if gen_top_n < 0:  # Allow 0, reject only negative
                 gen_top_n = self._gen_top_n_default
 
             self._gen_top_n = gen_top_n
@@ -667,9 +667,6 @@ class SchemaController:
             if entry:
                 entry.columns[(schema_name, table_name)] = cols
 
-        if cols is None:
-            return
-
         for col in cols:
             colname = col["COLUMN_NAME"]
             dtype = col.get("DATA_TYPE", "")
@@ -865,7 +862,7 @@ class SchemaController:
         if meta_type in ("database", "group"):
             return
 
-        if isinstance(meta, dict) and meta_type == "column":
+        if meta_type == "column":
             self._on_column_context_menu(item, meta, pos)
             return
 
@@ -873,7 +870,7 @@ class SchemaController:
         if not isinstance(name, str) or not name:
             return
 
-        if isinstance(meta, dict) and meta_type == "connection":
+        if meta_type == "connection":
             self._on_connection_context_menu(item, meta, pos)
             return
 
@@ -1020,8 +1017,7 @@ class SchemaController:
 
             # 4. (Optional) clear schema cache
             try:
-                if hasattr(self._schema_mgr, "invalidate"):
-                    self._schema_mgr.invalidate(connection_name)
+                self._schema_mgr.clear_for(connection_name)
             except (
                 AttributeError,
                 ConnectionError,

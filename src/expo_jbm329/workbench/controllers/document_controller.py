@@ -104,7 +104,7 @@ class DocumentController:
         self,
         parent: QWidget,
         file_dialogs: FileDialogService,
-        dialogs: DialogService,
+        dialogs: DialogService | None,
         set_status: Callable[[str, int | None], None],
         get_active_tab: Callable[[], EditorTab | None],
         clear_dirty: Callable[[str], None],

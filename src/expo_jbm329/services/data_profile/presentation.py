@@ -102,8 +102,7 @@ def _format_date_only(value: object) -> str:
         if isinstance(value, _dt.date):
             return value.isoformat()
 
-        # pandas Timestamp / NaT-safe
-        if hasattr(value, "to_pydatetime"):
+        if isinstance(value, pd.Timestamp):
             return str(value.to_pydatetime().date().isoformat())
 
     except (

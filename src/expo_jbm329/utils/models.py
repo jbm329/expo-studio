@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import contextlib
 import datetime
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, Any, cast, override
 
 import numpy as np
 import pandas as pd
@@ -62,7 +62,7 @@ class DataFrameModel(QAbstractTableModel):
 
     def __init__(
         self,
-        df: pd.DataFrame,
+        df: object,
         parent: QObject | None = None,
         *,
         na_rep: str = "",
@@ -79,7 +79,7 @@ class DataFrameModel(QAbstractTableModel):
         super().__init__(parent)
 
         if not isinstance(df, pd.DataFrame):
-            df = pd.DataFrame(df)
+            df = pd.DataFrame(cast("Any", df))
 
         self._df = df
         self._row_ix = np.arange(len(df), dtype=np.int64)
@@ -297,7 +297,7 @@ class DataFrameModel(QAbstractTableModel):
             column: The column index to sort by.
             order: The sort order (Ascending or Descending). Defaults to Ascending.
         """
-        if self._df is None or self._df.shape[0] <= 1:
+        if self._df.shape[0] <= 1:
             return
 
         # Tell Qt we are about to reorder rows

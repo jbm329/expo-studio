@@ -111,7 +111,7 @@ class SettingsService:
         self._notify_all(snapshot)
         return snapshot
 
-    def set_and_notify(self, new_settings: JsonObject) -> None:
+    def set_and_notify(self, new_settings: object) -> None:
         """Force-set settings and notify subscribers.
 
         Typically you don't need this because SettingsEditor writes to disk and

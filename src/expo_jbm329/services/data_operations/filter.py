@@ -335,7 +335,7 @@ def filter_between(
         raise TypeError(msg_0)
 
     inclusive_mode = cast("Literal['both', 'left', 'right', 'neither']", inclusive)
-    mask = s.between(low_val, high_val, inclusive=inclusive_mode)
+    mask = s.between(cast("Any", low_val), cast("Any", high_val), inclusive=inclusive_mode)
 
     return df.loc[mask].copy()
 
@@ -347,7 +347,7 @@ def filter_between(
 
 def filter_custom(
     df: pd.DataFrame,
-    predicate: Callable[[pd.DataFrame], pd.Series],
+    predicate: Callable[[pd.DataFrame], object],
 ) -> pd.DataFrame:
     """Filter rows using a custom boolean predicate.
 

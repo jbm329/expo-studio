@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import itertools
+from operator import itemgetter
 
 import pandas as pd
 
@@ -173,7 +174,8 @@ def _normalize_jsonstat2(payload: dict[str, object]) -> pd.DataFrame:
             labels = {str(code): str(text) for code, text in label_map.items()}
 
         # index: code -> position
-        codes = sorted(index.keys(), key=lambda k: index[k])
+        index_items = sorted(index.items(), key=itemgetter(1))
+        codes = [str(code) for code, _position in index_items]
         display_name = _display_dimension_name(dim_id, dim)
         unique_name = display_name
         counter = 2

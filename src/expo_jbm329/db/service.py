@@ -199,7 +199,7 @@ class DbService:
             )
 
         # ---- Validation ----
-        if not isinstance(sql, str) or not sql.strip():
+        if not sql.strip():
             return SqlResult(
                 ok=False,
                 cancelled=False,
@@ -236,10 +236,10 @@ class DbService:
         effective_sql = sql
         limit_injected = False
 
-        if isinstance(top_n, int) and top_n > 0:
+        if top_n is not None and top_n > 0:
             try:
                 limited = self.dialect.apply_limit(sql, top_n)
-                if isinstance(limited, str) and limited.strip() != sql.strip():
+                if limited.strip() != sql.strip():
                     effective_sql = limited
                     limit_injected = True
                     log.debug("DbService: applied server-side limit n=%s", top_n)
@@ -304,7 +304,7 @@ class DbService:
                     sql_signature=signature,
                 )
 
-            row_count = int(df.shape[0]) if isinstance(df, pd.DataFrame) else 0
+            row_count = int(df.shape[0])
             log.info(
                 "DbService: SQL completed (signature=%s, corr=%s) in %.3fs - %s rows",
                 signature,
@@ -314,7 +314,7 @@ class DbService:
             )
 
             # Fallback: client-side limiting
-            if not limit_injected and isinstance(df, pd.DataFrame) and isinstance(top_n, int):
+            if not limit_injected and top_n is not None:
                 df = df.head(top_n)
                 row_count = int(df.shape[0])
 

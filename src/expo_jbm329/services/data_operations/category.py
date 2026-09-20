@@ -182,9 +182,6 @@ def category_set_order(
     categories: list[str] = []
 
     for c in order_list:
-        if c is None:
-            continue
-
         c_str = str(c).strip()
         if c_str:
             categories.append(c_str)
