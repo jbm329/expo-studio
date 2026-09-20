@@ -13,6 +13,8 @@ import numpy as np
 import pandas as pd
 from PyQt6.QtCore import QDate, QLocale
 
+BYTES_PER_KIB = 1024
+
 
 # ---------------------------------------------------------------------
 #  % formatting
@@ -31,7 +33,7 @@ def fmt_pct(x: float, decimals: int = 2) -> str:
         s = f"{x * 100:.{decimals}f}%"
         if QLocale.system().decimalPoint() == ",":
             return s.replace(".", ",")
-        return s
+        return s  # noqa: TRY300
     except (
         AttributeError,
         ConnectionError,
@@ -72,8 +74,8 @@ def fmt_bytes(b: int) -> str:
     units = ["B", "KB", "MB", "GB", "TB"]
     s = float(b)
     u = 0
-    while s >= 1024 and u < len(units) - 1:
-        s /= 1024.0
+    while s >= BYTES_PER_KIB and u < len(units) - 1:
+        s /= float(BYTES_PER_KIB)
         u += 1
 
     loc = QLocale.system()

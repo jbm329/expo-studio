@@ -22,6 +22,10 @@ from expo_jbm329.services.data_operations.dtypes import classify_series_dtype
 
 errors: Literal["raise", "coerce"] = "coerce"
 
+MIN_YEAR_VALUE = 1800
+MAX_YEAR_VALUE = 2200
+DATETIME_SUCCESS_RATIO = 0.9
+
 
 @dataclass(frozen=True)
 class SeriesSemantics:
@@ -123,7 +127,7 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
         if can_be_int:
             xmin = int(x_num.min())
             xmax = int(x_num.max())
-            is_year_like = 1800 <= xmin <= 2200 and 1800 <= xmax <= 2200
+            is_year_like = MIN_YEAR_VALUE <= xmin <= MAX_YEAR_VALUE and MIN_YEAR_VALUE <= xmax <= MAX_YEAR_VALUE
 
     # ------------------------------------------------------------------
     # Datetime semantics
@@ -149,7 +153,7 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
             parsed = pd.to_datetime(sample, errors=errors)
             success_ratio = parsed.notna().mean()
 
-            can_be_datetime = bool(success_ratio > 0.9)
+            can_be_datetime = bool(success_ratio > DATETIME_SUCCESS_RATIO)
 
     except (
         AttributeError,

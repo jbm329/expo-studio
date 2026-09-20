@@ -245,9 +245,8 @@ class RestController:
             ValueError,
         ) as exc:
             self._logger.exception(
-                "Failed to load REST preset '%s': %s",
+                "Failed to load REST preset '%s'",
                 preset_name,
-                exc,
             )
             self._dialogs.critical(
                 parent=self._parent,

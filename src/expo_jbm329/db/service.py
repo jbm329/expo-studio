@@ -349,7 +349,7 @@ class DbService:
 
             err = self._classify_error(e)
             if should_log(signature):
-                log.error(
+                log.exception(
                     "DbService: SQL error (signature=%s, corr=%s): %s %s - %s",
                     signature,
                     corr_id,
@@ -601,7 +601,7 @@ class DbService:
         sql_all_fn = getattr(self.dialect, "sql_all_columns", None)
         if not callable(sql_all_fn):
             msg = "Dialect does not implement sql_all_columns()."
-            raise AttributeError(msg)
+            raise TypeError(msg)
 
         stmt = str(sql_all_fn())
         if not stmt:

@@ -292,9 +292,7 @@ class DataIOService:
             TypeError,
             ValueError,
         ) as e:
-            self._logger.exception(
-                "DataIOService: export CSV failed (corr=%s, path=%s): %s", corr_id, fmt_path(dest_str), e
-            )
+            self._logger.exception("DataIOService: export CSV failed (corr=%s, path=%s)", corr_id, fmt_path(dest_str))
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)
 
     # ------------------------------------------------------------------
@@ -434,7 +432,7 @@ class DataIOService:
         ) as e:
             # Unexpected failure path
             self._logger.exception(
-                "DataIOService: export excel failed (corr=%s, path=%s): %s", corr_id, fmt_path(dest_str), e
+                "DataIOService: export excel failed (corr=%s, path=%s)", corr_id, fmt_path(dest_str)
             )
             return JobResult(
                 ok=False,
@@ -524,10 +522,9 @@ class DataIOService:
             if progress_cb:
                 progress_cb(100)
             self._logger.exception(
-                "DataIOService: export data file failed (corr=%s, path=%s): %s",
+                "DataIOService: export data file failed (corr=%s, path=%s)",
                 corr_id,
                 fmt_path(dest_str),
-                e,
             )
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)
 
@@ -610,7 +607,7 @@ class DataIOService:
             ValueError,
         ) as e:
             self._logger.exception(
-                "DataIOService: export profile report failed (corr=%s, path=%s): %s", corr_id, fmt_path(dest_str), e
+                "DataIOService: export profile report failed (corr=%s, path=%s)", corr_id, fmt_path(dest_str)
             )
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)
 
@@ -717,9 +714,8 @@ class DataIOService:
             ValueError,
         ) as e:
             self._logger.exception(
-                "DataIOService: export comparison profile failed (corr=%s, path=%s): %s",
+                "DataIOService: export comparison profile failed (corr=%s, path=%s)",
                 corr_id,
                 fmt_path(dest_str),
-                e,
             )
             return JobResult(ok=False, elapsed=None, path=dest_str, cancelled=False, error=str(e), corr_id=corr_id)

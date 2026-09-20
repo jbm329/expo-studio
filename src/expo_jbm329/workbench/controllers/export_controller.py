@@ -234,8 +234,8 @@ class ExportController:
             RuntimeError,
             TypeError,
             ValueError,
-        ) as e:
-            self._logger.exception("ExportController: failed to reload settings: %s", e)
+        ):
+            self._logger.exception("ExportController: failed to reload settings")
 
     # ==================================================================
     # Logging helpers (corr-id & safe shape)

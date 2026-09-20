@@ -177,8 +177,8 @@ class DocumentController:
             RuntimeError,
             TypeError,
             ValueError,
-        ) as e:
-            self._logger.exception("DocumentController: failed to reload settings: %s", e)
+        ):
+            self._logger.exception("DocumentController: failed to reload settings")
 
     # ----------------------------------------------------------------------
     # Helpers
@@ -207,9 +207,8 @@ class DocumentController:
             status = self._tr(self.TR_OPEN_SQL_FILE_FAILED)
             self._set_status(status, 6000)
             self._logger.exception(
-                "DocumentController: Failed to open SQL file '%s': %s",
+                "DocumentController: Failed to open SQL file '%s'",
                 fmt_path(p),
-                e,
             )
             self._dialogs.critical(
                 self._parent,
@@ -361,9 +360,8 @@ class DocumentController:
             ValueError,
         ) as e:
             self._logger.exception(
-                "DocumentController: Failed to save as SQL file '%s': %s",
+                "DocumentController: Failed to save as SQL file '%s'",
                 fmt_path(tab.file_path),
-                e,
             )
             status = self._tr(self.TR_SAVE_SQL_FILE_FAILED)
             self._set_status(status, 6000)
@@ -445,9 +443,8 @@ class DocumentController:
             ValueError,
         ) as e:
             self._logger.exception(
-                "DocumentController: Failed to save as SQL file '%s': %s",
+                "DocumentController: Failed to save as SQL file '%s'",
                 fmt_path(path),
-                e,
             )
             status = self._tr(self.TR_SAVE_SQL_FILE_FAILED)
             self._set_status(status, 6000)
@@ -487,7 +484,6 @@ class DocumentController:
             status = self._tr_fmt(self.TR_OPENED_HTML_FILE, file_name=p.name)
             self._set_status(status, 5000)
             self._logger.info("DocumentController: HTML file opened: %s", fmt_path(p))
-            return ok
 
         except (
             AttributeError,
@@ -504,13 +500,14 @@ class DocumentController:
             status = self._tr(self.TR_OPEN_HTML_FILE_FAILED)
             self._set_status(status, 6000)
             self._logger.exception(
-                "DocumentController: failed to open HTML file '%s': %s",
+                "DocumentController: failed to open HTML file '%s'",
                 fmt_path(p),
-                e,
             )
             self._dialogs.critical(
                 parent=self._parent,
                 title=self._tr(self.TR_FAILURE),
                 text=self._tr_fmt(self.TR_OPEN_HTML_FILE_FAILED_ERROR, error=str(e)),
             )
+            return ok
+        else:
             return ok

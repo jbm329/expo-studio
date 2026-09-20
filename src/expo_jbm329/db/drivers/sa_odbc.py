@@ -100,7 +100,6 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
                 "SqlAlchemyOdbcDriver: active cursor has no cancel() method (job_id=%s)",
                 job_id,
             )
-            return False
 
         except (
             AttributeError,
@@ -119,6 +118,8 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
                 job_id,
                 exc_info=True,
             )
+            return False
+        else:
             return False
 
     def _url_for(self, cfg: ConnectionConfig) -> URL:

@@ -12,6 +12,10 @@ from typing import Self
 
 from expo_jbm329.db.sql_analysis import TableRef, extract_table_refs
 
+MIN_QUOTED_IDENTIFIER_LENGTH = 2
+SCHEMA_TABLE_PARTS = 2
+SCHEMA_TABLE_COLUMN_PARTS = 3
+
 
 class SqlAutoCompleter:
     """Pure-logic SQL autocomplete engine (Qt-free).
@@ -151,7 +155,7 @@ class SqlAutoCompleter:
             parts = text.split(".")
 
             # schema. OR table.
-            if len(parts) == 2:
+            if len(parts) == SCHEMA_TABLE_PARTS:
                 first, second = parts
                 if text.endswith("."):
                     schema_key = self._resolve_schema_ci(first)
@@ -174,7 +178,7 @@ class SqlAutoCompleter:
                 return []
 
             # schema.table. OR schema.table.colprefix
-            if len(parts) == 3:
+            if len(parts) == SCHEMA_TABLE_COLUMN_PARTS:
                 schema, table, colprefix = parts
                 if text.endswith("."):
                     return self._list_columns(schema, table)
@@ -379,7 +383,7 @@ class SqlAutoCompleter:
         """
         text = (value or "").strip()
 
-        if len(text) >= 2:
+        if len(text) >= MIN_QUOTED_IDENTIFIER_LENGTH:
             if text.startswith("[") and text.endswith("]"):
                 return text[1:-1].replace("]]", "]")
 

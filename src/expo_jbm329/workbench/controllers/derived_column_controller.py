@@ -278,10 +278,11 @@ class DerivedColumnController:
 
             try:
                 new_df = create_derived_column(safe_df, safe_spec)
-                return True, new_df, None
 
             except DerivedColumnError as exc:
                 return False, None, exc
+            else:
+                return True, new_df, None
 
         def _apply_result(result: tuple[bool, pd.DataFrame | None, Exception | None] | None) -> None:
             if result is None:
@@ -345,8 +346,6 @@ class DerivedColumnController:
                 )
                 return None
 
-            return df
-
         except (
             AttributeError,
             ConnectionError,
@@ -366,6 +365,8 @@ class DerivedColumnController:
                 text=str(exc),
             )
             return None
+        else:
+            return df
 
     def _apply_result(
         self,

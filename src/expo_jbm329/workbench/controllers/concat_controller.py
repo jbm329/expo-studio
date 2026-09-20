@@ -53,6 +53,7 @@ class ConcatController:
         return tr_fmt("ConcatController", text, **kwargs)
 
     __slots__ = (
+        "__weakref__",
         "_async_ops",
         "_get_active_title",
         "_get_df",

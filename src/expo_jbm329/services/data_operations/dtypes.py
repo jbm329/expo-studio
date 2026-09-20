@@ -133,8 +133,6 @@ def is_text_like_dtype(series: pd.Series) -> bool:
             sample = series[series.notna()].head(1000)
             return bool(sample.map(lambda v: isinstance(v, str)).all())
 
-        return False
-
     except (
         AttributeError,
         ConnectionError,
@@ -147,6 +145,8 @@ def is_text_like_dtype(series: pd.Series) -> bool:
         TypeError,
         ValueError,
     ):
+        return False
+    else:
         return False
 
 

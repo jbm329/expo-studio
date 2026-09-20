@@ -30,6 +30,8 @@ from expo_jbm329.db.core.errors import (
 )
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
 
+SCHEMA_KEY_PART_COUNT = 2
+
 ProgressCb = Callable[[int, int], None]  # (done, total)
 StatusCb = Callable[[str, int | None], None]  # (text, timeout)
 AutocompleteRebuildCb = Callable[[str], None]  # IMPORTANT: now takes connection_name
@@ -158,8 +160,7 @@ class SchemaCacheManager:
             batch_size = int(schema_cache.get("prefetch_batch_size", self._batch_size_default))
             ttl_seconds = int(schema_cache.get("ttl_seconds", self._ttl_seconds_default))
 
-            if prefetch_limit < 0:
-                prefetch_limit = 0
+            prefetch_limit = max(prefetch_limit, 0)
             if batch_size <= 0:
                 batch_size = self._batch_size_default
             if ttl_seconds <= 0:
@@ -189,8 +190,8 @@ class SchemaCacheManager:
             RuntimeError,
             TypeError,
             ValueError,
-        ) as e:
-            self._logger.exception("SchemaCacheManager: failed to reload settings: %s", e)
+        ):
+            self._logger.exception("SchemaCacheManager: failed to reload settings")
 
     # -------------------------------------------------------------------------
     # Public API
@@ -359,9 +360,9 @@ class SchemaCacheManager:
 
     def _normalize_key(self, key: object) -> tuple[str, str] | None:
         try:
-            if isinstance(key, tuple) and len(key) == 2:
+            if isinstance(key, tuple) and len(key) == SCHEMA_KEY_PART_COUNT:
                 return str(key[0]), str(key[1])
-            if isinstance(key, list) and len(key) == 2:
+            if isinstance(key, list) and len(key) == SCHEMA_KEY_PART_COUNT:
                 return str(key[0]), str(key[1])
             if isinstance(key, str) and "." in key:
                 sch, t = key.split(".", 1)

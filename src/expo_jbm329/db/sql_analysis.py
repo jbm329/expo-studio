@@ -41,6 +41,19 @@ SqlStatementKind = Literal[
 ]
 
 
+FALLBACK_STATEMENT_KIND_BY_TOKEN: Mapping[str, SqlStatementKind] = {
+    "select": "select",
+    "with": "with",
+    "insert": "insert",
+    "update": "update",
+    "delete": "delete",
+    "create": "create",
+    "drop": "drop",
+    "alter": "alter",
+    "truncate": "truncate",
+}
+
+
 SQLGLOT_DIALECT_BY_ENGINE: dict[str, str] = {
     "mssql": "tsql",
     "tsql": "tsql",
@@ -1375,35 +1388,12 @@ def _fallback_statement_kind(
     invalid: bool,
 ) -> SqlStatementKind:
     """Classify SQL from a leading token when AST classification is unavailable."""
-    if leading_token in {"select"}:
-        return "select"
-
-    if leading_token in {"with"}:
-        return "with"
+    known_kind = FALLBACK_STATEMENT_KIND_BY_TOKEN.get(leading_token)
+    if known_kind is not None:
+        return known_kind
 
     if leading_token in {"exec", "execute"}:
         return "exec"
-
-    if leading_token in {"insert"}:
-        return "insert"
-
-    if leading_token in {"update"}:
-        return "update"
-
-    if leading_token in {"delete"}:
-        return "delete"
-
-    if leading_token in {"create"}:
-        return "create"
-
-    if leading_token in {"drop"}:
-        return "drop"
-
-    if leading_token in {"alter"}:
-        return "alter"
-
-    if leading_token in {"truncate"}:
-        return "truncate"
 
     if invalid:
         return "invalid"

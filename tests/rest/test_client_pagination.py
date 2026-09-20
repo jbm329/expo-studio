@@ -90,4 +90,4 @@ def test_fetch_json_pages_stops_on_cancellation(monkeypatch: Any) -> None:
     ) as exc:
         assert str(exc) == "Request cancelled"
     else:
-        raise AssertionError("Expected cancellation")
+        raise AssertionError("Expected cancellation")  # noqa: TRY003

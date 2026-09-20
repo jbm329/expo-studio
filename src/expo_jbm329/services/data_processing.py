@@ -55,7 +55,6 @@ def generate_profile_report(df: pd.DataFrame, title: str, corr_id: str) -> Profi
 
         dt_ms = (time.perf_counter() - t0) * 1000.0
         logger.info("Profile built (corr=%s, title=%r, ms=%.1f, rows=%s, cols=%s)", corr_id, title, dt_ms, rows, cols)
-        return profile
 
     except (
         AttributeError,
@@ -68,9 +67,11 @@ def generate_profile_report(df: pd.DataFrame, title: str, corr_id: str) -> Profi
         RuntimeError,
         TypeError,
         ValueError,
-    ) as e:
-        logger.exception("Generate profile report failed (corr=%s, title=%r): %s", corr_id, title, e)
+    ):
+        logger.exception("Generate profile report failed (corr=%s, title=%r)", corr_id, title)
         raise
+    else:
+        return profile
 
 
 def generate_comparison_profile_report(
@@ -127,7 +128,6 @@ def generate_comparison_profile_report(
         comp = compare(reports)
         dt_ms = (time.perf_counter() - t0) * 1000.0
         logger.info("Profile comparison built (corr=%s, ms=%.1f, datasets=%s)", corr_id, dt_ms, number_of_datasets)
-        return comp
 
     except (
         AttributeError,
@@ -140,8 +140,10 @@ def generate_comparison_profile_report(
         RuntimeError,
         TypeError,
         ValueError,
-    ) as e:
+    ):
         logger.exception(
-            "Generate comparison profile report failed (corr=%s, datasets=%s): %s", corr_id, number_of_datasets, e
+            "Generate comparison profile report failed (corr=%s, datasets=%s)", corr_id, number_of_datasets
         )
         raise
+    else:
+        return comp

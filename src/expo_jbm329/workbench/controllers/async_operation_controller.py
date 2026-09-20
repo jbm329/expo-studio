@@ -328,7 +328,6 @@ class AsyncOperationController:
                 if on_error is not None:
                     try:
                         on_error(tb)
-                        return
                     except (
                         AttributeError,
                         ConnectionError,
@@ -346,6 +345,8 @@ class AsyncOperationController:
                             scope,
                             corr_id,
                         )
+                    else:
+                        return
 
                 if not suppress_error_dialog:
                     self._show_error_dialog(

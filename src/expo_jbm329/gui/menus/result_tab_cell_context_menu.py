@@ -20,6 +20,8 @@ from PyQt6.QtWidgets import QMenu, QWidget
 
 from expo_jbm329.utils.i18n_utils import tr
 
+MAX_CELL_PREVIEW_LENGTH = 80
+
 
 class ResultTabCellContextMenu:
     """Builder for cell context menus."""
@@ -76,8 +78,8 @@ class ResultTabCellContextMenu:
         # Header preview
         # --------------------------------------------------------------
         preview = str(raw_value)
-        if len(preview) > 80:
-            preview = preview[:77] + "…"
+        if len(preview) > MAX_CELL_PREVIEW_LENGTH:
+            preview = preview[: MAX_CELL_PREVIEW_LENGTH - 3] + "…"
 
         header_action = QAction(f"{column_name} = {preview}", menu)
         header_action.setEnabled(False)

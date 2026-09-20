@@ -40,6 +40,8 @@ from expo_jbm329.services.data_operations.dtypes import (
     is_numeric_series,
 )
 
+BINARY_OPERATOR_OPERAND_COUNT = 2
+
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
@@ -306,7 +308,7 @@ def evaluate_rpn(
             continue
 
         if token.token_type == FormulaTokenType.OPERATOR:
-            if len(stack) < 2:
+            if len(stack) < BINARY_OPERATOR_OPERAND_COUNT:
                 msg = "missing_operand_runtime"
                 raise DerivedColumnError(
                     msg,

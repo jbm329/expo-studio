@@ -17,6 +17,14 @@ if TYPE_CHECKING:
     from expo_jbm329.services.rest.models import RestRequestConfig
 
 
+def _require_dataframe(value: object) -> pd.DataFrame:
+    """Return value as a DataFrame or raise for malformed normalizer output."""
+    if not isinstance(value, pd.DataFrame):
+        msg = "Normalizer did not return a DataFrame"
+        raise TypeError(msg)
+    return value
+
+
 def fetch_rest_dataset(
     config: RestRequestConfig,
     *,
@@ -74,14 +82,12 @@ def fetch_rest_dataset(
 
         # ---------------- Normalize ----------------
 
-        df = _normalize_payloads(
-            payloads,
-            response_path=config.response_path,
+        df = _require_dataframe(
+            _normalize_payloads(
+                payloads,
+                response_path=config.response_path,
+            )
         )
-
-        if not isinstance(df, pd.DataFrame):
-            msg = "Normalizer did not return a DataFrame"
-            raise RuntimeError(msg)
 
         elapsed = time.perf_counter() - t0
 

@@ -154,8 +154,8 @@ class FilePanelController:
             RuntimeError,
             TypeError,
             ValueError,
-        ) as e:
-            self._logger.exception("FilePanelController: failed to reload settings: %s", e)
+        ):
+            self._logger.exception("FilePanelController: failed to reload settings")
 
     def update_icons(self) -> None:
         """Refresh file icons after a theme or icon-provider change."""
@@ -179,8 +179,8 @@ class FilePanelController:
             RuntimeError,
             TypeError,
             ValueError,
-        ) as e:
-            self._logger.exception("FilePanelController: failed to update icons: %s", e)
+        ):
+            self._logger.exception("FilePanelController: failed to update icons")
 
     # ==================================================================
     # Double click handling
@@ -418,7 +418,7 @@ class FilePanelController:
             TypeError,
             ValueError,
         ):
-            self._logger.error("FilePanelController: delete-via-model: failed to resolve path")
+            self._logger.exception("FilePanelController: delete-via-model: failed to resolve path")
             return False
 
         self._logger.debug("FilePanelController: attempting delete via model (path=%s)", fp)
@@ -446,9 +446,8 @@ class FilePanelController:
         try:
             p.unlink()
             self._logger.debug("FilePanelController: delete-via-unlink succeeded (path=%s)", fp)
-            return True
         except PermissionError as e:
-            self._logger.error("FilePanelController: delete-via-unlink permission error (path=%s, err=%s)", fp, e)
+            self._logger.exception("FilePanelController: delete-via-unlink permission error (path=%s)", fp)
             err_msg = self._tr_fmt(self.TR_SOMETHING_WENT_WRONG_DELETE_FILE_ERROR, file=p.name, error=str(e))
 
             self._dialogs.warn(parent=self._parent, title=self._tr(self.TR_FAILURE), text=err_msg)
@@ -465,7 +464,7 @@ class FilePanelController:
             TypeError,
             ValueError,
         ) as e:
-            self._logger.error("FilePanelController: delete-via-unlink failed (path=%s, err=%s)", fp, e)
+            self._logger.exception("FilePanelController: delete-via-unlink failed (path=%s)", fp)
             err_msg = self._tr_fmt(
                 self.TR_SOMETHING_WENT_WRONG_DELETE_FILE_ERROR,
                 file=p.name,
@@ -473,3 +472,5 @@ class FilePanelController:
             )
             self._dialogs.warn(parent=self._parent, title=self._tr(self.TR_FAILURE), text=err_msg)
             return False
+        else:
+            return True

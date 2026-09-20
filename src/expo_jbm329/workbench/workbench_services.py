@@ -490,7 +490,7 @@ class WorkbenchServices:
             get_active_view=results.active_view,
             get_active_tab_title=lambda: ui.result_tabs.tabText(ui.result_tabs.currentIndex()).strip(),
             list_tab_titles=lambda: [ui.result_tabs.tabText(i).strip() for i in range(ui.result_tabs.count())],
-            get_df_for_tab=lambda title: results.get_df_by_title(title),
+            get_df_for_tab=results.get_df_by_title,
             set_status=ui.set_status,
             logger=app.log_ui,
         )
@@ -505,7 +505,7 @@ class WorkbenchServices:
             results=results,
             get_active_tab_title=lambda: ui.result_tabs.tabText(ui.result_tabs.currentIndex()).strip(),
             list_tab_titles=lambda: [ui.result_tabs.tabText(i).strip() for i in range(ui.result_tabs.count())],
-            get_df_for_tab=lambda title: results.get_df_by_title(title),
+            get_df_for_tab=results.get_df_by_title,
             set_status=ui.set_status,
             logger=app.log_ui,
         )

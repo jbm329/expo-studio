@@ -121,21 +121,7 @@ def _onerror(func: Callable[[str], object], path: str, _exc_info: object) -> Non
     Attempts to make the path writable and retry the original operation.
     """
     _chmod_writable(Path(path))
-    try:
-        func(path)
-    except (
-        AttributeError,
-        ConnectionError,
-        FileNotFoundError,
-        IndexError,
-        KeyError,
-        LookupError,
-        OSError,
-        RuntimeError,
-        TypeError,
-        ValueError,
-    ):
-        raise
+    func(path)
 
 
 def _safe_rmtree(path: Path, retries: int = 6, backoff: float = 0.2) -> bool:
@@ -158,7 +144,6 @@ def _safe_rmtree(path: Path, retries: int = 6, backoff: float = 0.2) -> bool:
     for i in range(retries):
         try:
             shutil.rmtree(path, onerror=_onerror)
-            return True
         except (
             AttributeError,
             ConnectionError,
@@ -172,6 +157,8 @@ def _safe_rmtree(path: Path, retries: int = 6, backoff: float = 0.2) -> bool:
             ValueError,
         ):
             time.sleep(backoff * (i + 1))
+        else:
+            return True
 
     return False
 

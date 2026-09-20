@@ -266,10 +266,9 @@ class ResultTabUndoManager:
             RuntimeError,
             TypeError,
             ValueError,
-        ) as exc:
-            self._logger.error(
-                "ResultTabUndoManager: failed to reload settings %s",
-                exc,
+        ):
+            self._logger.exception(
+                "ResultTabUndoManager: failed to reload settings",
             )
 
     def set_limits(

@@ -25,7 +25,7 @@ def set_app_closing(value: bool = True) -> None:
 
     This prevents queued UI callbacks from running during Qt teardown.
     """
-    global _APP_CLOSING
+    global _APP_CLOSING  # noqa: PLW0603 - process-wide Qt shutdown flag.
     _APP_CLOSING = value
 
 

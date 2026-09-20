@@ -330,7 +330,7 @@ class Worker(QObject):
             ValueError,
         ):
             tb = traceback.format_exc()
-            self._logger.error(
+            self._logger.exception(
                 "Worker: callable raised (job_id=%s, scope=%s, corr=%s): %s",
                 self._job_id,
                 self._job_scope,
@@ -763,7 +763,6 @@ class JobManager:
                     corr_id=corr_id,
                 )
                 result = fn(*args, **call_kwargs)
-                return "ok", result
             except (
                 AttributeError,
                 ConnectionError,
@@ -777,6 +776,8 @@ class JobManager:
                 ValueError,
             ):
                 return "err", traceback.format_exc()
+            else:
+                return "ok", result
 
         # Queue started instead of emitting directly. This keeps signal delivery
         # consistent with the rest of the pool bridge and avoids races for any

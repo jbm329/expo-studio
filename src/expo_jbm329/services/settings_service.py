@@ -20,6 +20,14 @@ Subscriber = Callable[[JsonObject], None]
 Dispatcher = Callable[[Callable[[], None]], None]
 
 
+def _require_settings_object(value: object) -> JsonObject:
+    """Return value as settings JSON or raise for malformed loader output."""
+    if not isinstance(value, dict):
+        msg = "load_settings returned non-dict"
+        raise TypeError(msg)
+    return value
+
+
 class SettingsService:
     """Central settings hub with publisher-subscriber support.
 
@@ -125,11 +133,7 @@ class SettingsService:
     # -----------------------------
     def _safe_load(self) -> JsonObject:
         try:
-            s = self._loader()
-            if not isinstance(s, dict):
-                msg = "load_settings returned non-dict"
-                raise ValueError(msg)
-            return s
+            settings = _require_settings_object(self._loader())
         except (
             AttributeError,
             ConnectionError,
@@ -141,9 +145,11 @@ class SettingsService:
             RuntimeError,
             TypeError,
             ValueError,
-        ) as e:
-            self._logger.exception("SettingsService: failed to load settings; falling back to empty dict. Error: %s", e)
+        ):
+            self._logger.exception("SettingsService: failed to load settings; falling back to empty dict")
             return {}
+        else:
+            return settings
 
     def _notify_all(self, s: JsonObject) -> None:
         subs_snapshot: list[Subscriber]

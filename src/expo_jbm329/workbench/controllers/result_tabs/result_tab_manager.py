@@ -102,6 +102,7 @@ class ResultTabState(StrEnum):
 
 
 ResultOrigin = Literal["file", "sql", "derived", "join", "concat", "unknown"]
+MIN_MULTI_COLUMN_SELECTION = 2
 
 
 @dataclass(slots=True)
@@ -1186,7 +1187,7 @@ class ResultTabManager:
         sel_model = header.selectionModel()
         if sel_model is None:
             return
-        only_one_selected = len(sel_model.selectedColumns()) < 2
+        only_one_selected = len(sel_model.selectedColumns()) < MIN_MULTI_COLUMN_SELECTION
 
         ok, df, col_name, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or not col_name:
@@ -2122,15 +2123,14 @@ class ResultTabManager:
 
         if isinstance(current_delegate, ResultTabColumnPresentationDelegate):
             self._clear_presentation_delegate(view)
-        else:
-            if is_checked:
-                active_record = self.current_df()
-                if active_record is not None:
-                    self._run_with_busy_overlay(
-                        view,
-                        lambda: self._apply_presentation_delegate(view, active_record),
-                        message=self._tr(self.TR_FORMATTING_CELLS),
-                    )
+        elif is_checked:
+            active_record = self.current_df()
+            if active_record is not None:
+                self._run_with_busy_overlay(
+                    view,
+                    lambda: self._apply_presentation_delegate(view, active_record),
+                    message=self._tr(self.TR_FORMATTING_CELLS),
+                )
 
     def _adjust_column_widths_to_header(
         self,
@@ -2290,6 +2290,21 @@ class ResultTabManager:
     # DATA ACCESS HELPERS
     # ==============================================================
 
+    @staticmethod
+    def _require_dataframe(value: object) -> pd.DataFrame:
+        """Return value as a DataFrame or raise for invalid model state."""
+        if not isinstance(value, pd.DataFrame):
+            msg = "Model returned non-DataFrame."
+            raise TypeError(msg)
+        return value
+
+    @staticmethod
+    def _validate_column_index(column: int, column_count: int) -> None:
+        """Raise if column is outside the available DataFrame columns."""
+        if column < 0 or column >= column_count:
+            msg = f"Invalid column index: {column}"
+            raise IndexError(msg)
+
     def _resolve_df_col_series(
         self, view: QTableView, column: int
     ) -> tuple[bool, pd.DataFrame | None, str | None, pd.Series | None]:
@@ -2319,25 +2334,15 @@ class ResultTabManager:
             return False, None, None, None
 
         try:
-            df = model.data_frame()
-            if not isinstance(df, pd.DataFrame):
-                msg = "Model returned non-DataFrame."
-                raise TypeError(msg)
-
-            if column < 0 or column >= df.shape[1]:
-                msg_0 = f"Invalid column index: {column}"
-                raise IndexError(msg_0)
-
+            df = self._require_dataframe(model.data_frame())
+            self._validate_column_index(column, df.shape[1])
             col_name = str(df.columns[column])
             s = df[col_name]
 
-            return True, df, col_name, s
-
-        except IndexError as e:
-            self._logger.error(
-                "ResultTabManager: resolve failed - invalid column index=%s: %s",
+        except IndexError:
+            self._logger.exception(
+                "ResultTabManager: resolve failed - invalid column index=%s",
                 column,
-                e,
             )
             self._dialogs.critical(
                 parent=self._parent,
@@ -2346,11 +2351,10 @@ class ResultTabManager:
             )
             return False, None, None, None
 
-        except KeyError as e:
-            self._logger.error(
-                "ResultTabManager: resolve failed - column not found (column=%s): %s",
+        except KeyError:
+            self._logger.exception(
+                "ResultTabManager: resolve failed - column not found (column=%s)",
                 column,
-                e,
             )
             self._dialogs.critical(
                 parent=self._parent,
@@ -2369,10 +2373,9 @@ class ResultTabManager:
             TypeError,
             ValueError,
         ) as e:
-            self._logger.error(
-                "ResultTabManager: resolve failed - unexpected error (column=%s): %s",
+            self._logger.exception(
+                "ResultTabManager: resolve failed - unexpected error (column=%s)",
                 column,
-                e,
             )
             self._dialogs.critical(
                 parent=self._parent,
@@ -2380,6 +2383,8 @@ class ResultTabManager:
                 text=self._tr_fmt(self.TR_COULD_NOT_READ_COLUMN, error=str(e)),
             )
             return False, None, None, None
+        else:
+            return True, df, col_name, s
 
     def get_series_semantics(
         self,

@@ -361,7 +361,11 @@ def prompt_merge_columns(
     def _validate() -> None:
         if btn_ok is None:
             return
-        btn_ok.setEnabled(lst_selected.count() >= 2 and bool(txt_name.text().strip()) and bool(txt_delim.text()))
+        btn_ok.setEnabled(
+            lst_selected.count() >= 2  # noqa: PLR2004 - split requires at least two selected columns.
+            and bool(txt_name.text().strip())
+            and bool(txt_delim.text())
+        )
 
     def _add_column() -> None:
         item_x = lst_available.currentItem()

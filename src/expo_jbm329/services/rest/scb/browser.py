@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from http import HTTPStatus
 
 import httpx
 
@@ -68,7 +69,7 @@ def fetch_scb_tables(*, lang: str = "sv", timeout: float = 30.0) -> list[ScbTabl
                         "pageSize": page_size,
                     },
                 )
-                if response.status_code != 200:
+                if response.status_code != HTTPStatus.OK:
                     msg = f"SCB table index request failed: HTTP {response.status_code}"
                     raise ScbBrowserError(msg)
 
@@ -126,7 +127,7 @@ def fetch_scb_table_metadata(*, table_id: str, lang: str = "sv", timeout: float 
         msg_0 = f"Could not load SCB metadata for {cleaned}: {exc}"
         raise ScbBrowserError(msg_0) from exc
 
-    if response.status_code != 200:
+    if response.status_code != HTTPStatus.OK:
         msg_0 = f"SCB metadata request failed for {cleaned}: HTTP {response.status_code}"
         raise ScbBrowserError(msg_0)
 

@@ -123,6 +123,14 @@ def merge_defaults(defaults: Mapping[str, object], user: Mapping[str, object]) -
     return out
 
 
+def _require_json_object(value: object) -> JsonObject:
+    """Return value as a JSON object or raise for malformed config data."""
+    if not isinstance(value, dict):
+        msg = "Expected a JSON object."
+        raise TypeError(msg)
+    return object_from_mapping(value)
+
+
 # =====================================================================
 #  SETTINGS.JSON
 # =====================================================================
@@ -135,7 +143,7 @@ def load_settings() -> JsonObject:
     Returns:
         A copy of the current settings dictionary.
     """
-    global _settings_cache
+    global _settings_cache  # noqa: PLW0603 - module-level settings cache is guarded by _lock.
 
     with _lock:
         if _settings_cache is not None:
@@ -153,9 +161,7 @@ def load_settings() -> JsonObject:
         # Try to load existing file
         try:
             loaded: object = json.loads(p.read_text(encoding="utf-8"))
-            if not isinstance(loaded, dict):
-                raise ValueError
-            user = object_from_mapping(loaded)
+            user = _require_json_object(loaded)
         except (
             AttributeError,
             ConnectionError,
@@ -190,7 +196,7 @@ def save_settings(settings: JsonObject) -> None:
     Args:
         settings: The settings dictionary to save.
     """
-    global _settings_cache
+    global _settings_cache  # noqa: PLW0603 - module-level settings cache is guarded by _lock.
     with _lock:
         _validate_settings_inplace(settings)
         _atomic_write_json(get_settings_path(), settings)
@@ -449,17 +455,13 @@ def read_connections() -> ConnectionsConfig:
                 return {}
 
             loaded: object = json.loads(raw)
-            if not isinstance(loaded, dict):
-                raise ValueError
-
-            data = object_from_mapping(loaded)
+            data = _require_json_object(loaded)
             out: ConnectionsConfig = {}
             for name, conn in data.items():
                 if isinstance(name, str) and isinstance(conn, dict):
                     out[name] = normalize_entry(object_from_mapping(conn))
 
             _atomic_write_json(p, out)
-            return out
 
         except (
             AttributeError,
@@ -475,6 +477,8 @@ def read_connections() -> ConnectionsConfig:
         ):
             _atomic_write_json(p, {})
             return {}
+        else:
+            return out
 
 
 def write_connections(conns: ConnectionsConfig) -> None:
@@ -507,17 +511,13 @@ def read_rest_connections() -> RestConnectionsConfig:
                 return {}
 
             loaded: object = json.loads(raw)
-            if not isinstance(loaded, dict):
-                raise ValueError
-
-            data = object_from_mapping(loaded)
+            data = _require_json_object(loaded)
             out: RestConnectionsConfig = {}
             for name, cfg in data.items():
                 if isinstance(name, str) and isinstance(cfg, dict):
                     out[name] = _normalize_rest_entry(object_from_mapping(cfg))
 
             _atomic_write_json(p, out)
-            return out
 
         except (
             AttributeError,
@@ -533,6 +533,8 @@ def read_rest_connections() -> RestConnectionsConfig:
         ):
             _atomic_write_json(p, {})
             return {}
+        else:
+            return out
 
 
 def write_rest_connections(conns: RestConnectionsConfig) -> None:
@@ -720,9 +722,7 @@ def read_log_config() -> LogConfig:
 
         try:
             loaded: object = json.loads(p.read_text("utf-8"))
-            if not isinstance(loaded, dict):
-                raise ValueError
-            data = object_from_mapping(loaded)
+            data = _require_json_object(loaded)
         except (
             AttributeError,
             ConnectionError,
@@ -797,11 +797,11 @@ def _validate_log_config_inplace(cfg: LogConfig) -> None:
         return
     loggers = object_from_mapping(loggers_value)
 
-    for lname, spec in list(loggers.items()):
-        if not isinstance(lname, str) or not isinstance(spec, dict):
+    for lname, spec_value in list(loggers.items()):
+        if not isinstance(lname, str) or not isinstance(spec_value, dict):
             loggers.pop(lname, None)
             continue
-        spec = object_from_mapping(spec)
+        spec = object_from_mapping(spec_value)
         loggers[lname] = spec
 
         # level normalization

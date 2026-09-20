@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 import httpx
@@ -94,7 +95,7 @@ def fetch_json(
             _sleep_for_retry(attempt, retry_cfg, response, cancel_cb=cancel_cb)
             continue
 
-        if response.status_code != 200:
+        if response.status_code != HTTPStatus.OK:
             body = response.text[:500] if response.text else ""
             msg_0 = f"HTTP {response.status_code}: {body}"
             raise RestClientError(msg_0)
@@ -217,7 +218,7 @@ def _fetch_oauth2_access_token(auth: RestAuthConfig, *, timeout: float) -> str:
         msg_0 = f"OAuth2 token request failed: {exc}"
         raise RestClientError(msg_0) from exc
 
-    if response.status_code != 200:
+    if response.status_code != HTTPStatus.OK:
         body = response.text[:500] if response.text else ""
         msg_0 = f"OAuth2 token request failed: HTTP {response.status_code}: {body}"
         raise RestClientError(msg_0)

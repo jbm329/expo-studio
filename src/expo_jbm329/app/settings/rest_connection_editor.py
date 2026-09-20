@@ -621,7 +621,7 @@ class RestConnectionEditor(QDialog):
             raise ValueError(self.tr("{field} must contain valid JSON.").format(field=field_name)) from exc
 
         if not isinstance(value, dict):
-            raise ValueError(self.tr("{field} must be a JSON object.").format(field=field_name))
+            raise TypeError(self.tr("{field} must be a JSON object.").format(field=field_name))
 
         return value
 

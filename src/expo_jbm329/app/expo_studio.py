@@ -13,6 +13,7 @@ Language Policy:
 from __future__ import annotations
 
 import time
+from functools import partial
 from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QEvent, Qt, QTimer
@@ -313,7 +314,7 @@ class ExpoStudio(QMainWindow):
         self.statusbar = self.statusBar()
         if not isinstance(self.statusbar, QStatusBar):
             message = "QMainWindow did not provide a status bar."
-            raise RuntimeError(message)
+            raise TypeError(message)
         self.status_controller = StatusBarController(self, self.statusbar)
         status_controller = self.status_controller
 
@@ -365,14 +366,14 @@ class ExpoStudio(QMainWindow):
             open_file=workbench.document.open_any_dialog,
             save_file=workbench.document.save_sql,
             run_full=workbench.query.run_full,
-            run_selfull=lambda: workbench.query.run_selection(None),
+            run_selfull=partial(workbench.query.run_selection, None),
             run_top10=workbench.query.run_top10,
             cancel_job=self._cancel_all_jobs_from_toolbar,
             export_csv=workbench.export.export_csv,
             export_excel=workbench.export.export_excel,
             export_data=workbench.export.export_data,
-            join_data=lambda: workbench.join.open_join_dialog(),
-            concatenate_data=lambda: workbench.concat.open_concat_dialog(),
+            join_data=workbench.join.open_join_dialog,
+            concatenate_data=workbench.concat.open_concat_dialog,
             format_view=workbench.results.handle_format_view_toggle,
             clear_editor=workbench.editor_panel.clear_active_tab,
             refresh_schema=workbench.schema.refresh_current_schema,

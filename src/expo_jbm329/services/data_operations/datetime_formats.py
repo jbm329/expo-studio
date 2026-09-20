@@ -14,12 +14,12 @@ DateFormatKey = Literal[
 ]
 
 FORMAT_MAP = {
-    "auto": dict(fmt=None, dayfirst=False, yearfirst=False),
-    "iso_date": dict(fmt="%Y-%m-%d", dayfirst=False, yearfirst=False),
-    "iso_datetime": dict(fmt="%Y-%m-%d %H:%M:%S", dayfirst=False, yearfirst=False),
-    "dmy_slash": dict(fmt="%d/%m/%Y", dayfirst=True, yearfirst=False),
-    "mdy_slash": dict(fmt="%m/%d/%Y", dayfirst=False, yearfirst=False),
-    "dmy_dot": dict(fmt="%d.%m.%Y", dayfirst=True, yearfirst=False),
-    "ymd_slash": dict(fmt="%Y/%m/%d", dayfirst=False, yearfirst=False),
-    "ymd_compact": dict(fmt="%Y%m%d", dayfirst=False, yearfirst=False),
+    "auto": {"fmt": None, "dayfirst": False, "yearfirst": False},
+    "iso_date": {"fmt": "%Y-%m-%d", "dayfirst": False, "yearfirst": False},
+    "iso_datetime": {"fmt": "%Y-%m-%d %H:%M:%S", "dayfirst": False, "yearfirst": False},
+    "dmy_slash": {"fmt": "%d/%m/%Y", "dayfirst": True, "yearfirst": False},
+    "mdy_slash": {"fmt": "%m/%d/%Y", "dayfirst": False, "yearfirst": False},
+    "dmy_dot": {"fmt": "%d.%m.%Y", "dayfirst": True, "yearfirst": False},
+    "ymd_slash": {"fmt": "%Y/%m/%d", "dayfirst": False, "yearfirst": False},
+    "ymd_compact": {"fmt": "%Y%m%d", "dayfirst": False, "yearfirst": False},
 }

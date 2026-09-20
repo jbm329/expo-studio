@@ -14,6 +14,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+CATEGORY_CARDINALITY_RATIO_LIMIT = 0.5
+
 if TYPE_CHECKING:
     from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 
@@ -96,7 +98,7 @@ def infer_series_capabilities(sem: SeriesSemantics, storage_dtype: str) -> Serie
         can_convert_to_category=(
             sem.semantic_dtype in ("string", "category")
             and sem.cardinality_ratio is not None
-            and sem.cardinality_ratio < 0.5
+            and sem.cardinality_ratio < CATEGORY_CARDINALITY_RATIO_LIMIT
             and storage_dtype != "category"
         ),
         # -----------------------------

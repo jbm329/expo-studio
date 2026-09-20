@@ -33,6 +33,8 @@ from expo_jbm329.gui.gui_utils import ui_invoke
 from expo_jbm329.utils.format_utils import fmt_int
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
 
+TOP_N_DISPLAY_FORMAT_THRESHOLD = 1000
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -274,8 +276,8 @@ class SchemaController:
             RuntimeError,
             TypeError,
             ValueError,
-        ) as e:
-            self._logger.exception("SchemaController: failed to reload settings: %s", e)
+        ):
+            self._logger.exception("SchemaController: failed to reload settings")
 
     def update_icons(self) -> None:
         """Update icons in the schema tree for theme changes.
@@ -893,7 +895,7 @@ class SchemaController:
             act_cols = menu.addAction("SELECT")
             act_cols_schema = menu.addAction("SELECT (schema)")
         else:
-            top_n = fmt_int(self._gen_top_n) if self._gen_top_n > 1000 else self._gen_top_n
+            top_n = fmt_int(self._gen_top_n) if self._gen_top_n > TOP_N_DISPLAY_FORMAT_THRESHOLD else self._gen_top_n
             act_star = menu.addAction(f"SELECT * TOP {top_n}")
             act_cols = menu.addAction(f"SELECT TOP {top_n}")
             act_cols_schema = menu.addAction(f"SELECT TOP {top_n} (schema)")

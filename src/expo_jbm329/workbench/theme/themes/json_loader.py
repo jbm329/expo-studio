@@ -32,10 +32,10 @@ def _parse_color(value: str | dict[str, object] | None) -> QColor:
         a = value.get("a", 255)
         if not isinstance(r, int | str) or not isinstance(g, int | str):
             msg = f"Unsupported color format: {value}"
-            raise ValueError(msg)
+            raise TypeError(msg)
         if not isinstance(b, int | str) or not isinstance(a, int | str):
             msg = f"Unsupported color format: {value}"
-            raise ValueError(msg)
+            raise TypeError(msg)
         return QColor(
             int(r),
             int(g),
@@ -44,7 +44,7 @@ def _parse_color(value: str | dict[str, object] | None) -> QColor:
         )
 
     msg = f"Unsupported color format: {value}"
-    raise ValueError(msg)
+    raise TypeError(msg)
 
 
 def load_theme_from_json(path: Path) -> Theme:
@@ -60,7 +60,7 @@ def load_theme_from_json(path: Path) -> Theme:
     friendly = data.get("friendly_name")
     if not isinstance(friendly, str):
         msg = f"Theme JSON '{path.name}' is missing required friendly_name:string"
-        raise ValueError(msg)
+        raise TypeError(msg)
     kwargs["friendly_name"] = friendly
 
     # Handle remaining Theme fields

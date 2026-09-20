@@ -190,7 +190,6 @@ class SqlAutocompleteController(QObject):
                     pos,
                 )
 
-            return prefix
         except (
             AttributeError,
             ConnectionError,
@@ -209,6 +208,8 @@ class SqlAutocompleteController(QObject):
                     exc_info=True,
                 )
             return ""
+        else:
+            return prefix
 
     # ------------------------------------------------------------------ #
     def _update_suggestions(self) -> None:
@@ -256,7 +257,7 @@ class SqlAutocompleteController(QObject):
         ) as e:
             self._logger.debug("SqlAutocompleteController: autocomplete update failed: %s", str(e), exc_info=True)
             self.popup.hide()
-            QTimer.singleShot(1000, lambda: self._force_suggestions_now())
+            QTimer.singleShot(1000, self._force_suggestions_now)
 
     # ------------------------------------------------------------------ #
     def _force_suggestions_now(self) -> None:

@@ -233,26 +233,25 @@ def to_datetime(
     try:
         if pdt.is_datetime64_any_dtype(series):
             out = series
+        elif fmt is not None:
+            # When format is provided, pandas typing does NOT allow errors="ignore"
+            errors_fmt = cast("Literal['raise', 'coerce']", errors)
+
+            out = pd.to_datetime(
+                series,
+                format=fmt,
+                errors=errors_fmt,
+            )
         else:
-            if fmt is not None:
-                # When format is provided, pandas typing does NOT allow errors="ignore"
-                errors_fmt = cast("Literal['raise', 'coerce']", errors)
+            # For Series input, pandas typing does not allow errors="ignore"
+            errors_series = cast("Literal['raise', 'coerce']", errors)
 
-                out = pd.to_datetime(
-                    series,
-                    format=fmt,
-                    errors=errors_fmt,
-                )
-            else:
-                # For Series input, pandas typing does not allow errors="ignore"
-                errors_series = cast("Literal['raise', 'coerce']", errors)
-
-                out = pd.to_datetime(
-                    series,
-                    errors=errors_series,
-                    dayfirst=dayfirst,
-                    yearfirst=yearfirst,
-                )
+            out = pd.to_datetime(
+                series,
+                errors=errors_series,
+                dayfirst=dayfirst,
+                yearfirst=yearfirst,
+            )
 
         # Ensure Series output (column semantics)
         if not isinstance(out, pd.Series):
@@ -275,7 +274,7 @@ def to_datetime(
         TypeError,
         ValueError,
     ) as exc:
-        logger.error("to_datetime failed col='%s': %s", column, exc)
+        logger.exception("to_datetime failed col='%s'", column)
         msg = f"Could not convert column '{column}' to datetime64[ns]: {exc}"
         raise TypeError(msg) from exc
 
@@ -336,7 +335,6 @@ def to_boolean(
             x = pd.to_numeric(s, errors="raise")
             mapped = x.map({0: False, 1: True})
             new_df[column] = mapped.astype("boolean")
-            return new_df
         except (
             AttributeError,
             ConnectionError,
@@ -353,6 +351,8 @@ def to_boolean(
                 msg = f"Could not convert numeric column '{column}' to boolean"
                 raise ValueError(msg) from exc
             # fall through to NA
+        else:
+            return new_df
 
     # --------------------------------------------------
     # String path

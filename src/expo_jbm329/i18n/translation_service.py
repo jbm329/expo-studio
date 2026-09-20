@@ -84,8 +84,8 @@ class TranslationService(QObject):
             RuntimeError,
             TypeError,
             ValueError,
-        ) as exc:
-            self._logger.exception("TranslationService: failed to reload language: %s", exc)
+        ):
+            self._logger.exception("TranslationService: failed to reload language")
 
     def switch_language(self, language: str) -> None:
         """Switch the application language at runtime.

@@ -61,8 +61,7 @@ def build_response_preview(
     Returns:
         A dictionary containing the normalized row count, columns, and sample rows.
     """
-    if limit < 1:
-        limit = 1
+    limit = max(limit, 1)
 
     df = normalize_json_to_df(payload, response_path=response_path)
     sample = df.head(limit).to_dict(orient="records")

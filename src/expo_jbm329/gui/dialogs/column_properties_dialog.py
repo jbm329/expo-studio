@@ -27,6 +27,11 @@ from expo_jbm329.services.data_profile.stat_defs import (
 )
 from expo_jbm329.utils.format_utils import fmt_bytes, fmt_int, fmt_num, fmt_pct
 
+STAT_VALUE_NAME_COUNT_RATIO_ITEMS = 3
+STAT_VALUE_NAME_COUNT_ITEMS = 2
+STAT_VALUE_PREVIEW_LIMIT = 5
+MAX_TOP_VALUE_LABEL_LENGTH = 18
+
 if TYPE_CHECKING:
     from expo_jbm329.services.data_profile.column_data_profile import ColumnProfile
     from expo_jbm329.services.data_profile.semantics import SeriesSemantics
@@ -251,13 +256,15 @@ class ColumnPropertiesDialog(QDialog):
                     if value and isinstance(value[0], tuple):
                         parts = []
                         for item in value:
-                            if len(item) == 3:
+                            if len(item) == STAT_VALUE_NAME_COUNT_RATIO_ITEMS:
                                 parts.append(f"{item[0]} ({fmt_int(item[1])}, {fmt_pct(item[2])})")
-                            elif len(item) == 2:
+                            elif len(item) == STAT_VALUE_NAME_COUNT_ITEMS:
                                 parts.append(f"{item[0]} ({fmt_int(item[1])})")
                         text = "; ".join(parts)
                     else:
-                        text = ", ".join(map(str, value[:5])) + (" …" if len(value) > 5 else "")
+                        text = ", ".join(map(str, value[:STAT_VALUE_PREVIEW_LIMIT])) + (
+                            " …" if len(value) > STAT_VALUE_PREVIEW_LIMIT else ""
+                        )
                 else:
                     text = ""
             else:
@@ -295,7 +302,10 @@ class ColumnPropertiesDialog(QDialog):
             ax.bar(range(len(plot.labels)), plot.counts)
             ax.set_xticks(range(len(plot.labels)))
             ax.set_xticklabels(
-                [str(x)[:18] + ("…" if len(str(x)) > 18 else "") for x in plot.labels],
+                [
+                    str(x)[:MAX_TOP_VALUE_LABEL_LENGTH] + ("…" if len(str(x)) > MAX_TOP_VALUE_LABEL_LENGTH else "")
+                    for x in plot.labels
+                ],
                 rotation=30,
                 ha="right",
             )

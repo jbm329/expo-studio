@@ -350,12 +350,10 @@ class FileLoader:
 
             if cancel_cb is not None and cancel_cb():
                 msg = "Loading was cancelled during read."
-                raise OperationCancelledError(msg)
+                raise OperationCancelledError(msg)  # noqa: TRY301
 
             if progress_cb is not None:
                 progress_cb(100)
-
-            return df
 
         except OperationCancelledError:
             self._logger.info(
@@ -377,15 +375,16 @@ class FileLoader:
             RuntimeError,
             TypeError,
             ValueError,
-        ) as e:
+        ):
             self._logger.exception(
-                "FileLoader: could not read file (corr=%s, path=%s, suffix=%s): %s",
+                "FileLoader: could not read file (corr=%s, path=%s, suffix=%s)",
                 corr_id,
                 fmt_path(path),
                 suffix,
-                e,
             )
             raise
+        else:
+            return df
 
     # ================================================================
     # CSV reader
@@ -906,7 +905,6 @@ class FileLoader:
                     for _ in range(5):
                         if not f.readline():
                             break
-                return enc
             except (
                 AttributeError,
                 ConnectionError,
@@ -920,4 +918,6 @@ class FileLoader:
                 ValueError,
             ):
                 continue
+            else:
+                return enc
         return "iso-8859-1"

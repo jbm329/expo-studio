@@ -233,8 +233,6 @@ class DataFrameModel(QAbstractTableModel):
             if role == Qt.ItemDataRole.EditRole:
                 return val
 
-            return None
-
         except (
             AttributeError,
             ConnectionError,
@@ -248,6 +246,8 @@ class DataFrameModel(QAbstractTableModel):
             ValueError,
         ):
             # Defensive: never crash the delegate/view due to bad data
+            return None
+        else:
             return None
 
     # ------------------------------------------------------------------

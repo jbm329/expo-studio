@@ -18,6 +18,9 @@ import pandas as pd
 
 from expo_jbm329.utils.format_utils import fmt_path, fmt_shape
 
+EXCEL_MAX_SHEET_NAME_LENGTH = 31
+ASCII_CONTROL_CHAR_LIMIT = 32
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -162,15 +165,15 @@ class FileWriter:
         """
         if not isinstance(name, str):
             msg = "Invalid sheet name: not a string"
-            raise ValueError(msg)
+            raise TypeError(msg)
 
         # Trim only for validation of emptiness; Excel behåller mellanslag om man vill
         if name.strip() == "":
             msg = "Invalid sheet name: empty or whitespace only"
             raise ValueError(msg)
 
-        if len(name) > 31:
-            msg_0 = f"Invalid sheet name (too long): '{name}' (max 31)"
+        if len(name) > EXCEL_MAX_SHEET_NAME_LENGTH:
+            msg_0 = f"Invalid sheet name (too long): '{name}' (max {EXCEL_MAX_SHEET_NAME_LENGTH})"
             raise ValueError(msg_0)
 
         # Explicit illegal character set (Excel)
@@ -185,7 +188,7 @@ class FileWriter:
             raise ValueError(msg_0)
 
         # Disallow ASCII control characters (0x00..0x1F)
-        if any(ord(ch) < 32 for ch in name):
+        if any(ord(ch) < ASCII_CONTROL_CHAR_LIMIT for ch in name):
             msg_0 = f"Invalid sheet name (control characters): '{name}'"
             raise ValueError(msg_0)
 

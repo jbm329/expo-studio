@@ -28,6 +28,10 @@ from expo_jbm329.services.data_operations.joins import (
 )
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
 
+LARGE_JOIN_ROW_WARNING_THRESHOLD = 5_000_000
+JOIN_ROW_BLOCK_THRESHOLD = 100_000_000
+PREVIEW_JOIN_ROW_BLOCK_THRESHOLD = 50_000_000
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
@@ -77,6 +81,7 @@ class JoinController:
         return tr_fmt("JoinController", text, **kwargs)
 
     __slots__ = (
+        "__weakref__",
         "_async_ops",
         "_dialogs",
         "_get_active_title",
@@ -192,7 +197,7 @@ class JoinController:
         if est_rows is None:
             return
 
-        if est_rows > 5_000_000:
+        if est_rows > LARGE_JOIN_ROW_WARNING_THRESHOLD:
             proceed = self._dialogs.prompt_yes_no(
                 self._parent,
                 title=self._tr(self.TR_LARGE_DATA_TITLE),
@@ -203,7 +208,7 @@ class JoinController:
             if not proceed:
                 return
 
-        if est_rows > 100_000_000:
+        if est_rows > JOIN_ROW_BLOCK_THRESHOLD:
             self._dialogs.critical(
                 self._parent,
                 title=self._tr(self.TR_JOIN_BLOCKED),
@@ -379,7 +384,7 @@ class JoinController:
         if est_rows is None:
             return
 
-        if est_rows > 5_000_000:
+        if est_rows > LARGE_JOIN_ROW_WARNING_THRESHOLD:
             proceed = self._dialogs.prompt_yes_no(
                 self._parent,
                 title=self._tr(self.TR_LARGE_DATA_TITLE),
@@ -391,7 +396,7 @@ class JoinController:
                 self._logger.warning("Join preview aborted: too large (%s estimated rows)", est_rows)
                 return
 
-        if est_rows > 50_000_000:
+        if est_rows > PREVIEW_JOIN_ROW_BLOCK_THRESHOLD:
             self._dialogs.critical(
                 dlg,
                 title=self._tr(self.TR_JOIN_BLOCKED),

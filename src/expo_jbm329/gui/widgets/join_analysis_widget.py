@@ -22,6 +22,10 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.utils.format_utils import fmt_num
 
+EXCELLENT_MATCH_RATE = 0.9
+GOOD_MATCH_RATE = 0.7
+PARTIAL_MATCH_RATE = 0.4
+
 
 class JoinAnalysisWidget(QWidget):
     """Widget for displaying join success rate and metadata."""
@@ -105,11 +109,11 @@ class JoinAnalysisWidget(QWidget):
         # --- summary ---
         rate = getattr(metadata, "match_rate", 0.0)
 
-        if rate > 0.9:
+        if rate > EXCELLENT_MATCH_RATE:
             text = self.tr("✅ Excellent match")
-        elif rate > 0.7:
+        elif rate > GOOD_MATCH_RATE:
             text = self.tr("🟢 Good match")
-        elif rate > 0.4:
+        elif rate > PARTIAL_MATCH_RATE:
             text = self.tr("⚠ Partial match")
         else:
             text = self.tr("❌ Poor match")

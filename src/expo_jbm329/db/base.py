@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+from functools import partial
 from typing import TYPE_CHECKING, cast
 
 from expo_jbm329.app.settings.config_store import read_connections
@@ -52,16 +53,16 @@ logger = logging.getLogger("applogger.db")
 _registry = ServiceRegistry()
 
 # Drivers
-_registry.register_driver("odbc", lambda: SqlAlchemyOdbcDriver())
-_registry.register_driver("pymysql", lambda: SqlAlchemyMySqlDriver("pymysql"))
-_registry.register_driver("mysqlconnector", lambda: SqlAlchemyMySqlDriver("mysqlconnector"))
-_registry.register_driver("sqlite", lambda: SqlAlchemySqliteDriver())
+_registry.register_driver("odbc", SqlAlchemyOdbcDriver)
+_registry.register_driver("pymysql", partial(SqlAlchemyMySqlDriver, "pymysql"))
+_registry.register_driver("mysqlconnector", partial(SqlAlchemyMySqlDriver, "mysqlconnector"))
+_registry.register_driver("sqlite", SqlAlchemySqliteDriver)
 
 # Dialects
-_registry.register_dialect("mysql", lambda: MySqlDialect())
-_registry.register_dialect("mariadb", lambda: MySqlDialect())
-_registry.register_dialect("mssql", lambda: MssqlDialect())
-_registry.register_dialect("sqlite", lambda: SqliteDialect())
+_registry.register_dialect("mysql", MySqlDialect)
+_registry.register_dialect("mariadb", MySqlDialect)
+_registry.register_dialect("mssql", MssqlDialect)
+_registry.register_dialect("sqlite", SqliteDialect)
 
 # =============================================================================
 # Global Service Cache (per connection)
@@ -87,7 +88,7 @@ def configure_timeouts(*, login_timeout_s: int | None = None, query_timeout_s: i
     Raises:
         ValueError: If either timeout value is negative.
     """
-    global _login_timeout_s, _query_timeout_s
+    global _login_timeout_s, _query_timeout_s  # noqa: PLW0603 - process-wide DB timeout defaults.
 
     if login_timeout_s is not None:
         if login_timeout_s < 0:
@@ -132,7 +133,7 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
     rec = conns.get(connection_name)
     if not isinstance(rec, dict):
         msg = f"Missing config for '{connection_name}'"
-        raise RuntimeError(msg)
+        raise TypeError(msg)
 
     # --- Engine normalization -------------------------------------------------
     raw_engine = rec.get("db_type")
@@ -357,10 +358,9 @@ def execute_sql_safe(
         TypeError,
         ValueError,
     ) as e:
-        logger.error(
-            "Failed to initialize database service for '%s': %s",
+        logger.exception(
+            "Failed to initialize database service for '%s'",
             connection_name,
-            e,
         )
         return SqlResult(
             ok=False,

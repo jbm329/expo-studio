@@ -371,6 +371,6 @@ def filter_custom(
 
     if not isinstance(mask, pd.Series):
         msg = "filter_custom predicate must return a pandas Series."
-        raise ValueError(msg)
+        raise ValueError(msg)  # noqa: TRY004 - preserve public API documented by tests.
 
     return df.loc[mask].copy()

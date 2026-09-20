@@ -128,56 +128,58 @@ respect-gitignore = true
 
 [tool.ruff.lint]
 select = [
-    "B",    # bugbear
-    "D",    # docstrings
-    "E",    # pycodestyle (errors)
-    "F",    # pyflakes
-    "G",    # flake8-logging-format
-    "I",    # isort
-    "N",    # pep8-naming
-    "Q",    # quotes consistency
-    "S",    # flake8-bandit
-    "W",    # pycodestyle (warnings)
-    "UP",   # pyupgrade
-    "C90",  # complexity (mccabe)
-    "RET",  # return statements
-    "SIM",  # simplify
-    "ARG",  # unused args
-    "RUF",  # Ruff's own rules
-    "FURB", # flake8-ruff
-#    "PL",  # flake8-pie
-    "PD",   # pandas-vet
-    "PTH",  # flake8-use-pathlib
-    "NPY",  # numpy
-    "TC",   # flake8-type-checking
-    "TID",  # flake8-tidy-imports
-    "SLOT", # flake8-slots
-    "SIM",  # flake8-simplify
-    "SLF",  # flake8-self
-    "PYI",  # flake8-pyi
-    "PIE",  # flake8-pie
-    "LOG",  # flake8-logging-format
-    "ISC",  # flake8-implicit-str-concat
-    "INT",  # flake8-interpreted-string
-    "FA",   # flake8-future-import
-    "EM",   # flake8-errmsg
-    "DTZ",  # flake8-datetimez
-    "BLE",  # flake8-blind-except
-    "ASYNC",# flake8-async
-    "ANN",  # flake8-annotations
-    "ERA",  # flake8-eradicate
-    "AIR",  # flake8-airflow
+    "ANN",   # flake8-annotations
+    "ARG",   # flake8-unused-arguments
+    "ASYNC", # flake8-async
+    "B",     # flake8-bugbear
+    "BLE",   # flake8-blind-except
+    "C4",    # flake8-comprehensions
+    "D",     # pydocstyle
+    "DTZ",   # flake8-datetimez
+    "E",     # pycodestyle errors
+    "EM",    # flake8-errmsg
+    "ERA",   # eradicate
+    "F",     # Pyflakes
+    "FLY",   # flynt
+    "FURB",  # refurb
+    "G",     # flake8-logging-format
+    "I",     # isort
+    "ISC",   # flake8-implicit-str-concat
+    "LOG",   # flake8-logging
+    "N",     # pep8-naming
+    "NPY",   # NumPy-specific rules
+    "PD",    # pandas-vet
+    "PERF",  # Perflint
+    "PIE",   # flake8-pie
+    "PL",    # Pylint
+    "PTH",   # flake8-use-pathlib
+    "PYI",   # flake8-pyi
+    "Q",     # flake8-quotes
+    "RET",   # flake8-return
+    "RUF",   # Ruff-specific rules
+    "S",     # flake8-bandit
+    "SIM",   # flake8-simplify
+    "SLF",   # flake8-self
+    "SLOT",  # flake8-slots
+    "TC",    # flake8-type-checking
+    "TID",   # flake8-tidy-imports
+    "TRY",   # tryceratops
+    "UP",    # pyupgrade
+    "W",     # pycodestyle warnings
 ]
 
 ignore = [
-    "C90",      # complexity warnings are intentionally not enforced project-wide
-   "FURB171",
-    "PLC0415",
+    "PLR0911",  # too-many-return-statements
+    "PLR0912",  # too-many-branches
+    "PLR0913",  # too-many-arguments
+    "PLR0915",  # too-many-statements
+    "PLR0917",  # too-many-positional-arguments
+    "PLC0415",  # import-outside-toplevel
+
 ]
 [tool.ruff.lint.per-file-ignores]
 "tests/*.py" = ["W", "D", "S", "S101", "RUF", "D104", "ARG", "N", "SLF", "EM", "BLE", "E501", "ANN", "ERA", "PL"]
 "__init__.py" = ["D107", "D104"]
-
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
