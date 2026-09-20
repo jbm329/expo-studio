@@ -53,6 +53,7 @@ dev = [
     "pytest-cov>=4.1",
     "ruff>=0.5",
     "mypy>=1.10",
+    "pyright>=1.1.414",
     "pyinstaller>=6.4",
     "pyside6-essentials>=6.10.2",
     "pandas-stubs>=2.3.3"
@@ -224,5 +225,30 @@ disallow_untyped_defs = false
 check_untyped_defs = false
 ignore_errors = true
 
+[tool.pyright]
+include = ["src"]
+exclude = [
+"**/__pycache__",
+".venv",
+"build",
+"dist",
+]
+
+typeCheckingMode = "strict"
+
+reportMissingImports = true
+reportMissingTypeStubs = false
+
+reportOptionalMemberAccess = true
+reportOptionalCall = true
+reportOptionalSubscript = true
+reportOptionalIterable = true
+reportOptionalOperand = true
+
+reportUnknownVariableType = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+
+pythonVersion = "3.13"
 
 
