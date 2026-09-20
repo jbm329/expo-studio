@@ -363,9 +363,7 @@ class SchemaController:
     # ==================================================================
     # Load & refresh schema
     # ==================================================================
-    def load_schema_tree(
-        self, connection_name: str, force_refresh: bool = False, corr_id: str | None = None
-    ) -> None:
+    def load_schema_tree(self, connection_name: str, force_refresh: bool = False, corr_id: str | None = None) -> None:
         """Load the schema tree for a connection.
 
         Args:

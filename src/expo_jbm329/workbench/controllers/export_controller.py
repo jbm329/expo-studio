@@ -281,9 +281,7 @@ class ExportController:
         """
         return self._results.current_df()
 
-    def _choose_export_path(
-        self, title: str, base_dir: str, default_name: str, filter_str: str
-    ) -> tuple[str, str]:
+    def _choose_export_path(self, title: str, base_dir: str, default_name: str, filter_str: str) -> tuple[str, str]:
         """Display a save file dialog to choose export path.
 
         Args:

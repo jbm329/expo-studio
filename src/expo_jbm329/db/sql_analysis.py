@@ -791,10 +791,7 @@ def _is_known_column(
             return False
         return normalized_name in resolved_table.columns
 
-    return any(
-        normalized_name in resolved_table.columns
-        for resolved_table in context.resolved_tables.values()
-    )
+    return any(normalized_name in resolved_table.columns for resolved_table in context.resolved_tables.values())
 
 
 def _lint_unknown_tables(

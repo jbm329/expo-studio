@@ -349,9 +349,7 @@ class SchemaCacheManager:
     # -----------------------------------------------------------------------------
     # BULK HANDLER
     # -----------------------------------------------------------------------------
-    def _handle_bulk_error(
-        self, connection_name: str, token: str, err: str, corr_id: str | None = None
-    ) -> None:
+    def _handle_bulk_error(self, connection_name: str, token: str, err: str, corr_id: str | None = None) -> None:
         self._logger.warning("SchemaCacheManager: bulk error (conn=%s, corr=%s): %s", connection_name, corr_id, err)
 
         if self._status_cb:
@@ -416,9 +414,7 @@ class SchemaCacheManager:
             out[key] = lst
         return out
 
-    def _on_bulk_done(
-        self, connection_name: str, token: str, payload: object, corr_id: str | None = None
-    ) -> None:
+    def _on_bulk_done(self, connection_name: str, token: str, payload: object, corr_id: str | None = None) -> None:
         if not self._token_matches(connection_name, token):
             return
 

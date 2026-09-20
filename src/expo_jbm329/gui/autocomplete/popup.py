@@ -26,7 +26,7 @@ class SqlEditorAutoCompletePopup(QFrame):
         list: The list widget displaying the suggestions.
     """
 
-    def __init__(self, editor: QPlainTextEdit, parent: object=None) -> None:
+    def __init__(self, editor: QPlainTextEdit, parent: object = None) -> None:
         """Initialize the popup.
 
         Args:

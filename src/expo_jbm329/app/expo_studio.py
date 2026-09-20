@@ -386,9 +386,7 @@ class ExpoStudio(QMainWindow):
         toolbar_controller.apply_has_data_state(False)
         toolbar_controller.apply_connection_state(False)
         workbench.results.apply_toolbar_data_state(toolbar_controller.apply_has_data_state)
-        workbench.results.apply_toolbar_multiple_dataset_state(
-            toolbar_controller.apply_has_multiple_datasets_state
-        )
+        workbench.results.apply_toolbar_multiple_dataset_state(toolbar_controller.apply_has_multiple_datasets_state)
         workbench.icon_service.icons_updated.connect(toolbar_controller.apply_icons)
 
         # ------------------------------------------------

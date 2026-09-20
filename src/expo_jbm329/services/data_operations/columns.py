@@ -177,11 +177,7 @@ def split_column(
     # Preserve missing values as pd.NA instead of converting them to empty strings.
     s = df[column].astype("string")
 
-    parts = (
-        s.str.rsplit(delimiter, n=1, expand=True)
-        if mode == "last"
-        else s.str.split(delimiter, n=1, expand=True)
-    )
+    parts = s.str.rsplit(delimiter, n=1, expand=True) if mode == "last" else s.str.split(delimiter, n=1, expand=True)
 
     if parts.shape[1] == 1:
         parts[1] = pd.NA

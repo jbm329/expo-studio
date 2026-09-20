@@ -53,6 +53,7 @@ def _as_float(value: object, default: float = 0.0) -> float:
             return float(value)
     return default
 
+
 try:
     from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
