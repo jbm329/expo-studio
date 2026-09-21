@@ -11,7 +11,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from PyQt6.QtCore import QDate, QLocale
+from PyQt6.QtCore import QLocale
 
 BYTES_PER_KIB = 1024
 MIN_GROUPED_INT_ABS = 1000
@@ -251,13 +251,13 @@ def fmt_shape(df: pd.DataFrame | None) -> tuple[str, str]:
 
 
 def fmt_date(dt: datetime.date | datetime.datetime | None) -> str:
-    """Format date according to the user's locale (Qt / OS).
+    """Format a date as an ISO date string.
 
     Args:
         dt: Date or datetime object to format.
 
     Returns:
-        Localized date string, or empty string if dt is None.
+        ISO date string, or empty string if dt is None.
     """
     if dt is None:
         return ""
@@ -266,8 +266,7 @@ def fmt_date(dt: datetime.date | datetime.datetime | None) -> str:
     date_val: datetime.date
     date_val = dt.date() if isinstance(dt, datetime.datetime) else dt
 
-    date = QDate(date_val.year, date_val.month, date_val.day)
-    return QLocale().toString(date, QLocale.FormatType.ShortFormat)
+    return date_val.isoformat()
 
 
 def fmt_time(seconds: float) -> str:
