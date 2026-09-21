@@ -344,8 +344,10 @@ def fmt_path(p: object) -> str:
         POSIX-formatted path string.
     """
     try:
-        if isinstance(p, str | Path):
-            return Path(p).as_posix()
+        if isinstance(p, str):
+            return p.replace("\\", "/")
+        if isinstance(p, Path):
+            return p.as_posix().replace("\\", "/")
         return str(p).replace("\\", "/")
     except (
         AttributeError,
