@@ -229,6 +229,13 @@ disallow_untyped_defs = false
 check_untyped_defs = false
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = [
+"expo_jbm329.gui.dialogs.visualization.chart_preview_widget",
+"expo_jbm329.gui.dialogs.column_properties_dialog",
+]
+disable_error_code = ["unused-ignore"]
+
 [tool.pyright]
 include = ["src"]
 exclude = [
