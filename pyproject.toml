@@ -215,6 +215,10 @@ exclude = [
     "^hooks/",
     "^src/expo_jbm329/workbench/icon/icons_rc\\.py$",
     "^src/expo_jbm329/workbench/splash/splash_rc\\.py$",
+    "^src/expo_jbm329/build\\.py$",
+    "^src/expo_jbm329/build_i18n\\.py$",
+    "^src/expo_jbm329/build_locales\\.py$",
+    "^src/expo_jbm329/build_resources\\.py$",
 ]
 
 [[tool.mypy.overrides]]
