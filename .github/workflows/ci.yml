@@ -19,6 +19,10 @@ jobs:
       - name: Set up Python
         run: uv python install 3.13
 
+      - name: Configure Qt
+        run: |
+          echo "QT_QPA_PLATFORM=offscreen" >> $GITHUB_ENV
+
       - name: Sync dependencies
         run: uv sync --frozen --extra dev --extra profiling
 
