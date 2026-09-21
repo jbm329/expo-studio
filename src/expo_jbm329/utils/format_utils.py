@@ -14,6 +14,7 @@ import pandas as pd
 from PyQt6.QtCore import QDate, QLocale
 
 BYTES_PER_KIB = 1024
+MIN_GROUPED_INT_ABS = 1000
 
 
 # ---------------------------------------------------------------------
@@ -192,7 +193,9 @@ def fmt_int(n: int) -> str:
         Formatted integer string.
     """
     try:
-        return QLocale.system().toString(int(n))
+        value = int(n)
+        loc = QLocale.system()
+        formatted = loc.toString(value)
     except (
         AttributeError,
         ConnectionError,
@@ -206,6 +209,11 @@ def fmt_int(n: int) -> str:
         ValueError,
     ):
         return f"{int(n):,}".replace(",", " ")
+    else:
+        if abs(value) >= MIN_GROUPED_INT_ABS and formatted == str(value):
+            group_separator = loc.groupSeparator() or ","
+            return f"{value:,}".replace(",", group_separator)
+        return formatted
 
 
 # ---------------------------------------------------------------------

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from PyQt6.QtCore import QLocale
 
 from expo_jbm329.utils.format_utils import (
     fmt_bytes,
@@ -59,6 +60,12 @@ def test_fmt_num():
 def test_fmt_int():
     result = fmt_int(1234)
     assert any(s in result for s in ["1 234", "1\u00a0234", "1,234", "1.234"])
+
+
+def test_fmt_int_groups_when_qt_locale_omits_grouping(monkeypatch):
+    monkeypatch.setattr(QLocale, "system", QLocale.c)
+
+    assert fmt_int(1234) == "1,234"
 
 
 def test_fmt_shape():
