@@ -1,9 +1,11 @@
 """Language enum."""
+
 from enum import StrEnum
 
 
 class Language(StrEnum):
     """Supported languages."""
+
     SWEDISH = "sv"
     ENGLISH = "en"
 
@@ -14,4 +16,3 @@ class Language(StrEnum):
             Language.SWEDISH: "Svenska",
             Language.ENGLISH: "English",
         }[self]
-    

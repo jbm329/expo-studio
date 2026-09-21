@@ -9,8 +9,12 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from platformdirs import PlatformDirs
+
+if TYPE_CHECKING:
+    from expo_jbm329.app.settings.json_types import JsonObject
 
 APP_NAME = "Expo"
 
@@ -18,7 +22,16 @@ APP_NAME = "Expo"
 dirs = PlatformDirs(appname=APP_NAME, appauthor=False, roaming=False)
 
 
+def _pyinstaller_root() -> Path | None:
+    """Return the PyInstaller extraction root when running frozen."""
+    if not getattr(sys, "frozen", False):
+        return None
+    meipass = getattr(sys, "_MEIPASS", None)
+    return Path(meipass) if isinstance(meipass, str) else None
+
+
 # --------- Fixed directories ----------
+
 
 def get_config_dir() -> Path:
     """Return the user configuration directory.
@@ -107,7 +120,8 @@ def get_settings_path() -> Path:
 
 # --------- Active documents dir ----------
 
-def get_documents_dir(settings: dict) -> Path:
+
+def get_documents_dir(settings: JsonObject) -> Path:
     """Return the active documents directory from settings or the default.
 
     Args:
@@ -129,8 +143,8 @@ def get_theme_root() -> Path:
         Path object for the theme root directory.
     """
     # PyInstaller runtime
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        return Path(sys._MEIPASS) / "theme"
+    if (pyinstaller_root := _pyinstaller_root()) is not None:
+        return pyinstaller_root / "theme"
 
     return Path(__file__).resolve().parents[1] / "workbench" / "theme"
 
@@ -142,8 +156,8 @@ def get_i18n_root() -> Path:
         Path object for the i18n root directory.
     """
     # PyInstaller runtime
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        return Path(sys._MEIPASS) / "i18n"
+    if (pyinstaller_root := _pyinstaller_root()) is not None:
+        return pyinstaller_root / "i18n"
 
     return Path(__file__).resolve().parents[1] / "i18n"
 
@@ -155,13 +169,13 @@ def get_bootstrap_root() -> Path:
         Path object for the i18n root directory.
     """
     # PyInstaller runtime
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        return Path(sys._MEIPASS) / "bootstrap"
+    if (pyinstaller_root := _pyinstaller_root()) is not None:
+        return pyinstaller_root / "bootstrap"
 
     return Path(__file__).resolve().parents[1] / "bootstrap"
 
 
-def ensure_all_dirs(settings: dict) -> dict[str, Path]:
+def ensure_all_dirs(settings: JsonObject) -> dict[str, Path]:
     """Create the directory structure and necessary configuration files.
 
     Args:
@@ -181,8 +195,7 @@ def ensure_all_dirs(settings: dict) -> dict[str, Path]:
     }
 
     # Skapa kataloger
-    for key in ("config_dir", "log_dir", "cache_dir",
-                "documents_dir"):
+    for key in ("config_dir", "log_dir", "cache_dir", "documents_dir"):
         paths[key].mkdir(parents=True, exist_ok=True)
 
     return paths

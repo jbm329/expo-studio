@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from http import HTTPStatus
 
 import httpx
 
@@ -68,17 +69,20 @@ def fetch_scb_tables(*, lang: str = "sv", timeout: float = 30.0) -> list[ScbTabl
                         "pageSize": page_size,
                     },
                 )
-                if response.status_code != 200:
-                    raise ScbBrowserError(f"SCB table index request failed: HTTP {response.status_code}")
+                if response.status_code != HTTPStatus.OK:
+                    msg = f"SCB table index request failed: HTTP {response.status_code}"
+                    raise ScbBrowserError(msg)
 
                 try:
                     payload = response.json()
                 except ValueError as exc:
-                    raise ScbBrowserError("SCB table index response is not valid JSON") from exc
+                    msg = "SCB table index response is not valid JSON"
+                    raise ScbBrowserError(msg) from exc
 
                 tables = payload.get("tables")
                 if not isinstance(tables, list):
-                    raise ScbBrowserError("SCB table index response does not contain a tables list")
+                    msg = "SCB table index response does not contain a tables list"
+                    raise ScbBrowserError(msg)
 
                 summaries.extend(
                     ScbTableSummary(
@@ -101,7 +105,8 @@ def fetch_scb_tables(*, lang: str = "sv", timeout: float = 30.0) -> list[ScbTabl
                     break
                 page_number += 1
     except httpx.RequestError as exc:
-        raise ScbBrowserError(f"Could not load SCB table index: {exc}") from exc
+        msg_0 = f"Could not load SCB table index: {exc}"
+        raise ScbBrowserError(msg_0) from exc
 
     return summaries
 
@@ -110,7 +115,8 @@ def fetch_scb_table_metadata(*, table_id: str, lang: str = "sv", timeout: float 
     """Fetch SCB variable/value metadata for a given table identifier."""
     cleaned = str(table_id).strip()
     if not cleaned:
-        raise ScbBrowserError("SCB table id must not be empty")
+        msg = "SCB table id must not be empty"
+        raise ScbBrowserError(msg)
 
     url = f"https://statistikdatabasen.scb.se/api/v2/tables/{cleaned}/metadata"
     params = {"lang": lang}
@@ -118,21 +124,25 @@ def fetch_scb_table_metadata(*, table_id: str, lang: str = "sv", timeout: float 
         with httpx.Client(timeout=httpx.Timeout(timeout)) as client:
             response = client.get(url, params=params)
     except httpx.RequestError as exc:
-        raise ScbBrowserError(f"Could not load SCB metadata for {cleaned}: {exc}") from exc
+        msg_0 = f"Could not load SCB metadata for {cleaned}: {exc}"
+        raise ScbBrowserError(msg_0) from exc
 
-    if response.status_code != 200:
-        raise ScbBrowserError(f"SCB metadata request failed for {cleaned}: HTTP {response.status_code}")
+    if response.status_code != HTTPStatus.OK:
+        msg_0 = f"SCB metadata request failed for {cleaned}: HTTP {response.status_code}"
+        raise ScbBrowserError(msg_0)
 
     try:
         payload = response.json()
     except ValueError as exc:
-        raise ScbBrowserError(f"SCB metadata for {cleaned} is not valid JSON") from exc
+        msg_0 = f"SCB metadata for {cleaned} is not valid JSON"
+        raise ScbBrowserError(msg_0) from exc
 
     label = str(payload.get("label") or cleaned)
     description = str(payload.get("description") or "")
     dimension = payload.get("dimension")
     if not isinstance(dimension, dict):
-        raise ScbBrowserError(f"SCB metadata for {cleaned} does not contain a dimension map")
+        msg_0 = f"SCB metadata for {cleaned} does not contain a dimension map"
+        raise ScbBrowserError(msg_0)
 
     variables: list[ScbVariable] = []
     for name, config in dimension.items():

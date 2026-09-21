@@ -14,13 +14,13 @@ Design principles:
 
 from __future__ import annotations
 
-from typing import Any
-
 from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QMenu, QWidget
 
 from expo_jbm329.utils.i18n_utils import tr
+
+MAX_CELL_PREVIEW_LENGTH = 80
 
 
 class ResultTabCellContextMenu:
@@ -43,7 +43,7 @@ class ResultTabCellContextMenu:
         return tr("ResultTabCellContextMenu", text)
 
     # ------------------------------------------------------------------
-    def __init__(self, *, parent: QWidget):
+    def __init__(self, *, parent: QWidget) -> None:
         """Initialize the cell context menu builder.
 
         Args:
@@ -58,7 +58,7 @@ class ResultTabCellContextMenu:
         self,
         *,
         column_name: str,
-        raw_value: Any,
+        raw_value: object,
     ) -> tuple[QMenu, dict[QAction, str]]:
         """Build the cell context menu.
 
@@ -75,11 +75,11 @@ class ResultTabCellContextMenu:
         actions: dict[QAction, str] = {}
 
         # --------------------------------------------------------------
-        # Header (preview)
+        # Header preview
         # --------------------------------------------------------------
         preview = str(raw_value)
-        if len(preview) > 80:
-            preview = preview[:77] + "…"
+        if len(preview) > MAX_CELL_PREVIEW_LENGTH:
+            preview = preview[: MAX_CELL_PREVIEW_LENGTH - 3] + "…"
 
         header_action = QAction(f"{column_name} = {preview}", menu)
         header_action.setEnabled(False)

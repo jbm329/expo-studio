@@ -3,26 +3,34 @@
 This module provides the FileJobService class, which coordinates importing, exporting,
 profiling, and classification of files within the application.
 """
+
 from __future__ import annotations
 
 import contextlib
 import logging
 import re
-from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING
 
 import pandas as pd
-from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtCore import QT_TR_NOOP, QObject
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.gui_utils import ui_invoke
 from expo_jbm329.utils.format_utils import fmt_path, fmt_shape, fmt_time
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
-from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from PyQt6.QtWidgets import QWidget
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.services.job_result import JobResult
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
 
 
 class FileJobService:
@@ -38,6 +46,7 @@ class FileJobService:
     Notes:
       - All heavy I/O is executed through AsyncOperationController, which delegates execution to JobManager.
     """
+
     # --- i18n markers (pylupdate6-visible) -----------------------------
     TR_OPENED_SQL_FILE = QT_TR_NOOP("Opened SQL file: {file_name}")
     TR_SAVED_SQL_FILE = QT_TR_NOOP("Saved SQL file: {file_name}")
@@ -57,9 +66,7 @@ class FileJobService:
     TR_OPENED_DATA_FILE_ELAPSED = QT_TR_NOOP(
         "Completed: Opened file {file_name} - {rows} rows, {columns} columns ({elapsed_time})"
     )
-    TR_OPENED_DATA_FILE = QT_TR_NOOP(
-        "Completed: Opened file {file_name} - {rows} rows, {columns} columns"
-    )
+    TR_OPENED_DATA_FILE = QT_TR_NOOP("Completed: Opened file {file_name} - {rows} rows, {columns} columns")
     TR_PROCESSING = QT_TR_NOOP("Processing…")
 
     TR_MISSING = QT_TR_NOOP("(missing)")
@@ -104,12 +111,12 @@ class FileJobService:
         results: ResultTabManager,
         set_status: Callable[[str, int | None], None],
         get_active_tab_title: Callable[[], str],
-        resolve_and_load_df: Callable[..., Any],
+        resolve_and_load_df: Callable[..., JobResult],
         display_dataframe: Callable[..., None],
-        dialogs: DialogService,
+        dialogs: DialogService | None,
         is_shutting_down: Callable[[], bool] | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize FileJobService.
 
         Args:
@@ -170,8 +177,7 @@ class FileJobService:
         )
 
         self._logger.info(
-            "FileJobService: loading data file requested "
-            "(path=%s, suffix=%s, indeterminate=%s, corr=%s)",
+            "FileJobService: loading data file requested (path=%s, suffix=%s, indeterminate=%s, corr=%s)",
             fmt_path(p),
             suffix,
             indeterminate,
@@ -189,10 +195,17 @@ class FileJobService:
         pending_tab_id = pending_handle.tab_id
         pending_view = pending_handle.view
 
-        def _work(*, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
+            **extra_context: object,
+        ) -> JobResult:
+            _ = extra_context
             self._logger.debug(
-                "FileJobService: data file job started "
-                "(corr=%s, job_id=%s, scope=%s, path=%s, tab_id=%s)",
+                "FileJobService: data file job started (corr=%s, job_id=%s, scope=%s, path=%s, tab_id=%s)",
                 corr,
                 job_id,
                 job_scope,
@@ -209,7 +222,7 @@ class FileJobService:
                 corr_id=corr,
             )
 
-        def _on_result(payload: Any) -> None:
+        def _on_result(payload: object) -> None:
             """Handle file load result for the pending result tab."""
             self._on_data_loaded(
                 payload,
@@ -246,13 +259,14 @@ class FileJobService:
             corr_id=corr,
         )
 
-        jobid = self._async_ops.job_mgr.get_job_id(job)
+        jobid = self._async_ops.job_mgr.get_job_id(job) if isinstance(job, QObject) else getattr(job, "job_id", None)
+        if jobid is None:
+            jobid = getattr(job, "_job_id", None)
         if jobid is not None:
             self._results.bind_job_to_tab(pending_tab_id, jobid)
         else:
             self._logger.warning(
-                "FileJobService: could not bind file load job to pending tab "
-                "(corr=%s, tab_id=%s, path=%s).",
+                "FileJobService: could not bind file load job to pending tab (corr=%s, tab_id=%s, path=%s).",
                 corr,
                 pending_tab_id,
                 fmt_path(p),
@@ -264,7 +278,7 @@ class FileJobService:
 
     def _on_data_loaded(
         self,
-        payload: Any,
+        payload: object,
         path: str,
         *,
         corr: str | None = None,
@@ -282,9 +296,7 @@ class FileJobService:
 
         from expo_jbm329.services.job_result import JobResult
 
-        corr_eff = (
-                       getattr(payload, "corr_id", None) if isinstance(payload, JobResult) else None
-                   ) or corr
+        corr_eff = (getattr(payload, "corr_id", None) if isinstance(payload, JobResult) else None) or corr
 
         if self._is_shutting_down():
             self._logger.info(
@@ -296,13 +308,13 @@ class FileJobService:
 
         if not isinstance(payload, JobResult):
             self._logger.error(
-                "FileJobService: unexpected non-JobResult payload received "
-                "(corr=%s, path=%s, type=%s).",
+                "FileJobService: unexpected non-JobResult payload received (corr=%s, path=%s, type=%s).",
                 corr_eff,
                 fmt_path(path),
                 type(payload).__name__,
             )
-            raise TypeError("FileJobService expected JobResult")
+            msg = "FileJobService expected JobResult"
+            raise TypeError(msg)
 
         if payload.cancelled:
             self._logger.info(
@@ -350,8 +362,7 @@ class FileJobService:
         df_obj = payload.data
         if not isinstance(df_obj, pd.DataFrame):
             self._logger.error(
-                "FileJobService: expected DataFrame in successful job result "
-                "(corr=%s, path=%s, tab_id=%s, type=%s)",
+                "FileJobService: expected DataFrame in successful job result (corr=%s, path=%s, tab_id=%s, type=%s)",
                 corr_eff,
                 fmt_path(path),
                 pending_tab_id,
@@ -428,8 +439,7 @@ class FileJobService:
         """
         if self._is_shutting_down():
             self._logger.info(
-                "FileJobService: data load error ignored during shutdown "
-                "(corr=%s, path=%s, tab_id=%s)",
+                "FileJobService: data load error ignored during shutdown (corr=%s, path=%s, tab_id=%s)",
                 corr,
                 fmt_path(path),
                 pending_tab_id,
@@ -509,7 +519,7 @@ class FileJobService:
         new_ext = allowed_list[0]
         fixed = p.with_name(base_name + new_ext)
 
-        # “Toast” via statusbar (non-modal, 5s)        
+        # “Toast” via statusbar (non-modal, 5s)
         with contextlib.suppress(Exception):
             old_ext = old or self._tr(self.TR_MISSING)
             status = self._tr_fmt(self.TR_FILE_EXT_ADJUSTED, old_ext=old_ext, new_ext=new_ext)
@@ -617,7 +627,18 @@ class FileJobService:
 
         try:
             old_path.rename(new_path)
-        except Exception as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             msg = self._tr_fmt(self.TR_RENAME_FILE_FAILED_ERROR, error=str(e))
             self._set_status(self._tr(self.TR_RENAME_FILE_FAILED), 6000)
             return False, msg
@@ -637,7 +658,18 @@ class FileJobService:
 
         try:
             return bool(cb())
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.debug(
                 "FileJobService: shutdown state callback failed.",
                 exc_info=True,

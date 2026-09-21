@@ -21,7 +21,7 @@ def tr(context: str, text: str) -> str:
     return QCoreApplication.translate(context, text)
 
 
-def tr_fmt(context: str, text: str, /, **kwargs) -> str:
+def tr_fmt(context: str, text: str, /, **kwargs: object) -> str:
     r"""Translate and format a string using named placeholders.
 
     Uses Python's ``str.format`` after Qt translation, avoiding
@@ -50,6 +50,17 @@ def tr_fmt(context: str, text: str, /, **kwargs) -> str:
 
     try:
         return translated.format(**kwargs)
-    except Exception:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         # UI must never crash due to translation formatting issues
         return translated

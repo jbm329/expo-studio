@@ -110,10 +110,10 @@ def test_double_click_data_triggers_open_any(tmp_path):
     open_any.assert_called_once_with(Path(str(path)))
 
 
-def test_double_click_directory_is_ignored():
-    ctrl, tree, model, open_any, *_ = make_ctrl("C:\\tmp\\folder")
-    model.filePath = MagicMock(return_value="C:\\tmp\\folder")
-    Path.is_dir = lambda self: True  # type: ignore[method-assign]
+def test_double_click_directory_is_ignored(tmp_path):
+    folder = tmp_path / "folder"
+    folder.mkdir()
+    ctrl, tree, model, open_any, *_ = make_ctrl(str(folder))
 
     ctrl._on_file_double_clicked(SimpleNamespace())
 
@@ -199,8 +199,9 @@ def test_update_icons_sets_icon_provider():
 
 def test_reload_settings_updates_root_index(monkeypatch):
     ctrl, tree, model, *_ = make_ctrl("C:\\tmp\\data.csv")
-    monkeypatch.setattr("expo_jbm329.utils.path_manager.get_documents_dir", lambda settings: Path("C:/new_root"))
+    new_root = Path("C:/new_root")
+    monkeypatch.setattr("expo_jbm329.utils.path_manager.get_documents_dir", lambda settings: new_root)
 
     ctrl.reload_settings({"some": "settings"})
 
-    assert tree._root_index.path == "C:\\new_root"
+    assert tree._root_index.path == str(new_root)

@@ -6,15 +6,18 @@ import contextlib
 import logging
 import threading
 import time
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL, Engine
 
 from expo_jbm329.db.core.interfaces import DriverProtocol
-from expo_jbm329.db.core.models import ConnectionConfig
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.db.core.models import ConnectionConfig
 
 log = logging.getLogger("applogger.db.driver.odbc")
 
@@ -32,10 +35,10 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
         self._lock = threading.Lock()
         self._query_timeout_s: int | None = None
 
-        self._active_cursors: dict[str, Any] = {}
+        self._active_cursors: dict[str, object] = {}
         self._active_lock = threading.Lock()
 
-    def initialize(self, *, timeouts: dict | None = None) -> None:
+    def initialize(self, *, timeouts: dict[str, int | None] | None = None) -> None:
         """Initialize the driver with optional timeouts.
 
         Args:
@@ -97,14 +100,26 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
                 "SqlAlchemyOdbcDriver: active cursor has no cancel() method (job_id=%s)",
                 job_id,
             )
-            return False
 
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             log.debug(
                 "SqlAlchemyOdbcDriver: cursor cancel failed (job_id=%s).",
                 job_id,
                 exc_info=True,
             )
+            return False
+        else:
             return False
 
     def _url_for(self, cfg: ConnectionConfig) -> URL:
@@ -180,13 +195,13 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
             A pandas DataFrame containing the query results.
 
         Raises:
-            Exception: Any DBAPI or execution exception is allowed to bubble up
+            Exception: object DBAPI or execution exception is allowed to bubble up
                 to DbService for classification.
         """
         engine = self._get_engine(conn)
 
-        raw_conn: Any | None = None
-        cursor: Any | None = None
+        raw_conn: object | None = None
+        cursor: object | None = None
 
         stop_event = threading.Event()
         watcher_thread: threading.Thread | None = None
@@ -197,7 +212,18 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
                 return False
             try:
                 return bool(cancel_cb())
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 log.debug(
                     "SqlAlchemyOdbcDriver: cancel callback failed (corr=%s, job_id=%s).",
                     corr_id,
@@ -223,15 +249,27 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
                 time.sleep(0.05)
 
         if _is_cancelled():
-            raise RuntimeError("SqlAlchemyOdbcDriver: SQL execution cancelled before start.")
+            msg = "SqlAlchemyOdbcDriver: SQL execution cancelled before start."
+            raise RuntimeError(msg)
 
         try:
             raw_conn = engine.raw_connection()
 
             if self._query_timeout_s is not None:
                 try:
-                    raw_conn.timeout = int(self._query_timeout_s)
-                except Exception:
+                    cast("Any", raw_conn).timeout = int(self._query_timeout_s)
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ):
                     log.debug("SqlAlchemyOdbcDriver: driver does not support per-operation timeout.")
 
             cursor = raw_conn.cursor()
@@ -258,14 +296,16 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
             cursor.execute(sql)
 
             if _is_cancelled():
-                raise RuntimeError("SqlAlchemyOdbcDriver: SQL execution cancelled after execute().")
+                msg = "SqlAlchemyOdbcDriver: SQL execution cancelled after execute()."
+                raise RuntimeError(msg)
 
             rows = cursor.fetchall()
             description = cursor.description or []
             columns = [str(col[0]) for col in description]
 
             if _is_cancelled():
-                raise RuntimeError("SqlAlchemyOdbcDriver: SQL execution cancelled after fetchall().")
+                msg = "SqlAlchemyOdbcDriver: SQL execution cancelled after fetchall()."
+                raise RuntimeError(msg)
 
             if not rows:
                 return pd.DataFrame(columns=columns)
@@ -286,8 +326,8 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
 
             if cursor is not None:
                 with contextlib.suppress(Exception):
-                    cursor.close()
+                    cast("Any", cursor).close()
 
             if raw_conn is not None:
                 with contextlib.suppress(Exception):
-                    raw_conn.close()
+                    cast("Any", raw_conn).close()

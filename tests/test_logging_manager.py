@@ -4,8 +4,8 @@ from __future__ import annotations
 import logging
 from unittest.mock import patch
 
-from expo_jbm329.app.settings.config_store import DEFAULT_LOG_CONFIG, write_log_config
 from expo_jbm329.app.logging.logging_manager import LoggingManager
+from expo_jbm329.app.settings.config_store import DEFAULT_LOG_CONFIG, write_log_config
 
 
 def test_logging_manager_basic_setup(tmp_path):

@@ -25,7 +25,7 @@ import contextlib
 import hashlib
 import logging
 import time
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
@@ -40,7 +40,6 @@ from expo_jbm329.db.core.errors import (
     TR_UNKNOWN_DATABASE_FAIL_HINT,
     should_log,
 )
-from expo_jbm329.db.core.interfaces import DialectProtocol, DriverProtocol
 from expo_jbm329.db.core.models import (
     ConnectionConfig,
     SqlError,
@@ -48,12 +47,18 @@ from expo_jbm329.db.core.models import (
     TimeoutConfig,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.db.core.interfaces import DialectProtocol, DriverProtocol
+
 log = logging.getLogger("applogger.db")
 
 
 # =============================================================================
 # Internal helpers
 # =============================================================================
+
 
 def _sig(sql: str) -> str:
     """Return a short deterministic signature for the SQL text (used for throttling)."""
@@ -74,14 +79,15 @@ def _detect_sql_kind(sql: str) -> str:
         return "select"
     if s.startswith("with"):
         return "with"
-    if s.startswith("exec") or s.startswith("execute"):
+    if s.startswith(("exec", "execute")):
         return "exec"
     return "other"
 
 
 # =============================================================================
-# DbService — core execution component
+# DbService - core execution component
 # =============================================================================
+
 
 class DbService:
     """Main SQL execution service.
@@ -104,11 +110,11 @@ class DbService:
     # -------------------------------------------------------------------------
 
     def __init__(
-            self,
-            driver: DriverProtocol,
-            dialect: DialectProtocol,
-            timeouts: TimeoutConfig | None = None,
-            allow_exec: bool = True,
+        self,
+        driver: DriverProtocol,
+        dialect: DialectProtocol,
+        timeouts: TimeoutConfig | None = None,
+        allow_exec: bool = True,
     ) -> None:
         """Initialize the DbService.
 
@@ -170,7 +176,18 @@ class DbService:
                 return False
             try:
                 return bool(cancel_cb())
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 log.debug("DbService: cancel callback failed.", exc_info=True)
                 return False
 
@@ -182,7 +199,7 @@ class DbService:
             )
 
         # ---- Validation ----
-        if not isinstance(sql, str) or not sql.strip():
+        if not sql.strip():
             return SqlResult(
                 ok=False,
                 cancelled=False,
@@ -219,14 +236,25 @@ class DbService:
         effective_sql = sql
         limit_injected = False
 
-        if isinstance(top_n, int) and top_n > 0:
+        if top_n is not None and top_n > 0:
             try:
                 limited = self.dialect.apply_limit(sql, top_n)
-                if isinstance(limited, str) and limited.strip() != sql.strip():
+                if limited.strip() != sql.strip():
                     effective_sql = limited
                     limit_injected = True
                     log.debug("DbService: applied server-side limit n=%s", top_n)
-            except Exception as e:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as e:
                 log.debug("DbService: limit injection failed: %s", e)
 
         # ---- Cancellation before execution ----
@@ -276,9 +304,9 @@ class DbService:
                     sql_signature=signature,
                 )
 
-            row_count = int(df.shape[0]) if isinstance(df, pd.DataFrame) else 0
+            row_count = int(df.shape[0])
             log.info(
-                "DbService: SQL completed (signature=%s, corr=%s) in %.3fs – %s rows",
+                "DbService: SQL completed (signature=%s, corr=%s) in %.3fs - %s rows",
                 signature,
                 corr_id,
                 elapsed,
@@ -286,7 +314,7 @@ class DbService:
             )
 
             # Fallback: client-side limiting
-            if not limit_injected and isinstance(df, pd.DataFrame) and isinstance(top_n, int):
+            if not limit_injected and top_n is not None:
                 df = df.head(top_n)
                 row_count = int(df.shape[0])
 
@@ -306,8 +334,7 @@ class DbService:
             # prefer cancelled semantics over generic failure.
             if _is_cancelled():
                 log.info(
-                    "DbService: SQL cancelled during execution "
-                    "(signature=%s, corr=%s, elapsed=%.3fs, job_id=%s)",
+                    "DbService: SQL cancelled during execution (signature=%s, corr=%s, elapsed=%.3fs, job_id=%s)",
                     signature,
                     corr_id,
                     elapsed,
@@ -322,12 +349,12 @@ class DbService:
 
             err = self._classify_error(e)
             if should_log(signature):
-                log.error(
-                    "DbService: SQL error (signature=%s, corr=%s): %s %s – %s",
+                log.exception(
+                    "DbService: SQL error (signature=%s, corr=%s): %s %s - %s",
                     signature,
                     corr_id,
                     err.category,
-                    err.code if err.code else "",
+                    err.code or "",
                     err.message,
                 )
                 if err.category == "unknown":
@@ -364,10 +391,7 @@ class DbService:
         if res.data is None or res.data.empty:
             return []
         df = res.data
-        return [
-            {"schema": str(r["schema_name"]), "name": str(r["object_name"])}
-            for _, r in df.iterrows()
-        ]
+        return [{"schema": str(r["schema_name"]), "name": str(r["object_name"])} for _, r in df.iterrows()]
 
     def list_views(self, conn: ConnectionConfig, corr_id: str | None = None) -> list[dict[str, str]]:
         """Return a list of views in the connection.
@@ -386,17 +410,14 @@ class DbService:
         if res.data is None or res.data.empty:
             return []
         df = res.data
-        return [
-            {"schema": str(r["schema_name"]), "name": str(r["object_name"])}
-            for _, r in df.iterrows()
-        ]
+        return [{"schema": str(r["schema_name"]), "name": str(r["object_name"])} for _, r in df.iterrows()]
 
     def list_columns(
-            self,
-            conn: ConnectionConfig,
-            schema: str,
-            object_name: str,
-            corr_id: str | None = None,
+        self,
+        conn: ConnectionConfig,
+        schema: str,
+        object_name: str,
+        corr_id: str | None = None,
     ) -> list[dict[str, str]]:
         """Return column metadata for a given table or view.
 
@@ -426,7 +447,7 @@ class DbService:
         ]
 
     # -------------------------------------------------------------------------
-    # High‑level helpers (DB name, SELECT builders, bulk columns)
+    # High-level helpers (DB name, SELECT builders, bulk columns)
     # -------------------------------------------------------------------------
 
     def get_db_name(self, conn: ConnectionConfig, corr_id: str | None = None) -> str:
@@ -446,25 +467,31 @@ class DbService:
         if getattr(self.dialect, "name", "").lower() == "mssql":
             try:
                 res = self.execute_sql(conn, "SELECT DB_NAME() AS name", corr_id=corr_id)
-                if (
-                        res.ok
-                        and res.data is not None
-                        and not res.data.empty
-                        and "name" in res.data.columns
-                ):
+                if res.ok and res.data is not None and not res.data.empty and "name" in res.data.columns:
                     return str(res.data.iloc[0]["name"])
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 pass
 
         return conn.database or conn.name
 
     def build_select_star(
-            self,
-            schema: str,
-            object_name: str,
-            *,
-            top_n: int | None = None,
-            corr_id: str | None = None,
+        self,
+        schema: str,
+        object_name: str,
+        *,
+        top_n: int | None = None,
+        corr_id: str | None = None,
     ) -> str:
         """Build a standard SELECT * FROM statement.
 
@@ -479,6 +506,7 @@ class DbService:
         Returns:
             A SQL query string.
         """
+        _ = corr_id  # For future logging or tracing
         qtable = self.dialect.qualify(schema, object_name)
         sql = f"SELECT *\nFROM {qtable};"
 
@@ -500,14 +528,14 @@ class DbService:
         return f"SELECT DISTINCT {qcolumn}\nFROM {qtable};"
 
     def build_select_columns_auto(
-            self,
-            conn: ConnectionConfig,
-            schema: str,
-            object_name: str,
-            *,
-            top_n: int | None = None,
-            with_schema: bool = False,
-            corr_id: str | None = None,
+        self,
+        conn: ConnectionConfig,
+        schema: str,
+        object_name: str,
+        *,
+        top_n: int | None = None,
+        with_schema: bool = False,
+        corr_id: str | None = None,
     ) -> str:
         """Auto-generate a SELECT statement listing all columns of the object.
 
@@ -527,7 +555,7 @@ class DbService:
         cols = self.list_columns(conn, schema, object_name, corr_id=corr_id)
         if not cols:
             return self.build_select_star(schema, object_name, top_n=top_n, corr_id=corr_id)
-        col_names = [c.get("COLUMN_NAME") for c in cols if c.get("COLUMN_NAME")]
+        col_names = [str(column_name) for c in cols if (column_name := c.get("COLUMN_NAME"))]
 
         if not col_names:
             return self.build_select_star(schema, object_name, top_n=top_n, corr_id=corr_id)
@@ -542,11 +570,7 @@ class DbService:
         proj = f",\n{indent}".join(exprs)
         qtable = self.dialect.qualify(schema, object_name)
 
-        sql = (
-            "SELECT\n"
-            f"{indent}{proj}\n"
-            f"FROM {qtable};"
-        )
+        sql = f"SELECT\n{indent}{proj}\nFROM {qtable};"
 
         if isinstance(top_n, int) and top_n > 0:
             with contextlib.suppress(Exception):
@@ -555,9 +579,9 @@ class DbService:
         return sql
 
     def list_all_columns_map(
-            self,
-            conn: ConnectionConfig,
-            corr_id: str | None = None,
+        self,
+        conn: ConnectionConfig,
+        corr_id: str | None = None,
     ) -> dict[tuple[str, str], list[dict[str, str]]]:
         """Return full column metadata for all objects supported by the dialect.
 
@@ -576,11 +600,13 @@ class DbService:
         """
         sql_all_fn = getattr(self.dialect, "sql_all_columns", None)
         if not callable(sql_all_fn):
-            raise AttributeError("Dialect does not implement sql_all_columns().")
+            msg = "Dialect does not implement sql_all_columns()."
+            raise TypeError(msg)
 
         stmt = str(sql_all_fn())
         if not stmt:
-            raise AttributeError("Dialect does not support whole-database column listing.")
+            msg = "Dialect does not support whole-database column listing."
+            raise AttributeError(msg)
 
         res = self.execute_sql(conn, stmt, corr_id=corr_id)
         result: dict[tuple[str, str], list[dict[str, str]]] = {}
@@ -598,8 +624,9 @@ class DbService:
         table_col = "TABLE_NAME" if "TABLE_NAME" in df.columns else ("table" if "table" in df.columns else None)
         col_col = "COLUMN_NAME" if "COLUMN_NAME" in df.columns else ("column" if "column" in df.columns else None)
         dt_col = "DATA_TYPE" if "DATA_TYPE" in df.columns else ("data_type" if "data_type" in df.columns else None)
-        null_col = "IS_NULLABLE" if "IS_NULLABLE" in df.columns else (
-            "is_nullable" if "is_nullable" in df.columns else None)
+        null_col = (
+            "IS_NULLABLE" if "IS_NULLABLE" in df.columns else ("is_nullable" if "is_nullable" in df.columns else None)
+        )
 
         if not (schema_col and table_col and col_col):
             return result
@@ -634,14 +661,17 @@ class DbService:
 
         if name == "mssql":
             from expo_jbm329.db.core.errors import classify_mssql
+
             return classify_mssql(exc)
 
         if name in ("mysql", "mariadb"):
             from expo_jbm329.db.core.errors import classify_mysql
+
             return classify_mysql(exc)
 
         if name == "sqlite":
             from expo_jbm329.db.core.errors import classify_sqlite
+
             return classify_sqlite(exc)
 
         return SqlError(

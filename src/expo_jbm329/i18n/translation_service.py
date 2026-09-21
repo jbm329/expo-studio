@@ -1,4 +1,5 @@
 """Translation service."""
+
 from __future__ import annotations
 
 import logging
@@ -24,12 +25,8 @@ class TranslationService(QObject):
         - This service does not update UI widgets directly; callers are
           responsible for triggering UI retranslation.
     """
-    __slots__ = (
-        "_current_language",
-        "_locales_dir",
-        "_logger",
-        "_translator"
-    )
+
+    __slots__ = ("_current_language", "_locales_dir", "_logger", "_translator")
 
     def __init__(self, logger: logging.Logger | None) -> None:
         """Initialize the translation service.
@@ -43,9 +40,9 @@ class TranslationService(QObject):
         self._translator = QTranslator()
         self._locales_dir = get_i18n_root() / "locales"
         self._current_language: str | None = None
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._logger = logger or logging.getLogger("applogger.ui")
 
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Reload language configuration from application settings.
 
         This method is intended to be registered as a subscriber to the
@@ -59,15 +56,16 @@ class TranslationService(QObject):
             settings: The complete application settings dictionary.
         """
         try:
-            wb = settings.get("workbench", {}) or {}
+            wb = settings.get("workbench", {})
+            if not isinstance(wb, dict):
+                wb = {}
 
             lang = wb.get("language", Language.ENGLISH.value)
+            if not isinstance(lang, str):
+                return
             lang = lang.strip().lower()
 
             if lang not in {_lang.value for _lang in Language}:
-                return
-
-            if not isinstance(lang, str):
                 return
 
             if lang == self._current_language:
@@ -75,11 +73,22 @@ class TranslationService(QObject):
 
             self.switch_language(lang)
 
-        except Exception as exc:
-            self._logger.exception("TranslationService: failed to reload language: %s", exc)
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
+            self._logger.exception("TranslationService: failed to reload language")
 
     def switch_language(self, language: str) -> None:
-        """"Switch the application language at runtime.
+        """Switch the application language at runtime.
 
         Loads the corresponding Qt translation file (``app_<language>.qm``)
         from the locales directory and installs it into the current

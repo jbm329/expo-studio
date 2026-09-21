@@ -10,14 +10,11 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable, Sequence
 from enum import Enum, auto
 from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
-import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QWidget
 
 from expo_jbm329.gui.dialogs.service.dialog_service import DialogService, ProfileChoice
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
@@ -27,15 +24,30 @@ from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import (
     SaveFileRequest,
 )
 from expo_jbm329.services.job_result import JobResult
-from expo_jbm329.utils.dialog_state import DialogState
 from expo_jbm329.utils.format_utils import fmt_path, fmt_shape, fmt_time
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
 from expo_jbm329.utils.path_manager import get_documents_dir
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    import pandas as pd
+    from PyQt6.QtWidgets import QWidget
+
+    from expo_jbm329.services.data_io_service import DataIOService
+    from expo_jbm329.services.file_job_service import FileJobService
+    from expo_jbm329.utils.dialog_state import DialogState
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import (
+        ResultTabManager,
+    )
 
 
 class ExportKind(Enum):
     """Enumeration of export kinds."""
+
     CSV = auto()
     EXCEL = auto()
     DATAFILE = auto()
@@ -51,6 +63,7 @@ class ExportController:
     multiple datasets. It manages file dialogs, coordinates with FileJobService
     for background processing, and provides comprehensive logging and error handling.
     """
+
     # --- i18n markers (pylupdate6-visible) -----------------------------
     # No dataset
     TR_NO_DATASET_TITLE = QT_TR_NOOP("No dataset")
@@ -67,16 +80,15 @@ class ExportController:
 
     # Datafile Export
     TR_KIND_DATAFILE = QT_TR_NOOP("Export data to binary data file")
-    TR_EXPORT_DATAFILE_DIALOG_FILTER = QT_TR_NOOP("All data files (*.df *.feather *.ft *.parquet);;"
-                                                  "Pickle (*.df);;"
-                                                  "Feather (*.feather *.ft);;"
-                                                  "Parquet (*.parquet)")
+    TR_EXPORT_DATAFILE_DIALOG_FILTER = QT_TR_NOOP(
+        "All data files (*.df *.feather *.ft *.parquet);;Pickle (*.df);;Feather (*.feather *.ft);;Parquet (*.parquet)"
+    )
 
     # Profile report
     TR_KIND_PROFILE = QT_TR_NOOP("Generate data profile report")
     TR_EXPORT_PROFILE_DIALOG_FILTER = QT_TR_NOOP("HTML files (*.html)")
     TR_EXPORT_PROFILE_STARTED_MSG = QT_TR_NOOP("Generating data profile report {title}…")
-    
+
     # Multiple tabs
     TR_EXPORT_DATA_MULTIPLE_TABS_DIALOG_TITLE = QT_TR_NOOP("Multiple datasets open")
     TR_EXPORT_DATA_MULTIPLE_TABS_DIALOG_TEXT = QT_TR_NOOP("Multiple datasets are open. What do you want to profile?")
@@ -86,11 +98,11 @@ class ExportController:
     # Comparison profile report
     TR_KIND_COMPARISON_PROFILE = QT_TR_NOOP("Generate data profile comparison report")
     TR_EXPORT_COMPARISON_PROFILE_FILE_EXT = QT_TR_NOOP("_comparison.html")
-    # TR_EXPORT_COMPARISON_PROFILE_DIALOG_TITLE = QT_TR_NOOP("Save data comparison profile report")
     TR_EXPORT_COMPARISON_PROFILE_DIALOG_FILTER = QT_TR_NOOP("HTML files (*.html)")
     TR_EXPORT_COMPARISON_PROFILE_STARTED_MSG = QT_TR_NOOP(
-        "Generating data profile comparison report with {datasets_cnt} datasets…")
-    
+        "Generating data profile comparison report with {datasets_cnt} datasets…"
+    )
+
     # General messages
     TR_EXPORT_STARTED_MSG = QT_TR_NOOP("Exporting data to {file_name}…")
     TR_DONE_STATUS_FILE = QT_TR_NOOP("{kind_label} completed: {file_name}")
@@ -108,7 +120,7 @@ class ExportController:
         return tr("ExportController", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ExportController", text, **kwargs)
 
     _EXPORT_LABELS: Final[dict[ExportKind, str]] = {
@@ -141,22 +153,22 @@ class ExportController:
     # Initialization
     # ------------------------------------------------------------------
     def __init__(
-            self,
-            *,
-            parent_widget: QWidget,
-            async_ops: AsyncOperationController,
-            operation_target: QWidget,
-            results,
-            set_status: Callable[[str, int | None], None],
-            file_jobs,
-            get_tab_title: Callable[[], str],
-            open_url: Callable[[str], bool],
-            data_io,
-            dialogs: DialogService | None = None,
-            file_dialogs: FileDialogService | None = None,
-            dialog_state: DialogState,
-            logger: logging.Logger | None = None,
-    ):
+        self,
+        *,
+        parent_widget: QWidget,
+        async_ops: AsyncOperationController,
+        operation_target: QWidget,
+        results: ResultTabManager,
+        set_status: Callable[[str, int | None], None],
+        file_jobs: FileJobService,
+        get_tab_title: Callable[[], str],
+        open_url: Callable[[str], bool],
+        data_io: DataIOService,
+        dialogs: DialogService | None = None,
+        file_dialogs: FileDialogService | None = None,
+        dialog_state: DialogState,
+        logger: logging.Logger | None = None,
+    ) -> None:
         """Initialize the ExportController.
 
         Args:
@@ -190,17 +202,17 @@ class ExportController:
         self._documents_dir: Path | None = None
 
     # ==================================================================
-    # Properties (read-only)
+    # Properties read-only
     # ==================================================================
     @property
-    def file_jobs(self):
+    def file_jobs(self) -> FileJobService:
         """Return the FileJobService instance."""
         return self._file_jobs
 
     # ==================================================================
     # Settings
     # ==================================================================
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Synchronize ExportController with updated global settings.
 
         Things controlled by settings:
@@ -209,13 +221,21 @@ class ExportController:
         try:
             self._documents_dir = get_documents_dir(settings)
             self._logger.debug(
-                "ExportController: settings reloaded (documents_dir=%s).",
-                fmt_path(self._get_documents_dir())
+                "ExportController: settings reloaded (documents_dir=%s).", fmt_path(self._get_documents_dir())
             )
-        except Exception as e:
-            self._logger.exception(
-                "ExportController: failed to reload settings: %s", e
-            )
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
+            self._logger.exception("ExportController: failed to reload settings")
 
     # ==================================================================
     # Logging helpers (corr-id & safe shape)
@@ -226,14 +246,14 @@ class ExportController:
         return uuid.uuid4().hex
 
     def _log_start_export(
-            self,
-            *,
-            corr_id: str,
-            kind: ExportKind,
-            suggested_path: str,
-            rows: str,
-            cols: str,
-            scope: str | None = None
+        self,
+        *,
+        corr_id: str,
+        kind: ExportKind,
+        suggested_path: str,
+        rows: str,
+        cols: str,
+        scope: str | None = None,
     ) -> None:
         """Unified start log for exports.
 
@@ -242,7 +262,12 @@ class ExportController:
         """
         self._logger.info(
             "ExportController: export requested (corr=%s, kind=%s, scope=%s, rows=%s, cols=%s, suggested_path=%s)",
-            corr_id, kind, scope or "-", rows, cols, fmt_path(suggested_path)
+            corr_id,
+            kind,
+            scope or "-",
+            rows,
+            cols,
+            fmt_path(suggested_path),
         )
 
     # ==================================================================
@@ -269,21 +294,14 @@ class ExportController:
             tuple[str, str]: The (chosen_path, selected_filter) or ("", "") if cancelled.
         """
         initial = str(Path(base_dir) / default_name)
-        req = SaveFileRequest(
-            title=title,
-            initial_path=initial,
-            filter_str=filter_str
-        )
-        return self._file_dialogs.get_save_filename(
-            parent=self._parent,
-            req=req
-        )
+        req = SaveFileRequest(title=title, initial_path=initial, filter_str=filter_str)
+        return self._file_dialogs.get_save_filename(parent=self._parent, req=req)
 
     def _run_export_job(
         self,
         *,
-        job_fn,
-        job_args,
+        job_fn: Callable[..., object],
+        job_args: Sequence[object],
         started_msg: str,
         scope: str,
         suffix: str,
@@ -308,8 +326,7 @@ class ExportController:
             corr_id: Correlation ID for logging.
         """
         self._logger.debug(
-            "ExportController: scheduling async export job "
-            "(corr=%s, kind=%s, scope=%s, suffix=%s, indeterminate=%s)",
+            "ExportController: scheduling async export job (corr=%s, kind=%s, scope=%s, suffix=%s, indeterminate=%s)",
             corr_id,
             kind,
             scope,
@@ -317,7 +334,14 @@ class ExportController:
             indeterminate,
         )
 
-        def _work(*, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
+            **_: object,
+        ) -> object:
             return job_fn(
                 *job_args,
                 progress_cb=progress_cb,
@@ -359,16 +383,14 @@ class ExportController:
     def _get_documents_dir(self) -> Path:
         """Return documents directory, guaranteed to be initialized."""
         if self._documents_dir is None:
-            raise RuntimeError(
-                "ExportController: documents_dir not initialized. "
-                "reload_settings() must be called before export."
-            )
+            msg = "ExportController: documents_dir not initialized. reload_settings() must be called before export."
+            raise RuntimeError(msg)
         return self._documents_dir
 
     # ==================================================================
-    # EXPORT: CSV
+    # Export CSV
     # ==================================================================
-    def export_csv(self):
+    def export_csv(self) -> None:
         """Export the current DataFrame to CSV format.
 
         Displays a file dialog for the user to choose the export path,
@@ -385,7 +407,7 @@ class ExportController:
             fallback=self._get_documents_dir(),
         )
 
-        default_name = self._file_jobs.build_export_filename(".csv", start_dir)
+        default_name = self._file_jobs.build_export_filename(".csv", str(start_dir))
         suggested = str(Path(start_dir) / default_name)
         kind = ExportKind.CSV
         scope = "export:csv"
@@ -412,7 +434,10 @@ class ExportController:
 
         self._logger.debug(
             "ExportController: save dialog result (corr=%s, kind=%s, selected_filter=%r, chosen=%s)",
-            corr, kind, selected_filter, fmt_path(path)
+            corr,
+            kind,
+            selected_filter,
+            fmt_path(path),
         )
 
         path = self._file_jobs.coerce_save_suffix(path, selected_filter, fallback=".csv")
@@ -422,11 +447,16 @@ class ExportController:
             Path(path).parent,
         )
 
-        self._logger.debug(
-            "ExportController: coerced path (corr=%s, kind=%s, out=%s)",
-            corr, kind, fmt_path(path))
+        self._logger.debug("ExportController: coerced path (corr=%s, kind=%s, out=%s)", corr, kind, fmt_path(path))
 
-        def job(df_in, dest, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None):
+        def job(
+            df_in: pd.DataFrame,
+            dest: str,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
+        ) -> JobResult:
             return self._data_io.export_df_csv(
                 df_in,
                 dest,
@@ -453,9 +483,9 @@ class ExportController:
         )
 
     # ==================================================================
-    # EXPORT: Excel
+    # Export Excel
     # ==================================================================
-    def export_excel(self):
+    def export_excel(self) -> None:
         """Export the current DataFrame to Excel format."""
         df = self._get_active_df()
         if self._df_is_empty(df):
@@ -468,7 +498,7 @@ class ExportController:
             fallback=self._get_documents_dir(),
         )
 
-        default_name = self._file_jobs.build_export_filename(".xlsx", start_dir)
+        default_name = self._file_jobs.build_export_filename(".xlsx", str(start_dir))
         suggested = str(Path(start_dir) / default_name)
         kind = ExportKind.EXCEL
         scope = "export:excel"
@@ -489,14 +519,17 @@ class ExportController:
             default_name=default_name,
             filter_str=self._tr(self.TR_EXPORT_EXCEL_DIALOG_FILTER),
         )
-        
+
         if not path:
             self._logger.debug("ExportController: export canceled by user (corr=%s, kind=%s)", corr, kind)
             return
 
         self._logger.debug(
             "ExportController: save dialog result (corr=%s, kind=%s, selected_filter=%r, chosen=%s)",
-            corr, kind, selected_filter, fmt_path(path)
+            corr,
+            kind,
+            selected_filter,
+            fmt_path(path),
         )
 
         path = self._file_jobs.coerce_save_suffix(path, selected_filter, fallback=".xlsx")
@@ -506,10 +539,16 @@ class ExportController:
             Path(path).parent,
         )
 
-        self._logger.debug(
-            "ExportController: coerced path (corr=%s, kind=%s, out=%s)", corr, kind, fmt_path(path))
+        self._logger.debug("ExportController: coerced path (corr=%s, kind=%s, out=%s)", corr, kind, fmt_path(path))
 
-        def job(df_in, dest, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None):
+        def job(
+            df_in: pd.DataFrame,
+            dest: str,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
+        ) -> JobResult:
             return self._data_io.export_df_excel(
                 df_in,
                 dest,
@@ -536,7 +575,7 @@ class ExportController:
     # ==================================================================
     # EXPORT: Data file (pickle/feather/parquet/df)
     # ==================================================================
-    def export_data(self):
+    def export_data(self) -> None:
         """Export the current DataFrame to a data file format."""
         df = self._get_active_df()
         if self._df_is_empty(df):
@@ -549,7 +588,7 @@ class ExportController:
             fallback=self._get_documents_dir(),
         )
 
-        default_name = self._file_jobs.build_export_filename(".df", start_dir)
+        default_name = self._file_jobs.build_export_filename(".df", str(start_dir))
         suggested = str(Path(start_dir) / default_name)
         kind = ExportKind.DATAFILE
         scope = "export:data"
@@ -576,7 +615,10 @@ class ExportController:
 
         self._logger.debug(
             "ExportController: save dialog result (corr=%s, kind=%s, selected_filter=%r, chosen=%s)",
-            corr, kind, selected_filter, fmt_path(path)
+            corr,
+            kind,
+            selected_filter,
+            fmt_path(path),
         )
 
         path = self._file_jobs.coerce_save_suffix(path, selected_filter, fallback=".df")
@@ -588,14 +630,17 @@ class ExportController:
 
         suffix = Path(path).suffix.lower()
         self._logger.debug(
-            "ExportController: coerced path (corr=%s, kind=%s, out=%s, suffix=%s)",
-            corr,
-            kind,
-            fmt_path(path),
-            suffix
+            "ExportController: coerced path (corr=%s, kind=%s, out=%s, suffix=%s)", corr, kind, fmt_path(path), suffix
         )
 
-        def job(df_in, dest, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None):
+        def job(
+            df_in: pd.DataFrame,
+            dest: str,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
+        ) -> JobResult:
             return self._data_io.export_df_datafile(
                 df_in,
                 dest,
@@ -620,12 +665,14 @@ class ExportController:
         )
 
     # ==================================================================
-    # PROFILING: ydata (single-tab / multi-tab)
+    # PROFILING ydata (single-tab / multi-tab)
     # ==================================================================
     def profile_report(self) -> None:
         """Generate a profile report for the active dataset or compare multiple ready datasets."""
         df = self._get_active_df()
         if self._df_is_empty(df):
+            return
+        if df is None:
             return
 
         ready_dataset_count = self._results.ready_dataset_count()
@@ -638,7 +685,7 @@ class ExportController:
     # ------------------------------------------------------------------
     # Internal: profile single tab
     # ------------------------------------------------------------------
-    def _profile_single(self, df):
+    def _profile_single(self, df: pd.DataFrame) -> None:
         corr = self._new_corr()
 
         start_dir = self._dialog_state.get_dir(
@@ -646,7 +693,7 @@ class ExportController:
             fallback=self._get_documents_dir(),
         )
 
-        default_name = self._file_jobs.build_export_filename(".html", start_dir)
+        default_name = self._file_jobs.build_export_filename(".html", str(start_dir))
         suggested = str(Path(start_dir) / default_name)
 
         kind = ExportKind.PROFILE
@@ -668,14 +715,17 @@ class ExportController:
             default_name=default_name,
             filter_str=self._tr(self.TR_EXPORT_PROFILE_DIALOG_FILTER),
         )
-        
+
         if not path:
             self._logger.debug("ExportController: export canceled by user (corr=%s, kind=%s)", corr, kind)
             return
 
         self._logger.debug(
             "ExportController: save dialog result (corr=%s, kind=%s, selected_filter=%r, chosen=%s)",
-            corr, kind, selected_filter, fmt_path(path)
+            corr,
+            kind,
+            selected_filter,
+            fmt_path(path),
         )
 
         path = self._file_jobs.coerce_save_suffix(path, selected_filter, fallback=".html")
@@ -688,16 +738,20 @@ class ExportController:
         suffix = Path(path).suffix.lower()
 
         self._logger.debug(
-            "ExportController: coerced path (corr=%s, kind=%s, out=%s, suffix=%s)",
-            corr,
-            kind,
-            fmt_path(path),
-            suffix
+            "ExportController: coerced path (corr=%s, kind=%s, out=%s, suffix=%s)", corr, kind, fmt_path(path), suffix
         )
 
         title = self._get_tab_title() or "Dataset"
 
-        def job(df_in, dest, title_x, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None):
+        def job(
+            df_in: pd.DataFrame,
+            dest: str,
+            title_x: str,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
+        ) -> JobResult:
             return self._data_io.export_df_profile(
                 df_in,
                 dest,
@@ -707,7 +761,7 @@ class ExportController:
                 job_id=job_id,
                 job_scope=job_scope,
                 corr_id=corr,
-            )       
+            )
 
         started_msg = self._tr_fmt(self.TR_EXPORT_PROFILE_STARTED_MSG, title=title)
         self._run_export_job(
@@ -726,7 +780,7 @@ class ExportController:
     # ------------------------------------------------------------------
     # Internal: profile multi-tab
     # ------------------------------------------------------------------
-    def _profile_multi(self, df):
+    def _profile_multi(self, df: pd.DataFrame) -> None:
         profile_kind = self._tr(self.TR_KIND_PROFILE)
         comparison_kind = self._tr(self.TR_KIND_COMPARISON_PROFILE)
         choice = self._dialogs.confirm_profile_scope(
@@ -746,7 +800,7 @@ class ExportController:
     # ------------------------------------------------------------------
     # Internal: profile all tabs
     # ------------------------------------------------------------------
-    def _profile_all_tabs(self):
+    def _profile_all_tabs(self) -> None:
         data_all = self._results.collect_all_tabs_data()
         if not data_all:
             self._dialogs.info(
@@ -764,21 +818,25 @@ class ExportController:
         )
 
         default_ext = self._tr(self.TR_EXPORT_COMPARISON_PROFILE_FILE_EXT)
-        default_name = self._file_jobs.build_export_filename(default_ext, start_dir)
+        default_name = self._file_jobs.build_export_filename(default_ext, str(start_dir))
         suggested = str(Path(start_dir) / default_name)
         kind = ExportKind.PROFILE_COMPARE
         scope = "processdata:y-data-comparison"
 
         self._logger.info(
             "ExportController: export requested (corr=%s, kind=%s, scope=%s, datasets=%s, suggested_path=%s)",
-            corr, kind, scope or "-", len(data_all), fmt_path(suggested)
+            corr,
+            kind,
+            scope or "-",
+            len(data_all),
+            fmt_path(suggested),
         )
 
         path, selected_filter = self._choose_export_path(
             title=self._tr(self._EXPORT_LABELS[kind]),
             base_dir=str(start_dir),
             default_name=default_name,
-            filter_str=self._tr(self.TR_EXPORT_COMPARISON_PROFILE_DIALOG_FILTER)
+            filter_str=self._tr(self.TR_EXPORT_COMPARISON_PROFILE_DIALOG_FILTER),
         )
         if not path:
             self._logger.debug("ExportController: export canceled by user (corr=%s, kind=%s)", corr, kind)
@@ -786,27 +844,32 @@ class ExportController:
 
         self._logger.debug(
             "ExportController: save dialog result (corr=%s, kind=%s, selected_filter=%r, chosen=%s)",
-            corr, kind, selected_filter, fmt_path(path)
+            corr,
+            kind,
+            selected_filter,
+            fmt_path(path),
         )
 
         path = self._file_jobs.coerce_save_suffix(path, selected_filter, fallback=".html")
 
         suffix = Path(path).suffix.lower()
         self._logger.debug(
-            "ExportController: coerced path (corr=%s, kind=%s, out=%s, suffix=%s)",
-            corr,
-            kind,
-            fmt_path(path),
-            suffix
+            "ExportController: coerced path (corr=%s, kind=%s, out=%s, suffix=%s)", corr, kind, fmt_path(path), suffix
         )
 
-        # titles_str = ", ".join([name for _, name in data_all])
         datasets_cnt = len(data_all)
         started_msg = self._tr_fmt(self.TR_EXPORT_COMPARISON_PROFILE_STARTED_MSG, datasets_cnt=str(datasets_cnt))
 
-        data_copied: Sequence[tuple[pd.DataFrame, str]] = list(data_all)
+        data_copied: list[tuple[pd.DataFrame, str]] = list(data_all)
 
-        def job(data, dest, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None):
+        def job(
+            data: list[tuple[pd.DataFrame, str]],
+            dest: str,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
+        ) -> JobResult:
             return self._data_io.export_dfs_profile(
                 data,
                 dest,
@@ -834,19 +897,22 @@ class ExportController:
     # Callbacks
     # ==================================================================
 
-    def _on_export_done(self, payload, kind: ExportKind, out_path):
+    def _on_export_done(self, payload: object, kind: ExportKind, out_path: str) -> None:
         # Build JobResult robustly
         try:
             if isinstance(payload, JobResult):
                 res = payload
             elif isinstance(payload, dict):
+                elapsed = payload.get("elapsed")
+                error = payload.get("error")
+                corr_id = payload.get("corr_id")
                 res = JobResult(
                     ok=bool(payload.get("ok", False)),
-                    elapsed=payload.get("elapsed"),
+                    elapsed=elapsed if isinstance(elapsed, float) else None,
                     path=out_path,
                     cancelled=bool(payload.get("cancelled", False)),
-                    error=payload.get("error"),
-                    corr_id=payload.get("corr_id"),
+                    error=error if isinstance(error, str) else None,
+                    corr_id=corr_id if isinstance(corr_id, str) else None,
                 )
             else:
                 res = JobResult(
@@ -854,15 +920,22 @@ class ExportController:
                     elapsed=None,
                     path=out_path,
                     cancelled=False,
-                    error=self._tr(self.TR_EXCEPT_UNKNOWN_RESULT)
+                    error=self._tr(self.TR_EXCEPT_UNKNOWN_RESULT),
                 )
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             res = JobResult(
-                ok=False,
-                elapsed=None,
-                path=out_path,
-                cancelled=False,
-                error=self._tr(self.TR_EXCEPT_UNKNOWN_RESULT)
+                ok=False, elapsed=None, path=out_path, cancelled=False, error=self._tr(self.TR_EXCEPT_UNKNOWN_RESULT)
             )
 
         corr = res.corr_id or "-"
@@ -872,20 +945,14 @@ class ExportController:
             file_name = Path(out_path).name
 
             self._logger.info(
-                "ExportController: export done (corr=%s, kind=%s, out=%s)",
-                corr,
-                kind,
-                fmt_path(out_path)
+                "ExportController: export done (corr=%s, kind=%s, out=%s)", corr, kind, fmt_path(out_path)
             )
 
             if res.elapsed:
                 time_str = fmt_time(res.elapsed)
                 msg_str = self._tr_fmt(
-                    self.TR_DONE_STATUS_TIME_FILE,
-                    kind_label=kind_label,
-                    time_str=time_str,
-                    file_name=file_name
-                    )
+                    self.TR_DONE_STATUS_TIME_FILE, kind_label=kind_label, time_str=time_str, file_name=file_name
+                )
             else:
                 msg_str = self._tr_fmt(self.TR_DONE_STATUS_FILE, kind_label=kind_label, file_name=file_name)
 
@@ -898,27 +965,21 @@ class ExportController:
         if res.cancelled:
             self._logger.info("ExportController: export cancelled (corr=%s, kind=%s)", corr, kind)
             self._set_status(self._tr_fmt(self.TR_DONE_STATUS_CANCEL, kind_label=kind_label), 8000)
-            self._dialogs.info(
-                parent=self._parent,
-                title=kind_label,
-                text=self._tr(self.TR_DONE_CANCEL_DIALOG_TEXT)
-            )
+            self._dialogs.info(parent=self._parent, title=kind_label, text=self._tr(self.TR_DONE_CANCEL_DIALOG_TEXT))
             return
 
         # Failed export
         fail_status = self._tr_fmt(self.TR_DONE_STATUS_FAIL, kind_label=kind_label)
         self._logger.error(
-            "ExportController: export failed (corr=%s, kind=%s): %s", 
+            "ExportController: export failed (corr=%s, kind=%s): %s",
             corr,
             kind,
-            res.error or self._tr(self.TR_EXCEPT_UNKNOWN_ERROR)
+            res.error or self._tr(self.TR_EXCEPT_UNKNOWN_ERROR),
         )
         self._set_status(fail_status, 8000)
-        self._dialogs.warn(
-            parent=self._parent, title=kind_label, text=res.error or fail_status
-        )
+        self._dialogs.warn(parent=self._parent, title=kind_label, text=res.error or fail_status)
 
-    def _on_export_error(self, err: str, kind: ExportKind):
+    def _on_export_error(self, err: str, kind: ExportKind) -> None:
         corr = "-"
         kind_label = self._tr(self._EXPORT_LABELS[kind])
         if isinstance(err, JobResult):
@@ -930,8 +991,4 @@ class ExportController:
         self._logger.error("ExportController: export failed (corr=%s, kind=%s): %s", corr, kind, msg)
         self._set_status(self._tr_fmt(self.TR_DONE_STATUS_FAIL, kind_label=kind_label), 8000)
 
-        self._dialogs.critical(
-            parent=self._parent,
-            title=kind_label,
-            text=msg
-        )
+        self._dialogs.critical(parent=self._parent, title=kind_label, text=msg)

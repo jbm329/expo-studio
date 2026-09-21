@@ -19,12 +19,14 @@ Design principles:
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
-from typing import Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 import pandas as pd
 import pandas.api.types as pdt
 from pandas import CategoricalDtype
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 logger = logging.getLogger("applogger.service")
 
@@ -32,6 +34,7 @@ logger = logging.getLogger("applogger.service")
 # =====================================================================
 # Numeric conversions
 # =====================================================================
+
 
 def to_integer(
     df: pd.DataFrame,
@@ -58,19 +61,27 @@ def to_integer(
     logger.debug("to_integer: col='%s' errors=%s", column, errors)
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     new_df = df.copy()
 
     try:
-        new_df[column] = (
-            pd.to_numeric(df[column], errors=errors)
-            .astype("Int64")
-        )
-    except Exception as exc:
-        raise TypeError(
-            f"Could not convert column '{column}' to Int64: {exc}"
-        ) from exc
+        new_df[column] = pd.to_numeric(df[column], errors=errors).astype("Int64")
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as exc:
+        msg = f"Could not convert column '{column}' to Int64: {exc}"
+        raise TypeError(msg) from exc
 
     return new_df
 
@@ -100,7 +111,8 @@ def to_float(
     logger.debug("to_float: col='%s' errors=%s", column, errors)
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     new_df = df.copy()
 
@@ -109,10 +121,20 @@ def to_float(
             df[column],
             errors=errors,
         ).astype("float64")
-    except Exception as exc:
-        raise TypeError(
-            f"Could not convert column '{column}' to float64: {exc}"
-        ) from exc
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as exc:
+        msg = f"Could not convert column '{column}' to float64: {exc}"
+        raise TypeError(msg) from exc
 
     return new_df
 
@@ -137,18 +159,28 @@ def to_nullable_float_series(
     try:
         numeric = pd.to_numeric(series, errors=errors)
 
-        if not isinstance(numeric, pd.Series):
-            numeric = pd.Series(numeric, index=series.index, name=series.name)
-
         return numeric.astype("Float64")
 
-    except Exception as exc:
-        raise TypeError(f"Could not convert Series to Float64: {exc}") from exc
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as exc:
+        msg = f"Could not convert Series to Float64: {exc}"
+        raise TypeError(msg) from exc
 
 
 # =====================================================================
 # Datetime conversion
 # =====================================================================
+
 
 def to_datetime(
     df: pd.DataFrame,
@@ -179,8 +211,7 @@ def to_datetime(
         TypeError: If conversion fails and errors="raise".
     """
     logger.debug(
-        "to_datetime: col='%s' fmt=%r dayfirst=%s yearfirst=%s "
-        "errors=%s date_only=%s",
+        "to_datetime: col='%s' fmt=%r dayfirst=%s yearfirst=%s errors=%s date_only=%s",
         column,
         fmt,
         dayfirst,
@@ -190,49 +221,61 @@ def to_datetime(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     new_df = df.copy()
     series = new_df[column]
 
     try:
         if pdt.is_datetime64_any_dtype(series):
-            out = series
-        else:
-            if fmt is not None:
-                # When format is provided, pandas typing does NOT allow errors="ignore"
-                errors_fmt = cast(Literal["raise", "coerce"], errors)
+            out: pd.Series = series
+        elif fmt is not None:
+            # When format is provided, pandas typing does NOT allow errors="ignore"
+            errors_fmt = cast("Literal['raise', 'coerce']", errors)
 
-                out = pd.to_datetime(
+            out = cast(
+                "pd.Series",
+                pd.to_datetime(
                     series,
                     format=fmt,
                     errors=errors_fmt,
-                )
-            else:
-                # For Series input, pandas typing does not allow errors="ignore"
-                errors_series = cast(Literal["raise", "coerce"], errors)
+                ),
+            )
+        else:
+            # For Series input, pandas typing does not allow errors="ignore"
+            errors_series = cast("Literal['raise', 'coerce']", errors)
 
-                out = pd.to_datetime(
+            out = cast(
+                "pd.Series",
+                pd.to_datetime(
                     series,
                     errors=errors_series,
                     dayfirst=dayfirst,
                     yearfirst=yearfirst,
-                )
-
-        # Ensure Series output (column semantics)
-        if not isinstance(out, pd.Series):
-            out = pd.Series(out, index=new_df.index)
+                ),
+            )
 
         if date_only:
             out = out.dt.normalize()
 
         new_df[column] = out
 
-    except Exception as exc:
-        logger.error("to_datetime failed col='%s': %s", column, exc)
-        raise TypeError(
-            f"Could not convert column '{column}' to datetime64[ns]: {exc}"
-        ) from exc
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as exc:
+        logger.exception("to_datetime failed col='%s'", column)
+        msg = f"Could not convert column '{column}' to datetime64[ns]: {exc}"
+        raise TypeError(msg) from exc
 
     return new_df
 
@@ -240,6 +283,7 @@ def to_datetime(
 # =====================================================================
 # Boolean conversion
 # =====================================================================
+
 
 def to_boolean(
     df: pd.DataFrame,
@@ -276,7 +320,8 @@ def to_boolean(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column]
     new_df = df.copy()
@@ -289,28 +334,32 @@ def to_boolean(
             x = pd.to_numeric(s, errors="raise")
             mapped = x.map({0: False, 1: True})
             new_df[column] = mapped.astype("boolean")
-            return new_df
-        except Exception as exc:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
             if errors == "raise":
-                raise ValueError(
-                    f"Could not convert numeric column '{column}' to boolean"
-                ) from exc
+                msg = f"Could not convert numeric column '{column}' to boolean"
+                raise ValueError(msg) from exc
             # fall through to NA
+        else:
+            return new_df
 
     # --------------------------------------------------
     # String path
     # --------------------------------------------------
     s_str = s.astype("string").str.lower()
 
-    if true_values is None:
-        true_set = {"true", "1", "yes", "y", "ja"}
-    else:
-        true_set = {v.lower() for v in true_values}
-
-    if false_values is None:
-        false_set = {"false", "0", "no", "n", "nej"}
-    else:
-        false_set = {v.lower() for v in false_values}
+    true_set = {"true", "1", "yes", "y", "ja"} if true_values is None else {v.lower() for v in true_values}
+    false_set = {"false", "0", "no", "n", "nej"} if false_values is None else {v.lower() for v in false_values}
 
     result = pd.Series(pd.NA, index=s.index, dtype="boolean")
 
@@ -324,7 +373,8 @@ def to_boolean(
 
     if bool(mask_unmatched.any(skipna=True)) and errors == "raise":
         bad = s[mask_unmatched].unique()
-        raise ValueError(f"Unrecognized boolean values: {bad}")
+        msg = f"Unrecognized boolean values: {bad}"
+        raise ValueError(msg)
 
     new_df[column] = result
     return new_df
@@ -333,6 +383,7 @@ def to_boolean(
 # =====================================================================
 # String & categorical conversions
 # =====================================================================
+
 
 def to_string(df: pd.DataFrame, column: str) -> pd.DataFrame:
     """Cast a column to pandas StringDtype.
@@ -350,7 +401,8 @@ def to_string(df: pd.DataFrame, column: str) -> pd.DataFrame:
     logger.debug("to_string: col='%s'", column)
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     new_df = df.copy()
     new_df[column] = new_df[column].astype("string")
@@ -394,7 +446,8 @@ def to_category(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column].astype("string")
     non_null = s.dropna()
@@ -406,16 +459,12 @@ def to_category(
     elif order == "preserve":
         categories = list(pd.unique(non_null))
     else:
-        raise ValueError(
-            "order must be one of: 'alpha' | 'freq' | 'preserve'"
-        )
+        msg = "order must be one of: 'alpha' | 'freq' | 'preserve'"
+        raise ValueError(msg)
 
     dtype = CategoricalDtype(categories=categories, ordered=ordered)
 
-    if strict:
-        cat = pd.Categorical(s, dtype=dtype)
-    else:
-        cat = pd.Categorical(s, categories=categories, ordered=ordered)
+    cat = pd.Categorical(s, dtype=dtype) if strict else pd.Categorical(s, categories=categories, ordered=ordered)
 
     new_df = df.copy()
     new_df[column] = pd.Series(cat, index=s.index, name=s.name)

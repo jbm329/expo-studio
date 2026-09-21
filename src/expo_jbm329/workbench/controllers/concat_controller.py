@@ -4,14 +4,15 @@ This module provides a thin orchestration layer that opens the CONCAT dialog,
 collects the selected input tables, and delegates the actual DataFrame
 concatenation to the service layer.
 """
+
 from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING, cast
 
 import pandas as pd
-from PyQt6.QtCore import QT_TR_NOOP
+from PyQt6.QtCore import QT_TR_NOOP, QObject
 from PyQt6.QtWidgets import QDialog, QWidget
 
 from expo_jbm329.gui.dialogs.workflows.concat.concat_dialog import (
@@ -20,8 +21,14 @@ from expo_jbm329.gui.dialogs.workflows.concat.concat_dialog import (
 )
 from expo_jbm329.services.data_operations.concat import ConcatRequest, concat_dataframes
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
-from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
 
 
 class ConcatController:
@@ -42,10 +49,11 @@ class ConcatController:
         return tr("ConcatController", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ConcatController", text, **kwargs)
 
     __slots__ = (
+        "__weakref__",
         "_async_ops",
         "_get_active_title",
         "_get_df",
@@ -87,7 +95,7 @@ class ConcatController:
         self._list_tab_titles = list_tab_titles
         self._get_df = get_df_for_tab
         self._set_status = set_status
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._logger = logger or logging.getLogger("applogger.ui")
 
     # ------------------------------------------------------------------
     # Public API
@@ -106,9 +114,7 @@ class ConcatController:
         left_df = self._get_df(left_tab)
         left_cols = list(left_df.columns)
 
-        right_cols_map = {
-            tab: list(self._get_df(tab).columns) for tab in right_tabs
-        }
+        right_cols_map: dict[str, Sequence[str]] = {tab: list(self._get_df(tab).columns) for tab in right_tabs}
 
         dlg = ConcatDialog(
             parent=self._parent,
@@ -145,10 +151,15 @@ class ConcatController:
         pending_tab_id = pending_handle.tab_id
         pending_view = pending_handle.view
 
-        def _work(*, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None, **_):
-            _ = progress_cb
-            _ = job_scope
-            _ = job_id
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
+            del progress_cb, job_scope, job_id
 
             if cancel_cb is not None and cancel_cb():
                 return None
@@ -172,12 +183,11 @@ class ConcatController:
 
             return result_df
 
-        def _on_result(result_df: pd.DataFrame | None) -> None:
+        def _on_result(result_df: object) -> None:
             """Handle CONCAT result for the pending tab."""
             if result_df is None:
                 self._logger.info(
-                    "ConcatController: CONCAT cancelled "
-                    "(left=%s, right=%s, corr=%s, tab_id=%s)",
+                    "ConcatController: CONCAT cancelled (left=%s, right=%s, corr=%s, tab_id=%s)",
                     cfg.left_tab_title,
                     cfg.right_tab_title,
                     corr_id,
@@ -190,8 +200,7 @@ class ConcatController:
 
             if not isinstance(result_df, pd.DataFrame):
                 self._logger.error(
-                    "ConcatController: CONCAT returned non-DataFrame result "
-                    "(corr=%s, tab_id=%s, type=%s)",
+                    "ConcatController: CONCAT returned non-DataFrame result (corr=%s, tab_id=%s, type=%s)",
                     corr_id,
                     pending_tab_id,
                     type(result_df).__name__,
@@ -212,8 +221,7 @@ class ConcatController:
             )
 
             self._logger.info(
-                "ConcatController: CONCAT completed: %s + %s "
-                "(remove_duplicates=%s corr=%s tab_id=%s)",
+                "ConcatController: CONCAT completed: %s + %s (remove_duplicates=%s corr=%s tab_id=%s)",
                 cfg.left_tab_title,
                 cfg.right_tab_title,
                 cfg.remove_duplicates,
@@ -226,8 +234,7 @@ class ConcatController:
             record = self._results.tabs_by_id.get(pending_tab_id)
             if record is not None and record.is_pending:
                 self._logger.debug(
-                    "ConcatController: removing stale pending CONCAT tab on finished "
-                    "(corr=%s, tab_id=%s)",
+                    "ConcatController: removing stale pending CONCAT tab on finished (corr=%s, tab_id=%s)",
                     corr_id,
                     pending_tab_id,
                 )
@@ -255,13 +262,12 @@ class ConcatController:
             corr_id=corr_id,
         )
 
-        jobid = self._async_ops.job_mgr.get_job_id(job)
+        jobid = self._async_ops.job_mgr.get_job_id(cast("QObject | None", job))
         if jobid is not None:
             self._results.bind_job_to_tab(pending_tab_id, jobid)
         else:
             self._logger.warning(
-                "ConcatController: could not bind CONCAT job to pending tab "
-                "(corr=%s, tab_id=%s)",
+                "ConcatController: could not bind CONCAT job to pending tab (corr=%s, tab_id=%s)",
                 corr_id,
                 pending_tab_id,
             )

@@ -59,9 +59,11 @@ Important invariants:
 This separation is intentional and should be preserved when extending
 status, progress, or UI feedback behavior.
 """
+
 from __future__ import annotations
 
 import contextlib
+from typing import Any, cast
 
 from PyQt6.QtCore import QT_TR_NOOP, QTimer
 from PyQt6.QtWidgets import (
@@ -82,6 +84,7 @@ class StatusBarController:
     managing permanent and transient status messages, displaying data shape
     (rows/columns), and controlling the progress bar.
     """
+
     # --- i18n markers (pylupdate6-visible) -----------------------------
     TR_SET_SHAPE_STATUS_DEFAULT = QT_TR_NOOP("Rows: -  |  Columns: -")
     TR_SET_SHAPE_STATUS = QT_TR_NOOP("Rows: {rows}  |  Columns: {columns}")
@@ -94,8 +97,8 @@ class StatusBarController:
     @staticmethod
     def _tr_fmt(text: str, **kwargs: str) -> str:
         return tr_fmt("StatusBarController", text, **kwargs)
-    
-    def __init__(self, parent: QWidget, status_bar: QStatusBar):
+
+    def __init__(self, parent: QWidget, status_bar: QStatusBar) -> None:
         """Initialize the StatusBarController.
 
         Args:
@@ -116,16 +119,17 @@ class StatusBarController:
         self._shape_has_data = False
 
         self._build_widgets()
-        self._parent.progress = self.progress
-        self._parent.progress_label = self.progress_label
-        self._parent.shape_label = self.shape_label
+        parent_for_legacy = cast("Any", self._parent)
+        parent_for_legacy.progress = self.progress
+        parent_for_legacy.progress_label = self.progress_label
+        parent_for_legacy.shape_label = self.shape_label
 
         self.init_baseline()
 
     # ------------------------------------------------------------------
     # UI BUILDING
     # ------------------------------------------------------------------
-    def _build_widgets(self):
+    def _build_widgets(self) -> None:
         """Build and configure the status bar widgets."""
         sb = self._status_bar
 
@@ -134,9 +138,7 @@ class StatusBarController:
 
         # Shape label
         self.shape_label.setObjectName("shapeLabel")
-        self.shape_label.setStyleSheet(
-            "QLabel#shapeLabel { padding-left: 12px; color: #444; }"
-        )
+        self.shape_label.setStyleSheet("QLabel#shapeLabel { padding-left: 12px; color: #444; }")
         sb.addPermanentWidget(self.shape_label)
 
         # Optional progress label
@@ -150,7 +152,7 @@ class StatusBarController:
         sb.addPermanentWidget(self.progress)
 
     # ------------------------------------------------------------------
-    def init_baseline(self):
+    def init_baseline(self) -> None:
         """Initialize the baseline status message.
 
         Sets the default status message indicating to select a connection.
@@ -170,7 +172,7 @@ class StatusBarController:
         """Thread-safe entry point for updating the status bar."""
         ui_invoke(self._set_status_ui, text, timeout_ms)
 
-    def restore_baseline(self):
+    def restore_baseline(self) -> None:
         """Restore the permanent status text in the status bar."""
         ui_invoke(self._restore_baseline_ui)
 
@@ -197,7 +199,7 @@ class StatusBarController:
     # SHAPE DISPLAY
     # ------------------------------------------------------------------
 
-    def set_shape_status(self, rows: int | None, cols: int | None):
+    def set_shape_status(self, rows: int | None, cols: int | None) -> None:
         """Update the rows/columns summary indicator.
 
         Args:

@@ -89,11 +89,10 @@ def test_disconnect_non_active_connection_does_not_clear_active_state(controller
 
 def test_connect_without_schema_loader_raises():
     ctrl = ConnectionController(
-        get_connection_names=lambda: [],
+        get_connection_names=list,
         clear_schema_cache=lambda _: None,
         close_db_connection=lambda _: None,
     )
 
     with pytest.raises(RuntimeError, match="load_schema is missing"):
         ctrl.connect("Conn1")
-

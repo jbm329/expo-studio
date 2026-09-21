@@ -5,7 +5,6 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 
-from expo_jbm329.db.core.models import SqlError, SqlResult
 from expo_jbm329.workbench.controllers.query_controller import QueryController
 
 
@@ -145,7 +144,6 @@ def test_run_sql_missing_connection_shows_info():
 def test_on_worker_result_success_updates_results_and_parent():
     qc, parent, _, results, status_msgs, _ = make_qc()
     df = pd.DataFrame({"a": [1, 2]})
-    res = SqlResult(ok=True, data=df, rows=2, elapsed_s=1.234)
 
     results.fulfilled.append(("tab-1", df))
     parent.last_df = df
@@ -158,14 +156,12 @@ def test_on_worker_result_success_updates_results_and_parent():
 
 def test_on_worker_result_failure_with_error_object():
     qc, _, _, results, _, dialogs = make_qc()
-    err = SqlError(category="syntax", code=None, message="Bad syntax", hint="Check commas")
-    res = SqlResult(ok=False, error=err)
 
     qc._results.remove_pending_tab("tab-1")
     qc._set_status("Failed", 6000)
     dialogs.critical(parent=qc._parent, title="Failure", text="Bad syntax\n\nHint: Check commas")
 
-    assert "tab-1" in results.removed or True
+    assert "tab-1" in results.removed
     dialogs.critical.assert_called_once()
 
 

@@ -1,7 +1,9 @@
 """Prompt the user for a comparison operator and value and between-range."""
+
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QCoreApplication
 from PyQt6.QtWidgets import (
@@ -24,7 +26,10 @@ from expo_jbm329.gui.dialogs.service.common.localization import (
 from expo_jbm329.gui.dialogs.service.common.window_hints import (
     apply_dialog_window_hints,
 )
-from expo_jbm329.services.data_profile.semantics import SeriesSemantics
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import BetweenResult, CompareResult
+    from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 
 # ----------------------------------------------------------------------
 # operator labels
@@ -39,6 +44,7 @@ _OPERATOR_LABELS = {
     "!=": QCoreApplication.translate("QtDialogService", "Not equal to"),
 }
 
+
 # ----------------------------------------------------------------------
 # prompt_compare
 # ----------------------------------------------------------------------
@@ -51,7 +57,7 @@ def prompt_compare(
     default_op: str,
     default_value: object,
     semantics: SeriesSemantics,
-) -> dict:
+) -> CompareResult:
     """Prompt the user for a comparison operator and value."""
     dlg = QDialog(parent)
     dlg.setWindowTitle(title)
@@ -81,38 +87,40 @@ def prompt_compare(
     row_val = QHBoxLayout()
     row_val.addWidget(QLabel(label_value, dlg))
 
-    editor: QWidget
+    editor: QDateEdit | QDateTimeEdit | QSpinBox | QDoubleSpinBox
 
     if semantics.semantic_dtype == "datetime":
         if semantics.is_date_only:
-            edit = QDateEdit(dlg)
-            edit.setCalendarPopup(True)
-            edit.setDisplayFormat("yyyy-MM-dd")
+            date_edit = QDateEdit(dlg)
+            date_edit.setCalendarPopup(True)
+            date_edit.setDisplayFormat("yyyy-MM-dd")
             if isinstance(default_value, datetime):
-                edit.setDate(default_value.date())
+                date_edit.setDate(default_value.date())
+            editor = date_edit
         else:
-            edit = QDateTimeEdit(dlg)
-            edit.setCalendarPopup(True)
-            edit.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
+            datetime_edit = QDateTimeEdit(dlg)
+            datetime_edit.setCalendarPopup(True)
+            datetime_edit.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
             if isinstance(default_value, datetime):
-                edit.setDateTime(default_value)
-        editor = edit
+                datetime_edit.setDateTime(default_value)
+            editor = datetime_edit
 
     elif semantics.semantic_dtype in ("int", "float"):
         if semantics.is_integer_like:
-            edit = QSpinBox(dlg)
-            edit.setMinimum(-2_147_483_648)
-            edit.setMaximum(2_147_483_647)
+            int_edit = QSpinBox(dlg)
+            int_edit.setMinimum(-2_147_483_648)
+            int_edit.setMaximum(2_147_483_647)
             if isinstance(default_value, (int, float)):
-                edit.setValue(int(default_value))
+                int_edit.setValue(int(default_value))
+            editor = int_edit
         else:
-            edit = QDoubleSpinBox(dlg)
-            edit.setDecimals(6)
-            edit.setMinimum(-1e12)
-            edit.setMaximum(1e12)
+            float_edit = QDoubleSpinBox(dlg)
+            float_edit.setDecimals(6)
+            float_edit.setMinimum(-1e12)
+            float_edit.setMaximum(1e12)
             if isinstance(default_value, (int, float)):
-                edit.setValue(float(default_value))
-        editor = edit
+                float_edit.setValue(float(default_value))
+            editor = float_edit
 
     else:
         return {"ok": False}
@@ -123,7 +131,7 @@ def prompt_compare(
     buttons = QDialogButtonBox(parent=dlg)
     buttons.addButton(QDialogButtonBox.StandardButton.Ok)
     buttons.addButton(QDialogButtonBox.StandardButton.Cancel)
-    
+
     localize_dialog_buttons(buttons)
     buttons.accepted.connect(dlg.accept)
     buttons.rejected.connect(dlg.reject)
@@ -136,9 +144,10 @@ def prompt_compare(
         return {"ok": False}
 
     # Read value
+    value: object
     if isinstance(editor, QDateEdit):
         d = editor.date()
-        value = datetime(d.year(), d.month(), d.day())
+        value = datetime(d.year(), d.month(), d.day())  # noqa: DTZ001 - calendar-only dialog value
     elif isinstance(editor, QDateTimeEdit):
         value = editor.dateTime().toPyDateTime()
     else:
@@ -150,9 +159,11 @@ def prompt_compare(
         "ok": True,
     }
 
+
 # ----------------------------------------------------------------------
 # prompt_between
 # ----------------------------------------------------------------------
+
 
 def prompt_between(
     parent: QWidget,
@@ -164,7 +175,7 @@ def prompt_between(
     default_high: object,
     inclusive_default: str,
     semantics: SeriesSemantics,
-) -> dict:
+) -> BetweenResult:
     """Prompt the user for a between-range."""
     dlg = QDialog(parent)
     dlg.setWindowTitle(title)
@@ -172,7 +183,7 @@ def prompt_between(
     layout = QVBoxLayout(dlg)
 
     # Inclusivity
-    incl_map = {
+    incl_map: dict[str, str] = {
         QCoreApplication.translate("QtDialogService", "Both limits"): "both",
         QCoreApplication.translate("QtDialogService", "Only lower limit"): "left",
         QCoreApplication.translate("QtDialogService", "Only upper limit"): "right",
@@ -181,9 +192,7 @@ def prompt_between(
     rev_map = {v: k for k, v in incl_map.items()}
 
     row_incl = QHBoxLayout()
-    row_incl.addWidget(QLabel(
-        QCoreApplication.translate("QtDialogService", "Inclusivity:"), dlg
-    ))
+    row_incl.addWidget(QLabel(QCoreApplication.translate("QtDialogService", "Inclusivity:"), dlg))
     cmb_incl = QComboBox(dlg)
     cmb_incl.addItems(incl_map.keys())
     if inclusive_default in rev_map:
@@ -192,39 +201,40 @@ def prompt_between(
     layout.addLayout(row_incl)
 
     # Editors
-    def _make_editor(default: object) -> QWidget:
+    def _make_editor(default: object) -> QDateEdit | QDateTimeEdit | QSpinBox | QDoubleSpinBox:
         if semantics.semantic_dtype == "datetime":
             if semantics.is_date_only:
-                edit = QDateEdit(dlg)
-                edit.setCalendarPopup(True)
-                edit.setDisplayFormat("yyyy-MM-dd")
+                date_edit = QDateEdit(dlg)
+                date_edit.setCalendarPopup(True)
+                date_edit.setDisplayFormat("yyyy-MM-dd")
                 if isinstance(default, datetime):
-                    edit.setDate(default.date())
-                return edit
-            edit = QDateTimeEdit(dlg)
-            edit.setCalendarPopup(True)
-            edit.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
+                    date_edit.setDate(default.date())
+                return date_edit
+            datetime_edit = QDateTimeEdit(dlg)
+            datetime_edit.setCalendarPopup(True)
+            datetime_edit.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
             if isinstance(default, datetime):
-                edit.setDateTime(default)
-            return edit
+                datetime_edit.setDateTime(default)
+            return datetime_edit
 
         if semantics.semantic_dtype in ("int", "float"):
             if semantics.is_integer_like:
-                edit = QSpinBox(dlg)
-                edit.setMinimum(-2_147_483_648)
-                edit.setMaximum(2_147_483_647)
+                int_edit = QSpinBox(dlg)
+                int_edit.setMinimum(-2_147_483_648)
+                int_edit.setMaximum(2_147_483_647)
                 if isinstance(default, (int, float)):
-                    edit.setValue(int(default))
-                return edit
-            edit = QDoubleSpinBox(dlg)
-            edit.setDecimals(6)
-            edit.setMinimum(-1e12)
-            edit.setMaximum(1e12)
+                    int_edit.setValue(int(default))
+                return int_edit
+            float_edit = QDoubleSpinBox(dlg)
+            float_edit.setDecimals(6)
+            float_edit.setMinimum(-1e12)
+            float_edit.setMaximum(1e12)
             if isinstance(default, (int, float)):
-                edit.setValue(float(default))
-            return edit
+                float_edit.setValue(float(default))
+            return float_edit
 
-        raise RuntimeError("Unsupported semantics")
+        msg = "Unsupported semantics"
+        raise RuntimeError(msg)
 
     # Low
     row_low = QHBoxLayout()
@@ -255,10 +265,10 @@ def prompt_between(
     if not ok:
         return {"ok": False}
 
-    def _read(edit: QWidget) -> object:
+    def _read(edit: QDateEdit | QDateTimeEdit | QSpinBox | QDoubleSpinBox) -> object:
         if isinstance(edit, QDateEdit):
             d = edit.date()
-            return datetime(d.year(), d.month(), d.day())
+            return datetime(d.year(), d.month(), d.day())  # noqa: DTZ001 - calendar-only dialog value
         if isinstance(edit, QDateTimeEdit):
             return edit.dateTime().toPyDateTime()
         return edit.value()

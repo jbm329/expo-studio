@@ -22,6 +22,10 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.utils.format_utils import fmt_num
 
+EXCELLENT_MATCH_RATE = 0.9
+GOOD_MATCH_RATE = 0.7
+PARTIAL_MATCH_RATE = 0.4
+
 
 class JoinAnalysisWidget(QWidget):
     """Widget for displaying join success rate and metadata."""
@@ -74,7 +78,7 @@ class JoinAnalysisWidget(QWidget):
         root.addWidget(meta_box)
 
         # ======================================================
-        # Styling (colors)
+        # Styling colors
         # ======================================================
         self._apply_styles()
 
@@ -82,7 +86,7 @@ class JoinAnalysisWidget(QWidget):
     # Public API
     # ---------------------------------------------------------
 
-    def set_metadata(self, metadata) -> None:
+    def set_metadata(self, metadata: object) -> None:
         """Populate widget with join metadata.
 
         Args:
@@ -93,6 +97,7 @@ class JoinAnalysisWidget(QWidget):
                 - cardinality: str
                 - estimated_rows: int (optional)
         """
+
         def to_pct(val: float) -> int:
             return int(max(0.0, min(1.0, val)) * 100)
 
@@ -104,11 +109,11 @@ class JoinAnalysisWidget(QWidget):
         # --- summary ---
         rate = getattr(metadata, "match_rate", 0.0)
 
-        if rate > 0.9:
+        if rate > EXCELLENT_MATCH_RATE:
             text = self.tr("✅ Excellent match")
-        elif rate > 0.7:
+        elif rate > GOOD_MATCH_RATE:
             text = self.tr("🟢 Good match")
-        elif rate > 0.4:
+        elif rate > PARTIAL_MATCH_RATE:
             text = self.tr("⚠ Partial match")
         else:
             text = self.tr("❌ Poor match")
@@ -142,14 +147,8 @@ class JoinAnalysisWidget(QWidget):
         }
         """
 
-        self.pb_match.setStyleSheet(
-            base_style + "QProgressBar::chunk { background-color: #4CAF50; }"
-        )
+        self.pb_match.setStyleSheet(base_style + "QProgressBar::chunk { background-color: #4CAF50; }")
 
-        self.pb_left.setStyleSheet(
-            base_style + "QProgressBar::chunk { background-color: #FFC107; }"
-        )
+        self.pb_left.setStyleSheet(base_style + "QProgressBar::chunk { background-color: #FFC107; }")
 
-        self.pb_right.setStyleSheet(
-            base_style + "QProgressBar::chunk { background-color: #F44336; }"
-        )
+        self.pb_right.setStyleSheet(base_style + "QProgressBar::chunk { background-color: #F44336; }")

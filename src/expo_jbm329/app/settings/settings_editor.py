@@ -11,6 +11,7 @@ follow Google-style English conventions.
 from __future__ import annotations
 
 import contextlib
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
@@ -34,7 +35,7 @@ from expo_jbm329.app.settings.config_store import (
     load_settings,
     save_settings,
 )
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+from expo_jbm329.app.settings.json_types import JsonObject, bool_value, int_value, object_or_empty, string_value
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import (
     DirectoryRequest,
@@ -45,8 +46,11 @@ from expo_jbm329.utils.path_manager import (
     ensure_all_dirs,
     get_documents_dir,
 )
-from expo_jbm329.workbench.icon.icon_service import IconService
-from expo_jbm329.workbench.theme.highlighter_theme_service import HighlighterThemeService
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.icon.icon_service import IconService
+    from expo_jbm329.workbench.theme.highlighter_theme_service import HighlighterThemeService
 
 THEMES = ["system"]
 
@@ -76,7 +80,7 @@ class SettingsEditor(QDialog):
         file_dialogs: FileDialogService | None = None,
         highlighter_theme_service: HighlighterThemeService | None = None,
         icon_service: IconService | None = None,
-    ):
+    ) -> None:
         """Initializes the SettingsEditor dialog.
 
         Args:
@@ -102,8 +106,9 @@ class SettingsEditor(QDialog):
             self._icon_service.icons_updated.connect(self._update_icon)
 
         # Load user settings
-        self.settings: dict = load_settings()
+        self.settings: JsonObject = load_settings()
         self.highlighter_theme_service = highlighter_theme_service
+        self._theme_key_map: dict[str, str] = {}
 
         # Build UI + populate fields
         self._build_ui()
@@ -112,7 +117,7 @@ class SettingsEditor(QDialog):
     # -------------------------------------------------------------------------
     # Update icon
     # -------------------------------------------------------------------------
-    def _update_icon(self):
+    def _update_icon(self) -> None:
         """Updates the window icon using the IconService or a fallback path."""
         if self._icon_service:
             icon = self._icon_service.get("settings")
@@ -131,7 +136,7 @@ class SettingsEditor(QDialog):
         main_layout = QVBoxLayout(self)
 
         # ================================================================
-        # GROUP: Basic settings 
+        # GROUP: Basic settings
         # ================================================================
         box_top = QGroupBox(self.tr("Basic settings"), self)
         form_top = QFormLayout(box_top)
@@ -151,7 +156,7 @@ class SettingsEditor(QDialog):
 
         row_theme.addSpacing(20)
 
-        # GUI-Theme (light/dark/system)
+        # GUI-Theme light/dark/system
         row_theme.addWidget(QLabel(self.tr("GUI theme:"), self))
 
         self.cmb_theme = QComboBox(self)
@@ -213,7 +218,7 @@ class SettingsEditor(QDialog):
         main_layout.addWidget(box_top)
 
         # ================================================================
-        # GROUPS: CSV and Excel
+        # Groups CSV and Excel
         # ================================================================
         row_csv_excel = QHBoxLayout()
 
@@ -280,12 +285,12 @@ class SettingsEditor(QDialog):
         main_layout.addLayout(row_csv_excel)
 
         # ================================================================
-        # GROUP: Schema-cache
+        # Group Schema-cache
         # ================================================================
         row_schema = QHBoxLayout()
 
         # -------------------------
-        # VÄNSTER: Schema-cache
+        # Left Schema-cache
         # -------------------------
         box_sc = QGroupBox(self.tr("Schema cache"), self)
         form_sc = QFormLayout(box_sc)
@@ -308,7 +313,7 @@ class SettingsEditor(QDialog):
         row_schema.addWidget(box_sc, 1)
 
         # -------------------------
-        # HÖGER: Editor
+        # Right Editor
         # -------------------------
         box_editor = QGroupBox(self.tr("SQL editor"), self)
         form_editor = QFormLayout(box_editor)
@@ -353,12 +358,11 @@ class SettingsEditor(QDialog):
         """
         s = self.settings
 
-        editor_defaults = DEFAULT_SETTINGS.get("workbench", {})
-        editor = s.get("workbench", editor_defaults)
-        assert editor is not None
+        editor_defaults = object_or_empty(DEFAULT_SETTINGS.get("workbench"))
+        editor = object_or_empty(s.get("workbench")) or editor_defaults
 
         # Language
-        current_lang = editor.get("language", editor_defaults.get("language", "en"))
+        current_lang = string_value(editor.get("language"), string_value(editor_defaults.get("language"), "en"))
 
         found = False
         for i in range(self.cmb_language.count()):
@@ -371,10 +375,14 @@ class SettingsEditor(QDialog):
             self.cmb_language.setCurrentIndex(0)
 
         # Theme
-        self.cmb_theme.setCurrentText(editor.get("theme", editor_defaults.get("theme", "system")))
+        self.cmb_theme.setCurrentText(
+            string_value(editor.get("theme"), string_value(editor_defaults.get("theme"), "system"))
+        )
 
         # Highlighter theme (dynamic list)
-        assert self.highlighter_theme_service is not None
+        if self.highlighter_theme_service is None:
+            msg = "Highlighter theme service is not configured."
+            raise RuntimeError(msg)
         pairs = self.highlighter_theme_service.available_themes_with_labels()
 
         self.cmb_highlighter.clear()
@@ -385,7 +393,7 @@ class SettingsEditor(QDialog):
             self._theme_key_map[friendly] = key
 
         # Select current theme (from settings)
-        current_key = editor.get("highlighter_theme", "system")
+        current_key = string_value(editor.get("highlighter_theme"), "system")
         for friendly, key in self._theme_key_map.items():
             if key == current_key:
                 self.cmb_highlighter.setCurrentText(friendly)
@@ -396,29 +404,35 @@ class SettingsEditor(QDialog):
 
         # Undo settings
         self.spin_undo_limit.setValue(
-            int(editor.get("undo_limit_per_tab", editor_defaults.get("undo_limit_per_tab", 20)))
+            int_value(editor.get("undo_limit_per_tab"), int_value(editor_defaults.get("undo_limit_per_tab"), 20))
         )
         self.spin_undo_max_mb.setValue(
-            int(editor.get("max_size_allow_undo_mb", editor_defaults.get("max_size_allow_undo_mb", 100)))
+            int_value(
+                editor.get("max_size_allow_undo_mb"),
+                int_value(editor_defaults.get("max_size_allow_undo_mb"), 100),
+            )
         )
 
         # CSV settings
-        csv = s.get("csv", DEFAULT_SETTINGS["csv"])
+        csv_defaults = object_or_empty(DEFAULT_SETTINGS.get("csv"))
+        csv = object_or_empty(s.get("csv")) or csv_defaults
         self.spin_csv_read_chunksize.setValue(
-            csv.get("read_chunk_size_rows", DEFAULT_SETTINGS["csv"]["read_chunk_size_rows"])
+            int_value(csv.get("read_chunk_size_rows"), int_value(csv_defaults.get("read_chunk_size_rows"), 100000))
         )
         self.spin_csv_write_chunk_size.setValue(
-            csv.get("write_chunk_size_rows", DEFAULT_SETTINGS["csv"]["write_chunk_size_rows"]))
+            int_value(csv.get("write_chunk_size_rows"), int_value(csv_defaults.get("write_chunk_size_rows"), 100000))
+        )
         self.cmb_csv_encoding.setCurrentText(
-            csv.get("default_encoding", DEFAULT_SETTINGS["csv"]["default_encoding"]))
+            string_value(csv.get("default_encoding"), string_value(csv_defaults.get("default_encoding"), "utf-8"))
+        )
 
-        sniff_default = DEFAULT_SETTINGS["csv"].get("sniff_delimiter", True)
-        self.chk_csv_sniff.setChecked(bool(csv.get("sniff_delimiter", sniff_default)))
+        sniff_default = bool_value(csv_defaults.get("sniff_delimiter"), True)
+        self.chk_csv_sniff.setChecked(bool_value(csv.get("sniff_delimiter"), sniff_default))
         self._sync_csv_sep_enabled()
 
         # Map 'default_sep' from settings -> combobox index
-        default_sep_default = DEFAULT_SETTINGS["csv"].get("default_sep", ",")
-        sep_val = csv.get("default_sep", default_sep_default)
+        default_sep_default = string_value(csv_defaults.get("default_sep"), ",")
+        sep_val = string_value(csv.get("default_sep"), default_sep_default)
 
         # Normalize None / "" → "Auto"
         index = self.cmb_csv_default_sep.findData(sep_val)
@@ -428,32 +442,34 @@ class SettingsEditor(QDialog):
         self.cmb_csv_default_sep.setCurrentIndex(index)
 
         # Excel settings
-        excel = s.get("excel", DEFAULT_SETTINGS["excel"])
+        excel_defaults = object_or_empty(DEFAULT_SETTINGS.get("excel"))
+        excel = object_or_empty(s.get("excel")) or excel_defaults
         self.spin_excel_chunk_size.setValue(
-            excel.get("chunk_size_rows", DEFAULT_SETTINGS["excel"]["chunk_size_rows"])
+            int_value(excel.get("chunk_size_rows"), int_value(excel_defaults.get("chunk_size_rows"), 25000))
         )
         self.spin_excel_max_rows.setValue(
-            excel.get("max_rows_per_sheet", DEFAULT_SETTINGS["excel"]["max_rows_per_sheet"])
+            int_value(excel.get("max_rows_per_sheet"), int_value(excel_defaults.get("max_rows_per_sheet"), 1048576))
         )
         self.chk_excel_streaming.setChecked(
-            excel.get("streaming", DEFAULT_SETTINGS["excel"]["streaming"])
+            bool_value(excel.get("streaming"), bool_value(excel_defaults.get("streaming"), True))
         )
 
         # schema cache
-        sc = s.get("schema_cache", DEFAULT_SETTINGS["schema_cache"])
+        schema_defaults = object_or_empty(DEFAULT_SETTINGS.get("schema_cache"))
+        sc = object_or_empty(s.get("schema_cache")) or schema_defaults
         self.spin_schema_limit.setValue(
-            sc.get("prefetch_limit", DEFAULT_SETTINGS["schema_cache"]["prefetch_limit"])
+            int_value(sc.get("prefetch_limit"), int_value(schema_defaults.get("prefetch_limit"), 600))
         )
         self.spin_schema_batch.setValue(
-            sc.get("prefetch_batch_size", DEFAULT_SETTINGS["schema_cache"]["prefetch_batch_size"])
+            int_value(sc.get("prefetch_batch_size"), int_value(schema_defaults.get("prefetch_batch_size"), 100))
         )
         self.spin_schema_ttl.setValue(
-            sc.get("ttl_seconds", DEFAULT_SETTINGS["schema_cache"].get("ttl_seconds", 300))
+            int_value(sc.get("ttl_seconds"), int_value(schema_defaults.get("ttl_seconds"), 300))
         )
 
-        # (workbench – remaining)
+        # workbench - remaining
         self.spin_editor_topn.setValue(
-            editor.get("gen_top_n", editor_defaults.get("gen_top_n", 10))
+            int_value(editor.get("gen_top_n"), int_value(editor_defaults.get("gen_top_n"), 10))
         )
 
     # -------------------------------------------------------------------------
@@ -517,15 +533,16 @@ class SettingsEditor(QDialog):
 
         # workbench settings
         # NOTE: Keep all workbench-related values together
-        editor_defaults = DEFAULT_SETTINGS.get("workbench", {})
-        editor_existing = dict(new_s.get("workbench", {}))
+        editor_defaults = object_or_empty(DEFAULT_SETTINGS.get("workbench"))
+        editor_existing = dict(object_or_empty(new_s.get("workbench")))
 
         label = self.cmb_highlighter.currentText()
         key = self._theme_key_map.get(label, "system")
 
-        editor_updated = {
+        language_data = self.cmb_language.currentData()
+        editor_updated: JsonObject = {
             # From top row (Language, Theme, Highlighter)
-            "language": self.cmb_language.currentData(),
+            "language": language_data if isinstance(language_data, str) else "en",
             "theme": self.cmb_theme.currentText(),
             "highlighter_theme": key,
             # Core workbench features
@@ -541,7 +558,18 @@ class SettingsEditor(QDialog):
         try:
             save_settings(new_s)
             ensure_all_dirs(new_s)
-        except Exception as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             title = self.tr("Failure")
             msg = self.tr("Could not save settings:\n%1").replace("%1", str(e))
             self._dialogs.critical(self, title, msg)

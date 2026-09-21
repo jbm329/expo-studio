@@ -3,11 +3,16 @@
 This module provides a tooltip-style popup window that displays and manages
 a list of SQL autocomplete suggestions.
 """
+
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from PyQt6.QtCore import QPoint, QRect, Qt
-from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QFrame, QListWidget, QListWidgetItem, QPlainTextEdit
+
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QKeyEvent
 
 
 class SqlEditorAutoCompletePopup(QFrame):
@@ -21,13 +26,14 @@ class SqlEditorAutoCompletePopup(QFrame):
         list: The list widget displaying the suggestions.
     """
 
-    def __init__(self, editor: QPlainTextEdit, parent=None) -> None:
+    def __init__(self, editor: QPlainTextEdit, parent: object = None) -> None:
         """Initialize the popup.
 
         Args:
             editor: The editor widget to position the popup relative to.
             parent: Optional parent widget.
         """
+        _ = parent
         super().__init__(editor)
         self.editor = editor
 
@@ -64,7 +70,18 @@ class SqlEditorAutoCompletePopup(QFrame):
             cursor_rect: QRect = self.editor.cursorRect()
             global_pos = self.editor.mapToGlobal(cursor_rect.bottomLeft())
             self.move(global_pos + QPoint(0, 4))
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             pass
 
         self.show()

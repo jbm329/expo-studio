@@ -9,7 +9,10 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
 
 
 class ConnectionController:
@@ -44,6 +47,7 @@ class ConnectionController:
     This is intentional and required to avoid circular construction
     dependencies in the Qt workbench.
     """
+
     def __init__(
         self,
         *,
@@ -51,7 +55,7 @@ class ConnectionController:
         clear_schema_cache: Callable[[str], None],
         close_db_connection: Callable[[str], None],
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize the ConnectionController.
 
         Args:
@@ -86,7 +90,8 @@ class ConnectionController:
         if not name:
             return
         if self._load_schema is None:
-            raise RuntimeError("ConnectionController not wired: load_schema is missing")
+            msg = "ConnectionController not wired: load_schema is missing"
+            raise RuntimeError(msg)
 
         if self._active_connection == name:
             self._logger.debug("ConnectionController: already connected (%s)", name)
@@ -99,7 +104,18 @@ class ConnectionController:
 
         try:
             self._load_schema(name, False)
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.debug("ConnectionController: connection failed, reverting state for %s", name)
             self._active_connection = previous
             raise
@@ -107,7 +123,18 @@ class ConnectionController:
         for cb in self._on_active_connection_changed:
             try:
                 cb(previous, name)
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.exception("ConnectionController: callback failed")
 
     def disconnect(self, name: str | None = None) -> None:
@@ -133,7 +160,18 @@ class ConnectionController:
             for cb in self._on_active_connection_changed:
                 try:
                     cb(previous, None)
-                except Exception:
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ):
                     self._logger.exception("ConnectionController: callback failed")
 
         else:
@@ -170,5 +208,16 @@ class ConnectionController:
         for cb in callbacks:
             try:
                 cb()
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.exception("ConnectionController callback failed")

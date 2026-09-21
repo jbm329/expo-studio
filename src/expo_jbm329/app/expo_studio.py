@@ -9,13 +9,14 @@ Language Policy:
 - UI Strings (menus, dialogs, labels): Swedish.
 - Documentation and Comments: English.
 """
+
 from __future__ import annotations
 
 import time
-from typing import cast
+from functools import partial
+from typing import TYPE_CHECKING, override
 
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QCloseEvent
+from PyQt6.QtCore import QEvent, Qt, QTimer
 from PyQt6.QtWidgets import (
     QDockWidget,
     QMainWindow,
@@ -46,6 +47,17 @@ from expo_jbm329.workbench.controllers.status_bar_controller import StatusBarCon
 from expo_jbm329.workbench.controllers.toolbar_controller import ToolbarController
 from expo_jbm329.workbench.ui_refs import WorkbenchUIRefs
 from expo_jbm329.workbench.workbench_services import WorkbenchServices
+
+if TYPE_CHECKING:
+    from logging import Logger
+
+    from PyQt6.QtGui import QCloseEvent
+    from PyQt6.QtWidgets import QToolBar
+
+    from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
+    from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import QtFileDialogService
+    from expo_jbm329.workbench.controllers.connection_controller import ConnectionController
+    from expo_jbm329.workbench.controllers.editor_panel_controller import EditorPanelController
 
 
 # ======================================================================
@@ -90,10 +102,11 @@ class ExpoStudio(QMainWindow):
         - The window uses a two-phase initialization: UI construction in __init__,
           service initialization in init_services().
     """
+
     # ------------------------------------------------------------------
     # Constructor & Initialization
     # ------------------------------------------------------------------
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the main window."""
         super().__init__(parent)
         # -----------------------------------------------------------
@@ -122,23 +135,23 @@ class ExpoStudio(QMainWindow):
         self._shutdown_deadline_monotonic: float | None = None
         self._shutdown_timeout_logged = False
 
-        self.services = None
-        self.workbench_services = None
-        self.ui_logger = None
-        self._dialogs = None
-        self._file_dialogs = None
-        self.editor_controller = None
-        self.statusbar = None
-        self.status_controller = None
-        self.menu_controller = None
-        self._toolbar = None
-        self.toolbar_controller = None
-        self.connection_controller = None
+        self.services: AppServices | None = None
+        self.workbench_services: WorkbenchServices | None = None
+        self.ui_logger: Logger | None = None
+        self._dialogs: QtDialogService | None = None
+        self._file_dialogs: QtFileDialogService | None = None
+        self.editor_controller: EditorPanelController | None = None
+        self.statusbar: QStatusBar | None = None
+        self.status_controller: StatusBarController | None = None
+        self.menu_controller: MenuController | None = None
+        self._toolbar: QToolBar | None = None
+        self.toolbar_controller: ToolbarController | None = None
+        self.connection_controller: ConnectionController | None = None
 
     # ==================================================================
     # UI Construction
     # ==================================================================
-    def _build_central_widget(self):
+    def _build_central_widget(self) -> None:
         """Builds central splitter layout for docks + workbench."""
         central = QWidget(self)
         layout = QVBoxLayout(central)
@@ -152,7 +165,7 @@ class ExpoStudio(QMainWindow):
         self._central_layout = layout
         self._splitter = splitter
 
-    def _build_schema_dock(self):
+    def _build_schema_dock(self) -> None:
         """Builds left dock containing the schema tree."""
         self.schema_tree = SchemaTreeWidget(self)
 
@@ -160,20 +173,20 @@ class ExpoStudio(QMainWindow):
         dock.setObjectName("Dock_Databas")
         dock.setWidget(self.schema_tree)
         dock.setAllowedAreas(Qt.DockWidgetArea.LeftDockWidgetArea)
-        
+
         features = QDockWidget.DockWidgetFeature.DockWidgetMovable
         features |= QDockWidget.DockWidgetFeature.DockWidgetFloatable
         dock.setFeatures(features)
-        
+
         dock.setMinimumWidth(300)
 
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock)
         self._schema_dock = dock
 
-    def _build_files_dock(self):
+    def _build_files_dock(self) -> None:
         """Builds file browser dock below schema panel."""
         self.files_tree = FileTreeWidget(self)
-        self.files_model = self.files_tree.model
+        self.files_model = self.files_tree.file_model
 
         root_dir = str(get_documents_dir(self.settings))
         root_index = self.files_model.index(root_dir)
@@ -195,7 +208,7 @@ class ExpoStudio(QMainWindow):
         self.resizeDocks([self._schema_dock, dock], [3, 1], Qt.Orientation.Vertical)
         self._files_dock = dock
 
-    def _build_rest_dock(self):
+    def _build_rest_dock(self) -> None:
         """Builds REST API connections dock below files panel."""
         self.rest_tree = RestTreeWidget(self)
 
@@ -222,7 +235,7 @@ class ExpoStudio(QMainWindow):
         )
         self._rest_dock = dock
 
-    def _build_editor_and_tabs(self):
+    def _build_editor_and_tabs(self) -> None:
         """Builds the SQL workbench editor/result area with a movable splitter."""
         container = QWidget(self)
         layout = QVBoxLayout(container)
@@ -251,26 +264,72 @@ class ExpoStudio(QMainWindow):
     # ==================================================================
     # Init services and controllers
     # ==================================================================
-    def init_services(self):
+    def _require_services(self) -> AppServices:
+        """Return initialized application services."""
+        if self.services is None:
+            message = "Application services have not been initialized."
+            raise RuntimeError(message)
+        return self.services
+
+    def _require_workbench_services(self) -> WorkbenchServices:
+        """Return initialized workbench services."""
+        if self.workbench_services is None:
+            message = "Workbench services have not been initialized."
+            raise RuntimeError(message)
+        return self.workbench_services
+
+    def _require_status_controller(self) -> StatusBarController:
+        """Return initialized status-bar controller."""
+        if self.status_controller is None:
+            message = "Status controller has not been initialized."
+            raise RuntimeError(message)
+        return self.status_controller
+
+    def _require_toolbar_controller(self) -> ToolbarController:
+        """Return initialized toolbar controller."""
+        if self.toolbar_controller is None:
+            message = "Toolbar controller has not been initialized."
+            raise RuntimeError(message)
+        return self.toolbar_controller
+
+    def _require_dialogs(self) -> QtDialogService:
+        """Return initialized dialog service."""
+        if self._dialogs is None:
+            message = "Dialog service has not been initialized."
+            raise RuntimeError(message)
+        return self._dialogs
+
+    def _require_file_dialogs(self) -> QtFileDialogService:
+        """Return initialized file dialog service."""
+        if self._file_dialogs is None:
+            message = "File dialog service has not been initialized."
+            raise RuntimeError(message)
+        return self._file_dialogs
+
+    def init_services(self) -> None:
         """Initializes services."""
         # -------------------------------------------
         # Status bar + controller (Must be before backend services to provide status_cb)
         # -------------------------------------------
         self.statusbar = self.statusBar()
-        if isinstance(self.statusbar, QStatusBar):
-            self.status_controller = StatusBarController(self, self.statusbar)
+        if not isinstance(self.statusbar, QStatusBar):
+            message = "QMainWindow did not provide a status bar."
+            raise TypeError(message)
+        self.status_controller = StatusBarController(self, self.statusbar)
+        status_controller = self.status_controller
 
         # -------------------------------------------
         # Backend services
         # -------------------------------------------
         self.services = AppServices.build(self.settings)
-        self.ui_logger = self.services.log_ui        
+        services = self.services
+        self.ui_logger = services.log_ui
 
         # -------------------------------------------
         # Dialogs
         # -------------------------------------------
-        self._dialogs = self.services.dialogs
-        self._file_dialogs = self.services.file_dialogs
+        self._dialogs = services.dialogs
+        self._file_dialogs = services.file_dialogs
 
         # -------------------------------------------
         # Workbench services
@@ -283,66 +342,62 @@ class ExpoStudio(QMainWindow):
             files_tree=self.files_tree,
             rest_tree=self.rest_tree,
             files_model=self.files_model,
-            set_status=self.status_controller.set_status,
+            set_status=status_controller.set_status,
             open_rest_connection_dialog=self.open_rest_connection_dialog,
-            restore_status=self.status_controller.restore_baseline,
-            set_shape=self.status_controller.set_shape_status,
+            restore_status=status_controller.restore_baseline,
+            set_shape=status_controller.set_shape_status,
             update_undo_enabled=self.update_undo_enabled,
         )
 
-        self.workbench_services = WorkbenchServices.build(self.services, ui_refs, self.services.settings_service)
+        self.workbench_services = WorkbenchServices.build(services, ui_refs, services.settings_service)
+        workbench = self.workbench_services
 
         # -------------------------------------------
         # Connection controller
         # -------------------------------------------
-        self.connection_controller = self.workbench_services.connections
+        self.connection_controller = workbench.connections
 
         # -------------------------------------------
         # Toolbar controller
         # -------------------------------------------
         self.toolbar_controller = ToolbarController(
-            icon_service=self.workbench_services.icon_service,
-            new_file=self.workbench_services.editor_panel.new_file,
-            open_file=self.workbench_services.document.open_any_dialog,
-            save_file=self.workbench_services.document.save_sql,
-            run_full=self.workbench_services.query.run_full,
-            run_selfull=lambda: self.workbench_services.query.run_selection(None),
-            run_top10=self.workbench_services.query.run_top10,
+            icon_service=workbench.icon_service,
+            new_file=workbench.editor_panel.new_file,
+            open_file=workbench.document.open_any_dialog,
+            save_file=workbench.document.save_sql,
+            run_full=workbench.query.run_full,
+            run_selfull=partial(workbench.query.run_selection, None),
+            run_top10=workbench.query.run_top10,
             cancel_job=self._cancel_all_jobs_from_toolbar,
-            export_csv=self.workbench_services.export.export_csv,
-            export_excel=self.workbench_services.export.export_excel,
-            export_data=self.workbench_services.export.export_data,
-            join_data=lambda: self.workbench_services.join.open_join_dialog(),
-            concatenate_data=lambda: self.workbench_services.concat.open_concat_dialog(),
-            format_view=self.workbench_services.results.handle_format_view_toggle,
-            clear_editor=self.workbench_services.editor_panel.clear_active_tab,
-            refresh_schema=self.workbench_services.schema.refresh_current_schema,
-            undo=self.workbench_services.results.undo,
-            visualize_data=lambda: self.workbench_services.visualization.open_dialog(self),
+            export_csv=workbench.export.export_csv,
+            export_excel=workbench.export.export_excel,
+            export_data=workbench.export.export_data,
+            join_data=workbench.join.open_join_dialog,
+            concatenate_data=workbench.concat.open_concat_dialog,
+            format_view=workbench.results.handle_format_view_toggle,
+            clear_editor=workbench.editor_panel.clear_active_tab,
+            refresh_schema=workbench.schema.refresh_current_schema,
+            undo=workbench.results.undo,
+            visualize_data=lambda: workbench.visualization.open_dialog(self),
             logger=self.ui_logger,
         )
+        toolbar_controller = self.toolbar_controller
         self._toolbar = self.toolbar_controller.build(self)
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, self._toolbar)
-        self.toolbar_controller.apply_has_data_state(False)
-        self.toolbar_controller.apply_connection_state(False)
-        self.workbench_services.results.apply_toolbar_data_state(
-            self.toolbar_controller.apply_has_data_state
-        )
-        self.workbench_services.results.apply_toolbar_multiple_dataset_state(
-            self.toolbar_controller.apply_has_multiple_datasets_state
-        )
-        self.workbench_services.icon_service.icons_updated.connect(
-            self.toolbar_controller.apply_icons
-        )
+        toolbar_controller.apply_has_data_state(False)
+        toolbar_controller.apply_connection_state(False)
+        workbench.results.apply_toolbar_data_state(toolbar_controller.apply_has_data_state)
+        workbench.results.apply_toolbar_multiple_dataset_state(toolbar_controller.apply_has_multiple_datasets_state)
+        workbench.icon_service.icons_updated.connect(toolbar_controller.apply_icons)
 
         # ------------------------------------------------
-        # Editor tab → toolbar Run-state 
+        # Editor tab → toolbar Run-state
         # ------------------------------------------------
         def update_run_state_from_editor_tab() -> None:
-            can_run = self.workbench_services.editor_panel.can_execute_sql()
-            self.toolbar_controller.apply_connection_state(can_run)
+            can_run = workbench.editor_panel.can_execute_sql()
+            toolbar_controller.apply_connection_state(can_run)
 
-        self.workbench_services.editor_panel.on_active_tab_changed(update_run_state_from_editor_tab)
+        workbench.editor_panel.on_active_tab_changed(update_run_state_from_editor_tab)
         update_run_state_from_editor_tab()
 
         # -------------------------------------------
@@ -350,16 +405,16 @@ class ExpoStudio(QMainWindow):
         # -------------------------------------------
         self.menu_controller = MenuController(
             menubar=self.menuBar(),  # type: ignore
-            new_file=self.workbench_services.editor_panel.new_file,
-            open_file=self.workbench_services.document.open_any_dialog,
-            save_file=self.workbench_services.document.save_sql,
-            save_file_as=self.workbench_services.document.save_sql_as,
+            new_file=workbench.editor_panel.new_file,
+            open_file=workbench.document.open_any_dialog,
+            save_file=workbench.document.save_sql,
+            save_file_as=workbench.document.save_sql_as,
             quit_app=self.close,
-            export_csv=self.workbench_services.export.export_csv,
-            export_excel=self.workbench_services.export.export_excel,
-            export_data=self.workbench_services.export.export_data,
-            export_profile=self.workbench_services.export.profile_report,
-            clear_editor=self.workbench_services.editor_panel.clear_active_tab,
+            export_csv=workbench.export.export_csv,
+            export_excel=workbench.export.export_excel,
+            export_data=workbench.export.export_data,
+            export_profile=workbench.export.profile_report,
+            clear_editor=workbench.editor_panel.clear_active_tab,
             open_settings_dialog=self._open_settings_dialog,
             open_log_settings_dialog=self._open_log_dialog,
             open_connection_dialog=self._open_connection_dialog,
@@ -367,9 +422,7 @@ class ExpoStudio(QMainWindow):
             show_about_dialog=self._show_about_dialog,
         )
         self.menu_controller.apply_has_data_state(False)
-        self.workbench_services.results.apply_toolbar_data_state(
-            self.menu_controller.apply_has_data_state
-        )
+        workbench.results.apply_toolbar_data_state(self.menu_controller.apply_has_data_state)
 
         # Apply initial translations
         self.retranslate_ui()
@@ -377,56 +430,59 @@ class ExpoStudio(QMainWindow):
     # ==================================================================
     # Dialogs
     # ==================================================================
-    def _open_log_dialog(self):
+    def _open_log_dialog(self) -> None:
         """Open the log configuration dialog and reload settings if changed."""
         dlg = LogConfigEditor(
             parent=self,
-            dialogs=self._dialogs,
-            icon_service=self.workbench_services.icon_service,
+            dialogs=self._require_dialogs(),
+            icon_service=self._require_workbench_services().icon_service,
         )
         if dlg.exec():
             self._reload_logging()
-            self.status_controller.set_status(self.tr("Logg settings reloaded."), 4000)
+            self._require_status_controller().set_status(self.tr("Logg settings reloaded."), 4000)
 
-    def _open_settings_dialog(self):
+    def _open_settings_dialog(self) -> None:
         """Open the general settings dialog and reload settings if changed."""
         dlg = SettingsEditor(
             parent=self,
-            dialogs=self._dialogs,
-            file_dialogs=self._file_dialogs,
-            highlighter_theme_service=self.workbench_services.highlighter_theme_service,
-            icon_service=self.workbench_services.icon_service,
+            dialogs=self._require_dialogs(),
+            file_dialogs=self._require_file_dialogs(),
+            highlighter_theme_service=self._require_workbench_services().highlighter_theme_service,
+            icon_service=self._require_workbench_services().icon_service,
         )
         if dlg.exec():
-            self.services.settings_service.reload()
-            self.status_controller.set_status(self.tr("Settings reloaded."), 4000)
+            self._require_services().settings_service.reload()
+            self._require_status_controller().set_status(self.tr("Settings reloaded."), 4000)
 
-    def _open_connection_dialog(self):
+    def _open_connection_dialog(self) -> None:
         """Open the database connection editor dialog."""
         dlg = ConnectionEditor(
             parent=self,
-            dialogs=self._dialogs,
-            icon_service=self.workbench_services.icon_service,
+            dialogs=self._require_dialogs(),
+            icon_service=self._require_workbench_services().icon_service,
         )
+        workbench = self._require_workbench_services()
+        connection_controller = self.connection_controller
+        if connection_controller is None:
+            message = "Connection controller has not been initialized."
+            raise RuntimeError(message)
         dlg.connections_changed.connect(
-            lambda: self.workbench_services.schema.refresh_connections(
-                self.connection_controller.get_connection_names()
-            )
+            lambda: workbench.schema.refresh_connections(connection_controller.get_connection_names())
         )
         dlg.exec()
 
-    def open_rest_connection_dialog(self, preset_name: str | None = None):
+    def open_rest_connection_dialog(self, preset_name: str | None = None) -> None:
         """Open the REST connection editor dialog."""
         dlg = RestConnectionEditor(
             parent=self,
             preset_name=preset_name,
-            dialogs=self._dialogs,
-            icon_service=self.workbench_services.icon_service,
+            dialogs=self._require_dialogs(),
+            icon_service=self._require_workbench_services().icon_service,
         )
-        dlg.connections_changed.connect(self.workbench_services.rest_panel.reload)
+        dlg.connections_changed.connect(self._require_workbench_services().rest_panel.reload)
         dlg.exec()
 
-    def _show_about_dialog(self):
+    def _show_about_dialog(self) -> None:
         """Show the professional About dialog."""
         dlg = AboutDialog(parent=self)
         dlg.exec()
@@ -434,15 +490,17 @@ class ExpoStudio(QMainWindow):
     # ==================================================================
     # Logging and undo
     # ==================================================================
-    def _reload_logging(self):
+    def _reload_logging(self) -> None:
         """Reload logging configuration from logconfig.json without restarting."""
-        self.services.logging_manager.setup()
-        self.ui_logger.info("Logg settings reloaded.")
+        self._require_services().logging_manager.setup()
+        logger = self.ui_logger
+        if logger is not None:
+            logger.info("Logg settings reloaded.")
 
-    def update_undo_enabled(self):
+    def update_undo_enabled(self) -> None:
         """Enable/disable the Undo button depending on current tab's undo stack."""
-        enabled = bool(self.workbench_services.results.can_undo_current())
-        self.toolbar_controller.set_undo_enabled(enabled)
+        enabled = bool(self._require_workbench_services().results.can_undo_current())
+        self._require_toolbar_controller().set_undo_enabled(enabled)
 
     # ==================================================================
     # UI language
@@ -467,13 +525,14 @@ class ExpoStudio(QMainWindow):
             self.status_controller.retranslate_ui()
 
         if self.schema_tree:
-            self.workbench_services.schema.retranslate_ui()
+            self._require_workbench_services().schema.retranslate_ui()
 
-    def changeEvent(self, event):
+    @override
+    def changeEvent(self, a0: QEvent | None) -> None:
         """Handle Qt language change events."""
-        if event.type() == event.Type.LanguageChange:
+        if a0 is not None and a0.type() == QEvent.Type.LanguageChange:
             self.retranslate_ui()
-        super().changeEvent(event)
+        super().changeEvent(a0)
 
     # ==================================================================
     # Cancel all jobs
@@ -484,20 +543,12 @@ class ExpoStudio(QMainWindow):
         services = self.services
         if services is None:
             if self.ui_logger is not None:
-                self.ui_logger.warning(
-                    "MainWindow: cancel-all requested but no services were available."
-                )
+                self.ui_logger.warning("MainWindow: cancel-all requested but no services were available.")
             return
 
-        job_mgr = cast(object, services.job_mgr)
-        if job_mgr is None:
-            if self.ui_logger is not None:
-                self.ui_logger.warning(
-                    "MainWindow: cancel-all requested but no JobManager was available."
-                )
-            return
+        job_mgr = services.job_mgr
 
-        active_jobs = services.job_mgr.active_jobs
+        active_jobs = job_mgr.active_jobs
         if active_jobs <= 0:
             if self.status_controller is not None:
                 self.status_controller.set_status(
@@ -506,7 +557,7 @@ class ExpoStudio(QMainWindow):
                 )
             return
 
-        cancelled_count = services.job_mgr.cancel_all()
+        cancelled_count = job_mgr.cancel_all()
 
         if self.ui_logger is not None:
             self.ui_logger.info(
@@ -524,8 +575,8 @@ class ExpoStudio(QMainWindow):
     # ==================================================================
     # Close application
     # ==================================================================
-
-    def closeEvent(self, event: QCloseEvent) -> None:
+    @override
+    def closeEvent(self, a0: QCloseEvent | None) -> None:
         """Coordinate application shutdown with background job teardown.
 
         The window is not allowed to close immediately after the user confirms exit.
@@ -533,29 +584,44 @@ class ExpoStudio(QMainWindow):
         active background jobs are finalized before the close is accepted.
 
         Args:
-            event: The Qt close event.
+            a0: The Qt close event.
         """
+        if a0 is None:
+            super().closeEvent(a0)
+            return
+
         if self._allow_close:
-            event.accept()
+            a0.accept()
             return
 
         if self._shutdown_in_progress:
-            event.ignore()
+            a0.ignore()
             return
 
         try:
-            ok = self._dialogs.prompt_yes_no(
+            ok = self._require_dialogs().prompt_yes_no(
                 self,
                 title=self.tr("Confirm exit"),
                 text=self.tr("Do you want to quit the application?"),
                 informative=None,
                 default_yes=False,
             )
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             ok = False
 
         if not ok:
-            event.ignore()
+            a0.ignore()
             return
 
         self._shutdown_in_progress = True
@@ -567,7 +633,7 @@ class ExpoStudio(QMainWindow):
 
             set_app_closing(True)
 
-            if self.services is not None and self.services.job_mgr is not None:
+            if self.services is not None:
                 still_running = self.services.job_mgr.abort_all(wait_ms=250)
                 if self.ui_logger is not None and still_running:
                     self.ui_logger.warning(
@@ -575,21 +641,33 @@ class ExpoStudio(QMainWindow):
                         still_running,
                     )
 
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             if self.ui_logger is not None:
                 self.ui_logger.exception("Error initiating application shutdown.")
 
             # Fail safe: allow close if shutdown coordination itself crashes.
             self._allow_close = True
-            event.accept()
+            a0.accept()
             return
 
-        event.ignore()
+        a0.ignore()
         QTimer.singleShot(100, self._continue_shutdown_poll)
 
     def _continue_shutdown_poll(self) -> None:
         """Poll background job teardown until shutdown can complete safely."""
-        active_jobs = self.services.job_mgr.active_jobs if self.services.job_mgr is not None else 0
+        services = self.services
+        active_jobs = services.job_mgr.active_jobs if services is not None else 0
 
         if active_jobs == 0:
             self._finalize_shutdown_and_close()
@@ -599,7 +677,7 @@ class ExpoStudio(QMainWindow):
         if deadline is not None and time.monotonic() >= deadline:
             if not self._shutdown_timeout_logged:
                 if self.ui_logger is not None:
-                    active_ids = self.services.job_mgr.active_job_ids if self.services.job_mgr is not None else ()
+                    active_ids = services.job_mgr.active_job_ids if services is not None else ()
                     self.ui_logger.error(
                         "MainWindow: shutdown timeout with active jobs still present: %s",
                         active_ids,
@@ -608,9 +686,20 @@ class ExpoStudio(QMainWindow):
 
             # Retry cooperative abort once more, then keep polling.
             try:
-                if self.services.job_mgr is not None:
+                if self.services is not None:
                     self.services.job_mgr.abort_all(wait_ms=250)
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 if self.ui_logger is not None:
                     self.ui_logger.exception("Error retrying abort_all during shutdown.")
 
@@ -627,13 +716,23 @@ class ExpoStudio(QMainWindow):
 
             close_all_connections()
 
-            if self.services is not None and self.services.job_mgr is not None:
+            if self.services is not None:
                 self.services.job_mgr.shutdown(wait=False)
 
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             if self.ui_logger is not None:
                 self.ui_logger.exception("Error completing application shutdown.")
         finally:
             self._allow_close = True
             self.close()
-

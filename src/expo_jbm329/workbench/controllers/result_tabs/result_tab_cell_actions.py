@@ -16,17 +16,23 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QTableView, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from PyQt6.QtWidgets import QTableView, QWidget
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
 
 
 class ResultTabCellActions:
@@ -50,14 +56,10 @@ class ResultTabCellActions:
     TR_REPLACING_VALUES = QT_TR_NOOP("Replacing '{old_value}' → '{new_value}' in '{column_name}'")
 
     TR_REPLACE_ALL_OPERATION = QT_TR_NOOP("replace all values")
-    TR_REPLACED_ALL_VALUES = QT_TR_NOOP(
-        "Replaced all '{old_value}' → '{new_value}' in column: {column_name}"
-    )
+    TR_REPLACED_ALL_VALUES = QT_TR_NOOP("Replaced all '{old_value}' → '{new_value}' in column: {column_name}")
 
     TR_REPLACE_SINGLE_OPERATION = QT_TR_NOOP("replace single cell value")
-    TR_REPLACED_SINGLE_VALUE = QT_TR_NOOP(
-        "Replaced '{old_value}' → '{new_value}' on row {row} in '{column_name}'"
-    )
+    TR_REPLACED_SINGLE_VALUE = QT_TR_NOOP("Replaced '{old_value}' → '{new_value}' on row {row} in '{column_name}'")
 
     # ------------------------------------------------------------------
     @staticmethod
@@ -65,7 +67,7 @@ class ResultTabCellActions:
         return tr("ResultTabCellActions", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabCellActions", text, **kwargs)
 
     # ------------------------------------------------------------------
@@ -81,14 +83,14 @@ class ResultTabCellActions:
         self,
         *,
         parent: QWidget,
-        dialogs: DialogService,
-        logger: logging.Logger,
+        dialogs: DialogService | None,
+        logger: logging.Logger | None,
         async_ops: AsyncOperationController,
         apply_new_dataframe: Callable[
             [QTableView, pd.DataFrame, str],
             None,
         ],
-    ):
+    ) -> None:
         """Initialize cell actions.
 
         Args:
@@ -111,9 +113,9 @@ class ResultTabCellActions:
 
     def _validate(
         self,
-        view: QTableView,
-        df: pd.DataFrame,
-        column_name: str,
+        view: QTableView | None,
+        df: object,
+        column_name: object,
     ) -> bool:
         """Common defensive validation for cell actions.
 
@@ -144,7 +146,7 @@ class ResultTabCellActions:
         df: pd.DataFrame,
         *,
         column_name: str,
-        raw_value: Any,
+        raw_value: object,
     ) -> None:
         """Keep rows where column equals the given cell value.
 
@@ -170,18 +172,23 @@ class ResultTabCellActions:
             filter_isna,
         )
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
-            if pd.isna(raw_value):
+            if bool(pd.isna([raw_value])[0]):
                 return filter_isna(df, column_name)
 
             return filter_equals(df, column_name, raw_value)
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -215,7 +222,7 @@ class ResultTabCellActions:
         df: pd.DataFrame,
         *,
         column_name: str,
-        raw_value: Any,
+        raw_value: object,
     ) -> None:
         """Remove rows where column equals the given cell value.
 
@@ -240,19 +247,24 @@ class ResultTabCellActions:
             filter_not_equals,
             filter_notna,
         )
-        
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
-            if pd.isna(raw_value):
+            if bool(pd.isna([raw_value])[0]):
                 return filter_notna(df, column_name)
 
             return filter_not_equals(df, column_name, raw_value)
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -285,12 +297,12 @@ class ResultTabCellActions:
     # ------------------------------------------------------------------
     def replace_value(
         self,
-        view: QTableView,
-        df: pd.DataFrame,
+        view: QTableView | None,
+        df: object,
         *,
         row_index: int,
-        column_name: str,
-        raw_value: Any,
+        column_name: object,
+        raw_value: object,
     ) -> None:
         """Replace a value in a cell or column.
 
@@ -335,7 +347,7 @@ class ResultTabCellActions:
             title=self._tr(self.TR_REPLACE_VALUE),
             column=column_name,
             current_value=str(raw_value),
-            default_new_value="" if pd.isna(raw_value) else str(raw_value),
+            default_new_value="" if bool(pd.isna([raw_value])[0]) else str(raw_value),
             default_replace_all=False,
         )
 
@@ -353,7 +365,12 @@ class ResultTabCellActions:
             set_cell_value_text,
         )
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -398,9 +415,9 @@ class ResultTabCellActions:
                 column_name=column_name,
             )
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
-                return           
+                return
 
             self._apply_new_dataframe(
                 view,
@@ -423,7 +440,7 @@ class ResultTabCellActions:
                     column_name,
                     str(row_index + 1),
                     corr_id,
-                )            
+                )
 
         self._async_ops.run_dataframe_operation(
             view=view,
@@ -431,10 +448,7 @@ class ResultTabCellActions:
             work=_work,
             apply_result=_apply_result,
             busy_message=self._tr_fmt(
-                self.TR_REPLACING_VALUES,
-                old_value=old_value_str,
-                new_value=new_value_str,
-                column_name=column_name
+                self.TR_REPLACING_VALUES, old_value=old_value_str, new_value=new_value_str, column_name=column_name
             ),
             scope=f"replace_value:{column_name}",
             operation_name=operation,

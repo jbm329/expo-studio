@@ -1,10 +1,11 @@
 """Chart builder for dataset visualizations."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import pandas as pd
-from matplotlib.axes import Axes
 from pandas.api.types import is_numeric_dtype
 
 from expo_jbm329.utils.visualization_models import (
@@ -13,6 +14,9 @@ from expo_jbm329.utils.visualization_models import (
     MeasureType,
     VisualizationConfig,
 )
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
 
 
 class VisualizationError(ValueError):
@@ -62,7 +66,8 @@ class VisualizationChartBuilder:
         ax.clear()
 
         if df.empty:
-            raise VisualizationError("dataset_empty")
+            msg = "dataset_empty"
+            raise VisualizationError(msg)
 
         if config.chart_type == ChartType.BAR:
             self._draw_bar(ax, df, config)
@@ -84,8 +89,9 @@ class VisualizationChartBuilder:
             self._draw_histogram(ax, df, config)
             return
 
+        msg = "unsupported_chart_type"
         raise VisualizationError(
-            "unsupported_chart_type",
+            msg,
             detail=f"chart_type={config.chart_type!r}",
         )
 
@@ -116,11 +122,12 @@ class VisualizationChartBuilder:
         prepared = self._prepare_grouped_series(df, config)
 
         if prepared.y.empty:
-            raise VisualizationError("pie_no_data")
+            msg = "pie_no_data"
+            raise VisualizationError(msg)
 
         ax.pie(
             prepared.y,
-            labels=prepared.x.astype(str),
+            labels=list(prepared.x.astype(str)),
             autopct="%1.1f%%",
         )
         ax.set_title(self._chart_title(config))
@@ -146,16 +153,19 @@ class VisualizationChartBuilder:
         measure = config.measure
 
         if not category_col:
-            raise VisualizationError("category_column_missing")
+            msg = "category_column_missing"
+            raise VisualizationError(msg)
 
         if category_col not in df.columns:
+            msg = "category_column_not_found"
             raise VisualizationError(
-                "category_column_not_found",
+                msg,
                 detail=f"column={category_col!r}",
             )
 
         if measure is None:
-            raise VisualizationError("measure_missing")
+            msg = "measure_missing"
+            raise VisualizationError(msg)
 
         grouped: pd.Series
 
@@ -167,16 +177,19 @@ class VisualizationChartBuilder:
             aggregation = measure.aggregation
 
             if not column:
-                raise VisualizationError("value_column_missing")
+                msg = "value_column_missing"
+                raise VisualizationError(msg)
 
             if column not in df.columns:
+                msg = "value_column_not_found"
                 raise VisualizationError(
-                    "value_column_not_found",
+                    msg,
                     detail=f"column={column!r}",
                 )
 
             if aggregation is None:
-                raise VisualizationError("aggregation_missing")
+                msg = "aggregation_missing"
+                raise VisualizationError(msg)
 
             series = df.groupby(category_col, dropna=False)[column]
 
@@ -188,8 +201,9 @@ class VisualizationChartBuilder:
 
             else:
                 if not is_numeric_dtype(df[column]):
+                    msg = "non_numeric_measure_requires_count"
                     raise VisualizationError(
-                        "non_numeric_measure_requires_count",
+                        msg,
                         detail=f"column={column!r}, aggregation={aggregation.value}",
                     )
 
@@ -202,21 +216,24 @@ class VisualizationChartBuilder:
                 elif aggregation == AggregationType.MAX:
                     grouped = series.max()
                 else:
+                    msg = "unsupported_aggregation"
                     raise VisualizationError(
-                        "unsupported_aggregation",
+                        msg,
                         detail=f"aggregation={aggregation!r}",
                     )
 
         else:
+            msg = "unsupported_measure_type"
             raise VisualizationError(
-                "unsupported_measure_type",
+                msg,
                 detail=f"measure_type={measure.measure_type!r}",
             )
 
         grouped = grouped.dropna()
 
         if grouped.empty:
-            raise VisualizationError("no_data_after_aggregation")
+            msg = "no_data_after_aggregation"
+            raise VisualizationError(msg)
 
         # Sort descending and keep a reasonable default limit for readability.
         grouped = grouped.sort_values(ascending=False).head(20)
@@ -237,24 +254,28 @@ class VisualizationChartBuilder:
         y_col = config.y_column
 
         if not x_col or not y_col:
-            raise VisualizationError("scatter_axes_missing")
+            msg = "scatter_axes_missing"
+            raise VisualizationError(msg)
 
         if x_col not in df.columns:
+            msg = "scatter_x_column_not_found"
             raise VisualizationError(
-                "scatter_x_column_not_found",
+                msg,
                 detail=f"column={x_col!r}",
             )
 
         if y_col not in df.columns:
+            msg = "scatter_y_column_not_found"
             raise VisualizationError(
-                "scatter_y_column_not_found",
+                msg,
                 detail=f"column={y_col!r}",
             )
 
         plot_df = df[[x_col, y_col]].dropna()
 
         if plot_df.empty:
-            raise VisualizationError("scatter_no_data")
+            msg = "scatter_no_data"
+            raise VisualizationError(msg)
 
         ax.scatter(plot_df[x_col], plot_df[y_col])
         ax.set_xlabel(x_col)
@@ -266,24 +287,29 @@ class VisualizationChartBuilder:
         measure = config.measure
 
         if measure is None:
-            raise VisualizationError("measure_missing")
+            msg = "measure_missing"
+            raise VisualizationError(msg)
 
         if measure.measure_type != MeasureType.COLUMN:
-            raise VisualizationError("histogram_requires_column_measure")
+            msg = "histogram_requires_column_measure"
+            raise VisualizationError(msg)
 
         if not measure.column:
-            raise VisualizationError("histogram_value_column_missing")
+            msg = "histogram_value_column_missing"
+            raise VisualizationError(msg)
 
         if measure.column not in df.columns:
+            msg = "histogram_value_column_not_found"
             raise VisualizationError(
-                "histogram_value_column_not_found",
+                msg,
                 detail=f"column={measure.column!r}",
             )
 
         values = pd.to_numeric(df[measure.column], errors="coerce").dropna()
 
         if values.empty:
-            raise VisualizationError("histogram_no_numeric_data")
+            msg = "histogram_no_numeric_data"
+            raise VisualizationError(msg)
 
         ax.hist(values, bins=20)
         ax.set_xlabel(measure.name or measure.column)

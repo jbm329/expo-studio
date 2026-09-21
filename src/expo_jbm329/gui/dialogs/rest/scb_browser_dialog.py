@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from math import prod
-from typing import Any
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -22,7 +22,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict
 from expo_jbm329.services.rest.scb.browser import (
@@ -33,6 +32,9 @@ from expo_jbm329.services.rest.scb.browser import (
 )
 from expo_jbm329.services.rest.scb.service import ScbQueryBuilder, ScbSelection
 from expo_jbm329.utils.format_utils import fmt_int
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 
 
 class ScbBrowserDialog(QDialog):
@@ -45,13 +47,13 @@ class ScbBrowserDialog(QDialog):
     ) -> None:
         """Initialize the dialog."""
         super().__init__(parent)
-        self._dialogs = dialogs if dialogs else QtDialogService()
+        self._dialogs = dialogs or QtDialogService()
 
         self.setWindowTitle(self.tr("SCB query builder"))
         self.setFixedSize(700, 525)
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
 
-        self.result_data: dict[str, Any] | None = None
+        self.result_data: dict[str, object] | None = None
 
         self.table_label = QLabel(self.tr("Table:"))
         self.table_label.setFixedWidth(90)
@@ -62,8 +64,8 @@ class ScbBrowserDialog(QDialog):
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed,
         )
-        
-        self.table_combo = QComboBox()        
+
+        self.table_combo = QComboBox()
         self.table_combo.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed,
@@ -76,7 +78,7 @@ class ScbBrowserDialog(QDialog):
         self.language_combo.setFixedWidth(125)
         self.language_combo.addItem(self.tr("Swedish"), userData="sv")
         self.language_combo.addItem(self.tr("English"), userData="en")
-        self.language_combo.currentIndexChanged.connect(self._on_language_changed)        
+        self.language_combo.currentIndexChanged.connect(self._on_language_changed)
 
         self.current_table_label = QLabel(self.tr("No table selected"))
         self.current_table_label.setWordWrap(True)
@@ -138,13 +140,13 @@ class ScbBrowserDialog(QDialog):
         main.addLayout(form_grid)
 
         main.addWidget(self.current_table_label)
-        
+
         variable_labels = QHBoxLayout()
         variable_labels.addWidget(QLabel(self.tr("Variables")), 1)
         variable_value_label = QHBoxLayout()
         variable_value_label.addWidget(QLabel(self.tr("Variable values")), 1)
 
-        body = QHBoxLayout()        
+        body = QHBoxLayout()
         body.addWidget(self.variable_list, 1)
         value_side = QHBoxLayout()
         value_side.addWidget(self.value_list, 1)
@@ -183,11 +185,7 @@ class ScbBrowserDialog(QDialog):
         try:
             tables = fetch_scb_tables(lang=self._current_language())
         except ScbBrowserError as exc:
-            self._dialogs.critical(
-                self,
-                title=self.tr("SCB browser error"),
-                text=str(exc)
-            )
+            self._dialogs.critical(self, title=self.tr("SCB browser error"), text=str(exc))
 
             self.result_data = None
             self.reject()
@@ -263,9 +261,7 @@ class ScbBrowserDialog(QDialog):
 
         if selected_cells > max_cells:
             self.selection_counter.setStyleSheet("color: #ff6b6b; font-weight: bold;")
-            self.selection_warning.setText(
-                self.tr("This selection exceeds the SCB limit.")
-            )
+            self.selection_warning.setText(self.tr("This selection exceeds the SCB limit."))
             self.selection_warning.setStyleSheet("color: #ff6b6b; font-weight: bold;")
             self.apply_button.setEnabled(False)
         elif selected_cells == 0:
@@ -294,11 +290,7 @@ class ScbBrowserDialog(QDialog):
                     lang=self._current_language(),
                 )
             except ScbBrowserError as exc:
-                self._dialogs.critical(
-                    self,
-                    title=self.tr("SCB metadata error"),
-                    text=str(exc)
-                )
+                self._dialogs.critical(self, title=self.tr("SCB metadata error"), text=str(exc))
                 return
             self._metadata_by_id[table_id] = metadata
 
@@ -339,11 +331,12 @@ class ScbBrowserDialog(QDialog):
         self._current_variable = variable.name
         self.value_list.clear()
         for value in variable.values:
-            label = value.label.strip() if value.label.strip() else value.code
+            label = value.label.strip() if value.label.strip() else value.code  # noqa: FURB110
             check_item = QListWidgetItem(label)
             check_item.setFlags(check_item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             check_item.setCheckState(
-                Qt.CheckState.Checked if value.code in self._selected_codes.get(variable.name, [])
+                Qt.CheckState.Checked
+                if value.code in self._selected_codes.get(variable.name, [])
                 else Qt.CheckState.Unchecked
             )
             check_item.setData(Qt.ItemDataRole.UserRole, value.code)
@@ -411,7 +404,7 @@ class ScbBrowserDialog(QDialog):
             self._dialogs.warn(
                 self,
                 title=self.tr("No values selected"),
-                text=self.tr("Select at least one value before applying the query.")
+                text=self.tr("Select at least one value before applying the query."),
             )
             return
 
@@ -426,7 +419,18 @@ class ScbBrowserDialog(QDialog):
                 "url": builder.table_url(table_id),
                 "query_params": params,
             }
-        except Exception as exc:  # pragma: no cover - UI safety net
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:  # pragma: no cover - UI safety net
             self._dialogs.critical(
                 self,
                 title=self.tr("SCB query error"),
@@ -436,6 +440,6 @@ class ScbBrowserDialog(QDialog):
 
         self.accept()
 
-    def get_result(self) -> dict[str, Any] | None:
+    def get_result(self) -> dict[str, object] | None:
         """Return the built SCB query data if accepted."""
         return self.result_data

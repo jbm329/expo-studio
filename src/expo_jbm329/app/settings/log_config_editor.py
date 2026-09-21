@@ -9,6 +9,7 @@ interacts with logconfig.json.
 from __future__ import annotations
 
 import sys
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
@@ -32,10 +33,13 @@ from expo_jbm329.app.settings.config_store import (
     read_log_config,
     write_log_config,
 )
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+from expo_jbm329.app.settings.json_types import JsonObject, int_value, object_or_empty, string_value
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.path_manager import get_log_path
-from expo_jbm329.workbench.icon.icon_service import IconService
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.icon.icon_service import IconService
 
 # =============================================================================
 # Helper utilities
@@ -84,11 +88,11 @@ class LogConfigEditor(QDialog):
     """
 
     def __init__(
-            self,
-            parent: QWidget | None = None,
-            dialogs: DialogService | None = None,
-            icon_service: IconService | None = None,
-    ):
+        self,
+        parent: QWidget | None = None,
+        dialogs: DialogService | None = None,
+        icon_service: IconService | None = None,
+    ) -> None:
         """Initializes the LogConfigEditor dialog.
 
         Args:
@@ -111,7 +115,7 @@ class LogConfigEditor(QDialog):
             self._icon_service.icons_updated.connect(self._update_icon)
 
         # Current config
-        self.log_cfg: dict = read_log_config() or {}
+        self.log_cfg: JsonObject = read_log_config()
 
         # Widgets declared here; instantiated in _build_ui
         self.lbl_logfile: QLabel
@@ -138,7 +142,7 @@ class LogConfigEditor(QDialog):
     # -------------------------------------------------------------------------
     # Update icon
     # -------------------------------------------------------------------------
-    def _update_icon(self):
+    def _update_icon(self) -> None:
         """Updates the window icon using the IconService or a fallback path."""
         if self._icon_service:
             icon = self._icon_service.get("logging")
@@ -180,7 +184,7 @@ class LogConfigEditor(QDialog):
         cols = QHBoxLayout()
 
         def bind_enable(chk: QCheckBox, widgets: list[QWidget]) -> None:
-            def _apply():
+            def _apply() -> None:
                 e = chk.isChecked()
                 for w in widgets:
                     w.setEnabled(e)
@@ -216,8 +220,7 @@ class LogConfigEditor(QDialog):
 
         bind_enable(
             self.chk_file_enabled,
-            [self.cb_file_level, self.cb_file_formatter,
-             self.spin_file_maxbytes, self.spin_file_backup],
+            [self.cb_file_level, self.cb_file_formatter, self.spin_file_maxbytes, self.spin_file_backup],
         )
 
         cols.addWidget(gb_file, 1)
@@ -267,7 +270,7 @@ class LogConfigEditor(QDialog):
 
             # Styr enable/disable på nivålådan
             def bind_ns_enable(_chk: QCheckBox, _cb: QComboBox) -> None:
-                def _apply():
+                def _apply() -> None:
                     _cb.setEnabled(_chk.isChecked())
 
                 _chk.stateChanged.connect(_apply)
@@ -314,7 +317,7 @@ class LogConfigEditor(QDialog):
     # Populate UI
     # -------------------------------------------------------------------------
 
-    def _ensure_custom_formatter(self, name: str | None):
+    def _ensure_custom_formatter(self, name: str | None) -> None:
         """Ensures the UI combo boxes include a custom formatter name if it exists.
 
         Args:
@@ -332,7 +335,10 @@ class LogConfigEditor(QDialog):
         self.lbl_logfile.setText(str(get_log_path()))
 
         # Root
-        root_level = self.log_cfg.get("logger_level", DEFAULT_LOG_CONFIG["logger_level"])
+        root_level = string_value(
+            self.log_cfg.get("logger_level"),
+            string_value(DEFAULT_LOG_CONFIG.get("logger_level"), "INFO"),
+        )
         self.cb_logger_level.setCurrentText(root_level)
 
         # Third-party (wildcard) level
@@ -340,37 +346,50 @@ class LogConfigEditor(QDialog):
         self.cb_thirdparty_level.setCurrentText(str(tp_level).upper())
 
         # Handlers
-        handlers = self.log_cfg.get("handlers", {}) or {}
+        handlers = object_or_empty(self.log_cfg.get("handlers"))
+        handler_defaults = object_or_empty(DEFAULT_LOG_CONFIG.get("handlers"))
 
         # --- FILE ---
-        file_def = DEFAULT_LOG_CONFIG["handlers"]["file"]
-        h_file = handlers.get("file", {})
-        self._ensure_custom_formatter(h_file.get("formatter"))
+        file_def = object_or_empty(handler_defaults.get("file"))
+        h_file = object_or_empty(handlers.get("file"))
+        file_formatter = h_file.get("formatter")
+        self._ensure_custom_formatter(file_formatter if isinstance(file_formatter, str) else None)
 
         self.chk_file_enabled.setChecked(bool(h_file))
-        self.cb_file_level.setCurrentText(h_file.get("level", file_def["level"]))
-        self.cb_file_formatter.setCurrentText(h_file.get("formatter", file_def["formatter"]))
-        self.spin_file_maxbytes.setValue(int(h_file.get("maxBytes", file_def["maxBytes"])))
-        self.spin_file_backup.setValue(int(h_file.get("backupCount", file_def["backupCount"])))
+        self.cb_file_level.setCurrentText(
+            string_value(h_file.get("level"), string_value(file_def.get("level"), "INFO"))
+        )
+        self.cb_file_formatter.setCurrentText(
+            string_value(h_file.get("formatter"), string_value(file_def.get("formatter"), "default"))
+        )
+        self.spin_file_maxbytes.setValue(
+            int_value(h_file.get("maxBytes"), int_value(file_def.get("maxBytes"), 5_000_000))
+        )
+        self.spin_file_backup.setValue(int_value(h_file.get("backupCount"), int_value(file_def.get("backupCount"), 3)))
 
         # --- STDOUT ---
-        out_def = DEFAULT_LOG_CONFIG["handlers"]["stdout"]
-        h_out = handlers.get("stdout", {})
-        self._ensure_custom_formatter(h_out.get("formatter"))
+        out_def = object_or_empty(handler_defaults.get("stdout"))
+        h_out = object_or_empty(handlers.get("stdout"))
+        stdout_formatter = h_out.get("formatter")
+        self._ensure_custom_formatter(stdout_formatter if isinstance(stdout_formatter, str) else None)
 
         self.chk_console_enabled.setChecked(bool(h_out) and not _is_frozen())
-        self.cb_stdout_level.setCurrentText(h_out.get("level", out_def["level"]))
-        self.cb_stdout_formatter.setCurrentText(h_out.get("formatter", out_def["formatter"]))
+        self.cb_stdout_level.setCurrentText(
+            string_value(h_out.get("level"), string_value(out_def.get("level"), "WARNING"))
+        )
+        self.cb_stdout_formatter.setCurrentText(
+            string_value(h_out.get("formatter"), string_value(out_def.get("formatter"), "default"))
+        )
 
         # --- NAMESPACE LOGGERS ---
 
-        ns_cfg = (self.log_cfg.get("loggers", {}) or {})
+        ns_cfg = object_or_empty(self.log_cfg.get("loggers"))
 
-        ns_def = DEFAULT_LOG_CONFIG.get("loggers", {}) or {}
+        ns_def = object_or_empty(DEFAULT_LOG_CONFIG.get("loggers"))
         for lname, (chk, cb) in self.ns_widgets.items():
-            spec = ns_cfg.get(lname, {})
+            spec = object_or_empty(ns_cfg.get(lname))
             if not spec and lname in ns_def:
-                spec = ns_def.get(lname, {})
+                spec = object_or_empty(ns_def.get(lname))
             enabled = bool(spec)
             chk.setChecked(enabled)
             cb.setCurrentText(str(spec.get("level", "INFO")).upper())
@@ -382,12 +401,13 @@ class LogConfigEditor(QDialog):
     def _on_reset_defaults(self) -> None:
         """Resets only the logging configuration to DEFAULT_LOG_CONFIG."""
         import copy
+
         self.log_cfg = copy.deepcopy(DEFAULT_LOG_CONFIG)
         self._populate()
         self._dialogs.info(
             parent=self,
             title=self.tr("Reset defaults"),
-            text=self.tr("Log configuration has been reset to default values.")
+            text=self.tr("Log configuration has been reset to default values."),
         )
 
     # -------------------------------------------------------------------------
@@ -397,7 +417,7 @@ class LogConfigEditor(QDialog):
     def _on_save(self) -> None:
         """Persists the current UI state to logconfig.json."""
         new_log = dict(self.log_cfg)
-        handlers: dict = {}
+        handlers: JsonObject = {}
 
         # Root
         new_log["logger_level"] = self.cb_logger_level.currentText()
@@ -424,7 +444,7 @@ class LogConfigEditor(QDialog):
         new_log["handlers"] = handlers
 
         # NAMESPACE LOGGERS
-        loggers: dict[str, dict] = {}
+        loggers: dict[str, JsonObject] = {}
         for lname, (chk, cb) in self.ns_widgets.items():
             if chk.isChecked():
                 # Vår enkla modell: bara level; propagate=True styrs i config/manager
@@ -440,19 +460,24 @@ class LogConfigEditor(QDialog):
 
         try:
             write_log_config(new_log)
-        except Exception as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             title = self.tr("Failure")
             msg = self.tr("Could not save log configuration:\n{error}").format(error=str(e))
-            self._dialogs.critical(
-                parent=self,
-                title=title,
-                text=msg
-            )
+            self._dialogs.critical(parent=self, title=title, text=msg)
             return
 
         self._dialogs.info(
-            parent=self,
-            title=self.tr("Log configuration saved"),
-            text=self.tr("Log configuration has been saved.")
+            parent=self, title=self.tr("Log configuration saved"), text=self.tr("Log configuration has been saved.")
         )
         self.accept()

@@ -11,27 +11,26 @@ from expo_jbm329.gui.dialogs.workflows.join.join_dialog import (
     JoinDialogResult,
 )
 
+
 @pytest.fixture
 def parent_widget(qt_app):
     return QWidget()
+
 
 def test_concat_dialog_initialization(parent_widget):
     left_tab = "Left"
     right_tabs = ["Right1", "Right2"]
     left_cols = ["col1", "col2"]
-    right_cols_map = {
-        "Right1": ["r1_c1"],
-        "Right2": ["r2_c1", "r2_c2"]
-    }
-    
+    right_cols_map = {"Right1": ["r1_c1"], "Right2": ["r2_c1", "r2_c2"]}
+
     dialog = ConcatDialog(
         parent=parent_widget,
         left_tab_title=left_tab,
         right_tab_titles=right_tabs,
         left_columns=left_cols,
-        right_columns_map=right_cols_map
+        right_columns_map=right_cols_map,
     )
-    
+
     assert dialog.cb_left_dataset.currentText() == "Left"
     assert dialog.cb_right_dataset.currentText() == "Right1"
     assert dialog.left_columns_list.count() == 2
@@ -49,10 +48,7 @@ def test_concat_dialog_initialization(parent_widget):
 
 def test_join_dialog_initialization(parent_widget):
     all_tabs = ["Left", "Right"]
-    columns_for_tab = {
-        "Left": ["id", "val1"],
-        "Right": ["id", "val2"]
-    }
+    columns_for_tab = {"Left": ["id", "val1"], "Right": ["id", "val2"]}
     joinable_map = {
         ("Left", "id", "Right"): {"id"},
         ("Right", "id", "Left"): {"id"},

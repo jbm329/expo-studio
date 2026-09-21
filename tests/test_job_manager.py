@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from expo_jbm329.services.job_manager import JobManager, Worker, run_in_thread
 
@@ -147,9 +145,6 @@ def test_started_error_finished_hooks(monkeypatch):
     monkeypatch.setattr(JobManager, "_connect_job_lifecycle_signals", lambda self, job_id, job: None)
 
     jm = JobManager()
-    started = []
-    errors = []
-    finished = []
     jm.run(lambda: None)
     job_id = jm.active_job_ids[0]
 

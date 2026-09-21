@@ -4,11 +4,15 @@ This module provides a lightweight service registry for managing and
 instantiating database-specific driver and dialect components. It allows
 for decoupling the database core from specific implementations.
 """
+
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-from .interfaces import DialectProtocol, DriverProtocol
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from .interfaces import DialectProtocol, DriverProtocol
 
 
 class ServiceRegistry:
@@ -40,7 +44,8 @@ class ServiceRegistry:
             ValueError: If protocol is empty or factory is not callable.
         """
         if not protocol or not callable(factory):
-            raise ValueError("Invalid driver registration (protocol or factory).")
+            msg = "Invalid driver registration (protocol or factory)."
+            raise ValueError(msg)
         self._drivers[protocol] = factory
 
     def register_dialect(self, engine: str, factory: Callable[[], DialectProtocol]) -> None:
@@ -55,7 +60,8 @@ class ServiceRegistry:
             ValueError: If engine is empty or factory is not callable.
         """
         if not engine or not callable(factory):
-            raise ValueError("Invalid dialect registration (engine or factory).")
+            msg = "Invalid dialect registration (engine or factory)."
+            raise ValueError(msg)
         self._dialects[engine] = factory
 
     def create_driver(self, protocol: str) -> DriverProtocol:
@@ -73,7 +79,8 @@ class ServiceRegistry:
         try:
             factory = self._drivers[protocol]
         except KeyError as e:
-            raise KeyError(f"No driver registered for protocol='{protocol}'.") from e
+            msg = f"No driver registered for protocol='{protocol}'."
+            raise KeyError(msg) from e
         return factory()
 
     def create_dialect(self, engine: str) -> DialectProtocol:
@@ -91,5 +98,6 @@ class ServiceRegistry:
         try:
             factory = self._dialects[engine]
         except KeyError as e:
-            raise KeyError(f"No dialect registered for engine='{engine}'.") from e
+            msg = f"No dialect registered for engine='{engine}'."
+            raise KeyError(msg) from e
         return factory()

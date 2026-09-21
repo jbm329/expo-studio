@@ -3,7 +3,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pandas as pd
-from PyQt6.QtWidgets import QWidget, QTableView
+from PyQt6.QtWidgets import QTableView, QWidget
 
 from expo_jbm329.workbench.controllers.result_tabs.result_tab_cell_actions import (
     ResultTabCellActions,
@@ -27,4 +27,3 @@ def test_cell_filter_and_replace_actions():
     ctrl.replace_value(QTableView(), df, row_index=0, column_name="a", raw_value=1)
 
     assert async_ops.run_dataframe_operation.call_count == 2
-

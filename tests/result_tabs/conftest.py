@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QWidget
 from expo_jbm329.gui.dialogs.service.null_dialog_service import NullDialogService
 from expo_jbm329.services.data_profile.profile_cache import ColumnProfileCache
 from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
-from tests.stubs import DummyAsyncOps, DummyDialogState, DummyJobManager
+from tests.stubs import DummyAsyncOps
 
 
 class StubModel:
@@ -18,10 +18,10 @@ class StubModel:
         self._df = df
         self.parent_view = parent
 
-    def dataFrame(self):
+    def data_frame(self):
         return self._df
 
-    def setDataFrame(self, new_df, **kwargs):
+    def set_data_frame(self, new_df, **kwargs):
         self._df = new_df
         if self.parent_view is not None:
             self.parent_view._df = new_df
@@ -32,27 +32,68 @@ class StubHeader:
         self.customContextMenuRequested = SimpleNamespace(connect=lambda cb: None)
         self._font = QFont()
 
-    def setContextMenuPolicy(self, p): pass
-    def logicalIndexAt(self, pos): return 0
-    def setStretchLastSection(self, *a): pass
-    def setSectionResizeMode(self, *a): pass
-    def mapToGlobal(self, p): return p
-    def setHorizontalScrollBarPolicy(self, p): pass
-    def setVerticalScrollBarPolicy(self, p): pass
-    def setModel(self, m): pass
-    def setSectionsClickable(self, b): pass
-    def setSectionsMovable(self, b): pass
-    def setHighlightSections(self, b): pass
-    def selectionModel(self): return SimpleNamespace(selectedColumns=lambda: [])
-    def setSortIndicator(self, i, o): pass
-    def setSortIndicatorShown(self, b): pass
-    def viewport(self): return SimpleNamespace(installEventFilter=lambda f: None)
-    def installEventFilter(self, f): pass
-    def setDefaultAlignment(self, a): pass
-    def setDefaultSectionSize(self, s): pass
-    def font(self): return self._font
-    def sectionSize(self, i): return 100
-    def resizeSection(self, i, size): pass
+    def setContextMenuPolicy(self, p):
+        pass
+
+    def logicalIndexAt(self, pos):
+        return 0
+
+    def setStretchLastSection(self, *a):
+        pass
+
+    def setSectionResizeMode(self, *a):
+        pass
+
+    def mapToGlobal(self, p):
+        return p
+
+    def setHorizontalScrollBarPolicy(self, p):
+        pass
+
+    def setVerticalScrollBarPolicy(self, p):
+        pass
+
+    def setModel(self, m):
+        pass
+
+    def setSectionsClickable(self, b):
+        pass
+
+    def setSectionsMovable(self, b):
+        pass
+
+    def setHighlightSections(self, b):
+        pass
+
+    def selectionModel(self):
+        return SimpleNamespace(selectedColumns=list)
+
+    def setSortIndicator(self, i, o):
+        pass
+
+    def setSortIndicatorShown(self, b):
+        pass
+
+    def viewport(self):
+        return SimpleNamespace(installEventFilter=lambda f: None)
+
+    def installEventFilter(self, f):
+        pass
+
+    def setDefaultAlignment(self, a):
+        pass
+
+    def setDefaultSectionSize(self, s):
+        pass
+
+    def font(self):
+        return self._font
+
+    def sectionSize(self, i):
+        return 100
+
+    def resizeSection(self, i, size):
+        pass
 
 
 class StubView:
@@ -71,39 +112,64 @@ class StubView:
             setSectionResizeMode=lambda *a: None,
             setDefaultSectionSize=lambda s: None,
         )
-        self.selectionModel = lambda: SimpleNamespace(selectedColumns=lambda: [])
+        self.selectionModel = lambda: SimpleNamespace(selectedColumns=list)
 
     def horizontalHeader(self):
         return self._header
 
     def setModel(self, m):
         self._model = m
-        if hasattr(m, "dataFrame"):
-            self._df = m.dataFrame()
-            if hasattr(m, "setDataFrame"):
+        if hasattr(m, "data_frame"):
+            self._df = m.data_frame()
+            if hasattr(m, "set_data_frame"):
                 m.parent_view = self
 
     def model(self):
         return self._model
 
-    def setDataFrame(self, df):
+    def set_data_frame(self, df):
         self._df = df
         if self._model is not None:
             self._model._df = df
 
-    def setSortingEnabled(self, b): pass
-    def sortByColumn(self, column, order): pass
-    def setSelectionBehavior(self, b): pass
-    def setSelectionMode(self, m): pass
-    def setEditTriggers(self, t): pass
-    def setAlternatingRowColors(self, b): pass
-    def setContextMenuPolicy(self, p): pass
-    def setWordWrap(self, b): pass
-    def setItemDelegate(self, d): pass
-    def viewport(self): return SimpleNamespace(installEventFilter=lambda f: None)
-    def installEventFilter(self, f): pass
-    def setHorizontalHeader(self, h): self._header = h
-    def setShowGrid(self, b): pass
+    def setSortingEnabled(self, b):
+        pass
+
+    def sortByColumn(self, column, order):
+        pass
+
+    def setSelectionBehavior(self, b):
+        pass
+
+    def setSelectionMode(self, m):
+        pass
+
+    def setEditTriggers(self, t):
+        pass
+
+    def setAlternatingRowColors(self, b):
+        pass
+
+    def setContextMenuPolicy(self, p):
+        pass
+
+    def setWordWrap(self, b):
+        pass
+
+    def setItemDelegate(self, d):
+        pass
+
+    def viewport(self):
+        return SimpleNamespace(installEventFilter=lambda f: None)
+
+    def installEventFilter(self, f):
+        pass
+
+    def setHorizontalHeader(self, h):
+        self._header = h
+
+    def setShowGrid(self, b):
+        pass
 
 
 class StubTabs:
@@ -168,12 +234,6 @@ class StubTabs:
             self._data = {new_i: data for new_i, (_, _, data) in enumerate(items)}
             if self._current >= len(self._widgets):
                 self._current = len(self._widgets) - 1
-
-    def tabData(self, index):
-        return self._data.get(index)
-
-    def setTabData(self, index, value):
-        self._data[index] = value
 
 
 class StubParent(QWidget):

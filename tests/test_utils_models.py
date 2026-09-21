@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import pandas as pd
+from PyQt6.QtCore import Qt
 
 from expo_jbm329.utils.models import DataFrameModel, JoinPreviewModel
-from PyQt6.QtCore import Qt
 
 
 def test_dataframe_model_init():

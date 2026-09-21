@@ -4,14 +4,15 @@ This module provides centralized logging configuration and management,
 including file and console handlers, custom filters, and logger instances
 for different application components.
 """
+
 from __future__ import annotations
 
 import logging
 import sys
 from logging.handlers import RotatingFileHandler
-from typing import Any
 
 from expo_jbm329.app.settings.config_store import read_log_config
+from expo_jbm329.app.settings.json_types import JsonObject, int_value, object_or_empty, string_value
 from expo_jbm329.utils.path_manager import get_log_path
 
 BUILTIN_FORMATTERS = {
@@ -20,10 +21,7 @@ BUILTIN_FORMATTERS = {
         "datefmt": "%Y-%m-%d %H:%M:%S",
     },
     "verbose": {
-        "format": (
-            "%(levelname)s %(asctime)s "
-            "%(filename)s line %(lineno)d function %(funcName)s:\n >%(message)s"
-        ),
+        "format": ("%(levelname)s %(asctime)s %(filename)s line %(lineno)d function %(funcName)s:\n >%(message)s"),
         "datefmt": "%Y-%m-%d %H:%M:%S%z",
     },
 }
@@ -45,7 +43,7 @@ class ThirdPartyMinLevelFilter(logging.Filter):
     to pass through, while enforcing a minimum log level for all other loggers.
     """
 
-    def __init__(self, min_level: int, app_prefixes: tuple[str, ...]):
+    def __init__(self, min_level: int, app_prefixes: tuple[str, ...]) -> None:
         """Initializes the filter.
 
         Args:
@@ -98,7 +96,7 @@ class LoggingManager:
 
     APP_PREFIXES = ("applogger",)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the LoggingManager with pre-configured logger instances."""
         self.ui_logger: logging.Logger = logging.getLogger("applogger.ui")
         self.service_logger: logging.Logger = logging.getLogger("applogger.service")
@@ -116,7 +114,7 @@ class LoggingManager:
         and initializes the logger instances. This method should be called once
         during application startup.
         """
-        cfg = read_log_config() or {}
+        cfg = read_log_config()
         root = logging.getLogger()
 
         # Root level
@@ -126,7 +124,7 @@ class LoggingManager:
         for h in list(root.handlers):
             root.removeHandler(h)
 
-        handlers_cfg = cfg.get("handlers", {}) or {}
+        handlers_cfg = object_or_empty(cfg.get("handlers"))
 
         # Wildcard filter
         third_party_level = self._to_level(cfg.get("third_party_log_level", "WARNING"))
@@ -138,7 +136,18 @@ class LoggingManager:
                 h = self._create_file_handler(cfg)
                 h.addFilter(tp_filter)
                 root.addHandler(h)
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 logging.getLogger("applogger").exception("Failed to init file handler")
 
         # Stdout handler
@@ -147,13 +156,23 @@ class LoggingManager:
                 h = self._create_stdout_handler(cfg)
                 h.addFilter(tp_filter)
                 root.addHandler(h)
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 logging.getLogger("applogger").exception("Failed to init stdout handler")
 
         # Per-namespace overrides
-        for lname, spec in (cfg.get("loggers", {}) or {}).items():
-            if not isinstance(lname, str):
-                continue
+        for lname, spec_value in object_or_empty(cfg.get("loggers")).items():
+            spec = object_or_empty(spec_value)
             lg = logging.getLogger(lname)
             lg.setLevel(self._to_level(spec.get("level", "INFO")))
             lg.propagate = bool(spec.get("propagate", True))
@@ -161,23 +180,9 @@ class LoggingManager:
         self.system_logger.info("Logging initialized.")
 
     # =====================================================================
-    # Public helpers
-    # =====================================================================
-    # def get_logger(self, name: str) -> logging.Logger:
-    #     """Returns a logger instance for the given name.
-    #
-    #     Args:
-    #         name: The name of the logger.
-    #
-    #     Returns:
-    #         A logging.Logger instance.
-    #     """
-    #     return logging.getLogger(name)
-
-    # =====================================================================
     # Handler builders
     # =====================================================================
-    def _create_file_handler(self, cfg: dict) -> logging.Handler:
+    def _create_file_handler(self, cfg: JsonObject) -> logging.Handler:
         """Creates a rotating file handler based on configuration.
 
         Args:
@@ -189,7 +194,7 @@ class LoggingManager:
         params = self._subcfg(cfg, "handlers", "file")
 
         level = self._to_level(params.get("level", "INFO"))
-        fmt = self._formatter(params.get("formatter", "default"))
+        fmt = self._formatter(string_value(params.get("formatter"), "default"))
         max_bytes = self._to_int(params.get("maxBytes"), 5_000_000)
         backup = self._to_int(params.get("backupCount"), 3)
 
@@ -203,7 +208,7 @@ class LoggingManager:
         h.setFormatter(fmt)
         return h
 
-    def _create_stdout_handler(self, cfg: dict) -> logging.Handler:
+    def _create_stdout_handler(self, cfg: JsonObject) -> logging.Handler:
         """Creates a stdout stream handler based on configuration.
 
         Args:
@@ -215,7 +220,7 @@ class LoggingManager:
         params = self._subcfg(cfg, "handlers", "stdout")
 
         level = self._to_level(params.get("level", "WARNING"))
-        fmt = self._formatter(params.get("formatter", "default"))
+        fmt = self._formatter(string_value(params.get("formatter"), "default"))
 
         h = logging.StreamHandler()
         h.setLevel(level)
@@ -238,7 +243,7 @@ class LoggingManager:
         return logging.Formatter(tpl["format"], tpl["datefmt"])
 
     @staticmethod
-    def _to_level(v: Any) -> int:
+    def _to_level(v: object) -> int:
         """Converts a value to a logging level integer.
 
         Args:
@@ -250,12 +255,24 @@ class LoggingManager:
         if isinstance(v, int):
             return v
         try:
-            return getattr(logging, str(v).upper())
-        except Exception:
+            level: object = getattr(logging, str(v).upper())
+            return level if isinstance(level, int) else logging.INFO
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return logging.INFO
 
     @staticmethod
-    def _to_int(v: Any, default: int) -> int:
+    def _to_int(v: object, default: int) -> int:
         """Converts a value to an integer.
 
         Args:
@@ -266,12 +283,12 @@ class LoggingManager:
             The converted integer value, or default if conversion fails.
         """
         try:
-            return int(v)
-        except Exception:
+            return int_value(v, default)
+        except TypeError:
             return default
 
     @staticmethod
-    def _subcfg(cfg: dict, *keys: str) -> dict:
+    def _subcfg(cfg: JsonObject, *keys: str) -> JsonObject:
         """Retrieves a sub-configuration from a nested dict.
 
         Args:
@@ -281,9 +298,9 @@ class LoggingManager:
         Returns:
             The sub-configuration dict at the specified keys, or an empty dict if not found.
         """
-        cur = cfg
+        cur: object = cfg
         for k in keys:
             if not isinstance(cur, dict):
                 return {}
             cur = cur.get(k, {})
-        return cur if isinstance(cur, dict) else {}
+        return object_or_empty(cur)

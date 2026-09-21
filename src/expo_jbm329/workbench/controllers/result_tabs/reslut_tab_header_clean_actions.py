@@ -12,16 +12,23 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QTableView, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    import pandas as pd
+    from PyQt6.QtWidgets import QTableView, QWidget
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
 
 
 class ResultTabHeaderCleanActions:
@@ -83,9 +90,7 @@ class ResultTabHeaderCleanActions:
     TR_INSERT_TEXT_OPERATION = QT_TR_NOOP("insert text")
     TR_INSERTING_TEXT = QT_TR_NOOP("Inserting text in column: {column_name}")
     TR_INSERT_TEXT = QT_TR_NOOP("Insert text")
-    TR_INSERTED_TEXT = QT_TR_NOOP(
-        "Inserted '{insert_text}' at position {position} in column: {column_name}"
-    )
+    TR_INSERTED_TEXT = QT_TR_NOOP("Inserted '{insert_text}' at position {position} in column: {column_name}")
 
     # ------------------------------------------------------------------
     # i18n helpers
@@ -96,7 +101,7 @@ class ResultTabHeaderCleanActions:
         return tr("ResultTabHeaderCleanActions", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabHeaderCleanActions", text, **kwargs)
 
     # ------------------------------------------------------------------
@@ -115,8 +120,8 @@ class ResultTabHeaderCleanActions:
         self,
         *,
         parent: QWidget,
-        dialogs: DialogService,
-        logger: logging.Logger,
+        dialogs: DialogService | None,
+        logger: logging.Logger | None,
         async_ops: AsyncOperationController,
         resolve_df_col_series: Callable[
             [QTableView, int],
@@ -126,7 +131,7 @@ class ResultTabHeaderCleanActions:
             [QTableView, pd.DataFrame, str],
             None,
         ],
-    ):
+    ) -> None:
         """Initialize ResultTabHeaderCleanActions with dependencies.
 
         Args:
@@ -172,7 +177,12 @@ class ResultTabHeaderCleanActions:
 
         from expo_jbm329.services.data_operations.text import clean_text
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -180,7 +190,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -217,9 +227,7 @@ class ResultTabHeaderCleanActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -233,7 +241,12 @@ class ResultTabHeaderCleanActions:
 
         from expo_jbm329.services.data_operations.text import clean_text
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -241,7 +254,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -266,7 +279,7 @@ class ResultTabHeaderCleanActions:
             scope=f"lowercase:{safe_col}",
             operation_name=self._tr(self.TR_LOWERCASE_OPERATION),
             corr_id=corr_id,
-        )        
+        )
 
     def clean_upper(self, view: QTableView, column: int) -> None:
         """Convert a column in the result table to uppercase.
@@ -278,9 +291,7 @@ class ResultTabHeaderCleanActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -294,7 +305,12 @@ class ResultTabHeaderCleanActions:
 
         from expo_jbm329.services.data_operations.text import clean_text
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -302,7 +318,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -339,9 +355,7 @@ class ResultTabHeaderCleanActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -355,7 +369,12 @@ class ResultTabHeaderCleanActions:
 
         from expo_jbm329.services.data_operations.text import to_title_case
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -363,7 +382,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -388,7 +407,7 @@ class ResultTabHeaderCleanActions:
             scope=f"titlecase:{safe_col}",
             operation_name=self._tr(self.TR_TITLECASE_OPERATION),
             corr_id=corr_id,
-        )      
+        )
 
     def clean_capitalize(self, view: QTableView, column: int) -> None:
         """Convert a column in the result table to capitalize.
@@ -400,9 +419,7 @@ class ResultTabHeaderCleanActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -416,7 +433,12 @@ class ResultTabHeaderCleanActions:
 
         from expo_jbm329.services.data_operations.text import capitalize_first
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -424,7 +446,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -465,9 +487,7 @@ class ResultTabHeaderCleanActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -481,7 +501,12 @@ class ResultTabHeaderCleanActions:
 
         from expo_jbm329.services.data_operations.text import extract_digits
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -489,7 +514,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -514,7 +539,7 @@ class ResultTabHeaderCleanActions:
             scope=f"keep_digits:{safe_col}",
             operation_name=self._tr(self.TR_KEEP_DIGITS_OPERATION),
             corr_id=corr_id,
-        )        
+        )
 
     def clean_keep_letters(self, view: QTableView, column: int) -> None:
         """Keep only letters in a column in the result table.
@@ -526,9 +551,7 @@ class ResultTabHeaderCleanActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -542,7 +565,12 @@ class ResultTabHeaderCleanActions:
 
         from expo_jbm329.services.data_operations.text import extract_letters
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -550,7 +578,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -579,16 +607,16 @@ class ResultTabHeaderCleanActions:
 
     def clean_whitespace(self, view: QTableView, column: int) -> None:
         """Normalizes whitespace in a column in the result table.
-        
+
         Args:
             view: The QTableView instance where the action is performed.
             column: The index of the column to clean whitespace from.
-            
+
         Returns:
             None
         """
         ok, df, col, _ = self._resolve_df_col_series(view, column)
-        
+
         if not ok or df is None or col is None:
             return
 
@@ -602,7 +630,12 @@ class ResultTabHeaderCleanActions:
 
         from expo_jbm329.services.data_operations.text import normalize_whitespace
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -610,7 +643,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -635,22 +668,20 @@ class ResultTabHeaderCleanActions:
             scope=f"normalize_whitespace:{safe_col}",
             operation_name=self._tr(self.TR_NORMALIZE_WHITESPACE_OPERATION),
             corr_id=corr_id,
-        )        
+        )
 
     def clean_remove(self, view: QTableView, column: int) -> None:
         """Remove text from a column in the result table.
-                                
+
         Args:
             view: The QTableView instance.
-            column: The index of the column to remove text from.            
-            
+            column: The index of the column to remove text from.
+
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
-        
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
+
         if not ok or df is None or col is None:
             return
 
@@ -676,7 +707,12 @@ class ResultTabHeaderCleanActions:
 
         from expo_jbm329.services.data_operations.text import clean_text
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -684,7 +720,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -715,20 +751,20 @@ class ResultTabHeaderCleanActions:
             scope=f"remove_text:{safe_col}",
             operation_name=self._tr(self.TR_REMOVE_TEXT_OPERATION),
             corr_id=corr_id,
-        )        
+        )
 
     def clean_remove_regex(self, view: QTableView, column: int) -> None:
         """Remove text from a column in the result table using a regular expression.
-        
+
         Args:
             view: The QTableView instance.
             column: The index of the column to remove text from.
-            
+
         Returns:
             None
         """
         ok, df, col, _ = self._resolve_df_col_series(view, column)
-        
+
         if not ok or df is None or col is None:
             return
 
@@ -750,7 +786,12 @@ class ResultTabHeaderCleanActions:
 
         from expo_jbm329.services.data_operations.text import remove_regex
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -758,7 +799,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -784,11 +825,11 @@ class ResultTabHeaderCleanActions:
             scope=f"remove_regex:{safe_col}",
             operation_name=self._tr(self.TR_REMOVE_REGEX_OPERATION),
             corr_id=corr_id,
-        )        
+        )
 
     def clean_replace(self, view: QTableView, column: int) -> None:
         """Replace text in a column in the result table.
-        
+
         Args:
             view: The QTableView instance.
             column: The index of the column to perform the operation on.
@@ -797,7 +838,7 @@ class ResultTabHeaderCleanActions:
             None
         """
         ok, df, col, _ = self._resolve_df_col_series(view, column)
-        
+
         if not ok or df is None or col is None:
             return
 
@@ -822,7 +863,12 @@ class ResultTabHeaderCleanActions:
 
         from expo_jbm329.services.data_operations.text import replace_text
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -836,7 +882,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -880,9 +926,7 @@ class ResultTabHeaderCleanActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -906,7 +950,12 @@ class ResultTabHeaderCleanActions:
 
         from expo_jbm329.services.data_operations.text import insert_text
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -919,7 +968,7 @@ class ResultTabHeaderCleanActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 

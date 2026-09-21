@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -9,6 +9,9 @@ import pytest
 from expo_jbm329.services.data_io_service import DataIOService
 from expo_jbm329.services.file_loader import FileLoader
 from expo_jbm329.services.file_writer import FileWriter
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture
@@ -33,14 +36,14 @@ def io_service(loader: FileLoader, writer: FileWriter) -> DataIOService:
     return DataIOService(loader, writer)
 
 
-def test_file_loader_load_csv(loader: FileLoader, tmp_csv: Path):
+def test_file_loader_load_csv(loader: FileLoader, tmp_csv: Path) -> None:
     df = loader.load_df_auto(str(tmp_csv))
 
     assert len(df) == 2
     assert list(df.columns) == ["A", "B"]
 
 
-def test_file_writer_save_csv(writer: FileWriter, tmp_path: Path):
+def test_file_writer_save_csv(writer: FileWriter, tmp_path: Path) -> None:
     dest = tmp_path / "out.csv"
     df = pd.DataFrame({"X": [10, 20]})
 
@@ -50,7 +53,7 @@ def test_file_writer_save_csv(writer: FileWriter, tmp_path: Path):
     assert pd.read_csv(dest)["X"].tolist() == [10, 20]
 
 
-def test_data_io_service_load(io_service: DataIOService, tmp_csv: Path):
+def test_data_io_service_load(io_service: DataIOService, tmp_csv: Path) -> None:
     res = io_service.resolve_and_load_df(str(tmp_csv))
 
     assert res.ok is True
@@ -58,16 +61,17 @@ def test_data_io_service_load(io_service: DataIOService, tmp_csv: Path):
     assert list(res.data.columns) == ["A", "B"]
 
 
-def test_data_io_service_load_missing_file_returns_failure(io_service: DataIOService):
+def test_data_io_service_load_missing_file_returns_failure(io_service: DataIOService) -> None:
     res = io_service.resolve_and_load_df("missing.csv")
 
     assert res.ok is False
     assert res.cancelled is False
     assert res.data is None
+    assert res.error is not None
     assert "missing.csv" in res.error
 
 
-def test_data_io_service_export_csv(io_service: DataIOService, tmp_path: Path):
+def test_data_io_service_export_csv(io_service: DataIOService, tmp_path: Path) -> None:
     dest = tmp_path / "export.csv"
     df = pd.DataFrame({"Z": [100]})
 
@@ -77,7 +81,7 @@ def test_data_io_service_export_csv(io_service: DataIOService, tmp_path: Path):
     assert dest.exists()
 
 
-def test_data_io_service_export_profile(io_service: DataIOService, tmp_path: Path):
+def test_data_io_service_export_profile(io_service: DataIOService, tmp_path: Path) -> None:
     dest = tmp_path / "profile.html"
     df = pd.DataFrame({"A": [1]})
     mock_profile = MagicMock()
@@ -91,7 +95,7 @@ def test_data_io_service_export_profile(io_service: DataIOService, tmp_path: Pat
     io_service._writer.save_profile.assert_called_once_with(mock_profile, str(dest), corr_id=None)
 
 
-def test_data_io_service_export_comparison_profile(io_service: DataIOService, tmp_path: Path):
+def test_data_io_service_export_comparison_profile(io_service: DataIOService, tmp_path: Path) -> None:
     dest = tmp_path / "compare.html"
     data = [(pd.DataFrame({"A": [1]}), "One"), (pd.DataFrame({"A": [2]}), "Two")]
     mock_report = MagicMock()

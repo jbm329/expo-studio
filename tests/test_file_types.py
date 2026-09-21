@@ -19,4 +19,3 @@ def test_helpers_match_classification():
     assert is_sql_file("query.sql")
     assert is_data_file("data.xlsx")
     assert is_html_file("index.htm")
-

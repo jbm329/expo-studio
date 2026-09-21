@@ -1,13 +1,16 @@
 """Dataframe join and concatenation operations."""
+
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 from pandas import CategoricalDtype
 from pandas.api.types import is_numeric_dtype, is_string_dtype
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 JoinHow = Literal["inner", "left", "right", "outer"]
 
@@ -35,6 +38,7 @@ class JoinRequest:
         how: Join type: 'inner', 'left', 'right', 'outer'.
         suffixes: Suffixes for conflicting column names.
     """
+
     left: pd.DataFrame
     right: pd.DataFrame
     left_on: Sequence[str]
@@ -57,9 +61,8 @@ def join_dataframes(cfg: JoinRequest) -> pd.DataFrame:
         * Multi-key joins are supported.
     """
     if len(cfg.left_on) != len(cfg.right_on):
-        raise ValueError(
-            f"left_on and right_on must have same length (got {len(cfg.left_on)} vs {len(cfg.right_on)})"
-        )
+        msg = f"left_on and right_on must have same length (got {len(cfg.left_on)} vs {len(cfg.right_on)})"
+        raise ValueError(msg)
 
     return cfg.left.merge(
         cfg.right,
@@ -129,7 +132,8 @@ def concat_rows(*frames: pd.DataFrame, join: Literal["outer", "inner"] = "outer"
         Combined dataframe with reset index.
     """
     if not frames:
-        raise ValueError("No dataframes were provided for concat_rows().")
+        msg = "No dataframes were provided for concat_rows()."
+        raise ValueError(msg)
 
     return pd.concat(frames, axis=0, join=join).reset_index(drop=True)
 
@@ -145,6 +149,7 @@ def concat_columns(*frames: pd.DataFrame, join: Literal["outer", "inner"] = "out
         Combined dataframe by columns.
     """
     if not frames:
-        raise ValueError("No dataframes were provided for concat_columns().")
+        msg = "No dataframes were provided for concat_columns()."
+        raise ValueError(msg)
 
     return pd.concat(frames, axis=1, join=join)

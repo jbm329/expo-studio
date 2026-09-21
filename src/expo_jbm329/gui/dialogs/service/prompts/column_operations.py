@@ -3,11 +3,12 @@
 Includes dialogs for structural transformations on dataframe columns,
 such as splitting a column or joining multiple columns.
 """
+
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import QCoreApplication
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QButtonGroup,
@@ -27,7 +28,9 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.common.window_hints import apply_dialog_window_hints
-from expo_jbm329.gui.dialogs.service.dialog_service import MergeColumnsResult, SplitColumnResult
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import MergeColumnsResult, SplitColumnResult
 
 
 # ----------------------------------------------------------------------
@@ -51,9 +54,7 @@ def prompt_split_column(
     # Context
     root.addWidget(
         QLabel(
-            QCoreApplication.translate(
-                "QtDialogService", "Column: %1"
-            ).replace("%1", column),
+            QCoreApplication.translate("QtDialogService", "Column: %1").replace("%1", column),
             dlg,
         )
     )
@@ -62,28 +63,20 @@ def prompt_split_column(
     row_delim = QHBoxLayout()
     row_delim.addWidget(
         QLabel(
-            QCoreApplication.translate(
-                "QtDialogService", "Delimiter / string:"
-            ),
+            QCoreApplication.translate("QtDialogService", "Delimiter / string:"),
             dlg,
         )
     )
 
     txt_delim = QLineEdit(dlg)
     txt_delim.setText(default_delimiter or "")
-    txt_delim.setPlaceholderText(
-        QCoreApplication.translate(
-            "QtDialogService", "Example: ; , | space  \\t (tab)"
-        )
-    )
+    txt_delim.setPlaceholderText(QCoreApplication.translate("QtDialogService", "Example: ; , | space  \\t (tab)"))
     row_delim.addWidget(txt_delim)
     root.addLayout(row_delim)
 
     # Keep original column
     chk_keep = QCheckBox(
-        QCoreApplication.translate(
-            "QtDialogService", "Keep original column"
-        ),
+        QCoreApplication.translate("QtDialogService", "Keep original column"),
         dlg,
     )
     chk_keep.setChecked(bool(default_keep_original))
@@ -92,23 +85,17 @@ def prompt_split_column(
     # Split mode
     root.addWidget(
         QLabel(
-            QCoreApplication.translate(
-                "QtDialogService", "Split at:"
-            ),
+            QCoreApplication.translate("QtDialogService", "Split at:"),
             dlg,
         )
     )
 
     rb_first = QRadioButton(
-        QCoreApplication.translate(
-            "QtDialogService", "First occurrence"
-        ),
+        QCoreApplication.translate("QtDialogService", "First occurrence"),
         dlg,
     )
     rb_last = QRadioButton(
-        QCoreApplication.translate(
-            "QtDialogService", "Last occurrence"
-        ),
+        QCoreApplication.translate("QtDialogService", "Last occurrence"),
         dlg,
     )
 
@@ -144,7 +131,7 @@ def prompt_split_column(
 
     def _validate() -> None:
         if btn_ok is not None:
-            btn_ok.setEnabled(bool(txt_delim.text()))            
+            btn_ok.setEnabled(bool(txt_delim.text()))
 
     txt_delim.textChanged.connect(_validate)
 
@@ -175,6 +162,7 @@ def prompt_split_column(
 # ----------------------------------------------------------------------
 # Merge columns
 # ----------------------------------------------------------------------
+
 
 def prompt_merge_columns(
     parent: QWidget,
@@ -217,9 +205,7 @@ def prompt_merge_columns(
     col_available = QVBoxLayout()
     col_available.addWidget(
         QLabel(
-            QCoreApplication.translate(
-                "QtDialogService", "Available columns"
-            ),
+            QCoreApplication.translate("QtDialogService", "Available columns"),
             dlg,
         )
     )
@@ -251,9 +237,7 @@ def prompt_merge_columns(
     col_selected = QVBoxLayout()
     col_selected.addWidget(
         QLabel(
-            QCoreApplication.translate(
-                "QtDialogService", "Selected columns (merge order)"
-            ),
+            QCoreApplication.translate("QtDialogService", "Selected columns (merge order)"),
             dlg,
         )
     )
@@ -305,9 +289,7 @@ def prompt_merge_columns(
     row_delim = QHBoxLayout()
     row_delim.addWidget(
         QLabel(
-            QCoreApplication.translate(
-                "QtDialogService", "Delimiter:"
-            ),
+            QCoreApplication.translate("QtDialogService", "Delimiter:"),
             dlg,
         )
     )
@@ -323,9 +305,7 @@ def prompt_merge_columns(
     row_name = QHBoxLayout()
     row_name.addWidget(
         QLabel(
-            QCoreApplication.translate(
-                "QtDialogService", "New column name:"
-            ),
+            QCoreApplication.translate("QtDialogService", "New column name:"),
             dlg,
         )
     )
@@ -339,9 +319,7 @@ def prompt_merge_columns(
     # --------------------------------------------------
 
     chk_keep = QCheckBox(
-        QCoreApplication.translate(
-            "QtDialogService", "Keep original columns"
-        ),
+        QCoreApplication.translate("QtDialogService", "Keep original columns"),
         dlg,
     )
     chk_keep.setChecked(default_keep_original)
@@ -384,7 +362,7 @@ def prompt_merge_columns(
         if btn_ok is None:
             return
         btn_ok.setEnabled(
-            lst_selected.count() >= 2
+            lst_selected.count() >= 2  # noqa: PLR2004 - split requires at least two selected columns.
             and bool(txt_name.text().strip())
             and bool(txt_delim.text())
         )

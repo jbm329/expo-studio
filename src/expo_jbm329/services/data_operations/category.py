@@ -19,7 +19,7 @@ Design principles:
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from pandas import CategoricalDtype
@@ -32,6 +32,7 @@ logger = logging.getLogger("applogger.service")
 # =====================================================================
 # Category maintenance
 # =====================================================================
+
 
 def category_remove_unused(
     df: pd.DataFrame,
@@ -51,7 +52,8 @@ def category_remove_unused(
     logger.debug("category_remove_unused: col='%s'", column)
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column]
 
@@ -68,11 +70,12 @@ def category_remove_unused(
 # Category value manipulation
 # =====================================================================
 
+
 def category_rename_single(
     df: pd.DataFrame,
     column: str,
-    old: Any,
-    new: Any,
+    old: object,
+    new: object,
 ) -> pd.DataFrame:
     """Rename a single category value.
 
@@ -99,18 +102,19 @@ def category_rename_single(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column]
+    replacement_map = cast("Any", {old: new})
+    new_s: pd.Series
 
     if is_categorical_series(s):
         try:
-            new_s = s.cat.rename_categories(
-                lambda c: new if c == old else c
-            )
+            new_s = s.cat.rename_categories(lambda c: new if c == old else c)
         except (ValueError, TypeError):
             # Collision or invalid mapping -> rebuild categories
-            tmp = s.astype("string").replace({old: new})
+            tmp = s.astype("string").replace(replacement_map)
             categories = list(pd.unique(tmp.dropna()))
             dtype = CategoricalDtype(
                 categories=categories,
@@ -122,7 +126,7 @@ def category_rename_single(
                 name=s.name,
             )
     else:
-        new_s = s.astype("string").replace({old: new})
+        new_s = s.astype("string").replace(replacement_map)
 
     new_df = df.copy()
     new_df[column] = new_s
@@ -133,6 +137,7 @@ def category_rename_single(
 # =====================================================================
 # Explicit ordering
 # =====================================================================
+
 
 def category_set_order(
     df: pd.DataFrame,
@@ -169,25 +174,20 @@ def category_set_order(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     s = df[column].astype("string")
 
     categories: list[str] = []
 
     for c in order_list:
-        if c is None:
-            continue
-
         c_str = str(c).strip()
         if c_str:
             categories.append(c_str)
 
     if not strict and append_missing_tail:
-        extras = [
-            v for v in pd.unique(s.dropna())
-            if v not in categories
-        ]
+        extras = [v for v in pd.unique(s.dropna()) if v not in categories]
         categories = categories + extras
 
     dtype = CategoricalDtype(categories=categories, ordered=ordered)

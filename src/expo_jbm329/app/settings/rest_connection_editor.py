@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Literal, override
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QIcon, QTextCursor
+from PyQt6.QtGui import QIcon, QShowEvent, QTextCursor
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QListWidget,
+    QListWidgetItem,
     QPlainTextEdit,
     QPushButton,
     QScrollArea,
@@ -27,21 +28,67 @@ from expo_jbm329.app.settings.config_store import (
     read_rest_connections,
     write_rest_connections,
 )
+from expo_jbm329.app.settings.json_types import (
+    JsonObject,
+    int_value,
+    object_or_empty,
+    optional_string,
+    string_value,
+)
 from expo_jbm329.gui.dialogs.rest.scb_browser_dialog import ScbBrowserDialog
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.widgets.rest.auth_widget import RestAuthWidget
 from expo_jbm329.gui.widgets.rest.pagination_widget import RestPaginationWidget
 from expo_jbm329.services.rest.client import fetch_json
 from expo_jbm329.services.rest.models import (
+    RestApiKeyLocation,
     RestAuthConfig,
+    RestAuthType,
+    RestOAuth2GrantType,
     RestPaginationConfig,
+    RestPaginationType,
     RestRequestConfig,
 )
 from expo_jbm329.services.rest.normalizer import normalize_json_to_df
 from expo_jbm329.services.rest.schema import build_response_preview
 from expo_jbm329.utils.format_utils import fmt_shape
-from expo_jbm329.workbench.icon.icon_service import IconService
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.icon.icon_service import IconService
+
+
+def _auth_type(value: object) -> RestAuthType:
+    """Normalize a raw object to a supported REST auth type."""
+    if value in ("bearer", "basic", "api_key", "oauth2"):
+        return value
+    return "none"
+
+
+def _api_key_location(value: object) -> RestApiKeyLocation | None:
+    """Normalize a raw object to a supported API key location."""
+    if value in ("header", "query"):
+        return value
+    return None
+
+
+def _oauth2_grant_type(value: object) -> RestOAuth2GrantType | None:
+    """Normalize a raw object to a supported OAuth2 grant type."""
+    if value in ("client_credentials", "refresh_token"):
+        return value
+    return None
+
+
+def _pagination_type(value: object) -> RestPaginationType:
+    """Normalize a raw object to a supported pagination type."""
+    if value == "page_number":
+        return "page_number"
+    return "none"
+
+
+def _string_map(value: object) -> dict[str, str]:
+    """Return a string-to-string mapping from a JSON object."""
+    return {key: str(item) for key, item in object_or_empty(value).items()}
 
 
 class _SectionPanel(QWidget):
@@ -86,11 +133,11 @@ class RestConnectionEditor(QDialog):
         preset_name: str | None = None,
         dialogs: DialogService | None = None,
         icon_service: IconService | None = None,
-    ):
+    ) -> None:
         """Initializes the RestConnectionEditor dialog."""
         super().__init__(parent)
         self._preset_name = preset_name
-        self._dialogs = dialogs if dialogs else QtDialogService()
+        self._dialogs = dialogs or QtDialogService()
         self._icon_service = icon_service
 
         self.setWindowTitle(self.tr("REST API connections"))
@@ -103,7 +150,7 @@ class RestConnectionEditor(QDialog):
             self._icon_service.icons_updated.connect(self._update_icon)
 
         # Loaded in showEvent
-        self.data: dict[str, dict] = {}
+        self.data: dict[str, JsonObject] = {}
 
         # ==============================================================
         # Left: connection list
@@ -117,7 +164,7 @@ class RestConnectionEditor(QDialog):
 
         self.btn_scb_browser = QPushButton(self.tr("SCB query builder…"))
         self.btn_scb_browser.clicked.connect(self.open_scb_browser)
-        
+
         self.url_edit = QLineEdit()
 
         self.method_combo = QComboBox()
@@ -126,9 +173,7 @@ class RestConnectionEditor(QDialog):
         self.method_combo.currentIndexChanged.connect(self.on_method_changed)
 
         self.body_edit = QPlainTextEdit()
-        self.body_edit.setPlaceholderText(
-            '{\n  "query": [],\n  "response": { "format": "JSON" }\n}'
-        )
+        self.body_edit.setPlaceholderText('{\n  "query": [],\n  "response": { "format": "JSON" }\n}')
         self.body_edit.setMinimumHeight(120)
 
         self.response_path_edit = QLineEdit()
@@ -173,13 +218,13 @@ class RestConnectionEditor(QDialog):
         self.params_edit.textChanged.connect(self._update_action_buttons)
 
         # ==============================================================
-        # Layout (form)
+        # Layout form
         # ==============================================================
         wizard_panel = _SectionPanel(self.tr("Wizards"), checked=True)
         wizard_btns = QHBoxLayout()
         wizard_btns.addWidget(self.btn_scb_browser)
         wizard_panel.body_layout.addRow(wizard_btns)
-        general_panel = _SectionPanel(self.tr("General"), checked=True)        
+        general_panel = _SectionPanel(self.tr("General"), checked=True)
         general_panel.body_layout.addRow(self.tr("URL:"), self.url_edit)
         general_panel.body_layout.addRow(self.tr("Method:"), self.method_combo)
         general_panel.body_layout.addRow(self.tr("Response path:"), self.response_path_edit)
@@ -258,20 +303,18 @@ class RestConnectionEditor(QDialog):
     # ----------------------------------------------------------------------
     # Update icon
     # ----------------------------------------------------------------------
-    def _update_icon(self):
+    def _update_icon(self) -> None:
         """Updates the window icon using the IconService or a fallback path."""
-        if self._icon_service:
-            icon = self._icon_service.get("rest")
-        else:
-            icon = QIcon(":/icons/dark/themes/dark/rest.png")  # fallback
+        icon = self._icon_service.get("rest") if self._icon_service else QIcon(":/icons/dark/themes/dark/rest.png")
         self.setWindowIcon(icon)
 
     # ------------------------------------------------------------------
     # showEvent
     # ------------------------------------------------------------------
-    def showEvent(self, event):
+    @override
+    def showEvent(self, a0: QShowEvent | None) -> None:
         """Loads connection data and populates list."""
-        super().showEvent(event)
+        super().showEvent(a0)
 
         self.data = read_rest_connections()
 
@@ -295,7 +338,7 @@ class RestConnectionEditor(QDialog):
         if not is_post:
             self.body_edit.clear()
 
-    def on_auth_changed(self):
+    def on_auth_changed(self) -> None:
         """Handles the change in authentication type selection."""
         auth = self.auth_combo.currentData()
         self.auth_section.toggle.setChecked(auth != "none")
@@ -303,25 +346,25 @@ class RestConnectionEditor(QDialog):
         self.auth_widget.apply_visibility()
         self.on_oauth2_grant_changed()
 
-    def on_oauth2_grant_changed(self):
+    def on_oauth2_grant_changed(self) -> None:
         """Handles the change in OAuth2 grant type selection."""
         self.auth_widget.set_oauth_grant_visibility()
 
-    def on_pagination_changed(self):
+    def on_pagination_changed(self) -> None:
         """Handles the change in pagination mode selection."""
         is_page_number = self.pagination_combo.currentData() == "page_number"
         self.pagination_section.toggle.setChecked(is_page_number)
         self.pagination_section.body.setVisible(is_page_number)
         self.pagination_widget.apply_visibility()
 
-    def _apply_helper_result(self, result: dict[str, Any] | None) -> None:
+    def _apply_helper_result(self, result: dict[str, object] | None) -> None:
         """Apply an SCB helper result to the generic REST form."""
         if not result:
             return
 
-        self.url_edit.setText(result["url"])
+        self.url_edit.setText(string_value(result.get("url")))
         self.method_combo.setCurrentIndex(self.method_combo.findData("GET"))
-        self.params_edit.setPlainText(json.dumps(result["query_params"], indent=2))
+        self.params_edit.setPlainText(json.dumps(object_or_empty(result.get("query_params")), indent=2))
         self.params_edit.moveCursor(QTextCursor.MoveOperation.Start)
 
     def open_scb_browser(self) -> None:
@@ -331,7 +374,7 @@ class RestConnectionEditor(QDialog):
             return
         self._apply_helper_result(dialog.get_result())
 
-    def on_selection_changed(self, current):
+    def on_selection_changed(self, current: QListWidgetItem | None) -> None:
         """Loads the selected connection's data into the form fields."""
         if not current:
             self._clear_form_fields()
@@ -372,45 +415,43 @@ class RestConnectionEditor(QDialog):
             self.response_path_edit.clear()
             self.response_path_edit.setToolTip("")
 
-        headers = cfg.get("headers") or {}
-        self.headers_edit.setText(
-            json.dumps(headers) if headers else ""
-        )
+        headers = object_or_empty(cfg.get("headers"))
+        self.headers_edit.setText(json.dumps(headers) if headers else "")
 
-        params = cfg.get("query_params") or {}
+        params = object_or_empty(cfg.get("query_params"))
 
         text = json.dumps(params, indent=2) if params else ""
         self.params_edit.setPlainText(text)
         self.params_edit.moveCursor(QTextCursor.MoveOperation.Start)
 
-        auth = cfg.get("auth", {}).get("type", "none")
+        auth_cfg = object_or_empty(cfg.get("auth"))
+        auth = auth_cfg.get("type", "none")
         ix = self.auth_combo.findData(auth)
         if ix >= 0:
             self.auth_combo.setCurrentIndex(ix)
 
-        token = cfg.get("auth", {}).get("token", "")
-        self.token_edit.setText(token)
-        self.username_edit.setText(cfg.get("auth", {}).get("username", ""))
-        self.password_edit.setText(cfg.get("auth", {}).get("password", ""))
-        self.api_key_name_edit.setText(cfg.get("auth", {}).get("api_key_name", ""))
-        self.api_key_value_edit.setText(cfg.get("auth", {}).get("api_key_value", ""))
-        self.token_url_edit.setText(str(cfg.get("auth", {}).get("token_url", "")))
-        self.client_id_edit.setText(str(cfg.get("auth", {}).get("client_id", "")))
-        self.client_secret_edit.setText(str(cfg.get("auth", {}).get("client_secret", "")))
-        self.scope_edit.setText(str(cfg.get("auth", {}).get("scope", "")))
-        self.refresh_token_edit.setText(str(cfg.get("auth", {}).get("refresh_token", "")))
+        self.token_edit.setText(string_value(auth_cfg.get("token")))
+        self.username_edit.setText(string_value(auth_cfg.get("username")))
+        self.password_edit.setText(string_value(auth_cfg.get("password")))
+        self.api_key_name_edit.setText(string_value(auth_cfg.get("api_key_name")))
+        self.api_key_value_edit.setText(string_value(auth_cfg.get("api_key_value")))
+        self.token_url_edit.setText(string_value(auth_cfg.get("token_url")))
+        self.client_id_edit.setText(string_value(auth_cfg.get("client_id")))
+        self.client_secret_edit.setText(string_value(auth_cfg.get("client_secret")))
+        self.scope_edit.setText(string_value(auth_cfg.get("scope")))
+        self.refresh_token_edit.setText(string_value(auth_cfg.get("refresh_token")))
 
-        grant_type = cfg.get("auth", {}).get("grant_type", "client_credentials")
+        grant_type = auth_cfg.get("grant_type", "client_credentials")
         grant_ix = self.grant_type_combo.findData(grant_type)
         if grant_ix >= 0:
             self.grant_type_combo.setCurrentIndex(grant_ix)
 
-        api_key_location = cfg.get("auth", {}).get("api_key_location", "header")
+        api_key_location = auth_cfg.get("api_key_location", "header")
         api_key_ix = self.api_key_location_combo.findData(api_key_location)
         if api_key_ix >= 0:
             self.api_key_location_combo.setCurrentIndex(api_key_ix)
 
-        pagination = cfg.get("pagination") or {"type": "none"}
+        pagination = object_or_empty(cfg.get("pagination")) or {"type": "none"}
         pagination_type = pagination.get("type", "none")
         pagination_ix = self.pagination_combo.findData(pagination_type)
         if pagination_ix >= 0:
@@ -425,24 +466,27 @@ class RestConnectionEditor(QDialog):
         self._set_fields_enabled(True)
         self.on_pagination_changed()
         self._update_action_buttons()
+
     # ==================================================================
     # Helpers
     # ==================================================================
-    def _gather_form(self) -> dict:
+    def _gather_form(self) -> JsonObject:
         """Collect and validate the form into a persisted config shape."""
         raw_method = self.method_combo.currentData()
         method: Literal["GET", "POST"] = "POST" if raw_method == "POST" else "GET"
-        auth_type = self.auth_combo.currentData()
-        pagination_type = self.pagination_combo.currentData()
+        auth_type = _auth_type(self.auth_combo.currentData())
+        pagination_type = _pagination_type(self.pagination_combo.currentData())
+        auth_cfg: JsonObject = {"type": auth_type}
+        pagination_cfg: JsonObject = {"type": "none"}
 
-        cfg: dict[str, Any] = {
+        cfg: JsonObject = {
             "url": self.url_edit.text().strip(),
             "method": method,
             "response_path": self.response_path_edit.text().strip(),
             "headers": {},
             "query_params": {},
-            "auth": {"type": auth_type},
-            "pagination": {"type": "none"},
+            "auth": auth_cfg,
+            "pagination": pagination_cfg,
         }
 
         if cfg["method"] == "POST":
@@ -456,27 +500,27 @@ class RestConnectionEditor(QDialog):
                 cfg["json_body"] = None
 
         if auth_type == "bearer":
-            cfg["auth"]["token"] = self.token_edit.text().strip()
+            auth_cfg["token"] = self.token_edit.text().strip()
         elif auth_type == "basic":
-            cfg["auth"]["username"] = self.username_edit.text().strip()
-            cfg["auth"]["password"] = self.password_edit.text().strip()
+            auth_cfg["username"] = self.username_edit.text().strip()
+            auth_cfg["password"] = self.password_edit.text().strip()
         elif auth_type == "api_key":
-            cfg["auth"]["api_key_name"] = self.api_key_name_edit.text().strip()
-            cfg["auth"]["api_key_value"] = self.api_key_value_edit.text().strip()
-            cfg["auth"]["api_key_location"] = self.api_key_location_combo.currentData()
+            auth_cfg["api_key_name"] = self.api_key_name_edit.text().strip()
+            auth_cfg["api_key_value"] = self.api_key_value_edit.text().strip()
+            auth_cfg["api_key_location"] = _api_key_location(self.api_key_location_combo.currentData()) or "header"
         elif auth_type == "oauth2":
-            cfg["auth"]["token_url"] = self.token_url_edit.text().strip()
-            cfg["auth"]["client_id"] = self.client_id_edit.text().strip()
-            cfg["auth"]["client_secret"] = self.client_secret_edit.text().strip()
-            cfg["auth"]["grant_type"] = self.grant_type_combo.currentData()
-            cfg["auth"]["scope"] = self.scope_edit.text().strip()
-            cfg["auth"]["refresh_token"] = self.refresh_token_edit.text().strip()
+            auth_cfg["token_url"] = self.token_url_edit.text().strip()
+            auth_cfg["client_id"] = self.client_id_edit.text().strip()
+            auth_cfg["client_secret"] = self.client_secret_edit.text().strip()
+            auth_cfg["grant_type"] = _oauth2_grant_type(self.grant_type_combo.currentData()) or "client_credentials"
+            auth_cfg["scope"] = self.scope_edit.text().strip()
+            auth_cfg["refresh_token"] = self.refresh_token_edit.text().strip()
 
         if pagination_type == "page_number":
             page_param = self.page_param_edit.text().strip()
             if not page_param:
                 raise ValueError(self.tr("Page-number pagination requires a page parameter name"))
-            cfg["pagination"] = {
+            pagination_cfg = {
                 "type": "page_number",
                 "page_param": page_param,
                 "start_page": self._parse_positive_int(
@@ -485,21 +529,22 @@ class RestConnectionEditor(QDialog):
                     default=1,
                 ),
             }
+            cfg["pagination"] = pagination_cfg
             page_size_param = self.page_size_param_edit.text().strip()
             if page_size_param:
-                cfg["pagination"]["page_size_param"] = page_size_param
+                pagination_cfg["page_size_param"] = page_size_param
             page_size = self._parse_optional_positive_int(
                 self.page_size_edit.text(),
                 field_name=self.tr("Page size"),
             )
             if page_size is not None:
-                cfg["pagination"]["page_size"] = page_size
+                pagination_cfg["page_size"] = page_size
             max_pages = self._parse_optional_positive_int(
                 self.max_pages_edit.text(),
                 field_name=self.tr("Max pages"),
             )
             if max_pages is not None:
-                cfg["pagination"]["max_pages"] = max_pages
+                pagination_cfg["max_pages"] = max_pages
 
         headers_txt = self.headers_edit.text().strip()
         if headers_txt:
@@ -520,35 +565,35 @@ class RestConnectionEditor(QDialog):
     def _build_request_config(self, *, name: str) -> RestRequestConfig:
         """Build and validate a REST request config from the current form."""
         cfg_raw = self._gather_form()
-        auth_raw = cfg_raw.get("auth", {}) or {}
-        pagination_raw = cfg_raw.get("pagination") or {"type": "none"}
+        auth_raw = object_or_empty(cfg_raw.get("auth"))
+        pagination_raw = object_or_empty(cfg_raw.get("pagination")) or {"type": "none"}
 
         auth = RestAuthConfig(
-            type=auth_raw.get("type", "none"),
-            token=auth_raw.get("token"),
-            username=auth_raw.get("username"),
-            password=auth_raw.get("password"),
-            api_key_name=auth_raw.get("api_key_name"),
-            api_key_value=auth_raw.get("api_key_value"),
-            api_key_location=auth_raw.get("api_key_location"),
-            grant_type=auth_raw.get("grant_type"),
-            token_url=auth_raw.get("token_url"),
-            client_id=auth_raw.get("client_id"),
-            client_secret=auth_raw.get("client_secret"),
-            scope=auth_raw.get("scope"),
-            refresh_token=auth_raw.get("refresh_token"),
-            access_token=auth_raw.get("access_token"),
+            type=_auth_type(auth_raw.get("type", "none")),
+            token=optional_string(auth_raw.get("token")),
+            username=optional_string(auth_raw.get("username")),
+            password=optional_string(auth_raw.get("password")),
+            api_key_name=optional_string(auth_raw.get("api_key_name")),
+            api_key_value=optional_string(auth_raw.get("api_key_value")),
+            api_key_location=_api_key_location(auth_raw.get("api_key_location")),
+            grant_type=_oauth2_grant_type(auth_raw.get("grant_type")),
+            token_url=optional_string(auth_raw.get("token_url")),
+            client_id=optional_string(auth_raw.get("client_id")),
+            client_secret=optional_string(auth_raw.get("client_secret")),
+            scope=optional_string(auth_raw.get("scope")),
+            refresh_token=optional_string(auth_raw.get("refresh_token")),
+            access_token=optional_string(auth_raw.get("access_token")),
         )
 
         pagination = None
         if pagination_raw.get("type") == "page_number":
             pagination = RestPaginationConfig(
                 type="page_number",
-                page_param=pagination_raw.get("page_param"),
-                start_page=int(pagination_raw.get("start_page", 1)),
-                page_size_param=pagination_raw.get("page_size_param"),
-                page_size=pagination_raw.get("page_size"),
-                max_pages=pagination_raw.get("max_pages"),
+                page_param=optional_string(pagination_raw.get("page_param")),
+                start_page=int_value(pagination_raw.get("start_page"), 1),
+                page_size_param=optional_string(pagination_raw.get("page_size_param")),
+                page_size=int_value(pagination_raw.get("page_size"), 0) or None,
+                max_pages=int_value(pagination_raw.get("max_pages"), 0) or None,
             )
 
         raw_method = cfg_raw.get("method")
@@ -556,12 +601,12 @@ class RestConnectionEditor(QDialog):
 
         config = RestRequestConfig(
             name=name,
-            url=cfg_raw.get("url", ""),
+            url=string_value(cfg_raw.get("url")),
             method=method,
-            headers=cfg_raw.get("headers", {}),
-            query_params=cfg_raw.get("query_params", {}),
-            json_body=cfg_raw.get("json_body"),
-            response_path=cfg_raw.get("response_path") or None,
+            headers=_string_map(cfg_raw.get("headers")),
+            query_params=_string_map(cfg_raw.get("query_params")),
+            json_body=object_or_empty(cfg_raw.get("json_body")) or None,
+            response_path=optional_string(cfg_raw.get("response_path")) or None,
             auth=auth,
             pagination=pagination,
         )
@@ -573,14 +618,10 @@ class RestConnectionEditor(QDialog):
         try:
             value = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise ValueError(
-                self.tr("{field} must contain valid JSON.").format(field=field_name)
-            ) from exc
+            raise ValueError(self.tr("{field} must contain valid JSON.").format(field=field_name)) from exc
 
         if not isinstance(value, dict):
-            raise ValueError(
-                self.tr("{field} must be a JSON object.").format(field=field_name)
-            )
+            raise TypeError(self.tr("{field} must be a JSON object.").format(field=field_name))
 
         return value
 
@@ -880,25 +921,40 @@ class RestConnectionEditor(QDialog):
                     response_path=config.response_path,
                     limit=5,
                 )
-            except Exception as exc:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as exc:
                 self._dialogs.critical(
                     parent=self,
                     title=self.tr("Invalid response path"),
-                    text=self.tr(
-                        "The response path could not be applied to the API response.\n\n{error}"
-                    ).format(error=str(exc)),
+                    text=self.tr("The response path could not be applied to the API response.\n\n{error}").format(
+                        error=str(exc)
+                    ),
                 )
                 return
 
             rows, cols = fmt_shape(df)
-            column_summary = ", ".join(preview["columns"]) if preview["columns"] else self.tr("none")
-            sample_data = preview["sample"][:1]
+            preview_columns = preview.get("columns")
+            column_names = [str(column) for column in preview_columns] if isinstance(preview_columns, list) else []
+            column_summary = ", ".join(column_names) if column_names else self.tr("none")
+            preview_sample = preview.get("sample")
+            sample_data = preview_sample[:1] if isinstance(preview_sample, list) else []
             sample_text = ""
             if sample_data:
                 sample_text = "\n\nSample row: " + str(sample_data[0])
 
             text = self.tr(
-                "API test successful.\n\nReturned {rows} rows and {cols} columns.\nColumns: {columns}.\nTime: {sec:.2f}s{sample}"
+                "API test successful.\n\nReturned {rows} rows and {cols} columns.\n"
+                "Columns: {columns}.\nTime: {sec:.2f}s{sample}"
             ).format(
                 rows=rows,
                 cols=cols,
@@ -907,20 +963,27 @@ class RestConnectionEditor(QDialog):
                 sample=sample_text,
             )
 
-            self._dialogs.info(
-                parent=self,
-                title=self.tr("Test successful"),
-                text=text
-            )
+            self._dialogs.info(parent=self, title=self.tr("Test successful"), text=text)
 
-        except Exception as exc:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
             self._dialogs.critical(
                 parent=self,
                 title=self.tr("Test failed"),
                 text=str(exc),
             )
 
-    def delete_connection(self):
+    def delete_connection(self) -> None:
         """Deletes the currently selected connection after confirmation."""
         item = self.list_widget.currentItem()
         if not item:
@@ -941,7 +1004,7 @@ class RestConnectionEditor(QDialog):
         write_rest_connections(self.data)
         self.connections_changed.emit()
 
-    def save_changes(self):
+    def save_changes(self) -> None:
         """Saves the current form values to the selected connection entry."""
         item = self.list_widget.currentItem()
         if not item:
@@ -960,52 +1023,55 @@ class RestConnectionEditor(QDialog):
         )
         self.connections_changed.emit()
 
-    def _serialize_request_config(self, config: RestRequestConfig) -> dict[str, Any]:
+    def _serialize_request_config(self, config: RestRequestConfig) -> dict[str, object]:
         """Serialize a request config to the persisted dialog structure."""
-        payload: dict[str, Any] = {
+        auth_payload: JsonObject = {"type": config.auth.type if config.auth else "none"}
+        pagination_payload: JsonObject = {"type": "none"}
+        payload: JsonObject = {
             "url": config.url,
             "method": config.method,
             "response_path": config.response_path or "",
             "headers": dict(config.headers),
             "query_params": dict(config.query_params),
-            "auth": {"type": config.auth.type if config.auth else "none"},
-            "pagination": {"type": "none"},
+            "auth": auth_payload,
+            "pagination": pagination_payload,
         }
 
         if config.json_body is not None:
             payload["json_body"] = dict(config.json_body)
 
         if config.pagination is not None and config.pagination.type == "page_number":
-            payload["pagination"] = {
+            pagination_payload = {
                 "type": "page_number",
                 "page_param": config.pagination.page_param or "",
                 "start_page": config.pagination.start_page,
             }
+            payload["pagination"] = pagination_payload
             if config.pagination.page_size_param:
-                payload["pagination"]["page_size_param"] = config.pagination.page_size_param
+                pagination_payload["page_size_param"] = config.pagination.page_size_param
             if config.pagination.page_size is not None:
-                payload["pagination"]["page_size"] = config.pagination.page_size
+                pagination_payload["page_size"] = config.pagination.page_size
             if config.pagination.max_pages is not None:
-                payload["pagination"]["max_pages"] = config.pagination.max_pages
+                pagination_payload["max_pages"] = config.pagination.max_pages
 
         if config.auth is None:
             return payload
 
         if config.auth.type == "bearer" and config.auth.token:
-            payload["auth"]["token"] = config.auth.token
+            auth_payload["token"] = config.auth.token
         elif config.auth.type == "basic":
-            payload["auth"]["username"] = config.auth.username or ""
-            payload["auth"]["password"] = config.auth.password or ""
+            auth_payload["username"] = config.auth.username or ""
+            auth_payload["password"] = config.auth.password or ""
         elif config.auth.type == "api_key":
-            payload["auth"]["api_key_name"] = config.auth.api_key_name or ""
-            payload["auth"]["api_key_value"] = config.auth.api_key_value or ""
-            payload["auth"]["api_key_location"] = config.auth.api_key_location or "header"
+            auth_payload["api_key_name"] = config.auth.api_key_name or ""
+            auth_payload["api_key_value"] = config.auth.api_key_value or ""
+            auth_payload["api_key_location"] = config.auth.api_key_location or "header"
         elif config.auth.type == "oauth2":
-            payload["auth"]["token_url"] = config.auth.token_url or ""
-            payload["auth"]["client_id"] = config.auth.client_id or ""
-            payload["auth"]["client_secret"] = config.auth.client_secret or ""
-            payload["auth"]["grant_type"] = config.auth.grant_type or "client_credentials"
-            payload["auth"]["scope"] = config.auth.scope or ""
-            payload["auth"]["refresh_token"] = config.auth.refresh_token or ""
+            auth_payload["token_url"] = config.auth.token_url or ""
+            auth_payload["client_id"] = config.auth.client_id or ""
+            auth_payload["client_secret"] = config.auth.client_secret or ""
+            auth_payload["grant_type"] = config.auth.grant_type or "client_credentials"
+            auth_payload["scope"] = config.auth.scope or ""
+            auth_payload["refresh_token"] = config.auth.refresh_token or ""
 
         return payload

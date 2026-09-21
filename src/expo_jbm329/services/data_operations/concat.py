@@ -1,4 +1,5 @@
 """Dataframe concatenation services."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -16,6 +17,7 @@ class ConcatRequest:
         remove_duplicates: If True, behaves like SQL UNION (deduplicates).
             If False (default), behaves like SQL UNION ALL.
     """
+
     left: pd.DataFrame
     right: pd.DataFrame
     remove_duplicates: bool = False
@@ -51,7 +53,7 @@ def concat_dataframes(req: ConcatRequest) -> pd.DataFrame:
         [left, right],
         axis=0,
         ignore_index=True,
-        sort=False,    # preserve column order; don't sort automatically
+        sort=False,  # preserve column order; don't sort automatically
     )
 
     # --- Optional deduplicate ---

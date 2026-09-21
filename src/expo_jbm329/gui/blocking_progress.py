@@ -3,14 +3,24 @@
 This module provides a modal dialog that shows a progress bar and a status message,
 blocking the UI while a long-running job is in progress.
 """
+
 from __future__ import annotations
 
 import contextlib
+from typing import Protocol
 
 from PyQt6.QtCore import pyqtSlot
-from PyQt6.QtWidgets import QDialog, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout
+from PyQt6.QtWidgets import QDialog, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict
+
+
+class _CancellableJobManager(Protocol):
+    """Protocol for job managers that support cancellation."""
+
+    def cancel_job(self, job_id: str) -> bool:
+        """Cancel a job by id."""
+        ...
 
 
 class BlockingProgressDialog(QDialog):
@@ -24,7 +34,7 @@ class BlockingProgressDialog(QDialog):
         btn_cancel: The cancel button.
     """
 
-    def __init__(self, parent=None, title: str = "Arbetar...", started_msg: str = ""):
+    def __init__(self, parent: QWidget | None = None, title: str = "Arbetar...", started_msg: str = "") -> None:
         """Initialize the progress dialog.
 
         Args:
@@ -55,14 +65,13 @@ class BlockingProgressDialog(QDialog):
 
         apply_window_hints_strict(self, min_width=420, fixed_size=True, show_close_button=False)
 
-    @pyqtSlot()
-    def on_started(self):
+    @pyqtSlot()  # pyright: ignore[reportUntypedFunctionDecorator]
+    def on_started(self) -> None:
         """Handle the job start event."""
         # Can update text...
-        pass
 
-    @pyqtSlot(int)
-    def on_progress(self, v: int):
+    @pyqtSlot(int)  # pyright: ignore[reportUntypedFunctionDecorator]
+    def on_progress(self, v: int) -> None:
         """Update the progress bar value.
 
         Args:
@@ -73,21 +82,22 @@ class BlockingProgressDialog(QDialog):
             self.progress.setRange(0, 100)
         self.progress.setValue(v)
 
-    @pyqtSlot()
-    def on_finished(self):
+    @pyqtSlot()  # pyright: ignore[reportUntypedFunctionDecorator]
+    def on_finished(self) -> None:
         """Handle the job completion event."""
         self.accept()
 
-    @pyqtSlot(str)
-    def on_error(self, traceback_str: str):
+    @pyqtSlot(str)  # pyright: ignore[reportUntypedFunctionDecorator]
+    def on_error(self, traceback_str: str) -> None:
         """Handle the job error event.
 
         Args:
             traceback_str: The error traceback string.
         """
+        _ = traceback_str  # For logging or future use
         self.reject()
 
-    def set_started_msg(self, text: str):
+    def set_started_msg(self, text: str) -> None:
         """Set the initial status message.
 
         Args:
@@ -95,14 +105,15 @@ class BlockingProgressDialog(QDialog):
         """
         self.label.setText(text or "")
 
-    def attach_cancel(self, job_id: str, job_manager):
+    def attach_cancel(self, job_id: str, job_manager: _CancellableJobManager) -> None:
         """Connect the cancel button to the job manager.
 
         Args:
             job_id: The ID of the job to cancel.
             job_manager: The manager responsible for the job.
         """
-        def do_cancel():
+
+        def do_cancel() -> None:
             self.btn_cancel.setEnabled(False)
             self.btn_cancel.setText("Avbryter…")
 
@@ -110,6 +121,3 @@ class BlockingProgressDialog(QDialog):
                 job_manager.cancel_job(job_id)
 
         self.btn_cancel.clicked.connect(do_cancel)
-
-
-

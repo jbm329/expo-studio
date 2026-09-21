@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any
+import contextlib
+import importlib.util
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -19,27 +21,55 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.services.data_operations.dtypes import SemanticDType
-from expo_jbm329.services.data_profile.column_data_profile import ColumnProfile
 from expo_jbm329.services.data_profile.presentation import format_value_for_display
-from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 from expo_jbm329.services.data_profile.stat_defs import (
     STAT_DEFS,
     StatFormat,
 )
 from expo_jbm329.utils.format_utils import fmt_bytes, fmt_int, fmt_num, fmt_pct
 
-try:
-    from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.figure import Figure
-    _HAS_MPL = True
-except Exception:
-    _HAS_MPL = False
+STAT_VALUE_NAME_COUNT_RATIO_ITEMS = 3
+STAT_VALUE_NAME_COUNT_ITEMS = 2
+STAT_VALUE_PREVIEW_LIMIT = 5
+MAX_TOP_VALUE_LABEL_LENGTH = 18
+
+if TYPE_CHECKING:
+    from expo_jbm329.services.data_profile.column_data_profile import ColumnProfile
+    from expo_jbm329.services.data_profile.semantics import SeriesSemantics
+
+
+def _as_int(value: object, default: int = 0) -> int:
+    """Return value coerced to int for profile display."""
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        with contextlib.suppress(ValueError):
+            return int(value)
+    return default
+
+
+def _as_float(value: object, default: float = 0.0) -> float:
+    """Return value coerced to float for profile display."""
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        with contextlib.suppress(ValueError):
+            return float(value)
+    return default
+
+
+_has_mpl = (
+    importlib.util.find_spec("matplotlib.backends.backend_qtagg") is not None
+    and importlib.util.find_spec("matplotlib.figure") is not None
+)
 
 
 class ColumnPropertiesDialog(QDialog):
     """Dialog showing properties and statistics for a single column."""
 
-    def __init__(self, parent: QWidget, profile: ColumnProfile, semantics: SeriesSemantics | None):
+    def __init__(self, parent: QWidget, profile: ColumnProfile, semantics: SeriesSemantics | None) -> None:
         """Initialize the dialog.
 
         Args:
@@ -59,9 +89,7 @@ class ColumnPropertiesDialog(QDialog):
     # ------------------------------------------------------------------
 
     def _build(self) -> None:
-        self.setWindowTitle(
-            self.tr("Properties - {name}").format(name=self._profile.name)
-        )
+        self.setWindowTitle(self.tr("Properties - {name}").format(name=self._profile.name))
 
         self._build_header()
         self._build_stats_table()
@@ -87,20 +115,16 @@ class ColumnPropertiesDialog(QDialog):
 
         is_text_storage = is_object or is_string
 
-        is_mismatch = (
-            self._semantics is not None
-            and sem.value in ("int", "float", "datetime")
-            and is_text_storage
-        )
+        is_mismatch = self._semantics is not None and sem.value in ("int", "float", "datetime") and is_text_storage
 
         if is_mismatch:
-            text = self.tr(
-                "Type: <b>{sem}</b> ⚠ <span style='color:#666;'>({storage})</span>"
-            ).format(sem=semantic_label, storage=storage_label)
+            text = self.tr("Type: <b>{sem}</b> ⚠ <span style='color:#666;'>({storage})</span>").format(
+                sem=semantic_label, storage=storage_label
+            )
         else:
-            text = self.tr(
-                "Type: <b>{sem}</b> <span style='color:#666;'>({storage})</span>"
-            ).format(sem=semantic_label, storage=storage_label)
+            text = self.tr("Type: <b>{sem}</b> <span style='color:#666;'>({storage})</span>").format(
+                sem=semantic_label, storage=storage_label
+            )
 
         dtype_label = QLabel(text)
         dtype_label.setStyleSheet("font-size: 14px; margin-bottom: 4px;")
@@ -124,11 +148,11 @@ class ColumnPropertiesDialog(QDialog):
 
         stats = self._profile.stats
 
-        n = int(stats.get("count.n", 0))
-        missing = int(stats.get("missing.n", 0))
-        missing_pct = float(stats.get("missing.pct", 0.0))
-        unique = int(stats.get("unique.n", 0))
-        unique_pct = float(stats.get("unique.pct", 0.0))
+        n = _as_int(stats.get("count.n", 0))
+        missing = _as_int(stats.get("missing.n", 0))
+        missing_pct = _as_float(stats.get("missing.pct", 0.0))
+        unique = _as_int(stats.get("unique.n", 0))
+        unique_pct = _as_float(stats.get("unique.pct", 0.0))
 
         summary = QLabel(
             f"{self.tr('Rows')}: <b>{fmt_int(n)}</b> &nbsp;&nbsp; "
@@ -186,9 +210,7 @@ class ColumnPropertiesDialog(QDialog):
         table.resizeColumnsToContents()
         self._layout.addWidget(table)
 
-    def _format_stats_for_display(
-        self, stats: dict[str, Any]
-    ) -> list[tuple[str, str]]:
+    def _format_stats_for_display(self, stats: dict[str, object]) -> list[tuple[str, str]]:
         out: list[tuple[str, str]] = []
 
         for key, value in stats.items():
@@ -202,16 +224,16 @@ class ColumnPropertiesDialog(QDialog):
             label = self._tr_stat_label(key)
 
             if stat.fmt == StatFormat.INT:
-                text = fmt_int(value)
+                text = fmt_int(_as_int(value))
 
             elif stat.fmt == StatFormat.FLOAT:
-                text = fmt_num(value, sig=2)
+                text = fmt_num(_as_float(value), sig=2)
 
             elif stat.fmt == StatFormat.PERCENT:
-                text = fmt_pct(value)
+                text = fmt_pct(_as_float(value))
 
             elif stat.fmt == StatFormat.BYTES:
-                text = fmt_bytes(value)
+                text = fmt_bytes(_as_int(value))
 
             elif stat.fmt == StatFormat.VALUE:
                 text = format_value_for_display(value, self._semantics)
@@ -221,16 +243,14 @@ class ColumnPropertiesDialog(QDialog):
                     if value and isinstance(value[0], tuple):
                         parts = []
                         for item in value:
-                            if len(item) == 3:
-                                parts.append(
-                                    f"{item[0]} ({fmt_int(item[1])}, {fmt_pct(item[2])})"
-                                )
-                            elif len(item) == 2:
+                            if len(item) == STAT_VALUE_NAME_COUNT_RATIO_ITEMS:
+                                parts.append(f"{item[0]} ({fmt_int(item[1])}, {fmt_pct(item[2])})")
+                            elif len(item) == STAT_VALUE_NAME_COUNT_ITEMS:
                                 parts.append(f"{item[0]} ({fmt_int(item[1])})")
                         text = "; ".join(parts)
                     else:
-                        text = ", ".join(map(str, value[:5])) + (
-                            " …" if len(value) > 5 else ""
+                        text = ", ".join(map(str, value[:STAT_VALUE_PREVIEW_LIMIT])) + (
+                            " …" if len(value) > STAT_VALUE_PREVIEW_LIMIT else ""
                         )
                 else:
                     text = ""
@@ -246,11 +266,14 @@ class ColumnPropertiesDialog(QDialog):
     # ------------------------------------------------------------------
 
     def _build_plot(self) -> None:
-        if not _HAS_MPL:
+        if not _has_mpl:
             lbl = QLabel(self.tr("Plot not available (matplotlib missing)."))
             lbl.setStyleSheet("color: #666;")
             self._layout.addWidget(lbl)
             return
+
+        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+        from matplotlib.figure import Figure
 
         plot = self._profile.plot
         if not plot or not plot.kind:
@@ -261,15 +284,18 @@ class ColumnPropertiesDialog(QDialog):
 
         if plot.kind == "hist" and plot.bins and plot.counts:
             import numpy as np
-            ax.bar(plot.bins[:-1], plot.counts, width=np.diff(plot.bins),
-                   align="edge", edgecolor="#333")
+
+            ax.bar(plot.bins[:-1], plot.counts, width=np.diff(plot.bins), align="edge", edgecolor="#333")
             ax.set_title(self.tr("Histogram"))
 
         elif plot.kind == "bar_topn" and plot.labels and plot.counts:
             ax.bar(range(len(plot.labels)), plot.counts)
             ax.set_xticks(range(len(plot.labels)))
             ax.set_xticklabels(
-                [str(x)[:18] + ("…" if len(str(x)) > 18 else "") for x in plot.labels],
+                [
+                    str(x)[:MAX_TOP_VALUE_LABEL_LENGTH] + ("…" if len(str(x)) > MAX_TOP_VALUE_LABEL_LENGTH else "")
+                    for x in plot.labels
+                ],
                 rotation=30,
                 ha="right",
             )
@@ -292,7 +318,7 @@ class ColumnPropertiesDialog(QDialog):
             ax.set_title(self.tr("Distribution"))
 
         ax.grid(True, axis="y", alpha=0.25)
-        self._layout.addWidget(FigureCanvas(fig))
+        self._layout.addWidget(FigureCanvasQTAgg(fig))  # type: ignore[no-untyped-call]
 
     # ------------------------------------------------------------------
     # Buttons
@@ -311,7 +337,7 @@ class ColumnPropertiesDialog(QDialog):
 
         rows = self._format_stats_for_display(self._profile.stats)
 
-        def copy():
+        def copy() -> None:
             clipboard = QApplication.clipboard()
             if clipboard is not None:
                 clipboard.setText(to_markdown(rows))
@@ -371,7 +397,6 @@ class ColumnPropertiesDialog(QDialog):
             # Category
             "cat.count": self.tr("Categories (n)"),
             "cat.ordered": self.tr("Categories ordered"),
-
             # Notes
             "note.bytes": self.tr("Column contains binary data (bytes) and cannot be profiled."),
             # Samples

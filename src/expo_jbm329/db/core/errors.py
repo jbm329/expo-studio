@@ -6,6 +6,7 @@ user-facing messages (serving as keys for i18n). It also includes log
 throttling to prevent flooding the application logs with repeated
 identical errors.
 """
+
 from __future__ import annotations
 
 import re
@@ -13,12 +14,24 @@ import time
 
 from PyQt6.QtCore import QT_TRANSLATE_NOOP
 
-from expo_jbm329.utils.i18n_utils import tr
-
 from .models import SqlError
 
 _CODE_RE = re.compile(r"\((\d{3,6})\)")
 _last_err_ts: dict[str, float] = {}
+
+MSSQL_MISSING_PROC = 2812
+MSSQL_MISSING_OBJECT = 208
+MSSQL_SYNTAX_ERROR = 102
+MSSQL_INVALID_COLUMN = 207
+MSSQL_UNKNOWN_IDENTIFIER = 4104
+
+MYSQL_SYNTAX_ERROR = 1064
+MYSQL_MISSING_OBJECT = 1146
+MYSQL_UNKNOWN_COLUMN = 1054
+MYSQL_MISSING_PROC = 1305
+MYSQL_ACCESS_DENIED = 1045
+MYSQL_UNKNOWN_DATABASE = 1049
+MYSQL_LOCK_WAIT_TIMEOUT = 1205
 
 # --- i18n markers (pylupdate6-visible) -----------------------------
 # MSSQL
@@ -43,7 +56,8 @@ TR_UNKNOWN_COLUMN_MSSQL = QT_TRANSLATE_NOOP("DbErrors", "Unknown column.")
 TR_UNKNOWN_COLUMN_HINT_MSSQL = QT_TRANSLATE_NOOP("DbErrors", "Check spelling/alias or qualify the column.")
 TR_UNKNOWN_IDENTIFIER_MSSQL = QT_TRANSLATE_NOOP("DbErrors", "Unknown SQL identifier/alias.")
 TR_UNKNOWN_IDENTIFIER_HINT_MSSQL = QT_TRANSLATE_NOOP(
-    "DbErrors", "Check table/column alias and qualification (schema.table.column).")
+    "DbErrors", "Check table/column alias and qualification (schema.table.column)."
+)
 
 TR_UNKNOWN_FAILURE_MSSQL = QT_TRANSLATE_NOOP("DbErrors", "Unknown database failure.")
 TR_UNKNOWN_FAILURE_HINT_MSSQL = QT_TRANSLATE_NOOP("DbErrors", "Show details in log (DEBUG) or try again.")
@@ -95,16 +109,12 @@ TR_COULD_NOT_INIT_CONN = QT_TRANSLATE_NOOP("DbErrors", "Could not initialize con
 
 # Schema Cache / Autocomplete
 TR_PREPARING_AUTOCOMPLETE_BULK = QT_TRANSLATE_NOOP("DbErrors", "Preparing autocomplete (bulk)…")
-TR_BULK_FAILED_TRYING_BATCH = QT_TRANSLATE_NOOP("DbErrors", "Could not read schema in bulk – trying batch.")
+TR_BULK_FAILED_TRYING_BATCH = QT_TRANSLATE_NOOP("DbErrors", "Could not read schema in bulk - trying batch.")
 TR_AUTOCOMPLETE_READY_BULK = QT_TRANSLATE_NOOP("DbErrors", "Autocomplete for columns ready ({count} objects via bulk).")
 TR_AUTOCOMPLETE_READY = QT_TRANSLATE_NOOP("DbErrors", "Autocomplete for columns ready.")
 TR_PREPARING_AUTOCOMPLETE_BATCH = QT_TRANSLATE_NOOP("DbErrors", "Preparing autocomplete… {done}/{total}")
 TR_LOADING_SCHEMA = QT_TRANSLATE_NOOP("DbErrors", "Loading schema…")
 TR_SCHEMA_READY = QT_TRANSLATE_NOOP("DbErrors", "Schema ready.")
-
-
-def _tr(text: str) -> str:
-    return tr("DbErrors", text)
 
 
 def should_log(signature: str, window_s: float = 5.0) -> bool:
@@ -140,7 +150,18 @@ def extract_code(msg: str) -> int | None:
     if m:
         try:
             return int(m.group(1))
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return None
     return None
 
@@ -160,70 +181,39 @@ def classify_mssql(exc: Exception) -> SqlError:
     lo = raw.lower()
     code = extract_code(raw)
 
-    if "could not find stored procedure" in lo or code == 2812:
+    if "could not find stored procedure" in lo or code == MSSQL_MISSING_PROC:
         return SqlError(
             "missing_proc",
-            code or 2812,
+            code or MSSQL_MISSING_PROC,
             TR_STORED_PROCEDURE_NOT_EXISTS_MSSQL,
-            TR_STORED_PROCEDURE_NOT_EXISTS_HINT_MSSQL
+            TR_STORED_PROCEDURE_NOT_EXISTS_HINT_MSSQL,
         )
-    if "invalid object name" in lo or code == 208:
+    if "invalid object name" in lo or code == MSSQL_MISSING_OBJECT:
         return SqlError(
             "missing_object",
-            code or 208,
+            code or MSSQL_MISSING_OBJECT,
             TR_TABLE_OR_VIEW_NOT_EXISTS_MSSQL,
-            TR_TABLE_OR_VIEW_NOT_EXISTS_HINT_MSSQL
+            TR_TABLE_OR_VIEW_NOT_EXISTS_HINT_MSSQL,
         )
-    if "incorrect syntax near" in lo or code == 102:
-        return SqlError(
-            "syntax",
-            code or 102,
-            TR_SQL_SYNTAX_ERROR_MSSQL,
-            TR_SQL_SYNTAX_ERROR_HINT_MSSQL
-        )
+    if "incorrect syntax near" in lo or code == MSSQL_SYNTAX_ERROR:
+        return SqlError("syntax", code or MSSQL_SYNTAX_ERROR, TR_SQL_SYNTAX_ERROR_MSSQL, TR_SQL_SYNTAX_ERROR_HINT_MSSQL)
     if any(x in lo for x in ("permission", "is denied")) or code in (229, 262):
-        return SqlError(
-            "permission",
-            code or 229,
-            TR_PERMISSION_DENIED_MSSQL,
-            TR_PERMISSION_DENIED_HINT_MSSQL
-        )
+        return SqlError("permission", code or 229, TR_PERMISSION_DENIED_MSSQL, TR_PERMISSION_DENIED_HINT_MSSQL)
     if "timeout" in lo:
+        return SqlError("timeout", code, TR_TIMEOUT_MSSQL, TR_TIMEOUT_HINT_MSSQL)
+    if any(
+        x in lo for x in ("login failed", "transport-level", "server is not found", "could not open a connection")
+    ) or code in (18456, 4060, 53, 17, 11001):
+        return SqlError("connection", code, TR_CONNECTION_FAILED_MSSQL, TR_CONNECTION_FAILED_HINT_MSSQL)
+    if "invalid column name" in lo or code == MSSQL_INVALID_COLUMN:
+        return SqlError("syntax", code or MSSQL_INVALID_COLUMN, TR_UNKNOWN_COLUMN_MSSQL, TR_UNKNOWN_COLUMN_HINT_MSSQL)
+
+    if "multi-part identifier" in lo or code == MSSQL_UNKNOWN_IDENTIFIER:
         return SqlError(
-            "timeout",
-            code,
-            TR_TIMEOUT_MSSQL,
-            TR_TIMEOUT_HINT_MSSQL
-        )
-    if any(x in lo for x in ("login failed", "transport-level", "server is not found", "could not open a connection")) or code in (18456, 4060, 53, 17, 11001):
-        return SqlError(
-            "connection",
-            code,
-            TR_CONNECTION_FAILED_MSSQL,
-            TR_CONNECTION_FAILED_HINT_MSSQL
-        )
-    if "invalid column name" in lo or code == 207:
-        return SqlError(
-            "syntax",
-            code or 207,
-            TR_UNKNOWN_COLUMN_MSSQL,
-            TR_UNKNOWN_COLUMN_HINT_MSSQL
+            "syntax", code or MSSQL_UNKNOWN_IDENTIFIER, TR_UNKNOWN_IDENTIFIER_MSSQL, TR_UNKNOWN_IDENTIFIER_HINT_MSSQL
         )
 
-    if "multi-part identifier" in lo or code == 4104:
-        return SqlError(
-            "syntax",
-            code or 4104,
-            TR_UNKNOWN_IDENTIFIER_MSSQL,
-            TR_UNKNOWN_IDENTIFIER_HINT_MSSQL
-        )
-
-    return SqlError(
-        "unknown",
-        code,
-        TR_UNKNOWN_FAILURE_MSSQL,
-        TR_UNKNOWN_FAILURE_HINT_MSSQL
-    )
+    return SqlError("unknown", code, TR_UNKNOWN_FAILURE_MSSQL, TR_UNKNOWN_FAILURE_HINT_MSSQL)
 
 
 def classify_mysql(exc: Exception) -> SqlError:
@@ -249,83 +239,63 @@ def classify_mysql(exc: Exception) -> SqlError:
     code = extract_code(raw)
 
     # Parse error / syntax
-    if "you have an error in your sql syntax" in lo or code == 1064:
-        return SqlError(
-            "syntax",
-            code or 1064,
-            TR_SQL_SYNTAX_ERROR_MYSQL,
-            TR_SQL_SYNTAX_ERROR_HINT_MYSQL
-        )
+    if "you have an error in your sql syntax" in lo or code == MYSQL_SYNTAX_ERROR:
+        return SqlError("syntax", code or MYSQL_SYNTAX_ERROR, TR_SQL_SYNTAX_ERROR_MYSQL, TR_SQL_SYNTAX_ERROR_HINT_MYSQL)
 
     # Missing table/view
-    if "doesn't exist" in lo and ("table" in lo or code == 1146):
+    if "doesn't exist" in lo and ("table" in lo or code == MYSQL_MISSING_OBJECT):
         return SqlError(
             "missing_object",
-            code or 1146,
+            code or MYSQL_MISSING_OBJECT,
             TR_TABLE_OR_VIEW_NOT_EXISTS_MYSQL,
-            TR_TABLE_OR_VIEW_NOT_EXISTS_HINT_MYSQL
+            TR_TABLE_OR_VIEW_NOT_EXISTS_HINT_MYSQL,
         )
 
     # Unknown column
-    if "unknown column" in lo or code == 1054:
-        return SqlError(
-            "syntax",
-            code or 1054,
-            TR_UNKNOWN_COLUMN_MYSQL,
-            TR_UNKNOWN_COLUMN_HINT_MYSQL
-        )
+    if "unknown column" in lo or code == MYSQL_UNKNOWN_COLUMN:
+        return SqlError("syntax", code or MYSQL_UNKNOWN_COLUMN, TR_UNKNOWN_COLUMN_MYSQL, TR_UNKNOWN_COLUMN_HINT_MYSQL)
 
     # Missing procedure
-    if ("procedure" in lo and "does not exist" in lo) or code == 1305:
+    if ("procedure" in lo and "does not exist" in lo) or code == MYSQL_MISSING_PROC:
         return SqlError(
             "missing_proc",
-            code or 1305,
+            code or MYSQL_MISSING_PROC,
             TR_STORED_PROCEDURE_NOT_EXISTS_MYSQL,
-            TR_STORED_PROCEDURE_NOT_EXISTS_HINT_MYSQL
+            TR_STORED_PROCEDURE_NOT_EXISTS_HINT_MYSQL,
         )
 
     # Access denied
-    if "access denied" in lo or code == 1045:
+    if "access denied" in lo or code == MYSQL_ACCESS_DENIED:
         return SqlError(
             "permission",
-            code or 1045,
+            code or MYSQL_ACCESS_DENIED,
             TR_PERMISSION_DENIED_MSSQL,
-            TR_PERMISSION_DENIED_HINT_MSSQL
+            TR_PERMISSION_DENIED_HINT_MSSQL,
         )
 
     # Unknown database
-    if "unknown database" in lo or code == 1049:
+    if "unknown database" in lo or code == MYSQL_UNKNOWN_DATABASE:
         return SqlError(
             "connection",
-            code or 1049,
+            code or MYSQL_UNKNOWN_DATABASE,
             TR_UNKNOWN_DATABASE_MYSQL,
-            TR_UNKNOWN_DATABASE_HINT_MYSQL
+            TR_UNKNOWN_DATABASE_HINT_MYSQL,
         )
 
     # Lock wait timeout
-    if "lock wait timeout" in lo or code == 1205:
+    if "lock wait timeout" in lo or code == MYSQL_LOCK_WAIT_TIMEOUT:
         return SqlError(
             "timeout",
-            code or 1205,
+            code or MYSQL_LOCK_WAIT_TIMEOUT,
             TR_LOCK_WAIT_TIMEOUT_MYSQL,
-            TR_LOCK_WAIT_TIMEOUT_HINT_MYSQL
+            TR_LOCK_WAIT_TIMEOUT_HINT_MYSQL,
         )
 
     # Connection errors (generic)
     if "can't connect to" in lo or "connection refused" in lo:
-        return SqlError(
-            "connection",
-            code,
-            TR_CONNECTION_FAILED_MYSQL,
-            TR_CONNECTION_FAILED_HINT_MYSQL
-        )
+        return SqlError("connection", code, TR_CONNECTION_FAILED_MYSQL, TR_CONNECTION_FAILED_HINT_MYSQL)
 
-    return SqlError(
-        "unknown",
-        code,
-        TR_UNKNOWN_DATABASE_FAIL_MYSQL,
-        TR_UNKNOWN_DATABASE_FAIL_HINT_MYSQL
-    )
+    return SqlError("unknown", code, TR_UNKNOWN_DATABASE_FAIL_MYSQL, TR_UNKNOWN_DATABASE_FAIL_HINT_MYSQL)
 
 
 def classify_sqlite(exc: Exception) -> SqlError:
@@ -347,48 +317,20 @@ def classify_sqlite(exc: Exception) -> SqlError:
     lo = raw.lower()
 
     if "near" in lo and "syntax error" in lo:
-        return SqlError(
-            "syntax",
-            None,
-            TR_SQL_SYNTAX_ERROR_SQLITE,
-            TR_SQL_SYNTAX_ERROR_HINT_SQLITE
-        )
+        return SqlError("syntax", None, TR_SQL_SYNTAX_ERROR_SQLITE, TR_SQL_SYNTAX_ERROR_HINT_SQLITE)
 
     if "no such table" in lo:
         return SqlError(
-            "missing_object",
-            None,
-            TR_TABLE_OR_VIEW_NOT_EXISTS_SQLITE,
-            TR_TABLE_OR_VIEW_NOT_EXISTS_HINT_SQLITE
+            "missing_object", None, TR_TABLE_OR_VIEW_NOT_EXISTS_SQLITE, TR_TABLE_OR_VIEW_NOT_EXISTS_HINT_SQLITE
         )
 
     if "no such column" in lo:
-        return SqlError(
-            "syntax",
-            None,
-            TR_UNKNOWN_COLUMN_SQLITE,
-            TR_UNKNOWN_COLUMN_HINT_SQLITE
-        )
+        return SqlError("syntax", None, TR_UNKNOWN_COLUMN_SQLITE, TR_UNKNOWN_COLUMN_HINT_SQLITE)
 
     if "database is locked" in lo or "database locked" in lo:
-        return SqlError(
-            "timeout",
-            None,
-            TR_LOCK_WAIT_TIMEOUT_SQLITE,
-            TR_LOCK_WAIT_TIMEOUT_HINT_SQLITE
-        )
+        return SqlError("timeout", None, TR_LOCK_WAIT_TIMEOUT_SQLITE, TR_LOCK_WAIT_TIMEOUT_HINT_SQLITE)
 
     if "unable to open database file" in lo:
-        return SqlError(
-            "connection",
-            None,
-            TR_UNKNOWN_DATABASE_SQLITE,
-            TR_UNKNOWN_DATABASE_HINT_SQLITE
-        )
+        return SqlError("connection", None, TR_UNKNOWN_DATABASE_SQLITE, TR_UNKNOWN_DATABASE_HINT_SQLITE)
 
-    return SqlError(
-        "unknown",
-        None,
-        TR_UNKNOWN_FAILURE_SQLITE,
-        TR_UNKNOWN_FAILURE_HINT_SQLITE
-    )
+    return SqlError("unknown", None, TR_UNKNOWN_FAILURE_SQLITE, TR_UNKNOWN_FAILURE_HINT_SQLITE)

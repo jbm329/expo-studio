@@ -1,8 +1,9 @@
 """REST data source normalization helpers."""
+
 from __future__ import annotations
 
 import itertools
-from typing import Any
+from operator import itemgetter
 
 import pandas as pd
 
@@ -12,7 +13,7 @@ class RestNormalizeError(RuntimeError):
 
 
 def normalize_json_to_df(
-    payload: Any,
+    payload: object,
     *,
     response_path: str | None = None,
 ) -> pd.DataFrame:
@@ -57,14 +58,16 @@ def normalize_json_to_df(
     if isinstance(data, dict):
         return pd.json_normalize(data)
 
-    raise RestNormalizeError("Unsupported JSON structure")
+    msg = "Unsupported JSON structure"
+    raise RestNormalizeError(msg)
 
 
 # ---------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------
 
-def _extract_records(payload: Any, response_path: str | None) -> Any:
+
+def _extract_records(payload: object, response_path: str | None) -> object:
     """Extract the record container from a JSON payload.
 
     If response_path is None:
@@ -87,9 +90,8 @@ def _extract_records(payload: Any, response_path: str | None) -> Any:
     if response_path is None:
         if isinstance(payload, (list, dict)):
             return payload
-        raise RestNormalizeError(
-            f"Unsupported JSON root type: {type(payload).__name__}"
-        )
+        msg = f"Unsupported JSON root type: {type(payload).__name__}"
+        raise RestNormalizeError(msg)
 
     current = payload
 
@@ -97,9 +99,8 @@ def _extract_records(payload: Any, response_path: str | None) -> Any:
         # dict access
         if isinstance(current, dict):
             if part not in current:
-                raise RestNormalizeError(
-                    f"Invalid response_path '{response_path}': '{part}' not found"
-                )
+                msg = f"Invalid response_path '{response_path}': '{part}' not found"
+                raise RestNormalizeError(msg)
             current = current[part]
             continue
 
@@ -108,33 +109,27 @@ def _extract_records(payload: Any, response_path: str | None) -> Any:
             try:
                 idx = int(part)
             except ValueError as err:
-                raise RestNormalizeError(
-                    f"Invalid response_path '{response_path}': '{part}' is not a valid list index"
-                ) from err
+                msg = f"Invalid response_path '{response_path}': '{part}' is not a valid list index"
+                raise RestNormalizeError(msg) from err
 
             try:
                 current = current[idx]
             except IndexError as err:
-                raise RestNormalizeError(
-                    f"Invalid response_path '{response_path}': list index {idx} out of range"
-                ) from err
+                msg = f"Invalid response_path '{response_path}': list index {idx} out of range"
+                raise RestNormalizeError(msg) from err
             continue
 
-        raise RestNormalizeError(
-            f"Invalid response_path '{response_path}': "
-            f"cannot traverse object of type {type(current).__name__}"
-        )
+        msg = f"Invalid response_path '{response_path}': cannot traverse object of type {type(current).__name__}"
+        raise RestNormalizeError(msg)
 
     if not isinstance(current, (list, dict)):
-        raise RestNormalizeError(
-            f"Extracted object at '{response_path}' is not list or dict "
-            f"(got {type(current).__name__})"
-        )
+        msg = f"Extracted object at '{response_path}' is not list or dict (got {type(current).__name__})"
+        raise RestNormalizeError(msg)
 
     return current
 
 
-def _normalize_jsonstat2(payload: dict) -> pd.DataFrame:
+def _normalize_jsonstat2(payload: dict[str, object]) -> pd.DataFrame:
     """Normalize JSON-stat v2 dataset into a flat DataFrame.
 
     This handles PxWebApi v2 responses with outputFormat=json-stat2.
@@ -144,11 +139,14 @@ def _normalize_jsonstat2(payload: dict) -> pd.DataFrame:
     dimensions = payload.get("dimension")
 
     if not isinstance(ids, list):
-        raise RestNormalizeError("JSON-stat v2: missing 'id' array")
+        msg = "JSON-stat v2: missing 'id' array"
+        raise RestNormalizeError(msg)
     if not isinstance(values, list):
-        raise RestNormalizeError("JSON-stat v2: missing 'value' array")
+        msg = "JSON-stat v2: missing 'value' array"
+        raise RestNormalizeError(msg)
     if not isinstance(dimensions, dict):
-        raise RestNormalizeError("JSON-stat v2: missing 'dimension' object")
+        msg = "JSON-stat v2: missing 'dimension' object"
+        raise RestNormalizeError(msg)
 
     # Build ordered dimension value lists. Prefer the user-facing labels provided by
     # the SCB/PxWeb API over the raw technical keys when they are present.
@@ -176,7 +174,8 @@ def _normalize_jsonstat2(payload: dict) -> pd.DataFrame:
             labels = {str(code): str(text) for code, text in label_map.items()}
 
         # index: code -> position
-        codes = sorted(index.keys(), key=lambda k: index[k])
+        index_items = sorted(index.items(), key=itemgetter(1))
+        codes = [str(code) for code, _position in index_items]
         display_name = _display_dimension_name(dim_id, dim)
         unique_name = display_name
         counter = 2
@@ -191,16 +190,17 @@ def _normalize_jsonstat2(payload: dict) -> pd.DataFrame:
         dim_labels_by_code[dim_id] = labels
 
     if not dim_names or not dim_values:
-        raise RestNormalizeError("JSON-stat v2: no dimensions found")
+        msg = "JSON-stat v2: no dimensions found"
+        raise RestNormalizeError(msg)
 
-    records: list[dict] = []
+    records: list[dict[str, object]] = []
 
     for coords, val in zip(
         itertools.product(*dim_values),
         values,
         strict=True,
     ):
-        rec = {}
+        rec: dict[str, object] = {}
         for raw_dim_name, display_name, code in zip(dim_names, display_dim_names, coords, strict=True):
             label = dim_labels_by_code.get(raw_dim_name, {}).get(code)
             rec[display_name] = label if label is not None else code
@@ -210,7 +210,7 @@ def _normalize_jsonstat2(payload: dict) -> pd.DataFrame:
     return pd.DataFrame(records)
 
 
-def _display_dimension_name(dim_id: str, dim_config: dict[str, Any]) -> str:
+def _display_dimension_name(dim_id: str, dim_config: dict[str, object]) -> str:
     """Return the user-visible name for a JSON-stat dimension."""
     raw_name = str(dim_id).strip()
     label = str(dim_config.get("label") or "").strip()

@@ -4,12 +4,12 @@ This module provides a dialog for configuring the join operation between two
 datasets (tabs) in the workbench, allowing the user to select join keys,
 columns to include, and the join type.
 """
+
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QStandardItemModel
@@ -31,6 +31,9 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 @dataclass
@@ -132,13 +135,9 @@ class JoinDialog(QDialog):
                 self._right.cb_dataset.setCurrentText(tab)
                 break
 
-        self._left.cb_dataset.currentTextChanged.connect(
-            lambda: self._on_dataset_changed(self._left, self._right)
-        )
+        self._left.cb_dataset.currentTextChanged.connect(lambda: self._on_dataset_changed(self._left, self._right))
 
-        self._right.cb_dataset.currentTextChanged.connect(
-            lambda: self._on_dataset_changed(self._right, self._left)
-        )
+        self._right.cb_dataset.currentTextChanged.connect(lambda: self._on_dataset_changed(self._right, self._left))
 
         self._left.cb_key.currentTextChanged.connect(self._on_left_key_changed)
 
@@ -247,7 +246,7 @@ class JoinDialog(QDialog):
     # Populate left/right based on selected dataset
     # ---------------------------------------------------------
 
-    def _populate_side(self, side: _SideWidgets):
+    def _populate_side(self, side: _SideWidgets) -> None:
         tab = side.cb_dataset.currentText()
         cols = sorted(self._get_cols[tab])
 
@@ -275,7 +274,7 @@ class JoinDialog(QDialog):
 
     # ---------------------------------------------------------
     # ComboBox change handlers
-    # --------------------------------------------------------- 
+    # ---------------------------------------------------------
     def _on_dataset_changed(self, changed: _SideWidgets, other: _SideWidgets) -> None:
         """Handle dataset change for either left or right side."""
         # 1. Populate the changed side
@@ -298,7 +297,7 @@ class JoinDialog(QDialog):
         self._on_left_key_changed(self._left.cb_key.currentText())
 
     # noinspection PyMethodMayBeStatic
-    def _set_combobox_item_enabled(self, cb: QComboBox, index: int, enabled: bool, tooltip: str = ""):
+    def _set_combobox_item_enabled(self, cb: QComboBox, index: int, enabled: bool, tooltip: str = "") -> None:
         model = cb.model()
         if isinstance(model, QStandardItemModel):
             item = model.item(index)
@@ -306,7 +305,7 @@ class JoinDialog(QDialog):
                 item.setEnabled(enabled)
                 item.setToolTip(tooltip)
 
-    def _on_left_key_changed(self, col: str):
+    def _on_left_key_changed(self, col: str) -> None:
         """Handle change of the left join key.
 
         Updates the availability of keys in the right dataset based on
@@ -379,7 +378,7 @@ class JoinDialog(QDialog):
     # Toggle select all columns
     # ---------------------------------------------------------
 
-    def _toggle_all(self, side: _SideWidgets):
+    def _toggle_all(self, side: _SideWidgets) -> None:
         total = side.columns_list.count()
         checked = sum(
             1
@@ -398,7 +397,7 @@ class JoinDialog(QDialog):
         self._update_select_all(side)
 
     # noinspection PyMethodMayBeStatic
-    def _update_select_all(self, side: _SideWidgets):
+    def _update_select_all(self, side: _SideWidgets) -> None:
         total = side.columns_list.count()
         checked = sum(
             1
@@ -476,9 +475,8 @@ class JoinDialog(QDialog):
 
         # 1. Exact name match
         common = set(left_cols) & set(right_cols)
-        
-        for col in sorted(common):
 
+        for col in sorted(common):
             right_candidates = self._joinable_map.get((left_tab, col, right_tab), set())
             if col in right_candidates:
                 self._left.cb_key.setCurrentText(col)

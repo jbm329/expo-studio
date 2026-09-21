@@ -13,6 +13,7 @@ class MySqlDialect(DialectProtocol):
     Note:
         In MySQL the concept of "schema" is equivalent to "database".
     """
+
     name = "mysql"  # We'll reuse for MariaDB as well via registry
 
     # Detect if a query already has a LIMIT clause (supports "LIMIT n" or "LIMIT offset, n")
@@ -64,7 +65,7 @@ class MySqlDialect(DialectProtocol):
             True if the query starts with 'SELECT' or 'WITH', False otherwise.
         """
         s = sql.lstrip().lower()
-        return s.startswith("select") or s.startswith("with")
+        return s.startswith(("select", "with"))
 
     def _already_limited(self, sql: str) -> bool:
         """Check if a SQL query already contains a LIMIT clause.
@@ -87,7 +88,7 @@ class MySqlDialect(DialectProtocol):
         Returns:
             The modified SQL query with the LIMIT clause applied.
         """
-        if not sql or not isinstance(n, int) or n <= 0:
+        if not sql or n <= 0:
             return sql
         sql0 = self._strip_semicolon(sql)
         if not self._is_likely_select(sql0) or self._already_limited(sql0):
@@ -133,7 +134,7 @@ class MySqlDialect(DialectProtocol):
         """
         # Strong filter by provided schema (database) + table
         return (
-            "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE "
+            "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE "  # noqa: S608 - deferred SQL construction refactor
             f"FROM INFORMATION_SCHEMA.COLUMNS "
             f"WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{object_name}' "
             "ORDER BY ORDINAL_POSITION"

@@ -15,17 +15,24 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, cast
 
-import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QTableView, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
-from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    import pandas as pd
+    from PyQt6.QtWidgets import QTableView, QWidget
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.services.data_profile.semantics import SeriesSemantics
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
 
 
 class ResultTabHeaderFilterActions:
@@ -42,37 +49,25 @@ class ResultTabHeaderFilterActions:
     TR_FILTER_EQUAL_OPERATION = QT_TR_NOOP("filter equal")
     TR_FILTER_TITLE_EQUAL_TO = QT_TR_NOOP("Filter column equal to")
     TR_FILTERING_COLUMN_EQUAL_TO = QT_TR_NOOP("Filtering column '{column_name}' equal to '{value}'")
-    TR_SELECT_FILTER_VALUE_IN_COLUMN = QT_TR_NOOP(
-        "Select value for '{column_name}':"
-    )
-    TR_FILTERED_ROWS_WHERE_COLUMN_IS_VALUE = QT_TR_NOOP(
-        "Filtered rows where '{column_name}' = '{value}'"
-    )
+    TR_SELECT_FILTER_VALUE_IN_COLUMN = QT_TR_NOOP("Select value for '{column_name}':")
+    TR_FILTERED_ROWS_WHERE_COLUMN_IS_VALUE = QT_TR_NOOP("Filtered rows where '{column_name}' = '{value}'")
     TR_FILTER_CONTAINS_OPERATION = QT_TR_NOOP("filter contains")
     TR_FILTER_TITLE_CONTAINS = QT_TR_NOOP("Filter column contains")
     TR_FILTERING_COLUMN_CONTAINS = QT_TR_NOOP("Filtering column '{column_name}' contains '{value}'")
-    TR_SELECT_FILTER_SEARCH_STRING_IN_COLUMN = QT_TR_NOOP(
-        "Select search string for '{column_name}':"
-    )
+    TR_SELECT_FILTER_SEARCH_STRING_IN_COLUMN = QT_TR_NOOP("Select search string for '{column_name}':")
     TR_CASE_SENSITIVITY = QT_TR_NOOP("Case sensitivity")
     TR_MATCH_CASE = QT_TR_NOOP("Match case?")
     TR_CASE_SENSITIVE = QT_TR_NOOP("Yes (case sensitive)")
     TR_CASE_INSENSITIVE = QT_TR_NOOP("No (case insensitive)")
-    TR_FILTERED_ROWS_WHERE_COLUMN_CONTAINS_VALUE = QT_TR_NOOP(
-        "Filtered rows where '{column_name}' contains '{value}'"
-    )
+    TR_FILTERED_ROWS_WHERE_COLUMN_CONTAINS_VALUE = QT_TR_NOOP("Filtered rows where '{column_name}' contains '{value}'")
 
     # NA
     TR_FILTER_NA_OPERATION = QT_TR_NOOP("filter NA")
     TR_FILTERING_COLUMN_IS_NA = QT_TR_NOOP("Filtering column '{column_name}' is empty/NA")
-    TR_FILTERED_ROWS_WHERE_COLUMN_IS_NA = QT_TR_NOOP(
-        "Filtered rows where '{column_name}' is empty/NA"
-    )
+    TR_FILTERED_ROWS_WHERE_COLUMN_IS_NA = QT_TR_NOOP("Filtered rows where '{column_name}' is empty/NA")
     TR_FILTER_NOT_NA_OPERATION = QT_TR_NOOP("filter not NA")
     TR_FILTERING_COLUMN_IS_NOT_NA = QT_TR_NOOP("Filtering column '{column_name}' is not empty/NA")
-    TR_FILTERED_ROWS_WHERE_COLUMN_IS_NOT_NA = QT_TR_NOOP(
-        "Filtered rows where '{column_name}' is not empty/NA"
-    )
+    TR_FILTERED_ROWS_WHERE_COLUMN_IS_NOT_NA = QT_TR_NOOP("Filtered rows where '{column_name}' is not empty/NA")
 
     # Compare
     TR_FILTER_COMPARE_OPERATION = QT_TR_NOOP("filter compare")
@@ -81,12 +76,8 @@ class ResultTabHeaderFilterActions:
     TR_OPERATOR_FOR_COLUMN = QT_TR_NOOP("Operator for column '{column_name}':")
     TR_VALUE_FOR_COLUMN = QT_TR_NOOP("Value for column '{column_name}':")
     TR_NOT_SUPPORTED_DATATYPE_TITLE = QT_TR_NOOP("Datatype not supported")
-    TR_NOT_SUPPORTED_DATATYPE_TEXT = QT_TR_NOOP(
-        "The column '{column_name}' does not support range filtering"
-    )
-    TR_FILTERED_ROWS_WHERE_COLUMN_COMPARED_TO = QT_TR_NOOP(
-        "Filtered rows where '{column_name}' {operator} '{value}'"
-    )
+    TR_NOT_SUPPORTED_DATATYPE_TEXT = QT_TR_NOOP("The column '{column_name}' does not support range filtering")
+    TR_FILTERED_ROWS_WHERE_COLUMN_COMPARED_TO = QT_TR_NOOP("Filtered rows where '{column_name}' {operator} '{value}'")
 
     # Between
     TR_FILTER_BETWEEN_OPERATION = QT_TR_NOOP("filter between")
@@ -97,9 +88,7 @@ class ResultTabHeaderFilterActions:
     TR_START_LIMIT_FOR_COLUMN = QT_TR_NOOP("Start for '{column_name}':")
     TR_END_LIMIT_FOR_COLUMN = QT_TR_NOOP("End for '{column_name}':")
     TR_INVALID_INTERVAL_TITLE = QT_TR_NOOP("Invalid interval")
-    TR_INVALID_INTERVAL_TEXT = QT_TR_NOOP(
-        "Upper limit has to be greater than or equal to lower limit."
-    )
+    TR_INVALID_INTERVAL_TEXT = QT_TR_NOOP("Upper limit has to be greater than or equal to lower limit.")
     TR_BOTH_LIMITS = QT_TR_NOOP("both limits")
     TR_ONLY_LOWER_LIMIT = QT_TR_NOOP("only lower limit")
     TR_ONLY_UPPER_LIMIT = QT_TR_NOOP("only upper limit")
@@ -117,11 +106,11 @@ class ResultTabHeaderFilterActions:
         return tr("ResultTabHeaderFilterActions", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabHeaderFilterActions", text, **kwargs)
 
     # ------------------------------------------------------------------
-    # Init (DI)
+    # Init
     # ------------------------------------------------------------------
     __slots__ = (
         "_apply_new_dataframe",
@@ -130,26 +119,29 @@ class ResultTabHeaderFilterActions:
         "_get_series_semantics",
         "_logger",
         "_parent",
-        "_resolve_df_col_series"
+        "_resolve_df_col_series",
     )
 
     def __init__(
         self,
         *,
         parent: QWidget,
-        dialogs: DialogService,
-        logger: logging.Logger,
+        dialogs: DialogService | None,
+        logger: logging.Logger | None,
         async_ops: AsyncOperationController,
         resolve_df_col_series: Callable[
             [QTableView, int],
             tuple[bool, pd.DataFrame | None, str | None, pd.Series | None],
         ],
-        get_series_semantics: Callable[[QTableView, int], SeriesSemantics | None,],
+        get_series_semantics: Callable[
+            [QTableView, int],
+            SeriesSemantics | None,
+        ],
         apply_new_dataframe: Callable[
             [QTableView, pd.DataFrame, str],
             None,
         ],
-    ):
+    ) -> None:
         """Initialize the ResultTabHeaderFilterActions with dependencies.
 
         Args:
@@ -186,13 +178,13 @@ class ResultTabHeaderFilterActions:
         )
 
     # ==================================================================
-    # Filter: equals
+    # Filter equals
     # ==================================================================
 
     def filter_equals(self, view: QTableView, column: int) -> None:
         """Filter rows where column equals a user-provided value."""
         ok, df, col, _ = self._resolve_df_col_series(view, column)
-        
+
         if not ok or df is None or col is None:
             return
 
@@ -213,7 +205,7 @@ class ResultTabHeaderFilterActions:
 
         # Defaults
         case_sensitive = True
-        value = None
+        value: object | None = None
 
         try:
             # --------------------------------------------------
@@ -289,7 +281,18 @@ class ResultTabHeaderFilterActions:
                 value = opts["value"]
                 case_sensitive = opts["case_sensitive"]
 
-        except Exception as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._fail(e)
             return
 
@@ -300,7 +303,12 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_equals
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -313,7 +321,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -350,7 +358,7 @@ class ResultTabHeaderFilterActions:
         )
 
     # ==================================================================
-    # Filter: contains
+    # Filter contains
     # ==================================================================
 
     def filter_contains(self, view: QTableView, column: int) -> None:
@@ -370,11 +378,11 @@ class ResultTabHeaderFilterActions:
                 self.TR_SELECT_FILTER_SEARCH_STRING_IN_COLUMN,
                 column_name=safe_col,
             ),
-            default_value=""
+            default_value="",
         )
         if not opts["ok"] or not opts["value"]:
             return
-        
+
         value = opts["value"]
         case_sensitive = opts["case_sensitive"]
 
@@ -385,7 +393,12 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_contains
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -398,7 +411,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -435,15 +448,12 @@ class ResultTabHeaderFilterActions:
         )
 
     # ==================================================================
-    # Filter: isna / notna
+    # Filter isna / notna
     # ==================================================================
 
     def filter_isna(self, view: QTableView, column: int) -> None:
         """Filter rows where column is NA."""
-        ok, df, col, _ = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -457,7 +467,12 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_isna
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -465,7 +480,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -497,11 +512,8 @@ class ResultTabHeaderFilterActions:
 
     def filter_notna(self, view: QTableView, column: int) -> None:
         """Filter rows where column is not NA."""
-        ok, df, col, _ = self._resolve_df_col_series(
-            view,
-            column
-        )
-        
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
+
         if not ok or df is None or col is None:
             return
 
@@ -514,8 +526,13 @@ class ResultTabHeaderFilterActions:
         )
 
         from expo_jbm329.services.data_operations.filter import filter_notna
-        
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -523,7 +540,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -554,15 +571,12 @@ class ResultTabHeaderFilterActions:
         )
 
     # ==================================================================
-    # Filter: compare
+    # Filter compare
     # ==================================================================
 
     def filter_compare(self, view: QTableView, column: int) -> None:
         """Filter rows using a comparison operator."""
-        ok, df, col, s = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, s = self._resolve_df_col_series(view, column)
 
         if not ok or df is None or col is None or s is None:
             return
@@ -580,7 +594,7 @@ class ResultTabHeaderFilterActions:
                     column_name=safe_col,
                 ),
             )
-            return                
+            return
 
         try:
             result = self._dialogs.prompt_compare(
@@ -602,10 +616,23 @@ class ResultTabHeaderFilterActions:
             if not result.get("ok", False):
                 return
 
-            op = result["op"]
-            value = result["value"]            
+            op = result.get("op")
+            if not isinstance(op, str):
+                return
+            value = result.get("value")
 
-        except Exception as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._fail(e)
             return
 
@@ -616,7 +643,12 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_compare
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -627,9 +659,9 @@ class ResultTabHeaderFilterActions:
         value_str = format_value_for_display(value, sem)
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
-                return            
+                return
 
             self._apply_new_dataframe(
                 view,
@@ -656,10 +688,7 @@ class ResultTabHeaderFilterActions:
             work=_work,
             apply_result=_apply_result,
             busy_message=self._tr_fmt(
-                self.TR_FILTERING_COLUMN_COMPARED_TO,
-                column_name=safe_col, 
-                operator=op,
-                value=value_str
+                self.TR_FILTERING_COLUMN_COMPARED_TO, column_name=safe_col, operator=op, value=value_str
             ),
             scope=f"filter_compare:{safe_col}",
             operation_name=self._tr(self.TR_FILTER_COMPARE_OPERATION),
@@ -667,15 +696,12 @@ class ResultTabHeaderFilterActions:
         )
 
     # ==================================================================
-    # Filter: between
+    # Filter between
     # ==================================================================
 
     def filter_between(self, view: QTableView, column: int) -> None:
         """Filter rows where column values fall within a range."""
-        ok, df, col, s = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, s = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None or s is None:
             return
 
@@ -692,7 +718,7 @@ class ResultTabHeaderFilterActions:
                     column_name=safe_col,
                 ),
             )
-            return               
+            return
 
         try:
             result = self._dialogs.prompt_between(
@@ -715,11 +741,11 @@ class ResultTabHeaderFilterActions:
             if not result.get("ok", False):
                 return
 
-            low = result["low"]
-            high = result["high"]
+            low = result.get("low")
+            high = result.get("high")
             inclusive = result.get("inclusive", "both")
 
-            if low is not None and high is not None and high < low:
+            if low is not None and high is not None and cast("Any", high) < cast("Any", low):
                 self._dialogs.warn(
                     parent=self._parent,
                     title=self._tr(self.TR_INVALID_INTERVAL_TITLE),
@@ -727,7 +753,18 @@ class ResultTabHeaderFilterActions:
                 )
                 return
 
-        except Exception as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._fail(e)
             return
 
@@ -738,7 +775,12 @@ class ResultTabHeaderFilterActions:
 
         from expo_jbm329.services.data_operations.filter import filter_between
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -758,7 +800,7 @@ class ResultTabHeaderFilterActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -790,10 +832,7 @@ class ResultTabHeaderFilterActions:
             work=_work,
             apply_result=_apply_result,
             busy_message=self._tr_fmt(
-                self.TR_FILTERING_COLUMN_BETWEEN,
-                column_name=safe_col,
-                low=low_str,
-                high=high_str
+                self.TR_FILTERING_COLUMN_BETWEEN, column_name=safe_col, low=low_str, high=high_str
             ),
             scope=f"filter_between:{safe_col}",
             operation_name=self._tr(self.TR_FILTER_BETWEEN_OPERATION),

@@ -1,16 +1,24 @@
 # tests/stubs.py
 from __future__ import annotations
+
 from pathlib import Path
 from types import SimpleNamespace
+from typing import TYPE_CHECKING
+
 from PyQt6.QtCore import QObject, pyqtSignal
-import pandas as pd
+
 from expo_jbm329.gui.dialogs.service.dialog_service import ProfileChoice
 from expo_jbm329.gui.dialogs.service.null_dialog_service import NullDialogService
 from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import NullFileDialogService
 from expo_jbm329.services.job_result import JobResult
 
+if TYPE_CHECKING:
+    import pandas as pd
+
+
 class DummyResult:
     """Mock for SqlResult from execute_sql_safe."""
+
     def __init__(self, data=None, ok=True, rows=0, elapsed_s=0.0, error=None):
         self.data = data
         self.ok = ok
@@ -18,32 +26,43 @@ class DummyResult:
         self.elapsed_s = elapsed_s
         self.error = error
 
+
 class DummyWorker:
     """Simulates the Worker object returned by JobManager.run."""
+
     def __init__(self):
         self.result = DummySignal()
         self.error = DummySignal()
 
+
 class DummySignal:
     """Simple signal replacement collecting callbacks."""
+
     def __init__(self):
         self.callbacks = []
+
     def connect(self, cb):
         self.callbacks.append(cb)
+
     def emit(self, value):
         for cb in self.callbacks:
             cb(value)
 
+
 class DummyJobManager:
     """Captures run() calls and returns a DummyWorker."""
+
     def __init__(self):
         self.last_run = None
         self.worker = DummyWorker()
+
     def run(self, parent, fn, *args, **kwargs):
         self.last_run = {"parent": parent, "fn": fn, "args": args, "kwargs": kwargs}
         return self.worker
+
     def get_job_id(self):
         return "job_123"
+
 
 class DummyAsyncOps:
     def __init__(self):
@@ -58,12 +77,18 @@ class DummyAsyncOps:
             on_result(result if isinstance(result, JobResult) else JobResult(ok=True, elapsed=0.1, path=None))
         return result
 
+
 class DummyResults:
     """
     results: has current_df(), tabs.count(), collect_all_tabs_data(), display_dataframe().
     """
-    def __init__(self, df: pd.DataFrame | None = None, tabs_count: int = 1,
-                 data_all: list[tuple[pd.DataFrame, str]] | None = None):
+
+    def __init__(
+        self,
+        df: pd.DataFrame | None = None,
+        tabs_count: int = 1,
+        data_all: list[tuple[pd.DataFrame, str]] | None = None,
+    ):
         self._df = df
         self.tabs = SimpleNamespace(count=lambda: tabs_count)
         self._data_all = data_all or []
@@ -85,12 +110,14 @@ class DummyResults:
     def display_dataframe(self, df: pd.DataFrame):
         self.display_calls.append(df)
 
+
 class DummyFileJobs:
     """
     Minimal service: build_export_filename, coerce_save_suffix, format_to_behaviour, run,
     classify_file, open_data_file, open_sql_file, open_html_file, rename_file
     Capture: last_run (args/kwargs)
     """
+
     def __init__(self, behaviour_map: dict[str, str] | None = None):
         self.behaviour_map = behaviour_map or {
             ".csv": "nonblocking",
@@ -147,23 +174,37 @@ class DummyFileJobs:
         self.last_run = kwargs
         self.run_calls += 1
 
+
 class DummyDataIO:
     """
     Minimal data_io with methods called by ExportController.
     """
-    def export_df_csv(self, *a, **k): return JobResult(ok=True, elapsed=0.1, path=k.get("path") or (a[1] if len(a) > 1 else None))
-    def export_df_excel(self, *a, **k): return JobResult(ok=True, elapsed=0.1, path=k.get("path") or (a[1] if len(a) > 1 else None))
-    def export_df_datafile(self, *a, **k): return JobResult(ok=True, elapsed=0.1, path=k.get("path") or (a[1] if len(a) > 1 else None))
-    def export_df_profile(self, *a, **k): return JobResult(ok=True, elapsed=0.1, path=k.get("path") or (a[1] if len(a) > 1 else None))
-    def export_dfs_profile(self, *a, **k): return JobResult(ok=True, elapsed=0.1, path=k.get("path") or (a[1] if len(a) > 1 else None))
+
+    def export_df_csv(self, *a, **k):
+        return JobResult(ok=True, elapsed=0.1, path=k.get("path") or (a[1] if len(a) > 1 else None))
+
+    def export_df_excel(self, *a, **k):
+        return JobResult(ok=True, elapsed=0.1, path=k.get("path") or (a[1] if len(a) > 1 else None))
+
+    def export_df_datafile(self, *a, **k):
+        return JobResult(ok=True, elapsed=0.1, path=k.get("path") or (a[1] if len(a) > 1 else None))
+
+    def export_df_profile(self, *a, **k):
+        return JobResult(ok=True, elapsed=0.1, path=k.get("path") or (a[1] if len(a) > 1 else None))
+
+    def export_dfs_profile(self, *a, **k):
+        return JobResult(ok=True, elapsed=0.1, path=k.get("path") or (a[1] if len(a) > 1 else None))
+
 
 class DummyStatusLogger:
     """Captures set_status calls."""
+
     def __init__(self):
         self.messages: list[tuple[str, int | None]] = []
-    
+
     def set_status(self, text: str, timeout: int | None = None):
         self.messages.append((text, timeout))
+
 
 class DummyIconService:
     def __init__(self):
@@ -172,8 +213,10 @@ class DummyIconService:
     def get(self, name: str):
         if name not in self.icons:
             from PyQt6.QtGui import QIcon
+
             self.icons[name] = QIcon()
         return self.icons[name]
+
 
 class DummyDialogState:
     def __init__(self, directory: str = "C:/tmp") -> None:
@@ -188,8 +231,10 @@ class DummyDialogState:
         self.calls.append(("set_dir", key, value))
         self.directory = value
 
+
 def make_dialog_services(profile_choice=ProfileChoice.ACTIVE):
     return NullDialogService(default_profile_choice=profile_choice), NullFileDialogService()
+
 
 class DummyThemeService(QObject):
     theme_changed = pyqtSignal(str)

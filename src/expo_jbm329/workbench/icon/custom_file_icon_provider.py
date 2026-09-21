@@ -4,30 +4,37 @@ This module provides a QFileIconProvider implementation that resolves icons
 through the application's IconService so file and folder icons can follow the
 current GUI theme at runtime.
 """
+
 from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING, override
 
-from PyQt6.QtCore import QFileInfo
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QFileIconProvider, QStyle
 
+if TYPE_CHECKING:
+    from PyQt6.QtCore import QFileInfo
+
+    from expo_jbm329.workbench.icon.icon_service import IconService
+
 
 def _normalize_ext(ext: str) -> str:
-    """Normalize file extensions: ensure leading dot, lower-case."""
+    """Normalize file extensions to lower-case with a leading dot."""
     if not ext:
         return ""
-    s = ext.strip().lower()
-    if not s:
+    normalized = ext.strip().lower()
+    if not normalized:
         return ""
-    if not s.startswith("."):
-        s = "." + s
-    return s
+    if not normalized.startswith("."):
+        normalized = f".{normalized}"
+    return normalized
 
 
 class CustomFileIconProvider(QFileIconProvider):
     """Provide themed icons for files, folders, and symbolic links."""
+
     __slots__ = (
         "_file_icon",
         "_folder_icon",
@@ -35,9 +42,10 @@ class CustomFileIconProvider(QFileIconProvider):
         "_icons_by_ext",
         "_icons_by_multi_ext",
         "_link_icon",
+        "_logger",
     )
 
-    def __init__(self, icon_service=None, logger: logging.Logger | None = None) -> None:
+    def __init__(self, icon_service: IconService | None = None, logger: logging.Logger | None = None) -> None:
         """Initialize the icon provider.
 
         Args:
@@ -46,7 +54,7 @@ class CustomFileIconProvider(QFileIconProvider):
         """
         super().__init__()
         self._icon_service = icon_service
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._logger = logger or logging.getLogger("applogger.ui")
 
         # These are set via update_theme()
         self._folder_icon = QIcon()
@@ -57,15 +65,15 @@ class CustomFileIconProvider(QFileIconProvider):
         self._icons_by_ext: dict[str, QIcon] = {}
         self._icons_by_multi_ext: dict[str, QIcon] = {}
 
-        # Optional early initialization
-        # if icon_service is not None:
-        #     self.update_theme()
-
     # ------------------------------------------------------------------ #
     # Theme update API (called by SqlEditor)
     # ------------------------------------------------------------------ #
     def update_theme(self) -> None:
         """Refresh all icons according to the current GUI theme."""
+        if self._icon_service is None:
+            self._logger.warning("CustomFileIconProvider: no icon service configured; using fallback icons.")
+            return
+
         theme = self._icon_service.current_theme()
         # Base icons
         self._folder_icon = self._icon_service.get("folder")
@@ -122,42 +130,42 @@ class CustomFileIconProvider(QFileIconProvider):
     # ------------------------------------------------------------------ #
     # QFileIconProvider override
     # ------------------------------------------------------------------ #
-    def icon(self, type_or_info) -> QIcon:  # type: ignore[override]
+    @override
+    def icon(  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        info: QFileIconProvider.IconType | QFileInfo,
+    ) -> QIcon:
         """Return an icon for a file type or QFileInfo instance.
 
         Args:
-            type_or_info: QFileIconProvider.IconType or QFileInfo input.
+            info: QFileIconProvider.IconType or QFileInfo input.
 
         Returns:
             The themed QIcon for the given item.
         """
         try:
             # Case 1: system type (Folder/File)
-            if isinstance(type_or_info, QFileIconProvider.IconType):
-                return self._icon_for_type(type_or_info)
+            if isinstance(info, QFileIconProvider.IconType):
+                return self._icon_for_type(info)
 
             # Case 2: QFileInfo
-            if isinstance(type_or_info, QFileInfo):
-                info: QFileInfo = type_or_info
+            file_info: QFileInfo = info
 
-                if info.isDir():
-                    return self._folder_icon
+            if file_info.isDir():
+                return self._folder_icon
 
-                if info.isSymLink():
-                    return self._link_icon if not info.isDir() else self._folder_icon
+            if file_info.isSymLink():
+                return self._link_icon if not file_info.isDir() else self._folder_icon
 
-                # Determine file icon by extension
-                name = info.fileName() or ""
+            # Determine file icon by extension
+            name = file_info.fileName() or ""
 
-                icon = self._icon_for_name(name)
+            icon = self._icon_for_name(name)
 
-                return icon or self._file_icon
-
-            # Fallback
-            return super().icon(type_or_info)
-
-        except Exception:
-            return super().icon(type_or_info)
+        except Exception:  # noqa: BLE001
+            return super().icon(info)
+        else:
+            return icon or self._file_icon
 
     # ------------------------------------------------------------------ #
     # Internals
@@ -176,7 +184,10 @@ class CustomFileIconProvider(QFileIconProvider):
         if t == QFileIconProvider.IconType.File:
             return self._file_icon
         # Rare fallback
-        return QApplication.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon)
+        style = QApplication.style()
+        if style is None:
+            return QIcon()
+        return style.standardIcon(QStyle.StandardPixmap.SP_FileIcon)
 
     def _icon_for_name(self, file_name: str) -> QIcon | None:
         """Resolve an icon using file-name extension rules.
@@ -198,7 +209,7 @@ class CustomFileIconProvider(QFileIconProvider):
                 return self._icons_by_multi_ext[key]
 
         # Single extension
-        ext = Path(file_name).suffix.lower()
+        ext = _normalize_ext(Path(file_name).suffix)
         if ext in self._icons_by_ext:
             return self._icons_by_ext[ext]
 

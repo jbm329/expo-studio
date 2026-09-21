@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from PyQt6.QtCore import QLocale
 
 from expo_jbm329.utils.format_utils import (
     fmt_bytes,
@@ -58,7 +59,13 @@ def test_fmt_num():
 
 def test_fmt_int():
     result = fmt_int(1234)
-    assert any(s in result for s in ["1 234", "1\u00A0234", "1,234", "1.234"])
+    assert any(s in result for s in ["1 234", "1\u00a0234", "1,234", "1.234"])
+
+
+def test_fmt_int_groups_when_qt_locale_omits_grouping(monkeypatch):
+    monkeypatch.setattr(QLocale, "system", QLocale.c)
+
+    assert fmt_int(1234) == "1,234"
 
 
 def test_fmt_shape():
@@ -71,7 +78,7 @@ def test_fmt_date():
     dt = datetime.date(2023, 10, 5)
     assert fmt_date(dt) == "2023-10-05"
 
-    dttm = datetime.datetime(2023, 10, 5, 12, 30)
+    dttm = datetime.datetime(2023, 10, 5, 12, 30)  # noqa: DTZ001 - deterministic naive formatting fixture
     assert fmt_date(dttm) == "2023-10-05"
     assert fmt_date(None) == ""
 

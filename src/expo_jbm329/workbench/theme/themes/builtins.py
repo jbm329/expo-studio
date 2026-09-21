@@ -1,5 +1,7 @@
 # expo_jbm329/workbench/theme/themes/builtins.py
 
+"""Built-in highlighter themes shipped with Expo Studio."""
+
 from __future__ import annotations
 
 from PyQt6.QtGui import QColor
@@ -28,5 +30,3 @@ DARK_THEME = Theme(
     kw_bold=True,
     func_bold=False,
 )
-
-

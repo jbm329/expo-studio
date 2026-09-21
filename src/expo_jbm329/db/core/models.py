@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
-import pandas as pd
+if TYPE_CHECKING:
+    import pandas as pd
 
-EngineKey = Literal["mssql", "postgresql", "mysql", "sqlite", "oracle"]
+EngineKey = Literal["mssql", "postgresql", "mysql", "mariadb", "sqlite", "oracle"]
 ProtocolKey = Literal["odbc", "psycopg2", "pymysql", "mysqlconnector", "pytds", "pymssql", "sqlite"]
 
 
@@ -54,7 +55,7 @@ class ConnectionConfig:
     password: str | None = None
     odbc_connect: str | None = None
     dsn: str | None = None
-    extra: dict | None = None
+    extra: dict[str, object] | None = None
 
 
 @dataclass
@@ -68,11 +69,13 @@ class SqlError:
         hint: English hint (key for i18n).
     """
 
-    category: str  # 'syntax'|'missing_proc'|'missing_object'|'permission'|'timeout'|'connection'|'unsupported'|'unknown'
+    category: (
+        str  # 'syntax'|'missing_proc'|'missing_object'|'permission'|'timeout'|'connection'|'unsupported'|'unknown'
+    )
     code: int | None  # vendor-specific error code (e.g., 2812)
     message: str  # English message for logging and i18n key
     hint: str | None = None  # English hint for logging and i18n key
-    
+
 
 @dataclass
 class SqlResult:
@@ -95,4 +98,3 @@ class SqlResult:
     rows: int = 0
     elapsed_s: float = 0.0
     sql_signature: str | None = None
-

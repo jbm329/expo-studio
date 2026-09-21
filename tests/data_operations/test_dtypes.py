@@ -104,28 +104,24 @@ def test_is_numeric_series_bool_only_when_included():
 
 
 def test_get_numeric_columns_excludes_booleans_by_default():
-    df = pd.DataFrame(
-        {
-            "txt": ["a", "b"],
-            "num": [1, 2],
-            "flt": [1.0, 2.0],
-            "flag": [True, False],
-            "cat": pd.Categorical(["x", "y"]),
-        }
-    )
+    df = pd.DataFrame({
+        "txt": ["a", "b"],
+        "num": [1, 2],
+        "flt": [1.0, 2.0],
+        "flag": [True, False],
+        "cat": pd.Categorical(["x", "y"]),
+    })
 
     assert get_numeric_columns(df) == ["num", "flt"]
 
 
 def test_get_numeric_columns_can_include_booleans():
-    df = pd.DataFrame(
-        {
-            "txt": ["a", "b"],
-            "num": [1, 2],
-            "flt": [1.0, 2.0],
-            "flag": [True, False],
-            "cat": pd.Categorical(["x", "y"]),
-        }
-    )
+    df = pd.DataFrame({
+        "txt": ["a", "b"],
+        "num": [1, 2],
+        "flt": [1.0, 2.0],
+        "flag": [True, False],
+        "cat": pd.Categorical(["x", "y"]),
+    })
 
     assert get_numeric_columns(df, include_bool=True) == ["num", "flt", "flag"]

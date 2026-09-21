@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+from typing import Any
+
 from expo_jbm329.services.rest.client import fetch_json_pages
 from expo_jbm329.services.rest.models import RestPaginationConfig, RestRequestConfig
 
 
-def test_fetch_json_pages_uses_page_number_parameters(monkeypatch):
+def test_fetch_json_pages_uses_page_number_parameters(monkeypatch: Any) -> None:
     seen_pages: list[dict[str, str]] = []
 
-    def fake_fetch_json(config, **kwargs):
+    def fake_fetch_json(config: RestRequestConfig, **kwargs: object) -> tuple[dict[str, object], float]:
         seen_pages.append(dict(config.query_params))
         page = int(config.query_params["page"])
         if page <= 2:
@@ -43,10 +45,10 @@ def test_fetch_json_pages_uses_page_number_parameters(monkeypatch):
     assert elapsed > 0
 
 
-def test_fetch_json_pages_stops_on_cancellation(monkeypatch):
+def test_fetch_json_pages_stops_on_cancellation(monkeypatch: Any) -> None:
     call_count = 0
 
-    def fake_fetch_json(config, **kwargs):
+    def fake_fetch_json(config: RestRequestConfig, **kwargs: object) -> tuple[dict[str, object], float]:
         return {"items": [{"page": 1}]}, 0.1
 
     def cancel_cb() -> bool:
@@ -74,7 +76,18 @@ def test_fetch_json_pages_stops_on_cancellation(monkeypatch):
             ),
             cancel_cb=cancel_cb,
         )
-    except Exception as exc:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as exc:
         assert str(exc) == "Request cancelled"
     else:
-        raise AssertionError("Expected cancellation")
+        raise AssertionError("Expected cancellation")  # noqa: TRY003

@@ -9,8 +9,7 @@ from expo_jbm329.workbench.controllers.status_bar_controller import StatusBarCon
 def make_ctrl():
     parent = QWidget()
     status_bar = QStatusBar(parent)
-    ctrl = StatusBarController(parent, status_bar)
-    return ctrl
+    return StatusBarController(parent, status_bar)
 
 
 def test_init_baseline():

@@ -11,10 +11,11 @@ from __future__ import annotations
 import contextlib
 import json
 import uuid
+from typing import TYPE_CHECKING, override
 
 import pyodbc
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QShowEvent
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -25,17 +26,21 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QListWidget,
+    QListWidgetItem,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
 from expo_jbm329.app.settings.config_store import read_connections, write_connections
+from expo_jbm329.app.settings.json_types import JsonObject, string_value
 from expo_jbm329.db.base import execute_sql_safe
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.i18n_utils import tr
-from expo_jbm329.workbench.icon.icon_service import IconService
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.icon.icon_service import IconService
 
 # =============================================================================
 # Constants
@@ -49,7 +54,7 @@ _DEFAULT_PORTS = {
 
 _DEFAULT_PROTOCOL = {
     "mssql": "odbc",
-    "postgresql": "psycopg2",     # framtida stöd
+    "postgresql": "psycopg2",  # framtida stöd
     "mysql": "pymysql",
     "mariadb": "pymysql",
     "sqlite": "sqlite",
@@ -61,6 +66,7 @@ _DEFAULT_PROTOCOL = {
 # =============================================================================
 # Helper functions
 # =============================================================================
+
 
 def _default_port_for(db_type: str) -> int | None:
     """Returns the default port number for a given database type.
@@ -101,6 +107,7 @@ def _infer_db_type_from_driver_text(driver_text: str) -> str:
 # Dialog Class
 # =============================================================================
 
+
 class ConnectionEditor(QDialog):
     """Enterprise-level connection workbench.
 
@@ -119,11 +126,11 @@ class ConnectionEditor(QDialog):
     # ----------------------------------------------------------------------
 
     def __init__(
-            self,
-            parent: QWidget | None = None,
-            dialogs: DialogService | None = None,
-            icon_service: IconService | None = None
-    ):
+        self,
+        parent: QWidget | None = None,
+        dialogs: DialogService | None = None,
+        icon_service: IconService | None = None,
+    ) -> None:
         """Initializes the ConnectionEditor dialog.
 
         Args:
@@ -133,7 +140,7 @@ class ConnectionEditor(QDialog):
         """
         super().__init__(parent)
 
-        self._dialogs = dialogs if dialogs else QtDialogService()
+        self._dialogs = dialogs or QtDialogService()
         self._icon_service = icon_service
 
         # --- Dialog setup ---
@@ -147,7 +154,7 @@ class ConnectionEditor(QDialog):
             self._icon_service.icons_updated.connect(self._update_icon)
 
         # Data loaded later in showEvent
-        self.data: dict[str, dict] = {}
+        self.data: dict[str, JsonObject] = {}
 
         # ==================================================================
         # Left list: connection names
@@ -180,7 +187,18 @@ class ConnectionEditor(QDialog):
         try:
             for d in pyodbc.drivers():
                 self.system_drivers.addItem(d)
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self.system_drivers.addItem(self.tr("(No ODBC-drivers found)"))
 
         self.driver_edit = QLineEdit()
@@ -272,33 +290,34 @@ class ConnectionEditor(QDialog):
     # ----------------------------------------------------------------------
     # Update icon
     # ----------------------------------------------------------------------
-    def _update_icon(self):
+    def _update_icon(self) -> None:
         """Updates the window icon using the IconService or a fallback path."""
         if self._icon_service:
             icon = self._icon_service.get("connection")
         else:
             icon = QIcon(":/icons/dark/themes/dark/connection.png")  # fallback
         self.setWindowIcon(icon)
-    # ----------------------------------------------------------------------
-    # showEvent — only positioning + loading data
-    # ----------------------------------------------------------------------
 
-    def showEvent(self, event):
+    # ----------------------------------------------------------------------
+    # showEvent - only positioning + loading data
+    # ----------------------------------------------------------------------
+    @override
+    def showEvent(self, a0: QShowEvent | None) -> None:
         """Load connection data and populate list.
 
         Centers the dialog on its parent and reads existing connections from storage.
 
         Args:
-            event: The QShowEvent.
+            a0: The QShowEvent.
         """
-        super().showEvent(event)
+        super().showEvent(a0)
 
         # Center window on parent
-        if self.parent():
-            pg = self.parent().geometry()
+        parent = self.parent()
+        if isinstance(parent, QWidget):
+            pg = parent.geometry()
             dg = self.geometry()
-            self.move(pg.x() + (pg.width() - dg.width()) // 2,
-                      pg.y() + (pg.height() - dg.height()) // 2)
+            self.move(pg.x() + (pg.width() - dg.width()) // 2, pg.y() + (pg.height() - dg.height()) // 2)
 
         # Load connections
         self.data = read_connections()
@@ -315,24 +334,31 @@ class ConnectionEditor(QDialog):
     # Field enable/disable logic
     # =============================================================================
 
-    def _set_fields_enabled(self, enabled: bool):
+    def _set_fields_enabled(self, enabled: bool) -> None:
         """Enables or disables all input fields in the connection form.
 
         Args:
             enabled: Whether to enable (True) or disable (False) the fields.
         """
         for w in (
-            self.db_type_combo, self.protocol_combo,
-            self.system_drivers, self.driver_edit, self.btn_add_driver,
-            self.server_edit, self.port_edit, self.db_edit,
+            self.db_type_combo,
+            self.protocol_combo,
+            self.system_drivers,
+            self.driver_edit,
+            self.btn_add_driver,
+            self.server_edit,
+            self.port_edit,
+            self.db_edit,
             self.sqlite_browse_btn,
-            self.user_edit, self.password_edit,
+            self.user_edit,
+            self.password_edit,
             self.trusted_checkbox,
-            self.dsn_edit, self.extra_edit,
+            self.dsn_edit,
+            self.extra_edit,
         ):
             w.setEnabled(enabled)
 
-    def on_protocol_changed(self):
+    def on_protocol_changed(self) -> None:
         """Updates the enabled state of UI fields based on the selected protocol."""
         protocol = self.protocol_combo.currentText()
 
@@ -370,7 +396,7 @@ class ConnectionEditor(QDialog):
             self.trusted_checkbox.setEnabled(False)
             self.sqlite_browse_btn.setEnabled(False)
 
-    def on_db_type_changed(self):
+    def on_db_type_changed(self) -> None:
         """Updates default protocol and port when the database type changes."""
         db_type = self.db_type_combo.currentData()
 
@@ -393,7 +419,7 @@ class ConnectionEditor(QDialog):
     # Handlers
     # =============================================================================
 
-    def on_add_driver(self):
+    def on_add_driver(self) -> None:
         """Applies the selected system ODBC driver to the driver edit field."""
         self.driver_edit.setText(self.system_drivers.currentText())
 
@@ -403,7 +429,7 @@ class ConnectionEditor(QDialog):
                 self.db_type_combo.setCurrentIndex(i)
                 break
 
-    def on_trusted_changed(self):
+    def on_trusted_changed(self) -> None:
         """Enables or disables credential fields if Trusted Connection is toggled."""
         if self.trusted_checkbox.isChecked():
             self.user_edit.clear()
@@ -414,7 +440,7 @@ class ConnectionEditor(QDialog):
             self.user_edit.setEnabled(True)
             self.password_edit.setEnabled(True)
 
-    def on_sqlite_browse(self):
+    def on_sqlite_browse(self) -> None:
         """Opens a file dialog to select an SQLite database file."""
         path, _ = QFileDialog.getOpenFileName(
             self,
@@ -426,7 +452,7 @@ class ConnectionEditor(QDialog):
         if path:
             self.db_edit.setText(path)
 
-    def on_selection_changed(self, current):
+    def on_selection_changed(self, current: QListWidgetItem | None) -> None:
         """Loads the selected connection's data into the form fields.
 
         Args:
@@ -439,11 +465,8 @@ class ConnectionEditor(QDialog):
         name = current.text()
         conn = self.data.get(name, {})
 
-        db_type = conn.get("db_type", "mssql")
-        if isinstance(db_type, dict):
-            # Fallback if db_type is somehow a dict (should not happen with normalized data)
-            db_type = "mssql"
-        proto = conn.get("protocol", _DEFAULT_PROTOCOL.get(str(db_type), "odbc"))
+        db_type = string_value(conn.get("db_type"), "mssql")
+        proto = string_value(conn.get("protocol"), _DEFAULT_PROTOCOL.get(db_type, "odbc"))
 
         # DB type
         for i in range(self.db_type_combo.count()):
@@ -457,38 +480,55 @@ class ConnectionEditor(QDialog):
             self.protocol_combo.setCurrentIndex(ix)
 
         # Common fields
-        self.server_edit.setText(conn.get("server", ""))
-        self.db_edit.setText(conn.get("database", ""))
+        self.server_edit.setText(string_value(conn.get("server")))
+        self.db_edit.setText(string_value(conn.get("database")))
 
         port = conn.get("port")
         self.port_edit.setText(str(port) if port is not None else "")
 
-        self.user_edit.setText(conn.get("user", ""))
-        self.password_edit.setText(conn.get("password", ""))
+        self.user_edit.setText(string_value(conn.get("user")))
+        self.password_edit.setText(string_value(conn.get("password")))
 
         # ODBC
-        self.driver_edit.setText(conn.get("driver", ""))
+        self.driver_edit.setText(string_value(conn.get("driver")))
         tc = str(conn.get("trusted_connection", "")).lower()
         self.trusted_checkbox.setChecked(tc == "yes")
 
         # DSN
-        self.dsn_edit.setText(conn.get("dsn", ""))
+        self.dsn_edit.setText(string_value(conn.get("dsn")))
 
         # Extra JSON
         extra = conn.get("extra", {})
         try:
             self.extra_edit.setText(json.dumps(extra))
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self.extra_edit.setText("{}")
 
         self.on_protocol_changed()
         self.on_trusted_changed()
 
-    def clear_fields(self):
+    def clear_fields(self) -> None:
         """Clears all input fields in the connection form."""
         for w in (
-            self.driver_edit, self.server_edit, self.port_edit, self.db_edit,
-            self.user_edit, self.password_edit, self.dsn_edit, self.extra_edit,
+            self.driver_edit,
+            self.server_edit,
+            self.port_edit,
+            self.db_edit,
+            self.user_edit,
+            self.password_edit,
+            self.dsn_edit,
+            self.extra_edit,
         ):
             w.clear()
 
@@ -500,14 +540,15 @@ class ConnectionEditor(QDialog):
     # CRUD
     # =============================================================================
 
-    def _gather_current_form(self) -> dict:
+    def _gather_current_form(self) -> JsonObject:
         """Extracts current connection information from the form fields.
 
         Returns:
             A dictionary containing the connection parameters.
         """
-        d = {
-            "db_type": self.db_type_combo.currentData(),
+        db_type_data = self.db_type_combo.currentData()
+        d: JsonObject = {
+            "db_type": db_type_data if isinstance(db_type_data, str) else "mssql",
             "protocol": self.protocol_combo.currentText(),
             "driver": self.driver_edit.text().strip(),
             "server": self.server_edit.text().strip(),
@@ -532,7 +573,7 @@ class ConnectionEditor(QDialog):
 
         return d
 
-    def add_connection(self):
+    def add_connection(self) -> None:
         """Prompts for a name and adds a new connection entry with default values."""
         name, ok = self._dialogs.prompt_text(
             parent=self,
@@ -546,9 +587,7 @@ class ConnectionEditor(QDialog):
         name = name.strip()
         if name in self.data:
             self._dialogs.warn(
-                parent=self,
-                title=self.tr("Failure"),
-                text=self.tr("There is already a connection with that name.")
+                parent=self, title=self.tr("Failure"), text=self.tr("There is already a connection with that name.")
             )
             return
 
@@ -572,7 +611,7 @@ class ConnectionEditor(QDialog):
         self.list_widget.setCurrentRow(self.list_widget.count() - 1)
         self._set_fields_enabled(True)
 
-    def delete_connection(self):
+    def delete_connection(self) -> None:
         """Deletes the currently selected connection after confirmation."""
         item = self.list_widget.currentItem()
         if not item:
@@ -599,7 +638,7 @@ class ConnectionEditor(QDialog):
         if self.list_widget.count() == 0:
             self._set_fields_enabled(False)
 
-    def save_changes(self):
+    def save_changes(self) -> None:
         """Saves the current form values to the selected connection entry."""
         item = self.list_widget.currentItem()
         if not item:
@@ -609,26 +648,18 @@ class ConnectionEditor(QDialog):
         self.data[name] = self._gather_current_form()
 
         write_connections(self.data)
-        self._dialogs.info(
-            parent=self,
-            title=self.tr("Saved"),
-            text=self.tr("Changes saved successfully.")
-        )
+        self._dialogs.info(parent=self, title=self.tr("Saved"), text=self.tr("Changes saved successfully."))
         self.connections_changed.emit()
 
     # =============================================================================
     # Connection Testing
     # =============================================================================
 
-    def test_connection(self):
+    def test_connection(self) -> None:
         """Tests the current connection configuration using execute_sql_safe."""
         item = self.list_widget.currentItem()
         if not item:
-            self._dialogs.warn(
-                parent=self,
-                title=self.tr("Failure"),
-                text=self.tr("No connection selected.")
-            )
+            self._dialogs.warn(parent=self, title=self.tr("Failure"), text=self.tr("No connection selected."))
             return
 
         name = item.text()
@@ -653,8 +684,9 @@ class ConnectionEditor(QDialog):
         else:
             err = res.error
             msg = tr("DbErrors", err.message) if err else self.tr("Unknown error.")
-            if err and getattr(err, "hint", None):
-                hint = tr("DbErrors", err.hint)
+            hint_text = err.hint if err and isinstance(err.hint, str) else None
+            if hint_text:
+                hint = tr("DbErrors", hint_text)
                 msg = f"{msg}\n\n{hint}"
 
             self._dialogs.critical(

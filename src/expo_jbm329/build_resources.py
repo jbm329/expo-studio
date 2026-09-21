@@ -1,4 +1,5 @@
-# src/expo_jbm329/build_resources.py
+"""Utilities for compiling UI resource files into PyQt-compatible Python modules."""
+
 import pathlib
 import re
 import subprocess
@@ -18,7 +19,7 @@ def compile_qrc(qrc_path: pathlib.Path) -> pathlib.Path:
 
     cmd = ["pyside6-rcc", str(qrc_path), "-o", str(out_py)]
     print(f"Compiling: {' '.join(cmd)}")
-    subprocess.check_call(cmd)
+    subprocess.check_call(cmd)  # noqa: S603 - trusted build command
 
     return out_py
 
@@ -32,6 +33,7 @@ def patch_imports(py_file: pathlib.Path) -> None:
 
 
 def main() -> None:
+    """Compile the bundled Qt resource files into Python modules."""
     print("=== Building .qrc resources ===")
 
     for qrc in QRC_FILES:
@@ -51,4 +53,3 @@ if __name__ == "__main__":
     except subprocess.CalledProcessError as e:
         print(f"❌ Error running pyside6-rcc: {e}")
         sys.exit(1)
-

@@ -20,7 +20,7 @@ from typing import Literal, cast
 import sqlglot
 from sqlglot import exp
 from sqlglot.errors import ParseError, SqlglotError
-from sqlglot.expressions import Expression
+from sqlglot.expressions.core import Expression
 
 SqlStatementKind = Literal[
     "select",
@@ -37,6 +37,19 @@ SqlStatementKind = Literal[
     "empty",
     "invalid",
 ]
+
+
+FALLBACK_STATEMENT_KIND_BY_TOKEN: Mapping[str, SqlStatementKind] = {
+    "select": "select",
+    "with": "with",
+    "insert": "insert",
+    "update": "update",
+    "delete": "delete",
+    "create": "create",
+    "drop": "drop",
+    "alter": "alter",
+    "truncate": "truncate",
+}
 
 
 SQLGLOT_DIALECT_BY_ENGINE: dict[str, str] = {
@@ -144,7 +157,7 @@ def sqlglot_dialect(engine_or_dialect: str | None) -> str | None:
 
 
 # noinspection PyBroadException
-def parse_one_safe(sql: str, dialect: str | None = None) -> exp.Expression | None:
+def parse_one_safe(sql: str, dialect: str | None = None) -> Expression | None:
     """Parse one SQL statement safely.
 
     Args:
@@ -154,12 +167,12 @@ def parse_one_safe(sql: str, dialect: str | None = None) -> exp.Expression | Non
     Returns:
         The parsed sqlglot expression, or None if parsing fails.
     """
-    if not isinstance(sql, str) or not sql.strip():
+    if not sql.strip():
         return None
 
     try:
-        return sqlglot.parse_one(sql, read=sqlglot_dialect(dialect))
-    except Exception:
+        return cast("Expression", sqlglot.parse_one(sql, read=sqlglot_dialect(dialect)))
+    except (ParseError, SqlglotError, ValueError):
         return None
 
 
@@ -174,23 +187,17 @@ def parse_many_safe(sql: str, dialect: str | None = None) -> list[Expression]:
     Returns:
         A list of parsed sqlglot expressions. Returns an empty list on failure.
     """
-    if not isinstance(sql, str) or not sql.strip():
+    if not sql.strip():
         return []
 
     try:
         parsed = sqlglot.parse(sql, read=sqlglot_dialect(dialect))
-        return [
-            cast(Expression, expression)
-            for expression in parsed
-            if expression is not None
-        ]
-    except Exception:
+        return [cast("Expression", expression) for expression in parsed if expression is not None]
+    except (ParseError, SqlglotError, ValueError):
         return []
 
 
-_EMPTY_SELECT_LIST_RE = re.compile(
-    r"(?is)\bselect\b\s*\bfrom\b"
-)
+_EMPTY_SELECT_LIST_RE = re.compile(r"(?is)\bselect\b\s*\bfrom\b")
 
 
 def lint_editor_rules(sql: str) -> list[SqlDiagnostic]:
@@ -199,7 +206,7 @@ def lint_editor_rules(sql: str) -> list[SqlDiagnostic]:
     These rules catch cases that may be accepted or ambiguously parsed by a SQL
     parser but are not useful in the editor.
     """
-    if not isinstance(sql, str) or not sql.strip():
+    if not sql.strip():
         return []
 
     diagnostics: list[SqlDiagnostic] = []
@@ -352,7 +359,7 @@ def _find_suspicious_from_keyword(sql: str) -> tuple[int, int, str] | None:
         token = match.group(0)
         token_l = token.lower()
 
-        if token_l == "from":
+        if token_l == "from":  # noqa S105
             continue
 
         if _looks_like_keyword_typo(token_l, "from"):
@@ -420,14 +427,14 @@ def _strip_leading_sql_comments_and_whitespace(sql: str) -> str:
             newline_index = stripped.find("\n")
             if newline_index < 0:
                 return ""
-            text = stripped[newline_index + 1:]
+            text = stripped[newline_index + 1 :]
             continue
 
         if stripped.startswith("/*"):
             end_index = stripped.find("*/")
             if end_index < 0:
                 return ""
-            text = stripped[end_index + 2:]
+            text = stripped[end_index + 2 :]
             continue
 
         return stripped
@@ -448,7 +455,7 @@ def _find_incomplete_top_clause(sql: str) -> tuple[int, int, str] | None:
     if match is None:
         return None
 
-    remainder = sql[match.end():]
+    remainder = sql[match.end() :]
 
     if re.match(r"^\s*(\(\s*(\d+|@\w+)\s*\)|\d+|@\w+)", remainder):
         return None
@@ -542,7 +549,7 @@ def _lint_keyword_typos(sql: str) -> list[SqlDiagnostic]:
     keywords are actually expected so valid identifiers such as column names do
     not get flagged as keyword typos.
     """
-    if not isinstance(sql, str) or not sql.strip():
+    if not sql.strip():
         return []
 
     diagnostics: list[SqlDiagnostic] = []
@@ -576,77 +583,60 @@ def _lint_keyword_typos(sql: str) -> list[SqlDiagnostic]:
     return diagnostics
 
 
-def _suggest_keyword(token: str) -> str | None:
-    """Return a likely SQL keyword for a token typo."""
-    if not token:
-        return None
+def _find_suspicious_clause_keywords(sql: str) -> list[tuple[int, int, str]]:
+    """Find likely clause-keyword typos after valid SQL clause anchors."""
+    diagnostics: list[tuple[int, int, str]] = []
 
+    for match in re.finditer(r"(?is)\b[A-Za-z_][A-Za-z0-9_]*\b", sql):
+        token = match.group(0)
         token_l = token.lower()
 
-        if token_l in _COMMON_SQL_KEYWORD_ALIASES:
-            return _COMMON_SQL_KEYWORD_ALIASES[token_l]
+        if token_l in _COMMON_SQL_KEYWORDS:
+            continue
 
-        for candidate in _COMMON_SQL_KEYWORDS:
-            if _looks_like_keyword_typo(token_l, candidate):
-                return candidate.upper()
+        previous_keyword = _previous_meaningful_keyword(sql, match.start())
+        suggestion = _suggest_keyword_for_context(token_l, previous_keyword)
+        if suggestion is None:
+            continue
 
-        return None
+        diagnostics.append((match.start(), len(token), suggestion))
 
-
-def _find_suspicious_clause_keywords(sql: str) -> list[tuple[int, int, str]]:
-        """Find likely clause-keyword typos after valid SQL clause anchors."""
-        diagnostics: list[tuple[int, int, str]] = []
-
-        for match in re.finditer(r"(?is)\b[A-Za-z_][A-Za-z0-9_]*\b", sql):
-            token = match.group(0)
-            token_l = token.lower()
-
-            if token_l in _COMMON_SQL_KEYWORDS:
-                continue
-
-            previous_keyword = _previous_meaningful_keyword(sql, match.start())
-            suggestion = _suggest_keyword_for_context(token_l, previous_keyword)
-            if suggestion is None:
-                continue
-
-            diagnostics.append((match.start(), len(token), suggestion))
-
-        return diagnostics
+    return diagnostics
 
 
 def _previous_meaningful_keyword(sql: str, token_start: int) -> str | None:
-        """Return the nearest preceding SQL keyword-like token."""
-        previous_keyword: str | None = None
+    """Return the nearest preceding SQL keyword-like token."""
+    previous_keyword: str | None = None
 
-        for match in re.finditer(r"(?is)\b[A-Za-z_][A-Za-z0-9_]*\b", sql[:token_start]):
-            candidate = match.group(0).lower()
-            if candidate in _COMMON_SQL_KEYWORDS:
-                previous_keyword = candidate
+    for match in re.finditer(r"(?is)\b[A-Za-z_][A-Za-z0-9_]*\b", sql[:token_start]):
+        candidate = match.group(0).lower()
+        if candidate in _COMMON_SQL_KEYWORDS:
+            previous_keyword = candidate
 
-        return previous_keyword
+    return previous_keyword
 
 
 def _suggest_keyword_for_context(token: str, previous_keyword: str | None) -> str | None:
-        """Return a keyword suggestion when the surrounding clause expects one."""
-        if not token:
-            return None
-
-        if previous_keyword == "select" and _levenshtein_distance_at_most_one(token, "from"):
-            return "FROM"
-
-        if previous_keyword == "group" and _levenshtein_distance_at_most_one(token, "by"):
-            return "BY"
-
-        if previous_keyword == "order" and _levenshtein_distance_at_most_one(token, "by"):
-            return "BY"
-
-        if _looks_like_keyword_typo(token, "group"):
-            return "GROUP"
-
-        if _looks_like_keyword_typo(token, "order"):
-            return "ORDER"
-
+    """Return a keyword suggestion when the surrounding clause expects one."""
+    if not token:
         return None
+
+    if previous_keyword == "select" and _levenshtein_distance_at_most_one(token, "from"):
+        return "FROM"
+
+    if previous_keyword == "group" and _levenshtein_distance_at_most_one(token, "by"):
+        return "BY"
+
+    if previous_keyword == "order" and _levenshtein_distance_at_most_one(token, "by"):
+        return "BY"
+
+    if _looks_like_keyword_typo(token, "group"):
+        return "GROUP"
+
+    if _looks_like_keyword_typo(token, "order"):
+        return "ORDER"
+
+    return None
 
 
 _INCOMPLETE_TRAILING_CLAUSE_PATTERNS: tuple[tuple[str, str], ...] = (
@@ -676,11 +666,11 @@ def _normalize_identifier(value: str | None) -> str:
     """Normalize SQL identifiers for case-insensitive comparison."""
     if value is None:
         return ""
-    return str(value).strip().strip("[]`\"").casefold()
+    return str(value).strip().strip('[]`"').casefold()
 
 
 def _normalize_schema_for_lint(
-    schema: dict[str, dict[str, list[str]]] | None,
+    schema: Mapping[str, object] | None,
 ) -> dict[str, dict[str, set[str]]]:
     """Normalize schema metadata to a table -> set(columns) map.
 
@@ -692,7 +682,8 @@ def _normalize_schema_for_lint(
     if not isinstance(schema, Mapping):
         return {}
 
-    source = schema.get("by_schema") if isinstance(schema.get("by_schema"), Mapping) else schema
+    maybe_by_schema = schema.get("by_schema")
+    source: Mapping[str, object] = maybe_by_schema if isinstance(maybe_by_schema, Mapping) else schema
 
     normalized: dict[str, dict[str, set[str]]] = {}
 
@@ -719,7 +710,7 @@ def _normalize_schema_for_lint(
 
 
 def _build_schema_lint_context(
-    expression: exp.Expression,
+    expression: Expression,
     normalized_schema: dict[str, dict[str, set[str]]],
 ) -> SchemaLintContext:
     """Resolve visible tables from a parsed SQL statement."""
@@ -794,16 +785,12 @@ def _is_known_column(
             return False
         return normalized_name in resolved_table.columns
 
-    for resolved_table in context.resolved_tables.values():
-        if normalized_name in resolved_table.columns:
-            return True
-
-    return False
+    return any(normalized_name in resolved_table.columns for resolved_table in context.resolved_tables.values())
 
 
 def _lint_unknown_tables(
     sql: str,
-    expression: exp.Expression,
+    expression: Expression,
     context: SchemaLintContext,
 ) -> list[SqlDiagnostic]:
     """Return diagnostics for unknown schemas and tables."""
@@ -852,7 +839,7 @@ def _lint_unknown_tables(
 
 def _lint_unknown_columns(
     sql: str,
-    expression: exp.Expression,
+    expression: Expression,
     context: SchemaLintContext,
 ) -> list[SqlDiagnostic]:
     """Return diagnostics for unknown columns in the current statement context."""
@@ -896,7 +883,7 @@ def _lint_unknown_columns(
 def _lint_schema(
     sql: str,
     *,
-    schema: dict[str, dict[str, list[str]]] | None,
+    schema: Mapping[str, object] | None,
     dialect: str | None = None,
 ) -> list[SqlDiagnostic]:
     """Schema-aware lint checks for schema, table, and column names."""
@@ -930,9 +917,6 @@ def _find_identifier_span_in_sql(
     This avoids matching partial substrings inside longer identifiers such as
     matching Ref_Yrkesrol inside [Ref_Yrkesroll_ID].
     """
-    if not isinstance(sql, str):
-        return 0, 1
-
     text = (identifier or "").strip()
     if not text:
         return max(0, start_hint), 1
@@ -960,7 +944,7 @@ def lint_syntax(
     sql: str,
     dialect: str | None = None,
     *,
-    schema: dict[str, dict[str, list[str]]] | None = None,
+    schema: Mapping[str, object] | None = None,
 ) -> list[SqlDiagnostic]:
     """Lint SQL with layered checks.
 
@@ -970,7 +954,7 @@ def lint_syntax(
     3. syntax parse validation
     4. schema-aware table/column checks
     """
-    if not isinstance(sql, str) or not sql.strip():
+    if not sql.strip():
         return []
 
     diagnostics: list[SqlDiagnostic] = []
@@ -1029,13 +1013,13 @@ def lint_syntax(
     return _dedupe_diagnostics(diagnostics)
 
 
-def detect_statement_kind(sql: str, dialect: str | None = None) -> SqlStatementKind:  # noqa: C901
+def detect_statement_kind(sql: str, dialect: str | None = None) -> SqlStatementKind:
     """Detect the broad kind of a SQL statement.
 
     This uses sqlglot when possible and falls back to lightweight textual checks
     for statements that may not parse cleanly in every dialect, especially EXEC.
     """
-    if not isinstance(sql, str) or not sql.strip():
+    if not sql.strip():
         return "empty"
 
     leading_token = _first_meaningful_token(sql)
@@ -1076,7 +1060,7 @@ def detect_statement_kind(sql: str, dialect: str | None = None) -> SqlStatementK
         if command_name in {"truncate", "exec", "execute"}:
             return "truncate" if command_name == "truncate" else "exec"
 
-    if leading_token == "with":
+    if leading_token == "with":  # noqa S105
         return "with"
 
     return _fallback_statement_kind(leading_token, invalid=False)
@@ -1151,7 +1135,7 @@ def format_sql(
     pretty: bool = True,
 ) -> str:
     """Format SQL using sqlglot."""
-    if not isinstance(sql, str) or not sql.strip():
+    if not sql.strip():
         return sql
 
     resolved_dialect = sqlglot_dialect(dialect)
@@ -1194,7 +1178,18 @@ def _coerce_int_or_none(value: object) -> int | None:
     if isinstance(value, float | str | bytes | bytearray):
         try:
             return int(value)
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return None
 
     return None
@@ -1210,15 +1205,15 @@ def _expression_name_or_none(value: object) -> str | None:
 
     if isinstance(value, exp.Identifier):
         name = value.name
-        return name if isinstance(name, str) and name else None
+        return name or None
 
-    if isinstance(value, exp.Expression):
-        name = getattr(value, "name", None)
-        if isinstance(name, str) and name:
-            return name
+    if isinstance(value, Expression):
+        expr_name = getattr(value, "name", None)
+        if isinstance(expr_name, str) and expr_name:
+            return expr_name
 
         text = value.sql()
-        if isinstance(text, str) and text:
+        if text:
             return text
 
     return None
@@ -1257,14 +1252,14 @@ def _strip_leading_comments_and_whitespace(sql: str | None) -> str:
             newline_index = stripped.find("\n")
             if newline_index < 0:
                 return ""
-            text = stripped[newline_index + 1:]
+            text = stripped[newline_index + 1 :]
             continue
 
         if stripped.startswith("/*"):
             end_index = stripped.find("*/")
             if end_index < 0:
                 return ""
-            text = stripped[end_index + 2:]
+            text = stripped[end_index + 2 :]
             continue
 
         return stripped
@@ -1326,9 +1321,7 @@ def _identifier_like_span_from_offset(sql: str, offset: int) -> tuple[int, int]:
     return offset, max(1, end - offset)
 
 
-_ADJACENT_BRACKET_IDENTIFIERS_RE = re.compile(
-    r"(?is)(\[[^\]]+\])\s+(\[[^\]]+\])"
-)
+_ADJACENT_BRACKET_IDENTIFIERS_RE = re.compile(r"(?is)(\[[^\]]+\])\s+(\[[^\]]+\])")
 
 
 def _find_suspicious_adjacent_select_identifier(sql: str) -> tuple[int, int] | None:
@@ -1345,7 +1338,7 @@ def _find_suspicious_adjacent_select_identifier(sql: str) -> tuple[int, int] | N
     if select_match is None or from_match is None or from_match.start() <= select_match.end():
         return None
 
-    select_list = sql[select_match.end():from_match.start()]
+    select_list = sql[select_match.end() : from_match.start()]
     match = _ADJACENT_BRACKET_IDENTIFIERS_RE.search(select_list)
     if match is None:
         return None
@@ -1357,51 +1350,28 @@ def _find_suspicious_adjacent_select_identifier(sql: str) -> tuple[int, int] | N
 
 def _last_meaningful_token_span(sql: str) -> tuple[int, int]:
     """Return span for the last meaningful token in SQL text."""
-    match = None
+    last_match = None
     for match in re.finditer(r"[A-Za-z_][A-Za-z0-9_]*|\[[^\]]*$|\[[^\]]+\]|`[^`]*$|`[^`]+`|\"[^\"]*$|\"[^\"]+\"", sql):
-        pass
+        last_match = match
 
-    if match is None:
+    if last_match is None:
         return 0, 1
 
-    return match.start(), max(1, match.end() - match.start())
+    return last_match.start(), max(1, last_match.end() - last_match.start())
 
 
-def _fallback_statement_kind(  # noqa: C901
+def _fallback_statement_kind(
     leading_token: str,
     *,
     invalid: bool,
 ) -> SqlStatementKind:
     """Classify SQL from a leading token when AST classification is unavailable."""
-    if leading_token in {"select"}:
-        return "select"
-
-    if leading_token in {"with"}:
-        return "with"
+    known_kind = FALLBACK_STATEMENT_KIND_BY_TOKEN.get(leading_token)
+    if known_kind is not None:
+        return known_kind
 
     if leading_token in {"exec", "execute"}:
         return "exec"
-
-    if leading_token in {"insert"}:
-        return "insert"
-
-    if leading_token in {"update"}:
-        return "update"
-
-    if leading_token in {"delete"}:
-        return "delete"
-
-    if leading_token in {"create"}:
-        return "create"
-
-    if leading_token in {"drop"}:
-        return "drop"
-
-    if leading_token in {"alter"}:
-        return "alter"
-
-    if leading_token in {"truncate"}:
-        return "truncate"
 
     if invalid:
         return "invalid"

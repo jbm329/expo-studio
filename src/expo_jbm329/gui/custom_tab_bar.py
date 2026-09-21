@@ -3,9 +3,11 @@
 This module provides a customized tab bar that supports theme-aware close
 buttons, per-tab closability flags, and Swedish translations.
 """
+
 from __future__ import annotations
 
 import contextlib
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QRect, Qt
 from PyQt6.QtGui import QIcon, QPainter, QPainterPath
@@ -13,13 +15,16 @@ from PyQt6.QtWidgets import (
     QApplication,
     QProxyStyle,
     QStyle,
+    QStyleOption,
     QStyleOptionTab,
     QTabBar,
     QTabWidget,
     QToolButton,
+    QWidget,
 )
 
-from expo_jbm329.workbench.icon.icon_service import IconService
+if TYPE_CHECKING:
+    from expo_jbm329.workbench.icon.icon_service import IconService
 
 
 class TabBarProxyStyle(QProxyStyle):
@@ -32,7 +37,13 @@ class TabBarProxyStyle(QProxyStyle):
     # --------------------------------------------------
     # Spacing / padding
     # --------------------------------------------------
-    def pixelMetric(self, metric, option=None, widget=None):
+    @override
+    def pixelMetric(
+        self,
+        metric: QStyle.PixelMetric,
+        option: QStyleOption | None = None,
+        widget: QWidget | None = None,
+    ) -> int:
         """Custom pixelMetric override to provide consistent spacing."""
         if metric in (
             QStyle.PixelMetric.PM_TabBarTabHSpace,
@@ -41,11 +52,7 @@ class TabBarProxyStyle(QProxyStyle):
             base = self.TAB_PADDING * 2
 
             # Wider padding for selected tab bold to prevent crowding
-            if (
-                option is not None
-                and hasattr(option, "state")
-                and option.state & QStyle.StateFlag.State_Selected
-            ):
+            if option is not None and hasattr(option, "state") and option.state & QStyle.StateFlag.State_Selected:
                 return base + 4  # 2px per sida
 
             return base
@@ -55,7 +62,14 @@ class TabBarProxyStyle(QProxyStyle):
     # --------------------------------------------------
     # Tab shape + background
     # --------------------------------------------------
-    def drawControl(self, element, option, painter, widget=None):
+    @override
+    def drawControl(
+        self,
+        element: QStyle.ControlElement,
+        option: QStyleOption | None,
+        painter: QPainter | None,
+        widget: QWidget | None = None,
+    ) -> None:
         """Custom drawControl override for tab shape and background."""
         # Tab background / shape
         if (
@@ -69,7 +83,7 @@ class TabBarProxyStyle(QProxyStyle):
 
         super().drawControl(element, option, painter, widget)
 
-    def _draw_tab_shape(self, option: QStyleOptionTab, painter: QPainter, widget: QTabBar):
+    def _draw_tab_shape(self, option: QStyleOptionTab, painter: QPainter, widget: QTabBar) -> None:
         """Draw a rounded rectangle tab shape."""
         rect: QRect = option.rect
         palette = option.palette
@@ -137,7 +151,7 @@ class TabBarProxyStyle(QProxyStyle):
             )
             painter.fillRect(indicator, palette.highlight())
 
-        if not selected and widget is not None:
+        if not selected:
             current = widget.currentIndex()
             index = option.tabIndex
 
@@ -152,7 +166,14 @@ class TabBarProxyStyle(QProxyStyle):
 
         painter.restore()
 
-    def drawPrimitive(self, element, option, painter, widget=None):
+    @override
+    def drawPrimitive(
+        self,
+        element: QStyle.PrimitiveElement,
+        option: QStyleOption | None,
+        painter: QPainter | None,
+        widget: QWidget | None = None,
+    ) -> None:
         """Custom drawPrimitive override for hover effects."""
         if option is None or painter is None:
             return
@@ -164,11 +185,7 @@ class TabBarProxyStyle(QProxyStyle):
         ):
             return
 
-        if (
-            element == QStyle.PrimitiveElement.PE_FrameTabBarBase
-            and isinstance(widget, QTabBar)
-            and isinstance(painter, QPainter)
-        ):
+        if element == QStyle.PrimitiveElement.PE_FrameTabBarBase and isinstance(widget, QTabBar):
             painter.save()
             color = option.palette.mid().color()
             painter.setPen(color)
@@ -201,7 +218,7 @@ class CustomTabBar(QTabBar):
     CLOSE_BUTTON_SIZE = 18
     CLOSE_TOOLTIP = "Stäng flik"
 
-    def __init__(self, icon_service: IconService, parent: QTabWidget | None = None):
+    def __init__(self, icon_service: IconService, parent: QTabWidget | None = None) -> None:
         """Initialize the custom tab bar.
 
         Args:
@@ -212,7 +229,7 @@ class CustomTabBar(QTabBar):
 
         self._icon_service = icon_service
         self._close_icon: QIcon = QIcon()
-        
+
         # Style
         self.setStyle(TabBarProxyStyle(QApplication.style()))
 
@@ -221,16 +238,17 @@ class CustomTabBar(QTabBar):
 
         # Initial icon load
         self._reload_close_icon()
+        self.tabMoved.connect(self._handle_tab_moved)
 
     # ----------------------------------------------------------------------
     # PUBLIC API (called by EditorServices when theme changes)
     # ----------------------------------------------------------------------
-    def update_icons(self):
+    def update_icons(self) -> None:
         """Reload icons from IconService and rebuild close buttons."""
         self._reload_close_icon()
         self.refresh_close_buttons()
 
-    def refresh_close_buttons(self):
+    def refresh_close_buttons(self) -> None:
         """Recreate close buttons for all tabs."""
         for i in range(self.count()):
             self._install_close_button(i)
@@ -238,11 +256,22 @@ class CustomTabBar(QTabBar):
     # ----------------------------------------------------------------------
     # INTERNAL HELPERS
     # ----------------------------------------------------------------------
-    def _reload_close_icon(self):
+    def _reload_close_icon(self) -> None:
         """Load the theme-aware 'close' icon from IconService."""
         try:
             icon = self._icon_service.get("close")
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             icon = QIcon()
 
         if icon.isNull():
@@ -273,7 +302,7 @@ class CustomTabBar(QTabBar):
         btn.clicked.connect(lambda: self._emit_close_for(btn))
         return btn
 
-    def _install_close_button(self, index: int):
+    def _install_close_button(self, index: int) -> None:
         """Attach close button if allowed."""
         if not (0 <= index < self.count()):
             return
@@ -284,7 +313,18 @@ class CustomTabBar(QTabBar):
             data = self.tabData(index)
             if isinstance(data, dict):
                 closable = bool(data.get("closable", True))
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             pass
 
         pos = self._trailing_button_position()
@@ -305,7 +345,7 @@ class CustomTabBar(QTabBar):
             else QTabBar.ButtonPosition.RightSide
         )
 
-    def _emit_close_for(self, btn: QToolButton):
+    def _emit_close_for(self, btn: QToolButton) -> None:
         pos = self._trailing_button_position()
         for i in range(self.count()):
             if self.tabButton(i, pos) is btn:
@@ -316,7 +356,8 @@ class CustomTabBar(QTabBar):
     # ----------------------------------------------------------------------
     # OVERRIDES
     # ----------------------------------------------------------------------
-    def tabInserted(self, index: int):
+    @override
+    def tabInserted(self, index: int) -> None:
         """Called when a new tab is inserted.
 
         Installs the close button for the new tab.
@@ -327,21 +368,19 @@ class CustomTabBar(QTabBar):
         super().tabInserted(index)
         self._install_close_button(index)
 
-    def tabMoved(self, from_index: int, to_index: int):
-        """Called when a tab is moved.
-
-        Updates the close buttons for the affected tabs.
+    def _handle_tab_moved(self, from_index: int, to_index: int) -> None:
+        """Refresh close buttons after a tab is moved.
 
         Args:
             from_index: The original index of the tab.
             to_index: The new index of the tab.
         """
-        super().tabMoved(from_index, to_index)
         for i in (from_index, to_index):
             if 0 <= i < self.count():
                 self._install_close_button(i)
 
-    def tabRemoved(self, index: int):
+    @override
+    def tabRemoved(self, index: int) -> None:
         """Called when a tab is removed.
 
         Args:
@@ -349,4 +388,3 @@ class CustomTabBar(QTabBar):
         """
         super().tabRemoved(index)
         # Qt cleans up automatically
-

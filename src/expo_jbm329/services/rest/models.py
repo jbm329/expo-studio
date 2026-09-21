@@ -1,9 +1,12 @@
 """Models for REST data source services."""
+
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 RestAuthType = Literal["none", "bearer", "basic", "api_key", "oauth2"]
 RestHttpMethod = Literal["GET", "POST"]
@@ -33,22 +36,28 @@ class RestPaginationConfig:
             return
 
         if self.type != "page_number":
-            raise ValueError(f"Unsupported pagination type: {self.type}")
+            msg = f"Unsupported pagination type: {self.type}"
+            raise ValueError(msg)
 
         if not self.page_param:
-            raise ValueError("Page-number pagination requires page parameter name")
+            msg = "Page-number pagination requires page parameter name"
+            raise ValueError(msg)
 
         if self.start_page < 1:
-            raise ValueError("Page-number pagination start page must be >= 1")
+            msg = "Page-number pagination start page must be >= 1"
+            raise ValueError(msg)
 
         if self.page_size is not None and self.page_size < 1:
-            raise ValueError("Page-number pagination page size must be >= 1")
+            msg = "Page-number pagination page size must be >= 1"
+            raise ValueError(msg)
 
         if self.page_size is not None and not self.page_size_param:
-            raise ValueError("Page-number pagination page size requires parameter name")
+            msg = "Page-number pagination page size requires parameter name"
+            raise ValueError(msg)
 
         if self.max_pages is not None and self.max_pages < 1:
-            raise ValueError("Page-number pagination max pages must be >= 1")
+            msg = "Page-number pagination max pages must be >= 1"
+            raise ValueError(msg)
 
 
 @dataclass(frozen=True)
@@ -65,15 +74,20 @@ class RestRetryConfig:
     def validate(self) -> None:
         """Validate retry configuration."""
         if self.max_retries < 0:
-            raise ValueError("Retry policy max retries must be >= 0")
+            msg = "Retry policy max retries must be >= 0"
+            raise ValueError(msg)
         if self.initial_delay < 0:
-            raise ValueError("Retry policy initial delay must be >= 0")
+            msg = "Retry policy initial delay must be >= 0"
+            raise ValueError(msg)
         if self.max_delay < 0:
-            raise ValueError("Retry policy max delay must be >= 0")
+            msg = "Retry policy max delay must be >= 0"
+            raise ValueError(msg)
         if self.backoff_factor < 1:
-            raise ValueError("Retry policy backoff factor must be >= 1")
+            msg = "Retry policy backoff factor must be >= 1"
+            raise ValueError(msg)
         if not self.retry_status_codes:
-            raise ValueError("Retry policy must include at least one retryable status code")
+            msg = "Retry policy must include at least one retryable status code"
+            raise ValueError(msg)
 
 
 @dataclass(frozen=True)
@@ -106,42 +120,52 @@ class RestAuthConfig:
 
         if self.type == "bearer":
             if not self.token:
-                raise ValueError("Bearer auth requires token")
+                msg = "Bearer auth requires token"
+                raise ValueError(msg)
             return
 
         if self.type == "basic":
             if not self.username or not self.password:
-                raise ValueError("Basic auth requires username and password")
+                msg = "Basic auth requires username and password"
+                raise ValueError(msg)
             return
 
         if self.type == "api_key":
             if not self.api_key_name:
-                raise ValueError("API key auth requires parameter name")
+                msg = "API key auth requires parameter name"
+                raise ValueError(msg)
             if not self.api_key_value:
-                raise ValueError("API key auth requires value")
+                msg = "API key auth requires value"
+                raise ValueError(msg)
             if self.api_key_location not in ("header", "query"):
-                raise ValueError("API key auth requires location 'header' or 'query'")
+                msg = "API key auth requires location 'header' or 'query'"
+                raise ValueError(msg)
             return
 
         if self.type == "oauth2":
             if not self.token_url:
-                raise ValueError("OAuth2 auth requires token URL")
+                msg = "OAuth2 auth requires token URL"
+                raise ValueError(msg)
             if not self.client_id:
-                raise ValueError("OAuth2 auth requires client ID")
+                msg = "OAuth2 auth requires client ID"
+                raise ValueError(msg)
             if not self.client_secret:
-                raise ValueError("OAuth2 auth requires client secret")
+                msg = "OAuth2 auth requires client secret"
+                raise ValueError(msg)
 
             grant_type = self.grant_type or "client_credentials"
             if grant_type == "client_credentials":
                 return
             if grant_type == "refresh_token":
                 if not self.refresh_token:
-                    raise ValueError("OAuth2 refresh-token auth requires refresh token")
+                    msg = "OAuth2 refresh-token auth requires refresh token"
+                    raise ValueError(msg)
                 return
-            raise ValueError(f"Unsupported OAuth2 grant type: {grant_type}")
+            msg_0 = f"Unsupported OAuth2 grant type: {grant_type}"
+            raise ValueError(msg_0)
 
-        raise ValueError(f"Unsupported auth type: {self.type}")
-
+        msg_0 = f"Unsupported auth type: {self.type}"
+        raise ValueError(msg_0)
 
 
 @dataclass(frozen=True)
@@ -168,19 +192,20 @@ class RestRequestConfig:
             ValueError: If configuration is invalid.
         """
         if not self.name:
-            raise ValueError("REST request name must not be empty")
+            msg = "REST request name must not be empty"
+            raise ValueError(msg)
 
         if not self.url:
-            raise ValueError("REST request URL must not be empty")
+            msg = "REST request URL must not be empty"
+            raise ValueError(msg)
 
         if self.method not in ("GET", "POST"):
-            raise ValueError(f"Unsupported HTTP method: {self.method}")
+            msg_0 = f"Unsupported HTTP method: {self.method}"
+            raise ValueError(msg_0)
 
         if self.method == "POST" and self.json_body is None:
-            raise ValueError("POST requests require a JSON body")
-
-        if self.response_path is not None and not isinstance(self.response_path, str):
-            raise ValueError("REST response path must be a string or None")
+            msg = "POST requests require a JSON body"
+            raise ValueError(msg)
 
         if self.auth is not None:
             self.auth.validate()

@@ -1,18 +1,26 @@
 """Header (column) sort actions with explicit dependency injection."""
+
 from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QTableView, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    import pandas as pd
+    from PyQt6.QtWidgets import QTableView, QWidget
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
 
 
 class ResultTabHeaderSortActions:
@@ -23,19 +31,13 @@ class ResultTabHeaderSortActions:
     # ------------------------------------------------------------------
     TR_SORT_OPERATION_ASC = QT_TR_NOOP("sort ascending")
     TR_SORTING_COLUMN_ASC = QT_TR_NOOP("Sorting ascending: {column_name}")
-    TR_SORTED_ASC = QT_TR_NOOP(
-        "Sorted ascending by column: {column_name}"
-    )
+    TR_SORTED_ASC = QT_TR_NOOP("Sorted ascending by column: {column_name}")
     TR_SORT_OPERATION_DESC = QT_TR_NOOP("sort descending")
     TR_SORTING_COLUMN_DESC = QT_TR_NOOP("Sorting descending: {column_name}")
-    TR_SORTED_DESC = QT_TR_NOOP(
-        "Sorted descending by column: {column_name}"
-    )
+    TR_SORTED_DESC = QT_TR_NOOP("Sorted descending by column: {column_name}")
 
     TR_FAILURE = QT_TR_NOOP("Failure")
-    TR_COULD_NOT_PERFORM = QT_TR_NOOP(
-        "Could not perform the operation:\n{error}"
-    )
+    TR_COULD_NOT_PERFORM = QT_TR_NOOP("Could not perform the operation:\n{error}")
 
     # ------------------------------------------------------------------
     # i18n helpers
@@ -46,11 +48,11 @@ class ResultTabHeaderSortActions:
         return tr("ResultTabHeaderSortActions", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabHeaderSortActions", text, **kwargs)
 
     # ------------------------------------------------------------------
-    # Init (DI)
+    # Init
     # ------------------------------------------------------------------
     __slots__ = (
         "__weakref__",
@@ -59,15 +61,15 @@ class ResultTabHeaderSortActions:
         "_dialogs",
         "_logger",
         "_parent",
-        "_resolve_df_col_series"
+        "_resolve_df_col_series",
     )
 
     def __init__(
         self,
         *,
         parent: QWidget,
-        dialogs: DialogService,
-        logger: logging.Logger,
+        dialogs: DialogService | None,
+        logger: logging.Logger | None,
         async_ops: AsyncOperationController,
         resolve_df_col_series: Callable[
             [QTableView, int],
@@ -77,16 +79,16 @@ class ResultTabHeaderSortActions:
             [QTableView, pd.DataFrame, str],
             None,
         ],
-    ):
+    ) -> None:
         """Initialize ResultTabHeaderSortActions with dependencies.
-        
+
         Args:
-            parent (QWidget): Parent widget for dialogs.
-            dialogs (DialogService, optional): Service for showing dialogs. Defaults to QtDialogService.
-            logger (logging.Logger, optional): Logger for logging errors. Defaults to applogger.ui logger.
-            async_ops (AsyncOperationController): Controller for managing async operations.
-            resolve_df_col_series (Callable): Function to resolve DataFrame, column, and series.
-            apply_new_dataframe (Callable): Function to apply new DataFrame to view.
+        parent (QWidget): Parent widget for dialogs.
+        dialogs (DialogService, optional): Service for showing dialogs. Defaults to QtDialogService.
+        logger (logging.Logger, optional): Logger for logging errors. Defaults to applogger.ui logger.
+        async_ops (AsyncOperationController): Controller for managing async operations.
+        resolve_df_col_series (Callable): Function to resolve DataFrame, column, and series.
+        apply_new_dataframe (Callable): Function to apply new DataFrame to view.
         """
         self._parent = parent
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
@@ -97,11 +99,11 @@ class ResultTabHeaderSortActions:
 
     def sort_ascending(self, view: QTableView, column: int) -> None:
         """Sort rows in ascending order by column.
-        
+
         Args:
             view (QTableView): The table view containing the data.
             column (int): The column index to sort by.
-        
+
         Returns:
             None: This method does not return a value.
         """
@@ -117,7 +119,12 @@ class ResultTabHeaderSortActions:
             sort_dataframe,
         )
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -129,7 +136,7 @@ class ResultTabHeaderSortActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -170,11 +177,11 @@ class ResultTabHeaderSortActions:
 
     def sort_descending(self, view: QTableView, column: int) -> None:
         """Sort rows in descending order by column.
-        
+
         Args:
             view (QTableView): The table view containing the data.
             column (int): The column index to sort by.
-        
+
         Returns:
             None: This method does not return a value.
         """
@@ -190,7 +197,12 @@ class ResultTabHeaderSortActions:
             sort_dataframe,
         )
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -202,7 +214,7 @@ class ResultTabHeaderSortActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -236,4 +248,3 @@ class ResultTabHeaderSortActions:
             ),
             corr_id=corr_id,
         )
-        

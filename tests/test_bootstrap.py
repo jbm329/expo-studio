@@ -29,6 +29,7 @@ def test_bootstrap_merges_missing_keys(tmp_path, monkeypatch):
 
     # Clear cache to ensure we read from disk
     from expo_jbm329.app.settings import config_store
+
     config_store._settings_cache = None
 
     p = get_settings_path()
@@ -52,6 +53,7 @@ def test_bootstrap_idempotent(tmp_path, monkeypatch):
 
     # Clear cache
     from expo_jbm329.app.settings import config_store
+
     config_store._settings_cache = None
 
     run_bootstrap()

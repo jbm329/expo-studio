@@ -7,11 +7,13 @@ refreshes cached icon usage whenever the theme changes.
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QObject, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QIcon, QPainter, QPixmap, QPixmapCache
 
-from expo_jbm329.workbench.theme.theme_service import ThemeService
+if TYPE_CHECKING:
+    from expo_jbm329.workbench.theme.theme_service import ThemeService
 
 
 class IconService(QObject):
@@ -19,7 +21,7 @@ class IconService(QObject):
 
     icons_updated = pyqtSignal()
 
-    def __init__(self, theme_service: ThemeService, logger: logging.Logger | None = None):
+    def __init__(self, theme_service: ThemeService, logger: logging.Logger | None = None) -> None:
         """Initialize the icon service.
 
         Args:
@@ -28,7 +30,7 @@ class IconService(QObject):
         """
         super().__init__()
         self._theme_service = theme_service
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._logger = logger or logging.getLogger("applogger.ui")
 
         # react to GUI theme changes
         theme_service.theme_changed.connect(self._on_theme_changed)
@@ -92,17 +94,12 @@ class IconService(QObject):
         icon.addPixmap(base_pix, QIcon.Mode.Normal, QIcon.State.Off)
 
         # create disabled variant
-        dark_mode = (theme == "dark")
+        dark_mode = theme == "dark"
         disabled_pix = self._make_disabled_pixmap(base_pix, dark_mode=dark_mode)
         icon.addPixmap(disabled_pix, QIcon.Mode.Disabled, QIcon.State.Off)
 
-        # DEBUG available if needed, but disabled by default
-        # self._logger.debug("IconService.get('%s') → theme=%s, path=%s", name, theme, path)
         return icon
 
     def current_theme(self) -> str:
         """Return the currently resolved theme name."""
         return self._theme_service.resolve_theme()
-
-
-

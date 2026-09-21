@@ -33,12 +33,15 @@ import logging
 import time
 import traceback
 import uuid
-from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Any, Literal, Protocol, cast
+from functools import partial
+from typing import TYPE_CHECKING, Literal, Protocol, cast
 
 from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
 
 RunnerKind = Literal["thread", "pool"]
 
@@ -47,12 +50,19 @@ RunnerKind = Literal["thread", "pool"]
 # Protocols and type definitions
 # =============================================================================
 
+
 class _ConnectableSignal(Protocol):
     """Protocol for Qt-like signals exposing connect()."""
 
-    def connect(self, slot: Any, connection_type: Qt.ConnectionType = ...) -> Any:
+    def connect(self, slot: Callable[..., object], connection_type: Qt.ConnectionType = ...) -> object:
         """Connect a slot to the signal."""
         ...
+
+
+def _connect_queued(signal: object, slot: Callable[..., object]) -> object:
+    """Connect a Qt signal using a queued connection."""
+    return cast("_ConnectableSignal", signal).connect(slot, Qt.ConnectionType.QueuedConnection)
+
 
 # =============================================================================
 # Data structures
@@ -113,26 +123,11 @@ class _FutureBridge(QObject):
         super().__init__()
         self._job_id = job_id
 
-        self._dispatch_started.connect(
-            self.started.emit,
-            Qt.ConnectionType.QueuedConnection,
-        )
-        self._dispatch_progress.connect(
-            self.progress.emit,
-            Qt.ConnectionType.QueuedConnection,
-        )
-        self._dispatch_result.connect(
-            self.result.emit,
-            Qt.ConnectionType.QueuedConnection,
-        )
-        self._dispatch_error.connect(
-            self.error.emit,
-            Qt.ConnectionType.QueuedConnection,
-        )
-        self._dispatch_finished.connect(
-            self.finished.emit,
-            Qt.ConnectionType.QueuedConnection,
-        )
+        _connect_queued(self._dispatch_started, self.started.emit)
+        _connect_queued(self._dispatch_progress, self.progress.emit)
+        _connect_queued(self._dispatch_result, self.result.emit)
+        _connect_queued(self._dispatch_error, self.error.emit)
+        _connect_queued(self._dispatch_finished, self.finished.emit)
 
     @property
     def job_id(self) -> str:
@@ -151,7 +146,7 @@ class _FutureBridge(QObject):
         """
         self._dispatch_progress.emit(int(value))
 
-    def post_result(self, payload: Any) -> None:
+    def post_result(self, payload: object) -> None:
         """Queue a result signal on the bridge thread.
 
         Args:
@@ -213,13 +208,13 @@ class Worker(QObject):
 
     def __init__(
         self,
-        fn: Callable[..., Any],
-        *args: Any,
+        fn: Callable[..., object],
+        *args: object,
         job_id: str,
         job_scope: str | None,
         corr_id: str | None,
         logger: logging.Logger | None = None,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> None:
         """Initialize the Worker.
 
@@ -248,15 +243,13 @@ class Worker(QObject):
         self._keep_alive: Worker | None = self
 
         # Connect internal dispatch signals to the public signals with queued connections to ensure thread-safe.
-        self._dispatch_started.connect(self.started.emit, Qt.ConnectionType.QueuedConnection)
-        self._dispatch_progress.connect(self.progress.emit, Qt.ConnectionType.QueuedConnection)
-        self._dispatch_result.connect(self.result.emit, Qt.ConnectionType.QueuedConnection)
-        self._dispatch_error.connect(self.error.emit, Qt.ConnectionType.QueuedConnection)
+        _connect_queued(self._dispatch_started, self.started.emit)
+        _connect_queued(self._dispatch_progress, self.progress.emit)
+        _connect_queued(self._dispatch_result, self.result.emit)
+        _connect_queued(self._dispatch_error, self.error.emit)
 
         # When the worker is finished, emit the final finished signal.
-        self._dispatch_finished.connect(
-            self._handle_final_cleanup, Qt.ConnectionType.QueuedConnection
-        )
+        _connect_queued(self._dispatch_finished, self._handle_final_cleanup)
 
     def _handle_final_cleanup(self) -> None:
         """Safely emit finished and release self-ownership."""
@@ -268,6 +261,16 @@ class Worker(QObject):
         """Return the worker job id."""
         return self._job_id
 
+    @property
+    def cancel_func(self) -> Callable[[], bool] | None:
+        """Return the cooperative cancellation callback."""
+        return self._cancel_func
+
+    @cancel_func.setter
+    def cancel_func(self, callback: Callable[[], bool] | None) -> None:
+        """Set the cooperative cancellation callback."""
+        self._cancel_func = callback
+
     def _emit_progress(self, value: int) -> None:
         """Clamp and emit a progress value.
 
@@ -277,7 +280,18 @@ class Worker(QObject):
         try:
             clamped = max(0, min(100, int(value)))
             self._dispatch_progress.emit(clamped)
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             # Never allow progress reporting to crash job execution.
             self._logger.debug(
                 "Worker: failed to emit progress (job_id=%s, corr=%s).",
@@ -304,9 +318,20 @@ class Worker(QObject):
             result = self._fn(*self._args, **call_kwargs)
             self._dispatch_result.emit(result)
 
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             tb = traceback.format_exc()
-            self._logger.error(
+            self._logger.exception(
                 "Worker: callable raised (job_id=%s, scope=%s, corr=%s): %s",
                 self._job_id,
                 self._job_scope,
@@ -325,13 +350,13 @@ class Worker(QObject):
 
 
 def run_in_thread(
-    fn: Callable[..., Any],
-    *args: Any,
+    fn: Callable[..., object],
+    *args: object,
     job_id: str,
     job_scope: str | None,
     corr_id: str | None,
     logger: logging.Logger | None = None,
-    **kwargs: Any,
+    **kwargs: object,
 ) -> tuple[QThread, Worker]:
     """Create and wire a QThread + Worker pair.
 
@@ -361,8 +386,8 @@ def run_in_thread(
 
     thread.started.connect(worker.run)
     worker.finished.connect(thread.quit)
-    worker.finished.connect(worker.deleteLater, Qt.ConnectionType.QueuedConnection)
-    thread.finished.connect(thread.deleteLater, Qt.ConnectionType.QueuedConnection)
+    _connect_queued(worker.finished, worker.deleteLater)
+    _connect_queued(thread.finished, thread.deleteLater)
 
     return thread, worker
 
@@ -374,14 +399,14 @@ def run_in_thread(
 
 def _build_injected_call_kwargs(
     *,
-    fn: Callable[..., Any],
-    base_kwargs: dict[str, Any],
+    fn: Callable[..., object],
+    base_kwargs: dict[str, object],
     progress_cb: Callable[[int], None] | None,
     cancel_cb: Callable[[], bool] | None,
     job_id: str,
     job_scope: str | None,
     corr_id: str | None,
-) -> dict[str, Any]:
+) -> dict[str, object]:
     """Build callable kwargs with supported runtime context injected.
 
     Injection is conservative:
@@ -405,11 +430,8 @@ def _build_injected_call_kwargs(
 
     try:
         signature = inspect.signature(fn)
-        parameters = signature.parameters
-        accepts_var_kwargs = any(
-            parameter.kind is inspect.Parameter.VAR_KEYWORD
-            for parameter in parameters.values()
-        )
+        parameters: Mapping[str, inspect.Parameter] = signature.parameters
+        accepts_var_kwargs = any(parameter.kind is inspect.Parameter.VAR_KEYWORD for parameter in parameters.values())
     except (TypeError, ValueError):
         parameters = {}
         accepts_var_kwargs = False
@@ -517,14 +539,36 @@ class JobManager:
             job_id = getattr(obj, "job_id", None)
             if isinstance(job_id, str) and job_id:
                 return job_id
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             pass
 
         try:
             raw_job_id = getattr(obj, "_job_id", None)
             if isinstance(raw_job_id, str) and raw_job_id:
                 return raw_job_id
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             pass
 
         return None
@@ -548,11 +592,11 @@ class JobManager:
 
     def run(
         self,
-        fn: Callable[..., Any],
-        *args: Any,
+        fn: Callable[..., object],
+        *args: object,
         scope: str | None = None,
         corr_id: str | None = None,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> Worker:
         """Launch a callable in a dedicated QThread.
 
@@ -570,7 +614,8 @@ class JobManager:
             TypeError: If fn is not callable.
         """
         if not callable(fn):
-            raise TypeError("fn must be callable")
+            msg = "fn must be callable"
+            raise TypeError(msg)
 
         job_id = uuid.uuid4().hex
         self._register_job(
@@ -590,7 +635,7 @@ class JobManager:
             logger=self._logger,
             **kwargs,
         )
-        worker._cancel_func = lambda jid=job_id: self.is_cancelled(jid)
+        worker.cancel_func = partial(self.is_cancelled, job_id)
 
         with contextlib.suppress(Exception):
             thread.setObjectName(f"job-{job_id}")
@@ -599,11 +644,22 @@ class JobManager:
         self._connect_job_lifecycle_signals(job_id=job_id, job=worker)
 
         try:
-            thread.finished.connect(
-                lambda jid=job_id: self._finalize_job(jid),
-                Qt.ConnectionType.QueuedConnection,
+            _connect_queued(
+                thread.finished,
+                partial(self._finalize_job, job_id),
             )
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.debug(
                 "JobManager: failed to connect thread.finished finalizer (job_id=%s).",
                 job_id,
@@ -621,12 +677,12 @@ class JobManager:
         return worker
 
     def run_pool(
-            self,
-            fn: Callable[..., Any],
-            *args: Any,
-            scope: str | None = None,
-            corr_id: str | None = None,
-            **kwargs: Any,
+        self,
+        fn: Callable[..., object],
+        *args: object,
+        scope: str | None = None,
+        corr_id: str | None = None,
+        **kwargs: object,
     ) -> _FutureBridge:
         """Launch a callable on a shared ThreadPoolExecutor.
 
@@ -644,7 +700,8 @@ class JobManager:
             TypeError: If fn is not callable.
         """
         if not callable(fn):
-            raise TypeError("fn must be callable")
+            msg = "fn must be callable"
+            raise TypeError(msg)
 
         job_id = uuid.uuid4().hex
         self._register_job(
@@ -660,11 +717,22 @@ class JobManager:
         self._connect_job_lifecycle_signals(job_id=job_id, job=bridge)
 
         try:
-            bridge.finished.connect(
-                lambda jid=job_id: self._finalize_job(jid),
-                Qt.ConnectionType.QueuedConnection,
+            _connect_queued(
+                bridge.finished,
+                partial(self._finalize_job, job_id),
             )
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.debug(
                 "JobManager: failed to connect pool finished finalizer (job_id=%s).",
                 job_id,
@@ -678,21 +746,39 @@ class JobManager:
             corr_id,
         )
 
-        def wrapped() -> tuple[str, Any]:
+        def _post_pool_progress(value: int) -> None:
+            bridge.post_progress(int(value))
+
+        def _is_pool_cancelled() -> bool:
+            return self.is_cancelled(job_id)
+
+        def wrapped() -> tuple[str, object]:
             try:
                 call_kwargs = _build_injected_call_kwargs(
                     fn=fn,
                     base_kwargs=dict(kwargs),
-                    progress_cb=lambda value: bridge.post_progress(int(value)),
-                    cancel_cb=lambda jid=job_id: self.is_cancelled(jid),
+                    progress_cb=_post_pool_progress,
+                    cancel_cb=_is_pool_cancelled,
                     job_id=job_id,
                     job_scope=scope,
                     corr_id=corr_id,
                 )
                 result = fn(*args, **call_kwargs)
-                return "ok", result
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 return "err", traceback.format_exc()
+            else:
+                return "ok", result
 
         # Queue started instead of emitting directly. This keeps signal delivery
         # consistent with the rest of the pool bridge and avoids races for any
@@ -700,16 +786,27 @@ class JobManager:
         bridge.post_started()
 
         pool = self._ensure_pool()
-        future = pool.submit(wrapped)
+        future: Future[tuple[str, object]] = pool.submit(wrapped)
 
-        def on_done(done_future: Any) -> None:
+        def on_done(done_future: Future[tuple[str, object]]) -> None:
             try:
                 tag, payload = done_future.result()
                 if tag == "ok":
                     bridge.post_result(payload)
                 else:
-                    bridge.post_error(payload)
-            except Exception:
+                    bridge.post_error(str(payload))
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 bridge.post_error(traceback.format_exc())
             finally:
                 bridge.post_finished()
@@ -837,7 +934,18 @@ class JobManager:
                         meta.corr_id if meta is not None else None,
                         wait_ms,
                     )
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.debug(
                     "JobManager: failed to stop thread job during abort (job_id=%s).",
                     job_id,
@@ -847,7 +955,18 @@ class JobManager:
         if self._pool is not None:
             try:
                 self._pool.shutdown(wait=False, cancel_futures=True)
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.debug(
                     "JobManager: pool shutdown failed during abort.",
                     exc_info=True,
@@ -871,7 +990,18 @@ class JobManager:
 
         try:
             self._pool.shutdown(wait=wait, cancel_futures=True)
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.debug("JobManager: pool shutdown failed.", exc_info=True)
         finally:
             self._pool = None
@@ -928,18 +1058,27 @@ class JobManager:
             job: Worker or _FutureBridge instance.
         """
         started_signal = getattr(job, "started", None)
-        # progress_signal = getattr(job, "progress", None)
         error_signal = getattr(job, "error", None)
         finished_signal = getattr(job, "finished", None)
 
         if started_signal is not None:
-            started = cast(_ConnectableSignal, started_signal)
             try:
-                started.connect(
-                    lambda jid=job_id: self._on_job_started(jid),
-                    Qt.ConnectionType.QueuedConnection,
+                _connect_queued(
+                    started_signal,
+                    partial(self._on_job_started, job_id),
                 )
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.debug(
                     "JobManager: failed to connect started logger (job_id=%s).",
                     job_id,
@@ -947,13 +1086,23 @@ class JobManager:
                 )
 
         if error_signal is not None:
-            error = cast(_ConnectableSignal, error_signal)
             try:
-                error.connect(
-                    lambda tb, jid=job_id: self._on_job_error(jid, tb),
-                    Qt.ConnectionType.QueuedConnection,
+                _connect_queued(
+                    error_signal,
+                    partial(self._on_job_error, job_id),
                 )
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.debug(
                     "JobManager: failed to connect error logger (job_id=%s).",
                     job_id,
@@ -961,13 +1110,23 @@ class JobManager:
                 )
 
         if finished_signal is not None:
-            finished = cast(_ConnectableSignal, finished_signal)
             try:
-                finished.connect(
-                    lambda jid=job_id: self._on_job_finished(jid),
-                    Qt.ConnectionType.QueuedConnection,
+                _connect_queued(
+                    finished_signal,
+                    partial(self._on_job_finished, job_id),
                 )
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.debug(
                     "JobManager: failed to connect finished logger (job_id=%s).",
                     job_id,

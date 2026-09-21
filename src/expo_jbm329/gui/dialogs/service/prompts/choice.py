@@ -1,4 +1,5 @@
 """Dialogs for prompting the user for choices."""
+
 from __future__ import annotations
 
 from PyQt6.QtCore import QCoreApplication, Qt
@@ -59,7 +60,7 @@ def prompt_choice(
     buttons = QDialogButtonBox(parent=dlg)
     buttons.addButton(QDialogButtonBox.StandardButton.Ok)
     buttons.addButton(QDialogButtonBox.StandardButton.Cancel)
-    
+
     localize_dialog_buttons(buttons)
     buttons.accepted.connect(dlg.accept)
     buttons.rejected.connect(dlg.reject)
@@ -74,6 +75,7 @@ def prompt_choice(
 # ----------------------------------------------------------------------
 # prompt_yes_no
 # ----------------------------------------------------------------------
+
 
 def prompt_yes_no(
     parent: QWidget,
@@ -92,12 +94,8 @@ def prompt_yes_no(
     if informative:
         msg.setInformativeText(informative)
 
-    msg.setStandardButtons(
-        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-    )
-    msg.setDefaultButton(
-        QMessageBox.StandardButton.Yes if default_yes else QMessageBox.StandardButton.No
-    )
+    msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+    msg.setDefaultButton(QMessageBox.StandardButton.Yes if default_yes else QMessageBox.StandardButton.No)
 
     localize_messagebox_buttons(msg)
     apply_dialog_window_hints(msg, min_width=300)
@@ -108,6 +106,7 @@ def prompt_yes_no(
 # ----------------------------------------------------------------------
 # confirm_profile_scope
 # ----------------------------------------------------------------------
+
 
 def confirm_profile_scope(
     parent: QWidget,
@@ -126,7 +125,10 @@ def confirm_profile_scope(
 
     # Icon
     icon_label = QLabel(dlg)
-    icon = dlg.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxQuestion)
+    style = dlg.style()
+    if style is None:
+        return ProfileChoice.CANCEL
+    icon = style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxQuestion)
     icon_label.setPixmap(icon.pixmap(34, 34))
     icon_label.setAlignment(Qt.AlignmentFlag.AlignTop)
     content.addWidget(icon_label)
@@ -173,6 +175,7 @@ def confirm_profile_scope(
 # confirm_delete
 # ----------------------------------------------------------------------
 
+
 def confirm_delete(
     parent: QWidget,
     *,
@@ -183,9 +186,7 @@ def confirm_delete(
 ) -> bool:
     """Ask the user to confirm deletion of a file or folder."""
     if title is None:
-        title = QCoreApplication.translate(
-            "QtDialogService", "Confirm delete"
-        )
+        title = QCoreApplication.translate("QtDialogService", "Confirm delete")
 
     msg = QMessageBox(parent)
     msg.setIcon(QMessageBox.Icon.Warning)
@@ -193,7 +194,8 @@ def confirm_delete(
 
     size_str = size_hint or ""
     msg.setText(
-        QCoreApplication.translate(
+        QCoreApplication
+        .translate(
             "QtDialogService",
             "Do you want to permanently delete:\n\n%1%2",
         )
@@ -203,9 +205,7 @@ def confirm_delete(
 
     msg.setInformativeText(full_path)
 
-    msg.setStandardButtons(
-        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-    )
+    msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
     msg.setDefaultButton(QMessageBox.StandardButton.No)
 
     localize_messagebox_buttons(msg)

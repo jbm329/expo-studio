@@ -53,14 +53,19 @@ This module belongs to the GUI layer and sits below controllers
 (e.g. ResultTabManager) but above the service layer. It is a pure
 presentation component.
 """
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QMenu, QWidget
 
-from expo_jbm329.gui.menus.result_tab_header_context import ResultTabHeaderContext
 from expo_jbm329.utils.i18n_utils import tr
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.menus.result_tab_header_context import ResultTabHeaderContext
 
 
 class ResultTabColumnHeaderContextMenu:
@@ -231,7 +236,7 @@ class ResultTabColumnHeaderContextMenu:
             "clean.strip",
             enabled=one and caps.can_clean_text,
         )
-        
+
         self._add_menu_action(
             clean_menu,
             action_map,

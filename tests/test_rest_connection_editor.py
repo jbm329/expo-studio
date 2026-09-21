@@ -85,7 +85,7 @@ def test_gather_form_rejects_invalid_headers_json():
     except ValueError as exc:
         assert "Headers" in str(exc)
     else:
-        raise AssertionError("Expected ValueError")
+        raise AssertionError("Expected ValueError")  # noqa: TRY003
 
 
 def test_save_changes_persists_valid_api_key_auth(monkeypatch):

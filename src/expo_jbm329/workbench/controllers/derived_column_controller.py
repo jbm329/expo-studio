@@ -4,14 +4,11 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
-import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QDialog, QTableView
+from PyQt6.QtWidgets import QDialog, QTableView, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.derived_column.derived_column_dialog import (
     DerivedColumnDialog,
@@ -27,11 +24,21 @@ from expo_jbm329.services.data_operations.derived_column.derived_column_service 
 )
 from expo_jbm329.services.data_operations.dtypes import get_numeric_columns
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    import pandas as pd
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
 
 
 class ApplyToActiveTab(Protocol):
     """Protocol for applying a result to an active tab."""
+
     def __call__(
         self,
         df: pd.DataFrame,
@@ -53,7 +60,7 @@ class DerivedColumnController:
     TR_CREATING_COLUMN = QT_TR_NOOP("Creating derived column '{column_name}'")
     TR_NO_ACTIVE_TAB = QT_TR_NOOP("No active tab found.")
     TR_VALID_FORMULA = QT_TR_NOOP("Valid formula.")
-    
+
     # Errors
     TR_FAILURE = QT_TR_NOOP("Failure")
 
@@ -72,12 +79,8 @@ class DerivedColumnController:
     TR_MISSING_OPERAND_BEFORE_OPERATOR = QT_TR_NOOP(
         "Missing operand before operator '{operator}' at position {position}."
     )
-    TR_MISSING_OPERAND_BEFORE_CLOSING_PAREN = QT_TR_NOOP(
-        "Missing operand before ')' at position {position}."
-    )
-    TR_MISSING_OPERATOR_BEFORE_OPENING_PAREN = QT_TR_NOOP(
-        "Missing operator before '(' at position {position}."
-    )
+    TR_MISSING_OPERAND_BEFORE_CLOSING_PAREN = QT_TR_NOOP("Missing operand before ')' at position {position}.")
+    TR_MISSING_OPERATOR_BEFORE_OPENING_PAREN = QT_TR_NOOP("Missing operator before '(' at position {position}.")
     TR_UNMATCHED_CLOSING_PAREN = QT_TR_NOOP("Unmatched closing parenthesis at position {position}.")
     TR_UNMATCHED_OPENING_PAREN = QT_TR_NOOP("Unmatched opening parenthesis.")
     TR_FORMULA_ENDS_WITH_OPERATOR = QT_TR_NOOP("Formula cannot end with operator '{operator}'.")
@@ -110,7 +113,7 @@ class DerivedColumnController:
         return tr("DerivedColumnController", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("DerivedColumnController", text, **kwargs)
 
     __slots__ = (
@@ -131,7 +134,7 @@ class DerivedColumnController:
         get_active_view: Callable[[], QTableView | None],
         apply_to_active_tab: ApplyToActiveTab,
         dialogs: DialogService | None = None,
-        main_window,
+        main_window: QWidget,
         logger: logging.Logger | None = None,
     ) -> None:
         """Initialize controller.
@@ -244,9 +247,7 @@ class DerivedColumnController:
         """Create a derived column asynchronously and apply the result."""
         view = self._get_active_view()
         if view is None:
-            self._logger.warning(
-                "DerivedColumnController: no active view available for async derived column."
-            )
+            self._logger.warning("DerivedColumnController: no active view available for async derived column.")
             self._dialogs.info(
                 parent=self._main_window,
                 title=self._tr(self.TR_DERIVED_COLUMN),
@@ -259,31 +260,39 @@ class DerivedColumnController:
         corr_id = uuid.uuid4().hex
 
         self._logger.debug(
-            "DerivedColumnController: scheduling derived column creation "
-            "(column=%s, formula=%s, corr=%s).",
+            "DerivedColumnController: scheduling derived column creation (column=%s, formula=%s, corr=%s).",
             safe_spec.column_name,
             safe_spec.formula,
             corr_id,
         )
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> tuple[bool, pd.DataFrame | None, Exception | None] | None:
+            del progress_cb
             if cancel_cb and cancel_cb():
                 return None
 
             try:
                 new_df = create_derived_column(safe_df, safe_spec)
-                return True, new_df, None
 
             except DerivedColumnError as exc:
                 return False, None, exc
+            else:
+                return True, new_df, None
 
-        def _apply_result(result):
+        def _apply_result(result: tuple[bool, pd.DataFrame | None, Exception | None] | None) -> None:
             if result is None:
                 return
 
             ok, new_df, exc = result
 
             if not ok:
+                if exc is None:
+                    exc = DerivedColumnError(code="unknown")
                 self._logger.warning(
                     "DerivedColumnController: derived column failed (column=%s, corr=%s): %s",
                     safe_spec.column_name,
@@ -337,9 +346,18 @@ class DerivedColumnController:
                 )
                 return None
 
-            return df
-
-        except Exception as exc:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
             self._logger.exception("Failed to get active DataFrame")
             self._dialogs.critical(
                 parent=self._main_window,
@@ -347,6 +365,8 @@ class DerivedColumnController:
                 text=str(exc),
             )
             return None
+        else:
+            return df
 
     def _apply_result(
         self,
@@ -370,16 +390,18 @@ class DerivedColumnController:
                 message=self._tr_fmt(self.TR_CREATING_COLUMN, column_name=spec.column_name),
             )
 
-            # ------------------------------------------------------
-            # OPTION B:
-            # create new result tab
-            # ------------------------------------------------------
-            # self._rtm.add_result_tab(
-            #     new_df,
-            #     title=f"{self._rtm.get_active_title()} (beräknad)",
-            # )
-
-        except Exception as exc:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
             self._logger.exception("Failed to apply derived column result")
 
             self._dialogs.critical(

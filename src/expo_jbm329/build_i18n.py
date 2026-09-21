@@ -1,4 +1,5 @@
-# src/expo_jbm329/build_i18n.py
+"""Build the Qt translation files from Python source strings."""
+
 from __future__ import annotations
 
 import pathlib
@@ -36,10 +37,11 @@ def run_pylupdate(ts_file: pathlib.Path) -> None:
     print(f"Extracting strings → {ts_file.name}")
     print("  " + " ".join(cmd))
 
-    subprocess.check_call(cmd)
+    subprocess.check_call(cmd)  # noqa: S603 - trusted build command
 
 
 def main() -> None:
+    """Extract translatable strings from the Python sources to .ts files."""
     print("=== Extracting i18n strings (.py → .ts) ===")
     ensure_locales_dir()
 

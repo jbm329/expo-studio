@@ -6,16 +6,16 @@ autocomplete, result tabs, and file handling into a single dependency container.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Self
+
 from PyQt6.QtCore import Qt
 
-from expo_jbm329.app.app_services import AppServices
 from expo_jbm329.app.settings.config_store import read_connections
 from expo_jbm329.db.base import close_connection
 from expo_jbm329.gui.custom_tab_bar import CustomTabBar
 from expo_jbm329.gui.gui_utils import ui_invoke
 from expo_jbm329.services.file_job_service import FileJobService
 from expo_jbm329.services.schema_model import build_schema_dict
-from expo_jbm329.services.settings_service import SettingsService
 from expo_jbm329.utils.dialog_state import DialogState
 from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
 from expo_jbm329.workbench.controllers.busy_overlay_controller import BusyOverlayController
@@ -40,11 +40,16 @@ from expo_jbm329.workbench.icon.custom_file_icon_provider import CustomFileIconP
 from expo_jbm329.workbench.icon.icon_service import IconService
 from expo_jbm329.workbench.theme.highlighter_theme_service import HighlighterThemeService
 from expo_jbm329.workbench.theme.theme_service import ThemeService
-from expo_jbm329.workbench.ui_refs import WorkbenchUIRefs
+
+if TYPE_CHECKING:
+    from expo_jbm329.app.app_services import AppServices
+    from expo_jbm329.services.settings_service import SettingsService
+    from expo_jbm329.workbench.ui_refs import WorkbenchUIRefs
 
 
 class WorkbenchServices:
     """Container for workbench controllers and UI-facing services."""
+
     def __init__(
         self,
         busy_overlay: BusyOverlayController,
@@ -68,8 +73,8 @@ class WorkbenchServices:
         highlighter_theme_service: HighlighterThemeService,
         join: JoinController,
         concat: ConcatController,
-        dialog_state: DialogState
-    ):
+        dialog_state: DialogState,
+    ) -> None:
         """Initialize the workbench service container.
 
         Args:
@@ -95,6 +100,9 @@ class WorkbenchServices:
             join: Controller for JOIN operations.
             concat: Controller for CONCAT operations.
             dialog_state: Service for managing dialog state.
+
+        Returns:
+            None
         """
         self.busy_overlay = busy_overlay
         self.async_ops = async_ops
@@ -120,7 +128,7 @@ class WorkbenchServices:
         self.dialog_state = dialog_state
 
     @classmethod
-    def build(cls, app: AppServices, ui: WorkbenchUIRefs, settings_service: SettingsService) -> WorkbenchServices:
+    def build(cls: type[Self], app: AppServices, ui: WorkbenchUIRefs, settings_service: SettingsService) -> Self:
         """Construct all workbench-level controllers and services.
 
         Args:
@@ -203,7 +211,7 @@ class WorkbenchServices:
             update_undo_enabled=update_undo,
             cancel_job=app.job_mgr.cancel_job,
             logger=app.log_ui,
-        )      
+        )
 
         # ============================================================
         # RESULT TABS WIRING
@@ -222,7 +230,11 @@ class WorkbenchServices:
         result_tab_bar.customContextMenuRequested.connect(results.on_tabbar_context_menu)
 
         ui_invoke(result_tabs.currentChanged.connect, results.on_tab_changed)
-        ui_invoke(result_tabs.currentChanged.connect, lambda _: ui.update_undo_enabled())
+
+        def _update_undo_enabled(_index: int) -> None:
+            ui.update_undo_enabled()
+
+        ui_invoke(result_tabs.currentChanged.connect, _update_undo_enabled)
         # ============================================================
         # VISUALIZATION
         # ============================================================
@@ -293,7 +305,7 @@ class WorkbenchServices:
             display_dataframe=results.display_dataframe,
             dialogs=app.dialogs,
             logger=app.log_service,
-        )       
+        )
 
         # ============================================================
         # DOCUMENT
@@ -470,7 +482,7 @@ class WorkbenchServices:
             file_dialogs=app.file_dialogs,
             dialog_state=dialog_state,
             logger=app.log_service,
-        )       
+        )
 
         # ============================================================
         # JOIN CONTROLLER
@@ -482,11 +494,11 @@ class WorkbenchServices:
             get_active_view=results.active_view,
             get_active_tab_title=lambda: ui.result_tabs.tabText(ui.result_tabs.currentIndex()).strip(),
             list_tab_titles=lambda: [ui.result_tabs.tabText(i).strip() for i in range(ui.result_tabs.count())],
-            get_df_for_tab=lambda title: results.get_df_by_title(title),
+            get_df_for_tab=results.get_df_by_title,
             set_status=ui.set_status,
             logger=app.log_ui,
         )
-        results._join_controller = join
+        results.set_join_controller(join)
 
         # ============================================================
         # CONCAT CONTROLLER
@@ -495,17 +507,13 @@ class WorkbenchServices:
             parent_widget=ui.parent,
             async_ops=async_ops,
             results=results,
-            get_active_tab_title=lambda: ui.result_tabs.tabText(
-                ui.result_tabs.currentIndex()
-            ).strip(),
-            list_tab_titles=lambda: [
-                ui.result_tabs.tabText(i).strip() for i in range(ui.result_tabs.count())
-            ],
-            get_df_for_tab=lambda title: results.get_df_by_title(title),
+            get_active_tab_title=lambda: ui.result_tabs.tabText(ui.result_tabs.currentIndex()).strip(),
+            list_tab_titles=lambda: [ui.result_tabs.tabText(i).strip() for i in range(ui.result_tabs.count())],
+            get_df_for_tab=results.get_df_by_title,
             set_status=ui.set_status,
             logger=app.log_ui,
         )
-        results._concat_controller = concat
+        results.set_concat_controller(concat)
 
         # ============================================================
         # DERIVED COLUMN
@@ -519,7 +527,7 @@ class WorkbenchServices:
             main_window=ui.parent,
             logger=app.log_ui,
         )
-        results._derived_column_controller = derived_column
+        results.set_derived_column_controller(derived_column)
 
         # ============================================================
         # Workbench settings subscriptions

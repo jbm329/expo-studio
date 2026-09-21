@@ -25,16 +25,20 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 from weakref import WeakKeyDictionary
 
 from PyQt6.QtCore import QT_TR_NOOP, QTimer
 from PyQt6.QtWidgets import QApplication, QTableView, QWidget
 
 from expo_jbm329.gui.busy_overlay import BusyOverlayWidget
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.i18n_utils import tr
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 
 
 class BusyOverlayController:
@@ -46,9 +50,7 @@ class BusyOverlayController:
 
     TR_TIME_LIMIT_REACHED = QT_TR_NOOP("Time limit reached")
 
-    TR_TOO_LONG_TIME = QT_TR_NOOP(
-        "The time limit was reached.\nPlease see logs for more information."
-    )
+    TR_TOO_LONG_TIME = QT_TR_NOOP("The time limit was reached.\nPlease see logs for more information.")
 
     # ------------------------------------------------------------------
     @staticmethod
@@ -70,7 +72,7 @@ class BusyOverlayController:
         parent: QWidget,
         dialogs: DialogService | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize BusyOverlayController.
 
         Args:
@@ -82,13 +84,9 @@ class BusyOverlayController:
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
 
-        self._overlays: WeakKeyDictionary[QWidget, BusyOverlayWidget] = (
-            WeakKeyDictionary()
-        )
+        self._overlays: WeakKeyDictionary[QWidget, BusyOverlayWidget] = WeakKeyDictionary()
 
-        self._watchdogs: WeakKeyDictionary[QWidget, QTimer] = (
-            WeakKeyDictionary()
-        )
+        self._watchdogs: WeakKeyDictionary[QWidget, QTimer] = WeakKeyDictionary()
 
     # ==================================================================
     # Public API
@@ -146,7 +144,7 @@ class BusyOverlayController:
             timeout_ms=timeout_ms,
         )
 
-        def _execute():
+        def _execute() -> None:
             try:
                 fn()
             finally:
@@ -237,7 +235,18 @@ class BusyOverlayController:
 
         try:
             return overlay.isVisible()
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return False
 
     # ==================================================================
@@ -309,10 +318,8 @@ class BusyOverlayController:
         timer.setSingleShot(True)
         timer.setInterval(timeout_ms)
 
-        def _watchdog_fire():
-            self._logger.warning(
-                "BusyOverlayController: watchdog timeout reached."
-            )
+        def _watchdog_fire() -> None:
+            self._logger.warning("BusyOverlayController: watchdog timeout reached.")
 
             self.hide(target)
 

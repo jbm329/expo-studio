@@ -6,22 +6,27 @@ The manager is intentionally UI-agnostic and does not depend on Qt widgets.
 It acts as the single source of truth for which SQL tabs exist, which one is
 active, and which database connection (if any) each tab is bound to.
 """
+
 from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP
 
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
 
 class EditorTabState(Enum):
     """Lifecycle state of an editor tab."""
+
     UNBOUND = auto()
     DISCONNECTED = auto()
     BOUND = auto()
@@ -43,6 +48,7 @@ class EditorTab:
         file_path: Path to the associated file, if any.
         is_dirty: Flag indicating if the tab has unsaved changes.
     """
+
     tab_id: str
     base_title: str
     sql_text: str = ""
@@ -86,7 +92,10 @@ class EditorTabManager:
         "_tabs",
     )
 
-    def __init__(self, logger: logging.Logger | None = None,) -> None:
+    def __init__(
+        self,
+        logger: logging.Logger | None = None,
+    ) -> None:
         """Initialize an empty EditorTabManager."""
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
         self._tabs: dict[str, EditorTab] = {}
@@ -120,11 +129,7 @@ class EditorTabManager:
             self._query_counter += 1
             title = f"{self._tr(self.TR_QUERY_BASE_NAME)} {self._query_counter}"
 
-        state = (
-            EditorTabState.BOUND
-            if connection_name
-            else EditorTabState.UNBOUND
-        )
+        state = EditorTabState.BOUND if connection_name else EditorTabState.UNBOUND
 
         tab = EditorTab(
             tab_id=tab_id,
@@ -227,7 +232,8 @@ class EditorTabManager:
         """
         tab = self._tabs.get(tab_id)
         if not tab:
-            raise KeyError(f"Unknown tab_id: {tab_id}")
+            msg = f"Unknown tab_id: {tab_id}"
+            raise KeyError(msg)
 
         title = new_base_title.strip()
         if not title:
@@ -260,7 +266,8 @@ class EditorTabManager:
             KeyError: If the tab does not exist.
         """
         if tab_id not in self._tabs:
-            raise KeyError(f"Unknown tab_id: {tab_id}")
+            msg = f"Unknown tab_id: {tab_id}"
+            raise KeyError(msg)
 
         self._active_tab_id = tab_id
 
@@ -295,7 +302,8 @@ class EditorTabManager:
         """
         tab = self._tabs.get(tab_id)
         if not tab:
-            raise KeyError(f"Unknown tab_id: {tab_id}")
+            msg = f"Unknown tab_id: {tab_id}"
+            raise KeyError(msg)
 
         tab.connection_name = connection_name
         tab.last_used_connection = connection_name

@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock
-
 import pandas as pd
-import pytest
 
 from expo_jbm329.services.job_result import JobResult
 from expo_jbm329.services.rest.models import RestPaginationConfig, RestRequestConfig

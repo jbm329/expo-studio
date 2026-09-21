@@ -17,7 +17,7 @@ Design principles:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 
@@ -28,7 +28,7 @@ import pandas as pd
 def fillna(
     df: pd.DataFrame,
     column: str,
-    value: Any,
+    value: object,
 ) -> pd.DataFrame:
     """Fill missing values in a column with a given value.
 
@@ -44,10 +44,11 @@ def fillna(
         KeyError: If the column does not exist.
     """
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     new_df = df.copy()
-    new_df[column] = new_df[column].fillna(value)
+    new_df[column] = new_df[column].fillna(cast("Any", value))
 
     return new_df
 
@@ -55,6 +56,7 @@ def fillna(
 # =====================================================================
 # Statistical fill strategies
 # =====================================================================
+
 
 def fillna_mean(df: pd.DataFrame, column: str) -> pd.DataFrame:
     """Fill missing values with the column mean.
@@ -72,7 +74,8 @@ def fillna_mean(df: pd.DataFrame, column: str) -> pd.DataFrame:
         KeyError: If the column does not exist.
     """
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     mean_value = df[column].mean()
     return fillna(df, column, mean_value)
@@ -94,7 +97,8 @@ def fillna_median(df: pd.DataFrame, column: str) -> pd.DataFrame:
         KeyError: If the column does not exist.
     """
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     median_value = df[column].median()
     return fillna(df, column, median_value)
@@ -107,7 +111,8 @@ def fillna_mode(df: pd.DataFrame, column: str) -> pd.DataFrame:
     returns a copy of the original DataFrame unchanged.
     """
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     mode = df[column].mode()
 
@@ -122,6 +127,7 @@ def fillna_mode(df: pd.DataFrame, column: str) -> pd.DataFrame:
 # =====================================================================
 # String-specific helpers
 # =====================================================================
+
 
 def replace_empty_with_nan(
     df: pd.DataFrame,
@@ -146,9 +152,10 @@ def replace_empty_with_nan(
         KeyError: If the column does not exist.
     """
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
-    s = df[column].replace(r"^\s*$", pd.NA, regex=True)
+    s = df[column].replace(r"^\s*$", cast("Any", pd.NA), regex=True)
 
     new_df = df.copy()
     new_df[column] = s

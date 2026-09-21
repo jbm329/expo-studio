@@ -2,10 +2,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from expo_jbm329.services.data_profile.capabilities import (
-    SeriesCapabilities,
-    infer_series_capabilities,
-)
+from expo_jbm329.services.data_profile.capabilities import infer_series_capabilities
 
 
 def test_infer_series_capabilities_for_numeric_and_datetime():

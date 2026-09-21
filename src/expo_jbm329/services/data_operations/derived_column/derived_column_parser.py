@@ -33,6 +33,7 @@ from typing import Final
 
 class DerivedColumnFormulaError(ValueError):
     """Structured error for derived column formulas."""
+
     def __init__(
         self,
         code: str,
@@ -118,14 +119,13 @@ _OPERATOR_PRECEDENCE: Final[dict[str, int]] = {
 _SUPPORTED_OPERATORS: Final[set[str]] = set(_OPERATOR_PRECEDENCE)
 
 
-_NUMBER_RE: Final[re.Pattern[str]] = re.compile(
-    r"\d+(?:\.\d*)?|\.\d+"
-)
+_NUMBER_RE: Final[re.Pattern[str]] = re.compile(r"\d+(?:\.\d*)?|\.\d+")
 
 
 # =====================================================================
 # Public API
 # =====================================================================
+
 
 def tokenize_formula(formula: str) -> list[FormulaToken]:
     """Tokenize a derived column formula.
@@ -141,7 +141,8 @@ def tokenize_formula(formula: str) -> list[FormulaToken]:
     """
     text = (formula or "").strip()
     if not text:
-        raise DerivedColumnFormulaError("formula_empty")
+        msg = "formula_empty"
+        raise DerivedColumnFormulaError(msg)
 
     tokens: list[FormulaToken] = []
     i = 0
@@ -163,21 +164,13 @@ def tokenize_formula(formula: str) -> list[FormulaToken]:
         if char == "[":
             end = text.find("]", i + 1)
             if end == -1:
-                raise DerivedColumnFormulaError(
-                    "unclosed_column_reference",
-                    context={
-                        "position": i
-                    }
-                )
+                msg = "unclosed_column_reference"
+                raise DerivedColumnFormulaError(msg, context={"position": i})
 
-            column_name = text[i + 1:end].strip()
+            column_name = text[i + 1 : end].strip()
             if not column_name:
-                raise DerivedColumnFormulaError(
-                    "empty_column_reference",
-                    context={
-                        "position": i
-                    }
-                )
+                msg = "empty_column_reference"
+                raise DerivedColumnFormulaError(msg, context={"position": i})
 
             tokens.append(
                 FormulaToken(
@@ -283,8 +276,9 @@ def tokenize_formula(formula: str) -> list[FormulaToken]:
             expecting_operand = True
             continue
 
+        msg = "unsupported_character"
         raise DerivedColumnFormulaError(
-            "unsupported_character",
+            msg,
             context={
                 "char": char,
                 "position": i,
@@ -345,22 +339,24 @@ def parse_formula_to_rpn(formula: str, available_columns: set[str]) -> list[Form
                 output.append(top)
 
             if not found_lparen:
+                msg = "unmatched_closing_parenthesis"
                 raise DerivedColumnFormulaError(
-                    "unmatched_closing_parenthesis",
+                    msg,
                     context={
                         "position": token.position,
-                    }
+                    },
                 )
 
     while operators:
         top = operators.pop()
 
         if top.token_type == FormulaTokenType.LPAREN:
+            msg = "unmatched_opening_parenthesis"
             raise DerivedColumnFormulaError(
-                "unmatched_opening_parenthesis",
+                msg,
                 context={
                     "position": top.position,
-                }
+                },
             )
 
         output.append(top)
@@ -425,11 +421,7 @@ def extract_referenced_columns_from_tokens(tokens: list[FormulaToken]) -> set[st
     Returns:
         Set of referenced column names.
     """
-    return {
-        token.value
-        for token in tokens
-        if token.token_type == FormulaTokenType.COLUMN
-    }
+    return {token.value for token in tokens if token.token_type == FormulaTokenType.COLUMN}
 
 
 def validate_tokens(tokens: list[FormulaToken], available_columns: set[str]) -> None:
@@ -443,7 +435,8 @@ def validate_tokens(tokens: list[FormulaToken], available_columns: set[str]) -> 
         DerivedColumnFormulaError: If the token sequence is invalid.
     """
     if not tokens:
-        raise DerivedColumnFormulaError("formula_empty")
+        msg = "formula_empty"
+        raise DerivedColumnFormulaError(msg)
 
     _validate_column_references(tokens, available_columns)
     _validate_syntax(tokens)
@@ -469,12 +462,13 @@ def _operator_precedence(token: FormulaToken) -> int:
     try:
         return _OPERATOR_PRECEDENCE[token.value]
     except KeyError as exc:
+        msg = "unsupported_operator"
         raise DerivedColumnFormulaError(
-            "unsupported_operator",
+            msg,
             context={
                 "token": token.value,
                 "position": token.position,
-            }
+            },
         ) from exc
 
 
@@ -496,8 +490,9 @@ def _validate_column_references(
             continue
 
         if token.value not in available_columns:
+            msg = "unknown_column"
             raise DerivedColumnFormulaError(
-                "unknown_column",
+                msg,
                 context={
                     "column": token.value,
                     "position": token.position,
@@ -525,8 +520,9 @@ def _validate_syntax(tokens: list[FormulaToken]) -> None:
 
         if token_type in {FormulaTokenType.NUMBER, FormulaTokenType.COLUMN}:
             if not expecting_operand:
+                msg = "missing_operator_before_operand"
                 raise DerivedColumnFormulaError(
-                    "missing_operator_before_operand",
+                    msg,
                     context={"position": token.position},
                 )
 
@@ -537,11 +533,12 @@ def _validate_syntax(tokens: list[FormulaToken]) -> None:
 
         if token_type == FormulaTokenType.LPAREN:
             if not expecting_operand:
+                msg = "missing_operand_before_opening_parenthesis"
                 raise DerivedColumnFormulaError(
-                    "missing_operand_before_opening_parenthesis",
+                    msg,
                     context={
                         "position": token.position,
-                    }
+                    },
                 )
 
             paren_balance += 1
@@ -551,15 +548,17 @@ def _validate_syntax(tokens: list[FormulaToken]) -> None:
 
         if token_type == FormulaTokenType.RPAREN:
             if expecting_operand:
+                msg = "missing_operand_before_closing_parenthesis"
                 raise DerivedColumnFormulaError(
-                    "missing_operand_before_closing_parenthesis",
+                    msg,
                     context={"position": token.position},
                 )
 
             paren_balance -= 1
             if paren_balance < 0:
+                msg = "unmatched_closing_parenthesis"
                 raise DerivedColumnFormulaError(
-                    "unmatched_closing_parenthesis",
+                    msg,
                     context={"position": token.position},
                 )
 
@@ -569,20 +568,22 @@ def _validate_syntax(tokens: list[FormulaToken]) -> None:
 
         if token_type == FormulaTokenType.OPERATOR:
             if expecting_operand:
+                msg = "missing_operand_before_operator"
                 raise DerivedColumnFormulaError(
-                    "missing_operand_before_operator",
+                    msg,
                     context={
                         "operator": token.value,
                         "position": token.position,
-                    }
+                    },
                 )
 
             expecting_operand = True
             previous = token
             continue
 
+        msg = "unsupported_token"
         raise DerivedColumnFormulaError(
-            "unsupported_token",
+            msg,
             context={
                 "token": token.value,
                 "position": token.position,
@@ -590,16 +591,17 @@ def _validate_syntax(tokens: list[FormulaToken]) -> None:
         )
 
     if paren_balance > 0:
-        raise DerivedColumnFormulaError("unmatched_opening_parenthesis")
+        msg = "unmatched_opening_parenthesis"
+        raise DerivedColumnFormulaError(msg)
 
     if expecting_operand:
         if previous and previous.token_type == FormulaTokenType.OPERATOR:
-            raise DerivedColumnFormulaError(
-                "formula_ends_with_operator",
-                context={"operator": previous.value}
-            )
+            msg = "formula_ends_with_operator"
+            raise DerivedColumnFormulaError(msg, context={"operator": previous.value})
 
-        raise DerivedColumnFormulaError("formula_incomplete")
+        msg = "formula_incomplete"
+        raise DerivedColumnFormulaError(msg)
 
     if not saw_operand:
-        raise DerivedColumnFormulaError("formula_missing_value")
+        msg = "formula_missing_value"
+        raise DerivedColumnFormulaError(msg)

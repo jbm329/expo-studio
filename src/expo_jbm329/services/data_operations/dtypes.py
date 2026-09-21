@@ -101,6 +101,7 @@ def classify_series_dtype(s: pd.Series) -> SemanticDType:
 # Semantic dtype helpers
 # =====================================================================
 
+
 def is_text_like_dtype(series: pd.Series) -> bool:
     """Check whether a Series is semantically text-like.
 
@@ -124,17 +125,28 @@ def is_text_like_dtype(series: pd.Series) -> bool:
         if isinstance(series.dtype, CategoricalDtype):
             from typing import cast
 
-            cat_dtype = cast(CategoricalDtype, series.dtype)
+            cat_dtype = cast("CategoricalDtype", series.dtype)
             cats = cat_dtype.categories
             return pdt.is_string_dtype(cats) or pdt.is_object_dtype(cats)
 
         if pdt.is_object_dtype(series):
             sample = series[series.notna()].head(1000)
-            return sample.map(lambda v: isinstance(v, str)).all()
+            return bool(sample.map(lambda v: isinstance(v, str)).all())
 
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         return False
-
-    except Exception:
+    else:
         return False
 
 

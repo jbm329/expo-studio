@@ -7,13 +7,11 @@ operation to the appropriate workbench service.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import (
     FileDialogService,
@@ -21,11 +19,18 @@ from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import (
     SaveFileRequest,
 )
 from expo_jbm329.services.file_types import FileType, classify_file
-from expo_jbm329.utils.dialog_state import DialogState
 from expo_jbm329.utils.format_utils import fmt_path
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
 from expo_jbm329.utils.path_manager import get_documents_dir
-from expo_jbm329.workbench.controllers.editor_tab_manager import EditorTab
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from PyQt6.QtWidgets import QWidget
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.utils.dialog_state import DialogState
+    from expo_jbm329.workbench.controllers.editor_tab_manager import EditorTab
 
 
 class DocumentController:
@@ -62,7 +67,7 @@ class DocumentController:
     TR_OPEN_SQL_FILE_FAILED_ERROR = QT_TR_NOOP("Open SQL file failed:\n{error}")
     TR_SAVE_SQL_FILE_FAILED_ERROR = QT_TR_NOOP("Save SQL file failed:\n{error}")
     TR_OPEN_HTML_FILE_FAILED_ERROR = QT_TR_NOOP("Open HTML file failed:\n{error}")
-    
+
     TR_SQL_FILE_FILTER = QT_TR_NOOP("SQL files (*.sql)")
     TR_COULD_NOT_OPEN_FILE = QT_TR_NOOP("Could not open file:\n\n{error}")
     TR_NO_SQL = QT_TR_NOOP("No SQL")
@@ -99,7 +104,7 @@ class DocumentController:
         self,
         parent: QWidget,
         file_dialogs: FileDialogService,
-        dialogs: DialogService,
+        dialogs: DialogService | None,
         set_status: Callable[[str, int | None], None],
         get_active_tab: Callable[[], EditorTab | None],
         clear_dirty: Callable[[str], None],
@@ -108,7 +113,7 @@ class DocumentController:
         get_editor_text: Callable[[], str | None],
         create_tab: Callable[..., EditorTab],
         insert_sql_into_tab: Callable[[EditorTab, str], None],
-        open_data_file: Callable,
+        open_data_file: Callable[..., None],
         dialog_state: DialogState,
         logger: logging.Logger | None = None,
     ) -> None:
@@ -149,7 +154,7 @@ class DocumentController:
     # ==================================================================
     # Settings
     # ==================================================================
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Synchronize ExportController with updated global settings.
 
         Things controlled by settings:
@@ -161,8 +166,19 @@ class DocumentController:
                 "DocumentController: settings reloaded (documents_dir=%s).",
                 fmt_path(self._get_documents_dir()),
             )
-        except Exception as e:
-            self._logger.exception("DocumentController: failed to reload settings: %s", e)
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
+            self._logger.exception("DocumentController: failed to reload settings")
 
     # ----------------------------------------------------------------------
     # Helpers
@@ -173,19 +189,26 @@ class DocumentController:
         p = Path(path)
         self._logger.info("DocumentController: opening SQL file: %s", fmt_path(p))
         try:
-            with open(p, encoding="utf-8") as f:
-                sql = f.read()                
-                self._logger.info(
-                    "DocumentController: SQL file opened successfully: %s", fmt_path(p)
-                )
-        except Exception as e:
+            with p.open(encoding="utf-8") as f:
+                sql = f.read()
+                self._logger.info("DocumentController: SQL file opened successfully: %s", fmt_path(p))
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             status = self._tr(self.TR_OPEN_SQL_FILE_FAILED)
             self._set_status(status, 6000)
-            self._logger.error(
-                "DocumentController: Failed to open SQL file '%s': %s",
+            self._logger.exception(
+                "DocumentController: Failed to open SQL file '%s'",
                 fmt_path(p),
-                e,
-                exc_info=True,
             )
             self._dialogs.critical(
                 self._parent,
@@ -208,15 +231,13 @@ class DocumentController:
         self._update_tab_ui(tab)
         status = self._tr_fmt(self.TR_OPENED_SQL_FILE, file_name=p.name)
         self._set_status(status, 5000)
-            
+
     def _get_documents_dir(self) -> Path:
         """Return documents directory, guaranteed to be initialized."""
         if self._documents_dir is None:
-            raise RuntimeError(
-                "DocumentController: documents_dir not initialized. "
-                "reload_settings() must be called before export."
-            )
-        return self._documents_dir   
+            msg = "DocumentController: documents_dir not initialized. reload_settings() must be called before export."
+            raise RuntimeError(msg)
+        return self._documents_dir
 
     def _build_incremented_path(self, path: Path) -> Path:
         """Return a non-existing path by appending (n) before suffix.
@@ -265,15 +286,8 @@ class DocumentController:
             fallback=self._get_documents_dir(),
         )
 
-        req = OpenFileRequest(
-            title=self._tr(self.TR_OPEN_FILE),
-            initial_path=str(start_dir),
-            filter_str=filter_str
-        )
-        path, _ = self._file_dialogs.get_open_filename(
-            parent=self._parent,
-            req=req
-        )
+        req = OpenFileRequest(title=self._tr(self.TR_OPEN_FILE), initial_path=str(start_dir), filter_str=filter_str)
+        path, _ = self._file_dialogs.get_open_filename(parent=self._parent, req=req)
 
         if not path:
             return
@@ -329,18 +343,25 @@ class DocumentController:
 
         try:
             Path(tab.file_path).write_text(text, encoding="utf-8")
-            self._logger.info(
-                "DocumentController: SQL file saved as successfully: %s", fmt_path(tab.file_path)
-            )
+            self._logger.info("DocumentController: SQL file saved as successfully: %s", fmt_path(tab.file_path))
             status = self._tr(self.TR_SAVED_SQL_FILE)
             self._set_status(status, 3000)
-            
-        except Exception as e:
-            self._logger.error(
-                "DocumentController: Failed to save as SQL file '%s': %s",
+
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
+            self._logger.exception(
+                "DocumentController: Failed to save as SQL file '%s'",
                 fmt_path(tab.file_path),
-                e,
-                exc_info=True,
             )
             status = self._tr(self.TR_SAVE_SQL_FILE_FAILED)
             self._set_status(status, 6000)
@@ -409,12 +430,21 @@ class DocumentController:
             self._logger.info("DocumentController: SQL file saved as successfully: %s", fmt_path(path))
             status = self._tr(self.TR_SAVED_SQL_FILE)
             self._set_status(status, 3000)
-        except Exception as e:
-            self._logger.error(
-                "DocumentController: Failed to save as SQL file '%s': %s",
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
+            self._logger.exception(
+                "DocumentController: Failed to save as SQL file '%s'",
                 fmt_path(path),
-                e,
-                exc_info=True,
             )
             status = self._tr(self.TR_SAVE_SQL_FILE_FAILED)
             self._set_status(status, 6000)
@@ -446,6 +476,7 @@ class DocumentController:
         p = Path(path)
         self._logger.info("DocumentController: opening HTML file: %s", fmt_path(p))
         import webbrowser
+
         ok = False
         try:
             uri = p.resolve().as_uri()
@@ -453,21 +484,30 @@ class DocumentController:
             status = self._tr_fmt(self.TR_OPENED_HTML_FILE, file_name=p.name)
             self._set_status(status, 5000)
             self._logger.info("DocumentController: HTML file opened: %s", fmt_path(p))
-            return ok
 
-        except Exception as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             status = self._tr(self.TR_OPEN_HTML_FILE_FAILED)
             self._set_status(status, 6000)
-            self._logger.error(
-                "DocumentController: failed to open HTML file '%s': %s",
+            self._logger.exception(
+                "DocumentController: failed to open HTML file '%s'",
                 fmt_path(p),
-                e,
-                exc_info=True
             )
             self._dialogs.critical(
                 parent=self._parent,
                 title=self._tr(self.TR_FAILURE),
-                text=self._tr_fmt(self.TR_OPEN_HTML_FILE_FAILED_ERROR, error=str(e))
+                text=self._tr_fmt(self.TR_OPEN_HTML_FILE_FAILED_ERROR, error=str(e)),
             )
             return ok
-        
+        else:
+            return ok

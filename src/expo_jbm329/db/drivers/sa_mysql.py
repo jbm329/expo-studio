@@ -5,14 +5,18 @@ from __future__ import annotations
 import contextlib
 import logging
 import threading
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL, Engine
 
 from expo_jbm329.db.core.interfaces import DriverProtocol
-from expo_jbm329.db.core.models import ConnectionConfig
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.db.core.models import ConnectionConfig
 
 log = logging.getLogger("applogger.db.driver.mysql")
 
@@ -28,6 +32,7 @@ class SqlAlchemyMySqlDriver(DriverProtocol):
         * connect_timeout: seconds to wait for initial connection.
         * read_timeout/write_timeout: I/O timeouts (not server execution limits).
     """
+
     def __init__(self, driver_name: str) -> None:
         """Initialize the SqlAlchemyMySqlDriver.
 
@@ -40,14 +45,15 @@ class SqlAlchemyMySqlDriver(DriverProtocol):
         self._query_timeout_s: int | None = None
         self._connect_timeout_s: int | None = None
 
-    def initialize(self, *, timeouts: dict | None = None) -> None:
+    def initialize(self, *, timeouts: dict[str, int | None] | None = None) -> None:
         """Initialize the driver with optional timeouts.
 
         Args:
             timeouts: A dictionary of timeout values.
         """
         # We treat login/connect timeout via connect_args later in _get_engine.
-        self._connect_timeout_s = int(timeouts.get("login_timeout_s")) if (timeouts and timeouts.get("login_timeout_s") is not None) else None
+        login_timeout = timeouts.get("login_timeout_s") if timeouts is not None else None
+        self._connect_timeout_s = int(login_timeout) if login_timeout is not None else None
 
     def dispose(self) -> None:
         """Dispose of the driver and release all cached engines."""
@@ -96,6 +102,7 @@ class SqlAlchemyMySqlDriver(DriverProtocol):
         host = cfg.server or "localhost"
         port = int(cfg.port) if cfg.port else 3306
         database = cfg.database or ""
+        query = {str(key): str(value) for key, value in (cfg.extra or {}).items()}
         return URL.create(
             dialect,
             username=username or None,
@@ -103,7 +110,7 @@ class SqlAlchemyMySqlDriver(DriverProtocol):
             host=host,
             port=port,
             database=database or None,
-            query=cfg.extra or {},
+            query=query,
         )
 
     def _get_engine(self, cfg: ConnectionConfig) -> Engine:
@@ -129,9 +136,7 @@ class SqlAlchemyMySqlDriver(DriverProtocol):
                     connect_args["read_timeout"] = self._query_timeout_s
                     connect_args["write_timeout"] = self._query_timeout_s
                 log.debug(
-                    "SqlAlchemyMySqlDriver: creating SQLAlchemy Engine for %s (driver=%s)",
-                    cfg.name,
-                    self._driver_name
+                    "SqlAlchemyMySqlDriver: creating SQLAlchemy Engine for %s (driver=%s)", cfg.name, self._driver_name
                 )
                 eng = create_engine(url, pool_pre_ping=True, connect_args=connect_args)
                 self._engines[key] = eng

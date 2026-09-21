@@ -1,14 +1,13 @@
 """REST controller for loading datasets from REST APIs."""
+
 from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 import pandas as pd
-from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtCore import QT_TR_NOOP, QObject
 
 from expo_jbm329.app.settings.config_store import (
     read_rest_connections,
@@ -16,17 +15,27 @@ from expo_jbm329.app.settings.config_store import (
 )
 from expo_jbm329.gui.gui_utils import ui_invoke
 from expo_jbm329.services.job_result import JobResult
-from expo_jbm329.services.rest.models import RestRequestConfig
 from expo_jbm329.services.rest.registry import rest_registry
 from expo_jbm329.services.rest.rest_job import fetch_rest_dataset
 from expo_jbm329.utils.format_utils import fmt_shape, fmt_time
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
-from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from PyQt6.QtWidgets import QWidget
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.services.rest.models import RestRequestConfig
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
 
 
 class DisplayDataFrameProtocol(Protocol):
     """Protocol for displaying a DataFrame in results tab."""
+
     def __call__(self, df: pd.DataFrame, *, title: str | None) -> None:
         """Display a DataFrame in results tab."""
         ...
@@ -57,6 +66,13 @@ class RestController:
     def _tr_fmt(text: str, **kwargs: str) -> str:
         return tr_fmt("RestController", text, **kwargs)
 
+    def reload_settings(self, _settings: dict[str, object]) -> None:
+        """Handle workbench settings changes.
+
+        RestController currently has no dynamic settings, but the hook keeps
+        settings subscriptions explicit and typed.
+        """
+
     _SCOPE_LOAD_REST = "load:rest"
 
     __slots__ = (
@@ -81,9 +97,9 @@ class RestController:
         results: ResultTabManager,
         display_dataframe: DisplayDataFrameProtocol,
         set_status: Callable[[str, int | None], None],
-        dialogs,
+        dialogs: DialogService,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize RestController.
 
         Args:
@@ -135,7 +151,14 @@ class RestController:
         pending_tab_id = pending_handle.tab_id
         pending_view = pending_handle.view
 
-        def _work(*, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
+            **_: object,
+        ) -> object:
             if cancel_cb is not None and cancel_cb():
                 return JobResult(
                     ok=False,
@@ -191,13 +214,12 @@ class RestController:
             corr_id=corr,
         )
 
-        jobid = self._async_ops.job_mgr.get_job_id(job)
+        jobid = self._async_ops.job_mgr.get_job_id(job if isinstance(job, QObject) else None)
         if jobid is not None:
             self._results.bind_job_to_tab(pending_tab_id, jobid)
         else:
             self._logger.warning(
-                "RestController: could not bind REST job to pending tab "
-                "(corr=%s, name=%s, tab_id=%s)",
+                "RestController: could not bind REST job to pending tab (corr=%s, name=%s, tab_id=%s)",
                 corr,
                 config.name,
                 pending_tab_id,
@@ -206,7 +228,7 @@ class RestController:
     def load_preset(self, preset_name: str) -> None:
         """Load a REST dataset from a named preset (user or sample)."""
         entry = rest_registry.get(preset_name)
-        
+
         if not entry:
             self._logger.error("RestController: REST preset not found: %s", preset_name)
             return
@@ -217,11 +239,21 @@ class RestController:
             config.validate()
             self.load_from_api(config=config)
 
-        except Exception as exc:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
             self._logger.exception(
-                "Failed to load REST preset '%s': %s",
+                "Failed to load REST preset '%s'",
                 preset_name,
-                exc,
             )
             self._dialogs.critical(
                 parent=self._parent,
@@ -243,7 +275,7 @@ class RestController:
         """
         entry = rest_registry.get(preset_name)
         if not entry:
-            self._logger.error("RestController: copy_preset — preset not found: %s", preset_name)
+            self._logger.error("RestController: copy_preset - preset not found: %s", preset_name)
             return None
 
         # Build a unique default name
@@ -295,7 +327,7 @@ class RestController:
             preset_name,
             new_name,
         )
-        return new_name
+        return str(new_name)
 
     # ==================================================================
     # Internal handlers
@@ -325,8 +357,7 @@ class RestController:
 
         if not isinstance(payload, JobResult):
             self._logger.error(
-                "RestController: REST result is not JobResult "
-                "(corr=%s, name=%s, tab_id=%s, type=%s)",
+                "RestController: REST result is not JobResult (corr=%s, name=%s, tab_id=%s, type=%s)",
                 corr,
                 name,
                 pending_tab_id,
@@ -378,8 +409,7 @@ class RestController:
         df_obj = payload.data
         if not isinstance(df_obj, pd.DataFrame):
             self._logger.error(
-                "RestController: REST load returned non-DataFrame payload "
-                "(corr=%s, name=%s, tab_id=%s, type=%s)",
+                "RestController: REST load returned non-DataFrame payload (corr=%s, name=%s, tab_id=%s, type=%s)",
                 corr,
                 name,
                 pending_tab_id,
@@ -422,12 +452,12 @@ class RestController:
         )
 
     def _on_rest_error(
-            self,
-            err: str | JobResult,
-            name: str,
-            *,
-            corr: str | None = None,
-            pending_tab_id: str | None = None,
+        self,
+        err: str | JobResult,
+        name: str,
+        *,
+        corr: str | None = None,
+        pending_tab_id: str | None = None,
     ) -> None:
         """Handle REST job error for a pending result tab."""
         if pending_tab_id is not None:

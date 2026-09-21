@@ -26,9 +26,13 @@ import time
 import uuid
 import winreg
 import zipfile
-from datetime import datetime
+from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError, metadata
 from pathlib import Path
+from typing import TYPE_CHECKING, Never
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from PIL import Image
 
@@ -44,17 +48,13 @@ def _detect_platform() -> str:
     return sys.platform.replace(" ", "_")
 
 
-def _build_metadata() -> dict:
+def _build_metadata() -> dict[str, str]:
     """Return normalized metadata used for release artifacts."""
     try:
         meta = metadata("expo_jbm329")
 
         version = meta.get("Version", "unknown")
-        license_ = (
-            meta.get("License-Expression")
-            or meta.get("License")
-            or "GPL-3.0-or-later"
-        )
+        license_ = meta.get("License-Expression") or meta.get("License") or "GPL-3.0-or-later"
     except PackageNotFoundError:
         version = "dev"
         license_ = "GPL-3.0-or-later"
@@ -71,7 +71,7 @@ def _build_metadata() -> dict:
 
 def _build_release_notes(meta: dict[str, str], build_type: str) -> str:
     """Return release notes text for packaged release artifacts."""
-    now = datetime.now()
+    now = datetime.now(UTC).astimezone()
     return (
         f"{meta['app_name']}\n"
         f"Version: {meta['version']}\n\n"
@@ -100,31 +100,28 @@ def _site_packages() -> str | None:
 
 def _stamp() -> str:
     """Return a timestamp suitable for naming release artifacts."""
-    return datetime.now().strftime("%Y%m%d-%H%M")
+    return datetime.now(UTC).astimezone().strftime("%Y%m%d-%H%M")
 
 
 # -----------------------------
 # Pre-clean helpers
 # -----------------------------
-def _chmod_writable(path: Path):
+def _chmod_writable(path: Path) -> None:
     """Ensure a filesystem path is writable.
 
     This is primarily used to handle read-only files on Windows.
     """
     with contextlib.suppress(Exception):
-        os.chmod(path, stat.S_IWRITE)
+        path.chmod(stat.S_IWRITE)
 
 
-def _onerror(func, path, exc_info):
+def _onerror(func: Callable[[str], object], path: str, _exc_info: object) -> None:
     """Error handler for shutil.rmtree.
 
     Attempts to make the path writable and retry the original operation.
     """
     _chmod_writable(Path(path))
-    try:
-        func(path)
-    except Exception:
-        raise
+    func(path)
 
 
 def _safe_rmtree(path: Path, retries: int = 6, backoff: float = 0.2) -> bool:
@@ -146,15 +143,27 @@ def _safe_rmtree(path: Path, retries: int = 6, backoff: float = 0.2) -> bool:
 
     for i in range(retries):
         try:
-            shutil.rmtree(path, onerror=_onerror)
-            return True
-        except Exception:
+            shutil.rmtree(path, onexc=_onerror)
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             time.sleep(backoff * (i + 1))
+        else:
+            return True
 
     return False
 
 
-def _kill_running_expo():
+def _kill_running_expo() -> None:
     """Terminate running expo.exe processes on Windows.
 
     This is a silent no-op on non-Windows platforms.
@@ -164,14 +173,14 @@ def _kill_running_expo():
 
     with contextlib.suppress(Exception):
         subprocess.run(
-            ["taskkill", "/IM", "expo.exe", "/F"],
+            ["taskkill", "/IM", "expo.exe", "/F"],  # noqa: S607 - Windows system utility
             check=False,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
 
 
-def _pre_clean(root: Path):
+def _pre_clean(root: Path) -> None:
     """Perform pre-build cleanup steps.
 
     This function:
@@ -185,10 +194,7 @@ def _pre_clean(root: Path):
             print(f"[pre-clean] Removing {p} ...")
             ok = _safe_rmtree(p)
             if not ok:
-                print(
-                    "[pre-clean] WARNING: Could not fully clean directory "
-                    "(locked files?) – continuing anyway."
-                )
+                print("[pre-clean] WARNING: Could not fully clean directory (locked files?) - continuing anyway.")
 
 
 def _ensure_app_ico(root: Path) -> Path:
@@ -203,29 +209,14 @@ def _ensure_app_ico(root: Path) -> Path:
     Returns:
         Path to the generated or existing ICO file.
     """
-    png_path = (
-        root
-        / "src"
-        / "expo_jbm329"
-        / "workbench"
-        / "icon"
-        / "themes"
-        / "light"
-        / "app.png"
-    )
+    png_path = root / "src" / "expo_jbm329" / "workbench" / "icon" / "themes" / "light" / "app.png"
     ico_path = root / "src" / "expo_jbm329" / "workbench" / "icon" / "app.ico"
 
     if not png_path.exists():
-        print(
-            f"[icon] Source PNG not found: {png_path} "
-            "– skipping ICO generation."
-        )
+        print(f"[icon] Source PNG not found: {png_path} - skipping ICO generation.")
         return ico_path
 
-    regenerate = (
-        not ico_path.exists()
-        or png_path.stat().st_mtime > ico_path.stat().st_mtime
-    )
+    regenerate = not ico_path.exists() or png_path.stat().st_mtime > ico_path.stat().st_mtime
 
     if regenerate:
         print(f"[icon] Generating ICO from {png_path} -> {ico_path}")
@@ -245,7 +236,7 @@ def _archive_onedir_with_docs(
     platform: str,
     docs: dict[str, Path],
     release_notes: str,
-):
+) -> None:
     """Archive an onedir build and include documentation files.
 
     The archive will contain:
@@ -259,9 +250,7 @@ def _archive_onedir_with_docs(
     root_name = src_dir.name  # "expo"
 
     if platform == "windows":
-        with zipfile.ZipFile(
-            archive_path, "w", compression=zipfile.ZIP_DEFLATED
-        ) as zf:
+        with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
             # Application files
             for p in src_dir.rglob("*"):
                 if p.is_file():
@@ -286,6 +275,7 @@ def _archive_onedir_with_docs(
 
             # RELEASE-NOTES
             import io
+
             data = release_notes.encode("utf-8")
             info = tarfile.TarInfo(name=f"{root_name}/RELEASE-NOTES.txt")
             info.size = len(data)
@@ -491,12 +481,12 @@ def _build_windows_installer(root: Path, onedir_dir: Path) -> Path | None:
 
     cmd = [iscc, str(script_path)]
     print("[installer] Running:", " ".join(cmd))
-    subprocess.run(cmd, check=True, cwd=root)
+    subprocess.run(cmd, check=True, cwd=root)  # noqa: S603 - trusted build command
 
     return out_dir
 
 
-def build_exe(onefile: bool = False, make_release: bool = False) -> int:  # noqa: C901
+def build_exe(onefile: bool = False, make_release: bool = False) -> int:
     """Build the Windows executable using PyInstaller.
 
     The build is performed via `uv run` to ensure a clean environment with
@@ -534,9 +524,7 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:  # noqa
 
     # Generate a basic onedir spec file on first run
     if not spec_path.exists():
-        print(
-            "[build-exe] expo.spec not found – generating base spec (onedir) ..."
-        )
+        print("[build-exe] expo.spec not found - generating base spec (onedir) ...")
         cmd_gen = [
             "uv",
             "run",
@@ -549,7 +537,7 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:  # noqa
             str(entry),
         ]
         print("[build-exe] Running:", " ".join(cmd_gen))
-        subprocess.run(cmd_gen, check=True, cwd=root)
+        subprocess.run(cmd_gen, check=True, cwd=root)  # noqa: S603 - trusted build command
 
         if not spec_path.exists():
             print(
@@ -582,7 +570,7 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:  # noqa
         str(spec_path),
     ]
     print("[build-exe] Running:", " ".join(cmd_build))
-    subprocess.run(cmd_build, check=True, cwd=root, env=env)
+    subprocess.run(cmd_build, check=True, cwd=root, env=env)  # noqa: S603 - trusted build command
 
     # Locate resulting executable
     exe_onedir = default_dist_root / "expo" / "expo.exe"
@@ -597,10 +585,7 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:  # noqa
     if exe_path.exists():
         print(f"[build-exe] SUCCESS: {exe_path}")
     else:
-        print(
-            "[build-exe] Build completed but executable was not found "
-            "at the expected location."
-        )
+        print("[build-exe] Build completed but executable was not found at the expected location.")
         for p in sorted(default_dist_root.rglob("*.exe")):
             print(" -", p.relative_to(root))
 
@@ -616,15 +601,13 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:  # noqa
                 shutil.copy2(exe_onefile, out_exe)
                 print(f"[release] Copied onefile executable to: {out_exe}")
             else:
-                print(
-                    "[release] WARNING: Onefile artifact was not found."
-                )
+                print("[release] WARNING: Onefile artifact was not found.")
         else:
             # ONEDIR -> create platform-specific archive (zip or tar.gz)
             onedir_dir = default_dist_root / "expo"
             if onedir_dir.exists():
                 meta = _build_metadata()
-                date_str = datetime.now().strftime("%Y-%m-%d")
+                date_str = datetime.now(UTC).astimezone().strftime("%Y-%m-%d")
                 _write_release_notes_file(root=root, meta=meta, build_type="onedir")
 
                 docs = {
@@ -639,9 +622,7 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:  # noqa
                     if installer_out_dir is not None:
                         print(f"[release] Created Windows installer in: {installer_out_dir}")
                     else:
-                        archive_name = (
-                            f"{meta['app_slug']}-{meta['version']}-windows-onedir-{date_str}.zip"
-                        )
+                        archive_name = f"{meta['app_slug']}-{meta['version']}-windows-onedir-{date_str}.zip"
                         archive_path = rel_root / archive_name
                         _archive_onedir_with_docs(
                             src_dir=onedir_dir,
@@ -663,14 +644,12 @@ def build_exe(onefile: bool = False, make_release: bool = False) -> int:  # noqa
                     )
                     print(f"[release] Created archive: {archive_path}")
             else:
-                print(
-                    "[release] WARNING: onedir artifact was not found."
-                )
+                print("[release] WARNING: onedir artifact was not found.")
 
     return 0
 
 
-def build_release():
+def build_release() -> Never:
     """Entry point for `uv run build-release`.
 
     Performs an onedir build and packages the result as a versioned ZIP.

@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import logging
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-import pandas as pd
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -18,6 +16,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QTextEdit,
     QVBoxLayout,
+    QWidget,
 )
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
@@ -26,7 +25,10 @@ from expo_jbm329.services.data_operations.derived_column.derived_column_service 
     DerivedColumnSpec,
 )
 
-# logger = logging.getLogger("applogger.gui")
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    import pandas as pd
 
 
 class DerivedColumnDialog(QDialog):
@@ -38,7 +40,7 @@ class DerivedColumnDialog(QDialog):
         df: pd.DataFrame,
         numeric_columns: list[str],
         validate_callback: Callable[[str, str], tuple[bool, str]],
-        parent=None,
+        parent: QWidget | None = None,
     ) -> None:
         """Initialize dialog.
 

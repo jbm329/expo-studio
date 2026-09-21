@@ -9,14 +9,12 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable, Sequence
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import pandas as pd
-from PyQt6.QtCore import QT_TR_NOOP
+from PyQt6.QtCore import QT_TR_NOOP, QObject
 from PyQt6.QtWidgets import QDialog, QTableView, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.join.join_dialog import (
     JoinDialog,
@@ -29,8 +27,19 @@ from expo_jbm329.services.data_operations.joins import (
     join_dataframes,
 )
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
-from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
+
+LARGE_JOIN_ROW_WARNING_THRESHOLD = 5_000_000
+JOIN_ROW_BLOCK_THRESHOLD = 100_000_000
+PREVIEW_JOIN_ROW_BLOCK_THRESHOLD = 50_000_000
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
 
 
 class JoinController:
@@ -68,10 +77,11 @@ class JoinController:
         return tr("JoinController", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("JoinController", text, **kwargs)
 
     __slots__ = (
+        "__weakref__",
         "_async_ops",
         "_dialogs",
         "_get_active_title",
@@ -120,7 +130,7 @@ class JoinController:
         self._list_tab_titles = list_tab_titles
         self._get_df = get_df_for_tab
         self._set_status = set_status
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._logger = logger or logging.getLogger("applogger.ui")
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
 
     # ------------------------------------------------------------------
@@ -132,7 +142,7 @@ class JoinController:
 
         all_tabs = list(self._list_tab_titles())
 
-        columns_map = {t: list(self._get_df(t).columns) for t in all_tabs}
+        columns_map: dict[str, Sequence[str]] = {t: list(self._get_df(t).columns) for t in all_tabs}
 
         dfs = {t: self._get_df(t) for t in all_tabs}
 
@@ -146,10 +156,10 @@ class JoinController:
                     continue
 
                 for c1 in df1.columns:
-                    s1 = cast(pd.Series, df1[c1])
+                    s1 = df1[c1]
 
                     for c2 in df2.columns:
-                        s2 = cast(pd.Series, df2[c2])
+                        s2 = df2[c2]
 
                         if self._are_joinable(s1, s2):
                             joinable_map_dd[(t1, c1, t2)].add(c2)
@@ -166,9 +176,7 @@ class JoinController:
         )
 
         # Optional: connect preview
-        dlg.btn_preview.clicked.connect(
-            lambda: self._on_preview(dlg)
-        )
+        dlg.btn_preview.clicked.connect(lambda: self._on_preview(dlg))
 
         if dlg.exec() == QDialog.DialogCode.Accepted:
             result = dlg.build_result()
@@ -189,7 +197,7 @@ class JoinController:
         if est_rows is None:
             return
 
-        if est_rows > 5_000_000:
+        if est_rows > LARGE_JOIN_ROW_WARNING_THRESHOLD:
             proceed = self._dialogs.prompt_yes_no(
                 self._parent,
                 title=self._tr(self.TR_LARGE_DATA_TITLE),
@@ -200,7 +208,7 @@ class JoinController:
             if not proceed:
                 return
 
-        if est_rows > 100_000_000:
+        if est_rows > JOIN_ROW_BLOCK_THRESHOLD:
             self._dialogs.critical(
                 self._parent,
                 title=self._tr(self.TR_JOIN_BLOCKED),
@@ -220,10 +228,15 @@ class JoinController:
         pending_tab_id = pending_handle.tab_id
         pending_view = pending_handle.view
 
-        def _work(*, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None, **_):
-            _ = progress_cb
-            _ = job_scope
-            _ = job_id
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
+            del progress_cb, job_scope, job_id
 
             if cancel_cb is not None and cancel_cb():
                 return None
@@ -240,7 +253,7 @@ class JoinController:
 
             return filtered_df
 
-        def _on_result(result_df: pd.DataFrame | None) -> None:
+        def _on_result(result_df: object) -> None:
             """Handle JOIN result for the pending tab."""
             if result_df is None:
                 self._logger.info(
@@ -257,8 +270,7 @@ class JoinController:
 
             if not isinstance(result_df, pd.DataFrame):
                 self._logger.error(
-                    "JoinController: JOIN returned non-DataFrame result "
-                    "(corr=%s, tab_id=%s, type=%s)",
+                    "JoinController: JOIN returned non-DataFrame result (corr=%s, tab_id=%s, type=%s)",
                     corr_id,
                     pending_tab_id,
                     type(result_df).__name__,
@@ -279,8 +291,7 @@ class JoinController:
             )
 
             self._logger.info(
-                "JoinController: JOIN completed on (%s = %s) type=%s "
-                "estimated_rows=%s corr=%s tab_id=%s",
+                "JoinController: JOIN completed on (%s = %s) type=%s estimated_rows=%s corr=%s tab_id=%s",
                 cfg.left_on,
                 cfg.right_on,
                 cfg.join_type,
@@ -312,8 +323,7 @@ class JoinController:
             record = self._results.tabs_by_id.get(pending_tab_id)
             if record is not None and record.is_pending:
                 self._logger.debug(
-                    "JoinController: removing stale pending JOIN tab on finished "
-                    "(corr=%s, tab_id=%s)",
+                    "JoinController: removing stale pending JOIN tab on finished (corr=%s, tab_id=%s)",
                     corr_id,
                     pending_tab_id,
                 )
@@ -342,7 +352,7 @@ class JoinController:
             corr_id=corr_id,
         )
 
-        jobid = self._async_ops.job_mgr.get_job_id(job)
+        jobid = self._async_ops.job_mgr.get_job_id(cast("QObject | None", job))
         if jobid is not None:
             self._results.bind_job_to_tab(pending_tab_id, jobid)
         else:
@@ -374,7 +384,7 @@ class JoinController:
         if est_rows is None:
             return
 
-        if est_rows > 5_000_000:
+        if est_rows > LARGE_JOIN_ROW_WARNING_THRESHOLD:
             proceed = self._dialogs.prompt_yes_no(
                 self._parent,
                 title=self._tr(self.TR_LARGE_DATA_TITLE),
@@ -383,12 +393,10 @@ class JoinController:
                 default_yes=False,
             )
             if not proceed:
-                self._logger.warning(
-                    "Join preview aborted: too large (%s estimated rows)", est_rows
-                )
+                self._logger.warning("Join preview aborted: too large (%s estimated rows)", est_rows)
                 return
 
-        if est_rows > 50_000_000:
+        if est_rows > PREVIEW_JOIN_ROW_BLOCK_THRESHOLD:
             self._dialogs.critical(
                 dlg,
                 title=self._tr(self.TR_JOIN_BLOCKED),
@@ -398,8 +406,13 @@ class JoinController:
 
         corr_id = uuid.uuid4().hex
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
-            _ = progress_cb
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> tuple[pd.DataFrame, JoinMetadata] | None:
+            del progress_cb
             if cancel_cb and cancel_cb():
                 return None
 
@@ -422,7 +435,7 @@ class JoinController:
 
             return preview_df, metadata
 
-        def _show_preview(result):
+        def _show_preview(result: tuple[pd.DataFrame, JoinMetadata] | None) -> None:
             if result is None:
                 return
 
@@ -460,7 +473,7 @@ class JoinController:
         )
 
     # noinspection PyMethodMayBeStatic
-    def _filter_joined_columns(self, result_df, cfg):
+    def _filter_joined_columns(self, result_df: pd.DataFrame, cfg: JoinDialogResult) -> pd.DataFrame:
         """Filter join result columns according to dialog selection."""
         left_suffix = f"_{cfg.left_tab_title}"
         right_suffix = f"_{cfg.right_tab_title}"

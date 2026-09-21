@@ -7,5 +7,3 @@ CategoryOrderKey = Literal[
     "freq",
     "preserve",
 ]
-
-

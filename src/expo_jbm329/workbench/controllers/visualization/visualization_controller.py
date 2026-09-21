@@ -1,24 +1,32 @@
 """Controller for visualization dialog workflow."""
+
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
-import pandas as pd
 from pandas.api.types import (
     is_bool_dtype,
     is_datetime64_any_dtype,
     is_numeric_dtype,
 )
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QWidget
 
 from expo_jbm329.gui.dialogs.visualization.visualization_dialog import VisualizationDialog
 from expo_jbm329.utils.i18n_utils import tr
-from expo_jbm329.utils.visualization_models import VisualizationConfig
 from expo_jbm329.workbench.controllers.visualization.visualization_chart_builder import (
     VisualizationChartBuilder,
     VisualizationError,
 )
+
+if TYPE_CHECKING:
+    import pandas as pd
+    from PyQt6.QtWidgets import QWidget
+
+    from expo_jbm329.utils.visualization_models import VisualizationConfig
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import (
+        ResultTabManager,
+    )
 
 
 class VisualizationController:
@@ -52,7 +60,7 @@ class VisualizationController:
     def __init__(
         self,
         *,
-        results,
+        results: ResultTabManager,
         chart_builder: VisualizationChartBuilder | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
@@ -83,8 +91,14 @@ class VisualizationController:
             active_tab_id=self._results.active_tab_id(),
         )
 
-        dialog.dataset_changed.connect(lambda tab_id: self._on_dataset_changed(dialog, tab_id))
-        dialog.preview_requested.connect(lambda config: self._on_preview_requested(dialog, config))
+        def _handle_dataset_changed(tab_id: str) -> None:
+            self._on_dataset_changed(dialog, tab_id)
+
+        def _handle_preview_requested(config: VisualizationConfig) -> None:
+            self._on_preview_requested(dialog, config)
+
+        dialog.dataset_changed.connect(_handle_dataset_changed)
+        dialog.preview_requested.connect(_handle_preview_requested)
 
         initial_tab_id = dialog.selected_dataset_tab_id()
         if initial_tab_id:
@@ -120,7 +134,18 @@ class VisualizationController:
 
             dialog.show_empty_preview()
 
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.exception(
                 "VisualizationController: failed to update visualization dialog columns for dataset '%s'.",
                 tab_id,
@@ -159,7 +184,18 @@ class VisualizationController:
             )
             dialog.show_error_preview(self._map_error_code_to_ui_message(e.code))
 
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.exception("VisualizationController: unexpected visualization rendering failure.")
             dialog.show_error_preview(self._tr(self.TR_GENERIC_PREVIEW_ERROR))
 
@@ -175,7 +211,18 @@ class VisualizationController:
             try:
                 if is_numeric_dtype(df[col]) and not is_bool_dtype(df[col]):
                     numeric.append(str(col))
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 continue
 
         return numeric
@@ -189,7 +236,18 @@ class VisualizationController:
                     return str(col)
                 if not is_numeric_dtype(series):
                     return str(col)
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 continue
         return None
 
@@ -200,7 +258,18 @@ class VisualizationController:
                 series = df[col]
                 if is_numeric_dtype(series) and not is_bool_dtype(series):
                     return str(col)
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 continue
         return None
 

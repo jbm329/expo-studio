@@ -7,6 +7,7 @@ This module ensures that:
   automatically adds defaults in existing user files).
 - All caches inside config_store.py are synchronized.
 """
+
 from __future__ import annotations
 
 import os
@@ -19,6 +20,8 @@ from expo_jbm329.app.settings.config_store import (
 )
 from expo_jbm329.workbench.icon import icons_rc
 from expo_jbm329.workbench.splash import splash_rc
+
+_RESOURCE_MODULES = (icons_rc, splash_rc)
 
 
 def run_bootstrap() -> None:

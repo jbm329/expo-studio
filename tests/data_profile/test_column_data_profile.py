@@ -4,7 +4,6 @@ import pandas as pd
 
 from expo_jbm329.services.data_profile.column_data_profile import (
     ColumnProfile,
-    PlotSpec,
     profile_series,
 )
 
@@ -25,4 +24,3 @@ def test_profile_series_text_and_category_metadata():
     assert profile.stats["count.n"] == 3
     assert profile.stats["unique.n"] == 2
     assert profile.plot.kind in {"bar_topn", None}
-

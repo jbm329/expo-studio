@@ -1,15 +1,28 @@
 """REST data source job."""
+
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
 from expo_jbm329.services.job_result import JobResult
 from expo_jbm329.services.rest.client import RestClientError, fetch_json_pages
-from expo_jbm329.services.rest.models import RestRequestConfig
 from expo_jbm329.services.rest.normalizer import RestNormalizeError, normalize_json_to_df
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.services.rest.models import RestRequestConfig
+
+
+def _require_dataframe(value: object) -> pd.DataFrame:
+    """Return value as a DataFrame or raise for malformed normalizer output."""
+    if not isinstance(value, pd.DataFrame):
+        msg = "Normalizer did not return a DataFrame"
+        raise TypeError(msg)
+    return value
 
 
 def fetch_rest_dataset(
@@ -38,6 +51,9 @@ def fetch_rest_dataset(
     Returns:
         JobResult
     """
+    _ = job_id
+    _ = job_scope
+
     t0 = time.perf_counter()
 
     try:
@@ -50,7 +66,7 @@ def fetch_rest_dataset(
             )
 
         # ---------------- HTTP fetch ----------------
-        payloads, http_elapsed = fetch_json_pages(
+        payloads, _ = fetch_json_pages(
             config,
             progress_cb=progress_cb,
             cancel_cb=cancel_cb,
@@ -66,13 +82,12 @@ def fetch_rest_dataset(
 
         # ---------------- Normalize ----------------
 
-        df = _normalize_payloads(
-            payloads,
-            response_path=config.response_path,
+        df = _require_dataframe(
+            _normalize_payloads(
+                payloads,
+                response_path=config.response_path,
+            )
         )
-
-        if not isinstance(df, pd.DataFrame):
-            raise RuntimeError("Normalizer did not return a DataFrame")
 
         elapsed = time.perf_counter() - t0
 
@@ -93,7 +108,18 @@ def fetch_rest_dataset(
             corr_id=corr_id,
         )
 
-    except Exception as exc:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as exc:
         # Defensive fallback: never let the worker crash
         return JobResult(
             ok=False,
@@ -111,7 +137,8 @@ def _normalize_payloads(
 ) -> pd.DataFrame:
     """Normalize one or more REST payloads into a single dataframe."""
     if not payloads:
-        raise RestNormalizeError("REST response did not contain any payloads")
+        msg = "REST response did not contain any payloads"
+        raise RestNormalizeError(msg)
 
     frames = [
         normalize_json_to_df(

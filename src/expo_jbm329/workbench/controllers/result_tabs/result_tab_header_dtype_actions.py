@@ -16,18 +16,24 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable, Mapping
 from types import MappingProxyType
-from typing import ClassVar, Literal
+from typing import TYPE_CHECKING, ClassVar, Literal, cast
 
-import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QTableView, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
+
+    import pandas as pd
+    from PyQt6.QtWidgets import QTableView, QWidget
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
 
 
 class ResultTabHeaderDtypeActions:
@@ -39,24 +45,18 @@ class ResultTabHeaderDtypeActions:
 
     # Generic dtype
     TR_CONVERT_TO_TEXT_OPERATION = QT_TR_NOOP("convert to text")
-    TR_CONVERTING_TO_TEXT = QT_TR_NOOP("Converting column to text: {column_name}")    
-    TR_CONVERTED_TO_TEXT = QT_TR_NOOP(
-        "Converted column to text (string): {column_name}"
-    )
-    
+    TR_CONVERTING_TO_TEXT = QT_TR_NOOP("Converting column to text: {column_name}")
+    TR_CONVERTED_TO_TEXT = QT_TR_NOOP("Converted column to text (string): {column_name}")
+
     # Int
     TR_CONVERT_TO_INT_OPERATION = QT_TR_NOOP("convert to integer")
     TR_CONVERTING_TO_INT = QT_TR_NOOP("Converting to integer: {column_name}")
-    TR_CONVERTED_TO_INT = QT_TR_NOOP(
-        "Converted column to integer (Int64): {column_name}"
-    )
-    
+    TR_CONVERTED_TO_INT = QT_TR_NOOP("Converted column to integer (Int64): {column_name}")
+
     # Float
     TR_CONVERT_TO_FLOAT_OPERATION = QT_TR_NOOP("convert to float")
     TR_CONVERTING_TO_FLOAT = QT_TR_NOOP("Converting to float: {column_name}")
-    TR_CONVERTED_TO_FLOAT = QT_TR_NOOP(
-        "Converted column to float (Float64): {column_name}"
-    )
+    TR_CONVERTED_TO_FLOAT = QT_TR_NOOP("Converted column to float (Float64): {column_name}")
 
     # Datetime
     TR_CONVERT_TO_DATETIME_OPERATION = QT_TR_NOOP("convert to datetime")
@@ -64,9 +64,7 @@ class ResultTabHeaderDtypeActions:
     TR_CONVERT_TO_DATETIME = QT_TR_NOOP("Convert to datetime")
     TR_DATE = QT_TR_NOOP("date")
     TR_DATETIME = QT_TR_NOOP("datetime")
-    TR_CONVERTED_TO_DATETIME = QT_TR_NOOP(
-        "Converted column to {mode}: {column_name}"
-    )
+    TR_CONVERTED_TO_DATETIME = QT_TR_NOOP("Converted column to {mode}: {column_name}")
 
     # Boolean
     TR_CONVERT_TO_BOOL_OPERATION = QT_TR_NOOP("convert to boolean")
@@ -74,9 +72,7 @@ class ResultTabHeaderDtypeActions:
     TR_CONVERT_TO_BOOL = QT_TR_NOOP("Convert to bool")
     TR_UNKNOWN_ERROR_LABEL_NA = QT_TR_NOOP("unknown → NA")
     TR_UNKNOWN_ERROR_LABEL_ERROR = QT_TR_NOOP("unknown → error")
-    TR_CONVERTED_TO_BOOL = QT_TR_NOOP(
-        "Converted column to bool ({error_label}): {column_name}"
-    )
+    TR_CONVERTED_TO_BOOL = QT_TR_NOOP("Converted column to bool ({error_label}): {column_name}")
 
     # Category
     TR_CONVERT_TO_CATEGORIES_OPERATION = QT_TR_NOOP("convert to categories")
@@ -87,9 +83,7 @@ class ResultTabHeaderDtypeActions:
     TR_ORDER_LABEL_PRESERVE = QT_TR_NOOP("preserve order")
     TR_ORDERED = QT_TR_NOOP("ordered")
     TR_UNORDERED = QT_TR_NOOP("unordered")
-    TR_CONVERTED_TO_CATEGORIES = QT_TR_NOOP(
-        "Converted column to categories: {column_name} ({order}, {ordered})"
-    )
+    TR_CONVERTED_TO_CATEGORIES = QT_TR_NOOP("Converted column to categories: {column_name} ({order}, {ordered})")
 
     # ------------------------------------------------------------------
     # Order labels
@@ -110,11 +104,11 @@ class ResultTabHeaderDtypeActions:
         return tr("ResultTabHeaderDtypeActions", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabHeaderDtypeActions", text, **kwargs)
 
     # ------------------------------------------------------------------
-    # Init (DI)
+    # Init
     # ------------------------------------------------------------------
     __slots__ = (
         "_apply_new_dataframe",
@@ -130,8 +124,8 @@ class ResultTabHeaderDtypeActions:
         self,
         *,
         parent: QWidget,
-        dialogs: DialogService,
-        logger: logging.Logger,
+        dialogs: DialogService | None,
+        logger: logging.Logger | None,
         async_ops: AsyncOperationController,
         resolve_df_col_series: Callable[
             [QTableView, int],
@@ -141,7 +135,7 @@ class ResultTabHeaderDtypeActions:
             [QTableView, pd.DataFrame, str],
             None,
         ],
-    ):
+    ) -> None:
         """Initialize ResultTabHeaderDtypeActions with dependencies.
 
         Args:
@@ -153,8 +147,8 @@ class ResultTabHeaderDtypeActions:
             apply_new_dataframe: Function to apply a new DataFrame to the view.
         """
         self._parent = parent
-        self._dialogs = dialogs if dialogs else QtDialogService()
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._dialogs = dialogs or QtDialogService()
+        self._logger = logger or logging.getLogger("applogger.ui")
         self._async_ops = async_ops
         self._resolve_df_col_series = resolve_df_col_series
         self._apply_new_dataframe = apply_new_dataframe
@@ -175,9 +169,7 @@ class ResultTabHeaderDtypeActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -186,20 +178,25 @@ class ResultTabHeaderDtypeActions:
 
         self._logger.debug(
             "ResultTabHeaderDtypeActions: convert to string requested for column '%s'.",
-            safe_col,            
+            safe_col,
         )
 
         from expo_jbm329.services.data_operations.convert import to_string
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
             return to_string(safe_df, safe_col)
 
         corr_id = uuid.uuid4().hex
-        
-        def _apply_result(new_df):
+
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -240,9 +237,7 @@ class ResultTabHeaderDtypeActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -256,7 +251,12 @@ class ResultTabHeaderDtypeActions:
 
         from expo_jbm329.services.data_operations.convert import to_integer
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -268,7 +268,7 @@ class ResultTabHeaderDtypeActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -309,9 +309,7 @@ class ResultTabHeaderDtypeActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -325,7 +323,12 @@ class ResultTabHeaderDtypeActions:
 
         from expo_jbm329.services.data_operations.convert import to_float
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -337,7 +340,7 @@ class ResultTabHeaderDtypeActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -389,7 +392,8 @@ class ResultTabHeaderDtypeActions:
 
         self._logger.debug(
             "ResultTabHeaderDtypeActions: convert to datetime (mode=%s) requested for column '%s'.",
-            opts["target"], safe_col,
+            opts["target"],
+            safe_col,
         )
 
         from expo_jbm329.services.data_operations.convert import to_datetime
@@ -400,26 +404,32 @@ class ResultTabHeaderDtypeActions:
         format_key = opts["format_key"]
         target = opts["target"]
 
-        fmt_cfg = FORMAT_MAP[format_key]
+        fmt_cfg = cast("dict[str, object]", FORMAT_MAP[format_key])
+        fmt_obj = fmt_cfg["fmt"]
         date_only = target == "date"
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
             return to_datetime(
                 safe_df,
                 safe_col,
-                fmt=fmt_cfg["fmt"],
-                dayfirst=fmt_cfg["dayfirst"],
-                yearfirst=fmt_cfg["yearfirst"],
+                fmt=fmt_obj if isinstance(fmt_obj, str) else None,
+                dayfirst=bool(fmt_cfg["dayfirst"]),
+                yearfirst=bool(fmt_cfg["yearfirst"]),
                 date_only=date_only,
                 errors=self._conversion_error_handling,
             )
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -491,7 +501,12 @@ class ResultTabHeaderDtypeActions:
 
         from expo_jbm329.services.data_operations.convert import to_boolean
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -510,7 +525,7 @@ class ResultTabHeaderDtypeActions:
             "raise": self._tr(self.TR_UNKNOWN_ERROR_LABEL_ERROR),
         }[self._conversion_error_handling]
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -555,9 +570,7 @@ class ResultTabHeaderDtypeActions:
         Returns:
             None
         """
-        ok, df, col, _ = self._resolve_df_col_series(
-            view, column
-        )
+        ok, df, col, _ = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None:
             return
 
@@ -581,7 +594,12 @@ class ResultTabHeaderDtypeActions:
 
         from expo_jbm329.services.data_operations.convert import to_category
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -597,11 +615,9 @@ class ResultTabHeaderDtypeActions:
 
         order_label = self._tr(self._CATEGORY_ORDER_LABELS[opts["order"]])
 
-        ordered_label = (
-            self._tr(self.TR_ORDERED) if opts["ordered"] else self._tr(self.TR_UNORDERED)
-        )
+        ordered_label = self._tr(self.TR_ORDERED) if opts["ordered"] else self._tr(self.TR_UNORDERED)
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 

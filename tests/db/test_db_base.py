@@ -26,9 +26,7 @@ def test_configure_timeouts():
 
 def test_build_connection_config_sqlite():
     with patch("expo_jbm329.db.base.read_connections") as mock_read:
-        mock_read.return_value = {
-            "my_sqlite": {"name": "my_sqlite", "db_type": "sqlite", "database": "test.db"}
-        }
+        mock_read.return_value = {"my_sqlite": {"name": "my_sqlite", "db_type": "sqlite", "database": "test.db"}}
 
         cfg = base._build_connection_config("my_sqlite")
 
@@ -121,9 +119,11 @@ def test_execute_sql_safe_initialization_failure():
 
 
 def test_list_tables_failure():
-    with patch("expo_jbm329.db.base._get_service_with_config", side_effect=Exception("Service fail")):
-        with pytest.raises(Exception, match="Service fail"):
-            base.list_tables("broken_conn")
+    with (
+        patch("expo_jbm329.db.base._get_service_with_config", side_effect=Exception("Service fail")),
+        pytest.raises(Exception, match="Service fail"),
+    ):
+        base.list_tables("broken_conn")
 
 
 def test_fetch_df_returns_none_on_failure():

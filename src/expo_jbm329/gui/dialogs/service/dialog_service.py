@@ -1,36 +1,42 @@
 """Dialog service."""
+
 from __future__ import annotations
 
-from datetime import datetime
 from enum import Enum
-from typing import Literal, Protocol, TypedDict, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, TypedDict, runtime_checkable
 
-from PyQt6.QtWidgets import QWidget
+if TYPE_CHECKING:
+    from datetime import datetime
 
-from expo_jbm329.services.data_operations.category_orders import CategoryOrderKey
-from expo_jbm329.services.data_operations.datetime_formats import DateFormatKey
-from expo_jbm329.services.data_profile.semantics import SeriesSemantics
+    from PyQt6.QtWidgets import QWidget
+
+    from expo_jbm329.services.data_operations.category_orders import CategoryOrderKey
+    from expo_jbm329.services.data_operations.datetime_formats import DateFormatKey
+    from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 
 DateTimeTarget = Literal["date", "datetime"]
 
 
 class ProfileChoice(Enum):
     """Enum for profile scope confirmation."""
+
     ACTIVE = "active"
     ALL = "all"
     CANCEL = "cancel"
 
 
-class BetweenResult(TypedDict):
+class BetweenResult(TypedDict, total=False):
     """Result of a numeric or datetime range prompt."""
+
     low: object
     high: object
     inclusive: str
     ok: bool
-    
 
-class CompareResult(TypedDict):
+
+class CompareResult(TypedDict, total=False):
     """Result of a numeric or datetime compare prompt."""
+
     op: str
     value: object
     ok: bool
@@ -38,6 +44,7 @@ class CompareResult(TypedDict):
 
 class DateTimeConversionResult(TypedDict):
     """Result of a datetime conversion prompt."""
+
     format_key: DateFormatKey
     target: DateTimeTarget
     ok: bool
@@ -45,6 +52,7 @@ class DateTimeConversionResult(TypedDict):
 
 class BooleanConversionResult(TypedDict):
     """Result of a boolean conversion prompt."""
+
     true_values: list[str]
     false_values: list[str]
     ok: bool
@@ -52,6 +60,7 @@ class BooleanConversionResult(TypedDict):
 
 class CategoryConversionResult(TypedDict):
     """Result of a category conversion prompt."""
+
     order: CategoryOrderKey
     ordered: bool
     strict: bool
@@ -60,6 +69,7 @@ class CategoryConversionResult(TypedDict):
 
 class CategoryRenameResult(TypedDict):
     """Result of a category rename prompt."""
+
     old: str
     new: str
     ok: bool
@@ -67,6 +77,7 @@ class CategoryRenameResult(TypedDict):
 
 class CategoryOrderResult(TypedDict):
     """Result of a category order prompt."""
+
     order_list: list[str]
     ordered: bool
     strict: bool
@@ -76,6 +87,7 @@ class CategoryOrderResult(TypedDict):
 
 class TextReplaceResult(TypedDict):
     """Result of a text replace prompt."""
+
     old: str
     new: str
     case: bool
@@ -84,6 +96,7 @@ class TextReplaceResult(TypedDict):
 
 class TextInsertResult(TypedDict):
     """Result of a text insert prompt."""
+
     insert: str
     position: int
     ok: bool
@@ -91,6 +104,7 @@ class TextInsertResult(TypedDict):
 
 class ValueReplaceResult(TypedDict):
     """Result of a value replace prompt."""
+
     new_value: str
     replace_all: bool
     ok: bool
@@ -98,6 +112,7 @@ class ValueReplaceResult(TypedDict):
 
 class TextFilterMatchResult(TypedDict):
     """Result of a text contains filter prompt."""
+
     value: str
     case_sensitive: bool
     ok: bool
@@ -105,14 +120,16 @@ class TextFilterMatchResult(TypedDict):
 
 class SplitColumnResult(TypedDict):
     """Result of the split column dialog."""
+
     delimiter: str
     keep_original: bool
     mode: Literal["first", "last"]
     ok: bool
-    
+
 
 class MergeColumnsResult(TypedDict):
     """Result of a merge columns prompt."""
+
     columns: list[str]
     delimiter: str
     new_name: str
@@ -123,6 +140,7 @@ class MergeColumnsResult(TypedDict):
 @runtime_checkable
 class DialogService(Protocol):
     """Abstraction for dialogs."""
+
     # --- Message boxes ---
     def info(self, parent: QWidget, title: str, text: str) -> None:
         """Show an informational message box."""
@@ -267,39 +285,87 @@ class DialogService(Protocol):
         ...
 
     def prompt_category_set_order(
-            self,
-            parent: QWidget,
-            *,
-            title: str,
-            default_order_list: list[str],
-            default_ordered: bool,
-            default_strict: bool,
-            default_append_missing_tail: bool,
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        default_order_list: list[str],
+        default_ordered: bool,
+        default_strict: bool,
+        default_append_missing_tail: bool,
     ) -> CategoryOrderResult:
         """Show a prompt for category ordering."""
         ...
 
-    def prompt_text_replace(self, parent: QWidget, **kwargs) -> TextReplaceResult:
+    def prompt_text_replace(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        default_old: str = "",
+        default_new: str = "",
+        default_case: bool = True,
+    ) -> TextReplaceResult:
         """Show a prompt for text replacement."""
         ...
 
-    def prompt_text_insert(self, parent: QWidget, **kwargs) -> TextInsertResult:
+    def prompt_text_insert(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        default_insert: str = "",
+        default_position: int = 0,
+    ) -> TextInsertResult:
         """Show a prompt for text insertion."""
         ...
 
-    def prompt_value_replace(self, parent: QWidget, **kwargs) -> ValueReplaceResult:
+    def prompt_value_replace(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        column: str,
+        current_value: str,
+        default_new_value: str = "",
+        default_replace_all: bool = False,
+    ) -> ValueReplaceResult:
         """Show a prompt for value replacement."""
         ...
 
-    def prompt_text(self, parent: QWidget, **kwargs) -> tuple[str, bool]:
+    def prompt_text(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        label: str,
+        default: str | None = None,
+    ) -> tuple[str, bool]:
         """Show a prompt for text input."""
         ...
 
-    def prompt_choice(self, parent: QWidget, **kwargs) -> tuple[str, bool]:
+    def prompt_choice(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        label: str,
+        choices: list[str],
+        default_index: int = 0,
+        editable: bool = False,
+    ) -> tuple[str, bool]:
         """Show a prompt for a choice from a list of options."""
         ...
 
-    def prompt_yes_no(self, parent: QWidget, **kwargs) -> bool:
+    def prompt_yes_no(
+        self,
+        parent: QWidget,
+        *,
+        title: str,
+        text: str,
+        informative: str | None = None,
+        default_yes: bool = False,
+    ) -> bool:
         """Show a yes/no confirmation dialog."""
         ...
 
@@ -309,7 +375,7 @@ class DialogService(Protocol):
         *,
         title: str,
         label: str,
-        default: float | int | None,
+        default: float | None,
         semantics: SeriesSemantics,
     ) -> tuple[float | int | None, bool]:
         """Show a prompt for numeric input."""

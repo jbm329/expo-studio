@@ -14,6 +14,7 @@ class SqliteDialect(DialectProtocol):
         Metadata via sqlite_master and PRAGMA table_info.
         No whole-database one-shot column SQL (returns None to force batch).
     """
+
     name = "sqlite"
 
     def quote_ident(self, name: str) -> str:
@@ -52,7 +53,7 @@ class SqliteDialect(DialectProtocol):
         Returns:
             The modified SQL query with the LIMIT clause applied.
         """
-        if not sql or not isinstance(n, int) or n <= 0:
+        if not sql or n <= 0:
             return sql
         s = sql.rstrip().rstrip(";")
         # Naive but safe: SQLite supports simple '... LIMIT n'
@@ -108,9 +109,10 @@ class SqliteDialect(DialectProtocol):
         """
         # We must use PRAGMA; we return a SELECT that wraps pragma for consistency.
         # Note: PRAGMA does not support parameters. We interpolate object_name safely.
+        _ = schema  # unused, but kept for signature consistency
         tbl = object_name.replace('"', '""')
         return (
-            "SELECT "
+            "SELECT "  # noqa: S608 - deferred SQL construction refactor
             "  name AS COLUMN_NAME, "
             "  LOWER(type) AS DATA_TYPE, "
             "  CASE WHEN \"notnull\" = 0 THEN 'YES' ELSE 'NO' END AS IS_NULLABLE "

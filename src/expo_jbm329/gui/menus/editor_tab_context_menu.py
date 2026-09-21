@@ -10,16 +10,20 @@ ResultTabColumnHeaderContextMenu.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP, QPoint
 from PyQt6.QtGui import QAction
-from PyQt6.QtWidgets import QMenu
+from PyQt6.QtWidgets import QMenu, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.editor_tab_manager import EditorTab
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.controllers.editor_tab_manager import EditorTab
 
 
 class EditorTabContextMenu:
@@ -84,11 +88,11 @@ class EditorTabContextMenu:
         save_tab_as: Callable[[], None],
         duplicate_tab: Callable[[str], None],
         get_connections: Callable[[], Iterable[str]],
-        bind_tab_to_connection: Callable[[str, str]],
-        unbind_tab: Callable[[str]],
+        bind_tab_to_connection: Callable[[str, str], None],
+        unbind_tab: Callable[[str], None],
         close_all_tabs: Callable[[str | None], None],
         dialogs: DialogService | None = None,
-        parent,
+        parent: QWidget,
     ) -> None:
         """Initialize the context menu."""
         self._get_tab = get_tab
@@ -152,9 +156,7 @@ class EditorTabContextMenu:
         # --------------------------------------------------------------
         rename_action = QAction(self._tr(self.TR_RENAME), menu)
         menu.addAction(rename_action)
-        rename_action.triggered.connect(
-            lambda: self._prompt_rename(tab_id, tab.base_title)
-        )
+        rename_action.triggered.connect(lambda: self._prompt_rename(tab_id, tab.base_title))
 
         menu.addSeparator()
 
@@ -182,16 +184,12 @@ class EditorTabContextMenu:
         close_others_action = QAction(self._tr(self.TR_CLOSE_OTHERS), menu)
         menu.addAction(close_others_action)
         close_others_action.setEnabled(has_multiple)
-        close_others_action.triggered.connect(
-            lambda: self._close_other_tabs(tab_id)
-        )
+        close_others_action.triggered.connect(lambda: self._close_other_tabs(tab_id))
 
         close_right_action = QAction(self._tr(self.TR_CLOSE_RIGHT), menu)
         menu.addAction(close_right_action)
         close_right_action.setEnabled(has_multiple)
-        close_right_action.triggered.connect(
-            lambda: self._close_tabs_to_right(tab_id)
-        )
+        close_right_action.triggered.connect(lambda: self._close_tabs_to_right(tab_id))
 
         close_all_action = QAction(self._tr(self.TR_CLOSE_ALL), menu)
         menu.addAction(close_all_action)
@@ -202,9 +200,7 @@ class EditorTabContextMenu:
 
         duplicate_action = QAction(self._tr(self.TR_DUPLICATE_TAB), menu)
         menu.addAction(duplicate_action)
-        duplicate_action.triggered.connect(
-            lambda: self._duplicate_tab(tab_id)
-        )
+        duplicate_action.triggered.connect(lambda: self._duplicate_tab(tab_id))
 
         menu.addSeparator()
 
@@ -217,14 +213,17 @@ class EditorTabContextMenu:
             act.setChecked(conn == tab.connection_name)
             conn_menu.addAction(act)
 
-            act.triggered.connect(lambda _, c=conn: self._bind_tab_to_connection(tab_id, c))
+            def _bind_connection(_checked: bool = False, connection_name: str = conn) -> None:
+                self._bind_tab_to_connection(tab_id, connection_name)
+
+            act.triggered.connect(_bind_connection)
 
         conn_menu.addSeparator()
 
         unbind_action = QAction(self._tr(self.TR_UNBIND_TAB), conn_menu)
         unbind_action.setEnabled(tab.connection_name is not None)
         conn_menu.addAction(unbind_action)
-        unbind_action.triggered.connect(lambda: self._unbind_tab(tab_id))          
+        unbind_action.triggered.connect(lambda: self._unbind_tab(tab_id))
 
     # ------------------------------------------------------------------
     # Helpers

@@ -18,7 +18,7 @@ Design principles:
 from __future__ import annotations
 
 import logging
-from typing import Literal
+from typing import Any, Literal, cast
 
 import pandas as pd
 
@@ -30,6 +30,7 @@ logger = logging.getLogger("applogger.service")
 # =====================================================================
 # Core column operations
 # =====================================================================
+
 
 def sort_dataframe(
     df: pd.DataFrame,
@@ -56,7 +57,8 @@ def sort_dataframe(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     return df.sort_values(by=column, ascending=ascending).copy()
 
@@ -111,11 +113,13 @@ def rename_column(
     logger.debug("Renaming column '%s' -> '%s'", old_name, new_name)
 
     if old_name not in df.columns:
-        raise KeyError(f"Column '{old_name}' not found.")
+        msg = f"Column '{old_name}' not found."
+        raise KeyError(msg)
 
     new_name = str(new_name)
     if new_name in df.columns and new_name != old_name:
-        raise ValueError(f"Column '{new_name}' already exists.")
+        msg = f"Column '{new_name}' already exists."
+        raise ValueError(msg)
 
     return df.copy().rename(columns={old_name: new_name})
 
@@ -123,6 +127,7 @@ def rename_column(
 # =====================================================================
 # Column composition helpers
 # =====================================================================
+
 
 def split_column(
     df: pd.DataFrame,
@@ -162,25 +167,26 @@ def split_column(
     )
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     if delimiter == "":
-        raise ValueError("Delimiter must not be empty.")
+        msg = "Delimiter must not be empty."
+        raise ValueError(msg)
 
     # Preserve missing values as pd.NA instead of converting them to empty strings.
     s = df[column].astype("string")
 
-    if mode == "last":
-        parts = s.str.rsplit(delimiter, n=1, expand=True)
-    else:
-        parts = s.str.split(delimiter, n=1, expand=True)
+    parts = s.str.rsplit(delimiter, n=1, expand=True) if mode == "last" else s.str.split(delimiter, n=1, expand=True)
 
     if parts.shape[1] == 1:
         parts[1] = pd.NA
 
     def _normalize_split_part(series: pd.Series) -> pd.Series:
         """Trim whitespace and normalize empty strings to pandas missing values."""
-        return series.astype("string").str.strip().replace("", pd.NA).astype("string")
+        return cast("pd.Series[Any]", series.astype("string").str.strip().replace("", cast("Any", pd.NA))).astype(
+            "string"
+        )
 
     left = _normalize_split_part(parts[0])
     right = _normalize_split_part(parts[1])
@@ -189,7 +195,8 @@ def split_column(
     pos = df.columns.get_loc(column)
 
     if not isinstance(pos, int):
-        raise TypeError(f"Expected unique column location for '{column}', got {type(pos).__name__}")
+        msg_0 = f"Expected unique column location for '{column}', got {type(pos).__name__}"
+        raise TypeError(msg_0)
 
     def _unique_name(base: str) -> str:
         if base not in new_df.columns:
@@ -254,15 +261,13 @@ def join_columns(
 
     for col in columns:
         if col not in df.columns:
-            raise KeyError(f"Column '{col}' not found.")
+            msg = f"Column '{col}' not found."
+            raise KeyError(msg)
 
     if not new_name:
         new_name = "_".join(columns)
 
-    parts = [
-        df[col].astype("string").fillna("").str.strip()
-        for col in columns
-    ]
+    parts = [df[col].astype("string").fillna("").str.strip() for col in columns]
 
     joined = parts[0]
     for part in parts[1:]:
@@ -275,9 +280,8 @@ def join_columns(
     for col in columns:
         loc = df.columns.get_loc(col)
         if not isinstance(loc, int):
-            raise TypeError(
-                f"Expected unique column location for '{col}', got {type(loc).__name__}"
-            )
+            msg = f"Expected unique column location for '{col}', got {type(loc).__name__}"
+            raise TypeError(msg)
         positions.append(loc)
 
     last_pos = max(positions)

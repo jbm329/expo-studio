@@ -5,8 +5,7 @@ import pytest
 
 from expo_jbm329.gui.dialogs.service.dialog_service import ProfileChoice
 from expo_jbm329.services.job_result import JobResult
-from expo_jbm329.workbench.controllers.export_controller import ExportController
-from expo_jbm329.workbench.controllers.export_controller import ExportKind
+from expo_jbm329.workbench.controllers.export_controller import ExportController, ExportKind
 from tests.stubs import (
     DummyAsyncOps,
     DummyDataIO,
@@ -150,9 +149,7 @@ def test_profile_report_single_tab_runs_profile_single():
 
 def test_profile_report_multi_tabs_cancel_does_not_run():
     df = pd.DataFrame({"a": [1]})
-    ctrl, dlg, _, _, _, _, async_ops = make_controller(
-        df=df, tabs_count=3, dialog_choice=ProfileChoice.CANCEL
-    )
+    ctrl, dlg, _, _, _, _, async_ops = make_controller(df=df, tabs_count=3, dialog_choice=ProfileChoice.CANCEL)
 
     ctrl.profile_report()
 
@@ -161,9 +158,7 @@ def test_profile_report_multi_tabs_cancel_does_not_run():
 
 def test_profile_report_multi_tabs_active_runs_single():
     df = pd.DataFrame({"a": [1]})
-    ctrl, _, fdlg, _, _, _, async_ops = make_controller(
-        df=df, tabs_count=3, dialog_choice=ProfileChoice.ACTIVE
-    )
+    ctrl, _, fdlg, _, _, _, async_ops = make_controller(df=df, tabs_count=3, dialog_choice=ProfileChoice.ACTIVE)
     fdlg.enqueue_save_response("C:/tmp/single.html", "HTML files (*.html)")
 
     ctrl.profile_report()

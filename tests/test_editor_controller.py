@@ -3,8 +3,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from PyQt6.QtCore import QEvent, Qt
-from PyQt6.QtGui import QTextCursor
-from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtGui import QKeyEvent, QTextCursor
 from PyQt6.QtWidgets import QPlainTextEdit
 
 from expo_jbm329.workbench.controllers.editor_controller import EditorController
@@ -149,9 +148,7 @@ def test_handle_keypress_inserts_newline_with_existing_indentation():
     cursor.setPosition(len("SELECT 1\n    FROM dual"))
     editor.setTextCursor(cursor)
 
-    handled = ctrl.handle_keypress(
-        QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Return, Qt.KeyboardModifier.NoModifier)
-    )
+    handled = ctrl.handle_keypress(QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Return, Qt.KeyboardModifier.NoModifier))
 
     assert handled is True
     assert editor.toPlainText() == "SELECT 1\n    FROM dual\n    "
@@ -164,9 +161,7 @@ def test_handle_keypress_inserts_newline_with_extra_indent_after_open_parenthesi
     cursor.setPosition(len("SELECT ("))
     editor.setTextCursor(cursor)
 
-    handled = ctrl.handle_keypress(
-        QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Return, Qt.KeyboardModifier.NoModifier)
-    )
+    handled = ctrl.handle_keypress(QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Return, Qt.KeyboardModifier.NoModifier))
 
     assert handled is True
     assert editor.toPlainText() == "SELECT (\n    "
@@ -176,9 +171,7 @@ def test_handle_keypress_returns_false_for_non_enter_keys():
     editor = make_editor("SELECT 1")
     ctrl = EditorController(editor)
 
-    handled = ctrl.handle_keypress(
-        QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_A, Qt.KeyboardModifier.NoModifier, "a")
-    )
+    handled = ctrl.handle_keypress(QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_A, Qt.KeyboardModifier.NoModifier, "a"))
 
     assert handled is False
     assert editor.toPlainText() == "SELECT 1"

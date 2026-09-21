@@ -6,22 +6,22 @@ from expo_jbm329.services.schema_cache import SchemaCacheEntry, SchemaCacheManag
 
 
 class Recorder:
-    def __init__(self):
+    def __init__(self) -> None:
         self.status: list[tuple[str, int | None]] = []
         self.progress: list[tuple[int, int]] = []
         self.autocomplete: list[str] = []
 
-    def status_cb(self, text: str, timeout_ms: int | None = None):
+    def status_cb(self, text: str, timeout_ms: int | None = None) -> None:
         self.status.append((text, timeout_ms))
 
-    def progress_cb(self, done: int, total: int):
+    def progress_cb(self, done: int, total: int) -> None:
         self.progress.append((done, total))
 
-    def autocomplete_cb(self, conn_name: str):
+    def autocomplete_cb(self, conn_name: str) -> None:
         self.autocomplete.append(conn_name)
 
 
-def make_manager():
+def make_manager() -> tuple[SchemaCacheManager, Recorder]:
     rec = Recorder()
     mgr = SchemaCacheManager(
         status_cb=rec.status_cb,
@@ -31,7 +31,7 @@ def make_manager():
     return mgr, rec
 
 
-def test_reload_settings_clamps_values():
+def test_reload_settings_clamps_values() -> None:
     mgr, rec = make_manager()
 
     mgr.reload_settings({"schema_cache": {"prefetch_limit": -1, "prefetch_batch_size": 0, "ttl_seconds": 0}})

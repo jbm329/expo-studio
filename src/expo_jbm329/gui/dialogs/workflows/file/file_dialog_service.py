@@ -4,6 +4,7 @@ This module provides a unified interface for displaying file and directory
 dialogs to the user, allowing them to open files, save files, and select
 directories.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -165,9 +166,9 @@ class NullFileDialogService(FileDialogService):
     specific selections for testing purposes.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the null file dialog service."""
-        self.calls: list[SaveFileRequest] = []
+        self.calls: list[OpenFileRequest | SaveFileRequest | DirectoryRequest] = []
         self._queue_open: list[tuple[str, str]] = []
         self._queue_save: list[tuple[str, str]] = []
         self._queue_dir: list[str] = []
@@ -195,6 +196,7 @@ class NullFileDialogService(FileDialogService):
         self.calls.append(req)
         if self._queue_open:
             return self._queue_open.pop(0)
+        _ = parent
         return "", ""
 
     # --- Save ----------------------------------------------------
@@ -217,6 +219,7 @@ class NullFileDialogService(FileDialogService):
         Returns:
             The enqueued response or ("", "").
         """
+        _ = parent
         self.calls.append(req)
         if self._queue_save:
             return self._queue_save.pop(0)
@@ -242,8 +245,8 @@ class NullFileDialogService(FileDialogService):
         Returns:
             The enqueued response or "".
         """
+        _ = parent
         self.calls.append(req)
         if self._queue_dir:
             return self._queue_dir.pop(0)
         return ""  # simulate cancel
-

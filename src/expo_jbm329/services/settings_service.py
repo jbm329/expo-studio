@@ -4,6 +4,7 @@ This module provides the SettingsService class, which manages application
 settings, allows components to subscribe to changes, and handles reloading
 from configuration stores.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -13,9 +14,18 @@ from collections.abc import Callable
 from threading import RLock
 
 from expo_jbm329.app.settings.config_store import load_settings
+from expo_jbm329.app.settings.json_types import JsonObject
 
-Subscriber = Callable[[dict], None]
+Subscriber = Callable[[JsonObject], None]
 Dispatcher = Callable[[Callable[[], None]], None]
+
+
+def _require_settings_object(value: object) -> JsonObject:
+    """Return value as settings JSON or raise for malformed loader output."""
+    if not isinstance(value, dict):
+        msg = "load_settings returned non-dict"
+        raise TypeError(msg)
+    return value
 
 
 class SettingsService:
@@ -36,11 +46,11 @@ class SettingsService:
     def __init__(
         self,
         *,
-        initial_settings: dict | None = None,
+        initial_settings: JsonObject | None = None,
         dispatcher: Dispatcher | None = None,
-        loader: Callable[[], dict] = load_settings,
+        loader: Callable[[], JsonObject] = load_settings,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize the SettingsService.
 
         Args:
@@ -53,14 +63,14 @@ class SettingsService:
         self._loader = loader
         self._dispatcher = dispatcher
         self._subs: list[Subscriber] = []
-        self._settings: dict = initial_settings if initial_settings is not None else self._safe_load()
-        self._logger = logger if logger else logging.getLogger("applogger.service")
+        self._settings: JsonObject = initial_settings if initial_settings is not None else self._safe_load()
+        self._logger = logger or logging.getLogger("applogger.service")
         self._logger.debug("SettingsService initialized.")
 
     # -----------------------------
     # Public API
     # -----------------------------
-    def get(self) -> dict:
+    def get(self) -> JsonObject:
         """Return a deep copy of current settings."""
         with self._lock:
             return copy.deepcopy(self._settings)
@@ -72,7 +82,8 @@ class SettingsService:
         settings (via dispatcher if provided).
         """
         if not callable(callback):
-            raise TypeError("SettingsService.subscribe requires a callable")
+            msg = "SettingsService.subscribe requires a callable"
+            raise TypeError(msg)
 
         with self._lock:
             if callback not in self._subs:
@@ -86,7 +97,7 @@ class SettingsService:
         with self._lock, contextlib.suppress(ValueError):
             self._subs.remove(callback)
 
-    def reload(self) -> dict:
+    def reload(self) -> JsonObject:
         """Reload settings from disk and notify subscribers.
 
         Returns the new settings dict.
@@ -100,14 +111,15 @@ class SettingsService:
         self._notify_all(snapshot)
         return snapshot
 
-    def set_and_notify(self, new_settings: dict) -> None:
+    def set_and_notify(self, new_settings: object) -> None:
         """Force-set settings and notify subscribers.
 
         Typically you don't need this because SettingsEditor writes to disk and
         you can call reload().
         """
         if not isinstance(new_settings, dict):
-            raise TypeError("new_settings must be a dict")
+            msg = "new_settings must be a dict"
+            raise TypeError(msg)
 
         with self._lock:
             self._settings = copy.deepcopy(new_settings)
@@ -119,17 +131,27 @@ class SettingsService:
     # -----------------------------
     # Internals
     # -----------------------------
-    def _safe_load(self) -> dict:
+    def _safe_load(self) -> JsonObject:
         try:
-            s = self._loader()
-            if not isinstance(s, dict):
-                raise ValueError("load_settings returned non-dict")
-            return s
-        except Exception as e:
-            self._logger.exception("SettingsService: failed to load settings; falling back to empty dict. Error: %s", e)
+            settings = _require_settings_object(self._loader())
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
+            self._logger.exception("SettingsService: failed to load settings; falling back to empty dict")
             return {}
+        else:
+            return settings
 
-    def _notify_all(self, s: dict) -> None:
+    def _notify_all(self, s: JsonObject) -> None:
         subs_snapshot: list[Subscriber]
         with self._lock:
             subs_snapshot = list(self._subs)
@@ -137,18 +159,40 @@ class SettingsService:
         for cb in subs_snapshot:
             self._notify_one(cb, s)
 
-    def _notify_one(self, cb: Subscriber, s: dict) -> None:
-        def _invoke():
+    def _notify_one(self, cb: Subscriber, s: JsonObject) -> None:
+        def _invoke() -> None:
             try:
                 cb(copy.deepcopy(s))
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.exception("SettingsService subscriber raised.")
 
         if self._dispatcher is not None:
             # Marshal to UI thread (or provided dispatcher)
             try:
                 self._dispatcher(_invoke)
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.exception("SettingsService dispatcher failed; invoking directly.")
                 _invoke()
         else:

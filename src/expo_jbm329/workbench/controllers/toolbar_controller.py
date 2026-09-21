@@ -9,13 +9,18 @@ while maintaining full testability through dependency injection.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtGui import QAction
-from PyQt6.QtWidgets import QSizePolicy, QToolBar, QWidget, QWidgetAction
+from PyQt6.QtWidgets import QToolBar, QWidget
 
 from expo_jbm329.utils.i18n_utils import tr
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.workbench.icon.icon_service import IconService
 
 
 class ToolbarController:
@@ -24,6 +29,7 @@ class ToolbarController:
     This class builds and owns all toolbar actions, ensuring no parent coupling
     and no business logic. All command callbacks are injected by ExpoStudio.
     """
+
     # --- i18n markers (pylupdate6-visible) -----------------------------
     TR_NEW = QT_TR_NOOP("New file")
     TR_OPEN = QT_TR_NOOP("Open")
@@ -81,7 +87,7 @@ class ToolbarController:
 
     def __init__(
         self,
-        icon_service,
+        icon_service: IconService,
         *,
         new_file: Callable[[], None],
         open_file: Callable[[], None],
@@ -101,7 +107,7 @@ class ToolbarController:
         undo: Callable[[], None],
         visualize_data: Callable[[], None],
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize the ToolbarController.
 
         Args:
@@ -141,12 +147,12 @@ class ToolbarController:
         self._action_export_data_cb = export_data
         self._action_join_data_cb = join_data
         self._action_concatenate_data_cb = concatenate_data
-        self._action_format_view_cb = format_view       
+        self._action_format_view_cb = format_view
         self._action_clear_cb = clear_editor
         self._action_refresh_schema_cb = refresh_schema
         self._action_undo_cb = undo
         self._action_visualize_cb = visualize_data
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._logger = logger or logging.getLogger("applogger.ui")
 
     # ------------------------------------------------------------------
     def build(self, parent: QWidget) -> QToolBar:
@@ -242,11 +248,11 @@ class ToolbarController:
         tb.addAction(self._action_undo)
 
         tb.addSeparator()
-        
+
         # Format
         self._action_format_view = QAction(self._tr(self.TR_FROMAT_VIEW), tb)
         self._action_format_view.setCheckable(True)
-        tb.addAction(self._action_format_view)       
+        tb.addAction(self._action_format_view)
 
         self._connect_callbacks()
         self.apply_icons()
@@ -255,7 +261,7 @@ class ToolbarController:
 
     # ------------------------------------------------------------------
 
-    def _connect_callbacks(self):
+    def _connect_callbacks(self) -> None:
         """Connect all toolbar actions to their respective callbacks."""
         self._action_new.triggered.connect(self._action_new_cb)
         self._action_open.triggered.connect(self._action_open_cb)
@@ -272,7 +278,7 @@ class ToolbarController:
 
         self._action_join_data.triggered.connect(self._action_join_data_cb)
         self._action_concatenate_data.triggered.connect(self._action_concatenate_data_cb)
-        self._action_visualize.triggered.connect(self._action_visualize_cb)        
+        self._action_visualize.triggered.connect(self._action_visualize_cb)
 
         self._action_clear.triggered.connect(self._action_clear_cb)
         self._action_refresh_schema.triggered.connect(self._action_refresh_schema_cb)
@@ -282,7 +288,7 @@ class ToolbarController:
 
     # ------------------------------------------------------------------
 
-    def apply_icons(self):
+    def apply_icons(self) -> None:
         """Apply icons to all toolbar actions using the icon service."""
         self._action_new.setIcon(self._icons.get("file_new"))
         self._action_open.setIcon(self._icons.get("folder_open"))
@@ -299,7 +305,7 @@ class ToolbarController:
 
         self._action_join_data.setIcon(self._icons.get("join"))
         self._action_concatenate_data.setIcon(self._icons.get("concatenate"))
-        self._action_visualize.setIcon(self._icons.get("chart"))        
+        self._action_visualize.setIcon(self._icons.get("chart"))
 
         self._action_clear.setIcon(self._icons.get("file_clear"))
         self._action_refresh_schema.setIcon(self._icons.get("refresh"))
@@ -362,7 +368,7 @@ class ToolbarController:
 
         self._action_run10.setText(self._tr(self.TR_RUN_TOP10))
         self._action_run10.setToolTip(self._tr(self.TR_RUN_TOP10_SHORTCUT))
-        
+
         self._action_export_csv.setText(self._tr(self.TR_EXPORT_CSV))
         self._action_export_excel.setText(self._tr(self.TR_EXPORT_EXCEL))
         self._action_export_data.setText(self._tr(self.TR_EXPORT_DATA))

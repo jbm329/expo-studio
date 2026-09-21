@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, Self
+
 from expo_jbm329.services.rest.scb.browser import (
     fetch_scb_table_metadata,
     fetch_scb_tables,
@@ -7,26 +9,26 @@ from expo_jbm329.services.rest.scb.browser import (
 
 
 class _FakeResponse:
-    def __init__(self, payload: dict, status_code: int = 200):
+    def __init__(self, payload: dict[str, object], status_code: int = 200) -> None:
         self._payload = payload
         self.status_code = status_code
 
-    def json(self):
+    def json(self) -> dict[str, object]:
         return self._payload
 
 
 class _FakeClient:
-    def __init__(self, payload: dict | list[dict]):
+    def __init__(self, payload: dict[str, object] | list[dict[str, object]]) -> None:
         self.payload = payload
-        self.calls: list[tuple[str, dict | None]] = []
+        self.calls: list[tuple[str, dict[str, object] | None]] = []
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         return self
 
-    def __exit__(self, exc_type, exc, tb):
+    def __exit__(self, exc_type: object, exc: object, tb: object) -> bool:
         return False
 
-    def get(self, url: str, params: dict | None = None):
+    def get(self, url: str, params: dict[str, object] | None = None) -> _FakeResponse:
         self.calls.append((url, params))
         if isinstance(self.payload, list):
             page_number = int((params or {}).get("pageNumber", 1))
@@ -34,7 +36,7 @@ class _FakeClient:
         return _FakeResponse(self.payload)
 
 
-def test_fetch_scb_tables_parses_index(monkeypatch):
+def test_fetch_scb_tables_parses_index(monkeypatch: Any) -> None:
     payload = [
         {
             "tables": [

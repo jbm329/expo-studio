@@ -10,18 +10,28 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, cast
 
-from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtCore import QT_TR_NOOP, QObject
 
 from expo_jbm329.db.base import execute_sql_safe
-from expo_jbm329.db.core.models import SqlError
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+from expo_jbm329.db.core.models import SqlError, SqlResult
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.format_utils import fmt_shape, fmt_time
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from PyQt6.QtWidgets import QWidget
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import (
+        ResultTabManager,
+    )
 
 
 class QueryController:
@@ -64,6 +74,13 @@ class QueryController:
     def _tr_fmt(text: str, **kwargs: str) -> str:
         return tr_fmt("QueryController", text, **kwargs)
 
+    def reload_settings(self, _settings: dict[str, object]) -> None:
+        """Handle workbench settings changes.
+
+        QueryController currently has no dynamic settings, but the hook keeps
+        settings subscriptions explicit and typed.
+        """
+
     __slots__ = (
         "__weakref__",
         "_async_ops",
@@ -84,13 +101,13 @@ class QueryController:
         *,
         parent_widget: QWidget,
         async_ops: AsyncOperationController,
-        results,
+        results: ResultTabManager,
         set_status: Callable[[str, int | None], None],
         get_sql: Callable[[bool], str | None],
         get_current_connection: Callable[[], str | None],
         dialogs: DialogService | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize the QueryController.
 
         Args:
@@ -109,13 +126,13 @@ class QueryController:
         self._set_status = set_status
         self._get_sql = get_sql
         self._get_current_connection = get_current_connection
-        self._dialogs = dialogs if dialogs else QtDialogService()
-        self._logger = logger if logger else logging.getLogger("applogger.service")
+        self._dialogs = dialogs or QtDialogService()
+        self._logger = logger or logging.getLogger("applogger.service")
 
     # ==================================================================
     # Public API - invoked by toolbar buttons / shortcuts
     # ==================================================================
-    def run_top10(self):
+    def run_top10(self) -> None:
         """Execute the full SQL query limited to TOP 10 rows."""
         self._logger.info(
             "QueryController: run_top10 called (active_connection=%s)",
@@ -124,7 +141,7 @@ class QueryController:
 
         self._run_sql(use_sel=False, top_n=10, started_msg=self._tr(self.TR_RUNNING_SQL_TOP10))
 
-    def run_full(self):
+    def run_full(self) -> None:
         """Execute the entire SQL query with no row limit."""
         self._logger.info(
             "QueryController: run_full called (active_connection=%s)",
@@ -133,7 +150,7 @@ class QueryController:
 
         self._run_sql(use_sel=False, top_n=None, started_msg=self._tr(self.TR_RUNNING_SQL))
 
-    def run_selection(self, top_n: int | None):
+    def run_selection(self, top_n: int | None) -> None:
         """Execute only the selected SQL in the workbench.
 
         If no text is selected, the user is notified via dialog.
@@ -149,9 +166,7 @@ class QueryController:
         sql = self._get_sql(True)
         if not sql:
             self._dialogs.info(
-                parent=self._parent,
-                title=self._tr(self.TR_NO_SELECTION),
-                text=self._tr(self.TR_SELECT_SQL_TO_RUN)
+                parent=self._parent, title=self._tr(self.TR_NO_SELECTION), text=self._tr(self.TR_SELECT_SQL_TO_RUN)
             )
             return
 
@@ -224,9 +239,17 @@ class QueryController:
         pending_tab_id = pending_handle.tab_id
         pending_view = pending_handle.view
 
-        def _work(*, progress_cb=None, cancel_cb=None, job_id=None, job_scope=None, **_):
+        def _work(
+            *,
+            progress_cb: object = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
+            **extra_context: object,
+        ) -> object:
             _ = progress_cb
             _ = job_scope
+            _ = extra_context
 
             return execute_sql_safe(
                 safe_connection_name,
@@ -237,9 +260,9 @@ class QueryController:
                 job_id=job_id,
             )
 
-        def _on_result(payload) -> None:
+        def _on_result(payload: object) -> None:
             """Handle SQL result for the pending result tab."""
-            res = payload
+            res = payload if isinstance(payload, SqlResult) else None
 
             if res is None:
                 self._logger.error(
@@ -271,9 +294,7 @@ class QueryController:
             if not res.ok:
                 err = res.error if isinstance(res.error, SqlError) else None
 
-                msg = (
-                    tr("DbErrors", err.message) if err is not None else self._tr(self.TR_SQL_FAILED)
-                )
+                msg = tr("DbErrors", err.message) if err is not None else self._tr(self.TR_SQL_FAILED)
 
                 hint_str = tr("DbErrors", err.hint) if err is not None and err.hint else ""
                 hint = self._tr_fmt(self.TR_SQL_ERROR_HINT, error_hint=hint_str) if hint_str else ""
@@ -308,7 +329,6 @@ class QueryController:
                 )
                 self._results.remove_pending_tab(pending_tab_id)
                 return
-
             rows = df.shape[0]
 
             self._logger.info(
@@ -319,7 +339,7 @@ class QueryController:
                 pending_tab_id,
             )
 
-            self._parent.last_df = df
+            cast("Any", self._parent).last_df = df
 
             self._results.fulfill_pending_tab(pending_tab_id, df)
 
@@ -347,6 +367,7 @@ class QueryController:
                     traceback_str=traceback_str,
                 ),
             )
+
         query_type = ":full"
         if use_sel:
             query_type = ":selection"
@@ -374,7 +395,9 @@ class QueryController:
             corr_id=corr_id,
         )
 
-        jobid = self._async_ops.job_mgr.get_job_id(job)
+        jobid = self._async_ops.job_mgr.get_job_id(job) if isinstance(job, QObject) else getattr(job, "job_id", None)
+        if jobid is None:
+            jobid = getattr(job, "_job_id", None)
         if jobid is not None:
             self._results.bind_job_to_tab(pending_tab_id, jobid)
         else:

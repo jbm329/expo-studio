@@ -3,17 +3,21 @@
 This module manages the interaction between the editor, the completion engine,
 and the popup window to provide a smooth SQL autocompletion experience.
 """
+
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QEvent, QObject, Qt, QTimer
 from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtWidgets import QPlainTextEdit
 
-from .engine import SqlAutoCompleter
 from .popup import SqlEditorAutoCompletePopup
+
+if TYPE_CHECKING:
+    from PyQt6.QtWidgets import QPlainTextEdit
+
+    from .engine import SqlAutoCompleter
 
 
 class SqlAutocompleteController(QObject):
@@ -34,7 +38,7 @@ class SqlAutocompleteController(QObject):
         self,
         editor: QPlainTextEdit,
         completer: SqlAutoCompleter,
-        parent=None,
+        parent: QObject | None = None,
         *,
         debug: bool = False,
         logger: logging.Logger | None = None,
@@ -63,7 +67,7 @@ class SqlAutocompleteController(QObject):
         self.popup.installEventFilter(self)
         self.popup.list.installEventFilter(self)
 
-    def set_schema(self, schema_dict: dict[str, dict[str, list[str]]]) -> None:
+    def set_schema(self, schema_dict: dict[str, object]) -> None:
         """Update the schema metadata used for suggestions.
 
         Args:
@@ -83,22 +87,25 @@ class SqlAutocompleteController(QObject):
             )
 
     # ------------------------------------------------------------------ #
-    def eventFilter(self, obj: Any, event: QEvent) -> bool:
+    @override
+    def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
         """Filter events for the editor and popup.
 
         Args:
-            obj: The object being filtered.
-            event: The event to process.
+            a0: The object being filtered.
+            a1: The event to process.
 
         Returns:
             True if the event was handled, False otherwise.
         """
-        if event.type() == QEvent.Type.KeyPress and obj in (self.editor, self.popup, self.popup.list):
-            return self._handle_keypress(event)
-        return super().eventFilter(obj, event)
+        if a1 is not None and a1.type() == QEvent.Type.KeyPress and a0 in (self.editor, self.popup, self.popup.list):
+            if not isinstance(a1, QKeyEvent):
+                return super().eventFilter(a0, a1)
+            return self._handle_keypress(a1)
+        return super().eventFilter(a0, a1)
 
     # ------------------------------------------------------------------ #
-    def _handle_keypress(self, event: QKeyEvent) -> bool:  # noqa: C901
+    def _handle_keypress(self, event: QKeyEvent) -> bool:
         key = event.key()
         text = event.text() or ""
 
@@ -113,8 +120,10 @@ class SqlAutocompleteController(QObject):
         # Navigation + accept + escape when popup visible
         if self.popup.isVisible():
             if key in (
-                Qt.Key.Key_Up, Qt.Key.Key_Down,
-                Qt.Key.Key_PageUp, Qt.Key.Key_PageDown,
+                Qt.Key.Key_Up,
+                Qt.Key.Key_Down,
+                Qt.Key.Key_PageUp,
+                Qt.Key.Key_PageDown,
             ):
                 return self.popup.handle_key(event)
             if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Tab):
@@ -138,18 +147,14 @@ class SqlAutocompleteController(QObject):
         # Qt6: '.' as Key_Period
         if key == Qt.Key.Key_Period:
             if self._debug:
-                self._logger.debug(
-                    "SqlAutocompleteController: period key detected; scheduling suggestions."
-                )
+                self._logger.debug("SqlAutocompleteController: period key detected; scheduling suggestions.")
             QTimer.singleShot(0, self._update_suggestions)
             return False
 
         # '.' via text
         if text == ".":
             if self._debug:
-                self._logger.debug(
-                    "SqlAutocompleteController: period text detected; scheduling suggestions."
-                )
+                self._logger.debug("SqlAutocompleteController: period text detected; scheduling suggestions.")
             QTimer.singleShot(0, self._update_suggestions)
             return False
 
@@ -181,14 +186,26 @@ class SqlAutocompleteController(QObject):
                     pos,
                 )
 
-            return prefix
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             if self._debug:
                 self._logger.debug(
                     "SqlAutocompleteController: prefix extraction failed.",
                     exc_info=True,
                 )
             return ""
+        else:
+            return prefix
 
     # ------------------------------------------------------------------ #
     def _update_suggestions(self) -> None:
@@ -222,12 +239,21 @@ class SqlAutocompleteController(QObject):
             self._debug_log(prefix, suggestions)
             self._show_or_hide(suggestions)
 
-        except Exception as e:
-            self._logger.debug(
-                "SqlAutocompleteController: autocomplete update failed: %s", str(e), exc_info=True
-            )
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
+            self._logger.debug("SqlAutocompleteController: autocomplete update failed: %s", str(e), exc_info=True)
             self.popup.hide()
-            QTimer.singleShot(1000, lambda: self._force_suggestions_now())
+            QTimer.singleShot(1000, self._force_suggestions_now)
 
     # ------------------------------------------------------------------ #
     def _force_suggestions_now(self) -> None:
@@ -243,7 +269,18 @@ class SqlAutocompleteController(QObject):
             self._debug_log(prefix, suggestions)
             self._show_or_hide(suggestions)
 
-        except Exception as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._logger.debug("SqlAutocompleteController: forced autocomplete failed: %s", str(e))
             self.popup.hide()
 

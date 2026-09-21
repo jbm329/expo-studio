@@ -3,10 +3,11 @@
 This module provides a dialog for configuring the concatenation of two
 datasets (tabs) in the workbench.
 """
+
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -25,6 +26,9 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 @dataclass
@@ -63,7 +67,7 @@ class ConcatDialog(QDialog):
         right_tab_titles: Sequence[str],
         left_columns: Sequence[str],
         right_columns_map: dict[str, Sequence[str]],
-    ):
+    ) -> None:
         """Initialize the concatenation dialog.
 
         Args:
@@ -118,7 +122,7 @@ class ConcatDialog(QDialog):
         right_layout.addRow(QLabel(self.tr("Columns:")), self.right_columns_list)
 
         # ======================================================
-        # GRID: Left + Right
+        # Grid Left + Right
         # ======================================================
         row = QHBoxLayout()
         row.addWidget(left_box)
@@ -146,14 +150,14 @@ class ConcatDialog(QDialog):
     # ---------------------------------------------------------
     # Populate
     # ---------------------------------------------------------
-    def _populate_left_columns(self):
+    def _populate_left_columns(self) -> None:
         self.left_columns_list.clear()
         for col in self._left_cols:
             item = QListWidgetItem(col)
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)  # read-only
             self.left_columns_list.addItem(item)
 
-    def _populate_right_columns(self, tab: str):
+    def _populate_right_columns(self, tab: str) -> None:
         cols = self._right_cols_map.get(tab, [])
         self.right_columns_list.clear()
         for col in cols:
@@ -161,7 +165,7 @@ class ConcatDialog(QDialog):
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
             self.right_columns_list.addItem(item)
 
-    def _on_right_dataset_changed(self, tab: str):
+    def _on_right_dataset_changed(self, tab: str) -> None:
         self._populate_right_columns(tab)
 
     # ---------------------------------------------------------

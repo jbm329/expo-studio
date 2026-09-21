@@ -5,16 +5,19 @@ creation, action setup, and callback wiring for the main application window.
 It encapsulates all Qt menu boilerplate, allowing the main application to
 remain focused on business logic.
 """
+
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QMenu, QMenuBar
 
 from expo_jbm329.utils.i18n_utils import tr
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class MenuController:
@@ -34,8 +37,8 @@ class MenuController:
     TR_EXPORT = QT_TR_NOOP("Export…")
     TR_EXPORT_TO_CSV = QT_TR_NOOP("Export to CSV…")
     TR_EXPORT_TO_EXCEL = QT_TR_NOOP("Export to Excel…")
-    TR_EXPORT_TO_DATA = QT_TR_NOOP("Export to binary data file…")    
-    
+    TR_EXPORT_TO_DATA = QT_TR_NOOP("Export to binary data file…")
+
     TR_QUIT = QT_TR_NOOP("Quit")
     TR_EDIT = QT_TR_NOOP("Edit")
     TR_CLEAR_EDITOR = QT_TR_NOOP("Clear editor")
@@ -55,27 +58,27 @@ class MenuController:
     @staticmethod
     def _tr(text: str) -> str:
         return tr("MenuController", text)
-    
+
     def __init__(
-            self,
-            *,
-            menubar: QMenuBar,
-            new_file: Callable[[], None],
-            open_file: Callable[[], None],
-            save_file: Callable[[], None],
-            save_file_as: Callable[[], None],
-            quit_app: Callable[[], Any],
-            export_csv: Callable[[], None],
-            export_excel: Callable[[], None],
-            export_data: Callable[[], None],
-            export_profile: Callable[[], None],
-            clear_editor: Callable[[], None],
-            open_settings_dialog: Callable[[], None],
-            open_log_settings_dialog: Callable[[], None],
-            open_connection_dialog: Callable[[], None],
-            open_rest_connection_dialog: Callable[[], None],
-            show_about_dialog: Callable[[], None],
-    ):
+        self,
+        *,
+        menubar: QMenuBar,
+        new_file: Callable[[], None],
+        open_file: Callable[[], None],
+        save_file: Callable[[], None],
+        save_file_as: Callable[[], None],
+        quit_app: Callable[[], object],
+        export_csv: Callable[[], None],
+        export_excel: Callable[[], None],
+        export_data: Callable[[], None],
+        export_profile: Callable[[], None],
+        clear_editor: Callable[[], None],
+        open_settings_dialog: Callable[[], None],
+        open_log_settings_dialog: Callable[[], None],
+        open_connection_dialog: Callable[[], None],
+        open_rest_connection_dialog: Callable[[], None],
+        show_about_dialog: Callable[[], None],
+    ) -> None:
         """Initialize the MenuController.
 
         Args:
@@ -117,7 +120,7 @@ class MenuController:
         self._connect_menu_logic()
 
     # ----------------------------------------------------------------------
-    def _build_menu_bar(self):
+    def _build_menu_bar(self) -> None:
         """Build the complete menu bar structure with all menus and actions."""
         mb = self._menubar
 
@@ -200,13 +203,13 @@ class MenuController:
         self._menu_help.addAction(self._act_about)
 
     # ----------------------------------------------------------------------
-    def _connect_menu_logic(self):
+    def _connect_menu_logic(self) -> None:
         """Wire all menu actions to their respective callbacks."""
         # File
         self._act_new.triggered.connect(self._new_file)
         self._act_open.triggered.connect(self._open_file)
         self._act_save.triggered.connect(self._save_file)
-        self._act_save_as.triggered.connect(self._save_file_as)       
+        self._act_save_as.triggered.connect(self._save_file_as)
         self._act_quit.triggered.connect(self._quit_app)
 
         # Export
@@ -229,7 +232,7 @@ class MenuController:
 
     # ----------------------------------------------------------------------
 
-    def apply_has_data_state(self, has_data: bool):
+    def apply_has_data_state(self, has_data: bool) -> None:
         """Enable/disable export actions based on dataset availability.
 
         Args:

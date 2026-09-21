@@ -14,16 +14,23 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QTableView, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from PyQt6.QtWidgets import QTableView, QWidget
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
 
 
 class ResultTabHeaderCategoryActions:
@@ -34,9 +41,7 @@ class ResultTabHeaderCategoryActions:
     # ------------------------------------------------------------------
 
     TR_IS_NOT_CATEGORY = QT_TR_NOOP("Not category")
-    TR_COLUMN_IS_NOT_CATEGORY = QT_TR_NOOP(
-        "Column '{column_name}' is not categorical."
-    )
+    TR_COLUMN_IS_NOT_CATEGORY = QT_TR_NOOP("Column '{column_name}' is not categorical.")
 
     TR_ORDER_CATEGORIES_OPERATION = QT_TR_NOOP("order categories")
     TR_ORDERING_CATEGORIES = QT_TR_NOOP("Ordering categories: {column_name}")
@@ -48,24 +53,18 @@ class ResultTabHeaderCategoryActions:
     TR_ORDER_CATEGORIES = QT_TR_NOOP("Order categories")
     TR_INVALID_ORDER = QT_TR_NOOP("Invalid order")
     TR_ORDER_CAN_NOT_BE_EMPTY = QT_TR_NOOP("Order can not be empty.")
-    TR_ORDERED_CATEGORIES_IN_COLUMN = QT_TR_NOOP(
-        "Category order set for column: {column_name} ({ordered})"
-    )
+    TR_ORDERED_CATEGORIES_IN_COLUMN = QT_TR_NOOP("Category order set for column: {column_name} ({ordered})")
 
     TR_REMOVE_UNUSED_CATEGORY_OPERATION = QT_TR_NOOP("remove unused categories")
     TR_REMOVING_UNUSED_CATEGORIES = QT_TR_NOOP("Removing unused categories: {column_name}")
-    TR_REMOVED_UNUSED_CATEGORIES = QT_TR_NOOP(
-        "Removed unused categories in column: {column_name}"
-    )
+    TR_REMOVED_UNUSED_CATEGORIES = QT_TR_NOOP("Removed unused categories in column: {column_name}")
 
     TR_RENAME_CATEGORY_OPERATION = QT_TR_NOOP("rename category")
     TR_RENAMING_CATEGORY = QT_TR_NOOP("Renaming category: {column_name}")
     TR_RENAME_CATEGORY = QT_TR_NOOP("Rename category")
     TR_CATEGORY_RENAMED = QT_TR_NOOP("Renamed category: {old_name} → {new_name}")
     TR_NO_CATEGORIES = QT_TR_NOOP("No categories")
-    TR_NO_CATEGORIES_TO_RENAME = QT_TR_NOOP(
-        "There are no categories to rename."
-    )
+    TR_NO_CATEGORIES_TO_RENAME = QT_TR_NOOP("There are no categories to rename.")
 
     # ------------------------------------------------------------------
     # i18n helpers
@@ -76,11 +75,11 @@ class ResultTabHeaderCategoryActions:
         return tr("ResultTabHeaderCategoryActions", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabHeaderCategoryActions", text, **kwargs)
 
     # ------------------------------------------------------------------
-    # Init (DI)
+    # Init
     # ------------------------------------------------------------------
     __slots__ = (
         "_apply_new_dataframe",
@@ -95,8 +94,8 @@ class ResultTabHeaderCategoryActions:
         self,
         *,
         parent: QWidget,
-        dialogs: DialogService,
-        logger: logging.Logger,
+        dialogs: DialogService | None,
+        logger: logging.Logger | None,
         async_ops: AsyncOperationController,
         resolve_df_col_series: Callable[
             [QTableView, int],
@@ -106,7 +105,7 @@ class ResultTabHeaderCategoryActions:
             [QTableView, pd.DataFrame, str],
             None,
         ],
-    ):
+    ) -> None:
         """Initialize ResultTabHeaderCategoryActions with dependencies.
 
         Args:
@@ -148,7 +147,7 @@ class ResultTabHeaderCategoryActions:
                 ),
             )
             return False
-        return True   
+        return True
 
     # ==================================================================
     # Remove unused categories
@@ -156,21 +155,18 @@ class ResultTabHeaderCategoryActions:
 
     def remove_unused(self, view: QTableView, column: int) -> None:
         """Remove unused categories from a categorical column.
-        
+
         Args:
             view (QTableView): View containing the DataFrame.
             column (int): Column index to process.
-        
+
         Returns:
             None
         """
-        ok, df, col, s = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, s = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None or s is None:
             return
-        
+
         if not self._ensure_categorical(s, col):
             return
 
@@ -186,7 +182,12 @@ class ResultTabHeaderCategoryActions:
             category_remove_unused,
         )
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -194,7 +195,7 @@ class ResultTabHeaderCategoryActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -280,7 +281,12 @@ class ResultTabHeaderCategoryActions:
             category_rename_single,
         )
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -288,7 +294,7 @@ class ResultTabHeaderCategoryActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -379,15 +385,18 @@ class ResultTabHeaderCategoryActions:
         ordered = opts["ordered"]
         strict = opts["strict"]
         append_missing_tail = opts["append_missing_tail"]
-        ordered_label = (
-            self._tr(self.TR_ORDERED) if opts["ordered"] else self._tr(self.TR_UNORDERED)
-        )
+        ordered_label = self._tr(self.TR_ORDERED) if opts["ordered"] else self._tr(self.TR_UNORDERED)
 
         from expo_jbm329.services.data_operations.category import (
             category_set_order,
         )
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -402,7 +411,7 @@ class ResultTabHeaderCategoryActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 

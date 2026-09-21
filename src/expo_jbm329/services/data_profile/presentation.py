@@ -13,20 +13,22 @@ Responsibilities:
 from __future__ import annotations
 
 import datetime as _dt
-from typing import Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 
-from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num
+
+if TYPE_CHECKING:
+    from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 
 
 # =====================================================================
 # Public API
 # =====================================================================
 def format_value_for_display(
-    value: Any,
+    value: object,
     sem: SeriesSemantics | None,
 ) -> str:
     """Format a single value for display using series semantics.
@@ -47,7 +49,12 @@ def format_value_for_display(
     # --------------------------------------------------------------
     # Missing values (None, np.nan, pd.NA, NaT)
     # --------------------------------------------------------------
-    if value is None or pd.isna(value):
+    if value is None:
+        return ""
+    try:
+        if bool(pd.isna(value)):  # type: ignore[call-overload]
+            return ""
+    except (TypeError, ValueError):
         return ""
 
     # No semantics available → fallback
@@ -84,7 +91,8 @@ def format_value_for_display(
 # Internal helpers
 # =====================================================================
 
-def _format_date_only(value: Any) -> str:
+
+def _format_date_only(value: object) -> str:
     """Format datetime-like values as YYYY-MM-DD."""
     try:
         # Python datetime
@@ -94,41 +102,84 @@ def _format_date_only(value: Any) -> str:
         if isinstance(value, _dt.date):
             return value.isoformat()
 
-        # pandas Timestamp / NaT-safe
-        if hasattr(value, "to_pydatetime"):
-            return value.to_pydatetime().date().isoformat()
+        if isinstance(value, pd.Timestamp):
+            return str(value.to_pydatetime().date().isoformat())
 
-    except Exception:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         pass
 
     return str(value)
 
 
-def _format_integer_like(value: Any) -> str:
+def _format_integer_like(value: object) -> str:
     """Format integer-like numeric values using locale grouping."""
     try:
         if isinstance(value, (int, float, np.integer, np.floating)):
             return fmt_int(int(value))
-    except Exception:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         pass
     return str(value)
 
 
-def _format_float_like(value: Any, *, decimals: int = 2) -> str:
+def _format_float_like(value: object, *, decimals: int = 2) -> str:
     """Format non-integer float values with fixed decimal precision."""
     try:
         if isinstance(value, (float, np.floating)):
             return fmt_num(float(value), sig=decimals)
-    except Exception:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         pass
     return str(value)
 
 
-def _format_year_like(value: Any) -> str:
+def _format_year_like(value: object) -> str:
     """Format year-like values without thousand separators."""
     try:
         if isinstance(value, (int, float, np.integer, np.floating)):
             return str(int(value))
-    except Exception:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         pass
     return str(value)

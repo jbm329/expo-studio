@@ -8,11 +8,15 @@ of the main application flow.
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from typing import TYPE_CHECKING, Self, override
 
 from PyQt6.QtCore import QEvent, QObject, Qt
 from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtWidgets import QPlainTextEdit
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from PyQt6.QtWidgets import QPlainTextEdit
 
 
 class EditorController(QObject):
@@ -26,7 +30,7 @@ class EditorController(QObject):
         re.compile(r"\bJOIN\b.*\bON\s*$", re.IGNORECASE),
     )
 
-    def __init__(self, editor: QPlainTextEdit):
+    def __init__(self, editor: QPlainTextEdit) -> None:
         """Initialize the editor controller.
 
         Args:
@@ -112,7 +116,7 @@ class EditorController(QObject):
         return line_text.count("(") > line_text.count(")")
 
     @classmethod
-    def _should_increase_indent_for_sql_continuation(cls, line_text: str) -> bool:
+    def _should_increase_indent_for_sql_continuation(cls: type[Self], line_text: str) -> bool:
         """Return whether a SQL continuation pattern should add one indent level."""
         stripped_line = line_text.rstrip()
         if not stripped_line:
@@ -124,14 +128,16 @@ class EditorController(QObject):
         """Install editor event filtering handled by this controller."""
         self._editor.installEventFilter(self)
 
-    def eventFilter(self, obj: QObject | None, event: QEvent | None) -> bool:
+    @override
+    def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
         """Handle Enter-key indentation for the managed editor."""
-        if obj is self._editor and event is not None and event.type() == QEvent.Type.KeyPress:
-            assert isinstance(event, QKeyEvent)
-            if self.handle_keypress(event):
+        if a0 is self._editor and a1 is not None and a1.type() == QEvent.Type.KeyPress:
+            if not isinstance(a1, QKeyEvent):
+                return super().eventFilter(a0, a1)
+            if self.handle_keypress(a1):
                 return True
 
-        return super().eventFilter(obj, event)
+        return super().eventFilter(a0, a1)
 
     def handle_keypress(self, event: QKeyEvent) -> bool:
         """Handle editor key presses owned by this controller."""

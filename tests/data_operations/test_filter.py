@@ -16,6 +16,7 @@ from expo_jbm329.services.data_operations.filter import (
 # Equality filters
 # =====================================================================
 
+
 def test_filter_equals_basic():
     df = pd.DataFrame({"a": [1, 2, 1]})
 
@@ -45,6 +46,7 @@ def test_filter_not_equals_nan():
 # String filters
 # =====================================================================
 
+
 def test_filter_contains_case_sensitive():
     df = pd.DataFrame({"a": ["Foo", "bar", "foobar"]})
 
@@ -64,6 +66,7 @@ def test_filter_contains_case_insensitive():
 # =====================================================================
 # NA filters
 # =====================================================================
+
 
 def test_filter_isna():
     df = pd.DataFrame({"a": [1, None, 2]})
@@ -85,6 +88,7 @@ def test_filter_notna():
 # =====================================================================
 # Comparison filters (numeric)
 # =====================================================================
+
 
 def test_filter_compare_numeric_gt():
     df = pd.DataFrame({"a": [1, 2, 3]})
@@ -113,10 +117,9 @@ def test_filter_compare_invalid_dtype():
 # Comparison filters (datetime)
 # =====================================================================
 
+
 def test_filter_compare_datetime():
-    df = pd.DataFrame(
-        {"d": pd.to_datetime(["2024-01-01", "2024-01-10", "2024-02-01"])}
-    )
+    df = pd.DataFrame({"d": pd.to_datetime(["2024-01-01", "2024-01-10", "2024-02-01"])})
 
     out = filter_compare(df, "d", ">", "2024-01-05")
 
@@ -126,6 +129,7 @@ def test_filter_compare_datetime():
 # =====================================================================
 # Between filters
 # =====================================================================
+
 
 def test_filter_between_numeric_inclusive():
     df = pd.DataFrame({"a": [1, 2, 3, 4]})
@@ -144,9 +148,7 @@ def test_filter_between_numeric_exclusive():
 
 
 def test_filter_between_datetime():
-    df = pd.DataFrame(
-        {"d": pd.to_datetime(["2024-01-01", "2024-01-10", "2024-02-01"])}
-    )
+    df = pd.DataFrame({"d": pd.to_datetime(["2024-01-01", "2024-01-10", "2024-02-01"])})
 
     out = filter_between(
         df,
@@ -170,6 +172,7 @@ def test_filter_between_invalid_dtype():
 # Custom predicate
 # =====================================================================
 
+
 def test_filter_custom_basic():
     df = pd.DataFrame({"a": [1, 2, 3]})
 
@@ -183,4 +186,3 @@ def test_filter_custom_invalid_return():
 
     with pytest.raises(ValueError):
         filter_custom(df, lambda d: True)
-

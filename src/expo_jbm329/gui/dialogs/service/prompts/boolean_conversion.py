@@ -1,5 +1,8 @@
 """Boolean conversion prompt."""
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtWidgets import (
@@ -17,10 +20,12 @@ from expo_jbm329.gui.dialogs.service.common.localization import (
 from expo_jbm329.gui.dialogs.service.common.window_hints import (
     apply_dialog_window_hints,
 )
-from expo_jbm329.gui.dialogs.service.dialog_service import (
-    BooleanConversionResult,
-)
 from expo_jbm329.utils.i18n_utils import tr
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import (
+        BooleanConversionResult,
+    )
 
 # ======================================================================
 # i18n keys
@@ -37,6 +42,7 @@ TR_HELP_TEXT = QT_TR_NOOP(
 # ======================================================================
 # Public API
 # ======================================================================
+
 
 def prompt_boolean_conversion(
     parent: QWidget,
@@ -105,11 +111,7 @@ def prompt_boolean_conversion(
         }
 
     def _parse_values(text: str) -> list[str]:
-        return [
-            v.strip()
-            for v in text.split(",")
-            if v.strip()
-        ]
+        return [v.strip() for v in text.split(",") if v.strip()]
 
     true_values = _parse_values(edit_true.text())
     false_values = _parse_values(edit_false.text())

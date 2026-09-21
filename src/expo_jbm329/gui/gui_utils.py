@@ -4,16 +4,20 @@ This module provides common utility functions for GUI-related tasks,
 such as scheduling functions to run on the UI thread and applying
 standard window hints to dialogs.
 """
+
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QCoreApplication, Qt, QTimer
-from PyQt6.QtWidgets import QDialog
 
-_APP_CLOSING = False
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from PyQt6.QtWidgets import QDialog
+
+_app_closing = False
 
 
 def set_app_closing(value: bool = True) -> None:
@@ -21,11 +25,11 @@ def set_app_closing(value: bool = True) -> None:
 
     This prevents queued UI callbacks from running during Qt teardown.
     """
-    global _APP_CLOSING
-    _APP_CLOSING = value
+    global _app_closing  # noqa: PLW0603 - process-wide Qt shutdown flag.
+    _app_closing = value
 
 
-def ui_invoke(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> None:
+def ui_invoke(fn: Callable[..., object], *args: object, **kwargs: object) -> None:
     """Schedule a function to be executed on the UI thread as soon as possible.
 
     This acts as a trampoline to ensure UI updates are always performed on
@@ -37,11 +41,11 @@ def ui_invoke(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> None:
         **kwargs: Keyword arguments for the function.
     """
     app = QCoreApplication.instance()
-    if app is None or _APP_CLOSING:
+    if app is None or _app_closing:
         return
 
     def _invoke() -> None:
-        if _APP_CLOSING or QCoreApplication.instance() is None:
+        if _app_closing or QCoreApplication.instance() is None:
             return
         fn(*args, **kwargs)
 
@@ -70,11 +74,7 @@ def apply_window_hints_strict(
         show_close_button: Whether to show the close button.
     """
     # Base flags: dialog + custom + title
-    flags = (
-        Qt.WindowType.Dialog
-        | Qt.WindowType.CustomizeWindowHint
-        | Qt.WindowType.WindowTitleHint
-    )
+    flags = Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | Qt.WindowType.WindowTitleHint
 
     # Add close button if allowed
     if show_close_button:

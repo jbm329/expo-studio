@@ -33,9 +33,9 @@ from expo_jbm329.db.sql_analysis import (
     _normalize_schema_for_lint,
     _offset_to_line_column,
     _previous_meaningful_keyword,
-    _suggest_keyword_for_context,
     _strip_leading_comments_and_whitespace,
     _strip_leading_sql_comments_and_whitespace,
+    _suggest_keyword_for_context,
     detect_statement_kind,
     extract_column_refs,
     extract_table_aliases,
@@ -49,7 +49,6 @@ from expo_jbm329.db.sql_analysis import (
     parse_one_safe,
     sqlglot_dialect,
 )
-
 
 SCHEMA = {
     "by_schema": {
@@ -183,14 +182,14 @@ def test_location_helpers_cover_offsets_and_identifier_matching() -> None:
 
     sql = "SELECT [Ref_Yrkesroll_ID] FROM [dbo].[Ref_Yrkesrol]"
     start, length = _find_identifier_span_in_sql(sql, "Ref_Yrkesrol", start_hint=0)
-    assert sql[start:start + length] == "[Ref_Yrkesrol]"
+    assert sql[start : start + length] == "[Ref_Yrkesrol]"
 
     assert _find_suspicious_adjacent_select_identifier("SELECT [A]\n [B] FROM t") == (12, 3)
     assert _last_meaningful_token_span("SELECT [abc]") == (7, 5)
 
 
 def test_normalization_and_scalar_helpers() -> None:
-    assert _normalize_identifier('[AbC]') == "abc"
+    assert _normalize_identifier("[AbC]") == "abc"
     assert _normalize_schema_for_lint(SCHEMA) == {
         "dbo": {
             "ref_yrkesroll": {"ref_yrkesroll_id", "yrkesroll", "source"},
@@ -200,9 +199,7 @@ def test_normalization_and_scalar_helpers() -> None:
             "orders": {"id", "user_id"},
         },
     }
-    assert _normalize_schema_for_lint({"dbo": {"users": ["id"]}}) == {
-        "dbo": {"users": {"id"}}
-    }
+    assert _normalize_schema_for_lint({"dbo": {"users": ["id"]}}) == {"dbo": {"users": {"id"}}}
     assert _normalize_schema_for_lint(None) == {}
 
     assert _coerce_int_or_none(3) == 3
@@ -232,9 +229,7 @@ def test_dedupe_diagnostics_keeps_first_unique_entries() -> None:
 
 
 def test_schema_context_helpers_resolve_tables_and_columns() -> None:
-    expression = parse_one_safe(
-        "SELECT u.id, missing_col FROM dbo.users AS u JOIN sales.orders o ON o.user_id = u.id"
-    )
+    expression = parse_one_safe("SELECT u.id, missing_col FROM dbo.users AS u JOIN sales.orders o ON o.user_id = u.id")
     assert expression is not None
 
     context = _build_schema_lint_context(expression, _normalize_schema_for_lint(SCHEMA))

@@ -44,6 +44,7 @@ def summarize(df: pd.DataFrame) -> pd.DataFrame:
 # Missing-data statistics
 # =====================================================================
 
+
 def null_stats(df: pd.DataFrame) -> pd.DataFrame:
     """Return null counts and percentages per column.
 
@@ -61,9 +62,7 @@ def null_stats(df: pd.DataFrame) -> pd.DataFrame:
 
     data = {
         "nulls": df.isna().sum(),
-        "pct_null": (df.isna().sum() / total_rows * 100)
-        if total_rows > 0
-        else 0.0,
+        "pct_null": (df.isna().sum() / total_rows * 100) if total_rows > 0 else 0.0,
     }
 
     return pd.DataFrame(data)
@@ -73,10 +72,11 @@ def null_stats(df: pd.DataFrame) -> pd.DataFrame:
 # Column profiling
 # =====================================================================
 
+
 def get_column_profile(
     df: pd.DataFrame,
     column: str,
-):
+) -> object:
     """Return a profile object for a DataFrame column.
 
     This function delegates to `profile_series` and exists primarily
@@ -96,6 +96,7 @@ def get_column_profile(
     logger.debug("get_column_profile: col='%s'", column)
 
     if column not in df.columns:
-        raise KeyError(f"Column '{column}' not found.")
+        msg = f"Column '{column}' not found."
+        raise KeyError(msg)
 
     return profile_series(df[column], name=column)

@@ -1,7 +1,8 @@
 """Visualization dialog with a three-pane workspace layout."""
+
 from __future__ import annotations
 
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
@@ -27,6 +28,9 @@ from expo_jbm329.utils.visualization_models import (
     VisualizationConfig,
     VisualizationDatasetRef,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class VisualizationDialog(QDialog):
@@ -91,7 +95,7 @@ class VisualizationDialog(QDialog):
 
         self._dataset_combo = QComboBox(panel)
         for ds in self._datasets:
-            label = f"{ds.title} ({ds.row_count} × {ds.column_count})"
+            label = f"{ds.title} ({ds.row_count} x {ds.column_count})"
             self._dataset_combo.addItem(label, ds.tab_id)
 
         if active_tab_id:
@@ -252,9 +256,7 @@ class VisualizationDialog(QDialog):
 
             # Histogram should not support row count.
             if is_histogram:
-                self._measure_type_combo.setCurrentIndex(
-                    self._measure_type_combo.findData(MeasureType.COLUMN)
-                )
+                self._measure_type_combo.setCurrentIndex(self._measure_type_combo.findData(MeasureType.COLUMN))
                 return
 
             self._set_aggregation_items([AggregationType.COUNT])
@@ -278,37 +280,31 @@ class VisualizationDialog(QDialog):
 
         column = self._current_combo_text(self._measure_column_combo)
         if not column:
-            self._set_aggregation_items(
-                [
-                    AggregationType.SUM,
-                    AggregationType.COUNT,
-                    AggregationType.COUNT_DISTINCT,
-                    AggregationType.AVG,
-                    AggregationType.MIN,
-                    AggregationType.MAX,
-                ]
-            )
+            self._set_aggregation_items([
+                AggregationType.SUM,
+                AggregationType.COUNT,
+                AggregationType.COUNT_DISTINCT,
+                AggregationType.AVG,
+                AggregationType.MIN,
+                AggregationType.MAX,
+            ])
             return
 
         is_numeric = column in self._numeric_columns
         if is_numeric:
-            self._set_aggregation_items(
-                [
-                    AggregationType.SUM,
-                    AggregationType.COUNT,
-                    AggregationType.COUNT_DISTINCT,
-                    AggregationType.AVG,
-                    AggregationType.MIN,
-                    AggregationType.MAX,
-                ]
-            )
+            self._set_aggregation_items([
+                AggregationType.SUM,
+                AggregationType.COUNT,
+                AggregationType.COUNT_DISTINCT,
+                AggregationType.AVG,
+                AggregationType.MIN,
+                AggregationType.MAX,
+            ])
         else:
-            self._set_aggregation_items(
-                [
-                    AggregationType.COUNT,
-                    AggregationType.COUNT_DISTINCT,
-                ]
-            )
+            self._set_aggregation_items([
+                AggregationType.COUNT,
+                AggregationType.COUNT_DISTINCT,
+            ])
 
     # ------------------------------------------------------------------
     # Public API
@@ -337,9 +333,7 @@ class VisualizationDialog(QDialog):
         measure = None
         if chart_type in {ChartType.LINE, ChartType.BAR, ChartType.PIE, ChartType.HISTOGRAM}:
             aggregation_raw = self._aggregation_combo.currentData()
-            aggregation = (
-                aggregation_raw if isinstance(aggregation_raw, AggregationType) else None
-            )
+            aggregation = aggregation_raw if isinstance(aggregation_raw, AggregationType) else None
 
             measure = MeasureConfig(
                 measure_type=self.selected_measure_type(),

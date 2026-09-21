@@ -7,17 +7,24 @@ reaching into the main window directly.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from PyQt6.QtGui import QFileSystemModel
-from PyQt6.QtWidgets import QTabWidget, QWidget
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
-from expo_jbm329.gui.widgets.file_tree_widget import FileTreeWidget
-from expo_jbm329.gui.widgets.rest_tree_widget import RestTreeWidget
-from expo_jbm329.gui.widgets.schema_tree_widget import SchemaTreeWidget
-from expo_jbm329.workbench.controllers.editor_panel_controller import EditorPanelController
-from expo_jbm329.workbench.highlighter.sql_highlighter import SqlHighlighter
+    from PyQt6.QtGui import QFileSystemModel
+    from PyQt6.QtWidgets import QTabWidget, QWidget
+
+    from expo_jbm329.gui.widgets.file_tree_widget import FileTreeWidget
+    from expo_jbm329.gui.widgets.rest_tree_widget import RestTreeWidget
+    from expo_jbm329.gui.widgets.schema_tree_widget import SchemaTreeWidget
+    from expo_jbm329.workbench.controllers.editor_panel_controller import EditorPanelController
+    from expo_jbm329.workbench.highlighter.sql_highlighter import SqlHighlighter
+    from expo_jbm329.workbench.icon.custom_file_icon_provider import CustomFileIconProvider
+    from expo_jbm329.workbench.icon.icon_service import IconService
+    from expo_jbm329.workbench.theme.highlighter_theme_service import HighlighterThemeService
+    from expo_jbm329.workbench.theme.theme_service import ThemeService
 
 
 @dataclass
@@ -31,7 +38,7 @@ class WorkbenchUIRefs:
     schema_tree: SchemaTreeWidget
     files_tree: FileTreeWidget
     rest_tree: RestTreeWidget
-    files_model: QFileSystemModel    
+    files_model: QFileSystemModel
 
     # UI callbacks
     set_status: Callable[[str, int | None], None]
@@ -42,10 +49,10 @@ class WorkbenchUIRefs:
     editor_panel: EditorPanelController | None = None
 
     # GUI infrastructure services
-    theme_service: object | None = None
-    highlighter_theme_service: object | None = None
-    icon_service: object | None = None
-    file_icon_provider: object | None = None
+    theme_service: ThemeService | None = None
+    highlighter_theme_service: HighlighterThemeService | None = None
+    icon_service: IconService | None = None
+    file_icon_provider: CustomFileIconProvider | None = None
 
     # SQL workbench highlighter instance
     editor_highlighter: SqlHighlighter | None = None

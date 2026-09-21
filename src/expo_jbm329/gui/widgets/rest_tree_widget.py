@@ -14,13 +14,14 @@ The widget is intentionally "dumb":
 - No JobManager interaction
 - No configuration mutation
 """
+
 from __future__ import annotations
 
-from PyQt6.QtCore import QT_TR_NOOP, QPoint, QPointF, Qt, pyqtSignal
+from PyQt6.QtCore import QT_TR_NOOP, QPoint, Qt, pyqtSignal
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QMenu, QTreeWidget, QTreeWidgetItem, QWidget
 
-from expo_jbm329.services.rest.registry import rest_registry
+from expo_jbm329.services.rest.registry import RestConnectionEntry, rest_registry
 from expo_jbm329.utils.i18n_utils import tr
 
 
@@ -43,16 +44,16 @@ class RestTreeWidget(QTreeWidget):
     # ------------------------------------------------------------------
     # Signals (Qt-idiomatic API)
     # ------------------------------------------------------------------
-    load_requested = pyqtSignal(str)     # preset name
-    edit_requested = pyqtSignal(str)     # preset name
-    copy_requested = pyqtSignal(str)     # preset name
+    load_requested = pyqtSignal(str)  # preset name
+    edit_requested = pyqtSignal(str)  # preset name
+    copy_requested = pyqtSignal(str)  # preset name
 
     # ------------------------------------------------------------------
     # Initialization
     # ------------------------------------------------------------------
     def __init__(
-            self,
-            parent: QWidget | None = None,
+        self,
+        parent: QWidget | None = None,
     ) -> None:
         """Initialize the RestWidget."""
         super().__init__(parent)
@@ -77,7 +78,7 @@ class RestTreeWidget(QTreeWidget):
         entries = rest_registry.list_all()
 
         # -------------------------------
-        # Folder: samples
+        # Folder samples
         # -------------------------------
         samples_item = QTreeWidgetItem([self._tr("samples")])
         samples_item.setData(0, Qt.ItemDataRole.UserRole, self.FOLDER_ROLE)
@@ -110,7 +111,7 @@ class RestTreeWidget(QTreeWidget):
     # Internal helpers
     # ==================================================================
 
-    def _apply_tooltip(self, item: QTreeWidgetItem, entry) -> None:
+    def _apply_tooltip(self, item: QTreeWidgetItem, entry: RestConnectionEntry) -> None:
         """Apply tooltip information from a RestConnectionEntry."""
         tooltip = []
         url = entry.request.url.strip()
@@ -133,7 +134,7 @@ class RestTreeWidget(QTreeWidget):
         if isinstance(name, str):
             self.load_requested.emit(name)
 
-    def _on_context_menu(self, pos) -> None:
+    def _on_context_menu(self, pos: QPoint) -> None:
         """Show context menu for REST presets."""
         item = self.itemAt(pos)
         if not item:
@@ -167,12 +168,7 @@ class RestTreeWidget(QTreeWidget):
         if is_sample:
             act_edit.setEnabled(False)
 
-        if isinstance(pos, QPointF):
-            point: QPoint = pos.toPoint()
-        else:
-            point: QPoint = pos
-
-        global_pos: QPoint = self.mapToGlobal(point)
+        global_pos = self.mapToGlobal(pos)
         chosen = menu.exec(global_pos)
 
         if not chosen:

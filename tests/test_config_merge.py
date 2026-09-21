@@ -19,7 +19,7 @@ def test_merge_defaults_nested():
         "nested": {"x": 5, "y": 10},
     }
     user = {
-        "nested": {"y": 99},     # override
+        "nested": {"y": 99},  # override
     }
 
     merged = merge_defaults(defaults, user)

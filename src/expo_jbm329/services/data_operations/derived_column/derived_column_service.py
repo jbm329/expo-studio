@@ -20,9 +20,8 @@ Examples:
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Literal, cast
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
@@ -41,12 +40,18 @@ from expo_jbm329.services.data_operations.dtypes import (
     is_numeric_series,
 )
 
+BINARY_OPERATOR_OPERAND_COUNT = 2
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
 logger = logging.getLogger("applogger.service")
 
 
 # =====================================================================
 # Exceptions
 # =====================================================================
+
 
 class DerivedColumnError(ValueError):
     """Structured error for derived column operations."""
@@ -148,9 +153,7 @@ def validate_derived_column_spec(
         return validate_formula(spec.formula, numeric_columns)
 
     except DerivedColumnError as exc:
-        return FormulaValidationResult(
-            ok=False, error=DerivedColumnFormulaError(exc.code, context=exc.context)
-        )
+        return FormulaValidationResult(ok=False, error=DerivedColumnFormulaError(exc.code, context=exc.context))
 
 
 def create_derived_column(
@@ -189,15 +192,27 @@ def create_derived_column(
     except DerivedColumnFormulaError:
         raise  # propagate unchanged
 
-    except Exception as exc:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as exc:
         logger.exception(
             "Failed evaluating derived column formula (column=%r, formula=%r)",
             output_column,
             spec.formula,
         )
 
+        msg = "evaluation_failed"
         raise DerivedColumnError(
-            "evaluation_failed",
+            msg,
             context={"error": str(exc)},
         ) from exc
 
@@ -293,9 +308,10 @@ def evaluate_rpn(
             continue
 
         if token.token_type == FormulaTokenType.OPERATOR:
-            if len(stack) < 2:
+            if len(stack) < BINARY_OPERATOR_OPERAND_COUNT:
+                msg = "missing_operand_runtime"
                 raise DerivedColumnError(
-                    "missing_operand_runtime",
+                    msg,
                     context={"operator": token.value},
                 )
 
@@ -312,13 +328,15 @@ def evaluate_rpn(
             )
             continue
 
+        msg = "unsupported_token_runtime"
         raise DerivedColumnError(
-            "unsupported_token_runtime",
+            msg,
             context={"token": token.value},
         )
 
     if len(stack) != 1:
-        raise DerivedColumnError("invalid_evaluation_result")
+        msg = "invalid_evaluation_result"
+        raise DerivedColumnError(msg)
 
     return stack[0]
 
@@ -356,14 +374,17 @@ def _validate_column_name(
     column_name = _normalized_column_name(spec)
 
     if not column_name:
-        raise DerivedColumnError("missing_output_column_name")
+        msg = "missing_output_column_name"
+        raise DerivedColumnError(msg)
 
     if "[" in column_name or "]" in column_name:
-        raise DerivedColumnError("invalid_output_column_name_characters")
+        msg = "invalid_output_column_name_characters"
+        raise DerivedColumnError(msg)
 
     if column_name in df.columns and not spec.overwrite_existing:
+        msg = "output_column_exists"
         raise DerivedColumnError(
-            "output_column_exists",
+            msg,
             context={"column": column_name},
         )
 
@@ -385,17 +406,13 @@ def _numeric_series(df: pd.DataFrame, column: str) -> pd.Series:
     series = _get_unique_series(df, column)
 
     if not is_numeric_series(series, include_bool=False):
+        msg = "non_numeric_column"
         raise DerivedColumnError(
-            "non_numeric_column",
+            msg,
             context={"column": column},
         )
 
-    numeric = pd.to_numeric(series, errors="coerce")
-
-    if not isinstance(numeric, pd.Series):
-        numeric = pd.Series(numeric, index=series.index, name=series.name)
-
-    return cast(pd.Series, numeric)
+    return pd.to_numeric(series, errors="coerce")
 
 
 def _get_unique_series(df: pd.DataFrame, column: str) -> pd.Series:
@@ -412,20 +429,22 @@ def _get_unique_series(df: pd.DataFrame, column: str) -> pd.Series:
         DerivedColumnError: If the column does not exist or is not unique.
     """
     if column not in df.columns:
+        msg = "unknown_column_runtime"
         raise DerivedColumnError(
-            "unknown_column_runtime",
+            msg,
             context={"column": column},
         )
 
     location = df.columns.get_loc(column)
 
     if not isinstance(location, int):
+        msg = "column_not_unique"
         raise DerivedColumnError(
-            "column_not_unique",
+            msg,
             context={"column": column},
         )
 
-    return cast(pd.Series, df.iloc[:, location])
+    return df.iloc[:, location]
 
 
 # =====================================================================
@@ -467,17 +486,30 @@ def _apply_operator(
         if operator == "/":
             return _safe_divide(left=left, right=right, index=index)
 
-    except Exception as err:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as err:
+        msg = "operator_application_failed"
         raise DerivedColumnError(
-            "operator_application_failed",
+            msg,
             context={
                 "operator": operator,
                 "error": str(err),
             },
         ) from err
 
+    msg = "unsupported_operator_runtime"
     raise DerivedColumnError(
-        "unsupported_operator_runtime",
+        msg,
         context={"operator": operator},
     )
 
@@ -503,8 +535,8 @@ def _safe_divide(
     """
     # Scalar / scalar is the only case where Python would raise immediately.
     if not isinstance(left, pd.Series) and not isinstance(right, pd.Series):
-        left_value = cast(float, left)
-        right_value = cast(float, right)
+        left_value = left
+        right_value = right
 
         if right_value == 0:
             return pd.Series(pd.NA, index=index, dtype="Float64")
@@ -543,10 +575,7 @@ def _normalize_result_series(
 
     numeric_raw = pd.to_numeric(series, errors="coerce")
 
-    if not isinstance(numeric_raw, pd.Series):
-        numeric_raw = pd.Series(numeric_raw, index=index, name=series.name)
-
-    numeric = cast(pd.Series, numeric_raw)
+    numeric = numeric_raw
 
     if replace_inf_with_na:
         numeric = _replace_infinite_with_na(numeric)
@@ -555,14 +584,27 @@ def _normalize_result_series(
         if output_dtype == "Float64":
             return to_nullable_float_series(numeric, errors="coerce")
 
+        msg = "unsupported_output_dtype"
         raise DerivedColumnError(
-            "unsupported_output_dtype",
+            msg,
             context={"dtype": output_dtype},
         )
 
-    except Exception as err:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as err:
+        msg = "result_conversion_failed"
         raise DerivedColumnError(
-            "result_conversion_failed",
+            msg,
             context={"dtype": output_dtype},
         ) from err
 

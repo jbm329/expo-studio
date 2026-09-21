@@ -12,22 +12,42 @@ This controller standardizes:
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
-from typing import Literal, TypeVar
+from typing import TYPE_CHECKING, Literal, Protocol, TypeVar, cast
 
-from PyQt6.QtCore import QT_TR_NOOP, QTimer
+from PyQt6.QtCore import QT_TR_NOOP, QObject, QTimer
 from PyQt6.QtWidgets import QApplication, QTableView, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
-from expo_jbm329.services.job_manager import JobManager
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.busy_overlay_controller import (
-    BusyOverlayController,
-)
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.services.job_manager import JobManager
+    from expo_jbm329.workbench.controllers.busy_overlay_controller import (
+        BusyOverlayController,
+    )
 
 T = TypeVar("T")
 RunnerKind = Literal["pool", "thread"]
+
+
+class _Signal(Protocol):
+    """Protocol for Qt-like signals used by async job handles."""
+
+    def connect(self, slot: Callable[..., object]) -> object:
+        """Connect a slot to the signal."""
+        ...
+
+
+class _AsyncJobHandle(Protocol):
+    """Signal contract exposed by JobManager worker handles."""
+
+    progress: _Signal
+    result: _Signal
+    error: _Signal
+    finished: _Signal
 
 
 class AsyncOperationController:
@@ -39,9 +59,7 @@ class AsyncOperationController:
 
     TR_FAILURE = QT_TR_NOOP("Failure")
     TR_OPERATION_FAILED = QT_TR_NOOP("Could not {operation}.\n\n{error}")
-    TR_COULD_NOT_PERFORM = QT_TR_NOOP(
-        "Could not perform the operation:\n{error}"
-    )
+    TR_COULD_NOT_PERFORM = QT_TR_NOOP("Could not perform the operation:\n{error}")
 
     # ------------------------------------------------------------------
     # i18n helpers
@@ -52,7 +70,7 @@ class AsyncOperationController:
         return tr("AsyncOperationController", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt(
             "AsyncOperationController",
             text,
@@ -79,7 +97,7 @@ class AsyncOperationController:
         busy: BusyOverlayController,
         dialogs: DialogService | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize AsyncOperationController.
 
         Args:
@@ -95,17 +113,9 @@ class AsyncOperationController:
 
         self._busy = busy
 
-        self._dialogs = (
-            dialogs
-            if dialogs is not None
-            else QtDialogService()
-        )
+        self._dialogs = dialogs if dialogs is not None else QtDialogService()
 
-        self._logger = (
-            logger
-            if logger is not None
-            else logging.getLogger("applogger.ui")
-        )
+        self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
 
     # ==================================================================
     # Properties
@@ -143,7 +153,7 @@ class AsyncOperationController:
         show_status_progress: bool = False,
         show_started_in_status: bool = False,
         corr_id: str | None = None,
-    ):
+    ) -> QObject:
         """Run an async operation through the centralized workbench facade.
 
         This is the generic entry point for async work. It supports both
@@ -179,7 +189,7 @@ class AsyncOperationController:
         Returns:
             Job handle returned by JobManager.
         """
-        job = self._start_job(
+        job_obj = self._start_job(
             runner=runner,
             work=work,
             busy_message=busy_message,
@@ -190,8 +200,9 @@ class AsyncOperationController:
             show_started_in_status=show_started_in_status,
             corr_id=corr_id,
         )
+        job = cast("_AsyncJobHandle", job_obj)
 
-        job_id = self._job_mgr.get_job_id(job)
+        job_id = self._job_mgr.get_job_id(job_obj)
 
         def _handle_overlay_cancel() -> None:
             """Handle cancel button clicks from the overlay."""
@@ -200,8 +211,7 @@ class AsyncOperationController:
 
             if job_id is None:
                 self._logger.warning(
-                    "AsyncOperationController: cancel requested but no job_id was available "
-                    "(scope=%s corr=%s).",
+                    "AsyncOperationController: cancel requested but no job_id was available (scope=%s corr=%s).",
                     scope,
                     corr_id,
                 )
@@ -210,8 +220,7 @@ class AsyncOperationController:
             cancelled = self._job_mgr.cancel_job(job_id)
             if cancelled:
                 self._logger.info(
-                    "AsyncOperationController: cancel requested from overlay "
-                    "(scope=%s corr=%s job_id=%s).",
+                    "AsyncOperationController: cancel requested from overlay (scope=%s corr=%s job_id=%s).",
                     scope,
                     corr_id,
                     job_id,
@@ -237,7 +246,8 @@ class AsyncOperationController:
 
         def _hide_overlay_later() -> None:
             if show_overlay and auto_hide_overlay and target is not None:
-                QTimer.singleShot(0, lambda: self._busy.hide(target))
+                overlay_target = target
+                QTimer.singleShot(0, lambda: self._busy.hide(overlay_target))
 
         def _handle_progress(value: int) -> None:
             try:
@@ -249,7 +259,18 @@ class AsyncOperationController:
                 if on_progress is not None:
                     on_progress(value_i)
 
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.exception(
                     "AsyncOperationController: progress handler failed (scope=%s corr=%s).",
                     scope,
@@ -269,7 +290,18 @@ class AsyncOperationController:
 
                 on_result(result)
 
-            except Exception as e:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as e:
                 self._logger.exception(
                     "AsyncOperationController: result handler failed (scope=%s corr=%s).",
                     scope,
@@ -297,14 +329,25 @@ class AsyncOperationController:
                 if on_error is not None:
                     try:
                         on_error(tb)
-                        return
-                    except Exception:
+                    except (
+                        AttributeError,
+                        ConnectionError,
+                        FileNotFoundError,
+                        IndexError,
+                        KeyError,
+                        LookupError,
+                        OSError,
+                        RuntimeError,
+                        TypeError,
+                        ValueError,
+                    ):
                         self._logger.exception(
-                            "AsyncOperationController: custom error handler failed "
-                            "(scope=%s corr=%s).",
+                            "AsyncOperationController: custom error handler failed (scope=%s corr=%s).",
                             scope,
                             corr_id,
                         )
+                    else:
+                        return
 
                 if not suppress_error_dialog:
                     self._show_error_dialog(
@@ -320,7 +363,18 @@ class AsyncOperationController:
                 if on_finished is not None:
                     on_finished()
 
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 self._logger.exception(
                     "AsyncOperationController: finished handler failed (scope=%s corr=%s).",
                     scope,
@@ -335,7 +389,7 @@ class AsyncOperationController:
         job.error.connect(_handle_error)
         job.finished.connect(_handle_finished)
 
-        return job
+        return job_obj
 
     def run_with_overlay(
         self,
@@ -361,7 +415,7 @@ class AsyncOperationController:
         show_started_in_status: bool = False,
         corr_id: str | None = None,
         runner: RunnerKind = "pool",
-    ):
+    ) -> QObject:
         """Run async work with BusyOverlay handling for a QTableView."""
         return self.run_operation(
             target=self._target_for_view(view),
@@ -409,7 +463,7 @@ class AsyncOperationController:
         show_started_in_status: bool = False,
         corr_id: str | None = None,
         runner: RunnerKind = "pool",
-    ):
+    ) -> QObject:
         """Run a DataFrame operation with overlay kept during GUI apply."""
         target = self._target_for_view(view)
 
@@ -500,7 +554,7 @@ class AsyncOperationController:
         show_started_in_status: bool = False,
         corr_id: str | None = None,
         runner: RunnerKind = "pool",
-    ):
+    ) -> object:
         """Run async DataFrame-producing work that creates a new result tab."""
         target = self._target_for_view(view)
 
@@ -591,7 +645,7 @@ class AsyncOperationController:
         show_started_in_status: bool = False,
         corr_id: str | None = None,
         runner: RunnerKind = "thread",
-    ):
+    ) -> object:
         """Run an async operation with overlay on any QWidget target.
 
         Intended for first-load file operations, exports, SQL result area
@@ -619,7 +673,7 @@ class AsyncOperationController:
             show_status_progress=show_status_progress,
             show_started_in_status=show_started_in_status,
             corr_id=corr_id,
-        )   
+        )
 
     # ==================================================================
     # Internal helpers
@@ -637,12 +691,13 @@ class AsyncOperationController:
         show_status_progress: bool,
         show_started_in_status: bool,
         corr_id: str | None,
-    ):
+    ) -> QObject:
         """Start a job using the selected backend.
 
         JobManager is treated as execution infrastructure here.
         AsyncOperationController owns UI behavior for facade-based jobs.
         """
+        _ = busy_message
         _ = foreground
         _ = indeterminate
         _ = show_status_progress
@@ -693,9 +748,20 @@ class AsyncOperationController:
         return viewport if viewport is not None else view
 
     @staticmethod
-    def _is_stale(view: QTableView) -> bool:
+    def _is_stale(view: QTableView | None) -> bool:
         """Return True if the view is stale/deleted."""
         try:
             return view is None or view.model() is None
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return True

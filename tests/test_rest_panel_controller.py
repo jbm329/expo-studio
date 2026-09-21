@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget
 
 from expo_jbm329.workbench.controllers.rest_panel_controller import RestPanelController
@@ -96,4 +95,3 @@ def test_copy_requested_opens_dialog():
 
     rest_controller.copy_preset.assert_called_once_with("preset")
     open_dialog.assert_called_once_with("new")
-

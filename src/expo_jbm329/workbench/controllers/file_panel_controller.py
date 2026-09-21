@@ -4,30 +4,31 @@ This module coordinates file-panel interactions such as opening files,
 handling context-menu actions, and delegating file operations to the
 appropriate services.
 """
+
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP, QModelIndex, QPoint, Qt
 from PyQt6.QtGui import QAction, QFileSystemModel
-from PyQt6.QtWidgets import (
-    QMenu,
-    QTreeView,
-    QWidget,
-)
+from PyQt6.QtWidgets import QMenu, QTreeView, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
-from expo_jbm329.services.file_types import FileType, classify_file
+from expo_jbm329.services.file_types import classify_file
 from expo_jbm329.utils.format_utils import fmt_path, fmt_path_size
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 
 
 class FilePanelController:
     """Coordinate file-panel interactions in the left dock."""
-   
+
     # --- i18n markers (pylupdate6-visible) -----------------------------
     TR_UNKNOWN_FILE_FORMAT = QT_TR_NOOP("Unknown file format")
     TR_CANNOT_OPEN_FILE = QT_TR_NOOP("The file can not be opened:\n\n{file}")
@@ -39,17 +40,13 @@ class FilePanelController:
     TR_RENAME_FILE = QT_TR_NOOP("Rename file")
     TR_NEW_FILE_NAME = QT_TR_NOOP("New file name:")
     TR_FAILED_TO_RENAME_FILE = QT_TR_NOOP("Failed to rename the file.")
-    TR_SOMETHING_WENT_WRONG_RENAME_FILE = QT_TR_NOOP(
-        "Something went wrong trying to rename file: \n\n{error}"
-    )
+    TR_SOMETHING_WENT_WRONG_RENAME_FILE = QT_TR_NOOP("Something went wrong trying to rename file: \n\n{error}")
     TR_FAILURE = QT_TR_NOOP("Failure")
     TR_DELETE_FILE = QT_TR_NOOP("Delete file")
     TR_DELETING_FILE = QT_TR_NOOP("Deleting file: {file} …")
     TR_FILE_DELETED = QT_TR_NOOP("File deleted: {file}")
     TR_FAILED_TO_DELETE_FILE = QT_TR_NOOP("Failed to delete the file.")
-    TR_SOMETHING_WENT_WRONG_DELETE_FILE = QT_TR_NOOP(
-        "Something went wrong trying to delete file: \n\n{path}"
-    )
+    TR_SOMETHING_WENT_WRONG_DELETE_FILE = QT_TR_NOOP("Something went wrong trying to delete file: \n\n{path}")
     TR_CONFIRM_DELETE = QT_TR_NOOP("Confirm delete")
     TR_SOMETHING_WENT_WRONG_DELETE_FILE_ERROR = QT_TR_NOOP(
         "Something went wrong trying to delete file: \n\n{file}\n\n{error}"
@@ -93,10 +90,10 @@ class FilePanelController:
         close_result_tabs: Callable[[str], None],
         rename_file: Callable[[Path, str], tuple[bool, str | None]],
         set_status: Callable[[str, int | None], None],
-        file_icon_provider,
+        file_icon_provider: object,
         dialogs: DialogService | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         """Initialize the file panel controller.
 
         Args:
@@ -131,7 +128,7 @@ class FilePanelController:
     # Settings
     # ==================================================================
 
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Reload controller state from updated application settings.
 
         Args:
@@ -144,32 +141,51 @@ class FilePanelController:
             root_dir = str(get_documents_dir(settings))
             root_index = self._files_model.index(root_dir)
             self._files_tree.setRootIndex(root_index)
-            self._logger.debug(
-                "FilePanelController: settings reloaded (root_dir=%s)",
-                fmt_path(root_dir)
-            )
+            self._logger.debug("FilePanelController: settings reloaded (root_dir=%s)", fmt_path(root_dir))
 
-        except Exception as e:
-            self._logger.exception("FilePanelController: failed to reload settings: %s", e)
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
+            self._logger.exception("FilePanelController: failed to reload settings")
 
-    def update_icons(self):
+    def update_icons(self) -> None:
         """Refresh file icons after a theme or icon-provider change."""
         try:
             self._logger.debug("FilePanelController: updating icons")
-            self._files_model.setIconProvider(self._file_icon_provider)
+            self._files_model.setIconProvider(self._file_icon_provider)  # type: ignore[arg-type]
 
             vp = self._files_tree.viewport()
             if vp is not None:
                 vp.update()
 
             self._logger.info("FilePanelController: icons refreshed due to theme change.")
-        except Exception as e:
-            self._logger.exception("FilePanelController: failed to update icons: %s", e)
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
+            self._logger.exception("FilePanelController: failed to update icons")
 
     # ==================================================================
     # Double click handling
     # ==================================================================
-    def _on_file_double_clicked(self, index: QModelIndex):
+    def _on_file_double_clicked(self, index: QModelIndex) -> None:
         """Handle double-clicks on files in the tree view.
 
         Args:
@@ -189,7 +205,7 @@ class FilePanelController:
     # ==================================================================
     # Context menu
     # ==================================================================
-    def _on_context_menu(self, pos: QPoint):
+    def _on_context_menu(self, pos: QPoint) -> None:
         """Show the file panel context menu.
 
         Args:
@@ -257,7 +273,7 @@ class FilePanelController:
     # ==================================================================
     # Rename file
     # ==================================================================
-    def _rename(self, index: QModelIndex):
+    def _rename(self, index: QModelIndex) -> None:
         """Handle rename requests from the context menu.
 
         Args:
@@ -274,16 +290,14 @@ class FilePanelController:
             self._logger.info("FilePanelController: rename aborted, file missing (path=%s)", p_old)
             self._set_status(self._tr(self.TR_FILE_NO_LONGER_EXISTS), 6000)
             self._dialogs.info(
-                parent=self._parent,
-                title=self._tr(self.TR_RENAME_FILE),
-                text=self._tr(self.TR_FILE_NO_LONGER_EXISTS)
+                parent=self._parent, title=self._tr(self.TR_RENAME_FILE), text=self._tr(self.TR_FILE_NO_LONGER_EXISTS)
             )
             return
         new_name, ok = self._dialogs.prompt_text(
             parent=self._parent,
             title=self._tr(self.TR_RENAME_FILE),
             label=self._tr(self.TR_NEW_FILE_NAME),
-            default=old_path.name
+            default=old_path.name,
         )
 
         if not ok or not new_name.strip():
@@ -299,18 +313,14 @@ class FilePanelController:
             self._set_status(self._tr(self.TR_FAILED_TO_RENAME_FILE), 8000)
             text = self._tr_fmt(self.TR_SOMETHING_WENT_WRONG_RENAME_FILE, error=err)
 
-            self._dialogs.critical(
-                parent=self._parent,
-                title=self._tr(self.TR_FAILURE),
-                text=text
-            )
+            self._dialogs.critical(parent=self._parent, title=self._tr(self.TR_FAILURE), text=text)
         else:
             self._logger.info("FilePanelController: rename completed (%s → %s)", p_old, fmt_path(new_name))
 
     # ==================================================================
     # Delete file
     # ==================================================================
-    def _delete_file(self, index: QModelIndex):
+    def _delete_file(self, index: QModelIndex) -> None:
         """Delete a file after user confirmation.
 
         Args:
@@ -329,9 +339,7 @@ class FilePanelController:
             self._logger.info("Delete aborted, file missing (path=%s)", p)
             self._set_status(self._tr(self.TR_FILE_NO_LONGER_EXISTS), 6000)
             self._dialogs.info(
-                parent=self._parent,
-                title=self._tr(self.TR_DELETE_FILE),
-                text=self._tr(self.TR_FILE_NO_LONGER_EXISTS)
+                parent=self._parent, title=self._tr(self.TR_DELETE_FILE), text=self._tr(self.TR_FILE_NO_LONGER_EXISTS)
             )
             return
 
@@ -347,21 +355,17 @@ class FilePanelController:
         ok = self._delete_via_model(index)
 
         if ok:
-            self._logger.info("FilePanelController: file deleted (path=%s)", p)           
-           
+            self._logger.info("FilePanelController: file deleted (path=%s)", p)
+
             self._set_status(self._tr_fmt(self.TR_FILE_DELETED, file=path.name), 8000)
 
         else:
             self._logger.error("FilePanelController: delete failed (path=%s)", p)
-            
+
             self._set_status(self._tr(self.TR_FAILED_TO_DELETE_FILE), 8000)
 
             err_msg = self._tr_fmt(self.TR_SOMETHING_WENT_WRONG_DELETE_FILE, path=str(path))
-            self._dialogs.critical(
-                parent=self._parent,
-                title=self._tr(self.TR_FAILURE),
-                text=err_msg
-            )
+            self._dialogs.critical(parent=self._parent, title=self._tr(self.TR_FAILURE), text=err_msg)
 
     # ------------------------------------------------------------------
     def _confirm_delete(self, path: Path) -> bool:
@@ -402,8 +406,19 @@ class FilePanelController:
         try:
             p = Path(self._files_model.filePath(index))
             fp = fmt_path(p)
-        except Exception:
-            self._logger.error("FilePanelController: delete-via-model: failed to resolve path")
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
+            self._logger.exception("FilePanelController: delete-via-model: failed to resolve path")
             return False
 
         self._logger.debug("FilePanelController: attempting delete via model (path=%s)", fp)
@@ -413,43 +428,49 @@ class FilePanelController:
             if ok:
                 self._logger.debug("FilePanelController: delete-via-model succeeded (path=%s)", fp)
                 return True
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.debug("FilePanelController: delete-via-model failed, trying unlink (path=%s)", fp)
-            pass
 
         # Fallback: try direct unlink to get a precise exception (e.g., PermissionError)
         try:
             p.unlink()
             self._logger.debug("FilePanelController: delete-via-unlink succeeded (path=%s)", fp)
-            return True
         except PermissionError as e:
-            self._logger.error(
-                "FilePanelController: delete-via-unlink permission error (path=%s, err=%s)", fp, e
-            )
-            err_msg = (
-                self._tr_fmt(
-                    self.TR_SOMETHING_WENT_WRONG_DELETE_FILE_ERROR,
-                    file=p.name,
-                    error=str(e)
-                )
-            )
+            self._logger.exception("FilePanelController: delete-via-unlink permission error (path=%s)", fp)
+            err_msg = self._tr_fmt(self.TR_SOMETHING_WENT_WRONG_DELETE_FILE_ERROR, file=p.name, error=str(e))
 
-            self._dialogs.warn(
-                parent=self._parent,
-                title=self._tr(self.TR_FAILURE),
-                text=err_msg
-            )
+            self._dialogs.warn(parent=self._parent, title=self._tr(self.TR_FAILURE), text=err_msg)
             return False
-        except Exception as e:
-            self._logger.error("FilePanelController: delete-via-unlink failed (path=%s, err=%s)", fp, e)
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
+            self._logger.exception("FilePanelController: delete-via-unlink failed (path=%s)", fp)
             err_msg = self._tr_fmt(
                 self.TR_SOMETHING_WENT_WRONG_DELETE_FILE_ERROR,
                 file=p.name,
                 error=str(e),
             )
-            self._dialogs.warn(
-                parent=self._parent,
-                title=self._tr(self.TR_FAILURE),
-                text=err_msg
-            )
+            self._dialogs.warn(parent=self._parent, title=self._tr(self.TR_FAILURE), text=err_msg)
             return False
+        else:
+            return True

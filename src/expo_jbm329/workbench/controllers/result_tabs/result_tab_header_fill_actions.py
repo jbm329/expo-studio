@@ -14,17 +14,24 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QTableView, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
-from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    import pandas as pd
+    from PyQt6.QtWidgets import QTableView, QWidget
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.services.data_profile.semantics import SeriesSemantics
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
 
 
 class ResultTabHeaderFillActions:
@@ -35,47 +42,31 @@ class ResultTabHeaderFillActions:
     # ------------------------------------------------------------------
 
     TR_FAILURE = QT_TR_NOOP("Failure")
-    TR_COULD_NOT_PERFORM = QT_TR_NOOP("Could not perform the operation:\n{error}")    
+    TR_COULD_NOT_PERFORM = QT_TR_NOOP("Could not perform the operation:\n{error}")
 
     TR_NO_NA = QT_TR_NOOP("No missing values")
-    TR_NO_NA_IN_COLUMN = QT_TR_NOOP(
-        "No missing values in column: {column_name}"
-    )
+    TR_NO_NA_IN_COLUMN = QT_TR_NOOP("No missing values in column: {column_name}")
 
     TR_FILL_NA = QT_TR_NOOP("Fill missing values")
-    TR_FILL_NA_IN_COLUMN = QT_TR_NOOP(
-        "Select value for column '{column_name}':"
-    )
+    TR_FILL_NA_IN_COLUMN = QT_TR_NOOP("Select value for column '{column_name}':")
 
     TR_FILL_NA_MEAN_OPERATION = QT_TR_NOOP("fill missing with mean")
     TR_FILLING_NA_MEAN = QT_TR_NOOP("Filling missing values with mean: {column_name}")
-    TR_FILLED_NA_MEAN = QT_TR_NOOP(
-        "Filled missing values with mean in column: {column_name}"
-    )
+    TR_FILLED_NA_MEAN = QT_TR_NOOP("Filled missing values with mean in column: {column_name}")
 
     TR_FILL_NA_MEDIAN_OPERATION = QT_TR_NOOP("fill missing with median")
     TR_FILLING_NA_MEDIAN = QT_TR_NOOP("Filling missing values with median: {column_name}")
-    TR_FILLED_NA_MEDIAN = QT_TR_NOOP(
-        "Filled missing values with median in column: {column_name}"
-    )
+    TR_FILLED_NA_MEDIAN = QT_TR_NOOP("Filled missing values with median in column: {column_name}")
 
     TR_FILL_NA_MODE_OPERATION = QT_TR_NOOP("fill missing with mode")
     TR_FILLING_NA_MODE = QT_TR_NOOP("Filling missing values with mode: {column_name}")
-    TR_FILLED_NA_MODE = QT_TR_NOOP(
-        "Filled missing values with mode in column: {column_name}"
-    )
+    TR_FILLED_NA_MODE = QT_TR_NOOP("Filled missing values with mode in column: {column_name}")
 
     TR_FILL_NA_CUSTOM_OPERATION = QT_TR_NOOP("fill missing with custom value")
-    TR_FILLING_NA_CUSTOM = QT_TR_NOOP(
-        "Filling missing values with '{custom_value}' in column: {column_name}"
-    )
-    TR_FILLED_NA_CUSTOM = QT_TR_NOOP(
-        "Filled missing values with '{custom_value}' in column: {column_name}"
-    )
+    TR_FILLING_NA_CUSTOM = QT_TR_NOOP("Filling missing values with '{custom_value}' in column: {column_name}")
+    TR_FILLED_NA_CUSTOM = QT_TR_NOOP("Filled missing values with '{custom_value}' in column: {column_name}")
     TR_NOT_SUPPORTED_DATATYPE_TITLE = QT_TR_NOOP("Datatype not supported")
-    TR_NOT_SUPPORTED_DATATYPE_TEXT = QT_TR_NOOP(
-        "Column '{column_name}' can not be filled with a custom value."
-    )
+    TR_NOT_SUPPORTED_DATATYPE_TEXT = QT_TR_NOOP("Column '{column_name}' can not be filled with a custom value.")
 
     # ------------------------------------------------------------------
     # i18n helpers
@@ -86,11 +77,11 @@ class ResultTabHeaderFillActions:
         return tr("ResultTabHeaderFillActions", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabHeaderFillActions", text, **kwargs)
 
     # ------------------------------------------------------------------
-    # Init (DI)
+    # Init
     # ------------------------------------------------------------------
     __slots__ = (
         "_apply_new_dataframe",
@@ -106,19 +97,22 @@ class ResultTabHeaderFillActions:
         self,
         *,
         parent: QWidget,
-        dialogs: DialogService,
-        logger: logging.Logger,
+        dialogs: DialogService | None,
+        logger: logging.Logger | None,
         async_ops: AsyncOperationController,
         resolve_df_col_series: Callable[
             [QTableView, int],
             tuple[bool, pd.DataFrame | None, str | None, pd.Series | None],
         ],
-        get_series_semantics: Callable[[QTableView, int], SeriesSemantics | None, ],
+        get_series_semantics: Callable[
+            [QTableView, int],
+            SeriesSemantics | None,
+        ],
         apply_new_dataframe: Callable[
             [QTableView, pd.DataFrame, str],
             None,
         ],
-    ):
+    ) -> None:
         """Initialize ResultTabHeaderFillActions with dependencies.
 
         Args:
@@ -181,7 +175,7 @@ class ResultTabHeaderFillActions:
         return True
 
     # ==================================================================
-    # Fill: mean
+    # Fill mean
     # ==================================================================
 
     def fill_mean(self, view: QTableView, column: int) -> None:
@@ -194,20 +188,17 @@ class ResultTabHeaderFillActions:
         Returns:
             None
         """
-        ok, df, col, s = self._resolve_df_col_series(
-            view,
-            column
-        )        
-        
+        ok, df, col, s = self._resolve_df_col_series(view, column)
+
         if not ok or df is None or col is None or s is None:
             return
 
         safe_df = df
         safe_col = col
         safe_s = s
-        
+
         if not self._ensure_missing(safe_s, safe_col):
-            return        
+            return
 
         self._logger.debug(
             "ResultTabHeaderFillActions: fill NA with mean requested for column '%s'.",
@@ -216,7 +207,12 @@ class ResultTabHeaderFillActions:
 
         from expo_jbm329.services.data_operations.fill import fillna_mean
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -224,7 +220,7 @@ class ResultTabHeaderFillActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -252,7 +248,7 @@ class ResultTabHeaderFillActions:
         )
 
     # ==================================================================
-    # Fill: median
+    # Fill median
     # ==================================================================
 
     def fill_median(self, view: QTableView, column: int) -> None:
@@ -265,17 +261,14 @@ class ResultTabHeaderFillActions:
         Returns:
             None
         """
-        ok, df, col, s = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, s = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None or s is None:
             return
 
         safe_df = df
         safe_col = col
         safe_s = s
-        
+
         if not self._ensure_missing(safe_s, safe_col):
             return
 
@@ -286,7 +279,12 @@ class ResultTabHeaderFillActions:
 
         from expo_jbm329.services.data_operations.fill import fillna_median
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -294,7 +292,7 @@ class ResultTabHeaderFillActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -322,7 +320,7 @@ class ResultTabHeaderFillActions:
         )
 
     # ==================================================================
-    # Fill: mode
+    # Fill mode
     # ==================================================================
 
     def fill_mode(self, view: QTableView, column: int) -> None:
@@ -335,18 +333,15 @@ class ResultTabHeaderFillActions:
         Returns:
             None
         """
-        ok, df, col, s = self._resolve_df_col_series(
-            view,
-            column
-        )
-        
+        ok, df, col, s = self._resolve_df_col_series(view, column)
+
         if not ok or df is None or col is None or s is None:
             return
 
         safe_df = df
         safe_col = col
         safe_s = s
-        
+
         if not self._ensure_missing(safe_s, safe_col):
             return
 
@@ -357,7 +352,12 @@ class ResultTabHeaderFillActions:
 
         from expo_jbm329.services.data_operations.fill import fillna_mode
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -365,7 +365,7 @@ class ResultTabHeaderFillActions:
 
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 
@@ -406,17 +406,14 @@ class ResultTabHeaderFillActions:
         Returns:
             None
         """
-        ok, df, col, s = self._resolve_df_col_series(
-            view,
-            column
-        )
+        ok, df, col, s = self._resolve_df_col_series(view, column)
         if not ok or df is None or col is None or s is None:
             return
 
         safe_df = df
         safe_col = col
         safe_s = s
-        
+
         if not self._ensure_missing(safe_s, safe_col):
             return
 
@@ -432,6 +429,7 @@ class ResultTabHeaderFillActions:
             )
             return
 
+        typed_value: object
         try:
             # Boolean
             if sem.semantic_dtype == "bool":
@@ -491,9 +489,20 @@ class ResultTabHeaderFillActions:
                     default="",
                 )
                 if not ok:
-                    return          
+                    return
 
-        except Exception as e:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._fail(e)
             return
 
@@ -504,7 +513,12 @@ class ResultTabHeaderFillActions:
 
         from expo_jbm329.services.data_operations.fill import fillna
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
             if cancel_cb and cancel_cb():
                 return None
 
@@ -515,7 +529,7 @@ class ResultTabHeaderFillActions:
         value_str = format_value_for_display(typed_value, sem)
         corr_id = uuid.uuid4().hex
 
-        def _apply_result(new_df):
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
             if new_df is None:
                 return
 

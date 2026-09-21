@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import functools
 import logging
-from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP, QPoint
 from PyQt6.QtWidgets import (
@@ -28,7 +28,6 @@ from PyQt6.QtWidgets import (
 from expo_jbm329.db.sql_analysis import sqlglot_dialect
 from expo_jbm329.gui.autocomplete.controller import SqlAutocompleteController
 from expo_jbm329.gui.autocomplete.engine import SqlAutoCompleter
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.linting.sql_lint_controller import SqlLintController
 from expo_jbm329.gui.menus.editor_tab_context_menu import EditorTabContextMenu
@@ -40,8 +39,14 @@ from expo_jbm329.workbench.controllers.editor_tab_manager import (
     EditorTabState,
 )
 from expo_jbm329.workbench.highlighter.sql_highlighter import SqlHighlighter
-from expo_jbm329.workbench.icon.icon_service import IconService
-from expo_jbm329.workbench.theme.highlighter_theme_service import HighlighterThemeService
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.services.schema_cache import SchemaCacheEntry
+    from expo_jbm329.workbench.icon.icon_service import IconService
+    from expo_jbm329.workbench.theme.highlighter_theme_service import HighlighterThemeService
 
 
 class EditorPanelController(QWidget):
@@ -96,8 +101,8 @@ class EditorPanelController(QWidget):
         tab_widget: QTabWidget,
         icon_service: IconService,
         highlighter_theme_service: HighlighterThemeService,
-        get_cache_for: Callable[[str]],
-        build_schema_dict: Callable[[dict], dict],
+        get_cache_for: Callable[[str], SchemaCacheEntry | None],
+        build_schema_dict: Callable[[dict[str, object]], dict[str, object]],
         get_connection_engine: Callable[[str], str | None] | None = None,
         save_sql: Callable[[], None] | None = None,
         save_sql_as: Callable[[], None] | None = None,
@@ -135,7 +140,7 @@ class EditorPanelController(QWidget):
         self._save_sql = save_sql
         self._save_sql_as = save_sql_as
         self._set_status = set_status
-        self._dialogs = dialogs if dialogs else QtDialogService()
+        self._dialogs = dialogs or QtDialogService()
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
 
         self._tab_context_menu: EditorTabContextMenu | None = None
@@ -224,9 +229,7 @@ class EditorPanelController(QWidget):
         editor_widget = EditorWidget(self._tab_widget)
         editor_widget.tab_id = tab.tab_id
         editor_widget.editor_controller.suppress_change()
-        editor_widget.editor_controller.set_on_change(
-            functools.partial(self._on_editor_text_changed, tab.tab_id)
-        )
+        editor_widget.editor_controller.set_on_change(functools.partial(self._on_editor_text_changed, tab.tab_id))
 
         editor_widget.apply_tab_state(tab)
 
@@ -530,7 +533,7 @@ class EditorPanelController(QWidget):
         widget_to_id = {w: tid for tid, w in self._widgets.items()}
 
         for w in widgets_to_close:
-            tid = widget_to_id.get(w)
+            tid = widget_to_id.get(w) if isinstance(w, EditorWidget) else None
             if tid:
                 tab_ids_to_close.append(tid)
 
@@ -544,12 +547,9 @@ class EditorPanelController(QWidget):
         Args:
             keep_tab_id: The ID of the tab to keep open, if any.
         """
+        _ = keep_tab_id
         tabs = list(self._widgets.keys())
-        dirty = [
-            tid
-            for tid in tabs
-            if self._tab_manager.get_tab(tid) and self._tab_manager.get_tab(tid).is_dirty
-        ]
+        dirty = [tid for tid in tabs if (tab := self._tab_manager.get_tab(tid)) is not None and tab.is_dirty]
         count_tabs = len(tabs)
         dirty_tabs = len(dirty)
         msg = self._tr_fmt(
@@ -787,7 +787,18 @@ class EditorPanelController(QWidget):
 
         try:
             engine = self._get_connection_engine(connection_name)
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.debug(
                 "EditorPanelController: failed to resolve autocomplete dialect (conn=%s)",
                 connection_name,
@@ -821,16 +832,14 @@ class EditorPanelController(QWidget):
 
         if not tab:
             self._logger.debug(
-                "EditorPanelController: autocomplete rebuild skipped "
-                "(changed_conn=%s, reason=no active tab)",
+                "EditorPanelController: autocomplete rebuild skipped (changed_conn=%s, reason=no active tab)",
                 connection_name,
             )
             return
 
         if tab.connection_name != connection_name:
             self._logger.debug(
-                "EditorPanelController: autocomplete rebuild skipped "
-                "(changed_conn=%s, active_conn=%s)",
+                "EditorPanelController: autocomplete rebuild skipped (changed_conn=%s, active_conn=%s)",
                 connection_name,
                 tab.connection_name,
             )
@@ -912,7 +921,8 @@ class EditorPanelController(QWidget):
 
         engine.set_schema(schema_dict)
         if lint_controller is not None:
-            lint_controller.set_schema(schema_dict)
+            lint_schema = by_schema if isinstance(by_schema, dict) else {}
+            lint_controller.set_schema(lint_schema)
 
     def on_tab_context_menu_requested(self, pos: QPoint) -> None:
         """Handle context menu request on the tab bar.

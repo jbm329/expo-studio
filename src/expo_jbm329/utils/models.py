@@ -19,22 +19,24 @@ from __future__ import annotations
 
 import contextlib
 import datetime
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast, override
 
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype, is_numeric_dtype
-from PyQt6.QtCore import QAbstractTableModel, QDateTime, QLocale, QModelIndex, Qt, pyqtSignal
+from PyQt6.QtCore import QAbstractTableModel, QDateTime, QLocale, QModelIndex, QObject, Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 
 from expo_jbm329.utils.format_utils import (
     fmt_category,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 # ======================================================================
-# DataFrameModel — read-only display with safe datetime/text formatting
+# DataFrameModel - read-only display with safe datetime/text formatting
 # ======================================================================
 class DataFrameModel(QAbstractTableModel):
     """Read-only model for pandas.DataFrame in QTableView.
@@ -53,19 +55,19 @@ class DataFrameModel(QAbstractTableModel):
       - Numeric sorted with dtype max sentinels for NA to sink on ascending.
 
     Signals:
-      - dataFrameReplaced: emitted after setDataFrame completes.
+      - data_frame_replaced: emitted after set_data_frame completes.
     """
 
-    dataFrameReplaced = pyqtSignal()
+    data_frame_replaced = pyqtSignal()
 
     def __init__(
         self,
-        df: pd.DataFrame,
-        parent=None,
+        df: object,
+        parent: QObject | None = None,
         *,
         na_rep: str = "",
-        formatters: dict[str, Callable[[Any], str]] | None = None
-    ):
+        formatters: dict[str, Callable[[object], str]] | None = None,
+    ) -> None:
         """Initialize the DataFrameModel.
 
         Args:
@@ -77,7 +79,7 @@ class DataFrameModel(QAbstractTableModel):
         super().__init__(parent)
 
         if not isinstance(df, pd.DataFrame):
-            df = pd.DataFrame(df)
+            df = pd.DataFrame(cast("Any", df))
 
         self._df = df
         self._row_ix = np.arange(len(df), dtype=np.int64)
@@ -91,6 +93,7 @@ class DataFrameModel(QAbstractTableModel):
     # ------------------------------------------------------------------
     # Basic model API
     # ------------------------------------------------------------------
+    @override
     def rowCount(self, parent: QModelIndex | None = None) -> int:
         """Number of rows; returns 0 for child indexes."""
         parent = parent or QModelIndex()
@@ -98,6 +101,7 @@ class DataFrameModel(QAbstractTableModel):
             return 0
         return len(self._row_ix)
 
+    @override
     def columnCount(self, parent: QModelIndex | None = None) -> int:
         """Number of columns; includes synthetic leading '#' column."""
         parent = parent or QModelIndex()
@@ -108,7 +112,8 @@ class DataFrameModel(QAbstractTableModel):
     # ------------------------------------------------------------------
     # DATA
     # ------------------------------------------------------------------
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole):
+    @override
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> object:
         """Return the data for the given index and role.
 
         Args:
@@ -132,7 +137,7 @@ class DataFrameModel(QAbstractTableModel):
             # ----- Data columns -----
             df_col_ix = c
             col_name = self._df.columns[df_col_ix]
-            val = self._df.iat[real_r, df_col_ix]
+            val = self._df.iloc[real_r, df_col_ix]
 
             # DISPLAY
             if role == Qt.ItemDataRole.DisplayRole:
@@ -140,7 +145,18 @@ class DataFrameModel(QAbstractTableModel):
                 if col_name in self._formatters:
                     try:
                         return self._formatters[col_name](val)
-                    except Exception:
+                    except (
+                        AttributeError,
+                        ConnectionError,
+                        FileNotFoundError,
+                        IndexError,
+                        KeyError,
+                        LookupError,
+                        OSError,
+                        RuntimeError,
+                        TypeError,
+                        ValueError,
+                    ):
                         # Fall back to defaults on formatter failure
                         pass
 
@@ -176,14 +192,28 @@ class DataFrameModel(QAbstractTableModel):
 
                         return QLocale().toString(qdt, QLocale.FormatType.ShortFormat)
 
-                    except Exception:
+                    except (
+                        AttributeError,
+                        ConnectionError,
+                        FileNotFoundError,
+                        IndexError,
+                        KeyError,
+                        LookupError,
+                        OSError,
+                        RuntimeError,
+                        TypeError,
+                        ValueError,
+                    ):
                         return self._na_rep
 
                 # Category OR object/string -> safe text
                 import pandas.api.types as pdt
-                if isinstance(self._df[col_name].dtype, pd.CategoricalDtype) or \
-                   pdt.is_object_dtype(self._df[col_name]) or \
-                   pdt.is_string_dtype(self._df[col_name]):
+
+                if (
+                    isinstance(self._df[col_name].dtype, pd.CategoricalDtype)
+                    or pdt.is_object_dtype(self._df[col_name])
+                    or pdt.is_string_dtype(self._df[col_name])
+                ):
                     return fmt_category(val)
 
                 # Numeric (and other) -> raw string representation
@@ -203,21 +233,33 @@ class DataFrameModel(QAbstractTableModel):
             if role == Qt.ItemDataRole.EditRole:
                 return val
 
-            return None
-
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             # Defensive: never crash the delegate/view due to bad data
+            return None
+        else:
             return None
 
     # ------------------------------------------------------------------
     # HEADER
     # ------------------------------------------------------------------
+    @override
     def headerData(
         self,
         section: int,
         orientation: Qt.Orientation,
         role: int = Qt.ItemDataRole.DisplayRole,
-    ):
+    ) -> object:
         """Return the header data for the given section and orientation.
 
         Args:
@@ -244,17 +286,18 @@ class DataFrameModel(QAbstractTableModel):
     # ------------------------------------------------------------------
     # SORTING
     # ------------------------------------------------------------------
+    @override
     def sort(self, column: int, order: Qt.SortOrder = Qt.SortOrder.AscendingOrder) -> None:
         """Sort the model by the given column and order.
 
         Efficiently reorders row indexes using layoutAboutToBeChanged/layoutChanged.
-        No beginResetModel/endResetModel is used — avoids empty-table bug.
+        No beginResetModel/endResetModel is used - avoids empty-table bug.
 
         Args:
             column: The column index to sort by.
             order: The sort order (Ascending or Descending). Defaults to Ascending.
         """
-        if self._df is None or self._df.shape[0] <= 1:
+        if self._df.shape[0] <= 1:
             return
 
         # Tell Qt we are about to reorder rows
@@ -270,7 +313,7 @@ class DataFrameModel(QAbstractTableModel):
         try:
             # Datetime
             if is_datetime64_any_dtype(s):
-                arr64 = s.astype("int64", copy=False).to_numpy()
+                arr64 = s.astype("int64").to_numpy(copy=False)
                 nan_mask = s.isna().to_numpy()
                 key = arr64.copy()
                 key[nan_mask] = np.iinfo(np.int64).max
@@ -288,12 +331,23 @@ class DataFrameModel(QAbstractTableModel):
             else:
                 nan_mask = pd.isna(arr)
                 if np.issubdtype(arr.dtype, np.floating):
-                    fill_val = np.finfo(arr.dtype).max
+                    fill_val = float(np.finfo(arr.dtype).max)
                 else:
                     try:
-                        fill_val = np.iinfo(arr.dtype).max
-                    except Exception:
-                        fill_val = np.iinfo(np.int64).max
+                        fill_val = int(np.iinfo(arr.dtype).max)
+                    except (
+                        AttributeError,
+                        ConnectionError,
+                        FileNotFoundError,
+                        IndexError,
+                        KeyError,
+                        LookupError,
+                        OSError,
+                        RuntimeError,
+                        TypeError,
+                        ValueError,
+                    ):
+                        fill_val = int(np.iinfo(np.int64).max)
 
                 key = arr.copy()
                 key[nan_mask] = fill_val
@@ -304,7 +358,18 @@ class DataFrameModel(QAbstractTableModel):
 
             self._row_ix = sorted_pos.astype(np.int64)
 
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             # Fallback: string sort
             arr_fallback = s.astype(str).to_numpy()
             sorted_pos = np.argsort(arr_fallback)
@@ -318,12 +383,12 @@ class DataFrameModel(QAbstractTableModel):
     # ------------------------------------------------------------------
     # PUBLIC API
     # ------------------------------------------------------------------
-    def setDataFrame(self, df: pd.DataFrame):
+    def set_data_frame(self, df: pd.DataFrame) -> None:
         """Replace the underlying DataFrame and reset all cached metadata.
 
         Emits
         -----
-        dataFrameReplaced : pyqtSignal
+        data_frame_replaced : pyqtSignal
             Emitted after the model is reset and new data is active.
         """
         self.beginResetModel()
@@ -335,10 +400,10 @@ class DataFrameModel(QAbstractTableModel):
 
         self.endResetModel()
         with contextlib.suppress(Exception):
-            self.dataFrameReplaced.emit()
+            self.data_frame_replaced.emit()
 
-    def dataFrame(self) -> pd.DataFrame:
-        """Returns the underlying DataFrame reference."""
+    def data_frame(self) -> pd.DataFrame:
+        """Return the underlying DataFrame reference."""
         return self._df
 
 
@@ -347,7 +412,9 @@ class JoinPreviewModel(DataFrameModel):
 
     Inherits from DataFrameModel and adds specific functionality for joined data.
     """
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+
+    @override
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> object:
         """Return the data for the given index and role."""
         # --- custom preview logic ---
         if role == Qt.ItemDataRole.BackgroundRole:
@@ -355,7 +422,7 @@ class JoinPreviewModel(DataFrameModel):
                 return None
 
             col_name = self._df.columns[index.column()]
-            raw = self._df.iat[self._row_ix[index.row()], index.column()]
+            raw = self._df.iloc[self._row_ix[index.row()], index.column()]
 
             if col_name == "join_status":
                 if raw == "left_only":

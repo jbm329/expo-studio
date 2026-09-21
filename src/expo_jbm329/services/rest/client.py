@@ -1,10 +1,10 @@
-
 """REST client implementation."""
+
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
-from typing import Any
+from http import HTTPStatus
+from typing import TYPE_CHECKING
 
 import httpx
 
@@ -14,6 +14,9 @@ from expo_jbm329.services.rest.models import (
     RestRequestConfig,
     RestRetryConfig,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class RestClientError(RuntimeError):
@@ -26,7 +29,7 @@ def fetch_json(
     progress_cb: Callable[[int], None] | None = None,
     cancel_cb: Callable[[], bool] | None = None,
     timeout: float = 30.0,
-) -> tuple[Any, float]:
+) -> tuple[object, float]:
     """Fetch JSON data from a REST endpoint.
 
     This function performs a synchronous HTTP GET request and returns
@@ -44,12 +47,14 @@ def fetch_json(
     Raises:
         RestClientError: If the request fails or returns a non-200 status.
     """
+    _ = progress_cb
     config.validate()
 
     retry_cfg = config.retry or RestRetryConfig()
 
     if cancel_cb and cancel_cb():
-        raise RestClientError("Request cancelled before start")
+        msg = "Request cancelled before start"
+        raise RestClientError(msg)
 
     for attempt in range(retry_cfg.max_retries + 1):
         headers = dict(config.headers or {})
@@ -79,28 +84,44 @@ def fetch_json(
             if attempt < retry_cfg.max_retries:
                 _sleep_for_retry(attempt, retry_cfg, None, cancel_cb=cancel_cb)
                 continue
-            raise RestClientError(f"Request failed: {exc}") from exc
+            msg_0 = f"Request failed: {exc}"
+            raise RestClientError(msg_0) from exc
 
         if cancel_cb and cancel_cb():
-            raise RestClientError("Request cancelled")
+            msg = "Request cancelled"
+            raise RestClientError(msg)
 
         if response.status_code in retry_cfg.retry_status_codes and attempt < retry_cfg.max_retries:
             _sleep_for_retry(attempt, retry_cfg, response, cancel_cb=cancel_cb)
             continue
 
-        if response.status_code != 200:
+        if response.status_code != HTTPStatus.OK:
             body = response.text[:500] if response.text else ""
-            raise RestClientError(f"HTTP {response.status_code}: {body}")
+            msg_0 = f"HTTP {response.status_code}: {body}"
+            raise RestClientError(msg_0)
 
         try:
             payload = response.json()
-        except Exception as exc:
-            raise RestClientError("Response is not valid JSON") from exc
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
+            msg = "Response is not valid JSON"
+            raise RestClientError(msg) from exc
 
         elapsed = time.perf_counter() - t0
         return payload, elapsed
 
-    raise RestClientError("Request failed after retries")
+    msg = "Request failed after retries"
+    raise RestClientError(msg)
 
 
 def fetch_json_pages(
@@ -109,7 +130,7 @@ def fetch_json_pages(
     progress_cb: Callable[[int], None] | None = None,
     cancel_cb: Callable[[], bool] | None = None,
     timeout: float = 30.0,
-) -> tuple[list[Any], float]:
+) -> tuple[list[object], float]:
     """Fetch one or more paged JSON payloads from a REST endpoint."""
     config.validate()
 
@@ -136,6 +157,7 @@ def fetch_json_pages(
 # Helpers
 # ---------------------------------------------------------------------
 
+
 def _sleep_for_retry(
     attempt: int,
     retry_cfg: RestRetryConfig,
@@ -145,7 +167,8 @@ def _sleep_for_retry(
 ) -> None:
     """Sleep using the configured retry delay and optional Retry-After header."""
     if cancel_cb and cancel_cb():
-        raise RestClientError("Request cancelled")
+        msg = "Request cancelled"
+        raise RestClientError(msg)
 
     if retry_cfg.respect_retry_after and response is not None:
         retry_after = response.headers.get("Retry-After")
@@ -157,24 +180,28 @@ def _sleep_for_retry(
             time.sleep(delay)
             return
 
-    delay = min(retry_cfg.initial_delay * (retry_cfg.backoff_factor ** attempt), retry_cfg.max_delay)
+    delay = min(retry_cfg.initial_delay * (retry_cfg.backoff_factor**attempt), retry_cfg.max_delay)
     time.sleep(delay)
 
 
 def _fetch_oauth2_access_token(auth: RestAuthConfig, *, timeout: float) -> str:
     """Acquire an OAuth2 access token using the configured grant flow."""
     if not auth.token_url:
-        raise RestClientError("OAuth2 auth requires token URL")
+        msg = "OAuth2 auth requires token URL"
+        raise RestClientError(msg)
     if not auth.client_id:
-        raise RestClientError("OAuth2 auth requires client ID")
+        msg = "OAuth2 auth requires client ID"
+        raise RestClientError(msg)
     if not auth.client_secret:
-        raise RestClientError("OAuth2 auth requires client secret")
+        msg = "OAuth2 auth requires client secret"
+        raise RestClientError(msg)
 
     grant_type = auth.grant_type or "client_credentials"
     payload: dict[str, str] = {"grant_type": grant_type}
     if grant_type == "refresh_token":
         if not auth.refresh_token:
-            raise RestClientError("OAuth2 refresh-token auth requires refresh token")
+            msg = "OAuth2 refresh-token auth requires refresh token"
+            raise RestClientError(msg)
         payload["refresh_token"] = auth.refresh_token
     if auth.scope:
         payload["scope"] = auth.scope
@@ -188,20 +215,35 @@ def _fetch_oauth2_access_token(auth: RestAuthConfig, *, timeout: float) -> str:
                 auth=(auth.client_id, auth.client_secret),
             )
     except httpx.RequestError as exc:
-        raise RestClientError(f"OAuth2 token request failed: {exc}") from exc
+        msg_0 = f"OAuth2 token request failed: {exc}"
+        raise RestClientError(msg_0) from exc
 
-    if response.status_code != 200:
+    if response.status_code != HTTPStatus.OK:
         body = response.text[:500] if response.text else ""
-        raise RestClientError(f"OAuth2 token request failed: HTTP {response.status_code}: {body}")
+        msg_0 = f"OAuth2 token request failed: HTTP {response.status_code}: {body}"
+        raise RestClientError(msg_0)
 
     try:
         token_payload = response.json()
-    except Exception as exc:
-        raise RestClientError("OAuth2 token response is not valid JSON") from exc
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as exc:
+        msg = "OAuth2 token response is not valid JSON"
+        raise RestClientError(msg) from exc
 
     access_token = token_payload.get("access_token")
     if not access_token:
-        raise RestClientError("OAuth2 token response missing access_token")
+        msg = "OAuth2 token response missing access_token"
+        raise RestClientError(msg)
 
     return str(access_token)
 
@@ -219,43 +261,54 @@ def _apply_auth(
 
     if auth.type == "bearer":
         if not auth.token:
-            raise RestClientError("Bearer auth requires token")
+            msg = "Bearer auth requires token"
+            raise RestClientError(msg)
         headers["Authorization"] = f"Bearer {auth.token}"
         return
 
     if auth.type == "basic":
         if not auth.username or not auth.password:
-            raise RestClientError("Basic auth requires username and password")
+            msg = "Basic auth requires username and password"
+            raise RestClientError(msg)
         import base64
-        raw = f"{auth.username}:{auth.password}".encode("utf-8")
+
+        raw = f"{auth.username}:{auth.password}".encode()
         headers["Authorization"] = "Basic " + base64.b64encode(raw).decode("ascii")
         return
 
     if auth.type == "api_key":
         if not auth.api_key_name:
-            raise RestClientError("API key auth requires parameter name")
+            msg = "API key auth requires parameter name"
+            raise RestClientError(msg)
         if not auth.api_key_value:
-            raise RestClientError("API key auth requires value")
+            msg = "API key auth requires value"
+            raise RestClientError(msg)
         if auth.api_key_location == "header":
             headers[auth.api_key_name] = auth.api_key_value
             return
         if auth.api_key_location == "query":
             params[auth.api_key_name] = auth.api_key_value
             return
-        raise RestClientError("API key auth requires location 'header' or 'query'")
+        msg = "API key auth requires location 'header' or 'query'"
+        raise RestClientError(msg)
 
     if auth.type == "oauth2":
         if not auth.token_url:
-            raise RestClientError("OAuth2 auth requires token URL")
+            msg = "OAuth2 auth requires token URL"
+            raise RestClientError(msg)
         if not auth.client_id:
-            raise RestClientError("OAuth2 auth requires client ID")
+            msg = "OAuth2 auth requires client ID"
+            raise RestClientError(msg)
         if not auth.client_secret:
-            raise RestClientError("OAuth2 auth requires client secret")
+            msg = "OAuth2 auth requires client secret"
+            raise RestClientError(msg)
         access_token = auth.access_token or _fetch_oauth2_access_token(auth, timeout=timeout)
         headers["Authorization"] = f"Bearer {access_token}"
         return
 
-    raise RestClientError(f"Unsupported auth type: {auth.type}")
+    msg_0 = f"Unsupported auth type: {auth.type}"
+    raise RestClientError(msg_0)
+
 
 def _fetch_page_number_payloads(
     config: RestRequestConfig,
@@ -264,16 +317,17 @@ def _fetch_page_number_payloads(
     progress_cb: Callable[[int], None] | None,
     cancel_cb: Callable[[], bool] | None,
     timeout: float,
-) -> tuple[list[Any], float]:
+) -> tuple[list[object], float]:
     """Fetch paginated JSON payloads using page-number query parameters."""
-    payloads: list[Any] = []
+    payloads: list[object] = []
     total_elapsed = 0.0
     page = pagination.start_page
     page_limit = pagination.max_pages or 1_000_000
 
     while len(payloads) < page_limit:
         if cancel_cb and cancel_cb():
-            raise RestClientError("Request cancelled")
+            msg = "Request cancelled"
+            raise RestClientError(msg)
 
         page_params = dict(config.query_params or {})
         page_params[pagination.page_param or "page"] = str(page)
@@ -315,7 +369,7 @@ def _fetch_page_number_payloads(
     return payloads, total_elapsed
 
 
-def _should_continue_page_number_pagination(payload: Any) -> bool:
+def _should_continue_page_number_pagination(payload: object) -> bool:
     """Return whether a paged fetch should continue based on payload contents."""
     if isinstance(payload, list):
         return len(payload) > 0

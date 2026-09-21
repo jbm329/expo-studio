@@ -1,11 +1,15 @@
 """Manage per-tab undo stacks for result tabs."""
+
 from __future__ import annotations
 
 import contextlib
 import logging
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pandas as pd
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class ResultTabUndoManager:
@@ -64,7 +68,7 @@ class ResultTabUndoManager:
     # Public API
     # ==================================================================
 
-    def register_tab(self, tab_id: str) -> None:
+    def register_tab(self, tab_id: object) -> None:
         """Ensure an undo stack exists for a tab.
 
         Args:
@@ -76,7 +80,7 @@ class ResultTabUndoManager:
         self._stacks.setdefault(tab_id, [])
         self._notify_state_changed()
 
-    def unregister_tab(self, tab_id: str) -> None:
+    def unregister_tab(self, tab_id: object) -> None:
         """Remove all undo state for a tab.
 
         Args:
@@ -93,7 +97,7 @@ class ResultTabUndoManager:
         self._stacks.clear()
         self._notify_state_changed()
 
-    def reset_tab(self, tab_id: str) -> None:
+    def reset_tab(self, tab_id: object) -> None:
         """Clear undo history for a specific tab."""
         if not isinstance(tab_id, str) or not tab_id:
             return
@@ -127,7 +131,7 @@ class ResultTabUndoManager:
         stack = self._stacks.get(tab_id)
         return len(stack) if isinstance(stack, list) else 0
 
-    def push_snapshot(self, tab_id: str, df: pd.DataFrame) -> bool:
+    def push_snapshot(self, tab_id: object, df: object) -> bool:
         """Push a deep copy snapshot for a tab if allowed by current limits.
 
         Args:
@@ -152,7 +156,18 @@ class ResultTabUndoManager:
 
         try:
             snapshot = df.copy(deep=True)
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.debug(
                 "ResultTabUndoManager: failed to copy snapshot for tab=%s.",
                 tab_id,
@@ -172,7 +187,7 @@ class ResultTabUndoManager:
         )
         return True
 
-    def pop_snapshot(self, tab_id: str) -> pd.DataFrame | None:
+    def pop_snapshot(self, tab_id: object) -> pd.DataFrame | None:
         """Pop and return the latest undo snapshot for a tab.
 
         Args:
@@ -198,7 +213,7 @@ class ResultTabUndoManager:
         )
         return snapshot
 
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Reload undo-related settings from the global settings structure.
 
         Expected structure:
@@ -213,7 +228,8 @@ class ResultTabUndoManager:
             settings: Application settings dictionary.
         """
         try:
-            workbench = settings.get("workbench", {}) or {}
+            workbench_obj = settings.get("workbench", {})
+            workbench = workbench_obj if isinstance(workbench_obj, dict) else {}
 
             undo_limit_per_tab = int(
                 workbench.get(
@@ -234,16 +250,25 @@ class ResultTabUndoManager:
             )
 
             self._logger.info(
-                "ResultTabUndoManager: settings reloaded "
-                "(undo_limit=%s, max_undo_mb=%s).",
+                "ResultTabUndoManager: settings reloaded (undo_limit=%s, max_undo_mb=%s).",
                 self._undo_limit_per_tab,
                 self._max_size_allow_undo_mb,
             )
 
-        except Exception as exc:
-            self._logger.error(
-                "ResultTabUndoManager: failed to reload settings %s",
-                exc,
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
+            self._logger.exception(
+                "ResultTabUndoManager: failed to reload settings",
             )
 
     def set_limits(
@@ -310,7 +335,18 @@ class ResultTabUndoManager:
         """
         try:
             return int(df.memory_usage(deep=True).sum())
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return 0
 
     def _notify_state_changed(self) -> None:

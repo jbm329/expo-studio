@@ -7,8 +7,13 @@ cancel button.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, override
+
 from PyQt6.QtCore import QPoint, QRect, Qt, pyqtSignal
 from PyQt6.QtWidgets import QLabel, QProgressBar, QPushButton, QVBoxLayout, QWidget
+
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QResizeEvent
 
 
 class BusyOverlayWidget(QWidget):
@@ -41,9 +46,7 @@ class BusyOverlayWidget(QWidget):
 
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-        self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint | Qt.WindowType.SubWindow
-        )
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.SubWindow)
 
         self.setStyleSheet(
             """
@@ -162,13 +165,14 @@ class BusyOverlayWidget(QWidget):
             self._bar.setRange(0, 100)
         self._bar.setValue(max(0, min(100, int(value))))
 
-    def resizeEvent(self, event) -> None:
+    @override
+    def resizeEvent(self, a0: QResizeEvent | None) -> None:
         """Handle resize events and reposition the overlay.
 
         Args:
-            event: Resize event.
+            a0: Resize event.
         """
-        super().resizeEvent(event)
+        super().resizeEvent(a0)
         self._relayout()
 
     def _relayout(self) -> None:
@@ -189,7 +193,5 @@ class BusyOverlayWidget(QWidget):
         x = margin_w
         y = max(16, (self.height() - container_height) // 2)
 
-        self._container.setGeometry(
-            QRect(QPoint(x, y), self._container.sizeHint())
-        )
+        self._container.setGeometry(QRect(QPoint(x, y), self._container.sizeHint()))
         self._container.resize(container_width, container_height)

@@ -8,8 +8,13 @@ UI framework.
 from __future__ import annotations
 
 import logging
+from typing import Self
 
 from expo_jbm329.db.sql_analysis import TableRef, extract_table_refs
+
+MIN_QUOTED_IDENTIFIER_LENGTH = 2
+SCHEMA_TABLE_PARTS = 2
+SCHEMA_TABLE_COLUMN_PARTS = 3
 
 
 class SqlAutoCompleter:
@@ -35,7 +40,7 @@ class SqlAutoCompleter:
         self._log = logging.getLogger("applogger.ui.autocomplete")
 
     # ------------------------------------------------------------------ #
-    def set_schema(self, schema_dict: dict) -> None:
+    def set_schema(self, schema_dict: dict[str, object] | None) -> None:
         """Set the schema metadata used for generating suggestions.
 
         Args:
@@ -50,7 +55,7 @@ class SqlAutoCompleter:
             For compatibility, this method also accepts richer schema dictionaries
             containing a "by_schema" key.
         """
-        raw_keys = list(schema_dict.keys()) if isinstance(schema_dict, dict) else []
+        raw_keys = list(schema_dict.keys()) if schema_dict is not None else []
         self._schema = self._normalize_schema_dict(schema_dict or {})
 
         non_empty_column_tables = 0
@@ -91,7 +96,7 @@ class SqlAutoCompleter:
         Returns:
             A list of matching suggestions.
         """
-        safe_sql = sql if isinstance(sql, str) else ""
+        safe_sql = sql
         safe_cursor_pos = max(0, min(int(cursor_pos), len(safe_sql)))
         safe_prefix = (prefix or "").strip()
 
@@ -130,7 +135,7 @@ class SqlAutoCompleter:
         return fallback
 
     # ------------------------------------------------------------------ #
-    def get_suggestions(self, text: str) -> list[str]:  # noqa: C901
+    def get_suggestions(self, text: str) -> list[str]:
         """Get autocomplete suggestions based on the provided text.
 
         Parses the text to determine if it's a schema, table, or column prefix
@@ -150,7 +155,7 @@ class SqlAutoCompleter:
             parts = text.split(".")
 
             # schema. OR table.
-            if len(parts) == 2:
+            if len(parts) == SCHEMA_TABLE_PARTS:
                 first, second = parts
                 if text.endswith("."):
                     schema_key = self._resolve_schema_ci(first)
@@ -173,7 +178,7 @@ class SqlAutoCompleter:
                 return []
 
             # schema.table. OR schema.table.colprefix
-            if len(parts) == 3:
+            if len(parts) == SCHEMA_TABLE_COLUMN_PARTS:
                 schema, table, colprefix = parts
                 if text.endswith("."):
                     return self._list_columns(schema, table)
@@ -182,15 +187,15 @@ class SqlAutoCompleter:
         # table. (no schema)
         if text.endswith("."):
             table = text[:-1]
-            schema = self._find_schema_for_table(table)
-            return self._list_columns(schema, table) if schema else []
+            table_schema = self._find_schema_for_table(table)
+            return self._list_columns(table_schema, table) if table_schema else []
 
         # table.prefix (no schema)
         if "." in text:
             table, colprefix = text.split(".", 1)
-            schema = self._find_schema_for_table(table)
-            if schema:
-                return self._filter_starts_with(self._list_columns(schema, table), colprefix)
+            table_schema = self._find_schema_for_table(table)
+            if table_schema:
+                return self._filter_starts_with(self._list_columns(table_schema, table), colprefix)
 
         # fallback → global prefix
         return self.get_global_suggestions(text)
@@ -223,9 +228,9 @@ class SqlAutoCompleter:
                     if col.lower().startswith(pref):
                         col_set.add(col)
 
-        col_list = sorted(col_set, key=lambda x: x.lower())
-        tables.sort(key=lambda x: x.lower())
-        schemas.sort(key=lambda x: x.lower())
+        col_list = sorted(col_set, key=str.lower)
+        tables.sort(key=str.lower)
+        schemas.sort(key=str.lower)
         return col_list + tables + schemas
 
     # ------------------------------------------------------------------ #
@@ -242,9 +247,9 @@ class SqlAutoCompleter:
                 for col in cols:
                     col_set.add(col)
 
-        col_list = sorted(col_set, key=lambda x: x.lower())
-        tables.sort(key=lambda x: x.lower())
-        schemas.sort(key=lambda x: x.lower())
+        col_list = sorted(col_set, key=str.lower)
+        tables.sort(key=str.lower)
+        schemas.sort(key=str.lower)
         return col_list + tables + schemas
 
     # ------------------------------------------------------------------ #
@@ -362,7 +367,7 @@ class SqlAutoCompleter:
 
     # ------------------------------------------------------------------ #
     @classmethod
-    def _normalize_identifier(cls, value: str | None) -> str:
+    def _normalize_identifier(cls: type[Self], value: str | None) -> str:
         """Normalize an SQL identifier for lookup.
 
         Removes common SQL quoting styles used by supported dialects:
@@ -378,7 +383,7 @@ class SqlAutoCompleter:
         """
         text = (value or "").strip()
 
-        if len(text) >= 2:
+        if len(text) >= MIN_QUOTED_IDENTIFIER_LENGTH:
             if text.startswith("[") and text.endswith("]"):
                 return text[1:-1].replace("]]", "]")
 
@@ -391,7 +396,7 @@ class SqlAutoCompleter:
         return text
 
     @classmethod
-    def _normalize_qualified_identifier(cls, value: str | None) -> str:
+    def _normalize_qualified_identifier(cls: type[Self], value: str | None) -> str:
         """Normalize a possibly qualified SQL identifier.
 
         Examples:
@@ -528,7 +533,7 @@ class SqlAutoCompleter:
         Returns:
             SQL text that is more likely to parse successfully.
         """
-        safe_sql = sql if isinstance(sql, str) else ""
+        safe_sql = sql
         safe_cursor_pos = max(0, min(int(cursor_pos), len(safe_sql)))
         start = max(0, safe_cursor_pos - len(prefix))
 
@@ -540,7 +545,7 @@ class SqlAutoCompleter:
 
         # ------------------------------------------------------------------ #
 
-    def _normalize_schema_dict(self, schema_dict: dict) -> dict[str, dict[str, list[str]]]:
+    def _normalize_schema_dict(self, schema_dict: dict[str, object]) -> dict[str, dict[str, list[str]]]:
         """Normalize supported schema-cache shapes into the autocomplete shape.
 
         The autocomplete engine internally expects:
@@ -557,9 +562,6 @@ class SqlAutoCompleter:
         Returns:
             Normalized schema -> table -> columns mapping.
         """
-        if not isinstance(schema_dict, dict):
-            return {}
-
         by_schema = schema_dict.get("by_schema")
         if isinstance(by_schema, dict):
             normalized = self._normalize_by_schema_shape(by_schema)
@@ -568,14 +570,11 @@ class SqlAutoCompleter:
 
         return self._normalize_direct_schema_shape(schema_dict)
 
-    def _normalize_direct_schema_shape(self, schema_dict: dict) -> dict[str, dict[str, list[str]]]:
+    def _normalize_direct_schema_shape(self, schema_dict: dict[str, object]) -> dict[str, dict[str, list[str]]]:
         """Normalize a direct schema -> table -> columns mapping."""
         normalized: dict[str, dict[str, list[str]]] = {}
 
         for schema_name, tables in schema_dict.items():
-            if not isinstance(schema_name, str):
-                continue
-
             # Ignore richer top-level metadata keys if they reached this path.
             if schema_name in {"tables", "views", "columns", "loaded_at", "db_name", "by_schema"}:
                 continue
@@ -597,7 +596,7 @@ class SqlAutoCompleter:
 
         return normalized
 
-    def _normalize_by_schema_shape(self, by_schema: dict) -> dict[str, dict[str, list[str]]]:
+    def _normalize_by_schema_shape(self, by_schema: dict[object, object]) -> dict[str, dict[str, list[str]]]:
         """Normalize a by_schema mapping into schema -> table -> columns."""
         normalized: dict[str, dict[str, list[str]]] = {}
 

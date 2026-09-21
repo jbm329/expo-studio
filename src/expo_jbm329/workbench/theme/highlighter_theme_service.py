@@ -4,20 +4,25 @@ This module resolves the active syntax highlighter theme from application
 settings and the current OS theme, and emits updates when the selected theme
 changes.
 """
+
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QObject, Qt, pyqtSignal
 from PyQt6.QtWidgets import QApplication
 
 from expo_jbm329.workbench.highlighter.sql_highlighter import Theme
 from expo_jbm329.workbench.theme.highlighter_theme_repository import HighlighterThemeRepository
-from expo_jbm329.workbench.theme.theme_service import ThemeService
+
+if TYPE_CHECKING:
+    from expo_jbm329.workbench.theme.theme_service import ThemeService
 
 
 class HighlighterThemeService(QObject):
     """Resolve and publish the active syntax highlighter theme."""
+
     __slots__ = (
         "_current_theme",
         "_logger",
@@ -28,11 +33,7 @@ class HighlighterThemeService(QObject):
 
     theme_changed = pyqtSignal(Theme)
 
-    def __init__(
-            self,
-            theme_service: ThemeService,
-            logger: logging.Logger | None = None
-    ) -> None:
+    def __init__(self, theme_service: ThemeService, logger: logging.Logger | None = None) -> None:
         """Initialize the highlighter theme service.
 
         Args:
@@ -42,7 +43,7 @@ class HighlighterThemeService(QObject):
         super().__init__()
 
         self._repo = HighlighterThemeRepository()
-        self._logger = logger if logger else logging.getLogger("applogger.ui")
+        self._logger = logger or logging.getLogger("applogger.ui")
 
         # Track last resolved theme to avoid duplicate signals
         self._current_theme: Theme | None = None
@@ -61,7 +62,10 @@ class HighlighterThemeService(QObject):
         Returns:
             True if the OS theme is dark, otherwise False.
         """
-        cs = QApplication.styleHints().colorScheme()
+        style_hints = QApplication.styleHints()
+        if style_hints is None:
+            return False
+        cs = style_hints.colorScheme()
         return cs == Qt.ColorScheme.Dark
 
     # ------------------------------------------------------------------
@@ -85,7 +89,7 @@ class HighlighterThemeService(QObject):
             chosen = "dark" if os_dark else "light"
             return self._repo.get(chosen)
 
-        # Case 2: built‑in light/dark
+        # Case 2: built-in light/dark
         if self._settings_theme in ("light", "dark"):
             self._logger.debug("HighlighterThemeService: using explicit theme=%s", self._settings_theme)
             return self._repo.get(self._settings_theme)
@@ -141,35 +145,47 @@ class HighlighterThemeService(QObject):
     # ------------------------------------------------------------------
     # OS theme change handler
     # ------------------------------------------------------------------
-    def _on_gui_theme_changed(self, gui_theme: str):
+    def _on_gui_theme_changed(self, gui_theme: str) -> None:
         """Re-apply the theme when the GUI theme changes.
 
         Args:
             gui_theme: Name of the GUI theme that was applied.
         """
+        _ = gui_theme
         if self._settings_theme == "system":
             self.apply_theme()
 
     # ------------------------------------------------------------------
     # Settings update API
     # ------------------------------------------------------------------
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Reload the theme setting from application settings.
 
         Args:
             settings: Application settings dictionary.
         """
         try:
-            workbench_settings = settings.get("workbench", {}) or {}
+            workbench_settings = settings.get("workbench", {})
+            if not isinstance(workbench_settings, dict):
+                workbench_settings = {}
             val = workbench_settings.get("highlighter_theme", self._settings_theme_default)
-            self._settings_theme = (val or self._settings_theme_default).strip()
+            self._settings_theme = val.strip() if isinstance(val, str) and val else self._settings_theme_default
 
             self._logger.debug(
                 "HighlighterThemeService: settings reloaded (theme=%s)",
                 self._settings_theme,
-
             )
             self.apply_theme()
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             self._logger.exception("HighlighterThemeService: failed reloading settings")
-

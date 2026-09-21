@@ -13,19 +13,27 @@ from __future__ import annotations
 
 import logging
 import uuid
-from collections.abc import Callable
+from typing import TYPE_CHECKING, cast
 
-import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QTableView, QWidget
 
-from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
-from expo_jbm329.services.data_profile.profile_cache import ColumnProfileCache
-from expo_jbm329.services.data_profile.semantics import SeriesSemantics
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
 from expo_jbm329.utils.models import DataFrameModel
-from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    import pandas as pd
+    from PyQt6.QtWidgets import QTableView, QWidget
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.services.data_profile.column_data_profile import ColumnProfile
+    from expo_jbm329.services.data_profile.profile_cache import ColumnProfileCache
+    from expo_jbm329.services.data_profile.semantics import SeriesSemantics
+    from expo_jbm329.workbench.controllers.async_operation_controller import (
+        AsyncOperationController,
+    )
 
 
 class ResultTabColumnPropertiesController:
@@ -47,7 +55,7 @@ class ResultTabColumnPropertiesController:
         return tr("ResultTabColumnPropertiesController", text)
 
     @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
+    def _tr_fmt(text: str, **kwargs: object) -> str:
         return tr_fmt("ResultTabColumnPropertiesController", text, **kwargs)
 
     # ------------------------------------------------------------------
@@ -65,13 +73,13 @@ class ResultTabColumnPropertiesController:
         self,
         *,
         parent: QWidget,
-        dialogs: DialogService,
-        logger: logging.Logger,
+        dialogs: DialogService | None,
+        logger: logging.Logger | None,
         async_ops: AsyncOperationController,
         col_profile_cache: ColumnProfileCache,
         find_tab_id_for_view: Callable[[QTableView], str | None],
         get_series_semantics: Callable[[QTableView, int], SeriesSemantics | None],
-    ):
+    ) -> None:
         """Initialize the controller.
 
         Args:
@@ -95,7 +103,7 @@ class ResultTabColumnPropertiesController:
     # Public API
     # ==================================================================
 
-    def open(self, view: QTableView, column: int) -> None:
+    def open(self, view: QTableView | None, column: int) -> None:
         """Open the column properties dialog for a given view and column.
 
         Args:
@@ -112,10 +120,7 @@ class ResultTabColumnPropertiesController:
         if not isinstance(model, DataFrameModel):
             return
 
-        df = model.dataFrame()
-        if not isinstance(df, pd.DataFrame):
-            return
-
+        df = model.data_frame()
         if column >= df.shape[1]:
             return
 
@@ -133,21 +138,27 @@ class ResultTabColumnPropertiesController:
         # --------------------------------------------------------------
         cached = self._cache.get(key)
         if cached is not None:
-            self._logger.debug(
-                "ColumnPropertiesController: cache hit (key=%s).", key
-            )
+            self._logger.debug("ColumnPropertiesController: cache hit (key=%s).", key)
             try:
                 from expo_jbm329.gui.dialogs.column_properties_dialog import ColumnPropertiesDialog
 
                 sem = self._get_series_semantics(view, column)
 
-                dlg = ColumnPropertiesDialog(
-                    parent=self._parent,
-                    profile=cached,
-                    semantics=sem)
+                dlg = ColumnPropertiesDialog(parent=self._parent, profile=cached, semantics=sem)
                 dlg.show()
 
-            except Exception as e:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as e:
                 self._fail(e)
             return
 
@@ -177,17 +188,23 @@ class ResultTabColumnPropertiesController:
         """Run async column profiling."""
         corr_id = uuid.uuid4().hex
 
-        def _work(*, progress_cb=None, cancel_cb=None, **_):
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> ColumnProfile | None:
             from expo_jbm329.services.data_operations.analytics import (
                 get_column_profile,
             )
 
+            del progress_cb
             if cancel_cb and cancel_cb():
                 return None
 
-            return get_column_profile(df, col_name)
+            return cast("ColumnProfile", get_column_profile(df, col_name))
 
-        def _apply_result(profile):
+        def _apply_result(profile: ColumnProfile | None) -> None:
             if profile is None:
                 return
 

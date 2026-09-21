@@ -1,4 +1,5 @@
 """File tree widget."""
+
 from __future__ import annotations
 
 from PyQt6.QtCore import QDir, Qt
@@ -18,15 +19,14 @@ class FileTreeWidget(QTreeView):
 
         self._model = QFileSystemModel(self)
         self._model.setRootPath("")
-        self._model.setFilter(
-            QDir.Filter.AllDirs
-            | QDir.Filter.NoDotAndDotDot
-            | QDir.Filter.Files
-        )
+        self._model.setFilter(QDir.Filter.AllDirs | QDir.Filter.NoDotAndDotDot | QDir.Filter.Files)
 
         self.setModel(self._model)
 
         header = self.header()
+        if header is None:
+            message = "File tree header is unavailable."
+            raise RuntimeError(message)
         header.setStretchLastSection(False)
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         for i in (1, 2, 3):
@@ -36,6 +36,6 @@ class FileTreeWidget(QTreeView):
         self.setColumnHidden(3, True)
 
     @property
-    def model(self) -> QFileSystemModel:
+    def file_model(self) -> QFileSystemModel:
         """Returns the model of the tree widget."""
         return self._model

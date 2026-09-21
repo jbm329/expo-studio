@@ -5,14 +5,18 @@ from __future__ import annotations
 import contextlib
 import logging
 import threading
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL, Engine
 
 from expo_jbm329.db.core.interfaces import DriverProtocol
-from expo_jbm329.db.core.models import ConnectionConfig
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.db.core.models import ConnectionConfig
 
 log = logging.getLogger("applogger.db.driver.sqlite")
 
@@ -32,14 +36,14 @@ class SqlAlchemySqliteDriver(DriverProtocol):
         self._lock = threading.Lock()
         self._connect_timeout_s: int | None = None
 
-    def initialize(self, *, timeouts: dict | None = None) -> None:
+    def initialize(self, *, timeouts: dict[str, int | None] | None = None) -> None:
         """Initialize the driver with optional timeouts.
 
         Args:
             timeouts: A dictionary of timeout values.
         """
-        self._connect_timeout_s = int(timeouts.get("login_timeout_s")) if (
-                    timeouts and timeouts.get("login_timeout_s") is not None) else None
+        login_timeout = timeouts.get("login_timeout_s") if timeouts is not None else None
+        self._connect_timeout_s = int(login_timeout) if login_timeout is not None else None
 
     def dispose(self) -> None:
         """Dispose of the driver and release all cached engines."""
@@ -59,7 +63,6 @@ class SqlAlchemySqliteDriver(DriverProtocol):
         Args:
             seconds: The timeout in seconds, or None to reset.
         """
-        pass
 
     def cancel_execution(self, job_id: str) -> bool:
         """Attempt to cancel an active execution associated with a job id."""
@@ -81,7 +84,8 @@ class SqlAlchemySqliteDriver(DriverProtocol):
         """
         db_path = cfg.database or ":memory:"
         # If user supplied extra={'uri': 'true', 'cache': 'shared'} it will be passed through
-        return URL.create("sqlite+pysqlite", database=db_path, query=cfg.extra or {})
+        query = {str(key): str(value) for key, value in (cfg.extra or {}).items()}
+        return URL.create("sqlite+pysqlite", database=db_path, query=query)
 
     def _get_engine(self, cfg: ConnectionConfig) -> Engine:
         """Retrieve or create a SQLAlchemy Engine for the given configuration.

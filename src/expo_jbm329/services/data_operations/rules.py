@@ -18,13 +18,15 @@ Design principles:
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any
-
-import pandas as pd
+from typing import TYPE_CHECKING, Any, cast
 
 from .text import clean_text, replace_values
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    import pandas as pd
 
 logger = logging.getLogger("applogger.service")
 
@@ -32,6 +34,7 @@ logger = logging.getLogger("applogger.service")
 # =====================================================================
 # Base rule abstraction
 # =====================================================================
+
 
 @dataclass(frozen=True)
 class Rule:
@@ -57,12 +60,14 @@ class Rule:
         Raises:
             NotImplementedError: If not implemented by subclass.
         """
-        raise NotImplementedError("Rule.apply must be implemented by subclasses")
+        msg = "Rule.apply must be implemented by subclasses"
+        raise NotImplementedError(msg)
 
 
 # =====================================================================
 # Concrete rules
 # =====================================================================
+
 
 @dataclass(frozen=True)
 class ReplaceRule(Rule):
@@ -71,8 +76,8 @@ class ReplaceRule(Rule):
     Supports both literal and regex-based replacement.
     """
 
-    pattern: Any
-    replacement: Any
+    pattern: object
+    replacement: object
     regex: bool = False
 
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -98,7 +103,7 @@ class ReplaceRule(Rule):
 class RemoveValueRule(Rule):
     """Remove rows where a column equals a specific value."""
 
-    value: Any
+    value: object
 
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:
         """Remove rows matching the configured value."""
@@ -109,9 +114,10 @@ class RemoveValueRule(Rule):
         )
 
         if self.column not in df.columns:
-            raise KeyError(f"Column '{self.column}' not found.")
+            msg = f"Column '{self.column}' not found."
+            raise KeyError(msg)
 
-        return df.loc[df[self.column].ne(self.value)].copy()
+        return df.loc[df[self.column].ne(cast("Any", self.value))].copy()
 
 
 @dataclass(frozen=True)
@@ -128,6 +134,7 @@ class StripRule(Rule):
 # =====================================================================
 # Rule application
 # =====================================================================
+
 
 def apply_rules(
     df: pd.DataFrame,

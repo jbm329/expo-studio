@@ -108,10 +108,11 @@ def service():
     return svc, async_ops, results, dialogs, status_messages, display_dataframe
 
 
-def test_open_data_file_queues_job_and_binds_pending_tab(service):
+def test_open_data_file_queues_job_and_binds_pending_tab(service, tmp_path: Path):
     svc, async_ops, results, _, _, _ = service
+    path = tmp_path / "data.csv"
 
-    svc.open_data_file(path="C:\\tmp\\data.csv")
+    svc.open_data_file(path=path)
 
     assert results.pending[0]["title"] == "data.csv"
     assert results.bound[0][0] == "tab-0"
@@ -119,51 +120,55 @@ def test_open_data_file_queues_job_and_binds_pending_tab(service):
     assert async_ops.job_mgr.last_run["cancelable"] is True
 
 
-def test_on_data_loaded_fulfills_pending_tab(service):
+def test_on_data_loaded_fulfills_pending_tab(service, tmp_path: Path):
     svc, _, results, _, status_messages, display_dataframe = service
     payload = JobResult(ok=True, data=pd.DataFrame({"A": [1, 2]}), elapsed=1.5, corr_id="c1")
+    path = tmp_path / "data.csv"
 
-    svc._on_data_loaded(payload, "C:\\tmp\\data.csv", pending_tab_id="tab-1")
+    svc._on_data_loaded(payload, str(path), pending_tab_id="tab-1")
 
     assert results.fulfilled and results.fulfilled[0][0] == "tab-1"
     assert not display_dataframe.called
 
 
-def test_on_data_loaded_without_pending_tab_displays_dataframe(service):
+def test_on_data_loaded_without_pending_tab_displays_dataframe(service, tmp_path: Path):
     svc, _, results, _, _, display_dataframe = service
     payload = JobResult(ok=True, data=pd.DataFrame({"A": [1]}), elapsed=None, corr_id="c1")
+    path = tmp_path / "data.csv"
 
-    svc._on_data_loaded(payload, "C:\\tmp\\data.csv", pending_tab_id=None)
+    svc._on_data_loaded(payload, str(path), pending_tab_id=None)
 
     assert not results.fulfilled
     display_dataframe.assert_called_once()
 
 
-def test_on_data_loaded_cancelled_removes_pending_tab(service):
+def test_on_data_loaded_cancelled_removes_pending_tab(service, tmp_path: Path):
     svc, _, results, _, status_messages, _ = service
     payload = JobResult(ok=False, cancelled=True, elapsed=None, corr_id="c1")
+    path = tmp_path / "data.csv"
 
-    svc._on_data_loaded(payload, "C:\\tmp\\data.csv", pending_tab_id="tab-1")
+    svc._on_data_loaded(payload, str(path), pending_tab_id="tab-1")
 
     assert results.removed == ["tab-1"]
     assert any("cancelled" in msg.lower() for msg, _ in status_messages)
 
 
-def test_on_data_load_error_removes_pending_tab_and_shows_dialog(service):
+def test_on_data_load_error_removes_pending_tab_and_shows_dialog(service, tmp_path: Path):
     svc, _, results, dialogs, status_messages, _ = service
+    path = tmp_path / "data.csv"
 
-    svc._on_data_load_error("boom", "C:\\tmp\\data.csv", pending_tab_id="tab-1")
+    svc._on_data_load_error("boom", str(path), pending_tab_id="tab-1")
 
     assert results.removed == ["tab-1"]
     assert dialogs.critical_calls
     assert any("failed" in msg.lower() for msg, _ in status_messages)
 
 
-def test_coerce_save_suffix(service):
+def test_coerce_save_suffix(service, tmp_path: Path):
     svc, *_ = service
 
-    assert svc.coerce_save_suffix("C:\\tmp\\name", "Feather (*.feather *.ft)").endswith(".feather")
-    assert svc.coerce_save_suffix("C:\\tmp\\f.csv", "CSV (*.csv)").endswith(".csv")
+    assert svc.coerce_save_suffix(str(tmp_path / "name"), "Feather (*.feather *.ft)").endswith(".feather")
+    assert svc.coerce_save_suffix(str(tmp_path / "f.csv"), "CSV (*.csv)").endswith(".csv")
 
 
 def test_sanitize_and_strip_suffix(service):

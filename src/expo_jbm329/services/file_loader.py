@@ -3,15 +3,16 @@
 This module provides the FileLoader class, which supports loading CSV, Excel,
 Parquet, Feather, Pickle, and JSON files into pandas DataFrames.
 """
+
 from __future__ import annotations
 
+import csv
 import logging
 import threading
-from collections.abc import Callable
 from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import pandas as pd
 from openpyxl.utils.cell import range_boundaries
@@ -21,10 +22,14 @@ from expo_jbm329.utils.format_utils import fmt_path, fmt_path_size
 from expo_jbm329.utils.path_manager import get_documents_dir
 from expo_jbm329.utils.paths import expand
 
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+
 
 @dataclass(frozen=True)
 class ReadRequest:
     """Dataclass for read requests."""
+
     path: Path
     index_col: int | str | None = None
     sheet_name: str | int | None = None
@@ -38,6 +43,7 @@ class OperationCancelledError(Exception):
 
 class DataFrameReader(Protocol):
     """Protocol for functions that read a DataFrame from a file path."""
+
     def __call__(self, req: ReadRequest) -> pd.DataFrame:
         """Read a DataFrame from a file path."""
         ...
@@ -79,23 +85,23 @@ class FileLoader:
         *,
         logger: logging.Logger | None = None,
         encoding_detector: Callable[[Path], str] | None = None,
-    ):
+    ) -> None:
         """Initialize the FileLoader.
 
         Args:
             logger: Optional logger instance.
             encoding_detector: Optional callable to detect file encoding.
         """
-        self._logger = logger if logger else logging.getLogger("applogger.service")
+        self._logger = logger or logging.getLogger("applogger.service")
 
-        # Settings (hydrated in reload_settings)
-        self._config: dict = {}
+        # Settings
+        self._config: dict[str, object] = {}
 
         self._csv_encoding_default = "utf-8"
         self._csv_read_chunk_size_default = 100_000
         self._csv_read_chunk_size = self._csv_read_chunk_size_default
         self._csv_sniff_delimiter: bool = True
-        self._csv_default_sep: str | None = None  
+        self._csv_default_sep: str | None = None
 
         self._excel_chunk_size_default = 25_000
         self._excel_chunk_size = self._excel_chunk_size_default
@@ -123,7 +129,7 @@ class FileLoader:
     # ================================================================
     # Settings hydration
     # ================================================================
-    def reload_settings(self, settings: dict) -> None:
+    def reload_settings(self, settings: dict[str, object]) -> None:
         """Apply runtime settings for CSV/Excel reading.
 
         Args:
@@ -131,38 +137,69 @@ class FileLoader:
         """
         with self._lock:
             try:
-                csv_settings = settings.get("csv", {}) or {}
-                excel_settings = settings.get("excel", {}) or {}
+                raw_csv_settings = settings.get("csv", {}) or {}
+                csv_settings = raw_csv_settings if isinstance(raw_csv_settings, dict) else {}
+                raw_excel_settings = settings.get("excel", {}) or {}
+                excel_settings = raw_excel_settings if isinstance(raw_excel_settings, dict) else {}
 
                 enc = csv_settings.get("default_encoding", self._csv_encoding_default)
-                self._csv_encoding_default = (enc or "").strip() or "utf-8"
+                self._csv_encoding_default = enc.strip() if isinstance(enc, str) and enc.strip() else "utf-8"
 
                 # Guard: ensure these are ints and > 0 if used
                 try:
                     self._csv_read_chunk_size = int(
                         csv_settings.get("read_chunk_size_rows", self._csv_read_chunk_size_default)
                     )
-                except Exception:
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ):
                     self._csv_read_chunk_size = self._csv_read_chunk_size_default
 
                 # CSV sniff toggle and default sep
                 try:
-                    self._csv_sniff_delimiter = bool(
-                        csv_settings.get("sniff_delimiter", True)
-                    )
+                    self._csv_sniff_delimiter = bool(csv_settings.get("sniff_delimiter", True))
 
-                except Exception:
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ):
                     self._csv_sniff_delimiter = True
 
                 # Optional default separator if sniff is disabled (or as a fallback)
                 sep_val = csv_settings.get("default_sep")
-                self._csv_default_sep = (sep_val if isinstance(sep_val, str) and sep_val else None)
+                self._csv_default_sep = sep_val if isinstance(sep_val, str) and sep_val else None
 
                 try:
-                    self._excel_chunk_size = int(
-                        excel_settings.get("chunk_size_rows", self._excel_chunk_size_default)
-                    )
-                except Exception:
+                    self._excel_chunk_size = int(excel_settings.get("chunk_size_rows", self._excel_chunk_size_default))
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ):
                     self._excel_chunk_size = self._excel_chunk_size_default
 
                 # Used for Documents fallback resolution
@@ -175,9 +212,19 @@ class FileLoader:
                     self._csv_sniff_delimiter,
                     self._csv_default_sep,
                     self._excel_chunk_size,
-
                 )
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 # Developer diagnostics: keep stack trace
                 self._logger.exception("FileLoader: failed reloading settings")
 
@@ -204,7 +251,18 @@ class FileLoader:
             candidate = expand(docs) / Path(file_name_or_path).name
             if candidate.exists():
                 return candidate
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             # Non-fatal; simply return None if fallback fails
             pass
 
@@ -258,7 +316,8 @@ class FileLoader:
                 corr_id,
                 fmt_path(file_name_or_path),
             )
-            raise FileNotFoundError(f"Could not resolve file: {file_name_or_path}")
+            msg = f"Could not resolve file: {file_name_or_path}"
+            raise FileNotFoundError(msg)
 
         suffix = path.suffix.lower()
         reader = self._readers.get(suffix)
@@ -269,10 +328,12 @@ class FileLoader:
                 fmt_path(path),
                 suffix,
             )
-            raise ValueError(f"Unsupported file format: {suffix}")
+            msg = f"Unsupported file format: {suffix}"
+            raise ValueError(msg)
 
         if cancel_cb is not None and cancel_cb():
-            raise OperationCancelledError("Loading was cancelled before start.")
+            msg = "Loading was cancelled before start."
+            raise OperationCancelledError(msg)
 
         req = ReadRequest(
             path=path,
@@ -289,12 +350,11 @@ class FileLoader:
             df = reader(req)
 
             if cancel_cb is not None and cancel_cb():
-                raise OperationCancelledError("Loading was cancelled during read.")
+                msg = "Loading was cancelled during read."
+                raise OperationCancelledError(msg)  # noqa: TRY301
 
             if progress_cb is not None:
                 progress_cb(100)
-
-            return df
 
         except OperationCancelledError:
             self._logger.info(
@@ -305,22 +365,33 @@ class FileLoader:
             )
             raise
 
-        except Exception as e:
-            self._logger.error(
-                "FileLoader: could not read file (corr=%s, path=%s, suffix=%s): %s",
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
+            self._logger.exception(
+                "FileLoader: could not read file (corr=%s, path=%s, suffix=%s)",
                 corr_id,
                 fmt_path(path),
                 suffix,
-                e,
-                exc_info=True,
             )
             raise
+        else:
+            return df
 
     # ================================================================
     # CSV reader
     # ================================================================
 
-    def _read_csv(self, req: ReadRequest) -> pd.DataFrame:  # noqa: C901
+    def _read_csv(self, req: ReadRequest) -> pd.DataFrame:
         """Read a CSV file with cooperative cancellation support.
 
         This method prefers chunked reading whenever cancellation support is needed,
@@ -350,12 +421,13 @@ class FileLoader:
 
         def _raise_if_cancelled() -> None:
             if req.cancel_cb is not None and req.cancel_cb():
-                raise OperationCancelledError("CSV loading cancelled.")
+                msg = "CSV loading cancelled."
+                raise OperationCancelledError(msg)
 
         # If cancellation support is present, prefer chunked reading even for
         # relatively small files. A single-shot pd.read_csv() call is not
         # cooperatively cancellable while parsing is in progress.
-        use_chunking = self._csv_read_chunk_size is not None and self._csv_read_chunk_size > 0
+        use_chunking = self._csv_read_chunk_size > 0
         if req.cancel_cb is not None:
             use_chunking = True
 
@@ -384,7 +456,7 @@ class FileLoader:
         from typing import BinaryIO, cast
 
         with req.path.open("rb") as raw_f:
-            f = cast(BinaryIO, raw_f)
+            f = cast("BinaryIO", raw_f)
             it = pd.read_csv(
                 f,
                 sep=(sep or None),
@@ -409,7 +481,18 @@ class FileLoader:
                     if req.progress_cb is not None and pct != last_pct:
                         req.progress_cb(pct)
                         last_pct = pct
-                except Exception:
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ):
                     # Never fail on progress reporting.
                     pass
 
@@ -427,7 +510,7 @@ class FileLoader:
     # ================================================================
     # Excel reader (streaming)
     # ================================================================
-    def _read_excel(self, req: ReadRequest) -> pd.DataFrame:  # noqa: C901
+    def _read_excel(self, req: ReadRequest) -> pd.DataFrame:
         """Read XLSX with a streaming approach (openpyxl read_only).
 
         Keeps memory usage reasonable and emits progress periodically.
@@ -436,7 +519,18 @@ class FileLoader:
         # Try streaming path first
         try:
             from openpyxl import load_workbook
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             # Fallback: pandas (fast; usually 0→100 progress)
             if req.progress_cb:
                 req.progress_cb(0)
@@ -454,14 +548,38 @@ class FileLoader:
             if isinstance(req.sheet_name, int):
                 try:
                     ws = wb.worksheets[req.sheet_name]
-                except Exception as e:
-                    raise ValueError(f"Sheet index out of range: {req.sheet_name}") from e
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as e:
+                    msg = f"Sheet index out of range: {req.sheet_name}"
+                    raise ValueError(msg) from e
             else:
                 name = str(req.sheet_name) if req.sheet_name is not None else str(wb.worksheets[0].title)
                 try:
                     ws = wb[name]
-                except Exception as e:
-                    raise ValueError(f"Sheet name not found: {req.sheet_name}") from e
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as e:
+                    msg = f"Sheet name not found: {req.sheet_name}"
+                    raise ValueError(msg) from e
 
             rows_iter = ws.iter_rows(values_only=True)
 
@@ -477,8 +595,19 @@ class FileLoader:
             try:
                 dim = ws.calculate_dimension()
                 _, _, _, max_row = range_boundaries(dim)
-                total_rows = max(0, int(max_row) - 1)  # exclude header
-            except Exception:
+                total_rows = 0 if max_row is None else max(0, int(max_row) - 1)  # exclude header
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 total_rows = 0
 
             # If dimension unreliable (0 or 1), quickly recount
@@ -497,8 +626,8 @@ class FileLoader:
 
             read_rows = 0
             last_emitted = -1
-            data: list[list[Any]] = []
-            batch: list[tuple[Any, ...] | None] = []
+            data: list[list[object]] = []
+            batch: list[tuple[object, ...] | None] = []
 
             def emit_progress(force: bool = False) -> None:
                 """Emit bounded progress [1..99] while streaming; 100 is sent at exit."""
@@ -547,13 +676,26 @@ class FileLoader:
             if req.index_col is not None and not df.empty:
                 try:
                     if isinstance(req.index_col, int):
-                        df.set_index(df.columns[req.index_col], inplace=True)
+                        df = df.set_index(df.columns[req.index_col])
                     else:
-                        df.set_index(req.index_col, inplace=True)
-                except Exception as e:
+                        df = df.set_index(req.index_col)
+                except (
+                    AttributeError,
+                    ConnectionError,
+                    FileNotFoundError,
+                    IndexError,
+                    KeyError,
+                    LookupError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as e:
                     self._logger.warning(
                         "FileLoader: excel index assignment failed (index_col=%r, cols=%s): %s",
-                        req.index_col, list(df.columns), e
+                        req.index_col,
+                        list(df.columns),
+                        e,
                     )
 
             if req.progress_cb:
@@ -573,7 +715,7 @@ class FileLoader:
         df = pd.read_json(req.path)
 
         if req.index_col is not None:
-            df.set_index(req.index_col, inplace=True)
+            df = df.set_index(req.index_col)
 
         return df
 
@@ -583,13 +725,14 @@ class FileLoader:
     # noinspection PyMethodMayBeStatic
     def _read_pickle(self, req: ReadRequest) -> pd.DataFrame:
         """Read a Pickle file into a pandas DataFrame."""
-        df = pd.read_pickle(req.path)
+        df = pd.read_pickle(req.path)  # noqa: S301 - local file format intentionally supports pickle
 
         if not isinstance(df, pd.DataFrame):
-            raise TypeError("Pickle file did not contain a pandas DataFrame")
+            msg = "Pickle file did not contain a pandas DataFrame"
+            raise TypeError(msg)
 
         if req.index_col is not None:
-            df.set_index(req.index_col, inplace=True)
+            df = df.set_index(req.index_col)
 
         return df
 
@@ -602,7 +745,7 @@ class FileLoader:
         df = pd.read_feather(req.path)
 
         if req.index_col is not None:
-            df.set_index(req.index_col, inplace=True)
+            df = df.set_index(req.index_col)
 
         return df
 
@@ -615,7 +758,7 @@ class FileLoader:
         df = pd.read_parquet(req.path)
 
         if req.index_col is not None:
-            df.set_index(req.index_col, inplace=True)
+            df = df.set_index(req.index_col)
 
         return df
 
@@ -630,20 +773,20 @@ class FileLoader:
             fmt_path(req.path),
             fmt_path_size(req.path),
         )
-        
+
         if req.cancel_cb and req.cancel_cb():
             return pd.DataFrame()
 
-        table = QvdTable.from_qvd(req.path)
+        table: QvdTable | Iterable[Any] = cast("Any", QvdTable.from_qvd(req.path))
 
         if isinstance(table, QvdTable):
-            df = table.to_pandas()
+            df: pd.DataFrame = table.to_pandas()
         else:
             # fallback om library faktiskt returnerar iterator
             tables = list(table)
             if not tables:
                 return pd.DataFrame()
-            df = tables[0].to_pandas()
+            df = cast("pd.DataFrame", tables[0].to_pandas())
 
         return df
 
@@ -665,7 +808,7 @@ class FileLoader:
         df = pd.read_spss(req.path)
 
         if req.index_col is not None:
-            df.set_index(req.index_col, inplace=True)
+            df = df.set_index(req.index_col)
 
         return df
 
@@ -684,12 +827,12 @@ class FileLoader:
         if req.cancel_cb and req.cancel_cb():
             return pd.DataFrame()
 
-        df_or_iter = pd.read_stata(req.path)
+        df_or_iter: pd.DataFrame | Iterable[Any] = cast("Any", pd.read_stata(req.path))
 
         if isinstance(df_or_iter, pd.DataFrame):
             return df_or_iter
 
-        return pd.concat(list(df_or_iter), ignore_index=True)
+        return cast("pd.DataFrame", pd.concat(list(df_or_iter), ignore_index=True))
 
     # ================================================================
     # Utility helpers
@@ -698,11 +841,22 @@ class FileLoader:
     def _sniff_delimiter(self, path: Path, encoding: str) -> str | None:
         r"""Heuristic delimiter detection for CSV. Returns one of , ; \\t | or None."""
         try:
-            import csv
             with path.open("r", encoding=encoding, newline="") as f:
                 sample = f.read(2048)
             return csv.Sniffer().sniff(sample, delimiters=",;\t|").delimiter
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+            csv.Error,
+        ):
             return None
 
     def _default_detect_encoding(self, path: Path) -> str:
@@ -730,7 +884,18 @@ class FileLoader:
                 return "utf-16le"
             if head.startswith(b"\xfe\xff"):
                 return "utf-16be"
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             pass
 
         for enc in candidates:
@@ -739,7 +904,19 @@ class FileLoader:
                     for _ in range(5):
                         if not f.readline():
                             break
-                return enc
-            except Exception:
+            except (
+                AttributeError,
+                ConnectionError,
+                FileNotFoundError,
+                IndexError,
+                KeyError,
+                LookupError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 continue
+            else:
+                return enc
         return "iso-8859-1"

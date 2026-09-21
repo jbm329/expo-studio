@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import MagicMock
 
 import pytest
 from PyQt6.QtWidgets import QTabWidget, QWidget
@@ -102,7 +101,13 @@ def controller(monkeypatch):
     )
     monkeypatch.setattr(
         "expo_jbm329.workbench.controllers.editor_panel_controller.SqlLintController",
-        lambda **kwargs: SimpleNamespace(install=lambda: None, schedule_lint=lambda: None, dispose=lambda: None, deleteLater=lambda: None, clear_diagnostics=lambda: None),
+        lambda **kwargs: SimpleNamespace(
+            install=lambda: None,
+            schedule_lint=lambda: None,
+            dispose=lambda: None,
+            deleteLater=lambda: None,
+            clear_diagnostics=lambda: None,
+        ),
     )
     monkeypatch.setattr(
         "expo_jbm329.workbench.controllers.editor_panel_controller.EditorTabContextMenu",
@@ -141,11 +146,10 @@ def test_bind_and_update_tab(controller):
 
 def test_active_tab_text_helpers(controller):
     ctrl, _, _ = controller
-    tab = ctrl.create_tab(base_title="MyQuery")
+    ctrl.create_tab(base_title="MyQuery")
     widget = ctrl.get_active_editor_widget()
     widget.set_sql_text("SELECT 1")
 
     assert ctrl.get_active_tab_text() == "SELECT 1"
     ctrl.set_active_tab_text("SELECT 2")
     assert widget.get_sql_text() == "SELECT 2"
-

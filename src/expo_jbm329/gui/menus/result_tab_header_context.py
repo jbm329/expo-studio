@@ -9,8 +9,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-import pandas as pd
-
 from expo_jbm329.services.data_profile.capabilities import (
     SeriesCapabilities,
     infer_series_capabilities,
@@ -21,12 +19,14 @@ from expo_jbm329.services.data_profile.semantics import (
 )
 
 if TYPE_CHECKING:
+    import pandas as pd
     from PyQt6.QtWidgets import QTableView
 
 
 # =====================================================================
 # Context object
 # =====================================================================
+
 
 @dataclass(frozen=True)
 class ResultTabHeaderContext:
@@ -53,6 +53,7 @@ class ResultTabHeaderContext:
 # =====================================================================
 # Context builder
 # =====================================================================
+
 
 def build_header_context(
     *,
@@ -90,7 +91,7 @@ def build_header_context(
     # --------------------------------------------------------------
     # Normal case
     # --------------------------------------------------------------
-    series = df[column_name]    
+    series = df[column_name]
 
     semantics = infer_series_semantics(series)
     storage_dtype = series.dtype.name

@@ -43,4 +43,3 @@ def test_generate_comparison_profile_report(mock_report, mock_compare):
     assert result is mock_compare.return_value
     assert mock_report.call_count == 2
     mock_compare.assert_called_once()
-

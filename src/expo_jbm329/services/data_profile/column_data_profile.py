@@ -4,18 +4,21 @@ This module provides robust and UI-independent profiling logic for
 computing descriptive statistics and simple visualization specs
 (histograms, top-N bars, weekday bars, boolean bars).
 """
+
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Hashable
 from dataclasses import dataclass, field
 from numbers import Real
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
 
 from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
+
+if TYPE_CHECKING:
+    from collections.abc import Hashable
 
 # ============================================================
 # Error handling
@@ -42,6 +45,7 @@ DISPLAY_DTYPE = {
 # Plot specification model
 # =====================================================================
 
+
 @dataclass
 class PlotSpec:
     """Lightweight descriptor for plotting instructions.
@@ -52,6 +56,7 @@ class PlotSpec:
         counts: Corresponding counts for each bin/bar.
         labels: Category/weekday labels when applicable.
     """
+
     kind: Literal["hist", "bar_topn", "bar_weekday", "bar_bool"] | None = None
     bins: list[float] | None = None
     counts: list[int] | None = None
@@ -69,16 +74,18 @@ class ColumnProfile:
         stats: Dictionary of computed metrics (e.g., counts, missingness).
         plot: A PlotSpec describing how to visualize the data, if applicable.
     """
+
     name: str
     semantic_dtype: SemanticDType
     storage_dtype: str
-    stats: dict[str, Any] = field(default_factory=dict)
+    stats: dict[str, object] = field(default_factory=dict)
     plot: PlotSpec = field(default_factory=PlotSpec)
 
 
 # =====================================================================
 # Internal helpers
 # =====================================================================
+
 
 def _safe_memory_usage(series: pd.Series) -> int:
     """Compute memory usage (bytes) for a Series with maximum safety.
@@ -87,10 +94,32 @@ def _safe_memory_usage(series: pd.Series) -> int:
     """
     try:
         return int(series.memory_usage(deep=True))
-    except Exception:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         try:
             return int(series.memory_usage(deep=False))
-        except Exception:
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ):
             return 0
 
 
@@ -108,7 +137,7 @@ def _topn_text(series: pd.Series, n: int = 3) -> list[tuple[str, int]]:
     return [(str(k), int(v)) for k, v in vc.items()]
 
 
-def _format_samples(series: pd.Series) -> list[Any]:
+def _format_samples(series: pd.Series) -> list[object]:
     """Return up to three raw example values from the series.
 
     This function MUST NOT:
@@ -126,7 +155,18 @@ def _format_samples(series: pd.Series) -> list[Any]:
         # Keep original order, unique values
         return list(non_null.unique()[:3])
 
-    except Exception:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         return []
 
 
@@ -137,7 +177,18 @@ def _any_bool_safe(bools: pd.Series) -> bool:
     """
     try:
         return bool(pd.Series(bools, copy=False).to_numpy(dtype=bool, na_value=False).any())
-    except Exception:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         # Last-resort fallback (very robust, slightly slower for huge series)
         return any(bool(x) for x in pd.Series(bools, copy=False).astype(object).tolist())
 
@@ -158,7 +209,18 @@ def _dget_scalar(desc: pd.Series, key: str, default: float = np.nan) -> float:
         if isinstance(val, Real):
             return float(val)
         return float(default)
-    except Exception:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         return float(default)
 
 
@@ -189,7 +251,8 @@ def _name_to_str(value: Hashable | None) -> str:
 # Numeric profiling
 # =====================================================================
 
-def _numeric_profile(s: pd.Series) -> tuple[dict[str, Any], PlotSpec]:
+
+def _numeric_profile(s: pd.Series) -> tuple[dict[str, object], PlotSpec]:
     """Perform numeric profiling on a Series.
 
     Includes:
@@ -201,7 +264,7 @@ def _numeric_profile(s: pd.Series) -> tuple[dict[str, Any], PlotSpec]:
     x = x.replace([np.inf, -np.inf], np.nan).dropna()
 
     m = int(x.shape[0])
-    out: dict[str, Any] = {}
+    out: dict[str, object] = {}
     plot = PlotSpec()
 
     if m == 0:
@@ -263,7 +326,8 @@ def _numeric_profile(s: pd.Series) -> tuple[dict[str, Any], PlotSpec]:
 # Datetime profiling
 # =====================================================================
 
-def _datetime_profile(s: pd.Series):
+
+def _datetime_profile(s: pd.Series) -> tuple[dict[str, object], PlotSpec]:
     """Datetime profiling with date-only detection.
 
     - min/max
@@ -271,7 +335,7 @@ def _datetime_profile(s: pd.Series):
     - weekday distribution
     """
     x = pd.to_datetime(s, errors=errors).dropna()
-    out: dict[str, Any] = {}
+    out: dict[str, object] = {}
     plot = PlotSpec()
 
     if x.empty:
@@ -307,17 +371,18 @@ def _datetime_profile(s: pd.Series):
 # Boolean profiling
 # =====================================================================
 
-def _bool_profile(s: pd.Series):
+
+def _bool_profile(s: pd.Series) -> tuple[dict[str, object], PlotSpec]:
     """Profile a boolean series.
 
     Args:
         s: The boolean series to profile.
 
     Returns:
-        tuple[dict[str, Any], PlotSpec]: The profile results and plot specification.
+        tuple[dict[str, object], PlotSpec]: The profile results and plot specification.
     """
     x = s.dropna()
-    out: dict[str, Any] = {}
+    out: dict[str, object] = {}
     plot = PlotSpec()
 
     if x.empty:
@@ -351,7 +416,8 @@ def _bool_profile(s: pd.Series):
 # Text / object / category profiling
 # =====================================================================
 
-def _text_or_category_profile(s: pd.Series):
+
+def _text_or_category_profile(s: pd.Series) -> tuple[dict[str, object], PlotSpec]:
     """Profile textual or categorical data.
 
     Includes:
@@ -359,13 +425,24 @@ def _text_or_category_profile(s: pd.Series):
     - string-length metrics (min/median/max/mean)
     - robust handling of non-string coercion issues.
     """
-    out: dict[str, Any] = {}
+    out: dict[str, object] = {}
     plot = PlotSpec()
 
     # Safe coercion to string
     try:
         x = s.dropna().astype(str)
-    except Exception:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         out["note.bytes"] = True
         return out, plot
 
@@ -400,6 +477,7 @@ def _text_or_category_profile(s: pd.Series):
 # Public API
 # =====================================================================
 
+
 def profile_series(s: pd.Series, name: str | None = None) -> ColumnProfile:
     """Produce a full profile for a pandas Series.
 
@@ -429,7 +507,7 @@ def profile_series(s: pd.Series, name: str | None = None) -> ColumnProfile:
     n_unique = int(s.nunique(dropna=True))
     mem = _safe_memory_usage(s)
 
-    base: dict[str, Any] = {
+    base: dict[str, object] = {
         "count.n": n,
         "missing.n": n_missing,
         "missing.pct": (n_missing / n) if n else 0.0,
@@ -486,13 +564,14 @@ def profile_series(s: pd.Series, name: str | None = None) -> ColumnProfile:
 
     # Constant?
     with contextlib.suppress(Exception):
-        base["constant.flag"] = (n_unique <= 1)
+        base["constant.flag"] = n_unique <= 1
 
     # If categorical, add transparent metadata (even if displayed as "string")
     with contextlib.suppress(Exception):
         from pandas import CategoricalDtype
+
         if isinstance(s.dtype, CategoricalDtype):
-            dt: CategoricalDtype = s.dtype  # type: ignore
+            dt: CategoricalDtype = s.dtype
             cats = dt.categories
             base["cat.count"] = len(cats)
             base["cat.ordered"] = bool(getattr(s.dtype, "ordered", False))

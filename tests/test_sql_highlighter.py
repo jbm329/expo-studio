@@ -218,7 +218,7 @@ def test_highlight_quoted_idents(editor, highlighter):
     expectations = {
         7: (8, highlighter._theme.quoted_ident),
         17: (7, highlighter._theme.bracketed_ident),
-        26: (10, highlighter._theme.quoted_ident)
+        26: (10, highlighter._theme.quoted_ident),
     }
 
     for pos, (length, color_theme) in expectations.items():

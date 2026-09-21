@@ -22,6 +22,10 @@ from expo_jbm329.services.data_operations.dtypes import classify_series_dtype
 
 errors: Literal["raise", "coerce"] = "coerce"
 
+MIN_YEAR_VALUE = 1800
+MAX_YEAR_VALUE = 2200
+DATETIME_SUCCESS_RATIO = 0.9
+
 
 @dataclass(frozen=True)
 class SeriesSemantics:
@@ -68,7 +72,7 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
     can_be_float = False
     can_be_datetime = False
     can_be_bool = False
-    
+
     non_null = s.dropna()
     sample_size = len(non_null)
     x_num: pd.Series | None = None
@@ -86,9 +90,20 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
             warnings.simplefilter("ignore", UserWarning)
             x_raw = pd.to_numeric(non_null, errors="raise")
 
-        x_num = x_raw if isinstance(x_raw, pd.Series) else pd.Series(x_raw, index=non_null.index)
+        x_num = x_raw
 
-    except Exception:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         pass
 
     if x_num is not None:
@@ -112,7 +127,7 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
         if can_be_int:
             xmin = int(x_num.min())
             xmax = int(x_num.max())
-            is_year_like = 1800 <= xmin <= 2200 and 1800 <= xmax <= 2200
+            is_year_like = MIN_YEAR_VALUE <= xmin <= MAX_YEAR_VALUE and MIN_YEAR_VALUE <= xmax <= MAX_YEAR_VALUE
 
     # ------------------------------------------------------------------
     # Datetime semantics
@@ -138,9 +153,20 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
             parsed = pd.to_datetime(sample, errors=errors)
             success_ratio = parsed.notna().mean()
 
-            can_be_datetime = bool(success_ratio > 0.9)
+            can_be_datetime = bool(success_ratio > DATETIME_SUCCESS_RATIO)
 
-    except Exception:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         pass
 
     # ------------------------------------------------------------------
@@ -156,7 +182,18 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
         elif x_num is not None:
             can_be_bool = bool(x_num.isin({0, 1}).all())
 
-    except Exception:
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
         pass
 
     # ------------------------------------------------------------------
@@ -164,24 +201,20 @@ def infer_series_semantics(s: pd.Series) -> SeriesSemantics:
     # ------------------------------------------------------------------
     cardinality_ratio: float | None = None
 
-    if semantic_dtype in ("string", "category"):        
-        cardinality_ratio = non_null.nunique() / sample_size   
+    if semantic_dtype in ("string", "category"):
+        cardinality_ratio = non_null.nunique() / sample_size
 
     return SeriesSemantics(
         semantic_dtype=semantic_dtype,
-
         # Numeric
         is_integer_like=is_integer_like,
         is_year_like=is_year_like,
-
         # Datetime
         has_time_component=has_time_component,
         is_date_only=is_date_only,
-
         # Text
         cardinality_ratio=cardinality_ratio,
         sample_size=sample_size,
-
         # Convertibility
         can_be_int=can_be_int,
         can_be_float=can_be_float,

@@ -132,13 +132,11 @@ def test_list_tables(db_service, mock_driver, mock_dialect, conn_config):
 
 
 def test_list_columns(db_service, mock_driver, conn_config):
-    df_cols = pd.DataFrame(
-        {
-            "COLUMN_NAME": ["id", "name"],
-            "DATA_TYPE": ["int", "varchar"],
-            "IS_NULLABLE": ["NO", "YES"],
-        }
-    )
+    df_cols = pd.DataFrame({
+        "COLUMN_NAME": ["id", "name"],
+        "DATA_TYPE": ["int", "varchar"],
+        "IS_NULLABLE": ["NO", "YES"],
+    })
     mock_driver.execute_df.return_value = df_cols
 
     columns = db_service.list_columns(conn_config, "dbo", "table1")
@@ -149,20 +147,20 @@ def test_list_columns(db_service, mock_driver, conn_config):
 
 def test_list_tables_sql_failure(db_service, mock_driver):
     mock_driver.execute_df.side_effect = Exception("Login failed")
-    db_service._classify_error = MagicMock(return_value=SqlError("connection", 18456, "Login failed", "Check credentials"))
+    db_service._classify_error = MagicMock(
+        return_value=SqlError("connection", 18456, "Login failed", "Check credentials")
+    )
 
     with pytest.raises(RuntimeError, match="Login failed"):
         db_service.list_tables(ConnectionConfig(name="test", engine="sqlite", protocol="sqlite"))
 
 
 def test_build_select_columns_auto(db_service, mock_driver, conn_config):
-    df_cols = pd.DataFrame(
-        {
-            "COLUMN_NAME": ["id", "name"],
-            "DATA_TYPE": ["int", "varchar"],
-            "IS_NULLABLE": ["NO", "YES"],
-        }
-    )
+    df_cols = pd.DataFrame({
+        "COLUMN_NAME": ["id", "name"],
+        "DATA_TYPE": ["int", "varchar"],
+        "IS_NULLABLE": ["NO", "YES"],
+    })
     mock_driver.execute_df.return_value = df_cols
 
     sql = db_service.build_select_columns_auto(conn_config, "dbo", "table1")

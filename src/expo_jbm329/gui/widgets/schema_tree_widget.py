@@ -5,10 +5,10 @@ information in a tree structure, with support for drag-and-drop operations
 to export SQL identifiers. It includes utilities for validating and formatting
 schema metadata.
 """
+
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, TypeGuard, override
 
 from PyQt6.QtCore import QMimeData, Qt
 from PyQt6.QtWidgets import (
@@ -18,8 +18,14 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
 
-def _is_valid_meta(meta: Any) -> bool:
+
+SchemaItemMeta = dict[str, str]
+
+
+def _is_valid_meta(meta: object) -> TypeGuard[SchemaItemMeta]:
     """Validates the structure of metadata dicts placed in UserRole.
 
     Checks if the provided metadata dict conforms to the expected shapes for
@@ -37,9 +43,9 @@ def _is_valid_meta(meta: Any) -> bool:
         return False
     t = meta.get("type")
     if t in {"table", "view"}:
-        return all(k in meta for k in ("schema", "name"))
+        return all(isinstance(meta.get(k), str) for k in ("type", "schema", "name"))
     if t == "column":
-        return all(k in meta for k in ("schema", "table", "column"))
+        return all(isinstance(meta.get(k), str) for k in ("type", "schema", "table", "column"))
     return False
 
 
@@ -71,7 +77,7 @@ def _qualify_column(schema: str, table: str, column: str) -> str:
 
 
 def build_drag_text_from_meta(
-    metas: Iterable[dict[str, Any]],
+    metas: Iterable[SchemaItemMeta],
     *,
     prefer_multiline_for_same_table: bool = True,
     indent: str = "    ",
@@ -174,12 +180,10 @@ class SchemaTreeWidget(QTreeWidget):
         self.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)  # drop: no
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)  # multi-select
 
-        # Optional: disable default sorting (SchemaController controls structure)
-        # self.setSortingEnabled(False)
-
     # --------------------------------------------------------------------------
     # Qt override: build mime data for drag
     # --------------------------------------------------------------------------
+    @override
     def mimeData(self, items: Iterable[QTreeWidgetItem]) -> QMimeData:
         """Builds MIME data for drag operations.
 
@@ -197,7 +201,7 @@ class SchemaTreeWidget(QTreeWidget):
         selected: Sequence[QTreeWidgetItem] = list(items) if items else self.selectedItems()
 
         # Extract and normalize meta dicts
-        metas: list[dict[str, Any]] = []
+        metas: list[SchemaItemMeta] = []
         for it in selected:
             meta = it.data(0, Qt.ItemDataRole.UserRole)
             if _is_valid_meta(meta):
