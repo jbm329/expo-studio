@@ -25,11 +25,6 @@ def _archive_base_name() -> str:
     return f"{release_metadata.app_slug}-{release_metadata.version}-linux-portable-{date_str}"
 
 
-def _archive_path() -> Path:
-    """Return the Linux portable archive output path."""
-    return release_dir() / f"{_archive_base_name()}.tar.gz"
-
-
 def _required_paths(stage_dir: Path) -> list[Path]:
     """Return required staged files and directories for Linux packaging."""
     return [
@@ -81,7 +76,7 @@ def package_linux_tarball() -> int:
 
     stage_dir = staging_dir()
     archive_base_name = _archive_base_name()
-    archive_path = _archive_path()
+    archive_path = release_dir() / f"{archive_base_name}.tar.gz"
 
     print(f"[package-linux] staging={stage_dir}")
     print(f"[package-linux] archive={archive_path}")

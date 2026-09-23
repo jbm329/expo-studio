@@ -235,6 +235,7 @@ ignore_errors = true
 module = [
 "expo_jbm329.gui.dialogs.visualization.chart_preview_widget",
 "expo_jbm329.gui.dialogs.column_properties_dialog",
+"expo_jbm329.build.package_windows",
 ]
 disable_error_code = ["unused-ignore"]
 
