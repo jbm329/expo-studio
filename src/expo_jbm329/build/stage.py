@@ -137,8 +137,9 @@ def _validate_staging_output(paths: StagePaths) -> bool:
     missing = [staged_expo_dir] if not staged_expo_dir.is_dir() else []
     missing.extend(_missing_staged_dist_entries(source_dir=paths.dist_expo_dir, target_dir=staged_expo_dir))
     missing.extend(
-        path for path in (
-            paths.staging_dir / file_name for file_name in get_documentation_files()) if not path.is_file()
+        path
+        for path in (paths.staging_dir / file_name for file_name in get_documentation_files())
+        if not path.is_file()
     )
 
     release_notes_path = paths.staging_dir / get_release_notes_file()
