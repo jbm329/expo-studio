@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 from PIL import Image
 
 from expo_jbm329.build.build_utils import detect_platform, project_root
+from expo_jbm329.build.version import get_executable_name
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -22,20 +23,6 @@ if TYPE_CHECKING:
 
 PYINSTALLER_VERSION = "pyinstaller>=6.19"
 APP_NAME = "expo"
-
-
-def executable_name(platform_name: str) -> str:
-    """Return the platform-specific executable file name.
-
-    Args:
-        platform_name: Normalized platform name from build utilities.
-
-    Returns:
-        Name of the executable produced by PyInstaller.
-    """
-    if platform_name == "windows":
-        return f"{APP_NAME}.exe"
-    return APP_NAME
 
 
 def _onedir_environment() -> dict[str, str]:
@@ -95,7 +82,7 @@ def _kill_running_expo() -> None:
         return
 
     subprocess.run(  # noqa: S603 - trusted Windows cleanup command
-        ["taskkill", "/IM", executable_name("windows"), "/F"],  # noqa: S607 - Windows system utility
+        ["taskkill", "/IM", get_executable_name("windows"), "/F"],  # noqa: S607 - Windows system utility
         check=False,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -191,7 +178,7 @@ def build_onedir() -> int:
     entry = root / "src" / "expo_jbm329" / "gui_main.py"
     dist_root = root / "dist"
     platform_name = detect_platform()
-    exe_path = dist_root / APP_NAME / executable_name(platform_name)
+    exe_path = dist_root / APP_NAME / get_executable_name(platform_name)
 
     print(f"[build-onedir] root={root}")
     print(f"[build-onedir] entry={entry}")

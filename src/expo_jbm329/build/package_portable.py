@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import sys
 import zipfile
-from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from expo_jbm329.build.build_utils import release_dir, staging_dir
-from expo_jbm329.build.stage import DOCUMENTATION_FILES, RELEASE_NOTES_FILE, build_metadata
+from expo_jbm329.build.build_utils import detect_platform, release_dir, staging_dir
+from expo_jbm329.build.version import get_documentation_files, get_release_name, get_release_notes_file
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -16,17 +15,15 @@ if TYPE_CHECKING:
 
 def _archive_name() -> str:
     """Return the portable ZIP archive name."""
-    release_metadata = build_metadata()
-    date_str = datetime.now(UTC).astimezone().strftime("%Y-%m-%d")
-    return f"{release_metadata.app_slug}-{release_metadata.version}-{release_metadata.platform}-portable-{date_str}.zip"
+    return get_release_name(platform=detect_platform(), package_type="portable", extension="zip")
 
 
 def _required_paths(stage_dir: Path) -> list[Path]:
     """Return required staged files and directories for portable packaging."""
     return [
         stage_dir / "expo",
-        *(stage_dir / file_name for file_name in DOCUMENTATION_FILES),
-        stage_dir / RELEASE_NOTES_FILE,
+        *(stage_dir / file_name for file_name in get_documentation_files()),
+        stage_dir / get_release_notes_file(),
     ]
 
 

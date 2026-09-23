@@ -12,9 +12,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from string import Template
 
-from expo_jbm329.build.build import executable_name
 from expo_jbm329.build.build_utils import installer_dir, project_root, release_dir, staging_dir
-from expo_jbm329.build.stage import DOCUMENTATION_FILES, RELEASE_NOTES_FILE, ReleaseMetadata, build_metadata
+from expo_jbm329.build.version import (
+    DOCUMENTATION_FILES,
+    RELEASE_NOTES_FILE,
+    ReleaseMetadata,
+    build_metadata,
+    get_executable_name,
+    get_release_name,
+)
 
 PUBLISHER = "Jonas Brännström"
 TEMPLATE_FILE = "installer.iss.in"
@@ -113,14 +119,22 @@ def _find_iscc_exe_from_registry() -> Path | None:
         return None
 
     uninstall_keys = [
-        (winreg.HKEY_LOCAL_MACHINE,  # type: ignore[attr-defined]
-         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 7_is1"),
-        (winreg.HKEY_LOCAL_MACHINE,  # type: ignore[attr-defined]
-         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1"),
-        (winreg.HKEY_CURRENT_USER,  # type: ignore[attr-defined]
-         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 7_is1"),
-        (winreg.HKEY_CURRENT_USER,  # type: ignore[attr-defined]
-         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1"),
+        (
+            winreg.HKEY_LOCAL_MACHINE,  # type: ignore[attr-defined]
+            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 7_is1",
+        ),
+        (
+            winreg.HKEY_LOCAL_MACHINE,  # type: ignore[attr-defined]
+            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1",
+        ),
+        (
+            winreg.HKEY_CURRENT_USER,  # type: ignore[attr-defined]
+            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 7_is1",
+        ),
+        (
+            winreg.HKEY_CURRENT_USER,  # type: ignore[attr-defined]
+            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1",
+        ),
     ]
     for hive, subkey in uninstall_keys:
         with contextlib.suppress(OSError), winreg.OpenKey(hive, subkey) as key:  # type: ignore[attr-defined]
@@ -182,7 +196,7 @@ def render_inno_script(paths: WindowsInstallerPaths, release_metadata: ReleaseMe
         Path to the generated Inno Setup script.
     """
     paths.build_dir.mkdir(parents=True, exist_ok=True)
-    output_base_filename = f"{release_metadata.app_slug}-{release_metadata.version}-setup"
+    output_base_filename = get_release_name(platform="windows", package_type="setup", extension="")
     template = Template(paths.template_path.read_text(encoding="utf-8"))
     script = template.substitute(
         APP_ID=_inno_literal(_load_or_create_app_id(paths.app_id_path)),
@@ -190,7 +204,7 @@ def render_inno_script(paths: WindowsInstallerPaths, release_metadata: ReleaseMe
         APP_SLUG=release_metadata.app_slug,
         VERSION=release_metadata.version,
         PUBLISHER=PUBLISHER,
-        EXE_NAME=executable_name("windows"),
+        EXE_NAME=get_executable_name("windows"),
         SOURCE_DIR=_windows_path(paths.source_dir),
         OUTPUT_DIR=_windows_path(paths.output_dir),
         OUTPUT_BASE_FILENAME=output_base_filename,

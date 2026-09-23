@@ -6,39 +6,24 @@ import shutil
 import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from importlib.metadata import PackageNotFoundError, metadata
 from typing import TYPE_CHECKING
 
 from expo_jbm329.build.build_utils import (
-    detect_platform,
     dist_dir,
     prepare_clean_directory,
     project_root,
     staging_dir,
 )
+from expo_jbm329.build.version import (
+    ReleaseMetadata,
+    build_metadata,
+    get_documentation_files,
+    get_release_notes_file,
+    get_source_code_url,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-
-APP_NAME = "Expo Studio"
-APP_SLUG = "ExpoStudio"
-PACKAGE_NAME = "expo_jbm329"
-SOURCE_CODE_URL = "https://github.com/jbm329/expo-studio"
-DOCUMENTATION_FILES = ("LICENSE.txt", "README.md", "CHANGELOG.md")
-RELEASE_NOTES_FILE = "RELEASE-NOTES.txt"
-
-
-@dataclass(frozen=True)
-class ReleaseMetadata:
-    """Metadata used for staged release notes."""
-
-    app_name: str
-    app_slug: str
-    package: str
-    version: str
-    license: str
-    platform: str
 
 
 @dataclass(frozen=True)
@@ -48,28 +33,6 @@ class StagePaths:
     root: Path
     dist_expo_dir: Path
     staging_dir: Path
-
-
-def build_metadata() -> ReleaseMetadata:
-    """Return normalized metadata used for release staging."""
-    try:
-        package_metadata = metadata(PACKAGE_NAME)
-        version = package_metadata.get("Version", "unknown")
-        license_name = (
-            package_metadata.get("License-Expression") or package_metadata.get("License") or "GPL-3.0-or-later"
-        )
-    except PackageNotFoundError:
-        version = "dev"
-        license_name = "GPL-3.0-or-later"
-
-    return ReleaseMetadata(
-        app_name=APP_NAME,
-        app_slug=APP_SLUG,
-        package=PACKAGE_NAME,
-        version=version,
-        license=license_name,
-        platform=detect_platform(),
-    )
 
 
 def build_release_notes(release_metadata: ReleaseMetadata, build_type: str = "onedir") -> str:
@@ -90,7 +53,7 @@ def build_release_notes(release_metadata: ReleaseMetadata, build_type: str = "on
         f"Platform: {release_metadata.platform}\n"
         f"Build type: {build_type}\n\n"
         f"License: {release_metadata.license}\n"
-        f"Source code: {SOURCE_CODE_URL}\n\n"
+        f"Source code: {get_source_code_url()}\n\n"
         "This is a standalone desktop build created from the open source project.\n"
         "The application is provided as-is and developed as a personal side project.\n"
     )
@@ -108,7 +71,7 @@ def _stage_paths() -> StagePaths:
 
 def _required_source_files(root: Path) -> dict[str, Path]:
     """Return source documentation files required for staging."""
-    return {file_name: root / file_name for file_name in DOCUMENTATION_FILES}
+    return {file_name: root / file_name for file_name in get_documentation_files()}
 
 
 def _validate_sources(paths: StagePaths, documentation_files: dict[str, Path]) -> bool:
@@ -142,7 +105,7 @@ def _copy_dist_expo(source_dir: Path, target_dir: Path) -> None:
 
 def _write_release_notes(target_dir: Path, release_metadata: ReleaseMetadata) -> Path:
     """Generate release notes in the staging directory."""
-    release_notes_path = target_dir / RELEASE_NOTES_FILE
+    release_notes_path = target_dir / get_release_notes_file()
     release_notes_path.write_text(
         build_release_notes(release_metadata=release_metadata),
         encoding="utf-8",
@@ -174,10 +137,11 @@ def _validate_staging_output(paths: StagePaths) -> bool:
     missing = [staged_expo_dir] if not staged_expo_dir.is_dir() else []
     missing.extend(_missing_staged_dist_entries(source_dir=paths.dist_expo_dir, target_dir=staged_expo_dir))
     missing.extend(
-        path for path in (paths.staging_dir / file_name for file_name in DOCUMENTATION_FILES) if not path.is_file()
+        path for path in (
+            paths.staging_dir / file_name for file_name in get_documentation_files()) if not path.is_file()
     )
 
-    release_notes_path = paths.staging_dir / RELEASE_NOTES_FILE
+    release_notes_path = paths.staging_dir / get_release_notes_file()
     if not release_notes_path.is_file():
         missing.append(release_notes_path)
 

@@ -5,46 +5,45 @@ from __future__ import annotations
 import os
 import sys
 import tarfile
-from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from expo_jbm329.build.build_utils import detect_platform, release_dir, staging_dir
-from expo_jbm329.build.stage import DOCUMENTATION_FILES, RELEASE_NOTES_FILE, build_metadata
+from expo_jbm329.build.version import (
+    get_documentation_files,
+    get_executable_name,
+    get_release_name,
+    get_release_notes_file,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
-EXECUTABLE_NAME = "expo"
-
-
-def _archive_base_name() -> str:
+def _archive_base_name(platform_name: str) -> str:
     """Return the Linux portable archive base name without extension."""
-    release_metadata = build_metadata()
-    date_str = datetime.now(UTC).astimezone().strftime("%Y-%m-%d")
-    return f"{release_metadata.app_slug}-{release_metadata.version}-linux-portable-{date_str}"
+    return get_release_name(platform=platform_name, package_type="portable", extension="")
 
 
-def _required_paths(stage_dir: Path) -> list[Path]:
+def _required_paths(stage_dir: Path, platform_name: str) -> list[Path]:
     """Return required staged files and directories for Linux packaging."""
     return [
         stage_dir / "expo",
-        stage_dir / "expo" / EXECUTABLE_NAME,
-        *(stage_dir / file_name for file_name in DOCUMENTATION_FILES),
-        stage_dir / RELEASE_NOTES_FILE,
+        stage_dir / "expo" / get_executable_name(platform_name),
+        *(stage_dir / file_name for file_name in get_documentation_files()),
+        stage_dir / get_release_notes_file(),
     ]
 
 
-def _validate_inputs(stage_dir: Path) -> bool:
+def _validate_inputs(stage_dir: Path, platform_name: str) -> bool:
     """Validate required staged files, directories, and executable permissions."""
-    missing = [path for path in _required_paths(stage_dir) if not path.exists()]
+    missing = [path for path in _required_paths(stage_dir, platform_name) if not path.exists()]
     if missing:
         print("[package-linux] Missing required staged files or directories:", file=sys.stderr)
         for path in missing:
             print(f" - {path}", file=sys.stderr)
         return False
 
-    executable_path = stage_dir / "expo" / EXECUTABLE_NAME
+    executable_path = stage_dir / "expo" / get_executable_name(platform_name)
     if not executable_path.is_file():
         print(f"[package-linux] Expected executable is not a file: {executable_path}", file=sys.stderr)
         return False
@@ -75,13 +74,13 @@ def package_linux_tarball() -> int:
         return 1
 
     stage_dir = staging_dir()
-    archive_base_name = _archive_base_name()
+    archive_base_name = _archive_base_name(platform_name)
     archive_path = release_dir() / f"{archive_base_name}.tar.gz"
 
     print(f"[package-linux] staging={stage_dir}")
     print(f"[package-linux] archive={archive_path}")
 
-    if not _validate_inputs(stage_dir):
+    if not _validate_inputs(stage_dir, platform_name):
         return 1
 
     archive_path.parent.mkdir(parents=True, exist_ok=True)
