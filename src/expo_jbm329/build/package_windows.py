@@ -113,14 +113,14 @@ def _find_iscc_exe_from_registry() -> Path | None:
         return None
 
     uninstall_keys = [
-        (winreg.HKEY_LOCAL_MACHINE,
-         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 7_is1"),  # type: ignore[attr-defined]
-        (winreg.HKEY_LOCAL_MACHINE,
-         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1"),  # type: ignore[attr-defined]
-        (winreg.HKEY_CURRENT_USER,
-         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 7_is1"),  # type: ignore[attr-defined]
-        (winreg.HKEY_CURRENT_USER,
-         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1"),  # type: ignore[attr-defined]
+        (winreg.HKEY_LOCAL_MACHINE,  # type: ignore[attr-defined]
+         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 7_is1"),
+        (winreg.HKEY_LOCAL_MACHINE,  # type: ignore[attr-defined]
+         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1"),
+        (winreg.HKEY_CURRENT_USER,  # type: ignore[attr-defined]
+         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 7_is1"),
+        (winreg.HKEY_CURRENT_USER,  # type: ignore[attr-defined]
+         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1"),
     ]
     for hive, subkey in uninstall_keys:
         with contextlib.suppress(OSError), winreg.OpenKey(hive, subkey) as key:  # type: ignore[attr-defined]
