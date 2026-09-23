@@ -37,7 +37,7 @@ def test_menu_actions_wire_callbacks():
     ctrl._act_save_as.trigger()
     ctrl._act_quit.trigger()
     ctrl._act_clear.trigger()
-    ctrl.act_ydata_profiling.trigger()
+    ctrl.act_data_profiling.trigger()
 
     assert callbacks["new_file"].called
     assert callbacks["open_file"].called

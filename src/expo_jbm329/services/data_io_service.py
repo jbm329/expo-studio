@@ -32,7 +32,7 @@ class DataIOService:
     Responsibilities:
       • Resolve & load DataFrames using FileLoader
       • Export DataFrames to CSV/Excel/datafile using FileWriter
-      • Generate ydata-profiling reports (single/compare) and write to HTML
+      • Generate fg-data-profiling reports (single/compare) and write to HTML
 
     Notes:
       - Logs & docstrings are English. UI strings live in controllers.
@@ -541,7 +541,7 @@ class DataIOService:
         job_scope: str | None = None,
         corr_id: str | None = None,
     ) -> JobResult:
-        """Generates a ydata-profiling report for one DataFrame and returns JobResult.
+        """Generates a fg-data-profiling report for one DataFrame and returns JobResult.
 
         Args:
             df: The DataFrame to profile.

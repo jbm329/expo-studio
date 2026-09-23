@@ -40,6 +40,9 @@ print(f"[spec] ROOT={ROOT}")
 datas = []
 binaries = []
 
+PROFILING_IMPORT_PACKAGE = "data_profiling"
+PROFILING_DISTRIBUTION = "fg-data-profiling"
+
 # -------------------------------
 # Qt6 (PyQt6) - plugins and DLL:s
 # -------------------------------
@@ -68,15 +71,15 @@ hiddenimports += ["matplotlib.backends.backend_svg"]
 try:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
-        import ydata_profiling  # noqa: F401
+        import data_profiling  # noqa: F401
 except ImportError:
     pass
 else:
-    hiddenimports += collect_submodules("ydata_profiling.model.pandas")
-    hiddenimports += collect_submodules("ydata_profiling.report.presentation.flavours.html")
-    datas += copy_metadata("ydata_profiling")
+    hiddenimports += collect_submodules(f"{PROFILING_IMPORT_PACKAGE}.model.pandas")
+    hiddenimports += collect_submodules(f"{PROFILING_IMPORT_PACKAGE}.report.presentation.flavours.html")
+    datas += copy_metadata(PROFILING_DISTRIBUTION)
     datas += collect_data_files(
-        "ydata_profiling",
+        PROFILING_IMPORT_PACKAGE,
         includes=[
             "report/presentation/flavours/html/templates/*",
             "report/presentation/flavours/html/templates/**/*",
@@ -150,8 +153,8 @@ a = Analysis(
         "pyspark",
         "pytest",
         "sphinx",
-        "ydata_profiling.model.spark",
-        "ydata_profiling.report.presentation.flavours.widget",
+        "data_profiling.model.spark",
+        "data_profiling.report.presentation.flavours.widget",
     ],
     noarchive=False,
     optimize=1,

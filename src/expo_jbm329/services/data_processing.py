@@ -1,7 +1,7 @@
 """Data processing services, primarily for generating profile reports.
 
 This module provides functions to generate single and comparison profile reports
-using ydata-profiling.
+using fg-data-profiling.
 """
 
 from __future__ import annotations
@@ -19,10 +19,10 @@ logger = logging.getLogger("applogger.service")
 
 
 # ------------------------------------------------------------
-# Ydata-Profiling
+# fg-data-profiling
 # ------------------------------------------------------------
 def generate_profile_report(df: pd.DataFrame, title: str, corr_id: str) -> ProfileReport:
-    """Build a ydata-profiling report for a single DataFrame.
+    """Build a fg-data-profiling report for a single DataFrame.
 
     Args:
         df: The DataFrame to profile.

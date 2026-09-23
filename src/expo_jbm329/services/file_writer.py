@@ -936,7 +936,7 @@ class FileWriter:
         return path
 
     def save_profile(self, profile: object, dest: str | Path, *, corr_id: str | None = None) -> Path:
-        """Writes a ydata-profiling ProfileReport to HTML."""
+        """Writes a fg-data-profiling ProfileReport to HTML."""
         path = Path(dest)
         path.parent.mkdir(parents=True, exist_ok=True)
         self._logger.debug("FileWriter: save profile start (corr=%s, path=%s)", corr_id, fmt_path(path))

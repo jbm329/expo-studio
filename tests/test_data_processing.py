@@ -3,15 +3,15 @@ from __future__ import annotations
 import sys
 from unittest.mock import MagicMock, patch
 
-if "ydata_profiling" not in sys.modules:
-    sys.modules["ydata_profiling"] = MagicMock()
+if "data_profiling" not in sys.modules:
+    sys.modules["data_profiling"] = MagicMock()
 
 import pandas as pd
 
 from expo_jbm329.services import data_processing
 
 
-@patch("ydata_profiling.ProfileReport")
+@patch("data_profiling.ProfileReport")
 def test_generate_profile_report(mock_report):
     df = pd.DataFrame({"A": [1, 2, 3]})
     instance = MagicMock()
@@ -28,8 +28,8 @@ def test_generate_profile_report(mock_report):
     assert kwargs["progress_bar"] is False
 
 
-@patch("ydata_profiling.compare")
-@patch("ydata_profiling.ProfileReport")
+@patch("data_profiling.compare")
+@patch("data_profiling.ProfileReport")
 def test_generate_comparison_profile_report(mock_report, mock_compare):
     df1 = pd.DataFrame({"A": [1, 2]})
     df2 = pd.DataFrame({"A": [3, 4]})

@@ -37,7 +37,7 @@ The project is still in its infancy and may change significantly.
 - **Data Preparation**: Built-in tools for joining and concatenating datasets within the workbench.
 - **Data Transformation**: Apply transformations to datasets using a visual interface.
 - **Export Capabilities**: Export query results to multiple formats including **CSV**, **feather**, **parquet**, and more.
-- **Dataset Analysis**: Integrated data profiling (via `ydata-profiling`) for in-depth dataset statistics.
+- **Dataset Analysis**: Integrated data profiling (via `fg-data-profiling`) for in-depth dataset statistics.
 - **Column Analysis**: Analyze column types and distributions to understand data quality and structure.
 - **Persistence**: Supports management of database connections, application settings, and logs.
 
@@ -251,7 +251,7 @@ The project uses `uv` for dependency management.
 # Sync dependencies
 uv sync
 
-# Sync dependencies ydata-profiling
+# Sync dependencies for fg-data-profiling
 uv sync --extra profiling
 
 # Sync dev dependencies (ruff, pytest, mypy etc.)
