@@ -81,7 +81,7 @@ def package_linux_tarball() -> int:
 
     stage_dir = staging_dir()
     archive_base_name = _archive_base_name()
-    archive_path = release_dir() / f"{archive_base_name}.tar.gz"
+    archive_path = _archive_path()
 
     print(f"[package-linux] staging={stage_dir}")
     print(f"[package-linux] archive={archive_path}")
