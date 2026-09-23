@@ -72,11 +72,12 @@ profiling = [
 [project.scripts]
 expo-gui = "expo_jbm329.gui_main:gui_main"
 expo = "expo_jbm329.cli_main:cli_main"
-build-exe = "expo_jbm329.build:build_exe"
+build-exe = "expo_jbm329.build.build:main"
 build-release = "expo_jbm329.build:build_release"
-build-resources = "expo_jbm329.build_resources:main"
-build-i18n = "expo_jbm329.build_i18n:main"
-build-locales = "expo_jbm329.build_locales:main"
+build-resources = "expo_jbm329.build.build_resources:main"
+build-i18n = "expo_jbm329.build.build_i18n:main"
+build-locales = "expo_jbm329.build.build_locales:main"
+test = "expo_jbm329.build.build:main"
 
 # -------------------------------
 # Package-data (ikoner, qrc)

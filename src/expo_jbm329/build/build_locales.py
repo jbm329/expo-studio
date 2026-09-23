@@ -4,19 +4,18 @@ import pathlib
 import subprocess
 import sys
 
-BASE = pathlib.Path(__file__).parent
+from expo_jbm329.build.build_utils import locales_dir
 
-LOCALES_DIR = BASE / "i18n" / "locales"
 TS_GLOB = "app_*.ts"
 
 
 def find_ts_files() -> list[pathlib.Path]:
     """Return all .ts files under the locales directory."""
-    if not LOCALES_DIR.exists():
-        print(f"❌ Locales directory not found: {LOCALES_DIR}")
+    if not locales_dir().exists():
+        print(f"❌ Locales directory not found: {locales_dir()}")
         return []
 
-    return sorted(LOCALES_DIR.glob(TS_GLOB))
+    return sorted(locales_dir().glob(TS_GLOB))
 
 
 def compile_ts(ts_path: pathlib.Path) -> pathlib.Path:

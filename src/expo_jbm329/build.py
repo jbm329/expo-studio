@@ -369,7 +369,7 @@ def _write_inno_script(
     app_id: str,
 ) -> Path:
     """Generate an Inno Setup script for installer/uninstaller/upgrade support."""
-    script_path = root / "build" / "installer.iss"
+    script_path = root / "tools" / "installer" / "installer.iss"
     script_path.parent.mkdir(parents=True, exist_ok=True)
     escaped_app_id = app_id.replace("{", "{{").replace("}", "}}")
 
