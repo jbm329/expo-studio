@@ -1,0 +1,51 @@
+[Setup]
+AppId=$APP_ID
+AppName=$APP_NAME
+SetupIconFile=$ICON_PATH
+WizardSmallImageFile=$WIZARD_SMALL_IMAGE_PATH
+WizardImageFile=$WIZARD_IMAGE_PATH
+LicenseFile=$LICENSE_PATH
+InfoAfterFile=$RELEASE_NOTES_PATH
+AppVersion=$VERSION
+AppPublisher=$PUBLISHER
+DefaultDirName={autopf}\$APP_NAME
+DisableProgramGroupPage=yes
+DefaultGroupName=$APP_NAME
+UninstallDisplayIcon={app}\$EXE_NAME
+OutputDir=$OUTPUT_DIR
+OutputBaseFilename=$OUTPUT_BASE_FILENAME
+Compression=lzma
+SolidCompression=yes
+WizardStyle=modern
+ShowLanguageDialog=auto
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
+PrivilegesRequired=admin
+PrivilegesRequiredOverridesAllowed=dialog
+
+[Languages]
+Name: "swedish"; MessagesFile: "compiler:Languages\Swedish.isl"
+Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[CustomMessages]
+swedish.desktopicon=Skapa genväg på skrivbordet
+swedish.launch=Starta $APP_NAME
+english.desktopicon=Create desktop shortcut
+english.launch=Launch $APP_NAME
+
+[Tasks]
+Name: "desktopicon"; Description: "{cm:desktopicon}"; Flags: unchecked
+
+[Files]
+Source: "$SOURCE_DIR\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "$README_PATH"; DestDir: "{app}"
+Source: "$CHANGELOG_PATH"; DestDir: "{app}"
+Source: "$LICENSE_PATH"; DestDir: "{app}"
+Source: "$RELEASE_NOTES_PATH"; DestDir: "{app}"
+
+[Icons]
+Name: "{group}\$APP_NAME"; Filename: "{app}\$EXE_NAME"
+Name: "{autodesktop}\$APP_NAME"; Filename: "{app}\$EXE_NAME"; Tasks: desktopicon
+
+[Run]
+Filename: "{app}\$EXE_NAME"; Description: "{cm:launch}"; Flags: nowait postinstall skipifsilent

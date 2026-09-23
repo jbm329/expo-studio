@@ -2,23 +2,24 @@
 
 from __future__ import annotations
 
-import pathlib
 import subprocess
 import sys
+from typing import TYPE_CHECKING
 
-BASE = pathlib.Path(__file__).parent
-SRC_ROOT = BASE
-LOCALES_DIR = BASE / "i18n" / "locales"
+from expo_jbm329.build.build_utils import locales_dir, src_root
+
+if TYPE_CHECKING:
+    import pathlib
 
 TS_FILES = [
-    LOCALES_DIR / "app_en.ts",
-    LOCALES_DIR / "app_sv.ts",
+    locales_dir() / "app_en.ts",
+    locales_dir() / "app_sv.ts",
 ]
 
 
 def ensure_locales_dir() -> None:
     """Ensure that the locales directory exists."""
-    LOCALES_DIR.mkdir(parents=True, exist_ok=True)
+    locales_dir().mkdir(parents=True, exist_ok=True)
 
 
 def run_pylupdate(ts_file: pathlib.Path) -> None:
@@ -29,7 +30,7 @@ def run_pylupdate(ts_file: pathlib.Path) -> None:
     """
     cmd = [
         "pylupdate6",
-        str(SRC_ROOT),
+        str(src_root()),
         "--ts",
         str(ts_file),
     ]

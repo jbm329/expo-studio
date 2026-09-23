@@ -5,11 +5,11 @@ import re
 import subprocess
 import sys
 
-BASE = pathlib.Path(__file__).parent
+from expo_jbm329.build.build_utils import icons_qrc, splash_qrc
 
 QRC_FILES = [
-    BASE / "workbench/splash/splash.qrc",
-    BASE / "workbench/icon/icons.qrc",
+    splash_qrc(),
+    icons_qrc(),
 ]
 
 
