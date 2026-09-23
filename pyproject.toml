@@ -74,7 +74,7 @@ expo-gui = "expo_jbm329.gui_main:gui_main"
 expo = "expo_jbm329.cli_main:cli_main"
 build-exe = "expo_jbm329.build.build:main"
 stage-release = "expo_jbm329.build.stage:main"
-build-release = "expo_jbm329.build:build_release"
+build-release = "expo_jbm329.build.release:main"
 build-resources = "expo_jbm329.build.build_resources:main"
 build-i18n = "expo_jbm329.build.build_i18n:main"
 build-locales = "expo_jbm329.build.build_locales:main"
@@ -263,5 +263,4 @@ reportUnknownMemberType = false
 reportUnknownArgumentType = false
 
 pythonVersion = "3.13"
-
 
