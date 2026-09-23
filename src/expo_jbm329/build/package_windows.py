@@ -18,6 +18,7 @@ from expo_jbm329.build.version import (
     RELEASE_NOTES_FILE,
     ReleaseMetadata,
     build_metadata,
+    create_sha256,
     get_executable_name,
     get_release_name,
 )
@@ -26,6 +27,16 @@ PUBLISHER = "Jonas Brännström"
 TEMPLATE_FILE = "installer.iss.in"
 APP_ID_FILE = "installer.appid"
 GENERATED_SCRIPT_FILE = "installer.iss"
+
+
+def _installer_output_base_filename() -> str:
+    """Return the Inno Setup output base filename without extension."""
+    return get_release_name(platform="windows", package_type="setup", extension="")
+
+
+def _installer_artifact_path(output_dir: Path, output_base_filename: str) -> Path:
+    """Return the expected Inno Setup installer artifact path."""
+    return output_dir / f"{output_base_filename}.exe"
 
 
 @dataclass(frozen=True)
@@ -185,18 +196,24 @@ def _validate_inputs(paths: WindowsInstallerPaths) -> bool:
     return False
 
 
-def render_inno_script(paths: WindowsInstallerPaths, release_metadata: ReleaseMetadata) -> Path:
+def render_inno_script(
+    paths: WindowsInstallerPaths,
+    release_metadata: ReleaseMetadata,
+    output_base_filename: str | None = None,
+) -> Path:
     """Render the Inno Setup template to a generated script.
 
     Args:
         paths: Filesystem paths used by packaging.
         release_metadata: Release metadata for output names and installer version.
+        output_base_filename: Optional installer output base filename. If not
+            provided, it is generated from release metadata helpers.
 
     Returns:
         Path to the generated Inno Setup script.
     """
     paths.build_dir.mkdir(parents=True, exist_ok=True)
-    output_base_filename = get_release_name(platform="windows", package_type="setup", extension="")
+    resolved_output_base_filename = output_base_filename or _installer_output_base_filename()
     template = Template(paths.template_path.read_text(encoding="utf-8"))
     script = template.substitute(
         APP_ID=_inno_literal(_load_or_create_app_id(paths.app_id_path)),
@@ -207,7 +224,7 @@ def render_inno_script(paths: WindowsInstallerPaths, release_metadata: ReleaseMe
         EXE_NAME=get_executable_name("windows"),
         SOURCE_DIR=_windows_path(paths.source_dir),
         OUTPUT_DIR=_windows_path(paths.output_dir),
-        OUTPUT_BASE_FILENAME=output_base_filename,
+        OUTPUT_BASE_FILENAME=resolved_output_base_filename,
         ICON_PATH=_windows_path(paths.icon_path),
         WIZARD_IMAGE_PATH=_windows_path(paths.wizard_image_path),
         WIZARD_SMALL_IMAGE_PATH=_windows_path(paths.wizard_small_image_path),
@@ -218,6 +235,22 @@ def render_inno_script(paths: WindowsInstallerPaths, release_metadata: ReleaseMe
     )
     paths.generated_script_path.write_text(script, encoding="utf-8")
     return paths.generated_script_path
+
+
+def _create_checksum(artifact_path: Path) -> bool:
+    """Create and verify a checksum file for an artifact."""
+    try:
+        checksum_path = create_sha256(artifact_path)
+    except OSError as exc:
+        print(f"[package-windows] Failed to create checksum: {exc}", file=sys.stderr)
+        return False
+
+    if not checksum_path.is_file():
+        print(f"[package-windows] Checksum file was not created: {checksum_path}", file=sys.stderr)
+        return False
+
+    print(f"[package-windows] SHA256: {checksum_path}")
+    return True
 
 
 def package_windows_installer() -> int:
@@ -244,8 +277,15 @@ def package_windows_installer() -> int:
         print("[package-windows] Inno Setup compiler not found.", file=sys.stderr)
         return 1
 
+    output_base_filename = _installer_output_base_filename()
+    installer_path = _installer_artifact_path(paths.output_dir, output_base_filename)
+
     try:
-        script_path = render_inno_script(paths=paths, release_metadata=release_metadata)
+        script_path = render_inno_script(
+            paths=paths,
+            release_metadata=release_metadata,
+            output_base_filename=output_base_filename,
+        )
     except (KeyError, OSError, ValueError) as exc:
         print(f"[package-windows] Failed to render Inno Setup script: {exc}", file=sys.stderr)
         return 1
@@ -257,5 +297,12 @@ def package_windows_installer() -> int:
         print(f"[package-windows] Inno Setup failed with exit code {result.returncode}", file=sys.stderr)
         return result.returncode
 
-    print(f"[package-windows] SUCCESS: {paths.output_dir}")
+    if not installer_path.is_file():
+        print(f"[package-windows] Installer was not created: {installer_path}", file=sys.stderr)
+        return 1
+
+    if not _create_checksum(installer_path):
+        return 1
+
+    print(f"[package-windows] SUCCESS: {installer_path}")
     return 0

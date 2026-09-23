@@ -137,6 +137,45 @@ def build_metadata() -> ReleaseMetadata:
     )
 
 
+def calculate_sha256(path: Path) -> str:
+    """Calculate the SHA256 checksum for an artifact.
+
+    Args:
+        path: Artifact path to hash.
+
+    Returns:
+        Hex-encoded SHA256 digest.
+
+    Raises:
+        FileNotFoundError: If the artifact does not exist.
+        OSError: If the artifact cannot be read.
+    """
+    digest = hashlib.sha256()
+    with path.open("rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            digest.update(chunk)
+
+    return digest.hexdigest()
+
+
+def write_sha256_sum(path: Path, checksum: str) -> Path:
+    """Write a standard sha256sum file for an artifact.
+
+    Args:
+        path: Artifact path the checksum belongs to.
+        checksum: Hex-encoded SHA256 digest.
+
+    Returns:
+        Path to the written checksum file.
+
+    Raises:
+        OSError: If the checksum file cannot be written.
+    """
+    checksum_path = path.with_name(f"{path.name}.sha256")
+    checksum_path.write_text(f"{checksum}  {path.name}\n", encoding="utf-8")
+    return checksum_path
+
+
 def create_sha256(path: Path) -> Path:
     """Create a SHA256 checksum file for an artifact.
 
@@ -150,14 +189,7 @@ def create_sha256(path: Path) -> Path:
         FileNotFoundError: If the artifact does not exist.
         OSError: If the artifact or checksum file cannot be read or written.
     """
-    digest = hashlib.sha256()
-    with path.open("rb") as file:
-        for chunk in iter(lambda: file.read(1024 * 1024), b""):
-            digest.update(chunk)
-
-    checksum_path = path.with_name(f"{path.name}.sha256")
-    checksum_path.write_text(f"{digest.hexdigest()}  {path.name}\n", encoding="utf-8")
-    return checksum_path
+    return write_sha256_sum(path=path, checksum=calculate_sha256(path))
 
 
 def get_git_tag() -> str | None:

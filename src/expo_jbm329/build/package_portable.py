@@ -7,7 +7,7 @@ import zipfile
 from typing import TYPE_CHECKING
 
 from expo_jbm329.build.build_utils import detect_platform, release_dir, staging_dir
-from expo_jbm329.build.version import get_documentation_files, get_release_name, get_release_notes_file
+from expo_jbm329.build.version import create_sha256, get_documentation_files, get_release_name, get_release_notes_file
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -47,6 +47,22 @@ def _write_staging_zip(stage_dir: Path, archive_path: Path) -> None:
                 archive.write(path, path.relative_to(stage_dir))
 
 
+def _create_checksum(artifact_path: Path) -> bool:
+    """Create and verify a checksum file for an artifact."""
+    try:
+        checksum_path = create_sha256(artifact_path)
+    except OSError as exc:
+        print(f"[package-portable] Failed to create checksum: {exc}", file=sys.stderr)
+        return False
+
+    if not checksum_path.is_file():
+        print(f"[package-portable] Checksum file was not created: {checksum_path}", file=sys.stderr)
+        return False
+
+    print(f"[package-portable] SHA256: {checksum_path}")
+    return True
+
+
 def package_portable_zip() -> int:
     """Create a portable ZIP archive from staged release artifacts.
 
@@ -71,6 +87,9 @@ def package_portable_zip() -> int:
 
     if not archive_path.is_file():
         print(f"[package-portable] Archive was not created: {archive_path}", file=sys.stderr)
+        return 1
+
+    if not _create_checksum(archive_path):
         return 1
 
     print(f"[package-portable] SUCCESS: {archive_path}")
