@@ -260,6 +260,7 @@ source = { editable = "." }
 dependencies = [
     { name = "chardet" },
     { name = "httpx" },
+    { name = "matplotlib" },
     { name = "numpy" },
     { name = "openpyxl" },
     { name = "pandas" },
@@ -275,10 +276,13 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+build = [
+    { name = "pillow" },
+    { name = "pyinstaller" },
+]
 dev = [
     { name = "mypy" },
     { name = "pandas-stubs" },
-    { name = "pyinstaller" },
     { name = "pyright" },
     { name = "pyside6-essentials" },
     { name = "pytest" },
@@ -286,7 +290,6 @@ dev = [
     { name = "ruff" },
 ]
 profiling = [
-    { name = "matplotlib" },
     { name = "setuptools" },
     { name = "ydata-profiling" },
 ]
@@ -295,15 +298,16 @@ profiling = [
 requires-dist = [
     { name = "chardet" },
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "matplotlib", marker = "extra == 'profiling'", specifier = ">=3.10.0" },
+    { name = "matplotlib", specifier = ">=3.10.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
     { name = "numpy", specifier = ">=2.3.5" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "pandas-stubs", marker = "extra == 'dev'", specifier = ">=2.3.3" },
+    { name = "pillow", marker = "extra == 'build'", specifier = ">=11.0" },
     { name = "platformdirs", specifier = ">=4.9.2" },
     { name = "pyarrow", specifier = ">=23.0.1" },
-    { name = "pyinstaller", marker = "extra == 'dev'", specifier = ">=6.4" },
+    { name = "pyinstaller", marker = "extra == 'build'", specifier = ">=6.4" },
     { name = "pyodbc" },
     { name = "pyqt6", specifier = ">=6.10.2" },
     { name = "pyqt6-sip", specifier = ">=13.11.0" },
@@ -319,7 +323,7 @@ requires-dist = [
     { name = "sqlglot", specifier = ">=30.12.0" },
     { name = "ydata-profiling", marker = "extra == 'profiling'", specifier = ">=4.18" },
 ]
-provides-extras = ["dev", "profiling"]
+provides-extras = ["dev", "profiling", "build"]
 
 [[package]]
 name = "filetype"
