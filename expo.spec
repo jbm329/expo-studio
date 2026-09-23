@@ -2,6 +2,7 @@
 from pathlib import Path
 
 import os
+import warnings
 
 from PyInstaller.utils.hooks import (
     collect_submodules,
@@ -62,52 +63,34 @@ hiddenimports = []
 hiddenimports += collect_submodules("jinja2")
 # hiddenimports += collect_submodules("pkg_resources")
 hiddenimports += ["pkg_resources"]
-hiddenimports += ['matplotlib.backends.backend_svg']
+hiddenimports += ["matplotlib.backends.backend_svg"]
 
 try:
-    import ydata_profiling  # noqa: F401
-#    hiddenimports += collect_submodules("ydata_profiling")
-    hiddenimports += [
-        "ydata_profiling.model.pandas.describe_generic_pandas",
-        "ydata_profiling.model.pandas.describe_numeric_pandas",
-        "ydata_profiling.model.pandas.describe_boolean_pandas",
-        "ydata_profiling.model.pandas.describe_categorical_pandas",
-        "ydata_profiling.model.pandas.describe_counts_pandas",
-        "ydata_profiling.model.pandas.describe_date_pandas",
-        "ydata_profiling.model.pandas.describe_file_pandas",
-        "ydata_profiling.model.pandas.describe_image_pandas",
-        "ydata_profiling.model.pandas.describe_path_pandas",
-        "ydata_profiling.model.pandas.describe_text_pandas",
-        "ydata_profiling.model.pandas.describe_timeseries_pandas",
-        "ydata_profiling.model.pandas.describe_url_pandas",
-        "ydata_profiling.model.pandas.duplicates_pandas",
-        "ydata_profiling.model.pandas.missing_pandas",
-        "ydata_profiling.model.pandas.sample_pandas",
-        "ydata_profiling.model.pandas.table_pandas",
-        "ydata_profiling.model.pandas.timeseries_index_pandas",
-    ]
-
-    datas += copy_metadata("ydata_profiling")
-except Exception:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        import ydata_profiling  # noqa: F401
+except ImportError:
     pass
+else:
+    hiddenimports += collect_submodules("ydata_profiling.model.pandas")
+    hiddenimports += collect_submodules("ydata_profiling.report.presentation.flavours.html")
+    datas += copy_metadata("ydata_profiling")
+    datas += collect_data_files(
+        "ydata_profiling",
+        includes=[
+            "report/presentation/flavours/html/templates/*",
+            "report/presentation/flavours/html/templates/**/*",
+            "assets/*",
+            "assets/**/*",
+        ],
+        include_py_files=False,
+    )
 
 for _pkg in ("jinja2", "pandas", "numpy"):
     try:
         datas += copy_metadata(_pkg)
     except Exception:
         pass
-
-# ---- YData Profiling – collect HTML-templates, stats rtc. ----
-datas += collect_data_files(
-    "ydata_profiling",
-    includes=[
-        "report/presentation/flavours/html/templates/*",
-        "report/presentation/flavours/html/templates/**/*",
-        "assets/*",
-        "assets/**/*",
-    ],
-    include_py_files=False,
-)
 
 # -------------------------------
 # Highlighter themes (custom JSON)
@@ -155,10 +138,20 @@ a = Analysis(
         str(ROOT / "hooks" / "rthook_tqdm_disable.py"),
     ],
     excludes=[
-        "ipywidgets",
+        "Cython",
         "IPython",
-        "notebook",
+        "_pytest",
+        "coverage",
+        "cython",
+        "google.colab",
+        "ipywidgets",
         "matplotlib.tests",
+        "notebook",
+        "pyspark",
+        "pytest",
+        "sphinx",
+        "ydata_profiling.model.spark",
+        "ydata_profiling.report.presentation.flavours.widget",
     ],
     noarchive=False,
     optimize=1,
