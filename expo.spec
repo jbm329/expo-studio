@@ -69,11 +69,9 @@ hiddenimports += ["pkg_resources"]
 hiddenimports += ["matplotlib.backends.backend_svg"]
 
 try:
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        import data_profiling  # noqa: F401
+    import data_profiling  # noqa: F401
 except ImportError:
-    pass
+    print("[spec] data_profiling not installed; profiling support will not be bundled.")
 else:
     hiddenimports += collect_submodules(f"{PROFILING_IMPORT_PACKAGE}.model.pandas")
     hiddenimports += collect_submodules(f"{PROFILING_IMPORT_PACKAGE}.report.presentation.flavours.html")
