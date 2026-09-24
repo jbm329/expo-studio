@@ -1,6 +1,6 @@
 # hooks/rthook_typeguard_nop.py
 """
-Neutralisera typeguard.@typechecked innan ydata_profiling importeras.
+Neutralisera typeguard.@typechecked innan data_profiling importeras.
 Stöd både @typechecked och @typechecked(...).
 """
 import os

@@ -1,7 +1,7 @@
 """Data processing services, primarily for generating profile reports.
 
 This module provides functions to generate single and comparison profile reports
-using ydata-profiling.
+using fg-data-profiling.
 """
 
 from __future__ import annotations
@@ -13,16 +13,16 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import pandas as pd
-    from ydata_profiling import ProfileReport
+    from data_profiling import ProfileReport
 
 logger = logging.getLogger("applogger.service")
 
 
 # ------------------------------------------------------------
-# Ydata-Profiling
+# fg-data-profiling
 # ------------------------------------------------------------
 def generate_profile_report(df: pd.DataFrame, title: str, corr_id: str) -> ProfileReport:
-    """Build a ydata-profiling report for a single DataFrame.
+    """Build a fg-data-profiling report for a single DataFrame.
 
     Args:
         df: The DataFrame to profile.
@@ -45,7 +45,7 @@ def generate_profile_report(df: pd.DataFrame, title: str, corr_id: str) -> Profi
     logger.debug("Generating profile report (corr=%s, title=%r, rows=%s, cols=%s)", corr_id, title, rows, cols)
     t0 = time.perf_counter()
     try:
-        from ydata_profiling import ProfileReport
+        from data_profiling import ProfileReport
 
         # Disable progress bars: we integrate progress in our own job UI
         profile = ProfileReport(df, title=title, explorative=True, progress_bar=False)
@@ -119,7 +119,7 @@ def generate_comparison_profile_report(
 
     t0 = time.perf_counter()
     try:
-        from ydata_profiling import compare
+        from data_profiling import compare
 
         reports: list[ProfileReport] = []
         for df, title in data or []:

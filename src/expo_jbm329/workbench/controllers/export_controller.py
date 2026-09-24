@@ -1,7 +1,7 @@
 """Export controller for exporting DataFrames and generating reports.
 
 This module provides the ExportController class, which orchestrates exporting
-DataFrames to various formats (CSV, Excel, data files) and generating ydata-profiling
+DataFrames to various formats (CSV, Excel, data files) and generating fg-data-profiling
 reports. It handles file dialogs, format validation, job scheduling, and progress
 tracking for export operations.
 """
@@ -59,7 +59,7 @@ class ExportController:
     """Controller for exporting DataFrames and generating profiling reports.
 
     This class handles all export operations including CSV, Excel, and binary
-    data formats, as well as ydata-profiling report generation for single or
+    data formats, as well as fg-data-profiling report generation for single or
     multiple datasets. It manages file dialogs, coordinates with FileJobService
     for background processing, and provides comprehensive logging and error handling.
     """

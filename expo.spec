@@ -2,6 +2,7 @@
 from pathlib import Path
 
 import os
+import warnings
 
 from PyInstaller.utils.hooks import (
     collect_submodules,
@@ -39,6 +40,9 @@ print(f"[spec] ROOT={ROOT}")
 datas = []
 binaries = []
 
+PROFILING_IMPORT_PACKAGE = "data_profiling"
+PROFILING_DISTRIBUTION = "fg-data-profiling"
+
 # -------------------------------
 # Qt6 (PyQt6) - plugins and DLL:s
 # -------------------------------
@@ -62,52 +66,32 @@ hiddenimports = []
 hiddenimports += collect_submodules("jinja2")
 # hiddenimports += collect_submodules("pkg_resources")
 hiddenimports += ["pkg_resources"]
-hiddenimports += ['matplotlib.backends.backend_svg']
+hiddenimports += ["matplotlib.backends.backend_svg"]
 
 try:
-    import ydata_profiling  # noqa: F401
-#    hiddenimports += collect_submodules("ydata_profiling")
-    hiddenimports += [
-        "ydata_profiling.model.pandas.describe_generic_pandas",
-        "ydata_profiling.model.pandas.describe_numeric_pandas",
-        "ydata_profiling.model.pandas.describe_boolean_pandas",
-        "ydata_profiling.model.pandas.describe_categorical_pandas",
-        "ydata_profiling.model.pandas.describe_counts_pandas",
-        "ydata_profiling.model.pandas.describe_date_pandas",
-        "ydata_profiling.model.pandas.describe_file_pandas",
-        "ydata_profiling.model.pandas.describe_image_pandas",
-        "ydata_profiling.model.pandas.describe_path_pandas",
-        "ydata_profiling.model.pandas.describe_text_pandas",
-        "ydata_profiling.model.pandas.describe_timeseries_pandas",
-        "ydata_profiling.model.pandas.describe_url_pandas",
-        "ydata_profiling.model.pandas.duplicates_pandas",
-        "ydata_profiling.model.pandas.missing_pandas",
-        "ydata_profiling.model.pandas.sample_pandas",
-        "ydata_profiling.model.pandas.table_pandas",
-        "ydata_profiling.model.pandas.timeseries_index_pandas",
-    ]
-
-    datas += copy_metadata("ydata_profiling")
-except Exception:
-    pass
+    import data_profiling  # noqa: F401
+except ImportError:
+    print("[spec] data_profiling not installed; profiling support will not be bundled.")
+else:
+    hiddenimports += collect_submodules(f"{PROFILING_IMPORT_PACKAGE}.model.pandas")
+    hiddenimports += collect_submodules(f"{PROFILING_IMPORT_PACKAGE}.report.presentation.flavours.html")
+    datas += copy_metadata(PROFILING_DISTRIBUTION)
+    datas += collect_data_files(
+        PROFILING_IMPORT_PACKAGE,
+        includes=[
+            "report/presentation/flavours/html/templates/*",
+            "report/presentation/flavours/html/templates/**/*",
+            "assets/*",
+            "assets/**/*",
+        ],
+        include_py_files=False,
+    )
 
 for _pkg in ("jinja2", "pandas", "numpy"):
     try:
         datas += copy_metadata(_pkg)
     except Exception:
         pass
-
-# ---- YData Profiling – collect HTML-templates, stats rtc. ----
-datas += collect_data_files(
-    "ydata_profiling",
-    includes=[
-        "report/presentation/flavours/html/templates/*",
-        "report/presentation/flavours/html/templates/**/*",
-        "assets/*",
-        "assets/**/*",
-    ],
-    include_py_files=False,
-)
 
 # -------------------------------
 # Highlighter themes (custom JSON)
@@ -155,10 +139,20 @@ a = Analysis(
         str(ROOT / "hooks" / "rthook_tqdm_disable.py"),
     ],
     excludes=[
-        "ipywidgets",
+        "Cython",
         "IPython",
-        "notebook",
+        "_pytest",
+        "coverage",
+        "cython",
+        "google.colab",
+        "ipywidgets",
         "matplotlib.tests",
+        "notebook",
+        "pyspark",
+        "pytest",
+        "sphinx",
+        "data_profiling.model.spark",
+        "data_profiling.report.presentation.flavours.widget",
     ],
     noarchive=False,
     optimize=1,

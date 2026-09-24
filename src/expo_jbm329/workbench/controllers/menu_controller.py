@@ -50,7 +50,7 @@ class MenuController:
     TR_REST_CONNECTIONS = QT_TR_NOOP("REST connections…")
 
     TR_EXT_TOOLS = QT_TR_NOOP("External tools")
-    TR_YDATA_PROFILING = QT_TR_NOOP("YData profiling…")
+    TR_DATA_PROFILING = QT_TR_NOOP("Data profiling…")
 
     TR_HELP = QT_TR_NOOP("Help")
     TR_ABOUT = QT_TR_NOOP("About Expo studio…")
@@ -192,8 +192,8 @@ class MenuController:
         self._menu_ext = QMenu(self._tr(self.TR_EXT_TOOLS), mb)
         mb.addMenu(self._menu_ext)
 
-        self.act_ydata_profiling = QAction(self._tr(self.TR_YDATA_PROFILING), mb)
-        self._menu_ext.addAction(self.act_ydata_profiling)
+        self.act_data_profiling = QAction(self._tr(self.TR_DATA_PROFILING), mb)
+        self._menu_ext.addAction(self.act_data_profiling)
 
         # ============ Help ============
         self._menu_help = QMenu(self._tr(self.TR_HELP), mb)
@@ -216,7 +216,7 @@ class MenuController:
         self._act_export_csv.triggered.connect(self._export_csv)
         self._act_export_excel.triggered.connect(self._export_excel)
         self._act_export_data.triggered.connect(self._export_data)
-        self.act_ydata_profiling.triggered.connect(self._export_profile)
+        self.act_data_profiling.triggered.connect(self._export_profile)
 
         # Editing
         self._act_clear.triggered.connect(self._clear_editor)
@@ -241,7 +241,7 @@ class MenuController:
         self._act_export_csv.setEnabled(has_data)
         self._act_export_excel.setEnabled(has_data)
         self._act_export_data.setEnabled(has_data)
-        self.act_ydata_profiling.setEnabled(has_data)
+        self.act_data_profiling.setEnabled(has_data)
 
     # UI language
     def retranslate_ui(self) -> None:
@@ -270,5 +270,5 @@ class MenuController:
         self._act_connections.setText(self._tr(self.TR_DATABASE_CONNECTIONS))
         self._act_rest_connections.setText(self._tr(self.TR_REST_CONNECTIONS))
 
-        self.act_ydata_profiling.setText(self._tr(self.TR_YDATA_PROFILING))
+        self.act_data_profiling.setText(self._tr(self.TR_DATA_PROFILING))
         self._act_about.setText(self._tr(self.TR_ABOUT))
