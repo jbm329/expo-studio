@@ -33,9 +33,6 @@ from expo_jbm329.workbench.controllers.rest_controller import RestController
 from expo_jbm329.workbench.controllers.rest_panel_controller import RestPanelController
 from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
 from expo_jbm329.workbench.controllers.schema_controller import SchemaController
-from expo_jbm329.workbench.controllers.visualization.visualization_controller import (
-    VisualizationController,
-)
 from expo_jbm329.workbench.icon.custom_file_icon_provider import CustomFileIconProvider
 from expo_jbm329.workbench.icon.icon_service import IconService
 from expo_jbm329.workbench.theme.highlighter_theme_service import HighlighterThemeService
@@ -64,7 +61,6 @@ class WorkbenchServices:
         export: ExportController,
         rest: RestController,
         results: ResultTabManager,
-        visualization: VisualizationController,
         derived_column: DerivedColumnController,
         editor_panel: EditorPanelController,
         icon_service: IconService,
@@ -90,7 +86,6 @@ class WorkbenchServices:
             export: Controller for export operations.
             rest: Controller for REST API operations.
             results: Manager for result tabs.
-            visualization: Controller for visualization operations.
             derived_column: Controller for derived column operations.
             editor_panel: Controller for the editor panel.
             icon_service: Service that resolves themed icons.
@@ -116,7 +111,6 @@ class WorkbenchServices:
         self.rest_panel = rest_panel
         self.rest = rest
         self.results = results
-        self.visualization = visualization
         self.derived_column = derived_column
         self.editor_panel = editor_panel
         self.icon_service = icon_service
@@ -235,13 +229,6 @@ class WorkbenchServices:
             ui.update_undo_enabled()
 
         ui_invoke(result_tabs.currentChanged.connect, _update_undo_enabled)
-        # ============================================================
-        # VISUALIZATION
-        # ============================================================
-        visualization = VisualizationController(
-            results=results,
-            logger=app.log_ui,
-        )
 
         # ============================================================
         # EDITOR PANEL
@@ -563,7 +550,6 @@ class WorkbenchServices:
             export=export,
             rest=rest,
             results=results,
-            visualization=visualization,
             derived_column=derived_column,
             editor_panel=editor_panel,
             icon_service=icon_service,
