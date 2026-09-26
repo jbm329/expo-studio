@@ -2,10 +2,15 @@
 
 Aggregates per-column numeric statistics (mean/median/std/variance/min/max/
 range/quartiles/IQR/skewness/kurtosis/count/missing) across every numeric
-column in a DataFrame. Reuses
+column in a DataFrame, plus per-column histogram data for distribution
+charts. Reuses
 `expo_jbm329.services.data_profile.column_data_profile.profile_series()`'s
 existing per-column profiling instead of recomputing statistics from
-scratch; `range`/`iqr`/`variance` are derived from that existing output.
+scratch; `range`/`iqr`/`variance` are derived from that existing output, and
+histogram bins/counts are the same ones `profile_series()` already computes
+for the single-column "Column Properties" dialog. Boxplots need no extra
+computation - they're drawn directly from the existing min/q1/median/q3/max
+fields.
 """
 
 from __future__ import annotations
@@ -68,6 +73,10 @@ class ColumnDescriptiveStatistics:
         iqr: Interquartile range (``q3 - q1``).
         skewness: Sample skewness.
         kurtosis: Sample kurtosis.
+        histogram_bins: Histogram bin edges (``len(histogram_bins) ==
+            len(histogram_counts) + 1``). Empty when no histogram could be
+            computed (e.g. a fully missing column).
+        histogram_counts: Histogram bar heights, one per bin.
     """
 
     column: str
@@ -86,6 +95,8 @@ class ColumnDescriptiveStatistics:
     iqr: float
     skewness: float
     kurtosis: float
+    histogram_bins: tuple[float, ...]
+    histogram_counts: tuple[int, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -121,6 +132,10 @@ def _column_statistics(df: pd.DataFrame, column: str) -> ColumnDescriptiveStatis
     q3 = _as_float(stats.get("num.q3"))
     std = _as_float(stats.get("num.std"))
 
+    plot_bins = profile.plot.bins
+    plot_counts = profile.plot.counts
+    has_histogram = profile.plot.kind == "hist" and plot_bins is not None and plot_counts is not None
+
     return ColumnDescriptiveStatistics(
         column=column,
         count=total - missing_count,
@@ -138,6 +153,8 @@ def _column_statistics(df: pd.DataFrame, column: str) -> ColumnDescriptiveStatis
         iqr=_safe_diff(q3, q1),
         skewness=_as_float(stats.get("num.skew")),
         kurtosis=_as_float(stats.get("num.kurtosis")),
+        histogram_bins=tuple(plot_bins) if has_histogram and plot_bins is not None else (),
+        histogram_counts=tuple(plot_counts) if has_histogram and plot_counts is not None else (),
     )
 
 

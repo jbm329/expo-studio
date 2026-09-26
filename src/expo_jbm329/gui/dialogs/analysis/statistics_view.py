@@ -2,19 +2,36 @@
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 
+import numpy as np
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_pct
 
 if TYPE_CHECKING:
-    from expo_jbm329.services.analysis.statistics import DescriptiveStatisticsResult
+    from matplotlib.axes import Axes
+
+    from expo_jbm329.services.analysis.statistics import (
+        ColumnDescriptiveStatistics,
+        DescriptiveStatisticsResult,
+    )
 
 
 class StatisticsView(QWidget):
-    """Displays a `DescriptiveStatisticsResult` as a per-column stats table."""
+    """Displays a `DescriptiveStatisticsResult` as a per-column stats table.
+
+    Also shows a histogram/boxplot pair for one selected column at a time.
+    The selected column is driven externally (typically by a config widget
+    in the Advanced Analysis workspace's configuration pane) via
+    `show_distribution_for()`; this view never re-runs the analysis itself -
+    all columns' distribution data is already present in the `result` it
+    was built from.
+    """
 
     def __init__(self, result: DescriptiveStatisticsResult, parent: QWidget | None = None) -> None:
         """Initialize the Descriptive Statistics view.
@@ -25,6 +42,8 @@ class StatisticsView(QWidget):
         """
         super().__init__(parent)
 
+        self._columns_by_name = {stats.column: stats for stats in result.columns}
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
@@ -33,6 +52,9 @@ class StatisticsView(QWidget):
             return
 
         layout.addWidget(self._build_table(result))
+        layout.addWidget(self._build_distribution_section())
+
+        self.show_distribution_for(result.columns[0].column)
 
     def _build_empty_label(self) -> QLabel:
         """Build the message shown when the dataset has no numeric columns."""
@@ -106,3 +128,72 @@ class StatisticsView(QWidget):
             hheader.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
         return table
+
+    # ------------------------------------------------------------------
+    # Distribution chart (histogram + boxplot) for one selected column
+    # ------------------------------------------------------------------
+
+    def _build_distribution_section(self) -> QWidget:
+        """Build the histogram/boxplot canvas for the selected column."""
+        self._figure = Figure(constrained_layout=True)
+        self._canvas = FigureCanvasQTAgg(self._figure)  # type: ignore[no-untyped-call]
+        self._canvas.setMinimumHeight(260)
+        return self._canvas
+
+    def show_distribution_for(self, column: str) -> None:
+        """Redraw the histogram/boxplot for the given column.
+
+        Args:
+            column: Name of the numeric column to display. Must be one of
+                the columns this view was built with.
+        """
+        stats = self._columns_by_name.get(column)
+        if stats is None:
+            return
+
+        self._figure.clear()
+        ax_hist = self._figure.add_subplot(121)
+        ax_box = self._figure.add_subplot(122)
+
+        self._draw_histogram(ax_hist, stats)
+        self._draw_boxplot(ax_box, stats)
+
+        self._figure.suptitle(column)
+        self._canvas.draw_idle()  # type: ignore[no-untyped-call]
+
+    def _draw_histogram(self, ax: Axes, stats: ColumnDescriptiveStatistics) -> None:
+        """Draw a histogram from pre-computed bin edges/counts."""
+        if not stats.histogram_bins or not stats.histogram_counts:
+            ax.text(0.5, 0.5, self.tr("No data"), ha="center", va="center", transform=ax.transAxes)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            return
+
+        bins = np.asarray(stats.histogram_bins)
+        counts = np.asarray(stats.histogram_counts)
+        ax.bar(bins[:-1], counts, width=np.diff(bins), align="edge", edgecolor="#333")
+        ax.set_title(self.tr("Histogram"))
+
+    def _draw_boxplot(self, ax: Axes, stats: ColumnDescriptiveStatistics) -> None:
+        """Draw a min/max-whisker boxplot from the existing five-number summary."""
+        values = (stats.minimum, stats.q1, stats.median, stats.q3, stats.maximum)
+        if any(math.isnan(v) for v in values):
+            ax.text(0.5, 0.5, self.tr("No data"), ha="center", va="center", transform=ax.transAxes)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            return
+
+        ax.bxp(
+            [
+                {
+                    "med": stats.median,
+                    "q1": stats.q1,
+                    "q3": stats.q3,
+                    "whislo": stats.minimum,
+                    "whishi": stats.maximum,
+                    "fliers": [],
+                }
+            ],
+            showfliers=False,
+        )
+        ax.set_title(self.tr("Boxplot"))

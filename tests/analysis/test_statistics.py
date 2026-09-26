@@ -39,6 +39,8 @@ def test_analyze_descriptive_statistics_matches_known_reference_values():
     assert stats.iqr == 2.0
     assert stats.skewness == 0.0
     assert stats.kurtosis == pytest.approx(-1.2)
+    assert len(stats.histogram_bins) == len(stats.histogram_counts) + 1
+    assert sum(stats.histogram_counts) == stats.count
 
 
 def test_analyze_descriptive_statistics_counts_missing_values():
@@ -90,6 +92,8 @@ def test_analyze_descriptive_statistics_includes_fully_missing_numeric_column():
     assert math.isnan(stats.variance)
     assert math.isnan(stats.range)
     assert math.isnan(stats.iqr)
+    assert stats.histogram_bins == ()
+    assert stats.histogram_counts == ()
 
 
 def test_analyze_descriptive_statistics_handles_dataframe_with_no_numeric_columns():
@@ -123,3 +127,14 @@ def test_range_and_iqr_are_derived_from_min_max_quartiles():
     stats = _get(result, "col")
     assert stats.range == stats.maximum - stats.minimum
     assert stats.iqr == stats.q3 - stats.q1
+
+
+def test_histogram_bin_edges_span_the_full_value_range():
+    df = pd.DataFrame({"col": list(range(1, 21))})  # 1..20
+
+    result = analyze_descriptive_statistics(df)
+
+    stats = _get(result, "col")
+    assert stats.histogram_bins[0] == pytest.approx(stats.minimum)
+    assert stats.histogram_bins[-1] == pytest.approx(stats.maximum)
+    assert sum(stats.histogram_counts) == stats.count

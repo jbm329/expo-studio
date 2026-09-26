@@ -11,6 +11,7 @@ from PyQt6.QtCore import QT_TR_NOOP, QTimer
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
+from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
@@ -44,12 +45,15 @@ class _CategoryHandler:
     Attributes:
         compute: Background-safe callable turning a DataFrame into a plain
             (non-Qt) result object.
-        render: GUI-thread callable turning that result object into the
-            `QWidget` to display.
+        render: GUI-thread callable turning that result object into
+            ``(content_widget, config_widget)`` - the widgets to display in
+            the dialog's result pane and configuration pane, respectively.
+            `config_widget` is `None` for categories with no configurable
+            input (the configuration pane is then hidden).
     """
 
     compute: Callable[[pd.DataFrame], object]
-    render: Callable[[object], QWidget]
+    render: Callable[[object], tuple[QWidget, QWidget | None]]
 
 
 class AnalysisController:
@@ -141,13 +145,24 @@ class AnalysisController:
     # Renderers (GUI thread only)
     # ------------------------------------------------------------------
 
-    def _render_overview(self, result: object) -> QWidget:
+    def _render_overview(self, result: object) -> tuple[QWidget, QWidget | None]:
         """Render the Dataset Overview view. Must run on the GUI thread."""
-        return OverviewView(cast("DatasetOverviewResult", result))
+        return OverviewView(cast("DatasetOverviewResult", result)), None
 
-    def _render_statistics(self, result: object) -> QWidget:
-        """Render the Descriptive Statistics view. Must run on the GUI thread."""
-        return StatisticsView(cast("DescriptiveStatisticsResult", result))
+    def _render_statistics(self, result: object) -> tuple[QWidget, QWidget | None]:
+        """Render the Descriptive Statistics view and its column-picker config.
+
+        Must run on the GUI thread.
+        """
+        stats_result = cast("DescriptiveStatisticsResult", result)
+        content = StatisticsView(stats_result)
+
+        if not stats_result.columns:
+            return content, None
+
+        config = StatisticsConfigWidget(stats_result)
+        config.column_changed.connect(content.show_distribution_for)
+        return content, config
 
     # ------------------------------------------------------------------
     # Event handlers
@@ -169,14 +184,14 @@ class AnalysisController:
 
         handler = self._category_handlers.get(category)
         if handler is None:
-            dialog.show_placeholder(self._tr(self.TR_NOT_IMPLEMENTED))
+            self._show_placeholder(dialog, self._tr(self.TR_NOT_IMPLEMENTED))
             return
 
         tab_id = dialog.selected_dataset_tab_id()
         if tab_id is None:
             # Defensive only: open_dialog() never opens without a dataset,
             # so the combo box always has a selection in practice.
-            dialog.show_placeholder(self._tr(self.TR_ANALYSIS_ERROR))
+            self._show_placeholder(dialog, self._tr(self.TR_ANALYSIS_ERROR))
             return
 
         try:
@@ -198,10 +213,20 @@ class AnalysisController:
                 category,
                 tab_id,
             )
-            dialog.show_placeholder(self._tr(self.TR_ANALYSIS_ERROR))
+            self._show_placeholder(dialog, self._tr(self.TR_ANALYSIS_ERROR))
             return
 
         self._run_analysis(dialog, category, handler, tab_id, df)
+
+    def _show_placeholder(self, dialog: AnalysisDialog, text: str) -> None:
+        """Show a placeholder message and hide any stale configuration widget.
+
+        Args:
+            dialog: Active Advanced Analysis dialog.
+            text: Message to show instead of analysis results.
+        """
+        dialog.show_placeholder(text)
+        dialog.set_config_widget(None)
 
     def _run_analysis(
         self,
@@ -213,6 +238,12 @@ class AnalysisController:
     ) -> None:
         """Run a category's computation in the background with a busy overlay."""
         corr_id = uuid.uuid4().hex
+
+        # Hide any configuration widget left over from the previous category
+        # immediately - it isn't covered by the busy overlay (which only
+        # covers the result pane), so it would otherwise stay visible and
+        # irrelevant while this job runs.
+        dialog.set_config_widget(None)
 
         def _is_stale() -> bool:
             """Discard results once the user has moved on to something else."""
@@ -232,13 +263,14 @@ class AnalysisController:
         def _on_result(result: object) -> None:
             if result is None:
                 return
-            widget = handler.render(result)
-            dialog.set_content_widget(widget)
+            content_widget, config_widget = handler.render(result)
+            dialog.set_content_widget(content_widget)
+            dialog.set_config_widget(config_widget)
 
         def _on_error(_traceback: str) -> None:
             if _is_stale():
                 return
-            dialog.show_placeholder(self._tr(self.TR_ANALYSIS_ERROR))
+            self._show_placeholder(dialog, self._tr(self.TR_ANALYSIS_ERROR))
 
         self._async_ops.run_target_overlay_operation(
             target=dialog.content_panel(),

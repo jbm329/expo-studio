@@ -98,6 +98,54 @@ def test_set_content_widget_replaces_the_previous_widget():
     assert dialog.content_widget() is not first
 
 
+def test_config_panel_starts_hidden_with_no_widget():
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog.show()
+    try:
+        assert dialog.config_widget() is None
+        assert dialog._config_panel.isVisible() is False  # noqa: SLF001
+    finally:
+        dialog.close()
+
+
+def test_set_config_widget_shows_the_panel_and_stores_the_widget():
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog.show()
+    try:
+        widget = QWidget()
+
+        dialog.set_config_widget(widget)
+
+        assert dialog.config_widget() is widget
+        assert dialog._config_panel.isVisible() is True  # noqa: SLF001
+    finally:
+        dialog.close()
+
+
+def test_set_config_widget_none_hides_the_panel_again():
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog.show()
+    try:
+        dialog.set_config_widget(QWidget())
+
+        dialog.set_config_widget(None)
+
+        assert dialog.config_widget() is None
+        assert dialog._config_panel.isVisible() is False  # noqa: SLF001
+    finally:
+        dialog.close()
+
+
+def test_set_config_widget_replaces_the_previous_widget():
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog.set_config_widget(QWidget())
+    replacement = QWidget()
+
+    dialog.set_config_widget(replacement)
+
+    assert dialog.config_widget() is replacement
+
+
 def test_dialog_with_no_datasets_has_no_selection():
     dialog = AnalysisDialog(parent=None, datasets=[], active_tab_id=None)
 

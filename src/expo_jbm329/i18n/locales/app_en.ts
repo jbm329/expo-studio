@@ -41,75 +41,90 @@
 </context><context>
     <name>AnalysisController</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="29" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="70" />
         <source>This analysis is not implemented yet.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="71" />
+        <source>An error occurred while generating this analysis.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="72" />
+        <source>Running analysis…</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="73" />
+        <source>generate analysis</source>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>AnalysisDialog</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="61" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="62" />
         <source>Advanced Analysis</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="81" />
-        <source>Select an analysis from the list on the left.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="107" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="96" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="109" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="98" />
         <source>Dataset</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="109" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="111" />
         <source>Analysis</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="127" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="132" />
         <source>Result</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="224" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="145" />
+        <source>Configuration</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="296" />
         <source>Overview</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="225" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="297" />
         <source>Statistics</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="226" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="298" />
         <source>Correlation</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="227" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="299" />
         <source>Regression</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="228" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="300" />
         <source>Outliers</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="229" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="301" />
         <source>Clustering</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="230" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="302" />
         <source>PCA</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="231" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="303" />
         <source>Time Series</source>
         <translation type="unfinished" />
     </message>
@@ -2469,6 +2484,73 @@ Continue?</source>
     <message>
         <location filename="..\..\workbench\controllers\menu_controller.py" line="56" />
         <source>About Expo studio…</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>OverviewView</name>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="34" />
+        <source>Column types</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="36" />
+        <source>Potential issues</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="49" />
+        <source>Rows</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="50" />
+        <source>Columns</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="51" />
+        <source>Missing values</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="53" />
+        <source>Duplicate rows</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="66" />
+        <source>Numeric columns</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="67" />
+        <source>Categorical columns</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="68" />
+        <source>Datetime columns</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="69" />
+        <source>Boolean columns</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="70" />
+        <source>Other columns</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="80" />
+        <source>No issues detected.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="85" />
+        <source>⚠ {column} has {pct} missing values.</source>
         <translation type="unfinished" />
     </message>
 </context><context>
@@ -5128,6 +5210,111 @@ Time: {sec:.2f}s{sample}</source>
     <message>
         <location filename="..\..\app\settings\settings_editor.py" line="578" />
         <source>Settings have been saved.</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>StatisticsConfigWidget</name>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_config.py" line="43" />
+        <source>Column</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>StatisticsView</name>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="61" />
+        <source>No numeric columns in this dataset.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="69" />
+        <source>Column</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="70" />
+        <source>Count</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="71" />
+        <source>Missing</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="72" />
+        <source>Mean</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="73" />
+        <source>Median</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="74" />
+        <source>Std Dev</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="75" />
+        <source>Variance</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="76" />
+        <source>Min</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="77" />
+        <source>Max</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="78" />
+        <source>Range</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="79" />
+        <source>Q1</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="80" />
+        <source>Q3</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="81" />
+        <source>IQR</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="82" />
+        <source>Skewness</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="83" />
+        <source>Kurtosis</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="181" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="167" />
+        <source>No data</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="175" />
+        <source>Histogram</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="199" />
+        <source>Boxplot</source>
         <translation type="unfinished" />
     </message>
 </context><context>

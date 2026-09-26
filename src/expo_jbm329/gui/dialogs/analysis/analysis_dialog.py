@@ -71,9 +71,11 @@ class AnalysisDialog(QDialog):
 
         left_panel = self._build_left_panel(active_tab_id)
         content_panel = self._build_content_panel()
+        config_panel = self._build_config_panel()
 
         panels.addWidget(left_panel, 1)
         panels.addWidget(content_panel, 3)
+        panels.addWidget(config_panel, 1)
 
         root.addLayout(panels, 1)
         root.addWidget(self._build_button_box())
@@ -131,6 +133,20 @@ class AnalysisDialog(QDialog):
         self._content_panel = panel
         self._content_layout = QVBoxLayout(panel)
         self._content_widget: QWidget | None = None
+
+        return panel
+
+    def _build_config_panel(self) -> QWidget:
+        """Build the configuration panel for the currently selected category.
+
+        Hidden by default; categories with no configurable input (e.g.
+        Overview) keep it hidden via `set_config_widget(None)`.
+        """
+        panel = QGroupBox(self.tr("Configuration"), self)
+        self._config_panel = panel
+        self._config_layout = QVBoxLayout(panel)
+        self._config_widget: QWidget | None = None
+        panel.setVisible(False)
 
         return panel
 
@@ -244,6 +260,31 @@ class AnalysisDialog(QDialog):
         dialog's whole lifetime - suitable as a busy-overlay anchor.
         """
         return self._content_panel
+
+    def set_config_widget(self, widget: QWidget | None) -> None:
+        """Replace the configuration panel's widget, or hide it.
+
+        Args:
+            widget: The widget to display in the configuration panel, or
+                `None` to hide the panel entirely (categories with no
+                configurable input).
+        """
+        if self._config_widget is not None:
+            self._config_layout.removeWidget(self._config_widget)
+            self._config_widget.deleteLater()
+
+        self._config_widget = widget
+
+        if widget is None:
+            self._config_panel.setVisible(False)
+            return
+
+        self._config_layout.addWidget(widget)
+        self._config_panel.setVisible(True)
+
+    def config_widget(self) -> QWidget | None:
+        """Return the widget currently displayed in the configuration panel."""
+        return self._config_widget
 
     # ------------------------------------------------------------------
     # i18n

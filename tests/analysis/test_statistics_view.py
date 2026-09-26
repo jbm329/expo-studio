@@ -28,6 +28,8 @@ def _make_column_stats(**overrides: object) -> ColumnDescriptiveStatistics:
         "iqr": 20000.0,
         "skewness": 0.3,
         "kurtosis": -0.5,
+        "histogram_bins": (20000.0, 40000.0, 60000.0, 80000.0, 90000.0),
+        "histogram_counts": (20, 30, 30, 20),
     }
     defaults.update(overrides)
     return ColumnDescriptiveStatistics(**defaults)  # type: ignore[arg-type]
@@ -91,3 +93,43 @@ def test_nan_statistics_render_as_empty_string():
     assert table is not None
     assert table.item(0, 3).text() == ""  # Mean column
     assert table.item(0, 5).text() == ""  # Std Dev column
+
+
+def test_shows_first_columns_distribution_by_default():
+    result = DescriptiveStatisticsResult(columns=(_make_column_stats(column="a"), _make_column_stats(column="b")))
+    view = StatisticsView(result)
+
+    assert len(view._figure.axes) == 2  # noqa: SLF001
+
+
+def test_show_distribution_for_switches_to_a_different_column():
+    result = DescriptiveStatisticsResult(columns=(_make_column_stats(column="a"), _make_column_stats(column="b")))
+    view = StatisticsView(result)
+
+    view.show_distribution_for("b")
+
+    assert len(view._figure.axes) == 2  # noqa: SLF001
+
+
+def test_show_distribution_for_unknown_column_is_a_no_op():
+    result = DescriptiveStatisticsResult(columns=(_make_column_stats(column="a"),))
+    view = StatisticsView(result)
+
+    view.show_distribution_for("does-not-exist")  # must not raise
+
+
+def test_shows_no_data_message_when_histogram_and_boxplot_data_are_missing():
+    stats = _make_column_stats(
+        median=float("nan"),
+        q1=float("nan"),
+        q3=float("nan"),
+        minimum=float("nan"),
+        maximum=float("nan"),
+        histogram_bins=(),
+        histogram_counts=(),
+    )
+    result = DescriptiveStatisticsResult(columns=(stats,))
+    view = StatisticsView(result)
+
+    all_texts = [t.get_text() for ax in view._figure.axes for t in ax.texts]  # noqa: SLF001
+    assert all_texts.count("No data") == 2

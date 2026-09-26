@@ -5,6 +5,7 @@ import pytest
 from PyQt6.QtWidgets import QApplication, QDialog, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
+from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.utils.dataset_ref import DatasetRef
@@ -68,6 +69,7 @@ class DummyAnalysisDialog:
         self.dataset_changed = DummySignal()
         self.placeholder_calls: list[str] = []
         self.content_widgets: list[QWidget] = []
+        self.config_widgets: list[QWidget | None] = []
         self.exec_called = False
         self._panel = QWidget()
         self._selected_category: AnalysisCategory | None = None
@@ -78,6 +80,9 @@ class DummyAnalysisDialog:
 
     def set_content_widget(self, widget):
         self.content_widgets.append(widget)
+
+    def set_config_widget(self, widget):
+        self.config_widgets.append(widget)
 
     def selected_category(self):
         return self._selected_category
@@ -103,7 +108,13 @@ def dialog_factory(monkeypatch):
         return dlg
 
     monkeypatch.setattr(f"{_CONTROLLER_MODULE}.AnalysisDialog", _factory)
-    return dialogs
+    yield dialogs
+
+    # Matplotlib canvases (StatisticsView) schedule a deferred draw_idle();
+    # flush it here, while `dialogs` still keeps every created widget alive,
+    # so the queued paint never fires later against an already-garbage-
+    # collected canvas in an unrelated test.
+    QApplication.processEvents()
 
 
 def _open_and_flush(ctrl: AnalysisController, parent: QWidget) -> None:
@@ -271,6 +282,80 @@ def test_statistics_category_runs_as_a_background_job_with_a_busy_overlay(dialog
     assert len(dlg.content_widgets) == 1
     assert isinstance(dlg.content_widgets[0], StatisticsView)
     assert dlg.placeholder_calls == []
+
+
+def test_statistics_category_also_builds_a_column_picker_config_widget(dialog_factory):
+    df = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=2)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": df}),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.STATISTICS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
+    _simulate_success(async_ops.last_call)
+
+    assert len(dlg.config_widgets) == 2  # proactive None, then the real config widget
+    config = dlg.config_widgets[-1]
+    assert isinstance(config, StatisticsConfigWidget)
+    assert config.selected_column() == "a"
+
+
+def test_changing_the_statistics_config_column_updates_the_content_view_directly(dialog_factory):
+    """Switching columns is a pure GUI-thread operation - it must not
+    dispatch a new background job (all columns' data is already computed).
+    """
+    df = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=2)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": df}),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.STATISTICS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
+    _simulate_success(async_ops.last_call)
+
+    jobs_before = len(async_ops.calls)
+    config = dlg.config_widgets[-1]
+    config._column_combo.setCurrentIndex(1)  # noqa: SLF001
+
+    assert len(async_ops.calls) == jobs_before  # no new background job
+    assert config.selected_column() == "b"
+
+
+def test_switching_to_a_category_hides_a_stale_config_widget_while_loading(dialog_factory):
+    df = pd.DataFrame({"a": [1.0, 2.0, 3.0]})
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=1)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": df}),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.STATISTICS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
+    _simulate_success(async_ops.last_call)
+    assert dlg.config_widgets[-1] is not None
+
+    # Switch to Overview: the stale Statistics config widget must be hidden
+    # immediately, even before Overview's own job completes.
+    dlg._selected_category = AnalysisCategory.OVERVIEW
+    dlg.category_changed.emit(AnalysisCategory.OVERVIEW.value)
+
+    assert dlg.config_widgets[-1] is None
 
 
 def test_overview_result_is_discarded_when_the_dataset_changes_before_it_completes(dialog_factory):

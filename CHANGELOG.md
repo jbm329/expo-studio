@@ -15,9 +15,13 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Advanced Analysis workspace: the "Statistics" category now shows a
   dataset-wide descriptive statistics table (count, missing, mean, median,
   standard deviation, variance, min, max, range, quartiles, IQR, skewness,
-  kurtosis) for every numeric column.
+  kurtosis) for every numeric column, plus a histogram/boxplot pair for one
+  column at a time, selectable via a new configuration pane.
 
 ### Changed
+- Advanced Analysis workspace: added a dedicated configuration pane
+  (right-hand side) for analysis categories that need user input, such as
+  the Statistics category's column picker.
 - Advanced Analysis workspace: analyses now always run as background jobs
   with a busy overlay shown over the result pane, so large datasets no
   longer freeze the application while an analysis is computed.
