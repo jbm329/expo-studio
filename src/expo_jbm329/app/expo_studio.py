@@ -378,6 +378,7 @@ class ExpoStudio(QMainWindow):
             clear_editor=workbench.editor_panel.clear_active_tab,
             refresh_schema=workbench.schema.refresh_current_schema,
             undo=workbench.results.undo,
+            analyze_data=lambda: workbench.analysis.open_dialog(self),
             logger=self.ui_logger,
         )
         toolbar_controller = self.toolbar_controller

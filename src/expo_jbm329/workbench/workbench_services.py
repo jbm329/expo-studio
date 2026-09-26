@@ -17,6 +17,7 @@ from expo_jbm329.gui.gui_utils import ui_invoke
 from expo_jbm329.services.file_job_service import FileJobService
 from expo_jbm329.services.schema_model import build_schema_dict
 from expo_jbm329.utils.dialog_state import DialogState
+from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
 from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
 from expo_jbm329.workbench.controllers.busy_overlay_controller import BusyOverlayController
 from expo_jbm329.workbench.controllers.concat_controller import ConcatController
@@ -61,6 +62,7 @@ class WorkbenchServices:
         export: ExportController,
         rest: RestController,
         results: ResultTabManager,
+        analysis: AnalysisController,
         derived_column: DerivedColumnController,
         editor_panel: EditorPanelController,
         icon_service: IconService,
@@ -86,6 +88,7 @@ class WorkbenchServices:
             export: Controller for export operations.
             rest: Controller for REST API operations.
             results: Manager for result tabs.
+            analysis: Controller for the Advanced Analysis workspace.
             derived_column: Controller for derived column operations.
             editor_panel: Controller for the editor panel.
             icon_service: Service that resolves themed icons.
@@ -111,6 +114,7 @@ class WorkbenchServices:
         self.rest_panel = rest_panel
         self.rest = rest
         self.results = results
+        self.analysis = analysis
         self.derived_column = derived_column
         self.editor_panel = editor_panel
         self.icon_service = icon_service
@@ -229,6 +233,14 @@ class WorkbenchServices:
             ui.update_undo_enabled()
 
         ui_invoke(result_tabs.currentChanged.connect, _update_undo_enabled)
+
+        # ============================================================
+        # ADVANCED ANALYSIS
+        # ============================================================
+        analysis = AnalysisController(
+            results=results,
+            logger=app.log_ui,
+        )
 
         # ============================================================
         # EDITOR PANEL
@@ -550,6 +562,7 @@ class WorkbenchServices:
             export=export,
             rest=rest,
             results=results,
+            analysis=analysis,
             derived_column=derived_column,
             editor_panel=editor_panel,
             icon_service=icon_service,

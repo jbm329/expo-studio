@@ -39,6 +39,81 @@
         <translation type="unfinished" />
     </message>
 </context><context>
+    <name>AnalysisController</name>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="29" />
+        <source>This analysis is not implemented yet.</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>AnalysisDialog</name>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="61" />
+        <source>Advanced Analysis</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="81" />
+        <source>Select an analysis from the list on the left.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="107" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="96" />
+        <source>Dataset</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="109" />
+        <source>Analysis</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="127" />
+        <source>Result</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="224" />
+        <source>Overview</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="225" />
+        <source>Statistics</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="226" />
+        <source>Correlation</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="227" />
+        <source>Regression</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="228" />
+        <source>Outliers</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="229" />
+        <source>Clustering</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="230" />
+        <source>PCA</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="231" />
+        <source>Time Series</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
     <name>AsyncOperationController</name>
     <message>
         <location filename="..\..\workbench\controllers\async_operation_controller.py" line="60" />
@@ -170,348 +245,340 @@ Please see logs for more information.</source>
         <translation type="unfinished" />
     </message>
 </context><context>
-    <name>ChartPreviewWidget</name>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\chart_preview_widget.py" line="59" />
-        <location filename="..\..\gui\dialogs\visualization\chart_preview_widget.py" line="25" />
-        <source>No visualization yet.</source>
-        <translation type="unfinished" />
-    </message>
-</context><context>
     <name>ColumnPropertiesDialog</name>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="92" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="93" />
         <source>Properties - {name}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="121" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="122" />
         <source>Type: &lt;b&gt;{sem}&lt;/b&gt; ⚠ &lt;span style='color:#666;'&gt;({storage})&lt;/span&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="125" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="126" />
         <source>Type: &lt;b&gt;{sem}&lt;/b&gt; &lt;span style='color:#666;'&gt;({storage})&lt;/span&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="135" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="136" />
         <source>⚠ Column appears to contain dates but is stored as text.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="137" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="138" />
         <source>⚠ Column appears numeric but is stored as text.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="139" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="140" />
         <source>⚠ Column is stored as text but may require conversion.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="145" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="146" />
         <source>⚠ Column contains binary data and cannot be profiled.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="158" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="159" />
         <source>Rows</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="159" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="160" />
         <source>Missing</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="160" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="161" />
         <source>Unique</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="403" />
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="169" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="405" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="170" />
         <source>Sample values</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="194" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="195" />
         <source>Property</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="195" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="196" />
         <source>Value</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="270" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="271" />
         <source>Plot not available (matplotlib missing).</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="289" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="290" />
         <source>Histogram</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="302" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="303" />
         <source>Top values</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="310" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="311" />
         <source>Weekday distribution</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="318" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="319" />
         <source>Distribution</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="329" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="330" />
         <source>Copy as Markdown</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="357" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="359" />
         <source>Count (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="358" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="360" />
         <source>Missing (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="359" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="361" />
         <source>Missing (%)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="360" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="362" />
         <source>Unique (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="361" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="363" />
         <source>Unique (%)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="362" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="364" />
         <source>Memory (bytes)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="363" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="365" />
         <source>Constant</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="365" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="367" />
         <source>Min</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="366" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="368" />
         <source>Q1</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="367" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="369" />
         <source>Median</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="368" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="370" />
         <source>Q3</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="369" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="371" />
         <source>Max</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="370" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="372" />
         <source>Mean</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="371" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="373" />
         <source>Std deviation</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="372" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="374" />
         <source>MAD (median absolute deviation)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="373" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="375" />
         <source>Skewness</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="374" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="376" />
         <source>Kurtosis</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="375" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="377" />
         <source>Zeros (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="376" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="378" />
         <source>Zeros (%)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="377" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="379" />
         <source>Negatives (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="378" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="380" />
         <source>Negatives (%)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="379" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="381" />
         <source>Positives (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="380" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="382" />
         <source>Positives (%)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="382" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="384" />
         <source>True (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="383" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="385" />
         <source>True (%)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="384" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="386" />
         <source>False (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="385" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="387" />
         <source>False (%)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="387" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="389" />
         <source>Top 3</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="388" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="390" />
         <source>Length min</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="389" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="391" />
         <source>Length median</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="390" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="392" />
         <source>Length max</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="391" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="393" />
         <source>Length mean</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="392" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="394" />
         <source>Empty strings (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="394" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="396" />
         <source>Min datetime</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="395" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="397" />
         <source>Max datetime</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="396" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="398" />
         <source>Span (seconds)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="398" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="400" />
         <source>Categories (n)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="399" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="401" />
         <source>Categories ordered</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="401" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="403" />
         <source>Column contains binary data (bytes) and cannot be profiled.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="409" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="411" />
         <source>Mon</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="410" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="412" />
         <source>Tue</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="411" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="413" />
         <source>Wed</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="412" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="414" />
         <source>Thu</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="413" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="415" />
         <source>Fri</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="414" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="416" />
         <source>Sat</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="415" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="417" />
         <source>Sun</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="416" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="418" />
         <source>True</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="417" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="419" />
         <source>False</source>
         <translation type="unfinished" />
     </message>
@@ -2391,7 +2458,7 @@ Continue?</source>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\menu_controller.py" line="53" />
-        <source>YData profiling…</source>
+        <source>Data profiling…</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -2424,6 +2491,11 @@ Continue?</source>
     <message>
         <location filename="..\..\gui\dialogs\service\common\localization.py" line="9" />
         <source>No</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\service\common\localization.py" line="10" />
+        <source>Close</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -5196,247 +5268,7 @@ Shortcut: Ctrl+Z</source>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\toolbar_controller.py" line="55" />
-        <source>Visualize data</source>
-        <translation type="unfinished" />
-    </message>
-</context><context>
-    <name>VisualizationController</name>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="35" />
-        <source>An error occurred while rendering the visualization.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="36" />
-        <source>The selected dataset is empty.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="37" />
-        <source>Select a category column.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="38" />
-        <source>The selected category column no longer exists in the dataset.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="39" />
-        <source>Select a measure.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="40" />
-        <source>Select an aggregation.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="41" />
-        <source>Select a measure column.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="52" />
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="42" />
-        <source>The selected measure column no longer exists in the dataset.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="43" />
-        <source>Non-numeric measure columns can only use Count or Count distinct.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="44" />
-        <source>No data remains after aggregation.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="45" />
-        <source>No data available for the pie chart.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="46" />
-        <source>Select both X and Y axes for the scatter chart.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="47" />
-        <source>The selected X column no longer exists in the dataset.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="48" />
-        <source>The selected Y column no longer exists in the dataset.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="49" />
-        <source>No data available for the scatter chart.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="50" />
-        <source>Histogram requires a column-based measure.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="51" />
-        <source>Select a measure column for the histogram.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\visualization\visualization_controller.py" line="53" />
-        <source>No numeric data available for the histogram.</source>
-        <translation type="unfinished" />
-    </message>
-</context><context>
-    <name>VisualizationDialog</name>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="62" />
-        <source>Visualize data</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="90" />
-        <source>Datasource and chart type</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="108" />
-        <source>Line chart</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="109" />
-        <source>Bar chart</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="110" />
-        <source>Pie chart</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="111" />
-        <source>Scatter plot</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="112" />
-        <source>Histogram</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="114" />
-        <source>Dataset</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="115" />
-        <source>Chart type</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="124" />
-        <source>Visualization</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="138" />
-        <source>Dimensions and measures</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="144" />
-        <source>Dimension</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="147" />
-        <source>Measure type</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="149" />
-        <source>Column</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="150" />
-        <source>Number of rows</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="152" />
-        <source>Measure</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="155" />
-        <source>Aggregation</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="158" />
-        <source>Label</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="160" />
-        <source>Name of choice</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="162" />
-        <source>X-axis</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="165" />
-        <source>Y-axis</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="176" />
-        <source>Show chart</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="407" />
-        <source>No visualization yet.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="461" />
-        <source>Sum</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="462" />
-        <source>Count</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="463" />
-        <source>Count distinct</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="464" />
-        <source>Average</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="465" />
-        <source>Min</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\visualization\visualization_dialog.py" line="466" />
-        <source>Max</source>
+        <source>Analyze data</source>
         <translation type="unfinished" />
     </message>
 </context></TS>
