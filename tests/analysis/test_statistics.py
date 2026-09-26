@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from expo_jbm329.services.analysis.statistics import (
+    SHAPIRO_LARGE_SAMPLE_THRESHOLD,
     ColumnDescriptiveStatistics,
     analyze_descriptive_statistics,
 )
@@ -41,6 +42,8 @@ def test_analyze_descriptive_statistics_matches_known_reference_values():
     assert stats.kurtosis == pytest.approx(-1.2)
     assert len(stats.histogram_bins) == len(stats.histogram_counts) + 1
     assert sum(stats.histogram_counts) == stats.count
+    assert stats.shapiro_statistic == pytest.approx(0.986762155211559)
+    assert stats.shapiro_p_value == pytest.approx(0.9671739349728582)
 
 
 def test_analyze_descriptive_statistics_counts_missing_values():
@@ -52,6 +55,9 @@ def test_analyze_descriptive_statistics_counts_missing_values():
     assert stats.count == 3
     assert stats.missing_count == 2
     assert stats.missing_fraction == 0.4
+    # Shapiro-Wilk must only see the 3 non-null values, not the missing ones.
+    assert stats.shapiro_statistic == pytest.approx(1.0)
+    assert stats.shapiro_p_value == pytest.approx(1.0)
 
 
 def test_analyze_descriptive_statistics_excludes_non_numeric_columns():
@@ -94,6 +100,8 @@ def test_analyze_descriptive_statistics_includes_fully_missing_numeric_column():
     assert math.isnan(stats.iqr)
     assert stats.histogram_bins == ()
     assert stats.histogram_counts == ()
+    assert math.isnan(stats.shapiro_statistic)
+    assert math.isnan(stats.shapiro_p_value)
 
 
 def test_analyze_descriptive_statistics_handles_dataframe_with_no_numeric_columns():
@@ -138,3 +146,46 @@ def test_histogram_bin_edges_span_the_full_value_range():
     assert stats.histogram_bins[0] == pytest.approx(stats.minimum)
     assert stats.histogram_bins[-1] == pytest.approx(stats.maximum)
     assert sum(stats.histogram_counts) == stats.count
+
+
+def test_shapiro_wilk_flags_clearly_non_normal_data():
+    rng = np.random.default_rng(42)
+    df = pd.DataFrame({"uniform": rng.uniform(0, 100, size=200)})
+
+    result = analyze_descriptive_statistics(df)
+
+    stats = _get(result, "uniform")
+    # Uniformly distributed data should be clearly rejected as non-normal.
+    assert stats.shapiro_p_value < 0.001
+
+
+def test_shapiro_wilk_does_not_reject_clearly_normal_data():
+    rng = np.random.default_rng(42)
+    df = pd.DataFrame({"normal": rng.normal(loc=50, scale=10, size=200)})
+
+    result = analyze_descriptive_statistics(df)
+
+    stats = _get(result, "normal")
+    assert stats.shapiro_p_value > 0.05
+
+
+def test_shapiro_wilk_handles_a_constant_column():
+    df = pd.DataFrame({"col": [5.0] * 50})
+
+    result = analyze_descriptive_statistics(df)
+
+    stats = _get(result, "col")
+    assert stats.shapiro_statistic == pytest.approx(1.0)
+    assert stats.shapiro_p_value == pytest.approx(1.0)
+
+
+def test_shapiro_wilk_handles_large_samples_without_raising():
+    rng = np.random.default_rng(42)
+    df = pd.DataFrame({"col": rng.normal(size=10_000)})
+
+    result = analyze_descriptive_statistics(df)
+
+    stats = _get(result, "col")
+    assert stats.count > SHAPIRO_LARGE_SAMPLE_THRESHOLD
+    assert not math.isnan(stats.shapiro_statistic)
+    assert not math.isnan(stats.shapiro_p_value)

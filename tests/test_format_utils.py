@@ -11,6 +11,7 @@ from expo_jbm329.utils.format_utils import (
     fmt_date,
     fmt_int,
     fmt_num,
+    fmt_p_value,
     fmt_path,
     fmt_path_size,
     fmt_pct,
@@ -55,6 +56,27 @@ def test_fmt_num():
 
     result2 = fmt_num(123.456, sig=4)
     assert "123" in result2
+
+
+def test_fmt_p_value():
+    assert fmt_p_value(None) == ""
+    assert fmt_p_value(np.nan) == ""
+
+    result = fmt_p_value(0.4213)
+    assert "0,4213" in result or "0.4213" in result
+
+    # Below the default threshold: reported as "< threshold", not the
+    # (potentially misleadingly rounded-to-zero) exact value.
+    below = fmt_p_value(0.00001)
+    assert below.startswith("< ")
+    assert "0,001" in below or "0.001" in below
+
+    # Exactly at the threshold is not "below" it.
+    at_threshold = fmt_p_value(0.001)
+    assert not at_threshold.startswith("< ")
+
+    custom = fmt_p_value(0.02, threshold=0.05)
+    assert custom.startswith("< ")
 
 
 def test_fmt_int():

@@ -27,6 +27,8 @@ def _make_stats(column: str) -> ColumnDescriptiveStatistics:
         kurtosis=0.0,
         histogram_bins=(0.0, 1.0, 2.0),
         histogram_counts=(5, 5),
+        shapiro_statistic=0.98,
+        shapiro_p_value=0.42,
     )
 
 

@@ -4,10 +4,11 @@ from PyQt6.QtWidgets import QLabel, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.statistics import (
+    SHAPIRO_LARGE_SAMPLE_THRESHOLD,
     ColumnDescriptiveStatistics,
     DescriptiveStatisticsResult,
 )
-from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_pct
+from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
 
 
 def _make_column_stats(**overrides: object) -> ColumnDescriptiveStatistics:
@@ -30,6 +31,8 @@ def _make_column_stats(**overrides: object) -> ColumnDescriptiveStatistics:
         "kurtosis": -0.5,
         "histogram_bins": (20000.0, 40000.0, 60000.0, 80000.0, 90000.0),
         "histogram_counts": (20, 30, 30, 20),
+        "shapiro_statistic": 0.98,
+        "shapiro_p_value": 0.42,
     }
     defaults.update(overrides)
     return ColumnDescriptiveStatistics(**defaults)  # type: ignore[arg-type]
@@ -133,3 +136,74 @@ def test_shows_no_data_message_when_histogram_and_boxplot_data_are_missing():
 
     all_texts = [t.get_text() for ax in view._figure.axes for t in ax.texts]  # noqa: SLF001
     assert all_texts.count("No data") == 2
+
+
+def test_normality_label_shows_the_shapiro_statistic_and_p_value():
+    stats = _make_column_stats(shapiro_statistic=0.9876, shapiro_p_value=0.4213)
+    result = DescriptiveStatisticsResult(columns=(stats,))
+    view = StatisticsView(result)
+
+    text = view._normality_label.text()  # noqa: SLF001
+    assert fmt_num(0.9876) in text
+    assert fmt_p_value(0.4213) in text
+
+
+def test_normality_label_flags_significant_result():
+    stats = _make_column_stats(shapiro_p_value=0.001)
+    result = DescriptiveStatisticsResult(columns=(stats,))
+    view = StatisticsView(result)
+
+    text = view._normality_label.text()  # noqa: SLF001
+    assert "Significant evidence" in text
+    assert "No significant evidence" not in text
+
+
+def test_normality_label_shows_no_significant_result():
+    stats = _make_column_stats(shapiro_p_value=0.8)
+    result = DescriptiveStatisticsResult(columns=(stats,))
+    view = StatisticsView(result)
+
+    text = view._normality_label.text()  # noqa: SLF001
+    assert "No significant evidence" in text
+
+
+def test_normality_label_shows_large_sample_caveat_above_threshold():
+    stats = _make_column_stats(count=SHAPIRO_LARGE_SAMPLE_THRESHOLD + 1)
+    result = DescriptiveStatisticsResult(columns=(stats,))
+    view = StatisticsView(result)
+
+    text = view._normality_label.text()  # noqa: SLF001
+    assert "may not be accurate" in text
+
+
+def test_normality_label_omits_large_sample_caveat_at_or_below_threshold():
+    stats = _make_column_stats(count=SHAPIRO_LARGE_SAMPLE_THRESHOLD)
+    result = DescriptiveStatisticsResult(columns=(stats,))
+    view = StatisticsView(result)
+
+    text = view._normality_label.text()  # noqa: SLF001
+    assert "may not be accurate" not in text
+
+
+def test_normality_label_shows_not_enough_data_when_shapiro_is_nan():
+    stats = _make_column_stats(shapiro_statistic=float("nan"), shapiro_p_value=float("nan"))
+    result = DescriptiveStatisticsResult(columns=(stats,))
+    view = StatisticsView(result)
+
+    text = view._normality_label.text()  # noqa: SLF001
+    assert "Not enough data" in text
+
+
+def test_normality_label_updates_when_switching_columns():
+    result = DescriptiveStatisticsResult(
+        columns=(
+            _make_column_stats(column="a", shapiro_p_value=0.9),
+            _make_column_stats(column="b", shapiro_p_value=0.001),
+        )
+    )
+    view = StatisticsView(result)
+    assert "No significant evidence" in view._normality_label.text()  # noqa: SLF001
+
+    view.show_distribution_for("b")
+
+    assert "Significant evidence" in view._normality_label.text()  # noqa: SLF001

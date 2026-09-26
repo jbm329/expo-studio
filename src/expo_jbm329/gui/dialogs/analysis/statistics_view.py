@@ -11,7 +11,8 @@ from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
-from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_pct
+from expo_jbm329.services.analysis.statistics import SHAPIRO_LARGE_SAMPLE_THRESHOLD
+from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -20,6 +21,9 @@ if TYPE_CHECKING:
         ColumnDescriptiveStatistics,
         DescriptiveStatisticsResult,
     )
+
+# Standard convention for statistical significance in the normality summary.
+_SIGNIFICANCE_LEVEL = 0.05
 
 
 class StatisticsView(QWidget):
@@ -134,14 +138,24 @@ class StatisticsView(QWidget):
     # ------------------------------------------------------------------
 
     def _build_distribution_section(self) -> QWidget:
-        """Build the histogram/boxplot canvas for the selected column."""
+        """Build the histogram/boxplot canvas and normality summary label."""
+        container = QWidget(self)
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+
         self._figure = Figure(constrained_layout=True)
         self._canvas = FigureCanvasQTAgg(self._figure)  # type: ignore[no-untyped-call]
         self._canvas.setMinimumHeight(260)
-        return self._canvas
+        layout.addWidget(self._canvas)
+
+        self._normality_label = QLabel(container)
+        self._normality_label.setWordWrap(True)
+        layout.addWidget(self._normality_label)
+
+        return container
 
     def show_distribution_for(self, column: str) -> None:
-        """Redraw the histogram/boxplot for the given column.
+        """Redraw the histogram/boxplot and normality summary for the given column.
 
         Args:
             column: Name of the numeric column to display. Must be one of
@@ -160,6 +174,34 @@ class StatisticsView(QWidget):
 
         self._figure.suptitle(column)
         self._canvas.draw_idle()  # type: ignore[no-untyped-call]
+
+        self._normality_label.setText(self._normality_text(stats))
+
+    def _normality_text(self, stats: ColumnDescriptiveStatistics) -> str:
+        """Build the Shapiro-Wilk normality test summary text for a column."""
+        if math.isnan(stats.shapiro_p_value):
+            return self.tr("Not enough data to test for normality.")
+
+        lines = [
+            self.tr("Shapiro-Wilk: W = {w}, p = {p}").format(
+                w=fmt_num(stats.shapiro_statistic),
+                p=fmt_p_value(stats.shapiro_p_value),
+            )
+        ]
+
+        if stats.shapiro_p_value < _SIGNIFICANCE_LEVEL:
+            lines.append(self.tr("→ Significant evidence against normality (α = 0.05)."))  # noqa: RUF001
+        else:
+            lines.append(self.tr("→ No significant evidence against normality (α = 0.05)."))  # noqa: RUF001
+
+        if stats.count > SHAPIRO_LARGE_SAMPLE_THRESHOLD:
+            lines.append(
+                self.tr(
+                    "⚠ Sample size exceeds {threshold}; the p-value may not be accurate for very large samples."
+                ).format(threshold=fmt_int(SHAPIRO_LARGE_SAMPLE_THRESHOLD))
+            )
+
+        return "<br>".join(lines)
 
     def _draw_histogram(self, ax: Axes, stats: ColumnDescriptiveStatistics) -> None:
         """Draw a histogram from pre-computed bin edges/counts."""

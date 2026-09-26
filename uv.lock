@@ -271,6 +271,7 @@ dependencies = [
     { name = "pyqt6-sip" },
     { name = "pyqvd" },
     { name = "pyreadstat" },
+    { name = "scipy" },
     { name = "sqlalchemy" },
     { name = "sqlglot" },
 ]
@@ -318,6 +319,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "scipy", specifier = ">=1.16.0" },
     { name = "sqlalchemy", specifier = ">=2.0.46,<2.0.54" },
     { name = "sqlglot", specifier = ">=30.12.0" },
 ]
