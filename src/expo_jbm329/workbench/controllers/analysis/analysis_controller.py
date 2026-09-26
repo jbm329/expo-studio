@@ -11,8 +11,10 @@ from PyQt6.QtCore import QT_TR_NOOP, QTimer
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
+from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
+from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
 from expo_jbm329.utils.i18n_utils import tr
 
 if TYPE_CHECKING:
@@ -22,6 +24,7 @@ if TYPE_CHECKING:
     from PyQt6.QtWidgets import QWidget
 
     from expo_jbm329.services.analysis.overview import DatasetOverviewResult
+    from expo_jbm329.services.analysis.statistics import DescriptiveStatisticsResult
     from expo_jbm329.workbench.controllers.async_operation_controller import (
         AsyncOperationController,
     )
@@ -93,6 +96,10 @@ class AnalysisController:
                 compute=analyze_dataset_overview,
                 render=self._render_overview,
             ),
+            AnalysisCategory.STATISTICS: _CategoryHandler(
+                compute=analyze_descriptive_statistics,
+                render=self._render_statistics,
+            ),
         }
 
     def open_dialog(self, parent: QWidget) -> None:
@@ -137,6 +144,10 @@ class AnalysisController:
     def _render_overview(self, result: object) -> QWidget:
         """Render the Dataset Overview view. Must run on the GUI thread."""
         return OverviewView(cast("DatasetOverviewResult", result))
+
+    def _render_statistics(self, result: object) -> QWidget:
+        """Render the Descriptive Statistics view. Must run on the GUI thread."""
+        return StatisticsView(cast("DescriptiveStatisticsResult", result))
 
     # ------------------------------------------------------------------
     # Event handlers

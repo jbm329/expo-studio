@@ -12,6 +12,10 @@ and this project follows [Semantic Versioning](https://semver.org/).
   structural summary of the selected dataset (row/column counts, missing
   values, duplicate rows, and a breakdown of column counts by type), with
   columns above a missing-value threshold flagged as potential issues.
+- Advanced Analysis workspace: the "Statistics" category now shows a
+  dataset-wide descriptive statistics table (count, missing, mean, median,
+  standard deviation, variance, min, max, range, quartiles, IQR, skewness,
+  kurtosis) for every numeric column.
 
 ### Changed
 - Advanced Analysis workspace: analyses now always run as background jobs

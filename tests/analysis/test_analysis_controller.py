@@ -5,6 +5,7 @@ import pytest
 from PyQt6.QtWidgets import QApplication, QDialog, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
+from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
@@ -241,6 +242,34 @@ def test_overview_category_runs_as_a_background_job_with_a_busy_overlay(dialog_f
 
     assert len(dlg.content_widgets) == 1
     assert isinstance(dlg.content_widgets[0], OverviewView)
+
+
+def test_statistics_category_runs_as_a_background_job_with_a_busy_overlay(dialog_factory):
+    df = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": ["x", "y", "z"]})
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=2)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": df}),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.STATISTICS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
+
+    assert len(async_ops.calls) == 1
+    call = async_ops.last_call
+    assert call["target"] is dlg.content_panel()
+    assert call["runner"] == "pool"
+    assert call["scope"] == "analysis:statistics"
+    assert dlg.content_widgets == []
+
+    _simulate_success(call)
+
+    assert len(dlg.content_widgets) == 1
+    assert isinstance(dlg.content_widgets[0], StatisticsView)
     assert dlg.placeholder_calls == []
 
 
