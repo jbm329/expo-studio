@@ -295,6 +295,7 @@ class AnalysisDialog(QDialog):
         labels = {
             AnalysisCategory.OVERVIEW: self.tr("Overview"),
             AnalysisCategory.STATISTICS: self.tr("Statistics"),
+            AnalysisCategory.HYPOTHESIS_TESTS: self.tr("Hypothesis Tests"),
             AnalysisCategory.CORRELATION: self.tr("Correlation"),
             AnalysisCategory.REGRESSION: self.tr("Regression"),
             AnalysisCategory.OUTLIERS: self.tr("Outliers"),

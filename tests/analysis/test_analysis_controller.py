@@ -4,6 +4,8 @@ import pandas as pd
 import pytest
 from PyQt6.QtWidgets import QApplication, QDialog, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.group_comparison_config import GroupComparisonConfigWidget
+from expo_jbm329.gui.dialogs.analysis.group_comparison_view import GroupComparisonView
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
@@ -498,3 +500,206 @@ def test_no_category_selected_does_not_touch_the_dialog(dialog_factory):
     assert dlg.placeholder_calls == []
     assert dlg.content_widgets == []
     assert async_ops.calls == []
+
+
+# ----------------------------------------------------------------------
+# Hypothesis Tests / Group Comparison: config-driven recompute
+# ----------------------------------------------------------------------
+
+
+def _hypothesis_tests_df() -> pd.DataFrame:
+    # 24 rows with fully distinct "value"/"other" values (> MAX_GROUPS) so
+    # only "grp" is ever eligible as a grouping column - keeps these tests'
+    # grouping combo predictable (a single, stable "grp" option) while
+    # giving the numeric combo two real choices to switch between.
+    return pd.DataFrame({
+        "value": [float(i) for i in range(24)],
+        "other": [float(i) * 10 for i in range(24)],
+        "grp": ["A", "B"] * 12,
+    })
+
+
+def test_hypothesis_tests_category_runs_as_a_background_job_with_a_busy_overlay(dialog_factory):
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=4, column_count=3)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": _hypothesis_tests_df()}),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
+
+    assert len(async_ops.calls) == 1
+    call = async_ops.last_call
+    assert call["target"] is dlg.content_panel()
+    assert call["scope"] == "analysis:hypothesis_tests"
+    assert dlg.content_widgets == []
+
+    _simulate_success(call)
+
+    assert len(dlg.content_widgets) == 1
+    assert isinstance(dlg.content_widgets[0], GroupComparisonView)
+
+
+def test_hypothesis_tests_category_also_builds_a_column_picker_config_widget(dialog_factory):
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=4, column_count=3)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": _hypothesis_tests_df()}),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
+    _simulate_success(async_ops.last_call)
+
+    assert len(dlg.config_widgets) == 2  # proactive None, then the real config widget
+    config = dlg.config_widgets[-1]
+    assert isinstance(config, GroupComparisonConfigWidget)
+    assert config.current_selection() == ("value", "grp")
+
+
+def test_hypothesis_tests_with_no_eligible_columns_shows_content_without_a_config_widget(dialog_factory):
+    df = pd.DataFrame({"a": ["x", "y", "z"]})
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=1)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": df}),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
+    _simulate_success(async_ops.last_call)
+
+    assert isinstance(dlg.content_widgets[-1], GroupComparisonView)
+    assert dlg.config_widgets[-1] is None
+
+
+def test_changing_the_hypothesis_tests_config_selection_dispatches_a_new_background_job(dialog_factory):
+    """Unlike Statistics' pure GUI-thread column switch, changing either
+    dropdown here must trigger a new background job - the selected columns
+    determine *what* gets computed, not just what gets redrawn."""
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=4, column_count=3)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": _hypothesis_tests_df()}),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
+    _simulate_success(async_ops.last_call)
+
+    jobs_before = len(async_ops.calls)
+    config_widgets_before = len(dlg.config_widgets)
+    config = dlg.config_widgets[-1]
+    config._numeric_combo.setCurrentIndex(1)  # noqa: SLF001 - "value" -> "other"
+
+    assert len(async_ops.calls) == jobs_before + 1
+    new_call = async_ops.last_call
+    assert new_call["scope"] == "analysis:hypothesis_tests:other:grp"
+    assert new_call["target"] is dlg.content_panel()
+
+    _simulate_success(new_call)
+
+    assert isinstance(dlg.content_widgets[-1], GroupComparisonView)
+    # The configuration widget itself must not be replaced by the recompute.
+    assert len(dlg.config_widgets) == config_widgets_before
+
+
+def test_stale_hypothesis_tests_recompute_is_discarded_when_selection_changes_again(dialog_factory):
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=4, column_count=3)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": _hypothesis_tests_df()}),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
+    _simulate_success(async_ops.last_call)
+
+    config = dlg.config_widgets[-1]
+    config._numeric_combo.setCurrentIndex(1)  # noqa: SLF001 - "value" -> "other"
+    first_recompute_call = async_ops.last_call
+
+    config._numeric_combo.setCurrentIndex(0)  # noqa: SLF001 - "other" -> "value" again
+    second_recompute_call = async_ops.last_call
+
+    content_widgets_before = len(dlg.content_widgets)
+    _simulate_success(first_recompute_call)
+    assert len(dlg.content_widgets) == content_widgets_before  # stale result dropped
+
+    _simulate_success(second_recompute_call)
+    assert len(dlg.content_widgets) == content_widgets_before + 1
+
+
+def test_stale_hypothesis_tests_recompute_is_discarded_when_category_changes(dialog_factory):
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=4, column_count=3)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": _hypothesis_tests_df()}),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
+    _simulate_success(async_ops.last_call)
+
+    config = dlg.config_widgets[-1]
+    config._numeric_combo.setCurrentIndex(1)  # noqa: SLF001
+    recompute_call = async_ops.last_call
+
+    # User navigates to Overview before the recompute completes.
+    dlg._selected_category = AnalysisCategory.OVERVIEW
+    dlg.category_changed.emit(AnalysisCategory.OVERVIEW.value)
+    _simulate_success(async_ops.last_call)  # Overview's own job
+
+    content_widgets_before = len(dlg.content_widgets)
+    _simulate_success(recompute_call)
+    assert len(dlg.content_widgets) == content_widgets_before  # stale, dropped
+
+
+def test_hypothesis_tests_recompute_shows_error_placeholder_without_touching_config(dialog_factory):
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=4, column_count=3)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": _hypothesis_tests_df()}),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
+    _simulate_success(async_ops.last_call)
+
+    config_widgets_before = len(dlg.config_widgets)
+    config = dlg.config_widgets[-1]
+    config._numeric_combo.setCurrentIndex(1)  # noqa: SLF001
+
+    async_ops.last_call["on_error"]("boom")
+
+    assert dlg.placeholder_calls[-1] == ctrl._tr(ctrl.TR_ANALYSIS_ERROR)  # noqa: SLF001
+    assert len(dlg.config_widgets) == config_widgets_before  # config untouched

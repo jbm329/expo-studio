@@ -7,6 +7,7 @@ def test_analysis_category_values_are_stable_identifiers():
     """Category values are used as Qt item data and must stay stable strings."""
     assert AnalysisCategory.OVERVIEW == "overview"
     assert AnalysisCategory.STATISTICS == "statistics"
+    assert AnalysisCategory.HYPOTHESIS_TESTS == "hypothesis_tests"
     assert AnalysisCategory.CORRELATION == "correlation"
     assert AnalysisCategory.REGRESSION == "regression"
     assert AnalysisCategory.OUTLIERS == "outliers"

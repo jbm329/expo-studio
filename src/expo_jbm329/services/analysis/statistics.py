@@ -16,23 +16,18 @@ fields.
 from __future__ import annotations
 
 import math
-import warnings
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-import pandas as pd
-from scipy.stats import shapiro
-
+from expo_jbm329.services.analysis.normality import shapiro_normality
 from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
 from expo_jbm329.services.data_profile.column_data_profile import profile_series
 
+if TYPE_CHECKING:
+    import pandas as pd
+
 _NUMERIC_DTYPES = frozenset({SemanticDType.INT, SemanticDType.FLOAT})
 _NAN = float("nan")
-
-# scipy.stats.shapiro's own documented threshold beyond which its computed
-# p-value may not be accurate. Surfaced explicitly as a UI caveat (see
-# gui/dialogs/analysis/statistics_view.py) instead of scipy's internal
-# warning, which we deliberately suppress in `_shapiro_normality`.
-SHAPIRO_LARGE_SAMPLE_THRESHOLD = 5000
 
 
 def _as_int(value: object, default: int = 0) -> int:
@@ -51,28 +46,6 @@ def _as_float(value: object, default: float = _NAN) -> float:
     if isinstance(value, int | float):
         return float(value)
     return default
-
-
-def _shapiro_normality(series: pd.Series) -> tuple[float, float]:
-    """Run the Shapiro-Wilk normality test on a column's numeric values.
-
-    Args:
-        series: The raw column values (any dtype coercible to numeric).
-
-    Returns:
-        A ``(statistic, p_value)`` tuple. Both are NaN when scipy cannot
-        compute a result (e.g. fewer than 3 valid values).
-    """
-    values = pd.to_numeric(series, errors="coerce").replace([float("inf"), float("-inf")], _NAN).dropna()
-
-    with warnings.catch_warnings():
-        # scipy warns about reduced accuracy for large samples and about
-        # degenerate (zero-range) input. Both are surfaced explicitly as UI
-        # caveats (see StatisticsView) instead of as noisy warnings here.
-        warnings.simplefilter("ignore")
-        result = shapiro(values)
-
-    return float(result.statistic), float(result.pvalue)
 
 
 @dataclass(frozen=True, slots=True)
@@ -172,7 +145,7 @@ def _column_statistics(df: pd.DataFrame, column: str) -> ColumnDescriptiveStatis
     plot_counts = profile.plot.counts
     has_histogram = profile.plot.kind == "hist" and plot_bins is not None and plot_counts is not None
 
-    shapiro_statistic, shapiro_p_value = _shapiro_normality(df[column])
+    shapiro_statistic, shapiro_p_value = shapiro_normality(df[column])
 
     return ColumnDescriptiveStatistics(
         column=column,

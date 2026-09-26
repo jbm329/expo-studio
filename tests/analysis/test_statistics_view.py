@@ -3,8 +3,8 @@ from __future__ import annotations
 from PyQt6.QtWidgets import QLabel, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
+from expo_jbm329.services.analysis.normality import SHAPIRO_LARGE_SAMPLE_THRESHOLD
 from expo_jbm329.services.analysis.statistics import (
-    SHAPIRO_LARGE_SAMPLE_THRESHOLD,
     ColumnDescriptiveStatistics,
     DescriptiveStatisticsResult,
 )

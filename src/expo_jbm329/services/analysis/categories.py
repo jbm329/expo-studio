@@ -22,6 +22,7 @@ class AnalysisCategory(StrEnum):
 
     OVERVIEW = "overview"
     STATISTICS = "statistics"
+    HYPOTHESIS_TESTS = "hypothesis_tests"
     CORRELATION = "correlation"
     REGRESSION = "regression"
     OUTLIERS = "outliers"

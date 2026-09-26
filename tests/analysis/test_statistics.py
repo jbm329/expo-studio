@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from expo_jbm329.services.analysis.normality import SHAPIRO_LARGE_SAMPLE_THRESHOLD
 from expo_jbm329.services.analysis.statistics import (
-    SHAPIRO_LARGE_SAMPLE_THRESHOLD,
     ColumnDescriptiveStatistics,
     analyze_descriptive_statistics,
 )

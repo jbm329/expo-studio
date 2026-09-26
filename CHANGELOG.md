@@ -18,6 +18,15 @@ and this project follows [Semantic Versioning](https://semver.org/).
   kurtosis) for every numeric column, plus a histogram/boxplot pair and a
   Shapiro-Wilk normality test for one column at a time, selectable via a
   new configuration pane.
+- Advanced Analysis workspace: new "Hypothesis Tests" category with a
+  Group Comparison analysis - compares a numeric column across the groups
+  of another column using Welch's t-test and Mann-Whitney U (exactly two
+  groups) or one-way ANOVA and Kruskal-Wallis (more than two groups).
+  Shows both the parametric and non-parametric result side by side, with
+  confidence intervals, effect sizes (Cohen's d, rank-biserial correlation,
+  eta-squared, epsilon-squared), a per-group boxplot, and each group's own
+  Shapiro-Wilk normality check used as explicit guidance for which result
+  to trust.
 
 ### Changed
 - Advanced Analysis workspace: added a dedicated configuration pane
@@ -25,7 +34,11 @@ and this project follows [Semantic Versioning](https://semver.org/).
   the Statistics category's column picker.
 - Advanced Analysis workspace: analyses now always run as background jobs
   with a busy overlay shown over the result pane, so large datasets no
-  longer freeze the application while an analysis is computed.
+  longer freeze the application while an analysis is computed. For
+  analyses whose configuration selects *what* to compute (e.g. Group
+  Comparison's column pickers), changing the configuration now also
+  triggers a fresh background computation instead of only redrawing
+  already-computed data.
 
 ### Fixed
 - Standard dialog buttons using the "Close" role (Advanced Analysis
