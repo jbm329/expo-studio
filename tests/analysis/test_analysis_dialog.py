@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import QCoreApplication
-from PyQt6.QtWidgets import QDialog, QDialogButtonBox
+from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QLabel, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
 from expo_jbm329.gui.dialogs.service.common.localization import TR_CLOSE
@@ -60,14 +60,42 @@ def test_show_placeholder_updates_content_label():
 
     dialog.show_placeholder("Not implemented yet.")
 
-    assert dialog._placeholder_label.text() == "Not implemented yet."  # noqa: SLF001
+    content = dialog.content_widget()
+    assert isinstance(content, QLabel)
+    assert content.text() == "Not implemented yet."
 
 
-def test_dialog_shows_initial_placeholder_before_any_category_is_selected():
+def test_dialog_selects_overview_category_by_default():
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
 
-    assert dialog._placeholder_label.text()  # noqa: SLF001
-    assert dialog.selected_category() is None
+    assert dialog.selected_category() == AnalysisCategory.OVERVIEW
+
+
+def test_dialog_starts_with_no_content_widget():
+    """Populating the content panel is entirely the controller's job."""
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+
+    assert dialog.content_widget() is None
+
+
+def test_content_panel_is_a_stable_widget_across_content_changes():
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    panel_before = dialog.content_panel()
+
+    dialog.show_placeholder("Hello")
+
+    assert dialog.content_panel() is panel_before
+
+
+def test_set_content_widget_replaces_the_previous_widget():
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    first = dialog.content_widget()
+    replacement = QWidget()
+
+    dialog.set_content_widget(replacement)
+
+    assert dialog.content_widget() is replacement
+    assert dialog.content_widget() is not first
 
 
 def test_dialog_with_no_datasets_has_no_selection():

@@ -1,9 +1,10 @@
 """Advanced Analysis workspace dialog.
 
-This is currently a skeleton: it lets the user pick a dataset and an
-analysis category from the sidebar, but every category shows a placeholder
-message until its dedicated implementation step lands (see the project's
-step-by-step Advanced Analysis plan).
+Lets the user pick a dataset and an analysis category from the sidebar.
+Categories without a dedicated implementation yet show a placeholder
+message (see the project's step-by-step Advanced Analysis plan); the
+content panel itself is fully owned by the controller (AnalysisController),
+which computes analyses in the background and swaps in the resulting view.
 """
 
 from __future__ import annotations
@@ -78,7 +79,6 @@ class AnalysisDialog(QDialog):
         root.addWidget(self._build_button_box())
 
         self._connect_signals()
-        self.show_placeholder(self.tr("Select an analysis from the list on the left."))
 
         if self._dataset_combo.currentData():
             self.dataset_changed.emit(str(self._dataset_combo.currentData()))
@@ -115,6 +115,9 @@ class AnalysisDialog(QDialog):
             item.setData(_CATEGORY_ROLE, category.value)
             self._category_list.addItem(item)
 
+        # Overview is the natural starting point for exploring a dataset.
+        self.select_category(AnalysisCategory.OVERVIEW)
+
         category_layout.addWidget(self._category_list)
 
         layout.addWidget(dataset_group)
@@ -125,13 +128,9 @@ class AnalysisDialog(QDialog):
     def _build_content_panel(self) -> QWidget:
         """Build the right-hand content/placeholder panel."""
         panel = QGroupBox(self.tr("Result"), self)
-        layout = QVBoxLayout(panel)
-
-        self._placeholder_label = QLabel(panel)
-        self._placeholder_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._placeholder_label.setWordWrap(True)
-
-        layout.addWidget(self._placeholder_label)
+        self._content_panel = panel
+        self._content_layout = QVBoxLayout(panel)
+        self._content_widget: QWidget | None = None
 
         return panel
 
@@ -207,12 +206,44 @@ class AnalysisDialog(QDialog):
                 return
 
     def show_placeholder(self, text: str) -> None:
-        """Display a placeholder message in the content panel.
+        """Display a centered placeholder message in the content panel.
 
         Args:
             text: Message to show instead of analysis results.
         """
-        self._placeholder_label.setText(text)
+        label = QLabel(text, self)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label.setWordWrap(True)
+        self.set_content_widget(label)
+
+    def set_content_widget(self, widget: QWidget) -> None:
+        """Replace the content panel's widget with the given widget.
+
+        The previously displayed content widget, if any, is removed and
+        scheduled for deletion.
+
+        Args:
+            widget: The widget to display in the content panel.
+        """
+        if self._content_widget is not None:
+            self._content_layout.removeWidget(self._content_widget)
+            self._content_widget.deleteLater()
+
+        self._content_layout.addWidget(widget)
+        self._content_widget = widget
+
+    def content_widget(self) -> QWidget | None:
+        """Return the widget currently displayed in the content panel."""
+        return self._content_widget
+
+    def content_panel(self) -> QWidget:
+        """Return the stable result-pane container widget.
+
+        Unlike `content_widget()` (which changes every time the analysis
+        content is rebuilt), this returns the same container widget for the
+        dialog's whole lifetime - suitable as a busy-overlay anchor.
+        """
+        return self._content_panel
 
     # ------------------------------------------------------------------
     # i18n

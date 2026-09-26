@@ -239,6 +239,7 @@ class WorkbenchServices:
         # ============================================================
         analysis = AnalysisController(
             results=results,
+            async_ops=async_ops,
             logger=app.log_ui,
         )
 
