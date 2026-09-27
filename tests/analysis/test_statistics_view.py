@@ -146,6 +146,8 @@ def test_normality_label_shows_the_shapiro_statistic_and_p_value():
     text = view._normality_label.text()  # noqa: SLF001
     assert fmt_num(0.9876) in text
     assert fmt_p_value(0.4213) in text
+    assert "\n" in text
+    assert "<br>" not in text
 
 
 def test_normality_label_flags_significant_result():

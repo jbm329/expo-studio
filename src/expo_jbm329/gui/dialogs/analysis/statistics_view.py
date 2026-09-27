@@ -149,6 +149,7 @@ class StatisticsView(QWidget):
         layout.addWidget(self._canvas)
 
         self._normality_label = QLabel(container)
+        self._normality_label.setTextFormat(Qt.TextFormat.PlainText)
         self._normality_label.setWordWrap(True)
         layout.addWidget(self._normality_label)
 
@@ -201,7 +202,7 @@ class StatisticsView(QWidget):
                 ).format(threshold=fmt_int(SHAPIRO_LARGE_SAMPLE_THRESHOLD))
             )
 
-        return "<br>".join(lines)
+        return "\n".join(lines)
 
     def _draw_histogram(self, ax: Axes, stats: ColumnDescriptiveStatistics) -> None:
         """Draw a histogram from pre-computed bin edges/counts."""
