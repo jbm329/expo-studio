@@ -13,6 +13,8 @@ from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisT
 from expo_jbm329.gui.dialogs.analysis.outliers_config import OutliersConfigWidget
 from expo_jbm329.gui.dialogs.analysis.outliers_view import OutliersView
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
+from expo_jbm329.gui.dialogs.analysis.pca_config import PCAConfigWidget
+from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
@@ -20,6 +22,7 @@ from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.correlation import CorrelationMethod
 from expo_jbm329.services.analysis.outliers import OutlierMethod
+from expo_jbm329.services.analysis.pca import PCAError
 from expo_jbm329.services.analysis.regression import RegressionError
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
@@ -1557,3 +1560,133 @@ def test_outlier_column_recompute_uses_the_displayed_summary_configuration(dialo
     config.set_column("b")
 
     assert async_ops.last_call["scope"] == "analysis:outliers:column:iqr:1.5:b"
+
+
+# ----------------------------------------------------------------------
+# Principal Component Analysis
+# ----------------------------------------------------------------------
+
+
+def _pca_df() -> pd.DataFrame:
+    return pd.DataFrame({
+        "a": [1.0, 2.0, 3.0, 4.0, 5.0],
+        "b": [2.0, 4.0, 7.0, 8.0, 11.0],
+        "c": [9.0, 2.0, 5.0, 3.0, 7.0],
+        "text": list("abcde"),
+    })
+
+
+def _open_pca(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame | None = None):
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=5, column_count=4)
+    ctrl = AnalysisController(
+        results=DummyResults(
+            datasets=[dataset],
+            active_tab_id="t1",
+            dfs={"t1": _pca_df() if df is None else df},
+        ),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.PCA
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.PCA.value)
+    return ctrl, dlg
+
+
+def _pca_config(dlg: DummyAnalysisDialog) -> PCAConfigWidget:
+    config = dlg.config_widgets[-1]
+    assert isinstance(config, PCAConfigWidget)
+    return config
+
+
+def _pca_view(dlg: DummyAnalysisDialog) -> PCAView:
+    view = dlg.content_widget()
+    assert isinstance(view, PCAView)
+    return view
+
+
+def _set_pca_checked(config: PCAConfigWidget, column: str, checked: bool) -> None:
+    items = config._column_list.findItems(column, Qt.MatchFlag.MatchExactly)  # noqa: SLF001
+    assert len(items) == 1
+    items[0].setCheckState(Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked)
+
+
+def test_pca_runs_as_a_standard_background_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _open_pca(async_ops, dialog_factory)
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:pca"
+    assert call["cancelable"] is False
+    assert call["indeterminate"] is True
+
+
+def test_pca_shows_standardized_all_feature_result_and_config(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_pca(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+
+    view = _pca_view(dlg)
+    config = _pca_config(dlg)
+    assert view.configuration() == (("a", "b", "c"), True)
+    assert config.analysis_configuration() == (("a", "b", "c"), True)
+
+
+def test_pca_without_enough_numeric_columns_shows_error_without_config(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_pca(async_ops, dialog_factory, pd.DataFrame({"a": [1.0, 2.0], "text": ["x", "y"]}))
+    _simulate_success(async_ops.last_call)
+
+    view = _pca_view(dlg)
+    assert view.loadings_table() is None
+    assert PCAError.NOT_ENOUGH_NUMERIC_COLUMNS.value in str(view._result.error)  # noqa: SLF001
+    assert dlg.config_widgets[-1] is None
+
+
+def test_apply_recomputes_pca_and_keeps_the_config(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_pca(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _pca_config(dlg)
+    first_view = _pca_view(dlg)
+    configs_before = len(dlg.config_widgets)
+
+    _set_pca_checked(config, "c", False)
+    config._standardize_checkbox.setChecked(False)  # noqa: SLF001
+    config._apply_button.click()  # noqa: SLF001
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:pca:fit:raw:a:b"
+    assert call["target"] is dlg.content_panel()
+    assert call["cancelable"] is False
+
+    _simulate_success(call)
+
+    view = _pca_view(dlg)
+    assert view is not first_view
+    assert view.configuration() == (("a", "b"), False)
+    assert len(dlg.config_widgets) == configs_before
+
+
+def test_stale_pca_recompute_is_discarded_when_apply_changes_again(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_pca(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _pca_config(dlg)
+
+    _set_pca_checked(config, "c", False)
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+
+    config._standardize_checkbox.setChecked(False)  # noqa: SLF001
+    config._apply_button.click()  # noqa: SLF001
+    second = async_ops.last_call
+
+    contents_before = len(dlg.content_widgets)
+    _simulate_success(first)
+    assert len(dlg.content_widgets) == contents_before
+
+    _simulate_success(second)
+    assert _pca_view(dlg).configuration() == (("a", "b"), False)

@@ -18,6 +18,8 @@ from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisT
 from expo_jbm329.gui.dialogs.analysis.outliers_config import OutliersConfigWidget
 from expo_jbm329.gui.dialogs.analysis.outliers_view import OutliersView
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
+from expo_jbm329.gui.dialogs.analysis.pca_config import PCAConfigWidget
+from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
@@ -39,6 +41,8 @@ from expo_jbm329.services.analysis.outliers import (
     default_column,
 )
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
+from expo_jbm329.services.analysis.pca import MIN_SELECTED_COLUMNS as PCA_MIN_SELECTED_COLUMNS
+from expo_jbm329.services.analysis.pca import analyze_pca
 from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
 from expo_jbm329.utils.i18n_utils import tr
@@ -54,6 +58,7 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
     from expo_jbm329.services.analysis.outliers import OutlierColumnDetail, OutlierSummaryResult
     from expo_jbm329.services.analysis.overview import DatasetOverviewResult
+    from expo_jbm329.services.analysis.pca import PCAResult
     from expo_jbm329.services.analysis.regression import RegressionResult
     from expo_jbm329.services.analysis.statistics import DescriptiveStatisticsResult
     from expo_jbm329.workbench.controllers.async_operation_controller import (
@@ -228,6 +233,10 @@ class AnalysisController:
             AnalysisCategory.OUTLIERS: _CategoryHandler(
                 compute=_ignore_callbacks(self._compute_outliers),
                 render=self._render_outliers,
+            ),
+            AnalysisCategory.PCA: _CategoryHandler(
+                compute=_ignore_callbacks(analyze_pca),
+                render=self._render_pca,
             ),
         }
 
@@ -626,6 +635,31 @@ class AnalysisController:
             apply_result=_apply,
             is_stale=lambda: dialog.content_widget() is not view or config.current_column() != column,
             target=view.detail_panel(),
+        )
+
+    def _render_pca(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
+        """Render PCA and retain a feature/scaling config when it can be adjusted."""
+        pca_result = cast("PCAResult", result)
+        content = PCAView(pca_result)
+        if len(pca_result.available_columns) < PCA_MIN_SELECTED_COLUMNS:
+            return content, None
+
+        config = PCAConfigWidget(pca_result)
+        config.analysis_requested.connect(lambda: self._recompute_pca(dialog, config))
+        return content, config
+
+    def _recompute_pca(self, dialog: AnalysisDialog, config: PCAConfigWidget) -> None:
+        """Run PCA for an applied feature/scaling configuration."""
+        configuration = config.analysis_configuration()
+        columns, standardize = configuration
+
+        self._recompute_content(
+            dialog,
+            category=AnalysisCategory.PCA,
+            scope_suffix=f"fit:{'standardized' if standardize else 'raw'}:{':'.join(columns)}",
+            compute=lambda df, _callbacks: analyze_pca(df, columns, standardize=standardize),
+            apply_result=lambda result: dialog.set_content_widget(PCAView(cast("PCAResult", result))),
+            is_stale=lambda: config.analysis_configuration() != configuration,
         )
 
     # ------------------------------------------------------------------

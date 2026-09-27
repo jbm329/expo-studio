@@ -68,6 +68,15 @@ and this project follows [Semantic Versioning](https://semver.org/).
   (with caveats such as the Z-score's sensitivity to extreme values), and
   the 100 most extreme flagged rows with all their values. Computations run
   in background jobs with a busy overlay.
+- Advanced Analysis workspace: new "PCA" category. Fits principal component
+  analysis to selected numeric features, standardized by default, using
+  complete-case rows and reporting dropped rows. Shows a scree plot with
+  component and cumulative explained variance, a PC1-vs-PC2 score plot
+  (deterministically sampled to 5,000 rows when needed), and a feature
+  loadings table. The configuration pane supports feature selection and
+  disabling standardization; Apply runs a fresh background job with a busy
+  overlay.
+- New dependency: `scikit-learn` (used for PCA and planned clustering).
 
 ### Changed
 - Advanced Analysis workspace: added a dedicated configuration pane
