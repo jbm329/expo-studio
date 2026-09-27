@@ -274,6 +274,7 @@ dependencies = [
     { name = "scipy" },
     { name = "sqlalchemy" },
     { name = "sqlglot" },
+    { name = "statsmodels" },
 ]
 
 [package.optional-dependencies]
@@ -322,6 +323,7 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.16.0" },
     { name = "sqlalchemy", specifier = ">=2.0.46,<2.0.54" },
     { name = "sqlglot", specifier = ">=30.12.0" },
+    { name = "statsmodels", specifier = ">=0.14.4" },
 ]
 provides-extras = ["dev", "profiling", "build"]
 

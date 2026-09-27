@@ -47,6 +47,18 @@ and this project follows [Semantic Versioning](https://semver.org/).
   pickers or by clicking a table row; large datasets are plotted as a
   5,000-point sample while statistics use every row). The matrix job
   reports its progress and can be cancelled from the busy overlay.
+- Advanced Analysis workspace: new "Regression" category with multiple
+  linear regression (ordinary least squares). Choose a numeric target and
+  up to 20 numeric or categorical predictors; categorical predictors are
+  dummy-coded against their most frequent level, which is shown as the
+  reference. Shows the model summary (rows used/dropped, R-squared,
+  adjusted R-squared, F test, RMSE, AIC), a coefficient table with standard
+  errors, t, p, 95% confidence intervals and VIF, diagnostics with verdicts
+  (Breusch-Pagan, Jarque-Bera, Durbin-Watson, largest VIF), warnings for
+  likely problems, and residuals-vs-fitted, actual-vs-predicted and normal
+  Q-Q plots (sampled to 5,000 points on large datasets). Models are fitted
+  in a background job with a busy overlay.
+- New dependency: `statsmodels` (used for linear regression).
 
 ### Changed
 - Advanced Analysis workspace: added a dedicated configuration pane

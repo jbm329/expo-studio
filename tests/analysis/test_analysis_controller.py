@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 import pytest
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
@@ -10,10 +11,13 @@ from expo_jbm329.gui.dialogs.analysis.correlation_view import CorrelationView
 from expo_jbm329.gui.dialogs.analysis.group_comparison_view import GroupComparisonView
 from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
+from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
+from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.correlation import CorrelationMethod
+from expo_jbm329.services.analysis.regression import RegressionError
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
 
@@ -228,9 +232,9 @@ def test_category_without_a_registered_handler_shows_not_implemented_placeholder
     _open_and_flush(ctrl, QWidget())
 
     dlg = dialog_factory[0]
-    dlg._selected_category = AnalysisCategory.REGRESSION
+    dlg._selected_category = AnalysisCategory.OUTLIERS
     dlg._selected_dataset_tab_id = "t1"
-    dlg.category_changed.emit(AnalysisCategory.REGRESSION.value)
+    dlg.category_changed.emit(AnalysisCategory.OUTLIERS.value)
 
     assert dlg.placeholder_calls == [ctrl._tr(ctrl.TR_NOT_IMPLEMENTED)]  # noqa: SLF001
     assert dlg.content_widgets == []
@@ -462,8 +466,8 @@ def test_job_error_is_ignored_once_stale(dialog_factory):
     call = async_ops.last_call
 
     # User navigates away to an unimplemented category before the job fails.
-    dlg._selected_category = AnalysisCategory.REGRESSION
-    dlg.category_changed.emit(AnalysisCategory.REGRESSION.value)
+    dlg._selected_category = AnalysisCategory.OUTLIERS
+    dlg.category_changed.emit(AnalysisCategory.OUTLIERS.value)
     assert dlg.placeholder_calls == [ctrl._tr(ctrl.TR_NOT_IMPLEMENTED)]  # noqa: SLF001
 
     call["on_error"]("boom")
@@ -1184,3 +1188,143 @@ def test_failed_recompute_shows_error_placeholder_unless_stale(dialog_factory):
 
     second["on_error"]("boom")
     assert dlg.placeholder_calls == [ctrl._tr(ctrl.TR_ANALYSIS_ERROR)]  # noqa: SLF001
+
+
+# ----------------------------------------------------------------------
+# Linear Regression
+# ----------------------------------------------------------------------
+
+
+def _regression_df() -> pd.DataFrame:
+    return pd.DataFrame({
+        "y": [1.0, 2.5, 2.0, 4.5, 5.0, 6.5, 6.0, 8.5],
+        "x": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+        "z": [2.0, 1.0, 4.0, 3.0, 6.0, 5.0, 8.0, 7.0],
+        "g": ["a", "b", "a", "b", "a", "b", "a", "a"],
+    })
+
+
+def _open_regression(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame | None = None):
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=8, column_count=4)
+    ctrl = AnalysisController(
+        results=DummyResults(
+            datasets=[dataset],
+            active_tab_id="t1",
+            dfs={"t1": _regression_df() if df is None else df},
+        ),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.REGRESSION
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.REGRESSION.value)
+    return ctrl, dlg
+
+
+def _regression_config(dlg: DummyAnalysisDialog) -> RegressionConfigWidget:
+    config = dlg.config_widgets[-1]
+    assert isinstance(config, RegressionConfigWidget)
+    return config
+
+
+def _regression_view(dlg: DummyAnalysisDialog) -> RegressionView:
+    view = dlg.content_widgets[-1]
+    assert isinstance(view, RegressionView)
+    return view
+
+
+def _check_predictors(config: RegressionConfigWidget, *columns: str) -> None:
+    predictor_list = config._predictor_list  # noqa: SLF001
+    for index in range(predictor_list.count()):
+        item = predictor_list.item(index)
+        assert item is not None
+        if item.flags() & Qt.ItemFlag.ItemIsUserCheckable and item.flags() & Qt.ItemFlag.ItemIsEnabled:
+            wanted = item.data(Qt.ItemDataRole.UserRole) in columns
+            item.setCheckState(Qt.CheckState.Checked if wanted else Qt.CheckState.Unchecked)
+
+
+def test_regression_initially_prompts_for_predictors_with_a_standard_overlay(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory)
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:regression"
+    assert call["cancelable"] is False
+    _simulate_success(call)
+
+    view = _regression_view(dlg)
+    assert view.result().error is RegressionError.NO_PREDICTORS_SELECTED
+    assert view.result().target == "y"
+    config = _regression_config(dlg)
+    assert config.model_configuration() == ("y", ())
+
+
+def test_regression_without_numeric_columns_has_no_config(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory, df=pd.DataFrame({"g": ["a", "b", "a"]}))
+    _simulate_success(async_ops.last_call)
+
+    assert _regression_view(dlg).result().error is RegressionError.NO_NUMERIC_COLUMN
+    assert dlg.config_widgets[-1] is None
+
+
+def test_applying_predictors_refits_the_model_in_a_background_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _regression_config(dlg)
+
+    _check_predictors(config, "x", "g")
+    config._apply_button.click()  # noqa: SLF001
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:regression:y:x:g"
+    assert call["cancelable"] is False
+    _simulate_success(call)
+
+    view = _regression_view(dlg)
+    assert view.result().error is None
+    assert view.result().predictors == ("x", "g")
+    assert dlg.config_widgets[-1] is config  # the config is never rebuilt
+
+
+def test_changing_the_target_refits_without_it_as_a_predictor(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _regression_config(dlg)
+    _check_predictors(config, "x", "z")
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    combo = config._target_combo  # noqa: SLF001
+    combo.setCurrentIndex(combo.findText("x"))
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:regression:x:z"
+    _simulate_success(call)
+    assert _regression_view(dlg).result().target == "x"
+    assert _regression_view(dlg).result().predictors == ("z",)
+
+
+def test_stale_regression_result_is_discarded(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _regression_config(dlg)
+
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    _check_predictors(config, "z")
+    config._apply_button.click()  # noqa: SLF001
+    second = async_ops.last_call
+    views_before = len(dlg.content_widgets)
+
+    _simulate_success(first)
+    assert len(dlg.content_widgets) == views_before
+
+    _simulate_success(second)
+    assert _regression_view(dlg).result().predictors == ("z",)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtGui import QStandardItemModel
 from PyQt6.QtWidgets import QComboBox, QWidget
 
@@ -15,6 +15,26 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from expo_jbm329.services.analysis.group_comparison import ExcludedColumn
+
+
+def exclusion_tooltip(column: ExcludedColumn) -> str:
+    """Return the translated explanation of why a categorical `column` can't be chosen.
+
+    Args:
+        column: The excluded column and the reason for its exclusion.
+
+    Returns:
+        Translated tooltip text.
+    """
+    if column.reason is ColumnExclusionReason.TOO_FEW_VALUES:
+        return QCoreApplication.translate(
+            "ColumnComboBox",
+            "Not available: {count} distinct values (at least {minimum} are needed).",
+        ).format(count=fmt_int(column.distinct_count), minimum=fmt_int(MIN_GROUPS))
+    return QCoreApplication.translate(
+        "ColumnComboBox",
+        "Not available: {count} distinct values (at most {maximum} are allowed).",
+    ).format(count=fmt_int(column.distinct_count), maximum=fmt_int(MAX_GROUPS))
 
 
 class ColumnComboBox(QComboBox):
@@ -66,7 +86,7 @@ class ColumnComboBox(QComboBox):
             for column in excluded:
                 self.addItem(column.name)
                 index = self.count() - 1
-                self.setItemData(index, self._exclusion_tooltip(column), Qt.ItemDataRole.ToolTipRole)
+                self.setItemData(index, exclusion_tooltip(column), Qt.ItemDataRole.ToolTipRole)
                 item = model.item(index)
                 if item is None:
                     msg = f"ColumnComboBox: missing model item at index {index}."
@@ -102,15 +122,3 @@ class ColumnComboBox(QComboBox):
             msg = "ColumnComboBox requires the default QStandardItemModel."
             raise TypeError(msg)
         return model
-
-    def _exclusion_tooltip(self, column: ExcludedColumn) -> str:
-        """Return the translated explanation of why `column` can't be chosen."""
-        if column.reason is ColumnExclusionReason.TOO_FEW_VALUES:
-            return self.tr("Not available: {count} distinct values (at least {minimum} are needed).").format(
-                count=fmt_int(column.distinct_count),
-                minimum=fmt_int(MIN_GROUPS),
-            )
-        return self.tr("Not available: {count} distinct values (at most {maximum} are allowed).").format(
-            count=fmt_int(column.distinct_count),
-            maximum=fmt_int(MAX_GROUPS),
-        )

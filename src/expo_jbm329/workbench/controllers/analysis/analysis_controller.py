@@ -16,6 +16,8 @@ from expo_jbm329.gui.dialogs.analysis.correlation_view import CorrelationView
 from expo_jbm329.gui.dialogs.analysis.group_comparison_view import GroupComparisonView
 from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
+from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
+from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
@@ -29,6 +31,7 @@ from expo_jbm329.services.analysis.correlation import (
 )
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
+from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
 from expo_jbm329.utils.i18n_utils import tr
 
@@ -42,6 +45,7 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.correlation import CorrelationMatrixResult, CorrelationPairDetail
     from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
     from expo_jbm329.services.analysis.overview import DatasetOverviewResult
+    from expo_jbm329.services.analysis.regression import RegressionResult
     from expo_jbm329.services.analysis.statistics import DescriptiveStatisticsResult
     from expo_jbm329.workbench.controllers.async_operation_controller import (
         AsyncOperationController,
@@ -193,6 +197,10 @@ class AnalysisController:
                 compute=self._compute_correlation,
                 render=self._render_correlation,
                 cancelable=True,
+            ),
+            AnalysisCategory.REGRESSION: _CategoryHandler(
+                compute=_ignore_callbacks(analyze_regression),
+                render=self._render_regression,
             ),
         }
 
@@ -450,6 +458,37 @@ class AnalysisController:
             is_stale=lambda: dialog.content_widget() is not view or config.current_pair() != (x_column, y_column),
             target=view.pair_panel(),
         )
+
+    def _render_regression(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
+        """Render the Linear Regression view and its target/predictor config.
+
+        Must run on the GUI thread. The initial result has no predictors
+        selected, so the view prompts the user to choose some. Like
+        Hypothesis Tests, the configuration determines what to compute: a
+        target change or applied predictor selection refits the model in
+        a background job replacing only the content pane.
+        """
+        regression = cast("RegressionResult", result)
+        content = RegressionView(regression)
+        if regression.error is RegressionError.NO_NUMERIC_COLUMN:
+            return content, None
+
+        config = RegressionConfigWidget(regression)
+
+        def _handle_model_requested() -> None:
+            configuration = config.model_configuration()
+            target, predictors = configuration
+            self._recompute_content(
+                dialog,
+                category=AnalysisCategory.REGRESSION,
+                scope_suffix=":".join((target, *predictors)),
+                compute=lambda df, _callbacks: analyze_regression(df, target, predictors),
+                apply_result=lambda r: dialog.set_content_widget(RegressionView(cast("RegressionResult", r))),
+                is_stale=lambda: config.model_configuration() != configuration,
+            )
+
+        config.model_requested.connect(_handle_model_requested)
+        return content, config
 
     # ------------------------------------------------------------------
     # Event handlers
