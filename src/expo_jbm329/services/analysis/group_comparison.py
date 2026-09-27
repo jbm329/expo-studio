@@ -24,10 +24,9 @@ import numpy as np
 import pandas as pd
 from scipy.stats import f_oneway, kruskal, mannwhitneyu, ttest_ind
 
+from expo_jbm329.services.analysis.columns import numeric_columns as find_numeric_columns
 from expo_jbm329.services.analysis.normality import shapiro_normality
-from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
 
-_NUMERIC_DTYPES = frozenset({SemanticDType.INT, SemanticDType.FLOAT})
 _NAN = float("nan")
 _CONFIDENCE_LEVEL = 0.95
 
@@ -263,11 +262,6 @@ class GroupComparisonResult:
     excluded_grouping_columns: tuple[ExcludedColumn, ...] = ()
 
 
-def _numeric_columns(df: pd.DataFrame) -> tuple[str, ...]:
-    """Return every numeric (int or float) column name, in column order."""
-    return tuple(str(column) for column in df.columns if classify_series_dtype(df[column]) in _NUMERIC_DTYPES)
-
-
 def classify_grouping_columns(df: pd.DataFrame) -> GroupingColumns:
     """Split every column into eligible and excluded grouping columns.
 
@@ -462,7 +456,7 @@ def analyze_group_comparison(
         fewer than `MIN_GROUPS` or more than `MAX_GROUPS` groups with valid
         data.
     """
-    numeric_columns = _numeric_columns(df)
+    numeric_columns = find_numeric_columns(df)
     grouping_columns = classify_grouping_columns(df)
 
     if numeric_column is None:

@@ -5,12 +5,15 @@ import pytest
 from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
+from expo_jbm329.gui.dialogs.analysis.correlation_config import CorrelationConfigWidget
+from expo_jbm329.gui.dialogs.analysis.correlation_view import CorrelationView
 from expo_jbm329.gui.dialogs.analysis.group_comparison_view import GroupComparisonView
 from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
+from expo_jbm329.services.analysis.correlation import CorrelationMethod
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
 
@@ -77,12 +80,18 @@ class DummyAnalysisDialog:
         self._panel = QWidget()
         self._selected_category: AnalysisCategory | None = None
         self._selected_dataset_tab_id: str | None = None
+        self._current_content: QWidget | None = None
 
     def show_placeholder(self, text):
         self.placeholder_calls.append(text)
+        self._current_content = None
 
     def set_content_widget(self, widget):
         self.content_widgets.append(widget)
+        self._current_content = widget
+
+    def content_widget(self):
+        return self._current_content
 
     def set_config_widget(self, widget):
         self.config_widgets.append(widget)
@@ -219,9 +228,9 @@ def test_category_without_a_registered_handler_shows_not_implemented_placeholder
     _open_and_flush(ctrl, QWidget())
 
     dlg = dialog_factory[0]
-    dlg._selected_category = AnalysisCategory.CORRELATION
+    dlg._selected_category = AnalysisCategory.REGRESSION
     dlg._selected_dataset_tab_id = "t1"
-    dlg.category_changed.emit(AnalysisCategory.CORRELATION.value)
+    dlg.category_changed.emit(AnalysisCategory.REGRESSION.value)
 
     assert dlg.placeholder_calls == [ctrl._tr(ctrl.TR_NOT_IMPLEMENTED)]  # noqa: SLF001
     assert dlg.content_widgets == []
@@ -453,8 +462,8 @@ def test_job_error_is_ignored_once_stale(dialog_factory):
     call = async_ops.last_call
 
     # User navigates away to an unimplemented category before the job fails.
-    dlg._selected_category = AnalysisCategory.CORRELATION
-    dlg.category_changed.emit(AnalysisCategory.CORRELATION.value)
+    dlg._selected_category = AnalysisCategory.REGRESSION
+    dlg.category_changed.emit(AnalysisCategory.REGRESSION.value)
     assert dlg.placeholder_calls == [ctrl._tr(ctrl.TR_NOT_IMPLEMENTED)]  # noqa: SLF001
 
     call["on_error"]("boom")
@@ -829,3 +838,349 @@ def test_switching_to_an_unavailable_test_computes_its_defaults_and_shows_the_er
     assert async_ops.last_call["scope"] == "analysis:hypothesis_tests:chi_square"
     _simulate_success(async_ops.last_call)
     assert isinstance(dlg.content_widgets[-1], ChiSquareView)
+
+
+# ----------------------------------------------------------------------
+# Correlation Explorer
+# ----------------------------------------------------------------------
+
+
+def _correlation_df() -> pd.DataFrame:
+    return pd.DataFrame({
+        "a": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+        "b": [2.0, 4.1, 5.9, 8.2, 9.8, 12.1],
+        "c": [5.0, 3.0, 4.0, 1.0, 2.0, 0.5],
+        "text": ["x", "y", "z", "x", "y", "z"],
+    })
+
+
+def _open_correlation(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame | None = None):
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=6, column_count=4)
+    ctrl = AnalysisController(
+        results=DummyResults(
+            datasets=[dataset],
+            active_tab_id="t1",
+            dfs={"t1": _correlation_df() if df is None else df},
+        ),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.CORRELATION
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.CORRELATION.value)
+    return ctrl, dlg
+
+
+def _correlation_config(dlg: DummyAnalysisDialog) -> CorrelationConfigWidget:
+    config = dlg.config_widgets[-1]
+    assert isinstance(config, CorrelationConfigWidget)
+    return config
+
+
+def _correlation_view(dlg: DummyAnalysisDialog) -> CorrelationView:
+    view = dlg.content_widget()
+    assert isinstance(view, CorrelationView)
+    return view
+
+
+def test_correlation_runs_as_a_cancelable_background_job_with_progress(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _open_correlation(async_ops, dialog_factory)
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:correlation"
+    assert call["cancelable"] is True
+    assert call["indeterminate"] is False
+    assert call["timeout_ms"] == 600_000
+
+
+def test_non_correlation_jobs_keep_an_indeterminate_non_cancelable_overlay(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _open_hypothesis_tests(async_ops, dialog_factory)
+
+    call = async_ops.last_call
+    assert call["cancelable"] is False
+    assert call["indeterminate"] is True
+    assert call["timeout_ms"] == 60_000
+
+
+def test_correlation_job_reports_progress_through_the_injected_callback(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _open_correlation(async_ops, dialog_factory)
+    progress: list[int] = []
+
+    result = async_ops.last_call["work"](progress_cb=progress.append, cancel_cb=lambda: False)
+
+    assert result is not None
+    assert progress[-1] == 100
+
+
+def test_correlation_shows_view_and_config_with_the_strongest_pair(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_correlation(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+
+    view = _correlation_view(dlg)
+    config = _correlation_config(dlg)
+    detail = view.pair_detail()
+    assert detail is not None
+    assert (detail.pair.x_column, detail.pair.y_column) == ("a", "b")
+    assert config.current_pair() == ("a", "b")
+    assert config.matrix_configuration() == (CorrelationMethod.PEARSON, ("a", "b", "c"))
+
+
+def test_correlation_without_enough_numeric_columns_shows_error_without_config(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_correlation(async_ops, dialog_factory, pd.DataFrame({"a": [1.0, 2.0, 3.0]}))
+    _simulate_success(async_ops.last_call)
+
+    view = _correlation_view(dlg)
+    assert view.table() is None
+    assert dlg.config_widgets[-1] is None
+
+
+def test_cancelled_correlation_shows_the_cancelled_placeholder(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_correlation(async_ops, dialog_factory)
+    call = async_ops.last_call
+
+    call["on_result"](call["work"](cancel_cb=lambda: True))
+
+    assert dlg.placeholder_calls == [ctrl._tr(ctrl.TR_ANALYSIS_CANCELLED)]  # noqa: SLF001
+    assert dlg.config_widgets[-1] is None
+
+
+def test_cancel_during_the_matrix_computation_returns_none(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _open_correlation(async_ops, dialog_factory)
+    polls: list[None] = []
+
+    def _cancel_after_first_poll() -> bool:
+        polls.append(None)
+        return len(polls) > 1
+
+    assert async_ops.last_call["work"](cancel_cb=_cancel_after_first_poll) is None
+
+
+def test_method_change_recomputes_the_matrix_as_a_cancelable_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_correlation(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _correlation_config(dlg)
+    first_view = _correlation_view(dlg)
+    configs_before = len(dlg.config_widgets)
+
+    config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.SPEARMAN))  # noqa: SLF001
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:correlation:matrix:spearman"
+    assert call["target"] is dlg.content_panel()
+    assert call["cancelable"] is True
+    assert call["indeterminate"] is False
+
+    _simulate_success(call)
+
+    view = _correlation_view(dlg)
+    assert view is not first_view
+    assert view.method() is CorrelationMethod.SPEARMAN
+    detail = view.pair_detail()
+    assert detail is not None
+    assert detail.method is CorrelationMethod.SPEARMAN
+    assert len(dlg.config_widgets) == configs_before  # config is kept
+
+
+def test_apply_recomputes_the_matrix_with_the_checked_columns(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_correlation(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _correlation_config(dlg)
+
+    item = config._column_list.item(2)  # noqa: SLF001 - "c"
+    item.setCheckState(item.checkState().Unchecked)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    view = _correlation_view(dlg)
+    table = view.table()
+    assert table is not None
+    assert table.rowCount() == 1
+
+
+def test_cancelled_matrix_recompute_shows_placeholder_and_keeps_config(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_correlation(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _correlation_config(dlg)
+
+    config._apply_button.click()  # noqa: SLF001
+    call = async_ops.last_call
+    call["on_result"](call["work"](cancel_cb=lambda: True))
+
+    assert dlg.placeholder_calls[-1] == ctrl._tr(ctrl.TR_ANALYSIS_CANCELLED)  # noqa: SLF001
+    assert dlg.config_widgets[-1] is config
+
+
+def test_stale_matrix_recompute_is_discarded_when_the_method_changes_again(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_correlation(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _correlation_config(dlg)
+    combo = config._method_combo  # noqa: SLF001
+
+    combo.setCurrentIndex(combo.findData(CorrelationMethod.SPEARMAN))
+    first = async_ops.last_call
+    combo.setCurrentIndex(combo.findData(CorrelationMethod.KENDALL))
+    second = async_ops.last_call
+
+    contents_before = len(dlg.content_widgets)
+    _simulate_success(first)
+    assert len(dlg.content_widgets) == contents_before
+
+    _simulate_success(second)
+    assert _correlation_view(dlg).method() is CorrelationMethod.KENDALL
+
+
+def test_pair_change_recomputes_only_the_pair_detail_over_the_pair_panel(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_correlation(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _correlation_config(dlg)
+    view = _correlation_view(dlg)
+    contents_before = len(dlg.content_widgets)
+
+    config.set_pair("c", "a")
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:correlation:pair:pearson:c:a"
+    assert call["target"] is view.pair_panel()
+    assert call["cancelable"] is False
+
+    _simulate_success(call)
+
+    assert len(dlg.content_widgets) == contents_before  # view updated in place
+    detail = view.pair_detail()
+    assert detail is not None
+    assert (detail.pair.x_column, detail.pair.y_column) == ("c", "a")
+
+
+def test_clicking_a_table_row_selects_the_pair_and_recomputes_it(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_correlation(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _correlation_config(dlg)
+    view = _correlation_view(dlg)
+    table = view.table()
+    assert table is not None
+
+    table.cellClicked.emit(2, 0)
+
+    last_pair = view._result.pairs[2]  # noqa: SLF001
+    assert config.current_pair() == (last_pair.x_column, last_pair.y_column)
+    assert async_ops.last_call["scope"].startswith("analysis:correlation:pair:")
+
+
+def test_stale_pair_recompute_is_discarded_when_the_pair_changes_again(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_correlation(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _correlation_config(dlg)
+    view = _correlation_view(dlg)
+    initial_detail = view.pair_detail()
+
+    config.set_pair("c", "a")
+    first = async_ops.last_call
+    config.set_pair("b", "c")
+    second = async_ops.last_call
+
+    _simulate_success(first)
+    assert view.pair_detail() is initial_detail
+
+    _simulate_success(second)
+    detail = view.pair_detail()
+    assert detail is not None
+    assert (detail.pair.x_column, detail.pair.y_column) == ("b", "c")
+
+
+def test_pair_change_while_the_matrix_is_computing_is_caught_up_afterwards(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_correlation(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _correlation_config(dlg)
+
+    config._apply_button.click()  # noqa: SLF001
+    matrix_call = async_ops.last_call
+    dlg.show_placeholder("computing")  # no view is displayed while the matrix job runs
+    jobs_before = len(async_ops.calls)
+
+    config.set_pair("c", "a")
+    assert len(async_ops.calls) == jobs_before  # nothing to update yet
+
+    _simulate_success(matrix_call)
+
+    pair_call = async_ops.last_call
+    assert pair_call["scope"] == "analysis:correlation:pair:pearson:c:a"
+    _simulate_success(pair_call)
+    detail = _correlation_view(dlg).pair_detail()
+    assert detail is not None
+    assert (detail.pair.x_column, detail.pair.y_column) == ("c", "a")
+
+
+def test_pair_recompute_uses_the_displayed_matrix_method(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_correlation(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _correlation_config(dlg)
+
+    # Method changed, but its matrix job hasn't finished: the view is still Pearson.
+    config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.KENDALL))  # noqa: SLF001
+    config.set_pair("c", "a")
+
+    assert async_ops.last_call["scope"] == "analysis:correlation:pair:pearson:c:a"
+
+
+def test_recompute_shows_error_placeholder_when_the_dataset_cannot_be_reloaded(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_correlation(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _correlation_config(dlg)
+    ctrl._results._dfs.clear()  # noqa: SLF001 - the dataset disappeared
+    jobs_before = len(async_ops.calls)
+
+    config._apply_button.click()  # noqa: SLF001
+
+    assert len(async_ops.calls) == jobs_before
+    assert dlg.placeholder_calls[-1] == ctrl._tr(ctrl.TR_ANALYSIS_ERROR)  # noqa: SLF001
+
+
+def test_recompute_without_a_selected_dataset_does_nothing(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_correlation(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _correlation_config(dlg)
+    dlg._selected_dataset_tab_id = None
+    jobs_before = len(async_ops.calls)
+
+    config._apply_button.click()  # noqa: SLF001
+
+    assert len(async_ops.calls) == jobs_before
+
+
+def test_failed_recompute_shows_error_placeholder_unless_stale(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_correlation(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _correlation_config(dlg)
+    combo = config._method_combo  # noqa: SLF001
+
+    combo.setCurrentIndex(combo.findData(CorrelationMethod.SPEARMAN))
+    first = async_ops.last_call
+    combo.setCurrentIndex(combo.findData(CorrelationMethod.KENDALL))
+    second = async_ops.last_call
+
+    first["on_error"]("boom")
+    assert dlg.placeholder_calls == []
+
+    second["on_error"]("boom")
+    assert dlg.placeholder_calls == [ctrl._tr(ctrl.TR_ANALYSIS_ERROR)]  # noqa: SLF001

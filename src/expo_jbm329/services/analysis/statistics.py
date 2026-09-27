@@ -19,14 +19,13 @@ import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from expo_jbm329.services.analysis.columns import numeric_columns
 from expo_jbm329.services.analysis.normality import shapiro_normality
-from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
 from expo_jbm329.services.data_profile.column_data_profile import profile_series
 
 if TYPE_CHECKING:
     import pandas as pd
 
-_NUMERIC_DTYPES = frozenset({SemanticDType.INT, SemanticDType.FLOAT})
 _NAN = float("nan")
 
 
@@ -182,9 +181,5 @@ def analyze_descriptive_statistics(df: pd.DataFrame) -> DescriptiveStatisticsRes
         numeric column (int or float), in the DataFrame's original column
         order. Empty if the DataFrame has no numeric columns.
     """
-    columns = tuple(
-        _column_statistics(df, str(column))
-        for column in df.columns
-        if classify_series_dtype(df[column]) in _NUMERIC_DTYPES
-    )
+    columns = tuple(_column_statistics(df, column) for column in numeric_columns(df))
     return DescriptiveStatisticsResult(columns=columns)

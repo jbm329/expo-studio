@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+from expo_jbm329.services.analysis.columns import NUMERIC_DTYPES
 from expo_jbm329.services.data_operations.analytics import null_stats
 from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
 
@@ -69,7 +70,6 @@ class DatasetOverviewResult:
     high_missing_columns: tuple[tuple[str, float], ...] = field(default_factory=tuple)
 
 
-_NUMERIC_DTYPES = frozenset({SemanticDType.INT, SemanticDType.FLOAT})
 _CATEGORICAL_DTYPES = frozenset({SemanticDType.CATEGORY, SemanticDType.STRING})
 
 
@@ -119,7 +119,7 @@ def analyze_dataset_overview(df: pd.DataFrame) -> DatasetOverviewResult:
 
     type_counts = _count_columns_by_semantic_type(df)
 
-    numeric_column_count = sum(type_counts.get(t, 0) for t in _NUMERIC_DTYPES)
+    numeric_column_count = sum(type_counts.get(t, 0) for t in NUMERIC_DTYPES)
     categorical_column_count = sum(type_counts.get(t, 0) for t in _CATEGORICAL_DTYPES)
     datetime_column_count = type_counts.get(SemanticDType.DATETIME, 0)
     boolean_column_count = type_counts.get(SemanticDType.BOOL, 0)

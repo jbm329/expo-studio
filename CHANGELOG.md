@@ -37,6 +37,16 @@ and this project follows [Semantic Versioning](https://semver.org/).
   categorical variable (fewer than 2 or more than 20 distinct values) are
   still listed in the column pickers - also Group Comparison's grouping
   column - but disabled, with a tooltip explaining why.
+- Advanced Analysis workspace: new "Correlation" category (Correlation
+  Explorer). Computes Pearson, Spearman or Kendall's tau-b correlations
+  between numeric columns (the first 20 by default, up to 30 selectable)
+  with pairwise deletion of missing values. Shows a heatmap of the matrix,
+  a table of every pair ranked by strength with its 95% confidence
+  interval, p-value, Holm-adjusted p-value and n, and a scatterplot with a
+  least-squares line and statistics for a selected pair (chosen via X/Y
+  pickers or by clicking a table row; large datasets are plotted as a
+  5,000-point sample while statistics use every row). The matrix job
+  reports its progress and can be cancelled from the busy overlay.
 
 ### Changed
 - Advanced Analysis workspace: added a dedicated configuration pane
