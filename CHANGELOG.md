@@ -77,6 +77,14 @@ and this project follows [Semantic Versioning](https://semver.org/).
   disabling standardization; Apply runs a fresh background job with a busy
   overlay.
 - New dependency: `scikit-learn` (used for PCA and planned clustering).
+- Advanced Analysis workspace: new "Clustering" category with K-Means,
+  DBSCAN and Agglomerative clustering. Users can select numeric features
+  (all selected initially), standardize them by default, and set
+  method-specific parameters before applying. Fits use complete cases and
+  report dropped rows, cluster sizes, DBSCAN noise, and a silhouette score
+  when it is defined. An internal PCA projection shows observations colored
+  by their assigned cluster; large plots use a deterministic 5,000-row
+  sample. Every fit runs in a background job with a busy overlay.
 
 ### Changed
 - Advanced Analysis workspace: added a dedicated configuration pane

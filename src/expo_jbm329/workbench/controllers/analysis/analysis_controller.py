@@ -11,6 +11,8 @@ from PyQt6.QtCore import QT_TR_NOOP, QTimer
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
+from expo_jbm329.gui.dialogs.analysis.clustering_config import ClusteringConfigWidget
+from expo_jbm329.gui.dialogs.analysis.clustering_view import ClusteringView
 from expo_jbm329.gui.dialogs.analysis.correlation_config import CorrelationConfigWidget
 from expo_jbm329.gui.dialogs.analysis.correlation_view import CorrelationView
 from expo_jbm329.gui.dialogs.analysis.group_comparison_view import GroupComparisonView
@@ -26,6 +28,8 @@ from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigW
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.chi_square import analyze_chi_square
+from expo_jbm329.services.analysis.clustering import MIN_SELECTED_COLUMNS as CLUSTERING_MIN_SELECTED_COLUMNS
+from expo_jbm329.services.analysis.clustering import ClusteringMethod, analyze_clustering
 from expo_jbm329.services.analysis.correlation import (
     MIN_SELECTED_COLUMNS,
     CorrelationMethod,
@@ -54,6 +58,7 @@ if TYPE_CHECKING:
     from PyQt6.QtWidgets import QWidget
 
     from expo_jbm329.services.analysis.chi_square import ChiSquareResult
+    from expo_jbm329.services.analysis.clustering import ClusteringResult
     from expo_jbm329.services.analysis.correlation import CorrelationMatrixResult, CorrelationPairDetail
     from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
     from expo_jbm329.services.analysis.outliers import OutlierColumnDetail, OutlierSummaryResult
@@ -233,6 +238,10 @@ class AnalysisController:
             AnalysisCategory.OUTLIERS: _CategoryHandler(
                 compute=_ignore_callbacks(self._compute_outliers),
                 render=self._render_outliers,
+            ),
+            AnalysisCategory.CLUSTERING: _CategoryHandler(
+                compute=_ignore_callbacks(analyze_clustering),
+                render=self._render_clustering,
             ),
             AnalysisCategory.PCA: _CategoryHandler(
                 compute=_ignore_callbacks(analyze_pca),
@@ -659,6 +668,46 @@ class AnalysisController:
             scope_suffix=f"fit:{'standardized' if standardize else 'raw'}:{':'.join(columns)}",
             compute=lambda df, _callbacks: analyze_pca(df, columns, standardize=standardize),
             apply_result=lambda result: dialog.set_content_widget(PCAView(cast("PCAResult", result))),
+            is_stale=lambda: config.analysis_configuration() != configuration,
+        )
+
+    def _render_clustering(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
+        """Render clustering and retain its config when enough features exist."""
+        clustering_result = cast("ClusteringResult", result)
+        content = ClusteringView(clustering_result)
+        if len(clustering_result.available_columns) < CLUSTERING_MIN_SELECTED_COLUMNS:
+            return content, None
+
+        config = ClusteringConfigWidget(clustering_result)
+        config.analysis_requested.connect(lambda: self._recompute_clustering(dialog, config))
+        return content, config
+
+    def _recompute_clustering(self, dialog: AnalysisDialog, config: ClusteringConfigWidget) -> None:
+        """Run clustering for the latest applied config."""
+        configuration = config.analysis_configuration()
+        columns, method, standardize, cluster_count, dbscan_epsilon, dbscan_min_samples = configuration
+        parameters = (
+            f"eps:{dbscan_epsilon}:min_samples:{dbscan_min_samples}"
+            if method is ClusteringMethod.DBSCAN
+            else f"clusters:{cluster_count}"
+        )
+        scale = "standardized" if standardize else "raw"
+        scope_suffix = f"fit:{method.value}:{scale}:{parameters}:{':'.join(columns)}"
+
+        self._recompute_content(
+            dialog,
+            category=AnalysisCategory.CLUSTERING,
+            scope_suffix=scope_suffix,
+            compute=lambda df, _callbacks: analyze_clustering(
+                df,
+                columns,
+                method=method,
+                standardize=standardize,
+                cluster_count=cluster_count,
+                dbscan_epsilon=dbscan_epsilon,
+                dbscan_min_samples=dbscan_min_samples,
+            ),
+            apply_result=lambda result: dialog.set_content_widget(ClusteringView(cast("ClusteringResult", result))),
             is_stale=lambda: config.analysis_configuration() != configuration,
         )
 

@@ -6,6 +6,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
+from expo_jbm329.gui.dialogs.analysis.clustering_config import ClusteringConfigWidget
+from expo_jbm329.gui.dialogs.analysis.clustering_view import ClusteringView
 from expo_jbm329.gui.dialogs.analysis.correlation_config import CorrelationConfigWidget
 from expo_jbm329.gui.dialogs.analysis.correlation_view import CorrelationView
 from expo_jbm329.gui.dialogs.analysis.group_comparison_view import GroupComparisonView
@@ -20,6 +22,7 @@ from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
+from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.correlation import CorrelationMethod
 from expo_jbm329.services.analysis.outliers import OutlierMethod
 from expo_jbm329.services.analysis.pca import PCAError
@@ -238,9 +241,9 @@ def test_category_without_a_registered_handler_shows_not_implemented_placeholder
     _open_and_flush(ctrl, QWidget())
 
     dlg = dialog_factory[0]
-    dlg._selected_category = AnalysisCategory.CLUSTERING
+    dlg._selected_category = AnalysisCategory.TIME_SERIES
     dlg._selected_dataset_tab_id = "t1"
-    dlg.category_changed.emit(AnalysisCategory.CLUSTERING.value)
+    dlg.category_changed.emit(AnalysisCategory.TIME_SERIES.value)
 
     assert dlg.placeholder_calls == [ctrl._tr(ctrl.TR_NOT_IMPLEMENTED)]  # noqa: SLF001
     assert dlg.content_widgets == []
@@ -472,8 +475,8 @@ def test_job_error_is_ignored_once_stale(dialog_factory):
     call = async_ops.last_call
 
     # User navigates away to an unimplemented category before the job fails.
-    dlg._selected_category = AnalysisCategory.CLUSTERING
-    dlg.category_changed.emit(AnalysisCategory.CLUSTERING.value)
+    dlg._selected_category = AnalysisCategory.TIME_SERIES
+    dlg.category_changed.emit(AnalysisCategory.TIME_SERIES.value)
     assert dlg.placeholder_calls == [ctrl._tr(ctrl.TR_NOT_IMPLEMENTED)]  # noqa: SLF001
 
     call["on_error"]("boom")
@@ -1690,3 +1693,134 @@ def test_stale_pca_recompute_is_discarded_when_apply_changes_again(dialog_factor
 
     _simulate_success(second)
     assert _pca_view(dlg).configuration() == (("a", "b"), False)
+
+
+# ----------------------------------------------------------------------
+# Clustering
+# ----------------------------------------------------------------------
+
+
+def _clustering_df() -> pd.DataFrame:
+    return pd.DataFrame({
+        "x": [0.0, 0.1, -0.1, 10.0, 10.1, 9.9],
+        "y": [0.0, -0.1, 0.1, 10.0, 10.1, 9.9],
+        "z": [1.0, 1.1, 0.9, 5.0, 5.1, 4.9],
+        "text": list("abcdef"),
+    })
+
+
+def _open_clustering(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame | None = None):
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=6, column_count=4)
+    ctrl = AnalysisController(
+        results=DummyResults(
+            datasets=[dataset],
+            active_tab_id="t1",
+            dfs={"t1": _clustering_df() if df is None else df},
+        ),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.CLUSTERING
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.CLUSTERING.value)
+    return ctrl, dlg
+
+
+def _clustering_config(dlg: DummyAnalysisDialog) -> ClusteringConfigWidget:
+    config = dlg.config_widgets[-1]
+    assert isinstance(config, ClusteringConfigWidget)
+    return config
+
+
+def _clustering_view(dlg: DummyAnalysisDialog) -> ClusteringView:
+    view = dlg.content_widget()
+    assert isinstance(view, ClusteringView)
+    return view
+
+
+def _set_clustering_checked(config: ClusteringConfigWidget, column: str, checked: bool) -> None:
+    items = config._column_list.findItems(column, Qt.MatchFlag.MatchExactly)  # noqa: SLF001
+    assert len(items) == 1
+    items[0].setCheckState(Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked)
+
+
+def test_clustering_runs_as_a_standard_background_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _open_clustering(async_ops, dialog_factory)
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:clustering"
+    assert call["cancelable"] is False
+    assert call["indeterminate"] is True
+
+
+def test_clustering_shows_default_k_means_config_and_result(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_clustering(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+
+    view = _clustering_view(dlg)
+    config = _clustering_config(dlg)
+    assert view.configuration() == (("x", "y", "z"), ClusteringMethod.K_MEANS, True, 3, 0.5, 5)
+    assert config.analysis_configuration() == view.configuration()
+
+
+def test_clustering_without_numeric_columns_shows_error_without_config(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_clustering(async_ops, dialog_factory, pd.DataFrame({"text": ["x", "y"]}))
+    _simulate_success(async_ops.last_call)
+
+    assert _clustering_view(dlg).cluster_table() is None
+    assert dlg.config_widgets[-1] is None
+
+
+def test_clustering_apply_recomputes_dbscan_and_keeps_config(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_clustering(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _clustering_config(dlg)
+    first_view = _clustering_view(dlg)
+    configs_before = len(dlg.config_widgets)
+
+    _set_clustering_checked(config, "z", False)
+    config._standardize_checkbox.setChecked(False)  # noqa: SLF001
+    combo = config._method_combo  # noqa: SLF001
+    combo.setCurrentIndex(combo.findData(ClusteringMethod.DBSCAN))
+    config._epsilon_spin.setValue(0.75)  # noqa: SLF001
+    config._min_samples_spin.setValue(2)  # noqa: SLF001
+    config._apply_button.click()  # noqa: SLF001
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:clustering:fit:dbscan:raw:eps:0.75:min_samples:2:x:y"
+    assert call["target"] is dlg.content_panel()
+    assert call["cancelable"] is False
+
+    _simulate_success(call)
+
+    view = _clustering_view(dlg)
+    assert view is not first_view
+    assert view.configuration() == (("x", "y"), ClusteringMethod.DBSCAN, False, 3, 0.75, 2)
+    assert len(dlg.config_widgets) == configs_before
+
+
+def test_stale_clustering_recompute_is_discarded_after_another_apply(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_clustering(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _clustering_config(dlg)
+
+    config._cluster_count_spin.setValue(2)  # noqa: SLF001
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    config._cluster_count_spin.setValue(4)  # noqa: SLF001
+    config._apply_button.click()  # noqa: SLF001
+    second = async_ops.last_call
+
+    contents_before = len(dlg.content_widgets)
+    _simulate_success(first)
+    assert len(dlg.content_widgets) == contents_before
+
+    _simulate_success(second)
+    assert _clustering_view(dlg).configuration()[3] == 4
