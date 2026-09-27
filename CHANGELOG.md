@@ -68,6 +68,12 @@ and this project follows [Semantic Versioning](https://semver.org/).
   (with caveats such as the Z-score's sensitivity to extreme values), and
   the 100 most extreme flagged rows with all their values. Computations run
   in background jobs with a busy overlay.
+- Outlier Explorer now also supports multivariate, row-level anomaly
+  screening with Isolation Forest and Local Outlier Factor. Users can choose
+  two or more numeric features, optionally standardize them, set the expected
+  outlier fraction (and LOF neighbor count), and apply a fresh asynchronous
+  fit. Results include a presentation-only PCA projection and the 100 most
+  anomalous rows ranked by model score.
 - Advanced Analysis workspace: new "PCA" category. Fits principal component
   analysis to selected numeric features, standardized by default, using
   complete-case rows and reporting dropped rows. Shows a scree plot with

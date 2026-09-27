@@ -18,6 +18,8 @@ from expo_jbm329.gui.dialogs.analysis.correlation_view import CorrelationView
 from expo_jbm329.gui.dialogs.analysis.group_comparison_view import GroupComparisonView
 from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.outliers_config import OutliersConfigWidget
+from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_config import MultivariateOutliersConfigWidget
+from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_view import MultivariateOutliersView
 from expo_jbm329.gui.dialogs.analysis.outliers_view import OutliersView
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
 from expo_jbm329.gui.dialogs.analysis.pca_config import PCAConfigWidget
@@ -40,6 +42,10 @@ from expo_jbm329.services.analysis.correlation import (
     default_pair,
 )
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
+from expo_jbm329.services.analysis.multivariate_outliers import (
+    MultivariateOutlierMethod,
+    analyze_multivariate_outliers,
+)
 from expo_jbm329.services.analysis.outliers import (
     OutlierMethod,
     analyze_outlier_column,
@@ -64,6 +70,7 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.clustering import ClusteringResult
     from expo_jbm329.services.analysis.correlation import CorrelationMatrixResult, CorrelationPairDetail
     from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
+    from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierResult
     from expo_jbm329.services.analysis.outliers import OutlierColumnDetail, OutlierSummaryResult
     from expo_jbm329.services.analysis.overview import DatasetOverviewResult
     from expo_jbm329.services.analysis.pca import PCAResult
@@ -596,6 +603,7 @@ class AnalysisController:
 
         config.summary_requested.connect(_handle_summary_requested)
         config.column_changed.connect(_handle_column_changed)
+        config.multivariate_requested.connect(lambda: self._switch_to_multivariate_outliers(dialog, config))
         return content, config
 
     @staticmethod
@@ -652,6 +660,78 @@ class AnalysisController:
             apply_result=_apply,
             is_stale=lambda: dialog.content_widget() is not view or config.current_column() != column,
             target=view.detail_panel(),
+        )
+
+    def _switch_to_multivariate_outliers(self, dialog: AnalysisDialog, config: OutliersConfigWidget) -> None:
+        """Fit the default multivariate model after the mode switch."""
+        configuration = (
+            None,
+            MultivariateOutlierMethod.ISOLATION_FOREST,
+            True,
+            0.05,
+            20,
+        )
+
+        def _apply(result: object) -> None:
+            multivariate_result = cast("MultivariateOutlierResult", result)
+            multivariate_config = MultivariateOutliersConfigWidget(multivariate_result)
+            multivariate_config.analysis_requested.connect(
+                lambda: self._recompute_multivariate_outliers(dialog, multivariate_config)
+            )
+            multivariate_config.univariate_requested.connect(lambda: self._refresh_content(dialog))
+            dialog.set_content_widget(MultivariateOutliersView(multivariate_result))
+            dialog.set_config_widget(multivariate_config)
+
+        self._recompute_content(
+            dialog,
+            category=AnalysisCategory.OUTLIERS,
+            scope_suffix="multivariate:isolation_forest:standardized:contamination:0.05",
+            compute=lambda df, _callbacks: analyze_multivariate_outliers(
+                df,
+                columns=configuration[0],
+                method=configuration[1],
+                standardize=configuration[2],
+                contamination=configuration[3],
+                lof_neighbors=configuration[4],
+            ),
+            apply_result=_apply,
+            is_stale=lambda: dialog.config_widget() is not config,
+        )
+
+    def _recompute_multivariate_outliers(
+        self,
+        dialog: AnalysisDialog,
+        config: MultivariateOutliersConfigWidget,
+    ) -> None:
+        """Refit multivariate screening while preserving its configuration widget."""
+        configuration = config.analysis_configuration()
+        columns, method, standardize, contamination, lof_neighbors = configuration
+        scope_parts = [
+            "multivariate",
+            method.value,
+            "standardized" if standardize else "raw",
+            f"contamination:{contamination}",
+        ]
+        if method is MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR:
+            scope_parts.append(f"neighbors:{lof_neighbors}")
+        scope_parts.extend(columns)
+
+        self._recompute_content(
+            dialog,
+            category=AnalysisCategory.OUTLIERS,
+            scope_suffix=":".join(scope_parts),
+            compute=lambda df, _callbacks: analyze_multivariate_outliers(
+                df,
+                columns=columns,
+                method=method,
+                standardize=standardize,
+                contamination=contamination,
+                lof_neighbors=lof_neighbors,
+            ),
+            apply_result=lambda result: dialog.set_content_widget(
+                MultivariateOutliersView(cast("MultivariateOutlierResult", result))
+            ),
+            is_stale=lambda: dialog.config_widget() is not config or config.analysis_configuration() != configuration,
         )
 
     def _render_pca(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:

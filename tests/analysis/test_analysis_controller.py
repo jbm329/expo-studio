@@ -13,6 +13,8 @@ from expo_jbm329.gui.dialogs.analysis.correlation_view import CorrelationView
 from expo_jbm329.gui.dialogs.analysis.group_comparison_view import GroupComparisonView
 from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.outliers_config import OutliersConfigWidget
+from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_config import MultivariateOutliersConfigWidget
+from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_view import MultivariateOutliersView
 from expo_jbm329.gui.dialogs.analysis.outliers_view import OutliersView
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
 from expo_jbm329.gui.dialogs.analysis.pca_config import PCAConfigWidget
@@ -26,6 +28,7 @@ from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.correlation import CorrelationMethod
+from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierMethod
 from expo_jbm329.services.analysis.outliers import OutlierMethod
 from expo_jbm329.services.analysis.pca import PCAError
 from expo_jbm329.services.analysis.regression import RegressionError
@@ -97,6 +100,7 @@ class DummyAnalysisDialog:
         self._selected_category: AnalysisCategory | None = None
         self._selected_dataset_tab_id: str | None = None
         self._current_content: QWidget | None = None
+        self._current_config: QWidget | None = None
 
     def show_placeholder(self, text):
         self.placeholder_calls.append(text)
@@ -111,6 +115,10 @@ class DummyAnalysisDialog:
 
     def set_config_widget(self, widget):
         self.config_widgets.append(widget)
+        self._current_config = widget
+
+    def config_widget(self):
+        return self._current_config
 
     def selected_category(self):
         return self._selected_category
@@ -1388,6 +1396,18 @@ def _outliers_view(dlg: DummyAnalysisDialog) -> OutliersView:
     return view
 
 
+def _multivariate_outliers_config(dlg: DummyAnalysisDialog) -> MultivariateOutliersConfigWidget:
+    config = dlg.config_widget()
+    assert isinstance(config, MultivariateOutliersConfigWidget)
+    return config
+
+
+def _multivariate_outliers_view(dlg: DummyAnalysisDialog) -> MultivariateOutliersView:
+    view = dlg.content_widget()
+    assert isinstance(view, MultivariateOutliersView)
+    return view
+
+
 def _detail_column(view: OutliersView) -> str:
     detail = view.column_detail()
     assert detail is not None
@@ -1430,6 +1450,96 @@ def test_outliers_without_numeric_columns_show_error_without_config(dialog_facto
     assert view.table() is None
     assert view.column_detail() is None
     assert dlg.config_widgets[-1] is None
+
+
+def test_switching_outliers_to_multivariate_fits_asynchronously(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _outliers_config(dlg)
+
+    config._mode_combo.setCurrentIndex(1)  # noqa: SLF001
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:outliers:multivariate:isolation_forest:standardized:contamination:0.05"
+    assert call["target"] is dlg.content_panel()
+    assert call["cancelable"] is False
+    _simulate_success(call)
+
+    view = _multivariate_outliers_view(dlg)
+    multivariate_config = _multivariate_outliers_config(dlg)
+    assert view.configuration() == (("a", "b"), MultivariateOutlierMethod.ISOLATION_FOREST, True, 0.05, 20)
+    assert multivariate_config.analysis_configuration() == view.configuration()
+
+
+def test_applying_multivariate_configuration_refits_and_retains_config(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    _outliers_config(dlg)._mode_combo.setCurrentIndex(1)  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    config = _multivariate_outliers_config(dlg)
+
+    config._method_combo.setCurrentIndex(config._method_combo.findData(MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR))  # noqa: SLF001
+    config._contamination_spin.setValue(10.0)  # noqa: SLF001
+    config._neighbors_spin.setValue(3)  # noqa: SLF001
+    config._apply_button.click()  # noqa: SLF001
+
+    call = async_ops.last_call
+    assert (
+        call["scope"]
+        == "analysis:outliers:multivariate:local_outlier_factor:standardized:contamination:0.1:neighbors:3:a:b"
+    )
+    _simulate_success(call)
+
+    assert dlg.config_widget() is config
+    assert _multivariate_outliers_view(dlg).configuration() == (
+        ("a", "b"),
+        MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR,
+        True,
+        0.1,
+        3,
+    )
+
+
+def test_stale_multivariate_fit_is_discarded(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    _outliers_config(dlg)._mode_combo.setCurrentIndex(1)  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    config = _multivariate_outliers_config(dlg)
+
+    config._contamination_spin.setValue(10.0)  # noqa: SLF001
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    config._contamination_spin.setValue(20.0)  # noqa: SLF001
+    config._apply_button.click()  # noqa: SLF001
+    second = async_ops.last_call
+    views_before = len(dlg.content_widgets)
+
+    _simulate_success(first)
+    assert len(dlg.content_widgets) == views_before
+
+    _simulate_success(second)
+    assert _multivariate_outliers_view(dlg).configuration()[3] == 0.2
+
+
+def test_switching_multivariate_mode_back_restores_univariate_explorer(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    _outliers_config(dlg)._mode_combo.setCurrentIndex(1)  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    config = _multivariate_outliers_config(dlg)
+
+    config._mode_combo.setCurrentIndex(0)  # noqa: SLF001
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:outliers"
+    _simulate_success(call)
+    assert isinstance(dlg.content_widget(), OutliersView)
+    assert isinstance(dlg.config_widget(), OutliersConfigWidget)
 
 
 def test_outlier_method_change_recomputes_the_summary_and_keeps_the_config(dialog_factory):

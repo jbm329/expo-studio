@@ -42,6 +42,7 @@ class OutliersConfigWidget(QWidget):
 
     summary_requested = pyqtSignal()
     column_changed = pyqtSignal(str)
+    multivariate_requested = pyqtSignal()
 
     def __init__(
         self,
@@ -63,6 +64,11 @@ class OutliersConfigWidget(QWidget):
 
         form = QFormLayout(self)
         form.setContentsMargins(0, 0, 0, 0)
+
+        self._mode_combo = QComboBox(self)
+        self._mode_combo.addItem(self.tr("Univariate (by column)"), False)
+        self._mode_combo.addItem(self.tr("Multivariate (by row)"), True)
+        form.addRow(QLabel(self.tr("Mode"), self), self._mode_combo)
 
         self._method_combo = QComboBox(self)
         self._method_combo.addItem(self.tr("IQR (Tukey's fences)"), OutlierMethod.IQR)
@@ -91,10 +97,16 @@ class OutliersConfigWidget(QWidget):
         self._method_combo.currentIndexChanged.connect(self._on_method_changed)
         self._threshold_spin.valueChanged.connect(self._on_threshold_changed)
         self._column_combo.currentTextChanged.connect(self._on_column_changed)
+        self._mode_combo.currentIndexChanged.connect(self._on_mode_changed)
 
     # ------------------------------------------------------------------
     # Handlers
     # ------------------------------------------------------------------
+
+    def _on_mode_changed(self, _index: int) -> None:
+        """Request the distinct multivariate explorer when its mode is selected."""
+        if self._mode_combo.currentData():
+            self.multivariate_requested.emit()
 
     def _on_method_changed(self, _index: int) -> None:
         """Reset the threshold to the new method's default and request a new summary."""
