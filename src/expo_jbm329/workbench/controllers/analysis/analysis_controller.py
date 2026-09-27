@@ -15,6 +15,8 @@ from expo_jbm329.gui.dialogs.analysis.correlation_config import CorrelationConfi
 from expo_jbm329.gui.dialogs.analysis.correlation_view import CorrelationView
 from expo_jbm329.gui.dialogs.analysis.group_comparison_view import GroupComparisonView
 from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
+from expo_jbm329.gui.dialogs.analysis.outliers_config import OutliersConfigWidget
+from expo_jbm329.gui.dialogs.analysis.outliers_view import OutliersView
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
@@ -30,6 +32,12 @@ from expo_jbm329.services.analysis.correlation import (
     default_pair,
 )
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
+from expo_jbm329.services.analysis.outliers import (
+    OutlierMethod,
+    analyze_outlier_column,
+    analyze_outlier_summary,
+    default_column,
+)
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
@@ -44,6 +52,7 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.chi_square import ChiSquareResult
     from expo_jbm329.services.analysis.correlation import CorrelationMatrixResult, CorrelationPairDetail
     from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
+    from expo_jbm329.services.analysis.outliers import OutlierColumnDetail, OutlierSummaryResult
     from expo_jbm329.services.analysis.overview import DatasetOverviewResult
     from expo_jbm329.services.analysis.regression import RegressionResult
     from expo_jbm329.services.analysis.statistics import DescriptiveStatisticsResult
@@ -140,6 +149,20 @@ class _CorrelationOutcome:
     pair_detail: CorrelationPairDetail | None
 
 
+@dataclass(frozen=True, slots=True)
+class _OutliersOutcome:
+    """An outlier summary plus the detail of its selected column.
+
+    Attributes:
+        summary: The per-column outlier summary.
+        detail: The selected column's detail, or `None` when the summary
+            has an error (and so no column to show).
+    """
+
+    summary: OutlierSummaryResult
+    detail: OutlierColumnDetail | None
+
+
 class AnalysisController:
     """Controller responsible for the Advanced Analysis workspace workflow.
 
@@ -201,6 +224,10 @@ class AnalysisController:
             AnalysisCategory.REGRESSION: _CategoryHandler(
                 compute=_ignore_callbacks(analyze_regression),
                 render=self._render_regression,
+            ),
+            AnalysisCategory.OUTLIERS: _CategoryHandler(
+                compute=_ignore_callbacks(self._compute_outliers),
+                render=self._render_outliers,
             ),
         }
 
@@ -489,6 +516,117 @@ class AnalysisController:
 
         config.model_requested.connect(_handle_model_requested)
         return content, config
+
+    @staticmethod
+    def _compute_outliers(
+        df: pd.DataFrame,
+        method: OutlierMethod = OutlierMethod.IQR,
+        threshold: float | None = None,
+        column: str | None = None,
+    ) -> _OutliersOutcome:
+        """Compute an outlier summary and one column's detail (background-safe).
+
+        Args:
+            df: The DataFrame to analyze.
+            method: The detection method.
+            threshold: The method's threshold, or `None` for its default.
+            column: The column to detail, or `None` for the summary's
+                top-ranked one.
+
+        Returns:
+            The outcome.
+        """
+        summary = analyze_outlier_summary(df, method, threshold)
+        if summary.error is not None:
+            return _OutliersOutcome(summary=summary, detail=None)
+
+        detail_column = column if column is not None else default_column(summary)
+        detail = (
+            analyze_outlier_column(df, detail_column, method, summary.threshold) if detail_column is not None else None
+        )
+        return _OutliersOutcome(summary=summary, detail=detail)
+
+    def _render_outliers(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
+        """Render the Outlier Explorer view and its method/threshold/column config.
+
+        Must run on the GUI thread. Like the Correlation Explorer, a method
+        or threshold change recomputes the whole summary (a job replacing
+        the view), while a column change recomputes only the column detail
+        (a job updating the current view's detail panel in place).
+        """
+        outcome = cast("_OutliersOutcome", result)
+        if not outcome.summary.available_columns:
+            return OutliersView(outcome.summary, None), None
+
+        initial_column = outcome.detail.summary.column if outcome.detail is not None else None
+        config = OutliersConfigWidget(outcome.summary, initial_column)
+        content = self._build_outliers_view(outcome, config)
+
+        def _handle_summary_requested() -> None:
+            self._recompute_outlier_summary(dialog, config)
+
+        def _handle_column_changed(column: str) -> None:
+            self._recompute_outlier_column(dialog, config, column)
+
+        config.summary_requested.connect(_handle_summary_requested)
+        config.column_changed.connect(_handle_column_changed)
+        return content, config
+
+    @staticmethod
+    def _build_outliers_view(outcome: _OutliersOutcome, config: OutliersConfigWidget) -> OutliersView:
+        """Build an Outlier Explorer view whose table rows select the config's column."""
+        view = OutliersView(outcome.summary, outcome.detail)
+        view.column_activated.connect(config.set_column)
+        return view
+
+    def _recompute_outlier_summary(self, dialog: AnalysisDialog, config: OutliersConfigWidget) -> None:
+        """Recompute the whole outlier summary for the config's method and threshold."""
+        configuration = config.summary_configuration()
+        method, threshold = configuration
+        column = config.current_column() or None
+
+        def _apply(result: object) -> None:
+            outcome = cast("_OutliersOutcome", result)
+            dialog.set_content_widget(self._build_outliers_view(outcome, config))
+            # The column may have changed while the summary was computing;
+            # its own recompute was skipped (no current view), so catch up now.
+            current_column = config.current_column()
+            if outcome.detail is not None and current_column and current_column != column:
+                self._recompute_outlier_column(dialog, config, current_column)
+
+        self._recompute_content(
+            dialog,
+            category=AnalysisCategory.OUTLIERS,
+            scope_suffix=f"summary:{method.value}:{threshold}",
+            compute=lambda df, _callbacks: self._compute_outliers(df, method, threshold, column),
+            apply_result=_apply,
+            is_stale=lambda: config.summary_configuration() != configuration,
+        )
+
+    def _recompute_outlier_column(self, dialog: AnalysisDialog, config: OutliersConfigWidget, column: str) -> None:
+        """Recompute only the column detail, updating the current view's detail panel in place."""
+        view = dialog.content_widget()
+        if not isinstance(view, OutliersView) or view.table() is None:
+            # No summary is shown (still computing or failed); the next
+            # summary result will include the current column.
+            return
+
+        # The displayed summary's configuration, not the config's: a pending
+        # method/threshold change will bring its own detail with the new summary.
+        method, threshold = view.configuration()
+
+        def _apply(result: object) -> None:
+            view.set_column_detail(cast("OutlierColumnDetail", result))
+
+        self._recompute_content(
+            dialog,
+            category=AnalysisCategory.OUTLIERS,
+            scope_suffix=f"column:{method.value}:{threshold}:{column}",
+            compute=lambda df, _callbacks: analyze_outlier_column(df, column, method, threshold),
+            apply_result=_apply,
+            is_stale=lambda: dialog.content_widget() is not view or config.current_column() != column,
+            target=view.detail_panel(),
+        )
 
     # ------------------------------------------------------------------
     # Event handlers

@@ -59,6 +59,15 @@ and this project follows [Semantic Versioning](https://semver.org/).
   Q-Q plots (sampled to 5,000 points on large datasets). Models are fitted
   in a background job with a busy overlay.
 - New dependency: `statsmodels` (used for linear regression).
+- Advanced Analysis workspace: new "Outliers" category (Outlier Explorer).
+  Screens every numeric column with IQR (Tukey's fences), Z-score or
+  modified Z-score and an adjustable threshold, and ranks the columns by
+  their share of potential outliers, with dataset-wide totals of affected
+  rows. Selecting a column shows a histogram with the potential outliers
+  highlighted and the fences marked, the statistics the fences are based on
+  (with caveats such as the Z-score's sensitivity to extreme values), and
+  the 100 most extreme flagged rows with all their values. Computations run
+  in background jobs with a busy overlay.
 
 ### Changed
 - Advanced Analysis workspace: added a dedicated configuration pane

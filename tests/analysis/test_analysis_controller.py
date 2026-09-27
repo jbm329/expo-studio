@@ -10,6 +10,8 @@ from expo_jbm329.gui.dialogs.analysis.correlation_config import CorrelationConfi
 from expo_jbm329.gui.dialogs.analysis.correlation_view import CorrelationView
 from expo_jbm329.gui.dialogs.analysis.group_comparison_view import GroupComparisonView
 from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
+from expo_jbm329.gui.dialogs.analysis.outliers_config import OutliersConfigWidget
+from expo_jbm329.gui.dialogs.analysis.outliers_view import OutliersView
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
@@ -17,6 +19,7 @@ from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigW
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.correlation import CorrelationMethod
+from expo_jbm329.services.analysis.outliers import OutlierMethod
 from expo_jbm329.services.analysis.regression import RegressionError
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
@@ -232,9 +235,9 @@ def test_category_without_a_registered_handler_shows_not_implemented_placeholder
     _open_and_flush(ctrl, QWidget())
 
     dlg = dialog_factory[0]
-    dlg._selected_category = AnalysisCategory.OUTLIERS
+    dlg._selected_category = AnalysisCategory.CLUSTERING
     dlg._selected_dataset_tab_id = "t1"
-    dlg.category_changed.emit(AnalysisCategory.OUTLIERS.value)
+    dlg.category_changed.emit(AnalysisCategory.CLUSTERING.value)
 
     assert dlg.placeholder_calls == [ctrl._tr(ctrl.TR_NOT_IMPLEMENTED)]  # noqa: SLF001
     assert dlg.content_widgets == []
@@ -466,8 +469,8 @@ def test_job_error_is_ignored_once_stale(dialog_factory):
     call = async_ops.last_call
 
     # User navigates away to an unimplemented category before the job fails.
-    dlg._selected_category = AnalysisCategory.OUTLIERS
-    dlg.category_changed.emit(AnalysisCategory.OUTLIERS.value)
+    dlg._selected_category = AnalysisCategory.CLUSTERING
+    dlg.category_changed.emit(AnalysisCategory.CLUSTERING.value)
     assert dlg.placeholder_calls == [ctrl._tr(ctrl.TR_NOT_IMPLEMENTED)]  # noqa: SLF001
 
     call["on_error"]("boom")
@@ -1328,3 +1331,229 @@ def test_stale_regression_result_is_discarded(dialog_factory):
 
     _simulate_success(second)
     assert _regression_view(dlg).result().predictors == ("z",)
+
+
+# ----------------------------------------------------------------------
+# Outlier Explorer
+# ----------------------------------------------------------------------
+
+
+def _outliers_df() -> pd.DataFrame:
+    return pd.DataFrame({
+        "a": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 100.0],
+        "b": [float(i) for i in range(10)],
+        "text": list("abcdefghij"),
+    })
+
+
+def _open_outliers(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame | None = None):
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=10, column_count=3)
+    ctrl = AnalysisController(
+        results=DummyResults(
+            datasets=[dataset],
+            active_tab_id="t1",
+            dfs={"t1": _outliers_df() if df is None else df},
+        ),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.OUTLIERS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.OUTLIERS.value)
+    return ctrl, dlg
+
+
+def _outliers_config(dlg: DummyAnalysisDialog) -> OutliersConfigWidget:
+    config = dlg.config_widgets[-1]
+    assert isinstance(config, OutliersConfigWidget)
+    return config
+
+
+def _outliers_view(dlg: DummyAnalysisDialog) -> OutliersView:
+    view = dlg.content_widget()
+    assert isinstance(view, OutliersView)
+    return view
+
+
+def _detail_column(view: OutliersView) -> str:
+    detail = view.column_detail()
+    assert detail is not None
+    return detail.summary.column
+
+
+def _select_outlier_method(config: OutliersConfigWidget, method: OutlierMethod) -> None:
+    combo = config._method_combo  # noqa: SLF001
+    combo.setCurrentIndex(combo.findData(method))
+
+
+def test_outliers_run_as_a_background_job_with_a_standard_overlay(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _open_outliers(async_ops, dialog_factory)
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:outliers"
+    assert call["cancelable"] is False
+    assert call["indeterminate"] is True
+
+
+def test_outliers_show_view_and_config_with_the_top_ranked_column(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+
+    view = _outliers_view(dlg)
+    config = _outliers_config(dlg)
+    assert _detail_column(view) == "a"
+    assert config.current_column() == "a"
+    assert config.summary_configuration() == (OutlierMethod.IQR, 1.5)
+
+
+def test_outliers_without_numeric_columns_show_error_without_config(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory, pd.DataFrame({"t": ["x", "y", "z"]}))
+    _simulate_success(async_ops.last_call)
+
+    view = _outliers_view(dlg)
+    assert view.table() is None
+    assert view.column_detail() is None
+    assert dlg.config_widgets[-1] is None
+
+
+def test_outlier_method_change_recomputes_the_summary_and_keeps_the_config(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _outliers_config(dlg)
+    first_view = _outliers_view(dlg)
+    configs_before = len(dlg.config_widgets)
+
+    _select_outlier_method(config, OutlierMethod.Z_SCORE)
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:outliers:summary:z_score:3.0"
+    assert call["target"] is dlg.content_panel()
+    assert call["cancelable"] is False
+
+    _simulate_success(call)
+
+    view = _outliers_view(dlg)
+    assert view is not first_view
+    assert view.configuration() == (OutlierMethod.Z_SCORE, 3.0)
+    detail = view.column_detail()
+    assert detail is not None
+    assert detail.method is OutlierMethod.Z_SCORE
+    assert detail.summary.column == "a"  # the selected column is kept
+    assert len(dlg.config_widgets) == configs_before
+
+
+def test_stale_outlier_summary_is_discarded_when_the_threshold_changes_again(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _outliers_config(dlg)
+    spin = config._threshold_spin  # noqa: SLF001
+
+    spin.setValue(2.0)
+    first = async_ops.last_call
+    spin.setValue(3.0)
+    second = async_ops.last_call
+
+    contents_before = len(dlg.content_widgets)
+    _simulate_success(first)
+    assert len(dlg.content_widgets) == contents_before
+
+    _simulate_success(second)
+    assert _outliers_view(dlg).configuration() == (OutlierMethod.IQR, 3.0)
+
+
+def test_outlier_column_change_recomputes_only_the_detail_over_the_detail_panel(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _outliers_config(dlg)
+    view = _outliers_view(dlg)
+    contents_before = len(dlg.content_widgets)
+
+    config.set_column("b")
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:outliers:column:iqr:1.5:b"
+    assert call["target"] is view.detail_panel()
+    assert call["cancelable"] is False
+
+    _simulate_success(call)
+
+    assert len(dlg.content_widgets) == contents_before  # view updated in place
+    assert _detail_column(view) == "b"
+
+
+def test_clicking_an_outlier_summary_row_selects_the_column(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _outliers_config(dlg)
+    table = _outliers_view(dlg).table()
+    assert table is not None
+
+    table.cellClicked.emit(1, 0)
+
+    assert config.current_column() == "b"
+    assert async_ops.last_call["scope"] == "analysis:outliers:column:iqr:1.5:b"
+
+
+def test_stale_outlier_column_recompute_is_discarded_when_the_column_changes_again(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _outliers_config(dlg)
+    view = _outliers_view(dlg)
+    initial_detail = view.column_detail()
+
+    config.set_column("b")
+    first = async_ops.last_call
+    config.set_column("a")
+    second = async_ops.last_call
+
+    _simulate_success(first)
+    assert view.column_detail() is initial_detail
+
+    _simulate_success(second)
+    assert _detail_column(view) == "a"
+
+
+def test_outlier_column_change_while_the_summary_is_computing_is_caught_up_afterwards(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _outliers_config(dlg)
+
+    _select_outlier_method(config, OutlierMethod.MODIFIED_Z_SCORE)
+    summary_call = async_ops.last_call
+    dlg.show_placeholder("computing")  # no view is displayed while the summary job runs
+    jobs_before = len(async_ops.calls)
+
+    config.set_column("b")
+    assert len(async_ops.calls) == jobs_before  # nothing to update yet
+
+    _simulate_success(summary_call)
+    assert _detail_column(_outliers_view(dlg)) == "a"
+
+    column_call = async_ops.last_call
+    assert column_call["scope"] == "analysis:outliers:column:modified_z_score:3.5:b"
+    _simulate_success(column_call)
+    assert _detail_column(_outliers_view(dlg)) == "b"
+
+
+def test_outlier_column_recompute_uses_the_displayed_summary_configuration(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _outliers_config(dlg)
+
+    # Method changed, but its summary job hasn't finished: the view still shows IQR.
+    _select_outlier_method(config, OutlierMethod.Z_SCORE)
+    config.set_column("b")
+
+    assert async_ops.last_call["scope"] == "analysis:outliers:column:iqr:1.5:b"
