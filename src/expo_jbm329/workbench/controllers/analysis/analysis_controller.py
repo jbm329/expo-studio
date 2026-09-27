@@ -26,6 +26,8 @@ from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigW
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
+from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigWidget
+from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.chi_square import analyze_chi_square
 from expo_jbm329.services.analysis.clustering import MIN_SELECTED_COLUMNS as CLUSTERING_MIN_SELECTED_COLUMNS
@@ -49,6 +51,7 @@ from expo_jbm329.services.analysis.pca import MIN_SELECTED_COLUMNS as PCA_MIN_SE
 from expo_jbm329.services.analysis.pca import analyze_pca
 from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
+from expo_jbm329.services.analysis.timeseries import analyze_time_series
 from expo_jbm329.utils.i18n_utils import tr
 
 if TYPE_CHECKING:
@@ -66,6 +69,7 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.pca import PCAResult
     from expo_jbm329.services.analysis.regression import RegressionResult
     from expo_jbm329.services.analysis.statistics import DescriptiveStatisticsResult
+    from expo_jbm329.services.analysis.timeseries import TimeSeriesResult
     from expo_jbm329.workbench.controllers.async_operation_controller import (
         AsyncOperationController,
     )
@@ -246,6 +250,10 @@ class AnalysisController:
             AnalysisCategory.PCA: _CategoryHandler(
                 compute=_ignore_callbacks(analyze_pca),
                 render=self._render_pca,
+            ),
+            AnalysisCategory.TIME_SERIES: _CategoryHandler(
+                compute=_ignore_callbacks(analyze_time_series),
+                render=self._render_time_series,
             ),
         }
 
@@ -708,6 +716,40 @@ class AnalysisController:
                 dbscan_min_samples=dbscan_min_samples,
             ),
             apply_result=lambda result: dialog.set_content_widget(ClusteringView(cast("ClusteringResult", result))),
+            is_stale=lambda: config.analysis_configuration() != configuration,
+        )
+
+    def _render_time_series(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
+        """Render the Time Series Explorer and retain valid column controls."""
+        series_result = cast("TimeSeriesResult", result)
+        content = TimeSeriesView(series_result)
+        if not series_result.available_datetime_columns or not series_result.available_value_columns:
+            return content, None
+
+        config = TimeSeriesConfigWidget(series_result)
+        config.analysis_requested.connect(lambda: self._recompute_time_series(dialog, config))
+        return content, config
+
+    def _recompute_time_series(self, dialog: AnalysisDialog, config: TimeSeriesConfigWidget) -> None:
+        """Analyze one applied Time Series Explorer configuration."""
+        configuration = config.analysis_configuration()
+        datetime_column, value_column, frequency, period, model = configuration
+        frequency_scope = frequency or "original"
+        period_scope = str(period) if period is not None else "auto"
+
+        self._recompute_content(
+            dialog,
+            category=AnalysisCategory.TIME_SERIES,
+            scope_suffix=f"fit:{datetime_column}:{value_column}:{frequency_scope}:{period_scope}:{model.value}",
+            compute=lambda df, _callbacks: analyze_time_series(
+                df,
+                datetime_column,
+                value_column,
+                resample_frequency=frequency,
+                seasonal_period=period,
+                decomposition_model=model,
+            ),
+            apply_result=lambda result: dialog.set_content_widget(TimeSeriesView(cast("TimeSeriesResult", result))),
             is_stale=lambda: config.analysis_configuration() != configuration,
         )
 

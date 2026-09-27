@@ -21,12 +21,15 @@ from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigW
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
+from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigWidget
+from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.correlation import CorrelationMethod
 from expo_jbm329.services.analysis.outliers import OutlierMethod
 from expo_jbm329.services.analysis.pca import PCAError
 from expo_jbm329.services.analysis.regression import RegressionError
+from expo_jbm329.services.analysis.timeseries import DecompositionModel
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
 
@@ -238,6 +241,7 @@ def test_category_without_a_registered_handler_shows_not_implemented_placeholder
         results=DummyResults(datasets=[dataset], active_tab_id="t1"),
         async_ops=async_ops,
     )
+    ctrl._category_handlers.pop(AnalysisCategory.TIME_SERIES)  # noqa: SLF001
     _open_and_flush(ctrl, QWidget())
 
     dlg = dialog_factory[0]
@@ -475,6 +479,7 @@ def test_job_error_is_ignored_once_stale(dialog_factory):
     call = async_ops.last_call
 
     # User navigates away to an unimplemented category before the job fails.
+    ctrl._category_handlers.pop(AnalysisCategory.TIME_SERIES)  # noqa: SLF001
     dlg._selected_category = AnalysisCategory.TIME_SERIES
     dlg.category_changed.emit(AnalysisCategory.TIME_SERIES.value)
     assert dlg.placeholder_calls == [ctrl._tr(ctrl.TR_NOT_IMPLEMENTED)]  # noqa: SLF001
@@ -1824,3 +1829,97 @@ def test_stale_clustering_recompute_is_discarded_after_another_apply(dialog_fact
 
     _simulate_success(second)
     assert _clustering_view(dlg).configuration()[3] == 4
+
+
+# ----------------------------------------------------------------------
+# Time Series Explorer
+# ----------------------------------------------------------------------
+
+
+def _time_series_df() -> pd.DataFrame:
+    return pd.DataFrame({
+        "when": pd.date_range("2025-01-01", periods=21, freq="D"),
+        "value": range(21),
+        "other": range(100, 121),
+    })
+
+
+def _open_time_series(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame | None = None):
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=21, column_count=3)
+    ctrl = AnalysisController(
+        results=DummyResults(
+            datasets=[dataset],
+            active_tab_id="t1",
+            dfs={"t1": _time_series_df() if df is None else df},
+        ),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.TIME_SERIES
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.TIME_SERIES.value)
+    return ctrl, dlg
+
+
+def _time_series_config(dlg: DummyAnalysisDialog) -> TimeSeriesConfigWidget:
+    config = dlg.config_widgets[-1]
+    assert isinstance(config, TimeSeriesConfigWidget)
+    return config
+
+
+def _time_series_view(dlg: DummyAnalysisDialog) -> TimeSeriesView:
+    view = dlg.content_widget()
+    assert isinstance(view, TimeSeriesView)
+    return view
+
+
+def test_time_series_runs_as_a_standard_background_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _open_time_series(async_ops, dialog_factory)
+
+    assert async_ops.last_call["scope"] == "analysis:time_series"
+    assert async_ops.last_call["indeterminate"] is True
+
+
+def test_time_series_shows_default_result_and_config(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_time_series(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+
+    assert _time_series_view(dlg).configuration() == ("when", "value", None, 7, DecompositionModel.ADDITIVE)
+    assert _time_series_config(dlg).analysis_configuration() == (
+        "when",
+        "value",
+        None,
+        7,
+        DecompositionModel.ADDITIVE,
+    )
+
+
+def test_time_series_without_datetime_has_no_config(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_time_series(async_ops, dialog_factory, pd.DataFrame({"value": [1.0, 2.0, 3.0]}))
+    _simulate_success(async_ops.last_call)
+
+    assert dlg.config_widgets[-1] is None
+
+
+def test_time_series_apply_recomputes_and_keeps_config(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_time_series(async_ops, dialog_factory)
+    _simulate_success(async_ops.last_call)
+    config = _time_series_config(dlg)
+    configs_before = len(dlg.config_widgets)
+
+    config._value_combo.setCurrentIndex(config._value_combo.findText("other"))  # noqa: SLF001
+    config._frequency_combo.setCurrentIndex(config._frequency_combo.findData("W"))  # noqa: SLF001
+    config._period_spin.setValue(3)  # noqa: SLF001
+    config._model_combo.setCurrentIndex(config._model_combo.findData(DecompositionModel.MULTIPLICATIVE))  # noqa: SLF001
+    config._apply_button.click()  # noqa: SLF001
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:time_series:fit:when:other:W:3:multiplicative"
+    _simulate_success(call)
+    assert _time_series_view(dlg).configuration() == ("when", "other", "W", 3, DecompositionModel.MULTIPLICATIVE)
+    assert len(dlg.config_widgets) == configs_before

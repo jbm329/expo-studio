@@ -85,6 +85,15 @@ and this project follows [Semantic Versioning](https://semver.org/).
   when it is defined. An internal PCA projection shows observations colored
   by their assigned cluster; large plots use a deterministic 5,000-row
   sample. Every fit runs in a background job with a busy overlay.
+- Advanced Analysis workspace: new "Time Series" category. Select a native
+  datetime column and numeric value column; duplicate timestamps are averaged,
+  invalid rows are reported, and original timestamps are preserved unless
+  optionally resampled daily, weekly, or monthly. The explorer auto-detects
+  frequency and seasonal period where possible, with overrides for the
+  period and additive or multiplicative decomposition. It shows the series,
+  autocorrelation, and seasonal components; gaps are never interpolated, and
+  diagnostics/decomposition explain when regular, complete data is required.
+  Every analysis runs in a background job with a busy overlay.
 
 ### Changed
 - Advanced Analysis workspace: added a dedicated configuration pane
