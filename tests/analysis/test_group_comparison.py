@@ -9,9 +9,12 @@ import pytest
 from expo_jbm329.services.analysis.group_comparison import (
     MAX_GROUPS,
     MIN_GROUPS,
+    ColumnExclusionReason,
+    ExcludedColumn,
     GroupComparisonError,
     GroupWarningReason,
     analyze_group_comparison,
+    classify_grouping_columns,
 )
 
 
@@ -74,6 +77,38 @@ def test_grouping_candidate_columns_allow_any_dtype_including_numeric_flags():
     result = analyze_group_comparison(df)
 
     assert "flag" in result.available_grouping_columns
+
+
+def test_classify_grouping_columns_splits_by_distinct_value_count_in_column_order():
+    df = pd.DataFrame({
+        "id": range(MAX_GROUPS + 1),
+        "b": ["x", "y"] * 10 + ["x"],
+        "const": [1] * (MAX_GROUPS + 1),
+        "a": [0, 1, 2] * 7,
+        "empty": [None] * (MAX_GROUPS + 1),
+    })
+
+    columns = classify_grouping_columns(df)
+
+    assert columns.eligible == ("b", "a")
+    assert columns.excluded == (
+        ExcludedColumn("id", MAX_GROUPS + 1, ColumnExclusionReason.TOO_MANY_VALUES),
+        ExcludedColumn("const", 1, ColumnExclusionReason.TOO_FEW_VALUES),
+        ExcludedColumn("empty", 0, ColumnExclusionReason.TOO_FEW_VALUES),
+    )
+
+
+def test_result_reports_excluded_grouping_columns_on_success_and_on_error():
+    df = pd.DataFrame({"value": [float(i) for i in range(24)], "grp": ["A", "B"] * 12})
+
+    success = analyze_group_comparison(df)
+    error = analyze_group_comparison(df, "value", "missing")
+
+    expected = (ExcludedColumn("value", 24, ColumnExclusionReason.TOO_MANY_VALUES),)
+    assert success.error is None
+    assert success.excluded_grouping_columns == expected
+    assert error.error is not None
+    assert error.excluded_grouping_columns == expected
 
 
 def test_grouping_column_defaults_exclude_the_selected_numeric_column():

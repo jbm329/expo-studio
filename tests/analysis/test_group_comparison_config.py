@@ -1,7 +1,13 @@
 from __future__ import annotations
 
+import dataclasses
+
 from expo_jbm329.gui.dialogs.analysis.group_comparison_config import GroupComparisonConfigWidget
-from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
+from expo_jbm329.services.analysis.group_comparison import (
+    ColumnExclusionReason,
+    ExcludedColumn,
+    GroupComparisonResult,
+)
 
 
 def _make_result(
@@ -113,3 +119,30 @@ def test_only_the_final_selection_is_emitted_once_when_numeric_column_changes():
     widget._numeric_combo.setCurrentIndex(1)  # noqa: SLF001
 
     assert len(received) == 1
+
+
+def test_excluded_grouping_columns_are_listed_as_disabled_items():
+    result = dataclasses.replace(
+        _make_result(),
+        excluded_grouping_columns=(ExcludedColumn("id", 57, ColumnExclusionReason.TOO_MANY_VALUES),),
+    )
+
+    widget = GroupComparisonConfigWidget(result)
+
+    combo = widget._grouping_combo  # noqa: SLF001
+    assert [combo.itemText(i) for i in range(combo.count())] == ["grp", "cat", "", "id"]
+    assert combo.eligible_columns() == ("grp", "cat")
+
+
+def test_excluded_grouping_columns_survive_a_numeric_column_change():
+    result = dataclasses.replace(
+        _make_result(),
+        excluded_grouping_columns=(ExcludedColumn("id", 57, ColumnExclusionReason.TOO_MANY_VALUES),),
+    )
+    widget = GroupComparisonConfigWidget(result)
+
+    widget._numeric_combo.setCurrentIndex(1)  # noqa: SLF001
+
+    combo = widget._grouping_combo  # noqa: SLF001
+    assert combo.itemText(combo.count() - 1) == "id"
+    assert widget.current_selection() == ("b", "grp")

@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QFormLayout, QLabel, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.column_combo_box import ColumnComboBox
+
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
 
@@ -38,6 +40,7 @@ class GroupComparisonConfigWidget(QWidget):
         super().__init__(parent)
 
         self._grouping_columns = result.available_grouping_columns
+        self._excluded_grouping_columns = result.excluded_grouping_columns
 
         layout = QFormLayout(self)
 
@@ -45,7 +48,7 @@ class GroupComparisonConfigWidget(QWidget):
         self._numeric_combo.addItems(list(result.available_numeric_columns))
         self._set_current(self._numeric_combo, result.numeric_column)
 
-        self._grouping_combo = QComboBox(self)
+        self._grouping_combo = ColumnComboBox(self)
         self._populate_grouping_combo(exclude=result.numeric_column, select=result.grouping_column)
 
         layout.addRow(QLabel(self.tr("Numeric column"), self), self._numeric_combo)
@@ -57,12 +60,17 @@ class GroupComparisonConfigWidget(QWidget):
         self._grouping_combo.currentTextChanged.connect(self._on_grouping_changed)
 
     def _populate_grouping_combo(self, *, exclude: str, select: str) -> None:
-        """Rebuild the grouping combo's items, excluding `exclude` (the numeric column)."""
+        """Rebuild the grouping combo's items, excluding `exclude` (the numeric column).
+
+        Ineligible columns are listed too, as disabled items explaining why.
+        """
         self._grouping_combo.blockSignals(True)
         try:
-            self._grouping_combo.clear()
-            self._grouping_combo.addItems([column for column in self._grouping_columns if column != exclude])
-            self._set_current(self._grouping_combo, select)
+            self._grouping_combo.set_columns(
+                [column for column in self._grouping_columns if column != exclude],
+                self._excluded_grouping_columns,
+                select=select,
+            )
         finally:
             self._grouping_combo.blockSignals(False)
 
@@ -78,7 +86,7 @@ class GroupComparisonConfigWidget(QWidget):
         if not numeric_column:
             return
 
-        current_grouping = self._grouping_combo.currentText()
+        current_grouping = self._grouping_combo.current_column()
         self._populate_grouping_combo(
             exclude=numeric_column,
             select=current_grouping if current_grouping != numeric_column else "",
@@ -104,7 +112,7 @@ class GroupComparisonConfigWidget(QWidget):
             column that leaves no eligible grouping column).
         """
         numeric_column = self._numeric_combo.currentText()
-        grouping_column = self._grouping_combo.currentText()
+        grouping_column = self._grouping_combo.current_column()
         if not numeric_column or not grouping_column:
             return None
         return numeric_column, grouping_column

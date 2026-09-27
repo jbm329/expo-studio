@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import pandas as pd
 import pytest
-from PyQt6.QtWidgets import QApplication, QDialog, QWidget
+from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QWidget
 
-from expo_jbm329.gui.dialogs.analysis.group_comparison_config import GroupComparisonConfigWidget
+from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
 from expo_jbm329.gui.dialogs.analysis.group_comparison_view import GroupComparisonView
+from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
-from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
 
@@ -509,14 +510,41 @@ def test_no_category_selected_does_not_touch_the_dialog(dialog_factory):
 
 def _hypothesis_tests_df() -> pd.DataFrame:
     # 24 rows with fully distinct "value"/"other" values (> MAX_GROUPS) so
-    # only "grp" is ever eligible as a grouping column - keeps these tests'
-    # grouping combo predictable (a single, stable "grp" option) while
-    # giving the numeric combo two real choices to switch between.
+    # only "grp" and "color" are eligible categorical columns - Group
+    # Comparison defaults to ("value", "grp") with two numeric choices to
+    # switch between, and chi-square defaults to ("grp", "color").
     return pd.DataFrame({
         "value": [float(i) for i in range(24)],
         "other": [float(i) * 10 for i in range(24)],
         "grp": ["A", "B"] * 12,
+        "color": ["r", "g", "b"] * 8,
     })
+
+
+def _gc_numeric_combo(config: HypothesisTestsConfigWidget) -> QComboBox:
+    gc_config = config._group_comparison_config  # noqa: SLF001
+    assert gc_config is not None
+    return gc_config._numeric_combo  # noqa: SLF001
+
+
+def _open_hypothesis_tests(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame | None = None):
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=24, column_count=4)
+    ctrl = AnalysisController(
+        results=DummyResults(
+            datasets=[dataset],
+            active_tab_id="t1",
+            dfs={"t1": _hypothesis_tests_df() if df is None else df},
+        ),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
+    _simulate_success(async_ops.last_call)
+    return ctrl, dlg
 
 
 def test_hypothesis_tests_category_runs_as_a_background_job_with_a_busy_overlay(dialog_factory):
@@ -562,11 +590,12 @@ def test_hypothesis_tests_category_also_builds_a_column_picker_config_widget(dia
 
     assert len(dlg.config_widgets) == 2  # proactive None, then the real config widget
     config = dlg.config_widgets[-1]
-    assert isinstance(config, GroupComparisonConfigWidget)
-    assert config.current_selection() == ("value", "grp")
+    assert isinstance(config, HypothesisTestsConfigWidget)
+    assert config.current_configuration() == (HypothesisTest.GROUP_COMPARISON, ("value", "grp"))
+    assert config.chi_square_selection() == ("grp", "color")
 
 
-def test_hypothesis_tests_with_no_eligible_columns_shows_content_without_a_config_widget(dialog_factory):
+def test_hypothesis_tests_with_no_eligible_columns_still_shows_the_test_selector(dialog_factory):
     df = pd.DataFrame({"a": ["x", "y", "z"]})
     dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=1)
     async_ops = DummyAsyncOps()
@@ -583,7 +612,10 @@ def test_hypothesis_tests_with_no_eligible_columns_shows_content_without_a_confi
     _simulate_success(async_ops.last_call)
 
     assert isinstance(dlg.content_widgets[-1], GroupComparisonView)
-    assert dlg.config_widgets[-1] is None
+    config = dlg.config_widgets[-1]
+    assert isinstance(config, HypothesisTestsConfigWidget)
+    assert config.group_comparison_selection() is None
+    assert config.chi_square_selection() is None
 
 
 def test_changing_the_hypothesis_tests_config_selection_dispatches_a_new_background_job(dialog_factory):
@@ -607,11 +639,11 @@ def test_changing_the_hypothesis_tests_config_selection_dispatches_a_new_backgro
     jobs_before = len(async_ops.calls)
     config_widgets_before = len(dlg.config_widgets)
     config = dlg.config_widgets[-1]
-    config._numeric_combo.setCurrentIndex(1)  # noqa: SLF001 - "value" -> "other"
+    _gc_numeric_combo(config).setCurrentIndex(1)  # noqa: SLF001 - "value" -> "other"
 
     assert len(async_ops.calls) == jobs_before + 1
     new_call = async_ops.last_call
-    assert new_call["scope"] == "analysis:hypothesis_tests:other:grp"
+    assert new_call["scope"] == "analysis:hypothesis_tests:group_comparison:other:grp"
     assert new_call["target"] is dlg.content_panel()
 
     _simulate_success(new_call)
@@ -637,10 +669,10 @@ def test_stale_hypothesis_tests_recompute_is_discarded_when_selection_changes_ag
     _simulate_success(async_ops.last_call)
 
     config = dlg.config_widgets[-1]
-    config._numeric_combo.setCurrentIndex(1)  # noqa: SLF001 - "value" -> "other"
+    _gc_numeric_combo(config).setCurrentIndex(1)  # noqa: SLF001 - "value" -> "other"
     first_recompute_call = async_ops.last_call
 
-    config._numeric_combo.setCurrentIndex(0)  # noqa: SLF001 - "other" -> "value" again
+    _gc_numeric_combo(config).setCurrentIndex(0)  # noqa: SLF001 - "other" -> "value" again
     second_recompute_call = async_ops.last_call
 
     content_widgets_before = len(dlg.content_widgets)
@@ -667,7 +699,7 @@ def test_stale_hypothesis_tests_recompute_is_discarded_when_category_changes(dia
     _simulate_success(async_ops.last_call)
 
     config = dlg.config_widgets[-1]
-    config._numeric_combo.setCurrentIndex(1)  # noqa: SLF001
+    _gc_numeric_combo(config).setCurrentIndex(1)  # noqa: SLF001
     recompute_call = async_ops.last_call
 
     # User navigates to Overview before the recompute completes.
@@ -697,9 +729,103 @@ def test_hypothesis_tests_recompute_shows_error_placeholder_without_touching_con
 
     config_widgets_before = len(dlg.config_widgets)
     config = dlg.config_widgets[-1]
-    config._numeric_combo.setCurrentIndex(1)  # noqa: SLF001
+    _gc_numeric_combo(config).setCurrentIndex(1)  # noqa: SLF001
 
     async_ops.last_call["on_error"]("boom")
 
     assert dlg.placeholder_calls[-1] == ctrl._tr(ctrl.TR_ANALYSIS_ERROR)  # noqa: SLF001
     assert len(dlg.config_widgets) == config_widgets_before  # config untouched
+
+
+# ----------------------------------------------------------------------
+# Hypothesis Tests: switching between tests
+# ----------------------------------------------------------------------
+
+
+def _select_test(config: HypothesisTestsConfigWidget, test: HypothesisTest) -> None:
+    combo = config._test_combo  # noqa: SLF001
+    combo.setCurrentIndex(combo.findData(test.value))
+
+
+def test_switching_to_chi_square_dispatches_a_chi_square_background_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = dlg.config_widgets[-1]
+    jobs_before = len(async_ops.calls)
+    config_widgets_before = len(dlg.config_widgets)
+
+    _select_test(config, HypothesisTest.CHI_SQUARE)
+
+    assert len(async_ops.calls) == jobs_before + 1
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:hypothesis_tests:chi_square:grp:color"
+    assert call["target"] is dlg.content_panel()
+
+    _simulate_success(call)
+
+    assert isinstance(dlg.content_widgets[-1], ChiSquareView)
+    assert len(dlg.config_widgets) == config_widgets_before
+
+
+def test_switching_back_to_group_comparison_keeps_its_previous_selection(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = dlg.config_widgets[-1]
+    _gc_numeric_combo(config).setCurrentIndex(1)  # "value" -> "other"
+    _simulate_success(async_ops.last_call)
+
+    _select_test(config, HypothesisTest.CHI_SQUARE)
+    _simulate_success(async_ops.last_call)
+    _select_test(config, HypothesisTest.GROUP_COMPARISON)
+
+    assert async_ops.last_call["scope"] == "analysis:hypothesis_tests:group_comparison:other:grp"
+    _simulate_success(async_ops.last_call)
+    assert isinstance(dlg.content_widgets[-1], GroupComparisonView)
+
+
+def test_changing_the_chi_square_column_dispatches_a_new_background_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = dlg.config_widgets[-1]
+    _select_test(config, HypothesisTest.CHI_SQUARE)
+    _simulate_success(async_ops.last_call)
+
+    chi_config = config._chi_square_config  # noqa: SLF001
+    assert chi_config is not None
+    chi_config._row_combo.setCurrentIndex(chi_config._row_combo.findText("color"))  # noqa: SLF001
+
+    assert async_ops.last_call["scope"] == "analysis:hypothesis_tests:chi_square:color:grp"
+    _simulate_success(async_ops.last_call)
+    assert isinstance(dlg.content_widgets[-1], ChiSquareView)
+
+
+def test_stale_group_comparison_result_is_discarded_after_switching_test(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = dlg.config_widgets[-1]
+
+    _gc_numeric_combo(config).setCurrentIndex(1)
+    group_comparison_call = async_ops.last_call
+    _select_test(config, HypothesisTest.CHI_SQUARE)
+    chi_square_call = async_ops.last_call
+
+    content_widgets_before = len(dlg.content_widgets)
+    _simulate_success(group_comparison_call)
+    assert len(dlg.content_widgets) == content_widgets_before  # stale, dropped
+
+    _simulate_success(chi_square_call)
+    assert isinstance(dlg.content_widgets[-1], ChiSquareView)
+
+
+def test_switching_to_an_unavailable_test_computes_its_defaults_and_shows_the_error(dialog_factory):
+    # Only "grp" is categorical: Group Comparison works, chi-square has no column pair.
+    df = pd.DataFrame({"value": [float(i) for i in range(24)], "grp": ["A", "B"] * 12})
+    async_ops = DummyAsyncOps()
+    _ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory, df)
+    config = dlg.config_widgets[-1]
+
+    _select_test(config, HypothesisTest.CHI_SQUARE)
+
+    assert async_ops.last_call["scope"] == "analysis:hypothesis_tests:chi_square"
+    _simulate_success(async_ops.last_call)
+    assert isinstance(dlg.content_widgets[-1], ChiSquareView)

@@ -29,3 +29,13 @@ class AnalysisCategory(StrEnum):
     CLUSTERING = "clustering"
     PCA = "pca"
     TIME_SERIES = "time_series"
+
+
+class HypothesisTest(StrEnum):
+    """Tests available within the `AnalysisCategory.HYPOTHESIS_TESTS` category.
+
+    Ordered as they should appear in the category's "Test" selector.
+    """
+
+    GROUP_COMPARISON = "group_comparison"
+    CHI_SQUARE = "chi_square"

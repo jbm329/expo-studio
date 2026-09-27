@@ -10,12 +10,14 @@ from typing import TYPE_CHECKING, cast
 from PyQt6.QtCore import QT_TR_NOOP, QTimer
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
-from expo_jbm329.gui.dialogs.analysis.group_comparison_config import GroupComparisonConfigWidget
+from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
 from expo_jbm329.gui.dialogs.analysis.group_comparison_view import GroupComparisonView
+from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
-from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
+from expo_jbm329.services.analysis.chi_square import analyze_chi_square
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
@@ -27,6 +29,7 @@ if TYPE_CHECKING:
     import pandas as pd
     from PyQt6.QtWidgets import QWidget
 
+    from expo_jbm329.services.analysis.chi_square import ChiSquareResult
     from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
     from expo_jbm329.services.analysis.overview import DatasetOverviewResult
     from expo_jbm329.services.analysis.statistics import DescriptiveStatisticsResult
@@ -61,6 +64,18 @@ class _CategoryHandler:
 
     compute: Callable[[pd.DataFrame], object]
     render: Callable[[object, AnalysisDialog], tuple[QWidget, QWidget | None]]
+
+
+@dataclass(frozen=True, slots=True)
+class _HypothesisTestsDefaults:
+    """Every hypothesis test computed with its default columns.
+
+    The Hypothesis Tests category's initial result, so each test's column
+    pickers in `HypothesisTestsConfigWidget` can be populated up front.
+    """
+
+    group_comparison: GroupComparisonResult
+    chi_square: ChiSquareResult
 
 
 class AnalysisController:
@@ -112,8 +127,8 @@ class AnalysisController:
                 render=self._render_statistics,
             ),
             AnalysisCategory.HYPOTHESIS_TESTS: _CategoryHandler(
-                compute=analyze_group_comparison,
-                render=self._render_group_comparison,
+                compute=self._compute_hypothesis_tests_defaults,
+                render=self._render_hypothesis_tests,
             ),
         }
 
@@ -175,38 +190,69 @@ class AnalysisController:
         config.column_changed.connect(content.show_distribution_for)
         return content, config
 
-    def _render_group_comparison(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
-        """Render the Group Comparison view and its column-picker config.
+    def _render_hypothesis_tests(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
+        """Render the Hypothesis Tests content and its test/column-picker config.
 
-        Must run on the GUI thread. Unlike Overview/Statistics, this
-        category's configuration selection determines *what* to compute
-        (which two columns), not just how to redraw already-computed data -
-        so the configuration widget's `selection_changed` signal is wired
-        here to `_recompute_content`, which dispatches a new background job
-        and replaces only the content pane, leaving this exact
-        configuration widget instance (and the user's current picks) in
-        place.
+        Must run on the GUI thread. The initial content is always the
+        default test (Group Comparison). Unlike Overview/Statistics, the
+        configuration here determines *what* to compute (which test, which
+        columns), so the configuration widget's `configuration_changed`
+        signal is wired to `_recompute_content`, which dispatches a new
+        background job and replaces only the content pane, leaving this
+        exact configuration widget instance (and the user's picks) in place.
         """
-        gc_result = cast("GroupComparisonResult", result)
-        content: QWidget = GroupComparisonView(gc_result)
+        defaults = cast("_HypothesisTestsDefaults", result)
+        content: QWidget = GroupComparisonView(defaults.group_comparison)
+        config = HypothesisTestsConfigWidget(defaults.group_comparison, defaults.chi_square)
 
-        if not gc_result.available_numeric_columns or not gc_result.available_grouping_columns:
-            return content, None
-
-        config = GroupComparisonConfigWidget(gc_result)
-
-        def _handle_selection_changed(numeric_column: str, grouping_column: str) -> None:
+        def _handle_configuration_changed() -> None:
+            configuration = config.current_configuration()
+            test, selection = configuration
             self._recompute_content(
                 dialog,
                 category=AnalysisCategory.HYPOTHESIS_TESTS,
-                scope_suffix=f"{numeric_column}:{grouping_column}",
-                compute=lambda df: analyze_group_comparison(df, numeric_column, grouping_column),
-                render_content=lambda r: GroupComparisonView(cast("GroupComparisonResult", r)),
-                is_stale=lambda: config.current_selection() != (numeric_column, grouping_column),
+                scope_suffix=":".join((test.value, *(selection or ()))),
+                compute=lambda df: self._compute_hypothesis_test(df, test, selection),
+                render_content=lambda r: self._render_hypothesis_test_content(test, r),
+                is_stale=lambda: config.current_configuration() != configuration,
             )
 
-        config.selection_changed.connect(_handle_selection_changed)
+        config.configuration_changed.connect(_handle_configuration_changed)
         return content, config
+
+    @staticmethod
+    def _compute_hypothesis_tests_defaults(df: pd.DataFrame) -> _HypothesisTestsDefaults:
+        """Compute every hypothesis test with its default columns (background-safe).
+
+        Both are computed up front so each test's column pickers can be
+        populated immediately, without a further job when switching tests.
+        """
+        return _HypothesisTestsDefaults(
+            group_comparison=analyze_group_comparison(df),
+            chi_square=analyze_chi_square(df),
+        )
+
+    @staticmethod
+    def _compute_hypothesis_test(
+        df: pd.DataFrame,
+        test: HypothesisTest,
+        selection: tuple[str, str] | None,
+    ) -> object:
+        """Compute one hypothesis test for `selection`, or its defaults when `None`."""
+        match test:
+            case HypothesisTest.GROUP_COMPARISON:
+                return analyze_group_comparison(df) if selection is None else analyze_group_comparison(df, *selection)
+            case HypothesisTest.CHI_SQUARE:
+                return analyze_chi_square(df) if selection is None else analyze_chi_square(df, *selection)
+
+    @staticmethod
+    def _render_hypothesis_test_content(test: HypothesisTest, result: object) -> QWidget:
+        """Build the content view for one computed hypothesis test (GUI thread only)."""
+        match test:
+            case HypothesisTest.GROUP_COMPARISON:
+                return GroupComparisonView(cast("GroupComparisonResult", result))
+            case HypothesisTest.CHI_SQUARE:
+                return ChiSquareView(cast("ChiSquareResult", result))
 
     # ------------------------------------------------------------------
     # Event handlers

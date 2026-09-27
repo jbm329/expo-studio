@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 
 
 def test_analysis_category_values_are_stable_identifiers():
@@ -24,3 +24,9 @@ def test_analysis_category_has_no_duplicate_values():
 def test_analysis_category_round_trips_through_its_value():
     for category in AnalysisCategory:
         assert AnalysisCategory(category.value) is category
+
+
+def test_hypothesis_test_values_are_stable_identifiers():
+    assert HypothesisTest.GROUP_COMPARISON == "group_comparison"
+    assert HypothesisTest.CHI_SQUARE == "chi_square"
+    assert [test.value for test in HypothesisTest] == ["group_comparison", "chi_square"]

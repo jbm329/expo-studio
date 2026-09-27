@@ -27,6 +27,16 @@ and this project follows [Semantic Versioning](https://semver.org/).
   eta-squared, epsilon-squared), a per-group boxplot, and each group's own
   Shapiro-Wilk normality check used as explicit guidance for which result
   to trust.
+- Advanced Analysis workspace: chi-square test of independence in the
+  "Hypothesis Tests" category, selected via a new "Test" dropdown in the
+  configuration pane. Shows the observed contingency table with totals,
+  chi-square/df/p (Yates-corrected for 2x2 tables), Cramér's V, Fisher's
+  exact test for 2x2 tables, a heatmap of adjusted standardized residuals
+  showing which cells drive the association, and a warning when Cochran's
+  rule for expected counts is violated. Columns that can't be used as a
+  categorical variable (fewer than 2 or more than 20 distinct values) are
+  still listed in the column pickers - also Group Comparison's grouping
+  column - but disabled, with a tooltip explaining why.
 
 ### Changed
 - Advanced Analysis workspace: added a dedicated configuration pane

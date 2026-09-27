@@ -71,6 +71,46 @@ class GroupWarningReason(StrEnum):
     TOO_FEW_FOR_NORMALITY = "too_few_for_normality"
 
 
+class ColumnExclusionReason(StrEnum):
+    """Why a column is not eligible as a grouping/categorical column.
+
+    Kept UI-text-free for the same reason as `GroupComparisonError`.
+    """
+
+    TOO_FEW_VALUES = "too_few_values"
+    TOO_MANY_VALUES = "too_many_values"
+
+
+@dataclass(frozen=True, slots=True)
+class ExcludedColumn:
+    """A column that is not eligible as a grouping/categorical column.
+
+    Attributes:
+        name: Column name.
+        distinct_count: Number of distinct non-null values in the column.
+        reason: Whether it has fewer than `MIN_GROUPS` or more than
+            `MAX_GROUPS` distinct values.
+    """
+
+    name: str
+    distinct_count: int
+    reason: ColumnExclusionReason
+
+
+@dataclass(frozen=True, slots=True)
+class GroupingColumns:
+    """Every column of a dataset, split by grouping-column eligibility.
+
+    Attributes:
+        eligible: Columns with between `MIN_GROUPS` and `MAX_GROUPS`
+            distinct non-null values, in column order.
+        excluded: All remaining columns, in column order.
+    """
+
+    eligible: tuple[str, ...]
+    excluded: tuple[ExcludedColumn, ...]
+
+
 @dataclass(frozen=True, slots=True)
 class GroupComparisonWarning:
     """A single non-blocking caveat about one group's data.
@@ -206,6 +246,9 @@ class GroupComparisonResult:
         error: A structured reason no result could be computed (e.g. too
             many/too few groups), or `None` when `groups` was successfully
             computed. Set exclusively together with an empty `groups`.
+        excluded_grouping_columns: Every column *not* eligible as a
+            grouping column, with the reason - lets the configuration
+            widget show them as disabled choices instead of hiding them.
     """
 
     numeric_column: str
@@ -217,6 +260,7 @@ class GroupComparisonResult:
     multi_group: MultiGroupComparisonResult | None
     warnings: tuple[GroupComparisonWarning, ...]
     error: GroupComparisonError | None
+    excluded_grouping_columns: tuple[ExcludedColumn, ...] = ()
 
 
 def _numeric_columns(df: pd.DataFrame) -> tuple[str, ...]:
@@ -224,21 +268,36 @@ def _numeric_columns(df: pd.DataFrame) -> tuple[str, ...]:
     return tuple(str(column) for column in df.columns if classify_series_dtype(df[column]) in _NUMERIC_DTYPES)
 
 
-def _grouping_candidate_columns(df: pd.DataFrame) -> tuple[str, ...]:
-    """Return columns with a usable number of distinct values for grouping.
+def classify_grouping_columns(df: pd.DataFrame) -> GroupingColumns:
+    """Split every column into eligible and excluded grouping columns.
 
     Any dtype is eligible (e.g. a 0/1 flag stored as int is a perfectly
     valid grouping column) - only the distinct-value count is restricted,
     to keep the configuration widget's choices meaningful (excluding
     ID-like columns) without hiding legitimate low-cardinality numeric
-    columns behind a dtype filter.
+    columns behind a dtype filter. Also reused by the Chi-square test of
+    independence (`chi_square.py`) so both hypothesis tests share one
+    definition of a "categorical" column.
+
+    Args:
+        df: The DataFrame to inspect. Never mutated.
+
+    Returns:
+        Every column, in column order: those with between `MIN_GROUPS` and
+        `MAX_GROUPS` distinct non-null values as eligible, all others as
+        excluded together with their distinct count and the reason.
     """
-    candidates = []
+    eligible: list[str] = []
+    excluded: list[ExcludedColumn] = []
     for column in df.columns:
-        distinct = df[column].nunique(dropna=True)
-        if MIN_GROUPS <= distinct <= MAX_GROUPS:
-            candidates.append(str(column))
-    return tuple(candidates)
+        distinct = int(df[column].nunique(dropna=True))
+        if distinct < MIN_GROUPS:
+            excluded.append(ExcludedColumn(str(column), distinct, ColumnExclusionReason.TOO_FEW_VALUES))
+        elif distinct > MAX_GROUPS:
+            excluded.append(ExcludedColumn(str(column), distinct, ColumnExclusionReason.TOO_MANY_VALUES))
+        else:
+            eligible.append(str(column))
+    return GroupingColumns(eligible=tuple(eligible), excluded=tuple(excluded))
 
 
 def _error_result(
@@ -247,19 +306,20 @@ def _error_result(
     numeric_column: str,
     grouping_column: str,
     numeric_columns: tuple[str, ...],
-    grouping_columns: tuple[str, ...],
+    grouping_columns: GroupingColumns,
 ) -> GroupComparisonResult:
     """Build a `GroupComparisonResult` carrying only a structured error."""
     return GroupComparisonResult(
         numeric_column=numeric_column,
         grouping_column=grouping_column,
         available_numeric_columns=numeric_columns,
-        available_grouping_columns=grouping_columns,
+        available_grouping_columns=grouping_columns.eligible,
         groups=(),
         pairwise=None,
         multi_group=None,
         warnings=(),
         error=error,
+        excluded_grouping_columns=grouping_columns.excluded,
     )
 
 
@@ -403,13 +463,13 @@ def analyze_group_comparison(
         data.
     """
     numeric_columns = _numeric_columns(df)
-    grouping_columns = _grouping_candidate_columns(df)
+    grouping_columns = classify_grouping_columns(df)
 
     if numeric_column is None:
         numeric_column = numeric_columns[0] if numeric_columns else ""
 
     if grouping_column is None:
-        eligible_grouping = tuple(column for column in grouping_columns if column != numeric_column)
+        eligible_grouping = tuple(column for column in grouping_columns.eligible if column != numeric_column)
         grouping_column = eligible_grouping[0] if eligible_grouping else ""
 
     if not numeric_column or numeric_column not in numeric_columns:
@@ -497,10 +557,11 @@ def analyze_group_comparison(
         numeric_column=numeric_column,
         grouping_column=grouping_column,
         available_numeric_columns=numeric_columns,
-        available_grouping_columns=grouping_columns,
+        available_grouping_columns=grouping_columns.eligible,
         groups=tuple(summaries),
         pairwise=pairwise,
         multi_group=multi_group,
         warnings=tuple(group_warnings),
         error=None,
+        excluded_grouping_columns=grouping_columns.excluded,
     )
