@@ -63,6 +63,29 @@ def test_column_list_checks_the_results_columns():
     assert widget.matrix_configuration() == (CorrelationMethod.PEARSON, ("b", "d"))
 
 
+def test_select_all_and_clear_update_pending_matrix_columns_without_applying():
+    widget = CorrelationConfigWidget(_make_result(columns=("a", "b")), ("a", "b"))
+    received = _record(widget.matrix_requested)
+
+    assert widget._select_all_button.text() == "Select all"  # noqa: SLF001
+    assert widget._clear_button.text() == "Clear"  # noqa: SLF001
+    group_layout = widget._select_all_button.parentWidget().layout()  # noqa: SLF001
+    assert group_layout.itemAt(0).widget() is widget._column_list  # noqa: SLF001
+    button_row = group_layout.itemAt(1).layout()
+    assert button_row.indexOf(widget._select_all_button) >= 0  # noqa: SLF001
+    assert button_row.indexOf(widget._clear_button) >= 0  # noqa: SLF001
+    widget._clear_button.click()  # noqa: SLF001
+    assert widget.checked_columns() == ()
+    assert widget.applied_columns() == ("a", "b")
+    assert not widget._apply_button.isEnabled()  # noqa: SLF001
+
+    widget._select_all_button.click()  # noqa: SLF001
+    assert widget.checked_columns() == ("a", "b", "c", "d")
+    assert widget.applied_columns() == ("a", "b")
+    assert widget._apply_button.isEnabled()  # noqa: SLF001
+    assert received == []
+
+
 def test_pair_combos_list_every_available_column_excluding_x_from_y():
     widget = CorrelationConfigWidget(_make_result(), ("c", "a"))
 

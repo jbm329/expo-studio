@@ -382,6 +382,33 @@ def fmt_category(val: object) -> str:
 
 
 # ---------------------------------------------------------------------
+#  Raw dataset cell formatting
+# ---------------------------------------------------------------------
+
+
+def fmt_cell(val: object) -> str:
+    """Format one raw dataset value for display in a results table.
+
+    Missing values (``None``, ``NaN``, ``NaT``, ``pd.NA``) render as an
+    empty string so tables stay readable, floats go through `fmt_num` for
+    locale-aware separators, and anything else falls back to ``str``.
+
+    Args:
+        val: Raw cell value taken from a DataFrame.
+
+    Returns:
+        Display text for the value.
+    """
+    # NaT/NA must be checked before the float branch: pd.NaT is also a
+    # datetime instance, and neither supports math.isnan().
+    if val is None or val is pd.NaT or val is pd.NA:
+        return ""
+    if isinstance(val, float):
+        return "" if np.isnan(val) else fmt_num(val)
+    return str(val)
+
+
+# ---------------------------------------------------------------------
 #  Path format to posix
 # ---------------------------------------------------------------------
 

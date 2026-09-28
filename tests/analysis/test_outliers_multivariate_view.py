@@ -5,9 +5,9 @@ import dataclasses
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtWidgets import QLabel
+from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
-from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_view import MultivariateOutliersView, _cell_text
+from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_view import MultivariateOutliersView
 from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierError,
     MultivariateOutlierMethod,
@@ -46,6 +46,7 @@ def test_result_shows_projection_and_ranked_observation_table():
 
     assert len(view.findChildren(FigureCanvasQTAgg)) == 1
     assert table is not None
+    assert table.selectionMode() is QTableWidget.SelectionMode.NoSelection
     assert table.rowCount() == len(result.extremes)
     assert [table.horizontalHeaderItem(index).text() for index in range(table.columnCount())] == [
         "Row",
@@ -54,6 +55,9 @@ def test_result_shows_projection_and_ranked_observation_table():
         "y",
     ]
     assert view.configuration() == (result.columns, result.method, True, 0.2, 20)
+    splitters = view.findChildren(QSplitter)
+    assert len(splitters) == 1
+    assert splitters[0].childrenCollapsible() is False
 
 
 def test_projection_has_inlier_and_outlier_series():
@@ -82,10 +86,7 @@ def test_summary_reports_standardization_and_sampling():
     assert "deterministic sample" in text
 
 
-def test_cell_text_and_method_name_handle_scalar_edge_cases():
+def test_method_name_translates_every_method():
     view = MultivariateOutliersView(_result())
 
     assert view.method_name(MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR) == "Local Outlier Factor"
-    assert _cell_text(None) == ""
-    assert _cell_text(float("nan")) == ""
-    assert _cell_text("text") == "text"

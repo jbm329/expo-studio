@@ -51,16 +51,27 @@ class PCAView(QWidget):
             layout.addWidget(self._build_centered_label(self.error_text(result.error)))
             return
 
-        layout.addWidget(self._build_summary(result))
+        plots_panel = QWidget(self)
+        plots_layout = QVBoxLayout(plots_panel)
+        plots_layout.setContentsMargins(0, 0, 0, 0)
+        plots_layout.addWidget(self._build_section_title(self.tr("PCA plots"), plots_panel))
 
-        plots = QSplitter(Qt.Orientation.Horizontal, self)
+        plots = QSplitter(Qt.Orientation.Horizontal, plots_panel)
+        plots.setChildrenCollapsible(False)
         plots.addWidget(self._build_scree_plot(result))
         plots.addWidget(self._build_scatter_plot(result))
+        plots_layout.addWidget(plots)
 
         splitter = QSplitter(Qt.Orientation.Vertical, self)
-        splitter.addWidget(plots)
+        splitter.setChildrenCollapsible(False)
+        splitter.addWidget(self._build_summary_panel(result))
+        splitter.addWidget(plots_panel)
         splitter.addWidget(self._build_loadings_panel(result))
-        layout.addWidget(splitter)
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 4)
+        splitter.setStretchFactor(2, 2)
+        splitter.setSizes([130, 420, 230])
+        layout.addWidget(splitter, 1)
 
     def configuration(self) -> tuple[tuple[str, ...], bool]:
         """Return the selected columns and scaling used by this displayed fit."""
@@ -108,6 +119,15 @@ class PCAView(QWidget):
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setWordWrap(True)
         return label
+
+    def _build_summary_panel(self, result: PCAResult) -> QWidget:
+        """Build the titled PCA summary section."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_title(self.tr("Summary"), panel))
+        layout.addWidget(self._build_summary(result))
+        return panel
 
     def _build_scree_plot(self, result: PCAResult) -> QWidget:
         """Build a scree plot of component and cumulative explained variance."""
@@ -164,7 +184,7 @@ class PCAView(QWidget):
         table.setRowCount(len(result.columns))
         table.setHorizontalHeaderLabels(headers)
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
         table.setAlternatingRowColors(True)
         vheader = table.verticalHeader()
         if vheader is not None:
@@ -190,4 +210,11 @@ class PCAView(QWidget):
         label = QLabel(text, self)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setWordWrap(True)
+        return label
+
+    @staticmethod
+    def _build_section_title(text: str, parent: QWidget) -> QLabel:
+        """Build a bold title for a PCA section."""
+        label = QLabel(text, parent)
+        label.setStyleSheet("font-weight: bold;")
         return label

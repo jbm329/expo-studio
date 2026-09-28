@@ -4,8 +4,10 @@ import pandas as pd
 
 from expo_jbm329.services.analysis.overview import (
     HIGH_MISSING_FRACTION_THRESHOLD,
+    SAMPLE_ROW_LIMIT,
     analyze_dataset_overview,
 )
+from expo_jbm329.services.data_operations.dtypes import SemanticDType
 
 
 def test_analyze_dataset_overview_counts_columns_by_semantic_type():
@@ -130,3 +132,58 @@ def test_analyze_dataset_overview_handles_columns_with_no_rows():
     assert result.numeric_column_count == 2
     assert result.missing_cell_fraction == 0.0
     assert result.duplicate_row_fraction == 0.0
+    assert result.sample_rows == ()
+    assert result.sample_truncated is False
+    assert [column.missing_fraction for column in result.columns] == [0.0, 0.0]
+
+
+def test_analyze_dataset_overview_summarizes_every_column():
+    df = pd.DataFrame({
+        "col_int": [1, 2, 2, None],
+        "col_text": ["a", "b", "b", "c"],
+    })
+
+    result = analyze_dataset_overview(df)
+
+    by_name = {column.column: column for column in result.columns}
+    assert [column.column for column in result.columns] == ["col_int", "col_text"]
+    assert by_name["col_int"].semantic_dtype is SemanticDType.FLOAT
+    assert by_name["col_int"].missing_count == 1
+    assert by_name["col_int"].missing_fraction == 0.25
+    # nunique ignores the missing value.
+    assert by_name["col_int"].unique_count == 2
+    assert by_name["col_text"].semantic_dtype is SemanticDType.STRING
+    assert by_name["col_text"].dtype_name == str(df["col_text"].dtype)
+    assert by_name["col_text"].missing_count == 0
+    assert by_name["col_text"].unique_count == 3
+
+
+def test_analyze_dataset_overview_samples_raw_values_up_to_the_limit():
+    df = pd.DataFrame({"a": range(SAMPLE_ROW_LIMIT + 10), "b": ["x"] * (SAMPLE_ROW_LIMIT + 10)})
+
+    result = analyze_dataset_overview(df)
+
+    assert result.sample_columns == ("a", "b")
+    assert len(result.sample_rows) == SAMPLE_ROW_LIMIT
+    assert result.sample_truncated is True
+    # Raw, unformatted values: presentation belongs to the view.
+    assert result.sample_rows[0] == (0, "x")
+
+
+def test_analyze_dataset_overview_keeps_every_row_when_below_the_sample_limit():
+    df = pd.DataFrame({"a": [1, 2, 3]})
+
+    result = analyze_dataset_overview(df)
+
+    assert len(result.sample_rows) == 3
+    assert result.sample_truncated is False
+
+
+def test_analyze_dataset_overview_handles_duplicate_column_labels():
+    df = pd.DataFrame([[1, 2], [3, 4]], columns=["a", "a"])
+
+    result = analyze_dataset_overview(df)
+
+    assert [column.column for column in result.columns] == ["a", "a"]
+    assert [column.unique_count for column in result.columns] == [2, 2]
+    assert result.numeric_column_count == 2

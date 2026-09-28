@@ -5,7 +5,8 @@ import dataclasses
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtWidgets import QLabel, QSplitter
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.services.analysis.pca import PCAError, PCAResult, analyze_pca
@@ -53,10 +54,32 @@ def test_success_shows_scree_scatter_and_feature_loadings():
 
     assert len(_axes(view)) == 2
     assert table is not None
+    assert table.selectionMode() is QTableWidget.SelectionMode.NoSelection
     assert table.rowCount() == 3
     assert table.columnCount() == 4
     assert [table.item(row, 0).text() for row in range(table.rowCount())] == list(result.columns)
     assert view.configuration() == (result.columns, True)
+
+
+def test_layout_has_titled_summary_plots_and_loadings_with_adjustable_dividers():
+    view = PCAView(_result())
+
+    splitters = view.findChildren(QSplitter)
+    vertical = [splitter for splitter in splitters if splitter.orientation() is Qt.Orientation.Vertical]
+    horizontal = [splitter for splitter in splitters if splitter.orientation() is Qt.Orientation.Horizontal]
+    assert len(vertical) == 1
+    assert len(horizontal) == 1
+    assert all(not splitter.childrenCollapsible() for splitter in splitters)
+
+    sections = vertical[0]
+    assert sections.count() == 3
+    assert any(label.text() == "Summary" for label in sections.widget(0).findChildren(QLabel))
+    assert len(sections.widget(1).findChildren(FigureCanvasQTAgg)) == 2
+    assert any(label.text() == "PCA plots" for label in sections.widget(1).findChildren(QLabel))
+    table = view.loadings_table()
+    assert table is not None
+    assert sections.widget(2).isAncestorOf(table)
+    assert any("Feature loadings" in label.text() for label in sections.widget(2).findChildren(QLabel))
 
 
 def test_scree_plot_shows_component_and_cumulative_variance():

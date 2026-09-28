@@ -29,7 +29,7 @@ from expo_jbm329.services.analysis.outliers import (
     OutlierMethod,
     max_possible_z_score,
 )
-from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_pct
+from expo_jbm329.utils.format_utils import fmt_cell, fmt_int, fmt_num, fmt_pct
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -50,8 +50,14 @@ def _esc(text: str) -> str:
     return html.escape(text)
 
 
-def _new_table(headers: list[str], row_count: int, parent: QWidget) -> QTableWidget:
-    """Build a read-only, row-selecting table with `headers`."""
+def _new_table(
+    headers: list[str],
+    row_count: int,
+    parent: QWidget,
+    *,
+    rows_selectable: bool = False,
+) -> QTableWidget:
+    """Build a read-only table with `headers`."""
     table = QTableWidget(parent)
     table.setColumnCount(len(headers))
     table.setRowCount(row_count)
@@ -62,8 +68,11 @@ def _new_table(headers: list[str], row_count: int, parent: QWidget) -> QTableWid
         vheader.setVisible(False)
 
     table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-    table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-    table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+    if rows_selectable:
+        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+    else:
+        table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
     table.setAlternatingRowColors(True)
     return table
 
@@ -76,25 +85,15 @@ def _finish_table(table: QTableWidget) -> None:
         hheader.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
 
-def _cell_text(value: object) -> str:
-    """Format one dataset value for the observations table."""
-    if value is None:
-        return ""
-    if isinstance(value, float):
-        return "" if math.isnan(value) else fmt_num(value)
-    return str(value)
-
-
 class OutliersView(QWidget):
     """Displays the outlier screening of every numeric column and one column's detail.
 
-    The top half shows the dataset-wide totals and a table of every
-    numeric column ranked by outlier share; clicking a row emits
-    `column_activated`. The bottom half (`detail_panel`) shows the
-    selected column's histogram, statistics and most extreme flagged
-    rows, and is updated in place by `set_column_detail` so choosing
-    another column needn't rebuild the summary. A new summary result
-    always means a new view instance.
+    Four vertically resizable sections show the per-column summary table,
+    the selected column's most extreme flagged rows, its histogram and its
+    statistics. Clicking a summary row emits `column_activated`. The last
+    three sections are updated in place by `set_column_detail` so choosing
+    another column needn't rebuild the summary. A new summary result always
+    means a new view instance.
     """
 
     column_activated = pyqtSignal(str)
@@ -127,15 +126,43 @@ class OutliersView(QWidget):
         self._detail_layout = QVBoxLayout(self._detail_panel)
         self._detail_layout.setContentsMargins(0, 0, 0, 0)
 
+        detail_splitter = QSplitter(Qt.Orientation.Vertical, self._detail_panel)
+        detail_splitter.setChildrenCollapsible(False)
+
+        self._extremes_panel = QWidget(detail_splitter)
+        self._extremes_layout = QVBoxLayout(self._extremes_panel)
+        self._extremes_layout.setContentsMargins(0, 0, 0, 0)
+        detail_splitter.addWidget(self._extremes_panel)
+
+        self._chart_panel = QWidget(detail_splitter)
+        self._chart_layout = QVBoxLayout(self._chart_panel)
+        self._chart_layout.setContentsMargins(0, 0, 0, 0)
+        detail_splitter.addWidget(self._chart_panel)
+
+        self._statistics_panel = QWidget(detail_splitter)
+        self._statistics_layout = QVBoxLayout(self._statistics_panel)
+        self._statistics_layout.setContentsMargins(0, 0, 0, 0)
+        detail_splitter.addWidget(self._statistics_panel)
+
+        detail_splitter.setStretchFactor(0, 2)
+        detail_splitter.setStretchFactor(1, 3)
+        detail_splitter.setStretchFactor(2, 1)
+        detail_splitter.setSizes([180, 300, 150])
+        self._detail_layout.addWidget(detail_splitter)
+
         if result.error is not None:
             self._detail_panel.hide()
             layout.addWidget(self._build_centered_label(self.error_text(result.error)))
             return
 
         splitter = QSplitter(Qt.Orientation.Vertical, self)
+        splitter.setChildrenCollapsible(False)
         splitter.addWidget(self._build_summary_panel(result))
         splitter.addWidget(self._detail_panel)
-        layout.addWidget(splitter)
+        splitter.setStretchFactor(0, 2)
+        splitter.setStretchFactor(1, 5)
+        splitter.setSizes([250, 650])
+        layout.addWidget(splitter, 1)
 
         if detail is not None:
             self.set_column_detail(detail)
@@ -172,19 +199,28 @@ class OutliersView(QWidget):
         """
         self._detail = detail
         self._extremes_table = None
-        self._clear_detail_panel()
+        self._clear_layout(self._extremes_layout)
+        self._clear_layout(self._chart_layout)
+        self._clear_layout(self._statistics_layout)
 
         if detail.error is not None:
-            self._detail_layout.addWidget(self._build_centered_label(self.error_text(detail.error), self._detail_panel))
+            self._extremes_panel.hide()
+            self._chart_panel.hide()
+            self._statistics_panel.show()
+            self._statistics_layout.addWidget(
+                self._build_centered_label(self.error_text(detail.error), self._statistics_panel)
+            )
         else:
-            left = QSplitter(Qt.Orientation.Vertical, self._detail_panel)
-            left.addWidget(self._build_histogram(detail))
-            left.addWidget(self._build_detail_statistics(detail))
-
-            splitter = QSplitter(Qt.Orientation.Horizontal, self._detail_panel)
-            splitter.addWidget(left)
-            splitter.addWidget(self._build_extremes_panel(detail))
-            self._detail_layout.addWidget(splitter)
+            self._extremes_panel.show()
+            self._chart_panel.show()
+            self._statistics_panel.show()
+            self._extremes_layout.addWidget(self._build_extremes_panel(detail))
+            self._chart_layout.addWidget(self._build_section_title(self.tr("Distribution"), self._chart_panel))
+            self._chart_layout.addWidget(self._build_histogram(detail))
+            self._statistics_layout.addWidget(
+                self._build_section_title(self.tr("Column details"), self._statistics_panel)
+            )
+            self._statistics_layout.addWidget(self._build_detail_statistics(detail))
 
         self._select_table_row(detail.summary.column)
 
@@ -237,6 +273,7 @@ class OutliersView(QWidget):
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_title(self.tr("Columns"), panel))
 
         totals = QLabel(self._totals_text(result), panel)
         totals.setTextFormat(Qt.TextFormat.RichText)
@@ -257,6 +294,13 @@ class OutliersView(QWidget):
         layout.addWidget(caption)
 
         return panel
+
+    @staticmethod
+    def _build_section_title(text: str, parent: QWidget) -> QLabel:
+        """Build a bold title for an outlier section."""
+        label = QLabel(text, parent)
+        label.setStyleSheet("font-weight: bold;")
+        return label
 
     def _totals_text(self, result: OutlierSummaryResult) -> str:
         """Return the rich-text dataset-wide totals."""
@@ -286,7 +330,7 @@ class OutliersView(QWidget):
             self.tr("Lower fence"),
             self.tr("Upper fence"),
         ]
-        table = _new_table(headers, len(result.columns), parent)
+        table = _new_table(headers, len(result.columns), parent, rows_selectable=True)
 
         for row, summary in enumerate(result.columns):
             for col, text in enumerate(self._summary_row(summary)):
@@ -337,10 +381,11 @@ class OutliersView(QWidget):
     # Column detail
     # ------------------------------------------------------------------
 
-    def _clear_detail_panel(self) -> None:
-        """Remove and delete every widget currently in the detail panel."""
-        while self._detail_layout.count():
-            item = self._detail_layout.takeAt(0)
+    @staticmethod
+    def _clear_layout(layout: QVBoxLayout) -> None:
+        """Remove and delete every widget currently in `layout`."""
+        while layout.count():
+            item = layout.takeAt(0)
             widget = item.widget() if item is not None else None
             if widget is not None:
                 widget.hide()
@@ -526,7 +571,7 @@ class OutliersView(QWidget):
             fmt_int(observation.row_number),
             fmt_num(observation.value),
             fmt_num(observation.score, sig=3),
-            *(_cell_text(observation.row_values[i]) for i in other_indexes),
+            *(fmt_cell(observation.row_values[i]) for i in other_indexes),
         ]
 
     # ------------------------------------------------------------------

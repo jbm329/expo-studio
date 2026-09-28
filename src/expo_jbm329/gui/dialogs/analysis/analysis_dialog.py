@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
+    QAbstractItemView,
     QComboBox,
     QDialog,
     QDialogButtonBox,
@@ -20,6 +21,7 @@ from PyQt6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QListView,
     QListWidget,
     QListWidgetItem,
     QVBoxLayout,
@@ -60,24 +62,28 @@ class AnalysisDialog(QDialog):
         self._datasets = datasets
 
         self.setWindowTitle(self.tr("Advanced Analysis"))
-        self.resize(1100, 650)
+        self.resize(1280, 900)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(12, 12, 12, 12)
         root.setSpacing(12)
 
-        panels = QHBoxLayout()
-        panels.setSpacing(12)
+        top_row = QHBoxLayout()
+        top_row.setSpacing(12)
+        dataset_panel = self._build_dataset_panel(active_tab_id)
+        analysis_panel = self._build_analysis_panel()
+        top_row.addWidget(dataset_panel)
+        top_row.addWidget(analysis_panel, 1)
 
-        left_panel = self._build_left_panel(active_tab_id)
+        workspace = QHBoxLayout()
+        workspace.setSpacing(12)
         content_panel = self._build_content_panel()
         config_panel = self._build_config_panel()
+        workspace.addWidget(content_panel, 4)
+        workspace.addWidget(config_panel, 1)
 
-        panels.addWidget(left_panel, 1)
-        panels.addWidget(content_panel, 3)
-        panels.addWidget(config_panel, 1)
-
-        root.addLayout(panels, 1)
+        root.addLayout(top_row)
+        root.addLayout(workspace, 1)
         root.addWidget(self._build_button_box())
 
         self._connect_signals()
@@ -89,13 +95,9 @@ class AnalysisDialog(QDialog):
     # UI building
     # ------------------------------------------------------------------
 
-    def _build_left_panel(self, active_tab_id: str | None) -> QWidget:
-        """Build the left panel with the dataset picker and category list."""
-        panel = QWidget(self)
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        dataset_group = QGroupBox(self.tr("Dataset"), panel)
+    def _build_dataset_panel(self, active_tab_id: str | None) -> QWidget:
+        """Build the top-left dataset picker."""
+        dataset_group = QGroupBox(self.tr("Dataset"), self)
         dataset_form = QFormLayout(dataset_group)
 
         self._dataset_combo = QComboBox(dataset_group)
@@ -107,11 +109,20 @@ class AnalysisDialog(QDialog):
             self.select_dataset(active_tab_id)
 
         dataset_form.addRow(QLabel(self.tr("Dataset"), dataset_group), self._dataset_combo)
+        self._dataset_panel = dataset_group
+        return dataset_group
 
-        category_group = QGroupBox(self.tr("Analysis"), panel)
+    def _build_analysis_panel(self) -> QWidget:
+        """Build the horizontal analysis-category selector."""
+        category_group = QGroupBox(self.tr("Analysis"), self)
         category_layout = QVBoxLayout(category_group)
 
         self._category_list = QListWidget(category_group)
+        self._category_list.setFlow(QListView.Flow.LeftToRight)
+        self._category_list.setWrapping(False)
+        self._category_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._category_list.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self._category_list.setFixedHeight(36)
         for category in AnalysisCategory:
             item = QListWidgetItem(self._category_label(category))
             item.setData(_CATEGORY_ROLE, category.value)
@@ -121,11 +132,8 @@ class AnalysisDialog(QDialog):
         self.select_category(AnalysisCategory.OVERVIEW)
 
         category_layout.addWidget(self._category_list)
-
-        layout.addWidget(dataset_group)
-        layout.addWidget(category_group, 1)
-
-        return panel
+        self._analysis_panel = category_group
+        return category_group
 
     def _build_content_panel(self) -> QWidget:
         """Build the right-hand content/placeholder panel."""
@@ -242,6 +250,9 @@ class AnalysisDialog(QDialog):
             widget: The widget to display in the content panel.
         """
         if self._content_widget is not None:
+            # A visible canvas removed from its layout can be repainted once
+            # at zero size before deleteLater() runs.
+            self._content_widget.hide()
             self._content_layout.removeWidget(self._content_widget)
             self._content_widget.deleteLater()
 
@@ -270,6 +281,7 @@ class AnalysisDialog(QDialog):
                 configurable input).
         """
         if self._config_widget is not None:
+            self._config_widget.hide()
             self._config_layout.removeWidget(self._config_widget)
             self._config_widget.deleteLater()
 

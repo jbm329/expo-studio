@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QLabel, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
@@ -42,6 +42,24 @@ def test_dialog_lists_every_analysis_category_once():
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
 
     assert dialog._category_list.count() == len(list(AnalysisCategory))  # noqa: SLF001
+
+
+def test_dialog_places_the_horizontal_analysis_selector_above_the_workspace():
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog.set_config_widget(QWidget())
+    dialog.show()
+    QCoreApplication.processEvents()
+    try:
+        assert dialog._analysis_panel.x() > dialog._dataset_panel.x()  # noqa: SLF001
+        assert dialog._analysis_panel.y() == dialog._dataset_panel.y()  # noqa: SLF001
+        assert dialog._content_panel.y() > dialog._analysis_panel.y()  # noqa: SLF001
+        assert dialog._config_panel.y() > dialog._analysis_panel.y()  # noqa: SLF001
+        assert dialog._content_panel.width() > dialog._config_panel.width()  # noqa: SLF001
+        assert dialog._category_list.flow().name == "LeftToRight"  # noqa: SLF001
+        assert dialog._category_list.isWrapping() is False  # noqa: SLF001
+        assert dialog._category_list.verticalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAlwaysOff  # noqa: SLF001
+    finally:
+        dialog.close()
 
 
 def test_selecting_category_emits_category_changed_with_its_value():
@@ -89,13 +107,15 @@ def test_content_panel_is_a_stable_widget_across_content_changes():
 
 def test_set_content_widget_replaces_the_previous_widget():
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
-    first = dialog.content_widget()
+    first = QWidget()
+    dialog.set_content_widget(first)
     replacement = QWidget()
 
     dialog.set_content_widget(replacement)
 
     assert dialog.content_widget() is replacement
     assert dialog.content_widget() is not first
+    assert first.isHidden()
 
 
 def test_config_panel_starts_hidden_with_no_widget():
@@ -138,12 +158,14 @@ def test_set_config_widget_none_hides_the_panel_again():
 
 def test_set_config_widget_replaces_the_previous_widget():
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
-    dialog.set_config_widget(QWidget())
+    first = QWidget()
+    dialog.set_config_widget(first)
     replacement = QWidget()
 
     dialog.set_config_widget(replacement)
 
     assert dialog.config_widget() is replacement
+    assert first.isHidden()
 
 
 def test_dialog_with_no_datasets_has_no_selection():

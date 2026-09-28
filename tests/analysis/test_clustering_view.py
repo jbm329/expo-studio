@@ -5,7 +5,8 @@ import dataclasses
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtWidgets import QLabel
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.clustering_view import ClusteringView
 from expo_jbm329.services.analysis.clustering import (
@@ -66,9 +67,29 @@ def test_success_shows_projection_and_cluster_table():
 
     assert len(view.findChildren(FigureCanvasQTAgg)) == 1
     assert table is not None
+    assert table.selectionMode() is QTableWidget.SelectionMode.NoSelection
     assert table.rowCount() == len(result.clusters)
     assert table.item(0, 0).text() == "Cluster 1"
     assert view.configuration() == (result.columns, result.method, True, 2, 0.5, 2)
+
+
+def test_layout_has_titled_summary_plot_and_table_with_adjustable_dividers():
+    view = ClusteringView(_result())
+
+    splitters = view.findChildren(QSplitter)
+    assert len(splitters) == 1
+    splitter = splitters[0]
+    assert splitter.orientation() is Qt.Orientation.Vertical
+    assert splitter.childrenCollapsible() is False
+    assert splitter.count() == 3
+
+    assert any(label.text() == "Summary" for label in splitter.widget(0).findChildren(QLabel))
+    assert len(splitter.widget(1).findChildren(FigureCanvasQTAgg)) == 1
+    assert any(label.text() == "Cluster projection" for label in splitter.widget(1).findChildren(QLabel))
+    table = view.cluster_table()
+    assert table is not None
+    assert splitter.widget(2).isAncestorOf(table)
+    assert any(label.text() == "Cluster sizes" for label in splitter.widget(2).findChildren(QLabel))
 
 
 def test_projection_has_one_collection_per_cluster_and_axes():

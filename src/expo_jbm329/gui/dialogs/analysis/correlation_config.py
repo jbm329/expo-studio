@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QFormLayout,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
     QListWidget,
     QListWidgetItem,
@@ -89,6 +90,8 @@ class CorrelationConfigWidget(QWidget):
         # the default selection never emits a spurious first signal.
         self._method_combo.currentIndexChanged.connect(self._on_method_changed)
         self._column_list.itemChanged.connect(self._on_column_check_changed)
+        self._select_all_button.clicked.connect(lambda: self._set_all_columns_checked(checked=True))
+        self._clear_button.clicked.connect(lambda: self._set_all_columns_checked(checked=False))
         self._apply_button.clicked.connect(self._on_apply_clicked)
         self._x_combo.currentTextChanged.connect(self._on_x_changed)
         self._y_combo.currentTextChanged.connect(self._on_y_changed)
@@ -117,7 +120,16 @@ class CorrelationConfigWidget(QWidget):
             item = QListWidgetItem(column, self._column_list)
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             item.setCheckState(Qt.CheckState.Checked if column in applied else Qt.CheckState.Unchecked)
+
         group_layout.addWidget(self._column_list)
+
+        actions = QHBoxLayout()
+        actions.addStretch(1)
+        self._select_all_button = QPushButton(self.tr("Select all"), group)
+        self._clear_button = QPushButton(self.tr("Clear"), group)
+        actions.addWidget(self._select_all_button)
+        actions.addWidget(self._clear_button)
+        group_layout.addLayout(actions)
 
         self._selection_label = QLabel(group)
         self._selection_label.setWordWrap(True)
@@ -167,6 +179,19 @@ class CorrelationConfigWidget(QWidget):
 
     def _on_column_check_changed(self, _item: QListWidgetItem) -> None:
         """Refresh the selection count and Apply button after a checkbox toggle."""
+        self._update_apply_state()
+
+    def _set_all_columns_checked(self, *, checked: bool) -> None:
+        """Set every matrix column to the same pending check state."""
+        state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+        self._column_list.blockSignals(True)
+        try:
+            for index in range(self._column_list.count()):
+                item = self._column_list.item(index)
+                if item is not None:
+                    item.setCheckState(state)
+        finally:
+            self._column_list.blockSignals(False)
         self._update_apply_state()
 
     def _on_apply_clicked(self) -> None:

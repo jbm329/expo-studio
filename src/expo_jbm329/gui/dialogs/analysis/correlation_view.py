@@ -59,10 +59,10 @@ _PAIR_COLUMN_Y = 1
 class CorrelationView(QWidget):
     """Displays a correlation matrix and the detail of one selected pair.
 
-    The top half shows the matrix as a heatmap next to a table of every
-    pair ranked by absolute coefficient; clicking a table row emits
-    `pair_activated`. The bottom half (`pair_panel`) shows the selected
-    pair's scatterplot and statistics, and is updated in place by
+    The ranked pairs table spans the top of the view. The correlation
+    heatmap and selected pair's scatterplot sit side by side below it,
+    followed by the selected pair's statistics. Clicking a table row emits
+    `pair_activated`. The pair detail is updated in place by
     `set_pair_detail` so choosing another pair needn't rebuild the matrix.
     A new matrix result always means a new view instance.
     """
@@ -96,19 +96,53 @@ class CorrelationView(QWidget):
         self._pair_layout = QVBoxLayout(self._pair_panel)
         self._pair_layout.setContentsMargins(0, 0, 0, 0)
 
+        self._scatter_panel = QWidget(self._pair_panel)
+        self._scatter_layout = QVBoxLayout(self._scatter_panel)
+        self._scatter_layout.setContentsMargins(0, 0, 0, 0)
+
+        self._statistics_panel = QWidget(self._pair_panel)
+        self._statistics_layout = QVBoxLayout(self._statistics_panel)
+        self._statistics_layout.setContentsMargins(0, 0, 0, 0)
+
         if result.error is not None:
             self._pair_panel.hide()
             layout.addWidget(self._build_centered_label(self.error_text(result.error)))
             return
 
-        matrix_splitter = QSplitter(Qt.Orientation.Horizontal, self)
-        matrix_splitter.addWidget(self._build_heatmap(result))
-        matrix_splitter.addWidget(self._build_pairs_panel(result))
+        charts_section = QWidget(self._pair_panel)
+        charts_layout = QVBoxLayout(charts_section)
+        charts_layout.setContentsMargins(0, 0, 0, 0)
+        charts_layout.addWidget(self._build_section_title(self.tr("Correlation plots"), charts_section))
+
+        charts_splitter = QSplitter(Qt.Orientation.Horizontal, charts_section)
+        charts_splitter.setChildrenCollapsible(False)
+        charts_splitter.addWidget(self._build_heatmap(result))
+        charts_splitter.addWidget(self._scatter_panel)
+        charts_layout.addWidget(charts_splitter)
+
+        statistics_section = QWidget(self._pair_panel)
+        statistics_layout = QVBoxLayout(statistics_section)
+        statistics_layout.setContentsMargins(0, 0, 0, 0)
+        statistics_layout.addWidget(self._build_section_title(self.tr("Pair details"), statistics_section))
+        statistics_layout.addWidget(self._statistics_panel)
+
+        detail_splitter = QSplitter(Qt.Orientation.Vertical, self._pair_panel)
+        detail_splitter.setChildrenCollapsible(False)
+        detail_splitter.addWidget(charts_section)
+        detail_splitter.addWidget(statistics_section)
+        detail_splitter.setStretchFactor(0, 4)
+        detail_splitter.setStretchFactor(1, 1)
+        detail_splitter.setSizes([500, 140])
+        self._pair_layout.addWidget(detail_splitter, 1)
 
         splitter = QSplitter(Qt.Orientation.Vertical, self)
-        splitter.addWidget(matrix_splitter)
+        splitter.setChildrenCollapsible(False)
+        splitter.addWidget(self._build_pairs_panel(result))
         splitter.addWidget(self._pair_panel)
-        layout.addWidget(splitter)
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 2)
+        splitter.setSizes([260, 500])
+        layout.addWidget(splitter, 1)
 
         if pair_detail is not None:
             self.set_pair_detail(pair_detail)
@@ -140,15 +174,16 @@ class CorrelationView(QWidget):
             detail: The computed pair detail to display.
         """
         self._pair_detail = detail
-        self._clear_pair_panel()
+        self._clear_layout(self._scatter_layout)
+        self._clear_layout(self._statistics_layout)
 
         if detail.error is not None:
-            self._pair_layout.addWidget(self._build_centered_label(self.error_text(detail.error), self._pair_panel))
+            self._statistics_layout.addWidget(
+                self._build_centered_label(self.error_text(detail.error), self._statistics_panel)
+            )
         else:
-            splitter = QSplitter(Qt.Orientation.Horizontal, self._pair_panel)
-            splitter.addWidget(self._build_scatterplot(detail))
-            splitter.addWidget(self._build_pair_statistics(detail))
-            self._pair_layout.addWidget(splitter)
+            self._scatter_layout.addWidget(self._build_scatterplot(detail))
+            self._statistics_layout.addWidget(self._build_pair_statistics(detail))
 
         self._select_table_row(detail.pair.x_column, detail.pair.y_column)
 
@@ -366,10 +401,11 @@ class CorrelationView(QWidget):
     # Pair detail
     # ------------------------------------------------------------------
 
-    def _clear_pair_panel(self) -> None:
-        """Remove and delete every widget currently in the pair panel."""
-        while self._pair_layout.count():
-            item = self._pair_layout.takeAt(0)
+    @staticmethod
+    def _clear_layout(layout: QVBoxLayout) -> None:
+        """Remove and delete every widget currently in `layout`."""
+        while layout.count():
+            item = layout.takeAt(0)
             widget = item.widget() if item is not None else None
             if widget is not None:
                 widget.hide()
@@ -401,7 +437,7 @@ class CorrelationView(QWidget):
 
     def _build_pair_statistics(self, detail: CorrelationPairDetail) -> QLabel:
         """Build the rich-text label describing the pair's statistics."""
-        label = QLabel(self._pair_statistics_text(detail), self._pair_panel)
+        label = QLabel(self._pair_statistics_text(detail), self._statistics_panel)
         label.setWordWrap(True)
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
@@ -422,7 +458,7 @@ class CorrelationView(QWidget):
             self.tr("{confidence}% CI: {interval}").format(
                 confidence=fmt_int(round(CONFIDENCE_LEVEL * 100)), interval=self._interval_text(pair)
             ),
-            self.tr("p = {p}, n = {n}").format(p=fmt_p_value(pair.p_value), n=fmt_int(pair.n)),
+            self.tr("p = {p}, n = {n}").format(p=html.escape(fmt_p_value(pair.p_value)), n=fmt_int(pair.n)),
             "",
             self.tr("Least-squares line: slope {slope}, intercept {intercept}").format(
                 slope=fmt_num(detail.slope), intercept=fmt_num(detail.intercept)
@@ -455,4 +491,11 @@ class CorrelationView(QWidget):
         label = QLabel(text, parent if parent is not None else self)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setWordWrap(True)
+        return label
+
+    @staticmethod
+    def _build_section_title(text: str, parent: QWidget) -> QLabel:
+        """Build a bold title for a correlation section."""
+        label = QLabel(text, parent)
+        label.setStyleSheet("font-weight: bold;")
         return label

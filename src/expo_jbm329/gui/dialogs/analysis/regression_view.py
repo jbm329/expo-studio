@@ -67,10 +67,10 @@ def _esc(text: str) -> str:
 class RegressionView(QWidget):
     """Displays a fitted linear regression, or why none could be fitted.
 
-    The top half shows the model summary with diagnostics and warnings
-    next to the coefficient table; the bottom half shows the diagnostic
-    plots (residuals vs fitted, actual vs predicted and a normal Q-Q plot
-    of the residuals). A new result always means a new view instance.
+    The coefficient table spans the top of the view. Three diagnostic plots
+    (residuals vs fitted, actual vs predicted and a normal Q-Q plot of the
+    residuals) sit side by side below it, followed by the model summary,
+    diagnostics and warnings. A new result always means a new view instance.
     """
 
     def __init__(self, result: RegressionResult, parent: QWidget | None = None) -> None:
@@ -97,19 +97,16 @@ class RegressionView(QWidget):
             layout.addWidget(label)
             return
 
-        top = QSplitter(Qt.Orientation.Horizontal, self)
-        top.addWidget(self._build_summary(result))
-        top.addWidget(self._build_coefficients_panel(result))
-        top.setStretchFactor(0, 2)
-        top.setStretchFactor(1, 3)
-
         splitter = QSplitter(Qt.Orientation.Vertical, self)
-        splitter.addWidget(top)
+        splitter.setChildrenCollapsible(False)
+        splitter.addWidget(self._build_coefficients_panel(result))
         splitter.addWidget(self._build_plots_panel(result))
-        # The summary and coefficient table need more room than the plots.
-        splitter.setStretchFactor(0, 3)
-        splitter.setStretchFactor(1, 2)
-        layout.addWidget(splitter)
+        splitter.addWidget(self._build_summary(result))
+        splitter.setStretchFactor(0, 2)
+        splitter.setStretchFactor(1, 3)
+        splitter.setStretchFactor(2, 1)
+        splitter.setSizes([250, 400, 160])
+        layout.addWidget(splitter, 1)
 
     # ------------------------------------------------------------------
     # Public API
@@ -233,8 +230,13 @@ class RegressionView(QWidget):
             lines += ["", self.tr("<b>Diagnostics</b>"), *self._diagnostic_lines(result, result.diagnostics)]
 
         if result.warnings:
-            items = "".join(f"<li>{_esc(self.warning_text(warning))}</li>" for warning in result.warnings)
-            lines += ["", self.tr("<b>Warnings</b>") + f"<ul>{items}</ul>"]
+            warning_lines = [
+                '<span style="color: #cc6600;">'
+                + self.tr("⚠ {warning}").format(warning=_esc(self.warning_text(warning)))
+                + "</span>"
+                for warning in result.warnings
+            ]
+            lines += ["", self.tr("<b>Warnings</b>"), *warning_lines]
 
         return "<br>".join(lines)
 
@@ -344,7 +346,7 @@ class RegressionView(QWidget):
             vheader.setVisible(False)
 
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
         table.setAlternatingRowColors(True)
 
         for row, term in enumerate(result.terms):
@@ -411,12 +413,14 @@ class RegressionView(QWidget):
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_title(self.tr("Diagnostic plots"), panel))
 
         plot = result.plot
         if plot is None:
             return panel
 
         splitter = QSplitter(Qt.Orientation.Horizontal, panel)
+        splitter.setChildrenCollapsible(False)
         splitter.addWidget(self._build_canvas(lambda ax: self._draw_residuals_vs_fitted(ax, plot)))
         splitter.addWidget(self._build_canvas(lambda ax: self._draw_actual_vs_predicted(ax, plot, result.target)))
         splitter.addWidget(self._build_canvas(lambda ax: self._draw_qq(ax, plot)))
@@ -433,6 +437,13 @@ class RegressionView(QWidget):
             layout.addWidget(caption)
 
         return panel
+
+    @staticmethod
+    def _build_section_title(text: str, parent: QWidget) -> QLabel:
+        """Build a bold title for a regression section."""
+        label = QLabel(text, parent)
+        label.setStyleSheet("font-weight: bold;")
+        return label
 
     @staticmethod
     def _build_canvas(draw: Callable[[Axes], None]) -> QWidget:

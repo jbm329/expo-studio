@@ -8,7 +8,7 @@ import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QHeaderView, QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.services.analysis.clustering import (
     MIN_OBSERVATIONS,
@@ -41,9 +41,16 @@ class ClusteringView(QWidget):
             layout.addWidget(self._centered_label(self.error_text(result.error)))
             return
 
-        layout.addWidget(self._summary_label(result))
-        layout.addWidget(self._build_plot(result), 1)
-        layout.addWidget(self._build_cluster_table(result))
+        splitter = QSplitter(Qt.Orientation.Vertical, self)
+        splitter.setChildrenCollapsible(False)
+        splitter.addWidget(self._build_summary_section(result))
+        splitter.addWidget(self._build_plot_section(result))
+        splitter.addWidget(self._build_table_section(result))
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 4)
+        splitter.setStretchFactor(2, 2)
+        splitter.setSizes([130, 430, 220])
+        layout.addWidget(splitter, 1)
 
     def configuration(self) -> tuple[tuple[str, ...], ClusteringMethod, bool, int, float, int]:
         """Return the configuration of the displayed fit."""
@@ -120,6 +127,33 @@ class ClusteringView(QWidget):
         label.setWordWrap(True)
         return label
 
+    def _build_summary_section(self, result: ClusteringResult) -> QWidget:
+        """Build the titled clustering summary section."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_title(self.tr("Summary"), panel))
+        layout.addWidget(self._summary_label(result))
+        return panel
+
+    def _build_plot_section(self, result: ClusteringResult) -> QWidget:
+        """Build the titled cluster projection section."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_title(self.tr("Cluster projection"), panel))
+        layout.addWidget(self._build_plot(result))
+        return panel
+
+    def _build_table_section(self, result: ClusteringResult) -> QWidget:
+        """Build the titled cluster-size table section."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_title(self.tr("Cluster sizes"), panel))
+        layout.addWidget(self._build_cluster_table(result))
+        return panel
+
     def _build_plot(self, result: ClusteringResult) -> QWidget:
         """Build the internal PCA projection colored by cluster label."""
         figure = Figure(constrained_layout=True)
@@ -153,6 +187,7 @@ class ClusteringView(QWidget):
         table.setRowCount(rows)
         table.setHorizontalHeaderLabels([self.tr("Cluster"), self.tr("Rows")])
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
         table.setAlternatingRowColors(True)
         vheader = table.verticalHeader()
         if vheader is not None:
@@ -182,4 +217,11 @@ class ClusteringView(QWidget):
         label = QLabel(text, self)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setWordWrap(True)
+        return label
+
+    @staticmethod
+    def _build_section_title(text: str, parent: QWidget) -> QLabel:
+        """Build a bold title for a clustering section."""
+        label = QLabel(text, parent)
+        label.setStyleSheet("font-weight: bold;")
         return label

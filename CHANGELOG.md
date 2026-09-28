@@ -8,6 +8,10 @@ and this project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Advanced Analysis workspace: the "Overview" category now also lists every
+  column with its semantic and storage type, missing count and percentage and
+  number of unique values, plus a preview table of the first 100 rows, both
+  shown in a resizable split view.
 - Advanced Analysis workspace: the "Overview" category now shows a
   structural summary of the selected dataset (row/column counts, missing
   values, duplicate rows, and a breakdown of column counts by type), with

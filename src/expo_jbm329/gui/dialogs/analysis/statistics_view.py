@@ -8,8 +8,16 @@ from typing import TYPE_CHECKING
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QHeaderView, QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import (
+    QHeaderView,
+    QLabel,
+    QSplitter,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
 
 from expo_jbm329.services.analysis.normality import SHAPIRO_LARGE_SAMPLE_THRESHOLD
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
@@ -37,6 +45,8 @@ class StatisticsView(QWidget):
     was built from.
     """
 
+    column_selected = pyqtSignal(str)
+
     def __init__(self, result: DescriptiveStatisticsResult, parent: QWidget | None = None) -> None:
         """Initialize the Descriptive Statistics view.
 
@@ -47,6 +57,7 @@ class StatisticsView(QWidget):
         super().__init__(parent)
 
         self._columns_by_name = {stats.column: stats for stats in result.columns}
+        self._rows_by_column = {stats.column: row for row, stats in enumerate(result.columns)}
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -55,8 +66,16 @@ class StatisticsView(QWidget):
             layout.addWidget(self._build_empty_label())
             return
 
-        layout.addWidget(self._build_table(result))
-        layout.addWidget(self._build_distribution_section())
+        splitter = QSplitter(Qt.Orientation.Vertical, self)
+        splitter.setChildrenCollapsible(False)
+        splitter.addWidget(self._build_table_section(result))
+        splitter.addWidget(self._build_distribution_section())
+        splitter.addWidget(self._build_normality_section())
+        splitter.setStretchFactor(0, 2)
+        splitter.setStretchFactor(1, 3)
+        splitter.setStretchFactor(2, 1)
+        splitter.setSizes([250, 350, 120])
+        layout.addWidget(splitter, 1)
 
         self.show_distribution_for(result.columns[0].column)
 
@@ -66,6 +85,15 @@ class StatisticsView(QWidget):
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setWordWrap(True)
         return label
+
+    def _build_table_section(self, result: DescriptiveStatisticsResult) -> QWidget:
+        """Build the titled descriptive statistics table section."""
+        container = QWidget(self)
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_title(self.tr("Descriptive statistics"), container))
+        layout.addWidget(self._build_table(result))
+        return container
 
     def _build_table(self, result: DescriptiveStatisticsResult) -> QTableWidget:
         """Build the per-column statistics table."""
@@ -87,19 +115,19 @@ class StatisticsView(QWidget):
             self.tr("Kurtosis"),
         ]
 
-        table = QTableWidget(self)
-        table.setColumnCount(len(headers))
-        table.setRowCount(len(result.columns))
-        table.setHorizontalHeaderLabels(headers)
+        self._table = QTableWidget(self)
+        self._table.setColumnCount(len(headers))
+        self._table.setRowCount(len(result.columns))
+        self._table.setHorizontalHeaderLabels(headers)
 
-        vheader = table.verticalHeader()
+        vheader = self._table.verticalHeader()
         if vheader is not None:
             vheader.setVisible(False)
 
-        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
-        table.setAlternatingRowColors(True)
+        self._table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self._table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self._table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+        self._table.setAlternatingRowColors(True)
 
         for row, stats in enumerate(result.columns):
             values = [
@@ -123,37 +151,63 @@ class StatisticsView(QWidget):
                 item = QTableWidgetItem(text)
                 if col > 0:
                     item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-                table.setItem(row, col, item)
+                self._table.setItem(row, col, item)
 
-        table.resizeColumnsToContents()
+        self._table.resizeColumnsToContents()
 
-        hheader = table.horizontalHeader()
+        hheader = self._table.horizontalHeader()
         if hheader is not None:
             hheader.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
-        return table
+        self._table.cellClicked.connect(self._on_table_cell_clicked)
+        return self._table
+
+    def _on_table_cell_clicked(self, row: int, _column: int) -> None:
+        """Select the clicked column and update its distribution details."""
+        column_item = self._table.item(row, 0)
+        if column_item is None:
+            return
+
+        column = column_item.text()
+        self.show_distribution_for(column)
+        self.column_selected.emit(column)
 
     # ------------------------------------------------------------------
     # Distribution chart (histogram + boxplot) for one selected column
     # ------------------------------------------------------------------
 
     def _build_distribution_section(self) -> QWidget:
-        """Build the histogram/boxplot canvas and normality summary label."""
+        """Build the titled histogram/boxplot section."""
+        container = QWidget(self)
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_title(self.tr("Distribution"), container))
+
+        self._figure = Figure(constrained_layout=True)
+        self._canvas = FigureCanvasQTAgg(self._figure)  # type: ignore[no-untyped-call]
+        layout.addWidget(self._canvas)
+
+        return container
+
+    def _build_normality_section(self) -> QWidget:
+        """Build the Shapiro-Wilk normality text section."""
         container = QWidget(self)
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        self._figure = Figure(constrained_layout=True)
-        self._canvas = FigureCanvasQTAgg(self._figure)  # type: ignore[no-untyped-call]
-        self._canvas.setMinimumHeight(260)
-        layout.addWidget(self._canvas)
-
         self._normality_label = QLabel(container)
-        self._normality_label.setTextFormat(Qt.TextFormat.PlainText)
+        self._normality_label.setTextFormat(Qt.TextFormat.RichText)
         self._normality_label.setWordWrap(True)
         layout.addWidget(self._normality_label)
 
         return container
+
+    @staticmethod
+    def _build_section_title(text: str, parent: QWidget) -> QLabel:
+        """Build a bold title for a statistics view section."""
+        label = QLabel(text, parent)
+        label.setStyleSheet("font-weight: bold;")
+        return label
 
     def show_distribution_for(self, column: str) -> None:
         """Redraw the histogram/boxplot and normality summary for the given column.
@@ -165,6 +219,9 @@ class StatisticsView(QWidget):
         stats = self._columns_by_name.get(column)
         if stats is None:
             return
+
+        row = self._rows_by_column[column]
+        self._table.selectRow(row)
 
         self._figure.clear()
         ax_hist = self._figure.add_subplot(121)
@@ -184,10 +241,11 @@ class StatisticsView(QWidget):
             return self.tr("Not enough data to test for normality.")
 
         lines = [
-            self.tr("Shapiro-Wilk: W = {w}, p = {p}").format(
+            self.tr("<b>Shapiro-Wilk</b>:"),
+            self.tr("W = {w}, p = {p}").format(
                 w=fmt_num(stats.shapiro_statistic),
                 p=fmt_p_value(stats.shapiro_p_value),
-            )
+            ),
         ]
 
         if stats.shapiro_p_value < _SIGNIFICANCE_LEVEL:
@@ -202,7 +260,7 @@ class StatisticsView(QWidget):
                 ).format(threshold=fmt_int(SHAPIRO_LARGE_SAMPLE_THRESHOLD))
             )
 
-        return "\n".join(lines)
+        return "<br>".join(lines)
 
     def _draw_histogram(self, ax: Axes, stats: ColumnDescriptiveStatistics) -> None:
         """Draw a histogram from pre-computed bin edges/counts."""

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from PyQt6.QtWidgets import QLabel, QTableWidget
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.normality import SHAPIRO_LARGE_SAMPLE_THRESHOLD
@@ -59,6 +61,28 @@ def test_builds_one_table_row_per_numeric_column():
     assert table.item(1, 0).text() == "b"
 
 
+def test_layout_has_titled_table_chart_and_text_sections_with_adjustable_dividers():
+    view = StatisticsView(DescriptiveStatisticsResult(columns=(_make_column_stats(),)))
+
+    splitters = view.findChildren(QSplitter)
+    assert len(splitters) == 1
+    splitter = splitters[0]
+    assert splitter.orientation() is Qt.Orientation.Vertical
+    assert splitter.childrenCollapsible() is False
+    assert splitter.count() == 3
+
+    table = view.findChild(QTableWidget)
+    assert table is not None
+    assert splitter.widget(0).isAncestorOf(table)
+    assert any(label.text() == "Descriptive statistics" for label in splitter.widget(0).findChildren(QLabel))
+
+    canvases = splitter.widget(1).findChildren(FigureCanvasQTAgg)
+    assert len(canvases) == 1
+    assert any(label.text() == "Distribution" for label in splitter.widget(1).findChildren(QLabel))
+
+    assert splitter.widget(2).isAncestorOf(view._normality_label)  # noqa: SLF001
+
+
 def test_table_cells_use_format_utils_for_every_statistic():
     stats = _make_column_stats()
     result = DescriptiveStatisticsResult(columns=(stats,))
@@ -114,6 +138,22 @@ def test_show_distribution_for_switches_to_a_different_column():
     assert len(view._figure.axes) == 2  # noqa: SLF001
 
 
+def test_clicking_a_statistics_row_selects_and_displays_that_column():
+    result = DescriptiveStatisticsResult(columns=(_make_column_stats(column="a"), _make_column_stats(column="b")))
+    view = StatisticsView(result)
+    table = view.findChild(QTableWidget)
+    selected_columns: list[str] = []
+    view.column_selected.connect(selected_columns.append)
+
+    assert table is not None
+    table.cellClicked.emit(1, 3)
+
+    assert table.currentRow() == 1
+    assert view._figure._suptitle is not None  # noqa: SLF001
+    assert view._figure._suptitle.get_text() == "b"  # noqa: SLF001
+    assert selected_columns == ["b"]
+
+
 def test_show_distribution_for_unknown_column_is_a_no_op():
     result = DescriptiveStatisticsResult(columns=(_make_column_stats(column="a"),))
     view = StatisticsView(result)
@@ -146,8 +186,8 @@ def test_normality_label_shows_the_shapiro_statistic_and_p_value():
     text = view._normality_label.text()  # noqa: SLF001
     assert fmt_num(0.9876) in text
     assert fmt_p_value(0.4213) in text
-    assert "\n" in text
-    assert "<br>" not in text
+    assert "<br>" in text
+    assert "\n" not in text
 
 
 def test_normality_label_flags_significant_result():

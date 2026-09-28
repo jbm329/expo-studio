@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
-from PyQt6.QtCore import QEvent
+from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtWidgets import QApplication, QLabel, QSplitter
 
 from expo_jbm329.gui.dialogs.analysis.correlation_view import MAX_ANNOTATED_COLUMNS, CorrelationView
@@ -51,6 +51,10 @@ def _canvas_axes(widget):
     from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
     return [canvas.figure.axes[0] for canvas in widget.findChildren(FigureCanvasQTAgg)]
+
+
+def _scatter_axes(view: CorrelationView):
+    return [axis for axis in _canvas_axes(view.pair_panel()) if axis.get_xlabel()]
 
 
 # ----------------------------------------------------------------------
@@ -200,10 +204,38 @@ def test_initial_pair_detail_is_shown_and_its_row_selected():
     assert table is not None
     assert [index.row() for index in table.selectionModel().selectedRows()] == [1]
     assert len(_canvas_axes(view)) == 2
-    (scatter,) = _canvas_axes(view.pair_panel())
+    (scatter,) = _scatter_axes(view)
     assert scatter.get_xlabel() == pair.y_column
     assert len(scatter.lines) == 1
     assert "Least-squares line" in _labels_text(view.pair_panel())
+
+
+def test_layout_places_table_above_side_by_side_charts_and_statistics_below():
+    df = _frame()
+    view = CorrelationView(_matrix(df), analyze_correlation_pair(df, "c0", "c1"))
+
+    splitters = view.findChildren(QSplitter)
+    vertical = [splitter for splitter in splitters if splitter.orientation() is Qt.Orientation.Vertical]
+    horizontal = [splitter for splitter in splitters if splitter.orientation() is Qt.Orientation.Horizontal]
+    assert len(vertical) == 2
+    assert len(horizontal) == 1
+    assert all(not splitter.childrenCollapsible() for splitter in splitters)
+
+    root = next(splitter for splitter in vertical if splitter.parent() is view)
+    detail = next(splitter for splitter in vertical if splitter.parent() is view.pair_panel())
+    table = view.table()
+    assert table is not None
+    assert root.widget(0).isAncestorOf(table)
+    assert "Strongest correlations" in _labels_text(root.widget(0))
+
+    charts = horizontal[0]
+    assert len(_canvas_axes(charts)) == 2
+    assert "Correlation plots" in _labels_text(detail.widget(0))
+
+    statistics = next(label for label in view.pair_panel().findChildren(QLabel) if "Least-squares line" in label.text())
+    assert detail.widget(1).isAncestorOf(statistics)
+    assert "Pair details" in _labels_text(detail.widget(1))
+    assert not charts.isAncestorOf(statistics)
 
 
 def test_set_pair_detail_replaces_the_pair_panel_content():
@@ -214,7 +246,7 @@ def test_set_pair_detail_replaces_the_pair_panel_content():
     view.set_pair_detail(analyze_correlation_pair(df, "c1", "c2"))
     _flush_deletes()
 
-    scatters = _canvas_axes(view.pair_panel())
+    scatters = _scatter_axes(view)
     assert len(scatters) == 1
     assert scatters[0].get_xlabel() == "c1"
 
@@ -229,7 +261,7 @@ def test_pair_error_shows_message_and_clears_selection_for_unknown_pair():
     table = view.table()
     assert table is not None
     assert table.selectionModel().selectedRows() == []
-    assert _canvas_axes(view.pair_panel()) == []
+    assert _scatter_axes(view) == []
     assert "different numeric columns" in _labels_text(view.pair_panel())
 
 
@@ -269,3 +301,12 @@ def test_column_names_are_html_escaped_in_the_statistics():
     view = CorrelationView(_matrix(df), analyze_correlation_pair(df, "<b>x</b>", "c1"))
 
     assert "&lt;b&gt;x&lt;/b&gt;" in _labels_text(view.pair_panel())
+
+
+def test_small_p_value_is_html_escaped_in_the_statistics():
+    df = pd.DataFrame({"x": range(20), "y": range(20)})
+    view = CorrelationView(_matrix(df), analyze_correlation_pair(df, "x", "y"))
+
+    text = _labels_text(view.pair_panel())
+    assert "p = &lt; " in text
+    assert "p = < " not in text

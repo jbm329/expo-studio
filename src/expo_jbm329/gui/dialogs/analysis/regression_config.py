@@ -8,6 +8,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QFormLayout,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
     QListWidget,
     QListWidgetItem,
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
 
 # The column name of a predictor list item (its text may carry a suffix).
 _COLUMN_ROLE = Qt.ItemDataRole.UserRole
+_ELIGIBLE_ROLE = Qt.ItemDataRole.UserRole + 1
 
 
 class RegressionConfigWidget(QWidget):
@@ -79,6 +81,8 @@ class RegressionConfigWidget(QWidget):
         # the default selection never emits a spurious first signal.
         self._target_combo.currentTextChanged.connect(self._on_target_changed)
         self._predictor_list.itemChanged.connect(self._on_predictor_check_changed)
+        self._select_all_button.clicked.connect(lambda: self._set_all_predictors_checked(checked=True))
+        self._clear_button.clicked.connect(lambda: self._set_all_predictors_checked(checked=False))
         self._apply_button.clicked.connect(self._on_apply_clicked)
 
     # ------------------------------------------------------------------
@@ -99,10 +103,19 @@ class RegressionConfigWidget(QWidget):
             self._add_checkable_item(self._categorical_text(column), column, checked=column in applied)
         for excluded in columns.excluded:
             item = self._add_item(self._categorical_text(excluded.name), excluded.name)
-            # List items are user-checkable by default; excluded ones must never be.
-            item.setFlags(item.flags() & ~(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsUserCheckable))
+            item.setFlags((item.flags() | Qt.ItemFlag.ItemIsUserCheckable) & ~Qt.ItemFlag.ItemIsEnabled)
+            item.setCheckState(Qt.CheckState.Unchecked)
+            item.setData(_ELIGIBLE_ROLE, False)
             item.setToolTip(exclusion_tooltip(excluded))
         group_layout.addWidget(self._predictor_list)
+
+        actions = QHBoxLayout()
+        actions.addStretch(1)
+        self._select_all_button = QPushButton(self.tr("Select all"), group)
+        self._clear_button = QPushButton(self.tr("Clear"), group)
+        actions.addWidget(self._select_all_button)
+        actions.addWidget(self._clear_button)
+        group_layout.addLayout(actions)
 
         self._selection_label = QLabel(group)
         self._selection_label.setWordWrap(True)
@@ -128,6 +141,7 @@ class RegressionConfigWidget(QWidget):
         item = self._add_item(text, column)
         item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
         item.setCheckState(Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked)
+        item.setData(_ELIGIBLE_ROLE, True)
 
     # ------------------------------------------------------------------
     # Target
@@ -149,6 +163,8 @@ class RegressionConfigWidget(QWidget):
         self._predictor_list.blockSignals(True)
         try:
             for item in self._checkable_items():
+                if not item.data(_ELIGIBLE_ROLE):
+                    continue
                 is_target = item.data(_COLUMN_ROLE) == target
                 if is_target:
                     item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
@@ -166,6 +182,18 @@ class RegressionConfigWidget(QWidget):
 
     def _on_predictor_check_changed(self, _item: QListWidgetItem) -> None:
         """Refresh the selection count and Apply button after a checkbox toggle."""
+        self._update_apply_state()
+
+    def _set_all_predictors_checked(self, *, checked: bool) -> None:
+        """Set every enabled predictor to the same pending check state."""
+        state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+        self._predictor_list.blockSignals(True)
+        try:
+            for item in self._checkable_items():
+                if item.data(_ELIGIBLE_ROLE) and item.flags() & Qt.ItemFlag.ItemIsEnabled:
+                    item.setCheckState(state)
+        finally:
+            self._predictor_list.blockSignals(False)
         self._update_apply_state()
 
     def _on_apply_clicked(self) -> None:
@@ -201,7 +229,7 @@ class RegressionConfigWidget(QWidget):
         return 1 <= len(predictors) <= MAX_PREDICTORS
 
     def _checkable_items(self) -> list[QListWidgetItem]:
-        """Return the checkable (numeric and eligible categorical) predictor items."""
+        """Return all predictor items rendered with checkboxes."""
         return [
             item
             for index in range(self._predictor_list.count())
@@ -225,7 +253,7 @@ class RegressionConfigWidget(QWidget):
         return tuple(
             str(item.data(_COLUMN_ROLE))
             for item in self._checkable_items()
-            if item.checkState() == Qt.CheckState.Checked
+            if item.data(_ELIGIBLE_ROLE) and item.checkState() == Qt.CheckState.Checked
         )
 
     def model_configuration(self) -> tuple[str, tuple[str, ...]]:

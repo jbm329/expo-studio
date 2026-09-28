@@ -68,13 +68,14 @@ def test_predictor_list_shows_numeric_then_categorical_then_excluded_columns():
     assert [item.data(Qt.ItemDataRole.UserRole) for item in _items(widget)] == ["y", "x", "z", "g", "id"]
 
 
-def test_excluded_columns_are_disabled_with_an_explanatory_tooltip():
+def test_excluded_columns_show_an_unchecked_disabled_checkbox_and_tooltip():
     result = _result()
     widget = RegressionConfigWidget(result)
     item = _item(widget, "id")
 
     assert not _is_enabled(item)
-    assert not item.flags() & Qt.ItemFlag.ItemIsUserCheckable
+    assert item.flags() & Qt.ItemFlag.ItemIsUserCheckable
+    assert item.checkState() == Qt.CheckState.Unchecked
     assert item.toolTip() == exclusion_tooltip(result.predictor_columns.excluded[0])
 
 
@@ -96,6 +97,29 @@ def test_nothing_is_checked_initially_without_predictors():
     assert widget.model_configuration() == ("y", ())
     assert not widget._apply_button.isEnabled()  # noqa: SLF001
     assert widget._selection_label.text() == widget.tr("None selected - select at least one.")  # noqa: SLF001
+
+
+def test_select_all_and_clear_only_toggle_eligible_non_target_predictors():
+    widget = RegressionConfigWidget(_result("y"))
+    received = _record(widget.model_requested)
+
+    assert widget._select_all_button.text() == "Select all"  # noqa: SLF001
+    assert widget._clear_button.text() == "Clear"  # noqa: SLF001
+    group_layout = widget._select_all_button.parentWidget().layout()  # noqa: SLF001
+    assert group_layout.itemAt(0).widget() is widget._predictor_list  # noqa: SLF001
+    button_row = group_layout.itemAt(1).layout()
+    assert button_row.indexOf(widget._select_all_button) >= 0  # noqa: SLF001
+    assert button_row.indexOf(widget._clear_button) >= 0  # noqa: SLF001
+    widget._select_all_button.click()  # noqa: SLF001
+    assert widget.checked_predictors() == ("x", "z", "g")
+    assert widget.applied_predictors() == ()
+    assert _item(widget, "y").checkState() == Qt.CheckState.Unchecked
+    assert _item(widget, "id").checkState() == Qt.CheckState.Unchecked
+
+    widget._clear_button.click()  # noqa: SLF001
+    assert widget.checked_predictors() == ()
+    assert widget.applied_predictors() == ()
+    assert received == []
 
 
 def test_the_results_predictors_are_checked_and_applied():

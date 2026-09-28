@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -27,7 +26,7 @@ from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierError,
     MultivariateOutlierMethod,
 )
-from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_pct
+from expo_jbm329.utils.format_utils import fmt_cell, fmt_int, fmt_num, fmt_pct
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -36,15 +35,6 @@ if TYPE_CHECKING:
 
 _RIGHT_ALIGNED = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 _FIXED_TABLE_COLUMNS = 2
-
-
-def _cell_text(value: object) -> str:
-    """Format a source data cell for the extreme-observations table."""
-    if value is None:
-        return ""
-    if isinstance(value, float):
-        return "" if math.isnan(value) else fmt_num(value)
-    return str(value)
 
 
 class MultivariateOutliersView(QWidget):
@@ -63,9 +53,10 @@ class MultivariateOutliersView(QWidget):
 
         layout.addWidget(self._summary_label(result))
         splitter = QSplitter(Qt.Orientation.Vertical, self)
+        splitter.setChildrenCollapsible(False)
         splitter.addWidget(self._projection(result))
         splitter.addWidget(self._extremes_panel(result))
-        layout.addWidget(splitter)
+        layout.addWidget(splitter, 1)
 
     def configuration(self) -> tuple[tuple[str, ...], MultivariateOutlierMethod, bool, float, int]:
         """Return the displayed fit configuration."""
@@ -176,7 +167,7 @@ class MultivariateOutliersView(QWidget):
         table.setRowCount(len(result.extremes))
         table.setHorizontalHeaderLabels(headers)
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
         table.setAlternatingRowColors(True)
         vertical_header = table.verticalHeader()
         if vertical_header is not None:
@@ -186,7 +177,7 @@ class MultivariateOutliersView(QWidget):
             values = [
                 fmt_int(observation.row_number),
                 fmt_num(observation.score),
-                *map(_cell_text, observation.row_values),
+                *map(fmt_cell, observation.row_values),
             ]
             for column, text in enumerate(values):
                 item = QTableWidgetItem(text)

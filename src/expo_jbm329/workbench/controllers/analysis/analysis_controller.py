@@ -320,6 +320,7 @@ class AnalysisController:
 
         config = StatisticsConfigWidget(stats_result)
         config.column_changed.connect(content.show_distribution_for)
+        content.column_selected.connect(config.set_selected_column)
         return content, config
 
     def _render_hypothesis_tests(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:

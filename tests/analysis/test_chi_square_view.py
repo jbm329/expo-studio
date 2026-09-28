@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import dataclasses
+
 import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QLabel, QTableWidget
+from PyQt6.QtWidgets import QApplication, QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import (
     MAX_ANNOTATED_CELLS,
@@ -74,6 +76,7 @@ def test_observed_table_includes_row_and_column_totals():
 
     table = view.findChild(QTableWidget)
     assert table is not None
+    assert table.selectionMode() is QTableWidget.SelectionMode.NoSelection
     headers = [table.horizontalHeaderItem(i).text() for i in range(table.columnCount())]
     assert headers == ["row", "a", "b", "c", "Total"]
     assert table.rowCount() == 3
@@ -85,10 +88,30 @@ def test_observed_table_includes_row_and_column_totals():
     assert cells[2][-1] == "105"
 
 
+def test_layout_has_titled_table_heatmap_and_results_with_adjustable_dividers():
+    view = ChiSquareView(_two_by_three_result())
+
+    splitters = view.findChildren(QSplitter)
+    assert len(splitters) == 1
+    splitter = splitters[0]
+    assert splitter.orientation() is Qt.Orientation.Vertical
+    assert splitter.childrenCollapsible() is False
+    assert splitter.count() == 3
+
+    table = view.findChild(QTableWidget)
+    assert table is not None
+    assert splitter.widget(0).isAncestorOf(table)
+    assert any(label.text() == "Observed counts" for label in splitter.widget(0).findChildren(QLabel))
+    assert len(splitter.widget(1).findChildren(FigureCanvasQTAgg)) == 1
+    assert any(label.text() == "Adjusted residuals" for label in splitter.widget(1).findChildren(QLabel))
+    assert any(label.text() == "Test results" for label in splitter.widget(2).findChildren(QLabel))
+    assert any("Pearson" in label.text() for label in splitter.widget(2).findChildren(QLabel))
+
+
 def test_caption_names_both_columns_as_plain_text():
     view = ChiSquareView(_two_by_three_result())
 
-    caption = next(label for label in _labels(view) if "Observed counts" in label.text())
+    caption = next(label for label in _labels(view) if "Observed counts:" in label.text())
     assert "row" in caption.text()
     assert "col" in caption.text()
     assert caption.textFormat() == Qt.TextFormat.PlainText
@@ -120,6 +143,15 @@ def test_results_text_mentions_yates_and_fisher_for_two_by_two_tables():
     assert "Yates" in text
     assert "Fisher's exact test" in text
     assert "Odds ratio" in text
+
+
+def test_results_text_escapes_small_p_values_for_rich_text():
+    result = dataclasses.replace(_two_by_two_small_result(), p_value=1e-10, fisher_p_value=1e-10)
+    view = ChiSquareView(result)
+
+    text = view.test_results_text(result)
+    assert text.count("p = &lt; ") == 2
+    assert "p = < " not in text
 
 
 def test_results_text_reports_no_association_for_independent_data():

@@ -8,6 +8,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
     QListWidget,
     QListWidgetItem,
@@ -66,6 +67,14 @@ class PCAConfigWidget(QWidget):
             item.setCheckState(Qt.CheckState.Checked if column in applied else Qt.CheckState.Unchecked)
         group_layout.addWidget(self._column_list)
 
+        actions = QHBoxLayout()
+        actions.addStretch(1)
+        self._select_all_button = QPushButton(self.tr("Select all"), group)
+        self._clear_button = QPushButton(self.tr("Clear"), group)
+        actions.addWidget(self._select_all_button)
+        actions.addWidget(self._clear_button)
+        group_layout.addLayout(actions)
+
         self._selection_label = QLabel(group)
         self._selection_label.setWordWrap(True)
         group_layout.addWidget(self._selection_label)
@@ -76,10 +85,25 @@ class PCAConfigWidget(QWidget):
 
         self._update_apply_state()
         self._column_list.itemChanged.connect(self._on_column_check_changed)
+        self._select_all_button.clicked.connect(lambda: self._set_all_columns_checked(checked=True))
+        self._clear_button.clicked.connect(lambda: self._set_all_columns_checked(checked=False))
         self._apply_button.clicked.connect(self._on_apply_clicked)
 
     def _on_column_check_changed(self, _item: QListWidgetItem) -> None:
         """Refresh the pending selection feedback."""
+        self._update_apply_state()
+
+    def _set_all_columns_checked(self, *, checked: bool) -> None:
+        """Set every feature to the same pending check state."""
+        state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+        self._column_list.blockSignals(True)
+        try:
+            for index in range(self._column_list.count()):
+                item = self._column_list.item(index)
+                if item is not None:
+                    item.setCheckState(state)
+        finally:
+            self._column_list.blockSignals(False)
         self._update_apply_state()
 
     def _on_apply_clicked(self) -> None:

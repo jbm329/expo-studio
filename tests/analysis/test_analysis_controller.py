@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QWidget
+from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QTableWidget, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
 from expo_jbm329.gui.dialogs.analysis.clustering_config import ClusteringConfigWidget
@@ -367,6 +367,36 @@ def test_changing_the_statistics_config_column_updates_the_content_view_directly
     config._column_combo.setCurrentIndex(1)  # noqa: SLF001
 
     assert len(async_ops.calls) == jobs_before  # no new background job
+    assert config.selected_column() == "b"
+
+
+def test_clicking_a_statistics_table_row_updates_the_config_without_a_new_job(dialog_factory):
+    df = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=2)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": df}),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.STATISTICS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
+    _simulate_success(async_ops.last_call)
+
+    jobs_before = len(async_ops.calls)
+    content = dlg.content_widgets[-1]
+    config = dlg.config_widgets[-1]
+    assert isinstance(content, StatisticsView)
+    assert isinstance(config, StatisticsConfigWidget)
+    table = content.findChild(QTableWidget)
+    assert table is not None
+
+    table.cellClicked.emit(1, 0)
+
+    assert len(async_ops.calls) == jobs_before
     assert config.selected_column() == "b"
 
 

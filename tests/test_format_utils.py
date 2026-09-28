@@ -8,6 +8,7 @@ from PyQt6.QtCore import QLocale
 from expo_jbm329.utils.format_utils import (
     fmt_bytes,
     fmt_category,
+    fmt_cell,
     fmt_date,
     fmt_int,
     fmt_num,
@@ -126,6 +127,26 @@ def test_fmt_category():
     assert fmt_category(123) == "123"
     assert fmt_category(None) == ""
     assert fmt_category(np.nan) == ""
+
+
+def test_fmt_cell_renders_missing_values_as_empty_text():
+    assert fmt_cell(None) == ""
+    assert fmt_cell(np.nan) == ""
+    assert fmt_cell(float("nan")) == ""
+    assert fmt_cell(pd.NaT) == ""
+    assert fmt_cell(pd.NA) == ""
+
+
+def test_fmt_cell_formats_floats_through_fmt_num():
+    assert fmt_cell(1234.56789) == fmt_num(1234.56789)
+    assert fmt_cell(2.0) == fmt_num(2.0)
+
+
+def test_fmt_cell_falls_back_to_str_for_other_values():
+    assert fmt_cell("text") == "text"
+    assert fmt_cell(7) == "7"
+    assert fmt_cell(True) == "True"
+    assert fmt_cell(pd.Timestamp("2024-01-02 03:04:05")) == "2024-01-02 03:04:05"
 
 
 def test_fmt_path():

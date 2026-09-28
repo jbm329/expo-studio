@@ -67,3 +67,24 @@ def test_empty_result_leaves_no_selection():
     widget = StatisticsConfigWidget(result)
 
     assert widget.selected_column() is None
+
+
+def test_set_selected_column_updates_selection_without_emitting_change():
+    result = DescriptiveStatisticsResult(columns=(_make_stats("a"), _make_stats("b")))
+    widget = StatisticsConfigWidget(result)
+    changed_columns: list[str] = []
+    widget.column_changed.connect(changed_columns.append)
+
+    widget.set_selected_column("b")
+
+    assert widget.selected_column() == "b"
+    assert changed_columns == []
+
+
+def test_set_selected_column_ignores_unknown_column():
+    result = DescriptiveStatisticsResult(columns=(_make_stats("a"),))
+    widget = StatisticsConfigWidget(result)
+
+    widget.set_selected_column("unknown")
+
+    assert widget.selected_column() == "a"

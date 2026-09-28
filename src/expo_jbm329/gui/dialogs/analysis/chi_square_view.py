@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import math
 from typing import TYPE_CHECKING
 
@@ -9,7 +10,7 @@ import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QHeaderView, QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.services.analysis.chi_square import (
     COCHRAN_LOW_EXPECTED_COUNT,
@@ -59,13 +60,16 @@ class ChiSquareView(QWidget):
             layout.addWidget(self._build_error_label(result.error))
             return
 
-        layout.addWidget(self._build_caption_label(result))
-        layout.addWidget(self._build_table(result))
-        layout.addWidget(self._build_heatmap(result))
-        layout.addWidget(self._build_test_results_label(result))
-
-        if result.cochran_violated:
-            layout.addWidget(self._build_cochran_warning_label(result))
+        splitter = QSplitter(Qt.Orientation.Vertical, self)
+        splitter.setChildrenCollapsible(False)
+        splitter.addWidget(self._build_table_section(result))
+        splitter.addWidget(self._build_heatmap_section(result))
+        splitter.addWidget(self._build_results_section(result))
+        splitter.setStretchFactor(0, 2)
+        splitter.setStretchFactor(1, 3)
+        splitter.setStretchFactor(2, 1)
+        splitter.setSizes([250, 350, 170])
+        layout.addWidget(splitter, 1)
 
     # ------------------------------------------------------------------
     # Error / empty state
@@ -98,6 +102,16 @@ class ChiSquareView(QWidget):
     # ------------------------------------------------------------------
     # Observed contingency table
     # ------------------------------------------------------------------
+
+    def _build_table_section(self, result: ChiSquareResult) -> QWidget:
+        """Build the titled observed-count table section."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_title(self.tr("Observed counts"), panel))
+        layout.addWidget(self._build_caption_label(result))
+        layout.addWidget(self._build_table(result))
+        return panel
 
     def _build_caption_label(self, result: ChiSquareResult) -> QLabel:
         """Build the caption naming which column forms the rows and which the columns."""
@@ -137,7 +151,7 @@ class ChiSquareView(QWidget):
             vheader.setVisible(False)
 
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+        table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
         table.setAlternatingRowColors(True)
 
         for row_index, values in enumerate(rows):
@@ -158,6 +172,15 @@ class ChiSquareView(QWidget):
     # ------------------------------------------------------------------
     # Adjusted residual heatmap
     # ------------------------------------------------------------------
+
+    def _build_heatmap_section(self, result: ChiSquareResult) -> QWidget:
+        """Build the titled adjusted-residual heatmap section."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_title(self.tr("Adjusted residuals"), panel))
+        layout.addWidget(self._build_heatmap(result))
+        return panel
 
     def _build_heatmap(self, result: ChiSquareResult) -> QWidget:
         """Build a matplotlib canvas showing the adjusted standardized residuals."""
@@ -218,6 +241,17 @@ class ChiSquareView(QWidget):
     # Test results
     # ------------------------------------------------------------------
 
+    def _build_results_section(self, result: ChiSquareResult) -> QWidget:
+        """Build the titled test results and Cochran warning section."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_title(self.tr("Test results"), panel))
+        layout.addWidget(self._build_test_results_label(result))
+        if result.cochran_violated:
+            layout.addWidget(self._build_cochran_warning_label(result))
+        return panel
+
     def _build_test_results_label(self, result: ChiSquareResult) -> QLabel:
         """Build the rich-text label showing the test statistics and interpretation."""
         label = QLabel(self)
@@ -245,7 +279,7 @@ class ChiSquareView(QWidget):
             self.tr("χ² = {chi2}, df = {df}, p = {p}").format(
                 chi2=fmt_num(result.chi2_statistic),
                 df=fmt_int(result.degrees_of_freedom),
-                p=fmt_p_value(result.p_value),
+                p=html.escape(fmt_p_value(result.p_value)),
             ),
             self.tr("Cramér's V: {v}").format(v=fmt_num(result.cramers_v)),
             self.tr("N = {n}").format(n=fmt_int(result.total)),
@@ -257,7 +291,7 @@ class ChiSquareView(QWidget):
                 self.tr("<b>Fisher's exact test</b> (exact, reliable even for small samples):"),
                 self.tr("Odds ratio = {odds_ratio}, p = {p}").format(
                     odds_ratio=fmt_num(result.fisher_odds_ratio),
-                    p=fmt_p_value(result.fisher_p_value),
+                    p=html.escape(fmt_p_value(result.fisher_p_value)),
                 ),
             ]
 
@@ -311,3 +345,10 @@ class ChiSquareView(QWidget):
         if result.fisher_p_value is not None:
             return text + " " + self.tr("Prefer Fisher's exact test above.")
         return text + " " + self.tr("Consider merging sparse categories.")
+
+    @staticmethod
+    def _build_section_title(text: str, parent: QWidget) -> QLabel:
+        """Build a bold title for a chi-square section."""
+        label = QLabel(text, parent)
+        label.setStyleSheet("font-weight: bold;")
+        return label

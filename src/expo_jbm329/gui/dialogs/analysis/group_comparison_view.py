@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import html
 import math
 from typing import TYPE_CHECKING
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QHeaderView, QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.services.analysis.group_comparison import (
     MAX_GROUPS,
@@ -58,12 +59,16 @@ class GroupComparisonView(QWidget):
             layout.addWidget(self._build_error_label(result.error))
             return
 
-        layout.addWidget(self._build_table(result.groups))
-        layout.addWidget(self._build_boxplot(result.groups))
-        layout.addWidget(self._build_test_results_label(result))
-
-        if result.warnings:
-            layout.addWidget(self._build_warnings_label(result.warnings))
+        splitter = QSplitter(Qt.Orientation.Vertical, self)
+        splitter.setChildrenCollapsible(False)
+        splitter.addWidget(self._build_table_section(result.groups))
+        splitter.addWidget(self._build_chart_section(result.groups))
+        splitter.addWidget(self._build_results_section(result))
+        splitter.setStretchFactor(0, 2)
+        splitter.setStretchFactor(1, 3)
+        splitter.setStretchFactor(2, 1)
+        splitter.setSizes([250, 350, 160])
+        layout.addWidget(splitter, 1)
 
     # ------------------------------------------------------------------
     # Error / empty state
@@ -98,6 +103,15 @@ class GroupComparisonView(QWidget):
     # Per-group summary table
     # ------------------------------------------------------------------
 
+    def _build_table_section(self, groups: tuple[GroupSummary, ...]) -> QWidget:
+        """Build the titled per-group summary table section."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_title(self.tr("Group summary"), panel))
+        layout.addWidget(self._build_table(groups))
+        return panel
+
     def _build_table(self, groups: tuple[GroupSummary, ...]) -> QTableWidget:
         """Build the per-group descriptive summary and normality table."""
         headers = [
@@ -121,8 +135,7 @@ class GroupComparisonView(QWidget):
             vheader.setVisible(False)
 
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+        table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
         table.setAlternatingRowColors(True)
 
         for row, group in enumerate(groups):
@@ -162,6 +175,15 @@ class GroupComparisonView(QWidget):
     # Boxplot (all groups side by side)
     # ------------------------------------------------------------------
 
+    def _build_chart_section(self, groups: tuple[GroupSummary, ...]) -> QWidget:
+        """Build the titled group-distribution chart section."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_title(self.tr("Distribution"), panel))
+        layout.addWidget(self._build_boxplot(groups))
+        return panel
+
     def _build_boxplot(self, groups: tuple[GroupSummary, ...]) -> QWidget:
         """Build a matplotlib canvas with one boxplot per group, side by side."""
         figure = Figure(constrained_layout=True)
@@ -194,6 +216,17 @@ class GroupComparisonView(QWidget):
     # Test results
     # ------------------------------------------------------------------
 
+    def _build_results_section(self, result: GroupComparisonResult) -> QWidget:
+        """Build the titled statistical test results and warnings section."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_title(self.tr("Test results"), panel))
+        layout.addWidget(self._build_test_results_label(result))
+        if result.warnings:
+            layout.addWidget(self._build_warnings_label(result.warnings))
+        return panel
+
     def _build_test_results_label(self, result: GroupComparisonResult) -> QLabel:
         """Build the rich-text label showing the test statistics and guidance."""
         label = QLabel(self)
@@ -214,7 +247,7 @@ class GroupComparisonView(QWidget):
             self.tr("t = {t}, df = {df}, p = {p}").format(
                 t=fmt_num(pairwise.t_statistic),
                 df=fmt_num(pairwise.t_degrees_of_freedom),
-                p=fmt_p_value(pairwise.t_p_value),
+                p=html.escape(fmt_p_value(pairwise.t_p_value)),
             ),
             self.tr("Mean difference: {diff} (95% CI: {low} to {high})").format(
                 diff=fmt_num(pairwise.mean_difference),
@@ -224,7 +257,10 @@ class GroupComparisonView(QWidget):
             self.tr("Cohen's d: {d}").format(d=fmt_num(pairwise.cohens_d)),
             "",
             self.tr("<b>Mann-Whitney U</b>:"),
-            self.tr("U = {u}, p = {p}").format(u=fmt_num(pairwise.u_statistic), p=fmt_p_value(pairwise.u_p_value)),
+            self.tr("U = {u}, p = {p}").format(
+                u=fmt_num(pairwise.u_statistic),
+                p=html.escape(fmt_p_value(pairwise.u_p_value)),
+            ),
             self.tr("Rank-biserial correlation: {r}").format(r=fmt_num(pairwise.rank_biserial_correlation)),
             "",
             self._normality_guidance(groups),
@@ -235,11 +271,17 @@ class GroupComparisonView(QWidget):
         """Build the one-way ANOVA / Kruskal-Wallis results text."""
         lines = [
             self.tr("<b>One-way ANOVA</b> (assumes equal variances across groups):"),
-            self.tr("F = {f}, p = {p}").format(f=fmt_num(multi.f_statistic), p=fmt_p_value(multi.f_p_value)),
+            self.tr("F = {f}, p = {p}").format(
+                f=fmt_num(multi.f_statistic),
+                p=html.escape(fmt_p_value(multi.f_p_value)),
+            ),
             self.tr("Eta²: {eta}").format(eta=fmt_num(multi.eta_squared)),
             "",
             self.tr("<b>Kruskal-Wallis</b> (does not assume equal variances):"),
-            self.tr("H = {h}, p = {p}").format(h=fmt_num(multi.h_statistic), p=fmt_p_value(multi.h_p_value)),
+            self.tr("H = {h}, p = {p}").format(
+                h=fmt_num(multi.h_statistic),
+                p=html.escape(fmt_p_value(multi.h_p_value)),
+            ),
             self.tr("Epsilon²: {eps}").format(eps=fmt_num(multi.epsilon_squared)),
             "",
             self._normality_guidance(groups),
@@ -285,3 +327,10 @@ class GroupComparisonView(QWidget):
         return self.tr("⚠ Group '{label}' has fewer than 3 observations: its normality could not be tested.").format(
             label=warning.group_label
         )
+
+    @staticmethod
+    def _build_section_title(text: str, parent: QWidget) -> QLabel:
+        """Build a bold title for a group-comparison section."""
+        label = QLabel(text, parent)
+        label.setStyleSheet("font-weight: bold;")
+        return label

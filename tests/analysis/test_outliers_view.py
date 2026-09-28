@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import QEvent
-from PyQt6.QtWidgets import QApplication, QLabel
+from PyQt6.QtCore import QEvent, Qt
+from PyQt6.QtWidgets import QApplication, QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.outliers_view import OutliersView
 from expo_jbm329.services.analysis.outliers import (
@@ -115,6 +115,7 @@ def test_summary_table_lists_every_numeric_column_in_ranked_order():
     table = view.table()
 
     assert table is not None
+    assert table.selectionMode() is QTableWidget.SelectionMode.SingleSelection
     assert table.rowCount() == len(result.columns)
     assert [_cells(table, row)[0] for row in range(table.rowCount())] == [c.column for c in result.columns]
     first = _cells(table, 0)
@@ -183,6 +184,30 @@ def test_detail_shows_histogram_statistics_and_extremes():
     assert any("&lt;a&gt;" in text and "Q1 =" in text for text in texts)
 
 
+def test_layout_has_four_vertically_resizable_sections_in_the_requested_order():
+    view, _ = _view()
+
+    splitters = view.findChildren(QSplitter)
+    assert len(splitters) == 2
+    assert all(splitter.orientation() is Qt.Orientation.Vertical for splitter in splitters)
+    assert all(not splitter.childrenCollapsible() for splitter in splitters)
+
+    root_splitter = next(splitter for splitter in splitters if splitter.parent() is view)
+    detail_splitter = next(splitter for splitter in splitters if splitter.parent() is view.detail_panel())
+
+    summary_table = view.table()
+    extremes_table = view.extremes_table()
+    assert summary_table is not None
+    assert extremes_table is not None
+    assert root_splitter.widget(0).isAncestorOf(summary_table)
+    assert any(label.text() == "Columns" for label in root_splitter.widget(0).findChildren(QLabel))
+    assert detail_splitter.widget(0).isAncestorOf(extremes_table)
+    assert len(detail_splitter.widget(1).findChildren(FigureCanvasQTAgg)) == 1
+    assert any(label.text() == "Distribution" for label in detail_splitter.widget(1).findChildren(QLabel))
+    assert any(label.text() == "Column details" for label in detail_splitter.widget(2).findChildren(QLabel))
+    assert any("threshold" in label.text() for label in detail_splitter.widget(2).findChildren(QLabel))
+
+
 def test_histogram_stacks_outliers_and_marks_both_fences():
     view, _ = _view()
     canvas = view.findChildren(FigureCanvasQTAgg)[0]
@@ -210,6 +235,7 @@ def test_extremes_table_lists_row_value_score_then_other_columns():
     table = view.extremes_table()
 
     assert table is not None
+    assert table.selectionMode() is QTableWidget.SelectionMode.NoSelection
     headers = [table.horizontalHeaderItem(i).text() for i in range(table.columnCount())]  # type: ignore[union-attr]
     assert headers == [view.tr("Row"), "<a>", view.score_header(OutlierMethod.IQR), "b", "flat", "t", "when", "maybe"]
     cells = _cells(table, 0)

@@ -50,6 +50,29 @@ def test_initial_state_reflects_the_displayed_fit():
     assert not widget._standardize_checkbox.isChecked()  # noqa: SLF001
 
 
+def test_select_all_and_clear_update_pending_features_without_applying():
+    widget = PCAConfigWidget(_result(columns=("a", "b")))
+    received = _record(widget.analysis_requested)
+
+    assert widget._select_all_button.text() == "Select all"  # noqa: SLF001
+    assert widget._clear_button.text() == "Clear"  # noqa: SLF001
+    group_layout = widget._select_all_button.parentWidget().layout()  # noqa: SLF001
+    assert group_layout.itemAt(0).widget() is widget._column_list  # noqa: SLF001
+    button_row = group_layout.itemAt(1).layout()
+    assert button_row.indexOf(widget._select_all_button) >= 0  # noqa: SLF001
+    assert button_row.indexOf(widget._clear_button) >= 0  # noqa: SLF001
+    widget._clear_button.click()  # noqa: SLF001
+    assert widget.checked_columns() == ()
+    assert widget.analysis_configuration()[0] == ("a", "b")
+    assert not widget._apply_button.isEnabled()  # noqa: SLF001
+
+    widget._select_all_button.click()  # noqa: SLF001
+    assert widget.checked_columns() == ("a", "b", "c", "d")
+    assert widget.analysis_configuration()[0] == ("a", "b")
+    assert widget._apply_button.isEnabled()  # noqa: SLF001
+    assert received == []
+
+
 def test_initial_population_does_not_request_analysis():
     widget = PCAConfigWidget(_result())
     received = _record(widget.analysis_requested)

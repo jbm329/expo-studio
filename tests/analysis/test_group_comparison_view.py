@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from PyQt6.QtWidgets import QLabel, QTableWidget
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.group_comparison_view import GroupComparisonView
 from expo_jbm329.services.analysis.group_comparison import (
@@ -120,9 +122,29 @@ def test_table_has_one_row_per_group():
     view = GroupComparisonView(result)
 
     table = _find_table(view)
+    assert table.selectionMode() is QTableWidget.SelectionMode.NoSelection
     assert table.rowCount() == 3
     assert table.item(0, 0).text() == "A"
     assert table.item(2, 0).text() == "C"
+
+
+def test_layout_has_titled_table_chart_and_results_with_adjustable_dividers():
+    view = GroupComparisonView(_make_result())
+
+    splitters = view.findChildren(QSplitter)
+    assert len(splitters) == 1
+    splitter = splitters[0]
+    assert splitter.orientation() is Qt.Orientation.Vertical
+    assert splitter.childrenCollapsible() is False
+    assert splitter.count() == 3
+
+    table = _find_table(view)
+    assert splitter.widget(0).isAncestorOf(table)
+    assert any(label.text() == "Group summary" for label in splitter.widget(0).findChildren(QLabel))
+    assert len(splitter.widget(1).findChildren(FigureCanvasQTAgg)) == 1
+    assert any(label.text() == "Distribution" for label in splitter.widget(1).findChildren(QLabel))
+    assert any(label.text() == "Test results" for label in splitter.widget(2).findChildren(QLabel))
+    assert any("Welch" in label.text() for label in splitter.widget(2).findChildren(QLabel))
 
 
 def test_table_marks_a_group_as_not_normal_below_the_significance_level():
@@ -158,6 +180,7 @@ def test_pairwise_result_shows_t_test_and_mann_whitney_sections():
     assert "Mann-Whitney" in text
     assert "Cohen" in text
     assert "rank-biserial" in text.lower()
+    assert "p = &lt; " in text
 
 
 def test_multi_group_result_shows_anova_and_kruskal_wallis_sections():
@@ -168,6 +191,7 @@ def test_multi_group_result_shows_anova_and_kruskal_wallis_sections():
     assert "Kruskal-Wallis" in text
     assert "Eta" in text
     assert "Epsilon" in text
+    assert "p = &lt; " in text
 
 
 def test_non_normal_group_shows_non_parametric_guidance():

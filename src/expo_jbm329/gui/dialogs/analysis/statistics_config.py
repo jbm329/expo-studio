@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import QSignalBlocker, pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QFormLayout, QLabel, QWidget
 
 if TYPE_CHECKING:
@@ -51,3 +51,12 @@ class StatisticsConfigWidget(QWidget):
         """Return the currently selected column name, if any."""
         text = self._column_combo.currentText()
         return text or None
+
+    def set_selected_column(self, column: str) -> None:
+        """Update the selected column without emitting a redundant change."""
+        index = self._column_combo.findText(column)
+        if index < 0:
+            return
+
+        with QSignalBlocker(self._column_combo):
+            self._column_combo.setCurrentIndex(index)

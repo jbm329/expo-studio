@@ -6,7 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtWidgets import QLabel
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QLabel, QScrollArea, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.regression_view import LARGE_SAMPLE_SIZE, RegressionView
 from expo_jbm329.services.analysis.regression import (
@@ -107,7 +108,9 @@ def test_coefficient_table_lists_every_term():
     view = RegressionView(result)
     table = view.table()
 
+    assert view.result() is result
     assert table is not None
+    assert table.selectionMode() is QTableWidget.SelectionMode.NoSelection
     assert table.rowCount() == len(result.terms) == 4
     names = [_cells(view, row)[0] for row in range(table.rowCount())]
     assert names == [view.tr("(Intercept)"), "x", "g = a", "g = c"]
@@ -183,7 +186,8 @@ def test_summary_lists_warnings():
     view = RegressionView(result)
     text = _summary(view)
 
-    assert text.count("<li>") == len(RegressionWarningReason)
+    assert text.count("⚠") == len(RegressionWarningReason)
+    assert text.count('style="color: #cc6600;"') == len(RegressionWarningReason)
     for warning in result.warnings:
         assert view.warning_text(warning) in text
 
@@ -251,6 +255,33 @@ def test_three_diagnostic_plots_are_drawn():
         view.tr("Normal Q-Q plot of residuals"),
     }
     assert not any("random sample" in text for text in _labels(view))
+
+
+def test_layout_places_coefficients_above_plots_and_summary_below():
+    view = RegressionView(_fitted())
+
+    vertical_splitters = [
+        splitter for splitter in view.findChildren(QSplitter) if splitter.orientation() is Qt.Orientation.Vertical
+    ]
+    horizontal_splitters = [
+        splitter for splitter in view.findChildren(QSplitter) if splitter.orientation() is Qt.Orientation.Horizontal
+    ]
+    assert len(vertical_splitters) == 1
+    assert len(horizontal_splitters) == 1
+    assert all(not splitter.childrenCollapsible() for splitter in vertical_splitters + horizontal_splitters)
+
+    sections = vertical_splitters[0]
+    table = view.table()
+    assert table is not None
+    assert sections.widget(0).isAncestorOf(table)
+    assert "Coefficients" in " ".join(_labels(view))
+    assert len(sections.widget(1).findChildren(FigureCanvasQTAgg)) == 3
+    assert any(label.text() == "Diagnostic plots" for label in sections.widget(1).findChildren(QLabel))
+
+    summary = view.summary_label()
+    assert summary is not None
+    assert isinstance(sections.widget(2), QScrollArea)
+    assert sections.widget(2).isAncestorOf(summary)
 
 
 def test_sampled_plots_explain_the_sampling():
