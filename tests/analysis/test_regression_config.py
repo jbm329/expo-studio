@@ -226,6 +226,17 @@ def test_changing_the_target_swaps_the_disabled_item_and_emits():
     assert y_item.checkState() == Qt.CheckState.Unchecked
 
 
+def test_changing_target_before_predictors_are_applied_does_not_request_a_model():
+    widget = RegressionConfigWidget(_result())
+    received = _record(widget.model_requested)
+    combo = widget._target_combo  # noqa: SLF001
+
+    combo.setCurrentIndex(combo.findText("x"))
+
+    assert received == []
+    assert widget.model_configuration() == ("x", ())
+
+
 def test_clearing_the_target_is_ignored():
     widget = RegressionConfigWidget(_result("y", ("x",)))
     received = _record(widget.model_requested)

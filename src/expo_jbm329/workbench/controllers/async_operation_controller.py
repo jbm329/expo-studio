@@ -234,16 +234,6 @@ class AsyncOperationController:
                     job_id,
                 )
 
-        if show_overlay and target is not None:
-            self._busy.show(
-                target,
-                message=busy_message,
-                indeterminate=indeterminate,
-                timeout_ms=timeout_ms,
-                cancelable=cancelable,
-                on_cancel=_handle_overlay_cancel if cancelable else None,
-            )
-
         def _hide_overlay_later() -> None:
             if show_overlay and auto_hide_overlay and target is not None:
                 overlay_target = target
@@ -388,6 +378,16 @@ class AsyncOperationController:
         job.result.connect(_handle_result)
         job.error.connect(_handle_error)
         job.finished.connect(_handle_finished)
+
+        if show_overlay and target is not None:
+            self._busy.show(
+                target,
+                message=busy_message,
+                indeterminate=indeterminate,
+                timeout_ms=timeout_ms,
+                cancelable=cancelable,
+                on_cancel=_handle_overlay_cancel if cancelable else None,
+            )
 
         return job_obj
 

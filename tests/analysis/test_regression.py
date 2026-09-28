@@ -23,6 +23,7 @@ from expo_jbm329.services.analysis.regression import (
     TermKind,
     analyze_regression,
     classify_predictor_columns,
+    initialize_regression,
     term_name,
 )
 
@@ -294,6 +295,24 @@ def test_no_predictors_error_still_describes_available_columns():
     assert result.target == "x1"
     assert result.available_targets == ("x1", "x2", "y")
     assert result.predictor_columns.categorical == ("g", "flag")
+
+
+def test_initialize_regression_builds_selection_metadata_without_a_model():
+    result = initialize_regression(_frame())
+
+    _assert_error(result, RegressionError.NO_PREDICTORS_SELECTED)
+    assert result.target == "x1"
+    assert result.predictors == ()
+    assert result.available_targets == ("x1", "x2", "y")
+    assert result.predictor_columns.categorical == ("g", "flag")
+
+
+def test_initialize_regression_reports_when_no_numeric_target_exists():
+    result = initialize_regression(pd.DataFrame({"g": ["a", "b", "a"]}))
+
+    _assert_error(result, RegressionError.NO_NUMERIC_COLUMN)
+    assert result.target == ""
+    assert result.predictor_columns.categorical == ("g",)
 
 
 def test_too_many_predictors_error():

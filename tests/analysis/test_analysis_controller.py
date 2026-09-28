@@ -209,6 +209,36 @@ def test_open_dialog_schedules_exactly_one_deferred_initial_refresh(monkeypatch,
     assert calls == [dialog_factory[0]]
 
 
+def test_deferred_initial_refresh_is_skipped_after_category_interaction(monkeypatch):
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=1)
+    dialogs: list[DummyAnalysisDialog] = []
+    calls: list[object] = []
+
+    class InteractingDialog(DummyAnalysisDialog):
+        def exec(self):
+            self.exec_called = True
+            self._selected_category = AnalysisCategory.STATISTICS
+            self._selected_dataset_tab_id = "t1"
+            self.category_changed.emit(AnalysisCategory.STATISTICS.value)
+            return QDialog.DialogCode.Accepted
+
+    def _factory(**kwargs):
+        dialog = InteractingDialog(**kwargs)
+        dialogs.append(dialog)
+        return dialog
+
+    monkeypatch.setattr(f"{_CONTROLLER_MODULE}.AnalysisDialog", _factory)
+    monkeypatch.setattr(AnalysisController, "_refresh_content", lambda self, dialog: calls.append(dialog))
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1"),
+        async_ops=DummyAsyncOps(),
+    )
+
+    _open_and_flush(ctrl, QWidget())
+
+    assert calls == [dialogs[0]]
+
+
 def test_initial_refresh_shows_overview_content_when_overview_is_preselected(monkeypatch):
     """AnalysisDialog always pre-selects Overview and an active dataset at
     construction time; the deferred initial refresh must turn that default
@@ -1272,6 +1302,7 @@ def _open_regression(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame 
     dlg._selected_category = AnalysisCategory.REGRESSION
     dlg._selected_dataset_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.REGRESSION.value)
+    async_ops.calls.clear()
     return ctrl, dlg
 
 
@@ -1297,15 +1328,11 @@ def _check_predictors(config: RegressionConfigWidget, *columns: str) -> None:
             item.setCheckState(Qt.CheckState.Checked if wanted else Qt.CheckState.Unchecked)
 
 
-def test_regression_initially_prompts_for_predictors_with_a_standard_overlay(dialog_factory):
+def test_regression_initializes_without_a_background_job_or_busy_overlay(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_regression(async_ops, dialog_factory)
 
-    call = async_ops.last_call
-    assert call["scope"] == "analysis:regression"
-    assert call["cancelable"] is False
-    _simulate_success(call)
-
+    assert async_ops.calls == []
     view = _regression_view(dlg)
     assert view.result().error is RegressionError.NO_PREDICTORS_SELECTED
     assert view.result().target == "y"
@@ -1316,8 +1343,8 @@ def test_regression_initially_prompts_for_predictors_with_a_standard_overlay(dia
 def test_regression_without_numeric_columns_has_no_config(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_regression(async_ops, dialog_factory, df=pd.DataFrame({"g": ["a", "b", "a"]}))
-    _simulate_success(async_ops.last_call)
 
+    assert async_ops.calls == []
     assert _regression_view(dlg).result().error is RegressionError.NO_NUMERIC_COLUMN
     assert dlg.config_widgets[-1] is None
 
@@ -1325,7 +1352,6 @@ def test_regression_without_numeric_columns_has_no_config(dialog_factory):
 def test_applying_predictors_refits_the_model_in_a_background_job(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_regression(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
     config = _regression_config(dlg)
 
     _check_predictors(config, "x", "g")
@@ -1345,7 +1371,6 @@ def test_applying_predictors_refits_the_model_in_a_background_job(dialog_factory
 def test_changing_the_target_refits_without_it_as_a_predictor(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_regression(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
     config = _regression_config(dlg)
     _check_predictors(config, "x", "z")
     config._apply_button.click()  # noqa: SLF001
@@ -1364,7 +1389,6 @@ def test_changing_the_target_refits_without_it_as_a_predictor(dialog_factory):
 def test_stale_regression_result_is_discarded(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_regression(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
     config = _regression_config(dlg)
 
     _check_predictors(config, "x")

@@ -148,13 +148,14 @@ class RegressionConfigWidget(QWidget):
     # ------------------------------------------------------------------
 
     def _on_target_changed(self, _text: str) -> None:
-        """Disable the new target as a predictor and request a refit."""
+        """Disable the new target and refit an already-applied model."""
         if not self.current_target():
             return
         self._sync_target_item()
         self._applied_predictors = tuple(p for p in self._applied_predictors if p != self.current_target())
         self._update_apply_state()
-        self.model_requested.emit()
+        if self._applied_predictors:
+            self.model_requested.emit()
 
     def _sync_target_item(self) -> None:
         """Make the target's predictor item disabled and unchecked, and re-enable the others."""

@@ -311,6 +311,28 @@ def term_name(term: RegressionTerm) -> str:
     return term.column
 
 
+def initialize_regression(df: pd.DataFrame) -> RegressionResult:
+    """Build the initial regression selection state without fitting a model.
+
+    Args:
+        df: The DataFrame whose available targets and predictors are needed.
+
+    Returns:
+        A regression result containing selection metadata and the appropriate
+        initial prompt or missing-numeric-column error.
+    """
+    available_targets, predictor_columns = _regression_columns(df)
+    target = available_targets[0] if available_targets else ""
+    error = RegressionError.NO_PREDICTORS_SELECTED if available_targets else RegressionError.NO_NUMERIC_COLUMN
+    return _error_result(
+        error,
+        target=target,
+        predictors=(),
+        available_targets=available_targets,
+        predictor_columns=predictor_columns,
+    )
+
+
 # ----------------------------------------------------------------------
 # Internals
 # ----------------------------------------------------------------------
@@ -331,6 +353,11 @@ def _numeric_values(series: pd.Series) -> pd.Series:
     """Return a column as float64 with missing and infinite values as NaN."""
     values = pd.to_numeric(series, errors="coerce").astype("float64")
     return values.where(np.isfinite(values))
+
+
+def _regression_columns(df: pd.DataFrame) -> tuple[tuple[str, ...], PredictorColumns]:
+    """Return target and predictor metadata for regression configuration."""
+    return numeric_columns(df), classify_predictor_columns(df)
 
 
 def _sorted_levels(values: pd.Series) -> list[Any]:
@@ -558,8 +585,7 @@ def analyze_regression(
         The fitted model, or a result with `error` set when the selection
         is unusable or the model can't be estimated.
     """
-    available_targets = numeric_columns(df)
-    predictor_columns = classify_predictor_columns(df)
+    available_targets, predictor_columns = _regression_columns(df)
     requested = tuple(predictors)
     chosen_target = (available_targets[0] if available_targets else "") if target is None else target
 

@@ -58,6 +58,21 @@ class DummyBusy:
         self.progress_calls.append((target, value))
 
 
+class CompletingBusy(DummyBusy):
+    """Simulate BusyOverlay.show() pumping an already-queued job result."""
+
+    def __init__(self, job: DummyJob) -> None:
+        super().__init__()
+        self._job = job
+
+    def show(self, *args, **kwargs):
+        super().show(*args, **kwargs)
+        result_callback = self._job.result.connect.call_args[0][0]
+        finished_callback = self._job.finished.connect.call_args[0][0]
+        result_callback("completed while showing overlay")
+        finished_callback()
+
+
 class DummyDialogService:
     def __init__(self) -> None:
         self.warn_calls: list[object] = []
@@ -149,3 +164,28 @@ def test_run_target_overlay_operation_shows_overlay(controller):
     )
 
     assert controller._busy.show_calls
+
+
+def test_handlers_are_connected_before_showing_overlay(qt_app):
+    manager = DummyJobManager()
+    busy = CompletingBusy(manager.job)
+    controller = AsyncOperationController(
+        parent=DummyView(),
+        job_mgr=manager,
+        busy=busy,
+        dialogs=DummyDialogService(),
+    )
+    target = DummyView()
+    received: list[str] = []
+
+    controller.run_target_overlay_operation(
+        target=target,
+        work=lambda: "unused",
+        on_result=received.append,
+        busy_message="Working",
+        scope="fast-operation",
+    )
+    qt_app.processEvents()
+
+    assert received == ["completed while showing overlay"]
+    assert busy.hide_calls

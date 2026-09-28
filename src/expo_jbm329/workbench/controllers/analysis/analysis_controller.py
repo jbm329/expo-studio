@@ -55,7 +55,7 @@ from expo_jbm329.services.analysis.outliers import (
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.pca import MIN_SELECTED_COLUMNS as PCA_MIN_SELECTED_COLUMNS
 from expo_jbm329.services.analysis.pca import analyze_pca
-from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression
+from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression, initialize_regression
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
 from expo_jbm329.services.analysis.timeseries import analyze_time_series
 from expo_jbm329.utils.i18n_utils import tr
@@ -280,11 +280,18 @@ class AnalysisController:
             active_tab_id=self._results.active_tab_id(),
         )
 
-        def _handle_category_changed(_category_value: str) -> None:
+        refresh_started = False
+
+        def _refresh_after_interaction() -> None:
+            nonlocal refresh_started
+            refresh_started = True
             self._refresh_content(dialog)
 
+        def _handle_category_changed(_category_value: str) -> None:
+            _refresh_after_interaction()
+
         def _handle_dataset_changed(_tab_id: str) -> None:
-            self._refresh_content(dialog)
+            _refresh_after_interaction()
 
         dialog.category_changed.connect(_handle_category_changed)
         dialog.dataset_changed.connect(_handle_dataset_changed)
@@ -295,7 +302,11 @@ class AnalysisController:
         # dialog is already shown (and correctly sized) once the initial
         # busy overlay is created - showing an overlay on a not-yet-shown
         # widget would compute its geometry against a stale/default size.
-        QTimer.singleShot(0, lambda: self._refresh_content(dialog))
+        def _refresh_initial_content() -> None:
+            if not refresh_started:
+                self._refresh_content(dialog)
+
+        QTimer.singleShot(0, _refresh_initial_content)
 
         dialog.exec()
 
@@ -884,6 +895,12 @@ class AnalysisController:
                 tab_id,
             )
             self._show_placeholder(dialog, self._tr(self.TR_ANALYSIS_ERROR))
+            return
+
+        if category is AnalysisCategory.REGRESSION:
+            content_widget, config_widget = self._render_regression(initialize_regression(df), dialog)
+            dialog.set_content_widget(content_widget)
+            dialog.set_config_widget(config_widget)
             return
 
         self._run_analysis(dialog, category, handler, tab_id, df)
