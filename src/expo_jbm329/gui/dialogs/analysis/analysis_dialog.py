@@ -61,7 +61,7 @@ class AnalysisDialog(QDialog):
 
         self._datasets = datasets
 
-        self.setWindowTitle(self.tr("Advanced Analysis"))
+        self.setWindowTitle(self.tr("Advanced analysis"))
         self.resize(1280, 900)
 
         root = QVBoxLayout(self)

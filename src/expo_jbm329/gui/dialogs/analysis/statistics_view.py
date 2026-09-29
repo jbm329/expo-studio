@@ -256,7 +256,7 @@ class StatisticsView(QWidget):
         if stats.count > SHAPIRO_LARGE_SAMPLE_THRESHOLD:
             lines.append(
                 self.tr(
-                    "⚠ Sample size exceeds {threshold}; the p-value may not be accurate for very large samples."
+                    "⚠ Sample size exceeds {threshold}. The p-value may not be accurate for very large samples."
                 ).format(threshold=fmt_int(SHAPIRO_LARGE_SAMPLE_THRESHOLD))
             )
 

@@ -264,8 +264,8 @@ class RegressionView(QWidget):
         if non_normal and result.n_used > LARGE_SAMPLE_SIZE:
             lines.append(
                 self.tr(
-                    "<i>With many rows even negligible deviations from normality are significant; "
-                    "judge by the Q-Q plot instead.</i>"
+                    "<i>With many rows even negligible deviations from normality are significant. "
+                    "Judge by the Q-Q plot instead.</i>"
                 )
             )
 
@@ -386,7 +386,7 @@ class RegressionView(QWidget):
     def _coefficients_caption(self, result: RegressionResult) -> str:
         """Return the rich-text caption explaining significance marks and reference levels."""
         lines = [
-            self.tr("* marks coefficients significant at p &lt; {alpha}.").format(alpha=fmt_num(SIGNIFICANCE_LEVEL))
+            self.tr("* marks coefficients significant at p &lt, {alpha}.").format(alpha=fmt_num(SIGNIFICANCE_LEVEL))
         ]
         if result.references:
             lines.append(
@@ -428,7 +428,7 @@ class RegressionView(QWidget):
 
         if plot.sampled:
             caption = QLabel(
-                self.tr("Plots show a random sample of {shown} of {total} rows; statistics use all rows.").format(
+                self.tr("Plots show a random sample of {shown} of {total} rows. Statistics use all rows.").format(
                     shown=fmt_int(len(plot.actual)), total=fmt_int(result.n_used)
                 ),
                 panel,

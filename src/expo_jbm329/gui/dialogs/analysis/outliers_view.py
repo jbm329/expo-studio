@@ -486,8 +486,8 @@ class OutliersView(QWidget):
                         mean=fmt_num(detail.mean), std=fmt_num(detail.std)
                     ),
                     self.tr(
-                        "<i>Extreme values inflate the mean and standard deviation themselves; "
-                        "the modified Z-score is more robust.</i>"
+                        "<i>Extreme values inflate the mean and standard deviation themselves. "
+                        "The modified Z-score is more robust.</i>"
                     ),
                 ]
                 bound = max_possible_z_score(detail.summary.n)

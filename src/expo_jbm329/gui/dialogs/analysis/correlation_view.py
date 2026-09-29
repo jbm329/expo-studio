@@ -468,14 +468,14 @@ class CorrelationView(QWidget):
         if detail.method is not CorrelationMethod.PEARSON:
             lines.append(
                 self.tr(
-                    "The line is a linear fit shown for reference; {method} measures monotonic, "
+                    "The line is a linear fit shown for reference. {method} measures monotonic, "
                     "not necessarily linear, association."
                 ).format(method=self.method_name(detail.method))
             )
 
         if detail.sampled:
             lines.append(
-                self.tr("Showing a random sample of {shown} of {total} points; statistics use all points.").format(
+                self.tr("Showing a random sample of {shown} of {total} points. Statistics use all points.").format(
                     shown=fmt_int(len(detail.sample_x)), total=fmt_int(pair.n)
                 )
             )

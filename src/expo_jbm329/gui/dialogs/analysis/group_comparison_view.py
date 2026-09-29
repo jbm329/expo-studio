@@ -93,8 +93,8 @@ class GroupComparisonView(QWidget):
                 "The selected grouping column has fewer than {minimum} groups with valid data."
             ).format(minimum=fmt_int(MIN_GROUPS)),
             GroupComparisonError.TOO_MANY_GROUPS: self.tr(
-                "The selected grouping column has more than {maximum} distinct values; "
-                "choose a column with fewer groups."
+                "The selected grouping column has more than {maximum} distinct values. "
+                "Choose a column with fewer groups."
             ).format(maximum=fmt_int(MAX_GROUPS)),
         }
         return messages[error]
@@ -298,7 +298,7 @@ class GroupComparisonView(QWidget):
             )
         return self.tr(
             "→ Every group is consistent with a normal distribution → both results "
-            "should agree; the parametric result above is typically more powerful."
+            "should agree. The parametric result above is typically more powerful."
         )
 
     @staticmethod

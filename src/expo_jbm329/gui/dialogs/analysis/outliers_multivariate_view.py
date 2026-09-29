@@ -120,7 +120,7 @@ class MultivariateOutliersView(QWidget):
                 count=fmt_int(len(result.sample_outliers))
             )
         text += "<br>" + self.tr(
-            "<i>Scores rank observations within this fit; potential outliers are not necessarily errors.</i>"
+            "<i>Scores rank observations within this fit. Potential outliers are not necessarily errors.</i>"
         )
         label = QLabel(text, self)
         label.setTextFormat(Qt.TextFormat.RichText)

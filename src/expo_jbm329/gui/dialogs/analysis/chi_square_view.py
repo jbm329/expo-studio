@@ -94,7 +94,7 @@ class ChiSquareView(QWidget):
                 "Each selected column needs at least {minimum} categories with valid data."
             ).format(minimum=fmt_int(MIN_GROUPS)),
             ChiSquareError.TOO_MANY_CATEGORIES: self.tr(
-                "A selected column has more than {maximum} categories; choose a column with fewer categories."
+                "A selected column has more than {maximum} categories. Choose a column with fewer categories."
             ).format(maximum=fmt_int(MAX_GROUPS)),
         }
         return messages[error]
@@ -333,8 +333,8 @@ class ChiSquareView(QWidget):
         """
         text = self.tr(
             "⚠ {fraction} of expected counts are below {low} and the smallest expected count is {minimum} "
-            "(the chi-square approximation needs at most {max_fraction} below {low} and none below {floor}); "
-            "the chi-square p-value may be unreliable."
+            "(the chi-square approximation needs at most {max_fraction} below {low} and none below {floor}). "
+            "The chi-square p-value may be unreliable."
         ).format(
             fraction=fmt_pct(result.low_expected_fraction, decimals=0),
             max_fraction=fmt_pct(COCHRAN_MAX_LOW_EXPECTED_FRACTION, decimals=0),

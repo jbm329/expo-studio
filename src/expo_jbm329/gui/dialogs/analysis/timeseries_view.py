@@ -73,7 +73,7 @@ class TimeSeriesView(QWidget):
         frequency = result.detected_frequency or self.tr("irregular")
         text = self.tr(
             "<b>{value}</b> by <b>{time}</b>: {points} time points, frequency {frequency}. "
-            "{invalid} invalid rows dropped; {duplicates} duplicate rows averaged."
+            "{invalid} invalid rows dropped. {duplicates} duplicate rows averaged."
         ).format(
             value=result.value_column,
             time=result.datetime_column,
