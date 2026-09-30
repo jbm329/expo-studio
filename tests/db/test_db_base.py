@@ -129,3 +129,61 @@ def test_list_tables_failure():
 def test_fetch_df_returns_none_on_failure():
     with patch("expo_jbm329.db.base.execute_sql_safe", return_value=SqlResult(ok=False, data=None)):
         assert base.fetch_df("conn", "SELECT 1") is None
+
+
+@pytest.mark.parametrize(
+    ("db_type", "expected_name"),
+    [
+        ("mssql", "mssql"),
+        ("mysql", "mysql"),
+        ("mariadb", "mysql"),
+        ("sqlite", "sqlite"),
+        ("postgresql", "ansi"),
+        ("oracle", "ansi"),
+    ],
+)
+def test_get_dialect_resolves_from_config(db_type, expected_name):
+    with patch("expo_jbm329.db.base.read_connections", return_value={"c": {"db_type": db_type}}):
+        dialect = base.get_dialect("c")
+
+    assert dialect.name == expected_name
+    assert "c" not in base._services
+
+
+def test_get_dialect_falls_back_to_ansi_for_missing_config():
+    with patch("expo_jbm329.db.base.read_connections", return_value={}):
+        dialect = base.get_dialect("missing")
+
+    assert dialect.name == "ansi"
+    assert dialect.qualify("dbo", "T") == '"dbo"."T"'
+
+
+def test_get_dialect_falls_back_to_ansi_when_config_unreadable():
+    with patch("expo_jbm329.db.base.read_connections", side_effect=OSError("locked")):
+        assert base.get_dialect("c").name == "ansi"
+
+
+def test_get_dialect_prefers_cached_service_dialect():
+    service = MagicMock()
+    base._services["cached"] = (service, MagicMock())
+
+    with patch("expo_jbm329.db.base.read_connections") as mock_read:
+        assert base.get_dialect("cached") is service.dialect
+
+    mock_read.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("db_type", "expected_star", "expected_distinct"),
+    [
+        ("mysql", "SELECT * FROM `s`.`t`", "SELECT DISTINCT `c`\nFROM `s`.`t`"),
+        ("postgresql", 'SELECT * FROM "s"."t"', 'SELECT DISTINCT "c"\nFROM "s"."t"'),
+    ],
+)
+def test_select_builders_fallback_is_dialect_aware(db_type, expected_star, expected_distinct):
+    with (
+        patch("expo_jbm329.db.base._get_service_with_config", side_effect=RuntimeError("init failed")),
+        patch("expo_jbm329.db.base.read_connections", return_value={"c": {"db_type": db_type}}),
+    ):
+        assert base.build_select_star("c", "s", "t") == expected_star
+        assert base.build_select_distinct("c", "s", "t", "c") == expected_distinct

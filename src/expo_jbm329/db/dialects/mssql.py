@@ -11,6 +11,7 @@ class MssqlDialect(DialectProtocol):
     """MSSQL dialect: quoting, limit injection, metadata SQL builders."""
 
     name = "mssql"
+    limit_keyword = "TOP"
 
     _LIMIT_RE = re.compile(
         r"(?is)\b("
@@ -25,9 +26,11 @@ class MssqlDialect(DialectProtocol):
             name: The identifier to quote.
 
         Returns:
-            The quoted identifier (e.g., [name]).
+            The quoted identifier (e.g., [name]). Embedded closing brackets
+            are escaped by doubling them.
         """
-        return f"[{name}]"
+        escaped = name.replace("]", "]]")
+        return f"[{escaped}]"
 
     def qualify(self, schema: str, object_name: str) -> str:
         """Qualify an object name with a schema for MSSQL.
@@ -40,6 +43,19 @@ class MssqlDialect(DialectProtocol):
             The fully qualified name (e.g., [schema].[object]).
         """
         return f"{self.quote_ident(schema)}.{self.quote_ident(object_name)}"
+
+    def qualify_column(self, schema: str, object_name: str, column: str) -> str:
+        """Qualify a column name with its schema and table/view for MSSQL.
+
+        Args:
+            schema: The schema name.
+            object_name: The table or view name.
+            column: The column name.
+
+        Returns:
+            The fully qualified column name (e.g., [schema].[table].[column]).
+        """
+        return f"{self.qualify(schema, object_name)}.{self.quote_ident(column)}"
 
     @staticmethod
     def _strip_semicolon(sql: str) -> str:

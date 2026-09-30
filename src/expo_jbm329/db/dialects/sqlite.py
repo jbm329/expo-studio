@@ -16,6 +16,7 @@ class SqliteDialect(DialectProtocol):
     """
 
     name = "sqlite"
+    limit_keyword = "LIMIT"
 
     def quote_ident(self, name: str) -> str:
         """Quote an identifier (e.g., table or column name) for SQLite.
@@ -24,9 +25,11 @@ class SqliteDialect(DialectProtocol):
             name: The identifier to quote.
 
         Returns:
-            The quoted identifier (e.g., "name").
+            The quoted identifier (e.g., "name"). Embedded double quotes are
+            escaped by doubling them.
         """
-        return f'"{name}"'
+        escaped = name.replace('"', '""')
+        return f'"{escaped}"'
 
     def qualify(self, schema: str, object_name: str) -> str:
         """Qualify an object name with a schema for SQLite.
@@ -36,12 +39,26 @@ class SqliteDialect(DialectProtocol):
             object_name: The object name (e.g., table name).
 
         Returns:
-            The qualified name. If schema is falsy or 'main', returns just the quoted table.
+            The qualified name (e.g., "main"."table"). If schema is empty,
+            returns just the quoted table.
         """
         s = (schema or "").strip()
-        if not s or s.lower() == "main":
+        if not s:
             return self.quote_ident(object_name)
         return f"{self.quote_ident(s)}.{self.quote_ident(object_name)}"
+
+    def qualify_column(self, schema: str, object_name: str, column: str) -> str:
+        """Qualify a column name with its schema and table for SQLite.
+
+        Args:
+            schema: The schema name (typically 'main' or 'temp').
+            object_name: The table or view name.
+            column: The column name.
+
+        Returns:
+            The qualified column name (e.g., "main"."table"."column").
+        """
+        return f"{self.qualify(schema, object_name)}.{self.quote_ident(column)}"
 
     def apply_limit(self, sql: str, n: int) -> str:
         """Apply a LIMIT clause to the given SQL query for SQLite.

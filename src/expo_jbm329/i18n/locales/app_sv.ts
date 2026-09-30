@@ -8547,8 +8547,8 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <location filename="../../app/settings/settings_editor.py" line="324"/>
-        <source>SELECT TOP N value (0 = no limit):</source>
-        <translation>SELECT TOP N värde (0 = ingen gräns):</translation>
+        <source>Row limit for generated SELECT (0 = no limit):</source>
+        <translation>Radgräns för genererad SELECT (0 = ingen gräns):</translation>
     </message>
     <message>
         <location filename="../../app/settings/settings_editor.py" line="483"/>

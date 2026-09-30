@@ -7107,7 +7107,7 @@ Time: {sec:.2f}s{sample}</source>
     </message>
     <message>
         <location filename="..\..\app\settings\settings_editor.py" line="324" />
-        <source>SELECT TOP N value (0 = no limit):</source>
+        <source>Row limit for generated SELECT (0 = no limit):</source>
         <translation type="unfinished" />
     </message>
     <message>

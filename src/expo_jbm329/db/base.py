@@ -31,6 +31,7 @@ from expo_jbm329.app.settings.config_store import read_connections
 from expo_jbm329.db.core.di import ServiceRegistry
 from expo_jbm329.db.core.errors import TR_COULD_NOT_INIT_CONN
 from expo_jbm329.db.core.models import ConnectionConfig, EngineKey, ProtocolKey, SqlError, SqlResult, TimeoutConfig
+from expo_jbm329.db.dialects.ansi import AnsiDialect
 from expo_jbm329.db.dialects.mssql import MssqlDialect
 from expo_jbm329.db.dialects.mysql import MySqlDialect
 from expo_jbm329.db.dialects.sqlite import SqliteDialect
@@ -43,6 +44,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     import pandas as pd
+
+    from expo_jbm329.db.core.interfaces import DialectProtocol
 
 logger = logging.getLogger("applogger.db")
 
@@ -110,6 +113,33 @@ def configure_timeouts(*, login_timeout_s: int | None = None, query_timeout_s: i
 # =============================================================================
 
 
+def _normalize_engine_key(raw_engine: object) -> EngineKey:
+    """Normalize a configured ``db_type`` value to an engine key.
+
+    Unknown or missing values map to "mssql" to preserve existing behavior.
+
+    Args:
+        raw_engine: The raw ``db_type`` value from the connection config.
+
+    Returns:
+        The normalized engine key.
+    """
+    engine = raw_engine.lower() if isinstance(raw_engine, str) and raw_engine else "mssql"
+    match engine:
+        case "postgres" | "postgresql":
+            return "postgresql"
+        case "mysql":
+            return "mysql"
+        case "mariadb":
+            return "mariadb"
+        case "sqlite":
+            return "sqlite"
+        case "oracle":
+            return "oracle"
+        case _:
+            return "mssql"
+
+
 def _build_connection_config(connection_name: str) -> ConnectionConfig:
     """Construct a ConnectionConfig from user configuration.
 
@@ -136,22 +166,7 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
         raise TypeError(msg)
 
     # --- Engine normalization -------------------------------------------------
-    raw_engine = rec.get("db_type")
-    engine = raw_engine.lower() if isinstance(raw_engine, str) and raw_engine else "mssql"
-    engine_key: EngineKey
-    match engine:
-        case "postgres" | "postgresql":
-            engine_key = "postgresql"
-        case "mysql":
-            engine_key = "mysql"
-        case "mariadb":
-            engine_key = "mariadb"
-        case "sqlite":
-            engine_key = "sqlite"
-        case "oracle":
-            engine_key = "oracle"
-        case _:
-            engine_key = "mssql"
+    engine_key = _normalize_engine_key(rec.get("db_type"))
 
     # --- Protocol selection ---------------------------------------------------
     raw_protocol = rec.get("protocol")
@@ -309,6 +324,47 @@ def close_all_connections() -> None:
     for _, (svc, _) in list(_services.items()):
         svc.dispose()
     _services.clear()
+
+
+def get_dialect(connection_name: str) -> DialectProtocol:
+    """Return the SQL dialect for a connection without opening a connection.
+
+    Reuses the dialect of an already created DbService when available;
+    otherwise resolves it from the connection configuration. Falls back to
+    AnsiDialect when the configuration is missing or the engine has no
+    registered dialect.
+
+    Args:
+        connection_name: The name of the connection.
+
+    Returns:
+        The dialect used to format SQL for the connection.
+    """
+    entry = _services.get(connection_name)
+    if entry is not None:
+        return entry[0].dialect
+
+    try:
+        record = read_connections().get(connection_name)
+    except OSError:
+        logger.debug("get_dialect: failed to read connections, using ANSI fallback (conn=%s)", connection_name)
+        return AnsiDialect()
+
+    if not isinstance(record, dict):
+        logger.debug("get_dialect: no config for connection, using ANSI fallback (conn=%s)", connection_name)
+        return AnsiDialect()
+
+    engine_key = _normalize_engine_key(record.get("db_type"))
+    try:
+        return _registry.create_dialect(engine_key)
+    except KeyError:
+        # PostgreSQL/Oracle can be configured but have no engine-specific dialect yet.
+        logger.debug(
+            "get_dialect: no dialect registered, using ANSI fallback (conn=%s, engine=%s)",
+            connection_name,
+            engine_key,
+        )
+        return AnsiDialect()
 
 
 # =============================================================================
@@ -517,7 +573,8 @@ def build_select_star(
         ValueError,
     ):
         # Fallback quoting if service initialization fails
-        return f"SELECT * FROM [{schema}].[{object_name}]"  # noqa: S608 - deferred SQL construction refactor
+        qtable = get_dialect(connection_name).qualify(schema, object_name)
+        return f"SELECT * FROM {qtable}"  # noqa: S608 - identifiers are quoted by the dialect
 
 
 def build_select_distinct(
@@ -544,8 +601,11 @@ def build_select_distinct(
         TypeError,
         ValueError,
     ):
-        # Fallback MSSQL-style
-        return f"SELECT DISTINCT [{column_name}]\nFROM [{schema}].[{object_name}]"
+        # Fallback quoting if service initialization fails
+        dialect = get_dialect(connection_name)
+        qcolumn = dialect.quote_ident(column_name)
+        qtable = dialect.qualify(schema, object_name)
+        return f"SELECT DISTINCT {qcolumn}\nFROM {qtable}"
 
 
 def build_select_columns_auto(

@@ -26,8 +26,11 @@ from expo_jbm329.db.base import (
     build_select_columns_auto,
     build_select_distinct,
     build_select_star,
+    get_dialect,
     list_columns,
 )
+from expo_jbm329.db.dialects.ansi import AnsiDialect
+from expo_jbm329.db.identifier_formatting import build_identifier_text
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.gui_utils import ui_invoke
 from expo_jbm329.utils.format_utils import fmt_int
@@ -36,8 +39,9 @@ from expo_jbm329.utils.i18n_utils import tr, tr_fmt
 TOP_N_DISPLAY_FORMAT_THRESHOLD = 1000
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
 
+    from expo_jbm329.db.core.interfaces import DialectProtocol
     from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
     from expo_jbm329.gui.widgets.schema_tree_widget import SchemaTreeWidget
     from expo_jbm329.services.job_manager import JobManager
@@ -93,6 +97,7 @@ class SchemaController:
         "_job_mgr",
         "_logger",
         "_parent",
+        "_resolve_dialect",
         "_restore_baseline_status",
         "_schema_mgr",
         "_set_autocomplete_schema",
@@ -117,6 +122,7 @@ class SchemaController:
         disconnect_connection: Callable[[str], None],
         restore_baseline_status: Callable[[], None],
         dialogs: DialogService | None = None,
+        resolve_dialect: Callable[[str], DialectProtocol] | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
         """Initialize the SchemaController.
@@ -136,6 +142,8 @@ class SchemaController:
             disconnect_connection: Callback to disconnect a connection.
             restore_baseline_status: Callback to restore baseline status.
             dialogs: Dialog service, defaults to QtDialogService.
+            resolve_dialect: Callback resolving the SQL dialect for a connection,
+                defaults to ``db.base.get_dialect``.
             logger: Optional logger.
         """
         self._parent = parent_widget
@@ -152,6 +160,7 @@ class SchemaController:
         self._disconnect_connection = disconnect_connection
         self._restore_baseline_status = restore_baseline_status
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
+        self._resolve_dialect = resolve_dialect if resolve_dialect is not None else get_dialect
         self._gen_top_n_default = 1000
         self._gen_top_n: int = self._gen_top_n_default
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
@@ -160,6 +169,7 @@ class SchemaController:
         self._tree.customContextMenuRequested.connect(self._on_context_menu)
         self._tree.itemDoubleClicked.connect(self._on_item_double_clicked)
         self._tree.itemExpanded.connect(self._on_item_expanded)
+        self._tree.set_drag_text_provider(self.build_drag_text)
 
         # Bind schema manager callbacks after initialization to ensure all dependencies are set up
         self._bind_schema_manager_callbacks()
@@ -886,16 +896,10 @@ class SchemaController:
         menu.addAction(header)
         header.setEnabled(False)
         menu.addSeparator()
-        if self._gen_top_n == 0:
-            # No limit -> do not show TOP / LIMIT
-            act_star = menu.addAction("SELECT *")
-            act_cols = menu.addAction("SELECT")
-            act_cols_schema = menu.addAction("SELECT (schema)")
-        else:
-            top_n = fmt_int(self._gen_top_n) if self._gen_top_n > TOP_N_DISPLAY_FORMAT_THRESHOLD else self._gen_top_n
-            act_star = menu.addAction(f"SELECT * TOP {top_n}")
-            act_cols = menu.addAction(f"SELECT TOP {top_n}")
-            act_cols_schema = menu.addAction(f"SELECT TOP {top_n} (schema)")
+        labels = self._select_menu_labels(self._dialect_for_item(item))
+        act_star = menu.addAction(labels[0])
+        act_cols = menu.addAction(labels[1])
+        act_cols_schema = menu.addAction(labels[2])
 
         viewport = self._tree.viewport()
         if viewport is None:
@@ -906,17 +910,19 @@ class SchemaController:
 
         if chosen == act_star:
             self._logger.debug(
-                "SchemaController: context menu choice: SELECT * TOP (obj=%s.%s)", meta.get("schema"), meta.get("name")
+                "SchemaController: context menu choice: SELECT * (obj=%s.%s)", meta.get("schema"), meta.get("name")
             )
             self._insert_select_star(item, meta)
         elif chosen == act_cols:
             self._logger.debug(
-                "SchemaController: context menu choice: SELECT TOP (obj=%s.%s)", meta.get("schema"), meta.get("name")
+                "SchemaController: context menu choice: SELECT columns (obj=%s.%s)",
+                meta.get("schema"),
+                meta.get("name"),
             )
             self._insert_select_columns(item, meta, with_schema=False)
         elif chosen == act_cols_schema:
             self._logger.debug(
-                "SchemaController: context menu choice: SELECT TOP (schema) (obj=%s.%s)",
+                "SchemaController: context menu choice: SELECT columns with schema (obj=%s.%s)",
                 meta.get("schema"),
                 meta.get("name"),
             )
@@ -1157,7 +1163,7 @@ class SchemaController:
 
         top_label = self._gen_top_n if self._gen_top_n != 0 else "no limit"
         self._logger.debug(
-            "SchemaController: generating SELECT TOP (conn=%s, obj=%s.%s, top_n=%s, with_schema=%s, corr=%s)",
+            "SchemaController: generating SELECT columns (conn=%s, obj=%s.%s, top_n=%s, with_schema=%s, corr=%s)",
             conn,
             schema,
             name,
@@ -1175,6 +1181,63 @@ class SchemaController:
         )
 
         self._insert_sql_into_tab(tab, sql)
+
+    def _select_menu_labels(self, dialect: DialectProtocol) -> tuple[str, str, str]:
+        """Return context menu labels for the SELECT snippet actions.
+
+        Args:
+            dialect: Dialect of the connection owning the clicked object.
+
+        Returns:
+            Labels for SELECT *, SELECT columns and SELECT columns with schema.
+        """
+        if self._gen_top_n == 0:
+            # No limit -> do not show a row-limit keyword
+            return "SELECT *", "SELECT", "SELECT (schema)"
+
+        top_n = fmt_int(self._gen_top_n) if self._gen_top_n > TOP_N_DISPLAY_FORMAT_THRESHOLD else str(self._gen_top_n)
+        limit = f"{dialect.limit_keyword} {top_n}"
+        return f"SELECT * {limit}", f"SELECT {limit}", f"SELECT {limit} (schema)"
+
+    def _dialect_for_item(self, item: QTreeWidgetItem) -> DialectProtocol:
+        """Resolve the SQL dialect of the connection owning a tree item.
+
+        Args:
+            item: A tree item below a connection node.
+
+        Returns:
+            The connection's dialect, or AnsiDialect when no connection is found.
+        """
+        conn = self._resolve_connection_for_item(item)
+        if conn is None:
+            return AnsiDialect()
+        return self._resolve_dialect(conn)
+
+    def build_drag_text(self, items: Sequence[QTreeWidgetItem]) -> str:
+        """Build dialect-aware SQL identifier text for dragged schema items.
+
+        Items are grouped by their owning connection so each group is quoted
+        with that connection's dialect. Groups are separated by newlines.
+
+        Args:
+            items: The dragged tree items.
+
+        Returns:
+            The SQL identifier text, or an empty string when nothing is draggable.
+        """
+        groups: dict[str | None, list[object]] = {}
+        for item in items:
+            meta = item.data(0, Qt.ItemDataRole.UserRole)
+            groups.setdefault(self._resolve_connection_for_item(item), []).append(meta)
+
+        texts: list[str] = []
+        for conn, metas in groups.items():
+            dialect: DialectProtocol = AnsiDialect() if conn is None else self._resolve_dialect(conn)
+            text = build_identifier_text(metas, dialect)
+            if text:
+                texts.append(text)
+
+        return "\n".join(texts)
 
     def _resolve_connection_for_item(self, item: QTreeWidgetItem) -> str | None:
         """Walk up tree to find owning connection."""

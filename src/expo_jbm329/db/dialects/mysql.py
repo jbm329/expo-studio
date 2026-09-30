@@ -15,6 +15,7 @@ class MySqlDialect(DialectProtocol):
     """
 
     name = "mysql"  # We'll reuse for MariaDB as well via registry
+    limit_keyword = "LIMIT"
 
     # Detect if a query already has a LIMIT clause (supports "LIMIT n" or "LIMIT offset, n")
     _LIMIT_RE = re.compile(r"(?is)\blimit\s+\d+(\s*,\s*\d+)?\b")
@@ -26,9 +27,11 @@ class MySqlDialect(DialectProtocol):
             name: The identifier to quote.
 
         Returns:
-            The quoted identifier (e.g., `name`).
+            The quoted identifier (e.g., `name`). Embedded backticks are
+            escaped by doubling them.
         """
-        return f"`{name}`"
+        escaped = name.replace("`", "``")
+        return f"`{escaped}`"
 
     def qualify(self, schema: str, object_name: str) -> str:
         """Qualify an object name with a schema for MySQL.
@@ -41,6 +44,19 @@ class MySqlDialect(DialectProtocol):
             The fully qualified name (e.g., `schema`.`table`).
         """
         return f"{self.quote_ident(schema)}.{self.quote_ident(object_name)}"
+
+    def qualify_column(self, schema: str, object_name: str, column: str) -> str:
+        """Qualify a column name with its schema and table/view for MySQL.
+
+        Args:
+            schema: The schema (database) name.
+            object_name: The table or view name.
+            column: The column name.
+
+        Returns:
+            The fully qualified column name (e.g., `schema`.`table`.`column`).
+        """
+        return f"{self.qualify(schema, object_name)}.{self.quote_ident(column)}"
 
     @staticmethod
     def _strip_semicolon(sql: str) -> str:
