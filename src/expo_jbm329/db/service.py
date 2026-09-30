@@ -351,8 +351,7 @@ class DbService:
             err = self._classify_error(e, conn.engine)
             if should_log(signature):
                 log.exception(
-                    "DbService: SQL error (signature=%s, corr=%s, category=%s, code=%s, "
-                    "message=%s, hint=%s, raw=%s)",
+                    "DbService: SQL error (signature=%s, corr=%s, category=%s, code=%s, message=%s, hint=%s, raw=%s)",
                     signature,
                     corr_id,
                     err.category,

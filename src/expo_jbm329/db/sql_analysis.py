@@ -430,14 +430,14 @@ def _strip_leading_sql_comments_and_whitespace(sql: str) -> str:
             newline_index = stripped.find("\n")
             if newline_index < 0:
                 return ""
-            text = stripped[newline_index + 1:]
+            text = stripped[newline_index + 1 :]
             continue
 
         if stripped.startswith("/*"):
             end_index = stripped.find("*/")
             if end_index < 0:
                 return ""
-            text = stripped[end_index + 2:]
+            text = stripped[end_index + 2 :]
             continue
 
         return stripped
@@ -458,7 +458,7 @@ def _find_incomplete_top_clause(sql: str) -> tuple[int, int, str] | None:
     if match is None:
         return None
 
-    remainder = sql[match.end():]
+    remainder = sql[match.end() :]
 
     if re.match(r"^\s*(\(\s*(\d+|@\w+)\s*\)|\d+|@\w+)", remainder):
         return None
@@ -896,11 +896,7 @@ def _columns_for_scope_source(
     if isinstance(source, Scope):
         if not isinstance(source.expression, exp.Query):
             return None
-        names = {
-            _normalize_identifier(name)
-            for name in source.expression.named_selects
-            if name and name != "*"
-        }
+        names = {_normalize_identifier(name) for name in source.expression.named_selects if name and name != "*"}
         return names or None
 
     if not isinstance(source, exp.Table):
@@ -916,11 +912,7 @@ def _columns_for_scope_source(
         columns = normalized_schema.get(schema_key, {}).get(table_key)
         return columns or None
 
-    matches = [
-        tables[table_key]
-        for tables in normalized_schema.values()
-        if tables.get(table_key)
-    ]
+    matches = [tables[table_key] for tables in normalized_schema.values() if tables.get(table_key)]
     if len(matches) != 1:
         return None
     return matches[0]
@@ -934,21 +926,14 @@ def _ambiguous_columns(
     ambiguous: set[int] = set()
 
     for scope in traverse_scope(expression):
-        joins = [
-            join
-            for join in (scope.expression.args.get("joins") or [])
-            if isinstance(join, exp.Join)
-        ]
+        joins = [join for join in (scope.expression.args.get("joins") or []) if isinstance(join, exp.Join)]
         merged_columns = {
             _normalize_identifier(str(identifier.name or ""))
             for join in joins
             for identifier in (join.args.get("using") or [])
             if isinstance(identifier, exp.Identifier)
         }
-        has_natural_join = any(
-            str(join.args.get("method") or "").upper() == "NATURAL"
-            for join in joins
-        )
+        has_natural_join = any(str(join.args.get("method") or "").upper() == "NATURAL" for join in joins)
 
         source_columns = [
             columns
@@ -1009,10 +994,7 @@ def _lint_ambiguous_columns(
         diagnostics.append(
             SqlDiagnostic(
                 severity="error",
-                message=(
-                    f"Ambiguous column '{name}'. "
-                    "Qualify it with a table name or alias."
-                ),
+                message=(f"Ambiguous column '{name}'. Qualify it with a table name or alias."),
                 line=line,
                 column=column_no,
                 length=max(1, length),
@@ -1074,9 +1056,7 @@ def _find_identifier_span_in_sql(
     ]
 
     matches = [
-        match
-        for pattern in patterns
-        if (match := re.search(pattern, sql[safe_start:], re.IGNORECASE)) is not None
+        match for pattern in patterns if (match := re.search(pattern, sql[safe_start:], re.IGNORECASE)) is not None
     ]
     if matches:
         match = min(matches, key=lambda candidate: candidate.start())

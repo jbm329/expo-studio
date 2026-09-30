@@ -331,11 +331,7 @@ def test_lint_schema_and_lint_syntax_cover_layered_schema_aware_behavior() -> No
 
 
 def test_lint_schema_reports_full_ambiguous_column_tokens() -> None:
-    sql = (
-        "SELECT id, [id]\n"
-        "FROM dbo.users AS u\n"
-        "JOIN sales.orders AS o ON o.user_id = u.id"
-    )
+    sql = "SELECT id, [id]\nFROM dbo.users AS u\nJOIN sales.orders AS o ON o.user_id = u.id"
 
     diagnostics = [
         diagnostic
@@ -362,11 +358,7 @@ def test_lint_schema_reports_full_ambiguous_column_tokens() -> None:
 
 
 def test_lint_schema_accepts_qualified_and_unique_join_columns() -> None:
-    sql = (
-        "SELECT u.id, o.id, name, o.user_id "
-        "FROM dbo.users AS u "
-        "JOIN sales.orders AS o ON o.user_id = u.id"
-    )
+    sql = "SELECT u.id, o.id, name, o.user_id FROM dbo.users AS u JOIN sales.orders AS o ON o.user_id = u.id"
 
     diagnostics = lint_syntax(sql, schema=SCHEMA)
 

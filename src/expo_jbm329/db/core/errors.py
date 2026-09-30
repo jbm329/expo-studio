@@ -119,9 +119,7 @@ TR_UNKNOWN_DATABASE_FAIL = QT_TRANSLATE_NOOP("DbErrors", "Unknown database failu
 TR_UNKNOWN_DATABASE_FAIL_HINT = QT_TRANSLATE_NOOP("DbErrors", "Show details in log (DEBUG) or try again.")
 TR_COULD_NOT_INIT_CONN = QT_TRANSLATE_NOOP("DbErrors", "Could not initialize connection.")
 TR_AMBIGUOUS_COLUMN = QT_TRANSLATE_NOOP("DbErrors", "Ambiguous column reference.")
-TR_AMBIGUOUS_COLUMN_HINT = QT_TRANSLATE_NOOP(
-    "DbErrors", "Qualify the column with its table name or alias."
-)
+TR_AMBIGUOUS_COLUMN_HINT = QT_TRANSLATE_NOOP("DbErrors", "Qualify the column with its table name or alias.")
 
 # Schema Cache / Autocomplete
 TR_PREPARING_AUTOCOMPLETE_BULK = QT_TRANSLATE_NOOP("DbErrors", "Preparing autocomplete (bulk)…")
