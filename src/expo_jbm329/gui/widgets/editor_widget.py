@@ -86,6 +86,10 @@ class EditorWidget(QWidget):
         """Attach and own a SQL syntax highlighter for this editor."""
         self._highlighter = highlighter
 
+    def get_highlighter(self) -> SqlHighlighter | None:
+        """Return the SQL syntax highlighter for this editor, if attached."""
+        return self._highlighter
+
     def set_autocomplete_engine(self, engine: SqlAutoCompleter) -> None:
         """Attach and own a SQL autocomplete engine for this editor."""
         self._autocomplete_engine = engine

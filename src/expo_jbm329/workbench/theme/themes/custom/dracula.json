@@ -9,6 +9,8 @@
   "operator": "#FF79C6",
   "bracketed_ident": "#8BE9FD",
   "quoted_ident": "#8BE9FD",
+  "table_ident": "#50FA7B",
+  "column_ident": "#FFB86C",
   "kw_bold": true,
   "func_bold": false
 }
