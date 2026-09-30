@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.services.data_operations.dtypes import SemanticDType
 from expo_jbm329.services.data_profile.presentation import format_value_for_display
 from expo_jbm329.services.data_profile.stat_defs import (
@@ -344,6 +345,7 @@ class ColumnPropertiesDialog(QDialog):
 
         btn_copy.clicked.connect(copy)
         buttons.rejected.connect(self.reject)
+        localize_dialog_buttons(buttons)
 
         self._layout.addWidget(buttons)
 

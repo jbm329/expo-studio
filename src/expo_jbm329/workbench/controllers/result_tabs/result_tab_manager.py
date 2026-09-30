@@ -40,9 +40,9 @@ from expo_jbm329.gui.menus.result_tab_header_context import (
     build_header_context,
 )
 from expo_jbm329.services.data_profile.semantics import SeriesSemantics, infer_series_semantics
+from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.utils.i18n_utils import tr, tr_fmt
 from expo_jbm329.utils.models import DataFrameModel
-from expo_jbm329.utils.visualization_models import VisualizationDatasetRef
 from expo_jbm329.workbench.controllers.result_tabs.reslut_tab_header_clean_actions import (
     ResultTabHeaderCleanActions,
 )
@@ -853,20 +853,20 @@ class ResultTabManager:
 
         return data
 
-    def list_ready_datasets(self) -> list[VisualizationDatasetRef]:
+    def list_ready_datasets(self) -> list[DatasetRef]:
         """Return metadata for all ready datasets.
 
         Returns:
             A list of lightweight dataset references for all ready tabs.
         """
-        datasets: list[VisualizationDatasetRef] = []
+        datasets: list[DatasetRef] = []
 
         for record in self._ready_records():
             if record.df is None:
                 continue
 
             datasets.append(
-                VisualizationDatasetRef(
+                DatasetRef(
                     tab_id=record.tab_id,
                     title=record.title,
                     row_count=len(record.df),

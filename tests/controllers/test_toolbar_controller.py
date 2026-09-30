@@ -38,7 +38,7 @@ def test_build_toolbar_wires_callbacks_and_states():
             "clear_editor",
             "refresh_schema",
             "undo",
-            "visualize_data",
+            "analyze_data",
         ]
     }
 

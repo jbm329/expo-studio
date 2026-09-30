@@ -8,9 +8,11 @@ from PyQt6.QtCore import QLocale
 from expo_jbm329.utils.format_utils import (
     fmt_bytes,
     fmt_category,
+    fmt_cell,
     fmt_date,
     fmt_int,
     fmt_num,
+    fmt_p_value,
     fmt_path,
     fmt_path_size,
     fmt_pct,
@@ -55,6 +57,27 @@ def test_fmt_num():
 
     result2 = fmt_num(123.456, sig=4)
     assert "123" in result2
+
+
+def test_fmt_p_value():
+    assert fmt_p_value(None) == ""
+    assert fmt_p_value(np.nan) == ""
+
+    result = fmt_p_value(0.4213)
+    assert "0,4213" in result or "0.4213" in result
+
+    # Below the default threshold: reported as "< threshold", not the
+    # (potentially misleadingly rounded-to-zero) exact value.
+    below = fmt_p_value(0.00001)
+    assert below.startswith("< ")
+    assert "0,001" in below or "0.001" in below
+
+    # Exactly at the threshold is not "below" it.
+    at_threshold = fmt_p_value(0.001)
+    assert not at_threshold.startswith("< ")
+
+    custom = fmt_p_value(0.02, threshold=0.05)
+    assert custom.startswith("< ")
 
 
 def test_fmt_int():
@@ -104,6 +127,26 @@ def test_fmt_category():
     assert fmt_category(123) == "123"
     assert fmt_category(None) == ""
     assert fmt_category(np.nan) == ""
+
+
+def test_fmt_cell_renders_missing_values_as_empty_text():
+    assert fmt_cell(None) == ""
+    assert fmt_cell(np.nan) == ""
+    assert fmt_cell(float("nan")) == ""
+    assert fmt_cell(pd.NaT) == ""
+    assert fmt_cell(pd.NA) == ""
+
+
+def test_fmt_cell_formats_floats_through_fmt_num():
+    assert fmt_cell(1234.56789) == fmt_num(1234.56789)
+    assert fmt_cell(2.0) == fmt_num(2.0)
+
+
+def test_fmt_cell_falls_back_to_str_for_other_values():
+    assert fmt_cell("text") == "text"
+    assert fmt_cell(7) == "7"
+    assert fmt_cell(True) == "True"
+    assert fmt_cell(pd.Timestamp("2024-01-02 03:04:05")) == "2024-01-02 03:04:05"
 
 
 def test_fmt_path():

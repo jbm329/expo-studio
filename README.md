@@ -38,8 +38,26 @@ The project is still in its infancy and may change significantly.
 - **Data Transformation**: Apply transformations to datasets using a visual interface.
 - **Export Capabilities**: Export query results to multiple formats including **CSV**, **feather**, **parquet**, and more.
 - **Dataset Analysis**: Integrated data profiling (via `fg-data-profiling`) for in-depth dataset statistics.
-- **Column Analysis**: Analyze column types and distributions to understand data quality and structure.
+- **Advanced Analysis**: Explore active datasets through an interactive statistical-analysis workspace.
 - **Persistence**: Supports management of database connections, application settings, and logs.
+
+### 📈 Advanced Analysis
+
+The **Advanced Analysis** workspace provides interactive statistical tools for datasets loaded in result tabs. Open it with **Analyze data** in the toolbar, then choose a dataset and analysis category.
+
+Available analyses include:
+
+- **Overview**: Dataset dimensions, missing values, duplicate rows, column types, per-column statistics, and a sample of up to 100 rows.
+- **Statistics**: Descriptive statistics, histograms, boxplots, and Shapiro-Wilk normality tests for numeric columns.
+- **Hypothesis Tests**: Group comparisons for numeric and categorical variables, plus chi-square tests of independence with adjusted residuals.
+- **Correlation**: Pearson, Spearman, and Kendall correlation matrices, strongest-pair summaries, significance tests, heatmaps, and pairwise scatterplots.
+- **Regression**: Multiple linear regression with numeric and categorical predictors, coefficient estimates, confidence intervals, model summaries, diagnostic tests, and residual plots.
+- **Outliers**: Univariate screening using IQR, z-score, or modified z-score, and multivariate detection using Isolation Forest or Local Outlier Factor.
+- **Clustering**: K-means, DBSCAN, and agglomerative clustering with cluster summaries and PCA-based projections.
+- **PCA**: Principal component analysis with optional standardization, explained variance, score plots, and feature loadings.
+- **Time Series**: Series preparation, optional resampling, autocorrelation, and additive or multiplicative seasonal decomposition.
+
+The workspace uses adjustable result sections and configurable column selections. Long-running calculations are performed in the background to keep the interface responsive, and supported analyses provide progress or cancellation where appropriate.
 
 ### 📂 Supported Data File Formats
 

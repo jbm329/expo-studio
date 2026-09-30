@@ -183,6 +183,53 @@ def fmt_num(val: float | None, *, sig: int = 4) -> str:
     return formatted
 
 
+# ---------------------------------------------------------------------
+#  P-value formatting
+# ---------------------------------------------------------------------
+def fmt_p_value(p: float | None, *, threshold: float = 0.001) -> str:
+    """Format a statistical p-value using standard reporting convention.
+
+    Values below `threshold` are reported as "< {threshold}" rather than
+    with their exact (potentially uninformative, e.g. rounded to zero)
+    magnitude - matching how p-values are conventionally reported in
+    statistical software and publications.
+
+    Args:
+        p: The p-value to format (expected in the ``[0, 1]`` range).
+        threshold: Values strictly below this are reported as "< threshold"
+            instead of their literal value. Defaults to 0.001.
+
+    Returns:
+        Formatted p-value string, or empty string if `p` is None/NaN.
+    """
+    if p is None:
+        return ""
+
+    try:
+        pf = float(p)
+    except (
+        AttributeError,
+        ConnectionError,
+        FileNotFoundError,
+        IndexError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ):
+        return ""
+
+    if np.isnan(pf):
+        return ""
+
+    if pf < threshold:
+        return f"< {fmt_num(threshold)}"
+
+    return fmt_num(pf, sig=4)
+
+
 def fmt_int(n: int) -> str:
     """Format an integer with locale-aware grouping.
 
@@ -331,6 +378,33 @@ def fmt_category(val: object) -> str:
     """
     if val is None or (isinstance(val, float) and np.isnan(val)):
         return ""
+    return str(val)
+
+
+# ---------------------------------------------------------------------
+#  Raw dataset cell formatting
+# ---------------------------------------------------------------------
+
+
+def fmt_cell(val: object) -> str:
+    """Format one raw dataset value for display in a results table.
+
+    Missing values (``None``, ``NaN``, ``NaT``, ``pd.NA``) render as an
+    empty string so tables stay readable, floats go through `fmt_num` for
+    locale-aware separators, and anything else falls back to ``str``.
+
+    Args:
+        val: Raw cell value taken from a DataFrame.
+
+    Returns:
+        Display text for the value.
+    """
+    # NaT/NA must be checked before the float branch: pd.NaT is also a
+    # datetime instance, and neither supports math.isnan().
+    if val is None or val is pd.NaT or val is pd.NA:
+        return ""
+    if isinstance(val, float):
+        return "" if np.isnan(val) else fmt_num(val)
     return str(val)
 
 

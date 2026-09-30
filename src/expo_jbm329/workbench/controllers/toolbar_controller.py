@@ -52,7 +52,7 @@ class ToolbarController:
     TR_UPDATE_SCHEMA_SHORTCUT = QT_TR_NOOP("Update schema\nShortcut: F5")
     TR_UNDO = QT_TR_NOOP("Undo")
     TR_UNDO_SHORTCUT = QT_TR_NOOP("Undo last action\nShortcut: Ctrl+Z")
-    TR_VISUALIZE = QT_TR_NOOP("Visualize data")
+    TR_ANALYZE = QT_TR_NOOP("Analyze data")
 
     # File
     _action_new: QAction
@@ -73,7 +73,7 @@ class ToolbarController:
     # Data ops
     _action_join_data: QAction
     _action_concatenate_data: QAction
-    _action_visualize: QAction
+    _action_analyze: QAction
 
     # Misc
     _action_format_view: QAction
@@ -105,7 +105,7 @@ class ToolbarController:
         clear_editor: Callable[[], None],
         refresh_schema: Callable[[], None],
         undo: Callable[[], None],
-        visualize_data: Callable[[], None],
+        analyze_data: Callable[[], None],
         logger: logging.Logger | None = None,
     ) -> None:
         """Initialize the ToolbarController.
@@ -128,7 +128,7 @@ class ToolbarController:
             clear_editor: Callback for clear editor action.
             refresh_schema: Callback for refresh schema action.
             undo: Callback for undo action.
-            visualize_data: Callback for visualize data action.
+            analyze_data: Callback for analyze data action.
             logger: Optional logger instance.
         """
         self._icons = icon_service
@@ -151,7 +151,7 @@ class ToolbarController:
         self._action_clear_cb = clear_editor
         self._action_refresh_schema_cb = refresh_schema
         self._action_undo_cb = undo
-        self._action_visualize_cb = visualize_data
+        self._action_analyze_cb = analyze_data
         self._logger = logger or logging.getLogger("applogger.ui")
 
     # ------------------------------------------------------------------
@@ -225,9 +225,9 @@ class ToolbarController:
         self._action_concatenate_data.setEnabled(False)
         tb.addAction(self._action_concatenate_data)
 
-        self._action_visualize = QAction(self._tr(self.TR_VISUALIZE), tb)
-        self._action_visualize.setEnabled(False)
-        tb.addAction(self._action_visualize)
+        self._action_analyze = QAction(self._tr(self.TR_ANALYZE), tb)
+        self._action_analyze.setEnabled(False)
+        tb.addAction(self._action_analyze)
 
         tb.addSeparator()
 
@@ -278,7 +278,7 @@ class ToolbarController:
 
         self._action_join_data.triggered.connect(self._action_join_data_cb)
         self._action_concatenate_data.triggered.connect(self._action_concatenate_data_cb)
-        self._action_visualize.triggered.connect(self._action_visualize_cb)
+        self._action_analyze.triggered.connect(self._action_analyze_cb)
 
         self._action_clear.triggered.connect(self._action_clear_cb)
         self._action_refresh_schema.triggered.connect(self._action_refresh_schema_cb)
@@ -305,7 +305,7 @@ class ToolbarController:
 
         self._action_join_data.setIcon(self._icons.get("join"))
         self._action_concatenate_data.setIcon(self._icons.get("concatenate"))
-        self._action_visualize.setIcon(self._icons.get("chart"))
+        self._action_analyze.setIcon(self._icons.get("chart"))
 
         self._action_clear.setIcon(self._icons.get("file_clear"))
         self._action_refresh_schema.setIcon(self._icons.get("refresh"))
@@ -344,7 +344,7 @@ class ToolbarController:
         self._action_export_csv.setEnabled(has_data)
         self._action_export_excel.setEnabled(has_data)
         self._action_export_data.setEnabled(has_data)
-        self._action_visualize.setEnabled(has_data)
+        self._action_analyze.setEnabled(has_data)
 
     def apply_has_multiple_datasets_state(self, has_multiple_datasets: bool) -> None:
         """Apply the multiple datasets state to enable/disable join/concatenate actions.
@@ -375,7 +375,7 @@ class ToolbarController:
 
         self._action_join_data.setText(self._tr(self.TR_JOIN_DATASETS))
         self._action_concatenate_data.setText(self._tr(self.TR_CONCATENATE_DATASETS))
-        self._action_visualize.setText(self._tr(self.TR_VISUALIZE))
+        self._action_analyze.setText(self._tr(self.TR_ANALYZE))
 
         self._action_clear.setText(self._tr(self.TR_CLEAR_EDITOR))
         self._action_refresh_schema.setText(self._tr(self.TR_UPDATE_SCHEMA))
