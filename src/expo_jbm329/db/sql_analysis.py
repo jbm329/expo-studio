@@ -430,14 +430,14 @@ def _strip_leading_sql_comments_and_whitespace(sql: str) -> str:
             newline_index = stripped.find("\n")
             if newline_index < 0:
                 return ""
-            text = stripped[newline_index + 1 :]
+            text = stripped[newline_index + 1:]
             continue
 
         if stripped.startswith("/*"):
             end_index = stripped.find("*/")
             if end_index < 0:
                 return ""
-            text = stripped[end_index + 2 :]
+            text = stripped[end_index + 2:]
             continue
 
         return stripped
@@ -458,7 +458,7 @@ def _find_incomplete_top_clause(sql: str) -> tuple[int, int, str] | None:
     if match is None:
         return None
 
-    remainder = sql[match.end() :]
+    remainder = sql[match.end():]
 
     if re.match(r"^\s*(\(\s*(\d+|@\w+)\s*\)|\d+|@\w+)", remainder):
         return None
@@ -894,6 +894,8 @@ def _columns_for_scope_source(
 ) -> set[str] | None:
     """Resolve the available columns for one source in a query scope."""
     if isinstance(source, Scope):
+        if not isinstance(source.expression, exp.Query):
+            return None
         names = {
             _normalize_identifier(name)
             for name in source.expression.named_selects
