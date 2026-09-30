@@ -1691,6 +1691,16 @@ Please see logs for more information.</source>
         <translation type="unfinished" />
     </message>
     <message>
+        <location filename="..\..\db\core\errors.py" line="122" />
+        <source>Ambiguous column reference.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="123" />
+        <source>Qualify the column with its table name or alias.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
         <location filename="..\..\db\core\errors.py" line="69" />
         <source>Check database and object name.</source>
         <translation type="unfinished" />

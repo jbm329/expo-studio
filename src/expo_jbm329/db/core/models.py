@@ -63,7 +63,7 @@ class SqlError:
     """Structured error returned to UI (English source strings).
 
     Attributes:
-        category: Error category (e.g., 'syntax', 'timeout').
+        category: Error category (e.g., 'syntax', 'ambiguous_column', 'timeout').
         code: Vendor-specific error code.
         message: English error message (key for i18n).
         hint: English hint (key for i18n).

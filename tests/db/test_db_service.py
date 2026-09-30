@@ -123,6 +123,37 @@ def test_execute_sql_failure(db_service, mock_driver, conn_config):
     assert result.error.category == "unknown"
 
 
+@pytest.mark.parametrize(
+    ("engine", "message", "expected_code"),
+    [
+        ("mssql", "Ambiguous column name 'id'. (209)", 209),
+        ("mysql", "(1052, \"Column 'id' in field list is ambiguous\")", 1052),
+        ("mariadb", "(1052, \"Column 'id' in field list is ambiguous\")", 1052),
+        ("sqlite", "ambiguous column name: id", None),
+        ("postgresql", 'column reference "id" is ambiguous SQLSTATE 42702', 42702),
+        ("oracle", "ORA-00918: column ambiguously defined", 918),
+    ],
+)
+def test_execute_sql_classifies_ambiguity_by_connection_engine(
+    mock_driver,
+    mock_dialect,
+    engine,
+    message,
+    expected_code,
+):
+    mock_dialect.name = "ansi"
+    mock_driver.execute_df.side_effect = Exception(message)
+    service = DbService(driver=mock_driver, dialect=mock_dialect)
+    connection = ConnectionConfig(name="test", engine=engine, protocol="odbc")
+
+    result = service.execute_sql(connection, "SELECT id FROM a JOIN b ON a.id = b.id")
+
+    assert result.ok is False
+    assert result.error is not None
+    assert result.error.category == "ambiguous_column"
+    assert result.error.code == expected_code
+
+
 def test_list_tables(db_service, mock_driver, mock_dialect, conn_config):
     df_tables = pd.DataFrame({"schema_name": ["dbo", "dbo"], "object_name": ["t1", "t2"]})
     mock_driver.execute_df.return_value = df_tables
