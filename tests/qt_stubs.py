@@ -106,6 +106,10 @@ class StubTree:
         self.customContextMenuRequested = DummySignal()
         self.itemDoubleClicked = DummySignal()
         self.itemExpanded = DummySignal()
+        self.drag_text_provider = None
+
+    def set_drag_text_provider(self, provider):
+        self.drag_text_provider = provider
 
     def clear(self):
         self.top = []

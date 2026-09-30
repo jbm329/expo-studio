@@ -38,10 +38,11 @@ from expo_jbm329.workbench.controllers.editor_tab_manager import (
     EditorTabManager,
     EditorTabState,
 )
+from expo_jbm329.workbench.highlighter.schema_names import collect_schema_highlight_names
 from expo_jbm329.workbench.highlighter.sql_highlighter import SqlHighlighter
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterable, Mapping
 
     from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
     from expo_jbm329.services.schema_cache import SchemaCacheEntry
@@ -239,6 +240,7 @@ class EditorPanelController(QWidget):
         highlighter = SqlHighlighter(
             doc,
             theme=self._highlighter_theme_service.resolve_theme(),
+            dialect=self._resolve_autocomplete_dialect(tab.connection_name),
         )
         editor_widget.set_highlighter(highlighter)
 
@@ -865,6 +867,7 @@ class EditorPanelController(QWidget):
         if not tab or not tab.connection_name:
             engine.set_schema({})
             autocomplete.set_dialect(None)
+            self._update_highlighter(widget, dialect=None, by_schema={})
 
             if tab is not None:
                 lint_controller = self._lint_controllers.get(tab.tab_id)
@@ -884,6 +887,7 @@ class EditorPanelController(QWidget):
             engine.set_schema({})
             if lint_controller is not None:
                 lint_controller.set_schema({})
+            self._update_highlighter(widget, dialect=dialect, by_schema={})
             return
 
         schema_dict = self._build_schema_dict({
@@ -923,6 +927,32 @@ class EditorPanelController(QWidget):
         if lint_controller is not None:
             lint_schema = by_schema if isinstance(by_schema, dict) else {}
             lint_controller.set_schema(lint_schema)
+        self._update_highlighter(
+            widget,
+            dialect=dialect,
+            by_schema=by_schema if isinstance(by_schema, dict) else {},
+        )
+
+    @staticmethod
+    def _update_highlighter(
+        widget: EditorWidget,
+        *,
+        dialect: str | None,
+        by_schema: Mapping[str, object],
+    ) -> None:
+        """Make the editor's syntax highlighter dialect and schema aware.
+
+        Args:
+            widget: Editor widget owning the highlighter.
+            dialect: sqlglot dialect name, or None for generic rules.
+            by_schema: Nested ``{schema: {table: [columns]}}`` mapping.
+        """
+        highlighter = widget.get_highlighter()
+        if highlighter is None:
+            return
+        objects, columns = collect_schema_highlight_names(by_schema)
+        highlighter.set_dialect(dialect)
+        highlighter.set_schema_names(objects, columns)
 
     def on_tab_context_menu_requested(self, pos: QPoint) -> None:
         """Handle context menu request on the tab bar.

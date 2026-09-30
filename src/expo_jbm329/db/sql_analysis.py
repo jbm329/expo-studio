@@ -21,6 +21,7 @@ import sqlglot
 from sqlglot import exp
 from sqlglot.errors import ParseError, SqlglotError
 from sqlglot.expressions.core import Expression
+from sqlglot.optimizer.scope import Scope, traverse_scope
 
 SqlStatementKind = Literal[
     "select",
@@ -62,6 +63,8 @@ SQLGLOT_DIALECT_BY_ENGINE: dict[str, str] = {
     "sqlite": "sqlite",
     "oracle": "oracle",
 }
+
+_MIN_AMBIGUOUS_SOURCE_COUNT = 2
 
 
 @dataclass(frozen=True)
@@ -599,6 +602,11 @@ def _find_suspicious_clause_keywords(sql: str) -> list[tuple[int, int, str]]:
         if suggestion is None:
             continue
 
+        if suggestion in {"GROUP", "ORDER"}:
+            following = re.match(r"(?is)\s+([A-Za-z_][A-Za-z0-9_]*)", sql[match.end() :])
+            if following is None or following.group(1).lower() != "by":
+                continue
+
         diagnostics.append((match.start(), len(token), suggestion))
 
     return diagnostics
@@ -880,6 +888,122 @@ def _lint_unknown_columns(
     return diagnostics
 
 
+def _columns_for_scope_source(
+    source: Expression | Scope,
+    normalized_schema: dict[str, dict[str, set[str]]],
+) -> set[str] | None:
+    """Resolve the available columns for one source in a query scope."""
+    if isinstance(source, Scope):
+        if not isinstance(source.expression, exp.Query):
+            return None
+        names = {_normalize_identifier(name) for name in source.expression.named_selects if name and name != "*"}
+        return names or None
+
+    if not isinstance(source, exp.Table):
+        return None
+
+    table_key = _normalize_identifier(str(source.name or ""))
+    if not table_key:
+        return None
+
+    schema_name = str(source.db or source.catalog or "").strip()
+    if schema_name:
+        schema_key = _normalize_identifier(schema_name)
+        columns = normalized_schema.get(schema_key, {}).get(table_key)
+        return columns or None
+
+    matches = [tables[table_key] for tables in normalized_schema.values() if tables.get(table_key)]
+    if len(matches) != 1:
+        return None
+    return matches[0]
+
+
+def _ambiguous_columns(
+    expression: Expression,
+    normalized_schema: dict[str, dict[str, set[str]]],
+) -> set[int]:
+    """Return identities of unqualified columns with multiple source matches."""
+    ambiguous: set[int] = set()
+
+    for scope in traverse_scope(expression):
+        joins = [join for join in (scope.expression.args.get("joins") or []) if isinstance(join, exp.Join)]
+        merged_columns = {
+            _normalize_identifier(str(identifier.name or ""))
+            for join in joins
+            for identifier in (join.args.get("using") or [])
+            if isinstance(identifier, exp.Identifier)
+        }
+        has_natural_join = any(str(join.args.get("method") or "").upper() == "NATURAL" for join in joins)
+
+        source_columns = [
+            columns
+            for source in scope.sources.values()
+            if (columns := _columns_for_scope_source(source, normalized_schema)) is not None
+        ]
+        if len(source_columns) < _MIN_AMBIGUOUS_SOURCE_COUNT:
+            continue
+
+        for column in scope.columns:
+            name = str(column.name or "").strip()
+            if not name or name == "*" or column.table:
+                continue
+
+            normalized_name = _normalize_identifier(name)
+            if normalized_name in merged_columns or has_natural_join:
+                continue
+
+            match_count = sum(normalized_name in columns for columns in source_columns)
+            if match_count > 1:
+                ambiguous.add(id(column))
+
+    return ambiguous
+
+
+def _lint_ambiguous_columns(
+    sql: str,
+    expression: Expression,
+    normalized_schema: dict[str, dict[str, set[str]]],
+) -> list[SqlDiagnostic]:
+    """Return diagnostics for ambiguous unqualified column references."""
+    ambiguous = _ambiguous_columns(expression, normalized_schema)
+    if not ambiguous:
+        return []
+
+    diagnostics: list[SqlDiagnostic] = []
+    next_offset_by_name: dict[str, int] = {}
+
+    # find_all follows SQL expression order. Advancing separately per column
+    # name distinguishes repeated and qualified occurrences of the same name.
+    for column in expression.find_all(exp.Column):
+        name = str(column.name or "").strip()
+        if not name or name == "*":
+            continue
+
+        normalized_name = _normalize_identifier(name)
+        start, length = _find_identifier_span_in_sql(
+            sql,
+            name,
+            start_hint=next_offset_by_name.get(normalized_name, 0),
+        )
+        next_offset_by_name[normalized_name] = start + length
+
+        if id(column) not in ambiguous:
+            continue
+
+        line, column_no = _offset_to_line_column(sql, start)
+        diagnostics.append(
+            SqlDiagnostic(
+                severity="error",
+                message=(f"Ambiguous column '{name}'. Qualify it with a table name or alias."),
+                line=line,
+                column=column_no,
+                length=max(1, length),
+            )
+        )
+
+    return diagnostics
+
+
 def _lint_schema(
     sql: str,
     *,
@@ -903,6 +1027,7 @@ def _lint_schema(
     diagnostics: list[SqlDiagnostic] = []
     diagnostics.extend(_lint_unknown_tables(sql, expression, context))
     diagnostics.extend(_lint_unknown_columns(sql, expression, context))
+    diagnostics.extend(_lint_ambiguous_columns(sql, expression, normalized_schema))
     return diagnostics
 
 
@@ -930,12 +1055,14 @@ def _find_identifier_span_in_sql(
         rf"(?<![A-Za-z0-9_]){re.escape(text)}(?![A-Za-z0-9_])",
     ]
 
-    for pattern in patterns:
-        match = re.search(pattern, sql[safe_start:], re.IGNORECASE)
-        if match is not None:
-            start = safe_start + match.start()
-            length = max(1, match.end() - match.start())
-            return start, length
+    matches = [
+        match for pattern in patterns if (match := re.search(pattern, sql[safe_start:], re.IGNORECASE)) is not None
+    ]
+    if matches:
+        match = min(matches, key=lambda candidate: candidate.start())
+        start = safe_start + match.start()
+        length = max(1, match.end() - match.start())
+        return start, length
 
     return max(0, safe_start), max(1, len(text))
 

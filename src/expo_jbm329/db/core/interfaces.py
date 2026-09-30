@@ -78,9 +78,15 @@ class DriverProtocol(Protocol):
 
 @runtime_checkable
 class DialectProtocol(Protocol):
-    """Protocol defining the interface for engine-specific SQL dialects."""
+    """Protocol defining the interface for engine-specific SQL dialects.
+
+    Attributes:
+        name: Dialect key, e.g. "mssql", "mysql", "sqlite" or "ansi".
+        limit_keyword: Row-limiting keyword shown to users, e.g. "TOP" or "LIMIT".
+    """
 
     name: str
+    limit_keyword: str
 
     def apply_limit(self, sql: str, n: int) -> str:
         """Apply a LIMIT clause to the given SQL query.
@@ -114,6 +120,19 @@ class DialectProtocol(Protocol):
 
         Returns:
             The fully qualified name.
+        """
+        ...
+
+    def qualify_column(self, schema: str, object_name: str, column: str) -> str:
+        """Qualify a column name with its schema and table/view.
+
+        Args:
+            schema: The schema name.
+            object_name: The table or view name.
+            column: The column name.
+
+        Returns:
+            The fully qualified column name.
         """
         ...
 

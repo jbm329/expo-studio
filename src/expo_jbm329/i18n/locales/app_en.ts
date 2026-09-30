@@ -1691,6 +1691,16 @@ Please see logs for more information.</source>
         <translation type="unfinished" />
     </message>
     <message>
+        <location filename="..\..\db\core\errors.py" line="122" />
+        <source>Ambiguous column reference.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="123" />
+        <source>Qualify the column with its table name or alias.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
         <location filename="..\..\db\core\errors.py" line="69" />
         <source>Check database and object name.</source>
         <translation type="unfinished" />
@@ -7107,7 +7117,7 @@ Time: {sec:.2f}s{sample}</source>
     </message>
     <message>
         <location filename="..\..\app\settings\settings_editor.py" line="324" />
-        <source>SELECT TOP N value (0 = no limit):</source>
+        <source>Row limit for generated SELECT (0 = no limit):</source>
         <translation type="unfinished" />
     </message>
     <message>

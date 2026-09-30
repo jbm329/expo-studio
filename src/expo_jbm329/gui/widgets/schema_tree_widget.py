@@ -1,14 +1,13 @@
 """Widgets for database schema display and interaction.
 
-This module provides specialized Qt widgets for rendering database schema
-information in a tree structure, with support for drag-and-drop operations
-to export SQL identifiers. It includes utilities for validating and formatting
-schema metadata.
+This module provides a specialized Qt tree widget for rendering database schema
+information, with drag support to export SQL identifiers. Identifier formatting
+is delegated to an injected provider so the widget stays dialect agnostic.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeGuard, override
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QMimeData, Qt
 from PyQt6.QtWidgets import (
@@ -18,126 +17,14 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.db.dialects.ansi import AnsiDialect
+from expo_jbm329.db.identifier_formatting import build_identifier_text
+
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Callable, Iterable, Sequence
 
 
-SchemaItemMeta = dict[str, str]
-
-
-def _is_valid_meta(meta: object) -> TypeGuard[SchemaItemMeta]:
-    """Validates the structure of metadata dicts placed in UserRole.
-
-    Checks if the provided metadata dict conforms to the expected shapes for
-    database schema elements (tables, views, or columns).
-
-    Args:
-        meta: The metadata dict to validate. Expected structures:
-            - For tables/views: {"type": "table"|"view", "schema": str, "name": str}
-            - For columns: {"type": "column", "schema": str, "table": str, "column": str}
-
-    Returns:
-        True if the dict has a valid structure, False otherwise.
-    """
-    if not isinstance(meta, dict):
-        return False
-    t = meta.get("type")
-    if t in {"table", "view"}:
-        return all(isinstance(meta.get(k), str) for k in ("type", "schema", "name"))
-    if t == "column":
-        return all(isinstance(meta.get(k), str) for k in ("type", "schema", "table", "column"))
-    return False
-
-
-def _qualify_table(schema: str, name: str) -> str:
-    """Returns a fully qualified table/view name with bracket quoting.
-
-    Args:
-        schema: The schema name.
-        name: The table or view name.
-
-    Returns:
-        A string in the format [schema].[name].
-    """
-    return f"[{schema}].[{name}]"
-
-
-def _qualify_column(schema: str, table: str, column: str) -> str:
-    """Returns a fully qualified column name with bracket quoting.
-
-    Args:
-        schema: The schema name.
-        table: The table name.
-        column: The column name.
-
-    Returns:
-        A string in the format [schema].[table].[column].
-    """
-    return f"[{schema}].[{table}].[{column}]"
-
-
-def build_drag_text_from_meta(
-    metas: Iterable[SchemaItemMeta],
-    *,
-    prefer_multiline_for_same_table: bool = True,
-    indent: str = "    ",
-) -> str:
-    """Builds drag text (SQL identifiers) from metadata dicts.
-
-    Formats database schema elements (tables, views, columns) into SQL identifier
-    strings suitable for drag-and-drop operations. Supports multiline formatting
-    for columns from the same table.
-
-    Args:
-        metas: Iterable of metadata dicts representing schema elements.
-        prefer_multiline_for_same_table: If True and all items are columns from
-            the same table, formats as a comma-separated multiline list.
-        indent: Indentation string for multiline formatting.
-
-    Returns:
-        A string containing formatted SQL identifiers, separated by newlines
-        or commas depending on the input and options.
-    """
-    # Collect strings + compute shape characteristics
-    parts: list[str] = []
-    seen: set[str] = set()
-    types: set[str] = set()
-    tables_for_cols: set[tuple[str, str]] = set()
-
-    for m in metas:
-        if not _is_valid_meta(m):
-            continue
-
-        t = m["type"]
-        types.add(t)
-
-        if t in {"table", "view"}:
-            text = _qualify_table(m["schema"], m["name"])
-            if text not in seen:
-                seen.add(text)
-                parts.append(text)
-
-        elif t == "column":
-            text = _qualify_column(m["schema"], m["table"], m["column"])
-            if text not in seen:
-                seen.add(text)
-                parts.append(text)
-            tables_for_cols.add((m["schema"], m["table"]))
-
-    if not parts:
-        return ""
-
-    only_cols = types == {"column"}
-    if only_cols and len(tables_for_cols) == 1 and prefer_multiline_for_same_table:
-        # Pretty-print a multi-line, comma-separated column list
-        # First element without indent, subsequent with provided indent.
-        head, *tail = parts
-        if not tail:
-            return head
-        return ",\n".join([head] + [f"{indent}{p}" for p in tail])
-
-    # Mixed types or multiple tables -> newline separated for clarity
-    return "\n".join(parts)
+type DragTextProvider = Callable[[Sequence[QTreeWidgetItem]], str]
 
 
 class SchemaTreeWidget(QTreeWidget):
@@ -148,11 +35,13 @@ class SchemaTreeWidget(QTreeWidget):
     SQL identifiers to the workbench editor. Multiple selection is enabled for
     dragging multiple items.
 
+    The drag text is produced by an injected provider (see
+    ``set_drag_text_provider``), which allows the owning controller to format
+    identifiers using the dialect of each item's connection.
+
     Attributes:
         MIME_TEXT: MIME type for plain text payload ("text/plain").
         MIME_SQL_IDS: Custom MIME type for SQL identifiers ("application/x-sql-identifiers").
-        PREFER_MULTILINE_FOR_SAME_TABLE: Whether to format multiline columns from same table.
-        MULTILINE_INDENT: Indentation string for multiline formatting.
     """
 
     # ------------------------------ Configuration ------------------------------
@@ -161,15 +50,11 @@ class SchemaTreeWidget(QTreeWidget):
     MIME_TEXT = "text/plain"
     MIME_SQL_IDS = "application/x-sql-identifiers"
 
-    # Whether to render multi-line, comma-separated columns when all are from the same table.
-    PREFER_MULTILINE_FOR_SAME_TABLE = True
-
-    # Indentation used for multi-line columns
-    MULTILINE_INDENT = "    "
-
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initializes SchemaTreeWidget."""
         super().__init__(parent)
+
+        self._drag_text_provider: DragTextProvider | None = None
 
         # Basic presentation
         self.setHeaderHidden(True)
@@ -179,6 +64,30 @@ class SchemaTreeWidget(QTreeWidget):
         self.setDragEnabled(True)  # drag: yes
         self.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)  # drop: no
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)  # multi-select
+
+    def set_drag_text_provider(self, provider: DragTextProvider | None) -> None:
+        """Set the callable that builds drag text for the dragged items.
+
+        Args:
+            provider: Callable receiving the dragged items and returning the
+                SQL identifier text, or None to use the ANSI fallback.
+        """
+        self._drag_text_provider = provider
+
+    def _build_drag_text(self, items: Sequence[QTreeWidgetItem]) -> str:
+        """Build the drag text for the given items.
+
+        Args:
+            items: The dragged tree items.
+
+        Returns:
+            The SQL identifier text for the items.
+        """
+        if self._drag_text_provider is not None:
+            return self._drag_text_provider(items)
+
+        metas = [item.data(0, Qt.ItemDataRole.UserRole) for item in items]
+        return build_identifier_text(metas, AnsiDialect())
 
     # --------------------------------------------------------------------------
     # Qt override: build mime data for drag
@@ -197,22 +106,10 @@ class SchemaTreeWidget(QTreeWidget):
         Returns:
             A QMimeData object with text/plain and application/x-sql-identifiers data.
         """
-        # Defensive fallback: use selectedItems() if items is falsy
-        selected: Sequence[QTreeWidgetItem] = list(items) if items else self.selectedItems()
+        # Defensive fallback: use selectedItems() if no items were supplied
+        selected: Sequence[QTreeWidgetItem] = list(items) or self.selectedItems()
 
-        # Extract and normalize meta dicts
-        metas: list[SchemaItemMeta] = []
-        for it in selected:
-            meta = it.data(0, Qt.ItemDataRole.UserRole)
-            if _is_valid_meta(meta):
-                metas.append(meta)
-
-        # Build the text payload
-        text_out = build_drag_text_from_meta(
-            metas,
-            prefer_multiline_for_same_table=self.PREFER_MULTILINE_FOR_SAME_TABLE,
-            indent=self.MULTILINE_INDENT,
-        )
+        text_out = self._build_drag_text(selected)
 
         md = QMimeData()
         if text_out:

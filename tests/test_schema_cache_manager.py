@@ -73,10 +73,12 @@ def test_load_schema_returns_cached_entry_within_ttl():
     assert rec.status == []
 
 
-def test_bulk_prefetch_falls_back_to_batch_when_bulk_empty():
+def test_bulk_prefetch_falls_back_to_batch_when_bulk_empty(monkeypatch):
     mgr, rec = make_manager()
     mgr.reload_settings({"schema_cache": {"ttl_seconds": 300}})
     import expo_jbm329.services.schema_cache as sc
+
+    monkeypatch.setattr(sc, "supports_bulk_column_listing", lambda conn: True)
 
     sc.get_db_name = MagicMock(return_value="DB_Conn1")
     sc.list_tables = MagicMock(return_value=[{"schema": "dbo", "name": "A"}])
@@ -112,3 +114,42 @@ def test_batch_prefetch_updates_columns_when_no_runner():
     mgr.prefetch_columns_async("ConnX")
 
     assert rec.progress
+
+
+def test_prefetch_skips_bulk_job_when_dialect_does_not_support_it(monkeypatch):
+    mgr, rec = make_manager()
+    mgr.reload_settings({"schema_cache": {"ttl_seconds": 300}})
+    import expo_jbm329.services.schema_cache as sc
+
+    monkeypatch.setattr(sc, "get_db_name", MagicMock(return_value="main"))
+    monkeypatch.setattr(sc, "list_tables", MagicMock(return_value=[{"schema": "main", "name": "A"}]))
+    monkeypatch.setattr(sc, "list_views", MagicMock(return_value=[]))
+    bulk = MagicMock(side_effect=AssertionError("bulk must not run"))
+    monkeypatch.setattr(sc, "list_all_columns_map", bulk)
+    monkeypatch.setattr(sc, "supports_bulk_column_listing", lambda conn: False)
+    monkeypatch.setattr(
+        sc, "list_columns", MagicMock(return_value=[{"COLUMN_NAME": "id", "DATA_TYPE": "int", "IS_NULLABLE": "NO"}])
+    )
+
+    mgr.load_schema("Lite", force_refresh=True)
+    rec.status.clear()
+
+    submitted = []
+
+    class Worker:
+        def __init__(self, payload):
+            self.result = MagicMock(connect=lambda cb: cb(payload))
+            self.error = MagicMock(connect=lambda cb: None)
+
+    def runner(_parent, fn, *args, **kwargs):
+        submitted.append(fn)
+        return Worker(fn(*args))
+
+    mgr.set_job_runner(runner)
+    mgr.prefetch_columns_async("Lite")
+
+    bulk.assert_not_called()
+    assert submitted
+    assert all(fn.__name__ == "batch_job" for fn in submitted)
+    assert mgr.get_cache_for("Lite").columns[("main", "A")][0]["COLUMN_NAME"] == "id"
+    assert not any("batch" in msg.lower() and "fail" in msg.lower() for msg, _ in rec.status)

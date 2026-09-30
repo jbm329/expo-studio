@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
+from expo_jbm329.db.core.errors import BulkColumnListingNotSupportedError
 from expo_jbm329.db.core.interfaces import DialectProtocol, DriverProtocol
 from expo_jbm329.db.core.models import ConnectionConfig, SqlError, TimeoutConfig
 from expo_jbm329.db.service import DbService
@@ -122,6 +123,37 @@ def test_execute_sql_failure(db_service, mock_driver, conn_config):
     assert result.error.category == "unknown"
 
 
+@pytest.mark.parametrize(
+    ("engine", "message", "expected_code"),
+    [
+        ("mssql", "Ambiguous column name 'id'. (209)", 209),
+        ("mysql", "(1052, \"Column 'id' in field list is ambiguous\")", 1052),
+        ("mariadb", "(1052, \"Column 'id' in field list is ambiguous\")", 1052),
+        ("sqlite", "ambiguous column name: id", None),
+        ("postgresql", 'column reference "id" is ambiguous SQLSTATE 42702', 42702),
+        ("oracle", "ORA-00918: column ambiguously defined", 918),
+    ],
+)
+def test_execute_sql_classifies_ambiguity_by_connection_engine(
+    mock_driver,
+    mock_dialect,
+    engine,
+    message,
+    expected_code,
+):
+    mock_dialect.name = "ansi"
+    mock_driver.execute_df.side_effect = Exception(message)
+    service = DbService(driver=mock_driver, dialect=mock_dialect)
+    connection = ConnectionConfig(name="test", engine=engine, protocol="odbc")
+
+    result = service.execute_sql(connection, "SELECT id FROM a JOIN b ON a.id = b.id")
+
+    assert result.ok is False
+    assert result.error is not None
+    assert result.error.category == "ambiguous_column"
+    assert result.error.code == expected_code
+
+
 def test_list_tables(db_service, mock_driver, mock_dialect, conn_config):
     df_tables = pd.DataFrame({"schema_name": ["dbo", "dbo"], "object_name": ["t1", "t2"]})
     mock_driver.execute_df.return_value = df_tables
@@ -170,3 +202,17 @@ def test_build_select_columns_auto(db_service, mock_driver, conn_config):
     assert "[name]" in sql
     assert "FROM dbo.table1" in sql
     assert "    [id],\n    [name]" in sql
+
+
+@pytest.mark.parametrize("stmt", [None, ""])
+def test_list_all_columns_map_unsupported_dialect_runs_no_sql(db_service, mock_driver, mock_dialect, conn_config, stmt):
+    mock_dialect.sql_all_columns.return_value = stmt
+
+    with pytest.raises(BulkColumnListingNotSupportedError):
+        db_service.list_all_columns_map(conn_config)
+
+    mock_driver.execute_df.assert_not_called()
+
+
+def test_list_all_columns_map_unsupported_error_is_attribute_error():
+    assert issubclass(BulkColumnListingNotSupportedError, AttributeError)

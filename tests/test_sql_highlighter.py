@@ -305,3 +305,83 @@ def test_escaped_quotes_in_string(editor, highlighter):
             found = True
             break
     assert found
+
+
+def _color_at(highlighter, start, length):
+    for call in highlighter.setFormat.call_args_list:
+        args, _ = call
+        if args[0] == start and args[1] == length:
+            return args[2].foreground().color().name().upper()
+    return None
+
+
+def test_quoted_keyword_is_not_highlighted_as_keyword(highlighter):
+    highlighter.set_dialect("sqlite")
+    highlighter.setFormat = MagicMock()
+    highlighter.highlightBlock('SELECT * FROM "Order"')
+
+    kw = highlighter._theme.kw.name().upper()
+    assert _color_at(highlighter, 14, 7) == highlighter._theme.quoted_ident.name().upper()
+    assert _color_at(highlighter, 15, 5) != kw
+
+
+def test_schema_names_get_table_and_column_colors(highlighter):
+    highlighter.set_dialect("sqlite")
+    highlighter.set_schema_names(["main", "Table", "Order"], ["Total"])
+    highlighter.setFormat = MagicMock()
+    text = 'SELECT Total FROM "main"."Table" JOIN [Order] ON 1 = 1 WHERE order_x = 1'
+    highlighter.highlightBlock(text)
+
+    table = highlighter._theme.table_ident.name().upper()
+    column = highlighter._theme.column_ident.name().upper()
+    assert _color_at(highlighter, text.index("Total"), 5) == column
+    assert _color_at(highlighter, text.index('"main"'), 6) == table
+    assert _color_at(highlighter, text.index('"Table"'), 7) == table
+    assert _color_at(highlighter, text.index("[Order]"), 7) == table
+    assert _color_at(highlighter, text.index("order_x"), 7) is None
+
+
+def test_unquoted_keyword_wins_over_schema_name(highlighter):
+    highlighter.set_schema_names(["Order"], [])
+    highlighter.setFormat = MagicMock()
+    highlighter.highlightBlock("SELECT * FROM t ORDER BY 1")
+    assert _color_at(highlighter, 16, 5) == highlighter._theme.kw.name().upper()
+
+
+def test_name_that_is_table_and_column_uses_context(highlighter):
+    highlighter.set_schema_names(["Name"], ["Name"])
+    highlighter.setFormat = MagicMock()
+    text = "SELECT Name.x, Name"
+    highlighter.highlightBlock(text)
+    assert _color_at(highlighter, 7, 4) == highlighter._theme.table_ident.name().upper()
+    assert _color_at(highlighter, 15, 4) == highlighter._theme.column_ident.name().upper()
+
+
+def test_set_dialect_and_schema_names_rehighlight_only_on_change(highlighter):
+    highlighter.rehighlight = MagicMock()
+    highlighter.set_dialect("TSQL")
+    highlighter.set_dialect("tsql")
+    assert highlighter.dialect == "tsql"
+    assert highlighter.rehighlight.call_count == 1
+
+    highlighter.set_schema_names(["A"], ["b"])
+    highlighter.set_schema_names(["a"], ["B"])
+    assert highlighter.rehighlight.call_count == 2
+
+
+def test_dialect_switch_changes_keywords(highlighter):
+    highlighter.set_dialect("tsql")
+    highlighter.setFormat = MagicMock()
+    highlighter.highlightBlock("SELECT TOP 5 x")
+    assert _color_at(highlighter, 7, 3) == highlighter._theme.kw.name().upper()
+
+    highlighter.set_dialect("sqlite")
+    highlighter.setFormat = MagicMock()
+    highlighter.highlightBlock("SELECT TOP 5 x")
+    assert _color_at(highlighter, 7, 3) is None
+
+
+def test_keyword_override_survives_dialect_switch(highlighter):
+    highlighter.set_keywords(["CUSTOMKW"])
+    highlighter.set_dialect("tsql")
+    assert highlighter._keywords == ("CUSTOMKW",)

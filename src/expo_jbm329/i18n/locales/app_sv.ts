@@ -1819,6 +1819,16 @@ Vänligen se loggfil för mer information.</translation>
         <translation>Visa detaljer i logg (DEBUG) eller försök igen.</translation>
     </message>
     <message>
+        <location filename="../../db/core/errors.py" line="122"/>
+        <source>Ambiguous column reference.</source>
+        <translation>Tvetydig kolumnreferens.</translation>
+    </message>
+    <message>
+        <location filename="../../db/core/errors.py" line="123"/>
+        <source>Qualify the column with its table name or alias.</source>
+        <translation>Kvalificera kolumnen med dess tabellnamn eller alias.</translation>
+    </message>
+    <message>
         <location filename="../../db/core/errors.py" line="69"/>
         <source>Check database and object name.</source>
         <translation>Kontrollera databas och objektets namn.</translation>
@@ -8547,8 +8557,8 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <location filename="../../app/settings/settings_editor.py" line="324"/>
-        <source>SELECT TOP N value (0 = no limit):</source>
-        <translation>SELECT TOP N värde (0 = ingen gräns):</translation>
+        <source>Row limit for generated SELECT (0 = no limit):</source>
+        <translation>Radgräns för genererad SELECT (0 = ingen gräns):</translation>
     </message>
     <message>
         <location filename="../../app/settings/settings_editor.py" line="483"/>

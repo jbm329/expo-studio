@@ -310,10 +310,13 @@ class QueryController:
                 self._results.remove_pending_tab(pending_tab_id)
 
                 self._logger.warning(
-                    "QueryController: SQL failed (corr=%s, tab_id=%s, error=%s)",
+                    "QueryController: SQL failed (corr=%s, tab_id=%s, category=%s, code=%s, message=%s, hint=%s)",
                     corr_id,
                     pending_tab_id,
+                    err.category if err is not None else "unknown",
+                    err.code if err is not None else None,
                     err.message if err is not None else "unknown",
+                    err.hint if err is not None else None,
                 )
                 return
 

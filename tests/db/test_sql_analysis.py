@@ -330,6 +330,76 @@ def test_lint_schema_and_lint_syntax_cover_layered_schema_aware_behavior() -> No
     assert any(d.message == "WHERE is missing a condition." for d in diagnostics)
 
 
+def test_lint_schema_reports_full_ambiguous_column_tokens() -> None:
+    sql = "SELECT id, [id]\nFROM dbo.users AS u\nJOIN sales.orders AS o ON o.user_id = u.id"
+
+    diagnostics = [
+        diagnostic
+        for diagnostic in lint_syntax(sql, schema=SCHEMA)
+        if diagnostic.message.startswith("Ambiguous column")
+    ]
+
+    assert diagnostics == [
+        SqlDiagnostic(
+            severity="error",
+            message="Ambiguous column 'id'. Qualify it with a table name or alias.",
+            line=1,
+            column=8,
+            length=2,
+        ),
+        SqlDiagnostic(
+            severity="error",
+            message="Ambiguous column 'id'. Qualify it with a table name or alias.",
+            line=1,
+            column=12,
+            length=4,
+        ),
+    ]
+
+
+def test_lint_schema_accepts_qualified_and_unique_join_columns() -> None:
+    sql = "SELECT u.id, o.id, name, o.user_id FROM dbo.users AS u JOIN sales.orders AS o ON o.user_id = u.id"
+
+    diagnostics = lint_syntax(sql, schema=SCHEMA)
+
+    assert not any(diagnostic.message.startswith("Ambiguous column") for diagnostic in diagnostics)
+
+
+def test_lint_schema_does_not_guess_when_join_metadata_is_unresolved() -> None:
+    sql = "SELECT id FROM dbo.users AS u JOIN sales.missing AS m ON m.id = u.id"
+
+    diagnostics = lint_syntax(sql, schema=SCHEMA)
+
+    assert not any(diagnostic.message.startswith("Ambiguous column") for diagnostic in diagnostics)
+
+
+def test_lint_schema_keeps_nested_query_scopes_independent() -> None:
+    sql = "SELECT (SELECT id FROM dbo.users) AS user_id FROM sales.orders"
+
+    diagnostics = lint_syntax(sql, schema=SCHEMA)
+
+    assert not any(diagnostic.message.startswith("Ambiguous column") for diagnostic in diagnostics)
+
+
+def test_lint_schema_accepts_columns_merged_by_using_or_natural_join() -> None:
+    queries = [
+        "SELECT id FROM dbo.users AS u JOIN sales.orders AS o USING (id)",
+        "SELECT id FROM dbo.users AS u NATURAL JOIN sales.orders AS o",
+    ]
+
+    for sql in queries:
+        diagnostics = lint_syntax(sql, schema=SCHEMA)
+        assert not any(diagnostic.message.startswith("Ambiguous column") for diagnostic in diagnostics)
+
+
+def test_keyword_typo_lint_accepts_orders_table_name() -> None:
+    sql = "SELECT id FROM dbo.users AS u JOIN sales.orders AS o ON o.user_id = u.id"
+
+    diagnostics = lint_syntax(sql, schema=SCHEMA)
+
+    assert not any("Did you mean ORDER?" in diagnostic.message for diagnostic in diagnostics)
+
+
 def test_detect_statement_kind_and_select_like_cover_main_paths() -> None:
     assert detect_statement_kind("SELECT 1") == "select"
     assert detect_statement_kind("WITH cte AS (SELECT 1) SELECT * FROM cte") == "select"

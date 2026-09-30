@@ -38,6 +38,7 @@ from expo_jbm329.db.core.errors import (
     TR_SQL_EMPTY_HINT,
     TR_UNKNOWN_DATABASE_FAIL,
     TR_UNKNOWN_DATABASE_FAIL_HINT,
+    BulkColumnListingNotSupportedError,
     should_log,
 )
 from expo_jbm329.db.core.models import (
@@ -347,15 +348,17 @@ class DbService:
                     sql_signature=signature,
                 )
 
-            err = self._classify_error(e)
+            err = self._classify_error(e, conn.engine)
             if should_log(signature):
                 log.exception(
-                    "DbService: SQL error (signature=%s, corr=%s): %s %s - %s",
+                    "DbService: SQL error (signature=%s, corr=%s, category=%s, code=%s, message=%s, hint=%s, raw=%s)",
                     signature,
                     corr_id,
                     err.category,
-                    err.code or "",
+                    err.code,
                     err.message,
+                    err.hint,
+                    e,  # noqa: TRY401 - raw driver text is a required structured log field.
                 )
                 if err.category == "unknown":
                     log.debug("DbService: full exception:", exc_info=True)
@@ -596,17 +599,14 @@ class DbService:
             A mapping from (schema, table) tuples to lists of column metadata.
 
         Raises:
-            AttributeError: If the dialect does not support bulk column listing.
+            BulkColumnListingNotSupportedError: If the dialect does not support
+                whole-database column listing.
+            RuntimeError: If the bulk column query fails.
         """
-        sql_all_fn = getattr(self.dialect, "sql_all_columns", None)
-        if not callable(sql_all_fn):
-            msg = "Dialect does not implement sql_all_columns()."
-            raise TypeError(msg)
-
-        stmt = str(sql_all_fn())
+        stmt = self.dialect.sql_all_columns()
         if not stmt:
-            msg = "Dialect does not support whole-database column listing."
-            raise AttributeError(msg)
+            msg = f"Dialect '{self.dialect.name}' does not support whole-database column listing."
+            raise BulkColumnListingNotSupportedError(msg)
 
         res = self.execute_sql(conn, stmt, corr_id=corr_id)
         result: dict[tuple[str, str], list[dict[str, str]]] = {}
@@ -648,16 +648,17 @@ class DbService:
     # Error classification
     # -------------------------------------------------------------------------
 
-    def _classify_error(self, exc: Exception) -> SqlError:
+    def _classify_error(self, exc: Exception, engine: str | None = None) -> SqlError:
         """Dispatch to proper engine-specific classifier.
 
         Args:
             exc: The exception to classify.
+            engine: Configured database engine, when available.
 
         Returns:
             A Swedish SqlError suitable for UI display.
         """
-        name = self.dialect.name
+        name = engine or self.dialect.name
 
         if name == "mssql":
             from expo_jbm329.db.core.errors import classify_mssql
@@ -673,6 +674,16 @@ class DbService:
             from expo_jbm329.db.core.errors import classify_sqlite
 
             return classify_sqlite(exc)
+
+        if name in ("postgres", "postgresql"):
+            from expo_jbm329.db.core.errors import classify_postgresql
+
+            return classify_postgresql(exc)
+
+        if name == "oracle":
+            from expo_jbm329.db.core.errors import classify_oracle
+
+            return classify_oracle(exc)
 
         return SqlError(
             "unknown",

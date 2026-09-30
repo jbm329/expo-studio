@@ -26,7 +26,10 @@ DARK_THEME = Theme(
     comment=QColor("#8B949E"),
     operator=QColor("#79C0FF"),
     bracketed_ident=QColor("#DDDDDD"),
-    quoted_ident=QColor("#A1A1A1"),
+    # Kept clearly distinct from the comment grey (#8B949E).
+    quoted_ident=QColor("#D7BA7D"),
+    table_ident=QColor("#4EC9B0"),
+    column_ident=QColor("#9CDCFE"),
     kw_bold=True,
     func_bold=False,
 )

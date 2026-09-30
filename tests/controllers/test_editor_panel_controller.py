@@ -36,6 +36,24 @@ class DummyThemeService:
         return SimpleNamespace()
 
 
+class DummyHighlighter:
+    def __init__(self, doc, *, theme, dialect=None):
+        self.dialect = dialect
+        self.schema_names = None
+
+    def rehighlight(self):
+        pass
+
+    def set_theme(self, theme):
+        pass
+
+    def set_dialect(self, dialect):
+        self.dialect = dialect
+
+    def set_schema_names(self, objects, columns):
+        self.schema_names = (set(objects), set(columns))
+
+
 class DummyEditorWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -59,6 +77,9 @@ class DummyEditorWidget(QWidget):
 
     def set_highlighter(self, highlighter):
         self._highlighter = highlighter
+
+    def get_highlighter(self):
+        return self._highlighter
 
     def get_editor(self):
         return self._editor
@@ -93,11 +114,11 @@ def controller(monkeypatch):
     )
     monkeypatch.setattr(
         "expo_jbm329.workbench.controllers.editor_panel_controller.SqlHighlighter",
-        lambda doc, theme: SimpleNamespace(rehighlight=lambda: None, set_theme=lambda theme: None),
+        DummyHighlighter,
     )
     monkeypatch.setattr(
         "expo_jbm329.workbench.controllers.editor_panel_controller.SqlAutocompleteController",
-        lambda **kwargs: SimpleNamespace(install=lambda: None),
+        lambda **kwargs: SimpleNamespace(install=lambda: None, set_dialect=lambda dialect: None),
     )
     monkeypatch.setattr(
         "expo_jbm329.workbench.controllers.editor_panel_controller.SqlLintController",
@@ -107,6 +128,8 @@ def controller(monkeypatch):
             dispose=lambda: None,
             deleteLater=lambda: None,
             clear_diagnostics=lambda: None,
+            set_dialect=lambda dialect: None,
+            set_schema=lambda schema: None,
         ),
     )
     monkeypatch.setattr(
@@ -153,3 +176,48 @@ def test_active_tab_text_helpers(controller):
     assert ctrl.get_active_tab_text() == "SELECT 1"
     ctrl.set_active_tab_text("SELECT 2")
     assert widget.get_sql_text() == "SELECT 2"
+
+
+def _make_ctrl(get_cache_for, build_schema_dict=lambda schema: schema):
+    return EditorPanelController(
+        tab_manager=EditorTabManager(),
+        tab_widget=QTabWidget(),
+        icon_service=DummyIconService(),
+        highlighter_theme_service=DummyThemeService(),
+        get_cache_for=get_cache_for,
+        build_schema_dict=build_schema_dict,
+        get_connection_engine=lambda conn: "sqlite",
+        dialogs=DummyDialogService(),
+        parent=QWidget(),
+    )
+
+
+def test_highlighter_created_with_connection_dialect(controller):
+    ctrl = _make_ctrl(lambda conn: None)
+    ctrl.create_tab(connection_name="db", base_title="Q")
+    assert ctrl.get_active_editor_widget().get_highlighter().dialect == "sqlite"
+
+
+def test_update_autocomplete_makes_highlighter_schema_aware(controller):
+    entry = SimpleNamespace(db_name="db", tables=[], views=[], columns={}, loaded_at=None)
+    ctrl = _make_ctrl(
+        lambda conn: entry,
+        build_schema_dict=lambda cache: {"by_schema": {"main": {"Order": ["Id"], "Table": []}}},
+    )
+    ctrl.create_tab(connection_name="db", base_title="Q")
+    ctrl.update_autocomplete_for_active_tab()
+
+    highlighter = ctrl.get_active_editor_widget().get_highlighter()
+    assert highlighter.dialect == "sqlite"
+    assert highlighter.schema_names == ({"main", "Order", "Table"}, {"Id"})
+
+
+def test_update_autocomplete_without_connection_resets_highlighter(controller):
+    ctrl, _, _ = controller
+    ctrl.create_tab(base_title="Q")
+    highlighter = ctrl.get_active_editor_widget().get_highlighter()
+    highlighter.dialect = "tsql"
+    ctrl.update_autocomplete_for_active_tab()
+
+    assert highlighter.dialect is None
+    assert highlighter.schema_names == (set(), set())

@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 
+from expo_jbm329.db.core.models import SqlError, SqlResult
 from expo_jbm329.workbench.controllers.query_controller import QueryController
 
 
@@ -172,3 +173,37 @@ def test_on_worker_error_shows_critical():
     dialogs.critical(parent=qc._parent, title="Failure", text="trace")
 
     assert dialogs.critical.called
+
+
+def test_ambiguous_column_failure_shows_actionable_dialog_and_log():
+    qc, _, async_ops, results, _, dialogs = make_qc(sql_text="SELECT id FROM users u JOIN orders o ON o.user_id = u.id")
+    qc._logger = MagicMock()
+
+    qc.run_full()
+    async_ops.last_call["on_result"](
+        SqlResult(
+            ok=False,
+            error=SqlError(
+                category="ambiguous_column",
+                code=209,
+                message="Ambiguous column reference.",
+                hint="Qualify the column with its table name or alias.",
+            ),
+        )
+    )
+
+    dialogs.critical.assert_called_once_with(
+        parent=qc._parent,
+        title="Failure",
+        text=("Ambiguous column reference.\n\nHint: Qualify the column with its table name or alias."),
+    )
+    assert results.removed == ["tab-1"]
+    log_args = qc._logger.warning.call_args.args
+    assert log_args[0].endswith("(corr=%s, tab_id=%s, category=%s, code=%s, message=%s, hint=%s)")
+    assert log_args[2:] == (
+        "tab-1",
+        "ambiguous_column",
+        209,
+        "Ambiguous column reference.",
+        "Qualify the column with its table name or alias.",
+    )

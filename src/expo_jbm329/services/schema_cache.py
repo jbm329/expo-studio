@@ -18,6 +18,7 @@ from expo_jbm329.db.base import (
     list_columns,
     list_tables,
     list_views,
+    supports_bulk_column_listing,
 )
 from expo_jbm329.db.core.errors import (
     TR_AUTOCOMPLETE_READY,
@@ -282,6 +283,16 @@ class SchemaCacheManager:
             return
 
         token = self._make_token(connection_name)
+
+        if not supports_bulk_column_listing(connection_name):
+            # Engines such as SQLite need one metadata query per table.
+            self._logger.debug(
+                "SchemaCacheManager: bulk column listing not supported → batch prefetch (conn=%s, corr=%s).",
+                connection_name,
+                corr_id,
+            )
+            self._start_batch_prefetch(connection_name, token, corr_id)
+            return
 
         def _load_all_columns(conn: str) -> dict[tuple[str, str], list[dict[str, str]]]:
             return list_all_columns_map(conn, corr_id=corr_id)

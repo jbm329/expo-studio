@@ -321,7 +321,7 @@ class SettingsEditor(QDialog):
         self.spin_editor_topn = QSpinBox(self)
         self.spin_editor_topn.setRange(0, 1_000_000)  # allow 0 = no limit
         self.spin_editor_topn.setSingleStep(1000)
-        form_editor.addRow(self.tr("SELECT TOP N value (0 = no limit):"), self.spin_editor_topn)
+        form_editor.addRow(self.tr("Row limit for generated SELECT (0 = no limit):"), self.spin_editor_topn)
 
         row_schema.addWidget(box_editor, 1)
 

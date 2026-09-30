@@ -1,16 +1,18 @@
 """SQL syntax highlighting for the Expo workbench.
 
-This module provides a Qt syntax highlighter for SQL text, including support
-for keywords, functions, identifiers, numbers, operators, comments, and
-multi-line string and block-comment highlighting.
+This module provides a Qt syntax highlighter for SQL text. Tokenization is
+delegated to :mod:`sql_tokenizer`, which is dialect aware (quote styles,
+comment prefixes, keyword sets) and never detects keywords inside strings,
+comments or quoted identifiers. Optionally, known schema objects (tables,
+views, schemas) and columns are highlighted with dedicated colors.
 """
 
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, override
 
-from PyQt6.QtCore import QRegularExpression
 from PyQt6.QtGui import (
     QBrush,
     QColor,
@@ -18,6 +20,16 @@ from PyQt6.QtGui import (
     QSyntaxHighlighter,
     QTextCharFormat,
     QTextDocument,
+)
+
+from expo_jbm329.workbench.highlighter.sql_dialect_rules import SqlDialectRules, rules_for_dialect
+from expo_jbm329.workbench.highlighter.sql_tokenizer import (
+    STATE_IN_BLOCK_COMMENT,
+    STATE_IN_STRING,
+    STATE_NONE,
+    SqlToken,
+    TokenKind,
+    tokenize_line,
 )
 
 if TYPE_CHECKING:
@@ -41,6 +53,10 @@ class Theme:
     operator: QColor = field(default_factory=lambda: QColor("#005A5A"))  # Operators/symbols
     bracketed_ident: QColor = field(default_factory=lambda: QColor("#333333"))
     quoted_ident: QColor = field(default_factory=lambda: QColor("#2F4F4F"))
+
+    # Schema-aware identifiers (known tables/views/schemas and columns)
+    table_ident: QColor = field(default_factory=lambda: QColor("#267F99"))
+    column_ident: QColor = field(default_factory=lambda: QColor("#001080"))
 
     # Emphasis
     kw_bold: bool = True
@@ -74,9 +90,9 @@ def _mk_format(
 class SqlHighlighter(QSyntaxHighlighter):
     """Qt syntax highlighter for SQL text."""
 
-    _STATE_NONE = 0
-    _STATE_IN_BLOCK_COMMENT = 1
-    _STATE_IN_STRING = 2
+    _STATE_NONE = STATE_NONE
+    _STATE_IN_BLOCK_COMMENT = STATE_IN_BLOCK_COMMENT
+    _STATE_IN_STRING = STATE_IN_STRING
 
     def __init__(
         self,
@@ -85,200 +101,91 @@ class SqlHighlighter(QSyntaxHighlighter):
         theme: Theme,
         keywords: Sequence[str] | None = None,
         functions: Sequence[str] | None = None,
+        dialect: str | None = None,
     ) -> None:
         """Initialize the SQL highlighter.
 
         Args:
             document: The document to highlight.
             theme: Theme used to construct text formats.
-            keywords: Optional sequence of SQL keywords to highlight.
-            functions: Optional sequence of SQL functions to highlight.
+            keywords: Optional keywords overriding the dialect keyword set.
+            functions: Optional function names overriding the dialect function set.
+            dialect: Optional sqlglot dialect name (e.g. "tsql", "sqlite").
+                None uses generic rules covering all supported dialects.
         """
         super().__init__(document)
 
-        # ----- Theme & formats ------------------------------------------------
         self._theme = theme
+        self._build_formats(theme)
 
-        self._fmt_kw = _mk_format(theme.kw, bold=theme.kw_bold)
-        self._fmt_func = _mk_format(theme.func, bold=theme.func_bold)
-        self._fmt_ident = _mk_format(theme.ident)
-        self._fmt_string = _mk_format(theme.string, bg=theme.string_bg)
-        self._fmt_number = _mk_format(theme.number)
-        self._fmt_comment = _mk_format(theme.comment, bg=theme.comment_bg, italic=True)
-        self._fmt_operator = _mk_format(theme.operator)
-        self._fmt_bracketed_ident = _mk_format(theme.bracketed_ident)
-        self._fmt_quoted_ident = _mk_format(theme.quoted_ident)
-
-        # ----- Token sets -----------------------------------------------------
-        self._keywords = tuple(
-            kw.upper()
-            for kw in (
-                keywords
-                or [
-                    "SELECT",
-                    "FROM",
-                    "WHERE",
-                    "AND",
-                    "OR",
-                    "NOT",
-                    "NULL",
-                    "LIKE",
-                    "ILIKE",
-                    "JOIN",
-                    "INNER",
-                    "LEFT",
-                    "RIGHT",
-                    "FULL",
-                    "OUTER",
-                    "ON",
-                    "GROUP",
-                    "BY",
-                    "ORDER",
-                    "ASC",
-                    "DESC",
-                    "INSERT",
-                    "INTO",
-                    "VALUES",
-                    "UPDATE",
-                    "SET",
-                    "DELETE",
-                    "CREATE",
-                    "TABLE",
-                    "ALTER",
-                    "DROP",
-                    "VIEW",
-                    "INDEX",
-                    "CONSTRAINT",
-                    "PRIMARY",
-                    "KEY",
-                    "FOREIGN",
-                    "DISTINCT",
-                    "TOP",
-                    "HAVING",
-                    "CASE",
-                    "WHEN",
-                    "THEN",
-                    "ELSE",
-                    "END",
-                    "UNION",
-                    "ALL",
-                    "EXCEPT",
-                    "INTERSECT",
-                    "IS",
-                    "BETWEEN",
-                    "IN",
-                    "EXISTS",
-                    "OVER",
-                    "PARTITION",
-                    "ROWS",
-                    "RANGE",
-                    "CAST",
-                    "CONVERT",
-                    "COALESCE",
-                    "NVL",
-                    "WITH",
-                    "AS",
-                    "MATERIALIZED",
-                    "RECURSIVE",
-                ]
-            )
+        self._dialect: str | None = dialect
+        self._keyword_override: frozenset[str] | None = frozenset(kw.upper() for kw in keywords) if keywords else None
+        self._function_override: frozenset[str] | None = (
+            frozenset(fn.upper() for fn in functions) if functions else None
         )
+        self._object_names: frozenset[str] = frozenset()
+        self._column_names: frozenset[str] = frozenset()
 
-        self._functions = tuple(
-            fn.upper()
-            for fn in (
-                functions
-                or [
-                    "COUNT",
-                    "SUM",
-                    "AVG",
-                    "MIN",
-                    "MAX",
-                    "LOWER",
-                    "UPPER",
-                    "SUBSTRING",
-                    "LEFT",
-                    "RIGHT",
-                    "LEN",
-                    "LENGTH",
-                    "TRIM",
-                    "RTRIM",
-                    "LTRIM",
-                    "ROUND",
-                    "FLOOR",
-                    "CEILING",
-                    "ABS",
-                    "POWER",
-                    "GETDATE",
-                    "CURRENT_TIMESTAMP",
-                    "NOW",
-                    "DATEADD",
-                    "DATEDIFF",
-                    "DATE_TRUNC",
-                ]
-            )
-        )
-
-        # ----- Precompiled regex rules ---------------------------------------
-        self._re_number = QRegularExpression(r"(?<![\w])(?:\d+\.\d+|\d+)(?![\w])")
-        self._re_operator = QRegularExpression(r"[\+\-\*/=<>\.,;()\[\]]")
-        self._re_line_comment = QRegularExpression(r"--[^\n]*")
-        self._re_block_comment_start = QRegularExpression(r"/\*")
-        self._re_block_comment_end = QRegularExpression(r"\*/")
-        self._re_string_start = QRegularExpression(r"'")
-
-        # Identifiers in [], "", ``
-        self._re_bracketed_ident = QRegularExpression(r"\[[^\]]*\]")
-        self._re_dquoted_ident = QRegularExpression(r'"[^"]*"')
-        self._re_backtick_ident = QRegularExpression(r"`[^`]*`")
-
-        # Build keyword/function regex as whole-word, case-insensitive
-        self._re_keywords = [
-            QRegularExpression(
-                rf"\b{QRegularExpression.escape(kw)}\b",
-                QRegularExpression.PatternOption.CaseInsensitiveOption,
-            )
-            for kw in self._keywords
-        ]
-        self._re_functions = [
-            QRegularExpression(
-                rf"\b{QRegularExpression.escape(fn)}\s*(?=\()",
-                QRegularExpression.PatternOption.CaseInsensitiveOption,
-            )
-            for fn in self._functions
-        ]
+        self._rules: SqlDialectRules = self._build_rules()
+        self._keywords: tuple[str, ...] = tuple(sorted(self._rules.keywords))
+        self._functions: tuple[str, ...] = tuple(sorted(self._rules.functions))
 
     # ---------------------- Public API -------------------------------- #
+    @property
+    def dialect(self) -> str | None:
+        """Return the sqlglot dialect name used for highlighting, if any."""
+        return self._dialect
+
     def set_keywords(self, keywords: Iterable[str]) -> None:
-        """Replace the keyword set and rebuild keyword regex patterns.
+        """Replace the keyword set (overrides dialect keywords).
 
         Args:
             keywords: New SQL keywords to highlight.
         """
-        self._keywords = tuple(kw.upper() for kw in keywords)
-        self._re_keywords = [
-            QRegularExpression(
-                rf"\b{QRegularExpression.escape(kw)}\b",
-                QRegularExpression.PatternOption.CaseInsensitiveOption,
-            )
-            for kw in self._keywords
-        ]
+        self._keyword_override = frozenset(kw.upper() for kw in keywords)
+        self._refresh_rules()
         self.rehighlight()
 
     def set_functions(self, functions: Iterable[str]) -> None:
-        """Replace the function set and rebuild function regex patterns.
+        """Replace the function set (overrides dialect functions).
 
         Args:
             functions: New SQL function names to highlight.
         """
-        self._functions = tuple(fn.upper() for fn in functions)
-        self._re_functions = [
-            QRegularExpression(
-                rf"\b{QRegularExpression.escape(fn)}\s*(?=\()",
-                QRegularExpression.PatternOption.CaseInsensitiveOption,
-            )
-            for fn in self._functions
-        ]
+        self._function_override = frozenset(fn.upper() for fn in functions)
+        self._refresh_rules()
+        self.rehighlight()
+
+    def set_dialect(self, dialect: str | None) -> None:
+        """Switch the SQL dialect used for tokenization.
+
+        Rehighlights only if the dialect actually changed.
+
+        Args:
+            dialect: sqlglot dialect name, or None for generic rules.
+        """
+        normalized = dialect.lower() if dialect else None
+        if normalized == self._dialect:
+            return
+        self._dialect = normalized
+        self._refresh_rules()
+        self.rehighlight()
+
+    def set_schema_names(self, objects: Iterable[str], columns: Iterable[str]) -> None:
+        """Set known schema object and column names for schema-aware coloring.
+
+        Matching is case-insensitive. Rehighlights only if the names changed.
+
+        Args:
+            objects: Table, view and schema names.
+            columns: Column names.
+        """
+        object_names = frozenset(name.lower() for name in objects if name)
+        column_names = frozenset(name.lower() for name in columns if name)
+        if object_names == self._object_names and column_names == self._column_names:
+            return
+        self._object_names = object_names
+        self._column_names = column_names
         self.rehighlight()
 
     def set_theme(self, theme: Theme) -> None:
@@ -288,15 +195,7 @@ class SqlHighlighter(QSyntaxHighlighter):
             theme: New theme to apply.
         """
         self._theme = theme
-        self._fmt_kw = _mk_format(theme.kw, bold=theme.kw_bold)
-        self._fmt_func = _mk_format(theme.func, bold=theme.func_bold)
-        self._fmt_ident = _mk_format(theme.ident)
-        self._fmt_string = _mk_format(theme.string, bg=theme.string_bg)
-        self._fmt_number = _mk_format(theme.number)
-        self._fmt_comment = _mk_format(theme.comment, bg=theme.comment_bg, italic=True)
-        self._fmt_operator = _mk_format(theme.operator)
-        self._fmt_bracketed_ident = _mk_format(theme.bracketed_ident)
-        self._fmt_quoted_ident = _mk_format(theme.quoted_ident)
+        self._build_formats(theme)
         self.rehighlight()
 
     # ---------------------- QSyntaxHighlighter ------------------------ #
@@ -307,146 +206,72 @@ class SqlHighlighter(QSyntaxHighlighter):
         Args:
             text: The current text block to highlight.
         """
-        text = text or ""
-        self.setCurrentBlockState(self._STATE_NONE)
-
-        # 1) Continue multi-line constructs if needed
-        if self.previousBlockState() == self._STATE_IN_BLOCK_COMMENT:
-            self._apply_block_comment(text, continuing=True)
-        elif self.previousBlockState() == self._STATE_IN_STRING:
-            self._apply_multiline_string(text, continuing=True)
-
-        # 2) Single-line primitives
-        self._apply_regex_all(self._re_bracketed_ident, text, self._fmt_bracketed_ident)
-        self._apply_regex_all(self._re_dquoted_ident, text, self._fmt_quoted_ident)
-        self._apply_regex_all(self._re_backtick_ident, text, self._fmt_quoted_ident)
-        self._apply_regex_all(self._re_number, text, self._fmt_number)
-        self._apply_regex_all(self._re_operator, text, self._fmt_operator)
-
-        # 3) Start multi-line constructs on this line
-        self._apply_block_comment(text, continuing=False)
-        self._apply_multiline_string(text, continuing=False)
-
-        # 4) Keywords and functions last
-        for rx in self._re_keywords:
-            self._apply_regex_all(rx, text, self._fmt_kw)
-        for rx in self._re_functions:
-            self._apply_regex_all(rx, text, self._fmt_func)
-
-        # 5) Comments
-        self._apply_regex_all(self._re_line_comment, text, self._fmt_comment)
+        tokens, end_state = tokenize_line(text or "", self._rules, self.previousBlockState())
+        self.setCurrentBlockState(end_state)
+        for token in tokens:
+            fmt = self._format_for(token)
+            if fmt is not None and token.length > 0:
+                self.setFormat(token.start, token.length, fmt)
 
     # ---------------------- Internals --------------------------------- #
-    def _apply_regex_all(self, rx: QRegularExpression, text: str, fmt: QTextCharFormat) -> None:
-        """Apply a regex format to all matches in a text block.
+    def _build_formats(self, theme: Theme) -> None:
+        """Create text formats from a theme."""
+        self._fmt_kw = _mk_format(theme.kw, bold=theme.kw_bold)
+        self._fmt_func = _mk_format(theme.func, bold=theme.func_bold)
+        self._fmt_ident = _mk_format(theme.ident)
+        self._fmt_string = _mk_format(theme.string, bg=theme.string_bg)
+        self._fmt_number = _mk_format(theme.number)
+        self._fmt_comment = _mk_format(theme.comment, bg=theme.comment_bg, italic=True)
+        self._fmt_operator = _mk_format(theme.operator)
+        self._fmt_bracketed_ident = _mk_format(theme.bracketed_ident)
+        self._fmt_quoted_ident = _mk_format(theme.quoted_ident)
+        self._fmt_table_ident = _mk_format(theme.table_ident)
+        self._fmt_column_ident = _mk_format(theme.column_ident)
 
-        Args:
-            rx: Regular expression used for matching.
-            text: The text block to process.
-            fmt: Text format to apply to matches.
-        """
-        it = rx.globalMatch(text)
-        while it.hasNext():
-            m = it.next()
-            start = m.capturedStart()
-            length = m.capturedLength()
-            if start >= 0 and length > 0:
-                self.setFormat(start, length, fmt)
+    def _build_rules(self) -> SqlDialectRules:
+        """Combine dialect rules with explicit keyword/function overrides."""
+        rules = rules_for_dialect(self._dialect)
+        if self._keyword_override is not None:
+            rules = dataclasses.replace(rules, keywords=self._keyword_override)
+        if self._function_override is not None:
+            rules = dataclasses.replace(rules, functions=self._function_override)
+        return rules
 
-    def _apply_block_comment(self, text: str, *, continuing: bool) -> None:
-        """Highlight block comments and manage block state transitions.
+    def _refresh_rules(self) -> None:
+        self._rules = self._build_rules()
+        self._keywords = tuple(sorted(self._rules.keywords))
+        self._functions = tuple(sorted(self._rules.functions))
 
-        Args:
-            text: The text block to process.
-            continuing: Whether the previous block was already inside a block comment.
-        """
-        start_index = 0
-        if continuing:
-            end_match = self._re_block_comment_end.match(text, 0)
-            if end_match.hasMatch():
-                end_pos = end_match.capturedEnd()
-                self.setFormat(0, end_pos, self._fmt_comment)
-                start_index = end_pos
-            else:
-                self.setFormat(0, len(text), self._fmt_comment)
-                self.setCurrentBlockState(self._STATE_IN_BLOCK_COMMENT)
-                return
-
-        while True:
-            start_match = self._re_block_comment_start.match(text, start_index)
-            if not start_match.hasMatch():
-                break
-
-            start_pos = start_match.capturedStart()
-            end_match = self._re_block_comment_end.match(text, start_pos + 2)
-
-            if end_match.hasMatch():
-                end_pos = end_match.capturedEnd()
-                self.setFormat(start_pos, end_pos - start_pos, self._fmt_comment)
-                start_index = end_pos
-            else:
-                self.setFormat(start_pos, len(text) - start_pos, self._fmt_comment)
-                self.setCurrentBlockState(self._STATE_IN_BLOCK_COMMENT)
-                break
-
-    def _apply_multiline_string(self, text: str, *, continuing: bool) -> None:
-        """Highlight single-quoted strings across block boundaries.
-
-        Args:
-            text: The text block to process.
-            continuing: Whether the previous block was already inside a string.
-        """
-        start_index = 0
-
-        if continuing:
-            end_pos = self._find_string_end(text, 0)
-            if end_pos is not None:
-                length = end_pos + 1
-                self.setFormat(0, length, self._fmt_string)
-                start_index = length
-            else:
-                self.setFormat(0, len(text), self._fmt_string)
-                self.setCurrentBlockState(self._STATE_IN_STRING)
-                return
-
-        while True:
-            start_match = self._re_string_start.match(text, start_index)
-            if not start_match.hasMatch():
-                break
-
-            s_pos = start_match.capturedStart()
-            end_pos = self._find_string_end(text, s_pos + 1)
-
-            if end_pos is not None:
-                self.setFormat(s_pos, (end_pos - s_pos) + 1, self._fmt_string)
-                start_index = end_pos + 1
-            else:
-                self.setFormat(s_pos, len(text) - s_pos, self._fmt_string)
-                self.setCurrentBlockState(self._STATE_IN_STRING)
-                break
-
-    @staticmethod
-    def _find_string_end(text: str, start: int) -> int | None:
-        """Find the end of a SQL single-quoted string.
-
-        Handles doubled single quotes as escaped quotes.
-
-        Args:
-            text: The text block to scan.
-            start: Index to start scanning from.
-
-        Returns:
-            The index of the closing quote, or None if no closing quote exists
-            in the current block.
-        """
-        i = start
-        n = len(text)
-        while i < n:
-            ch = text[i]
-            if ch == "'":
-                if (i + 1) < n and text[i + 1] == "'":
-                    i += 2
-                    continue
-                return i
-            i += 1
+    def _schema_format(self, token: SqlToken) -> QTextCharFormat | None:
+        """Return the table/column format when the identifier is a known schema name."""
+        name = token.name.lower()
+        is_object = name in self._object_names
+        is_column = name in self._column_names
+        if is_object and (token.qualifier or not is_column):
+            return self._fmt_table_ident
+        if is_column:
+            return self._fmt_column_ident
         return None
+
+    def _format_for(self, token: SqlToken) -> QTextCharFormat | None:
+        """Map a token to its text format."""
+        match token.kind:
+            case TokenKind.KEYWORD:
+                return self._fmt_kw
+            case TokenKind.FUNCTION:
+                return self._fmt_func
+            case TokenKind.STRING:
+                return self._fmt_string
+            case TokenKind.NUMBER:
+                return self._fmt_number
+            case TokenKind.COMMENT:
+                return self._fmt_comment
+            case TokenKind.OPERATOR:
+                return self._fmt_operator
+            case TokenKind.QUOTED_IDENTIFIER:
+                schema_fmt = self._schema_format(token)
+                if schema_fmt is not None:
+                    return schema_fmt
+                return self._fmt_bracketed_ident if token.quote == "[" else self._fmt_quoted_ident
+            case TokenKind.IDENTIFIER:
+                return self._schema_format(token)

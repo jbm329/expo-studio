@@ -1,7 +1,7 @@
 """Database error classification and throttling utilities.
 
 This module provides tools for mapping raw database exceptions from different
-engines (MSSQL, MySQL, SQLite) into a common `SqlError` model with English
+engines into a common `SqlError` model with English
 user-facing messages (serving as keys for i18n). It also includes log
 throttling to prevent flooding the application logs with repeated
 identical errors.
@@ -16,7 +16,14 @@ from PyQt6.QtCore import QT_TRANSLATE_NOOP
 
 from .models import SqlError
 
-_CODE_RE = re.compile(r"\((\d{3,6})\)")
+
+class BulkColumnListingNotSupportedError(AttributeError):
+    """Raised when a dialect cannot list all columns with a single query."""
+
+
+_CODE_RE = re.compile(r"\((\d{3,6})(?:\)|,)")
+_POSTGRES_SQLSTATE_RE = re.compile(r"\b(?:sqlstate[=:\s]*)?(\d{5})\b", re.IGNORECASE)
+_ORACLE_CODE_RE = re.compile(r"\bORA-(\d{5})\b", re.IGNORECASE)
 _last_err_ts: dict[str, float] = {}
 
 MSSQL_MISSING_PROC = 2812
@@ -24,6 +31,7 @@ MSSQL_MISSING_OBJECT = 208
 MSSQL_SYNTAX_ERROR = 102
 MSSQL_INVALID_COLUMN = 207
 MSSQL_UNKNOWN_IDENTIFIER = 4104
+MSSQL_AMBIGUOUS_COLUMN = 209
 
 MYSQL_SYNTAX_ERROR = 1064
 MYSQL_MISSING_OBJECT = 1146
@@ -32,6 +40,10 @@ MYSQL_MISSING_PROC = 1305
 MYSQL_ACCESS_DENIED = 1045
 MYSQL_UNKNOWN_DATABASE = 1049
 MYSQL_LOCK_WAIT_TIMEOUT = 1205
+MYSQL_AMBIGUOUS_COLUMN = 1052
+
+POSTGRES_AMBIGUOUS_COLUMN = 42702
+ORACLE_AMBIGUOUS_COLUMN = 918
 
 # --- i18n markers (pylupdate6-visible) -----------------------------
 # MSSQL
@@ -106,6 +118,8 @@ TR_EXEC_DISABLED_HINT = QT_TRANSLATE_NOOP("DbErrors", "Enable EXEC in settings o
 TR_UNKNOWN_DATABASE_FAIL = QT_TRANSLATE_NOOP("DbErrors", "Unknown database failure.")
 TR_UNKNOWN_DATABASE_FAIL_HINT = QT_TRANSLATE_NOOP("DbErrors", "Show details in log (DEBUG) or try again.")
 TR_COULD_NOT_INIT_CONN = QT_TRANSLATE_NOOP("DbErrors", "Could not initialize connection.")
+TR_AMBIGUOUS_COLUMN = QT_TRANSLATE_NOOP("DbErrors", "Ambiguous column reference.")
+TR_AMBIGUOUS_COLUMN_HINT = QT_TRANSLATE_NOOP("DbErrors", "Qualify the column with its table name or alias.")
 
 # Schema Cache / Autocomplete
 TR_PREPARING_AUTOCOMPLETE_BULK = QT_TRANSLATE_NOOP("DbErrors", "Preparing autocomplete (bulk)…")
@@ -138,7 +152,8 @@ def should_log(signature: str, window_s: float = 5.0) -> bool:
 def extract_code(msg: str) -> int | None:
     """Extract a numeric error code from a database error message.
 
-    The code is expected to be enclosed in parentheses, e.g., "(208)".
+    The code is expected at the start of parenthesized driver details, such as
+    ``(208)`` or ``(1052, ...)``.
 
     Args:
         msg: The raw error message string.
@@ -166,6 +181,33 @@ def extract_code(msg: str) -> int | None:
     return None
 
 
+def _ambiguous_column_error(code: int | None) -> SqlError:
+    """Build the common error shown for ambiguous column references."""
+    return SqlError(
+        "ambiguous_column",
+        code,
+        TR_AMBIGUOUS_COLUMN,
+        TR_AMBIGUOUS_COLUMN_HINT,
+    )
+
+
+def _postgres_error_code(exc: Exception, raw: str) -> int | None:
+    """Extract a PostgreSQL SQLSTATE from driver or wrapped exceptions."""
+    current: object | None = exc
+    seen: set[int] = set()
+
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        for attribute in ("sqlstate", "pgcode"):
+            value = getattr(current, attribute, None)
+            if value is not None and str(value).isdigit():
+                return int(str(value))
+        current = getattr(current, "orig", None)
+
+    match = _POSTGRES_SQLSTATE_RE.search(raw)
+    return int(match.group(1)) if match is not None else None
+
+
 def classify_mssql(exc: Exception) -> SqlError:
     """Map common SQL Server errors to categorized messages.
 
@@ -180,6 +222,9 @@ def classify_mssql(exc: Exception) -> SqlError:
     raw = str(exc) or ""
     lo = raw.lower()
     code = extract_code(raw)
+
+    if "ambiguous column name" in lo or code == MSSQL_AMBIGUOUS_COLUMN:
+        return _ambiguous_column_error(code or MSSQL_AMBIGUOUS_COLUMN)
 
     if "could not find stored procedure" in lo or code == MSSQL_MISSING_PROC:
         return SqlError(
@@ -237,6 +282,9 @@ def classify_mysql(exc: Exception) -> SqlError:
     raw = str(exc) or ""
     lo = raw.lower()
     code = extract_code(raw)
+
+    if ("column" in lo and "ambiguous" in lo) or code == MYSQL_AMBIGUOUS_COLUMN:
+        return _ambiguous_column_error(code or MYSQL_AMBIGUOUS_COLUMN)
 
     # Parse error / syntax
     if "you have an error in your sql syntax" in lo or code == MYSQL_SYNTAX_ERROR:
@@ -316,6 +364,9 @@ def classify_sqlite(exc: Exception) -> SqlError:
     raw = str(exc) or ""
     lo = raw.lower()
 
+    if "ambiguous column name" in lo:
+        return _ambiguous_column_error(None)
+
     if "near" in lo and "syntax error" in lo:
         return SqlError("syntax", None, TR_SQL_SYNTAX_ERROR_SQLITE, TR_SQL_SYNTAX_ERROR_HINT_SQLITE)
 
@@ -334,3 +385,22 @@ def classify_sqlite(exc: Exception) -> SqlError:
         return SqlError("connection", None, TR_UNKNOWN_DATABASE_SQLITE, TR_UNKNOWN_DATABASE_HINT_SQLITE)
 
     return SqlError("unknown", None, TR_UNKNOWN_FAILURE_SQLITE, TR_UNKNOWN_FAILURE_HINT_SQLITE)
+
+
+def classify_postgresql(exc: Exception) -> SqlError:
+    """Map PostgreSQL ambiguous-column errors to the common error model."""
+    raw = str(exc) or ""
+    code = _postgres_error_code(exc, raw)
+    if ("column reference" in raw.lower() and "ambiguous" in raw.lower()) or code == POSTGRES_AMBIGUOUS_COLUMN:
+        return _ambiguous_column_error(code or POSTGRES_AMBIGUOUS_COLUMN)
+    return SqlError("unknown", code, TR_UNKNOWN_DATABASE_FAIL, TR_UNKNOWN_DATABASE_FAIL_HINT)
+
+
+def classify_oracle(exc: Exception) -> SqlError:
+    """Map Oracle ambiguous-column errors to the common error model."""
+    raw = str(exc) or ""
+    match = _ORACLE_CODE_RE.search(raw)
+    code = int(match.group(1)) if match is not None else extract_code(raw)
+    if "column ambiguously defined" in raw.lower() or code == ORACLE_AMBIGUOUS_COLUMN:
+        return _ambiguous_column_error(code or ORACLE_AMBIGUOUS_COLUMN)
+    return SqlError("unknown", code, TR_UNKNOWN_DATABASE_FAIL, TR_UNKNOWN_DATABASE_FAIL_HINT)
