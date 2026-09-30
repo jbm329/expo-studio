@@ -2,7 +2,7 @@
 
 Builds the observed contingency table of two columns, then runs Pearson's
 chi-square test of independence (`scipy.stats.chi2_contingency`, which
-applies Yates' continuity correction for 2x2 tables), Cramér's V effect
+applies Yates' continuity correction for 2x2 tables), CramÃ©r's V effect
 size, and - for 2x2 tables only - Fisher's exact test as a small-sample
 alternative. Adjusted standardized residuals are returned per cell so the
 caller can show *which* cells drive a significant result, and Cochran's
@@ -43,6 +43,9 @@ COCHRAN_MAX_LOW_EXPECTED_FRACTION = 0.2
 COCHRAN_MIN_EXPECTED_COUNT = 1.0
 
 _TWO_BY_TWO = (2, 2)
+
+# A test of independence compares a pair of columns.
+_COLUMNS_PER_TEST = 2
 
 
 class ChiSquareError(StrEnum):
@@ -85,7 +88,7 @@ class ChiSquareResult:
         degrees_of_freedom: ``(rows - 1) * (columns - 1)``.
         yates_correction_applied: Whether Yates' continuity correction was
             applied (scipy does so for 2x2 tables only).
-        cramers_v: Cramér's V effect size in ``[0, 1]``.
+        cramers_v: CramÃ©r's V effect size in ``[0, 1]``.
         fisher_odds_ratio: Fisher's exact test odds ratio; `None` unless
             the table is 2x2.
         fisher_p_value: Fisher's exact test p-value; `None` unless the
@@ -124,14 +127,14 @@ class ChiSquareResult:
     excluded_columns: tuple[ExcludedColumn, ...] = ()
 
 
-def _error_result(
-    error: ChiSquareError,
+def _unfitted_result(
+    error: ChiSquareError | None,
     *,
     row_column: str,
     column_column: str,
     columns: GroupingColumns,
 ) -> ChiSquareResult:
-    """Build a `ChiSquareResult` carrying only a structured error."""
+    """Build a `ChiSquareResult` without table data, carrying `error` if any."""
     return ChiSquareResult(
         row_column=row_column,
         column_column=column_column,
@@ -178,6 +181,31 @@ def _to_float_rows(table: np.ndarray) -> tuple[tuple[float, ...], ...]:
     return tuple(tuple(float(value) for value in row) for row in table)
 
 
+def initialize_chi_square(df: pd.DataFrame) -> ChiSquareResult:
+    """Return the default chi-square configuration without testing any columns.
+
+    Only distinct-value counts are inspected, so the configuration can be
+    shown before the user applies it.
+
+    Args:
+        df: The DataFrame to inspect. Never mutated.
+
+    Returns:
+        A result without table data, using the first two eligible
+        categorical columns. Its `error` is `NOT_ENOUGH_COLUMNS` when fewer
+        than two eligible columns exist, and `None` otherwise.
+    """
+    columns = classify_grouping_columns(df)
+    available = columns.eligible
+    enough = len(available) >= _COLUMNS_PER_TEST
+    return _unfitted_result(
+        None if enough else ChiSquareError.NOT_ENOUGH_COLUMNS,
+        row_column=available[0] if enough else "",
+        column_column=available[1] if enough else "",
+        columns=columns,
+    )
+
+
 def analyze_chi_square(
     df: pd.DataFrame,
     row_column: str | None = None,
@@ -211,7 +239,7 @@ def analyze_chi_square(
         column_column = others[0] if others else ""
 
     if row_column == "" or column_column == "":
-        return _error_result(
+        return _unfitted_result(
             ChiSquareError.NOT_ENOUGH_COLUMNS,
             row_column=row_column,
             column_column=column_column,
@@ -219,7 +247,7 @@ def analyze_chi_square(
         )
 
     if row_column == column_column or row_column not in df.columns or column_column not in df.columns:
-        return _error_result(
+        return _unfitted_result(
             ChiSquareError.INVALID_COLUMN,
             row_column=row_column,
             column_column=column_column,
@@ -231,14 +259,14 @@ def analyze_chi_square(
     n_rows, n_columns = crosstab.shape
 
     if min(n_rows, n_columns) < MIN_GROUPS:
-        return _error_result(
+        return _unfitted_result(
             ChiSquareError.TOO_FEW_CATEGORIES,
             row_column=row_column,
             column_column=column_column,
             columns=columns,
         )
     if max(n_rows, n_columns) > MAX_GROUPS:
-        return _error_result(
+        return _unfitted_result(
             ChiSquareError.TOO_MANY_CATEGORIES,
             row_column=row_column,
             column_column=column_column,

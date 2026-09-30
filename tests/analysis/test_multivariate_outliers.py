@@ -13,6 +13,7 @@ from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierError,
     MultivariateOutlierMethod,
     analyze_multivariate_outliers,
+    initialize_multivariate_outliers,
 )
 
 
@@ -137,3 +138,27 @@ def test_defaults_are_exposed_in_the_result():
     result = analyze_multivariate_outliers(_frame())
 
     assert result.lof_neighbors == DEFAULT_LOF_NEIGHBORS
+
+
+def test_initialize_multivariate_outliers_uses_defaults_without_fitting():
+    df = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4, 5, 6], "t": list("xyz")})
+
+    result = initialize_multivariate_outliers(df)
+
+    assert result.method is MultivariateOutlierMethod.ISOLATION_FOREST
+    assert result.columns == ("a", "b")
+    assert result.available_columns == ("a", "b")
+    assert result.standardize is True
+    assert result.contamination == DEFAULT_CONTAMINATION
+    assert result.lof_neighbors == DEFAULT_LOF_NEIGHBORS
+    assert result.total_rows == 3
+    assert result.rows_used == 0
+    assert result.extremes == ()
+    assert result.error is None
+
+
+def test_initialize_multivariate_outliers_with_one_numeric_column_reports_the_error():
+    result = initialize_multivariate_outliers(pd.DataFrame({"a": [1.0, 2.0], "t": ["x", "y"]}))
+
+    assert result.columns == ("a",)
+    assert result.error is MultivariateOutlierError.NOT_ENOUGH_NUMERIC_COLUMNS

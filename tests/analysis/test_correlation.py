@@ -24,6 +24,7 @@ from expo_jbm329.services.analysis.correlation import (
     correlation_strength,
     default_pair,
     holm_adjust,
+    initialize_correlation,
 )
 
 
@@ -440,3 +441,25 @@ def test_pair_constant_input_error() -> None:
     assert detail.error is CorrelationError.CONSTANT_INPUT
     assert detail.pair.n == 4
     assert math.isnan(detail.pair.coefficient)
+
+
+def test_initialize_correlation_selects_default_columns_without_coefficients() -> None:
+    df = pd.DataFrame({f"n{i}": [float(i), float(i + 1)] for i in range(DEFAULT_SELECTED_COLUMNS + 2)})
+    df["text"] = ["x", "y"]
+
+    result = initialize_correlation(df)
+
+    assert result.error is None
+    assert result.method is CorrelationMethod.PEARSON
+    assert result.available_columns == tuple(f"n{i}" for i in range(DEFAULT_SELECTED_COLUMNS + 2))
+    assert result.columns == result.available_columns[:DEFAULT_SELECTED_COLUMNS]
+    assert result.coefficients == ()
+    assert result.pairs == ()
+
+
+def test_initialize_correlation_reports_too_few_numeric_columns() -> None:
+    result = initialize_correlation(pd.DataFrame({"a": [1.0, 2.0], "text": ["x", "y"]}))
+
+    assert result.error is CorrelationError.NOT_ENOUGH_NUMERIC_COLUMNS
+    assert result.columns == ()
+    assert result.available_columns == ("a",)

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import dataclasses
+
 import pandas as pd
 import pytest
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QTableWidget, QWidget
+from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QLabel, QTableWidget, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
 from expo_jbm329.gui.dialogs.analysis.clustering_config import ClusteringConfigWidget
@@ -28,7 +30,7 @@ from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.correlation import CorrelationMethod
-from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierMethod
+from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierError, MultivariateOutlierMethod
 from expo_jbm329.services.analysis.outliers import OutlierMethod
 from expo_jbm329.services.analysis.pca import PCAError
 from expo_jbm329.services.analysis.regression import RegressionError
@@ -170,6 +172,12 @@ def _simulate_success(call_kwargs: dict) -> None:
         return
     result = call_kwargs["work"](cancel_cb=lambda: False)
     call_kwargs["on_result"](result)
+
+
+def _assert_apply_prompt(ctrl: AnalysisController, dlg: DummyAnalysisDialog) -> None:
+    content = dlg.content_widget()
+    assert isinstance(content, QLabel)
+    assert content.text() == ctrl._tr(ctrl.TR_APPLY_PROMPT)  # noqa: SLF001
 
 
 def test_open_dialog_does_nothing_when_there_are_no_datasets(dialog_factory):
@@ -599,7 +607,7 @@ def test_no_category_selected_does_not_touch_the_dialog(dialog_factory):
 
 
 # ----------------------------------------------------------------------
-# Hypothesis Tests / Group Comparison: config-driven recompute
+# Hypothesis Tests: Apply-first recompute
 # ----------------------------------------------------------------------
 
 
@@ -638,195 +646,133 @@ def _open_hypothesis_tests(async_ops: DummyAsyncOps, dialog_factory, df: pd.Data
     dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
     dlg._selected_dataset_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
-    _simulate_success(async_ops.last_call)
     return ctrl, dlg
 
 
-def test_hypothesis_tests_category_runs_as_a_background_job_with_a_busy_overlay(dialog_factory):
-    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=4, column_count=3)
-    async_ops = DummyAsyncOps()
-    ctrl = AnalysisController(
-        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": _hypothesis_tests_df()}),
-        async_ops=async_ops,
-    )
-    _open_and_flush(ctrl, QWidget())
+def _hypothesis_tests_config(dlg: DummyAnalysisDialog) -> HypothesisTestsConfigWidget:
+    config = dlg.config_widgets[-1]
+    assert isinstance(config, HypothesisTestsConfigWidget)
+    return config
 
-    dlg = dialog_factory[0]
-    dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
-    dlg._selected_dataset_tab_id = "t1"
-    dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
+
+def _apply_hypothesis_test(async_ops: DummyAsyncOps, dlg: DummyAnalysisDialog) -> dict:
+    """Click Apply and return the test job's call, without completing it."""
+    _hypothesis_tests_config(dlg)._apply_button.click()  # noqa: SLF001
+    return async_ops.last_call
+
+
+def _select_test(config: HypothesisTestsConfigWidget, test: HypothesisTest) -> None:
+    combo = config._test_combo  # noqa: SLF001
+    combo.setCurrentIndex(combo.findData(test.value))
+
+
+def test_hypothesis_tests_initialize_without_a_job_and_prompt_for_apply(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+
+    assert async_ops.calls == []
+    _assert_apply_prompt(ctrl, dlg)
+    config = _hypothesis_tests_config(dlg)
+    assert config.current_configuration() == (HypothesisTest.GROUP_COMPARISON, ("value", "grp"))
+    assert config.chi_square_selection() == ("grp", "color")
+    assert config.applied_configuration() is None
+
+
+def test_hypothesis_tests_with_no_eligible_columns_show_the_error_and_the_test_selector(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory, pd.DataFrame({"a": ["x", "y", "z"]}))
+
+    assert async_ops.calls == []
+    assert isinstance(dlg.content_widget(), GroupComparisonView)
+    config = _hypothesis_tests_config(dlg)
+    assert config.group_comparison_selection() is None
+    assert config.chi_square_selection() is None
+    assert not config._apply_button.isEnabled()  # noqa: SLF001
+
+
+def test_hypothesis_test_column_changes_start_no_job_until_applied(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+
+    _gc_numeric_combo(_hypothesis_tests_config(dlg)).setCurrentIndex(1)  # "value" -> "other"
+
+    assert async_ops.calls == []
+
+
+def test_applying_a_hypothesis_test_runs_a_background_job_and_keeps_the_config(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = _hypothesis_tests_config(dlg)
+    config_widgets_before = len(dlg.config_widgets)
+    _gc_numeric_combo(config).setCurrentIndex(1)  # "value" -> "other"
+
+    call = _apply_hypothesis_test(async_ops, dlg)
 
     assert len(async_ops.calls) == 1
-    call = async_ops.last_call
+    assert call["scope"] == "analysis:hypothesis_tests:group_comparison:other:grp"
     assert call["target"] is dlg.content_panel()
-    assert call["scope"] == "analysis:hypothesis_tests"
-    assert dlg.content_widgets == []
+    assert call["cancelable"] is False
+    assert call["indeterminate"] is True
+    assert call["timeout_ms"] == 60_000
 
     _simulate_success(call)
 
-    assert len(dlg.content_widgets) == 1
-    assert isinstance(dlg.content_widgets[0], GroupComparisonView)
-
-
-def test_hypothesis_tests_category_also_builds_a_column_picker_config_widget(dialog_factory):
-    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=4, column_count=3)
-    async_ops = DummyAsyncOps()
-    ctrl = AnalysisController(
-        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": _hypothesis_tests_df()}),
-        async_ops=async_ops,
-    )
-    _open_and_flush(ctrl, QWidget())
-
-    dlg = dialog_factory[0]
-    dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
-    dlg._selected_dataset_tab_id = "t1"
-    dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
-    _simulate_success(async_ops.last_call)
-
-    assert len(dlg.config_widgets) == 2  # proactive None, then the real config widget
-    config = dlg.config_widgets[-1]
-    assert isinstance(config, HypothesisTestsConfigWidget)
-    assert config.current_configuration() == (HypothesisTest.GROUP_COMPARISON, ("value", "grp"))
-    assert config.chi_square_selection() == ("grp", "color")
-
-
-def test_hypothesis_tests_with_no_eligible_columns_still_shows_the_test_selector(dialog_factory):
-    df = pd.DataFrame({"a": ["x", "y", "z"]})
-    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=1)
-    async_ops = DummyAsyncOps()
-    ctrl = AnalysisController(
-        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": df}),
-        async_ops=async_ops,
-    )
-    _open_and_flush(ctrl, QWidget())
-
-    dlg = dialog_factory[0]
-    dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
-    dlg._selected_dataset_tab_id = "t1"
-    dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
-    _simulate_success(async_ops.last_call)
-
-    assert isinstance(dlg.content_widgets[-1], GroupComparisonView)
-    config = dlg.config_widgets[-1]
-    assert isinstance(config, HypothesisTestsConfigWidget)
-    assert config.group_comparison_selection() is None
-    assert config.chi_square_selection() is None
-
-
-def test_changing_the_hypothesis_tests_config_selection_dispatches_a_new_background_job(dialog_factory):
-    """Unlike Statistics' pure GUI-thread column switch, changing either
-    dropdown here must trigger a new background job - the selected columns
-    determine *what* gets computed, not just what gets redrawn."""
-    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=4, column_count=3)
-    async_ops = DummyAsyncOps()
-    ctrl = AnalysisController(
-        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": _hypothesis_tests_df()}),
-        async_ops=async_ops,
-    )
-    _open_and_flush(ctrl, QWidget())
-
-    dlg = dialog_factory[0]
-    dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
-    dlg._selected_dataset_tab_id = "t1"
-    dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
-    _simulate_success(async_ops.last_call)
-
-    jobs_before = len(async_ops.calls)
-    config_widgets_before = len(dlg.config_widgets)
-    config = dlg.config_widgets[-1]
-    _gc_numeric_combo(config).setCurrentIndex(1)  # noqa: SLF001 - "value" -> "other"
-
-    assert len(async_ops.calls) == jobs_before + 1
-    new_call = async_ops.last_call
-    assert new_call["scope"] == "analysis:hypothesis_tests:group_comparison:other:grp"
-    assert new_call["target"] is dlg.content_panel()
-
-    _simulate_success(new_call)
-
-    assert isinstance(dlg.content_widgets[-1], GroupComparisonView)
-    # The configuration widget itself must not be replaced by the recompute.
+    assert isinstance(dlg.content_widget(), GroupComparisonView)
     assert len(dlg.config_widgets) == config_widgets_before
 
 
-def test_stale_hypothesis_tests_recompute_is_discarded_when_selection_changes_again(dialog_factory):
-    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=4, column_count=3)
+def test_column_change_after_apply_keeps_the_result_until_applied_again(dialog_factory):
     async_ops = DummyAsyncOps()
-    ctrl = AnalysisController(
-        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": _hypothesis_tests_df()}),
-        async_ops=async_ops,
-    )
-    _open_and_flush(ctrl, QWidget())
+    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    _simulate_success(_apply_hypothesis_test(async_ops, dlg))
+    view = dlg.content_widget()
+    jobs_before = len(async_ops.calls)
 
-    dlg = dialog_factory[0]
-    dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
-    dlg._selected_dataset_tab_id = "t1"
-    dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
-    _simulate_success(async_ops.last_call)
+    _gc_numeric_combo(_hypothesis_tests_config(dlg)).setCurrentIndex(1)
 
-    config = dlg.config_widgets[-1]
-    _gc_numeric_combo(config).setCurrentIndex(1)  # noqa: SLF001 - "value" -> "other"
-    first_recompute_call = async_ops.last_call
+    assert len(async_ops.calls) == jobs_before
+    assert dlg.content_widget() is view
 
-    _gc_numeric_combo(config).setCurrentIndex(0)  # noqa: SLF001 - "other" -> "value" again
-    second_recompute_call = async_ops.last_call
+
+def test_stale_hypothesis_test_result_is_discarded_when_applied_again(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = _hypothesis_tests_config(dlg)
+
+    _gc_numeric_combo(config).setCurrentIndex(1)  # "value" -> "other"
+    first = _apply_hypothesis_test(async_ops, dlg)
+    _gc_numeric_combo(config).setCurrentIndex(0)  # "other" -> "value" again
+    second = _apply_hypothesis_test(async_ops, dlg)
 
     content_widgets_before = len(dlg.content_widgets)
-    _simulate_success(first_recompute_call)
+    _simulate_success(first)
     assert len(dlg.content_widgets) == content_widgets_before  # stale result dropped
 
-    _simulate_success(second_recompute_call)
+    _simulate_success(second)
     assert len(dlg.content_widgets) == content_widgets_before + 1
 
 
-def test_stale_hypothesis_tests_recompute_is_discarded_when_category_changes(dialog_factory):
-    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=4, column_count=3)
+def test_stale_hypothesis_test_result_is_discarded_when_category_changes(dialog_factory):
     async_ops = DummyAsyncOps()
-    ctrl = AnalysisController(
-        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": _hypothesis_tests_df()}),
-        async_ops=async_ops,
-    )
-    _open_and_flush(ctrl, QWidget())
+    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    call = _apply_hypothesis_test(async_ops, dlg)
 
-    dlg = dialog_factory[0]
-    dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
-    dlg._selected_dataset_tab_id = "t1"
-    dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
-    _simulate_success(async_ops.last_call)
-
-    config = dlg.config_widgets[-1]
-    _gc_numeric_combo(config).setCurrentIndex(1)  # noqa: SLF001
-    recompute_call = async_ops.last_call
-
-    # User navigates to Overview before the recompute completes.
+    # User navigates to Overview before the test completes.
     dlg._selected_category = AnalysisCategory.OVERVIEW
     dlg.category_changed.emit(AnalysisCategory.OVERVIEW.value)
     _simulate_success(async_ops.last_call)  # Overview's own job
 
     content_widgets_before = len(dlg.content_widgets)
-    _simulate_success(recompute_call)
+    _simulate_success(call)
     assert len(dlg.content_widgets) == content_widgets_before  # stale, dropped
 
 
-def test_hypothesis_tests_recompute_shows_error_placeholder_without_touching_config(dialog_factory):
-    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=4, column_count=3)
+def test_hypothesis_test_error_shows_the_error_placeholder_without_touching_config(dialog_factory):
     async_ops = DummyAsyncOps()
-    ctrl = AnalysisController(
-        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": _hypothesis_tests_df()}),
-        async_ops=async_ops,
-    )
-    _open_and_flush(ctrl, QWidget())
-
-    dlg = dialog_factory[0]
-    dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
-    dlg._selected_dataset_tab_id = "t1"
-    dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
-    _simulate_success(async_ops.last_call)
-
+    ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
     config_widgets_before = len(dlg.config_widgets)
-    config = dlg.config_widgets[-1]
-    _gc_numeric_combo(config).setCurrentIndex(1)  # noqa: SLF001
 
-    async_ops.last_call["on_error"]("boom")
+    _apply_hypothesis_test(async_ops, dlg)["on_error"]("boom")
 
     assert dlg.placeholder_calls[-1] == ctrl._tr(ctrl.TR_ANALYSIS_ERROR)  # noqa: SLF001
     assert len(dlg.config_widgets) == config_widgets_before  # config untouched
@@ -837,93 +783,87 @@ def test_hypothesis_tests_recompute_shows_error_placeholder_without_touching_con
 # ----------------------------------------------------------------------
 
 
-def _select_test(config: HypothesisTestsConfigWidget, test: HypothesisTest) -> None:
-    combo = config._test_combo  # noqa: SLF001
-    combo.setCurrentIndex(combo.findData(test.value))
-
-
-def test_switching_to_chi_square_dispatches_a_chi_square_background_job(dialog_factory):
+def test_switching_test_replaces_the_result_with_the_prompt_without_a_job(dialog_factory):
     async_ops = DummyAsyncOps()
-    _ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
-    config = dlg.config_widgets[-1]
-    jobs_before = len(async_ops.calls)
+    ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    _simulate_success(_apply_hypothesis_test(async_ops, dlg))
     config_widgets_before = len(dlg.config_widgets)
+    jobs_before = len(async_ops.calls)
 
-    _select_test(config, HypothesisTest.CHI_SQUARE)
+    _select_test(_hypothesis_tests_config(dlg), HypothesisTest.CHI_SQUARE)
 
-    assert len(async_ops.calls) == jobs_before + 1
-    call = async_ops.last_call
-    assert call["scope"] == "analysis:hypothesis_tests:chi_square:grp:color"
-    assert call["target"] is dlg.content_panel()
-
-    _simulate_success(call)
-
-    assert isinstance(dlg.content_widgets[-1], ChiSquareView)
+    assert len(async_ops.calls) == jobs_before
+    _assert_apply_prompt(ctrl, dlg)
     assert len(dlg.config_widgets) == config_widgets_before
 
 
-def test_switching_back_to_group_comparison_keeps_its_previous_selection(dialog_factory):
+def test_applying_chi_square_runs_a_chi_square_background_job(dialog_factory):
     async_ops = DummyAsyncOps()
-    _ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
-    config = dlg.config_widgets[-1]
+    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    _select_test(_hypothesis_tests_config(dlg), HypothesisTest.CHI_SQUARE)
+
+    call = _apply_hypothesis_test(async_ops, dlg)
+
+    assert call["scope"] == "analysis:hypothesis_tests:chi_square:grp:color"
+    _simulate_success(call)
+    assert isinstance(dlg.content_widget(), ChiSquareView)
+
+
+def test_switching_back_to_group_comparison_keeps_its_pending_selection(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = _hypothesis_tests_config(dlg)
     _gc_numeric_combo(config).setCurrentIndex(1)  # "value" -> "other"
-    _simulate_success(async_ops.last_call)
 
     _select_test(config, HypothesisTest.CHI_SQUARE)
-    _simulate_success(async_ops.last_call)
     _select_test(config, HypothesisTest.GROUP_COMPARISON)
 
-    assert async_ops.last_call["scope"] == "analysis:hypothesis_tests:group_comparison:other:grp"
-    _simulate_success(async_ops.last_call)
-    assert isinstance(dlg.content_widgets[-1], GroupComparisonView)
+    _assert_apply_prompt(ctrl, dlg)
+    assert _apply_hypothesis_test(async_ops, dlg)["scope"] == "analysis:hypothesis_tests:group_comparison:other:grp"
 
 
-def test_changing_the_chi_square_column_dispatches_a_new_background_job(dialog_factory):
+def test_changing_the_chi_square_column_is_applied_with_the_new_pair(dialog_factory):
     async_ops = DummyAsyncOps()
-    _ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
-    config = dlg.config_widgets[-1]
+    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = _hypothesis_tests_config(dlg)
     _select_test(config, HypothesisTest.CHI_SQUARE)
-    _simulate_success(async_ops.last_call)
 
     chi_config = config._chi_square_config  # noqa: SLF001
     assert chi_config is not None
     chi_config._row_combo.setCurrentIndex(chi_config._row_combo.findText("color"))  # noqa: SLF001
 
-    assert async_ops.last_call["scope"] == "analysis:hypothesis_tests:chi_square:color:grp"
-    _simulate_success(async_ops.last_call)
-    assert isinstance(dlg.content_widgets[-1], ChiSquareView)
+    assert async_ops.calls == []
+    call = _apply_hypothesis_test(async_ops, dlg)
+    assert call["scope"] == "analysis:hypothesis_tests:chi_square:color:grp"
+    _simulate_success(call)
+    assert isinstance(dlg.content_widget(), ChiSquareView)
 
 
 def test_stale_group_comparison_result_is_discarded_after_switching_test(dialog_factory):
     async_ops = DummyAsyncOps()
-    _ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
-    config = dlg.config_widgets[-1]
+    ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    group_comparison_call = _apply_hypothesis_test(async_ops, dlg)
 
-    _gc_numeric_combo(config).setCurrentIndex(1)
-    group_comparison_call = async_ops.last_call
-    _select_test(config, HypothesisTest.CHI_SQUARE)
-    chi_square_call = async_ops.last_call
-
+    _select_test(_hypothesis_tests_config(dlg), HypothesisTest.CHI_SQUARE)
     content_widgets_before = len(dlg.content_widgets)
     _simulate_success(group_comparison_call)
+
     assert len(dlg.content_widgets) == content_widgets_before  # stale, dropped
-
-    _simulate_success(chi_square_call)
-    assert isinstance(dlg.content_widgets[-1], ChiSquareView)
+    _assert_apply_prompt(ctrl, dlg)
 
 
-def test_switching_to_an_unavailable_test_computes_its_defaults_and_shows_the_error(dialog_factory):
+def test_switching_to_an_unavailable_test_shows_its_error_and_disables_apply(dialog_factory):
     # Only "grp" is categorical: Group Comparison works, chi-square has no column pair.
     df = pd.DataFrame({"value": [float(i) for i in range(24)], "grp": ["A", "B"] * 12})
     async_ops = DummyAsyncOps()
-    _ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory, df)
-    config = dlg.config_widgets[-1]
+    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory, df)
+    config = _hypothesis_tests_config(dlg)
 
     _select_test(config, HypothesisTest.CHI_SQUARE)
 
-    assert async_ops.last_call["scope"] == "analysis:hypothesis_tests:chi_square"
-    _simulate_success(async_ops.last_call)
-    assert isinstance(dlg.content_widgets[-1], ChiSquareView)
+    assert async_ops.calls == []
+    assert isinstance(dlg.content_widget(), ChiSquareView)
+    assert not config._apply_button.isEnabled()  # noqa: SLF001
 
 
 # ----------------------------------------------------------------------
@@ -971,101 +911,127 @@ def _correlation_view(dlg: DummyAnalysisDialog) -> CorrelationView:
     return view
 
 
-def test_correlation_runs_as_a_cancelable_background_job_with_progress(dialog_factory):
-    async_ops = DummyAsyncOps()
-    _open_correlation(async_ops, dialog_factory)
+def _apply_correlation(async_ops: DummyAsyncOps, dlg: DummyAnalysisDialog) -> dict:
+    """Click Apply and return the matrix job's call, without completing it."""
+    _correlation_config(dlg)._apply_button.click()  # noqa: SLF001
+    return async_ops.last_call
 
-    call = async_ops.last_call
-    assert call["scope"] == "analysis:correlation"
+
+def _open_applied_correlation(async_ops: DummyAsyncOps, dialog_factory):
+    ctrl, dlg = _open_correlation(async_ops, dialog_factory)
+    _simulate_success(_apply_correlation(async_ops, dlg))
+    return ctrl, dlg
+
+
+def test_correlation_initializes_without_a_job_and_prompts_for_apply(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_correlation(async_ops, dialog_factory)
+
+    assert async_ops.calls == []
+    _assert_apply_prompt(ctrl, dlg)
+    config = _correlation_config(dlg)
+    assert config.matrix_configuration() == (CorrelationMethod.PEARSON, ("a", "b", "c"))
+    assert config.checked_columns() == ("a", "b", "c")
+    assert config.is_pair_selection_enabled() is False
+
+
+def test_pair_change_before_the_first_apply_starts_no_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_correlation(async_ops, dialog_factory)
+
+    _correlation_config(dlg).set_pair("c", "a")
+
+    assert async_ops.calls == []
+
+
+def test_method_change_without_apply_starts_no_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    config = _correlation_config(dlg)
+    jobs_before = len(async_ops.calls)
+
+    config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.SPEARMAN))  # noqa: SLF001
+
+    assert len(async_ops.calls) == jobs_before
+    assert config.matrix_configuration() == (CorrelationMethod.PEARSON, ("a", "b", "c"))
+    assert _correlation_view(dlg).method() is CorrelationMethod.PEARSON
+
+
+def test_correlation_apply_runs_as_a_cancelable_background_job_with_progress(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_correlation(async_ops, dialog_factory)
+
+    call = _apply_correlation(async_ops, dlg)
+
+    assert call["scope"] == "analysis:correlation:matrix:pearson"
+    assert call["target"] is dlg.content_panel()
     assert call["cancelable"] is True
     assert call["indeterminate"] is False
     assert call["timeout_ms"] == 600_000
 
 
-def test_non_correlation_jobs_keep_an_indeterminate_non_cancelable_overlay(dialog_factory):
-    async_ops = DummyAsyncOps()
-    _open_hypothesis_tests(async_ops, dialog_factory)
-
-    call = async_ops.last_call
-    assert call["cancelable"] is False
-    assert call["indeterminate"] is True
-    assert call["timeout_ms"] == 60_000
-
-
 def test_correlation_job_reports_progress_through_the_injected_callback(dialog_factory):
     async_ops = DummyAsyncOps()
-    _open_correlation(async_ops, dialog_factory)
+    _, dlg = _open_correlation(async_ops, dialog_factory)
+    call = _apply_correlation(async_ops, dlg)
     progress: list[int] = []
 
-    result = async_ops.last_call["work"](progress_cb=progress.append, cancel_cb=lambda: False)
+    result = call["work"](progress_cb=progress.append, cancel_cb=lambda: False)
 
     assert result is not None
     assert progress[-1] == 100
 
 
-def test_correlation_shows_view_and_config_with_the_strongest_pair(dialog_factory):
+def test_first_apply_details_the_strongest_pair_and_enables_pair_selection(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_correlation(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
-
-    view = _correlation_view(dlg)
     config = _correlation_config(dlg)
-    detail = view.pair_detail()
+    config.set_pair("c", "a")  # disabled pickers only hold a placeholder pair
+
+    _simulate_success(_apply_correlation(async_ops, dlg))
+
+    detail = _correlation_view(dlg).pair_detail()
     assert detail is not None
     assert (detail.pair.x_column, detail.pair.y_column) == ("a", "b")
     assert config.current_pair() == ("a", "b")
-    assert config.matrix_configuration() == (CorrelationMethod.PEARSON, ("a", "b", "c"))
+    assert config.is_pair_selection_enabled() is True
+    assert async_ops.last_call["scope"] == "analysis:correlation:matrix:pearson"  # no extra pair job
 
 
 def test_correlation_without_enough_numeric_columns_shows_error_without_config(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_correlation(async_ops, dialog_factory, pd.DataFrame({"a": [1.0, 2.0, 3.0]}))
-    _simulate_success(async_ops.last_call)
 
+    assert async_ops.calls == []
     view = _correlation_view(dlg)
     assert view.table() is None
     assert dlg.config_widgets[-1] is None
 
 
-def test_cancelled_correlation_shows_the_cancelled_placeholder(dialog_factory):
-    async_ops = DummyAsyncOps()
-    ctrl, dlg = _open_correlation(async_ops, dialog_factory)
-    call = async_ops.last_call
-
-    call["on_result"](call["work"](cancel_cb=lambda: True))
-
-    assert dlg.placeholder_calls == [ctrl._tr(ctrl.TR_ANALYSIS_CANCELLED)]  # noqa: SLF001
-    assert dlg.config_widgets[-1] is None
-
-
 def test_cancel_during_the_matrix_computation_returns_none(dialog_factory):
     async_ops = DummyAsyncOps()
-    _open_correlation(async_ops, dialog_factory)
+    _, dlg = _open_correlation(async_ops, dialog_factory)
+    call = _apply_correlation(async_ops, dlg)
     polls: list[None] = []
 
     def _cancel_after_first_poll() -> bool:
         polls.append(None)
         return len(polls) > 1
 
-    assert async_ops.last_call["work"](cancel_cb=_cancel_after_first_poll) is None
+    assert call["work"](cancel_cb=_cancel_after_first_poll) is None
 
 
-def test_method_change_recomputes_the_matrix_as_a_cancelable_job(dialog_factory):
+def test_applied_method_change_recomputes_the_matrix_and_keeps_config(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_correlation(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
     first_view = _correlation_view(dlg)
     configs_before = len(dlg.config_widgets)
 
     config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.SPEARMAN))  # noqa: SLF001
+    call = _apply_correlation(async_ops, dlg)
 
-    call = async_ops.last_call
     assert call["scope"] == "analysis:correlation:matrix:spearman"
-    assert call["target"] is dlg.content_panel()
-    assert call["cancelable"] is True
-    assert call["indeterminate"] is False
-
     _simulate_success(call)
 
     view = _correlation_view(dlg)
@@ -1079,14 +1045,12 @@ def test_method_change_recomputes_the_matrix_as_a_cancelable_job(dialog_factory)
 
 def test_apply_recomputes_the_matrix_with_the_checked_columns(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_correlation(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
 
     item = config._column_list.item(2)  # noqa: SLF001 - "c"
     item.setCheckState(item.checkState().Unchecked)
-    config._apply_button.click()  # noqa: SLF001
-    _simulate_success(async_ops.last_call)
+    _simulate_success(_apply_correlation(async_ops, dlg))
 
     view = _correlation_view(dlg)
     table = view.table()
@@ -1097,28 +1061,26 @@ def test_apply_recomputes_the_matrix_with_the_checked_columns(dialog_factory):
 def test_cancelled_matrix_recompute_shows_placeholder_and_keeps_config(dialog_factory):
     async_ops = DummyAsyncOps()
     ctrl, dlg = _open_correlation(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
     config = _correlation_config(dlg)
 
-    config._apply_button.click()  # noqa: SLF001
-    call = async_ops.last_call
+    call = _apply_correlation(async_ops, dlg)
     call["on_result"](call["work"](cancel_cb=lambda: True))
 
     assert dlg.placeholder_calls[-1] == ctrl._tr(ctrl.TR_ANALYSIS_CANCELLED)  # noqa: SLF001
     assert dlg.config_widgets[-1] is config
+    assert config.is_pair_selection_enabled() is False
 
 
-def test_stale_matrix_recompute_is_discarded_when_the_method_changes_again(dialog_factory):
+def test_stale_matrix_recompute_is_discarded_when_applied_again(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_correlation(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
     combo = config._method_combo  # noqa: SLF001
 
     combo.setCurrentIndex(combo.findData(CorrelationMethod.SPEARMAN))
-    first = async_ops.last_call
+    first = _apply_correlation(async_ops, dlg)
     combo.setCurrentIndex(combo.findData(CorrelationMethod.KENDALL))
-    second = async_ops.last_call
+    second = _apply_correlation(async_ops, dlg)
 
     contents_before = len(dlg.content_widgets)
     _simulate_success(first)
@@ -1130,8 +1092,7 @@ def test_stale_matrix_recompute_is_discarded_when_the_method_changes_again(dialo
 
 def test_pair_change_recomputes_only_the_pair_detail_over_the_pair_panel(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_correlation(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
     view = _correlation_view(dlg)
     contents_before = len(dlg.content_widgets)
@@ -1153,8 +1114,7 @@ def test_pair_change_recomputes_only_the_pair_detail_over_the_pair_panel(dialog_
 
 def test_clicking_a_table_row_selects_the_pair_and_recomputes_it(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_correlation(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
     view = _correlation_view(dlg)
     table = view.table()
@@ -1169,8 +1129,7 @@ def test_clicking_a_table_row_selects_the_pair_and_recomputes_it(dialog_factory)
 
 def test_stale_pair_recompute_is_discarded_when_the_pair_changes_again(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_correlation(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
     view = _correlation_view(dlg)
     initial_detail = view.pair_detail()
@@ -1191,12 +1150,10 @@ def test_stale_pair_recompute_is_discarded_when_the_pair_changes_again(dialog_fa
 
 def test_pair_change_while_the_matrix_is_computing_is_caught_up_afterwards(dialog_factory):
     async_ops = DummyAsyncOps()
-    ctrl, dlg = _open_correlation(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
 
-    config._apply_button.click()  # noqa: SLF001
-    matrix_call = async_ops.last_call
+    matrix_call = _apply_correlation(async_ops, dlg)
     dlg.show_placeholder("computing")  # no view is displayed while the matrix job runs
     jobs_before = len(async_ops.calls)
 
@@ -1215,12 +1172,12 @@ def test_pair_change_while_the_matrix_is_computing_is_caught_up_afterwards(dialo
 
 def test_pair_recompute_uses_the_displayed_matrix_method(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_correlation(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
 
-    # Method changed, but its matrix job hasn't finished: the view is still Pearson.
+    # Kendall is applied, but its matrix job hasn't finished: the view is still Pearson.
     config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.KENDALL))  # noqa: SLF001
+    _apply_correlation(async_ops, dlg)
     config.set_pair("c", "a")
 
     assert async_ops.last_call["scope"] == "analysis:correlation:pair:pearson:c:a"
@@ -1229,47 +1186,50 @@ def test_pair_recompute_uses_the_displayed_matrix_method(dialog_factory):
 def test_recompute_shows_error_placeholder_when_the_dataset_cannot_be_reloaded(dialog_factory):
     async_ops = DummyAsyncOps()
     ctrl, dlg = _open_correlation(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
-    config = _correlation_config(dlg)
     ctrl._results._dfs.clear()  # noqa: SLF001 - the dataset disappeared
-    jobs_before = len(async_ops.calls)
 
-    config._apply_button.click()  # noqa: SLF001
+    _correlation_config(dlg)._apply_button.click()  # noqa: SLF001
 
-    assert len(async_ops.calls) == jobs_before
+    assert async_ops.calls == []
     assert dlg.placeholder_calls[-1] == ctrl._tr(ctrl.TR_ANALYSIS_ERROR)  # noqa: SLF001
 
 
 def test_recompute_without_a_selected_dataset_does_nothing(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_correlation(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
-    config = _correlation_config(dlg)
     dlg._selected_dataset_tab_id = None
-    jobs_before = len(async_ops.calls)
 
-    config._apply_button.click()  # noqa: SLF001
+    _correlation_config(dlg)._apply_button.click()  # noqa: SLF001
 
-    assert len(async_ops.calls) == jobs_before
+    assert async_ops.calls == []
 
 
 def test_failed_recompute_shows_error_placeholder_unless_stale(dialog_factory):
     async_ops = DummyAsyncOps()
     ctrl, dlg = _open_correlation(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
     config = _correlation_config(dlg)
     combo = config._method_combo  # noqa: SLF001
 
     combo.setCurrentIndex(combo.findData(CorrelationMethod.SPEARMAN))
-    first = async_ops.last_call
+    first = _apply_correlation(async_ops, dlg)
     combo.setCurrentIndex(combo.findData(CorrelationMethod.KENDALL))
-    second = async_ops.last_call
+    second = _apply_correlation(async_ops, dlg)
 
     first["on_error"]("boom")
     assert dlg.placeholder_calls == []
 
     second["on_error"]("boom")
     assert dlg.placeholder_calls == [ctrl._tr(ctrl.TR_ANALYSIS_ERROR)]  # noqa: SLF001
+
+
+def test_non_correlation_jobs_keep_an_indeterminate_non_cancelable_overlay(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+
+    call = _apply_hypothesis_test(async_ops, dlg)
+    assert call["cancelable"] is False
+    assert call["indeterminate"] is True
+    assert call["timeout_ms"] == 60_000
 
 
 # ----------------------------------------------------------------------
@@ -1346,6 +1306,26 @@ def test_regression_without_numeric_columns_has_no_config(dialog_factory):
 
     assert async_ops.calls == []
     assert _regression_view(dlg).result().error is RegressionError.NO_NUMERIC_COLUMN
+    assert dlg.config_widgets[-1] is None
+
+
+def test_failing_initializer_shows_error_placeholder_without_a_job(dialog_factory, monkeypatch):
+    def _raise(_df: pd.DataFrame) -> object:
+        raise ValueError
+
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_regression(async_ops, dialog_factory)
+    handler = ctrl._category_handlers[AnalysisCategory.REGRESSION]  # noqa: SLF001
+    monkeypatch.setitem(
+        ctrl._category_handlers,  # noqa: SLF001
+        AnalysisCategory.REGRESSION,
+        dataclasses.replace(handler, initialize=_raise),
+    )
+
+    dlg.category_changed.emit(AnalysisCategory.REGRESSION.value)
+
+    assert async_ops.calls == []
+    assert dlg.placeholder_calls[-1] == ctrl._tr(ctrl.TR_ANALYSIS_ERROR)  # noqa: SLF001
     assert dlg.config_widgets[-1] is None
 
 
@@ -1473,66 +1453,156 @@ def _select_outlier_method(config: OutliersConfigWidget, method: OutlierMethod) 
     combo.setCurrentIndex(combo.findData(method))
 
 
-def test_outliers_run_as_a_background_job_with_a_standard_overlay(dialog_factory):
-    async_ops = DummyAsyncOps()
-    _open_outliers(async_ops, dialog_factory)
+def _apply_outliers(async_ops: DummyAsyncOps, dlg: DummyAnalysisDialog) -> dict:
+    """Click the univariate Apply and return the summary job's call, without completing it."""
+    _outliers_config(dlg)._apply_button.click()  # noqa: SLF001
+    return async_ops.last_call
 
-    call = async_ops.last_call
-    assert call["scope"] == "analysis:outliers"
+
+def _open_applied_outliers(async_ops: DummyAsyncOps, dialog_factory):
+    ctrl, dlg = _open_outliers(async_ops, dialog_factory)
+    _simulate_success(_apply_outliers(async_ops, dlg))
+    return ctrl, dlg
+
+
+def _switch_to_multivariate(dlg: DummyAnalysisDialog) -> MultivariateOutliersConfigWidget:
+    _outliers_config(dlg)._mode_combo.setCurrentIndex(1)  # noqa: SLF001
+    return _multivariate_outliers_config(dlg)
+
+
+def test_outliers_initialize_without_a_job_and_prompt_for_apply(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_outliers(async_ops, dialog_factory)
+
+    assert async_ops.calls == []
+    _assert_apply_prompt(ctrl, dlg)
+    config = _outliers_config(dlg)
+    assert config.summary_configuration() == (OutlierMethod.IQR, 1.5)
+    assert config.is_column_selection_enabled() is False
+
+
+def test_outlier_column_change_before_the_first_apply_starts_no_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+
+    _outliers_config(dlg).set_column("b")
+
+    assert async_ops.calls == []
+
+
+def test_outlier_apply_runs_as_a_background_job_with_a_standard_overlay(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+
+    call = _apply_outliers(async_ops, dlg)
+
+    assert call["scope"] == "analysis:outliers:summary:iqr:1.5"
+    assert call["target"] is dlg.content_panel()
     assert call["cancelable"] is False
     assert call["indeterminate"] is True
 
 
-def test_outliers_show_view_and_config_with_the_top_ranked_column(dialog_factory):
+def test_first_outlier_apply_details_the_top_ranked_column_and_enables_column_selection(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_outliers(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
-
-    view = _outliers_view(dlg)
     config = _outliers_config(dlg)
-    assert _detail_column(view) == "a"
+    config.set_column("b")  # the disabled picker only holds a placeholder column
+
+    _simulate_success(_apply_outliers(async_ops, dlg))
+
+    assert _detail_column(_outliers_view(dlg)) == "a"
     assert config.current_column() == "a"
-    assert config.summary_configuration() == (OutlierMethod.IQR, 1.5)
+    assert config.is_column_selection_enabled() is True
+    assert async_ops.last_call["scope"] == "analysis:outliers:summary:iqr:1.5"  # no extra column job
 
 
 def test_outliers_without_numeric_columns_show_error_without_config(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_outliers(async_ops, dialog_factory, pd.DataFrame({"t": ["x", "y", "z"]}))
-    _simulate_success(async_ops.last_call)
 
+    assert async_ops.calls == []
     view = _outliers_view(dlg)
     assert view.table() is None
     assert view.column_detail() is None
     assert dlg.config_widgets[-1] is None
 
 
-def test_switching_outliers_to_multivariate_fits_asynchronously(dialog_factory):
+def test_outlier_method_and_threshold_changes_start_no_job_until_applied(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    config = _outliers_config(dlg)
+    jobs_before = len(async_ops.calls)
+
+    _select_outlier_method(config, OutlierMethod.Z_SCORE)
+    config._threshold_spin.setValue(2.5)  # noqa: SLF001
+
+    assert len(async_ops.calls) == jobs_before
+    assert config.summary_configuration() == (OutlierMethod.IQR, 1.5)
+    assert _outliers_view(dlg).configuration() == (OutlierMethod.IQR, 1.5)
+
+
+def test_switching_outliers_to_multivariate_prompts_without_fitting(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    jobs_before = len(async_ops.calls)
+
+    multivariate_config = _switch_to_multivariate(dlg)
+
+    assert len(async_ops.calls) == jobs_before
+    _assert_apply_prompt(ctrl, dlg)
+    assert multivariate_config.analysis_configuration() == (
+        ("a", "b"),
+        MultivariateOutlierMethod.ISOLATION_FOREST,
+        True,
+        0.05,
+        20,
+    )
+
+
+def test_switching_to_multivariate_with_too_few_numeric_columns_explains_why(dialog_factory):
+    async_ops = DummyAsyncOps()
+    df = pd.DataFrame({"a": [1.0, 2.0, 3.0], "text": ["x", "y", "z"]})
+    _, dlg = _open_outliers(async_ops, dialog_factory, df)
+
+    multivariate_config = _switch_to_multivariate(dlg)
+
+    assert async_ops.calls == []
+    view = _multivariate_outliers_view(dlg)
+    assert view._result.error is MultivariateOutlierError.NOT_ENOUGH_NUMERIC_COLUMNS  # noqa: SLF001
+    assert dlg.config_widget() is multivariate_config
+
+
+def test_switching_to_multivariate_shows_error_when_the_dataset_cannot_be_reloaded(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_outliers(async_ops, dialog_factory)
+    ctrl._results._dfs.clear()  # noqa: SLF001 - the dataset disappeared
+
+    _outliers_config(dlg)._mode_combo.setCurrentIndex(1)  # noqa: SLF001
+
+    assert async_ops.calls == []
+    assert dlg.placeholder_calls[-1] == ctrl._tr(ctrl.TR_ANALYSIS_ERROR)  # noqa: SLF001
+    assert dlg.config_widget() is None
+
+
+def test_first_multivariate_apply_fits_the_default_configuration(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_outliers(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
-    config = _outliers_config(dlg)
+    config = _switch_to_multivariate(dlg)
 
-    config._mode_combo.setCurrentIndex(1)  # noqa: SLF001
+    config._apply_button.click()  # noqa: SLF001
 
     call = async_ops.last_call
-    assert call["scope"] == "analysis:outliers:multivariate:isolation_forest:standardized:contamination:0.05"
+    assert call["scope"] == "analysis:outliers:multivariate:isolation_forest:standardized:contamination:0.05:a:b"
     assert call["target"] is dlg.content_panel()
     assert call["cancelable"] is False
     _simulate_success(call)
-
-    view = _multivariate_outliers_view(dlg)
-    multivariate_config = _multivariate_outliers_config(dlg)
-    assert view.configuration() == (("a", "b"), MultivariateOutlierMethod.ISOLATION_FOREST, True, 0.05, 20)
-    assert multivariate_config.analysis_configuration() == view.configuration()
+    assert _multivariate_outliers_view(dlg).configuration() == config.analysis_configuration()
 
 
 def test_applying_multivariate_configuration_refits_and_retains_config(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_outliers(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
-    _outliers_config(dlg)._mode_combo.setCurrentIndex(1)  # noqa: SLF001
-    _simulate_success(async_ops.last_call)
-    config = _multivariate_outliers_config(dlg)
+    config = _switch_to_multivariate(dlg)
 
     config._method_combo.setCurrentIndex(config._method_combo.findData(MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR))  # noqa: SLF001
     config._contamination_spin.setValue(10.0)  # noqa: SLF001
@@ -1559,10 +1629,7 @@ def test_applying_multivariate_configuration_refits_and_retains_config(dialog_fa
 def test_stale_multivariate_fit_is_discarded(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_outliers(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
-    _outliers_config(dlg)._mode_combo.setCurrentIndex(1)  # noqa: SLF001
-    _simulate_success(async_ops.last_call)
-    config = _multivariate_outliers_config(dlg)
+    config = _switch_to_multivariate(dlg)
 
     config._contamination_spin.setValue(10.0)  # noqa: SLF001
     config._apply_button.click()  # noqa: SLF001
@@ -1579,38 +1646,32 @@ def test_stale_multivariate_fit_is_discarded(dialog_factory):
     assert _multivariate_outliers_view(dlg).configuration()[3] == 0.2
 
 
-def test_switching_multivariate_mode_back_restores_univariate_explorer(dialog_factory):
+def test_switching_multivariate_mode_back_restores_the_univariate_prompt(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_outliers(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
-    _outliers_config(dlg)._mode_combo.setCurrentIndex(1)  # noqa: SLF001
-    _simulate_success(async_ops.last_call)
-    config = _multivariate_outliers_config(dlg)
+    ctrl, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    config = _switch_to_multivariate(dlg)
+    jobs_before = len(async_ops.calls)
 
     config._mode_combo.setCurrentIndex(0)  # noqa: SLF001
 
-    call = async_ops.last_call
-    assert call["scope"] == "analysis:outliers"
-    _simulate_success(call)
-    assert isinstance(dlg.content_widget(), OutliersView)
+    assert len(async_ops.calls) == jobs_before
+    _assert_apply_prompt(ctrl, dlg)
     assert isinstance(dlg.config_widget(), OutliersConfigWidget)
 
 
-def test_outlier_method_change_recomputes_the_summary_and_keeps_the_config(dialog_factory):
+def test_applied_outlier_method_recomputes_the_summary_and_keeps_the_config(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_outliers(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
     config = _outliers_config(dlg)
     first_view = _outliers_view(dlg)
     configs_before = len(dlg.config_widgets)
+    config.set_column("b")
+    _simulate_success(async_ops.last_call)
 
     _select_outlier_method(config, OutlierMethod.Z_SCORE)
+    call = _apply_outliers(async_ops, dlg)
 
-    call = async_ops.last_call
     assert call["scope"] == "analysis:outliers:summary:z_score:3.0"
-    assert call["target"] is dlg.content_panel()
-    assert call["cancelable"] is False
-
     _simulate_success(call)
 
     view = _outliers_view(dlg)
@@ -1619,21 +1680,20 @@ def test_outlier_method_change_recomputes_the_summary_and_keeps_the_config(dialo
     detail = view.column_detail()
     assert detail is not None
     assert detail.method is OutlierMethod.Z_SCORE
-    assert detail.summary.column == "a"  # the selected column is kept
+    assert detail.summary.column == "b"  # the selected column is kept
     assert len(dlg.config_widgets) == configs_before
 
 
-def test_stale_outlier_summary_is_discarded_when_the_threshold_changes_again(dialog_factory):
+def test_stale_outlier_summary_is_discarded_when_applied_again(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_outliers(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
     config = _outliers_config(dlg)
     spin = config._threshold_spin  # noqa: SLF001
 
     spin.setValue(2.0)
-    first = async_ops.last_call
+    first = _apply_outliers(async_ops, dlg)
     spin.setValue(3.0)
-    second = async_ops.last_call
+    second = _apply_outliers(async_ops, dlg)
 
     contents_before = len(dlg.content_widgets)
     _simulate_success(first)
@@ -1645,8 +1705,7 @@ def test_stale_outlier_summary_is_discarded_when_the_threshold_changes_again(dia
 
 def test_outlier_column_change_recomputes_only_the_detail_over_the_detail_panel(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_outliers(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
     config = _outliers_config(dlg)
     view = _outliers_view(dlg)
     contents_before = len(dlg.content_widgets)
@@ -1666,8 +1725,7 @@ def test_outlier_column_change_recomputes_only_the_detail_over_the_detail_panel(
 
 def test_clicking_an_outlier_summary_row_selects_the_column(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_outliers(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
     config = _outliers_config(dlg)
     table = _outliers_view(dlg).table()
     assert table is not None
@@ -1680,8 +1738,7 @@ def test_clicking_an_outlier_summary_row_selects_the_column(dialog_factory):
 
 def test_stale_outlier_column_recompute_is_discarded_when_the_column_changes_again(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_outliers(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
     config = _outliers_config(dlg)
     view = _outliers_view(dlg)
     initial_detail = view.column_detail()
@@ -1700,12 +1757,11 @@ def test_stale_outlier_column_recompute_is_discarded_when_the_column_changes_aga
 
 def test_outlier_column_change_while_the_summary_is_computing_is_caught_up_afterwards(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_outliers(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
     config = _outliers_config(dlg)
 
     _select_outlier_method(config, OutlierMethod.MODIFIED_Z_SCORE)
-    summary_call = async_ops.last_call
+    summary_call = _apply_outliers(async_ops, dlg)
     dlg.show_placeholder("computing")  # no view is displayed while the summary job runs
     jobs_before = len(async_ops.calls)
 
@@ -1723,12 +1779,12 @@ def test_outlier_column_change_while_the_summary_is_computing_is_caught_up_after
 
 def test_outlier_column_recompute_uses_the_displayed_summary_configuration(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_outliers(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
     config = _outliers_config(dlg)
 
-    # Method changed, but its summary job hasn't finished: the view still shows IQR.
+    # Z-score is applied, but its summary job hasn't finished: the view still shows IQR.
     _select_outlier_method(config, OutlierMethod.Z_SCORE)
+    _apply_outliers(async_ops, dlg)
     config.set_column("b")
 
     assert async_ops.last_call["scope"] == "analysis:outliers:column:iqr:1.5:b"
@@ -1785,32 +1841,34 @@ def _set_pca_checked(config: PCAConfigWidget, column: str, checked: bool) -> Non
     items[0].setCheckState(Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked)
 
 
-def test_pca_runs_as_a_standard_background_job(dialog_factory):
+def test_pca_initializes_without_a_job_and_prompts_for_apply(dialog_factory):
     async_ops = DummyAsyncOps()
-    _open_pca(async_ops, dialog_factory)
+    ctrl, dlg = _open_pca(async_ops, dialog_factory)
 
-    call = async_ops.last_call
-    assert call["scope"] == "analysis:pca"
-    assert call["cancelable"] is False
-    assert call["indeterminate"] is True
+    assert async_ops.calls == []
+    _assert_apply_prompt(ctrl, dlg)
+    config = _pca_config(dlg)
+    assert config.analysis_configuration() == (("a", "b", "c"), True)
+    assert config.checked_columns() == ("a", "b", "c")
 
 
-def test_pca_shows_standardized_all_feature_result_and_config(dialog_factory):
+def test_first_pca_apply_fits_the_default_configuration(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_pca(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
 
-    view = _pca_view(dlg)
-    config = _pca_config(dlg)
-    assert view.configuration() == (("a", "b", "c"), True)
-    assert config.analysis_configuration() == (("a", "b", "c"), True)
+    _pca_config(dlg)._apply_button.click()  # noqa: SLF001
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:pca:fit:standardized:a:b:c"
+    _simulate_success(call)
+    assert _pca_view(dlg).configuration() == (("a", "b", "c"), True)
 
 
 def test_pca_without_enough_numeric_columns_shows_error_without_config(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_pca(async_ops, dialog_factory, pd.DataFrame({"a": [1.0, 2.0], "text": ["x", "y"]}))
-    _simulate_success(async_ops.last_call)
 
+    assert async_ops.calls == []
     view = _pca_view(dlg)
     assert view.loadings_table() is None
     assert PCAError.NOT_ENOUGH_NUMERIC_COLUMNS.value in str(view._result.error)  # noqa: SLF001
@@ -1820,9 +1878,8 @@ def test_pca_without_enough_numeric_columns_shows_error_without_config(dialog_fa
 def test_apply_recomputes_pca_and_keeps_the_config(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_pca(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
     config = _pca_config(dlg)
-    first_view = _pca_view(dlg)
+    prompt = dlg.content_widget()
     configs_before = len(dlg.config_widgets)
 
     _set_pca_checked(config, "c", False)
@@ -1837,7 +1894,7 @@ def test_apply_recomputes_pca_and_keeps_the_config(dialog_factory):
     _simulate_success(call)
 
     view = _pca_view(dlg)
-    assert view is not first_view
+    assert view is not prompt
     assert view.configuration() == (("a", "b"), False)
     assert len(dlg.config_widgets) == configs_before
 
@@ -1845,7 +1902,6 @@ def test_apply_recomputes_pca_and_keeps_the_config(dialog_factory):
 def test_stale_pca_recompute_is_discarded_when_apply_changes_again(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_pca(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
     config = _pca_config(dlg)
 
     _set_pca_checked(config, "c", False)
@@ -1915,32 +1971,34 @@ def _set_clustering_checked(config: ClusteringConfigWidget, column: str, checked
     items[0].setCheckState(Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked)
 
 
-def test_clustering_runs_as_a_standard_background_job(dialog_factory):
+def test_clustering_initializes_without_a_job_and_prompts_for_apply(dialog_factory):
     async_ops = DummyAsyncOps()
-    _open_clustering(async_ops, dialog_factory)
+    ctrl, dlg = _open_clustering(async_ops, dialog_factory)
 
-    call = async_ops.last_call
-    assert call["scope"] == "analysis:clustering"
-    assert call["cancelable"] is False
-    assert call["indeterminate"] is True
+    assert async_ops.calls == []
+    _assert_apply_prompt(ctrl, dlg)
+    config = _clustering_config(dlg)
+    assert config.analysis_configuration() == (("x", "y", "z"), ClusteringMethod.K_MEANS, True, 3, 0.5, 5)
+    assert config.checked_columns() == ("x", "y", "z")
 
 
-def test_clustering_shows_default_k_means_config_and_result(dialog_factory):
+def test_first_clustering_apply_fits_the_default_configuration(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_clustering(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
 
-    view = _clustering_view(dlg)
-    config = _clustering_config(dlg)
-    assert view.configuration() == (("x", "y", "z"), ClusteringMethod.K_MEANS, True, 3, 0.5, 5)
-    assert config.analysis_configuration() == view.configuration()
+    _clustering_config(dlg)._apply_button.click()  # noqa: SLF001
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:clustering:fit:k_means:standardized:clusters:3:x:y:z"
+    _simulate_success(call)
+    assert _clustering_view(dlg).configuration() == (("x", "y", "z"), ClusteringMethod.K_MEANS, True, 3, 0.5, 5)
 
 
 def test_clustering_without_numeric_columns_shows_error_without_config(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_clustering(async_ops, dialog_factory, pd.DataFrame({"text": ["x", "y"]}))
-    _simulate_success(async_ops.last_call)
 
+    assert async_ops.calls == []
     assert _clustering_view(dlg).cluster_table() is None
     assert dlg.config_widgets[-1] is None
 
@@ -1948,9 +2006,8 @@ def test_clustering_without_numeric_columns_shows_error_without_config(dialog_fa
 def test_clustering_apply_recomputes_dbscan_and_keeps_config(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_clustering(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
     config = _clustering_config(dlg)
-    first_view = _clustering_view(dlg)
+    prompt = dlg.content_widget()
     configs_before = len(dlg.config_widgets)
 
     _set_clustering_checked(config, "z", False)
@@ -1969,7 +2026,7 @@ def test_clustering_apply_recomputes_dbscan_and_keeps_config(dialog_factory):
     _simulate_success(call)
 
     view = _clustering_view(dlg)
-    assert view is not first_view
+    assert view is not prompt
     assert view.configuration() == (("x", "y"), ClusteringMethod.DBSCAN, False, 3, 0.75, 2)
     assert len(dlg.config_widgets) == configs_before
 
@@ -1977,7 +2034,6 @@ def test_clustering_apply_recomputes_dbscan_and_keeps_config(dialog_factory):
 def test_stale_clustering_recompute_is_discarded_after_another_apply(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_clustering(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
     config = _clustering_config(dlg)
 
     config._cluster_count_spin.setValue(2)  # noqa: SLF001
@@ -2038,46 +2094,47 @@ def _time_series_view(dlg: DummyAnalysisDialog) -> TimeSeriesView:
     return view
 
 
-def test_time_series_runs_as_a_standard_background_job(dialog_factory):
+def test_time_series_initializes_without_a_job_and_prompts_for_apply(dialog_factory):
     async_ops = DummyAsyncOps()
-    _open_time_series(async_ops, dialog_factory)
+    ctrl, dlg = _open_time_series(async_ops, dialog_factory)
 
-    assert async_ops.last_call["scope"] == "analysis:time_series"
-    assert async_ops.last_call["indeterminate"] is True
+    assert async_ops.calls == []
+    _assert_apply_prompt(ctrl, dlg)
+    config = _time_series_config(dlg)
+    assert config.analysis_configuration() == ("when", "value", None, None, DecompositionModel.ADDITIVE)
+    assert config.pending_configuration() == config.analysis_configuration()
 
 
-def test_time_series_shows_default_result_and_config(dialog_factory):
+def test_first_time_series_apply_analyzes_the_default_configuration(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_time_series(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
 
+    _time_series_config(dlg)._apply_button.click()  # noqa: SLF001
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:time_series:fit:when:value:original:auto:additive"
+    _simulate_success(call)
     assert _time_series_view(dlg).configuration() == ("when", "value", None, 7, DecompositionModel.ADDITIVE)
-    assert _time_series_config(dlg).analysis_configuration() == (
-        "when",
-        "value",
-        None,
-        7,
-        DecompositionModel.ADDITIVE,
-    )
 
 
 def test_time_series_without_datetime_has_no_config(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_time_series(async_ops, dialog_factory, pd.DataFrame({"value": [1.0, 2.0, 3.0]}))
-    _simulate_success(async_ops.last_call)
 
+    assert async_ops.calls == []
+    assert isinstance(dlg.content_widget(), TimeSeriesView)
     assert dlg.config_widgets[-1] is None
 
 
 def test_time_series_apply_recomputes_and_keeps_config(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_time_series(async_ops, dialog_factory)
-    _simulate_success(async_ops.last_call)
     config = _time_series_config(dlg)
     configs_before = len(dlg.config_widgets)
 
     config._value_combo.setCurrentIndex(config._value_combo.findText("other"))  # noqa: SLF001
     config._frequency_combo.setCurrentIndex(config._frequency_combo.findData("W"))  # noqa: SLF001
+    config._auto_period.setChecked(False)  # noqa: SLF001
     config._period_spin.setValue(3)  # noqa: SLF001
     config._model_combo.setCurrentIndex(config._model_combo.findData(DecompositionModel.MULTIPLICATIVE))  # noqa: SLF001
     config._apply_button.click()  # noqa: SLF001

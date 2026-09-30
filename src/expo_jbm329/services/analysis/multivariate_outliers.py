@@ -97,13 +97,17 @@ class _Configuration:
     total_rows: int
 
 
-def _error_result(
-    error: MultivariateOutlierError,
+def _unfitted_result(
+    error: MultivariateOutlierError | None,
     *,
     configuration: _Configuration,
     rows_used: int = 0,
 ) -> MultivariateOutlierResult:
-    """Build a structured failure result while retaining configuration context."""
+    """Build a result without fit data while retaining configuration context.
+
+    `error` is `None` only for the configuration-only result returned by
+    `initialize_multivariate_outliers`.
+    """
     return MultivariateOutlierResult(
         method=configuration.method,
         columns=configuration.columns,
@@ -170,6 +174,35 @@ def _plot_sample(
     return projection[positions], outliers[positions], True
 
 
+def initialize_multivariate_outliers(df: pd.DataFrame) -> MultivariateOutlierResult:
+    """Return the default multivariate screening configuration without fitting a model.
+
+    Only column metadata is inspected, so this is cheap enough for the GUI
+    thread. It lets the configuration be shown before the user applies it.
+
+    Args:
+        df: DataFrame to inspect. Never mutated.
+
+    Returns:
+        A result without fit data, using every numeric column and the
+        default Isolation Forest settings. Its `error` is
+        `NOT_ENOUGH_NUMERIC_COLUMNS` when the dataset has too few numeric
+        columns, and `None` otherwise.
+    """
+    available = numeric_columns(df)
+    configuration = _Configuration(
+        method=MultivariateOutlierMethod.ISOLATION_FOREST,
+        columns=available,
+        available_columns=available,
+        standardize=True,
+        contamination=DEFAULT_CONTAMINATION,
+        lof_neighbors=DEFAULT_LOF_NEIGHBORS,
+        total_rows=len(df),
+    )
+    error = MultivariateOutlierError.NOT_ENOUGH_NUMERIC_COLUMNS if len(available) < MIN_SELECTED_COLUMNS else None
+    return _unfitted_result(error, configuration=configuration)
+
+
 def analyze_multivariate_outliers(
     df: pd.DataFrame,
     columns: Sequence[str] | None = None,
@@ -210,26 +243,26 @@ def analyze_multivariate_outliers(
     )
 
     if len(available) < MIN_SELECTED_COLUMNS:
-        return _error_result(MultivariateOutlierError.NOT_ENOUGH_NUMERIC_COLUMNS, configuration=configuration)
+        return _unfitted_result(MultivariateOutlierError.NOT_ENOUGH_NUMERIC_COLUMNS, configuration=configuration)
     if len(set(selected)) != len(selected) or any(column not in available for column in selected):
-        return _error_result(MultivariateOutlierError.INVALID_COLUMN, configuration=configuration)
+        return _unfitted_result(MultivariateOutlierError.INVALID_COLUMN, configuration=configuration)
     if len(selected) < MIN_SELECTED_COLUMNS:
-        return _error_result(MultivariateOutlierError.NOT_ENOUGH_SELECTED_COLUMNS, configuration=configuration)
+        return _unfitted_result(MultivariateOutlierError.NOT_ENOUGH_SELECTED_COLUMNS, configuration=configuration)
     if not MIN_CONTAMINATION <= contamination <= MAX_CONTAMINATION:
-        return _error_result(MultivariateOutlierError.INVALID_CONTAMINATION, configuration=configuration)
+        return _unfitted_result(MultivariateOutlierError.INVALID_CONTAMINATION, configuration=configuration)
     if not MIN_LOF_NEIGHBORS <= lof_neighbors <= MAX_LOF_NEIGHBORS:
-        return _error_result(MultivariateOutlierError.INVALID_LOF_NEIGHBORS, configuration=configuration)
+        return _unfitted_result(MultivariateOutlierError.INVALID_LOF_NEIGHBORS, configuration=configuration)
 
     complete_values, positions = _values_and_positions(df, selected)
     rows_used = len(complete_values)
     if rows_used < MIN_OBSERVATIONS:
-        return _error_result(
+        return _unfitted_result(
             MultivariateOutlierError.NOT_ENOUGH_OBSERVATIONS,
             configuration=configuration,
             rows_used=rows_used,
         )
     if method is MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR and lof_neighbors >= rows_used:
-        return _error_result(
+        return _unfitted_result(
             MultivariateOutlierError.INVALID_LOF_NEIGHBORS,
             configuration=configuration,
             rows_used=rows_used,
@@ -237,7 +270,7 @@ def analyze_multivariate_outliers(
 
     fitted_values = StandardScaler().fit_transform(complete_values) if standardize else complete_values
     if bool(np.all(np.ptp(fitted_values, axis=0) == 0.0)):
-        return _error_result(MultivariateOutlierError.NO_VARIATION, configuration=configuration, rows_used=rows_used)
+        return _unfitted_result(MultivariateOutlierError.NO_VARIATION, configuration=configuration, rows_used=rows_used)
 
     outliers, scores = _fit_labels_and_scores(
         fitted_values,

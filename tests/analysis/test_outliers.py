@@ -22,6 +22,7 @@ from expo_jbm329.services.analysis.outliers import (
     analyze_outlier_column,
     analyze_outlier_summary,
     default_column,
+    initialize_outlier_summary,
     max_possible_z_score,
 )
 
@@ -339,3 +340,24 @@ def test_max_possible_z_score():
     assert math.isnan(max_possible_z_score(1))
     values = np.array([0.0] * 9 + [1.0])
     assert ((values - values.mean()) / values.std(ddof=1)).max() == pytest.approx(max_possible_z_score(10))
+
+
+def test_initialize_outlier_summary_uses_defaults_without_screening():
+    df = pd.DataFrame({"a": [1.0, 2.0, 100.0], "b": [1, 2, 3], "t": list("xyz")})
+
+    result = initialize_outlier_summary(df)
+
+    assert result.method is OutlierMethod.IQR
+    assert result.threshold == DEFAULT_THRESHOLDS[OutlierMethod.IQR]
+    assert result.available_columns == ("a", "b")
+    assert result.columns == ()
+    assert result.row_count == 3
+    assert result.rows_with_outliers == 0
+    assert result.error is None
+
+
+def test_initialize_outlier_summary_without_numeric_columns_reports_the_error():
+    result = initialize_outlier_summary(pd.DataFrame({"t": list("xyz")}))
+
+    assert result.available_columns == ()
+    assert result.error is OutlierError.NO_NUMERIC_COLUMN

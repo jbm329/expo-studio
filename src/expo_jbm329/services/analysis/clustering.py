@@ -101,13 +101,17 @@ class _Configuration:
     total_rows: int
 
 
-def _error_result(
-    error: ClusteringError,
+def _unfitted_result(
+    error: ClusteringError | None,
     *,
     configuration: _Configuration,
     rows_used: int = 0,
 ) -> ClusteringResult:
-    """Build an error result while retaining config and complete-case context."""
+    """Build a result without fit data while retaining config and complete-case context.
+
+    `error` is `None` only for the configuration-only result returned by
+    `initialize_clustering`.
+    """
     return ClusteringResult(
         method=configuration.method,
         columns=configuration.columns,
@@ -188,6 +192,36 @@ def _plot_sample(values: np.ndarray, labels: np.ndarray) -> tuple[np.ndarray, np
     return projection[positions], labels[positions], True
 
 
+def initialize_clustering(df: pd.DataFrame) -> ClusteringResult:
+    """Return the default clustering configuration without fitting a model.
+
+    Only column metadata is inspected, so this is cheap enough for the GUI
+    thread. It lets the configuration be shown before the user applies it.
+
+    Args:
+        df: DataFrame to inspect. Never mutated.
+
+    Returns:
+        A result without fit data, using every numeric column and the
+        default K-Means parameters. Its `error` is
+        `NOT_ENOUGH_NUMERIC_COLUMNS` when clustering is not possible for the
+        dataset, and `None` otherwise.
+    """
+    available = numeric_columns(df)
+    configuration = _Configuration(
+        method=ClusteringMethod.K_MEANS,
+        columns=available,
+        available_columns=available,
+        standardize=True,
+        cluster_count=DEFAULT_CLUSTER_COUNT,
+        dbscan_epsilon=DEFAULT_DBSCAN_EPSILON,
+        dbscan_min_samples=DEFAULT_DBSCAN_MIN_SAMPLES,
+        total_rows=len(df),
+    )
+    error = ClusteringError.NOT_ENOUGH_NUMERIC_COLUMNS if len(available) < MIN_SELECTED_COLUMNS else None
+    return _unfitted_result(error, configuration=configuration)
+
+
 def analyze_clustering(
     df: pd.DataFrame,
     columns: Sequence[str] | None = None,
@@ -228,29 +262,31 @@ def analyze_clustering(
     )
 
     if len(available) < MIN_SELECTED_COLUMNS:
-        return _error_result(ClusteringError.NOT_ENOUGH_NUMERIC_COLUMNS, configuration=configuration)
+        return _unfitted_result(ClusteringError.NOT_ENOUGH_NUMERIC_COLUMNS, configuration=configuration)
     if len(set(selected)) != len(selected) or any(column not in available for column in selected):
-        return _error_result(ClusteringError.INVALID_COLUMN, configuration=configuration)
+        return _unfitted_result(ClusteringError.INVALID_COLUMN, configuration=configuration)
     if len(selected) < MIN_SELECTED_COLUMNS:
-        return _error_result(ClusteringError.NOT_ENOUGH_SELECTED_COLUMNS, configuration=configuration)
+        return _unfitted_result(ClusteringError.NOT_ENOUGH_SELECTED_COLUMNS, configuration=configuration)
     if not MIN_CLUSTER_COUNT <= cluster_count <= MAX_CLUSTER_COUNT:
-        return _error_result(ClusteringError.INVALID_CLUSTER_COUNT, configuration=configuration)
+        return _unfitted_result(ClusteringError.INVALID_CLUSTER_COUNT, configuration=configuration)
     if not MIN_DBSCAN_EPSILON <= dbscan_epsilon <= MAX_DBSCAN_EPSILON:
-        return _error_result(ClusteringError.INVALID_DBSCAN_EPSILON, configuration=configuration)
+        return _unfitted_result(ClusteringError.INVALID_DBSCAN_EPSILON, configuration=configuration)
     if not MIN_DBSCAN_MIN_SAMPLES <= dbscan_min_samples <= MAX_DBSCAN_MIN_SAMPLES:
-        return _error_result(ClusteringError.INVALID_DBSCAN_MIN_SAMPLES, configuration=configuration)
+        return _unfitted_result(ClusteringError.INVALID_DBSCAN_MIN_SAMPLES, configuration=configuration)
 
     all_values = _column_values(df, selected)
     complete_values = all_values[np.isfinite(all_values).all(axis=1)]
     rows_used = len(complete_values)
     if rows_used < MIN_OBSERVATIONS:
-        return _error_result(ClusteringError.NOT_ENOUGH_OBSERVATIONS, configuration=configuration, rows_used=rows_used)
+        return _unfitted_result(
+            ClusteringError.NOT_ENOUGH_OBSERVATIONS, configuration=configuration, rows_used=rows_used
+        )
     if method is not ClusteringMethod.DBSCAN and cluster_count > rows_used:
-        return _error_result(ClusteringError.INVALID_CLUSTER_COUNT, configuration=configuration, rows_used=rows_used)
+        return _unfitted_result(ClusteringError.INVALID_CLUSTER_COUNT, configuration=configuration, rows_used=rows_used)
 
     fitted_values = StandardScaler().fit_transform(complete_values) if standardize else complete_values
     if bool(np.all(np.ptp(fitted_values, axis=0) == 0.0)):
-        return _error_result(ClusteringError.NO_VARIATION, configuration=configuration, rows_used=rows_used)
+        return _unfitted_result(ClusteringError.NO_VARIATION, configuration=configuration, rows_used=rows_used)
 
     labels = _cluster_labels(
         fitted_values,

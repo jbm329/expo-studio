@@ -5,7 +5,7 @@ import math
 import pandas as pd
 import pytest
 
-from expo_jbm329.services.analysis.chi_square import ChiSquareError, analyze_chi_square
+from expo_jbm329.services.analysis.chi_square import ChiSquareError, analyze_chi_square, initialize_chi_square
 from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS, ColumnExclusionReason, ExcludedColumn
 
 
@@ -227,3 +227,29 @@ def test_result_reports_excluded_columns_on_success_and_on_error():
     assert success.excluded_columns == expected
     assert error.error is ChiSquareError.INVALID_COLUMN
     assert error.excluded_columns == expected
+
+
+def test_initialize_chi_square_uses_the_first_two_eligible_columns_without_testing():
+    df = pd.DataFrame({
+        "id": [float(i) for i in range(24)],
+        "grp": ["A", "B"] * 12,
+        "color": ["r", "g", "b"] * 8,
+    })
+
+    result = initialize_chi_square(df)
+
+    assert (result.row_column, result.column_column) == ("grp", "color")
+    assert result.available_columns == ("grp", "color")
+    assert result.observed == ()
+    assert result.total == 0
+    assert math.isnan(result.p_value)
+    assert result.error is None
+    assert result.excluded_columns == analyze_chi_square(df).excluded_columns
+
+
+def test_initialize_chi_square_with_one_eligible_column_reports_the_error():
+    result = initialize_chi_square(pd.DataFrame({"grp": ["A", "B"] * 3}))
+
+    assert (result.row_column, result.column_column) == ("", "")
+    assert result.available_columns == ("grp",)
+    assert result.error is ChiSquareError.NOT_ENOUGH_COLUMNS

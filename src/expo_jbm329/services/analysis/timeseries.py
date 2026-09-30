@@ -101,12 +101,16 @@ def _default_period(frequency: str | None) -> int | None:
     return None
 
 
-def _error_result(
-    error: TimeSeriesError,
+def _unfitted_result(
+    error: TimeSeriesError | None,
     *,
     configuration: _Configuration,
 ) -> TimeSeriesResult:
-    """Build a structured error result retaining the configuration context."""
+    """Build a result without series data, retaining the configuration context.
+
+    `error` is `None` only for the configuration-only result returned by
+    `initialize_time_series`.
+    """
     return TimeSeriesResult(
         datetime_column=configuration.datetime_column,
         value_column=configuration.value_column,
@@ -204,6 +208,41 @@ def _decomposition(
     )
 
 
+def initialize_time_series(df: pd.DataFrame) -> TimeSeriesResult:
+    """Return the default time-series configuration without analyzing a series.
+
+    Only column metadata is inspected, so this is cheap enough for the GUI
+    thread. It lets the configuration be shown before the user applies it.
+
+    Args:
+        df: DataFrame to inspect. Never mutated.
+
+    Returns:
+        A result without series data, selecting the first datetime and
+        numeric columns. Its `error` is `NO_DATETIME_COLUMN` or
+        `NO_NUMERIC_COLUMN` when the dataset lacks either, and `None`
+        otherwise.
+    """
+    available_dates = datetime_columns(df)
+    available_values = numeric_columns(df)
+    configuration = _Configuration(
+        datetime_column=available_dates[0] if available_dates else "",
+        value_column=available_values[0] if available_values else "",
+        available_datetime_columns=available_dates,
+        available_value_columns=available_values,
+        resample_frequency=None,
+        seasonal_period=None,
+        decomposition_model=DecompositionModel.ADDITIVE,
+        source_rows=len(df),
+    )
+    error: TimeSeriesError | None = None
+    if not available_dates:
+        error = TimeSeriesError.NO_DATETIME_COLUMN
+    elif not available_values:
+        error = TimeSeriesError.NO_NUMERIC_COLUMN
+    return _unfitted_result(error, configuration=configuration)
+
+
 def analyze_time_series(
     df: pd.DataFrame,
     datetime_column: str | None = None,
@@ -247,22 +286,22 @@ def analyze_time_series(
     )
 
     if not available_dates:
-        return _error_result(TimeSeriesError.NO_DATETIME_COLUMN, configuration=configuration)
+        return _unfitted_result(TimeSeriesError.NO_DATETIME_COLUMN, configuration=configuration)
     if not available_values:
-        return _error_result(TimeSeriesError.NO_NUMERIC_COLUMN, configuration=configuration)
+        return _unfitted_result(TimeSeriesError.NO_NUMERIC_COLUMN, configuration=configuration)
     if date_column not in available_dates:
-        return _error_result(TimeSeriesError.INVALID_DATETIME_COLUMN, configuration=configuration)
+        return _unfitted_result(TimeSeriesError.INVALID_DATETIME_COLUMN, configuration=configuration)
     if numeric_column not in available_values:
-        return _error_result(TimeSeriesError.INVALID_VALUE_COLUMN, configuration=configuration)
+        return _unfitted_result(TimeSeriesError.INVALID_VALUE_COLUMN, configuration=configuration)
     if seasonal_period is not None and seasonal_period < MIN_SEASONAL_PERIOD:
-        return _error_result(TimeSeriesError.INVALID_SEASONAL_PERIOD, configuration=configuration)
+        return _unfitted_result(TimeSeriesError.INVALID_SEASONAL_PERIOD, configuration=configuration)
 
     try:
         series, invalid_rows, duplicate_rows = _prepared_series(df, date_column, numeric_column, resample_frequency)
     except ValueError:
-        return _error_result(TimeSeriesError.INVALID_FREQUENCY, configuration=configuration)
+        return _unfitted_result(TimeSeriesError.INVALID_FREQUENCY, configuration=configuration)
     if len(series) < MIN_OBSERVATIONS:
-        return _error_result(TimeSeriesError.NOT_ENOUGH_OBSERVATIONS, configuration=configuration)
+        return _unfitted_result(TimeSeriesError.NOT_ENOUGH_OBSERVATIONS, configuration=configuration)
 
     index = pd.DatetimeIndex(series.index)
     detected_frequency = resample_frequency if resample_frequency is not None else _detect_frequency(index)

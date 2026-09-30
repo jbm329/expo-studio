@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, cast
 
 from PyQt6.QtCore import QT_TR_NOOP, QTimer
 
-from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
+from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog, build_placeholder_label
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
 from expo_jbm329.gui.dialogs.analysis.clustering_config import ClusteringConfigWidget
 from expo_jbm329.gui.dialogs.analysis.clustering_view import ClusteringView
@@ -31,33 +31,36 @@ from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigWidget
 from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
-from expo_jbm329.services.analysis.chi_square import analyze_chi_square
+from expo_jbm329.services.analysis.chi_square import analyze_chi_square, initialize_chi_square
 from expo_jbm329.services.analysis.clustering import MIN_SELECTED_COLUMNS as CLUSTERING_MIN_SELECTED_COLUMNS
-from expo_jbm329.services.analysis.clustering import ClusteringMethod, analyze_clustering
+from expo_jbm329.services.analysis.clustering import ClusteringMethod, analyze_clustering, initialize_clustering
 from expo_jbm329.services.analysis.correlation import (
     MIN_SELECTED_COLUMNS,
     CorrelationMethod,
     analyze_correlation_matrix,
     analyze_correlation_pair,
     default_pair,
+    initialize_correlation,
 )
-from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
+from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison, initialize_group_comparison
 from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierMethod,
     analyze_multivariate_outliers,
+    initialize_multivariate_outliers,
 )
 from expo_jbm329.services.analysis.outliers import (
     OutlierMethod,
     analyze_outlier_column,
     analyze_outlier_summary,
     default_column,
+    initialize_outlier_summary,
 )
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.pca import MIN_SELECTED_COLUMNS as PCA_MIN_SELECTED_COLUMNS
-from expo_jbm329.services.analysis.pca import analyze_pca
+from expo_jbm329.services.analysis.pca import analyze_pca, initialize_pca
 from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression, initialize_regression
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
-from expo_jbm329.services.analysis.timeseries import analyze_time_series
+from expo_jbm329.services.analysis.timeseries import analyze_time_series, initialize_time_series
 from expo_jbm329.utils.i18n_utils import tr
 
 if TYPE_CHECKING:
@@ -137,16 +140,23 @@ class _CategoryHandler:
         cancelable: Whether `compute` reports progress and honors
             cancellation - the busy overlay then shows a progress bar and
             a Cancel button.
+        initialize: Optional GUI-thread-cheap callable turning a DataFrame
+            into a metadata-only result (column lists and defaults, no
+            model fitting). When set, opening the category renders this
+            result synchronously - no background job or busy overlay -
+            and `compute` is not run; computation then starts only when
+            the user applies a configuration.
     """
 
     compute: Callable[[pd.DataFrame, _JobCallbacks], object]
     render: Callable[[object, AnalysisDialog], tuple[QWidget, QWidget | None]]
     cancelable: bool = False
+    initialize: Callable[[pd.DataFrame], object] | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class _HypothesisTestsDefaults:
-    """Every hypothesis test computed with its default columns.
+    """Every hypothesis test's default configuration, without any test computed.
 
     The Hypothesis Tests category's initial result, so each test's column
     pickers in `HypothesisTestsConfigWidget` can be populated up front.
@@ -187,12 +197,14 @@ class _OutliersOutcome:
 class AnalysisController:
     """Controller responsible for the Advanced Analysis workspace workflow.
 
-    Each analysis category is backed by a `_CategoryHandler`. Computation
-    always runs as a background job (JobManager, via
+    Each analysis category is backed by a `_CategoryHandler`. Automatic
+    categories (Overview, Statistics) compute as soon as they are opened;
+    computation always runs as a background job (JobManager, via
     AsyncOperationController) with a busy overlay shown over the dialog's
-    result pane, so large datasets never freeze the GUI thread. Categories
-    without a registered handler fall back to the not-implemented
-    placeholder.
+    result pane, so large datasets never freeze the GUI thread.
+    Apply-first categories only build their configuration when opened and
+    compute once the user applies it. Categories without a registered
+    handler fall back to the not-implemented placeholder.
     """
 
     TR_NOT_IMPLEMENTED = QT_TR_NOOP("This analysis is not implemented yet.")
@@ -200,6 +212,7 @@ class AnalysisController:
     TR_RUNNING_ANALYSIS = QT_TR_NOOP("Running analysis…")
     TR_ANALYSIS_OPERATION = QT_TR_NOOP("generate analysis")
     TR_ANALYSIS_CANCELLED = QT_TR_NOOP("Analysis cancelled.")
+    TR_APPLY_PROMPT = QT_TR_NOOP("Choose settings and click Apply.")
 
     @staticmethod
     def _tr(text: str) -> str:
@@ -234,33 +247,40 @@ class AnalysisController:
                 render=self._render_statistics,
             ),
             AnalysisCategory.HYPOTHESIS_TESTS: _CategoryHandler(
-                compute=_ignore_callbacks(self._compute_hypothesis_tests_defaults),
+                compute=_ignore_callbacks(self._initialize_hypothesis_tests),
                 render=self._render_hypothesis_tests,
+                initialize=self._initialize_hypothesis_tests,
             ),
             AnalysisCategory.CORRELATION: _CategoryHandler(
                 compute=self._compute_correlation,
                 render=self._render_correlation,
                 cancelable=True,
+                initialize=initialize_correlation,
             ),
             AnalysisCategory.REGRESSION: _CategoryHandler(
                 compute=_ignore_callbacks(analyze_regression),
                 render=self._render_regression,
+                initialize=initialize_regression,
             ),
             AnalysisCategory.OUTLIERS: _CategoryHandler(
                 compute=_ignore_callbacks(self._compute_outliers),
                 render=self._render_outliers,
+                initialize=initialize_outlier_summary,
             ),
             AnalysisCategory.CLUSTERING: _CategoryHandler(
                 compute=_ignore_callbacks(analyze_clustering),
                 render=self._render_clustering,
+                initialize=initialize_clustering,
             ),
             AnalysisCategory.PCA: _CategoryHandler(
                 compute=_ignore_callbacks(analyze_pca),
                 render=self._render_pca,
+                initialize=initialize_pca,
             ),
             AnalysisCategory.TIME_SERIES: _CategoryHandler(
                 compute=_ignore_callbacks(analyze_time_series),
                 render=self._render_time_series,
+                initialize=initialize_time_series,
             ),
         }
 
@@ -335,22 +355,31 @@ class AnalysisController:
         return content, config
 
     def _render_hypothesis_tests(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
-        """Render the Hypothesis Tests content and its test/column-picker config.
+        """Render the Hypothesis Tests Apply prompt and its test/column-picker config.
 
-        Must run on the GUI thread. The initial content is always the
-        default test (Group Comparison). Unlike Overview/Statistics, the
-        configuration here determines *what* to compute (which test, which
-        columns), so the configuration widget's `configuration_changed`
-        signal is wired to `_recompute_content`, which dispatches a new
-        background job and replaces only the content pane, leaving this
-        exact configuration widget instance (and the user's picks) in place.
+        Must run on the GUI thread. Nothing is computed until the user
+        clicks Apply; the configuration widget's `apply_requested` signal is
+        wired to `_recompute_content`, which dispatches a background job and
+        replaces only the content pane, leaving this exact configuration
+        widget instance (and the user's picks) in place. Switching test
+        replaces the previous test's result with the prompt again.
         """
         defaults = cast("_HypothesisTestsDefaults", result)
-        content: QWidget = GroupComparisonView(defaults.group_comparison)
         config = HypothesisTestsConfigWidget(defaults.group_comparison, defaults.chi_square)
 
-        def _handle_configuration_changed() -> None:
-            configuration = config.current_configuration()
+        def _unapplied_content() -> QWidget:
+            test = config.selected_test()
+            initial: GroupComparisonResult | ChiSquareResult = (
+                defaults.group_comparison if test is HypothesisTest.GROUP_COMPARISON else defaults.chi_square
+            )
+            if initial.error is None:
+                return self._apply_prompt()
+            return self._render_hypothesis_test_content(test, initial)
+
+        def _handle_apply_requested() -> None:
+            configuration = config.applied_configuration()
+            if configuration is None:
+                return
             test, selection = configuration
             self._recompute_content(
                 dialog,
@@ -358,22 +387,21 @@ class AnalysisController:
                 scope_suffix=":".join((test.value, *(selection or ()))),
                 compute=lambda df, _callbacks: self._compute_hypothesis_test(df, test, selection),
                 apply_result=lambda r: dialog.set_content_widget(self._render_hypothesis_test_content(test, r)),
-                is_stale=lambda: config.current_configuration() != configuration,
+                is_stale=lambda: (
+                    config.applied_configuration() is not configuration or config.selected_test() is not test
+                ),
             )
 
-        config.configuration_changed.connect(_handle_configuration_changed)
-        return content, config
+        config.test_changed.connect(lambda: dialog.set_content_widget(_unapplied_content()))
+        config.apply_requested.connect(_handle_apply_requested)
+        return _unapplied_content(), config
 
     @staticmethod
-    def _compute_hypothesis_tests_defaults(df: pd.DataFrame) -> _HypothesisTestsDefaults:
-        """Compute every hypothesis test with its default columns (background-safe).
-
-        Both are computed up front so each test's column pickers can be
-        populated immediately, without a further job when switching tests.
-        """
+    def _initialize_hypothesis_tests(df: pd.DataFrame) -> _HypothesisTestsDefaults:
+        """Return every hypothesis test's default configuration without computing a test."""
         return _HypothesisTestsDefaults(
-            group_comparison=analyze_group_comparison(df),
-            chi_square=analyze_chi_square(df),
+            group_comparison=initialize_group_comparison(df),
+            chi_square=initialize_chi_square(df),
         )
 
     @staticmethod
@@ -436,25 +464,20 @@ class AnalysisController:
         return _CorrelationOutcome(matrix=matrix, pair_detail=pair_detail)
 
     def _render_correlation(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
-        """Render the Correlation Explorer view and its method/column/pair config.
+        """Render the Correlation Explorer's initial state: the Apply prompt and its config.
 
-        Must run on the GUI thread. Like Hypothesis Tests, the configuration
-        determines what to compute: a method change or applied column
-        selection recomputes the whole matrix (a cancelable job replacing
-        the view), while a pair change recomputes only the pair detail
-        (a quick job updating the current view's pair panel in place).
+        Must run on the GUI thread. `result` is the configuration-only
+        `initialize_correlation` matrix; nothing is computed until the user
+        applies a method and column selection, which recomputes the whole
+        matrix (a cancelable job replacing the view). Once a matrix is
+        shown, a pair change recomputes only the pair detail (a quick job
+        updating the current view's pair panel in place).
         """
-        outcome = cast("_CorrelationOutcome", result)
-        if len(outcome.matrix.available_columns) < MIN_SELECTED_COLUMNS:
-            return CorrelationView(outcome.matrix, None), None
+        matrix = cast("CorrelationMatrixResult", result)
+        if len(matrix.available_columns) < MIN_SELECTED_COLUMNS:
+            return CorrelationView(matrix, None), None
 
-        initial_pair = (
-            (outcome.pair_detail.pair.x_column, outcome.pair_detail.pair.y_column)
-            if outcome.pair_detail is not None
-            else default_pair(outcome.matrix)
-        )
-        config = CorrelationConfigWidget(outcome.matrix, initial_pair)
-        content = self._build_correlation_view(outcome, config)
+        config = CorrelationConfigWidget(matrix, None)
 
         def _handle_matrix_requested() -> None:
             self._recompute_correlation_matrix(dialog, config)
@@ -464,7 +487,7 @@ class AnalysisController:
 
         config.matrix_requested.connect(_handle_matrix_requested)
         config.pair_changed.connect(_handle_pair_changed)
-        return content, config
+        return self._apply_prompt(), config
 
     @staticmethod
     def _build_correlation_view(outcome: _CorrelationOutcome, config: CorrelationConfigWidget) -> CorrelationView:
@@ -474,18 +497,29 @@ class AnalysisController:
         return view
 
     def _recompute_correlation_matrix(self, dialog: AnalysisDialog, config: CorrelationConfigWidget) -> None:
-        """Recompute the whole correlation matrix for the config's method and applied columns."""
+        """Recompute the whole correlation matrix for the config's applied method and columns.
+
+        Before the first matrix is shown, the pair pickers are disabled and
+        only hold a placeholder pair, so the matrix's strongest pair is
+        detailed instead and then synced back into the pickers.
+        """
         configuration = config.matrix_configuration()
         method, columns = configuration
-        pair = config.current_pair()
+        pair = config.current_pair() if config.is_pair_selection_enabled() else None
 
         def _apply(result: object) -> None:
             outcome = cast("_CorrelationOutcome", result)
             dialog.set_content_widget(self._build_correlation_view(outcome, config))
+            if outcome.pair_detail is None:
+                return
+            detailed_pair = (outcome.pair_detail.pair.x_column, outcome.pair_detail.pair.y_column)
+            if pair is None:
+                config.set_pair(*detailed_pair, notify=False)
+            config.set_pair_selection_enabled(enabled=True)
             # The pair may have changed while the matrix was computing; its
             # own recompute was skipped (no current view), so catch up now.
             current_pair = config.current_pair()
-            if outcome.pair_detail is not None and current_pair is not None and current_pair != pair:
+            if current_pair is not None and current_pair != detailed_pair:
                 self._recompute_correlation_pair(dialog, config, *current_pair)
 
         self._recompute_content(
@@ -592,20 +626,20 @@ class AnalysisController:
         return _OutliersOutcome(summary=summary, detail=detail)
 
     def _render_outliers(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
-        """Render the Outlier Explorer view and its method/threshold/column config.
+        """Render the Outlier Explorer's initial state: the Apply prompt and its config.
 
-        Must run on the GUI thread. Like the Correlation Explorer, a method
-        or threshold change recomputes the whole summary (a job replacing
-        the view), while a column change recomputes only the column detail
-        (a job updating the current view's detail panel in place).
+        Must run on the GUI thread. `result` is the configuration-only
+        `initialize_outlier_summary` result; nothing is computed until the
+        user applies a method and threshold, which recomputes the whole
+        summary (a job replacing the view). Once a summary is shown, a
+        column change recomputes only the column detail (a job updating the
+        current view's detail panel in place).
         """
-        outcome = cast("_OutliersOutcome", result)
-        if not outcome.summary.available_columns:
-            return OutliersView(outcome.summary, None), None
+        summary = cast("OutlierSummaryResult", result)
+        if not summary.available_columns:
+            return OutliersView(summary, None), None
 
-        initial_column = outcome.detail.summary.column if outcome.detail is not None else None
-        config = OutliersConfigWidget(outcome.summary, initial_column)
-        content = self._build_outliers_view(outcome, config)
+        config = OutliersConfigWidget(summary, None)
 
         def _handle_summary_requested() -> None:
             self._recompute_outlier_summary(dialog, config)
@@ -615,8 +649,8 @@ class AnalysisController:
 
         config.summary_requested.connect(_handle_summary_requested)
         config.column_changed.connect(_handle_column_changed)
-        config.multivariate_requested.connect(lambda: self._switch_to_multivariate_outliers(dialog, config))
-        return content, config
+        config.multivariate_requested.connect(lambda: self._switch_to_multivariate_outliers(dialog))
+        return self._apply_prompt(), config
 
     @staticmethod
     def _build_outliers_view(outcome: _OutliersOutcome, config: OutliersConfigWidget) -> OutliersView:
@@ -626,18 +660,29 @@ class AnalysisController:
         return view
 
     def _recompute_outlier_summary(self, dialog: AnalysisDialog, config: OutliersConfigWidget) -> None:
-        """Recompute the whole outlier summary for the config's method and threshold."""
+        """Recompute the whole outlier summary for the config's applied method and threshold.
+
+        Before the first summary is shown, the column picker is disabled and
+        only holds a placeholder column, so the summary's top-ranked column
+        is detailed instead and then synced back into the picker.
+        """
         configuration = config.summary_configuration()
         method, threshold = configuration
-        column = config.current_column() or None
+        column = (config.current_column() or None) if config.is_column_selection_enabled() else None
 
         def _apply(result: object) -> None:
             outcome = cast("_OutliersOutcome", result)
             dialog.set_content_widget(self._build_outliers_view(outcome, config))
+            if outcome.detail is None:
+                return
+            detailed_column = outcome.detail.summary.column
+            if column is None:
+                config.set_column(detailed_column, notify=False)
+            config.set_column_selection_enabled(enabled=True)
             # The column may have changed while the summary was computing;
             # its own recompute was skipped (no current view), so catch up now.
             current_column = config.current_column()
-            if outcome.detail is not None and current_column and current_column != column:
+            if current_column and current_column != detailed_column:
                 self._recompute_outlier_column(dialog, config, current_column)
 
         self._recompute_content(
@@ -674,41 +719,31 @@ class AnalysisController:
             target=view.detail_panel(),
         )
 
-    def _switch_to_multivariate_outliers(self, dialog: AnalysisDialog, config: OutliersConfigWidget) -> None:
-        """Fit the default multivariate model after the mode switch."""
-        configuration = (
-            None,
-            MultivariateOutlierMethod.ISOLATION_FOREST,
-            True,
-            0.05,
-            20,
-        )
+    def _switch_to_multivariate_outliers(self, dialog: AnalysisDialog) -> None:
+        """Show the multivariate configuration after the mode switch, without fitting.
 
-        def _apply(result: object) -> None:
-            multivariate_result = cast("MultivariateOutlierResult", result)
-            multivariate_config = MultivariateOutliersConfigWidget(multivariate_result)
-            multivariate_config.analysis_requested.connect(
-                lambda: self._recompute_multivariate_outliers(dialog, multivariate_config)
-            )
-            multivariate_config.univariate_requested.connect(lambda: self._refresh_content(dialog))
-            dialog.set_content_widget(MultivariateOutliersView(multivariate_result))
-            dialog.set_config_widget(multivariate_config)
+        Like every apply-first category, the model is only fitted once the
+        user applies a configuration. When the dataset cannot support
+        multivariate screening, its explanatory error view is shown instead
+        of the Apply prompt, but the configuration is kept so the user can
+        switch back to univariate mode.
+        """
+        df = self._load_selected_dataset(dialog, AnalysisCategory.OUTLIERS)
+        if df is None:
+            self._show_placeholder(dialog, self._tr(self.TR_ANALYSIS_ERROR))
+            return
 
-        self._recompute_content(
-            dialog,
-            category=AnalysisCategory.OUTLIERS,
-            scope_suffix="multivariate:isolation_forest:standardized:contamination:0.05",
-            compute=lambda df, _callbacks: analyze_multivariate_outliers(
-                df,
-                columns=configuration[0],
-                method=configuration[1],
-                standardize=configuration[2],
-                contamination=configuration[3],
-                lof_neighbors=configuration[4],
-            ),
-            apply_result=_apply,
-            is_stale=lambda: dialog.config_widget() is not config,
+        multivariate_result = initialize_multivariate_outliers(df)
+        multivariate_config = MultivariateOutliersConfigWidget(multivariate_result)
+        multivariate_config.analysis_requested.connect(
+            lambda: self._recompute_multivariate_outliers(dialog, multivariate_config)
         )
+        multivariate_config.univariate_requested.connect(lambda: self._refresh_content(dialog))
+        content = (
+            self._apply_prompt() if multivariate_result.error is None else MultivariateOutliersView(multivariate_result)
+        )
+        dialog.set_content_widget(content)
+        dialog.set_config_widget(multivariate_config)
 
     def _recompute_multivariate_outliers(
         self,
@@ -747,15 +782,19 @@ class AnalysisController:
         )
 
     def _render_pca(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
-        """Render PCA and retain a feature/scaling config when it can be adjusted."""
+        """Render PCA's initial state: the Apply prompt and its feature/scaling config.
+
+        `result` is the configuration-only `initialize_pca` result; the fit
+        only runs once the user applies a configuration. When the dataset
+        cannot support PCA, its explanatory error view is shown instead.
+        """
         pca_result = cast("PCAResult", result)
-        content = PCAView(pca_result)
         if len(pca_result.available_columns) < PCA_MIN_SELECTED_COLUMNS:
-            return content, None
+            return PCAView(pca_result), None
 
         config = PCAConfigWidget(pca_result)
         config.analysis_requested.connect(lambda: self._recompute_pca(dialog, config))
-        return content, config
+        return self._apply_prompt(), config
 
     def _recompute_pca(self, dialog: AnalysisDialog, config: PCAConfigWidget) -> None:
         """Run PCA for an applied feature/scaling configuration."""
@@ -772,15 +811,20 @@ class AnalysisController:
         )
 
     def _render_clustering(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
-        """Render clustering and retain its config when enough features exist."""
+        """Render clustering's initial state: the Apply prompt and its config.
+
+        `result` is the configuration-only `initialize_clustering` result;
+        the fit only runs once the user applies a configuration. When the
+        dataset cannot support clustering, its explanatory error view is
+        shown instead.
+        """
         clustering_result = cast("ClusteringResult", result)
-        content = ClusteringView(clustering_result)
         if len(clustering_result.available_columns) < CLUSTERING_MIN_SELECTED_COLUMNS:
-            return content, None
+            return ClusteringView(clustering_result), None
 
         config = ClusteringConfigWidget(clustering_result)
         config.analysis_requested.connect(lambda: self._recompute_clustering(dialog, config))
-        return content, config
+        return self._apply_prompt(), config
 
     def _recompute_clustering(self, dialog: AnalysisDialog, config: ClusteringConfigWidget) -> None:
         """Run clustering for the latest applied config."""
@@ -812,15 +856,20 @@ class AnalysisController:
         )
 
     def _render_time_series(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
-        """Render the Time Series Explorer and retain valid column controls."""
+        """Render the Time Series Explorer's initial state: the Apply prompt and its config.
+
+        `result` is the configuration-only `initialize_time_series` result;
+        the series is only analyzed once the user applies a configuration.
+        When the dataset lacks a datetime or numeric column, the explanatory
+        error view is shown instead.
+        """
         series_result = cast("TimeSeriesResult", result)
-        content = TimeSeriesView(series_result)
         if not series_result.available_datetime_columns or not series_result.available_value_columns:
-            return content, None
+            return TimeSeriesView(series_result), None
 
         config = TimeSeriesConfigWidget(series_result)
         config.analysis_requested.connect(lambda: self._recompute_time_series(dialog, config))
-        return content, config
+        return self._apply_prompt(), config
 
     def _recompute_time_series(self, dialog: AnalysisDialog, config: TimeSeriesConfigWidget) -> None:
         """Analyze one applied Time Series Explorer configuration."""
@@ -852,9 +901,11 @@ class AnalysisController:
     def _refresh_content(self, dialog: AnalysisDialog) -> None:
         """Rebuild the content panel for the currently selected category/dataset.
 
-        The actual computation always runs as a background job with a busy
-        overlay shown over the dialog's result pane, so large datasets or
-        heavier analyses never freeze the GUI thread.
+        Apply-first categories (with an `initialize` callable) only render
+        their configuration here, synchronously. Every other category's
+        computation runs as a background job with a busy overlay shown over
+        the dialog's result pane, so large datasets or heavier analyses
+        never freeze the GUI thread.
 
         Args:
             dialog: Active Advanced Analysis dialog.
@@ -875,8 +926,62 @@ class AnalysisController:
             self._show_placeholder(dialog, self._tr(self.TR_ANALYSIS_ERROR))
             return
 
+        df = self._load_dataset(category, tab_id)
+        if df is None:
+            self._show_placeholder(dialog, self._tr(self.TR_ANALYSIS_ERROR))
+            return
+
+        if handler.initialize is not None:
+            self._initialize_category(dialog, category, handler.initialize, handler.render, df)
+            return
+
+        self._run_analysis(dialog, category, handler, tab_id, df)
+
+    def _initialize_category(
+        self,
+        dialog: AnalysisDialog,
+        category: AnalysisCategory,
+        initialize: Callable[[pd.DataFrame], object],
+        render: Callable[[object, AnalysisDialog], tuple[QWidget, QWidget | None]],
+        df: pd.DataFrame,
+    ) -> None:
+        """Render an apply-first category's configuration synchronously.
+
+        Initializers only inspect column metadata, so they are cheap enough
+        for the GUI thread and need neither a background job nor a busy
+        overlay; the actual computation starts when the user clicks Apply.
+
+        Args:
+            dialog: Active Advanced Analysis dialog.
+            category: The category being opened (for logging).
+            initialize: Metadata-only initializer for the category.
+            render: The category's renderer.
+            df: The DataFrame to analyze.
+        """
         try:
-            df = self._results.get_df_by_tab_id(tab_id)
+            result = initialize(df)
+        except (KeyError, TypeError, ValueError):
+            self._logger.exception("AnalysisController: failed to initialize category '%s'.", category)
+            self._show_placeholder(dialog, self._tr(self.TR_ANALYSIS_ERROR))
+            return
+
+        content_widget, config_widget = render(result, dialog)
+        dialog.set_content_widget(content_widget)
+        dialog.set_config_widget(config_widget)
+
+    def _apply_prompt(self) -> QWidget:
+        """Build the content shown by an apply-first category before its first Apply."""
+        return build_placeholder_label(self._tr(self.TR_APPLY_PROMPT))
+
+    def _load_dataset(self, category: AnalysisCategory, tab_id: str) -> pd.DataFrame | None:
+        """Return the dataset of `tab_id`, or `None` (logged) if it cannot be loaded.
+
+        Args:
+            category: The category needing the dataset (for logging).
+            tab_id: The dataset's result tab ID.
+        """
+        try:
+            return self._results.get_df_by_tab_id(tab_id)
         except (
             AttributeError,
             ConnectionError,
@@ -894,16 +999,19 @@ class AnalysisController:
                 category,
                 tab_id,
             )
-            self._show_placeholder(dialog, self._tr(self.TR_ANALYSIS_ERROR))
-            return
+            return None
 
-        if category is AnalysisCategory.REGRESSION:
-            content_widget, config_widget = self._render_regression(initialize_regression(df), dialog)
-            dialog.set_content_widget(content_widget)
-            dialog.set_config_widget(config_widget)
-            return
+    def _load_selected_dataset(self, dialog: AnalysisDialog, category: AnalysisCategory) -> pd.DataFrame | None:
+        """Return the dialog's selected dataset, or `None` if none is selected or it cannot be loaded.
 
-        self._run_analysis(dialog, category, handler, tab_id, df)
+        Args:
+            dialog: Active Advanced Analysis dialog.
+            category: The category needing the dataset (for logging).
+        """
+        tab_id = dialog.selected_dataset_tab_id()
+        if tab_id is None:
+            return None
+        return self._load_dataset(category, tab_id)
 
     def _show_placeholder(self, dialog: AnalysisDialog, text: str) -> None:
         """Show a placeholder message and hide any stale configuration widget.
@@ -1037,25 +1145,8 @@ class AnalysisController:
         if tab_id is None:
             return
 
-        try:
-            df = self._results.get_df_by_tab_id(tab_id)
-        except (
-            AttributeError,
-            ConnectionError,
-            FileNotFoundError,
-            IndexError,
-            KeyError,
-            LookupError,
-            OSError,
-            RuntimeError,
-            TypeError,
-            ValueError,
-        ):
-            self._logger.exception(
-                "AnalysisController: failed to reload dataset for category '%s' (tab_id=%s).",
-                category,
-                tab_id,
-            )
+        df = self._load_dataset(category, tab_id)
+        if df is None:
             dialog.show_placeholder(self._tr(self.TR_ANALYSIS_ERROR))
             return
 

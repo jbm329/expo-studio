@@ -37,6 +37,22 @@ if TYPE_CHECKING:
 _CATEGORY_ROLE = Qt.ItemDataRole.UserRole
 
 
+def build_placeholder_label(text: str, parent: QWidget | None = None) -> QLabel:
+    """Build the centered, word-wrapped message shown instead of analysis results.
+
+    Args:
+        text: Message to show.
+        parent: Optional parent widget.
+
+    Returns:
+        The placeholder label.
+    """
+    label = QLabel(text, parent)
+    label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    label.setWordWrap(True)
+    return label
+
+
 class AnalysisDialog(QDialog):
     """Dialog hosting the Advanced Analysis workspace."""
 
@@ -235,10 +251,7 @@ class AnalysisDialog(QDialog):
         Args:
             text: Message to show instead of analysis results.
         """
-        label = QLabel(text, self)
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        label.setWordWrap(True)
-        self.set_content_widget(label)
+        self.set_content_widget(build_placeholder_label(text, self))
 
     def set_content_widget(self, widget: QWidget) -> None:
         """Replace the content panel's widget with the given widget.

@@ -167,3 +167,28 @@ def test_default_cluster_count_is_valid():
 
     assert result.error is None
     assert result.cluster_count == DEFAULT_CLUSTER_COUNT
+
+
+def test_initialize_clustering_uses_default_k_means_without_fitting() -> None:
+    df = pd.DataFrame({"x": [0.0, 1.0, 2.0], "y": [2.0, 1.0, 0.0], "text": ["a", "b", "c"]})
+
+    result = clustering.initialize_clustering(df)
+
+    assert result.error is None
+    assert result.method is clustering.ClusteringMethod.K_MEANS
+    assert result.columns == ("x", "y")
+    assert result.available_columns == ("x", "y")
+    assert result.standardize is True
+    assert result.cluster_count == clustering.DEFAULT_CLUSTER_COUNT
+    assert result.dbscan_epsilon == clustering.DEFAULT_DBSCAN_EPSILON
+    assert result.dbscan_min_samples == clustering.DEFAULT_DBSCAN_MIN_SAMPLES
+    assert result.total_rows == 3
+    assert result.clusters == ()
+    assert result.sample_labels == ()
+
+
+def test_initialize_clustering_reports_too_few_numeric_columns() -> None:
+    result = clustering.initialize_clustering(pd.DataFrame({"text": ["a", "b"]}))
+
+    assert result.error is clustering.ClusteringError.NOT_ENOUGH_NUMERIC_COLUMNS
+    assert result.available_columns == ()

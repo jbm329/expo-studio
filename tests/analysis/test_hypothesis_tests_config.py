@@ -25,9 +25,9 @@ def _widget(df: pd.DataFrame | None = None) -> HypothesisTestsConfigWidget:
     return HypothesisTestsConfigWidget(analyze_group_comparison(data), analyze_chi_square(data))
 
 
-def _received(widget: HypothesisTestsConfigWidget) -> list[None]:
+def _record(signal) -> list[None]:
     received: list[None] = []
-    widget.configuration_changed.connect(lambda: received.append(None))
+    signal.connect(lambda: received.append(None))
     return received
 
 
@@ -60,37 +60,63 @@ def test_stack_pages_hold_each_tests_config_widget():
     assert stack.currentIndex() == 0
 
 
-def test_switching_test_shows_its_page_and_emits_once():
+def test_switching_test_shows_its_page_and_emits_test_changed_once():
     widget = _widget()
-    received = _received(widget)
+    test_changes = _record(widget.test_changed)
+    applies = _record(widget.apply_requested)
 
     _select_test(widget, HypothesisTest.CHI_SQUARE)
 
     assert widget._stack.currentIndex() == 1  # noqa: SLF001
     assert widget.current_configuration() == (HypothesisTest.CHI_SQUARE, ("grp", "color"))
-    assert received == [None]
+    assert test_changes == [None]
+    assert applies == []
+    assert widget.applied_configuration() is None
 
 
-def test_inner_selection_changes_are_forwarded_as_configuration_changes():
+def test_inner_selection_changes_are_pending_until_applied():
     widget = _widget()
-    received = _received(widget)
+    test_changes = _record(widget.test_changed)
+    applies = _record(widget.apply_requested)
     gc_config = widget._group_comparison_config  # noqa: SLF001
-    chi_config = widget._chi_square_config  # noqa: SLF001
     assert gc_config is not None
-    assert chi_config is not None
 
     gc_config._numeric_combo.setCurrentIndex(1)  # noqa: SLF001
-    chi_config._column_combo.clear()  # noqa: SLF001 - an incomplete selection is not emitted
-    chi_config._row_combo.setCurrentIndex(1)  # noqa: SLF001
 
-    assert len(received) == 2
+    assert test_changes == []
+    assert applies == []
     assert widget.group_comparison_selection() == ("other", "grp")
+    assert widget.applied_configuration() is None
+
+
+def test_apply_stores_the_current_configuration_and_emits():
+    widget = _widget()
+    applies = _record(widget.apply_requested)
+    _select_test(widget, HypothesisTest.CHI_SQUARE)
+
+    widget._apply_button.click()  # noqa: SLF001
+
+    assert applies == [None]
+    assert widget.applied_configuration() == (HypothesisTest.CHI_SQUARE, ("grp", "color"))
+
+
+def test_applied_configuration_is_kept_while_the_selection_changes():
+    widget = _widget()
+    widget._apply_button.click()  # noqa: SLF001
+    gc_config = widget._group_comparison_config  # noqa: SLF001
+    assert gc_config is not None
+
+    gc_config._numeric_combo.setCurrentIndex(1)  # noqa: SLF001
+
+    assert widget.applied_configuration() == (HypothesisTest.GROUP_COMPARISON, ("value", "grp"))
+    assert widget.current_configuration() == (HypothesisTest.GROUP_COMPARISON, ("other", "grp"))
 
 
 def test_construction_does_not_emit():
     widget = _widget()
 
-    assert _received(widget) == []
+    assert _record(widget.test_changed) == []
+    assert _record(widget.apply_requested) == []
 
 
 def test_unavailable_tests_get_a_notice_page_and_no_selection():
@@ -102,10 +128,13 @@ def test_unavailable_tests_get_a_notice_page_and_no_selection():
     assert widget.group_comparison_selection() is None
     assert widget.chi_square_selection() is None
     assert widget.current_configuration() == (HypothesisTest.GROUP_COMPARISON, None)
+    assert not widget.is_selected_test_available()
+    assert not widget._apply_button.isEnabled()  # noqa: SLF001
 
     _select_test(widget, HypothesisTest.CHI_SQUARE)
 
     assert widget.current_configuration() == (HypothesisTest.CHI_SQUARE, None)
+    assert not widget._apply_button.isEnabled()  # noqa: SLF001
 
 
 def test_only_one_test_may_be_unavailable():
@@ -115,3 +144,13 @@ def test_only_one_test_may_be_unavailable():
 
     assert isinstance(stack.widget(0), GroupComparisonConfigWidget)
     assert isinstance(stack.widget(1), QLabel)
+    assert widget._apply_button.isEnabled()  # noqa: SLF001
+
+    _select_test(widget, HypothesisTest.CHI_SQUARE)
+
+    assert not widget.is_selected_test_available()
+    assert not widget._apply_button.isEnabled()  # noqa: SLF001
+
+    _select_test(widget, HypothesisTest.GROUP_COMPARISON)
+
+    assert widget._apply_button.isEnabled()  # noqa: SLF001

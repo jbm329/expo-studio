@@ -36,14 +36,15 @@ class CorrelationConfigWidget(QWidget):
     Two kinds of change are reported separately, because they need
     different amounts of recomputation:
 
-    - `matrix_requested`: the method changed, or a new column selection
-      was applied. The whole matrix (and the detail pair) is recomputed.
-      Column checkboxes only take effect once "Apply" is clicked, so
-      ticking several columns doesn't start a costly job per click.
-      Apply stays enabled for an unchanged selection, so a cancelled
-      computation can be rerun.
+    - `matrix_requested`: "Apply" was clicked. The method and the checked
+      columns only take effect then, so changing several settings doesn't
+      start a costly job per change. The whole matrix (and the detail
+      pair) is recomputed. Apply stays enabled for an unchanged
+      configuration, so a cancelled computation can be rerun.
     - `pair_changed`: the X/Y pair changed. Only the pair detail is
-      recomputed.
+      recomputed. The pair pickers stay disabled until the controller
+      reports a displayed matrix via `set_pair_selection_enabled`, because
+      a pair detail is only shown alongside a matrix.
 
     This widget never computes anything itself and is never recreated by
     those recomputes.
@@ -61,9 +62,10 @@ class CorrelationConfigWidget(QWidget):
         """Initialize the configuration widget.
 
         Args:
-            result: The most recently computed correlation matrix, used to
-                populate the method, column list and pair pickers. Must
-                have at least `MIN_SELECTED_COLUMNS` available columns.
+            result: The default or most recently computed correlation
+                matrix, used to populate the method, column list and pair
+                pickers. Must have at least `MIN_SELECTED_COLUMNS`
+                available columns.
             pair: The ``(x, y)`` pair to select initially, or `None` for
                 the first two available columns.
             parent: Optional parent widget.
@@ -72,6 +74,7 @@ class CorrelationConfigWidget(QWidget):
 
         self._available_columns = result.available_columns
         self._applied_columns = result.columns
+        self._applied_method = result.method
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -82,13 +85,14 @@ class CorrelationConfigWidget(QWidget):
         layout.addLayout(method_form)
 
         layout.addWidget(self._build_columns_group())
-        layout.addWidget(self._build_pair_group(pair))
+        self._pair_group = self._build_pair_group(pair)
+        self._pair_group.setEnabled(False)
+        layout.addWidget(self._pair_group)
 
         self._update_apply_state()
 
         # Connected only after the initial population above, so setting up
         # the default selection never emits a spurious first signal.
-        self._method_combo.currentIndexChanged.connect(self._on_method_changed)
         self._column_list.itemChanged.connect(self._on_column_check_changed)
         self._select_all_button.clicked.connect(lambda: self._set_all_columns_checked(checked=True))
         self._clear_button.clicked.connect(lambda: self._set_all_columns_checked(checked=False))
@@ -173,10 +177,6 @@ class CorrelationConfigWidget(QWidget):
     # Method and matrix columns
     # ------------------------------------------------------------------
 
-    def _on_method_changed(self, _index: int) -> None:
-        """Request a matrix recompute for the new method (with the applied columns)."""
-        self.matrix_requested.emit()
-
     def _on_column_check_changed(self, _item: QListWidgetItem) -> None:
         """Refresh the selection count and Apply button after a checkbox toggle."""
         self._update_apply_state()
@@ -195,11 +195,12 @@ class CorrelationConfigWidget(QWidget):
         self._update_apply_state()
 
     def _on_apply_clicked(self) -> None:
-        """Apply the checked columns and request a matrix recompute."""
+        """Apply the selected method and checked columns, and request a matrix recompute."""
         checked = self.checked_columns()
         if not self._is_valid_selection(checked):
             return
         self._applied_columns = checked
+        self._applied_method = self.current_method()
         self._update_apply_state()
         self.matrix_requested.emit()
 
@@ -251,7 +252,7 @@ class CorrelationConfigWidget(QWidget):
         if pair is not None:
             self.pair_changed.emit(*pair)
 
-    def set_pair(self, x_column: str, y_column: str) -> None:
+    def set_pair(self, x_column: str, y_column: str, *, notify: bool = True) -> None:
         """Select the ``(x_column, y_column)`` pair and emit `pair_changed` if it changed.
 
         Emits at most once, however many combos had to change. Unknown or
@@ -260,6 +261,8 @@ class CorrelationConfigWidget(QWidget):
         Args:
             x_column: Column to select as X.
             y_column: Column to select as Y.
+            notify: Whether to emit `pair_changed`. `False` only syncs the
+                pickers with a pair whose detail is already displayed.
         """
         if (
             x_column == y_column
@@ -275,15 +278,33 @@ class CorrelationConfigWidget(QWidget):
         finally:
             self._x_combo.blockSignals(False)
         self._populate_y_combo(select=y_column)
-        self._emit_pair()
+        if notify:
+            self._emit_pair()
+
+    def set_pair_selection_enabled(self, *, enabled: bool) -> None:
+        """Enable or disable the X/Y pair pickers.
+
+        Args:
+            enabled: Whether a matrix is displayed, so a pair change can
+                update its detail.
+        """
+        self._pair_group.setEnabled(enabled)
+
+    def is_pair_selection_enabled(self) -> bool:
+        """Return whether the X/Y pair pickers are enabled."""
+        return self._pair_group.isEnabled()
 
     # ------------------------------------------------------------------
     # Queries
     # ------------------------------------------------------------------
 
     def current_method(self) -> CorrelationMethod:
-        """Return the selected correlation method."""
+        """Return the selected (possibly not yet applied) correlation method."""
         return CorrelationMethod(self._method_combo.currentData())
+
+    def applied_method(self) -> CorrelationMethod:
+        """Return the method of the most recently applied configuration."""
+        return self._applied_method
 
     def applied_columns(self) -> tuple[str, ...]:
         """Return the columns of the most recently applied selection, in matrix order."""
@@ -298,8 +319,8 @@ class CorrelationConfigWidget(QWidget):
         )
 
     def matrix_configuration(self) -> tuple[CorrelationMethod, tuple[str, ...]]:
-        """Return the ``(method, applied_columns)`` that determine the matrix."""
-        return self.current_method(), self._applied_columns
+        """Return the applied ``(method, columns)`` that determine the matrix."""
+        return self._applied_method, self._applied_columns
 
     def current_pair(self) -> tuple[str, str] | None:
         """Return the selected ``(x_column, y_column)`` pair, or `None` if incomplete."""

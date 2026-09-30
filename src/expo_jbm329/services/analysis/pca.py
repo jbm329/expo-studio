@@ -82,8 +82,8 @@ class PCAResult:
     error: PCAError | None
 
 
-def _error_result(
-    error: PCAError,
+def _unfitted_result(
+    error: PCAError | None,
     *,
     columns: tuple[str, ...],
     available_columns: tuple[str, ...],
@@ -91,7 +91,11 @@ def _error_result(
     total_rows: int,
     rows_used: int = 0,
 ) -> PCAResult:
-    """Build an error result while retaining its configuration context."""
+    """Build a result without fit data while retaining its configuration context.
+
+    `error` is `None` only for the configuration-only result returned by
+    `initialize_pca`.
+    """
     return PCAResult(
         columns=columns,
         available_columns=available_columns,
@@ -126,6 +130,31 @@ def _sample_scores(scores: np.ndarray) -> tuple[np.ndarray, bool]:
     return scores[positions], True
 
 
+def initialize_pca(df: pd.DataFrame) -> PCAResult:
+    """Return the default PCA configuration without fitting a model.
+
+    Only column metadata is inspected, so this is cheap enough for the GUI
+    thread. It lets the configuration be shown before the user applies it.
+
+    Args:
+        df: DataFrame to inspect. It is never mutated.
+
+    Returns:
+        A result without fit data, selecting every numeric column. Its
+        `error` is `NOT_ENOUGH_NUMERIC_COLUMNS` when PCA is not possible for
+        the dataset, and `None` otherwise.
+    """
+    available = numeric_columns(df)
+    error = PCAError.NOT_ENOUGH_NUMERIC_COLUMNS if len(available) < MIN_SELECTED_COLUMNS else None
+    return _unfitted_result(
+        error,
+        columns=available,
+        available_columns=available,
+        standardize=True,
+        total_rows=len(df),
+    )
+
+
 def analyze_pca(
     df: pd.DataFrame,
     columns: Sequence[str] | None = None,
@@ -152,7 +181,7 @@ def analyze_pca(
     selected = available if columns is None else tuple(columns)
 
     if len(available) < MIN_SELECTED_COLUMNS:
-        return _error_result(
+        return _unfitted_result(
             PCAError.NOT_ENOUGH_NUMERIC_COLUMNS,
             columns=selected,
             available_columns=available,
@@ -160,7 +189,7 @@ def analyze_pca(
             total_rows=total_rows,
         )
     if len(set(selected)) != len(selected) or any(column not in available for column in selected):
-        return _error_result(
+        return _unfitted_result(
             PCAError.INVALID_COLUMN,
             columns=selected,
             available_columns=available,
@@ -168,7 +197,7 @@ def analyze_pca(
             total_rows=total_rows,
         )
     if len(selected) < MIN_SELECTED_COLUMNS:
-        return _error_result(
+        return _unfitted_result(
             PCAError.NOT_ENOUGH_SELECTED_COLUMNS,
             columns=selected,
             available_columns=available,
@@ -181,7 +210,7 @@ def analyze_pca(
     complete_values = all_values[complete_mask]
     rows_used = len(complete_values)
     if rows_used < MIN_OBSERVATIONS:
-        return _error_result(
+        return _unfitted_result(
             PCAError.NOT_ENOUGH_OBSERVATIONS,
             columns=selected,
             available_columns=available,
@@ -192,7 +221,7 @@ def analyze_pca(
 
     fitted_values = StandardScaler().fit_transform(complete_values) if standardize else complete_values
     if bool(np.all(np.ptp(fitted_values, axis=0) == 0.0)):
-        return _error_result(
+        return _unfitted_result(
             PCAError.NO_VARIATION,
             columns=selected,
             available_columns=available,

@@ -343,6 +343,32 @@ def default_column(result: OutlierSummaryResult) -> str | None:
 # ----------------------------------------------------------------------
 
 
+def initialize_outlier_summary(df: pd.DataFrame) -> OutlierSummaryResult:
+    """Return the default outlier screening configuration without screening any column.
+
+    Only column metadata is inspected, so this is cheap enough for the GUI
+    thread. It lets the configuration be shown before the user applies it.
+
+    Args:
+        df: The DataFrame to inspect. Never mutated.
+
+    Returns:
+        A result without column summaries, using the IQR method and its
+        default threshold. Its `error` is `NO_NUMERIC_COLUMN` when the
+        dataset has no numeric column, and `None` otherwise.
+    """
+    available = numeric_columns(df)
+    return OutlierSummaryResult(
+        method=OutlierMethod.IQR,
+        threshold=DEFAULT_THRESHOLDS[OutlierMethod.IQR],
+        available_columns=available,
+        columns=(),
+        row_count=len(df),
+        rows_with_outliers=0,
+        error=None if available else OutlierError.NO_NUMERIC_COLUMN,
+    )
+
+
 def analyze_outlier_summary(
     df: pd.DataFrame,
     method: OutlierMethod = OutlierMethod.IQR,

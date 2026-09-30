@@ -105,15 +105,48 @@ def test_without_a_pair_defaults_to_the_first_two_columns():
 # ----------------------------------------------------------------------
 
 
-def test_method_change_requests_matrix_with_applied_columns():
+def test_method_change_is_pending_until_applied():
     widget = CorrelationConfigWidget(_make_result(), ("a", "b"))
     received = _record(widget.matrix_requested)
-    _set_checked(widget, "c", checked=True)  # checked, but not applied
+    _set_checked(widget, "c", checked=True)
 
     widget._method_combo.setCurrentIndex(widget._method_combo.findData(CorrelationMethod.KENDALL))  # noqa: SLF001
 
+    assert received == []
+    assert widget.current_method() is CorrelationMethod.KENDALL
+    assert widget.applied_method() is CorrelationMethod.PEARSON
+    assert widget.matrix_configuration() == (CorrelationMethod.PEARSON, ("a", "b"))
+
+    widget._apply_button.click()  # noqa: SLF001
+
     assert received == [()]
-    assert widget.matrix_configuration() == (CorrelationMethod.KENDALL, ("a", "b"))
+    assert widget.matrix_configuration() == (CorrelationMethod.KENDALL, ("a", "b", "c"))
+
+
+# ----------------------------------------------------------------------
+# Pair selection availability
+# ----------------------------------------------------------------------
+
+
+def test_pair_selection_is_disabled_until_enabled():
+    widget = CorrelationConfigWidget(_make_result(), None)
+
+    assert widget.is_pair_selection_enabled() is False
+    assert widget._pair_group.isEnabled() is False  # noqa: SLF001
+
+    widget.set_pair_selection_enabled(enabled=True)
+
+    assert widget.is_pair_selection_enabled() is True
+
+
+def test_set_pair_without_notify_selects_the_pair_silently():
+    widget = CorrelationConfigWidget(_make_result(), ("a", "b"))
+    received = _record(widget.pair_changed)
+
+    widget.set_pair("c", "a", notify=False)
+
+    assert widget.current_pair() == ("c", "a")
+    assert received == []
 
 
 # ----------------------------------------------------------------------

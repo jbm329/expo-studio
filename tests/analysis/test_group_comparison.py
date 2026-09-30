@@ -15,6 +15,7 @@ from expo_jbm329.services.analysis.group_comparison import (
     GroupWarningReason,
     analyze_group_comparison,
     classify_grouping_columns,
+    initialize_group_comparison,
 )
 
 
@@ -422,3 +423,38 @@ def test_minimum_allowed_group_count_is_accepted():
 
     assert result.error is None
     assert len(result.groups) == MIN_GROUPS
+
+
+def test_initialize_group_comparison_uses_default_columns_without_comparing():
+    df = pd.DataFrame({
+        "value": [float(i) for i in range(24)],
+        "other": [float(i) * 10 for i in range(24)],
+        "grp": ["A", "B"] * 12,
+    })
+
+    result = initialize_group_comparison(df)
+
+    assert (result.numeric_column, result.grouping_column) == ("value", "grp")
+    assert result.available_numeric_columns == ("value", "other")
+    assert result.available_grouping_columns == ("grp",)
+    assert result.groups == ()
+    assert result.pairwise is None
+    assert result.multi_group is None
+    assert result.error is None
+    assert result.excluded_grouping_columns == analyze_group_comparison(df).excluded_grouping_columns
+
+
+def test_initialize_group_comparison_without_numeric_columns_reports_the_error():
+    result = initialize_group_comparison(pd.DataFrame({"grp": ["A", "B", "A"]}))
+
+    assert result.numeric_column == ""
+    assert result.error is GroupComparisonError.NO_NUMERIC_COLUMN
+
+
+def test_initialize_group_comparison_without_another_grouping_column_reports_the_error():
+    # "value" is both the only numeric and the only eligible grouping column.
+    result = initialize_group_comparison(pd.DataFrame({"value": [1.0, 2.0, 1.0, 2.0]}))
+
+    assert result.numeric_column == "value"
+    assert result.grouping_column == ""
+    assert result.error is GroupComparisonError.NO_GROUPING_COLUMN

@@ -347,12 +347,16 @@ def _sort_key(pair: CorrelationPair) -> tuple[bool, float]:
 
 
 def _matrix_error(
-    error: CorrelationError,
+    error: CorrelationError | None,
     method: CorrelationMethod,
     columns: tuple[str, ...],
     available: tuple[str, ...],
 ) -> CorrelationMatrixResult:
-    """Build a `CorrelationMatrixResult` carrying only a structured error."""
+    """Build a `CorrelationMatrixResult` without coefficients.
+
+    `error` is `None` only for the configuration-only result returned by
+    `initialize_correlation`.
+    """
     return CorrelationMatrixResult(
         method=method,
         columns=columns,
@@ -366,6 +370,27 @@ def _matrix_error(
 # ----------------------------------------------------------------------
 # Matrix
 # ----------------------------------------------------------------------
+
+
+def initialize_correlation(df: pd.DataFrame) -> CorrelationMatrixResult:
+    """Return the default correlation configuration without computing coefficients.
+
+    Only column metadata is inspected, so this is cheap enough for the GUI
+    thread. It lets the configuration be shown before the user applies it.
+
+    Args:
+        df: The DataFrame to inspect. Never mutated.
+
+    Returns:
+        A result without coefficients, selecting the first
+        `DEFAULT_SELECTED_COLUMNS` numeric columns with Pearson's method.
+        Its `error` is `NOT_ENOUGH_NUMERIC_COLUMNS` when the dataset has too
+        few numeric columns, and `None` otherwise.
+    """
+    available = numeric_columns(df)
+    if len(available) < MIN_SELECTED_COLUMNS:
+        return _matrix_error(CorrelationError.NOT_ENOUGH_NUMERIC_COLUMNS, CorrelationMethod.PEARSON, (), available)
+    return _matrix_error(None, CorrelationMethod.PEARSON, available[:DEFAULT_SELECTED_COLUMNS], available)
 
 
 def analyze_correlation_matrix(

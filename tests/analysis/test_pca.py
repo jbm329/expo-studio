@@ -151,3 +151,25 @@ def test_missing_fitted_model_attributes_raise_a_clear_internal_error(monkeypatc
 
     with pytest.raises(pca._PCAFitError):  # noqa: SLF001
         analyze_pca(pd.DataFrame({"a": [1.0, 2.0], "b": [2.0, 3.0]}))
+
+
+def test_initialize_pca_selects_every_numeric_column_without_fitting() -> None:
+    df = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [3.0, 1.0, 2.0], "text": ["x", "y", "z"]})
+
+    result = pca.initialize_pca(df)
+
+    assert result.error is None
+    assert result.columns == ("a", "b")
+    assert result.available_columns == ("a", "b")
+    assert result.standardize is True
+    assert result.total_rows == 3
+    assert result.explained_variance == ()
+    assert result.loadings == ()
+    assert result.sample_pc1 == ()
+
+
+def test_initialize_pca_reports_too_few_numeric_columns() -> None:
+    result = pca.initialize_pca(pd.DataFrame({"a": [1.0, 2.0], "text": ["x", "y"]}))
+
+    assert result.error is pca.PCAError.NOT_ENOUGH_NUMERIC_COLUMNS
+    assert result.available_columns == ("a",)

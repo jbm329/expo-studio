@@ -41,100 +41,105 @@
 </context><context>
     <name>AnalysisController</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="198" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="210" />
         <source>This analysis is not implemented yet.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="199" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="211" />
         <source>An error occurred while generating this analysis.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="200" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="212" />
         <source>Running analysis…</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="201" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="213" />
         <source>generate analysis</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="202" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="214" />
         <source>Analysis cancelled.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="215" />
+        <source>Choose settings and click Apply.</source>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>AnalysisDialog</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="64" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="80" />
         <source>Advanced analysis</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="111" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="100" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="127" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="116" />
         <source>Dataset</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="117" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="133" />
         <source>Analysis</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="140" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="156" />
         <source>Result</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="153" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="169" />
         <source>Configuration</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="308" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="321" />
         <source>Overview</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="309" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="322" />
         <source>Statistics</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="310" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="323" />
         <source>Hypothesis Tests</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="311" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="324" />
         <source>Correlation</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="312" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="325" />
         <source>Regression</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="313" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="326" />
         <source>Outliers</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="314" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="327" />
         <source>Clustering</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="315" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="328" />
         <source>PCA</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="316" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="329" />
         <source>Time Series</source>
         <translation type="unfinished" />
     </message>
@@ -1254,72 +1259,72 @@ Please see logs for more information.</source>
 </context><context>
     <name>CorrelationConfigWidget</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="81" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="84" />
         <source>Method</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="106" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="110" />
         <source>Pearson</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="107" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="111" />
         <source>Spearman</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="108" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="112" />
         <source>Kendall's tau-b</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="114" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="118" />
         <source>Columns in matrix</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="128" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="132" />
         <source>Select all</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="129" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="133" />
         <source>Clear</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="138" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="142" />
         <source>Apply</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="145" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="149" />
         <source>Scatterplot</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="156" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="160" />
         <source>X variable</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="157" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="161" />
         <source>Y variable</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="215" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="216" />
         <source>{count} selected - select at least {minimum}.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="219" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="220" />
         <source>{count} selected - select at most {maximum}.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="222" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="223" />
         <source>{count} selected (at most {maximum}).</source>
         <translation type="unfinished" />
     </message>
@@ -2875,22 +2880,27 @@ Continue?</source>
 </context><context>
     <name>HypothesisTestsConfigWidget</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="60" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="64" />
         <source>Group comparison</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="61" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="65" />
         <source>Chi-square independence</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="64" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="68" />
         <source>Test</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="94" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="88" />
+        <source>Apply</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="102" />
         <source>This test is not available for the selected dataset.</source>
         <translation type="unfinished" />
     </message>
@@ -3536,62 +3546,67 @@ Continue?</source>
 </context><context>
     <name>OutliersConfigWidget</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="69" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="75" />
         <source>Univariate (by column)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="70" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="76" />
         <source>Multivariate (by row)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="71" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="77" />
         <source>Mode</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="74" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="80" />
         <source>IQR (Tukey's fences)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="75" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="81" />
         <source>Z-score</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="76" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="82" />
         <source>Modified Z-score</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="78" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="84" />
         <source>Method</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="93" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="96" />
+        <source>Apply</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="100" />
         <source>Column</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="134" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="143" />
         <source>IQR multiplier</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="136" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="145" />
         <source>Values more than this many IQRs below Q1 or above Q3 are flagged.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="139" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="148" />
         <source>Score threshold</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="140" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="149" />
         <source>Values whose absolute score exceeds this are flagged.</source>
         <translation type="unfinished" />
     </message>

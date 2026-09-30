@@ -294,15 +294,15 @@ def classify_grouping_columns(df: pd.DataFrame) -> GroupingColumns:
     return GroupingColumns(eligible=tuple(eligible), excluded=tuple(excluded))
 
 
-def _error_result(
-    error: GroupComparisonError,
+def _unfitted_result(
+    error: GroupComparisonError | None,
     *,
     numeric_column: str,
     grouping_column: str,
     numeric_columns: tuple[str, ...],
     grouping_columns: GroupingColumns,
 ) -> GroupComparisonResult:
-    """Build a `GroupComparisonResult` carrying only a structured error."""
+    """Build a `GroupComparisonResult` without group data, carrying `error` if any."""
     return GroupComparisonResult(
         numeric_column=numeric_column,
         grouping_column=grouping_column,
@@ -424,6 +424,41 @@ def _multi_group_comparison(groups: list[np.ndarray]) -> MultiGroupComparisonRes
     )
 
 
+def initialize_group_comparison(df: pd.DataFrame) -> GroupComparisonResult:
+    """Return the default group comparison configuration without comparing any groups.
+
+    Only column metadata and distinct-value counts are inspected, so the
+    configuration can be shown before the user applies it.
+
+    Args:
+        df: The DataFrame to inspect. Never mutated.
+
+    Returns:
+        A result without group data, using the first numeric column and the
+        first other eligible grouping column. Its `error` is
+        `NO_NUMERIC_COLUMN` or `NO_GROUPING_COLUMN` when no such column
+        exists, and `None` otherwise.
+    """
+    numeric_columns = find_numeric_columns(df)
+    grouping_columns = classify_grouping_columns(df)
+    numeric_column = numeric_columns[0] if numeric_columns else ""
+    eligible_grouping = tuple(column for column in grouping_columns.eligible if column != numeric_column)
+    grouping_column = eligible_grouping[0] if eligible_grouping else ""
+
+    error: GroupComparisonError | None = None
+    if not numeric_column:
+        error = GroupComparisonError.NO_NUMERIC_COLUMN
+    elif not grouping_column:
+        error = GroupComparisonError.NO_GROUPING_COLUMN
+    return _unfitted_result(
+        error,
+        numeric_column=numeric_column,
+        grouping_column=grouping_column,
+        numeric_columns=numeric_columns,
+        grouping_columns=grouping_columns,
+    )
+
+
 def analyze_group_comparison(
     df: pd.DataFrame,
     numeric_column: str | None = None,
@@ -467,7 +502,7 @@ def analyze_group_comparison(
         grouping_column = eligible_grouping[0] if eligible_grouping else ""
 
     if not numeric_column or numeric_column not in numeric_columns:
-        return _error_result(
+        return _unfitted_result(
             GroupComparisonError.NO_NUMERIC_COLUMN,
             numeric_column=numeric_column,
             grouping_column=grouping_column,
@@ -475,7 +510,7 @@ def analyze_group_comparison(
             grouping_columns=grouping_columns,
         )
     if not grouping_column or grouping_column == numeric_column or grouping_column not in df.columns:
-        return _error_result(
+        return _unfitted_result(
             GroupComparisonError.NO_GROUPING_COLUMN,
             numeric_column=numeric_column,
             grouping_column=grouping_column,
@@ -491,7 +526,7 @@ def analyze_group_comparison(
     grouped = working.groupby(grouping_column, sort=True, observed=True)[numeric_column]
 
     if grouped.ngroups < MIN_GROUPS:
-        return _error_result(
+        return _unfitted_result(
             GroupComparisonError.TOO_FEW_GROUPS,
             numeric_column=numeric_column,
             grouping_column=grouping_column,
@@ -499,7 +534,7 @@ def analyze_group_comparison(
             grouping_columns=grouping_columns,
         )
     if grouped.ngroups > MAX_GROUPS:
-        return _error_result(
+        return _unfitted_result(
             GroupComparisonError.TOO_MANY_GROUPS,
             numeric_column=numeric_column,
             grouping_column=grouping_column,

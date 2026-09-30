@@ -3,7 +3,7 @@ from __future__ import annotations
 from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QLabel, QWidget
 
-from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
+from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog, build_placeholder_label
 from expo_jbm329.gui.dialogs.service.common.localization import TR_CLOSE
 from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.utils.dataset_ref import DatasetRef
@@ -81,6 +81,14 @@ def test_show_placeholder_updates_content_label():
     content = dialog.content_widget()
     assert isinstance(content, QLabel)
     assert content.text() == "Not implemented yet."
+
+
+def test_build_placeholder_label_centers_and_wraps_the_message():
+    label = build_placeholder_label("Choose settings.")
+
+    assert label.text() == "Choose settings."
+    assert label.alignment() == Qt.AlignmentFlag.AlignCenter
+    assert label.wordWrap() is True
 
 
 def test_dialog_selects_overview_category_by_default():

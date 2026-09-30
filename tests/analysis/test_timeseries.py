@@ -247,3 +247,43 @@ def test_decomposition_explains_a_missing_seasonal_period():
     )
 
     assert note == "No seasonal period could be detected; choose one to decompose the series."
+
+
+def test_initialize_time_series_selects_first_columns_without_analyzing() -> None:
+    df = pd.DataFrame({
+        "when": pd.date_range("2025-01-01", periods=3, freq="D"),
+        "later": pd.date_range("2025-02-01", periods=3, freq="D"),
+        "value": [1.0, 2.0, 3.0],
+        "other": [4.0, 5.0, 6.0],
+    })
+
+    result = timeseries.initialize_time_series(df)
+
+    assert result.error is None
+    assert result.datetime_column == "when"
+    assert result.value_column == "value"
+    assert result.available_datetime_columns == ("when", "later")
+    assert result.available_value_columns == ("value", "other")
+    assert result.resample_frequency is None
+    assert result.seasonal_period is None
+    assert result.decomposition_model is timeseries.DecompositionModel.ADDITIVE
+    assert result.source_rows == 3
+    assert result.timestamps == ()
+    assert result.acf_values == ()
+
+
+@pytest.mark.parametrize(
+    ("df", "error"),
+    [
+        (pd.DataFrame({"value": [1.0, 2.0]}), timeseries.TimeSeriesError.NO_DATETIME_COLUMN),
+        (pd.DataFrame({}), timeseries.TimeSeriesError.NO_DATETIME_COLUMN),
+        (
+            pd.DataFrame({"when": pd.date_range("2025-01-01", periods=2, freq="D"), "text": ["a", "b"]}),
+            timeseries.TimeSeriesError.NO_NUMERIC_COLUMN,
+        ),
+    ],
+)
+def test_initialize_time_series_reports_missing_columns(df: pd.DataFrame, error: timeseries.TimeSeriesError) -> None:
+    result = timeseries.initialize_time_series(df)
+
+    assert result.error is error
