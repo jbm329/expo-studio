@@ -38,6 +38,7 @@ from expo_jbm329.db.core.errors import (
     TR_SQL_EMPTY_HINT,
     TR_UNKNOWN_DATABASE_FAIL,
     TR_UNKNOWN_DATABASE_FAIL_HINT,
+    BulkColumnListingNotSupportedError,
     should_log,
 )
 from expo_jbm329.db.core.models import (
@@ -596,17 +597,14 @@ class DbService:
             A mapping from (schema, table) tuples to lists of column metadata.
 
         Raises:
-            AttributeError: If the dialect does not support bulk column listing.
+            BulkColumnListingNotSupportedError: If the dialect does not support
+                whole-database column listing.
+            RuntimeError: If the bulk column query fails.
         """
-        sql_all_fn = getattr(self.dialect, "sql_all_columns", None)
-        if not callable(sql_all_fn):
-            msg = "Dialect does not implement sql_all_columns()."
-            raise TypeError(msg)
-
-        stmt = str(sql_all_fn())
+        stmt = self.dialect.sql_all_columns()
         if not stmt:
-            msg = "Dialect does not support whole-database column listing."
-            raise AttributeError(msg)
+            msg = f"Dialect '{self.dialect.name}' does not support whole-database column listing."
+            raise BulkColumnListingNotSupportedError(msg)
 
         res = self.execute_sql(conn, stmt, corr_id=corr_id)
         result: dict[tuple[str, str], list[dict[str, str]]] = {}

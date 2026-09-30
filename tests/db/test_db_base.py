@@ -187,3 +187,14 @@ def test_select_builders_fallback_is_dialect_aware(db_type, expected_star, expec
     ):
         assert base.build_select_star("c", "s", "t") == expected_star
         assert base.build_select_distinct("c", "s", "t", "c") == expected_distinct
+
+
+@pytest.mark.parametrize(
+    ("db_type", "expected"),
+    [("mssql", True), ("mysql", True), ("postgresql", True), ("sqlite", False)],
+)
+def test_supports_bulk_column_listing(db_type, expected):
+    with patch("expo_jbm329.db.base.read_connections", return_value={"c": {"db_type": db_type}}):
+        assert base.supports_bulk_column_listing("c") is expected
+
+    assert "c" not in base._services

@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
+from expo_jbm329.db.core.errors import BulkColumnListingNotSupportedError
 from expo_jbm329.db.core.interfaces import DialectProtocol, DriverProtocol
 from expo_jbm329.db.core.models import ConnectionConfig, SqlError, TimeoutConfig
 from expo_jbm329.db.service import DbService
@@ -170,3 +171,17 @@ def test_build_select_columns_auto(db_service, mock_driver, conn_config):
     assert "[name]" in sql
     assert "FROM dbo.table1" in sql
     assert "    [id],\n    [name]" in sql
+
+
+@pytest.mark.parametrize("stmt", [None, ""])
+def test_list_all_columns_map_unsupported_dialect_runs_no_sql(db_service, mock_driver, mock_dialect, conn_config, stmt):
+    mock_dialect.sql_all_columns.return_value = stmt
+
+    with pytest.raises(BulkColumnListingNotSupportedError):
+        db_service.list_all_columns_map(conn_config)
+
+    mock_driver.execute_df.assert_not_called()
+
+
+def test_list_all_columns_map_unsupported_error_is_attribute_error():
+    assert issubclass(BulkColumnListingNotSupportedError, AttributeError)

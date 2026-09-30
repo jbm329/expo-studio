@@ -16,6 +16,11 @@ from PyQt6.QtCore import QT_TRANSLATE_NOOP
 
 from .models import SqlError
 
+
+class BulkColumnListingNotSupportedError(AttributeError):
+    """Raised when a dialect cannot list all columns with a single query."""
+
+
 _CODE_RE = re.compile(r"\((\d{3,6})\)")
 _last_err_ts: dict[str, float] = {}
 

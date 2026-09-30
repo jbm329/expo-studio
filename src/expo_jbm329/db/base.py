@@ -657,13 +657,30 @@ def build_select_columns_auto(
         return build_select_star(connection_name, schema, object_name, top_n=top_n, corr_id=corr_id)
 
 
+def supports_bulk_column_listing(connection_name: str) -> bool:
+    """Return whether the connection's dialect can list all columns in one query.
+
+    Resolves the dialect without opening a database connection, so callers can
+    choose between bulk and per-table column loading up front.
+
+    Args:
+        connection_name: The name of the connection.
+
+    Returns:
+        True if the dialect provides a whole-database column query.
+    """
+    return bool(get_dialect(connection_name).sql_all_columns())
+
+
 def list_all_columns_map(
     connection_name: str, corr_id: str | None = None
 ) -> dict[tuple[str, str], list[dict[str, str]]]:
     """Return a mapping of (schema, table) to lists of column metadata.
 
-    If the dialect does not support whole-database listing, raises AttributeError,
-    allowing callers to fall back to per-table batch loading.
+    If the dialect does not support whole-database listing, raises
+    BulkColumnListingNotSupportedError (an AttributeError), allowing callers to
+    fall back to per-table batch loading. Use supports_bulk_column_listing()
+    to check up front.
 
     Args:
         connection_name: The name of the connection.
@@ -673,7 +690,7 @@ def list_all_columns_map(
         A mapping from (schema, table) tuples to lists of column metadata.
 
     Raises:
-        AttributeError: If the dialect does not support bulk column listing.
+        BulkColumnListingNotSupportedError: If the dialect does not support bulk column listing.
     """
     svc, cfg = _get_service_with_config(connection_name)
     return svc.list_all_columns_map(cfg, corr_id=corr_id)
