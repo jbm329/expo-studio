@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import subprocess
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError, metadata
 from typing import TYPE_CHECKING
 
@@ -96,20 +95,23 @@ def get_version() -> str:
     return package_metadata.get("Version", "unknown")
 
 
-def get_release_name(platform: str, package_type: str, extension: str) -> str:
+def get_release_name(platform: str, extension: str, suffix: str = "") -> str:
     """Return a release artifact filename.
 
     Args:
         platform: Normalized platform name, for example ``windows`` or ``linux``.
-        package_type: Package type, for example ``portable`` or ``setup``.
         extension: File extension without or with a leading dot. Use an empty
             string for extensionless names.
+        suffix: Optional artifact suffix, for example ``setup``.
 
     Returns:
         Release artifact filename.
     """
-    date_str = datetime.now(UTC).astimezone().strftime("%Y-%m-%d")
-    base_name = f"{get_app_slug()}-{get_version()}-{platform}-{package_type}-{date_str}"
+    platform_name = "win64" if platform == "windows" else platform
+    name_parts = [get_app_slug(), get_version(), platform_name]
+    if suffix:
+        name_parts.append(suffix)
+    base_name = "-".join(name_parts)
     normalized_extension = extension.lstrip(".")
     if not normalized_extension:
         return base_name

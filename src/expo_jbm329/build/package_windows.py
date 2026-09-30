@@ -31,7 +31,7 @@ GENERATED_SCRIPT_FILE = "installer.iss"
 
 def _installer_output_base_filename() -> str:
     """Return the Inno Setup output base filename without extension."""
-    return get_release_name(platform="windows", package_type="setup", extension="")
+    return get_release_name(platform="windows", extension="", suffix="setup")
 
 
 def _installer_artifact_path(output_dir: Path, output_base_filename: str) -> Path:

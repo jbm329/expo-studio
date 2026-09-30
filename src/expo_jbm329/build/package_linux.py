@@ -1,4 +1,4 @@
-"""Create Linux portable release archives from staged artifacts."""
+"""Create Linux release archives from staged artifacts."""
 
 from __future__ import annotations
 
@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 
 
 def _archive_base_name(platform_name: str) -> str:
-    """Return the Linux portable archive base name without extension."""
-    return get_release_name(platform=platform_name, package_type="portable", extension="")
+    """Return the Linux archive base name without extension."""
+    return get_release_name(platform=platform_name, extension="")
 
 
 def _required_paths(stage_dir: Path, platform_name: str) -> list[Path]:
@@ -80,7 +80,7 @@ def _create_checksum(artifact_path: Path) -> bool:
 
 
 def package_linux_tarball() -> int:
-    """Create a Linux portable tar.gz archive from staged release artifacts.
+    """Create a Linux tar.gz archive from staged release artifacts.
 
     Returns:
         Exit code where 0 indicates success and non-zero indicates failure.

@@ -9,8 +9,8 @@ from expo_jbm329.build.build import build_onedir
 from expo_jbm329.build.build_utils import detect_platform
 from expo_jbm329.build.package_linux import package_linux_tarball
 from expo_jbm329.build.package_macos import package_macos_tarball
-from expo_jbm329.build.package_portable import package_portable_zip
 from expo_jbm329.build.package_windows import package_windows_installer
+from expo_jbm329.build.package_zip_archive import package_zip
 from expo_jbm329.build.stage import stage_onedir
 
 if TYPE_CHECKING:
@@ -33,7 +33,7 @@ def _run_windows_packaging() -> int:
     """Run all Windows packaging steps."""
     for name, step in [
         ("windows installer packaging", package_windows_installer),
-        ("portable ZIP packaging", package_portable_zip),
+        ("ZIP archive packaging", package_zip),
     ]:
         exit_code = _run_step(name, step)
         if exit_code != 0:
@@ -63,10 +63,10 @@ def release() -> int:
         return _run_windows_packaging()
 
     if platform_name == "linux":
-        return _run_step("Linux portable tar.gz packaging", package_linux_tarball)
+        return _run_step("Linux tar.gz packaging", package_linux_tarball)
 
     if platform_name == "macos":
-        return _run_step("macOS portable tar.gz packaging", package_macos_tarball)
+        return _run_step("macOS tar.gz packaging", package_macos_tarball)
 
     print(f"[release] Packaging is not implemented for platform: {platform_name}", file=sys.stderr)
     return 1
