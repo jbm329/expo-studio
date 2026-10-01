@@ -317,9 +317,11 @@ uv run build-resources
 # Build project (requires PyInstaller)
 uv run build-exe
 
-# Build onedir release zip (requires PyInstaller) or onedir setup wizard (requires Inno Setup)
+# Build a platform-specific onedir release (requires PyInstaller; Windows installer also requires Inno Setup)
 uv run build-release
 ```
+
+The release artifacts are written to `release/artifacts/`: a `.tar.gz` archive and SHA-256 checksum on Linux, or a ZIP archive and installer on Windows. Pushing a `v*` tag builds both platforms in GitHub Actions and uploads separate Windows (`release`) and Linux (`release-linux`) workflow artifacts.
 
 ## 📝 License
 
