@@ -6,7 +6,7 @@ import sys
 import zipfile
 from typing import TYPE_CHECKING
 
-from expo_jbm329.build.build_utils import detect_platform, release_dir, staging_dir
+from expo_jbm329.build.build_utils import detect_platform, ensure_release_artifacts_dir, staging_dir
 from expo_jbm329.build.version import create_sha256, get_documentation_files, get_release_name, get_release_notes_file
 
 if TYPE_CHECKING:
@@ -70,15 +70,20 @@ def package_zip() -> int:
         Exit code where 0 indicates success and non-zero indicates failure.
     """
     stage_dir = staging_dir()
-    archive_path = release_dir() / _archive_name()
 
     print(f"[package-zip] staging={stage_dir}")
-    print(f"[package-zip] archive={archive_path}")
 
     if not _validate_inputs(stage_dir):
         return 1
 
-    archive_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        archive_path = ensure_release_artifacts_dir() / _archive_name()
+    except OSError as exc:
+        print(f"[package-zip] Failed to create artifacts directory: {exc}", file=sys.stderr)
+        return 1
+
+    print(f"[package-zip] archive={archive_path}")
+
     try:
         _write_staging_zip(stage_dir=stage_dir, archive_path=archive_path)
     except OSError as exc:

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from expo_jbm329.build import package_windows, release, version
+from expo_jbm329.build import build_utils, package_windows, release, version
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -47,3 +47,18 @@ def test_windows_release_runs_installer_then_zip(monkeypatch: pytest.MonkeyPatch
 
     assert release._run_windows_packaging() == 0
     assert calls == ["setup", "zip"]
+
+
+def test_release_artifacts_directory_is_centralized_and_created(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    release_root = tmp_path / "release"
+    monkeypatch.setattr(build_utils, "release_dir", lambda: release_root)
+
+    artifacts_dir = build_utils.release_artifacts_dir()
+    assert artifacts_dir == release_root / "artifacts"
+    assert not artifacts_dir.exists()
+
+    assert build_utils.ensure_release_artifacts_dir() == artifacts_dir
+    assert artifacts_dir.is_dir()

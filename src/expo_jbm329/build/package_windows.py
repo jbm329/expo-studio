@@ -12,7 +12,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from string import Template
 
-from expo_jbm329.build.build_utils import installer_dir, project_root, release_dir, staging_dir
+from expo_jbm329.build.build_utils import (
+    ensure_release_artifacts_dir,
+    installer_dir,
+    project_root,
+    release_artifacts_dir,
+    release_dir,
+    staging_dir,
+)
 from expo_jbm329.build.version import (
     DOCUMENTATION_FILES,
     RELEASE_NOTES_FILE,
@@ -76,7 +83,7 @@ def _paths() -> WindowsInstallerPaths:
         root=root,
         staging_dir=staging_dir(),
         source_dir=staging_dir() / "expo",
-        output_dir=release_root,
+        output_dir=release_artifacts_dir(),
         build_dir=build_dir,
         template_path=setup_dir / TEMPLATE_FILE,
         app_id_path=setup_dir / APP_ID_FILE,
@@ -275,6 +282,12 @@ def package_windows_installer() -> int:
     iscc_path = _find_iscc_exe()
     if iscc_path is None:
         print("[package-windows] Inno Setup compiler not found.", file=sys.stderr)
+        return 1
+
+    try:
+        ensure_release_artifacts_dir()
+    except OSError as exc:
+        print(f"[package-windows] Failed to create artifacts directory: {exc}", file=sys.stderr)
         return 1
 
     output_base_filename = _installer_output_base_filename()

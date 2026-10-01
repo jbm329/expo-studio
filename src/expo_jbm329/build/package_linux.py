@@ -7,7 +7,7 @@ import sys
 import tarfile
 from typing import TYPE_CHECKING
 
-from expo_jbm329.build.build_utils import detect_platform, release_dir, staging_dir
+from expo_jbm329.build.build_utils import detect_platform, ensure_release_artifacts_dir, staging_dir
 from expo_jbm329.build.version import (
     create_sha256,
     get_documentation_files,
@@ -92,15 +92,20 @@ def package_linux_tarball() -> int:
 
     stage_dir = staging_dir()
     archive_base_name = _archive_base_name(platform_name)
-    archive_path = release_dir() / f"{archive_base_name}.tar.gz"
 
     print(f"[package-linux] staging={stage_dir}")
-    print(f"[package-linux] archive={archive_path}")
 
     if not _validate_inputs(stage_dir, platform_name):
         return 1
 
-    archive_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        archive_path = ensure_release_artifacts_dir() / f"{archive_base_name}.tar.gz"
+    except OSError as exc:
+        print(f"[package-linux] Failed to create artifacts directory: {exc}", file=sys.stderr)
+        return 1
+
+    print(f"[package-linux] archive={archive_path}")
+
     try:
         _write_staging_tarball(
             stage_dir=stage_dir,

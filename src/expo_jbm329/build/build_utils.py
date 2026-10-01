@@ -38,6 +38,18 @@ def release_dir() -> pathlib.Path:
     return BASE / "release"
 
 
+def release_artifacts_dir() -> pathlib.Path:
+    """Return the directory for final release artifacts."""
+    return release_dir() / "artifacts"
+
+
+def ensure_release_artifacts_dir() -> pathlib.Path:
+    """Create and return the directory for final release artifacts."""
+    artifacts_path = release_artifacts_dir()
+    artifacts_path.mkdir(parents=True, exist_ok=True)
+    return artifacts_path
+
+
 def staging_dir() -> pathlib.Path:
     """Return the release staging directory."""
     return release_dir() / "staging"
