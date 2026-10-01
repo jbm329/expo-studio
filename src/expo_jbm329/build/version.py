@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import subprocess
 from dataclasses import dataclass
 from importlib.metadata import PackageNotFoundError, metadata
@@ -108,7 +109,12 @@ def get_release_name(platform: str, extension: str, suffix: str = "") -> str:
         Release artifact filename.
     """
     platform_name = "win64" if platform == "windows" else platform
-    name_parts = [get_app_slug(), get_version(), platform_name]
+    version = get_version()
+    prerelease = re.fullmatch(r"(\d+\.\d+\.\d+)(a|b|rc)(\d+)", version)
+    if prerelease is not None:
+        version = f"{prerelease[1]}-{prerelease[2]}{prerelease[3]}"
+
+    name_parts = [get_app_slug(), version, platform_name]
     if suffix:
         name_parts.append(suffix)
     base_name = "-".join(name_parts)
