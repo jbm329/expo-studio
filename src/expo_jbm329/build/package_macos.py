@@ -1,4 +1,4 @@
-"""Create macOS portable release archives from staged artifacts."""
+"""Create macOS release archives from staged artifacts."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import sys
 import tarfile
 from typing import TYPE_CHECKING
 
-from expo_jbm329.build.build_utils import detect_platform, release_dir, staging_dir
+from expo_jbm329.build.build_utils import detect_platform, ensure_release_artifacts_dir, staging_dir
 from expo_jbm329.build.version import (
     create_sha256,
     get_documentation_files,
@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 
 
 def _archive_base_name(platform_name: str) -> str:
-    """Return the macOS portable archive base name without extension."""
-    return get_release_name(platform=platform_name, package_type="portable", extension="")
+    """Return the macOS archive base name without extension."""
+    return get_release_name(platform=platform_name, extension="")
 
 
 def _required_paths(stage_dir: Path, platform_name: str) -> list[Path]:
@@ -80,7 +80,7 @@ def _create_checksum(artifact_path: Path) -> bool:
 
 
 def package_macos_tarball() -> int:
-    """Create a macOS portable tar.gz archive from staged release artifacts.
+    """Create a macOS tar.gz archive from staged release artifacts.
 
     Returns:
         Exit code where 0 indicates success and non-zero indicates failure.
@@ -92,15 +92,20 @@ def package_macos_tarball() -> int:
 
     stage_dir = staging_dir()
     archive_base_name = _archive_base_name(platform_name)
-    archive_path = release_dir() / f"{archive_base_name}.tar.gz"
 
     print(f"[package-macos] staging={stage_dir}")
-    print(f"[package-macos] archive={archive_path}")
 
     if not _validate_inputs(stage_dir, platform_name):
         return 1
 
-    archive_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        archive_path = ensure_release_artifacts_dir() / f"{archive_base_name}.tar.gz"
+    except OSError as exc:
+        print(f"[package-macos] Failed to create artifacts directory: {exc}", file=sys.stderr)
+        return 1
+
+    print(f"[package-macos] archive={archive_path}")
+
     try:
         _write_staging_tarball(
             stage_dir=stage_dir,

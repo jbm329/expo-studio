@@ -67,6 +67,13 @@ hiddenimports += collect_submodules("jinja2")
 # hiddenimports += collect_submodules("pkg_resources")
 hiddenimports += ["pkg_resources"]
 hiddenimports += ["matplotlib.backends.backend_svg"]
+# sqlglot loads dialects lazily via importlib (e.g. sqlglot.dialects.sqlite),
+# which PyInstaller cannot detect statically.
+hiddenimports += collect_submodules("sqlglot")
+# pandas.read_spss imports pyreadstat via import_optional_dependency, and the
+# pyreadstat Cython extensions import narwhals in a way PyInstaller cannot see.
+hiddenimports += collect_submodules("pyreadstat")
+hiddenimports += ["narwhals.stable.v2"]
 
 try:
     import data_profiling  # noqa: F401

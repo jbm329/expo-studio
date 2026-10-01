@@ -317,9 +317,13 @@ uv run build-resources
 # Build project (requires PyInstaller)
 uv run build-exe
 
-# Build onedir release zip (requires PyInstaller) or onedir setup wizard (requires Inno Setup)
+# Build a platform-specific onedir release (requires PyInstaller; Windows installer also requires Inno Setup)
 uv run build-release
 ```
+
+The release artifacts are written to `release/artifacts/`: a `.tar.gz` archive and SHA-256 checksum on Linux, or a ZIP archive, installer, and their checksums on Windows. To publish a release, update the version in `pyproject.toml`, run `uv lock`, commit both files, and push the matching `v<version>` tag (for example, `v1.0.0`). The tag workflow builds both platforms, verifies the files, and publishes them as GitHub Release assets with GitHub-generated release notes. The generated `RELEASE-NOTES.txt` remains inside each packaged archive. Build outputs are also available as separate `release-windows` and `release-linux` workflow artifacts. Rerunning a tag after its release is published will not overwrite its assets.
+
+For prereleases, use a normalized Python version such as `version = "1.0.0rc1"` in `pyproject.toml`, run `uv lock`, and commit both files before pushing the hyphenated tag `v1.0.0-rc1`. The same convention supports `-aN` and `-bN`; release asset filenames retain the hyphen (for example, `ExpoStudio-1.0.0-rc1-linux.tar.gz`). The workflow rejects tags that disagree with the project version or lockfile.
 
 ## 📝 License
 
