@@ -25,6 +25,11 @@ jobs:
       - name: Build release
         run: uv run build-release
 
+      - name: Verify release checksum
+        run: |
+          cd release/artifacts
+          sha256sum --check *.sha256
+
       - name: Upload release artifacts
         uses: actions/upload-artifact@v7
         with:
