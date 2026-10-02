@@ -318,18 +318,10 @@ class Worker(QObject):
             result = self._fn(*self._args, **call_kwargs)
             self._dispatch_result.emit(result)
 
-        except (
-            AttributeError,
-            ConnectionError,
-            FileNotFoundError,
-            IndexError,
-            KeyError,
-            LookupError,
-            OSError,
-            RuntimeError,
-            TypeError,
-            ValueError,
-        ):
+        # Thread boundary: PyQt6 aborts the whole process when an exception escapes
+        # QThread.run, without any log in windowed builds. Every failure must
+        # therefore be reported through the error signal instead.
+        except Exception:
             tb = traceback.format_exc()
             self._logger.exception(
                 "Worker: callable raised (job_id=%s, scope=%s, corr=%s): %s",
@@ -764,19 +756,17 @@ class JobManager:
                     corr_id=corr_id,
                 )
                 result = fn(*args, **call_kwargs)
-            except (
-                AttributeError,
-                ConnectionError,
-                FileNotFoundError,
-                IndexError,
-                KeyError,
-                LookupError,
-                OSError,
-                RuntimeError,
-                TypeError,
-                ValueError,
-            ):
-                return "err", traceback.format_exc()
+            # Pool boundary: any failure must reach the bridge's error signal;
+            # otherwise the job would finish without reporting why.
+            except Exception:
+                tb = traceback.format_exc()
+                self._logger.exception(
+                    "JobManager: pool callable raised (job_id=%s, scope=%s, corr=%s)",
+                    job_id,
+                    scope,
+                    corr_id,
+                )
+                return "err", tb
             else:
                 return "ok", result
 
@@ -795,18 +785,9 @@ class JobManager:
                     bridge.post_result(payload)
                 else:
                     bridge.post_error(str(payload))
-            except (
-                AttributeError,
-                ConnectionError,
-                FileNotFoundError,
-                IndexError,
-                KeyError,
-                LookupError,
-                OSError,
-                RuntimeError,
-                TypeError,
-                ValueError,
-            ):
+            # Covers cancellation (CancelledError) and other future failures.
+            except Exception:
+                self._logger.exception("JobManager: pool future failed (job_id=%s)", job_id)
                 bridge.post_error(traceback.format_exc())
             finally:
                 bridge.post_finished()

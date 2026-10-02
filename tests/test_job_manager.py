@@ -170,3 +170,27 @@ def test_abort_all_and_shutdown(monkeypatch):
 
     assert jm.abort_all() == []
     jm.shutdown()
+
+
+def test_worker_reports_import_error_instead_of_propagating():
+    # PackageNotFoundError is an ImportError; escaping QThread.run would abort the app.
+    from importlib.metadata import PackageNotFoundError
+
+    def fn_fail():
+        raise PackageNotFoundError("Pillow")
+
+    w = Worker(fn_fail, job_id="X", job_scope=None, corr_id=None)
+    errors = []
+    finished = []
+    w.__dict__["started"] = FakeSignal()
+    w.__dict__["_dispatch_result"] = FakeSignal()
+    w.__dict__["_dispatch_error"] = FakeSignal()
+    w.__dict__["_dispatch_finished"] = FakeSignal()
+    w._dispatch_error.connect(errors.append)
+    w._dispatch_finished.connect(lambda: finished.append(True))
+
+    w.run()
+
+    assert len(errors) == 1
+    assert "PackageNotFoundError" in errors[0]
+    assert finished == [True]
