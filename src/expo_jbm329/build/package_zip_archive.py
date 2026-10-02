@@ -7,7 +7,13 @@ import zipfile
 from typing import TYPE_CHECKING
 
 from expo_jbm329.build.build_utils import detect_platform, ensure_release_artifacts_dir, staging_dir
-from expo_jbm329.build.version import create_sha256, get_documentation_files, get_release_name, get_release_notes_file
+from expo_jbm329.build.version import (
+    create_sha256,
+    get_documentation_files,
+    get_release_name,
+    get_release_notes_file,
+    get_third_party_notice_files,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -23,6 +29,7 @@ def _required_paths(stage_dir: Path) -> list[Path]:
     return [
         stage_dir / "expo",
         *(stage_dir / file_name for file_name in get_documentation_files()),
+        *(stage_dir / file_name for file_name in get_third_party_notice_files()),
         stage_dir / get_release_notes_file(),
     ]
 

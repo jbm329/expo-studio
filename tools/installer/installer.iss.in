@@ -41,6 +41,8 @@ Source: "$SOURCE_DIR\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdir
 Source: "$README_PATH"; DestDir: "{app}"
 Source: "$CHANGELOG_PATH"; DestDir: "{app}"
 Source: "$LICENSE_PATH"; DestDir: "{app}"
+Source: "$THIRD_PARTY_NOTICES_PATH"; DestDir: "{app}"
+Source: "$THIRD_PARTY_MANIFEST_PATH"; DestDir: "{app}"
 Source: "$RELEASE_NOTES_PATH"; DestDir: "{app}"
 
 [Icons]

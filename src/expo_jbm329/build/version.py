@@ -22,6 +22,8 @@ PACKAGE_NAME = "expo_jbm329"
 SOURCE_CODE_URL = "https://github.com/jbm329/expo-studio"
 DOCUMENTATION_FILES = ("LICENSE.txt", "README.md", "CHANGELOG.md")
 RELEASE_NOTES_FILE = "RELEASE-NOTES.txt"
+THIRD_PARTY_NOTICES_FILE = "THIRD-PARTY-NOTICES.txt"
+THIRD_PARTY_MANIFEST_FILE = "third-party-manifest.json"
 
 
 @dataclass(frozen=True)
@@ -80,6 +82,11 @@ def get_documentation_files() -> tuple[str, ...]:
 def get_release_notes_file() -> str:
     """Return the release notes filename included in release artifacts."""
     return RELEASE_NOTES_FILE
+
+
+def get_third_party_notice_files() -> tuple[str, ...]:
+    """Return the generated third-party notice files included in release artifacts."""
+    return (THIRD_PARTY_NOTICES_FILE, THIRD_PARTY_MANIFEST_FILE)
 
 
 def get_version() -> str:

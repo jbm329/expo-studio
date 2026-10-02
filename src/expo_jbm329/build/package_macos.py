@@ -14,6 +14,7 @@ from expo_jbm329.build.version import (
     get_executable_name,
     get_release_name,
     get_release_notes_file,
+    get_third_party_notice_files,
 )
 
 if TYPE_CHECKING:
@@ -31,6 +32,7 @@ def _required_paths(stage_dir: Path, platform_name: str) -> list[Path]:
         stage_dir / "expo",
         stage_dir / "expo" / get_executable_name(platform_name),
         *(stage_dir / file_name for file_name in get_documentation_files()),
+        *(stage_dir / file_name for file_name in get_third_party_notice_files()),
         stage_dir / get_release_notes_file(),
     ]
 

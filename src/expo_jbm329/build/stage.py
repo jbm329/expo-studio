@@ -12,14 +12,18 @@ from expo_jbm329.build.build_utils import (
     dist_dir,
     prepare_clean_directory,
     project_root,
+    pyinstaller_work_dir,
     staging_dir,
 )
+from expo_jbm329.build.notices.cli import run_third_party_notices
+from expo_jbm329.build.notices.pyinstaller_toc import COLLECT_TOC_FILE
 from expo_jbm329.build.version import (
     ReleaseMetadata,
     build_metadata,
     get_documentation_files,
     get_release_notes_file,
     get_source_code_url,
+    get_third_party_notice_files,
 )
 
 if TYPE_CHECKING:
@@ -33,6 +37,7 @@ class StagePaths:
     root: Path
     dist_expo_dir: Path
     staging_dir: Path
+    work_dir: Path
 
 
 def build_release_notes(release_metadata: ReleaseMetadata, build_type: str = "onedir") -> str:
@@ -66,6 +71,7 @@ def _stage_paths() -> StagePaths:
         root=root,
         dist_expo_dir=dist_dir() / "expo",
         staging_dir=staging_dir(),
+        work_dir=pyinstaller_work_dir(),
     )
 
 
@@ -80,6 +86,11 @@ def _validate_sources(paths: StagePaths, documentation_files: dict[str, Path]) -
 
     if not paths.dist_expo_dir.is_dir():
         missing.append(paths.dist_expo_dir)
+
+    # Third-party notices are derived from the PyInstaller TOC files of the same build.
+    collect_toc = paths.work_dir / COLLECT_TOC_FILE
+    if not collect_toc.is_file():
+        missing.append(collect_toc)
 
     missing.extend(source_path for source_path in documentation_files.values() if not source_path.is_file())
 
@@ -138,7 +149,9 @@ def _validate_staging_output(paths: StagePaths) -> bool:
     missing.extend(_missing_staged_dist_entries(source_dir=paths.dist_expo_dir, target_dir=staged_expo_dir))
     missing.extend(
         path
-        for path in (paths.staging_dir / file_name for file_name in get_documentation_files())
+        for path in (
+            paths.staging_dir / file_name for file_name in (*get_documentation_files(), *get_third_party_notice_files())
+        )
         if not path.is_file()
     )
 
@@ -166,6 +179,7 @@ def stage_onedir() -> int:
 
     print(f"[stage] root={paths.root}")
     print(f"[stage] dist_expo={paths.dist_expo_dir}")
+    print(f"[stage] work_dir={paths.work_dir}")
     print(f"[stage] staging={paths.staging_dir}")
 
     if not _validate_sources(paths=paths, documentation_files=documentation_files):
@@ -183,6 +197,15 @@ def stage_onedir() -> int:
         _write_release_notes(target_dir=paths.staging_dir, release_metadata=build_metadata())
     except (OSError, shutil.Error) as exc:
         print(f"[stage] Failed to stage artifacts: {exc}", file=sys.stderr)
+        return 1
+
+    if not run_third_party_notices(
+        onedir_dir=paths.staging_dir / "expo",
+        work_dir=paths.work_dir,
+        output_dir=paths.staging_dir,
+        log_prefix="[stage]",
+    ):
+        print("[stage] Third-party notice validation failed.", file=sys.stderr)
         return 1
 
     if not _validate_staging_output(paths):
