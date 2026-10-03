@@ -54,7 +54,7 @@ qt6_plugins = collect_data_files(
         "plugins/styles/*",
     ],
 )
-qt6_libs = collect_dynamic_libs("PyQt6.Qt6")
+qt6_libs = collect_dynamic_libs("PyQt6.Qt6") if IS_WIN else []
 
 datas += qt6_plugins
 binaries += qt6_libs

@@ -65,8 +65,9 @@ class AboutDialog(QDialog):
 
         metadata = get_app_metadata()
 
-        name_label = QLabel(f"<b>{metadata.get('name', 'Expo studio ')} "
-                            f"{metadata.get('version', self.tr('Unknown'))!s}</b>")
+        name_label = QLabel(
+            f"<b>{metadata.get('name', 'Expo studio ')} {metadata.get('version', self.tr('Unknown'))!s}</b>"
+        )
         name_label.setStyleSheet("font-size: 16pt; font-weight: bold;")
         info_layout.addWidget(name_label)
 

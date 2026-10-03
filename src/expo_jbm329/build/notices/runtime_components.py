@@ -6,7 +6,11 @@ import platform
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING
 
-from expo_jbm329.build.notices.attribution import MSVC_RUNTIME_COMPONENT, PYTHON_RUNTIME_COMPONENT
+from expo_jbm329.build.notices.attribution import (
+    LINUX_SYSTEM_RUNTIME_COMPONENT,
+    MSVC_RUNTIME_COMPONENT,
+    PYTHON_RUNTIME_COMPONENT,
+)
 from expo_jbm329.build.notices.licenses import read_license_file
 from expo_jbm329.build.notices.models import Component, LicenseSource, LicenseText
 
@@ -21,6 +25,9 @@ PYTHON_RUNTIME_HOMEPAGE = "https://www.python.org/"
 MSVC_RUNTIME_NAME = "Microsoft Visual C++ Runtime"
 MSVC_RUNTIME_LICENSE = "LicenseRef-Microsoft-Redistributable"
 MSVC_RUNTIME_HOMEPAGE = "https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist"
+LINUX_SYSTEM_RUNTIME_NAME = "Linux System Runtime Libraries"
+LINUX_SYSTEM_RUNTIME_LICENSE = "GPL-3.0-or-later WITH GCC-exception-3.1 OR LGPL-2.1-or-later OR MIT OR BSD-3-Clause"
+LINUX_SYSTEM_RUNTIME_HOMEPAGE = "https://gcc.gnu.org/onlinedocs/libstdc++/manual/license.html"
 
 
 def python_license_candidates(runtime_root: Path, version: str) -> tuple[Path, ...]:
@@ -138,6 +145,53 @@ def build_msvc_runtime_component(entries: Sequence[BundledEntry]) -> Component:
         license=MSVC_RUNTIME_LICENSE,
         homepage=MSVC_RUNTIME_HOMEPAGE,
         license_texts=(LicenseText(name="Notice", text=msvc_runtime_notice(file_names), source=LicenseSource.BUILTIN),),
+        file_count=len(entries),
+        license_source=LicenseSource.BUILTIN,
+    )
+
+
+def linux_system_runtime_notice(file_names: Sequence[str]) -> str:
+    """Return the notice text for redistributed Linux system and runtime libraries.
+
+    Args:
+        file_names: Bundled Linux system runtime file names.
+
+    Returns:
+        Notice text listing the bundled files.
+    """
+    listed_files = "\n".join(f"  - {name}" for name in file_names)
+    return (
+        "This application includes the following Linux system and runtime libraries,\n"
+        "redistributed in unmodified form:\n\n"
+        f"{listed_files}\n\n"
+        "These libraries originate from the host GNU/Linux operating system environment\n"
+        "and are distributed under their respective open source licenses (such as the\n"
+        "GNU LGPL, GNU GPL with GCC Runtime Library Exception, MIT, BSD, or zlib licenses),\n"
+        "and are not covered by the primary license of this application.\n\n"
+        "Source code for standard system libraries can be obtained from the respective\n"
+        "upstream project repositories or GNU/Linux distribution package repositories."
+    )
+
+
+def build_linux_system_runtime_component(entries: Sequence[BundledEntry]) -> Component:
+    """Return the notice component for bundled Linux system runtime libraries.
+
+    Args:
+        entries: Entries attributed to the Linux system runtime.
+
+    Returns:
+        Linux system runtime component.
+    """
+    file_names = sorted({PurePosixPath(entry.destination).name for entry in entries}, key=str.casefold)
+    return Component(
+        component_id=LINUX_SYSTEM_RUNTIME_COMPONENT,
+        name=LINUX_SYSTEM_RUNTIME_NAME,
+        version="",
+        license=LINUX_SYSTEM_RUNTIME_LICENSE,
+        homepage=LINUX_SYSTEM_RUNTIME_HOMEPAGE,
+        license_texts=(
+            LicenseText(name="Notice", text=linux_system_runtime_notice(file_names), source=LicenseSource.BUILTIN),
+        ),
         file_count=len(entries),
         license_source=LicenseSource.BUILTIN,
     )

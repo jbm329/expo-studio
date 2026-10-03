@@ -7,6 +7,7 @@ import pytest
 
 from expo_jbm329.build.notices.attribution import (
     FIRST_PARTY_COMPONENT,
+    LINUX_SYSTEM_RUNTIME_COMPONENT,
     MSVC_RUNTIME_COMPONENT,
     PYTHON_RUNTIME_COMPONENT,
     AttributionContext,
@@ -36,6 +37,12 @@ from expo_jbm329.build.notices.pyinstaller_toc import (
     load_bundle_contents,
 )
 from expo_jbm329.build.notices.renderer import render_manifest, render_notices_text
+from expo_jbm329.build.notices.runtime_components import (
+    LINUX_SYSTEM_RUNTIME_LICENSE,
+    LINUX_SYSTEM_RUNTIME_NAME,
+    build_linux_system_runtime_component,
+    build_msvc_runtime_component,
+)
 from expo_jbm329.build.notices.service import NoticeConfig, analyze_onedir, write_notice_files
 
 
@@ -291,6 +298,9 @@ def test_attribute_entry_rules(tmp_path: Path, attribution_context: AttributionC
     assert attribute("_internal/x/METADATA", site / "expo_jbm329-1.0.dist-info" / "METADATA") == FIRST_PARTY_COMPONENT
     assert attribute("_internal/theme/a.json", tmp_path / "project" / "src" / "a.json") == FIRST_PARTY_COMPONENT
     assert attribute("_internal/python313.dll", tmp_path / "python" / "python313.dll") == PYTHON_RUNTIME_COMPONENT
+    assert attribute("_internal/libgcc_s.so.1", Path("/lib64/libgcc_s.so.1")) == LINUX_SYSTEM_RUNTIME_COMPONENT
+    assert attribute("_internal/libstdc++.so.6", Path("/usr/lib64/libstdc++.so.6")) == LINUX_SYSTEM_RUNTIME_COMPONENT
+    assert attribute("_internal/libz.so.1", Path("/usr/lib/libz.so.1")) == LINUX_SYSTEM_RUNTIME_COMPONENT
     assert attribute("_internal/loose.py", unrecorded_site_file) is None
     assert attribute("_internal/unknown.dll", tmp_path / "elsewhere" / "unknown.dll") is None
 
@@ -299,6 +309,35 @@ def test_executable_is_unattributed_without_bootloader_distribution(attribution_
     entry = _file_entry("expo.exe", Path("build/expo.exe"), typecode="EXECUTABLE")
 
     assert attribute_entry(entry, DistributionIndex([]), attribution_context) is None
+
+
+def test_build_linux_system_runtime_component() -> None:
+    entries = [
+        _file_entry("_internal/libgcc_s.so.1", Path("/lib64/libgcc_s.so.1")),
+        _file_entry("_internal/libstdc++.so.6", Path("/usr/lib64/libstdc++.so.6")),
+    ]
+    component = build_linux_system_runtime_component(entries)
+
+    assert component.component_id == LINUX_SYSTEM_RUNTIME_COMPONENT
+    assert component.name == LINUX_SYSTEM_RUNTIME_NAME
+    assert component.license == LINUX_SYSTEM_RUNTIME_LICENSE
+    assert component.file_count == 2
+    assert len(component.license_texts) == 1
+    notice_text = component.license_texts[0].text
+    assert "libgcc_s.so.1" in notice_text
+    assert "libstdc++.so.6" in notice_text
+
+
+def test_build_msvc_runtime_component() -> None:
+    entries = [
+        _file_entry("_internal/VCRUNTIME140.dll", Path("C:/Windows/System32/vcruntime140.dll")),
+    ]
+    component = build_msvc_runtime_component(entries)
+
+    assert component.component_id == MSVC_RUNTIME_COMPONENT
+    assert component.file_count == 1
+    assert len(component.license_texts) == 1
+    assert "VCRUNTIME140.dll" in component.license_texts[0].text
 
 
 # ---------------------------------------------------------------- end-to-end analysis
@@ -377,6 +416,68 @@ def test_analyze_onedir_reports_components_and_issues(tmp_path: Path) -> None:
     assert not any(issue.message.startswith("No license") for issue in report.warnings)
     python_component = next(component for component in report.components if component.name == "Python")
     assert python_component.license_texts[0].text == "PSF license"
+
+
+def test_analyze_onedir_attributes_linux_system_runtime(tmp_path: Path) -> None:
+    site = tmp_path / "venv" / "site-packages"
+    runtime_file = _write(site / "runtime_lib" / "core.pyd")
+    runtime_license = _write(site / "runtime_lib-1.0.dist-info" / "LICENSE", "Runtime license")
+    pyinstaller_license = _write(site / "pyinstaller-1.0.dist-info" / "LICENSE", "PyInstaller license")
+    python_root = tmp_path / "python"
+    _write(python_root / "LICENSE.txt", "PSF license")
+    python_dll = _write(python_root / "python313.dll")
+
+    work_dir = tmp_path / "build"
+    sys_lib = Path("/lib64/libgcc_s.so.1")
+    collect_rows = [
+        ("expo.exe", str(tmp_path / "build" / "expo.exe"), "EXECUTABLE"),
+        ("runtime_lib\\core.pyd", str(runtime_file), "EXTENSION"),
+        ("python313.dll", str(python_dll), "BINARY"),
+        ("libgcc_s.so.1", str(sys_lib), "BINARY"),
+    ]
+    _write(work_dir / "COLLECT-00.toc", repr((collect_rows,)))
+
+    dist_dir = tmp_path / "dist"
+    _write(dist_dir / "expo.exe")
+    _write(dist_dir / "_internal" / "runtime_lib" / "core.pyd")
+    _write(dist_dir / "_internal" / "python313.dll")
+    _write(dist_dir / "_internal" / "libgcc_s.so.1")
+
+    installed = [
+        _distribution("app", requirements=("runtime-lib",)),
+        _distribution("runtime-lib", files=(runtime_file,), license_files=(runtime_license,)),
+        _distribution(
+            "pyinstaller",
+            license_expression="GPL-2.0-or-later WITH Bootloader-exception",
+            license_files=(pyinstaller_license,),
+        ),
+    ]
+    config = NoticeConfig(
+        dist_dir=dist_dir,
+        work_dir=work_dir,
+        application_name="Expo Studio",
+        application_version="1.2.3",
+        root_distribution="app",
+        attribution=AttributionContext(
+            executable_name="expo.exe",
+            first_party_distribution="app",
+            first_party_roots=(tmp_path / "src",),
+            python_runtime_roots=(python_root,),
+        ),
+        allowed_extras=(),
+        dev_extras=(),
+        case_sensitive_paths=True,
+    )
+
+    report = analyze_onedir(config, installed)
+
+    assert not report.has_errors
+    assert "Linux System Runtime Libraries" in [component.name for component in report.components]
+    linux_component = next(
+        component for component in report.components if component.name == "Linux System Runtime Libraries"
+    )
+    assert linux_component.file_count == 1
+    assert "libgcc_s.so.1" in linux_component.license_texts[0].text
 
 
 def test_analyze_onedir_reports_missing_onedir_files(tmp_path: Path) -> None:

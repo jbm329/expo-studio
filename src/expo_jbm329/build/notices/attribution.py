@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING
 
 from packaging.utils import canonicalize_name
@@ -14,13 +14,22 @@ from expo_jbm329.build.notices.models import BundledEntry, ComponentId, Componen
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from pathlib import Path
 
     from expo_jbm329.build.notices.distributions import DistributionIndex
 
 FIRST_PARTY_COMPONENT = ComponentId(kind=ComponentKind.FIRST_PARTY, key="first-party")
 PYTHON_RUNTIME_COMPONENT = ComponentId(kind=ComponentKind.PYTHON_RUNTIME, key="python")
 MSVC_RUNTIME_COMPONENT = ComponentId(kind=ComponentKind.SYSTEM_RUNTIME, key="microsoft-visual-cpp-runtime")
+LINUX_SYSTEM_RUNTIME_COMPONENT = ComponentId(kind=ComponentKind.SYSTEM_RUNTIME, key="linux-system-runtime")
+
+LINUX_SYSTEM_LIBRARY_ROOTS = (
+    Path("/lib"),
+    Path("/lib64"),
+    Path("/usr/lib"),
+    Path("/usr/lib64"),
+    Path("/usr/local/lib"),
+    Path("/usr/local/lib64"),
+)
 
 # Microsoft C/C++ runtime DLLs are attributed by name because several distributions
 # vendor their own copies, and PyInstaller may also collect them from the system.
@@ -76,6 +85,11 @@ def _is_python_runtime_file(source: Path, context: AttributionContext) -> bool:
     return any(is_path_under(source, root) for root in context.python_runtime_roots)
 
 
+def _is_linux_system_file(source: Path) -> bool:
+    """Return whether a source file is a system runtime library on Linux."""
+    return any(is_path_under(source, root) for root in LINUX_SYSTEM_LIBRARY_ROOTS)
+
+
 def _attribute_by_destination(entry: BundledEntry, context: AttributionContext) -> ComponentId | None:
     """Attribute files that PyInstaller generates or that are identified by their name."""
     if entry.origin is not EntryOrigin.FILE:
@@ -128,6 +142,9 @@ def attribute_entry(
 
     if _is_python_runtime_file(entry.source, context):
         return PYTHON_RUNTIME_COMPONENT
+
+    if _is_linux_system_file(entry.source):
+        return LINUX_SYSTEM_RUNTIME_COMPONENT
 
     return None
 

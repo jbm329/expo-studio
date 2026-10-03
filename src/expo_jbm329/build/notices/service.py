@@ -13,6 +13,7 @@ from packaging.utils import canonicalize_name
 from expo_jbm329.build.build_utils import project_root
 from expo_jbm329.build.notices.attribution import (
     FIRST_PARTY_COMPONENT,
+    LINUX_SYSTEM_RUNTIME_COMPONENT,
     AttributionContext,
     AttributionResult,
     attribute_entries,
@@ -38,6 +39,7 @@ from expo_jbm329.build.notices.models import (
 from expo_jbm329.build.notices.pyinstaller_toc import list_onedir_files, load_bundle_contents
 from expo_jbm329.build.notices.renderer import render_manifest, render_notices_text
 from expo_jbm329.build.notices.runtime_components import (
+    build_linux_system_runtime_component,
     build_msvc_runtime_component,
     build_python_runtime_component,
 )
@@ -291,7 +293,10 @@ def _build_components(
                 components.append(runtime)
                 license_issues.extend(_runtime_license_issues(runtime))
             case ComponentKind.SYSTEM_RUNTIME:
-                runtime = build_msvc_runtime_component(entries)
+                if component_id == LINUX_SYSTEM_RUNTIME_COMPONENT:
+                    runtime = build_linux_system_runtime_component(entries)
+                else:
+                    runtime = build_msvc_runtime_component(entries)
                 components.append(runtime)
                 license_issues.extend(_runtime_license_issues(runtime))
             case ComponentKind.PYTHON_DISTRIBUTION:
