@@ -65,7 +65,8 @@ class AboutDialog(QDialog):
 
         metadata = get_app_metadata()
 
-        name_label = QLabel(f"<b>{metadata.get('name', 'Expo studio')}</b>")
+        name_label = QLabel(f"<b>{metadata.get('name', 'Expo studio ')} "
+                            f"{metadata.get('version', self.tr('Unknown'))!s}</b>")
         name_label.setStyleSheet("font-size: 16pt; font-weight: bold;")
         info_layout.addWidget(name_label)
 
@@ -82,7 +83,7 @@ class AboutDialog(QDialog):
         author_label = QLabel(self.tr("Author: %1").replace("%1", str(metadata.get("author", "Jonas Brännström"))))
         info_layout.addWidget(author_label)
 
-        license_label = QLabel(self.tr("License: %1").replace("%1", str(metadata.get("license", "GPL-3.0-or-later"))))
+        license_label = QLabel(self.tr("License: %1").replace("%1", str(metadata.get("license", "GPL-3.0-only"))))
         info_layout.addWidget(license_label)
         source_code_label = QLabel(
             self.tr("Source code: <a href='%1'>%1</a>").replace(

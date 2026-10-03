@@ -327,7 +327,15 @@ For prereleases, use a normalized Python version such as `version = "1.0.0rc1"` 
 
 ## 📝 License
 
-This project is licensed under the **GNU General Public License v3.0 or later** - see the [LICENSE.txt](LICENSE.txt) file for details.
+Expo Studio is free software: you can redistribute it and/or modify
+it under the terms of the **GNU General Public License** as published
+by the Free Software Foundation, version 3.
+
+Expo Studio is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the [LICENSE.txt](LICENSE.txt) file for details.
 
 ## 👤 Author
 
