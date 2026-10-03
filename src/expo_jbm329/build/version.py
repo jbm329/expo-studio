@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from importlib.metadata import PackageNotFoundError, metadata
 from typing import TYPE_CHECKING
 
+from expo_jbm329.app.metadata import REPOSITORY_URL
 from expo_jbm329.build.build_utils import detect_platform, project_root
 
 if TYPE_CHECKING:
@@ -19,7 +20,7 @@ APP_NAME = "Expo Studio"
 APP_SLUG = "ExpoStudio"
 EXECUTABLE_BASENAME = "expo"
 PACKAGE_NAME = "expo_jbm329"
-SOURCE_CODE_URL = "https://github.com/jbm329/expo-studio"
+SOURCE_CODE_URL = REPOSITORY_URL
 DOCUMENTATION_FILES = ("LICENSE.txt", "README.md", "CHANGELOG.md")
 RELEASE_NOTES_FILE = "RELEASE-NOTES.txt"
 THIRD_PARTY_NOTICES_FILE = "THIRD-PARTY-NOTICES.txt"

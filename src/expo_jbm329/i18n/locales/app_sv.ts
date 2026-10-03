@@ -4,39 +4,135 @@
 <context>
     <name>AboutDialog</name>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="32"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="40"/>
         <source>About Expo studio</source>
         <translation>Om Expo studio</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="72"/>
-        <source>Version: %1</source>
-        <translation>Version: %1</translation>
+        <location filename="../../gui/dialogs/about_dialog.py" line="66"/>
+        <source>Expo Studio</source>
+        <translation>Expo Studio</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="72"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="67"/>
         <source>Unknown</source>
         <translation>Okänd</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="82"/>
-        <source>Author: %1</source>
-        <translation>Utvecklare: %1</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="85"/>
-        <source>License: %1</source>
-        <translation>Licens: %1</translation>
+        <location filename="../../gui/dialogs/about_dialog.py" line="79"/>
+        <source>Copyright © %1 %2</source>
+        <translation>Copyright © %1 %2</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/about_dialog.py" line="88"/>
-        <source>Source code: &lt;a href=&apos;%1&apos;&gt;%1&lt;/a&gt;</source>
-        <translation>Källkod: &lt;a href=&apos;%1&apos;&gt;%1&lt;/a&gt;</translation>
+        <source>Expo Studio is free software licensed under the GNU General Public License, version 3 (GPLv3). This program comes with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable law.</source>
+        <translation>Expo Studio är fri programvara licensierad enligt GNU General Public License, version 3 (GPLv3). Programmet tillhandahålls UTAN NÅGON SOM HELST GARANTI, i den utsträckning som tillåts enligt tillämplig lag.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="133"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="97"/>
+        <source>Expo Studio is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</source>
+        <translation>Expo Studio distribueras i förhoppningen att det ska vara till nytta, men UTAN NÅGON SOM HELST GARANTI, inte ens den underförstådda garantin om SÄLJBARHET eller LÄMPLIGHET FÖR ETT VISST ÄNDAMÅL.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/about_dialog.py" line="105"/>
+        <source>Third-party notices</source>
+        <translation>Information om programvara från tredje part</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/about_dialog.py" line="108"/>
+        <source>The application uses third-party software distributed under various licenses. See &lt;b&gt;%1&lt;/b&gt; for details.</source>
+        <translation>Applikationen använder programvara från tredje part som distribueras under olika licenser. Se &lt;b&gt;%1&lt;/b&gt; för mer information.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/about_dialog.py" line="117"/>
+        <source>Icons provided by &lt;a href=&apos;https://icons8.com&apos;&gt;Icons8&lt;/a&gt; and used under the free license which requires attribution.</source>
+        <translation>Ikoner tillhandahålls av &lt;a href=&apos;https://icons8.com&apos;&gt;Icons8&lt;/a&gt; som används under den fria licensen som kräver tillskrivning.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/about_dialog.py" line="127"/>
+        <source>Python: %1</source>
+        <translation>Python: %1</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/about_dialog.py" line="128"/>
+        <source>Qt: %1 | PyQt: %2</source>
+        <translation>Qt: %1 | PyQt: %2</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/about_dialog.py" line="129"/>
+        <source>Platform: %1 %2 (%3)</source>
+        <translation>Plattform: %1 %2 (%3)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/about_dialog.py" line="144"/>
         <source>Close</source>
         <translation>Stäng</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/about_dialog.py" line="154"/>
+        <source>License</source>
+        <translation>Licens</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/about_dialog.py" line="155"/>
+        <source>Source code</source>
+        <translation>Källkod</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/about_dialog.py" line="181"/>
+        <source>Document unavailable</source>
+        <translation>Dokumentet är inte tillgängligt</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/about_dialog.py" line="182"/>
+        <source>Could not find %1.</source>
+        <translation>Kunde inte hitta %1.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/about_dialog.py" line="190"/>
+        <source>Unable to open link</source>
+        <translation>Det gick inte att öppna länken</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/about_dialog.py" line="191"/>
+        <source>The requested link could not be opened.</source>
+        <translation>Den begärda länken kunde inte öppnas.</translation>
+    </message>
+    <message>
+        <source>Expo Studio uses third-party software distributed under various licenses. See &lt;b&gt;%1&lt;/b&gt; for details.</source>
+        <translation type="vanished">Expo Studio använder programvara från tredje part som distribueras under olika licenser. Se &lt;b&gt;%1&lt;/b&gt; för mer information.</translation>
+    </message>
+    <message>
+        <source>This application uses third-party software distributed under various licenses. See &lt;b&gt;%1&lt;/b&gt; for details.</source>
+        <translation type="vanished">Programmet använder programvara från tredje part som distribueras under olika licenser. Se &lt;b&gt;%1&lt;/b&gt; för mer information.</translation>
+    </message>
+    <message>
+        <source>Icons provided by &lt;a href=&apos;https://icons8.com&apos;&gt;Icons8&lt;/a&gt; used under the free license which requires attribution.</source>
+        <translation type="vanished">Ikoner tillhandahålls av &lt;a href=&apos;https://icons8.com&apos;&gt;Icons8&lt;/a&gt; som används under den fria licensen som kräver tillskrivning.</translation>
+    </message>
+    <message>
+        <source>Icons provided by &lt;a href=&apos;https://icons8.com&apos;&gt;Icons8&lt;/a&gt;.&lt;br/&gt;Used under the free license which requires attribution.</source>
+        <translation type="vanished">Ikoner tillhandahålls av &lt;a href=&apos;https://icons8.com&apos;&gt;Icons8&lt;/a&gt;&lt;br/&gt;som används under den fria licensen som kräver tillskrivning.</translation>
+    </message>
+    <message>
+        <source>Expo Studio is free software licensed under the GNU General Public License, version 3 (GPLv3).</source>
+        <translation type="vanished">Expo Studio är fri programvara licensierad enligt GNU General Public License, version 3 (GPLv3).</translation>
+    </message>
+    <message>
+        <source>This program comes with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable law.</source>
+        <translation type="vanished">Programmet tillhandahålls UTAN NÅGON GARANTI, i den utsträckning som tillåts enligt tillämplig lag.</translation>
+    </message>
+    <message>
+        <source>Third-party software</source>
+        <translation type="vanished">Programvara från tredje part</translation>
+    </message>
+    <message>
+        <source>This application uses third-party software distributed under various licenses. See THIRD-PARTY-NOTICES for details.</source>
+        <translation type="vanished">Programmet använder programvara från tredje part som distribueras under olika licenser. Se THIRD-PARTY-NOTICES för mer information.</translation>
+    </message>
+    <message>
+        <source>Repository</source>
+        <translation type="vanished">Kodförråd</translation>
     </message>
 </context>
 <context>
@@ -1709,252 +1805,252 @@ Vänligen se loggfil för mer information.</translation>
 <context>
     <name>DbErrors</name>
     <message>
-        <location filename="../../db/core/errors.py" line="72"/>
-        <location filename="../../db/core/errors.py" line="38"/>
+        <location filename="../../db/core/errors.py" line="84"/>
+        <location filename="../../db/core/errors.py" line="50"/>
         <source>The stored procedure does not exist.</source>
         <translation>Stored procedure finns inte.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="39"/>
+        <location filename="../../db/core/errors.py" line="51"/>
         <source>Check name and schema (ex: EXEC dbo.MyProc ...).</source>
         <translation>Kontrollera namn och schema (ex: EXEC dbo.MinProc ...).</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="88"/>
-        <location filename="../../db/core/errors.py" line="68"/>
-        <location filename="../../db/core/errors.py" line="42"/>
+        <location filename="../../db/core/errors.py" line="100"/>
+        <location filename="../../db/core/errors.py" line="80"/>
+        <location filename="../../db/core/errors.py" line="54"/>
         <source>The table or view does not exist.</source>
         <translation>Tabellen eller vyn finns inte.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="43"/>
+        <location filename="../../db/core/errors.py" line="55"/>
         <source>Check name and schema (ex: dbo.MyTable).</source>
         <translation>Kontrollera namn och schema (ex: dbo.MinTabell).</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="86"/>
-        <location filename="../../db/core/errors.py" line="66"/>
-        <location filename="../../db/core/errors.py" line="45"/>
+        <location filename="../../db/core/errors.py" line="98"/>
+        <location filename="../../db/core/errors.py" line="78"/>
+        <location filename="../../db/core/errors.py" line="57"/>
         <source>SQL syntax error.</source>
         <translation>SQL syntaxfel.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="87"/>
-        <location filename="../../db/core/errors.py" line="67"/>
-        <location filename="../../db/core/errors.py" line="46"/>
+        <location filename="../../db/core/errors.py" line="99"/>
+        <location filename="../../db/core/errors.py" line="79"/>
+        <location filename="../../db/core/errors.py" line="58"/>
         <source>Check keywords, commas and parentheses.</source>
         <translation>Kontrollera nyckelord, kommatecken och parenteser.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="74"/>
-        <location filename="../../db/core/errors.py" line="47"/>
+        <location filename="../../db/core/errors.py" line="86"/>
+        <location filename="../../db/core/errors.py" line="59"/>
         <source>Permission denied.</source>
         <translation>Behörighet nekad.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="48"/>
+        <location filename="../../db/core/errors.py" line="60"/>
         <source>Check SELECT/EXEC permissions or use another connection.</source>
         <translation>Kontrollera SELECT/EXEC behörighet eller använd en annan anslutning.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="51"/>
+        <location filename="../../db/core/errors.py" line="63"/>
         <source>Timeout exceeded.</source>
         <translation>Tidsgräns uppnådd.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="52"/>
+        <location filename="../../db/core/errors.py" line="64"/>
         <source>Try reducing the result set (TOP) or adding filters.</source>
         <translation>Begränsa resultat (TOP) eller lägg på filter.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="78"/>
-        <location filename="../../db/core/errors.py" line="53"/>
+        <location filename="../../db/core/errors.py" line="90"/>
+        <location filename="../../db/core/errors.py" line="65"/>
         <source>Connection failed.</source>
         <translation>Anslutningen misslyckades.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="79"/>
-        <location filename="../../db/core/errors.py" line="54"/>
+        <location filename="../../db/core/errors.py" line="91"/>
+        <location filename="../../db/core/errors.py" line="66"/>
         <source>Check network, host/port and firewall settings.</source>
         <translation>Kontrollera nätverk, värd/port och brandväggsinställningar.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="90"/>
-        <location filename="../../db/core/errors.py" line="70"/>
-        <location filename="../../db/core/errors.py" line="55"/>
+        <location filename="../../db/core/errors.py" line="102"/>
+        <location filename="../../db/core/errors.py" line="82"/>
+        <location filename="../../db/core/errors.py" line="67"/>
         <source>Unknown column.</source>
         <translation>Okänd kolumn.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="91"/>
-        <location filename="../../db/core/errors.py" line="71"/>
-        <location filename="../../db/core/errors.py" line="56"/>
+        <location filename="../../db/core/errors.py" line="103"/>
+        <location filename="../../db/core/errors.py" line="83"/>
+        <location filename="../../db/core/errors.py" line="68"/>
         <source>Check spelling/alias or qualify the column.</source>
         <translation>Kontrollera stavning/alias eller kvalificera kolumnen.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="57"/>
+        <location filename="../../db/core/errors.py" line="69"/>
         <source>Unknown SQL identifier/alias.</source>
         <translation>Ogiltig identifier/alias i SQL.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="58"/>
+        <location filename="../../db/core/errors.py" line="70"/>
         <source>Check table/column alias and qualification (schema.table.column).</source>
         <translation>Kontrollera tabell-/kolumnalias och kvalificering (schema.tabell.kolumn).</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="106"/>
-        <location filename="../../db/core/errors.py" line="96"/>
-        <location filename="../../db/core/errors.py" line="82"/>
-        <location filename="../../db/core/errors.py" line="62"/>
+        <location filename="../../db/core/errors.py" line="118"/>
+        <location filename="../../db/core/errors.py" line="108"/>
+        <location filename="../../db/core/errors.py" line="94"/>
+        <location filename="../../db/core/errors.py" line="74"/>
         <source>Unknown database failure.</source>
         <translation>Okänt databasmisstag.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="107"/>
-        <location filename="../../db/core/errors.py" line="97"/>
-        <location filename="../../db/core/errors.py" line="83"/>
-        <location filename="../../db/core/errors.py" line="63"/>
+        <location filename="../../db/core/errors.py" line="119"/>
+        <location filename="../../db/core/errors.py" line="109"/>
+        <location filename="../../db/core/errors.py" line="95"/>
+        <location filename="../../db/core/errors.py" line="75"/>
         <source>Show details in log (DEBUG) or try again.</source>
         <translation>Visa detaljer i logg (DEBUG) eller försök igen.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="122"/>
-        <source>Ambiguous column reference.</source>
-        <translation>Tvetydig kolumnreferens.</translation>
-    </message>
-    <message>
-        <location filename="../../db/core/errors.py" line="123"/>
-        <source>Qualify the column with its table name or alias.</source>
-        <translation>Kvalificera kolumnen med dess tabellnamn eller alias.</translation>
-    </message>
-    <message>
-        <location filename="../../db/core/errors.py" line="69"/>
+        <location filename="../../db/core/errors.py" line="81"/>
         <source>Check database and object name.</source>
         <translation>Kontrollera databas och objektets namn.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="73"/>
+        <location filename="../../db/core/errors.py" line="85"/>
         <source>Check name and schema (database).</source>
         <translation>Kontrollera namn och schema (databas).</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="75"/>
+        <location filename="../../db/core/errors.py" line="87"/>
         <source>Check user/password and permissions.</source>
         <translation>Kontrollera användare/lösenord och rättigheter.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="76"/>
+        <location filename="../../db/core/errors.py" line="88"/>
         <source>Unknown database.</source>
         <translation>Okänd databas.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="77"/>
+        <location filename="../../db/core/errors.py" line="89"/>
         <source>Check connection &apos;database&apos; and permissions.</source>
         <translation>Kontrollera anslutningens &apos;database&apos; och rättigheter.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="80"/>
+        <location filename="../../db/core/errors.py" line="92"/>
         <source>Locked table - timeout exceeded.</source>
         <translation>Låst tabell - tidsgräns uppnådd.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="81"/>
+        <location filename="../../db/core/errors.py" line="93"/>
         <source>Try reducing locks or splitting transactions.</source>
         <translation>Försök igen, minska låsningar eller dela upp transaktioner.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="89"/>
+        <location filename="../../db/core/errors.py" line="101"/>
         <source>Check file/database and table name.</source>
         <translation>Kontrollera fil/databas och tabellens namn.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="92"/>
+        <location filename="../../db/core/errors.py" line="104"/>
         <source>Database is locked.</source>
         <translation>Databasen är låst.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="93"/>
+        <location filename="../../db/core/errors.py" line="105"/>
         <source>Try again later or close other database processes.</source>
         <translation>Försök igen senare eller stäng andra processer som håller lås.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="94"/>
+        <location filename="../../db/core/errors.py" line="106"/>
         <source>Could not open database file.</source>
         <translation>Kunde inte öppna databasfilen.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="95"/>
+        <location filename="../../db/core/errors.py" line="107"/>
         <source>Check database file path and permissions.</source>
         <translation>Kontrollera filsökväg och filrättigheter.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="100"/>
+        <location filename="../../db/core/errors.py" line="112"/>
         <source>SQL statement is empty.</source>
         <translation>SQL-sats är tom.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="101"/>
+        <location filename="../../db/core/errors.py" line="113"/>
         <source>Write a SELECT or EXEC.</source>
         <translation>Skriv en SELECT eller EXEC.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="102"/>
+        <location filename="../../db/core/errors.py" line="114"/>
         <source>Only SELECT, WITH (CTE) and EXEC are supported here.</source>
         <translation>Bara SELECT, WITH (CTE) och EXEC stöds här.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="103"/>
+        <location filename="../../db/core/errors.py" line="115"/>
         <source>Start with SELECT/WITH or run procedure with EXEC.</source>
         <translation>Börja med SELECT/WITH eller kör procedur med EXEC.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="104"/>
+        <location filename="../../db/core/errors.py" line="116"/>
         <source>EXEC is disabled in this mode.</source>
         <translation>EXEC är inaktiverat i detta läge.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="105"/>
+        <location filename="../../db/core/errors.py" line="117"/>
         <source>Enable EXEC in settings or run a SELECT.</source>
         <translation>Aktivera EXEC eller kör SELECT.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="108"/>
+        <location filename="../../db/core/errors.py" line="120"/>
         <source>Could not initialize connection.</source>
         <translation>Kunde inte initiera en anslutning.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="111"/>
+        <location filename="../../db/core/errors.py" line="121"/>
+        <source>Ambiguous column reference.</source>
+        <translation>Tvetydig kolumnreferens.</translation>
+    </message>
+    <message>
+        <location filename="../../db/core/errors.py" line="122"/>
+        <source>Qualify the column with its table name or alias.</source>
+        <translation>Kvalificera kolumnen med dess tabellnamn eller alias.</translation>
+    </message>
+    <message>
+        <location filename="../../db/core/errors.py" line="125"/>
         <source>Preparing autocomplete (bulk)…</source>
         <translation>Förbereder autocomplete (bulk)…</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="112"/>
+        <location filename="../../db/core/errors.py" line="126"/>
         <source>Could not read schema in bulk - trying batch.</source>
         <translation>Kunde inte läsa in schemat i ett steg. Försöker i batchar.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="113"/>
+        <location filename="../../db/core/errors.py" line="127"/>
         <source>Autocomplete for columns ready ({count} objects via bulk).</source>
         <translation>Autocomplete för kolumner klar ({count} objekt via bulk).</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="114"/>
+        <location filename="../../db/core/errors.py" line="128"/>
         <source>Autocomplete for columns ready.</source>
         <translation>Autocomplete för kolumner klar.</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="115"/>
+        <location filename="../../db/core/errors.py" line="129"/>
         <source>Preparing autocomplete… {done}/{total}</source>
         <translation>Förbereder autocomplete… {done}/{total}</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="116"/>
+        <location filename="../../db/core/errors.py" line="130"/>
         <source>Loading schema…</source>
         <translation>Laddar schema…</translation>
     </message>
     <message>
-        <location filename="../../db/core/errors.py" line="117"/>
+        <location filename="../../db/core/errors.py" line="131"/>
         <source>Schema ready.</source>
         <translation>Schema klart.</translation>
     </message>
@@ -2309,27 +2405,27 @@ Vänligen se loggfil för mer information.</translation>
 <context>
     <name>EditorPanelController</name>
     <message>
-        <location filename="../../workbench/controllers/editor_panel_controller.py" line="56"/>
+        <location filename="../../workbench/controllers/editor_panel_controller.py" line="57"/>
         <source>Close tab</source>
         <translation>Stäng flik</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/editor_panel_controller.py" line="57"/>
+        <location filename="../../workbench/controllers/editor_panel_controller.py" line="58"/>
         <source>Unsaved changes</source>
         <translation>Ej sparade ändringar</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/editor_panel_controller.py" line="58"/>
+        <location filename="../../workbench/controllers/editor_panel_controller.py" line="59"/>
         <source>There are unsaved changes in {tab_name}. Close anyway?</source>
         <translation>Det finns ej sparade ändringar i fliken {tab_name}. Stäng ändå?</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/editor_panel_controller.py" line="59"/>
+        <location filename="../../workbench/controllers/editor_panel_controller.py" line="60"/>
         <source>{base_title} (copy)</source>
         <translation>{base_title} (kopia)</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/editor_panel_controller.py" line="60"/>
+        <location filename="../../workbench/controllers/editor_panel_controller.py" line="61"/>
         <source>You are about to close {count_tabs} tabs.
 Unsaved changes in {dirty_tabs} tabs.
 Continue?</source>
@@ -2338,12 +2434,12 @@ Osparade ändringar i {dirty_tabs} flikar.
 Fortsätt?</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/editor_panel_controller.py" line="63"/>
+        <location filename="../../workbench/controllers/editor_panel_controller.py" line="64"/>
         <source>Rename tab</source>
         <translation>Byt namn på flik</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/editor_panel_controller.py" line="64"/>
+        <location filename="../../workbench/controllers/editor_panel_controller.py" line="65"/>
         <source>New name:</source>
         <translation>Nytt namn:</translation>
     </message>
@@ -8350,7 +8446,7 @@ Vänligen se loggfil för mer information.</translation>
 <context>
     <name>SchemaCacheManager</name>
     <message>
-        <location filename="../../services/schema_cache.py" line="181"/>
+        <location filename="../../services/schema_cache.py" line="182"/>
         <source>DbErrors</source>
         <comment>Settings for schema cache updated.</comment>
         <translation>DbErrors</translation>
@@ -8359,42 +8455,42 @@ Vänligen se loggfil för mer information.</translation>
 <context>
     <name>SchemaController</name>
     <message>
-        <location filename="../../workbench/controllers/schema_controller.py" line="60"/>
+        <location filename="../../workbench/controllers/schema_controller.py" line="64"/>
         <source>Connect</source>
         <translation>Anslut</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/schema_controller.py" line="61"/>
+        <location filename="../../workbench/controllers/schema_controller.py" line="65"/>
         <source>Disconnect</source>
         <translation>Koppla ifrån</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/schema_controller.py" line="62"/>
+        <location filename="../../workbench/controllers/schema_controller.py" line="66"/>
         <source>Loading schema…</source>
         <translation>Laddar schema…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/schema_controller.py" line="63"/>
+        <location filename="../../workbench/controllers/schema_controller.py" line="67"/>
         <source>Tables</source>
         <translation>Tabeller</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/schema_controller.py" line="64"/>
+        <location filename="../../workbench/controllers/schema_controller.py" line="68"/>
         <source>Views</source>
         <translation>Vyer</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/schema_controller.py" line="65"/>
+        <location filename="../../workbench/controllers/schema_controller.py" line="69"/>
         <source>Finished loading schema</source>
         <translation>Slutförde laddning av schema</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/schema_controller.py" line="66"/>
+        <location filename="../../workbench/controllers/schema_controller.py" line="70"/>
         <source>Failure</source>
         <translation>Fel</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/schema_controller.py" line="67"/>
+        <location filename="../../workbench/controllers/schema_controller.py" line="71"/>
         <source>Could not load schema. 
 
 {error}</source>
@@ -8403,17 +8499,17 @@ Vänligen se loggfil för mer information.</translation>
 {error}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/schema_controller.py" line="68"/>
+        <location filename="../../workbench/controllers/schema_controller.py" line="72"/>
         <source>Failed to load schema</source>
         <translation>Misslyckades med att ladda schema</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/schema_controller.py" line="69"/>
+        <location filename="../../workbench/controllers/schema_controller.py" line="73"/>
         <source>(Columns …)</source>
         <translation>(Kolumner …)</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/schema_controller.py" line="70"/>
+        <location filename="../../workbench/controllers/schema_controller.py" line="74"/>
         <source>Preloading schema… {done}/{total}</source>
         <translation>Förladdar schema… {done}/{total}</translation>
     </message>
