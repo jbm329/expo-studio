@@ -1,5 +1,6 @@
 """Analyse PyInstaller onedir builds and generate third-party notices."""
 
+from expo_jbm329.build.notices.license_overrides import LicenseOverrideError
 from expo_jbm329.build.notices.models import Component, IssueSeverity, NoticeIssue, NoticeReport
 from expo_jbm329.build.notices.pyinstaller_toc import TocFormatError
 from expo_jbm329.build.notices.service import (
@@ -12,6 +13,7 @@ from expo_jbm329.build.notices.service import (
 __all__ = [
     "Component",
     "IssueSeverity",
+    "LicenseOverrideError",
     "NoticeConfig",
     "NoticeIssue",
     "NoticeReport",

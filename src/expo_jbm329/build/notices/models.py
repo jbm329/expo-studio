@@ -105,11 +105,14 @@ class LicenseText:
 
     Attributes:
         name: Heading describing which files or packages the text applies to.
+            Merged identical texts list one file per line.
         text: License text.
+        source: Whether the text was shipped with the component or supplied manually.
     """
 
     name: str
     text: str
+    source: LicenseSource = LicenseSource.METADATA
 
 
 @dataclass(frozen=True)
@@ -122,7 +125,19 @@ class ResolvedLicense:
 
 @dataclass(frozen=True)
 class Component:
-    """A third-party component included in the onedir output."""
+    """A third-party component included in the onedir output.
+
+    Attributes:
+        component_id: Identity of the component.
+        name: Display name.
+        version: Version, or an empty string if unknown.
+        license: License identifier, or None if it could not be determined.
+        homepage: Project homepage URL, if known.
+        license_texts: License texts that apply to the component.
+        file_count: Number of bundled entries attributed to the component.
+        license_source: Where the license identifier comes from.
+        license_reference: Where manually supplied license information was verified.
+    """
 
     component_id: ComponentId
     name: str
@@ -132,6 +147,7 @@ class Component:
     license_texts: tuple[LicenseText, ...]
     file_count: int
     license_source: LicenseSource = LicenseSource.METADATA
+    license_reference: str | None = None
 
 
 @dataclass(frozen=True)

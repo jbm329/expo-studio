@@ -46,6 +46,8 @@ def _component_section(component: Component) -> list[str]:
     ]
     if component.license_source is LicenseSource.OVERRIDE:
         lines.append("License note: Not declared in the package metadata; verified against the upstream project.")
+    if component.license_reference is not None:
+        lines.append(f"License verified at: {component.license_reference}")
     if component.homepage is not None:
         lines.append(f"Homepage: {component.homepage}")
     lines.append("")
@@ -118,11 +120,13 @@ def render_manifest(report: NoticeReport, application_name: str, application_ver
                 "version": component.version,
                 "license": component.license,
                 "license_source": str(component.license_source),
+                "license_reference": component.license_reference,
                 "homepage": component.homepage,
                 "file_count": component.file_count,
                 "license_texts": [
                     {
                         "files": license_text.name.splitlines(),
+                        "source": str(license_text.source),
                         "sha256": hashlib.sha256(license_text.text.encode("utf-8")).hexdigest(),
                     }
                     for license_text in component.license_texts

@@ -2,20 +2,16 @@
 
 from __future__ import annotations
 
-import hashlib
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-
-from packaging.utils import canonicalize_name
 
 from expo_jbm329.build.notices.distributions import enclosing_dist_info_dir, normalize_path
 from expo_jbm329.build.notices.models import LicenseSource, LicenseText, ResolvedLicense
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Sequence
     from pathlib import Path
 
-    from expo_jbm329.build.notices.license_overrides import LicenseOverride
     from expo_jbm329.build.notices.models import DistributionInfo
 
 LICENSE_CLASSIFIER_PREFIX = "License :: "
@@ -57,37 +53,8 @@ def _license_from_classifiers(classifiers: tuple[str, ...]) -> str | None:
     return "; ".join(names) if names else None
 
 
-def license_text_sha256(text: str) -> str:
-    """Return the SHA-256 digest used to identify a license text.
-
-    Args:
-        text: Stripped license text.
-
-    Returns:
-        Hex-encoded SHA-256 digest of the UTF-8 encoded text.
-    """
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def find_license_override(distribution_name: str, overrides: Iterable[LicenseOverride]) -> LicenseOverride | None:
-    """Return the configured override for a distribution, if any.
-
-    Args:
-        distribution_name: Distribution name in any normalization.
-        overrides: Configured overrides.
-
-    Returns:
-        The override for the distribution, or None.
-    """
-    key = canonicalize_name(distribution_name)
-    return next((override for override in overrides if canonicalize_name(override.distribution) == key), None)
-
-
 def resolve_license_name(distribution: DistributionInfo) -> str | None:
     """Return the most precise license identifier declared by a distribution.
-
-    The SPDX ``License-Expression`` is preferred, then a short legacy ``License``
-    value, then trove classifiers.
 
     Args:
         distribution: Distribution metadata.
@@ -98,25 +65,17 @@ def resolve_license_name(distribution: DistributionInfo) -> str | None:
     return resolve_license(distribution).name
 
 
-def resolve_license(
-    distribution: DistributionInfo,
-    overrides: Iterable[LicenseOverride] = (),
-) -> ResolvedLicense:
-    """Return the license identifier of a distribution and where it was found.
+def resolve_license(distribution: DistributionInfo) -> ResolvedLicense:
+    """Return the license identifier declared by a distribution and where it was found.
 
-    Declared metadata always wins. A configured override is only used when the
-    distribution declares nothing and one of its own license files matches the
-    verified license text.
+    The SPDX ``License-Expression`` is preferred, then a short legacy ``License``
+    value, then trove classifiers.
 
     Args:
         distribution: Distribution metadata.
-        overrides: Manually verified license identifiers.
 
     Returns:
-        Resolved license. ``name`` is None when nothing could be determined.
-
-    Raises:
-        OSError: If a license file must be read to verify an override and cannot be read.
+        Resolved license. ``name`` is None when the metadata declares nothing.
     """
     if distribution.license_expression is not None:
         return ResolvedLicense(name=distribution.license_expression, source=LicenseSource.METADATA)
@@ -128,20 +87,7 @@ def resolve_license(
     if from_classifiers is not None:
         return ResolvedLicense(name=from_classifiers, source=LicenseSource.CLASSIFIER)
 
-    override = find_license_override(distribution.name, overrides)
-    if override is not None and _own_license_text_matches(distribution, override.license_text_sha256):
-        return ResolvedLicense(name=override.license, source=LicenseSource.OVERRIDE)
-
     return ResolvedLicense(name=None, source=LicenseSource.UNKNOWN)
-
-
-def _own_license_text_matches(distribution: DistributionInfo, expected_sha256: str) -> bool:
-    """Return whether one of the distribution's own license files has the expected text."""
-    return any(
-        license_text_sha256(_read_text(entry.path)) == expected_sha256
-        for entry in _labelled_license_files(distribution)
-        if entry.is_own and entry.path.is_file()
-    )
 
 
 def _read_text(path: Path) -> str:

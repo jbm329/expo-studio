@@ -19,8 +19,13 @@ from expo_jbm329.build.notices.attribution import (
 )
 from expo_jbm329.build.notices.dependency_scope import classify_dependency_scope
 from expo_jbm329.build.notices.distributions import DistributionIndex, load_installed_distributions
-from expo_jbm329.build.notices.license_overrides import DEFAULT_LICENSE_OVERRIDES, LicenseOverride
-from expo_jbm329.build.notices.licenses import find_license_override, resolve_license, resolve_license_texts
+from expo_jbm329.build.notices.license_overrides import (
+    OVERRIDES_DIRECTORY_NAME,
+    OVERRIDES_FILE_NAME,
+    LicenseOverride,
+    load_license_overrides,
+)
+from expo_jbm329.build.notices.license_policy import resolve_distribution_license, unused_override_issues
 from expo_jbm329.build.notices.models import (
     BundledEntry,
     Component,
@@ -68,8 +73,8 @@ class NoticeConfig:
         allowed_extras: Extras of the application whose dependencies may be bundled.
         dev_extras: Extras of the application whose dependencies must not be bundled.
         case_sensitive_paths: Whether onedir paths are compared case-sensitively.
-        license_overrides: Manually verified license identifiers for distributions
-            whose metadata declares none.
+        license_overrides: Version-pinned license information for distributions
+            whose metadata is incomplete.
     """
 
     dist_dir: Path
@@ -81,7 +86,7 @@ class NoticeConfig:
     allowed_extras: tuple[str, ...] = DEFAULT_ALLOWED_EXTRAS
     dev_extras: tuple[str, ...] = DEFAULT_DEV_EXTRAS
     case_sensitive_paths: bool = os.name != "nt"
-    license_overrides: tuple[LicenseOverride, ...] = DEFAULT_LICENSE_OVERRIDES
+    license_overrides: tuple[LicenseOverride, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -109,6 +114,10 @@ def create_default_config(dist_dir: Path, work_dir: Path) -> NoticeConfig:
 
     Returns:
         Notice configuration.
+
+    Raises:
+        LicenseOverrideError: If ``licenses/overrides.toml`` is invalid.
+        OSError: If ``licenses/overrides.toml`` cannot be read.
     """
     root = project_root()
     return NoticeConfig(
@@ -123,6 +132,7 @@ def create_default_config(dist_dir: Path, work_dir: Path) -> NoticeConfig:
             first_party_roots=(root / "src", root / "hooks"),
             python_runtime_roots=python_runtime_roots(),
         ),
+        license_overrides=load_license_overrides(root / OVERRIDES_DIRECTORY_NAME / OVERRIDES_FILE_NAME),
     )
 
 
@@ -215,73 +225,95 @@ def _distribution_component(
     distribution: DistributionInfo,
     file_count: int,
     overrides: Iterable[LicenseOverride],
-) -> Component:
-    """Return the notice component for a bundled Python distribution."""
-    resolved = resolve_license(distribution, overrides)
-    return Component(
+) -> tuple[Component, tuple[NoticeIssue, ...]]:
+    """Return the notice component for a bundled Python distribution and its license issues."""
+    resolved = resolve_distribution_license(distribution, overrides)
+    component = Component(
         component_id=component_id,
         name=distribution.name,
         version=distribution.version,
-        license=resolved.name,
+        license=resolved.license.name,
         homepage=distribution.homepage,
-        license_texts=resolve_license_texts(distribution),
+        license_texts=resolved.texts,
         file_count=file_count,
-        license_source=resolved.source,
+        license_source=resolved.license.source,
+        license_reference=resolved.reference,
     )
+    return component, resolved.issues
 
 
-def _license_issues(component: Component, overrides: Iterable[LicenseOverride]) -> list[NoticeIssue]:
-    """Return warnings for components with incomplete license information."""
-    issues: list[NoticeIssue] = []
-    if component.license is None:
-        message = f"No license identifier found for {component.name}"
-        if find_license_override(component.name, overrides) is not None:
-            message += (
-                ". A license override is configured, but the shipped license text no longer matches "
-                "the verified text; review the license and update the override"
-            )
-        issues.append(NoticeIssue(severity=IssueSeverity.WARNING, component=component.name, message=message))
-    if not component.license_texts:
-        issues.append(
-            NoticeIssue(
-                severity=IssueSeverity.WARNING,
-                component=component.name,
-                message=f"No license text found for {component.name}",
-            )
+def _runtime_license_issues(component: Component) -> list[NoticeIssue]:
+    """Return errors for a runtime component with incomplete license information."""
+    missing = [
+        label
+        for label, is_missing in (
+            ("license identifier", component.license is None),
+            ("license text", not component.license_texts),
         )
-    return issues
+        if is_missing
+    ]
+    if not missing:
+        return []
+    return [
+        NoticeIssue(
+            severity=IssueSeverity.ERROR,
+            component=component.name,
+            message=f"No {' or '.join(missing)} found for runtime component {component.name}",
+        )
+    ]
+
+
+@dataclass(frozen=True)
+class _ComponentsResult:
+    """Third-party components of a build with the distributions and license issues behind them."""
+
+    components: list[Component]
+    bundled_distributions: list[DistributionInfo]
+    license_issues: list[NoticeIssue]
 
 
 def _build_components(
     attribution: AttributionResult,
     index: DistributionIndex,
     config: NoticeConfig,
-) -> tuple[list[Component], list[DistributionInfo]]:
-    """Return third-party components and the bundled distributions they are based on."""
+) -> _ComponentsResult:
+    """Return third-party components, the distributions they are based on and license issues."""
     components: list[Component] = []
     bundled_distributions: list[DistributionInfo] = []
+    license_issues: list[NoticeIssue] = []
 
     for component_id, entries in attribution.components.items():
         match component_id.kind:
             case ComponentKind.FIRST_PARTY:
                 continue
             case ComponentKind.PYTHON_RUNTIME:
-                components.append(build_python_runtime_component(entries, config.attribution.python_runtime_roots))
+                runtime = build_python_runtime_component(entries, config.attribution.python_runtime_roots)
+                components.append(runtime)
+                license_issues.extend(_runtime_license_issues(runtime))
             case ComponentKind.SYSTEM_RUNTIME:
-                components.append(build_msvc_runtime_component(entries))
+                runtime = build_msvc_runtime_component(entries)
+                components.append(runtime)
+                license_issues.extend(_runtime_license_issues(runtime))
             case ComponentKind.PYTHON_DISTRIBUTION:
                 distribution = index.get(component_id.key)
                 if distribution is None:
                     message = f"Attributed distribution is not installed: {component_id.key}"
                     raise LookupError(message)
                 bundled_distributions.append(distribution)
-                components.append(
-                    _distribution_component(component_id, distribution, len(entries), config.license_overrides)
+                component, issues = _distribution_component(
+                    component_id, distribution, len(entries), config.license_overrides
                 )
+                components.append(component)
+                license_issues.extend(issues)
 
     components.sort(key=lambda component: (component.name.casefold(), component.component_id.key))
     bundled_distributions.sort(key=lambda distribution: distribution.name.casefold())
-    return components, bundled_distributions
+    license_issues.extend(unused_override_issues(config.license_overrides, bundled_distributions))
+    return _ComponentsResult(
+        components=components,
+        bundled_distributions=bundled_distributions,
+        license_issues=license_issues,
+    )
 
 
 def analyze_onedir(config: NoticeConfig, installed: Iterable[DistributionInfo]) -> NoticeReport:
@@ -302,17 +334,16 @@ def analyze_onedir(config: NoticeConfig, installed: Iterable[DistributionInfo]) 
     onedir_files = list_onedir_files(config.dist_dir)
     index = DistributionIndex(installed)
     attribution = attribute_entries(contents.entries, index, config.attribution)
-    components, bundled_distributions = _build_components(attribution, index, config)
+    built = _build_components(attribution, index, config)
 
     issues = _compare_onedir_contents(contents.expected_files, onedir_files, config.case_sensitive_paths)
     issues.extend(_unattributed_issues(attribution.unattributed))
-    issues.extend(_dependency_scope_issues(config, index, bundled_distributions))
-    for component in components:
-        issues.extend(_license_issues(component, config.license_overrides))
+    issues.extend(_dependency_scope_issues(config, index, built.bundled_distributions))
+    issues.extend(built.license_issues)
 
     first_party_entries = attribution.components.get(FIRST_PARTY_COMPONENT, [])
     return NoticeReport(
-        components=tuple(components),
+        components=tuple(built.components),
         first_party_file_count=len(first_party_entries),
         issues=tuple(issues),
     )

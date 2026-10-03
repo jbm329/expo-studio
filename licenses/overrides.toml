@@ -1,0 +1,26 @@
+# Manually verified license information for bundled third-party distributions.
+#
+# `python -m expo_jbm329.build.stage` fails when a bundled distribution lacks a
+# license identifier or license text in its package metadata. The error message
+# contains an entry to paste here. Before adding it:
+#   1. Verify the license in the upstream repository at the bundled version's tag.
+#   2. If the package ships no license text, save the upstream LICENSE file as
+#      licenses/<normalized-distribution-name>/LICENSE and reference it with `license_file`.
+#
+# Each entry is pinned to the exact bundled version. The stage also fails when an
+# entry no longer matches the bundled version, is unused, or provides information
+# the package metadata now declares itself; update or remove the entry then.
+#
+# Keys:
+#   distribution  Distribution name (any normalization).
+#   version       Exact bundled version.
+#   license       SPDX expression; only allowed when the metadata declares none.
+#   license_file  Path relative to this directory; only allowed when the package
+#                 ships no license text.
+#   source        Where the license was verified.
+
+[[override]]
+distribution = "minify_html"
+version = "0.18.1"
+license_file = "minify-html/LICENSE"
+source = "https://github.com/wilsonzlin/minify-html/blob/v0.18.1/LICENSE"

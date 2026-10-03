@@ -14,10 +14,8 @@ from expo_jbm329.build.notices.attribution import (
 )
 from expo_jbm329.build.notices.dependency_scope import classify_dependency_scope
 from expo_jbm329.build.notices.distributions import DistributionIndex, is_license_file, own_dist_info_dir
-from expo_jbm329.build.notices.license_overrides import LicenseOverride
 from expo_jbm329.build.notices.licenses import (
     LEGACY_LICENSE_TEXT_NAME,
-    license_text_sha256,
     resolve_license,
     resolve_license_name,
     resolve_license_texts,
@@ -206,21 +204,14 @@ def test_own_dist_info_dir_picks_shallowest_dist_info_with_metadata(tmp_path: Pa
     assert own_dist_info_dir((tmp_path / "pkg" / "mod.py",)) is None
 
 
-def test_resolve_license_uses_override_only_when_own_license_text_matches(tmp_path: Path) -> None:
-    own_dist_info = tmp_path / "pkg-1.0.dist-info"
-    own = _write(own_dist_info / "licenses" / "LICENSE", "  MIT text\n")
-    vendored = _write(tmp_path / "pkg" / "_vendor" / "x-1.0.dist-info" / "LICENSE", "Other text")
-    distribution = _distribution(
-        "Pkg", license_expression=None, license_files=(own, vendored), dist_info_dir=own_dist_info
-    )
-    matching = LicenseOverride("pkg", "MIT", license_text_sha256("MIT text"), "https://example.invalid")
-    vendored_only = LicenseOverride("pkg", "MIT", license_text_sha256("Other text"), "https://example.invalid")
+def test_resolve_license_reports_where_the_identifier_comes_from() -> None:
+    classifiers = ("License :: OSI Approved :: BSD License",)
 
-    assert resolve_license(distribution, (matching,)) == ResolvedLicense("MIT", LicenseSource.OVERRIDE)
-    assert resolve_license(distribution, (vendored_only,)) == ResolvedLicense(None, LicenseSource.UNKNOWN)
-    assert resolve_license(distribution) == ResolvedLicense(None, LicenseSource.UNKNOWN)
-    declared = _distribution("pkg", license_expression="BSD-3-Clause", license_files=(own,))
-    assert resolve_license(declared, (matching,)) == ResolvedLicense("BSD-3-Clause", LicenseSource.METADATA)
+    assert resolve_license(_distribution("a")) == ResolvedLicense("MIT", LicenseSource.METADATA)
+    assert resolve_license(_distribution("a", license_expression=None, classifiers=classifiers)) == ResolvedLicense(
+        "BSD License", LicenseSource.CLASSIFIER
+    )
+    assert resolve_license(_distribution("a", license_expression=None)) == ResolvedLicense(None, LicenseSource.UNKNOWN)
 
 
 # ---------------------------------------------------------------- dependency scope
@@ -375,9 +366,15 @@ def test_analyze_onedir_reports_components_and_issues(tmp_path: Path) -> None:
     assert any("could not be attributed" in message and "mystery.dll" in message for message in error_messages)
     assert any("not described by the PyInstaller build: _internal/stray.txt" in message for message in error_messages)
     assert report.has_errors
-    warning_components = {(issue.component, issue.message.split(" for ")[0]) for issue in report.warnings}
-    assert ("dev-tool", "No license identifier found") in warning_components
-    assert ("pyinstaller", "No license text found") in warning_components
+    assert any(
+        issue.component == "dev-tool" and issue.message.startswith("No license identifier or license text found")
+        for issue in report.errors
+    )
+    assert any(
+        issue.component == "pyinstaller" and issue.message.startswith("No license text found")
+        for issue in report.errors
+    )
+    assert not any(issue.message.startswith("No license") for issue in report.warnings)
     python_component = next(component for component in report.components if component.name == "Python")
     assert python_component.license_texts[0].text == "PSF license"
 

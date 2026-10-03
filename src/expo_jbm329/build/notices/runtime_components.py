@@ -137,7 +137,7 @@ def build_msvc_runtime_component(entries: Sequence[BundledEntry]) -> Component:
         version="",
         license=MSVC_RUNTIME_LICENSE,
         homepage=MSVC_RUNTIME_HOMEPAGE,
-        license_texts=(LicenseText(name="Notice", text=msvc_runtime_notice(file_names)),),
+        license_texts=(LicenseText(name="Notice", text=msvc_runtime_notice(file_names), source=LicenseSource.BUILTIN),),
         file_count=len(entries),
         license_source=LicenseSource.BUILTIN,
     )

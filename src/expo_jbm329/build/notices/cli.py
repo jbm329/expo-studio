@@ -6,6 +6,11 @@ import sys
 from typing import TYPE_CHECKING
 
 from expo_jbm329.build.build_utils import dist_dir, project_root, pyinstaller_work_dir
+from expo_jbm329.build.notices.license_overrides import (
+    OVERRIDES_DIRECTORY_NAME,
+    OVERRIDES_FILE_NAME,
+    LicenseOverrideError,
+)
 from expo_jbm329.build.notices.pyinstaller_toc import TocFormatError
 from expo_jbm329.build.notices.service import create_default_config, generate_third_party_notices
 
@@ -15,6 +20,22 @@ if TYPE_CHECKING:
     from expo_jbm329.build.notices.models import NoticeReport
 
 DEFAULT_OUTPUT_DIRECTORY = ("build", "third-party-notices")
+
+
+def _license_status_line(report: NoticeReport) -> str:
+    """Return a one-line summary of whether all components have complete license information."""
+    components_needing_action = sorted(
+        {issue.component for issue in report.errors if issue.component is not None},
+        key=str.casefold,
+    )
+    if not report.has_errors:
+        return f"License check: OK, all {len(report.components)} third-party components are resolved"
+    if not components_needing_action:
+        return "License check: FAILED, see errors above"
+    return (
+        f"License check: FAILED, {len(components_needing_action)} component(s) need action: "
+        f"{', '.join(components_needing_action)} (see {OVERRIDES_DIRECTORY_NAME}/{OVERRIDES_FILE_NAME})"
+    )
 
 
 def print_report(report: NoticeReport, log_prefix: str) -> None:
@@ -33,6 +54,8 @@ def print_report(report: NoticeReport, log_prefix: str) -> None:
         print(f"{log_prefix} WARNING: {issue.message}")
     for issue in report.errors:
         print(f"{log_prefix} ERROR: {issue.message}", file=sys.stderr)
+    status_stream = sys.stderr if report.has_errors else sys.stdout
+    print(f"{log_prefix} {_license_status_line(report)}", file=status_stream)
 
 
 def run_third_party_notices(onedir_dir: Path, work_dir: Path, output_dir: Path, log_prefix: str) -> bool:
@@ -47,10 +70,10 @@ def run_third_party_notices(onedir_dir: Path, work_dir: Path, output_dir: Path, 
     Returns:
         True if the analysis found no errors, otherwise False.
     """
-    config = create_default_config(dist_dir=onedir_dir, work_dir=work_dir)
     try:
+        config = create_default_config(dist_dir=onedir_dir, work_dir=work_dir)
         report = generate_third_party_notices(config, output_dir)
-    except (OSError, TocFormatError) as exc:
+    except (OSError, TocFormatError, LicenseOverrideError) as exc:
         print(f"{log_prefix} Failed to generate third-party notices: {exc}", file=sys.stderr)
         return False
 
