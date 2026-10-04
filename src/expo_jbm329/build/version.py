@@ -22,7 +22,7 @@ EXECUTABLE_BASENAME = "expo"
 PACKAGE_NAME = "expo_jbm329"
 SOURCE_CODE_URL = REPOSITORY_URL
 DOCUMENTATION_FILES = ("LICENSE.txt", "README.md", "CHANGELOG.md")
-RELEASE_NOTES_FILE = "RELEASE-NOTES.txt"
+BUILD_INFO_FILE = "BUILD-INFO.txt"
 THIRD_PARTY_NOTICES_FILE = "THIRD-PARTY-NOTICES.txt"
 THIRD_PARTY_MANIFEST_FILE = "third-party-manifest.json"
 
@@ -80,9 +80,9 @@ def get_documentation_files() -> tuple[str, ...]:
     return DOCUMENTATION_FILES
 
 
-def get_release_notes_file() -> str:
-    """Return the release notes filename included in release artifacts."""
-    return RELEASE_NOTES_FILE
+def get_build_info_file() -> str:
+    """Return the build information filename included in release artifacts."""
+    return BUILD_INFO_FILE
 
 
 def get_third_party_notice_files() -> tuple[str, ...]:
@@ -104,6 +104,18 @@ def get_version() -> str:
     return package_metadata.get("Version", "unknown")
 
 
+def get_artifact_platform(platform: str) -> str:
+    """Return the platform label used in artifact names and build information.
+
+    Args:
+        platform: Normalized platform name, such as ``windows`` or ``linux``.
+
+    Returns:
+        Artifact platform label.
+    """
+    return "win64" if platform == "windows" else platform
+
+
 def get_release_name(platform: str, extension: str, suffix: str = "") -> str:
     """Return a release artifact filename.
 
@@ -116,7 +128,7 @@ def get_release_name(platform: str, extension: str, suffix: str = "") -> str:
     Returns:
         Release artifact filename.
     """
-    platform_name = "win64" if platform == "windows" else platform
+    platform_name = get_artifact_platform(platform)
     version = get_version()
     prerelease = re.fullmatch(r"(\d+\.\d+\.\d+)(a|b|rc)(\d+)", version)
     if prerelease is not None:

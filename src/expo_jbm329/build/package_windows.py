@@ -21,8 +21,8 @@ from expo_jbm329.build.build_utils import (
     staging_dir,
 )
 from expo_jbm329.build.version import (
+    BUILD_INFO_FILE,
     DOCUMENTATION_FILES,
-    RELEASE_NOTES_FILE,
     THIRD_PARTY_MANIFEST_FILE,
     THIRD_PARTY_NOTICES_FILE,
     ReleaseMetadata,
@@ -191,7 +191,7 @@ def _required_paths(paths: WindowsInstallerPaths) -> list[Path]:
         *(paths.staging_dir / file_name for file_name in DOCUMENTATION_FILES),
         paths.staging_dir / THIRD_PARTY_NOTICES_FILE,
         paths.staging_dir / THIRD_PARTY_MANIFEST_FILE,
-        paths.staging_dir / RELEASE_NOTES_FILE,
+        paths.staging_dir / BUILD_INFO_FILE,
     ]
 
 
@@ -243,8 +243,9 @@ def render_inno_script(
         CHANGELOG_PATH=_windows_path(paths.staging_dir / "CHANGELOG.md"),
         LICENSE_PATH=_windows_path(paths.staging_dir / "LICENSE.txt"),
         THIRD_PARTY_NOTICES_PATH=_windows_path(paths.staging_dir / THIRD_PARTY_NOTICES_FILE),
+        THIRD_PARTY_NOTICES_FILE=THIRD_PARTY_NOTICES_FILE,
         THIRD_PARTY_MANIFEST_PATH=_windows_path(paths.staging_dir / THIRD_PARTY_MANIFEST_FILE),
-        RELEASE_NOTES_PATH=_windows_path(paths.staging_dir / RELEASE_NOTES_FILE),
+        BUILD_INFO_PATH=_windows_path(paths.staging_dir / BUILD_INFO_FILE),
     )
     paths.generated_script_path.write_text(script, encoding="utf-8")
     return paths.generated_script_path

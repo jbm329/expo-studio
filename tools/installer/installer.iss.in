@@ -5,7 +5,6 @@ SetupIconFile=$ICON_PATH
 WizardSmallImageFile=$WIZARD_SMALL_IMAGE_PATH
 WizardImageFile=$WIZARD_IMAGE_PATH
 LicenseFile=$LICENSE_PATH
-InfoAfterFile=$RELEASE_NOTES_PATH
 AppVersion=$VERSION
 AppPublisher=$PUBLISHER
 DefaultDirName={autopf}\$APP_NAME
@@ -30,8 +29,10 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [CustomMessages]
 swedish.desktopicon=Skapa genväg på skrivbordet
 swedish.launch=Starta $APP_NAME
+swedish.thirdpartylicenses=Visa tredjepartslicenser
 english.desktopicon=Create desktop shortcut
 english.launch=Launch $APP_NAME
+english.thirdpartylicenses=View third-party licenses
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:desktopicon}"; Flags: unchecked
@@ -43,7 +44,7 @@ Source: "$CHANGELOG_PATH"; DestDir: "{app}"
 Source: "$LICENSE_PATH"; DestDir: "{app}"
 Source: "$THIRD_PARTY_NOTICES_PATH"; DestDir: "{app}"
 Source: "$THIRD_PARTY_MANIFEST_PATH"; DestDir: "{app}"
-Source: "$RELEASE_NOTES_PATH"; DestDir: "{app}"
+Source: "$BUILD_INFO_PATH"; DestDir: "{app}"
 
 [Icons]
 Name: "{group}\$APP_NAME"; Filename: "{app}\$EXE_NAME"
@@ -51,3 +52,4 @@ Name: "{autodesktop}\$APP_NAME"; Filename: "{app}\$EXE_NAME"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\$EXE_NAME"; Description: "{cm:launch}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\$THIRD_PARTY_NOTICES_FILE"; Description: "{cm:thirdpartylicenses}"; Flags: shellexec nowait postinstall unchecked skipifsilent runasoriginaluser
