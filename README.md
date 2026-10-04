@@ -96,12 +96,12 @@ This functionality is still evolving and will be extended as new use cases emerg
 
 ### 🗄️ Database Support
 
-Expo Studio has primarily been developed and tested against **Microsoft SQL Server**, which is currently the most stable and well-supported database backend.
+Expo Studio has been developed and tested on both Windows and Linux. The tested database combinations are:
 
-Basic testing has been performed with **MariaDB** on Linux (Fedora 43).
+- **Windows**: Microsoft SQL Server (MSSQL) and SQLite
+- **Linux (Fedora 44)**: MariaDB and SQLite
 
-Support for other databases is experimental and largely unverified.  
-They may work partially or require additional configuration.
+Support for other databases is experimental and largely unverified. They may work partially or require additional configuration.
 
 - **Microsoft SQL Server (MSSQL)**
 - **MySQL**
@@ -198,7 +198,7 @@ Expo Studio requires **Python 3.13**.
 ### Using `uv` (Recommended)
 If you have `uv` installed, you can run or install it directly:
 
-```powershell
+```sh
 # Create virtual environment
 uv venv
 
@@ -211,7 +211,7 @@ uv sync
 ### Launching the GUI
 After installation, you can launch the main application using:
 
-```powershell
+```sh
 uv run expo-gui
 ```
 
@@ -263,9 +263,9 @@ src/expo_jbm329/workbench/theme/themes/custom
 Development notes below are provided mainly for contributors and for my own reference.
 
 ### Setup
-The project uses `uv` for dependency management.
+The project uses `uv` for dependency management. Development, testing, and release builds are supported on both Windows and Linux. Local development and testing have been verified on Windows and Fedora 44; pull-request CI currently runs on Ubuntu, while tagged release workflows build for both Windows and Linux.
 
-```powershell
+```sh
 # Sync dependencies
 uv sync
 
@@ -279,7 +279,7 @@ uv sync --extra dev
 ### Running Tests
 The project uses `pytest` for automated unit testing.
 
-```powershell
+```sh
 # Run all tests
 uv run pytest
 
@@ -294,7 +294,7 @@ The i18n workflow consists of three main steps:
 #### 1️⃣ Extract translatable strings
 All strings tagged for translation are collected using the following command:
 
-```powershell
+```sh
 uv run build-i18n
 ```
 
@@ -304,13 +304,13 @@ The extracted strings are then manually edited in the `src/expo_jbm329/i18n/loca
 
 #### 3️⃣ Compile translations
 After editing, the translations are compiled into binary format using the following command:
-```powershell
+```sh
 uv run build-locales
 ```
 
 ### Building
 
-```powershell
+```sh
 # Compile resources (icons & splash)
 uv run build-resources
 

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "expo_jbm329"
-version = "1.0.0"
+version = "1.0.0rc1"
 description = "Workbench for datapreparation and dataset analysis"
 authors = [{name = "Jonas Brännström", email = "jonas.brannstrom@gmail.com"}]
 readme = "README.md"

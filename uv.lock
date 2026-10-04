@@ -255,7 +255,7 @@ wheels = [
 
 [[package]]
 name = "expo-jbm329"
-version = "1.0.0"
+version = "1.0.0rc1"
 source = { editable = "." }
 dependencies = [
     { name = "chardet" },
