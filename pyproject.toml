@@ -84,6 +84,7 @@ stage-release = "expo_jbm329.build.stage:main"
 build-release = "expo_jbm329.build.release:main"
 build-resources = "expo_jbm329.build.build_resources:main"
 build-i18n = "expo_jbm329.build.build_i18n:main"
+build-i18n-clean = "expo_jbm329.build.build_i18n:main_clean"
 build-locales = "expo_jbm329.build.build_locales:main"
 
 

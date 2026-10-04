@@ -216,7 +216,15 @@ uv run expo-gui
 ```
 
 ### CLI Access
-Some day, I may implement a CLI interface for certain operations, but currently the focus is on the GUI.
+The `expo` entry point currently provides help and version output only; it does not yet support data-processing operations.
+
+```sh
+# Show CLI help
+uv run expo --help
+
+# Print the CLI version
+uv run expo --version
+```
 
 ### Configuration
 - **Settings**: Accessible via `Settings` in the menu.
@@ -274,7 +282,12 @@ uv sync --extra profiling
 
 # Sync dev dependencies (ruff, pytest, mypy etc.)
 uv sync --extra dev
+
+# Sync development and build dependencies together
+uv sync --extra dev --extra build
 ```
+
+Run the commands below from the repository root. The `dev` extra includes the Qt tools used by `build-resources` and `build-locales` (`pyside6-rcc` and `pyside6-lrelease`). String extraction uses `pylupdate6`, supplied by PyQt6. The `build` extra supplies build dependencies such as Pillow, PyInstaller, and `pip-licenses`.
 
 ### Running Tests
 The project uses `pytest` for automated unit testing.
@@ -292,32 +305,64 @@ Expo Studio uses Qt's translation system for internationalization, with all user
 The i18n workflow consists of three main steps:
 
 #### 1️⃣ Extract translatable strings
-All strings tagged for translation are collected using the following command:
+`build-i18n` collects strings tagged for translation from the Python sources and updates `app_en.ts` and `app_sv.ts` in `src/expo_jbm329/i18n/locales`. Existing translations are retained, and messages no longer used by the sources are kept as vanished entries.
 
 ```sh
 uv run build-i18n
 ```
+
+To extract strings **and remove obsolete/unused entries**, use `build-i18n-clean` instead:
+
+```sh
+uv run build-i18n-clean
+```
+
+This runs the same extraction with `pylupdate6 --no-obsolete`. It deletes translations for messages no longer present in the sources; review the changes before committing. It is an alternative to `build-i18n`, not a required additional step.
 
 #### 2️⃣ Edit translations
 The extracted strings are then manually edited in the `src/expo_jbm329/i18n/locales` directory using Qt Linguist (e.g. `app_sv.ts`).
 
 
 #### 3️⃣ Compile translations
-After editing, the translations are compiled into binary format using the following command:
+`build-locales` compiles all `app_*.ts` files in the locales directory into `.qm` binaries alongside their source files. It uses `pyside6-lrelease` from the `dev` extra:
 ```sh
 uv run build-locales
 ```
 
 ### Building
 
+Install development and build dependencies with `uv sync --extra dev --extra build` before running these commands.
+
+#### Compile UI resources
+
+`build-resources` compiles the icon and splash `.qrc` files into adjacent `*_rc.py` modules using `pyside6-rcc`, then adjusts their imports for PyQt6. Run it after changing the bundled resources.
+
 ```sh
 # Compile resources (icons & splash)
 uv run build-resources
+```
 
-# Build project (requires PyInstaller)
+#### Build the executable
+
+`build-exe` builds the GUI application with PyInstaller in **onedir** mode, writing the application and its dependencies to `dist/expo/`. PyInstaller's intermediate files are written to `build/expo/`. This command does not stage or package a release.
+
+```sh
 uv run build-exe
+```
 
-# Build a platform-specific onedir release (requires PyInstaller; Windows installer also requires Inno Setup)
+#### Stage an existing build
+
+`stage-release` prepares `release/staging/` from an existing `build-exe` output. It copies the application and release documentation, writes `BUILD-INFO.txt`, and generates third-party notices from that build's PyInstaller metadata. Both `dist/expo/` and the corresponding metadata in `build/expo/` must be present. Existing staging contents are replaced.
+
+```sh
+uv run stage-release
+```
+
+#### Build and package a release
+
+`build-release` runs the executable build, staging, and platform-specific packaging in sequence; there is no need to run `build-exe` or `stage-release` separately beforehand. Windows installer packaging additionally requires Inno Setup.
+
+```sh
 uv run build-release
 ```
 
