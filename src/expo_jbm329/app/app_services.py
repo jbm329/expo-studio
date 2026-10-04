@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Self
 
+from expo_jbm329.app.logging.crash_hooks import install_crash_hooks
 from expo_jbm329.app.logging.logging_manager import LoggingManager
 from expo_jbm329.app.settings.config_store import read_rest_connections
 from expo_jbm329.bootstrap.rest_samples import load_rest_samples
@@ -113,6 +114,7 @@ class AppServices:
         log_jobs = logging_manager.jobs_logger
         log_db = logging_manager.db_logger
         log_system = logging_manager.system_logger
+        install_crash_hooks(log_system)
 
         # -------------------------
         # 2) Settings (pub/sub)

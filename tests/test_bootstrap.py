@@ -35,7 +35,7 @@ def test_bootstrap_merges_missing_keys(tmp_path, monkeypatch):
     p = get_settings_path()
     p.parent.mkdir(parents=True, exist_ok=True)
     # Use a key that is NOT validated/coerced back to default if it already exists correctly
-    p.write_text(json.dumps({"workbench": {"theme": "dark"}}), encoding="utf-8")
+    p.write_text(json.dumps({"workbench": {"gen_top_n": 500}}), encoding="utf-8")
 
     run_bootstrap()
 
@@ -43,8 +43,9 @@ def test_bootstrap_merges_missing_keys(tmp_path, monkeypatch):
     # Check top level keys from DEFAULT_SETTINGS
     for key in DEFAULT_SETTINGS:
         assert key in merged
-    # Check that our theme was preserved
-    assert merged["workbench"]["theme"] == "dark"
+    # Check that our custom workbench value was preserved
+    assert merged["workbench"]["gen_top_n"] == 500
+    assert merged["workbench"]["theme"] == "system"
 
 
 def test_bootstrap_idempotent(tmp_path, monkeypatch):

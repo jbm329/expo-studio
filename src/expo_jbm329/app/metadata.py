@@ -1,7 +1,7 @@
 """Application metadata access for Expo Studio.
 
 This module provides a small, centralized API for accessing application
-metadata (name, version, description, author, license) at runtime.
+metadata (name, version, description, author, license, repository) at runtime.
 
 The metadata is retrieved from the installed package distribution using
 ``importlib.metadata``. This makes the information available consistently
@@ -17,6 +17,8 @@ from __future__ import annotations
 from importlib.metadata import PackageNotFoundError, metadata
 from typing import TypedDict
 
+REPOSITORY_URL = "https://github.com/jbm329/expo-studio"
+
 
 class AppMetadata(TypedDict):
     """Typed representation of application metadata.
@@ -27,6 +29,7 @@ class AppMetadata(TypedDict):
         description: Short summary or description of the application.
         author: Primary author or maintainer.
         license: License identifier or expression.
+        repository: Source code repository URL.
     """
 
     name: str
@@ -34,6 +37,7 @@ class AppMetadata(TypedDict):
     description: str
     author: str
     license: str
+    repository: str
 
 
 def get_app_metadata() -> AppMetadata:
@@ -74,6 +78,7 @@ def get_app_metadata() -> AppMetadata:
             "description": meta.get("Summary", ""),
             "author": author,
             "license": license_,
+            "repository": REPOSITORY_URL,
         }
 
     except PackageNotFoundError:
@@ -84,4 +89,5 @@ def get_app_metadata() -> AppMetadata:
             "description": "Workbench for datapreparation and dataset analysis",
             "author": "Jonas Brännström",
             "license": "GPL-3.0-or-later",
+            "repository": REPOSITORY_URL,
         }

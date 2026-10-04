@@ -10,10 +10,11 @@ from typing import TYPE_CHECKING
 from expo_jbm329.build.build_utils import detect_platform, ensure_release_artifacts_dir, staging_dir
 from expo_jbm329.build.version import (
     create_sha256,
+    get_build_info_file,
     get_documentation_files,
     get_executable_name,
     get_release_name,
-    get_release_notes_file,
+    get_third_party_notice_files,
 )
 
 if TYPE_CHECKING:
@@ -31,7 +32,8 @@ def _required_paths(stage_dir: Path, platform_name: str) -> list[Path]:
         stage_dir / "expo",
         stage_dir / "expo" / get_executable_name(platform_name),
         *(stage_dir / file_name for file_name in get_documentation_files()),
-        stage_dir / get_release_notes_file(),
+        *(stage_dir / file_name for file_name in get_third_party_notice_files()),
+        stage_dir / get_build_info_file(),
     ]
 
 

@@ -26,7 +26,7 @@ The feature list reflects current functionality, not guarantees.
 The project is still in its infancy and may change significantly.
 
 ### 🛠️ Core Workbench
-- **SQL Editor**: Syntax highlighting and basic SQL-aware auto-completion
+- **SQL Editor**: Syntax highlighting, SQL-aware auto-completion and linting
 - **Schema Browser**: Navigate through database structures, including tables, views, and schemas.
 - **File Explorer**: Integrated file system browser for quick access to local SQL scripts and data files.
 - **REST Data Loader**: Experimental support for loading and exploring datasets from REST APIs.
@@ -321,13 +321,21 @@ uv run build-exe
 uv run build-release
 ```
 
-The release artifacts are written to `release/artifacts/`: a `.tar.gz` archive and SHA-256 checksum on Linux, or a ZIP archive, installer, and their checksums on Windows. To publish a release, update the version in `pyproject.toml`, run `uv lock`, commit both files, and push the matching `v<version>` tag (for example, `v1.0.0`). The tag workflow builds both platforms, verifies the files, and publishes them as GitHub Release assets with GitHub-generated release notes. The generated `RELEASE-NOTES.txt` remains inside each packaged archive. Build outputs are also available as separate `release-windows` and `release-linux` workflow artifacts. Rerunning a tag after its release is published will not overwrite its assets.
+The release artifacts are written to `release/artifacts/`: a `.tar.gz` archive and SHA-256 checksum on Linux, or a ZIP archive, installer, and their checksums on Windows. To publish a release, update the version in `pyproject.toml`, run `uv lock`, commit both files, and push the matching `v<version>` tag (for example, `v1.0.0`). The tag workflow builds both platforms, verifies the files, and publishes them as GitHub Release assets with GitHub-generated release notes. The generated `BUILD-INFO.txt` is bundled with each release and records build metadata rather than release changes; its platform label matches the artifact suffix (`win64`, `linux`, or `macos`). The Windows installer does not display this file automatically. Its finish page offers an unchecked option to view the installed `THIRD-PARTY-NOTICES.txt`, which also remains accessible from the application's About dialog. Build outputs are also available as separate `release-windows` and `release-linux` workflow artifacts. Rerunning a tag after its release is published will not overwrite its assets.
 
 For prereleases, use a normalized Python version such as `version = "1.0.0rc1"` in `pyproject.toml`, run `uv lock`, and commit both files before pushing the hyphenated tag `v1.0.0-rc1`. The same convention supports `-aN` and `-bN`; release asset filenames retain the hyphen (for example, `ExpoStudio-1.0.0-rc1-linux.tar.gz`). The workflow rejects tags that disagree with the project version or lockfile.
 
 ## 📝 License
 
-This project is licensed under the **GNU General Public License v3.0 or later** - see the [LICENSE.txt](LICENSE.txt) file for details.
+Expo Studio is free software: you can redistribute it and/or modify
+it under the terms of the **GNU General Public License** as published
+by the Free Software Foundation, version 3.
+
+Expo Studio is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the [LICENSE.txt](LICENSE.txt) file for details.
 
 ## 👤 Author
 

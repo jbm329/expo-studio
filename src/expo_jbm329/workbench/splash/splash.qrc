@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/splash">
         <file>splash.png</file>
+        <file>wizard-small.bmp</file>
     </qresource>
 </RCC>

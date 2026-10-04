@@ -33,6 +33,11 @@ def dist_dir() -> pathlib.Path:
     return BASE / "dist"
 
 
+def pyinstaller_work_dir() -> pathlib.Path:
+    """Return the PyInstaller work directory of the onedir build, containing its TOC files."""
+    return BASE / "build" / "expo"
+
+
 def release_dir() -> pathlib.Path:
     """Return the release output directory."""
     return BASE / "release"

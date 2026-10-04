@@ -54,7 +54,7 @@ qt6_plugins = collect_data_files(
         "plugins/styles/*",
     ],
 )
-qt6_libs = collect_dynamic_libs("PyQt6.Qt6")
+qt6_libs = collect_dynamic_libs("PyQt6.Qt6") if IS_WIN else []
 
 datas += qt6_plugins
 binaries += qt6_libs
@@ -64,8 +64,6 @@ binaries += qt6_libs
 # -------------------------------
 hiddenimports = []
 hiddenimports += collect_submodules("jinja2")
-# hiddenimports += collect_submodules("pkg_resources")
-hiddenimports += ["pkg_resources"]
 hiddenimports += ["matplotlib.backends.backend_svg"]
 # sqlglot loads dialects lazily via importlib (e.g. sqlglot.dialects.sqlite),
 # which PyInstaller cannot detect statically.
@@ -83,6 +81,11 @@ else:
     hiddenimports += collect_submodules(f"{PROFILING_IMPORT_PACKAGE}.model.pandas")
     hiddenimports += collect_submodules(f"{PROFILING_IMPORT_PACKAGE}.report.presentation.flavours.html")
     datas += copy_metadata(PROFILING_DISTRIBUTION)
+    # ProfileReport.to_file() calls `importlib.metadata.version("Pillow")` through an
+    # alias (`version as package_version`), which PyInstaller's automatic metadata
+    # scan does not recognise. Without it, exporting a report raises
+    # PackageNotFoundError in the frozen app.
+    datas += copy_metadata("Pillow")
     datas += collect_data_files(
         PROFILING_IMPORT_PACKAGE,
         includes=[
@@ -160,6 +163,29 @@ a = Analysis(
         "sphinx",
         "data_profiling.model.spark",
         "data_profiling.report.presentation.flavours.widget",
+        # Dev-only packages that leak in from the build venv. PyInstaller analyses
+        # the installed environment, not pyproject extras:
+        # - matplotlib.backends.qt_compat imports shiboken6 in its PySide6 branch;
+        #   PyInstaller's Qt-binding exclusion only covers the PySide6 package.
+        # - the pydantic hook collects pydantic.mypy (mypy plugin) -> mypy.
+        # - sqlglot.helper optionally imports mypy_extensions (falls back to no-ops).
+        # - numba/httpx import pygments only for optional debug/CLI output.
+        "PySide6",
+        "shiboken6",
+        "pydantic.mypy",
+        "pydantic.v1.mypy",
+        "mypy",
+        "mypyc",
+        "mypy_extensions",
+        "pygments",
+        "numba.misc.dump_style",
+        # setuptools is only installed because PyInstaller depends on it. No runtime
+        # package needs pkg_resources (pytz prefers importlib.resources), and
+        # numba.pycc is numba's ahead-of-time compiler, unused at runtime.
+        "pkg_resources",
+        "setuptools",
+        "_distutils_hack",
+        "numba.pycc",
     ],
     noarchive=False,
     optimize=1,
