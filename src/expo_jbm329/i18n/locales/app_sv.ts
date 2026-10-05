@@ -5,8 +5,8 @@
     <name>AboutDialog</name>
     <message>
         <location filename="../../gui/dialogs/about_dialog.py" line="40"/>
-        <source>About Expo studio</source>
-        <translation>Om Expo studio</translation>
+        <source>About Expo Studio</source>
+        <translation>Om Expo Studio</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/about_dialog.py" line="66"/>
@@ -29,110 +29,74 @@
         <translation>Expo Studio är fri programvara licensierad enligt GNU General Public License, version 3 (GPLv3). Programmet tillhandahålls UTAN NÅGON SOM HELST GARANTI, i den utsträckning som tillåts enligt tillämplig lag.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="97"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="98"/>
         <source>Expo Studio is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</source>
         <translation>Expo Studio distribueras i förhoppningen att det ska vara till nytta, men UTAN NÅGON SOM HELST GARANTI, inte ens den underförstådda garantin om SÄLJBARHET eller LÄMPLIGHET FÖR ETT VISST ÄNDAMÅL.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="105"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="107"/>
         <source>Third-party notices</source>
         <translation>Information om programvara från tredje part</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="108"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="110"/>
         <source>The application uses third-party software distributed under various licenses. See &lt;b&gt;%1&lt;/b&gt; for details.</source>
         <translation>Applikationen använder programvara från tredje part som distribueras under olika licenser. Se &lt;b&gt;%1&lt;/b&gt; för mer information.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="117"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="119"/>
         <source>Icons provided by &lt;a href=&apos;https://icons8.com&apos;&gt;Icons8&lt;/a&gt; and used under the free license which requires attribution.</source>
         <translation>Ikoner tillhandahålls av &lt;a href=&apos;https://icons8.com&apos;&gt;Icons8&lt;/a&gt; som används under den fria licensen som kräver tillskrivning.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="127"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="129"/>
         <source>Python: %1</source>
         <translation>Python: %1</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="128"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="130"/>
         <source>Qt: %1 | PyQt: %2</source>
         <translation>Qt: %1 | PyQt: %2</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="129"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="131"/>
         <source>Platform: %1 %2 (%3)</source>
         <translation>Plattform: %1 %2 (%3)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="144"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="146"/>
         <source>Close</source>
         <translation>Stäng</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="154"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="156"/>
         <source>License</source>
         <translation>Licens</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="155"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="157"/>
         <source>Source code</source>
         <translation>Källkod</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="181"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="183"/>
         <source>Document unavailable</source>
         <translation>Dokumentet är inte tillgängligt</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="182"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="184"/>
         <source>Could not find %1.</source>
         <translation>Kunde inte hitta %1.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="190"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="192"/>
         <source>Unable to open link</source>
         <translation>Det gick inte att öppna länken</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/about_dialog.py" line="191"/>
+        <location filename="../../gui/dialogs/about_dialog.py" line="193"/>
         <source>The requested link could not be opened.</source>
         <translation>Den begärda länken kunde inte öppnas.</translation>
-    </message>
-    <message>
-        <source>Expo Studio uses third-party software distributed under various licenses. See &lt;b&gt;%1&lt;/b&gt; for details.</source>
-        <translation type="vanished">Expo Studio använder programvara från tredje part som distribueras under olika licenser. Se &lt;b&gt;%1&lt;/b&gt; för mer information.</translation>
-    </message>
-    <message>
-        <source>This application uses third-party software distributed under various licenses. See &lt;b&gt;%1&lt;/b&gt; for details.</source>
-        <translation type="vanished">Programmet använder programvara från tredje part som distribueras under olika licenser. Se &lt;b&gt;%1&lt;/b&gt; för mer information.</translation>
-    </message>
-    <message>
-        <source>Icons provided by &lt;a href=&apos;https://icons8.com&apos;&gt;Icons8&lt;/a&gt; used under the free license which requires attribution.</source>
-        <translation type="vanished">Ikoner tillhandahålls av &lt;a href=&apos;https://icons8.com&apos;&gt;Icons8&lt;/a&gt; som används under den fria licensen som kräver tillskrivning.</translation>
-    </message>
-    <message>
-        <source>Icons provided by &lt;a href=&apos;https://icons8.com&apos;&gt;Icons8&lt;/a&gt;.&lt;br/&gt;Used under the free license which requires attribution.</source>
-        <translation type="vanished">Ikoner tillhandahålls av &lt;a href=&apos;https://icons8.com&apos;&gt;Icons8&lt;/a&gt;&lt;br/&gt;som används under den fria licensen som kräver tillskrivning.</translation>
-    </message>
-    <message>
-        <source>Expo Studio is free software licensed under the GNU General Public License, version 3 (GPLv3).</source>
-        <translation type="vanished">Expo Studio är fri programvara licensierad enligt GNU General Public License, version 3 (GPLv3).</translation>
-    </message>
-    <message>
-        <source>This program comes with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable law.</source>
-        <translation type="vanished">Programmet tillhandahålls UTAN NÅGON GARANTI, i den utsträckning som tillåts enligt tillämplig lag.</translation>
-    </message>
-    <message>
-        <source>Third-party software</source>
-        <translation type="vanished">Programvara från tredje part</translation>
-    </message>
-    <message>
-        <source>This application uses third-party software distributed under various licenses. See THIRD-PARTY-NOTICES for details.</source>
-        <translation type="vanished">Programmet använder programvara från tredje part som distribueras under olika licenser. Se THIRD-PARTY-NOTICES för mer information.</translation>
-    </message>
-    <message>
-        <source>Repository</source>
-        <translation type="vanished">Kodförråd</translation>
     </message>
 </context>
 <context>
@@ -240,10 +204,6 @@
         <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="329"/>
         <source>Time Series</source>
         <translation>Tidsserie</translation>
-    </message>
-    <message>
-        <source>Select an analysis from the list on the left.</source>
-        <translation type="vanished">Välj en analys från listan till vänster.</translation>
     </message>
 </context>
 <context>
@@ -388,17 +348,6 @@ Vänligen se loggfil för mer information.</translation>
     </message>
 </context>
 <context>
-    <name>ChartPreviewWidget</name>
-    <message>
-        <source>No visualization yet.</source>
-        <translation type="vanished">Ingen visualisering ännu.</translation>
-    </message>
-    <message>
-        <source>No visualization yet</source>
-        <translation type="vanished">Ingen visualisering ännu</translation>
-    </message>
-</context>
-<context>
     <name>ChiSquareConfigWidget</name>
     <message>
         <location filename="../../gui/dialogs/analysis/chi_square_config.py" line="49"/>
@@ -527,14 +476,6 @@ Vänligen se loggfil för mer information.</translation>
         <location filename="../../gui/dialogs/analysis/chi_square_view.py" line="347"/>
         <source>Consider merging sparse categories.</source>
         <translation>Överväg att slå samman glesa kategorier.</translation>
-    </message>
-    <message>
-        <source>A selected column has more than {maximum} categories; choose a column with fewer categories.</source>
-        <translation type="vanished">En vald kolumn har fler än {maximum} kategorier; välj en kolumn med färre kategorier.</translation>
-    </message>
-    <message>
-        <source>⚠ {fraction} of expected counts are below {low} and the smallest expected count is {minimum} (the chi-square approximation needs at most {max_fraction} below {low} and none below {floor}); the chi-square p-value may be unreliable.</source>
-        <translation type="vanished">⚠ {fraction} av de förväntade frekvenserna ligger under {low} och den minsta förväntade frekvensen är {minimum} (chi-två-approximationen tillåter högst {max_fraction} under {low} och ingen under {floor}); chi-två p-värde kan vara opålitligt.</translation>
     </message>
 </context>
 <context>
@@ -771,21 +712,6 @@ Vänligen se loggfil för mer information.</translation>
         <location filename="../../gui/dialogs/analysis/column_combo_box.py" line="34"/>
         <source>Not available: {count} distinct values (at most {maximum} are allowed).</source>
         <translation>Inte tillgängligt: {count} distinkta värden (högst {maximum} tillåts).</translation>
-    </message>
-</context>
-<context>
-    <name>ColumnProfileStats</name>
-    <message>
-        <source>True</source>
-        <translation type="vanished">Sant</translation>
-    </message>
-    <message>
-        <source>False</source>
-        <translation type="vanished">Falskt</translation>
-    </message>
-    <message>
-        <source>Count (n)</source>
-        <translation type="vanished">Antal (n)</translation>
     </message>
 </context>
 <context>
@@ -1126,18 +1052,6 @@ Vänligen se loggfil för mer information.</translation>
         <source>False</source>
         <translation>Falskt</translation>
     </message>
-    <message>
-        <source>Data type: &lt;b&gt;{dtype}&lt;/b&gt;</source>
-        <translation type="vanished">Datatyp: &lt;b&gt;{dtype}&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <source>Pandas dtype</source>
-        <translation type="vanished">Pandas dtype</translation>
-    </message>
-    <message>
-        <source>Top 10</source>
-        <translation type="vanished">Topp 10</translation>
-    </message>
 </context>
 <context>
     <name>ConcatController</name>
@@ -1195,49 +1109,6 @@ Vänligen se loggfil för mer information.</translation>
         <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="111"/>
         <source>Second dataset</source>
         <translation>Andra dataset</translation>
-    </message>
-    <message>
-        <source>OK</source>
-        <translation type="vanished">OK</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation type="vanished">Avbryt</translation>
-    </message>
-    <message>
-        <source>Yes</source>
-        <translation type="vanished">Ja</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation type="vanished">Nej</translation>
-    </message>
-</context>
-<context>
-    <name>ConnectionController</name>
-    <message>
-        <source>Connection:</source>
-        <translation type="vanished">Anslutning:</translation>
-    </message>
-    <message>
-        <source>-- Select connection --</source>
-        <translation type="vanished">-- Välj anslutning --</translation>
-    </message>
-    <message>
-        <source>-- Close connection --</source>
-        <translation type="vanished">-- Stäng anslutning --</translation>
-    </message>
-    <message>
-        <source>Connected: {name}</source>
-        <translation type="vanished">Ansluten: {name}</translation>
-    </message>
-    <message>
-        <source>Select a connection to connect to a database</source>
-        <translation type="vanished">Välj en anslutning för att ansluta mot en databas</translation>
-    </message>
-    <message>
-        <source>Connected: %1</source>
-        <translation type="vanished">Ansluten: %1</translation>
     </message>
 </context>
 <context>
@@ -1730,14 +1601,6 @@ Vänligen se loggfil för mer information.</translation>
         <source>Showing a random sample of {shown} of {total} points. Statistics use all points.</source>
         <translation>Visar ett slumpmässigt urval av {shown} av {total} punkter. Statistiken baseras på samtliga punkter.</translation>
     </message>
-    <message>
-        <source>The line is a linear fit shown for reference; {method} measures monotonic, not necessarily linear, association.</source>
-        <translation type="vanished">Linjen är en linjär anpassning som visas som referens; {method} mäter monotona, men inte nödvändigtvis linjära, samband.</translation>
-    </message>
-    <message>
-        <source>Showing a random sample of {shown} of {total} points; statistics use all points.</source>
-        <translation type="vanished">Visar ett slumpmässigt urval av {shown} av {total} punkter. Statistiken baseras på samtliga punkter.</translation>
-    </message>
 </context>
 <context>
     <name>DateTimeConversion</name>
@@ -2053,10 +1916,6 @@ Vänligen se loggfil för mer information.</translation>
         <location filename="../../db/core/errors.py" line="131"/>
         <source>Schema ready.</source>
         <translation>Schema klart.</translation>
-    </message>
-    <message>
-        <source>Could not read schema in bulk – trying batch.</source>
-        <translation type="vanished">Kunde inte läsa schema i bulk – försöker batch.</translation>
     </message>
 </context>
 <context>
@@ -2397,10 +2256,6 @@ Vänligen se loggfil för mer information.</translation>
         <source>There is no active tab to save.</source>
         <translation>Det finns ingen aktiv flik att spara.</translation>
     </message>
-    <message>
-        <source>All supported files (*.sql *.csv *.xls *.xlsx *.feather *.ft *.parquet *.df *.pkl *.html *.htm);;SQL files (*.sql);;CSV files (*.csv);;Excel files (*.xls *.xlsx);;Feather files (*.feather *.ft);;Parquet files (*.parquet);;Pickle/DF files (*.df *.pkl);;HTML files (*.html *.htm)</source>
-        <translation type="vanished">All stödda filer (*.sql *.csv *.xls *.xlsx *.feather *.ft *.parquet *.df *.pkl *.html *.htm);;SQL filer (*.sql);;CSV filer (*.csv);;Excel filer (*.xls *.xlsx);;Feather filer (*.feather *.ft);;Parquet filer (*.parquet);;Pickle/DF filer (*.df *.pkl);;HTML filer (*.html *.htm)</translation>
-    </message>
 </context>
 <context>
     <name>EditorPanelController</name>
@@ -2581,22 +2436,6 @@ Fortsätt?</translation>
         <source>Do you want to quit the application?</source>
         <translation>Vill du avsluta applikationen?</translation>
     </message>
-    <message>
-        <source>Write SQL here …</source>
-        <translation type="vanished">Skriv SQL här …</translation>
-    </message>
-    <message>
-        <source>Connected: {conn}</source>
-        <translation type="vanished">Ansluten: {conn}</translation>
-    </message>
-    <message>
-        <source>Ready</source>
-        <translation type="vanished">Redo</translation>
-    </message>
-    <message>
-        <source>Database</source>
-        <translation type="vanished">Databas</translation>
-    </message>
 </context>
 <context>
     <name>ExportController</name>
@@ -2736,20 +2575,6 @@ Fortsätt?</translation>
         <source>Operation was cancelled.</source>
         <translation>Operationen avbröts.</translation>
     </message>
-    <message>
-        <source>Active tab:	{profile_kind}
-All tabs:		{comparison_kind}</source>
-        <translation type="vanished">Activ flik:	{profile_kind}
-Alla flikar:	{comparison_kind}</translation>
-    </message>
-    <message>
-        <source>Generate data comparison profile report</source>
-        <translation type="vanished">Generera data</translation>
-    </message>
-    <message>
-        <source>Exporting data to CSV…</source>
-        <translation type="vanished">Exporterar data ti CSV…</translation>
-    </message>
 </context>
 <context>
     <name>FileJobService</name>
@@ -2872,45 +2697,6 @@ Alla flikar:	{comparison_kind}</translation>
         <location filename="../../services/file_job_service.py" line="79"/>
         <source>There is no active tab to save.</source>
         <translation>Det finns ingen aktiv flik att spara.</translation>
-    </message>
-</context>
-<context>
-    <name>FileOpenController</name>
-    <message>
-        <source>All supported files (*.sql *.csv *.xls *.xlsx *.feather *.ft *.parquet *.df *.pkl *.html *.htm);;SQL files (*.sql);;CSV files (*.csv);;Excel files (*.xls *.xlsx);;Feather files (*.feather *.ft);;Parquet files (*.parquet);;Pickle/DF files (*.df *.pkl);;HTML files (*.html *.htm)</source>
-        <translation type="vanished">All stödda filer (*.sql *.csv *.xls *.xlsx *.feather *.ft *.parquet *.df *.pkl *.html *.htm);;SQL filer (*.sql);;CSV filer (*.csv);;Excel filer (*.xls *.xlsx);;Feather filer (*.feather *.ft);;Parquet filer (*.parquet);;Pickle/DF filer (*.df *.pkl);;HTML filer (*.html *.htm)</translation>
-    </message>
-    <message>
-        <source>Open file</source>
-        <translation type="vanished">Öppna fil</translation>
-    </message>
-    <message>
-        <source>Save SQL file</source>
-        <translation type="vanished">Spara SQL fil</translation>
-    </message>
-    <message>
-        <source>SQL files (*.sql)</source>
-        <translation type="vanished">SQL filer (*.sql)</translation>
-    </message>
-    <message>
-        <source>Failure</source>
-        <translation type="vanished">Fel</translation>
-    </message>
-    <message>
-        <source>Could not open file:
-
-{error}</source>
-        <translation type="vanished">Kunde inte öppna fil:
-
-{error}</translation>
-    </message>
-    <message>
-        <source>No SQL</source>
-        <translation type="vanished">Ingen SQL</translation>
-    </message>
-    <message>
-        <source>There is no active tab to save.</source>
-        <translation type="vanished">Det finns ingen aktiv flik att spara.</translation>
     </message>
 </context>
 <context>
@@ -3222,193 +3008,6 @@ Alla flikar:	{comparison_kind}</translation>
         <source>⚠ Group &apos;{label}&apos; has fewer than 3 observations: its normality could not be tested.</source>
         <translation>⚠ Grupp &apos;{label}&apos; har färre än 3 observationer: dess normalitet kunde inte testas.</translation>
     </message>
-    <message>
-        <source>The selected grouping column has more than {maximum} distinct values; choose a column with fewer groups.</source>
-        <translation type="vanished">Den valda grupperingskolumnen har fler än {maximum} unika värden. Välj en kolumn med färre grupper.</translation>
-    </message>
-    <message>
-        <source>→ Every group is consistent with a normal distribution → both results should agree; the parametric result above is typically more powerful.</source>
-        <translation type="vanished">→ Alla grupper är förenliga med en normalfördelning → båda resultaten bör ge samma slutsats. Det parametriska testet ovan har vanligtvis högre statistisk styrka.</translation>
-    </message>
-</context>
-<context>
-    <name>HeaderContextMenu</name>
-    <message>
-        <source>Sort ascending</source>
-        <translation type="vanished">Sortera stigande</translation>
-    </message>
-    <message>
-        <source>Sort descending</source>
-        <translation type="vanished">Sortera fallande</translation>
-    </message>
-    <message>
-        <source>Rename…</source>
-        <translation type="vanished">Byt namn…</translation>
-    </message>
-    <message>
-        <source>Remove…</source>
-        <translation type="vanished">Ta bort…</translation>
-    </message>
-    <message>
-        <source>Properties</source>
-        <translation type="vanished">Egenskaper</translation>
-    </message>
-    <message>
-        <source>Cleanse data…</source>
-        <translation type="vanished">Rensa data…</translation>
-    </message>
-    <message>
-        <source>Trim (remove whitespace)</source>
-        <translation type="vanished">Trimma (ta bort blanksteg)</translation>
-    </message>
-    <message>
-        <source>Normalize whitespace</source>
-        <translation type="vanished">Normalisera mellanrum</translation>
-    </message>
-    <message>
-        <source>Convert to lowercase</source>
-        <translation type="vanished">Ändra till gemener</translation>
-    </message>
-    <message>
-        <source>Convert to uppercase</source>
-        <translation type="vanished">Ändra till versaler</translation>
-    </message>
-    <message>
-        <source>Convert to title case</source>
-        <translation type="vanished">Ändra till titelstil</translation>
-    </message>
-    <message>
-        <source>Capitalize first letter</source>
-        <translation type="vanished">Ändra första bokstav till versal</translation>
-    </message>
-    <message>
-        <source>Replace text…</source>
-        <translation type="vanished">Ersätt text…</translation>
-    </message>
-    <message>
-        <source>Insert text…</source>
-        <translation type="vanished">Infoga text…</translation>
-    </message>
-    <message>
-        <source>Remove text (simple)…</source>
-        <translation type="vanished">Ta bort text (enkelt)…</translation>
-    </message>
-    <message>
-        <source>Remove text (regex)…</source>
-        <translation type="vanished">Ta bort text (regex)…</translation>
-    </message>
-    <message>
-        <source>Keep digits only</source>
-        <translation type="vanished">Behåll endast siffror</translation>
-    </message>
-    <message>
-        <source>Keep letters only</source>
-        <translation type="vanished">Behåll endast bokstäver</translation>
-    </message>
-    <message>
-        <source>Fill missing values…</source>
-        <translation type="vanished">Fyll saknade värden…</translation>
-    </message>
-    <message>
-        <source>Mean</source>
-        <translation type="vanished">Medelvärde</translation>
-    </message>
-    <message>
-        <source>Median</source>
-        <translation type="vanished">Median</translation>
-    </message>
-    <message>
-        <source>Mode</source>
-        <translation type="vanished">Läge (mode)</translation>
-    </message>
-    <message>
-        <source>Custom value…</source>
-        <translation type="vanished">Eget värde…</translation>
-    </message>
-    <message>
-        <source>Datatype…</source>
-        <translation type="vanished">Datatyp…</translation>
-    </message>
-    <message>
-        <source>Convert to category…</source>
-        <translation type="vanished">Omvandla till kategorier…</translation>
-    </message>
-    <message>
-        <source>Convert to text (string)</source>
-        <translation type="vanished">Omvandla till text (string)</translation>
-    </message>
-    <message>
-        <source>Convert to integer (Int64)</source>
-        <translation type="vanished">Omvandla till heltal (Int64)</translation>
-    </message>
-    <message>
-        <source>Convert to float (Float64)</source>
-        <translation type="vanished">Omvandla till decimaltal (Float64)</translation>
-    </message>
-    <message>
-        <source>Convert to datetime…</source>
-        <translation type="vanished">Omvandla till datum/tid…</translation>
-    </message>
-    <message>
-        <source>Convert to date…</source>
-        <translation type="vanished">Omvandla till datum…</translation>
-    </message>
-    <message>
-        <source>Convert to boolean…</source>
-        <translation type="vanished">Omvandla till bool (sant/falskt)…</translation>
-    </message>
-    <message>
-        <source>Rename category…</source>
-        <translation type="vanished">Byt namn på kategori…</translation>
-    </message>
-    <message>
-        <source>Set category order…</source>
-        <translation type="vanished">Ordna kategorier…</translation>
-    </message>
-    <message>
-        <source>Remove unused categories</source>
-        <translation type="vanished">Ta bort oanvända kategorier…</translation>
-    </message>
-    <message>
-        <source>Filter rows…</source>
-        <translation type="vanished">Filtrera rader…</translation>
-    </message>
-    <message>
-        <source>Equals…</source>
-        <translation type="vanished">Är lika med…</translation>
-    </message>
-    <message>
-        <source>Contains…</source>
-        <translation type="vanished">Innehåller…</translation>
-    </message>
-    <message>
-        <source>Is empty</source>
-        <translation type="vanished">Är tom</translation>
-    </message>
-    <message>
-        <source>Is not empty</source>
-        <translation type="vanished">Är inte tom</translation>
-    </message>
-    <message>
-        <source>Compare…</source>
-        <translation type="vanished">Jämförelse…</translation>
-    </message>
-    <message>
-        <source>Between…</source>
-        <translation type="vanished">Mellan…</translation>
-    </message>
-    <message>
-        <source>Split column…</source>
-        <translation type="vanished">Dela kolumn…</translation>
-    </message>
-    <message>
-        <source>Merge columns…</source>
-        <translation type="vanished">Slå ihop kolumner…</translation>
-    </message>
-    <message>
-        <source>Remove text (simple)</source>
-        <translation type="vanished">Ta bort text (enkelt)</translation>
-    </message>
 </context>
 <context>
     <name>HypothesisTestsConfigWidget</name>
@@ -3590,14 +3189,6 @@ Alla flikar:	{comparison_kind}</translation>
         <translation>Kunde inte färdigställa join.
 {error}</translation>
     </message>
-    <message>
-        <source>Do you want to continue</source>
-        <translation type="vanished">Vill du fortsätta</translation>
-    </message>
-    <message>
-        <source>Preview Join ({join_type})</source>
-        <translation type="vanished">Förhandsgranskning Join ({join_type})</translation>
-    </message>
 </context>
 <context>
     <name>JoinDialog</name>
@@ -3660,10 +3251,6 @@ Alla flikar:	{comparison_kind}</translation>
         <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="341"/>
         <source>Incompatible types</source>
         <translation>Inkompatibla datatyper</translation>
-    </message>
-    <message>
-        <source>Join dataset</source>
-        <translation type="vanished">Join dataset</translation>
     </message>
 </context>
 <context>
@@ -3789,12 +3376,6 @@ Alla flikar:	{comparison_kind}</translation>
         <source>Log configuration has been saved.</source>
         <translation>Logginställningarna har sparats</translation>
     </message>
-    <message>
-        <source>Could not save log configuration:
-%1</source>
-        <translation type="vanished">Kunde inte spara logginställningar:
-%1</translation>
-    </message>
 </context>
 <context>
     <name>MenuController</name>
@@ -3902,34 +3483,6 @@ Alla flikar:	{comparison_kind}</translation>
         <location filename="../../workbench/controllers/menu_controller.py" line="56"/>
         <source>About Expo studio…</source>
         <translation>Om Expo studio…</translation>
-    </message>
-    <message>
-        <source>YData profiling…</source>
-        <translation type="vanished">YData profiling…</translation>
-    </message>
-    <message>
-        <source>Save…</source>
-        <translation type="vanished">Spara…</translation>
-    </message>
-    <message>
-        <source>Export to data file…</source>
-        <translation type="vanished">Exportera till datafil…</translation>
-    </message>
-    <message>
-        <source>Connections…</source>
-        <translation type="vanished">Anslutningar…</translation>
-    </message>
-    <message>
-        <source>REST Connections…</source>
-        <translation type="vanished">REST Connections…</translation>
-    </message>
-    <message>
-        <source>Y-data profiling…</source>
-        <translation type="vanished">Y-data profilering…</translation>
-    </message>
-    <message>
-        <source>Export</source>
-        <translation type="vanished">Exportera</translation>
     </message>
 </context>
 <context>
@@ -4131,10 +3684,6 @@ Alla flikar:	{comparison_kind}</translation>
         <location filename="../../gui/dialogs/analysis/outliers_multivariate_view.py" line="164"/>
         <source>Anomaly score</source>
         <translation>Avvikelsepoäng</translation>
-    </message>
-    <message>
-        <source>&lt;i&gt;Scores rank observations within this fit; potential outliers are not necessarily errors.&lt;/i&gt;</source>
-        <translation type="vanished">&lt;i&gt;Poängen rangordnar observationerna inom denna modellanpassning; potentiella avvikare är inte nödvändigtvis felaktiga värden.&lt;/i&gt;</translation>
     </message>
 </context>
 <context>
@@ -4421,10 +3970,6 @@ Alla flikar:	{comparison_kind}</translation>
         <location filename="../../gui/dialogs/analysis/outliers_view.py" line="549"/>
         <source>Row</source>
         <translation>Rad</translation>
-    </message>
-    <message>
-        <source>&lt;i&gt;Extreme values inflate the mean and standard deviation themselves; the modified Z-score is more robust.&lt;/i&gt;</source>
-        <translation type="vanished">&lt;i&gt;Extrema värden påverkar själva medelvärdet och standardavvikelsen; det modifierade Z-värdet är mer robust.&lt;/i&gt;</translation>
     </message>
 </context>
 <context>
@@ -4959,174 +4504,6 @@ Alla flikar:	{comparison_kind}</translation>
         <source>Replace value in all cells</source>
         <translation>Ersätt värde i alla celler</translation>
     </message>
-    <message>
-        <source>Columns: %1</source>
-        <translation type="vanished">Kolumner: %1</translation>
-    </message>
-    <message>
-        <source>Delimiter/string:</source>
-        <translation type="vanished">Avgränsare/sträng:</translation>
-    </message>
-    <message>
-        <source>Example: ; ,  |  space  \t (tab)</source>
-        <translation type="vanished">Exempel: ; ,  |  mellanslag  \t (tab)</translation>
-    </message>
-    <message>
-        <source>Convert to date/time</source>
-        <translation type="vanished">Omvandla till datum/tid</translation>
-    </message>
-    <message>
-        <source>Format (optional):</source>
-        <translation type="vanished">Fromat (valfritt)</translation>
-    </message>
-    <message>
-        <source>Example: %Y-%m-%d   or   %d/%m/%Y %H:%M</source>
-        <translation type="vanished">Exempel: %Y-%m-%d   eller   %d/%m/%Y %H:%M</translation>
-    </message>
-    <message>
-        <source>Interpret first field as day (day-first)</source>
-        <translation type="vanished">Tolka första fältet som dag (day-first)</translation>
-    </message>
-    <message>
-        <source>Interpret first field as year (year-first)</source>
-        <translation type="vanished">Tolka första fältet som år (year-first)</translation>
-    </message>
-    <message>
-        <source>Date only (YYYY-MM-DD)</source>
-        <translation type="vanished">Endast datum (YYYY-MM-DD)</translation>
-    </message>
-    <message>
-        <source>Convert to boolean</source>
-        <translation type="vanished">Omvandla till bool</translation>
-    </message>
-    <message>
-        <source>Values interpreted as TRUE (comma separated):</source>
-        <translation type="vanished">Värden som ska tolkas som SANT (kommaseparerade):</translation>
-    </message>
-    <message>
-        <source>Values interpreted as FALSE (comma separated):</source>
-        <translation type="vanished">Värden som ska tolkas som FALSKT (kommaseparerade)</translation>
-    </message>
-    <message>
-        <source>Convert to categories</source>
-        <translation type="vanished">Omvandla till kategorier</translation>
-    </message>
-    <message>
-        <source>Category order:</source>
-        <translation type="vanished">Ordna kategorier:</translation>
-    </message>
-    <message>
-        <source>Alphabetically</source>
-        <translation type="vanished">Alfabetiskt</translation>
-    </message>
-    <message>
-        <source>After frequency</source>
-        <translation type="vanished">Efter frekvens</translation>
-    </message>
-    <message>
-        <source>Preserve order</source>
-        <translation type="vanished">Behåll ursprungsordning</translation>
-    </message>
-    <message>
-        <source>Categories should be ordered</source>
-        <translation type="vanished">Kategorier ska ordnas</translation>
-    </message>
-    <message>
-        <source>Strict mode (unknown values → NA)</source>
-        <translation type="vanished">Strikt läge (okända värden → NA)</translation>
-    </message>
-    <message>
-        <source>Rename category</source>
-        <translation type="vanished">Byt namn på kategori</translation>
-    </message>
-    <message>
-        <source>Select category:</source>
-        <translation type="vanished">Välj kategori:</translation>
-    </message>
-    <message>
-        <source>New name:</source>
-        <translation type="vanished">Nytt namn:</translation>
-    </message>
-    <message>
-        <source>Set category order</source>
-        <translation type="vanished">Sätt ordning av kategorier</translation>
-    </message>
-    <message>
-        <source>Order categories (drag and drop):</source>
-        <translation type="vanished">Ordna kategorier (dra och släpp):</translation>
-    </message>
-    <message>
-        <source>Up</source>
-        <translation type="vanished">Upp</translation>
-    </message>
-    <message>
-        <source>Down</source>
-        <translation type="vanished">Ner</translation>
-    </message>
-    <message>
-        <source>Sort alphabetically</source>
-        <translation type="vanished">Sortera alfabetiskt</translation>
-    </message>
-    <message>
-        <source>Restore original order</source>
-        <translation type="vanished">Återställ ursprungsordning</translation>
-    </message>
-    <message>
-        <source>Ordered category</source>
-        <translation type="vanished">Ordnad kategori</translation>
-    </message>
-    <message>
-        <source>Add missing values last</source>
-        <translation type="vanished">Lägg till saknade värden sist</translation>
-    </message>
-    <message>
-        <source>Replace text</source>
-        <translation type="vanished">Ersätt text</translation>
-    </message>
-    <message>
-        <source>Insert text</source>
-        <translation type="vanished">Infoga text</translation>
-    </message>
-    <message>
-        <source>Replace value</source>
-        <translation type="vanished">Ersätt värde</translation>
-    </message>
-    <message>
-        <source>Data profile</source>
-        <translation type="vanished">Dataprofil</translation>
-    </message>
-    <message>
-        <source>Multiple tabs are open. What do you want to profile?</source>
-        <translation type="vanished">Flera flikar är öppna. Vad vill du profilera?</translation>
-    </message>
-    <message>
-        <source>Less than or equals to</source>
-        <translation type="vanished">Mindre än eller lika med</translation>
-    </message>
-    <message>
-        <source>Greater than or equals to</source>
-        <translation type="vanished">Större än eller lika med</translation>
-    </message>
-    <message>
-        <source>Equals to</source>
-        <translation type="vanished">Lika med</translation>
-    </message>
-    <message>
-        <source>Not equals to</source>
-        <translation type="vanished">Ej lika med</translation>
-    </message>
-    <message>
-        <source>Active tab</source>
-        <translation type="vanished">Aktiv flik</translation>
-    </message>
-    <message>
-        <source>All tabs</source>
-        <translation type="vanished">Alla flikar</translation>
-    </message>
-    <message>
-        <source>Example: %Y-%m-%d   eller   %d/%m/%Y %H:%M</source>
-        <translation type="vanished">Exempel: %Y-%m-%d   eller   %d/%m/%Y %H:%M</translation>
-    </message>
 </context>
 <context>
     <name>QueryController</name>
@@ -5222,10 +4599,6 @@ Tips: {error_hint}</translation>
         <location filename="../../workbench/controllers/query_controller.py" line="67"/>
         <source>Please select a database connection.</source>
         <translation>Välj en databasanslutning.</translation>
-    </message>
-    <message>
-        <source>Completed: {rows} rows, {cols} columns ({elapsed_time})</source>
-        <translation type="vanished">Klar: {rows} rader, {cols} kolumner ({elapsed_time})</translation>
     </message>
 </context>
 <context>
@@ -5592,10 +4965,6 @@ Tips: {error_hint}</translation>
         <location filename="../../gui/dialogs/analysis/regression_view.py" line="488"/>
         <source>Standardized residual</source>
         <translation>Standardiserad residual</translation>
-    </message>
-    <message>
-        <source>Plots show a random sample of {shown} of {total} rows; statistics use all rows.</source>
-        <translation type="vanished">Diagrammen visar ett slumpmässigt urval av {shown} av {total} rader</translation>
     </message>
 </context>
 <context>
@@ -5990,46 +5359,6 @@ Tid: {sec:.2f}s{sample}</translation>
         <source>REST connection saved successfully.</source>
         <translation>REST anslutningen sparades.</translation>
     </message>
-    <message>
-        <source>None</source>
-        <translation type="vanished">None</translation>
-    </message>
-    <message>
-        <source>Bearer token</source>
-        <translation type="vanished">Bearer token</translation>
-    </message>
-    <message>
-        <source>Authentication:</source>
-        <translation type="vanished">Autentisering:</translation>
-    </message>
-    <message>
-        <source>Bearer token:</source>
-        <translation type="vanished">Bearer token:</translation>
-    </message>
-    <message>
-        <source>Invalid JSON</source>
-        <translation type="vanished">Ogiltig JSON</translation>
-    </message>
-    <message>
-        <source>Missing URL</source>
-        <translation type="vanished">URL saknas</translation>
-    </message>
-    <message>
-        <source>URL must be specified before testing.</source>
-        <translation type="vanished">URL måste vara specificerad före test.</translation>
-    </message>
-    <message>
-        <source>API test successful.
-
-Returned {rows} rows and {cols} columns.
-
-Time: {sec:.2f}s</source>
-        <translation type="vanished">API test lyckades.
-
-Returnerade {rows} rader och {cols} kolumner.
-
-Tid: {sec:.2f}s</translation>
-    </message>
 </context>
 <context>
     <name>RestController</name>
@@ -6213,36 +5542,6 @@ Tid: {sec:.2f}s</translation>
         <location filename="../../workbench/controllers/result_tabs/result_tab_cell_actions.py" line="62"/>
         <source>Replaced &apos;{old_value}&apos; → &apos;{new_value}&apos; on row {row} in &apos;{column_name}&apos;</source>
         <translation>Ersatte &apos;{old_value}&apos; → &apos;{new_value}&apos; på rad {row} i &apos;{column_name}&apos;</translation>
-    </message>
-    <message>
-        <source>Failure</source>
-        <translation type="vanished">Fel</translation>
-    </message>
-    <message>
-        <source>Could not perform the operation:
-{error}</source>
-        <translation type="vanished">Kunde inte utföra operationen:
-{error}</translation>
-    </message>
-    <message>
-        <source>Replacing values: {column_name}</source>
-        <translation type="vanished">Ersätter värden: {column_name}</translation>
-    </message>
-    <message>
-        <source>Replaced value</source>
-        <translation type="vanished">Ersatt värde</translation>
-    </message>
-    <message>
-        <source>Replacing value in cell: {column_name}</source>
-        <translation type="vanished">Ersätter värde i cell: {column_name} </translation>
-    </message>
-    <message>
-        <source>Replaced &apos;{old_value}&apos; → &apos;{new_value}&apos; on row {row} in column: {column_name}</source>
-        <translation type="vanished">Ersatte &apos;{old_value}&apos; → &apos;{new_value}&apos; på rad {row} i kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Remove rows where &apos;{column_name}&apos; = &apos;{value}&apos;</source>
-        <translation type="vanished">Tar bort rader där &apos;{column_name}&apos; = &apos;{value}&apos;</translation>
     </message>
 </context>
 <context>
@@ -6515,16 +5814,6 @@ Tid: {sec:.2f}s</translation>
         <source>Profiling column: {column_name}</source>
         <translation>Profilerar kolumn: {column_name}</translation>
     </message>
-    <message>
-        <source>Time limit reached</source>
-        <translation type="vanished">Tidsgräns nådd</translation>
-    </message>
-    <message>
-        <source>The time limit was reached.
-Please see logs for more information.</source>
-        <translation type="vanished">Tidsgränsen är nådd.
-Vänligen se loggfil för mer information.</translation>
-    </message>
 </context>
 <context>
     <name>ResultTabHeaderCategoryActions</name>
@@ -6637,28 +5926,6 @@ Vänligen se loggfil för mer information.</translation>
         <location filename="../../workbench/controllers/result_tabs/result_tab_header_category_actions.py" line="67"/>
         <source>There are no categories to rename.</source>
         <translation>Det finns inga kategorier att byta namn på.</translation>
-    </message>
-    <message>
-        <source>Failure</source>
-        <translation type="vanished">Fel</translation>
-    </message>
-    <message>
-        <source>Could not perform the operation:
-{error}</source>
-        <translation type="vanished">Kunde inte utföra operationen:
-{error}</translation>
-    </message>
-    <message>
-        <source>can not be changed</source>
-        <translation type="vanished">kan inte ändras</translation>
-    </message>
-    <message>
-        <source>Convert to categories</source>
-        <translation type="vanished">Omvandla till kategorier</translation>
-    </message>
-    <message>
-        <source>Converted column to categories: {column_name} ({order}, {ordered})</source>
-        <translation type="vanished">Omvandlade kolumn till kategorier: {column_name} ({order}, {ordered})</translation>
     </message>
 </context>
 <context>
@@ -6873,20 +6140,6 @@ Vänligen se loggfil för mer information.</translation>
         <source>Inserted &apos;{insert_text}&apos; at position {position} in column: {column_name}</source>
         <translation>Infogade &apos;{insert_text}&apos; på position {position} i kolumn: {column_name}</translation>
     </message>
-    <message>
-        <source>Failure</source>
-        <translation type="vanished">Fel</translation>
-    </message>
-    <message>
-        <source>Could not perform the operation:
-{error}</source>
-        <translation type="vanished">Kunde inte utföra operationen:
-{error}</translation>
-    </message>
-    <message>
-        <source>can not be changed</source>
-        <translation type="vanished">kan inte ändras</translation>
-    </message>
 </context>
 <context>
     <name>ResultTabHeaderColumnActions</name>
@@ -7039,28 +6292,6 @@ Vänligen se loggfil för mer information.</translation>
         <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="79"/>
         <source>Removed column: {column_name}</source>
         <translation>Tog bort kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Failure</source>
-        <translation type="vanished">Fel</translation>
-    </message>
-    <message>
-        <source>Could not perform the operation:
-{error}</source>
-        <translation type="vanished">Kunde inte utföra operationen:
-{error}</translation>
-    </message>
-    <message>
-        <source>can not be changed</source>
-        <translation type="vanished">kan inte ändras</translation>
-    </message>
-    <message>
-        <source>Not allowed</source>
-        <translation type="vanished">Ej tillåtet</translation>
-    </message>
-    <message>
-        <source>Renaming column: {column_name} →  {new_name}</source>
-        <translation type="vanished">Byter namn på kolumn: {column_name} →  {new_name}</translation>
     </message>
 </context>
 <context>
@@ -7215,28 +6446,6 @@ Vänligen se loggfil för mer information.</translation>
         <source>Converted column to categories: {column_name} ({order}, {ordered})</source>
         <translation>Omvandlade kolumn till kategorier: {column_name} ({order}, {ordered})</translation>
     </message>
-    <message>
-        <source>Failure</source>
-        <translation type="vanished">Fel</translation>
-    </message>
-    <message>
-        <source>Could not perform the operation:
-{error}</source>
-        <translation type="vanished">Kunde inte utföra operationen:
-{error}</translation>
-    </message>
-    <message>
-        <source>can not be changed</source>
-        <translation type="vanished">kan inte ändras</translation>
-    </message>
-    <message>
-        <source>Converting to datetime: {column_name}</source>
-        <translation type="vanished">Omvandlar till datum/tid: {column_name}</translation>
-    </message>
-    <message>
-        <source>Converted column to {mode}: {column_name} {format}</source>
-        <translation type="vanished">Omvandlade kolumn till {mode}: {column_name} {format}</translation>
-    </message>
 </context>
 <context>
     <name>ResultTabHeaderFillActions</name>
@@ -7341,10 +6550,6 @@ Vänligen se loggfil för mer information.</translation>
         <location filename="../../workbench/controllers/result_tabs/result_tab_header_fill_actions.py" line="69"/>
         <source>Column &apos;{column_name}&apos; can not be filled with a custom value.</source>
         <translation>Kolumnen &apos;{column_name}&apos; kan inte fyllas med eget värde.</translation>
-    </message>
-    <message>
-        <source>can not be changed</source>
-        <translation type="vanished">kan inte ändras</translation>
     </message>
 </context>
 <context>
@@ -7571,30 +6776,6 @@ Vänligen se loggfil för mer information.</translation>
         <source>Filtered rows where &apos;{column_name}&apos; between &apos;{low}&apos; and &apos;{high}&apos; ({limits})</source>
         <translation>Filtrerade rader där &apos;{column_name}&apos; mellan &apos;{low}&apos; och &apos;{high}&apos; ({limits})</translation>
     </message>
-    <message>
-        <source>can not be filtered</source>
-        <translation type="vanished">kan inte filtreras</translation>
-    </message>
-    <message>
-        <source>Filtering column &apos;{column_name}&apos; is empty/NaN</source>
-        <translation type="vanished">Filtrerar kolumn &apos;{column_name}&apos; är tom/NaN</translation>
-    </message>
-    <message>
-        <source>Filtered rows where &apos;{column_name}&apos; is empty/NaN</source>
-        <translation type="vanished">Filtrerade rader där &apos;{column_name}&apos; är tom/NaN</translation>
-    </message>
-    <message>
-        <source>Filtering column &apos;{column_name}&apos; is not empty/NaN</source>
-        <translation type="vanished">Filtrerar kolumn &apos;{column_name}&apos; är inte tom/NaN</translation>
-    </message>
-    <message>
-        <source>Filtered rows where &apos;{column_name}&apos; is not empty/NaN</source>
-        <translation type="vanished">Filtrerade rader där &apos;{column_name}&apos; inte är tom/NaN</translation>
-    </message>
-    <message>
-        <source>The column &apos;{column_name}&apos; is neither numeric or datetime.</source>
-        <translation type="vanished">Kolumnen &apos;{column_name}&apos; är varken numerisk eller datum/tid.</translation>
-    </message>
 </context>
 <context>
     <name>ResultTabHeaderSortActions</name>
@@ -7639,10 +6820,6 @@ Vänligen se loggfil för mer information.</translation>
 {error}</source>
         <translation>Kunde inte utföra operationen:
 {error}</translation>
-    </message>
-    <message>
-        <source>can not be sorted</source>
-        <translation type="vanished">kan inte sorteras</translation>
     </message>
 </context>
 <context>
@@ -7789,528 +6966,6 @@ Vänligen se loggfil för mer information.</translation>
         <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="206"/>
         <source>Formatting cell values…</source>
         <translation>Formaterar värden i celler…</translation>
-    </message>
-    <message>
-        <source>Profiling column: {column_name}</source>
-        <translation type="vanished">Profilerar kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Time limit reached</source>
-        <translation type="vanished">Tidsgräns nådd</translation>
-    </message>
-    <message>
-        <source>The time limit was reached.
-Please see logs for more information.</source>
-        <translation type="vanished">Tidsgränsen är nådd.
-Vänligen se loggfil för mer information.</translation>
-    </message>
-    <message>
-        <source>has no properties</source>
-        <translation type="vanished">har inga egenskaper</translation>
-    </message>
-    <message>
-        <source>Not allowed</source>
-        <translation type="vanished">Ej tillåtet</translation>
-    </message>
-    <message>
-        <source>Index column (#) {action_text}.</source>
-        <translation type="vanished">Indexkolumnen (#) {action_text}.</translation>
-    </message>
-    <message>
-        <source>Less than</source>
-        <translation type="vanished">Mindre än</translation>
-    </message>
-    <message>
-        <source>Less than or equal to</source>
-        <translation type="vanished">Mindre än eller lika med</translation>
-    </message>
-    <message>
-        <source>Greater than</source>
-        <translation type="vanished">Större än</translation>
-    </message>
-    <message>
-        <source>Greater than or equal to</source>
-        <translation type="vanished">Större än eller lika med</translation>
-    </message>
-    <message>
-        <source>Equal to</source>
-        <translation type="vanished">Lika med</translation>
-    </message>
-    <message>
-        <source>Not equal to</source>
-        <translation type="vanished">Ej lika med</translation>
-    </message>
-    <message>
-        <source>can not be filtered</source>
-        <translation type="vanished">kan inte filtreras</translation>
-    </message>
-    <message>
-        <source>Filter column equal to</source>
-        <translation type="vanished">Filtrera kolumn lika med</translation>
-    </message>
-    <message>
-        <source>Select value for &apos;{column_name}&apos;:</source>
-        <translation type="vanished">Välj värde för &apos;{column_name}&apos;:</translation>
-    </message>
-    <message>
-        <source>Filtered rows where &apos;{column_name}&apos; = &apos;{value}&apos;</source>
-        <translation type="vanished">Filtrerade rader där &apos;{column_name}&apos; = &apos;{value}&apos;</translation>
-    </message>
-    <message>
-        <source>Filtered rows where &apos;{column_name}&apos; contains &apos;{value}&apos;</source>
-        <translation type="vanished">Filtrerade rader där &apos;{column_name}&apos; innehåller &apos;{value}&apos;</translation>
-    </message>
-    <message>
-        <source>Filtered rows where &apos;{column_name}&apos; is empty/NaN</source>
-        <translation type="vanished">Filtrerade rader där &apos;{column_name}&apos; är tom/NaN</translation>
-    </message>
-    <message>
-        <source>Filtered rows where &apos;{column_name}&apos; is not empty/NaN</source>
-        <translation type="vanished">Filtrerade rader där &apos;{column_name}&apos; inte är tom/NaN</translation>
-    </message>
-    <message>
-        <source>Filter column contains</source>
-        <translation type="vanished">Filtrera kolumn innehåller</translation>
-    </message>
-    <message>
-        <source>Select search string for &apos;{column_name}&apos;:</source>
-        <translation type="vanished">Välj söksträng för &apos;{column_name}&apos;:</translation>
-    </message>
-    <message>
-        <source>Case sensitivity</source>
-        <translation type="vanished">Skiftlägeskänslighet</translation>
-    </message>
-    <message>
-        <source>Match case?</source>
-        <translation type="vanished">Skiftlägeskänslig?</translation>
-    </message>
-    <message>
-        <source>Yes (case sensitive)</source>
-        <translation type="vanished">Ja (skiftlägeskänslig)</translation>
-    </message>
-    <message>
-        <source>No (case insensitive)</source>
-        <translation type="vanished">Nej (ej skiftlägeskänslig)</translation>
-    </message>
-    <message>
-        <source>Filter column compared to</source>
-        <translation type="vanished">Filtrera kolumn jämför med</translation>
-    </message>
-    <message>
-        <source>Operator for column &apos;{column_name}&apos;:</source>
-        <translation type="vanished">Operator för kolumn &apos;{column_name}&apos;:</translation>
-    </message>
-    <message>
-        <source>Value for column &apos;{column_name}&apos;:</source>
-        <translation type="vanished">Värde för kolumn &apos;{column_name}&apos;:</translation>
-    </message>
-    <message>
-        <source>Datatype not supported</source>
-        <translation type="vanished">Datatypen stöds inte</translation>
-    </message>
-    <message>
-        <source>The column &apos;{column_name}&apos; is neither numeric or dattime.</source>
-        <translation type="vanished">Kolumnen &apos;{column_name}&apos; är varken numerisk eller datum/tid.</translation>
-    </message>
-    <message>
-        <source>Filtered rows where &apos;{column_name}&apos; {operator} &apos;{value}&apos;</source>
-        <translation type="vanished">Filtrerade rader där &apos;{column_name}&apos; {operator} &apos;{value}&apos;</translation>
-    </message>
-    <message>
-        <source>Filter column between</source>
-        <translation type="vanished">Filtrera kolumn mellan</translation>
-    </message>
-    <message>
-        <source>Lower limit for &apos;{column_name}&apos;:</source>
-        <translation type="vanished">Nedre gräns för &apos;{column_name}&apos;:</translation>
-    </message>
-    <message>
-        <source>Upper limit for &apos;{column_name}&apos;:</source>
-        <translation type="vanished">Övre gräns för &apos;{column_name}&apos;:</translation>
-    </message>
-    <message>
-        <source>Start for &apos;{column_name}&apos;:</source>
-        <translation type="vanished">Start för &apos;{column_name}&apos;:</translation>
-    </message>
-    <message>
-        <source>End for &apos;{column_name}&apos;:</source>
-        <translation type="vanished">Slut för &apos;{column_name}&apos;:</translation>
-    </message>
-    <message>
-        <source>Invalid interval</source>
-        <translation type="vanished">Ogiltigt intervall</translation>
-    </message>
-    <message>
-        <source>Upper limit has to be greater than or equal to lower limit.</source>
-        <translation type="vanished">Övre gräns måste vara större än eller lika med nedre gräns.</translation>
-    </message>
-    <message>
-        <source>both limits</source>
-        <translation type="vanished">båda gränsvärden</translation>
-    </message>
-    <message>
-        <source>only lower limit</source>
-        <translation type="vanished">endast nedre gränsvärde</translation>
-    </message>
-    <message>
-        <source>only upper limit</source>
-        <translation type="vanished">endast övre gränsvärde</translation>
-    </message>
-    <message>
-        <source>no limits</source>
-        <translation type="vanished">inga gränsvärden</translation>
-    </message>
-    <message>
-        <source>Filtered rows where &apos;{column_name}&apos; between &apos;{low}&apos; and &apos;{high}&apos; ({limits})</source>
-        <translation type="vanished">Filtrerade rader där &apos;{column_name}&apos; mellan &apos;{low}&apos; och &apos;{high}&apos; ({limits})</translation>
-    </message>
-    <message>
-        <source>Filter…</source>
-        <translation type="vanished">Filtrera…</translation>
-    </message>
-    <message>
-        <source>Keep rows</source>
-        <translation type="vanished">Behåll rader</translation>
-    </message>
-    <message>
-        <source>Remove rows</source>
-        <translation type="vanished">Ta bort rader</translation>
-    </message>
-    <message>
-        <source>Keeping rows where &apos;{column_name}&apos; = &apos;{value}&apos;</source>
-        <translation type="vanished">Behåller rader där &apos;{column_name}&apos; = &apos;{value}&apos;</translation>
-    </message>
-    <message>
-        <source>Remove rows where &apos;{column_name}&apos; = &apos;{value}&apos;</source>
-        <translation type="vanished">Tar bort rader där &apos;{column_name}&apos; = &apos;{value}&apos;</translation>
-    </message>
-    <message>
-        <source>Value…</source>
-        <translation type="vanished">Värde…</translation>
-    </message>
-    <message>
-        <source>Replace value…</source>
-        <translation type="vanished">Ersätt värde…</translation>
-    </message>
-    <message>
-        <source>Column sorted: {column_name} ({sort_order})</source>
-        <translation type="vanished">Kolumnen sorterad: {column_name} ({sort_order})</translation>
-    </message>
-    <message>
-        <source>ascending</source>
-        <translation type="vanished">stigande</translation>
-    </message>
-    <message>
-        <source>descending</source>
-        <translation type="vanished">fallande</translation>
-    </message>
-    <message>
-        <source>can not be removed</source>
-        <translation type="vanished">kan inte tas bort</translation>
-    </message>
-    <message>
-        <source>Remove column</source>
-        <translation type="vanished">Ta bort kolumn</translation>
-    </message>
-    <message>
-        <source>Remove column: {column_name}</source>
-        <translation type="vanished">Ta bort kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Removed column: {column_name}</source>
-        <translation type="vanished">Tog bort kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>can not be changed</source>
-        <translation type="vanished">kan inte ändras</translation>
-    </message>
-    <message>
-        <source>Converted column to lowercase: {column_name}</source>
-        <translation type="vanished">Ändrade kolumn till gemener: {column_name}</translation>
-    </message>
-    <message>
-        <source>Converted column to uppercase: {column_name}</source>
-        <translation type="vanished">Ändrade kolumn till versaler: {column_name}</translation>
-    </message>
-    <message>
-        <source>Converted column to titlecase: {column_name}</source>
-        <translation type="vanished">Ändrade kolumn till titelstil: {column_name}</translation>
-    </message>
-    <message>
-        <source>Converted column to capitalize: {column_name}</source>
-        <translation type="vanished">Ändrade kolumn till första versal: {column_name}</translation>
-    </message>
-    <message>
-        <source>Trimmed column: {column_name}</source>
-        <translation type="vanished">Trimmade kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Normalized whitespace: {column_name}</source>
-        <translation type="vanished">Normaliserade mellanrum i kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Remove text</source>
-        <translation type="vanished">Ta bort text</translation>
-    </message>
-    <message>
-        <source>Text to remove:</source>
-        <translation type="vanished">Text att ta bort:</translation>
-    </message>
-    <message>
-        <source>Removed &apos;{text_remove}&apos; in column: {column_name}</source>
-        <translation type="vanished">Tog bort &apos;{text_remove}&apos; i kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Remove with regular expression</source>
-        <translation type="vanished">Ta bort med regular expresion</translation>
-    </message>
-    <message>
-        <source>Regex pattern:</source>
-        <translation type="vanished">Regex mönster:</translation>
-    </message>
-    <message>
-        <source>Removed with regex in column: {column_name}</source>
-        <translation type="vanished">Tog bort med regex i kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Fill missing values</source>
-        <translation type="vanished">Fyll saknade värden</translation>
-    </message>
-    <message>
-        <source>Select value for column &apos;{column_name}&apos;:</source>
-        <translation type="vanished">Välj värde för kolumn &apos;{column_name}&apos;:</translation>
-    </message>
-    <message>
-        <source>No missing values</source>
-        <translation type="vanished">Inga saknade värden</translation>
-    </message>
-    <message>
-        <source>No missing values in column: {column_name}</source>
-        <translation type="vanished">Det finns inga saknade värden i kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Filled missing values with mean in column: {column_name}</source>
-        <translation type="vanished">Fyllde saknade värden med medelvärde i kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Filled missing values with median in column: {column_name}</source>
-        <translation type="vanished">Fyllde saknade värden med medianvärde i kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Filled missing values with mode in column: {column_name}</source>
-        <translation type="vanished">Fyllde saknde värden med typvärde (mode) i kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Filled missing values with &apos;{custom_value}&apos; in column: {column_name}</source>
-        <translation type="vanished">Fyllde saknade värden med &apos;{custom_value}&apos; i kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Insert text</source>
-        <translation type="vanished">Infoga text</translation>
-    </message>
-    <message>
-        <source>Inserted &apos;{insert_text}&apos; at position {position} in column: {column_name}</source>
-        <translation type="vanished">Infogade &apos;{insert_text}&apos; på position {position} i kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Only digits kept in column: {column_name}</source>
-        <translation type="vanished">Bara siffror sparades i kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Only letters kept in column: {column_name}</source>
-        <translation type="vanished">Bara bokstäver sparades i kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Replace text</source>
-        <translation type="vanished">Ersätt text</translation>
-    </message>
-    <message>
-        <source>Replaced &apos;{old_text}&apos; → &apos;{new_text}&apos; in column: {column_name}</source>
-        <translation type="vanished">Ersatte &apos;{old_text}&apos; → &apos;{new_text}&apos; i kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Replace value</source>
-        <translation type="vanished">Ersätt värde</translation>
-    </message>
-    <message>
-        <source>Replaced all &apos;{old_value}&apos; → &apos;{new_value}&apos; in column: {column_name}</source>
-        <translation type="vanished">Ersatte alla &apos;{old_value}&apos; → &apos;{new_value}&apos; i kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Replaced &apos;{old_value}&apos; → &apos;{new_value}&apos; on row {row} in column: {column_name}</source>
-        <translation type="vanished">Ersatte &apos;{old_value}&apos; → &apos;{new_value}&apos; på rad {row} i kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Split column</source>
-        <translation type="vanished">Dela kolumn</translation>
-    </message>
-    <message>
-        <source>kept original</source>
-        <translation type="vanished">behöll ursprungskolumn</translation>
-    </message>
-    <message>
-        <source>removed original</source>
-        <translation type="vanished">tog bort ursprungskolumn</translation>
-    </message>
-    <message>
-        <source>Split column: {column_name} ({original})</source>
-        <translation type="vanished">Delade kolumn: {column_name} ({original})</translation>
-    </message>
-    <message>
-        <source>Select at least two columns.</source>
-        <translation type="vanished">Välj åtminstone två kolumner.</translation>
-    </message>
-    <message>
-        <source>Index column (#) can not be merged.</source>
-        <translation type="vanished">Indexkolumnen (#) kan inte slås ihop.</translation>
-    </message>
-    <message>
-        <source>Merge columns</source>
-        <translation type="vanished">Slå ihop kolumner</translation>
-    </message>
-    <message>
-        <source>Merged columns &apos;{columns_merged}&apos; → &apos;{new_name}&apos; ({original})</source>
-        <translation type="vanished">Slog ihop kolumner &apos;{columns_merged}&apos; → &apos;{new_name}&apos; ({original})</translation>
-    </message>
-    <message>
-        <source>Rename column</source>
-        <translation type="vanished">Byt namn på kolumn</translation>
-    </message>
-    <message>
-        <source>New name for &apos;{column_name}&apos;:</source>
-        <translation type="vanished">Nytt namn för &apos;{column_name}&apos;:</translation>
-    </message>
-    <message>
-        <source>Name taken</source>
-        <translation type="vanished">Namnet finns redan</translation>
-    </message>
-    <message>
-        <source>A column with the name &apos;{column_name}&apos; already exists.</source>
-        <translation type="vanished">En kolumn med namnet &apos;{column_name}&apos; finns redan.</translation>
-    </message>
-    <message>
-        <source>Renamed column &apos;{old_name}&apos; → &apos;{new_name}&apos;</source>
-        <translation type="vanished">Bytte namn på kolumn &apos;{old_name}&apos; → &apos;{new_name}&apos;</translation>
-    </message>
-    <message>
-        <source>Convert to categories</source>
-        <translation type="vanished">Omvandla till kategorier</translation>
-    </message>
-    <message>
-        <source>Order categories</source>
-        <translation type="vanished">Ordna kategorier</translation>
-    </message>
-    <message>
-        <source>Invalid order</source>
-        <translation type="vanished">Ogiltig ordning</translation>
-    </message>
-    <message>
-        <source>Category order set for column: {column_name} ({ordered})</source>
-        <translation type="vanished">Ordnade kategorier för kolumn: {column_name} ({ordered})</translation>
-    </message>
-    <message>
-        <source>Order can not be empty.</source>
-        <translation type="vanished">Orning kan inte vara tom.</translation>
-    </message>
-    <message>
-        <source>alphabetically</source>
-        <translation type="vanished">alfabetisk</translation>
-    </message>
-    <message>
-        <source>after frequency</source>
-        <translation type="vanished">efter frekvens</translation>
-    </message>
-    <message>
-        <source>preserve order</source>
-        <translation type="vanished">behåll ursprungsordning</translation>
-    </message>
-    <message>
-        <source>ordered</source>
-        <translation type="vanished">ordnad</translation>
-    </message>
-    <message>
-        <source>unordered</source>
-        <translation type="vanished">oordnad</translation>
-    </message>
-    <message>
-        <source>Converted column to categories: {column_name} ({order}, {ordered})</source>
-        <translation type="vanished">Omvandlade kolumn till kategorier: {column_name} ({order}, {ordered})</translation>
-    </message>
-    <message>
-        <source>Not category</source>
-        <translation type="vanished">Inte kategori</translation>
-    </message>
-    <message>
-        <source>Column &apos;{column_name}&apos; is not categorical.</source>
-        <translation type="vanished">Kolumn &apos;{column_name}&apos; är inte kategorisk.</translation>
-    </message>
-    <message>
-        <source>Removed unused categories in column: {column_name}</source>
-        <translation type="vanished">Tog bort oanvända kategorieri kolumn: {column_name}</translation>
-    </message>
-    <message>
-        <source>Rename category</source>
-        <translation type="vanished">Byt namn på kategori</translation>
-    </message>
-    <message>
-        <source>Renamed category: {old_name} → {new_name}</source>
-        <translation type="vanished">Bytte namn på kategori: {old_name} → {new_name}</translation>
-    </message>
-    <message>
-        <source>No categories</source>
-        <translation type="vanished">Inga kategorier</translation>
-    </message>
-    <message>
-        <source>There are no categories to rename.</source>
-        <translation type="vanished">Det finns inga kategorier att byta namn på.</translation>
-    </message>
-    <message>
-        <source>Converted column to text (string): {column_name}</source>
-        <translation type="vanished">Omvandlade kolumn till text (string): {column_name}</translation>
-    </message>
-    <message>
-        <source>Converted column to integer (Int64): {column_name}</source>
-        <translation type="vanished">Omvandlade kolumn till heltal (Int64): {column_name}</translation>
-    </message>
-    <message>
-        <source>Converted column to float (Float64): {column_name}</source>
-        <translation type="vanished">Omvandlade kolumn till decimaltal (Float64): {column_name}</translation>
-    </message>
-    <message>
-        <source>Convert to datetime</source>
-        <translation type="vanished">Omvandla till datum/tid</translation>
-    </message>
-    <message>
-        <source>date</source>
-        <translation type="vanished">datum</translation>
-    </message>
-    <message>
-        <source>datetime</source>
-        <translation type="vanished">datum/tid</translation>
-    </message>
-    <message>
-        <source>Converted column to {mode}: {column_name} {format}</source>
-        <translation type="vanished">Omvandlade kolumn till {mode}: {column_name} {format}</translation>
-    </message>
-    <message>
-        <source>Convert to bool</source>
-        <translation type="vanished">Omvandla till bool</translation>
-    </message>
-    <message>
-        <source>unknown → NA</source>
-        <translation type="vanished">okänd → NA</translation>
-    </message>
-    <message>
-        <source>unknown → error</source>
-        <translation type="vanished">okänd → error</translation>
-    </message>
-    <message>
-        <source>Converted column to bool ({error_label}): {column_name}</source>
-        <translation type="vanished">Omvandlade kolumn till bool ({error_label}): {column_name}</translation>
-    </message>
-    <message>
-        <source>Column sorted: {column_name} {sort_order}</source>
-        <translation type="vanished">Kolumn sorterad: {column_name} {sort_order}</translation>
     </message>
 </context>
 <context>
@@ -8703,22 +7358,6 @@ Vänligen se loggfil för mer information.</translation>
         <source>Settings have been saved.</source>
         <translation>Inställningarna har sparats.</translation>
     </message>
-    <message>
-        <source>SELECT TOP N value:</source>
-        <translation type="vanished">SELECT TOP N värde:</translation>
-    </message>
-    <message>
-        <source>GUI file type behaviour</source>
-        <translation type="vanished">GUI beteende för filtyper</translation>
-    </message>
-    <message>
-        <source>Blocking (GUI blocks)</source>
-        <translation type="vanished">Blockerande (GUI låst)</translation>
-    </message>
-    <message>
-        <source>Non-blocking (background)</source>
-        <translation type="vanished">Ej blockerande (bakgrund)</translation>
-    </message>
 </context>
 <context>
     <name>StatisticsConfigWidget</name>
@@ -8884,18 +7523,6 @@ Vänligen se loggfil för mer information.</translation>
         <source>Ready</source>
         <translation>Redo</translation>
     </message>
-    <message>
-        <source>Select a connection to connect to a database</source>
-        <translation type="vanished">Välj en anslutning för att ansluta mot en databas</translation>
-    </message>
-    <message>
-        <source>Rows: %1  |  Columns: %2</source>
-        <translation type="vanished">Rader: %1  |  Kolumner: %2</translation>
-    </message>
-    <message>
-        <source>Select a connection to connect to the database</source>
-        <translation type="vanished">Välj en anslutning för att ansluta mot en databas</translation>
-    </message>
 </context>
 <context>
     <name>TextMatchFilter</name>
@@ -8903,10 +7530,6 @@ Vänligen se loggfil för mer information.</translation>
         <location filename="../../gui/dialogs/service/prompts/filter_match.py" line="55"/>
         <source>Case sensitive</source>
         <translation>Skiftlägeskänslig</translation>
-    </message>
-    <message>
-        <source>Case insensitive</source>
-        <translation type="vanished">Skiftlägesokänslig</translation>
     </message>
 </context>
 <context>
@@ -9193,220 +7816,6 @@ Snabbkommando: Ctrl+Z</translation>
         <location filename="../../workbench/controllers/toolbar_controller.py" line="55"/>
         <source>Analyze data</source>
         <translation>Analysera data</translation>
-    </message>
-    <message>
-        <source>Visualize data</source>
-        <translation type="vanished">Visualisera data</translation>
-    </message>
-</context>
-<context>
-    <name>VisualizationController</name>
-    <message>
-        <source>An error occurred while rendering the visualization.</source>
-        <translation type="vanished">Ett fel inträffade vid rendering av visualisering.</translation>
-    </message>
-    <message>
-        <source>The selected dataset is empty.</source>
-        <translation type="vanished">Valt dataset är tomt.</translation>
-    </message>
-    <message>
-        <source>Select a category column.</source>
-        <translation type="vanished">Välj kolumn för kategori.</translation>
-    </message>
-    <message>
-        <source>The selected category column no longer exists in the dataset.</source>
-        <translation type="vanished">Vald kolumn för kategori finns inte längre i dataset.</translation>
-    </message>
-    <message>
-        <source>Select a measure.</source>
-        <translation type="vanished">Välj ett mätvärde.</translation>
-    </message>
-    <message>
-        <source>Select an aggregation.</source>
-        <translation type="vanished">Välj aggregering.</translation>
-    </message>
-    <message>
-        <source>Select a measure column.</source>
-        <translation type="vanished">Välj kolumn för mätvärde.</translation>
-    </message>
-    <message>
-        <source>The selected measure column no longer exists in the dataset.</source>
-        <translation type="vanished">Vald kolumn för mätvärde finns inte längre i dataset.</translation>
-    </message>
-    <message>
-        <source>Non-numeric measure columns can only use Count or Count distinct.</source>
-        <translation type="vanished">Icke numeriska kolumner som mätvärde kan endast använda Antal eller Unikt antal</translation>
-    </message>
-    <message>
-        <source>No data remains after aggregation.</source>
-        <translation type="vanished">Ingen data finns kvar efter aggregering.</translation>
-    </message>
-    <message>
-        <source>No data available for the pie chart.</source>
-        <translation type="vanished">Ingen data tillgänglig för cirkeldiagram.</translation>
-    </message>
-    <message>
-        <source>Select both X and Y axes for the scatter chart.</source>
-        <translation type="vanished">Välj både X och Y axlar för scatter.</translation>
-    </message>
-    <message>
-        <source>The selected X column no longer exists in the dataset.</source>
-        <translation type="vanished">Vald X kolumn finns inte längre i dataset.</translation>
-    </message>
-    <message>
-        <source>The selected Y column no longer exists in the dataset.</source>
-        <translation type="vanished">Vald Y kolumn finns inte längre i dataset.</translation>
-    </message>
-    <message>
-        <source>No data available for the scatter chart.</source>
-        <translation type="vanished">Ingen data finns tillgänglig för scatter.</translation>
-    </message>
-    <message>
-        <source>Histogram requires a column-based measure.</source>
-        <translation type="vanished">Histogram kräver ett kolumnbaserat mätvärde.</translation>
-    </message>
-    <message>
-        <source>Select a measure column for the histogram.</source>
-        <translation type="vanished">Välj ett mätvärde för histogram.</translation>
-    </message>
-    <message>
-        <source>No numeric data available for the histogram.</source>
-        <translation type="vanished">Ingen numerisk data tillgänglig för histogram.</translation>
-    </message>
-    <message>
-        <source>Select a value column.</source>
-        <translation type="vanished">Välj kolumn för mätvärde.</translation>
-    </message>
-    <message>
-        <source>The selected value column no longer exists in the dataset.</source>
-        <translation type="vanished">Vald kolumn för mätvärde finns inte längre i dataset.</translation>
-    </message>
-    <message>
-        <source>Select a value column for the histogram.</source>
-        <translation type="vanished">Välj kolumn för mätvärde i histogram.</translation>
-    </message>
-</context>
-<context>
-    <name>VisualizationDialog</name>
-    <message>
-        <source>Visualize data</source>
-        <translation type="vanished">Visualisera data</translation>
-    </message>
-    <message>
-        <source>Datasource and chart type</source>
-        <translation type="vanished">Datakälla och diagramtyp</translation>
-    </message>
-    <message>
-        <source>Line chart</source>
-        <translation type="vanished">Linjediagram</translation>
-    </message>
-    <message>
-        <source>Bar chart</source>
-        <translation type="vanished">Stapeldiagram</translation>
-    </message>
-    <message>
-        <source>Pie chart</source>
-        <translation type="vanished">Cirkeldiagram</translation>
-    </message>
-    <message>
-        <source>Scatter plot</source>
-        <translation type="vanished">Scatter</translation>
-    </message>
-    <message>
-        <source>Histogram</source>
-        <translation type="vanished">Histogram</translation>
-    </message>
-    <message>
-        <source>Dataset</source>
-        <translation type="vanished">Dataset</translation>
-    </message>
-    <message>
-        <source>Chart type</source>
-        <translation type="vanished">Diagramtyp</translation>
-    </message>
-    <message>
-        <source>Visualization</source>
-        <translation type="vanished">Visualisering</translation>
-    </message>
-    <message>
-        <source>Dimensions and measures</source>
-        <translation type="vanished">Dimensioner och mätvärden</translation>
-    </message>
-    <message>
-        <source>Dimension</source>
-        <translation type="vanished">Dimension</translation>
-    </message>
-    <message>
-        <source>Measure type</source>
-        <translation type="vanished">Typ av mätvärde</translation>
-    </message>
-    <message>
-        <source>Column</source>
-        <translation type="vanished">Kolumn</translation>
-    </message>
-    <message>
-        <source>Number of rows</source>
-        <translation type="vanished">Antal rader</translation>
-    </message>
-    <message>
-        <source>Measure</source>
-        <translation type="vanished">Mätvärde</translation>
-    </message>
-    <message>
-        <source>Aggregation</source>
-        <translation type="vanished">Aggregering</translation>
-    </message>
-    <message>
-        <source>Label</source>
-        <translation type="vanished">Etikett</translation>
-    </message>
-    <message>
-        <source>Name of choice</source>
-        <translation type="vanished">Valfritt namn</translation>
-    </message>
-    <message>
-        <source>X-axis</source>
-        <translation type="vanished">X-axel</translation>
-    </message>
-    <message>
-        <source>Y-axis</source>
-        <translation type="vanished">Y-axel</translation>
-    </message>
-    <message>
-        <source>Show chart</source>
-        <translation type="vanished">Visa diagram</translation>
-    </message>
-    <message>
-        <source>No visualization yet.</source>
-        <translation type="vanished">Ingen visualisering ännu.</translation>
-    </message>
-    <message>
-        <source>Sum</source>
-        <translation type="vanished">Summa</translation>
-    </message>
-    <message>
-        <source>Count</source>
-        <translation type="vanished">Antal</translation>
-    </message>
-    <message>
-        <source>Count distinct</source>
-        <translation type="vanished">Antal unika</translation>
-    </message>
-    <message>
-        <source>Average</source>
-        <translation type="vanished">Medel</translation>
-    </message>
-    <message>
-        <source>Min</source>
-        <translation type="vanished">Min</translation>
-    </message>
-    <message>
-        <source>Max</source>
-        <translation type="vanished">Max</translation>
-    </message>
-    <message>
-        <source>No visualization yet</source>
-        <translation type="vanished">Ingen visualisering ännu</translation>
     </message>
 </context>
 </TS>

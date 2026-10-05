@@ -5,7 +5,7 @@
     <name>AboutDialog</name>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="40" />
-        <source>About Expo studio</source>
+        <source>About Expo Studio</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -29,72 +29,72 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\about_dialog.py" line="97" />
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="98" />
         <source>Expo Studio is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\about_dialog.py" line="105" />
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="107" />
         <source>Third-party notices</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\about_dialog.py" line="108" />
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="110" />
         <source>The application uses third-party software distributed under various licenses. See &lt;b&gt;%1&lt;/b&gt; for details.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\about_dialog.py" line="117" />
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="119" />
         <source>Icons provided by &lt;a href='https://icons8.com'&gt;Icons8&lt;/a&gt; and used under the free license which requires attribution.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\about_dialog.py" line="127" />
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="129" />
         <source>Python: %1</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\about_dialog.py" line="128" />
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="130" />
         <source>Qt: %1 | PyQt: %2</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\about_dialog.py" line="129" />
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="131" />
         <source>Platform: %1 %2 (%3)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\about_dialog.py" line="144" />
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="146" />
         <source>Close</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\about_dialog.py" line="154" />
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="156" />
         <source>License</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\about_dialog.py" line="155" />
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="157" />
         <source>Source code</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\about_dialog.py" line="181" />
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="183" />
         <source>Document unavailable</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\about_dialog.py" line="182" />
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="184" />
         <source>Could not find %1.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\about_dialog.py" line="190" />
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="192" />
         <source>Unable to open link</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\about_dialog.py" line="191" />
+        <location filename="..\..\gui\dialogs\about_dialog.py" line="193" />
         <source>The requested link could not be opened.</source>
         <translation type="unfinished" />
     </message>

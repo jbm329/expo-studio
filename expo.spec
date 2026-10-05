@@ -144,6 +144,7 @@ a = Analysis(
     hiddenimports=hiddenimports,
     hookspath=[],
     runtime_hooks=[
+        str(ROOT / "hooks" / "rthook_restore_environ.py"),
         str(ROOT / "hooks" / "rthook_disable_typeguard.py"),
         str(ROOT / "hooks" / "rthook_typeguard_nop.py"),
         str(ROOT / "hooks" / "rthook_tqdm_disable.py"),
