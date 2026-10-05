@@ -63,7 +63,43 @@ jobs:
         run: uv sync --frozen --extra build --extra profiling
 
       - name: Build release
-        run: uv run build-release
+        id: windows-release-build
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release/diagnostics | Out-Null
+          uv run build-release 2>&1 | Tee-Object -FilePath release/diagnostics/build-release.log
+          exit $LASTEXITCODE
+
+      - name: Collect failed Windows build diagnostics
+        if: failure() && steps.windows-release-build.outcome == 'failure'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release/diagnostics | Out-Null
+          $tocFiles = @()
+          if (Test-Path build/expo) {
+            $tocFiles = @(Get-ChildItem build/expo -Filter *.toc)
+          }
+          if ($tocFiles.Count -gt 0) {
+            $tocFiles | Select-String -Pattern 'sqldrivers|LIBPQ|c:\\tools\\php' |
+              Out-File -Encoding utf8 release/diagnostics/qt-sql-dependencies.txt
+          } else {
+            'No PyInstaller TOCs available; inspect build-release.log.' |
+              Out-File -Encoding utf8 release/diagnostics/qt-sql-dependencies.txt
+          }
+          Get-Content release/diagnostics/qt-sql-dependencies.txt
+
+      - name: Upload failed Windows build diagnostics
+        if: failure() && steps.windows-release-build.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-build-diagnostics
+          path: |
+            build/expo/*.toc
+            build/expo/warn-*.txt
+            build/expo/xref-*.html
+            release/diagnostics/*
+            release/staging/third-party-manifest.json
+          if-no-files-found: warn
 
       - name: Verify release checksum
         run: |

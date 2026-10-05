@@ -13,6 +13,8 @@ from PyInstaller.utils.hooks import (
 
 from typing import TYPE_CHECKING
 
+from expo_jbm329.build.qt_binaries import filter_qt_binaries
+
 if TYPE_CHECKING:
     from PyInstaller.building.build_main import (
         Analysis,
@@ -54,7 +56,9 @@ qt6_plugins = collect_data_files(
         "plugins/styles/*",
     ],
 )
-qt6_libs = collect_dynamic_libs("PyQt6.Qt6") if IS_WIN else []
+# Unused Qt SQL plugins otherwise resolve client DLLs from unrelated runner
+# installations (for example PHP's LIBPQ.dll). Filter before dependency analysis.
+qt6_libs = filter_qt_binaries(collect_dynamic_libs("PyQt6.Qt6")) if IS_WIN else []
 
 datas += qt6_plugins
 binaries += qt6_libs
