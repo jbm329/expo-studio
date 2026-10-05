@@ -372,6 +372,8 @@ For prereleases, use a normalized Python version such as `version = "1.0.0rc1"` 
 
 ## 📝 License
 
+Copyright © 2026 Jonas Brännström.
+
 Expo Studio is free software: you can redistribute it and/or modify
 it under the terms of the **GNU General Public License** as published
 by the Free Software Foundation, version 3.
