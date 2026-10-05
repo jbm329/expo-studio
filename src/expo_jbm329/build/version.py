@@ -200,7 +200,8 @@ def write_sha256_sum(path: Path, checksum: str) -> Path:
         OSError: If the checksum file cannot be written.
     """
     checksum_path = path.with_name(f"{path.name}.sha256")
-    checksum_path.write_text(f"{checksum}  {path.name}\n", encoding="utf-8")
+    # sha256sum expects LF line endings; CRLF would make the filename end in "\r" on Windows.
+    checksum_path.write_text(f"{checksum}  {path.name}\n", encoding="utf-8", newline="\n")
     return checksum_path
 
 
