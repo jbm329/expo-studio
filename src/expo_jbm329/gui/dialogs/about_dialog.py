@@ -38,7 +38,7 @@ class AboutDialog(QDialog):
         """Initialize the About dialog."""
         super().__init__(parent)
         self.setWindowTitle(self.tr("About Expo Studio"))
-        self.setFixedSize(610, 410)
+        self.setFixedSize(610, 430)
         self._init_ui()
 
     def _init_ui(self) -> None:
@@ -51,7 +51,7 @@ class AboutDialog(QDialog):
         content_layout.setSpacing(20)
 
         logo_label = QLabel()
-        pixmap = QPixmap(":/splash/wizard-small.bmp")
+        pixmap = QPixmap(":/splash/splash.png")
         if not pixmap.isNull():
             logo_label.setPixmap(
                 pixmap.scaled(120, 120, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
