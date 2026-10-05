@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
@@ -64,6 +65,17 @@ def test_windows_installer_name_uses_setup_suffix(
     installer_path = package_windows._installer_artifact_path(tmp_path, output_base_filename)
 
     assert installer_path.name == expected
+
+
+def test_checksum_file_uses_sha256sum_format_with_lf(tmp_path: Path) -> None:
+    artifact = tmp_path / "ExpoStudio-1.0.0-rc1-win64.zip"
+    artifact.write_bytes(b"release payload")
+
+    checksum_path = version.create_sha256(artifact)
+
+    expected_digest = hashlib.sha256(b"release payload").hexdigest()
+    assert checksum_path == tmp_path / "ExpoStudio-1.0.0-rc1-win64.zip.sha256"
+    assert checksum_path.read_bytes() == f"{expected_digest}  {artifact.name}\n".encode()
 
 
 def test_windows_release_runs_installer_then_zip(monkeypatch: pytest.MonkeyPatch) -> None:
