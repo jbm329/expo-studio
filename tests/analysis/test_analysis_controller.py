@@ -28,6 +28,7 @@ from expo_jbm329.gui.dialogs.analysis.regression_glm_view import GeneralizedRegr
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
+from expo_jbm329.gui.dialogs.analysis.survival_view import SurvivalRegressionView
 from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigWidget
 from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
@@ -1542,6 +1543,103 @@ def test_stale_glm_result_is_discarded_after_switching_models(dialog_factory):
     _simulate_success(stale_call)
 
     _assert_apply_prompt(ctrl, dlg)
+
+
+def test_cox_regression_uses_apply_first_background_path_and_survival_view(dialog_factory):
+    rng = np.random.default_rng(27)
+    size = 160
+    x = rng.normal(size=size)
+    event_time = rng.exponential(scale=np.exp(-0.35 * x), size=size)
+    censor_time = rng.exponential(scale=1.6, size=size)
+    event = event_time <= censor_time
+    df = pd.DataFrame({
+        "duration": np.minimum(event_time, censor_time),
+        "event": event.astype(int),
+        "x": x,
+    })
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    config._model_combo.setCurrentIndex(config._model_combo.findData(RegressionModel.COX.value))  # noqa: SLF001
+
+    assert async_ops.calls == []
+    assert config.current_duration() == "duration"
+    assert config.current_event() == "event"
+    _check_predictors(config, "x")
+    assert async_ops.calls == []
+    config._apply_button.click()  # noqa: SLF001
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:regression:cox:duration:event:x"
+    _simulate_success(call)
+
+    view = dlg.content_widget()
+    assert isinstance(view, SurvivalRegressionView)
+    assert view.result().error is None
+    assert dlg.config_widgets[-1] is config
+
+
+def test_cox_job_is_stale_after_switching_models_away_and_back(dialog_factory):
+    rng = np.random.default_rng(29)
+    size = 150
+    x = rng.normal(size=size)
+    event_time = rng.exponential(scale=np.exp(-0.3 * x), size=size)
+    censor_time = rng.exponential(scale=1.5, size=size)
+    event = event_time <= censor_time
+    df = pd.DataFrame({
+        "duration": np.minimum(event_time, censor_time),
+        "event": event.astype(int),
+        "binary": rng.binomial(1, 0.5, size=size),
+        "x": x,
+    })
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    config._model_combo.setCurrentIndex(config._model_combo.findData(RegressionModel.COX.value))  # noqa: SLF001
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    call = async_ops.last_call
+
+    config._model_combo.setCurrentIndex(config._model_combo.findData(RegressionModel.LOGISTIC.value))  # noqa: SLF001
+    config._model_combo.setCurrentIndex(config._model_combo.findData(RegressionModel.COX.value))  # noqa: SLF001
+    views_before = len(dlg.content_widgets)
+    _simulate_success(call)
+
+    assert len(dlg.content_widgets) == views_before
+    assert not isinstance(dlg.content_widget(), SurvivalRegressionView)
+
+
+def test_cox_job_is_stale_after_duration_change_and_category_round_trip(dialog_factory):
+    rng = np.random.default_rng(31)
+    size = 150
+    x = rng.normal(size=size)
+    event_time = rng.exponential(scale=np.exp(-0.3 * x), size=size)
+    censor_time = rng.exponential(scale=1.5, size=size)
+    event = event_time <= censor_time
+    df = pd.DataFrame({
+        "duration": np.minimum(event_time, censor_time),
+        "duration2": np.minimum(event_time, censor_time) + 0.25,
+        "event": event.astype(int),
+        "binary": rng.binomial(1, 0.5, size=size),
+        "x": x,
+    })
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    config._model_combo.setCurrentIndex(config._model_combo.findData(RegressionModel.COX.value))  # noqa: SLF001
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    stale_call = async_ops.last_call
+
+    config._duration_combo.setCurrentIndex(config._duration_combo.findText("duration2"))  # noqa: SLF001
+    dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
+    dlg.category_changed.emit(AnalysisCategory.REGRESSION.value)
+    assert _regression_config(dlg) is not config
+    views_before = len(dlg.content_widgets)
+    _simulate_success(stale_call)
+
+    assert len(dlg.content_widgets) == views_before
+    assert not isinstance(dlg.content_widget(), SurvivalRegressionView)
 
 
 # ----------------------------------------------------------------------

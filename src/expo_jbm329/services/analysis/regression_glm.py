@@ -40,6 +40,7 @@ class RegressionModel(StrEnum):
     LOGISTIC = "logistic"
     POISSON = "poisson"
     NEGATIVE_BINOMIAL = "negative_binomial"
+    COX = "cox"
 
 
 class GeneralizedRegressionError(StrEnum):
@@ -157,7 +158,7 @@ def analyze_generalized_regression(
     kinds = dict.fromkeys(predictor_columns.numeric, PredictorKind.NUMERIC)
     kinds |= dict.fromkeys(predictor_columns.categorical, PredictorKind.CATEGORICAL)
 
-    if model is RegressionModel.LINEAR:
+    if model in {RegressionModel.LINEAR, RegressionModel.COX}:
         return _empty_result(
             model,
             target,

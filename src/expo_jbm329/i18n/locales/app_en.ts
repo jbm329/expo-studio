@@ -8031,4 +8031,43 @@ Shortcut: Ctrl+Z</source>
         <source>Analyze data</source>
         <translation type="unfinished" />
     </message>
-</context></TS>
+</context>
+<context>
+    <name>RegressionConfigWidget</name>
+    <message><source>Cox proportional-hazards regression</source><translation>Cox proportional-hazards regression</translation></message>
+    <message><source>Duration</source><translation>Duration</translation></message>
+    <message><source>Event (1 = event; 0 = censored)</source><translation>Event (1 = event; 0 = censored)</translation></message>
+    <message><source>This column is an outcome and cannot be a predictor.</source><translation>This column is an outcome and cannot be a predictor.</translation></message>
+    <message><source>Cox regression needs distinct numeric duration and binary event columns.</source><translation>Cox regression needs distinct numeric duration and binary event columns.</translation></message>
+</context>
+<context>
+    <name>SurvivalRegressionView</name>
+    <message><source>Select a duration column for Cox regression.</source><translation>Select a duration column for Cox regression.</translation></message>
+    <message><source>Select a binary event column for Cox regression.</source><translation>Select a binary event column for Cox regression.</translation></message>
+    <message><source>Select one or more predictors and click Apply.</source><translation>Select one or more predictors and click Apply.</translation></message>
+    <message><source>Select at most {maximum} predictors.</source><translation>Select at most {maximum} predictors.</translation></message>
+    <message><source>Choose valid, distinct duration and event columns and other columns as predictors.</source><translation>Choose valid, distinct duration and event columns and other columns as predictors.</translation></message>
+    <message><source>Duration {column} contains a non-missing value that is not finite and strictly positive.</source><translation>Duration {column} contains a non-missing value that is not finite and strictly positive.</translation></message>
+    <message><source>Event {column} must contain only 0 and 1 or boolean values; 1 means event and 0 means censored.</source><translation>Event {column} must contain only 0 and 1 or boolean values; 1 means event and 0 means censored.</translation></message>
+    <message><source>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</source><translation>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</translation></message>
+    <message><source>Only {count} complete rows are available, which is too few to fit this model.</source><translation>Only {count} complete rows are available, which is too few to fit this model.</translation></message>
+    <message>    <source>There are too few events relative to the model terms to estimate this model.</source><translation>There are too few events relative to the model terms, or no censored rows, to estimate this model.</translation></message>
+    <message><source>The predictor {column} has the same value in every complete row.</source><translation>The predictor {column} has the same value in every complete row.</translation></message>
+    <message><source>Some predictors are exact linear combinations of others, so the model cannot be estimated.</source><translation>Some predictors are exact linear combinations of others, so the model cannot be estimated.</translation></message>
+    <message><source>The model could not be fitted reliably. Check for sparse events, separation, redundant predictors, or numerical problems.</source><translation>The model could not be fitted reliably. Check for sparse events, separation, redundant predictors, or numerical problems.</translation></message>
+    <message><source>Term</source><translation>Term</translation></message>
+    <message><source>Coefficient</source><translation>Coefficient</translation></message>
+    <message><source>Hazard ratio</source><translation>Hazard ratio</translation></message>
+    <message><source>95% hazard-ratio CI</source><translation>95% hazard-ratio CI</translation></message>
+    <message><source>p-value</source><translation>p-value</translation></message>
+    <message><source>(Intercept)</source><translation>(Intercept)</translation></message>
+    <message><source>&lt;b&gt;Cox proportional-hazards regression&lt;/b&gt;</source><translation>&lt;b&gt;Cox proportional-hazards regression&lt;/b&gt;</translation></message>
+    <message><source>Duration: &lt;b&gt;{duration}&lt;/b&gt;; event: &lt;b&gt;{event}&lt;/b&gt;</source><translation>Duration: &lt;b&gt;{duration}&lt;/b&gt;; event: &lt;b&gt;{event}&lt;/b&gt;</translation></message>
+    <message><source>Event coding: 1 = event; 0 = censored.</source><translation>Event coding: 1 = event; 0 = censored.</translation></message>
+    <message><source>Rows used: {used} ({dropped} excluded by listwise missing-value handling)</source><translation>Rows used: {used} ({dropped} excluded by listwise missing-value handling)</translation></message>
+    <message><source>Events: {events}; censored: {censored}</source><translation>Events: {events}; censored: {censored}</translation></message>
+    <message><source>Reference for {column}: {level}</source><translation>Reference for {column}: {level}</translation></message>
+    <message><source>Efron method was used to handle tied event times.</source><translation>Efron method was used to handle tied event times.</translation></message>
+    <message><source>The proportional-hazards assumption was not assessed.</source><translation>The proportional-hazards assumption was not assessed.</translation></message>
+</context>
+</TS>

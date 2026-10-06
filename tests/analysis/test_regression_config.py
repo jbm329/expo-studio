@@ -8,6 +8,7 @@ from expo_jbm329.gui.dialogs.analysis.column_combo_box import exclusion_tooltip
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
 from expo_jbm329.services.analysis.regression import MAX_PREDICTORS, RegressionResult, analyze_regression
 from expo_jbm329.services.analysis.regression_glm import GeneralizedTargetColumns, RegressionModel
+from expo_jbm329.services.analysis.survival import SurvivalColumns
 
 
 def _frame() -> pd.DataFrame:
@@ -298,3 +299,49 @@ def test_changing_model_refits_when_predictors_are_already_applied():
     assert widget.model_configuration() == (RegressionModel.LOGISTIC, "g", ("x",))
     assert requested == [()]
     assert changed == []
+
+
+def test_cox_selectors_exclude_both_outcomes_and_wait_for_apply():
+    columns = SurvivalColumns(durations=("duration", "event"), events=("event", "flag"))
+    df = _frame()
+    df["duration"] = np.arange(1, len(df) + 1, dtype=float)
+    df["event"] = np.arange(len(df)) % 2
+    df["flag"] = np.arange(len(df)) % 2 == 0
+    result = analyze_regression(df)
+    widget = RegressionConfigWidget(result, survival_columns=columns)
+    requested = _record(widget.model_requested)
+    changed = _record(widget.configuration_changed)
+    model_combo = widget._model_combo  # noqa: SLF001
+    model_combo.setCurrentIndex(model_combo.findData(RegressionModel.COX.value))
+
+    assert requested == []
+    assert widget.current_model() is RegressionModel.COX
+    assert widget.current_duration() == "duration"
+    assert widget.current_event() == "event"
+    assert not _is_enabled(_item(widget, "duration"))
+    assert not _is_enabled(_item(widget, "event"))
+    assert widget.current_duration() not in widget._event_combo.eligible_columns()  # noqa: SLF001
+    assert changed == [()]
+
+    _set_checked(widget, "x", True)
+    assert requested == []
+    widget._apply_button.click()  # noqa: SLF001
+    assert requested == [()]
+
+
+def test_changing_cox_outcomes_invalidates_configuration_without_starting_a_fit():
+    columns = SurvivalColumns(durations=("duration", "duration2"), events=("event", "flag"))
+    df = _frame()
+    df["duration"] = np.arange(1, len(df) + 1, dtype=float)
+    df["duration2"] = np.arange(2, len(df) + 2, dtype=float)
+    df["event"] = np.arange(len(df)) % 2
+    df["flag"] = np.arange(len(df)) % 2 == 0
+    widget = RegressionConfigWidget(analyze_regression(df), survival_columns=columns)
+    widget._model_combo.setCurrentIndex(widget._model_combo.findData(RegressionModel.COX.value))  # noqa: SLF001
+    revision = widget.configuration_revision()
+    requested = _record(widget.model_requested)
+    widget._duration_combo.setCurrentIndex(widget._duration_combo.findText("duration2"))  # noqa: SLF001
+
+    assert widget.current_duration() == "duration2"
+    assert widget.configuration_revision() > revision
+    assert requested == []

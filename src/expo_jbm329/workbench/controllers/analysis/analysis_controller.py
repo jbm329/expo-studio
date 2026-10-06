@@ -30,6 +30,7 @@ from expo_jbm329.gui.dialogs.analysis.regression_glm_view import GeneralizedRegr
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
+from expo_jbm329.gui.dialogs.analysis.survival_view import SurvivalRegressionView
 from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigWidget
 from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
@@ -74,6 +75,12 @@ from expo_jbm329.services.analysis.regression_glm import (
     initialize_generalized_targets,
 )
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
+from expo_jbm329.services.analysis.survival import (
+    SurvivalColumns,
+    SurvivalResult,
+    analyze_cox_regression,
+    initialize_survival_columns,
+)
 from expo_jbm329.services.analysis.timeseries import analyze_time_series, initialize_time_series
 from expo_jbm329.utils.i18n_utils import tr
 
@@ -183,10 +190,11 @@ class _HypothesisTestsDefaults:
 
 @dataclass(frozen=True, slots=True)
 class _RegressionDefaults:
-    """Linear regression defaults and target metadata for all regression families."""
+    """Regression defaults and eligible outcome metadata for all model families."""
 
     linear: RegressionResult
     generalized_targets: GeneralizedTargetColumns
+    survival_columns: SurvivalColumns
 
 
 @dataclass(frozen=True, slots=True)
@@ -624,23 +632,32 @@ class AnalysisController:
         ):
             return content, None
 
-        config = RegressionConfigWidget(regression, defaults.generalized_targets)
+        config = RegressionConfigWidget(regression, defaults.generalized_targets, defaults.survival_columns)
 
         def _handle_model_requested() -> None:
             configuration = config.model_configuration()
             model, target, predictors = configuration
-            scope_parts = (
-                (target, *predictors) if model is RegressionModel.LINEAR else (model.value, target, *predictors)
-            )
+            event = config.current_event() if model is RegressionModel.COX else ""
+            revision = config.configuration_revision()
+            if model is RegressionModel.LINEAR:
+                scope_parts = (target, *predictors)
+            elif model is RegressionModel.COX:
+                scope_parts = (model.value, target, event, *predictors)
+            else:
+                scope_parts = (model.value, target, *predictors)
 
             def _compute(df: pd.DataFrame, _callbacks: _JobCallbacks) -> object:
                 if model is RegressionModel.LINEAR:
                     return analyze_regression(df, target, predictors)
+                if model is RegressionModel.COX:
+                    return analyze_cox_regression(df, target, event, predictors)
                 return analyze_generalized_regression(df, model, target, predictors)
 
             def _apply_result(computed: object) -> None:
                 if model is RegressionModel.LINEAR:
                     dialog.set_content_widget(RegressionView(cast("RegressionResult", computed)))
+                elif model is RegressionModel.COX:
+                    dialog.set_content_widget(SurvivalRegressionView(cast("SurvivalResult", computed)))
                 else:
                     dialog.set_content_widget(GeneralizedRegressionView(cast("GeneralizedRegressionResult", computed)))
 
@@ -650,7 +667,12 @@ class AnalysisController:
                 scope_suffix=":".join(scope_parts),
                 compute=_compute,
                 apply_result=_apply_result,
-                is_stale=lambda: config.model_configuration() != configuration,
+                is_stale=lambda: (
+                    dialog.config_widget() is not config
+                    or config.configuration_revision() != revision
+                    or config.model_configuration() != configuration
+                    or (model is RegressionModel.COX and config.current_event() != event)
+                ),
             )
 
         config.configuration_changed.connect(lambda: dialog.set_content_widget(self._apply_prompt()))
@@ -663,6 +685,7 @@ class AnalysisController:
         return _RegressionDefaults(
             linear=initialize_regression(df),
             generalized_targets=initialize_generalized_targets(df),
+            survival_columns=initialize_survival_columns(df),
         )
 
     @staticmethod

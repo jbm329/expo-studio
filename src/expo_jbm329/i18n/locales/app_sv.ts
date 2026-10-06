@@ -8181,4 +8181,43 @@ Snabbkommando: Ctrl+Z</translation>
         <source>Analyze data</source>
         <translation>Analysera data</translation>
     </message>
-</context></TS>
+</context>
+<context>
+    <name>RegressionConfigWidget</name>
+    <message><source>Cox proportional-hazards regression</source><translation>Cox-regression med proportionella hazarder</translation></message>
+    <message><source>Duration</source><translation>Duration</translation></message>
+    <message><source>Event (1 = event; 0 = censored)</source><translation>Händelse (1 = händelse; 0 = censurerad)</translation></message>
+    <message><source>This column is an outcome and cannot be a predictor.</source><translation>Kolumnen är ett utfall och kan inte användas som prediktor.</translation></message>
+    <message><source>Cox regression needs distinct numeric duration and binary event columns.</source><translation>Cox-regression kräver olika numeriska duration- och binära händelsekolumner.</translation></message>
+</context>
+<context>
+    <name>SurvivalRegressionView</name>
+    <message><source>Select a duration column for Cox regression.</source><translation>Välj en durationkolumn för Cox-regression.</translation></message>
+    <message><source>Select a binary event column for Cox regression.</source><translation>Välj en binär händelsekolumn för Cox-regression.</translation></message>
+    <message><source>Select one or more predictors and click Apply.</source><translation>Välj en eller flera prediktorer och klicka på Tillämpa.</translation></message>
+    <message><source>Select at most {maximum} predictors.</source><translation>Välj högst {maximum} prediktorer.</translation></message>
+    <message><source>Choose valid, distinct duration and event columns and other columns as predictors.</source><translation>Välj giltiga, olika duration- och händelsekolumner samt andra kolumner som prediktorer.</translation></message>
+    <message><source>Duration {column} contains a non-missing value that is not finite and strictly positive.</source><translation>Duration {column} innehåller ett värde som inte saknas men som inte är ändligt och strikt positivt.</translation></message>
+    <message><source>Event {column} must contain only 0 and 1 or boolean values; 1 means event and 0 means censored.</source><translation>Händelsen {column} får endast innehålla 0 och 1 eller booleska värden; 1 betyder händelse och 0 betyder censurerad.</translation></message>
+    <message><source>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</source><translation>Modellen skulle ha fler än {maximum} termer efter dummy-kodning av kategoriska prediktorer. Ta bort prediktorer eller använd kolumner med färre nivåer.</translation></message>
+    <message><source>Only {count} complete rows are available, which is too few to fit this model.</source><translation>Endast {count} kompletta rader är tillgängliga, vilket är för få för att anpassa modellen.</translation></message>
+    <message><source>There are too few events relative to the model terms to estimate this model.</source><translation>Det finns för få händelser i förhållande till modellens termer för att skatta modellen.</translation></message>
+    <message><source>The predictor {column} has the same value in every complete row.</source><translation>Prediktorn {column} har samma värde i varje komplett rad.</translation></message>
+    <message><source>Some predictors are exact linear combinations of others, so the model cannot be estimated.</source><translation>Vissa prediktorer är exakta linjära kombinationer av andra, så modellen kan inte skattas.</translation></message>
+    <message><source>The model could not be fitted reliably. Check for sparse events, separation, redundant predictors, or numerical problems.</source><translation>Modellen kunde inte anpassas tillförlitligt. Kontrollera om händelserna är glesa, om separation eller redundanta prediktorer förekommer eller om det finns numeriska problem.</translation></message>
+    <message><source>Term</source><translation>Term</translation></message>
+    <message><source>Coefficient</source><translation>Koefficient</translation></message>
+    <message><source>Hazard ratio</source><translation>Hazardkvot</translation></message>
+    <message><source>95% hazard-ratio CI</source><translation>95 % KI för hazardkvot</translation></message>
+    <message><source>p-value</source><translation>p-värde</translation></message>
+    <message><source>(Intercept)</source><translation>(Intercept)</translation></message>
+    <message><source>&lt;b&gt;Cox proportional-hazards regression&lt;/b&gt;</source><translation>&lt;b&gt;Cox-regression med proportionella hazarder&lt;/b&gt;</translation></message>
+    <message><source>Duration: &lt;b&gt;{duration}&lt;/b&gt;; event: &lt;b&gt;{event}&lt;/b&gt;</source><translation>Duration: &lt;b&gt;{duration}&lt;/b&gt;; händelse: &lt;b&gt;{event}&lt;/b&gt;</translation></message>
+    <message><source>Event coding: 1 = event; 0 = censored.</source><translation>Händelsekodning: 1 = händelse; 0 = censurerad.</translation></message>
+    <message><source>Rows used: {used} ({dropped} excluded by listwise missing-value handling)</source><translation>Använda rader: {used} ({dropped} exkluderade genom komplettfallsanalys av saknade värden)</translation></message>
+    <message><source>Events: {events}; censored: {censored}</source><translation>Händelser: {events}; censurerade: {censored}</translation></message>
+    <message><source>Reference for {column}: {level}</source><translation>Referens för {column}: {level}</translation></message>
+    <message><source>Efron method was used to handle tied event times.</source><translation>Efrons metod användes för att hantera bundna händelsetider.</translation></message>
+    <message><source>The proportional-hazards assumption was not assessed.</source><translation>Antagandet om proportionella hazarder har inte utvärderats.</translation></message>
+</context>
+</TS>
