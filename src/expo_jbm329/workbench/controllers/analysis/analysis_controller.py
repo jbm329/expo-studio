@@ -22,6 +22,7 @@ from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_config import Multiv
 from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_view import MultivariateOutliersView
 from expo_jbm329.gui.dialogs.analysis.outliers_view import OutliersView
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
+from expo_jbm329.gui.dialogs.analysis.paired_comparison_view import PairedComparisonView
 from expo_jbm329.gui.dialogs.analysis.pca_config import PCAConfigWidget
 from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
@@ -56,6 +57,11 @@ from expo_jbm329.services.analysis.outliers import (
     initialize_outlier_summary,
 )
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
+from expo_jbm329.services.analysis.paired_comparison import (
+    PairedComparisonResult,
+    analyze_paired_comparison,
+    initialize_paired_comparison,
+)
 from expo_jbm329.services.analysis.pca import MIN_SELECTED_COLUMNS as PCA_MIN_SELECTED_COLUMNS
 from expo_jbm329.services.analysis.pca import analyze_pca, initialize_pca
 from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression, initialize_regression
@@ -164,6 +170,7 @@ class _HypothesisTestsDefaults:
 
     group_comparison: GroupComparisonResult
     chi_square: ChiSquareResult
+    paired_comparison: PairedComparisonResult
 
 
 @dataclass(frozen=True, slots=True)
@@ -366,13 +373,20 @@ class AnalysisController:
         replaces the previous test's result with the prompt again.
         """
         defaults = cast("_HypothesisTestsDefaults", result)
-        config = HypothesisTestsConfigWidget(defaults.group_comparison, defaults.chi_square)
+        config = HypothesisTestsConfigWidget(
+            defaults.group_comparison,
+            defaults.chi_square,
+            defaults.paired_comparison,
+        )
 
         def _unapplied_content() -> QWidget:
             test = config.selected_test()
-            initial: GroupComparisonResult | ChiSquareResult = (
-                defaults.group_comparison if test is HypothesisTest.GROUP_COMPARISON else defaults.chi_square
-            )
+            initial_by_test: dict[HypothesisTest, GroupComparisonResult | ChiSquareResult | PairedComparisonResult] = {
+                HypothesisTest.GROUP_COMPARISON: defaults.group_comparison,
+                HypothesisTest.CHI_SQUARE: defaults.chi_square,
+                HypothesisTest.PAIRED_COMPARISON: defaults.paired_comparison,
+            }
+            initial = initial_by_test[test]
             if initial.error is None:
                 return self._apply_prompt()
             return self._render_hypothesis_test_content(test, initial)
@@ -403,20 +417,29 @@ class AnalysisController:
         return _HypothesisTestsDefaults(
             group_comparison=initialize_group_comparison(df),
             chi_square=initialize_chi_square(df),
+            paired_comparison=initialize_paired_comparison(df),
         )
 
     @staticmethod
     def _compute_hypothesis_test(
         df: pd.DataFrame,
         test: HypothesisTest,
-        selection: tuple[str, str] | None,
+        selection: tuple[str, ...] | None,
     ) -> object:
         """Compute one hypothesis test for `selection`, or its defaults when `None`."""
         match test:
             case HypothesisTest.GROUP_COMPARISON:
-                return analyze_group_comparison(df) if selection is None else analyze_group_comparison(df, *selection)
+                return (
+                    analyze_group_comparison(df)
+                    if selection is None
+                    else analyze_group_comparison(df, selection[0], selection[1])
+                )
             case HypothesisTest.CHI_SQUARE:
-                return analyze_chi_square(df) if selection is None else analyze_chi_square(df, *selection)
+                return (
+                    analyze_chi_square(df) if selection is None else analyze_chi_square(df, selection[0], selection[1])
+                )
+            case HypothesisTest.PAIRED_COMPARISON:
+                return analyze_paired_comparison(df, selection or ())
 
     @staticmethod
     def _render_hypothesis_test_content(test: HypothesisTest, result: object) -> QWidget:
@@ -426,6 +449,8 @@ class AnalysisController:
                 return GroupComparisonView(cast("GroupComparisonResult", result))
             case HypothesisTest.CHI_SQUARE:
                 return ChiSquareView(cast("ChiSquareResult", result))
+            case HypothesisTest.PAIRED_COMPARISON:
+                return PairedComparisonView(cast("PairedComparisonResult", result))
 
     @staticmethod
     def _compute_correlation(

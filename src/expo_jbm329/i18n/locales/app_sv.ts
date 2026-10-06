@@ -102,32 +102,32 @@
 <context>
     <name>AnalysisController</name>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="210"/>
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="217"/>
         <source>This analysis is not implemented yet.</source>
         <translation>Denna analys är inte implementerad än.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="211"/>
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="218"/>
         <source>An error occurred while generating this analysis.</source>
         <translation>Ett fel inträffade när den här analysen skulle köras.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="212"/>
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="219"/>
         <source>Running analysis…</source>
         <translation>Kör analys…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="213"/>
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="220"/>
         <source>generate analysis</source>
         <translation>generera analys</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="214"/>
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="221"/>
         <source>Analysis cancelled.</source>
         <translation>Analys avbruten.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="215"/>
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="222"/>
         <source>Choose settings and click Apply.</source>
         <translation>Välj inställningar och klicka på Tillämpa</translation>
     </message>
@@ -2946,72 +2946,72 @@ Fortsätt?</translation>
         <translation>Cohens d: {d}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="261"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="259"/>
         <source>&lt;b&gt;Student&apos;s t-test&lt;/b&gt; (assumes equal variances):</source>
         <translation>&lt;b&gt;Students t-test&lt;/b&gt; (antar lika varianser):</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="259"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="271"/>
         <source>&lt;b&gt;Mann-Whitney U&lt;/b&gt;:</source>
         <translation>&lt;b&gt;Mann-Whitneys U-test&lt;/b&gt;:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="260"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="272"/>
         <source>U = {u}, p = {p}</source>
         <translation>U = {u}, p = {p}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="264"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="276"/>
         <source>Rank-biserial correlation: {r}</source>
         <translation>Rank-biserial korrelation: {r}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="273"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="285"/>
         <source>&lt;b&gt;One-way ANOVA&lt;/b&gt; (assumes equal variances across groups):</source>
         <translation>&lt;b&gt;Envägs-ANOVA&lt;/b&gt; (antar lika varianser mellan grupper):</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="274"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="286"/>
         <source>F = {f}, p = {p}</source>
         <translation>F = {f}, p = {p}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="278"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="290"/>
         <source>Eta²: {eta}</source>
         <translation>Eta²: {eta}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="280"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="292"/>
         <source>&lt;b&gt;Kruskal-Wallis&lt;/b&gt; (does not assume equal variances):</source>
         <translation>&lt;b&gt;Kruskal-Wallis&lt;/b&gt; (antar inte lika varianser):</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="281"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="293"/>
         <source>H = {h}, p = {p}</source>
         <translation>H = {h}, p = {p}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="285"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="297"/>
         <source>Epsilon²: {eps}</source>
         <translation>Epsilon²: {eps}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="294"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="306"/>
         <source>⚠ At least one group&apos;s data does not appear normally distributed (or normality could not be tested) → the non-parametric result above is likely more reliable.</source>
         <translation>⚠ Data för minst en grupp verkar inte vara normalfördelade (eller så kunde normalitet inte testas) → det icke-parametriska resultatet ovan är sannolikt mer tillförlitligt.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="299"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="311"/>
         <source>→ Every group is consistent with a normal distribution → both results should agree. The parametric result above is typically more powerful.</source>
         <translation>→ Alla grupper är förenliga med en normalfördelning → båda resultaten bör ge samma slutsats. Det parametriska testet ovan har vanligtvis högre statistisk styrka.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="323"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="335"/>
         <source>⚠ Group &apos;{label}&apos; has fewer than 2 observations: its standard deviation and any statistic derived from it could not be computed.</source>
         <translation>⚠ Grupp &apos;{label}&apos; har färre än 2 observationer: dess standardavvikelse och all statistik som bygger på den kunde inte beräknas.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="327"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="339"/>
         <source>⚠ Group &apos;{label}&apos; has fewer than 3 observations: its normality could not be tested.</source>
         <translation>⚠ Grupp &apos;{label}&apos; har färre än 3 observationer: dess normalitet kunde inte testas.</translation>
     </message>
@@ -3019,27 +3019,32 @@ Fortsätt?</translation>
 <context>
     <name>HypothesisTestsConfigWidget</name>
     <message>
-        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="64"/>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="128"/>
         <source>Group comparison</source>
         <translation>Jämförelse mellan grupper</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="65"/>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="129"/>
         <source>Chi-square independence</source>
         <translation>Chi-två-oberoende</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="68"/>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="130"/>
+        <source>Paired comparison</source>
+        <translation>Parat test</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="133"/>
         <source>Test</source>
         <translation>Test</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="88"/>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="163"/>
         <source>Apply</source>
         <translation>Tillämpa</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="102"/>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="177"/>
         <source>This test is not available for the selected dataset.</source>
         <translation>Detta test är inte tillgängligt för det valda datasetet.</translation>
     </message>
@@ -4287,6 +4292,82 @@ Fortsätt?</translation>
         <location filename="../../gui/dialogs/analysis/pca_view.py" line="181"/>
         <source>Feature</source>
         <translation>Variabel</translation>
+    </message>
+</context>
+<context>
+    <name>PairedComparisonConfigWidget</name>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="56"/>
+        <source>Select at least two numeric columns. They are used in the order shown; each row is one subject.</source>
+        <translation>Välj minst två numeriska kolumner. De används i den ordning de visas; varje rad motsvarar en individ.</translation>
+    </message>
+</context>
+<context>
+    <name>PairedComparisonView</name>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="38"/>
+        <source>Wilcoxon signed-rank test</source>
+        <translation>Wilcoxons teckenrangtest</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="40"/>
+        <source>Friedman test</source>
+        <translation>Friedmans test</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="45"/>
+        <source>&lt;b&gt;{test}&lt;/b&gt;</source>
+        <translation>&lt;b&gt;{test}&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="46"/>
+        <source>Measurement columns: {columns}</source>
+        <translation>Mätkolumner: {columns}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="47"/>
+        <source>Test statistic = {statistic}, p = {p}</source>
+        <translation>Teststatistik = {statistic}, p = {p}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="51"/>
+        <source>Complete subjects: {complete} of {total}; excluded for missing values: {excluded}</source>
+        <translation>Kompletta individer: {complete} av {total}; exkluderade på grund av saknade värden: {excluded}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="58"/>
+        <source>Kendall&apos;s W: {effect}</source>
+        <translation>Kendalls W: {effect}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="59"/>
+        <source>Rows are treated as paired subjects across the selected measurement columns.</source>
+        <translation>Raderna behandlas som parade individer mellan de valda mätkolumnerna.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="74"/>
+        <source>Select at least two numeric measurement columns.</source>
+        <translation>Välj minst två numeriska mätkolumner.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="75"/>
+        <source>The selected measurement columns are not valid numeric columns.</source>
+        <translation>De valda mätkolumnerna är inte giltiga numeriska kolumner.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="76"/>
+        <source>There are not enough subjects with complete measurements for this paired test.</source>
+        <translation>Det finns inte tillräckligt många individer med kompletta mätningar för det parade testet.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="79"/>
+        <source>The two measurements are identical for every complete subject; the Wilcoxon test is undefined.</source>
+        <translation>De två mätningarna är identiska för alla individer med kompletta värden; Wilcoxontestet är odefinierat.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="82"/>
+        <source>The selected measurements do not vary across occasions, so the Friedman test is undefined.</source>
+        <translation>De valda mätningarna varierar inte mellan tillfällena, så Friedmans test är odefinierat.</translation>
     </message>
 </context>
 <context>
@@ -7419,180 +7500,180 @@ Tid: {sec:.2f}s{sample}</translation>
         <translation>Deskriptiv statistik</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="110"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="114"/>
         <source>Continuous</source>
         <translation>Kontinuerliga</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="112"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="116"/>
         <source>Categorical</source>
         <translation>Kategoriska</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="203"/>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="119"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="207"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="123"/>
         <source>Column</source>
         <translation>Kolumn</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="205"/>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="120"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="209"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="124"/>
         <source>Count</source>
         <translation>Antal</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="121"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="125"/>
         <source>Missing</source>
         <translation>Saknade</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="122"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="126"/>
         <source>Mean</source>
         <translation>Medelvärde</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="123"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="127"/>
         <source>Median</source>
         <translation>Median</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="124"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="128"/>
         <source>Std Dev</source>
         <translation>Standardavvikelse</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="125"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="129"/>
         <source>Variance</source>
         <translation>Varians</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="126"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="130"/>
         <source>Min</source>
         <translation>Min</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="127"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="131"/>
         <source>Max</source>
         <translation>Max</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="128"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="132"/>
         <source>Range</source>
         <translation>Spann</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="129"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="133"/>
         <source>Q1</source>
         <translation>Q1</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="130"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="134"/>
         <source>Q3</source>
         <translation>Q3</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="131"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="135"/>
         <source>IQR</source>
         <translation>IQR</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="132"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="136"/>
         <source>Skewness</source>
         <translation>Skevhet</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="133"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="137"/>
         <source>Kurtosis</source>
         <translation>Kurtosis</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="134"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="138"/>
         <source>Reported summary</source>
         <translation>Redovisat mått</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="190"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="194"/>
         <source>Columns with more than {maximum} distinct values are omitted.</source>
         <translation>Kolumner med fler än {maximum} unika värden visas inte.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="204"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="208"/>
         <source>Category</source>
         <translation>Kategori</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="206"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="210"/>
         <source>Percent (non-missing)</source>
         <translation>Procent (icke-saknade)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="207"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="211"/>
         <source>Missing count</source>
         <translation>Antal saknade</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="212"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="216"/>
         <source>No non-missing values</source>
         <translation>Inga icke-saknade värden</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="293"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="297"/>
         <source>Distribution</source>
         <translation>Fördelning</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="303"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="307"/>
         <source>No numeric columns are available for distributions.</source>
         <translation>Inga numeriska kolumner är tillgängliga för fördelningsdiagram.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="323"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="327"/>
         <source>Normality testing applies to continuous variables.</source>
         <translation>Normalitetstestning gäller kontinuerliga variabler.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="365"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="369"/>
         <source>Not enough data to test for normality.</source>
         <translation>Inte tillräckligt med data för att testa normalfördelning.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="368"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="372"/>
         <source>&lt;b&gt;Shapiro-Wilk&lt;/b&gt;:</source>
         <translation>&lt;b&gt;Shapiro-Wilk&lt;/b&gt;:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="369"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="373"/>
         <source>W = {w}, p = {p}</source>
         <translation>W = {w}, p = {p}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="376"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="380"/>
         <source>→ Significant evidence against normality (α = 0.05).</source>
         <translation>→ Statistiskt signifikanta belägg mot normalfördelning (α = 0,05).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="378"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="382"/>
         <source>→ No significant evidence against normality (α = 0.05).</source>
         <translation>→ Inga statistiskt signifikanta belägg mot normalfördelning (α = 0,05).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="382"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="386"/>
         <source>⚠ Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</source>
         <translation>⚠ Antalet observationer överstiger {threshold}. P-värdet kan vara mindre tillförlitligt för mycket stora stickprov.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="406"/>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="392"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="410"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="396"/>
         <source>No data</source>
         <translation>Ingen data</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="400"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="404"/>
         <source>Histogram</source>
         <translation>Histogram</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="424"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="428"/>
         <source>Boxplot</source>
         <translation>Boxplot</translation>
     </message>

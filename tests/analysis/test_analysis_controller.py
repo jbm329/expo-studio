@@ -19,6 +19,7 @@ from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_config import Multiv
 from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_view import MultivariateOutliersView
 from expo_jbm329.gui.dialogs.analysis.outliers_view import OutliersView
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
+from expo_jbm329.gui.dialogs.analysis.paired_comparison_view import PairedComparisonView
 from expo_jbm329.gui.dialogs.analysis.pca_config import PCAConfigWidget
 from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
@@ -835,6 +836,38 @@ def test_applying_chi_square_runs_a_chi_square_background_job(dialog_factory):
     assert isinstance(dlg.content_widget(), ChiSquareView)
 
 
+def test_applying_paired_comparison_runs_and_renders_a_background_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = _hypothesis_tests_config(dlg)
+    _select_test(config, HypothesisTest.PAIRED_COMPARISON)
+
+    call = _apply_hypothesis_test(async_ops, dlg)
+
+    assert call["scope"] == "analysis:hypothesis_tests:paired_comparison:value:other"
+    _simulate_success(call)
+    assert isinstance(dlg.content_widget(), PairedComparisonView)
+    assert len(dlg.config_widgets) == 1
+
+
+def test_paired_comparison_excludes_incomplete_subjects_and_renders_result(dialog_factory):
+    df = pd.DataFrame({
+        "before": [1.0, 2.0, 3.0, None],
+        "after": [2.0, 3.0, 5.0, 9.0],
+        "group": ["A", "B", "A", "B"],
+    })
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory, df)
+    _select_test(_hypothesis_tests_config(dlg), HypothesisTest.PAIRED_COMPARISON)
+
+    _simulate_success(_apply_hypothesis_test(async_ops, dlg))
+
+    view = dlg.content_widget()
+    assert isinstance(view, PairedComparisonView)
+    labels = view.findChildren(QLabel)
+    assert any("Complete subjects: 3 of 4" in label.text() for label in labels)
+
+
 def test_switching_back_to_group_comparison_keeps_its_pending_selection(dialog_factory):
     async_ops = DummyAsyncOps()
     ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
@@ -875,6 +908,21 @@ def test_stale_group_comparison_result_is_discarded_after_switching_test(dialog_
     _simulate_success(group_comparison_call)
 
     assert len(dlg.content_widgets) == content_widgets_before  # stale, dropped
+    _assert_apply_prompt(ctrl, dlg)
+
+
+def test_stale_paired_result_is_discarded_after_switching_test(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = _hypothesis_tests_config(dlg)
+    _select_test(config, HypothesisTest.PAIRED_COMPARISON)
+    paired_call = _apply_hypothesis_test(async_ops, dlg)
+
+    _select_test(config, HypothesisTest.CHI_SQUARE)
+    content_widgets_before = len(dlg.content_widgets)
+    _simulate_success(paired_call)
+
+    assert len(dlg.content_widgets) == content_widgets_before
     _assert_apply_prompt(ctrl, dlg)
 
 
