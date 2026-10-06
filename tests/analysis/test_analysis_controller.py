@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 
+import numpy as np
 import pandas as pd
 import pytest
 from PyQt6.QtCore import Qt
@@ -23,6 +24,7 @@ from expo_jbm329.gui.dialogs.analysis.paired_comparison_view import PairedCompar
 from expo_jbm329.gui.dialogs.analysis.pca_config import PCAConfigWidget
 from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
+from expo_jbm329.gui.dialogs.analysis.regression_glm_view import GeneralizedRegressionView
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
@@ -35,6 +37,7 @@ from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutl
 from expo_jbm329.services.analysis.outliers import OutlierMethod
 from expo_jbm329.services.analysis.pca import PCAError
 from expo_jbm329.services.analysis.regression import RegressionError
+from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.timeseries import DecompositionModel
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
@@ -1371,16 +1374,19 @@ def test_regression_initializes_without_a_background_job_or_busy_overlay(dialog_
     assert view.result().error is RegressionError.NO_PREDICTORS_SELECTED
     assert view.result().target == "y"
     config = _regression_config(dlg)
-    assert config.model_configuration() == ("y", ())
+    assert config.model_configuration() == (RegressionModel.LINEAR, "y", ())
 
 
-def test_regression_without_numeric_columns_has_no_config(dialog_factory):
+def test_regression_without_numeric_columns_can_still_configure_binary_models(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_regression(async_ops, dialog_factory, df=pd.DataFrame({"g": ["a", "b", "a"]}))
 
     assert async_ops.calls == []
     assert _regression_view(dlg).result().error is RegressionError.NO_NUMERIC_COLUMN
-    assert dlg.config_widgets[-1] is None
+    config = _regression_config(dlg)
+    _select_model = config._model_combo  # noqa: SLF001
+    _select_model.setCurrentIndex(_select_model.findData(RegressionModel.LOGISTIC.value))
+    assert config.current_target() == "g"
 
 
 def test_failing_initializer_shows_error_placeholder_without_a_job(dialog_factory, monkeypatch):
@@ -1458,6 +1464,84 @@ def test_stale_regression_result_is_discarded(dialog_factory):
 
     _simulate_success(second)
     assert _regression_view(dlg).result().predictors == ("z",)
+
+
+def test_applying_logistic_regression_uses_glm_view_and_keeps_linear_defaults(dialog_factory):
+    rng = np.random.default_rng(21)
+    size = 120
+    x = rng.normal(size=size)
+    probability = 1 / (1 + np.exp(-(-0.2 + 0.7 * x)))
+    df = pd.DataFrame({
+        "binary": rng.binomial(1, probability, size=size),
+        "x": x,
+        "z": rng.normal(size=size),
+    })
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    config._model_combo.setCurrentIndex(  # noqa: SLF001
+        config._model_combo.findData(RegressionModel.LOGISTIC.value)  # noqa: SLF001
+    )
+    assert config.current_model() is RegressionModel.LOGISTIC
+    assert config.current_target() == "binary"
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:regression:logistic:binary:x"
+    _simulate_success(call)
+
+    view = dlg.content_widget()
+    assert isinstance(view, GeneralizedRegressionView)
+    assert view.result().error is None
+    assert view.result().model is RegressionModel.LOGISTIC
+    assert view.result().target == "binary"
+    assert dlg.config_widgets[-1] is config
+
+
+def test_applying_poisson_regression_keeps_selected_model(dialog_factory):
+    rng = np.random.default_rng(22)
+    size = 120
+    x = rng.normal(size=size)
+    df = pd.DataFrame({"count": rng.poisson(np.exp(0.3 + 0.4 * x)), "x": x})
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    config._model_combo.setCurrentIndex(  # noqa: SLF001
+        config._model_combo.findData(RegressionModel.POISSON.value)  # noqa: SLF001
+    )
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    view = dlg.content_widget()
+    assert isinstance(view, GeneralizedRegressionView)
+    assert view.result().error is None
+    assert view.result().model is RegressionModel.POISSON
+
+
+def test_stale_glm_result_is_discarded_after_switching_models(dialog_factory):
+    rng = np.random.default_rng(23)
+    size = 120
+    x = rng.normal(size=size)
+    probability = 1 / (1 + np.exp(-(-0.2 + 0.7 * x)))
+    df = pd.DataFrame({"binary": rng.binomial(1, probability, size=size), "x": x, "z": rng.normal(size=size)})
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    config._model_combo.setCurrentIndex(  # noqa: SLF001
+        config._model_combo.findData(RegressionModel.LOGISTIC.value)  # noqa: SLF001
+    )
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    stale_call = async_ops.last_call
+
+    config._model_combo.setCurrentIndex(  # noqa: SLF001
+        config._model_combo.findData(RegressionModel.LINEAR.value)  # noqa: SLF001
+    )
+    _simulate_success(stale_call)
+
+    _assert_apply_prompt(ctrl, dlg)
 
 
 # ----------------------------------------------------------------------

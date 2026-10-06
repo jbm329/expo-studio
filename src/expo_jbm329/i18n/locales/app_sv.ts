@@ -100,6 +100,164 @@
     </message>
 </context>
 <context>
+    <name>GeneralizedRegressionView</name>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="75"/>
+        <source>Select an outcome column for this regression model.</source>
+        <translation>Välj en utfallskolumn för den här regressionsmodellen.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="77"/>
+        <source>The selected outcome is invalid. Logistic regression needs two outcome levels; count regression needs non-negative integer values.</source>
+        <translation>Det valda utfallet är ogiltigt. Logistisk regression kräver två utfallsnivåer; regression för räknevariabler kräver icke-negativa heltalsvärden.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="82"/>
+        <source>Select one or more predictors and click Apply.</source>
+        <translation>Markera en eller flera prediktorer och klicka på Tillämpa.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="84"/>
+        <source>Select at most {maximum} predictors.</source>
+        <translation>Markera högst {maximum} prediktorer.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="86"/>
+        <source>Choose a valid outcome and one or more other columns as predictors.</source>
+        <translation>Välj ett giltigt utfall och en eller flera andra kolumner som prediktorer.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="88"/>
+        <source>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</source>
+        <translation>Modellen skulle ha fler än {maximum} termer efter att kategoriska prediktorer dummy-kodats. Ta bort prediktorer eller använd kolumner med färre nivåer.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="93"/>
+        <source>Only {count} complete rows are available, which is too few to fit this model.</source>
+        <translation>Endast {count} kompletta rader är tillgängliga, vilket är för få för att anpassa modellen.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="97"/>
+        <source>The outcome {column} has only one value in the complete rows.</source>
+        <translation>Utfallet {column} har bara ett värde bland de kompletta raderna.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="99"/>
+        <source>The predictor {column} has the same value in every complete row.</source>
+        <translation>Prediktorn {column} har samma värde i alla kompletta rader.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="101"/>
+        <source>Some predictors are exact linear combinations of others, so the model cannot be estimated.</source>
+        <translation>Vissa prediktorer är exakta linjära kombinationer av andra, så modellen kan inte skattas.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="105"/>
+        <source>The model could not be fitted. Check for sparse outcomes, separation, or redundant predictors.</source>
+        <translation>Modellen kunde inte anpassas. Kontrollera om utfallet är glest, om separation förekommer eller om prediktorer är redundanta.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="149"/>
+        <source>Linear regression</source>
+        <translation>Linjär regression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="150"/>
+        <source>Logistic regression</source>
+        <translation>Logistisk regression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="155"/>
+        <source>Poisson regression</source>
+        <translation>Poissonregression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="158"/>
+        <source>Negative binomial regression</source>
+        <translation>Negativ binomial regression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="161"/>
+        <source>&lt;b&gt;{model}&lt;/b&gt;</source>
+        <translation>&lt;b&gt;{model}&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="162"/>
+        <source>Target: &lt;b&gt;{target}&lt;/b&gt;</source>
+        <translation>Målvariabel: &lt;b&gt;{target}&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="163"/>
+        <source>Rows used: {used} ({dropped} dropped because of missing values)</source>
+        <translation>Använda rader: {used} ({dropped} borttagna på grund av saknade värden)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="114"/>
+        <source>Odds ratio</source>
+        <translation>Oddskvot</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="116"/>
+        <source>Rate ratio</source>
+        <translation>Incidenskvot</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="119"/>
+        <source>Term</source>
+        <translation>Term</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="120"/>
+        <source>Coefficient</source>
+        <translation>Koefficient</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="122"/>
+        <source>95% effect CI</source>
+        <translation>95 % KI för effekt</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="123"/>
+        <source>p-value</source>
+        <translation>p-värde</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="132"/>
+        <source>(Intercept)</source>
+        <translation>(Intercept)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="149"/>
+        <source>Outcome coding: {zero} = 0; {one} = 1.</source>
+        <translation>Utfallskodning: {zero} = 0; {one} = 1.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="171"/>
+        <source>Log-likelihood = {value}; McFadden pseudo R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</source>
+        <translation>Log-likelihood = {value}; McFaddens pseudo-R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="175"/>
+        <source>AIC = {aic}</source>
+        <translation>AIC = {aic}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="179"/>
+        <source>Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial.</source>
+        <translation>Pearson-dispersion = {value}, över riktvärdet {threshold}; överväg negativ binomial regression.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="183"/>
+        <source>Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion.</source>
+        <translation>Pearson-dispersion = {value}; den överskrider inte riktvärdet {threshold} för överdispersion.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="192"/>
+        <source>This diagnostic is advisory; the selected model was not changed.</source>
+        <translation>Diagnostiken är vägledande; den valda modellen ändrades inte.</translation>
+    </message>
+</context>
+<context>
     <name>AnalysisController</name>
     <message>
         <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="217"/>
@@ -4691,6 +4849,36 @@ Tips: {error_hint}</translation>
 </context>
 <context>
     <name>RegressionConfigWidget</name>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_config.py" line="80"/>
+        <source>Linear regression</source>
+        <translation>Linjär regression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_config.py" line="81"/>
+        <source>Logistic regression</source>
+        <translation>Logistisk regression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_config.py" line="82"/>
+        <source>Poisson regression</source>
+        <translation>Poissonregression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_config.py" line="83"/>
+        <source>Negative binomial regression</source>
+        <translation>Negativ binomial regression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_config.py" line="89"/>
+        <source>Model</source>
+        <translation>Modell</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_config.py" line="227"/>
+        <source>No eligible target columns are available for this model.</source>
+        <translation>Inga lämpliga utfallskolumner är tillgängliga för den här modellen.</translation>
+    </message>
     <message>
         <location filename="../../gui/dialogs/analysis/regression_config.py" line="72"/>
         <source>Target</source>

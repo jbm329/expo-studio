@@ -339,7 +339,7 @@ def initialize_regression(df: pd.DataFrame) -> RegressionResult:
 
 
 @dataclass(frozen=True, slots=True)
-class _Design:
+class RegressionDesign:
     """The model's design matrix and the terms its columns represent."""
 
     matrix: np.ndarray
@@ -387,11 +387,11 @@ def _categorical_terms(column: str, values: pd.Series) -> tuple[list[np.ndarray]
     return dummies, labels, CategoricalReference(column, str(reference), len(levels))
 
 
-def _build_design(
+def build_regression_design(
     data: pd.DataFrame,
     predictors: tuple[str, ...],
     kinds: dict[str, PredictorKind],
-) -> _Design:
+) -> RegressionDesign:
     """Build the design matrix (intercept first) for NaN-free `data`."""
     matrix_columns: list[np.ndarray] = [np.ones(len(data))]
     term_kinds: list[TermKind] = [TermKind.INTERCEPT]
@@ -414,7 +414,7 @@ def _build_design(
         term_levels.extend(labels)
         references.append(reference)
 
-    return _Design(
+    return RegressionDesign(
         matrix=np.column_stack(matrix_columns),
         kinds=tuple(term_kinds),
         columns=tuple(term_columns),
@@ -638,7 +638,7 @@ def analyze_regression(
             error_column=constant_column,
         )
 
-    design = _build_design(data, requested, kinds)
+    design = build_regression_design(data, requested, kinds)
     y = data[chosen_target].to_numpy(dtype="float64")
     with warnings.catch_warnings():
         # Degenerate fits are reported via structured errors instead.
@@ -663,7 +663,7 @@ def analyze_regression(
 
 def _fitted_result(
     fit: Any,  # noqa: ANN401 - statsmodels results are untyped
-    design: _Design,
+    design: RegressionDesign,
     y: np.ndarray,
     *,
     target: str,

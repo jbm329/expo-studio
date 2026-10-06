@@ -26,6 +26,7 @@ from expo_jbm329.gui.dialogs.analysis.paired_comparison_view import PairedCompar
 from expo_jbm329.gui.dialogs.analysis.pca_config import PCAConfigWidget
 from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
+from expo_jbm329.gui.dialogs.analysis.regression_glm_view import GeneralizedRegressionView
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
@@ -65,6 +66,13 @@ from expo_jbm329.services.analysis.paired_comparison import (
 from expo_jbm329.services.analysis.pca import MIN_SELECTED_COLUMNS as PCA_MIN_SELECTED_COLUMNS
 from expo_jbm329.services.analysis.pca import analyze_pca, initialize_pca
 from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression, initialize_regression
+from expo_jbm329.services.analysis.regression_glm import (
+    GeneralizedRegressionResult,
+    GeneralizedTargetColumns,
+    RegressionModel,
+    analyze_generalized_regression,
+    initialize_generalized_targets,
+)
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
 from expo_jbm329.services.analysis.timeseries import analyze_time_series, initialize_time_series
 from expo_jbm329.utils.i18n_utils import tr
@@ -174,6 +182,14 @@ class _HypothesisTestsDefaults:
 
 
 @dataclass(frozen=True, slots=True)
+class _RegressionDefaults:
+    """Linear regression defaults and target metadata for all regression families."""
+
+    linear: RegressionResult
+    generalized_targets: GeneralizedTargetColumns
+
+
+@dataclass(frozen=True, slots=True)
 class _CorrelationOutcome:
     """A correlation matrix plus the detail of its selected pair.
 
@@ -267,7 +283,7 @@ class AnalysisController:
             AnalysisCategory.REGRESSION: _CategoryHandler(
                 compute=_ignore_callbacks(analyze_regression),
                 render=self._render_regression,
-                initialize=initialize_regression,
+                initialize=self._initialize_regression,
             ),
             AnalysisCategory.OUTLIERS: _CategoryHandler(
                 compute=_ignore_callbacks(self._compute_outliers),
@@ -592,35 +608,62 @@ class AnalysisController:
         )
 
     def _render_regression(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
-        """Render the Linear Regression view and its target/predictor config.
+        """Render regression model results and the shared target/predictor config.
 
-        Must run on the GUI thread. The initial result has no predictors
-        selected, so the view prompts the user to choose some. Like
-        Hypothesis Tests, the configuration determines what to compute: a
-        target change or applied predictor selection refits the model in
-        a background job replacing only the content pane.
+        Must run on the GUI thread. Linear regression remains the default;
+        model changes and applied predictor selections refit in a background
+        job without recreating the configuration widget.
         """
-        regression = cast("RegressionResult", result)
+        defaults = cast("_RegressionDefaults", result)
+        regression = defaults.linear
         content = RegressionView(regression)
-        if regression.error is RegressionError.NO_NUMERIC_COLUMN:
+        if (
+            regression.error is RegressionError.NO_NUMERIC_COLUMN
+            and not defaults.generalized_targets.binary
+            and not defaults.generalized_targets.count
+        ):
             return content, None
 
-        config = RegressionConfigWidget(regression)
+        config = RegressionConfigWidget(regression, defaults.generalized_targets)
 
         def _handle_model_requested() -> None:
             configuration = config.model_configuration()
-            target, predictors = configuration
+            model, target, predictors = configuration
+            scope_parts = (
+                (target, *predictors) if model is RegressionModel.LINEAR else (model.value, target, *predictors)
+            )
+
+            def _compute(df: pd.DataFrame, _callbacks: _JobCallbacks) -> object:
+                if model is RegressionModel.LINEAR:
+                    return analyze_regression(df, target, predictors)
+                return analyze_generalized_regression(df, model, target, predictors)
+
+            def _apply_result(computed: object) -> None:
+                if model is RegressionModel.LINEAR:
+                    dialog.set_content_widget(RegressionView(cast("RegressionResult", computed)))
+                else:
+                    dialog.set_content_widget(GeneralizedRegressionView(cast("GeneralizedRegressionResult", computed)))
+
             self._recompute_content(
                 dialog,
                 category=AnalysisCategory.REGRESSION,
-                scope_suffix=":".join((target, *predictors)),
-                compute=lambda df, _callbacks: analyze_regression(df, target, predictors),
-                apply_result=lambda r: dialog.set_content_widget(RegressionView(cast("RegressionResult", r))),
+                scope_suffix=":".join(scope_parts),
+                compute=_compute,
+                apply_result=_apply_result,
                 is_stale=lambda: config.model_configuration() != configuration,
             )
 
+        config.configuration_changed.connect(lambda: dialog.set_content_widget(self._apply_prompt()))
         config.model_requested.connect(_handle_model_requested)
         return content, config
+
+    @staticmethod
+    def _initialize_regression(df: pd.DataFrame) -> _RegressionDefaults:
+        """Build configuration defaults for linear, binary and count regression."""
+        return _RegressionDefaults(
+            linear=initialize_regression(df),
+            generalized_targets=initialize_generalized_targets(df),
+        )
 
     @staticmethod
     def _compute_outliers(

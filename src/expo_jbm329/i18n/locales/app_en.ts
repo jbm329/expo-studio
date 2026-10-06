@@ -4604,6 +4604,36 @@ Hint: {error_hint}</source>
 </context><context>
     <name>RegressionConfigWidget</name>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="80" />
+        <source>Linear regression</source>
+        <translation>Linear regression</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="81" />
+        <source>Logistic regression</source>
+        <translation>Logistic regression</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="82" />
+        <source>Poisson regression</source>
+        <translation>Poisson regression</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="83" />
+        <source>Negative binomial regression</source>
+        <translation>Negative binomial regression</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="89" />
+        <source>Model</source>
+        <translation>Model</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="227" />
+        <source>No eligible target columns are available for this model.</source>
+        <translation>No eligible target columns are available for this model.</translation>
+    </message>
+    <message>
         <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="72" />
         <source>Target</source>
         <translation type="unfinished" />
@@ -4964,6 +4994,163 @@ Hint: {error_hint}</source>
         <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="488" />
         <source>Standardized residual</source>
         <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>GeneralizedRegressionView</name>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="75" />
+        <source>Select an outcome column for this regression model.</source>
+        <translation>Select an outcome column for this regression model.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="77" />
+        <source>The selected outcome is invalid. Logistic regression needs two outcome levels; count regression needs non-negative integer values.</source>
+        <translation>The selected outcome is invalid. Logistic regression needs two outcome levels; count regression needs non-negative integer values.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="82" />
+        <source>Select one or more predictors and click Apply.</source>
+        <translation>Select one or more predictors and click Apply.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="84" />
+        <source>Select at most {maximum} predictors.</source>
+        <translation>Select at most {maximum} predictors.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="86" />
+        <source>Choose a valid outcome and one or more other columns as predictors.</source>
+        <translation>Choose a valid outcome and one or more other columns as predictors.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="88" />
+        <source>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</source>
+        <translation>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="93" />
+        <source>Only {count} complete rows are available, which is too few to fit this model.</source>
+        <translation>Only {count} complete rows are available, which is too few to fit this model.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="97" />
+        <source>The outcome {column} has only one value in the complete rows.</source>
+        <translation>The outcome {column} has only one value in the complete rows.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="99" />
+        <source>The predictor {column} has the same value in every complete row.</source>
+        <translation>The predictor {column} has the same value in every complete row.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="101" />
+        <source>Some predictors are exact linear combinations of others, so the model cannot be estimated.</source>
+        <translation>Some predictors are exact linear combinations of others, so the model cannot be estimated.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="105" />
+        <source>The model could not be fitted. Check for sparse outcomes, separation, or redundant predictors.</source>
+        <translation>The model could not be fitted. Check for sparse outcomes, separation, or redundant predictors.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="149" />
+        <source>Linear regression</source>
+        <translation>Linear regression</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="150" />
+        <source>Logistic regression</source>
+        <translation>Logistic regression</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="155" />
+        <source>Poisson regression</source>
+        <translation>Poisson regression</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="158" />
+        <source>Negative binomial regression</source>
+        <translation>Negative binomial regression</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="161" />
+        <source>&lt;b&gt;{model}&lt;/b&gt;</source>
+        <translation>&lt;b&gt;{model}&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="162" />
+        <source>Target: &lt;b&gt;{target}&lt;/b&gt;</source>
+        <translation>Target: &lt;b&gt;{target}&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="163" />
+        <source>Rows used: {used} ({dropped} dropped because of missing values)</source>
+        <translation>Rows used: {used} ({dropped} dropped because of missing values)</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="114" />
+        <source>Odds ratio</source>
+        <translation>Odds ratio</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="116" />
+        <source>Rate ratio</source>
+        <translation>Rate ratio</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="119" />
+        <source>Term</source>
+        <translation>Term</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="120" />
+        <source>Coefficient</source>
+        <translation>Coefficient</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="122" />
+        <source>95% effect CI</source>
+        <translation>95% effect CI</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="123" />
+        <source>p-value</source>
+        <translation>p-value</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="132" />
+        <source>(Intercept)</source>
+        <translation>(Intercept)</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="149" />
+        <source>Outcome coding: {zero} = 0; {one} = 1.</source>
+        <translation>Outcome coding: {zero} = 0; {one} = 1.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="171" />
+        <source>Log-likelihood = {value}; McFadden pseudo R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</source>
+        <translation>Log-likelihood = {value}; McFadden pseudo R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="175" />
+        <source>AIC = {aic}</source>
+        <translation>AIC = {aic}</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="179" />
+        <source>Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial.</source>
+        <translation>Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="183" />
+        <source>Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion.</source>
+        <translation>Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="192" />
+        <source>This diagnostic is advisory; the selected model was not changed.</source>
+        <translation>This diagnostic is advisory; the selected model was not changed.</translation>
     </message>
 </context><context>
     <name>RestAuthWidget</name>

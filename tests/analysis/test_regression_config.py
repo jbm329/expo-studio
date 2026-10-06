@@ -7,6 +7,7 @@ from PyQt6.QtCore import Qt
 from expo_jbm329.gui.dialogs.analysis.column_combo_box import exclusion_tooltip
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
 from expo_jbm329.services.analysis.regression import MAX_PREDICTORS, RegressionResult, analyze_regression
+from expo_jbm329.services.analysis.regression_glm import GeneralizedTargetColumns, RegressionModel
 
 
 def _frame() -> pd.DataFrame:
@@ -59,6 +60,7 @@ def test_target_combo_lists_numeric_columns_and_selects_the_results_target():
 
     assert combo.eligible_columns() == ("y", "x", "z")
     assert widget.current_target() == "x"
+    assert widget.current_model() is RegressionModel.LINEAR
 
 
 def test_predictor_list_shows_numeric_then_categorical_then_excluded_columns():
@@ -94,7 +96,7 @@ def test_nothing_is_checked_initially_without_predictors():
 
     assert widget.checked_predictors() == ()
     assert widget.applied_predictors() == ()
-    assert widget.model_configuration() == ("y", ())
+    assert widget.model_configuration() == (RegressionModel.LINEAR, "y", ())
     assert not widget._apply_button.isEnabled()  # noqa: SLF001
     assert widget._selection_label.text() == widget.tr("None selected - select at least one.")  # noqa: SLF001
 
@@ -127,7 +129,7 @@ def test_the_results_predictors_are_checked_and_applied():
 
     assert widget.checked_predictors() == ("x", "g")  # list order
     assert widget.applied_predictors() == ("g", "x")
-    assert widget.model_configuration() == ("y", ("g", "x"))
+    assert widget.model_configuration() == (RegressionModel.LINEAR, "y", ("g", "x"))
     assert widget._apply_button.isEnabled()  # noqa: SLF001
 
 
@@ -167,7 +169,7 @@ def test_apply_applies_the_checked_predictors_and_emits():
     widget._apply_button.click()  # noqa: SLF001
 
     assert received == [()]
-    assert widget.model_configuration() == ("y", ("z",))
+    assert widget.model_configuration() == (RegressionModel.LINEAR, "y", ("z",))
 
 
 def test_apply_can_rerun_an_unchanged_selection():
@@ -216,7 +218,7 @@ def test_changing_the_target_swaps_the_disabled_item_and_emits():
     combo.setCurrentIndex(combo.findText("x"))
 
     assert received == [()]
-    assert widget.model_configuration() == ("x", ("z",))
+    assert widget.model_configuration() == (RegressionModel.LINEAR, "x", ("z",))
     assert widget.checked_predictors() == ("z",)
     assert not _is_enabled(_item(widget, "x"))
     assert _item(widget, "x").checkState() == Qt.CheckState.Unchecked
@@ -234,7 +236,7 @@ def test_changing_target_before_predictors_are_applied_does_not_request_a_model(
     combo.setCurrentIndex(combo.findText("x"))
 
     assert received == []
-    assert widget.model_configuration() == ("x", ())
+    assert widget.model_configuration() == (RegressionModel.LINEAR, "x", ())
 
 
 def test_clearing_the_target_is_ignored():
@@ -245,3 +247,54 @@ def test_clearing_the_target_is_ignored():
 
     assert received == []
     assert widget.applied_predictors() == ("x",)
+
+
+def test_model_selector_updates_target_eligibility_and_remembers_each_model_target():
+    targets = GeneralizedTargetColumns(binary=("g",), count=("x", "z"))
+    widget = RegressionConfigWidget(_result("y"), targets)
+    changed = _record(widget.configuration_changed)
+    model_combo = widget._model_combo  # noqa: SLF001
+    target_combo = widget._target_combo  # noqa: SLF001
+
+    model_combo.setCurrentIndex(model_combo.findData(RegressionModel.LOGISTIC.value))
+
+    assert widget.model_configuration() == (RegressionModel.LOGISTIC, "g", ())
+    assert target_combo.eligible_columns() == ("g",)
+    assert changed == [()]
+
+    model_combo.setCurrentIndex(model_combo.findData(RegressionModel.POISSON.value))
+
+    assert widget.model_configuration() == (RegressionModel.POISSON, "x", ())
+    assert target_combo.eligible_columns() == ("x", "z")
+
+    model_combo.setCurrentIndex(model_combo.findData(RegressionModel.LOGISTIC.value))
+
+    assert widget.current_target() == "g"
+
+
+def test_model_without_eligible_targets_disables_target_and_apply():
+    widget = RegressionConfigWidget(_result("y"), GeneralizedTargetColumns(binary=(), count=()))
+    combo = widget._model_combo  # noqa: SLF001
+    combo.setCurrentIndex(combo.findData(RegressionModel.LOGISTIC.value))
+
+    assert widget.current_target() == ""
+    assert not widget._target_combo.isEnabled()  # noqa: SLF001
+    assert widget._target_notice.text() == widget.tr("No eligible target columns are available for this model.")  # noqa: SLF001
+    assert not widget._apply_button.isEnabled()  # noqa: SLF001
+
+
+def test_changing_model_refits_when_predictors_are_already_applied():
+    widget = RegressionConfigWidget(
+        _result("y", ("x", "g")),
+        GeneralizedTargetColumns(binary=("g",), count=("x", "z")),
+    )
+    requested = _record(widget.model_requested)
+    changed = _record(widget.configuration_changed)
+
+    widget._model_combo.setCurrentIndex(  # noqa: SLF001
+        widget._model_combo.findData(RegressionModel.LOGISTIC.value)  # noqa: SLF001
+    )
+
+    assert widget.model_configuration() == (RegressionModel.LOGISTIC, "g", ("x",))
+    assert requested == [()]
+    assert changed == []
