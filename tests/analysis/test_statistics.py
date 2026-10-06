@@ -9,7 +9,9 @@ import pytest
 from expo_jbm329.services.analysis.normality import SHAPIRO_LARGE_SAMPLE_THRESHOLD
 from expo_jbm329.services.analysis.statistics import (
     ColumnDescriptiveStatistics,
+    DescriptiveSummaryMethod,
     analyze_descriptive_statistics,
+    recommended_summary_method,
 )
 
 
@@ -116,6 +118,60 @@ def test_analyze_descriptive_statistics_handles_completely_empty_dataframe():
     result = analyze_descriptive_statistics(pd.DataFrame())
 
     assert result.columns == ()
+    assert result.categorical_columns == ()
+
+
+def test_analyze_descriptive_statistics_counts_categories_using_non_missing_denominator():
+    df = pd.DataFrame({"sex": ["F", "M", "F", None]})
+
+    result = analyze_descriptive_statistics(df)
+
+    assert len(result.categorical_columns) == 1
+    category = result.categorical_columns[0]
+    assert category.column == "sex"
+    assert category.count == 3
+    assert category.missing_count == 1
+    assert category.missing_fraction == 0.25
+    assert [(item.value, item.count, item.fraction) for item in category.frequencies] == [
+        ("F", 2, pytest.approx(2 / 3)),
+        ("M", 1, pytest.approx(1 / 3)),
+    ]
+
+
+def test_analyze_descriptive_statistics_keeps_single_level_categories():
+    result = analyze_descriptive_statistics(pd.DataFrame({"constant": ["yes", "yes", None]}))
+
+    assert len(result.categorical_columns) == 1
+    summary = result.categorical_columns[0]
+    assert summary.count == 2
+    assert summary.missing_count == 1
+    assert [(item.value, item.count, item.fraction) for item in summary.frequencies] == [("yes", 2, 1.0)]
+
+
+def test_analyze_descriptive_statistics_includes_low_cardinality_numeric_frequencies():
+    df = pd.DataFrame({"sex_code": [0, 1, 0, 1]})
+
+    result = analyze_descriptive_statistics(df)
+
+    assert [item.column for item in result.columns] == ["sex_code"]
+    assert [item.column for item in result.categorical_columns] == ["sex_code"]
+    assert [item.count for item in result.categorical_columns[0].frequencies] == [2, 2]
+
+
+def test_recommended_summary_method_uses_shapiro_and_falls_back_when_unavailable():
+    normal = _get(
+        analyze_descriptive_statistics(pd.DataFrame({"x": [1.0, 2.0, 3.0, 4.0]})),
+        "x",
+    )
+    non_normal = _get(
+        analyze_descriptive_statistics(pd.DataFrame({"x": [float(i) for i in range(30)] + [1000.0]})),
+        "x",
+    )
+    unavailable = _get(analyze_descriptive_statistics(pd.DataFrame({"x": [1.0, None]})), "x")
+
+    assert recommended_summary_method(normal) is DescriptiveSummaryMethod.MEAN_SD
+    assert recommended_summary_method(non_normal) is DescriptiveSummaryMethod.MEDIAN_IQR
+    assert recommended_summary_method(unavailable) is DescriptiveSummaryMethod.MEDIAN_IQR
 
 
 def test_variance_is_derived_from_squared_standard_deviation():

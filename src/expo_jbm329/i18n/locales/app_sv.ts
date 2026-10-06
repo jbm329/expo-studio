@@ -7362,148 +7362,236 @@ Tid: {sec:.2f}s{sample}</translation>
 <context>
     <name>StatisticsConfigWidget</name>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="43"/>
+        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="105"/>
+        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="50"/>
+        <source>Mean ± SD</source>
+        <translation>Medelvärde ± standardavvikelse</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="54"/>
+        <source>Median (Q1 to Q3)</source>
+        <translation>Median (Q1 till Q3)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="69"/>
+        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="60"/>
         <source>Column</source>
         <translation>Kolumn</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="61"/>
+        <source>Reported summary</source>
+        <translation>Redovisat mått</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="98"/>
+        <source>Shapiro-Wilk could not provide a recommendation. Median (IQR) is selected by default; you can override it.</source>
+        <translation>Shapiro-Wilk kunde inte ge en rekommendation. Median (IQR) väljs som standard, men du kan ändra valet.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="105"/>
+        <source>Median (IQR)</source>
+        <translation>Median (IQR)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="107"/>
+        <source>Shapiro-Wilk suggests {summary} as a starting point. This is a guide, not proof of normality; you can override it.</source>
+        <translation>Shapiro-Wilk föreslår {summary} som utgångspunkt. Detta är en vägledning, inte ett bevis på normalfördelning; du kan ändra valet.</translation>
     </message>
 </context>
 <context>
     <name>StatisticsView</name>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="84"/>
-        <source>No numeric columns in this dataset.</source>
-        <translation>Inga numeriska kolumner i detta dataset.</translation>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="97"/>
+        <source>No numeric columns or eligible categorical columns in this dataset.</source>
+        <translation>Datasetet innehåller inga numeriska kolumner eller lämpliga kategorikolumner.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="94"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="107"/>
         <source>Descriptive statistics</source>
         <translation>Deskriptiv statistik</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="101"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="110"/>
+        <source>Continuous</source>
+        <translation>Kontinuerliga</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="112"/>
+        <source>Categorical</source>
+        <translation>Kategoriska</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="203"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="119"/>
         <source>Column</source>
         <translation>Kolumn</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="102"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="205"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="120"/>
         <source>Count</source>
         <translation>Antal</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="103"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="121"/>
         <source>Missing</source>
         <translation>Saknade</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="104"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="122"/>
         <source>Mean</source>
         <translation>Medelvärde</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="105"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="123"/>
         <source>Median</source>
         <translation>Median</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="106"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="124"/>
         <source>Std Dev</source>
         <translation>Standardavvikelse</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="107"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="125"/>
         <source>Variance</source>
         <translation>Varians</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="108"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="126"/>
         <source>Min</source>
         <translation>Min</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="109"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="127"/>
         <source>Max</source>
         <translation>Max</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="110"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="128"/>
         <source>Range</source>
         <translation>Spann</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="111"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="129"/>
         <source>Q1</source>
         <translation>Q1</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="112"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="130"/>
         <source>Q3</source>
         <translation>Q3</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="113"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="131"/>
         <source>IQR</source>
         <translation>IQR</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="114"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="132"/>
         <source>Skewness</source>
         <translation>Skevhet</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="115"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="133"/>
         <source>Kurtosis</source>
         <translation>Kurtosis</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="184"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="134"/>
+        <source>Reported summary</source>
+        <translation>Redovisat mått</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="190"/>
+        <source>Columns with more than {maximum} distinct values are omitted.</source>
+        <translation>Kolumner med fler än {maximum} unika värden visas inte.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="204"/>
+        <source>Category</source>
+        <translation>Kategori</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="206"/>
+        <source>Percent (non-missing)</source>
+        <translation>Procent (icke-saknade)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="207"/>
+        <source>Missing count</source>
+        <translation>Antal saknade</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="212"/>
+        <source>No non-missing values</source>
+        <translation>Inga icke-saknade värden</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="293"/>
         <source>Distribution</source>
         <translation>Fördelning</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="241"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="303"/>
+        <source>No numeric columns are available for distributions.</source>
+        <translation>Inga numeriska kolumner är tillgängliga för fördelningsdiagram.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="323"/>
+        <source>Normality testing applies to continuous variables.</source>
+        <translation>Normalitetstestning gäller kontinuerliga variabler.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="365"/>
         <source>Not enough data to test for normality.</source>
         <translation>Inte tillräckligt med data för att testa normalfördelning.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="244"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="368"/>
         <source>&lt;b&gt;Shapiro-Wilk&lt;/b&gt;:</source>
         <translation>&lt;b&gt;Shapiro-Wilk&lt;/b&gt;:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="245"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="369"/>
         <source>W = {w}, p = {p}</source>
         <translation>W = {w}, p = {p}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="252"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="376"/>
         <source>→ Significant evidence against normality (α = 0.05).</source>
         <translation>→ Statistiskt signifikanta belägg mot normalfördelning (α = 0,05).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="254"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="378"/>
         <source>→ No significant evidence against normality (α = 0.05).</source>
         <translation>→ Inga statistiskt signifikanta belägg mot normalfördelning (α = 0,05).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="258"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="382"/>
         <source>⚠ Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</source>
         <translation>⚠ Antalet observationer överstiger {threshold}. P-värdet kan vara mindre tillförlitligt för mycket stora stickprov.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="282"/>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="268"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="406"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="392"/>
         <source>No data</source>
         <translation>Ingen data</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="276"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="400"/>
         <source>Histogram</source>
         <translation>Histogram</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="300"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="424"/>
         <source>Boxplot</source>
         <translation>Boxplot</translation>
+    </message>
+    <message>
+        <source>No numeric columns in this dataset.</source>
+        <translation type="vanished">Inga numeriska kolumner i detta dataset.</translation>
     </message>
 </context>
 <context>
@@ -7817,5 +7905,4 @@ Snabbkommando: Ctrl+Z</translation>
         <source>Analyze data</source>
         <translation>Analysera data</translation>
     </message>
-</context>
-</TS>
+</context></TS>

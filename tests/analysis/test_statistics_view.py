@@ -2,13 +2,16 @@ from __future__ import annotations
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
+from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTabWidget
 
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.normality import SHAPIRO_LARGE_SAMPLE_THRESHOLD
 from expo_jbm329.services.analysis.statistics import (
+    CategoricalColumnStatistics,
+    CategoryFrequency,
     ColumnDescriptiveStatistics,
     DescriptiveStatisticsResult,
+    DescriptiveSummaryMethod,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
 
@@ -83,6 +86,33 @@ def test_layout_has_titled_table_chart_and_text_sections_with_adjustable_divider
     assert splitter.widget(2).isAncestorOf(view._normality_label)  # noqa: SLF001
 
 
+def test_statistics_tabs_have_extra_horizontal_padding_for_selected_text():
+    view = StatisticsView(
+        DescriptiveStatisticsResult(
+            columns=(_make_column_stats(),),
+            categorical_columns=(
+                CategoricalColumnStatistics(
+                    column="group",
+                    count=1,
+                    missing_count=0,
+                    missing_fraction=0.0,
+                    frequencies=(CategoryFrequency(value="A", count=1, fraction=1.0),),
+                ),
+            ),
+        )
+    )
+    tabs = view.findChild(QTabWidget)
+
+    assert tabs is not None
+    style = tabs.styleSheet()
+    assert "border-bottom-color: palette(highlight)" in style
+    assert "border: none" in style
+    for index in range(tabs.count()):
+        tabs.setCurrentIndex(index)
+        text_width = tabs.tabBar().fontMetrics().horizontalAdvance(tabs.tabText(index))
+        assert tabs.tabBar().tabRect(index).width() >= text_width + 12
+
+
 def test_table_cells_use_format_utils_for_every_statistic():
     stats = _make_column_stats()
     result = DescriptiveStatisticsResult(columns=(stats,))
@@ -108,6 +138,7 @@ def test_table_cells_use_format_utils_for_every_statistic():
         fmt_num(stats.iqr),
         fmt_num(stats.skewness),
         fmt_num(stats.kurtosis),
+        f"{fmt_num(stats.mean)} ± {fmt_num(stats.std)}",
     ]
 
 
@@ -176,6 +207,46 @@ def test_shows_no_data_message_when_histogram_and_boxplot_data_are_missing():
 
     all_texts = [t.get_text() for ax in view._figure.axes for t in ax.texts]  # noqa: SLF001
     assert all_texts.count("No data") == 2
+
+
+def test_categorical_table_shows_counts_percentages_and_missing_separately():
+    result = DescriptiveStatisticsResult(
+        columns=(),
+        categorical_columns=(
+            CategoricalColumnStatistics(
+                column="sex",
+                count=3,
+                missing_count=1,
+                missing_fraction=0.25,
+                frequencies=(
+                    CategoryFrequency(value="F", count=2, fraction=2 / 3),
+                    CategoryFrequency(value="M", count=1, fraction=1 / 3),
+                ),
+            ),
+        ),
+    )
+    view = StatisticsView(result)
+    table = view.findChild(QTableWidget)
+
+    assert table is not None
+    assert table.horizontalHeaderItem(3).text() == "Percent (non-missing)"
+    assert table.item(0, 0).text() == "sex"
+    assert table.item(0, 1).text() == "F"
+    assert table.item(0, 2).text() == fmt_int(2)
+    assert table.item(0, 3).text() == fmt_pct(2 / 3)
+    assert table.item(0, 4).text() == fmt_int(1)
+    assert table.item(1, 4).text() == ""
+
+
+def test_set_summary_method_updates_the_numeric_table_row():
+    stats = _make_column_stats()
+    view = StatisticsView(DescriptiveStatisticsResult(columns=(stats,)))
+    table = view.findChild(QTableWidget)
+    assert table is not None
+
+    view.set_summary_method("salary", DescriptiveSummaryMethod.MEDIAN_IQR.value)
+
+    assert table.item(0, 15).text() == (f"{fmt_num(stats.median)} ({fmt_num(stats.q1)} to {fmt_num(stats.q3)})")
 
 
 def test_normality_label_shows_the_shapiro_statistic_and_p_value():

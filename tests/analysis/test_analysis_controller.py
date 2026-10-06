@@ -381,6 +381,28 @@ def test_statistics_category_also_builds_a_column_picker_config_widget(dialog_fa
     assert config.selected_column() == "a"
 
 
+def test_statistics_category_shows_categorical_summaries_without_numeric_config(dialog_factory):
+    df = pd.DataFrame({"sex": ["F", "M", "F", None]})
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=4, column_count=1)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": df}),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.STATISTICS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
+    _simulate_success(async_ops.last_call)
+
+    content = dlg.content_widgets[-1]
+    assert isinstance(content, StatisticsView)
+    assert content.findChild(QTableWidget) is not None
+    assert dlg.config_widgets[-1] is None
+
+
 def test_changing_the_statistics_config_column_updates_the_content_view_directly(dialog_factory):
     """Switching columns is a pure GUI-thread operation - it must not
     dispatch a new background job (all columns' data is already computed).
@@ -402,10 +424,15 @@ def test_changing_the_statistics_config_column_updates_the_content_view_directly
 
     jobs_before = len(async_ops.calls)
     config = dlg.config_widgets[-1]
+    content = dlg.content_widgets[-1]
+    assert isinstance(content, StatisticsView)
     config._column_combo.setCurrentIndex(1)  # noqa: SLF001
+    config._summary_method_combo.setCurrentIndex(1)  # noqa: SLF001
 
     assert len(async_ops.calls) == jobs_before  # no new background job
     assert config.selected_column() == "b"
+    numeric_table = next(table for table in content.findChildren(QTableWidget) if table.columnCount() == 16)
+    assert numeric_table.item(1, 15).text().startswith("5")
 
 
 def test_clicking_a_statistics_table_row_updates_the_config_without_a_new_job(dialog_factory):
@@ -429,8 +456,7 @@ def test_clicking_a_statistics_table_row_updates_the_config_without_a_new_job(di
     config = dlg.config_widgets[-1]
     assert isinstance(content, StatisticsView)
     assert isinstance(config, StatisticsConfigWidget)
-    table = content.findChild(QTableWidget)
-    assert table is not None
+    table = next(table for table in content.findChildren(QTableWidget) if table.columnCount() == 16)
 
     table.cellClicked.emit(1, 0)
 
