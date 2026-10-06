@@ -241,7 +241,7 @@ class GroupComparisonView(QWidget):
         return label
 
     def _pairwise_text(self, pairwise: PairwiseComparisonResult, groups: tuple[GroupSummary, ...]) -> str:
-        """Build the Welch's t-test / Mann-Whitney U results text."""
+        """Build the Student's t-test, Welch's t-test and Mann-Whitney U results text."""
         lines = [
             self.tr("<b>Welch's t-test</b> (does not assume equal variances):"),
             self.tr("t = {t}, df = {df}, p = {p}").format(
@@ -255,6 +255,18 @@ class GroupComparisonView(QWidget):
                 high=fmt_num(pairwise.mean_difference_ci_high),
             ),
             self.tr("Cohen's d: {d}").format(d=fmt_num(pairwise.cohens_d)),
+            "",
+            self.tr("<b>Student's t-test</b> (assumes equal variances):"),
+            self.tr("t = {t}, df = {df}, p = {p}").format(
+                t=fmt_num(pairwise.student_t_statistic),
+                df=fmt_num(pairwise.student_t_degrees_of_freedom),
+                p=html.escape(fmt_p_value(pairwise.student_t_p_value)),
+            ),
+            self.tr("Mean difference: {diff} (95% CI: {low} to {high})").format(
+                diff=fmt_num(pairwise.mean_difference),
+                low=fmt_num(pairwise.student_mean_difference_ci_low),
+                high=fmt_num(pairwise.student_mean_difference_ci_high),
+            ),
             "",
             self.tr("<b>Mann-Whitney U</b>:"),
             self.tr("U = {u}, p = {p}").format(

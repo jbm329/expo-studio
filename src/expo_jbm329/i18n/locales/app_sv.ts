@@ -439,8 +439,8 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/chi_square_view.py" line="291"/>
-        <source>&lt;b&gt;Fisher&apos;s exact test&lt;/b&gt; (exact, reliable even for small samples):</source>
-        <translation>&lt;b&gt;Fishers exakta test&lt;/b&gt; (exakt, tillförlitligt även för små stickprov):</translation>
+        <source>&lt;b&gt;Fisher&apos;s exact test&lt;/b&gt; (exact; useful when expected counts are small):</source>
+        <translation>&lt;b&gt;Fishers exakta test&lt;/b&gt; (exakt; användbart när förväntade frekvenser är låga):</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/chi_square_view.py" line="292"/>
@@ -2929,11 +2929,13 @@ Fortsätt?</translation>
         <translation>&lt;b&gt;Welchs t-test&lt;/b&gt; (antar inte lika varianser):</translation>
     </message>
     <message>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="260"/>
         <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="247"/>
         <source>t = {t}, df = {df}, p = {p}</source>
         <translation>t = {t}, df = {df}, p = {p}</translation>
     </message>
     <message>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="265"/>
         <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="252"/>
         <source>Mean difference: {diff} (95% CI: {low} to {high})</source>
         <translation>Skillnad i medelvärden: {diff} (95 % KI: {low} till {high})</translation>
@@ -2942,6 +2944,11 @@ Fortsätt?</translation>
         <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="257"/>
         <source>Cohen&apos;s d: {d}</source>
         <translation>Cohens d: {d}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="261"/>
+        <source>&lt;b&gt;Student&apos;s t-test&lt;/b&gt; (assumes equal variances):</source>
+        <translation>&lt;b&gt;Students t-test&lt;/b&gt; (antar lika varianser):</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="259"/>

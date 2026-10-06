@@ -425,7 +425,7 @@ Please see logs for more information.</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="291" />
-        <source>&lt;b&gt;Fisher's exact test&lt;/b&gt; (exact, reliable even for small samples):</source>
+        <source>&lt;b&gt;Fisher's exact test&lt;/b&gt; (exact; useful when expected counts are small):</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -2868,11 +2868,13 @@ Continue?</source>
         <translation type="unfinished" />
     </message>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="260" />
         <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="247" />
         <source>t = {t}, df = {df}, p = {p}</source>
         <translation type="unfinished" />
     </message>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="265" />
         <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="252" />
         <source>Mean difference: {diff} (95% CI: {low} to {high})</source>
         <translation type="unfinished" />
@@ -2880,6 +2882,11 @@ Continue?</source>
     <message>
         <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="257" />
         <source>Cohen's d: {d}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="261" />
+        <source>&lt;b&gt;Student's t-test&lt;/b&gt; (assumes equal variances):</source>
         <translation type="unfinished" />
     </message>
     <message>

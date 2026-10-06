@@ -142,6 +142,7 @@ def test_results_text_mentions_yates_and_fisher_for_two_by_two_tables():
     text = view.test_results_text(result)
     assert "Yates" in text
     assert "Fisher's exact test" in text
+    assert "useful when expected counts are small" in text
     assert "Odds ratio" in text
 
 
