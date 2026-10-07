@@ -21,6 +21,8 @@ from expo_jbm329.services.analysis.columns import numeric_columns
 _NAN = float("nan")
 _MIN_OCCASIONS = 2
 _MIN_FRIEDMAN_SUBJECTS = 3
+MAX_PAIRED_TRAJECTORIES = 200
+_PLOT_SEED = 0
 
 
 class PairedComparisonError(StrEnum):
@@ -41,6 +43,29 @@ class PairedComparisonMethod(StrEnum):
 
 
 @dataclass(frozen=True, slots=True)
+class PairedOccasionSummary:
+    """Full complete-case distribution for one occasion; whiskers are min/max."""
+
+    column: str
+    count: int
+    mean: float
+    median: float
+    std: float
+    q1: float
+    q3: float
+    minimum: float
+    maximum: float
+
+
+@dataclass(frozen=True, slots=True)
+class PairedPlotData:
+    """Aligned subject trajectories in selected occasion order, capped for display."""
+
+    trajectories: tuple[tuple[float, ...], ...]
+    sampled: bool
+
+
+@dataclass(frozen=True, slots=True)
 class PairedComparisonResult:
     """Result of a Wilcoxon signed-rank or Friedman repeated-measures test."""
 
@@ -54,6 +79,8 @@ class PairedComparisonResult:
     p_value: float
     kendall_w: float
     error: PairedComparisonError | None
+    summaries: tuple[PairedOccasionSummary, ...] = ()
+    plot_data: PairedPlotData | None = None
 
 
 def _empty_result(
@@ -226,6 +253,38 @@ def analyze_paired_comparison(
         p_value=p_value,
         kendall_w=kendall_w,
         error=None,
+        summaries=tuple(_occasion_summary(column, complete[column]) for column in selected),
+        plot_data=_plot_data(complete),
+    )
+
+
+def _occasion_summary(column: str, values: pd.Series) -> PairedOccasionSummary:
+    """Summarize all complete subjects, with sample SD unavailable for one subject."""
+    return PairedOccasionSummary(
+        column=column,
+        count=len(values),
+        mean=float(values.mean()),
+        median=float(values.median()),
+        std=float(values.std(ddof=1)) if len(values) > 1 else _NAN,
+        q1=float(values.quantile(0.25)),
+        q3=float(values.quantile(0.75)),
+        minimum=float(values.min()),
+        maximum=float(values.max()),
+    )
+
+
+def _plot_data(complete: pd.DataFrame) -> PairedPlotData:
+    """Sample rows, never occasions independently, without changing test statistics."""
+    count = len(complete)
+    if count > MAX_PAIRED_TRAJECTORIES:
+        rng = np.random.default_rng(_PLOT_SEED)
+        indices = np.sort(rng.choice(count, size=MAX_PAIRED_TRAJECTORIES, replace=False))
+        plotted = complete.iloc[indices]
+    else:
+        plotted = complete
+    return PairedPlotData(
+        trajectories=tuple(tuple(float(value) for value in row) for row in plotted.itertuples(index=False, name=None)),
+        sampled=count > MAX_PAIRED_TRAJECTORIES,
     )
 
 

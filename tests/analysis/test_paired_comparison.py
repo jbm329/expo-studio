@@ -8,6 +8,7 @@ import pytest
 from scipy.stats import friedmanchisquare, wilcoxon
 
 from expo_jbm329.services.analysis.paired_comparison import (
+    MAX_PAIRED_TRAJECTORIES,
     PairedComparisonError,
     PairedComparisonMethod,
     analyze_paired_comparison,
@@ -30,6 +31,8 @@ def test_initializer_selects_first_two_numeric_columns_without_running_test():
     assert result.complete_subjects == 0
     assert result.error is None
     assert math.isnan(result.p_value)
+    assert result.summaries == ()
+    assert result.plot_data is None
 
 
 def test_initializer_reports_when_fewer_than_two_numeric_columns_are_available():
@@ -155,3 +158,76 @@ def test_non_finite_values_are_excluded_with_incomplete_subjects():
     assert result.error is None
     assert result.complete_subjects == 2
     assert result.excluded_subjects == 1
+
+
+def test_summaries_and_trajectories_use_the_exact_complete_case_cohort_in_selection_order():
+    df = pd.DataFrame(
+        {
+            "before": [1.0, 2.0, 3.0, np.inf, 5.0, 6.0],
+            "after": [2.0, 4.0, 5.0, 8.0, None, 10.0],
+        },
+        index=[5, 5, 1, 9, 0, 0],
+    )
+    original = df.copy(deep=True)
+    result = analyze_paired_comparison(df, ("after", "before"))
+
+    assert [summary.column for summary in result.summaries] == ["after", "before"]
+    assert result.complete_subjects == 4
+    assert result.excluded_subjects == 2
+    assert result.plot_data is not None
+    assert result.plot_data.trajectories == ((2.0, 1.0), (4.0, 2.0), (5.0, 3.0), (10.0, 6.0))
+    assert not result.plot_data.sampled
+    values = pd.Series([2.0, 4.0, 5.0, 10.0])
+    summary = result.summaries[0]
+    assert summary.count == 4
+    assert summary.mean == pytest.approx(values.mean())
+    assert summary.median == pytest.approx(values.median())
+    assert summary.std == pytest.approx(values.std(ddof=1))
+    assert summary.q1 == pytest.approx(values.quantile(0.25))
+    assert summary.q3 == pytest.approx(values.quantile(0.75))
+    assert summary.minimum == 2.0
+    assert summary.maximum == 10.0
+    pd.testing.assert_frame_equal(df, original)
+
+
+@pytest.mark.parametrize("count", [MAX_PAIRED_TRAJECTORIES, MAX_PAIRED_TRAJECTORIES + 1, 1000])
+def test_trajectory_sampling_is_deterministic_and_never_changes_full_data_statistics(count: int):
+    values = np.arange(count, dtype=float)
+    df = pd.DataFrame({"a": values, "b": values + 1, "c": values + 2})
+    result = analyze_paired_comparison(df, ("c", "a", "b"))
+    repeated = analyze_paired_comparison(df, ("c", "a", "b"))
+
+    assert result.plot_data is not None
+    assert result.plot_data == repeated.plot_data
+    assert len(result.plot_data.trajectories) == min(count, MAX_PAIRED_TRAJECTORIES)
+    assert result.plot_data.sampled == (count > MAX_PAIRED_TRAJECTORIES)
+    assert len(set(result.plot_data.trajectories)) == len(result.plot_data.trajectories)
+    assert all(row[0] == row[1] + 2 and row[2] == row[1] + 1 for row in result.plot_data.trajectories)
+    assert result.complete_subjects == count
+    for summary, column in zip(result.summaries, result.columns, strict=True):
+        assert summary.count == count
+        assert summary.mean == pytest.approx(df[column].mean())
+        assert summary.q1 == pytest.approx(df[column].quantile(0.25))
+        assert summary.minimum == df[column].min()
+        assert summary.maximum == df[column].max()
+    expected = friedmanchisquare(df["c"], df["a"], df["b"])
+    assert result.statistic == pytest.approx(expected.statistic)
+    assert result.p_value == pytest.approx(expected.pvalue)
+
+
+def test_single_complete_subject_has_no_sample_standard_deviation():
+    result = analyze_paired_comparison(pd.DataFrame({"a": [1.0], "b": [2.0]}), ("a", "b"))
+
+    assert result.error is None
+    assert result.summaries[0].count == 1
+    assert math.isnan(result.summaries[0].std)
+    assert result.plot_data is not None
+    assert result.plot_data.trajectories == ((1.0, 2.0),)
+
+
+def test_error_result_has_no_charts_or_distribution_summaries():
+    result = analyze_paired_comparison(pd.DataFrame({"a": [1.0, 2.0], "b": [1.0, 2.0]}), ("a", "b"))
+
+    assert result.error is PairedComparisonError.NO_DIFFERENCES
+    assert result.summaries == ()
+    assert result.plot_data is None

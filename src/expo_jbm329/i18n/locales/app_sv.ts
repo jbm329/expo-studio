@@ -4463,6 +4463,82 @@ Fortsätt?</translation>
 <context>
     <name>PairedComparisonView</name>
     <message>
+        <source>Select measurement columns and click Apply to run the paired test.</source>
+        <translation>Välj mätkolumner och klicka på Verkställ för att köra det parade testet.</translation>
+    </message>
+    <message>
+        <source>Measurement summary</source>
+        <translation>Mätsammanfattning</translation>
+    </message>
+    <message>
+        <source>Measurement</source>
+        <translation>Mätning</translation>
+    </message>
+    <message>
+        <source>Count</source>
+        <translation>Antal</translation>
+    </message>
+    <message>
+        <source>Mean</source>
+        <translation>Medelvärde</translation>
+    </message>
+    <message>
+        <source>Median</source>
+        <translation>Median</translation>
+    </message>
+    <message>
+        <source>Std Dev</source>
+        <translation>Standardavvikelse</translation>
+    </message>
+    <message>
+        <source>Q1</source>
+        <translation>Q1</translation>
+    </message>
+    <message>
+        <source>Q3</source>
+        <translation>Q3</translation>
+    </message>
+    <message>
+        <source>Paired measurements</source>
+        <translation>Parade mätningar</translation>
+    </message>
+    <message>
+        <source>Distribution by occasion</source>
+        <translation>Fördelning per mättillfälle</translation>
+    </message>
+    <message>
+        <source>Subject trajectories</source>
+        <translation>Individuella mätförlopp</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation>Värde</translation>
+    </message>
+    <message>
+        <source>Measurement occasion</source>
+        <translation>Mättillfälle</translation>
+    </message>
+    <message>
+        <source>Test results</source>
+        <translation>Testresultat</translation>
+    </message>
+    <message>
+        <source>Occasions follow the selected column order; chronological order is not inferred.</source>
+        <translation>Mättillfällena följer den valda kolumnordningen; kronologisk ordning härleds inte.</translation>
+    </message>
+    <message>
+        <source>Boxplots use all complete subjects; whiskers show the minimum and maximum.</source>
+        <translation>Lådagrammen använder alla individer med kompletta mätningar; spröten visar minimum och maximum.</translation>
+    </message>
+    <message>
+        <source>Trajectories show a deterministic sample of {shown} of {total} complete subjects.</source>
+        <translation>Mätförloppen visar ett deterministiskt urval av {shown} av {total} individer med kompletta mätningar.</translation>
+    </message>
+    <message>
+        <source>Tables, boxplots and tests use all complete subjects.</source>
+        <translation>Tabeller, lådagram och tester använder alla individer med kompletta mätningar.</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="38"/>
         <source>Wilcoxon signed-rank test</source>
         <translation>Wilcoxons teckenrangtest</translation>

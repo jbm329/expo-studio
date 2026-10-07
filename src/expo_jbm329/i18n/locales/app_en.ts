@@ -4226,6 +4226,82 @@ Continue?</source>
 </context><context>
     <name>PairedComparisonView</name>
     <message>
+        <source>Select measurement columns and click Apply to run the paired test.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Measurement summary</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Measurement</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Count</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Mean</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Median</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Std Dev</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Q1</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Q3</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Paired measurements</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Distribution by occasion</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Subject trajectories</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Value</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Measurement occasion</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Test results</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Occasions follow the selected column order; chronological order is not inferred.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Boxplots use all complete subjects; whiskers show the minimum and maximum.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Trajectories show a deterministic sample of {shown} of {total} complete subjects.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Tables, boxplots and tests use all complete subjects.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="38" />
         <source>Wilcoxon signed-rank test</source>
         <translation type="unfinished" />

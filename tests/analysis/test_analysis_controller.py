@@ -5,6 +5,7 @@ import dataclasses
 import numpy as np
 import pandas as pd
 import pytest
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QLabel, QTableWidget, QWidget
 
@@ -870,6 +871,14 @@ def test_paired_comparison_excludes_incomplete_subjects_and_renders_result(dialo
     assert isinstance(view, PairedComparisonView)
     labels = view.findChildren(QLabel)
     assert any("Complete subjects: 3 of 4" in label.text() for label in labels)
+    table = view.findChild(QTableWidget)
+    assert table is not None
+    assert table.rowCount() == 2
+    assert table.item(0, 1).text() == "3"
+    canvas = view.findChild(FigureCanvasQTAgg)
+    assert canvas is not None
+    assert len(canvas.figure.axes[1].lines) == 3
+    assert list(canvas.figure.axes[1].lines[-1].get_ydata()) == [3.0, 5.0]
 
 
 def test_switching_back_to_group_comparison_keeps_its_pending_selection(dialog_factory):
