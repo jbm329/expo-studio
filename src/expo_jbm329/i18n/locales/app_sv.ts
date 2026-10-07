@@ -102,6 +102,18 @@
 <context>
     <name>GeneralizedRegressionView</name>
     <message>
+        <source>Charts unavailable: the fitted Negative Binomial variance is invalid.</source>
+        <translation>Diagrammen är inte tillgängliga: den anpassade negativa binomialvariansen är ogiltig.</translation>
+    </message>
+    <message>
+        <source>Fitted NB2 alpha = {alpha}; this is distinct from the advisory Pearson dispersion.</source>
+        <translation>Skattat NB2-alfa = {alpha}; detta skiljer sig från den vägledande Pearsondispersionen.</translation>
+    </message>
+    <message>
+        <source>Negative Binomial Pearson residuals use NB2 variance: fitted count + alpha * fitted count squared.</source>
+        <translation>Pearsonresidualerna för negativ binomialregression använder NB2-varians: anpassat antal + alfa * anpassat antal i kvadrat.</translation>
+    </message>
+    <message>
         <source>Dispersion diagnostic unavailable because fitted counts or residuals are invalid.</source>
         <translation>Dispersionsdiagnostiken är inte tillgänglig eftersom de anpassade antalen eller residualerna är ogiltiga.</translation>
     </message>

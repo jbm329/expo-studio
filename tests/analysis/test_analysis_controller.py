@@ -1509,16 +1509,19 @@ def test_applying_logistic_regression_uses_glm_view_and_keeps_linear_defaults(di
     assert dlg.config_widgets[-1] is config
 
 
-def test_applying_poisson_regression_keeps_selected_model(dialog_factory):
+@pytest.mark.parametrize("model", [RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL])
+def test_applying_count_regression_keeps_selected_model(dialog_factory, model):
     rng = np.random.default_rng(22)
     size = 120
     x = rng.normal(size=size)
-    df = pd.DataFrame({"count": rng.poisson(np.exp(0.3 + 0.4 * x)), "x": x})
+    mean = np.exp(0.3 + 0.4 * x)
+    counts = rng.poisson(mean) if model is RegressionModel.POISSON else rng.negative_binomial(2, 2 / (2 + mean))
+    df = pd.DataFrame({"count": counts, "x": x})
     async_ops = DummyAsyncOps()
     _, dlg = _open_regression(async_ops, dialog_factory, df)
     config = _regression_config(dlg)
     config._model_combo.setCurrentIndex(  # noqa: SLF001
-        config._model_combo.findData(RegressionModel.POISSON.value)  # noqa: SLF001
+        config._model_combo.findData(model.value)  # noqa: SLF001
     )
     _check_predictors(config, "x")
     config._apply_button.click()  # noqa: SLF001
@@ -1527,7 +1530,7 @@ def test_applying_poisson_regression_keeps_selected_model(dialog_factory):
     view = dlg.content_widget()
     assert isinstance(view, GeneralizedRegressionView)
     assert view.result().error is None
-    assert view.result().model is RegressionModel.POISSON
+    assert view.result().model is model
     assert view.result().plot_data is not None
     canvas = view.findChild(FigureCanvasQTAgg)
     assert canvas is not None

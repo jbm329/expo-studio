@@ -14,7 +14,7 @@ from expo_jbm329.services.analysis.regression_glm import (
     CountPlotError,
     GeneralizedRegressionError,
     RegressionModel,
-    _poisson_plot_data,  # noqa: PLC2701
+    _count_plot_data,  # noqa: PLC2701
     analyze_generalized_regression,
     generalized_term_name,
     initialize_generalized_targets,
@@ -239,13 +239,13 @@ def test_poisson_chart_sampling_preserves_alignment_and_full_fit(size: int):
     "fitted", [np.array([0.0]), np.array([-1.0]), np.array([np.nan]), np.array([np.inf]), np.array([])]
 )
 def test_poisson_plot_data_rejects_invalid_predictions_without_dropping_rows(fitted: np.ndarray):
-    data, error = _poisson_plot_data(np.array([1.0]), fitted)
+    data, error = _count_plot_data(np.array([1.0]), fitted)
     assert data is None
     assert error is CountPlotError.INVALID_PREDICTIONS
 
 
 def test_poisson_plot_data_surfaces_residual_overflow():
-    data, error = _poisson_plot_data(np.array([1e308]), np.array([1e-300]))
+    data, error = _count_plot_data(np.array([1e308]), np.array([1e-300]))
     assert data is None
     assert error is CountPlotError.INVALID_RESIDUALS
 
@@ -267,7 +267,7 @@ def test_invalid_poisson_predictions_preserve_coefficients_and_surface_chart_err
     assert math.isnan(result.dispersion_ratio)
 
 
-@pytest.mark.parametrize("model", [RegressionModel.LOGISTIC, RegressionModel.NEGATIVE_BINOMIAL])
+@pytest.mark.parametrize("model", [RegressionModel.LOGISTIC])
 def test_other_models_do_not_gain_chart_data_in_the_poisson_step(model: RegressionModel):
     df = _binary_frame() if model is RegressionModel.LOGISTIC else _count_frame(overdispersed=True)
     target = "outcome" if model is RegressionModel.LOGISTIC else "count"
@@ -275,6 +275,103 @@ def test_other_models_do_not_gain_chart_data_in_the_poisson_step(model: Regressi
     assert result.error is None
     assert result.plot_data is None
     assert result.plot_error is None
+
+
+def test_negative_binomial_charts_use_fitted_nb2_alpha_and_exact_complete_cases():
+    df = _count_frame(overdispersed=True)
+    df.loc[0, "x"] = np.nan
+    df.loc[1, "x"] = np.inf
+    result = analyze_generalized_regression(df, RegressionModel.NEGATIVE_BINOMIAL, "count", ["x"])
+    complete = df.replace([np.inf, -np.inf], np.nan).dropna()
+    expected_fit = sm.NegativeBinomial(complete["count"], sm.add_constant(complete[["x"]])).fit(disp=False)
+    fitted = np.asarray(expected_fit.predict())
+    alpha = float(expected_fit.params.iloc[-1])
+
+    assert result.error is None
+    assert result.plot_error is None
+    assert result.negative_binomial_alpha == pytest.approx(alpha)
+    assert alpha > 0
+    assert result.n_used == 498
+    data = result.plot_data
+    assert data is not None
+    np.testing.assert_array_equal(data.observed, complete["count"])
+    np.testing.assert_allclose(data.fitted, fitted)
+    np.testing.assert_allclose(
+        data.pearson_residuals, (complete["count"] - fitted) / np.sqrt(fitted + alpha * fitted**2)
+    )
+    assert not np.allclose(data.pearson_residuals, (complete["count"] - fitted) / np.sqrt(fitted))
+    assert result.dispersion_ratio == pytest.approx(
+        np.sum((complete["count"].to_numpy() - fitted) ** 2 / fitted) / expected_fit.df_resid
+    )
+
+
+def test_negative_binomial_sampling_preserves_row_alignment_and_full_fit():
+    size = PLOT_SAMPLE_SIZE + 1
+    df = _count_frame(size=size, overdispersed=True)
+    result = analyze_generalized_regression(df, RegressionModel.NEGATIVE_BINOMIAL, "count", ["x"])
+    repeated = analyze_generalized_regression(df, RegressionModel.NEGATIVE_BINOMIAL, "count", ["x"])
+    data = result.plot_data
+    assert data is not None
+    assert data == repeated.plot_data
+    assert data.sampled
+    assert len(data.fitted) == PLOT_SAMPLE_SIZE
+    indices = np.sort(np.random.default_rng(0).choice(size, PLOT_SAMPLE_SIZE, replace=False))
+    fit = sm.NegativeBinomial(df["count"], sm.add_constant(df[["x"]])).fit(disp=False)
+    fitted = np.asarray(fit.predict())
+    alpha = float(fit.params.iloc[-1])
+    np.testing.assert_array_equal(data.observed, df["count"].to_numpy()[indices])
+    np.testing.assert_allclose(data.fitted, fitted[indices])
+    residuals = (df["count"].to_numpy() - fitted) / np.sqrt(fitted + alpha * fitted**2)
+    np.testing.assert_allclose(data.pearson_residuals, residuals[indices])
+    assert result.n_used == size
+    assert result.terms[1].estimate == pytest.approx(fit.params.iloc[1])
+
+
+@pytest.mark.parametrize("alpha", [0.0, 1e-12])
+def test_nb2_residuals_approach_poisson_when_alpha_approaches_zero(alpha: float):
+    observed = np.array([0.0, 1.0, 7.0])
+    fitted = np.array([0.5, 2.0, 5.0])
+    poisson, _ = _count_plot_data(observed, fitted)
+    negative_binomial, error = _count_plot_data(observed, fitted, alpha)
+    assert error is None
+    assert poisson is not None
+    assert negative_binomial is not None
+    np.testing.assert_allclose(negative_binomial.pearson_residuals, poisson.pearson_residuals)
+
+
+@pytest.mark.parametrize("alpha", [-1.0, np.nan, np.inf])
+def test_invalid_nb2_alpha_is_reported_without_poisson_fallback(alpha: float):
+    data, error = _count_plot_data(np.array([1.0]), np.array([2.0]), alpha)
+    assert data is None
+    assert error is CountPlotError.INVALID_VARIANCE
+
+
+def test_nb2_variance_overflow_is_reported():
+    data, error = _count_plot_data(np.array([1.0]), np.array([1e200]), 1.0)
+    assert data is None
+    assert error is CountPlotError.INVALID_VARIANCE
+
+
+def test_invalid_fitted_nb2_alpha_preserves_model_and_reports_diagnostic_error(monkeypatch):
+    original_fit = sm.NegativeBinomial.fit
+
+    def invalid_alpha_fit(model, *args, **kwargs):
+        fit = original_fit(model, *args, **kwargs)
+        if model.exog.shape[1] > 1:
+            # Cache model statistics before injecting a diagnostic-only invalid alpha.
+            _ = fit.llnull, fit.llf, fit.aic
+            fit.params[-1] = np.nan
+        return fit
+
+    monkeypatch.setattr(sm.NegativeBinomial, "fit", invalid_alpha_fit)
+    result = analyze_generalized_regression(
+        _count_frame(overdispersed=True), RegressionModel.NEGATIVE_BINOMIAL, "count", ["x"]
+    )
+    assert result.error is None
+    assert result.terms
+    assert result.plot_data is None
+    assert result.plot_error is CountPlotError.INVALID_VARIANCE
+    assert math.isfinite(result.dispersion_ratio)
 
 
 def test_failed_poisson_fit_has_no_chart_data():

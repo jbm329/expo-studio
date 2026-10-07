@@ -5074,6 +5074,18 @@ Hint: {error_hint}</source>
 </context><context>
     <name>GeneralizedRegressionView</name>
     <message>
+        <source>Charts unavailable: the fitted Negative Binomial variance is invalid.</source>
+        <translation>Charts unavailable: the fitted Negative Binomial variance is invalid.</translation>
+    </message>
+    <message>
+        <source>Fitted NB2 alpha = {alpha}; this is distinct from the advisory Pearson dispersion.</source>
+        <translation>Fitted NB2 alpha = {alpha}; this is distinct from the advisory Pearson dispersion.</translation>
+    </message>
+    <message>
+        <source>Negative Binomial Pearson residuals use NB2 variance: fitted count + alpha * fitted count squared.</source>
+        <translation>Negative Binomial Pearson residuals use NB2 variance: fitted count + alpha * fitted count squared.</translation>
+    </message>
+    <message>
         <source>Dispersion diagnostic unavailable because fitted counts or residuals are invalid.</source>
         <translation>Dispersion diagnostic unavailable because fitted counts or residuals are invalid.</translation>
     </message>

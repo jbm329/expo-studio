@@ -85,8 +85,9 @@ def test_structured_errors_are_shown_without_a_result_table(error):
     assert view.findChild(FigureCanvasQTAgg) is None
 
 
-def test_poisson_layout_and_charts_render_exact_fitted_data():
-    result = _result(RegressionModel.POISSON)
+@pytest.mark.parametrize("model", [RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL])
+def test_count_layout_and_charts_render_exact_fitted_data(model):
+    result = _result(model)
     view = GeneralizedRegressionView(result)
     view.resize(950, 800)
     view.show()
@@ -117,13 +118,19 @@ def test_poisson_layout_and_charts_render_exact_fitted_data():
         assert comparison.get_ylabel() == "Observed count"
         assert residuals.get_ylabel() == "Pearson residual"
         assert "in-sample" in _text(view)
-        assert "variance equal to the fitted count" in _text(view)
+        if model is RegressionModel.POISSON:
+            assert "variance equal to the fitted count" in _text(view)
+        else:
+            assert "NB2 variance" in _text(view)
+            assert "Fitted NB2 alpha" in _text(view)
+            assert "distinct from the advisory Pearson dispersion" in _text(view)
+            assert "variance equal to the fitted count" not in _text(view)
         assert "deterministic sample" not in _text(view)
     finally:
         view.close()
 
 
-@pytest.mark.parametrize("model", [RegressionModel.LOGISTIC, RegressionModel.NEGATIVE_BINOMIAL])
+@pytest.mark.parametrize("model", [RegressionModel.LOGISTIC])
 def test_other_model_layouts_remain_unchanged(model):
     view = GeneralizedRegressionView(_result(model))
     assert view.findChild(QSplitter) is None
@@ -151,13 +158,27 @@ def test_unavailable_poisson_charts_show_reason_without_hiding_model_results(err
         assert "does not exceed" not in _text(view)
 
 
-def test_sampled_poisson_charts_explain_full_cohort_estimation():
-    result = _result(RegressionModel.POISSON)
+@pytest.mark.parametrize("model", [RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL])
+def test_sampled_count_charts_explain_full_cohort_estimation(model):
+    result = _result(model)
     assert result.plot_data is not None
     result = dataclasses.replace(result, n_used=6000, plot_data=dataclasses.replace(result.plot_data, sampled=True))
     view = GeneralizedRegressionView(result)
     assert "sample of 120 of 6" in _text(view)
     assert "Coefficient estimates and dispersion diagnostics use all fitted rows" in _text(view)
+
+
+@pytest.mark.parametrize("error", list(CountPlotError))
+def test_negative_binomial_chart_errors_do_not_hide_coefficients(error):
+    result = dataclasses.replace(_result(RegressionModel.NEGATIVE_BINOMIAL), plot_data=None, plot_error=error)
+    view = GeneralizedRegressionView(result)
+    assert "Charts unavailable" in _text(view)
+    assert view.table() is not None
+    assert view.findChild(FigureCanvasQTAgg) is None
+    if error is CountPlotError.INVALID_VARIANCE:
+        assert "Negative Binomial variance is invalid" in _text(view)
+        assert "Pearson dispersion =" in _text(view)
+        assert "Dispersion diagnostic unavailable" not in _text(view)
 
 
 @pytest.mark.parametrize("fitted", [(1.0, 1.0), (1e100, 2e100)])

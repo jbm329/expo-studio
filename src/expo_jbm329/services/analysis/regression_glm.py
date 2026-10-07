@@ -102,6 +102,7 @@ class CountPlotError(StrEnum):
 
     INVALID_PREDICTIONS = "invalid_predictions"
     INVALID_RESIDUALS = "invalid_residuals"
+    INVALID_VARIANCE = "invalid_variance"
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,6 +130,7 @@ class GeneralizedRegressionResult:
     error_column: str | None = None
     plot_data: CountRegressionPlotData | None = None
     plot_error: CountPlotError | None = None
+    negative_binomial_alpha: float | None = None
 
 
 def initialize_generalized_targets(df: pd.DataFrame) -> GeneralizedTargetColumns:
@@ -410,10 +412,15 @@ def analyze_generalized_regression(
         for index in range(design_width)
     )
     fitted_values = np.asarray(fit.predict(design.matrix), dtype=np.float64)
-    plot_data, plot_error = _poisson_plot_data(y, fitted_values) if model is RegressionModel.POISSON else (None, None)
+    alpha = float(np.asarray(fit.params)[design_width]) if model is RegressionModel.NEGATIVE_BINOMIAL else None
+    plot_data, plot_error = (
+        _count_plot_data(y, fitted_values, alpha)
+        if model in {RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL}
+        else (None, None)
+    )
     dispersion_ratio = (
         _pearson_dispersion(y, fitted_values, int(fit.df_resid))
-        if model is not RegressionModel.LOGISTIC and plot_error is None
+        if model is not RegressionModel.LOGISTIC and plot_error in {None, CountPlotError.INVALID_VARIANCE}
         else _NAN
     )
     log_likelihood = float(fit.llf)
@@ -440,18 +447,34 @@ def analyze_generalized_regression(
         error=None,
         plot_data=plot_data,
         plot_error=plot_error,
+        negative_binomial_alpha=alpha,
     )
 
 
-def _poisson_plot_data(
+def _count_plot_data(
     observed: np.ndarray,
     fitted: np.ndarray,
+    alpha: float | None = None,
 ) -> tuple[CountRegressionPlotData | None, CountPlotError | None]:
-    """Prepare Poisson diagnostics on all fitted rows before display-only sampling."""
+    """Prepare count residuals using Poisson or NB2 variance before row sampling.
+
+    Args:
+        observed: Complete-case observed counts.
+        fitted: Response-scale expected counts in the same row order.
+        alpha: Fitted NB2 dispersion, or None for Poisson variance.
+
+    Returns:
+        Aligned chart data or an explicit diagnostic error.
+    """
     if fitted.shape != observed.shape or not np.isfinite(fitted).all() or np.any(fitted <= 0):
         return None, CountPlotError.INVALID_PREDICTIONS
+    if alpha is not None and (not math.isfinite(alpha) or alpha < 0):
+        return None, CountPlotError.INVALID_VARIANCE
     with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
-        residuals = (observed - fitted) / np.sqrt(fitted)
+        variance = fitted if alpha is None or alpha == 0 else fitted + alpha * np.square(fitted)
+        if not np.isfinite(variance).all() or np.any(variance <= 0):
+            return None, CountPlotError.INVALID_VARIANCE
+        residuals = (observed - fitted) / np.sqrt(variance)
     if not np.isfinite(residuals).all():
         return None, CountPlotError.INVALID_RESIDUALS
     count = len(observed)

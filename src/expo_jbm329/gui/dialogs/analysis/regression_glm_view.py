@@ -56,7 +56,7 @@ class GeneralizedRegressionView(QWidget):
         self._summary_label.setWordWrap(True)
         self._summary_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self._summary_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        if result.model is RegressionModel.POISSON:
+        if result.model in {RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL}:
             splitter = QSplitter(Qt.Orientation.Vertical, self)
             splitter.setChildrenCollapsible(False)
             table_panel, table_layout = self._build_section(self.tr("Model coefficients"))
@@ -97,6 +97,8 @@ class GeneralizedRegressionView(QWidget):
                 text = self.tr("Charts unavailable: fitted counts are not finite and strictly positive.")
             elif self._result.plot_error is CountPlotError.INVALID_RESIDUALS:
                 text = self.tr("Charts unavailable: Pearson residuals are not finite.")
+            elif self._result.plot_error is CountPlotError.INVALID_VARIANCE:
+                text = self.tr("Charts unavailable: the fitted Negative Binomial variance is invalid.")
             else:
                 text = self.tr("No count-model chart data are available.")
             label = QLabel(text, panel)
@@ -243,7 +245,7 @@ class GeneralizedRegressionView(QWidget):
             self.tr("AIC = {aic}").format(aic=fmt_num(result.aic)),
         ])
         if result.model in {RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL}:
-            if result.plot_error is not None:
+            if result.plot_error in {CountPlotError.INVALID_PREDICTIONS, CountPlotError.INVALID_RESIDUALS}:
                 lines.append(
                     self.tr("Dispersion diagnostic unavailable because fitted counts or residuals are invalid.")
                 )
@@ -263,11 +265,28 @@ class GeneralizedRegressionView(QWidget):
                     )
                 )
             lines.append(self.tr("This diagnostic is advisory; the selected model was not changed."))
-        if result.model is RegressionModel.POISSON and result.plot_data is not None:
+        if result.model is RegressionModel.NEGATIVE_BINOMIAL and result.negative_binomial_alpha is not None:
+            lines.append(
+                self.tr("Fitted NB2 alpha = {alpha}; this is distinct from the advisory Pearson dispersion.").format(
+                    alpha=fmt_num(result.negative_binomial_alpha),
+                )
+            )
+        if (
+            result.model in {RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL}
+            and result.plot_data is not None
+        ):
             lines.append(
                 self.tr("Charts describe the fitted rows (in-sample), not out-of-sample predictive performance.")
             )
-            lines.append(self.tr("Poisson Pearson residuals use variance equal to the fitted count."))
+            if result.model is RegressionModel.POISSON:
+                lines.append(self.tr("Poisson Pearson residuals use variance equal to the fitted count."))
+            else:
+                lines.append(
+                    self.tr(
+                        "Negative Binomial Pearson residuals use NB2 variance: "
+                        "fitted count + alpha * fitted count squared."
+                    )
+                )
             if result.plot_data.sampled:
                 lines.append(
                     self.tr("Charts show a deterministic sample of {shown} of {total} fitted rows.").format(
