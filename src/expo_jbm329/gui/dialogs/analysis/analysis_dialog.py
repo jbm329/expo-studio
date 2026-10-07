@@ -124,6 +124,8 @@ class AnalysisDialog(QDialog):
             active_tab_id: Initially selected dataset tab ID.
         """
         super().__init__(parent)
+        self.setWindowFlag(Qt.WindowType.WindowMaximizeButtonHint, True)
+        self.setWindowFlag(Qt.WindowType.WindowMinimizeButtonHint, False)
 
         self._datasets = datasets
 

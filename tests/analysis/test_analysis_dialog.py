@@ -64,6 +64,15 @@ def test_dialog_selects_active_tab_on_init():
     assert dialog.selected_dataset_tab_id() == "t2"
 
 
+def test_dialog_has_maximize_and_close_buttons_but_no_minimize_button():
+    dialog = AnalysisDialog(parent=None, datasets=[], active_tab_id=None)
+
+    flags = dialog.windowFlags()
+    assert flags & Qt.WindowType.WindowMaximizeButtonHint
+    assert flags & Qt.WindowType.WindowCloseButtonHint
+    assert not flags & Qt.WindowType.WindowMinimizeButtonHint
+
+
 def test_dialog_defaults_to_first_dataset_when_no_active_tab():
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
 
