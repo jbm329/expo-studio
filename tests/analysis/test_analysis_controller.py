@@ -1528,6 +1528,12 @@ def test_applying_poisson_regression_keeps_selected_model(dialog_factory):
     assert isinstance(view, GeneralizedRegressionView)
     assert view.result().error is None
     assert view.result().model is RegressionModel.POISSON
+    assert view.result().plot_data is not None
+    canvas = view.findChild(FigureCanvasQTAgg)
+    assert canvas is not None
+    assert len(canvas.figure.axes) == 2
+    assert len(canvas.figure.axes[0].collections[0].get_offsets()) == size
+    assert dlg.config_widgets[-1] is config
 
 
 def test_stale_glm_result_is_discarded_after_switching_models(dialog_factory):

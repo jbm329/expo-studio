@@ -102,6 +102,70 @@
 <context>
     <name>GeneralizedRegressionView</name>
     <message>
+        <source>Dispersion diagnostic unavailable because fitted counts or residuals are invalid.</source>
+        <translation>Dispersionsdiagnostiken är inte tillgänglig eftersom de anpassade antalen eller residualerna är ogiltiga.</translation>
+    </message>
+    <message>
+        <source>Model coefficients</source>
+        <translation>Modellkoefficienter</translation>
+    </message>
+    <message>
+        <source>Model comments</source>
+        <translation>Modellkommentarer</translation>
+    </message>
+    <message>
+        <source>Count-model diagnostics</source>
+        <translation>Diagnostik för räknemodellen</translation>
+    </message>
+    <message>
+        <source>Charts unavailable: fitted counts are not finite and strictly positive.</source>
+        <translation>Diagrammen är inte tillgängliga: de anpassade antalen är inte ändliga och strikt positiva.</translation>
+    </message>
+    <message>
+        <source>Charts unavailable: Pearson residuals are not finite.</source>
+        <translation>Diagrammen är inte tillgängliga: Pearsonresidualerna är inte ändliga.</translation>
+    </message>
+    <message>
+        <source>No count-model chart data are available.</source>
+        <translation>Inga diagramdata för räknemodellen är tillgängliga.</translation>
+    </message>
+    <message>
+        <source>Observed versus fitted counts</source>
+        <translation>Observerade mot anpassade antal</translation>
+    </message>
+    <message>
+        <source>Fitted count</source>
+        <translation>Anpassat antal</translation>
+    </message>
+    <message>
+        <source>Observed count</source>
+        <translation>Observerat antal</translation>
+    </message>
+    <message>
+        <source>Pearson residuals versus fitted counts</source>
+        <translation>Pearsonresidualer mot anpassade antal</translation>
+    </message>
+    <message>
+        <source>Pearson residual</source>
+        <translation>Pearsonresidual</translation>
+    </message>
+    <message>
+        <source>Charts describe the fitted rows (in-sample), not out-of-sample predictive performance.</source>
+        <translation>Diagrammen beskriver de rader som modellen anpassats till, inte prediktionsförmågan för nya observationer.</translation>
+    </message>
+    <message>
+        <source>Poisson Pearson residuals use variance equal to the fitted count.</source>
+        <translation>Pearsonresidualerna för Poisson använder en varians som är lika med det anpassade antalet.</translation>
+    </message>
+    <message>
+        <source>Charts show a deterministic sample of {shown} of {total} fitted rows.</source>
+        <translation>Diagrammen visar ett deterministiskt urval av {shown} av {total} rader som modellen anpassats till.</translation>
+    </message>
+    <message>
+        <source>Coefficient estimates and dispersion diagnostics use all fitted rows.</source>
+        <translation>Koefficientskattningar och dispersionsdiagnostik använder alla rader som modellen anpassats till.</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="75"/>
         <source>Select an outcome column for this regression model.</source>
         <translation>Välj en utfallskolumn för den här regressionsmodellen.</translation>

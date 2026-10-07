@@ -51,7 +51,7 @@ Available analyses include:
 - **Statistics**: Descriptive statistics, histograms, boxplots, and Shapiro-Wilk normality tests for numeric columns.
 - **Hypothesis Tests**: Group comparisons for numeric and categorical variables, chi-square tests of independence with adjusted residuals, and paired Wilcoxon/Friedman tests with measurement summaries, distribution boxplots, and subject trajectories.
 - **Correlation**: Pearson, Spearman, and Kendall correlation matrices, strongest-pair summaries, significance tests, heatmaps, and pairwise scatterplots.
-- **Regression**: Multiple linear regression with numeric and categorical predictors, coefficient estimates, confidence intervals, model summaries, diagnostic tests, and residual plots.
+- **Regression**: Multiple linear regression with numeric and categorical predictors, coefficient estimates, confidence intervals, model summaries, diagnostic tests, and residual plots. Poisson count regression includes observed-versus-fitted counts and Pearson residual plots.
 - **Outliers**: Univariate screening using IQR, z-score, or modified z-score, and multivariate detection using Isolation Forest or Local Outlier Factor.
 - **Clustering**: K-means, DBSCAN, and agglomerative clustering with cluster summaries and PCA-based projections.
 - **PCA**: Principal component analysis with optional standardization, explained variance, score plots, and feature loadings.

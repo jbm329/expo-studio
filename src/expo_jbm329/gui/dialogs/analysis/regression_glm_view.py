@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import html
+from itertools import chain
 from typing import TYPE_CHECKING
 
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.services.analysis.regression import MAX_MODEL_TERMS, MAX_PREDICTORS, TermKind
 from expo_jbm329.services.analysis.regression_glm import (
     OVERDISPERSION_THRESHOLD,
+    CountPlotError,
     GeneralizedRegressionError,
     RegressionModel,
     generalized_term_name,
@@ -52,8 +56,72 @@ class GeneralizedRegressionView(QWidget):
         self._summary_label.setWordWrap(True)
         self._summary_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self._summary_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        layout.addWidget(self._table, 2)
-        layout.addWidget(self._summary_label, 1)
+        if result.model is RegressionModel.POISSON:
+            splitter = QSplitter(Qt.Orientation.Vertical, self)
+            splitter.setChildrenCollapsible(False)
+            table_panel, table_layout = self._build_section(self.tr("Model coefficients"))
+            table_layout.addWidget(self._table)
+            summary_panel, summary_layout = self._build_section(self.tr("Model comments"))
+            summary_layout.addWidget(self._summary_label)
+            splitter.addWidget(table_panel)
+            splitter.addWidget(self._build_chart_section())
+            splitter.addWidget(summary_panel)
+            splitter.setStretchFactor(0, 2)
+            splitter.setStretchFactor(1, 3)
+            splitter.setStretchFactor(2, 1)
+            splitter.setSizes([250, 350, 160])
+            layout.addWidget(splitter, 1)
+        else:
+            layout.addWidget(self._table, 2)
+            layout.addWidget(self._summary_label, 1)
+
+    def _build_section(self, title: str) -> tuple[QWidget, QVBoxLayout]:
+        """Build a titled section matching the Hypothesis Tests layout."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        label = QLabel(title, panel)
+        label.setTextFormat(Qt.TextFormat.PlainText)
+        font = label.font()
+        font.setBold(True)
+        label.setFont(font)
+        layout.addWidget(label)
+        return panel, layout
+
+    def _build_chart_section(self) -> QWidget:
+        """Render response-scale fit and variance-aware residual diagnostics."""
+        panel, layout = self._build_section(self.tr("Count-model diagnostics"))
+        data = self._result.plot_data
+        if data is None:
+            if self._result.plot_error is CountPlotError.INVALID_PREDICTIONS:
+                text = self.tr("Charts unavailable: fitted counts are not finite and strictly positive.")
+            elif self._result.plot_error is CountPlotError.INVALID_RESIDUALS:
+                text = self.tr("Charts unavailable: Pearson residuals are not finite.")
+            else:
+                text = self.tr("No count-model chart data are available.")
+            label = QLabel(text, panel)
+            label.setTextFormat(Qt.TextFormat.PlainText)
+            label.setWordWrap(True)
+            layout.addWidget(label)
+            return panel
+        figure = Figure(constrained_layout=True)
+        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas.setMinimumHeight(260)
+        comparison = figure.add_subplot(121)
+        residuals = figure.add_subplot(122)
+        comparison.scatter(data.fitted, data.observed, alpha=0.35, s=12)
+        upper = max(chain(data.fitted, data.observed))
+        comparison.plot([0, upper], [0, upper], linestyle="--", color="tab:red")
+        comparison.set_title(self.tr("Observed versus fitted counts"))
+        comparison.set_xlabel(self.tr("Fitted count"))
+        comparison.set_ylabel(self.tr("Observed count"))
+        residuals.scatter(data.fitted, data.pearson_residuals, alpha=0.35, s=12)
+        residuals.axhline(0, linestyle="--", color="tab:red")
+        residuals.set_title(self.tr("Pearson residuals versus fitted counts"))
+        residuals.set_xlabel(self.tr("Fitted count"))
+        residuals.set_ylabel(self.tr("Pearson residual"))
+        layout.addWidget(canvas)
+        return panel
 
     def result(self) -> GeneralizedRegressionResult:
         """Return the displayed result."""
@@ -175,19 +243,37 @@ class GeneralizedRegressionView(QWidget):
             self.tr("AIC = {aic}").format(aic=fmt_num(result.aic)),
         ])
         if result.model in {RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL}:
-            if result.overdispersed:
-                dispersion_text = self.tr(
-                    "Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial."
+            if result.plot_error is not None:
+                lines.append(
+                    self.tr("Dispersion diagnostic unavailable because fitted counts or residuals are invalid.")
                 )
             else:
-                dispersion_text = self.tr(
-                    "Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion."
+                if result.overdispersed:
+                    dispersion_text = self.tr(
+                        "Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial."
+                    )
+                else:
+                    dispersion_text = self.tr(
+                        "Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion."
+                    )
+                lines.append(
+                    dispersion_text.format(
+                        value=fmt_num(result.dispersion_ratio),
+                        threshold=fmt_num(OVERDISPERSION_THRESHOLD),
+                    )
                 )
-            lines.append(
-                dispersion_text.format(
-                    value=fmt_num(result.dispersion_ratio),
-                    threshold=fmt_num(OVERDISPERSION_THRESHOLD),
-                )
-            )
             lines.append(self.tr("This diagnostic is advisory; the selected model was not changed."))
+        if result.model is RegressionModel.POISSON and result.plot_data is not None:
+            lines.append(
+                self.tr("Charts describe the fitted rows (in-sample), not out-of-sample predictive performance.")
+            )
+            lines.append(self.tr("Poisson Pearson residuals use variance equal to the fitted count."))
+            if result.plot_data.sampled:
+                lines.append(
+                    self.tr("Charts show a deterministic sample of {shown} of {total} fitted rows.").format(
+                        shown=fmt_int(len(result.plot_data.observed)),
+                        total=fmt_int(result.n_used),
+                    )
+                )
+                lines.append(self.tr("Coefficient estimates and dispersion diagnostics use all fitted rows."))
         return "<br>".join(lines)

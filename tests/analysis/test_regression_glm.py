@@ -7,10 +7,14 @@ import math
 import numpy as np
 import pandas as pd
 import pytest
+import statsmodels.api as sm
 
+from expo_jbm329.services.analysis.regression import PLOT_SAMPLE_SIZE
 from expo_jbm329.services.analysis.regression_glm import (
+    CountPlotError,
     GeneralizedRegressionError,
     RegressionModel,
+    _poisson_plot_data,  # noqa: PLC2701
     analyze_generalized_regression,
     generalized_term_name,
     initialize_generalized_targets,
@@ -179,3 +183,102 @@ def test_fit_failure_returns_structured_error(monkeypatch):
     result = analyze_generalized_regression(df, RegressionModel.LOGISTIC, "outcome", ["x"])
 
     assert result.error is GeneralizedRegressionError.FIT_FAILED
+
+
+def test_poisson_charts_match_response_predictions_and_pearson_residuals_on_complete_rows():
+    df = _count_frame()
+    df.loc[0, "x"] = np.nan
+    df.loc[1, "x"] = np.inf
+    df.loc[2, "count"] = np.nan
+    result = analyze_generalized_regression(df, RegressionModel.POISSON, "count", ["x"])
+    complete = df.replace([np.inf, -np.inf], np.nan).dropna()
+    expected_fit = sm.Poisson(complete["count"], sm.add_constant(complete[["x"]])).fit(disp=False)
+    expected = expected_fit.predict()
+
+    assert result.error is None
+    assert result.plot_error is None
+    data = result.plot_data
+    assert data is not None
+    assert not data.sampled
+    assert len(data.observed) == result.n_used == 497
+    np.testing.assert_array_equal(data.observed, complete["count"])
+    np.testing.assert_allclose(data.fitted, expected)
+    np.testing.assert_allclose(data.pearson_residuals, (complete["count"] - expected) / np.sqrt(expected))
+    assert 0 in data.observed
+    assert not np.allclose(data.fitted, expected_fit.fittedvalues)
+
+
+@pytest.mark.parametrize("size", [PLOT_SAMPLE_SIZE, PLOT_SAMPLE_SIZE + 1])
+def test_poisson_chart_sampling_preserves_alignment_and_full_fit(size: int):
+    df = _count_frame(size=size)
+    result = analyze_generalized_regression(df, RegressionModel.POISSON, "count", ["x"])
+    repeated = analyze_generalized_regression(df, RegressionModel.POISSON, "count", ["x"])
+    data = result.plot_data
+    assert data is not None
+    assert data == repeated.plot_data
+    assert len(data.observed) == min(size, PLOT_SAMPLE_SIZE)
+    assert data.sampled == (size > PLOT_SAMPLE_SIZE)
+    indices = (
+        np.sort(np.random.default_rng(0).choice(size, PLOT_SAMPLE_SIZE, replace=False))
+        if size > PLOT_SAMPLE_SIZE
+        else np.arange(size)
+    )
+    expected_fit = sm.Poisson(df["count"], sm.add_constant(df[["x"]])).fit(disp=False)
+    fitted = np.asarray(expected_fit.predict())
+    np.testing.assert_array_equal(data.observed, df["count"].to_numpy()[indices])
+    np.testing.assert_allclose(data.fitted, fitted[indices])
+    np.testing.assert_allclose(data.pearson_residuals, ((df["count"].to_numpy() - fitted) / np.sqrt(fitted))[indices])
+    assert result.n_used == size
+    assert result.dispersion_ratio == pytest.approx(
+        np.sum((df["count"].to_numpy() - fitted) ** 2 / fitted) / expected_fit.df_resid
+    )
+    assert result.terms[1].estimate == pytest.approx(expected_fit.params.iloc[1])
+
+
+@pytest.mark.parametrize(
+    "fitted", [np.array([0.0]), np.array([-1.0]), np.array([np.nan]), np.array([np.inf]), np.array([])]
+)
+def test_poisson_plot_data_rejects_invalid_predictions_without_dropping_rows(fitted: np.ndarray):
+    data, error = _poisson_plot_data(np.array([1.0]), fitted)
+    assert data is None
+    assert error is CountPlotError.INVALID_PREDICTIONS
+
+
+def test_poisson_plot_data_surfaces_residual_overflow():
+    data, error = _poisson_plot_data(np.array([1e308]), np.array([1e-300]))
+    assert data is None
+    assert error is CountPlotError.INVALID_RESIDUALS
+
+
+def test_invalid_poisson_predictions_preserve_coefficients_and_surface_chart_error(monkeypatch):
+    original_fit = sm.Poisson.fit
+
+    def fit_with_invalid_predictions(model, *args, **kwargs):
+        fit = original_fit(model, *args, **kwargs)
+        fit.predict = lambda matrix: np.full(len(matrix), np.nan)
+        return fit
+
+    monkeypatch.setattr(sm.Poisson, "fit", fit_with_invalid_predictions)
+    result = analyze_generalized_regression(_count_frame(), RegressionModel.POISSON, "count", ["x"])
+    assert result.error is None
+    assert result.terms
+    assert result.plot_data is None
+    assert result.plot_error is CountPlotError.INVALID_PREDICTIONS
+    assert math.isnan(result.dispersion_ratio)
+
+
+@pytest.mark.parametrize("model", [RegressionModel.LOGISTIC, RegressionModel.NEGATIVE_BINOMIAL])
+def test_other_models_do_not_gain_chart_data_in_the_poisson_step(model: RegressionModel):
+    df = _binary_frame() if model is RegressionModel.LOGISTIC else _count_frame(overdispersed=True)
+    target = "outcome" if model is RegressionModel.LOGISTIC else "count"
+    result = analyze_generalized_regression(df, model, target, ["x"])
+    assert result.error is None
+    assert result.plot_data is None
+    assert result.plot_error is None
+
+
+def test_failed_poisson_fit_has_no_chart_data():
+    result = analyze_generalized_regression(_count_frame(), RegressionModel.POISSON, "count", [])
+    assert result.error is GeneralizedRegressionError.NO_PREDICTORS_SELECTED
+    assert result.plot_data is None
+    assert result.plot_error is None

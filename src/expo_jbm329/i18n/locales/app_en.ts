@@ -5074,6 +5074,70 @@ Hint: {error_hint}</source>
 </context><context>
     <name>GeneralizedRegressionView</name>
     <message>
+        <source>Dispersion diagnostic unavailable because fitted counts or residuals are invalid.</source>
+        <translation>Dispersion diagnostic unavailable because fitted counts or residuals are invalid.</translation>
+    </message>
+    <message>
+        <source>Model coefficients</source>
+        <translation>Model coefficients</translation>
+    </message>
+    <message>
+        <source>Model comments</source>
+        <translation>Model comments</translation>
+    </message>
+    <message>
+        <source>Count-model diagnostics</source>
+        <translation>Count-model diagnostics</translation>
+    </message>
+    <message>
+        <source>Charts unavailable: fitted counts are not finite and strictly positive.</source>
+        <translation>Charts unavailable: fitted counts are not finite and strictly positive.</translation>
+    </message>
+    <message>
+        <source>Charts unavailable: Pearson residuals are not finite.</source>
+        <translation>Charts unavailable: Pearson residuals are not finite.</translation>
+    </message>
+    <message>
+        <source>No count-model chart data are available.</source>
+        <translation>No count-model chart data are available.</translation>
+    </message>
+    <message>
+        <source>Observed versus fitted counts</source>
+        <translation>Observed versus fitted counts</translation>
+    </message>
+    <message>
+        <source>Fitted count</source>
+        <translation>Fitted count</translation>
+    </message>
+    <message>
+        <source>Observed count</source>
+        <translation>Observed count</translation>
+    </message>
+    <message>
+        <source>Pearson residuals versus fitted counts</source>
+        <translation>Pearson residuals versus fitted counts</translation>
+    </message>
+    <message>
+        <source>Pearson residual</source>
+        <translation>Pearson residual</translation>
+    </message>
+    <message>
+        <source>Charts describe the fitted rows (in-sample), not out-of-sample predictive performance.</source>
+        <translation>Charts describe the fitted rows (in-sample), not out-of-sample predictive performance.</translation>
+    </message>
+    <message>
+        <source>Poisson Pearson residuals use variance equal to the fitted count.</source>
+        <translation>Poisson Pearson residuals use variance equal to the fitted count.</translation>
+    </message>
+    <message>
+        <source>Charts show a deterministic sample of {shown} of {total} fitted rows.</source>
+        <translation>Charts show a deterministic sample of {shown} of {total} fitted rows.</translation>
+    </message>
+    <message>
+        <source>Coefficient estimates and dispersion diagnostics use all fitted rows.</source>
+        <translation>Coefficient estimates and dispersion diagnostics use all fitted rows.</translation>
+    </message>
+    <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="75" />
         <source>Select an outcome column for this regression model.</source>
         <translation>Select an outcome column for this regression model.</translation>

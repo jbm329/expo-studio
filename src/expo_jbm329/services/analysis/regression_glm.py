@@ -18,6 +18,7 @@ from expo_jbm329.services.analysis.regression import (
     CONFIDENCE_LEVEL,
     MAX_MODEL_TERMS,
     MAX_PREDICTORS,
+    PLOT_SAMPLE_SIZE,
     CategoricalReference,
     PredictorColumns,
     PredictorKind,
@@ -31,6 +32,7 @@ _NAN = float("nan")
 _MIN_DISTINCT = 2
 _MIN_RESIDUAL_DF = 1
 OVERDISPERSION_THRESHOLD = 1.5
+_PLOT_SEED = 0
 
 
 class RegressionModel(StrEnum):
@@ -86,6 +88,23 @@ class GeneralizedRegressionTerm:
 
 
 @dataclass(frozen=True, slots=True)
+class CountRegressionPlotData:
+    """Row-aligned response-scale counts and residuals, possibly sampled."""
+
+    observed: tuple[float, ...]
+    fitted: tuple[float, ...]
+    pearson_residuals: tuple[float, ...]
+    sampled: bool
+
+
+class CountPlotError(StrEnum):
+    """Reasons fitted count-model diagnostics cannot be displayed."""
+
+    INVALID_PREDICTIONS = "invalid_predictions"
+    INVALID_RESIDUALS = "invalid_residuals"
+
+
+@dataclass(frozen=True, slots=True)
 class GeneralizedRegressionResult:
     """Fit metadata and estimates for logistic or count regression."""
 
@@ -108,6 +127,8 @@ class GeneralizedRegressionResult:
     overdispersed: bool
     error: GeneralizedRegressionError | None
     error_column: str | None = None
+    plot_data: CountRegressionPlotData | None = None
+    plot_error: CountPlotError | None = None
 
 
 def initialize_generalized_targets(df: pd.DataFrame) -> GeneralizedTargetColumns:
@@ -389,8 +410,11 @@ def analyze_generalized_regression(
         for index in range(design_width)
     )
     fitted_values = np.asarray(fit.predict(design.matrix), dtype=np.float64)
+    plot_data, plot_error = _poisson_plot_data(y, fitted_values) if model is RegressionModel.POISSON else (None, None)
     dispersion_ratio = (
-        _pearson_dispersion(y, fitted_values, int(fit.df_resid)) if model is not RegressionModel.LOGISTIC else _NAN
+        _pearson_dispersion(y, fitted_values, int(fit.df_resid))
+        if model is not RegressionModel.LOGISTIC and plot_error is None
+        else _NAN
     )
     log_likelihood = float(fit.llf)
     null_log_likelihood = float(fit.llnull)
@@ -414,7 +438,34 @@ def analyze_generalized_regression(
         dispersion_ratio=dispersion_ratio,
         overdispersed=dispersion_ratio > OVERDISPERSION_THRESHOLD,
         error=None,
+        plot_data=plot_data,
+        plot_error=plot_error,
     )
+
+
+def _poisson_plot_data(
+    observed: np.ndarray,
+    fitted: np.ndarray,
+) -> tuple[CountRegressionPlotData | None, CountPlotError | None]:
+    """Prepare Poisson diagnostics on all fitted rows before display-only sampling."""
+    if fitted.shape != observed.shape or not np.isfinite(fitted).all() or np.any(fitted <= 0):
+        return None, CountPlotError.INVALID_PREDICTIONS
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+        residuals = (observed - fitted) / np.sqrt(fitted)
+    if not np.isfinite(residuals).all():
+        return None, CountPlotError.INVALID_RESIDUALS
+    count = len(observed)
+    if count > PLOT_SAMPLE_SIZE:
+        rng = np.random.default_rng(_PLOT_SEED)
+        indices = np.sort(rng.choice(count, size=PLOT_SAMPLE_SIZE, replace=False))
+    else:
+        indices = np.arange(count)
+    return CountRegressionPlotData(
+        observed=tuple(float(value) for value in observed[indices]),
+        fitted=tuple(float(value) for value in fitted[indices]),
+        pearson_residuals=tuple(float(value) for value in residuals[indices]),
+        sampled=count > PLOT_SAMPLE_SIZE,
+    ), None
 
 
 def _empty_result(
