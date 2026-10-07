@@ -1,9 +1,10 @@
-"""Dataset-wide Descriptive Statistics analysis.
+"""Dataset-wide descriptive summaries for continuous and categorical columns.
 
 Aggregates per-column numeric statistics (mean/median/std/variance/min/max/
 range/quartiles/IQR/skewness/kurtosis/count/missing) across every numeric
-column in a DataFrame, plus per-column histogram data for distribution
-charts and a Shapiro-Wilk normality test. Reuses
+column in a DataFrame, and categorical level counts and percentages for
+low-cardinality columns. Numeric columns also include histogram data for
+distribution charts and a Shapiro-Wilk normality test. Reuses
 `expo_jbm329.services.data_profile.column_data_profile.profile_series()`'s
 existing per-column profiling instead of recomputing statistics from
 scratch; `range`/`iqr`/`variance` are derived from that existing output, and
@@ -17,16 +18,48 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from expo_jbm329.services.analysis.columns import numeric_columns
+from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS
 from expo_jbm329.services.analysis.normality import shapiro_normality
+from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
 from expo_jbm329.services.data_profile.column_data_profile import profile_series
 
 if TYPE_CHECKING:
     import pandas as pd
 
 _NAN = float("nan")
+_NORMALITY_SIGNIFICANCE_LEVEL = 0.05
+_CATEGORICAL_DTYPES = frozenset({SemanticDType.BOOL, SemanticDType.STRING, SemanticDType.CATEGORY})
+
+
+class DescriptiveSummaryMethod(StrEnum):
+    """Presentation method for one continuous variable in a baseline table."""
+
+    MEAN_SD = "mean_sd"
+    MEDIAN_IQR = "median_iqr"
+
+
+@dataclass(frozen=True, slots=True)
+class CategoryFrequency:
+    """Frequency of one observed level in a categorical column."""
+
+    value: str
+    count: int
+    fraction: float
+
+
+@dataclass(frozen=True, slots=True)
+class CategoricalColumnStatistics:
+    """Frequency and missing-value summary for a categorical column."""
+
+    column: str
+    count: int
+    missing_count: int
+    missing_fraction: float
+    frequencies: tuple[CategoryFrequency, ...]
 
 
 def _as_int(value: object, default: int = 0) -> int:
@@ -109,14 +142,36 @@ class ColumnDescriptiveStatistics:
 
 @dataclass(frozen=True, slots=True)
 class DescriptiveStatisticsResult:
-    """Dataset-wide descriptive statistics for every numeric column.
+    """Dataset-wide descriptive statistics and categorical frequencies.
 
     Attributes:
         columns: Per-column statistics, in the DataFrame's original column
             order. Empty when the DataFrame has no numeric columns.
+        categorical_columns: Frequency summaries for eligible categorical
+            columns, in the DataFrame's original column order.
     """
 
     columns: tuple[ColumnDescriptiveStatistics, ...]
+    categorical_columns: tuple[CategoricalColumnStatistics, ...] = ()
+
+
+def recommended_summary_method(stats: ColumnDescriptiveStatistics) -> DescriptiveSummaryMethod:
+    """Choose a presentation default from the Shapiro-Wilk result.
+
+    A non-significant result is only a guide, not proof of normality. When
+    Shapiro-Wilk cannot provide a usable p-value, use the median/IQR
+    presentation.
+
+    Args:
+        stats: Summary statistics for one numeric column.
+
+    Returns:
+        Mean/SD when Shapiro-Wilk does not reject normality; median/IQR when
+        it does or when no usable p-value is available.
+    """
+    if math.isnan(stats.shapiro_p_value) or stats.shapiro_p_value < _NORMALITY_SIGNIFICANCE_LEVEL:
+        return DescriptiveSummaryMethod.MEDIAN_IQR
+    return DescriptiveSummaryMethod.MEAN_SD
 
 
 def _safe_diff(minuend: float, subtrahend: float) -> float:
@@ -170,16 +225,54 @@ def _column_statistics(df: pd.DataFrame, column: str) -> ColumnDescriptiveStatis
     )
 
 
+def _categorical_statistics(df: pd.DataFrame, column: str) -> CategoricalColumnStatistics:
+    """Compute non-missing level frequencies for one eligible category."""
+    series = df[column]
+    count = int(series.count())
+    frequencies = tuple(
+        CategoryFrequency(
+            value=str(value),
+            count=int(value_count),
+            fraction=float(value_count / count) if count else _NAN,
+        )
+        for value, value_count in series.value_counts(sort=False, dropna=True).items()
+    )
+    missing_count = len(series) - count
+    return CategoricalColumnStatistics(
+        column=column,
+        count=count,
+        missing_count=missing_count,
+        missing_fraction=float(missing_count / len(series)) if len(series) else 0.0,
+        frequencies=frequencies,
+    )
+
+
+def _categorical_columns(df: pd.DataFrame) -> tuple[str, ...]:
+    """Return low-cardinality categorical and coded-numeric columns."""
+    eligible: list[str] = []
+    for column in df.columns:
+        series = df[column]
+        semantic_dtype = classify_series_dtype(series)
+        is_categorical = semantic_dtype in _CATEGORICAL_DTYPES
+        is_low_cardinality_numeric = semantic_dtype in {SemanticDType.INT, SemanticDType.FLOAT}
+        if (is_categorical or is_low_cardinality_numeric) and int(series.nunique(dropna=True)) <= MAX_GROUPS:
+            eligible.append(str(column))
+    return tuple(eligible)
+
+
 def analyze_descriptive_statistics(df: pd.DataFrame) -> DescriptiveStatisticsResult:
-    """Compute dataset-wide descriptive statistics for every numeric column.
+    """Compute continuous summaries and categorical frequencies for a DataFrame.
 
     Args:
         df: The DataFrame to analyze. Never mutated.
 
     Returns:
-        A populated `DescriptiveStatisticsResult`, with one entry per
-        numeric column (int or float), in the DataFrame's original column
-        order. Empty if the DataFrame has no numeric columns.
+        A populated `DescriptiveStatisticsResult`, with numeric columns
+        summarized as before and eligible low-cardinality columns summarized
+        as frequencies. Low-cardinality numeric columns appear in both
+        summaries so their continuous statistics remain available.
     """
     columns = tuple(_column_statistics(df, column) for column in numeric_columns(df))
-    return DescriptiveStatisticsResult(columns=columns)
+    categorical_names = _categorical_columns(df)
+    categorical_columns = tuple(_categorical_statistics(df, column) for column in categorical_names)
+    return DescriptiveStatisticsResult(columns=columns, categorical_columns=categorical_columns)

@@ -288,7 +288,7 @@ class ChiSquareView(QWidget):
         if result.fisher_odds_ratio is not None and result.fisher_p_value is not None:
             lines += [
                 "",
-                self.tr("<b>Fisher's exact test</b> (exact, reliable even for small samples):"),
+                self.tr("<b>Fisher's exact test</b> (exact; useful when expected counts are small):"),
                 self.tr("Odds ratio = {odds_ratio}, p = {p}").format(
                     odds_ratio=fmt_num(result.fisher_odds_ratio),
                     p=html.escape(fmt_p_value(result.fisher_p_value)),

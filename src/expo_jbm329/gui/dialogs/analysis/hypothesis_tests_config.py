@@ -5,7 +5,17 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QComboBox, QFormLayout, QLabel, QPushButton, QStackedWidget, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QComboBox,
+    QFormLayout,
+    QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QPushButton,
+    QStackedWidget,
+    QVBoxLayout,
+    QWidget,
+)
 
 from expo_jbm329.gui.dialogs.analysis.chi_square_config import ChiSquareConfigWidget
 from expo_jbm329.gui.dialogs.analysis.group_comparison_config import GroupComparisonConfigWidget
@@ -14,11 +24,61 @@ from expo_jbm329.services.analysis.categories import HypothesisTest
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.chi_square import ChiSquareResult
     from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
+    from expo_jbm329.services.analysis.paired_comparison import PairedComparisonResult
 
-# A test's (first, second) column pair, or None when unavailable/incomplete.
-ColumnSelection = tuple[str, str] | None
+# A test's ordered column selection, or None when unavailable/incomplete.
+ColumnSelection = tuple[str, ...] | None
 
 _COLUMNS_PER_CHI_SQUARE_TEST = 2
+_MIN_PAIRED_OCCASIONS = 2
+
+
+class PairedComparisonConfigWidget(QWidget):
+    """Lets the user select repeated-measure columns in occasion order."""
+
+    selection_changed = pyqtSignal()
+
+    def __init__(self, result: PairedComparisonResult, parent: QWidget | None = None) -> None:
+        """Initialize the paired-test column checklist.
+
+        Args:
+            result: Initializer result containing available numeric columns
+                and default selected occasions.
+            parent: Optional parent widget.
+        """
+        super().__init__(parent)
+        selected = set(result.columns)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        label = QLabel(
+            self.tr("Select at least two numeric columns. They are used in the order shown; each row is one subject."),
+            self,
+        )
+        label.setWordWrap(True)
+        layout.addWidget(label)
+
+        self._columns_list = QListWidget(self)
+        self._columns_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
+        for column in result.available_numeric_columns:
+            item = QListWidgetItem(column, self._columns_list)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Checked if column in selected else Qt.CheckState.Unchecked)
+        layout.addWidget(self._columns_list)
+        self._columns_list.itemChanged.connect(self._on_item_changed)
+
+    def _on_item_changed(self, _item: QListWidgetItem) -> None:
+        """Notify the parent that the pending occasion selection changed."""
+        self.selection_changed.emit()
+
+    def selected_columns(self) -> tuple[str, ...] | None:
+        """Return checked columns in dataset order when at least two are selected."""
+        selected = tuple(
+            item.text()
+            for index in range(self._columns_list.count())
+            if (item := self._columns_list.item(index)) is not None and item.checkState() is Qt.CheckState.Checked
+        )
+        return selected if len(selected) >= _MIN_PAIRED_OCCASIONS else None
 
 
 class HypothesisTestsConfigWidget(QWidget):
@@ -43,6 +103,7 @@ class HypothesisTestsConfigWidget(QWidget):
         self,
         group_comparison: GroupComparisonResult,
         chi_square: ChiSquareResult,
+        paired_comparison: PairedComparisonResult,
         parent: QWidget | None = None,
     ) -> None:
         """Initialize the configuration widget.
@@ -53,6 +114,8 @@ class HypothesisTestsConfigWidget(QWidget):
                 pickers.
             chi_square: Default or most recently computed chi-square
                 result, used to populate that test's column pickers.
+            paired_comparison: Default paired-test metadata, used to
+                populate its measurement occasion checklist.
             parent: Optional parent widget.
         """
         super().__init__(parent)
@@ -63,6 +126,7 @@ class HypothesisTestsConfigWidget(QWidget):
         self._test_combo = QComboBox(self)
         self._test_combo.addItem(self.tr("Group comparison"), HypothesisTest.GROUP_COMPARISON.value)
         self._test_combo.addItem(self.tr("Chi-square independence"), HypothesisTest.CHI_SQUARE.value)
+        self._test_combo.addItem(self.tr("Paired comparison"), HypothesisTest.PAIRED_COMPARISON.value)
 
         form = QFormLayout()
         form.addRow(QLabel(self.tr("Test"), self), self._test_combo)
@@ -74,6 +138,7 @@ class HypothesisTestsConfigWidget(QWidget):
         self._group_comparison_config: GroupComparisonConfigWidget | None = None
         if group_comparison.available_numeric_columns and group_comparison.available_grouping_columns:
             self._group_comparison_config = GroupComparisonConfigWidget(group_comparison, self._stack)
+            self._group_comparison_config.selection_changed.connect(self._update_apply_button)
             self._stack.addWidget(self._group_comparison_config)
         else:
             self._stack.addWidget(self._build_unavailable_label())
@@ -81,7 +146,16 @@ class HypothesisTestsConfigWidget(QWidget):
         self._chi_square_config: ChiSquareConfigWidget | None = None
         if len(chi_square.available_columns) >= _COLUMNS_PER_CHI_SQUARE_TEST:
             self._chi_square_config = ChiSquareConfigWidget(chi_square, self._stack)
+            self._chi_square_config.selection_changed.connect(self._update_apply_button)
             self._stack.addWidget(self._chi_square_config)
+        else:
+            self._stack.addWidget(self._build_unavailable_label())
+
+        self._paired_comparison_config: PairedComparisonConfigWidget | None = None
+        if len(paired_comparison.available_numeric_columns) >= _MIN_PAIRED_OCCASIONS:
+            self._paired_comparison_config = PairedComparisonConfigWidget(paired_comparison, self._stack)
+            self._paired_comparison_config.selection_changed.connect(self._update_apply_button)
+            self._stack.addWidget(self._paired_comparison_config)
         else:
             self._stack.addWidget(self._build_unavailable_label())
 
@@ -117,7 +191,7 @@ class HypothesisTestsConfigWidget(QWidget):
 
     def _update_apply_button(self) -> None:
         """Enable Apply only when the selected test is available for the dataset."""
-        self._apply_button.setEnabled(self.is_selected_test_available())
+        self._apply_button.setEnabled(self.is_selected_test_available() and self.current_configuration()[1] is not None)
 
     def is_selected_test_available(self) -> bool:
         """Return whether the dataset has eligible columns for the selected test."""
@@ -126,6 +200,8 @@ class HypothesisTestsConfigWidget(QWidget):
                 return self._group_comparison_config is not None
             case HypothesisTest.CHI_SQUARE:
                 return self._chi_square_config is not None
+            case HypothesisTest.PAIRED_COMPARISON:
+                return self._paired_comparison_config is not None
 
     def selected_test(self) -> HypothesisTest:
         """Return the currently selected hypothesis test."""
@@ -142,6 +218,12 @@ class HypothesisTestsConfigWidget(QWidget):
         if self._chi_square_config is None:
             return None
         return self._chi_square_config.current_selection()
+
+    def paired_comparison_selection(self) -> ColumnSelection:
+        """Return the selected paired-measure columns, if at least two are checked."""
+        if self._paired_comparison_config is None:
+            return None
+        return self._paired_comparison_config.selected_columns()
 
     def applied_configuration(self) -> tuple[HypothesisTest, ColumnSelection] | None:
         """Return the most recently applied ``(test, selection)``, or `None` before the first Apply."""
@@ -160,3 +242,5 @@ class HypothesisTestsConfigWidget(QWidget):
                 return test, self.group_comparison_selection()
             case HypothesisTest.CHI_SQUARE:
                 return test, self.chi_square_selection()
+            case HypothesisTest.PAIRED_COMPARISON:
+                return test, self.paired_comparison_selection()

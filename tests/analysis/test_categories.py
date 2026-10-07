@@ -29,4 +29,5 @@ def test_analysis_category_round_trips_through_its_value():
 def test_hypothesis_test_values_are_stable_identifiers():
     assert HypothesisTest.GROUP_COMPARISON == "group_comparison"
     assert HypothesisTest.CHI_SQUARE == "chi_square"
-    assert [test.value for test in HypothesisTest] == ["group_comparison", "chi_square"]
+    assert HypothesisTest.PAIRED_COMPARISON == "paired_comparison"
+    assert [test.value for test in HypothesisTest] == ["group_comparison", "chi_square", "paired_comparison"]

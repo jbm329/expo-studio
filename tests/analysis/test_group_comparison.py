@@ -292,9 +292,7 @@ def test_two_groups_populate_pairwise_and_not_multi_group():
 
 
 def test_pairwise_statistics_match_known_scipy_reference_values():
-    """Cross-checked directly against scipy in isolation (see session
-    notes): ttest_ind(a, b, equal_var=False) and mannwhitneyu(a, b) with
-    this exact seeded data give these exact values."""
+    """Lock down both SciPy t-tests and Mann-Whitney U for seeded data."""
     result = analyze_group_comparison(_two_group_df(), "value", "grp")
 
     pairwise = result.pairwise
@@ -302,6 +300,11 @@ def test_pairwise_statistics_match_known_scipy_reference_values():
     assert pairwise.t_statistic == pytest.approx(-5.371949870025589)
     assert pairwise.t_p_value == pytest.approx(1.442996693360877e-06)
     assert pairwise.t_degrees_of_freedom == pytest.approx(57.92758039371246)
+    assert pairwise.student_t_statistic == pytest.approx(-5.371949870025589)
+    assert pairwise.student_t_p_value == pytest.approx(1.4389647707703002e-06)
+    assert pairwise.student_t_degrees_of_freedom == pytest.approx(58.0)
+    assert pairwise.student_mean_difference_ci_low == pytest.approx(-3.011379736867769)
+    assert pairwise.student_mean_difference_ci_high == pytest.approx(-1.3763910179152474)
     assert pairwise.mean_difference_ci_low == pytest.approx(-3.0114014973635843)
     assert pairwise.mean_difference_ci_high == pytest.approx(-1.376369257419432)
     assert pairwise.cohens_d == pytest.approx(-1.387031492218014)

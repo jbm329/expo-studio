@@ -160,7 +160,7 @@ class GroupSummary:
 
 @dataclass(frozen=True, slots=True)
 class PairwiseComparisonResult:
-    """Two-group comparison: Welch's t-test and Mann-Whitney U.
+    """Two-group comparison: Student's and Welch's t-tests, and Mann-Whitney U.
 
     `mean_difference` and its confidence interval are computed as
     ``mean(first group) - mean(second group)``, using `groups`' order.
@@ -170,6 +170,13 @@ class PairwiseComparisonResult:
             variances between the two groups).
         t_p_value: Two-sided p-value for the t-test.
         t_degrees_of_freedom: Welch-Satterthwaite degrees of freedom.
+        student_t_statistic: Equal-variance Student's t-test statistic.
+        student_t_p_value: Two-sided p-value for Student's t-test.
+        student_t_degrees_of_freedom: Degrees of freedom for Student's test.
+        student_mean_difference_ci_low: Lower confidence bound for the
+            difference in means under the equal-variance assumption.
+        student_mean_difference_ci_high: Upper confidence bound for the
+            difference in means under the equal-variance assumption.
         mean_difference: Difference between the two groups' means.
         mean_difference_ci_low: Lower bound of the confidence interval for
             `mean_difference` (`_CONFIDENCE_LEVEL`).
@@ -186,6 +193,11 @@ class PairwiseComparisonResult:
     t_statistic: float
     t_p_value: float
     t_degrees_of_freedom: float
+    student_t_statistic: float
+    student_t_p_value: float
+    student_t_degrees_of_freedom: float
+    student_mean_difference_ci_low: float
+    student_mean_difference_ci_high: float
     mean_difference: float
     mean_difference_ci_low: float
     mean_difference_ci_high: float
@@ -365,7 +377,7 @@ def _epsilon_squared(h_statistic: float, n_total: int, n_groups: int) -> float:
 
 
 def _pairwise_comparison(a: np.ndarray, b: np.ndarray) -> PairwiseComparisonResult:
-    """Run Welch's t-test and Mann-Whitney U on exactly two groups' values."""
+    """Run both t-tests and Mann-Whitney U on exactly two groups' values."""
     with warnings.catch_warnings():
         # scipy warns about reduced precision for near-identical/constant
         # groups; it already returns a valid (if degenerate) result in
@@ -373,6 +385,8 @@ def _pairwise_comparison(a: np.ndarray, b: np.ndarray) -> PairwiseComparisonResu
         warnings.simplefilter("ignore")
         t_result = ttest_ind(a, b, equal_var=False)
         ci = t_result.confidence_interval(confidence_level=_CONFIDENCE_LEVEL)
+        student_t_result = ttest_ind(a, b, equal_var=True)
+        student_ci = student_t_result.confidence_interval(confidence_level=_CONFIDENCE_LEVEL)
         u_result = mannwhitneyu(a, b, alternative="two-sided")
 
     return PairwiseComparisonResult(
@@ -383,6 +397,11 @@ def _pairwise_comparison(a: np.ndarray, b: np.ndarray) -> PairwiseComparisonResu
         t_statistic=float(t_result.statistic),  # pyright: ignore[reportAttributeAccessIssue]
         t_p_value=float(t_result.pvalue),  # pyright: ignore[reportAttributeAccessIssue]
         t_degrees_of_freedom=float(t_result.df),  # pyright: ignore[reportAttributeAccessIssue]
+        student_t_statistic=float(student_t_result.statistic),  # pyright: ignore[reportAttributeAccessIssue]
+        student_t_p_value=float(student_t_result.pvalue),  # pyright: ignore[reportAttributeAccessIssue]
+        student_t_degrees_of_freedom=float(student_t_result.df),  # pyright: ignore[reportAttributeAccessIssue]
+        student_mean_difference_ci_low=float(student_ci.low),
+        student_mean_difference_ci_high=float(student_ci.high),
         mean_difference=float(np.mean(a) - np.mean(b)),
         mean_difference_ci_low=float(ci.low),
         mean_difference_ci_high=float(ci.high),

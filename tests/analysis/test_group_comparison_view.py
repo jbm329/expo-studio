@@ -38,6 +38,11 @@ _PAIRWISE = PairwiseComparisonResult(
     t_statistic=-5.37,
     t_p_value=1.4e-06,
     t_degrees_of_freedom=57.9,
+    student_t_statistic=-5.37,
+    student_t_p_value=1.4e-06,
+    student_t_degrees_of_freedom=58.0,
+    student_mean_difference_ci_low=-3.01,
+    student_mean_difference_ci_high=-1.38,
     mean_difference=-2.19,
     mean_difference_ci_low=-3.01,
     mean_difference_ci_high=-1.38,
@@ -172,10 +177,11 @@ def test_table_shows_not_available_when_shapiro_could_not_be_computed():
 # ----------------------------------------------------------------------
 
 
-def test_pairwise_result_shows_t_test_and_mann_whitney_sections():
+def test_pairwise_result_shows_student_welch_and_mann_whitney_sections():
     view = GroupComparisonView(_make_result(pairwise=_PAIRWISE, multi_group=None))
 
     text = " ".join(label.text() for label in _find_labels(view))
+    assert "Student's t-test" in text
     assert "Welch" in text
     assert "Mann-Whitney" in text
     assert "Cohen" in text

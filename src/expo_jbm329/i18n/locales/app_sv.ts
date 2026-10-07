@@ -100,34 +100,268 @@
     </message>
 </context>
 <context>
+    <name>GeneralizedRegressionView</name>
+    <message>
+        <source>Charts unavailable: the fitted Negative Binomial variance is invalid.</source>
+        <translation>Diagrammen är inte tillgängliga: den anpassade negativa binomialvariansen är ogiltig.</translation>
+    </message>
+    <message>
+        <source>Fitted NB2 alpha = {alpha}; this is distinct from the advisory Pearson dispersion.</source>
+        <translation>Skattat NB2-alfa = {alpha}; detta skiljer sig från den vägledande Pearsondispersionen.</translation>
+    </message>
+    <message>
+        <source>Negative Binomial Pearson residuals use NB2 variance: fitted count + alpha * fitted count squared.</source>
+        <translation>Pearsonresidualerna för negativ binomialregression använder NB2-varians: anpassat antal + alfa * anpassat antal i kvadrat.</translation>
+    </message>
+    <message>
+        <source>Dispersion diagnostic unavailable because fitted counts or residuals are invalid.</source>
+        <translation>Dispersionsdiagnostiken är inte tillgänglig eftersom de anpassade antalen eller residualerna är ogiltiga.</translation>
+    </message>
+    <message>
+        <source>Model coefficients</source>
+        <translation>Modellkoefficienter</translation>
+    </message>
+    <message>
+        <source>Model comments</source>
+        <translation>Modellkommentarer</translation>
+    </message>
+    <message>
+        <source>Count-model diagnostics</source>
+        <translation>Diagnostik för räknemodellen</translation>
+    </message>
+    <message>
+        <source>Charts unavailable: fitted counts are not finite and strictly positive.</source>
+        <translation>Diagrammen är inte tillgängliga: de anpassade antalen är inte ändliga och strikt positiva.</translation>
+    </message>
+    <message>
+        <source>Charts unavailable: Pearson residuals are not finite.</source>
+        <translation>Diagrammen är inte tillgängliga: Pearsonresidualerna är inte ändliga.</translation>
+    </message>
+    <message>
+        <source>No count-model chart data are available.</source>
+        <translation>Inga diagramdata för räknemodellen är tillgängliga.</translation>
+    </message>
+    <message>
+        <source>Observed versus fitted counts</source>
+        <translation>Observerade mot anpassade antal</translation>
+    </message>
+    <message>
+        <source>Fitted count</source>
+        <translation>Anpassat antal</translation>
+    </message>
+    <message>
+        <source>Observed count</source>
+        <translation>Observerat antal</translation>
+    </message>
+    <message>
+        <source>Pearson residuals versus fitted counts</source>
+        <translation>Pearsonresidualer mot anpassade antal</translation>
+    </message>
+    <message>
+        <source>Pearson residual</source>
+        <translation>Pearsonresidual</translation>
+    </message>
+    <message>
+        <source>Charts describe the fitted rows (in-sample), not out-of-sample predictive performance.</source>
+        <translation>Diagrammen beskriver de rader som modellen anpassats till, inte prediktionsförmågan för nya observationer.</translation>
+    </message>
+    <message>
+        <source>Poisson Pearson residuals use variance equal to the fitted count.</source>
+        <translation>Pearsonresidualerna för Poisson använder en varians som är lika med det anpassade antalet.</translation>
+    </message>
+    <message>
+        <source>Charts show a deterministic sample of {shown} of {total} fitted rows.</source>
+        <translation>Diagrammen visar ett deterministiskt urval av {shown} av {total} rader som modellen anpassats till.</translation>
+    </message>
+    <message>
+        <source>Coefficient estimates and dispersion diagnostics use all fitted rows.</source>
+        <translation>Koefficientskattningar och dispersionsdiagnostik använder alla rader som modellen anpassats till.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="75"/>
+        <source>Select an outcome column for this regression model.</source>
+        <translation>Välj en utfallskolumn för den här regressionsmodellen.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="77"/>
+        <source>The selected outcome is invalid. Logistic regression needs two outcome levels; count regression needs non-negative integer values.</source>
+        <translation>Det valda utfallet är ogiltigt. Logistisk regression kräver två utfallsnivåer; regression för räknevariabler kräver icke-negativa heltalsvärden.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="82"/>
+        <source>Select one or more predictors and click Apply.</source>
+        <translation>Markera en eller flera prediktorer och klicka på Tillämpa.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="84"/>
+        <source>Select at most {maximum} predictors.</source>
+        <translation>Markera högst {maximum} prediktorer.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="86"/>
+        <source>Choose a valid outcome and one or more other columns as predictors.</source>
+        <translation>Välj ett giltigt utfall och en eller flera andra kolumner som prediktorer.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="88"/>
+        <source>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</source>
+        <translation>Modellen skulle ha fler än {maximum} termer efter att kategoriska prediktorer dummy-kodats. Ta bort prediktorer eller använd kolumner med färre nivåer.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="93"/>
+        <source>Only {count} complete rows are available, which is too few to fit this model.</source>
+        <translation>Endast {count} kompletta rader är tillgängliga, vilket är för få för att anpassa modellen.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="97"/>
+        <source>The outcome {column} has only one value in the complete rows.</source>
+        <translation>Utfallet {column} har bara ett värde bland de kompletta raderna.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="99"/>
+        <source>The predictor {column} has the same value in every complete row.</source>
+        <translation>Prediktorn {column} har samma värde i alla kompletta rader.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="101"/>
+        <source>Some predictors are exact linear combinations of others, so the model cannot be estimated.</source>
+        <translation>Vissa prediktorer är exakta linjära kombinationer av andra, så modellen kan inte skattas.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="105"/>
+        <source>The model could not be fitted. Check for sparse outcomes, separation, or redundant predictors.</source>
+        <translation>Modellen kunde inte anpassas. Kontrollera om utfallet är glest, om separation förekommer eller om prediktorer är redundanta.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="149"/>
+        <source>Linear regression</source>
+        <translation>Linjär regression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="150"/>
+        <source>Logistic regression</source>
+        <translation>Logistisk regression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="155"/>
+        <source>Poisson regression</source>
+        <translation>Poissonregression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="158"/>
+        <source>Negative binomial regression</source>
+        <translation>Negativ binomial regression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="161"/>
+        <source>&lt;b&gt;{model}&lt;/b&gt;</source>
+        <translation>&lt;b&gt;{model}&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="162"/>
+        <source>Target: &lt;b&gt;{target}&lt;/b&gt;</source>
+        <translation>Målvariabel: &lt;b&gt;{target}&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="163"/>
+        <source>Rows used: {used} ({dropped} dropped because of missing values)</source>
+        <translation>Använda rader: {used} ({dropped} borttagna på grund av saknade värden)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="114"/>
+        <source>Odds ratio</source>
+        <translation>Oddskvot</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="116"/>
+        <source>Rate ratio</source>
+        <translation>Incidenskvot</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="119"/>
+        <source>Term</source>
+        <translation>Term</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="120"/>
+        <source>Coefficient</source>
+        <translation>Koefficient</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="122"/>
+        <source>95% effect CI</source>
+        <translation>95 % KI för effekt</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="123"/>
+        <source>p-value</source>
+        <translation>p-värde</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="132"/>
+        <source>(Intercept)</source>
+        <translation>(Intercept)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="149"/>
+        <source>Outcome coding: {zero} = 0; {one} = 1.</source>
+        <translation>Utfallskodning: {zero} = 0; {one} = 1.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="171"/>
+        <source>Log-likelihood = {value}; McFadden pseudo R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</source>
+        <translation>Log-likelihood = {value}; McFaddens pseudo-R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="175"/>
+        <source>AIC = {aic}</source>
+        <translation>AIC = {aic}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="179"/>
+        <source>Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial.</source>
+        <translation>Pearson-dispersion = {value}, över riktvärdet {threshold}; överväg negativ binomial regression.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="183"/>
+        <source>Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion.</source>
+        <translation>Pearson-dispersion = {value}; den överskrider inte riktvärdet {threshold} för överdispersion.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_glm_view.py" line="192"/>
+        <source>This diagnostic is advisory; the selected model was not changed.</source>
+        <translation>Diagnostiken är vägledande; den valda modellen ändrades inte.</translation>
+    </message>
+</context>
+<context>
     <name>AnalysisController</name>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="210"/>
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="217"/>
         <source>This analysis is not implemented yet.</source>
         <translation>Denna analys är inte implementerad än.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="211"/>
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="218"/>
         <source>An error occurred while generating this analysis.</source>
         <translation>Ett fel inträffade när den här analysen skulle köras.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="212"/>
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="219"/>
         <source>Running analysis…</source>
         <translation>Kör analys…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="213"/>
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="220"/>
         <source>generate analysis</source>
         <translation>generera analys</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="214"/>
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="221"/>
         <source>Analysis cancelled.</source>
         <translation>Analys avbruten.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="215"/>
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="222"/>
         <source>Choose settings and click Apply.</source>
         <translation>Välj inställningar och klicka på Tillämpa</translation>
     </message>
@@ -439,8 +673,8 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/chi_square_view.py" line="291"/>
-        <source>&lt;b&gt;Fisher&apos;s exact test&lt;/b&gt; (exact, reliable even for small samples):</source>
-        <translation>&lt;b&gt;Fishers exakta test&lt;/b&gt; (exakt, tillförlitligt även för små stickprov):</translation>
+        <source>&lt;b&gt;Fisher&apos;s exact test&lt;/b&gt; (exact; useful when expected counts are small):</source>
+        <translation>&lt;b&gt;Fishers exakta test&lt;/b&gt; (exakt; användbart när förväntade frekvenser är låga):</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/chi_square_view.py" line="292"/>
@@ -2929,11 +3163,13 @@ Fortsätt?</translation>
         <translation>&lt;b&gt;Welchs t-test&lt;/b&gt; (antar inte lika varianser):</translation>
     </message>
     <message>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="260"/>
         <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="247"/>
         <source>t = {t}, df = {df}, p = {p}</source>
         <translation>t = {t}, df = {df}, p = {p}</translation>
     </message>
     <message>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="265"/>
         <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="252"/>
         <source>Mean difference: {diff} (95% CI: {low} to {high})</source>
         <translation>Skillnad i medelvärden: {diff} (95 % KI: {low} till {high})</translation>
@@ -2945,66 +3181,71 @@ Fortsätt?</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="259"/>
+        <source>&lt;b&gt;Student&apos;s t-test&lt;/b&gt; (assumes equal variances):</source>
+        <translation>&lt;b&gt;Students t-test&lt;/b&gt; (antar lika varianser):</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="271"/>
         <source>&lt;b&gt;Mann-Whitney U&lt;/b&gt;:</source>
         <translation>&lt;b&gt;Mann-Whitneys U-test&lt;/b&gt;:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="260"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="272"/>
         <source>U = {u}, p = {p}</source>
         <translation>U = {u}, p = {p}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="264"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="276"/>
         <source>Rank-biserial correlation: {r}</source>
         <translation>Rank-biserial korrelation: {r}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="273"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="285"/>
         <source>&lt;b&gt;One-way ANOVA&lt;/b&gt; (assumes equal variances across groups):</source>
         <translation>&lt;b&gt;Envägs-ANOVA&lt;/b&gt; (antar lika varianser mellan grupper):</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="274"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="286"/>
         <source>F = {f}, p = {p}</source>
         <translation>F = {f}, p = {p}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="278"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="290"/>
         <source>Eta²: {eta}</source>
         <translation>Eta²: {eta}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="280"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="292"/>
         <source>&lt;b&gt;Kruskal-Wallis&lt;/b&gt; (does not assume equal variances):</source>
         <translation>&lt;b&gt;Kruskal-Wallis&lt;/b&gt; (antar inte lika varianser):</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="281"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="293"/>
         <source>H = {h}, p = {p}</source>
         <translation>H = {h}, p = {p}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="285"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="297"/>
         <source>Epsilon²: {eps}</source>
         <translation>Epsilon²: {eps}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="294"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="306"/>
         <source>⚠ At least one group&apos;s data does not appear normally distributed (or normality could not be tested) → the non-parametric result above is likely more reliable.</source>
         <translation>⚠ Data för minst en grupp verkar inte vara normalfördelade (eller så kunde normalitet inte testas) → det icke-parametriska resultatet ovan är sannolikt mer tillförlitligt.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="299"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="311"/>
         <source>→ Every group is consistent with a normal distribution → both results should agree. The parametric result above is typically more powerful.</source>
         <translation>→ Alla grupper är förenliga med en normalfördelning → båda resultaten bör ge samma slutsats. Det parametriska testet ovan har vanligtvis högre statistisk styrka.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="323"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="335"/>
         <source>⚠ Group &apos;{label}&apos; has fewer than 2 observations: its standard deviation and any statistic derived from it could not be computed.</source>
         <translation>⚠ Grupp &apos;{label}&apos; har färre än 2 observationer: dess standardavvikelse och all statistik som bygger på den kunde inte beräknas.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="327"/>
+        <location filename="../../gui/dialogs/analysis/group_comparison_view.py" line="339"/>
         <source>⚠ Group &apos;{label}&apos; has fewer than 3 observations: its normality could not be tested.</source>
         <translation>⚠ Grupp &apos;{label}&apos; har färre än 3 observationer: dess normalitet kunde inte testas.</translation>
     </message>
@@ -3012,27 +3253,32 @@ Fortsätt?</translation>
 <context>
     <name>HypothesisTestsConfigWidget</name>
     <message>
-        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="64"/>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="128"/>
         <source>Group comparison</source>
         <translation>Jämförelse mellan grupper</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="65"/>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="129"/>
         <source>Chi-square independence</source>
         <translation>Chi-två-oberoende</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="68"/>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="130"/>
+        <source>Paired comparison</source>
+        <translation>Parat test</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="133"/>
         <source>Test</source>
         <translation>Test</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="88"/>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="163"/>
         <source>Apply</source>
         <translation>Tillämpa</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="102"/>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="177"/>
         <source>This test is not available for the selected dataset.</source>
         <translation>Detta test är inte tillgängligt för det valda datasetet.</translation>
     </message>
@@ -4283,6 +4529,158 @@ Fortsätt?</translation>
     </message>
 </context>
 <context>
+    <name>PairedComparisonConfigWidget</name>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="56"/>
+        <source>Select at least two numeric columns. They are used in the order shown; each row is one subject.</source>
+        <translation>Välj minst två numeriska kolumner. De används i den ordning de visas; varje rad motsvarar en individ.</translation>
+    </message>
+</context>
+<context>
+    <name>PairedComparisonView</name>
+    <message>
+        <source>Select measurement columns and click Apply to run the paired test.</source>
+        <translation>Välj mätkolumner och klicka på Verkställ för att köra det parade testet.</translation>
+    </message>
+    <message>
+        <source>Measurement summary</source>
+        <translation>Mätsammanfattning</translation>
+    </message>
+    <message>
+        <source>Measurement</source>
+        <translation>Mätning</translation>
+    </message>
+    <message>
+        <source>Count</source>
+        <translation>Antal</translation>
+    </message>
+    <message>
+        <source>Mean</source>
+        <translation>Medelvärde</translation>
+    </message>
+    <message>
+        <source>Median</source>
+        <translation>Median</translation>
+    </message>
+    <message>
+        <source>Std Dev</source>
+        <translation>Standardavvikelse</translation>
+    </message>
+    <message>
+        <source>Q1</source>
+        <translation>Q1</translation>
+    </message>
+    <message>
+        <source>Q3</source>
+        <translation>Q3</translation>
+    </message>
+    <message>
+        <source>Paired measurements</source>
+        <translation>Parade mätningar</translation>
+    </message>
+    <message>
+        <source>Distribution by occasion</source>
+        <translation>Fördelning per mättillfälle</translation>
+    </message>
+    <message>
+        <source>Subject trajectories</source>
+        <translation>Individuella mätförlopp</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation>Värde</translation>
+    </message>
+    <message>
+        <source>Measurement occasion</source>
+        <translation>Mättillfälle</translation>
+    </message>
+    <message>
+        <source>Test results</source>
+        <translation>Testresultat</translation>
+    </message>
+    <message>
+        <source>Occasions follow the selected column order; chronological order is not inferred.</source>
+        <translation>Mättillfällena följer den valda kolumnordningen; kronologisk ordning härleds inte.</translation>
+    </message>
+    <message>
+        <source>Boxplots use all complete subjects; whiskers show the minimum and maximum.</source>
+        <translation>Lådagrammen använder alla individer med kompletta mätningar; spröten visar minimum och maximum.</translation>
+    </message>
+    <message>
+        <source>Trajectories show a deterministic sample of {shown} of {total} complete subjects.</source>
+        <translation>Mätförloppen visar ett deterministiskt urval av {shown} av {total} individer med kompletta mätningar.</translation>
+    </message>
+    <message>
+        <source>Tables, boxplots and tests use all complete subjects.</source>
+        <translation>Tabeller, lådagram och tester använder alla individer med kompletta mätningar.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="38"/>
+        <source>Wilcoxon signed-rank test</source>
+        <translation>Wilcoxons teckenrangtest</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="40"/>
+        <source>Friedman test</source>
+        <translation>Friedmans test</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="45"/>
+        <source>&lt;b&gt;{test}&lt;/b&gt;</source>
+        <translation>&lt;b&gt;{test}&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="46"/>
+        <source>Measurement columns: {columns}</source>
+        <translation>Mätkolumner: {columns}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="47"/>
+        <source>Test statistic = {statistic}, p = {p}</source>
+        <translation>Teststatistik = {statistic}, p = {p}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="51"/>
+        <source>Complete subjects: {complete} of {total}; excluded for missing values: {excluded}</source>
+        <translation>Kompletta individer: {complete} av {total}; exkluderade på grund av saknade värden: {excluded}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="58"/>
+        <source>Kendall&apos;s W: {effect}</source>
+        <translation>Kendalls W: {effect}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="59"/>
+        <source>Rows are treated as paired subjects across the selected measurement columns.</source>
+        <translation>Raderna behandlas som parade individer mellan de valda mätkolumnerna.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="74"/>
+        <source>Select at least two numeric measurement columns.</source>
+        <translation>Välj minst två numeriska mätkolumner.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="75"/>
+        <source>The selected measurement columns are not valid numeric columns.</source>
+        <translation>De valda mätkolumnerna är inte giltiga numeriska kolumner.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="76"/>
+        <source>There are not enough subjects with complete measurements for this paired test.</source>
+        <translation>Det finns inte tillräckligt många individer med kompletta mätningar för det parade testet.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="79"/>
+        <source>The two measurements are identical for every complete subject; the Wilcoxon test is undefined.</source>
+        <translation>De två mätningarna är identiska för alla individer med kompletta värden; Wilcoxontestet är odefinierat.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/paired_comparison_view.py" line="82"/>
+        <source>The selected measurements do not vary across occasions, so the Friedman test is undefined.</source>
+        <translation>De valda mätningarna varierar inte mellan tillfällena, så Friedmans test är odefinierat.</translation>
+    </message>
+</context>
+<context>
     <name>QtDialogService</name>
     <message>
         <location filename="../../gui/dialogs/service/common/localization.py" line="6"/>
@@ -4603,6 +5001,36 @@ Tips: {error_hint}</translation>
 </context>
 <context>
     <name>RegressionConfigWidget</name>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_config.py" line="80"/>
+        <source>Linear regression</source>
+        <translation>Linjär regression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_config.py" line="81"/>
+        <source>Logistic regression</source>
+        <translation>Logistisk regression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_config.py" line="82"/>
+        <source>Poisson regression</source>
+        <translation>Poissonregression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_config.py" line="83"/>
+        <source>Negative binomial regression</source>
+        <translation>Negativ binomial regression</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_config.py" line="89"/>
+        <source>Model</source>
+        <translation>Modell</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_config.py" line="227"/>
+        <source>No eligible target columns are available for this model.</source>
+        <translation>Inga lämpliga utfallskolumner är tillgängliga för den här modellen.</translation>
+    </message>
     <message>
         <location filename="../../gui/dialogs/analysis/regression_config.py" line="72"/>
         <source>Target</source>
@@ -7362,7 +7790,8 @@ Tid: {sec:.2f}s{sample}</translation>
 <context>
     <name>StatisticsConfigWidget</name>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="43"/>
+        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="69"/>
+        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="60"/>
         <source>Column</source>
         <translation>Kolumn</translation>
     </message>
@@ -7370,140 +7799,215 @@ Tid: {sec:.2f}s{sample}</translation>
 <context>
     <name>StatisticsView</name>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="84"/>
-        <source>No numeric columns in this dataset.</source>
-        <translation>Inga numeriska kolumner i detta dataset.</translation>
+        <source>Mean ± SD</source>
+        <translation>Medelvärde ± standardavvikelse</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="94"/>
+        <source>Median (Q1 to Q3)</source>
+        <translation>Median (Q1 till Q3)</translation>
+    </message>
+    <message>
+        <source>* marks the summary suggested by Shapiro-Wilk. No star means no recommendation is available.</source>
+        <translation>* markerar sammanfattningen som Shapiro-Wilk föreslår. Ingen stjärna betyder att ingen rekommendation är tillgänglig.</translation>
+    </message>
+    <message>
+        <source>{column}: Shapiro-Wilk could not provide a recommendation; neither summary is starred.</source>
+        <translation>{column}: Shapiro-Wilk kunde inte ge någon rekommendation; ingen av sammanfattningarna är markerad med en stjärna.</translation>
+    </message>
+    <message>
+        <source>{column}: Shapiro-Wilk suggests {summary} as a starting point. This is a guide, not proof of normality.</source>
+        <translation>{column}: Shapiro-Wilk föreslår {summary} som utgångspunkt. Detta är vägledning, inte ett bevis på normalfördelning.</translation>
+    </message>
+    <message>
+        <source>Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</source>
+        <translation>Stickprovsstorleken överstiger {threshold}. P-värdet kan vara osäkert för mycket stora stickprov.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="97"/>
+        <source>No numeric columns or eligible categorical columns in this dataset.</source>
+        <translation>Datasetet innehåller inga numeriska kolumner eller lämpliga kategorikolumner.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="107"/>
         <source>Descriptive statistics</source>
         <translation>Deskriptiv statistik</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="101"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="114"/>
+        <source>Continuous</source>
+        <translation>Kontinuerliga</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="116"/>
+        <source>Categorical</source>
+        <translation>Kategoriska</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="207"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="123"/>
         <source>Column</source>
         <translation>Kolumn</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="102"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="209"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="124"/>
         <source>Count</source>
         <translation>Antal</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="103"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="125"/>
         <source>Missing</source>
         <translation>Saknade</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="104"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="126"/>
         <source>Mean</source>
         <translation>Medelvärde</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="105"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="127"/>
         <source>Median</source>
         <translation>Median</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="106"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="128"/>
         <source>Std Dev</source>
         <translation>Standardavvikelse</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="107"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="129"/>
         <source>Variance</source>
         <translation>Varians</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="108"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="130"/>
         <source>Min</source>
         <translation>Min</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="109"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="131"/>
         <source>Max</source>
         <translation>Max</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="110"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="132"/>
         <source>Range</source>
         <translation>Spann</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="111"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="133"/>
         <source>Q1</source>
         <translation>Q1</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="112"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="134"/>
         <source>Q3</source>
         <translation>Q3</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="113"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="135"/>
         <source>IQR</source>
         <translation>IQR</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="114"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="136"/>
         <source>Skewness</source>
         <translation>Skevhet</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="115"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="137"/>
         <source>Kurtosis</source>
         <translation>Kurtosis</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="184"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="194"/>
+        <source>Columns with more than {maximum} distinct values are omitted.</source>
+        <translation>Kolumner med fler än {maximum} unika värden visas inte.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="208"/>
+        <source>Category</source>
+        <translation>Kategori</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="210"/>
+        <source>Percent (non-missing)</source>
+        <translation>Procent (icke-saknade)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="211"/>
+        <source>Missing count</source>
+        <translation>Antal saknade</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="216"/>
+        <source>No non-missing values</source>
+        <translation>Inga icke-saknade värden</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="297"/>
         <source>Distribution</source>
         <translation>Fördelning</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="241"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="307"/>
+        <source>No numeric columns are available for distributions.</source>
+        <translation>Inga numeriska kolumner är tillgängliga för fördelningsdiagram.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="327"/>
+        <source>Normality testing applies to continuous variables.</source>
+        <translation>Normalitetstestning gäller kontinuerliga variabler.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="369"/>
         <source>Not enough data to test for normality.</source>
         <translation>Inte tillräckligt med data för att testa normalfördelning.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="244"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="372"/>
         <source>&lt;b&gt;Shapiro-Wilk&lt;/b&gt;:</source>
         <translation>&lt;b&gt;Shapiro-Wilk&lt;/b&gt;:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="245"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="373"/>
         <source>W = {w}, p = {p}</source>
         <translation>W = {w}, p = {p}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="252"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="380"/>
         <source>→ Significant evidence against normality (α = 0.05).</source>
         <translation>→ Statistiskt signifikanta belägg mot normalfördelning (α = 0,05).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="254"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="382"/>
         <source>→ No significant evidence against normality (α = 0.05).</source>
         <translation>→ Inga statistiskt signifikanta belägg mot normalfördelning (α = 0,05).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="258"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="386"/>
         <source>⚠ Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</source>
         <translation>⚠ Antalet observationer överstiger {threshold}. P-värdet kan vara mindre tillförlitligt för mycket stora stickprov.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="282"/>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="268"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="410"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="396"/>
         <source>No data</source>
         <translation>Ingen data</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="276"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="404"/>
         <source>Histogram</source>
         <translation>Histogram</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="300"/>
+        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="428"/>
         <source>Boxplot</source>
         <translation>Boxplot</translation>
+    </message>
+    <message>
+        <source>No numeric columns in this dataset.</source>
+        <translation type="vanished">Inga numeriska kolumner i detta dataset.</translation>
     </message>
 </context>
 <context>
@@ -7817,5 +8321,105 @@ Snabbkommando: Ctrl+Z</translation>
         <source>Analyze data</source>
         <translation>Analysera data</translation>
     </message>
+</context>
+<context>
+    <name>RegressionConfigWidget</name>
+    <message><source>Cox proportional-hazards regression</source><translation>Cox-regression med proportionella hazarder</translation></message>
+    <message><source>Duration</source><translation>Duration</translation></message>
+    <message><source>Event (1 = event; 0 = censored)</source><translation>Händelse (1 = händelse; 0 = censurerad)</translation></message>
+    <message><source>This column is an outcome and cannot be a predictor.</source><translation>Kolumnen är ett utfall och kan inte användas som prediktor.</translation></message>
+    <message><source>Cox regression needs distinct numeric duration and binary event columns.</source><translation>Cox-regression kräver olika numeriska duration- och binära händelsekolumner.</translation></message>
+</context>
+<context>
+    <name>SurvivalRegressionView</name>
+    <message>
+        <source>Model coefficients</source>
+        <translation>Modellkoefficienter</translation>
+    </message>
+    <message>
+        <source>Model comments</source>
+        <translation>Modellkommentarer</translation>
+    </message>
+    <message>
+        <source>Effects and survival</source>
+        <translation>Effekter och överlevnad</translation>
+    </message>
+    <message>
+        <source>Hazard ratios with 95% intervals</source>
+        <translation>Hazardkvoter med 95 % intervall</translation>
+    </message>
+    <message>
+        <source>Forest plot unavailable:
+all hazard ratios and intervals must be finite and positive.</source>
+        <translation>Forestdiagrammet är inte tillgängligt:
+alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
+    </message>
+    <message>
+        <source>Hazard ratio (log scale)</source>
+        <translation>Hazardkvot (logaritmisk skala)</translation>
+    </message>
+    <message>
+        <source>Overall Kaplan-Meier survival (unadjusted)</source>
+        <translation>Övergripande Kaplan-Meier-överlevnad (ojusterad)</translation>
+    </message>
+    <message>
+        <source>No survival chart data are available.</source>
+        <translation>Inga diagramdata för överlevnad är tillgängliga.</translation>
+    </message>
+    <message>
+        <source>Duration: {column}</source>
+        <translation>Tid: {column}</translation>
+    </message>
+    <message>
+        <source>Survival probability</source>
+        <translation>Överlevnadssannolikhet</translation>
+    </message>
+    <message>
+        <source>At risk immediately before time</source>
+        <translation>Antal i riskpopulationen omedelbart före tidpunkten</translation>
+    </message>
+    <message>
+        <source>Kaplan-Meier uses the same complete-case subjects as the Cox fit, without covariate adjustment.</source>
+        <translation>Kaplan-Meier använder samma individer med kompletta värden som Cox-modellen, utan justering för kovariater.</translation>
+    </message>
+    <message>
+        <source>The survival curve is not a Cox prediction or a proportional-hazards diagnostic.</source>
+        <translation>Överlevnadskurvan är inte en Cox-prediktion eller en diagnostik av antagandet om proportionella hazarder.</translation>
+    </message>
+    <message>
+        <source>Plus signs mark censoring times; tied censor marks may overlap.</source>
+        <translation>Plustecken markerar censureringstidpunkter; markeringar vid samma tidpunkt kan överlappa.</translation>
+    </message>
+    <message>
+        <source>All complete subjects are used; no survival sampling or confidence bands are applied.</source>
+        <translation>Alla individer med kompletta värden används; inget urval eller konfidensband för överlevnad används.</translation>
+    </message>
+    <message><source>Select a duration column for Cox regression.</source><translation>Välj en durationkolumn för Cox-regression.</translation></message>
+    <message><source>Select a binary event column for Cox regression.</source><translation>Välj en binär händelsekolumn för Cox-regression.</translation></message>
+    <message><source>Select one or more predictors and click Apply.</source><translation>Välj en eller flera prediktorer och klicka på Tillämpa.</translation></message>
+    <message><source>Select at most {maximum} predictors.</source><translation>Välj högst {maximum} prediktorer.</translation></message>
+    <message><source>Choose valid, distinct duration and event columns and other columns as predictors.</source><translation>Välj giltiga, olika duration- och händelsekolumner samt andra kolumner som prediktorer.</translation></message>
+    <message><source>Duration {column} contains a non-missing value that is not finite and strictly positive.</source><translation>Duration {column} innehåller ett värde som inte saknas men som inte är ändligt och strikt positivt.</translation></message>
+    <message><source>Event {column} must contain only 0 and 1 or boolean values; 1 means event and 0 means censored.</source><translation>Händelsen {column} får endast innehålla 0 och 1 eller booleska värden; 1 betyder händelse och 0 betyder censurerad.</translation></message>
+    <message><source>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</source><translation>Modellen skulle ha fler än {maximum} termer efter dummy-kodning av kategoriska prediktorer. Ta bort prediktorer eller använd kolumner med färre nivåer.</translation></message>
+    <message><source>Only {count} complete rows are available, which is too few to fit this model.</source><translation>Endast {count} kompletta rader är tillgängliga, vilket är för få för att anpassa modellen.</translation></message>
+    <message><source>There are too few events relative to the model terms to estimate this model.</source><translation>Det finns för få händelser i förhållande till modellens termer för att skatta modellen.</translation></message>
+    <message><source>The predictor {column} has the same value in every complete row.</source><translation>Prediktorn {column} har samma värde i varje komplett rad.</translation></message>
+    <message><source>Some predictors are exact linear combinations of others, so the model cannot be estimated.</source><translation>Vissa prediktorer är exakta linjära kombinationer av andra, så modellen kan inte skattas.</translation></message>
+    <message><source>The model could not be fitted reliably. Check for sparse events, separation, redundant predictors, or numerical problems.</source><translation>Modellen kunde inte anpassas tillförlitligt. Kontrollera om händelserna är glesa, om separation eller redundanta prediktorer förekommer eller om det finns numeriska problem.</translation></message>
+    <message><source>Term</source><translation>Term</translation></message>
+    <message><source>Coefficient</source><translation>Koefficient</translation></message>
+    <message><source>Hazard ratio</source><translation>Hazardkvot</translation></message>
+    <message><source>95% hazard-ratio CI</source><translation>95 % KI för hazardkvot</translation></message>
+    <message><source>p-value</source><translation>p-värde</translation></message>
+    <message><source>(Intercept)</source><translation>(Intercept)</translation></message>
+    <message><source>&lt;b&gt;Cox proportional-hazards regression&lt;/b&gt;</source><translation>&lt;b&gt;Cox-regression med proportionella hazarder&lt;/b&gt;</translation></message>
+    <message><source>Duration: &lt;b&gt;{duration}&lt;/b&gt;; event: &lt;b&gt;{event}&lt;/b&gt;</source><translation>Duration: &lt;b&gt;{duration}&lt;/b&gt;; händelse: &lt;b&gt;{event}&lt;/b&gt;</translation></message>
+    <message><source>Event coding: 1 = event; 0 = censored.</source><translation>Händelsekodning: 1 = händelse; 0 = censurerad.</translation></message>
+    <message><source>Rows used: {used} ({dropped} excluded by listwise missing-value handling)</source><translation>Använda rader: {used} ({dropped} exkluderade genom komplettfallsanalys av saknade värden)</translation></message>
+    <message><source>Events: {events}; censored: {censored}</source><translation>Händelser: {events}; censurerade: {censored}</translation></message>
+    <message><source>Reference for {column}: {level}</source><translation>Referens för {column}: {level}</translation></message>
+    <message><source>Efron method was used to handle tied event times.</source><translation>Efrons metod användes för att hantera bundna händelsetider.</translation></message>
+    <message><source>The proportional-hazards assumption was not assessed.</source><translation>Antagandet om proportionella hazarder har inte utvärderats.</translation></message>
 </context>
 </TS>

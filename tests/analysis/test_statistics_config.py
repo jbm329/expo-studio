@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from PyQt6.QtWidgets import QComboBox, QLabel
+
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.services.analysis.statistics import (
     ColumnDescriptiveStatistics,
@@ -48,6 +50,13 @@ def test_defaults_to_the_first_column():
     widget = StatisticsConfigWidget(result)
 
     assert widget.selected_column() == "a"
+
+
+def test_configuration_contains_only_the_column_picker():
+    result = DescriptiveStatisticsResult(columns=(_make_stats("a"), _make_stats("b")))
+    widget = StatisticsConfigWidget(result)
+    assert len(widget.findChildren(QComboBox)) == 1
+    assert [label.text() for label in widget.findChildren(QLabel)] == ["Column"]
 
 
 def test_changing_the_combo_emits_column_changed():

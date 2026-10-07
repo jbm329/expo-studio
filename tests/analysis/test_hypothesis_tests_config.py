@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 import pandas as pd
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel
 
 from expo_jbm329.gui.dialogs.analysis.chi_square_config import ChiSquareConfigWidget
 from expo_jbm329.gui.dialogs.analysis.group_comparison_config import GroupComparisonConfigWidget
-from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
+from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import (
+    HypothesisTestsConfigWidget,
+    PairedComparisonConfigWidget,
+)
 from expo_jbm329.services.analysis.categories import HypothesisTest
 from expo_jbm329.services.analysis.chi_square import analyze_chi_square
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
+from expo_jbm329.services.analysis.paired_comparison import initialize_paired_comparison
 
 
 def _df() -> pd.DataFrame:
@@ -22,7 +27,11 @@ def _df() -> pd.DataFrame:
 
 def _widget(df: pd.DataFrame | None = None) -> HypothesisTestsConfigWidget:
     data = _df() if df is None else df
-    return HypothesisTestsConfigWidget(analyze_group_comparison(data), analyze_chi_square(data))
+    return HypothesisTestsConfigWidget(
+        analyze_group_comparison(data),
+        analyze_chi_square(data),
+        initialize_paired_comparison(data),
+    )
 
 
 def _record(signal) -> list[None]:
@@ -57,6 +66,7 @@ def test_stack_pages_hold_each_tests_config_widget():
 
     assert isinstance(stack.widget(0), GroupComparisonConfigWidget)
     assert isinstance(stack.widget(1), ChiSquareConfigWidget)
+    assert isinstance(stack.widget(2), PairedComparisonConfigWidget)
     assert stack.currentIndex() == 0
 
 
@@ -125,8 +135,10 @@ def test_unavailable_tests_get_a_notice_page_and_no_selection():
 
     assert isinstance(stack.widget(0), QLabel)
     assert isinstance(stack.widget(1), QLabel)
+    assert isinstance(stack.widget(2), QLabel)
     assert widget.group_comparison_selection() is None
     assert widget.chi_square_selection() is None
+    assert widget.paired_comparison_selection() is None
     assert widget.current_configuration() == (HypothesisTest.GROUP_COMPARISON, None)
     assert not widget.is_selected_test_available()
     assert not widget._apply_button.isEnabled()  # noqa: SLF001
@@ -134,6 +146,8 @@ def test_unavailable_tests_get_a_notice_page_and_no_selection():
     _select_test(widget, HypothesisTest.CHI_SQUARE)
 
     assert widget.current_configuration() == (HypothesisTest.CHI_SQUARE, None)
+    _select_test(widget, HypothesisTest.PAIRED_COMPARISON)
+    assert widget.current_configuration() == (HypothesisTest.PAIRED_COMPARISON, None)
     assert not widget._apply_button.isEnabled()  # noqa: SLF001
 
 
@@ -144,6 +158,7 @@ def test_only_one_test_may_be_unavailable():
 
     assert isinstance(stack.widget(0), GroupComparisonConfigWidget)
     assert isinstance(stack.widget(1), QLabel)
+    assert isinstance(stack.widget(2), QLabel)
     assert widget._apply_button.isEnabled()  # noqa: SLF001
 
     _select_test(widget, HypothesisTest.CHI_SQUARE)
@@ -151,6 +166,46 @@ def test_only_one_test_may_be_unavailable():
     assert not widget.is_selected_test_available()
     assert not widget._apply_button.isEnabled()  # noqa: SLF001
 
+    _select_test(widget, HypothesisTest.PAIRED_COMPARISON)
+
+    assert not widget.is_selected_test_available()
+    assert not widget._apply_button.isEnabled()  # noqa: SLF001
+
     _select_test(widget, HypothesisTest.GROUP_COMPARISON)
 
     assert widget._apply_button.isEnabled()  # noqa: SLF001
+
+
+def test_paired_selection_requires_two_columns_and_is_applied_in_dataset_order():
+    data = _df()
+    data["third"] = [float(i) * 20 for i in range(len(data))]
+    widget = _widget(data)
+    _select_test(widget, HypothesisTest.PAIRED_COMPARISON)
+    config = widget._paired_comparison_config  # noqa: SLF001
+    assert config is not None
+    received = _record(widget.apply_requested)
+
+    assert widget.current_configuration() == (
+        HypothesisTest.PAIRED_COMPARISON,
+        ("value", "other"),
+    )
+    assert widget._apply_button.isEnabled()  # noqa: SLF001
+
+    config._columns_list.item(0).setCheckState(Qt.CheckState.Unchecked)  # noqa: SLF001
+    assert widget.current_configuration() == (HypothesisTest.PAIRED_COMPARISON, None)
+    assert not widget._apply_button.isEnabled()  # noqa: SLF001
+
+    config._columns_list.item(0).setCheckState(Qt.CheckState.Checked)  # noqa: SLF001
+    config._columns_list.item(1).setCheckState(Qt.CheckState.Unchecked)  # noqa: SLF001
+    config._columns_list.item(2).setCheckState(Qt.CheckState.Checked)  # noqa: SLF001
+    assert widget.current_configuration() == (
+        HypothesisTest.PAIRED_COMPARISON,
+        ("value", "third"),
+    )
+
+    widget._apply_button.click()  # noqa: SLF001
+    assert received == [None]
+    assert widget.applied_configuration() == (
+        HypothesisTest.PAIRED_COMPARISON,
+        ("value", "third"),
+    )

@@ -12,12 +12,11 @@ if TYPE_CHECKING:
 
 
 class StatisticsConfigWidget(QWidget):
-    """Lets the user pick which numeric column's distribution to display.
+    """Lets the user pick a numeric column for distribution and normality details.
 
     Purely a GUI-thread concern: all columns' distribution data is already
     present in the `DescriptiveStatisticsResult` this widget is built from,
-    so changing the selection never triggers a new background computation -
-    it only tells the paired `StatisticsView` which column to redraw.
+    so changing the selection never triggers a new background computation.
     """
 
     column_changed = pyqtSignal(str)
@@ -38,12 +37,11 @@ class StatisticsConfigWidget(QWidget):
         for stats in result.columns:
             self._column_combo.addItem(stats.column)
 
+        layout.addRow(QLabel(self.tr("Column"), self), self._column_combo)
         self._column_combo.currentTextChanged.connect(self._on_current_text_changed)
 
-        layout.addRow(QLabel(self.tr("Column"), self), self._column_combo)
-
     def _on_current_text_changed(self, text: str) -> None:
-        """Emit column_changed, ignoring the transient empty-combo state."""
+        """Notify the paired view of the selected column."""
         if text:
             self.column_changed.emit(text)
 
@@ -53,7 +51,11 @@ class StatisticsConfigWidget(QWidget):
         return text or None
 
     def set_selected_column(self, column: str) -> None:
-        """Update the selected column without emitting a redundant change."""
+        """Update the selected column without emitting a redundant change.
+
+        Args:
+            column: Numeric column to select.
+        """
         index = self._column_combo.findText(column)
         if index < 0:
             return

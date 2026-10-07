@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import dataclasses
 
+import numpy as np
 import pandas as pd
 import pytest
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QLabel, QTableWidget, QWidget
 
@@ -19,12 +21,15 @@ from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_config import Multiv
 from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_view import MultivariateOutliersView
 from expo_jbm329.gui.dialogs.analysis.outliers_view import OutliersView
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
+from expo_jbm329.gui.dialogs.analysis.paired_comparison_view import PairedComparisonView
 from expo_jbm329.gui.dialogs.analysis.pca_config import PCAConfigWidget
 from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
+from expo_jbm329.gui.dialogs.analysis.regression_glm_view import GeneralizedRegressionView
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
+from expo_jbm329.gui.dialogs.analysis.survival_view import SurvivalRegressionView
 from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigWidget
 from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
@@ -34,6 +39,7 @@ from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutl
 from expo_jbm329.services.analysis.outliers import OutlierMethod
 from expo_jbm329.services.analysis.pca import PCAError
 from expo_jbm329.services.analysis.regression import RegressionError
+from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.timeseries import DecompositionModel
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
@@ -381,6 +387,28 @@ def test_statistics_category_also_builds_a_column_picker_config_widget(dialog_fa
     assert config.selected_column() == "a"
 
 
+def test_statistics_category_shows_categorical_summaries_without_numeric_config(dialog_factory):
+    df = pd.DataFrame({"sex": ["F", "M", "F", None]})
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=4, column_count=1)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": df}),
+        async_ops=async_ops,
+    )
+    _open_and_flush(ctrl, QWidget())
+
+    dlg = dialog_factory[0]
+    dlg._selected_category = AnalysisCategory.STATISTICS
+    dlg._selected_dataset_tab_id = "t1"
+    dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
+    _simulate_success(async_ops.last_call)
+
+    content = dlg.content_widgets[-1]
+    assert isinstance(content, StatisticsView)
+    assert content.findChild(QTableWidget) is not None
+    assert dlg.config_widgets[-1] is None
+
+
 def test_changing_the_statistics_config_column_updates_the_content_view_directly(dialog_factory):
     """Switching columns is a pure GUI-thread operation - it must not
     dispatch a new background job (all columns' data is already computed).
@@ -402,10 +430,16 @@ def test_changing_the_statistics_config_column_updates_the_content_view_directly
 
     jobs_before = len(async_ops.calls)
     config = dlg.config_widgets[-1]
+    content = dlg.content_widgets[-1]
+    assert isinstance(content, StatisticsView)
     config._column_combo.setCurrentIndex(1)  # noqa: SLF001
 
     assert len(async_ops.calls) == jobs_before  # no new background job
     assert config.selected_column() == "b"
+    numeric_table = next(table for table in content.findChildren(QTableWidget) if table.columnCount() == 17)
+    assert numeric_table.item(1, 15).text().startswith("5")
+    assert numeric_table.item(1, 16).text().startswith("5")
+    assert "b: Shapiro-Wilk suggests" in content._recommendation_label.text()  # noqa: SLF001
 
 
 def test_clicking_a_statistics_table_row_updates_the_config_without_a_new_job(dialog_factory):
@@ -429,13 +463,13 @@ def test_clicking_a_statistics_table_row_updates_the_config_without_a_new_job(di
     config = dlg.config_widgets[-1]
     assert isinstance(content, StatisticsView)
     assert isinstance(config, StatisticsConfigWidget)
-    table = content.findChild(QTableWidget)
-    assert table is not None
+    table = next(table for table in content.findChildren(QTableWidget) if table.columnCount() == 17)
 
     table.cellClicked.emit(1, 0)
 
     assert len(async_ops.calls) == jobs_before
     assert config.selected_column() == "b"
+    assert "b: Shapiro-Wilk suggests" in content._recommendation_label.text()  # noqa: SLF001
 
 
 def test_switching_to_a_category_hides_a_stale_config_widget_while_loading(dialog_factory):
@@ -809,6 +843,46 @@ def test_applying_chi_square_runs_a_chi_square_background_job(dialog_factory):
     assert isinstance(dlg.content_widget(), ChiSquareView)
 
 
+def test_applying_paired_comparison_runs_and_renders_a_background_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = _hypothesis_tests_config(dlg)
+    _select_test(config, HypothesisTest.PAIRED_COMPARISON)
+
+    call = _apply_hypothesis_test(async_ops, dlg)
+
+    assert call["scope"] == "analysis:hypothesis_tests:paired_comparison:value:other"
+    _simulate_success(call)
+    assert isinstance(dlg.content_widget(), PairedComparisonView)
+    assert len(dlg.config_widgets) == 1
+
+
+def test_paired_comparison_excludes_incomplete_subjects_and_renders_result(dialog_factory):
+    df = pd.DataFrame({
+        "before": [1.0, 2.0, 3.0, None],
+        "after": [2.0, 3.0, 5.0, 9.0],
+        "group": ["A", "B", "A", "B"],
+    })
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory, df)
+    _select_test(_hypothesis_tests_config(dlg), HypothesisTest.PAIRED_COMPARISON)
+
+    _simulate_success(_apply_hypothesis_test(async_ops, dlg))
+
+    view = dlg.content_widget()
+    assert isinstance(view, PairedComparisonView)
+    labels = view.findChildren(QLabel)
+    assert any("Complete subjects: 3 of 4" in label.text() for label in labels)
+    table = view.findChild(QTableWidget)
+    assert table is not None
+    assert table.rowCount() == 2
+    assert table.item(0, 1).text() == "3"
+    canvas = view.findChild(FigureCanvasQTAgg)
+    assert canvas is not None
+    assert len(canvas.figure.axes[1].lines) == 3
+    assert list(canvas.figure.axes[1].lines[-1].get_ydata()) == [3.0, 5.0]
+
+
 def test_switching_back_to_group_comparison_keeps_its_pending_selection(dialog_factory):
     async_ops = DummyAsyncOps()
     ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
@@ -849,6 +923,21 @@ def test_stale_group_comparison_result_is_discarded_after_switching_test(dialog_
     _simulate_success(group_comparison_call)
 
     assert len(dlg.content_widgets) == content_widgets_before  # stale, dropped
+    _assert_apply_prompt(ctrl, dlg)
+
+
+def test_stale_paired_result_is_discarded_after_switching_test(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = _hypothesis_tests_config(dlg)
+    _select_test(config, HypothesisTest.PAIRED_COMPARISON)
+    paired_call = _apply_hypothesis_test(async_ops, dlg)
+
+    _select_test(config, HypothesisTest.CHI_SQUARE)
+    content_widgets_before = len(dlg.content_widgets)
+    _simulate_success(paired_call)
+
+    assert len(dlg.content_widgets) == content_widgets_before
     _assert_apply_prompt(ctrl, dlg)
 
 
@@ -1297,16 +1386,19 @@ def test_regression_initializes_without_a_background_job_or_busy_overlay(dialog_
     assert view.result().error is RegressionError.NO_PREDICTORS_SELECTED
     assert view.result().target == "y"
     config = _regression_config(dlg)
-    assert config.model_configuration() == ("y", ())
+    assert config.model_configuration() == (RegressionModel.LINEAR, "y", ())
 
 
-def test_regression_without_numeric_columns_has_no_config(dialog_factory):
+def test_regression_without_numeric_columns_can_still_configure_binary_models(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_regression(async_ops, dialog_factory, df=pd.DataFrame({"g": ["a", "b", "a"]}))
 
     assert async_ops.calls == []
     assert _regression_view(dlg).result().error is RegressionError.NO_NUMERIC_COLUMN
-    assert dlg.config_widgets[-1] is None
+    config = _regression_config(dlg)
+    _select_model = config._model_combo  # noqa: SLF001
+    _select_model.setCurrentIndex(_select_model.findData(RegressionModel.LOGISTIC.value))
+    assert config.current_target() == "g"
 
 
 def test_failing_initializer_shows_error_placeholder_without_a_job(dialog_factory, monkeypatch):
@@ -1384,6 +1476,200 @@ def test_stale_regression_result_is_discarded(dialog_factory):
 
     _simulate_success(second)
     assert _regression_view(dlg).result().predictors == ("z",)
+
+
+def test_applying_logistic_regression_uses_glm_view_and_keeps_linear_defaults(dialog_factory):
+    rng = np.random.default_rng(21)
+    size = 120
+    x = rng.normal(size=size)
+    probability = 1 / (1 + np.exp(-(-0.2 + 0.7 * x)))
+    df = pd.DataFrame({
+        "binary": rng.binomial(1, probability, size=size),
+        "x": x,
+        "z": rng.normal(size=size),
+    })
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    config._model_combo.setCurrentIndex(  # noqa: SLF001
+        config._model_combo.findData(RegressionModel.LOGISTIC.value)  # noqa: SLF001
+    )
+    assert config.current_model() is RegressionModel.LOGISTIC
+    assert config.current_target() == "binary"
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:regression:logistic:binary:x"
+    _simulate_success(call)
+
+    view = dlg.content_widget()
+    assert isinstance(view, GeneralizedRegressionView)
+    assert view.result().error is None
+    assert view.result().model is RegressionModel.LOGISTIC
+    assert view.result().target == "binary"
+    assert dlg.config_widgets[-1] is config
+
+
+@pytest.mark.parametrize("model", [RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL])
+def test_applying_count_regression_keeps_selected_model(dialog_factory, model):
+    rng = np.random.default_rng(22)
+    size = 120
+    x = rng.normal(size=size)
+    mean = np.exp(0.3 + 0.4 * x)
+    counts = rng.poisson(mean) if model is RegressionModel.POISSON else rng.negative_binomial(2, 2 / (2 + mean))
+    df = pd.DataFrame({"count": counts, "x": x})
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    config._model_combo.setCurrentIndex(  # noqa: SLF001
+        config._model_combo.findData(model.value)  # noqa: SLF001
+    )
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    view = dlg.content_widget()
+    assert isinstance(view, GeneralizedRegressionView)
+    assert view.result().error is None
+    assert view.result().model is model
+    assert view.result().plot_data is not None
+    canvas = view.findChild(FigureCanvasQTAgg)
+    assert canvas is not None
+    assert len(canvas.figure.axes) == 2
+    assert len(canvas.figure.axes[0].collections[0].get_offsets()) == size
+    assert dlg.config_widgets[-1] is config
+
+
+def test_stale_glm_result_is_discarded_after_switching_models(dialog_factory):
+    rng = np.random.default_rng(23)
+    size = 120
+    x = rng.normal(size=size)
+    probability = 1 / (1 + np.exp(-(-0.2 + 0.7 * x)))
+    df = pd.DataFrame({"binary": rng.binomial(1, probability, size=size), "x": x, "z": rng.normal(size=size)})
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    config._model_combo.setCurrentIndex(  # noqa: SLF001
+        config._model_combo.findData(RegressionModel.LOGISTIC.value)  # noqa: SLF001
+    )
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    stale_call = async_ops.last_call
+
+    config._model_combo.setCurrentIndex(  # noqa: SLF001
+        config._model_combo.findData(RegressionModel.LINEAR.value)  # noqa: SLF001
+    )
+    _simulate_success(stale_call)
+
+    _assert_apply_prompt(ctrl, dlg)
+
+
+def test_cox_regression_uses_apply_first_background_path_and_survival_view(dialog_factory):
+    rng = np.random.default_rng(27)
+    size = 160
+    x = rng.normal(size=size)
+    event_time = rng.exponential(scale=np.exp(-0.35 * x), size=size)
+    censor_time = rng.exponential(scale=1.6, size=size)
+    event = event_time <= censor_time
+    df = pd.DataFrame({
+        "duration": np.minimum(event_time, censor_time),
+        "event": event.astype(int),
+        "x": x,
+    })
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    config._model_combo.setCurrentIndex(config._model_combo.findData(RegressionModel.COX.value))  # noqa: SLF001
+
+    assert async_ops.calls == []
+    assert config.current_duration() == "duration"
+    assert config.current_event() == "event"
+    _check_predictors(config, "x")
+    assert async_ops.calls == []
+    config._apply_button.click()  # noqa: SLF001
+
+    call = async_ops.last_call
+    assert call["scope"] == "analysis:regression:cox:duration:event:x"
+    _simulate_success(call)
+
+    view = dlg.content_widget()
+    assert isinstance(view, SurvivalRegressionView)
+    assert view.result().error is None
+    assert dlg.config_widgets[-1] is config
+    assert view.result().plot_data is not None
+    assert view.result().plot_data.at_risk[0] == size
+    canvas = view.findChild(FigureCanvasQTAgg)
+    assert canvas is not None
+    assert len(canvas.figure.axes) == 3
+    assert canvas.figure.axes[0].get_xscale() == "log"
+    np.testing.assert_array_equal(
+        canvas.figure.axes[1].lines[0].get_xdata(),
+        view.result().plot_data.times,
+    )
+
+
+def test_cox_job_is_stale_after_switching_models_away_and_back(dialog_factory):
+    rng = np.random.default_rng(29)
+    size = 150
+    x = rng.normal(size=size)
+    event_time = rng.exponential(scale=np.exp(-0.3 * x), size=size)
+    censor_time = rng.exponential(scale=1.5, size=size)
+    event = event_time <= censor_time
+    df = pd.DataFrame({
+        "duration": np.minimum(event_time, censor_time),
+        "event": event.astype(int),
+        "binary": rng.binomial(1, 0.5, size=size),
+        "x": x,
+    })
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    config._model_combo.setCurrentIndex(config._model_combo.findData(RegressionModel.COX.value))  # noqa: SLF001
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    call = async_ops.last_call
+
+    config._model_combo.setCurrentIndex(config._model_combo.findData(RegressionModel.LOGISTIC.value))  # noqa: SLF001
+    config._model_combo.setCurrentIndex(config._model_combo.findData(RegressionModel.COX.value))  # noqa: SLF001
+    views_before = len(dlg.content_widgets)
+    _simulate_success(call)
+
+    assert len(dlg.content_widgets) == views_before
+    assert not isinstance(dlg.content_widget(), SurvivalRegressionView)
+
+
+def test_cox_job_is_stale_after_duration_change_and_category_round_trip(dialog_factory):
+    rng = np.random.default_rng(31)
+    size = 150
+    x = rng.normal(size=size)
+    event_time = rng.exponential(scale=np.exp(-0.3 * x), size=size)
+    censor_time = rng.exponential(scale=1.5, size=size)
+    event = event_time <= censor_time
+    df = pd.DataFrame({
+        "duration": np.minimum(event_time, censor_time),
+        "duration2": np.minimum(event_time, censor_time) + 0.25,
+        "event": event.astype(int),
+        "binary": rng.binomial(1, 0.5, size=size),
+        "x": x,
+    })
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    config._model_combo.setCurrentIndex(config._model_combo.findData(RegressionModel.COX.value))  # noqa: SLF001
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    stale_call = async_ops.last_call
+
+    config._duration_combo.setCurrentIndex(config._duration_combo.findText("duration2"))  # noqa: SLF001
+    dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
+    dlg.category_changed.emit(AnalysisCategory.REGRESSION.value)
+    assert _regression_config(dlg) is not config
+    views_before = len(dlg.content_widgets)
+    _simulate_success(stale_call)
+
+    assert len(dlg.content_widgets) == views_before
+    assert not isinstance(dlg.content_widget(), SurvivalRegressionView)
 
 
 # ----------------------------------------------------------------------

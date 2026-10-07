@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
+    QComboBox,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
@@ -19,6 +20,8 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.gui.dialogs.analysis.column_combo_box import ColumnComboBox, exclusion_tooltip
 from expo_jbm329.services.analysis.regression import MAX_PREDICTORS
+from expo_jbm329.services.analysis.regression_glm import GeneralizedTargetColumns, RegressionModel
+from expo_jbm329.services.analysis.survival import SurvivalColumns
 from expo_jbm329.utils.format_utils import fmt_int
 
 if TYPE_CHECKING:
@@ -49,37 +52,82 @@ class RegressionConfigWidget(QWidget):
     """
 
     model_requested = pyqtSignal()
+    configuration_changed = pyqtSignal()
 
-    def __init__(self, result: RegressionResult, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        result: RegressionResult,
+        generalized_targets: GeneralizedTargetColumns | None = None,
+        survival_columns: SurvivalColumns | None = None,
+        parent: QWidget | None = None,
+    ) -> None:
         """Initialize the configuration widget.
 
         Args:
             result: The most recently computed regression, used to
                 populate the target and predictor pickers. Must have at
                 least one available target.
+            generalized_targets: Binary and count target metadata.
+            survival_columns: Eligible Cox duration and event columns.
             parent: Optional parent widget.
         """
         super().__init__(parent)
 
         self._applied_predictors = tuple(p for p in result.predictors if p != result.target)
+        self._linear_targets = result.available_targets
+        self._generalized_targets = (
+            generalized_targets if generalized_targets is not None else GeneralizedTargetColumns(binary=(), count=())
+        )
+        self._survival_columns = survival_columns if survival_columns is not None else SurvivalColumns((), ())
+        self._configuration_revision = 0
+        self._targets_by_model: dict[RegressionModel, str] = {RegressionModel.LINEAR: result.target}
+        self._model_combo = QComboBox(self)
+        self._model_combo.addItem(self.tr("Linear regression"), RegressionModel.LINEAR.value)
+        self._model_combo.addItem(self.tr("Logistic regression"), RegressionModel.LOGISTIC.value)
+        self._model_combo.addItem(self.tr("Poisson regression"), RegressionModel.POISSON.value)
+        self._model_combo.addItem(self.tr("Negative binomial regression"), RegressionModel.NEGATIVE_BINOMIAL.value)
+        self._model_combo.addItem(self.tr("Cox proportional-hazards regression"), RegressionModel.COX.value)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
         target_form = QFormLayout()
+        target_form.addRow(QLabel(self.tr("Model"), self), self._model_combo)
         self._target_combo = ColumnComboBox(self)
         self._target_combo.set_columns(result.available_targets, select=result.target)
-        target_form.addRow(QLabel(self.tr("Target"), self), self._target_combo)
+        self._target_label = QLabel(self.tr("Target"), self)
+        target_form.addRow(self._target_label, self._target_combo)
+        self._duration_combo = ColumnComboBox(self)
+        first_duration = next(
+            (column for column in self._survival_columns.durations if column not in self._survival_columns.events),
+            self._survival_columns.durations[0] if self._survival_columns.durations else "",
+        )
+        self._duration_combo.set_columns(self._survival_columns.durations, select=first_duration)
+        self._duration_label = QLabel(self.tr("Duration"), self)
+        target_form.addRow(self._duration_label, self._duration_combo)
+        self._event_combo = ColumnComboBox(self)
+        first_event = next((column for column in self._survival_columns.events if column != first_duration), "")
+        self._event_combo.set_columns(self._survival_columns.events, select=first_event)
+        self._event_label = QLabel(self.tr("Event (1 = event; 0 = censored)"), self)
+        target_form.addRow(self._event_label, self._event_combo)
         layout.addLayout(target_form)
+        self._target_notice = QLabel(self)
+        self._target_notice.setWordWrap(True)
+        layout.addWidget(self._target_notice)
 
         layout.addWidget(self._build_predictors_group(result))
 
         self._sync_target_item()
+        self._update_cox_controls()
+        self._update_target_notice()
         self._update_apply_state()
 
         # Connected only after the initial population above, so setting up
         # the default selection never emits a spurious first signal.
+        self._model_combo.currentIndexChanged.connect(self._on_model_changed)
         self._target_combo.currentTextChanged.connect(self._on_target_changed)
+        self._duration_combo.currentTextChanged.connect(self._on_duration_changed)
+        self._event_combo.currentTextChanged.connect(self._on_event_changed)
         self._predictor_list.itemChanged.connect(self._on_predictor_check_changed)
         self._select_all_button.clicked.connect(lambda: self._set_all_predictors_checked(checked=True))
         self._clear_button.clicked.connect(lambda: self._set_all_predictors_checked(checked=False))
@@ -151,23 +199,146 @@ class RegressionConfigWidget(QWidget):
         """Disable the new target and refit an already-applied model."""
         if not self.current_target():
             return
+        model = self.current_model()
+        self._configuration_revision += 1
+        self._targets_by_model[model] = self.current_target()
+        had_applied_predictors = bool(self._applied_predictors)
         self._sync_target_item()
         self._applied_predictors = tuple(p for p in self._applied_predictors if p != self.current_target())
         self._update_apply_state()
         if self._applied_predictors:
             self.model_requested.emit()
+        elif had_applied_predictors:
+            self.configuration_changed.emit()
+
+    def _on_model_changed(self, _index: int) -> None:
+        """Replace available targets and refit when a model already has predictors applied."""
+        model = self.current_model()
+        self._configuration_revision += 1
+        self._update_cox_controls()
+        if model is RegressionModel.COX:
+            self._update_cox_choices()
+            self._sync_target_item()
+            self._update_target_notice()
+            self._update_apply_state()
+            self.configuration_changed.emit()
+            return
+        targets = self._available_targets(model)
+        selected = self._targets_by_model.get(model, "")
+        self._target_combo.blockSignals(True)
+        try:
+            self._target_combo.set_columns(targets, select=selected)
+        finally:
+            self._target_combo.blockSignals(False)
+        self._targets_by_model[model] = self.current_target()
+        self._sync_target_item()
+        self._update_target_notice()
+        self._update_apply_state()
+        if not self.current_target():
+            self.configuration_changed.emit()
+            return
+        if self._applied_predictors:
+            self._applied_predictors = tuple(p for p in self._applied_predictors if p != self.current_target())
+            if self._applied_predictors:
+                self.model_requested.emit()
+            else:
+                self.configuration_changed.emit()
+        else:
+            self.configuration_changed.emit()
+
+    def _available_targets(self, model: RegressionModel) -> tuple[str, ...]:
+        """Return the suitable outcome columns for `model`."""
+        if model is RegressionModel.LINEAR:
+            return self._linear_targets
+        if model is RegressionModel.LOGISTIC:
+            return self._generalized_targets.binary
+        if model is RegressionModel.COX:
+            return ()
+        return self._generalized_targets.count
+
+    def _update_cox_controls(self) -> None:
+        """Show survival outcomes only while Cox regression is selected."""
+        is_cox = self.current_model() is RegressionModel.COX
+        self._target_label.setVisible(not is_cox)
+        self._target_combo.setVisible(not is_cox)
+        self._duration_label.setVisible(is_cox)
+        self._duration_combo.setVisible(is_cox)
+        self._event_label.setVisible(is_cox)
+        self._event_combo.setVisible(is_cox)
+
+    def _update_cox_choices(self) -> None:
+        """Keep duration and event selections distinct when they share columns."""
+        duration = self.current_duration()
+        event = self.current_event()
+        duration_choices = tuple(column for column in self._survival_columns.durations if column != event)
+        event_choices = tuple(column for column in self._survival_columns.events if column != duration)
+        self._duration_combo.blockSignals(True)
+        self._event_combo.blockSignals(True)
+        try:
+            self._duration_combo.set_columns(duration_choices, select=duration)
+            self._event_combo.set_columns(event_choices, select=event)
+        finally:
+            self._duration_combo.blockSignals(False)
+            self._event_combo.blockSignals(False)
+
+    def _on_duration_changed(self, _text: str) -> None:
+        """Update Cox outcome exclusions without fitting before Apply."""
+        self._configuration_revision += 1
+        self._update_cox_choices()
+        self._sync_target_item()
+        self._update_target_notice()
+        self._update_apply_state()
+        self.configuration_changed.emit()
+
+    def _on_event_changed(self, _text: str) -> None:
+        """Update Cox outcome exclusions without fitting before Apply."""
+        self._configuration_revision += 1
+        self._update_cox_choices()
+        self._sync_target_item()
+        self._update_target_notice()
+        self._update_apply_state()
+        self.configuration_changed.emit()
+
+    def _update_target_notice(self) -> None:
+        """Explain when the selected model has no eligible target columns."""
+        if self.current_model() is RegressionModel.COX:
+            has_duration = bool(self._duration_combo.eligible_columns())
+            has_event = bool(self._event_combo.eligible_columns())
+            has_distinct_pair = any(
+                duration != event
+                for duration in self._survival_columns.durations
+                for event in self._survival_columns.events
+            )
+            available = has_duration and has_event and has_distinct_pair
+            message = (
+                "" if available else self.tr("Cox regression needs distinct numeric duration and binary event columns.")
+            )
+            self._target_notice.setText(message)
+            self._duration_combo.setEnabled(has_duration and has_distinct_pair)
+            self._event_combo.setEnabled(has_event and has_distinct_pair)
+            return
+        available = bool(self._available_targets(self.current_model()))
+        message = "" if available else self.tr("No eligible target columns are available for this model.")
+        self._target_notice.setText(message)
+        self._target_combo.setEnabled(available)
+        self._duration_combo.setEnabled(True)
+        self._event_combo.setEnabled(True)
 
     def _sync_target_item(self) -> None:
         """Make the target's predictor item disabled and unchecked, and re-enable the others."""
-        target = self.current_target()
-        tooltip = self.tr("This column is the target.")
+        outcomes = set(self._outcome_columns())
+        tooltip = (
+            self.tr("This column is an outcome and cannot be a predictor.")
+            if self.current_model() is RegressionModel.COX
+            else self.tr("This column is the target.")
+        )
         self._predictor_list.blockSignals(True)
         try:
             for item in self._checkable_items():
                 if not item.data(_ELIGIBLE_ROLE):
                     continue
-                is_target = item.data(_COLUMN_ROLE) == target
-                if is_target:
+                is_outcome = item.data(_COLUMN_ROLE) in outcomes
+                if is_outcome:
                     item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
                     item.setCheckState(Qt.CheckState.Unchecked)
                     item.setToolTip(tooltip)
@@ -200,17 +371,33 @@ class RegressionConfigWidget(QWidget):
     def _on_apply_clicked(self) -> None:
         """Apply the checked predictors and request a refit."""
         checked = self.checked_predictors()
-        if not self._is_valid_selection(checked):
+        if not self._has_valid_outcomes() or not self._is_valid_selection(checked):
             return
         self._applied_predictors = checked
+        self._configuration_revision += 1
         self._update_apply_state()
         self.model_requested.emit()
 
     def _update_apply_state(self) -> None:
         """Enable Apply only for a valid selection and explain the count."""
         checked = self.checked_predictors()
-        self._apply_button.setEnabled(self._is_valid_selection(checked))
+        self._apply_button.setEnabled(self._has_valid_outcomes() and self._is_valid_selection(checked))
         self._selection_label.setText(self._selection_text(len(checked)))
+
+    def _has_valid_outcomes(self) -> bool:
+        """Return whether the selected model has its required outcome columns."""
+        if self.current_model() is RegressionModel.COX:
+            return bool(
+                self.current_duration() and self.current_event() and self.current_duration() != self.current_event()
+            )
+        return bool(self.current_target())
+
+    def _outcome_columns(self) -> tuple[str, ...]:
+        """Return the columns that cannot be used as predictors."""
+        if self.current_model() is RegressionModel.COX:
+            return tuple(column for column in (self.current_duration(), self.current_event()) if column)
+        target = self.current_target()
+        return (target,) if target else ()
 
     def _selection_text(self, count: int) -> str:
         """Return the translated selection count, with a hint when it is out of range."""
@@ -257,6 +444,24 @@ class RegressionConfigWidget(QWidget):
             if item.data(_ELIGIBLE_ROLE) and item.checkState() == Qt.CheckState.Checked
         )
 
-    def model_configuration(self) -> tuple[str, tuple[str, ...]]:
-        """Return the ``(target, applied_predictors)`` that determine the model."""
-        return self.current_target(), self._applied_predictors
+    def current_model(self) -> RegressionModel:
+        """Return the selected regression model."""
+        return RegressionModel(self._model_combo.currentData())
+
+    def model_configuration(self) -> tuple[RegressionModel, str, tuple[str, ...]]:
+        """Return the model, target and applied predictors that determine the fit."""
+        if self.current_model() is RegressionModel.COX:
+            return self.current_model(), self.current_duration(), self._applied_predictors
+        return self.current_model(), self.current_target(), self._applied_predictors
+
+    def current_duration(self) -> str:
+        """Return the selected Cox duration column, or ``""`` if none is available."""
+        return self._duration_combo.current_column()
+
+    def current_event(self) -> str:
+        """Return the selected Cox event column, or ``""`` if none is available."""
+        return self._event_combo.current_column()
+
+    def configuration_revision(self) -> int:
+        """Return a monotonically increasing token for changes to applied model configuration."""
+        return self._configuration_revision

@@ -39,3 +39,4 @@ class HypothesisTest(StrEnum):
 
     GROUP_COMPARISON = "group_comparison"
     CHI_SQUARE = "chi_square"
+    PAIRED_COMPARISON = "paired_comparison"

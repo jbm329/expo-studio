@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import pandas as pd
+import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
+from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTabWidget
 
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.normality import SHAPIRO_LARGE_SAMPLE_THRESHOLD
 from expo_jbm329.services.analysis.statistics import (
+    CategoricalColumnStatistics,
+    CategoryFrequency,
     ColumnDescriptiveStatistics,
     DescriptiveStatisticsResult,
+    analyze_descriptive_statistics,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
 
@@ -83,6 +88,33 @@ def test_layout_has_titled_table_chart_and_text_sections_with_adjustable_divider
     assert splitter.widget(2).isAncestorOf(view._normality_label)  # noqa: SLF001
 
 
+def test_statistics_tabs_have_extra_horizontal_padding_for_selected_text():
+    view = StatisticsView(
+        DescriptiveStatisticsResult(
+            columns=(_make_column_stats(),),
+            categorical_columns=(
+                CategoricalColumnStatistics(
+                    column="group",
+                    count=1,
+                    missing_count=0,
+                    missing_fraction=0.0,
+                    frequencies=(CategoryFrequency(value="A", count=1, fraction=1.0),),
+                ),
+            ),
+        )
+    )
+    tabs = view.findChild(QTabWidget)
+
+    assert tabs is not None
+    style = tabs.styleSheet()
+    assert "border-bottom-color: palette(highlight)" in style
+    assert "border: none" in style
+    for index in range(tabs.count()):
+        tabs.setCurrentIndex(index)
+        text_width = tabs.tabBar().fontMetrics().horizontalAdvance(tabs.tabText(index))
+        assert tabs.tabBar().tabRect(index).width() >= text_width + 12
+
+
 def test_table_cells_use_format_utils_for_every_statistic():
     stats = _make_column_stats()
     result = DescriptiveStatisticsResult(columns=(stats,))
@@ -108,6 +140,8 @@ def test_table_cells_use_format_utils_for_every_statistic():
         fmt_num(stats.iqr),
         fmt_num(stats.skewness),
         fmt_num(stats.kurtosis),
+        f"{fmt_num(stats.mean)} ± {fmt_num(stats.std)} *",
+        f"{fmt_num(stats.median)} ({fmt_num(stats.q1)} to {fmt_num(stats.q3)})",
     ]
 
 
@@ -176,6 +210,97 @@ def test_shows_no_data_message_when_histogram_and_boxplot_data_are_missing():
 
     all_texts = [t.get_text() for ax in view._figure.axes for t in ax.texts]  # noqa: SLF001
     assert all_texts.count("No data") == 2
+
+
+def test_categorical_table_shows_counts_percentages_and_missing_separately():
+    result = DescriptiveStatisticsResult(
+        columns=(),
+        categorical_columns=(
+            CategoricalColumnStatistics(
+                column="sex",
+                count=3,
+                missing_count=1,
+                missing_fraction=0.25,
+                frequencies=(
+                    CategoryFrequency(value="F", count=2, fraction=2 / 3),
+                    CategoryFrequency(value="M", count=1, fraction=1 / 3),
+                ),
+            ),
+        ),
+    )
+    view = StatisticsView(result)
+    table = view.findChild(QTableWidget)
+
+    assert table is not None
+    assert table.horizontalHeaderItem(3).text() == "Percent (non-missing)"
+    assert table.item(0, 0).text() == "sex"
+    assert table.item(0, 1).text() == "F"
+    assert table.item(0, 2).text() == fmt_int(2)
+    assert table.item(0, 3).text() == fmt_pct(2 / 3)
+    assert table.item(0, 4).text() == fmt_int(1)
+    assert table.item(1, 4).text() == ""
+
+
+@pytest.mark.parametrize(("p_value", "star_column"), [(0.8, 15), (0.05, 15), (0.049, 16), (float("nan"), None)])
+def test_both_summaries_are_present_and_only_the_suggested_summary_is_starred(p_value, star_column):
+    stats = _make_column_stats(shapiro_p_value=p_value)
+    view = StatisticsView(DescriptiveStatisticsResult(columns=(stats,)))
+    table = view.findChild(QTableWidget)
+    assert table is not None
+
+    assert table.columnCount() == 17
+    assert table.horizontalHeaderItem(15).text() == "Mean ± SD"
+    assert table.horizontalHeaderItem(16).text() == "Median (Q1 to Q3)"
+    for column in (15, 16):
+        assert table.item(0, column).text().endswith(" *") == (column == star_column)
+
+
+def test_legend_and_selected_column_guidance_are_below_the_continuous_table():
+    result = DescriptiveStatisticsResult(
+        columns=(
+            _make_column_stats(column="<a>", shapiro_p_value=0.8),
+            _make_column_stats(column="b", shapiro_p_value=0.001),
+        )
+    )
+    view = StatisticsView(result)
+    tabs = view.findChild(QTabWidget)
+    page = tabs.widget(0)
+    layout = page.layout()
+    assert isinstance(layout.itemAt(0).widget(), QTableWidget)
+    assert "* marks" in layout.itemAt(1).widget().text()
+    recommendation = layout.itemAt(2).widget()
+    assert recommendation.textFormat() is Qt.TextFormat.PlainText
+    assert "<a>: Shapiro-Wilk suggests Mean ± SD" in recommendation.text()
+    view.show_distribution_for("b")
+    assert "b: Shapiro-Wilk suggests Median (Q1 to Q3)" in recommendation.text()
+    assert "guide, not proof" in recommendation.text()
+    table = view.findChild(QTableWidget)
+    assert table.item(0, 15).text().endswith("*")
+    assert table.item(1, 16).text().endswith("*")
+
+
+@pytest.mark.parametrize("values", [[1.0, 2.0], [1.0, 1.0, 1.0], [float("nan")] * 3])
+def test_unavailable_normality_never_stars_the_fallback_summary(values):
+    result = analyze_descriptive_statistics(pd.DataFrame({"a": values}))
+    view = StatisticsView(result)
+    table = next(table for table in view.findChildren(QTableWidget) if table.columnCount() == 17)
+    assert table is not None
+    assert "*" not in table.item(0, 15).text()
+    assert "*" not in table.item(0, 16).text()
+    assert "could not provide a recommendation" in view._recommendation_label.text()  # noqa: SLF001
+
+
+def test_undefined_mean_sd_summary_remains_blank_without_a_star():
+    view = StatisticsView(DescriptiveStatisticsResult(columns=(_make_column_stats(std=float("nan")),)))
+    table = view.findChild(QTableWidget)
+    assert table.item(0, 15).text() == ""
+
+
+def test_recommendation_repeats_large_sample_caveat():
+    view = StatisticsView(
+        DescriptiveStatisticsResult(columns=(_make_column_stats(count=SHAPIRO_LARGE_SAMPLE_THRESHOLD + 1),))
+    )
+    assert "may not be accurate" in view._recommendation_label.text()  # noqa: SLF001
 
 
 def test_normality_label_shows_the_shapiro_statistic_and_p_value():
