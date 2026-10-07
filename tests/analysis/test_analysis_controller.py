@@ -433,12 +433,13 @@ def test_changing_the_statistics_config_column_updates_the_content_view_directly
     content = dlg.content_widgets[-1]
     assert isinstance(content, StatisticsView)
     config._column_combo.setCurrentIndex(1)  # noqa: SLF001
-    config._summary_method_combo.setCurrentIndex(1)  # noqa: SLF001
 
     assert len(async_ops.calls) == jobs_before  # no new background job
     assert config.selected_column() == "b"
-    numeric_table = next(table for table in content.findChildren(QTableWidget) if table.columnCount() == 16)
+    numeric_table = next(table for table in content.findChildren(QTableWidget) if table.columnCount() == 17)
     assert numeric_table.item(1, 15).text().startswith("5")
+    assert numeric_table.item(1, 16).text().startswith("5")
+    assert "b: Shapiro-Wilk suggests" in content._recommendation_label.text()  # noqa: SLF001
 
 
 def test_clicking_a_statistics_table_row_updates_the_config_without_a_new_job(dialog_factory):
@@ -462,12 +463,13 @@ def test_clicking_a_statistics_table_row_updates_the_config_without_a_new_job(di
     config = dlg.config_widgets[-1]
     assert isinstance(content, StatisticsView)
     assert isinstance(config, StatisticsConfigWidget)
-    table = next(table for table in content.findChildren(QTableWidget) if table.columnCount() == 16)
+    table = next(table for table in content.findChildren(QTableWidget) if table.columnCount() == 17)
 
     table.cellClicked.emit(1, 0)
 
     assert len(async_ops.calls) == jobs_before
     assert config.selected_column() == "b"
+    assert "b: Shapiro-Wilk suggests" in content._recommendation_label.text()  # noqa: SLF001
 
 
 def test_switching_to_a_category_hides_a_stale_config_widget_while_loading(dialog_factory):

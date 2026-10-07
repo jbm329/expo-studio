@@ -7655,44 +7655,37 @@ Time: {sec:.2f}s{sample}</source>
 </context><context>
     <name>StatisticsConfigWidget</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_config.py" line="105" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_config.py" line="50" />
-        <source>Mean ± SD</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_config.py" line="54" />
-        <source>Median (Q1 to Q3)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
         <location filename="..\..\gui\dialogs\analysis\statistics_config.py" line="69" />
         <location filename="..\..\gui\dialogs\analysis\statistics_config.py" line="60" />
         <source>Column</source>
         <translation type="unfinished" />
     </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_config.py" line="61" />
-        <source>Reported summary</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_config.py" line="98" />
-        <source>Shapiro-Wilk could not provide a recommendation. Median (IQR) is selected by default; you can override it.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_config.py" line="105" />
-        <source>Median (IQR)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_config.py" line="107" />
-        <source>Shapiro-Wilk suggests {summary} as a starting point. This is a guide, not proof of normality; you can override it.</source>
-        <translation type="unfinished" />
-    </message>
 </context><context>
     <name>StatisticsView</name>
+    <message>
+        <source>Mean ± SD</source>
+        <translation>Mean ± SD</translation>
+    </message>
+    <message>
+        <source>Median (Q1 to Q3)</source>
+        <translation>Median (Q1 to Q3)</translation>
+    </message>
+    <message>
+        <source>* marks the summary suggested by Shapiro-Wilk. No star means no recommendation is available.</source>
+        <translation>* marks the summary suggested by Shapiro-Wilk. No star means no recommendation is available.</translation>
+    </message>
+    <message>
+        <source>{column}: Shapiro-Wilk could not provide a recommendation; neither summary is starred.</source>
+        <translation>{column}: Shapiro-Wilk could not provide a recommendation; neither summary is starred.</translation>
+    </message>
+    <message>
+        <source>{column}: Shapiro-Wilk suggests {summary} as a starting point. This is a guide, not proof of normality.</source>
+        <translation>{column}: Shapiro-Wilk suggests {summary} as a starting point. This is a guide, not proof of normality.</translation>
+    </message>
+    <message>
+        <source>Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</source>
+        <translation>Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</translation>
+    </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="97" />
         <source>No numeric columns or eligible categorical columns in this dataset.</source>
@@ -7788,11 +7781,6 @@ Time: {sec:.2f}s{sample}</source>
     <message>
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="137" />
         <source>Kurtosis</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="138" />
-        <source>Reported summary</source>
         <translation type="unfinished" />
     </message>
     <message>

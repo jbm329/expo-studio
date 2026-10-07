@@ -7790,45 +7790,38 @@ Tid: {sec:.2f}s{sample}</translation>
 <context>
     <name>StatisticsConfigWidget</name>
     <message>
-        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="105"/>
-        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="50"/>
-        <source>Mean ± SD</source>
-        <translation>Medelvärde ± standardavvikelse</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="54"/>
-        <source>Median (Q1 to Q3)</source>
-        <translation>Median (Q1 till Q3)</translation>
-    </message>
-    <message>
         <location filename="../../gui/dialogs/analysis/statistics_config.py" line="69"/>
         <location filename="../../gui/dialogs/analysis/statistics_config.py" line="60"/>
         <source>Column</source>
         <translation>Kolumn</translation>
     </message>
-    <message>
-        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="61"/>
-        <source>Reported summary</source>
-        <translation>Redovisat mått</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="98"/>
-        <source>Shapiro-Wilk could not provide a recommendation. Median (IQR) is selected by default; you can override it.</source>
-        <translation>Shapiro-Wilk kunde inte ge en rekommendation. Median (IQR) väljs som standard, men du kan ändra valet.</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="105"/>
-        <source>Median (IQR)</source>
-        <translation>Median (IQR)</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="107"/>
-        <source>Shapiro-Wilk suggests {summary} as a starting point. This is a guide, not proof of normality; you can override it.</source>
-        <translation>Shapiro-Wilk föreslår {summary} som utgångspunkt. Detta är en vägledning, inte ett bevis på normalfördelning; du kan ändra valet.</translation>
-    </message>
 </context>
 <context>
     <name>StatisticsView</name>
+    <message>
+        <source>Mean ± SD</source>
+        <translation>Medelvärde ± standardavvikelse</translation>
+    </message>
+    <message>
+        <source>Median (Q1 to Q3)</source>
+        <translation>Median (Q1 till Q3)</translation>
+    </message>
+    <message>
+        <source>* marks the summary suggested by Shapiro-Wilk. No star means no recommendation is available.</source>
+        <translation>* markerar sammanfattningen som Shapiro-Wilk föreslår. Ingen stjärna betyder att ingen rekommendation är tillgänglig.</translation>
+    </message>
+    <message>
+        <source>{column}: Shapiro-Wilk could not provide a recommendation; neither summary is starred.</source>
+        <translation>{column}: Shapiro-Wilk kunde inte ge någon rekommendation; ingen av sammanfattningarna är markerad med en stjärna.</translation>
+    </message>
+    <message>
+        <source>{column}: Shapiro-Wilk suggests {summary} as a starting point. This is a guide, not proof of normality.</source>
+        <translation>{column}: Shapiro-Wilk föreslår {summary} som utgångspunkt. Detta är vägledning, inte ett bevis på normalfördelning.</translation>
+    </message>
+    <message>
+        <source>Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</source>
+        <translation>Stickprovsstorleken överstiger {threshold}. P-värdet kan vara osäkert för mycket stora stickprov.</translation>
+    </message>
     <message>
         <location filename="../../gui/dialogs/analysis/statistics_view.py" line="97"/>
         <source>No numeric columns or eligible categorical columns in this dataset.</source>
@@ -7925,11 +7918,6 @@ Tid: {sec:.2f}s{sample}</translation>
         <location filename="../../gui/dialogs/analysis/statistics_view.py" line="137"/>
         <source>Kurtosis</source>
         <translation>Kurtosis</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/analysis/statistics_view.py" line="138"/>
-        <source>Reported summary</source>
-        <translation>Redovisat mått</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/statistics_view.py" line="194"/>

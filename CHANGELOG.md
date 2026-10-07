@@ -9,7 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 - Categorical tab in Statistics with frequency counts, percentages, and separate missing-value counts
-- Continuous summaries with Shapiro-Wilk-guided mean/SD or median/quartile reporting and a manual override
+- Continuous mean/SD and median/quartile summaries with Shapiro-Wilk reporting guidance
 - Student's t-test alongside Welch's t-test and Mann-Whitney U for two-group comparisons
 - Guidance on Fisher's exact test for 2x2 tables with small expected counts
 - Paired comparison using Wilcoxon signed-rank tests for two measurement occasions

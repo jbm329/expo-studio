@@ -35,9 +35,9 @@ if TYPE_CHECKING:
     )
 
 # Standard convention for statistical significance in the normality summary.
-_SUMMARY_COLUMN = 15
 _FIRST_NUMERIC_TABLE_COLUMN = 2
 _SIGNIFICANCE_LEVEL = 0.05
+_MIN_SHAPIRO_OBSERVATIONS = 3
 
 
 class StatisticsView(QWidget):
@@ -64,7 +64,6 @@ class StatisticsView(QWidget):
 
         self._columns_by_name = {stats.column: stats for stats in result.columns}
         self._rows_by_column = {stats.column: row for row, stats in enumerate(result.columns)}
-        self._summary_methods = {stats.column: recommended_summary_method(stats) for stats in result.columns}
         self._table: QTableWidget | None = None
 
         layout = QVBoxLayout(self)
@@ -111,11 +110,30 @@ class StatisticsView(QWidget):
             "QTabBar::tab:selected { border-bottom-color: palette(highlight); }"
         )
         if result.columns:
-            tabs.addTab(self._build_table(result), self.tr("Continuous"))
+            tabs.addTab(self._build_continuous_page(result), self.tr("Continuous"))
         if result.categorical_columns:
             tabs.addTab(self._build_categorical_page(result.categorical_columns), self.tr("Categorical"))
         layout.addWidget(tabs)
         return container
+
+    def _build_continuous_page(self, result: DescriptiveStatisticsResult) -> QWidget:
+        """Show both summaries with recommendation guidance directly below the table."""
+        page = QWidget(self)
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_table(result), 1)
+        legend = QLabel(
+            self.tr("* marks the summary suggested by Shapiro-Wilk. No star means no recommendation is available."),
+            page,
+        )
+        legend.setTextFormat(Qt.TextFormat.PlainText)
+        legend.setWordWrap(True)
+        layout.addWidget(legend)
+        self._recommendation_label = QLabel(page)
+        self._recommendation_label.setTextFormat(Qt.TextFormat.PlainText)
+        self._recommendation_label.setWordWrap(True)
+        layout.addWidget(self._recommendation_label)
+        return page
 
     def _build_table(self, result: DescriptiveStatisticsResult) -> QTableWidget:
         """Build the per-column statistics table."""
@@ -135,7 +153,8 @@ class StatisticsView(QWidget):
             self.tr("IQR"),
             self.tr("Skewness"),
             self.tr("Kurtosis"),
-            self.tr("Reported summary"),
+            self.tr("Mean ± SD"),
+            self.tr("Median (Q1 to Q3)"),
         ]
 
         self._table = QTableWidget(self)
@@ -169,7 +188,8 @@ class StatisticsView(QWidget):
                 fmt_num(stats.iqr),
                 fmt_num(stats.skewness),
                 fmt_num(stats.kurtosis),
-                self._summary_text(stats, self._summary_methods[stats.column]),
+                self._marked_summary(stats, DescriptiveSummaryMethod.MEAN_SD),
+                self._marked_summary(stats, DescriptiveSummaryMethod.MEDIAN_IQR),
             ]
             for col, text in enumerate(values):
                 item = QTableWidgetItem(text)
@@ -254,23 +274,42 @@ class StatisticsView(QWidget):
             return ""
         return f"{fmt_num(stats.median)} ({fmt_num(stats.q1)} to {fmt_num(stats.q3)})"
 
-    def set_summary_method(self, column: str, method: str) -> None:
-        """Update one continuous column's displayed baseline summary.
+    @staticmethod
+    def _has_recommendation(stats: ColumnDescriptiveStatistics) -> bool:
+        """Return whether Shapiro-Wilk provided a usable normality result."""
+        return (
+            stats.count >= _MIN_SHAPIRO_OBSERVATIONS
+            and stats.minimum < stats.maximum
+            and math.isfinite(stats.shapiro_statistic)
+            and math.isfinite(stats.shapiro_p_value)
+            and 0 <= stats.shapiro_p_value <= 1
+        )
 
-        Args:
-            column: Numeric column whose summary should change.
-            method: Serialized `DescriptiveSummaryMethod` value.
-        """
-        table = self._table
-        if column not in self._summary_methods or table is None:
-            return
-        summary_method = DescriptiveSummaryMethod(method)
-        self._summary_methods[column] = summary_method
-        row = self._rows_by_column[column]
-        stats = self._columns_by_name[column]
-        item = table.item(row, _SUMMARY_COLUMN)
-        if item is not None:
-            item.setText(self._summary_text(stats, summary_method))
+    def _marked_summary(self, stats: ColumnDescriptiveStatistics, method: DescriptiveSummaryMethod) -> str:
+        """Mark only defined summaries supported by a usable Shapiro-Wilk result."""
+        text = self._summary_text(stats, method)
+        if text and self._has_recommendation(stats) and recommended_summary_method(stats) is method:
+            return f"{text} *"
+        return text
+
+    def _recommendation_text(self, stats: ColumnDescriptiveStatistics) -> str:
+        """Explain the selected column's suggestion without making a reporting choice."""
+        if not self._has_recommendation(stats):
+            return self.tr(
+                "{column}: Shapiro-Wilk could not provide a recommendation; neither summary is starred."
+            ).format(
+                column=stats.column,
+            )
+        method = recommended_summary_method(stats)
+        summary = self.tr("Mean ± SD") if method is DescriptiveSummaryMethod.MEAN_SD else self.tr("Median (Q1 to Q3)")
+        text = self.tr(
+            "{column}: Shapiro-Wilk suggests {summary} as a starting point. This is a guide, not proof of normality."
+        ).format(column=stats.column, summary=summary)
+        if stats.count > SHAPIRO_LARGE_SAMPLE_THRESHOLD:
+            text += " " + self.tr(
+                "Sample size exceeds {threshold}. The p-value may not be accurate for very large samples."
+            ).format(threshold=fmt_int(SHAPIRO_LARGE_SAMPLE_THRESHOLD))
+        return text
 
     def _on_table_cell_clicked(self, row: int, _column: int) -> None:
         """Select the clicked column and update its distribution details."""
@@ -362,6 +401,7 @@ class StatisticsView(QWidget):
         self._canvas.draw_idle()  # type: ignore[no-untyped-call]
 
         self._normality_label.setText(self._normality_text(stats))
+        self._recommendation_label.setText(self._recommendation_text(stats))
 
     def _normality_text(self, stats: ColumnDescriptiveStatistics) -> str:
         """Build the Shapiro-Wilk normality test summary text for a column."""

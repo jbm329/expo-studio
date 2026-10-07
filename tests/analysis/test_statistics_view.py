@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pandas as pd
+import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTabWidget
@@ -11,7 +13,7 @@ from expo_jbm329.services.analysis.statistics import (
     CategoryFrequency,
     ColumnDescriptiveStatistics,
     DescriptiveStatisticsResult,
-    DescriptiveSummaryMethod,
+    analyze_descriptive_statistics,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
 
@@ -138,7 +140,8 @@ def test_table_cells_use_format_utils_for_every_statistic():
         fmt_num(stats.iqr),
         fmt_num(stats.skewness),
         fmt_num(stats.kurtosis),
-        f"{fmt_num(stats.mean)} ± {fmt_num(stats.std)}",
+        f"{fmt_num(stats.mean)} ± {fmt_num(stats.std)} *",
+        f"{fmt_num(stats.median)} ({fmt_num(stats.q1)} to {fmt_num(stats.q3)})",
     ]
 
 
@@ -238,15 +241,66 @@ def test_categorical_table_shows_counts_percentages_and_missing_separately():
     assert table.item(1, 4).text() == ""
 
 
-def test_set_summary_method_updates_the_numeric_table_row():
-    stats = _make_column_stats()
+@pytest.mark.parametrize(("p_value", "star_column"), [(0.8, 15), (0.05, 15), (0.049, 16), (float("nan"), None)])
+def test_both_summaries_are_present_and_only_the_suggested_summary_is_starred(p_value, star_column):
+    stats = _make_column_stats(shapiro_p_value=p_value)
     view = StatisticsView(DescriptiveStatisticsResult(columns=(stats,)))
     table = view.findChild(QTableWidget)
     assert table is not None
 
-    view.set_summary_method("salary", DescriptiveSummaryMethod.MEDIAN_IQR.value)
+    assert table.columnCount() == 17
+    assert table.horizontalHeaderItem(15).text() == "Mean ± SD"
+    assert table.horizontalHeaderItem(16).text() == "Median (Q1 to Q3)"
+    for column in (15, 16):
+        assert table.item(0, column).text().endswith(" *") == (column == star_column)
 
-    assert table.item(0, 15).text() == (f"{fmt_num(stats.median)} ({fmt_num(stats.q1)} to {fmt_num(stats.q3)})")
+
+def test_legend_and_selected_column_guidance_are_below_the_continuous_table():
+    result = DescriptiveStatisticsResult(
+        columns=(
+            _make_column_stats(column="<a>", shapiro_p_value=0.8),
+            _make_column_stats(column="b", shapiro_p_value=0.001),
+        )
+    )
+    view = StatisticsView(result)
+    tabs = view.findChild(QTabWidget)
+    page = tabs.widget(0)
+    layout = page.layout()
+    assert isinstance(layout.itemAt(0).widget(), QTableWidget)
+    assert "* marks" in layout.itemAt(1).widget().text()
+    recommendation = layout.itemAt(2).widget()
+    assert recommendation.textFormat() is Qt.TextFormat.PlainText
+    assert "<a>: Shapiro-Wilk suggests Mean ± SD" in recommendation.text()
+    view.show_distribution_for("b")
+    assert "b: Shapiro-Wilk suggests Median (Q1 to Q3)" in recommendation.text()
+    assert "guide, not proof" in recommendation.text()
+    table = view.findChild(QTableWidget)
+    assert table.item(0, 15).text().endswith("*")
+    assert table.item(1, 16).text().endswith("*")
+
+
+@pytest.mark.parametrize("values", [[1.0, 2.0], [1.0, 1.0, 1.0], [float("nan")] * 3])
+def test_unavailable_normality_never_stars_the_fallback_summary(values):
+    result = analyze_descriptive_statistics(pd.DataFrame({"a": values}))
+    view = StatisticsView(result)
+    table = next(table for table in view.findChildren(QTableWidget) if table.columnCount() == 17)
+    assert table is not None
+    assert "*" not in table.item(0, 15).text()
+    assert "*" not in table.item(0, 16).text()
+    assert "could not provide a recommendation" in view._recommendation_label.text()  # noqa: SLF001
+
+
+def test_undefined_mean_sd_summary_remains_blank_without_a_star():
+    view = StatisticsView(DescriptiveStatisticsResult(columns=(_make_column_stats(std=float("nan")),)))
+    table = view.findChild(QTableWidget)
+    assert table.item(0, 15).text() == ""
+
+
+def test_recommendation_repeats_large_sample_caveat():
+    view = StatisticsView(
+        DescriptiveStatisticsResult(columns=(_make_column_stats(count=SHAPIRO_LARGE_SAMPLE_THRESHOLD + 1),))
+    )
+    assert "may not be accurate" in view._recommendation_label.text()  # noqa: SLF001
 
 
 def test_normality_label_shows_the_shapiro_statistic_and_p_value():

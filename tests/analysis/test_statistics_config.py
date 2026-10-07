@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import replace
+from PyQt6.QtWidgets import QComboBox, QLabel
 
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.services.analysis.statistics import (
     ColumnDescriptiveStatistics,
     DescriptiveStatisticsResult,
-    DescriptiveSummaryMethod,
 )
 
 
@@ -51,35 +50,13 @@ def test_defaults_to_the_first_column():
     widget = StatisticsConfigWidget(result)
 
     assert widget.selected_column() == "a"
-    assert widget.selected_summary_method() is DescriptiveSummaryMethod.MEAN_SD
 
 
-def test_summary_method_can_be_overridden_and_is_preserved_per_column():
+def test_configuration_contains_only_the_column_picker():
     result = DescriptiveStatisticsResult(columns=(_make_stats("a"), _make_stats("b")))
     widget = StatisticsConfigWidget(result)
-    received: list[tuple[str, str]] = []
-    widget.summary_method_changed.connect(lambda column, method: received.append((column, method)))
-
-    widget._summary_method_combo.setCurrentIndex(1)  # noqa: SLF001
-    widget._column_combo.setCurrentIndex(1)  # noqa: SLF001
-    assert widget.selected_summary_method() is DescriptiveSummaryMethod.MEAN_SD
-    widget._summary_method_combo.setCurrentIndex(1)  # noqa: SLF001
-    widget._column_combo.setCurrentIndex(0)  # noqa: SLF001
-
-    assert received == [
-        ("a", DescriptiveSummaryMethod.MEDIAN_IQR.value),
-        ("b", DescriptiveSummaryMethod.MEDIAN_IQR.value),
-    ]
-    assert widget.selected_summary_method() is DescriptiveSummaryMethod.MEDIAN_IQR
-    assert widget.summary_method("b") is DescriptiveSummaryMethod.MEDIAN_IQR
-
-
-def test_unavailable_shapiro_recommends_median_iqr():
-    stats = replace(_make_stats("a"), shapiro_p_value=float("nan"))
-    widget = StatisticsConfigWidget(DescriptiveStatisticsResult(columns=(stats,)))
-
-    assert widget.selected_summary_method() is DescriptiveSummaryMethod.MEDIAN_IQR
-    assert "could not provide a recommendation" in widget._recommendation_label.text()  # noqa: SLF001
+    assert len(widget.findChildren(QComboBox)) == 1
+    assert [label.text() for label in widget.findChildren(QLabel)] == ["Column"]
 
 
 def test_changing_the_combo_emits_column_changed():

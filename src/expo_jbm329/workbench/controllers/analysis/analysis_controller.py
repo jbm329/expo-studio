@@ -382,7 +382,6 @@ class AnalysisController:
 
         config = StatisticsConfigWidget(stats_result)
         config.column_changed.connect(content.show_distribution_for)
-        config.summary_method_changed.connect(content.set_summary_method)
         content.column_selected.connect(config.set_selected_column)
         return content, config
 
