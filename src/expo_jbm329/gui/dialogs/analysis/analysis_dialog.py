@@ -9,21 +9,27 @@ which computes analyses in the background and swaps in the resulting view.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from html import escape
+from typing import TYPE_CHECKING, override
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QEvent, QObject, Qt, pyqtSignal
+from PyQt6.QtGui import QHelpEvent
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
     QDialog,
     QDialogButtonBox,
     QFormLayout,
+    QFrame,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QListView,
     QListWidget,
     QListWidgetItem,
+    QScrollArea,
+    QSizePolicy,
+    QToolTip,
     QVBoxLayout,
     QWidget,
 )
@@ -35,6 +41,50 @@ if TYPE_CHECKING:
     from expo_jbm329.utils.dataset_ref import DatasetRef
 
 _CATEGORY_ROLE = Qt.ItemDataRole.UserRole
+
+
+class _ComboToolTipFilter(QObject):
+    """Show current dropdown text while preserving explicit item explanations."""
+
+    def __init__(self, combo: QComboBox) -> None:
+        """Attach tooltip handling to the closed picker and its popup."""
+        super().__init__(combo)
+        self._combo = combo
+        view = combo.view()
+        if view is None:
+            message = "Dropdown tooltips require a popup view."
+            raise RuntimeError(message)
+        viewport = view.viewport()
+        if viewport is None:
+            message = "Dropdown tooltips require a popup viewport."
+            raise RuntimeError(message)
+        self._view = view
+        combo.installEventFilter(self)
+        viewport.installEventFilter(self)
+
+    @override
+    def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
+        """Resolve tooltips on demand so rebuilt and renamed items stay accurate."""
+        watched, event = a0, a1
+        if not isinstance(event, QHelpEvent) or event.type() != QEvent.Type.ToolTip:
+            return super().eventFilter(watched, event)
+        if watched is self._combo:
+            tooltip = self._combo.currentData(Qt.ItemDataRole.ToolTipRole)
+            text = self._combo.currentText()
+        else:
+            index = self._view.indexAt(event.pos())
+            tooltip = index.data(Qt.ItemDataRole.ToolTipRole)
+            text = index.data(Qt.ItemDataRole.DisplayRole)
+
+        if not tooltip and isinstance(text, str) and text:
+            # Qt detects rich text automatically; column names must remain literal.
+            tooltip = f"<qt>{escape(text)}</qt>"
+        if isinstance(tooltip, str) and tooltip and isinstance(watched, QWidget):
+            QToolTip.showText(event.globalPos(), tooltip, watched)
+        else:
+            QToolTip.hideText()
+        event.accept()
+        return True
 
 
 def build_placeholder_label(text: str, parent: QWidget | None = None) -> QLabel:
@@ -117,6 +167,7 @@ class AnalysisDialog(QDialog):
         dataset_form = QFormLayout(dataset_group)
 
         self._dataset_combo = QComboBox(dataset_group)
+        _ComboToolTipFilter(self._dataset_combo)
         for ds in self._datasets:
             label = f"{ds.title} ({ds.row_count} x {ds.column_count})"
             self._dataset_combo.addItem(label, ds.tab_id)
@@ -167,8 +218,14 @@ class AnalysisDialog(QDialog):
         Overview) keep it hidden via `set_config_widget(None)`.
         """
         panel = QGroupBox(self.tr("Configuration"), self)
+        panel.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self._config_panel = panel
         self._config_layout = QVBoxLayout(panel)
+        self._config_scroll = QScrollArea(panel)
+        self._config_scroll.setWidgetResizable(True)
+        self._config_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self._config_scroll.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
+        self._config_layout.addWidget(self._config_scroll)
         self._config_widget: QWidget | None = None
         panel.setVisible(False)
 
@@ -295,8 +352,9 @@ class AnalysisDialog(QDialog):
         """
         if self._config_widget is not None:
             self._config_widget.hide()
-            self._config_layout.removeWidget(self._config_widget)
-            self._config_widget.deleteLater()
+            previous = self._config_scroll.takeWidget()
+            if previous is not None:
+                previous.deleteLater()
 
         self._config_widget = widget
 
@@ -304,8 +362,31 @@ class AnalysisDialog(QDialog):
             self._config_panel.setVisible(False)
             return
 
-        self._config_layout.addWidget(widget)
+        self._prepare_config_layout(widget)
+        self._config_scroll.setWidget(widget)
         self._config_panel.setVisible(True)
+
+    @staticmethod
+    def _prepare_config_layout(widget: QWidget) -> None:
+        """Keep configuration controls usable within the shared workspace width."""
+        layout = widget.layout()
+        if layout is not None:
+            layout.setContentsMargins(0, 0, 0, 0)
+            if isinstance(layout, QFormLayout):
+                layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        for label in widget.findChildren(QLabel):
+            label.setWordWrap(True)
+        for form in widget.findChildren(QFormLayout):
+            form.setContentsMargins(0, 0, 0, 0)
+            form.setFormAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+            form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
+            form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        for combo in widget.findChildren(QComboBox):
+            _ComboToolTipFilter(combo)
+            # Dataset names and model labels must not determine the pane width.
+            combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+            combo.setMinimumContentsLength(10)
+            combo.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
 
     def config_widget(self) -> QWidget | None:
         """Return the widget currently displayed in the configuration panel."""

@@ -66,8 +66,6 @@ class StatisticsConfigWidget(QWidget):
         if result.columns:
             self._sync_summary_method()
 
-        layout.addRow(QLabel(self.tr("Column"), self), self._column_combo)
-
     def _on_current_text_changed(self, text: str) -> None:
         """Select the column's summary option and notify the paired view."""
         if text:
