@@ -6,7 +6,17 @@ import pandas as pd
 import pytest
 from PyQt6.QtCore import QCoreApplication, QEvent, QPoint, Qt
 from PyQt6.QtGui import QHelpEvent
-from PyQt6.QtWidgets import QComboBox, QDialog, QDialogButtonBox, QFormLayout, QLabel, QToolTip, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
+    QGroupBox,
+    QLabel,
+    QToolTip,
+    QVBoxLayout,
+    QWidget,
+)
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog, build_placeholder_label
 from expo_jbm329.gui.dialogs.analysis.clustering_config import ClusteringConfigWidget
@@ -323,6 +333,40 @@ def test_tall_configuration_can_scroll_without_expanding_the_dialog():
         assert scrollbar is not None
         assert scrollbar.maximum() > 0
         assert dialog.height() == 900
+    finally:
+        dialog.close()
+
+
+@pytest.mark.parametrize("section", ["Scatterplot", "Parameters"])
+def test_bordered_configuration_forms_keep_padding_on_both_sides(section):
+    frame = pd.DataFrame({"a": range(30), "b": range(1, 31)})
+    config = (
+        CorrelationConfigWidget(initialize_correlation(frame), None)
+        if section == "Scatterplot"
+        else ClusteringConfigWidget(initialize_clustering(frame))
+    )
+    group = next(group for group in config.findChildren(QGroupBox) if group.title() == section)
+    form = group.layout()
+    assert isinstance(form, QFormLayout)
+    margins = form.contentsMargins()
+    assert margins.left() > 0
+    assert margins.right() > 0
+    dialog = AnalysisDialog(parent=None, datasets=[], active_tab_id=None)
+    dialog.set_config_widget(config)
+    dialog.show()
+    QCoreApplication.processEvents()
+    try:
+        assert form.contentsMargins() == margins
+        for row in range(form.rowCount()):
+            for role in (QFormLayout.ItemRole.LabelRole, QFormLayout.ItemRole.FieldRole):
+                item = form.itemAt(row, role)
+                assert item is not None
+                control = item.widget()
+                assert control is not None
+                if control.isHidden():
+                    continue
+                assert control.geometry().left() >= margins.left()
+                assert group.width() - control.geometry().right() - 1 >= margins.right()
     finally:
         dialog.close()
 

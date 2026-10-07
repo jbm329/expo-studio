@@ -377,7 +377,8 @@ class AnalysisDialog(QDialog):
         for label in widget.findChildren(QLabel):
             label.setWordWrap(True)
         for form in widget.findChildren(QFormLayout):
-            form.setContentsMargins(0, 0, 0, 0)
+            if not isinstance(form.parentWidget(), QGroupBox):
+                form.setContentsMargins(0, 0, 0, 0)
             form.setFormAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
             form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
             form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
