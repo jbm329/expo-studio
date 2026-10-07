@@ -3,16 +3,23 @@
 from __future__ import annotations
 
 import html
+import math
 from typing import TYPE_CHECKING
 
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from matplotlib.figure import Figure
+from matplotlib.ticker import FixedFormatter, FixedLocator, NullLocator
+from matplotlib.transforms import Bbox
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.services.analysis.regression import MAX_MODEL_TERMS, MAX_PREDICTORS, TermKind
 from expo_jbm329.services.analysis.survival import SurvivalError, survival_term_name
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 
 if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+
     from expo_jbm329.services.analysis.survival import SurvivalResult
 
 
@@ -45,8 +52,146 @@ class SurvivalRegressionView(QWidget):
         self._summary_label.setWordWrap(True)
         self._summary_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self._summary_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        layout.addWidget(self._table, 2)
-        layout.addWidget(self._summary_label, 1)
+        splitter = QSplitter(Qt.Orientation.Vertical, self)
+        splitter.setChildrenCollapsible(False)
+        table_panel, table_layout = self._build_section(self.tr("Model coefficients"))
+        table_layout.addWidget(self._table)
+        summary_panel, summary_layout = self._build_section(self.tr("Model comments"))
+        summary_layout.addWidget(self._summary_label)
+        splitter.addWidget(table_panel)
+        splitter.addWidget(self._build_chart_section())
+        splitter.addWidget(summary_panel)
+        splitter.setStretchFactor(0, 2)
+        splitter.setStretchFactor(1, 3)
+        splitter.setStretchFactor(2, 1)
+        splitter.setSizes([250, 350, 160])
+        layout.addWidget(splitter, 1)
+
+    def _build_section(self, title: str) -> tuple[QWidget, QVBoxLayout]:
+        """Build a titled section matching the Hypothesis Tests layout."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        label = QLabel(title, panel)
+        label.setTextFormat(Qt.TextFormat.PlainText)
+        font = label.font()
+        font.setBold(True)
+        label.setFont(font)
+        layout.addWidget(label)
+        return panel, layout
+
+    def _build_chart_section(self) -> QWidget:
+        """Render model effects and unadjusted survival from prepared cohort data."""
+        panel, layout = self._build_section(self.tr("Effects and survival"))
+        figure = Figure(constrained_layout=True)
+        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas.setMinimumHeight(300)
+        grid = figure.add_gridspec(2, 2, height_ratios=[5, 1])
+        self._draw_forest(figure.add_subplot(grid[:, 0]))
+        self._draw_survival(figure.add_subplot(grid[0, 1]))
+        self._draw_risk_counts(figure.add_subplot(grid[1, 1]))
+        layout.addWidget(canvas)
+        return panel
+
+    def _draw_forest(self, axis: Axes) -> None:
+        """Show every term or explicitly explain why a log-scale plot is unavailable."""
+        terms = self._result.terms
+        axis.set_title(self.tr("Hazard ratios with 95% intervals"))
+        if not terms or any(
+            not all(
+                math.isfinite(value) and value > 0
+                for value in (
+                    term.hazard_ratio,
+                    term.hazard_ratio_ci_low,
+                    term.hazard_ratio_ci_high,
+                )
+            )
+            or not term.hazard_ratio_ci_low <= term.hazard_ratio <= term.hazard_ratio_ci_high
+            for term in terms
+        ):
+            axis.text(
+                0.5,
+                0.5,
+                self.tr("Forest plot unavailable:\nall hazard ratios and intervals must be finite and positive."),
+                transform=axis.transAxes,
+                ha="center",
+                va="center",
+                wrap=True,
+            )
+            axis.set_axis_off()
+            return
+        ratios = [term.hazard_ratio for term in terms]
+        positions = list(range(len(terms)))
+        axis.set_xscale("log")
+        lower = min(1.0, *(term.hazard_ratio_ci_low for term in terms))
+        upper = max(1.0, *(term.hazard_ratio_ci_high for term in terms))
+        if lower == upper:
+            lower, upper = 0.5, 2.0
+        # Fixed ticks avoid automatic log locators overflowing on extreme finite intervals.
+        log_low, log_high = math.log(lower), math.log(upper)
+        ticks = [math.exp(log_low + (log_high - log_low) * index / 4) for index in range(5)]
+        axis.xaxis.set_major_locator(FixedLocator(ticks))
+        axis.xaxis.set_major_formatter(FixedFormatter([fmt_num(value, sig=2) for value in ticks]))
+        axis.xaxis.set_minor_locator(NullLocator())
+        lows = [term.hazard_ratio_ci_low for term in terms]
+        highs = [term.hazard_ratio_ci_high for term in terms]
+        # Draw endpoints directly; reconstructing them from xerr can lose tiny bounds.
+        axis.hlines(positions, lows, highs, color="tab:blue")
+        axis.plot(ratios, positions, linestyle="none", marker="o", color="tab:blue")
+        axis.plot(lows, positions, linestyle="none", marker="|", color="tab:blue")
+        axis.plot(highs, positions, linestyle="none", marker="|", color="tab:blue")
+        axis.axvline(1.0, linestyle="--", color="tab:red")
+        axis.set_xlim(lower, upper)
+        axis.set_yticks(positions, [survival_term_name(term) for term in terms])
+        axis.set_ylim(len(terms) - 0.5, -0.5)
+        axis.set_xlabel(self.tr("Hazard ratio (log scale)"))
+
+    def _draw_survival(self, axis: Axes) -> None:
+        """Draw all unique follow-up times with censor marks and selected risk counts."""
+        axis.set_title(self.tr("Overall Kaplan-Meier survival (unadjusted)"))
+        data = self._result.plot_data
+        if data is None:
+            axis.text(
+                0.5,
+                0.5,
+                self.tr("No survival chart data are available."),
+                transform=axis.transAxes,
+                ha="center",
+                va="center",
+            )
+            axis.set_axis_off()
+            return
+        axis.step(data.times, data.survival, where="post", color="tab:blue")
+        censor_indices = [index for index, count in enumerate(data.censored) if count > 0]
+        axis.plot(
+            [data.times[index] for index in censor_indices],
+            [data.survival[index] for index in censor_indices],
+            linestyle="none",
+            marker="+",
+            color="tab:blue",
+        )
+        axis.set_ylim(0, 1.05)
+        axis.set_xlim(0, data.times[-1])
+        axis.set_xlabel(self.tr("Duration: {column}").format(column=self._result.duration))
+        axis.set_ylabel(self.tr("Survival probability"))
+        axis.set_xticks(data.risk_times)
+        axis.tick_params(axis="x", labelrotation=30)
+
+    def _draw_risk_counts(self, axis: Axes) -> None:
+        """Show uniformly spaced follow-up times and their exact risk counts."""
+        axis.set_axis_off()
+        data = self._result.plot_data
+        if data is None:
+            return
+        axis.set_title(self.tr("At risk immediately before time"), fontsize=9)
+        table = axis.table(
+            cellText=[[fmt_int(count) for count in data.risk_counts]],
+            colLabels=[fmt_num(time, sig=3) for time in data.risk_times],
+            loc="center",
+            bbox=Bbox.from_bounds(0, 0, 1, 1),
+        )
+        table.auto_set_font_size(False)
+        table.set_fontsize(8)
 
     def result(self) -> SurvivalResult:
         """Return the displayed Cox result."""
@@ -167,4 +312,13 @@ class SurvivalRegressionView(QWidget):
             self.tr("Efron method was used to handle tied event times."),
             self.tr("The proportional-hazards assumption was not assessed."),
         ])
+        if result.plot_data is not None:
+            lines.extend([
+                self.tr(
+                    "Kaplan-Meier uses the same complete-case subjects as the Cox fit, without covariate adjustment."
+                ),
+                self.tr("The survival curve is not a Cox prediction or a proportional-hazards diagnostic."),
+                self.tr("Plus signs mark censoring times; tied censor marks may overlap."),
+                self.tr("All complete subjects are used; no survival sampling or confidence bands are applied."),
+            ])
         return "<br>".join(lines)

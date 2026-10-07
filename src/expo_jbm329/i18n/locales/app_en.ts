@@ -8194,6 +8194,68 @@ Shortcut: Ctrl+Z</source>
 </context>
 <context>
     <name>SurvivalRegressionView</name>
+    <message>
+        <source>Model coefficients</source>
+        <translation>Model coefficients</translation>
+    </message>
+    <message>
+        <source>Model comments</source>
+        <translation>Model comments</translation>
+    </message>
+    <message>
+        <source>Effects and survival</source>
+        <translation>Effects and survival</translation>
+    </message>
+    <message>
+        <source>Hazard ratios with 95% intervals</source>
+        <translation>Hazard ratios with 95% intervals</translation>
+    </message>
+    <message>
+        <source>Forest plot unavailable:
+all hazard ratios and intervals must be finite and positive.</source>
+        <translation>Forest plot unavailable:
+all hazard ratios and intervals must be finite and positive.</translation>
+    </message>
+    <message>
+        <source>Hazard ratio (log scale)</source>
+        <translation>Hazard ratio (log scale)</translation>
+    </message>
+    <message>
+        <source>Overall Kaplan-Meier survival (unadjusted)</source>
+        <translation>Overall Kaplan-Meier survival (unadjusted)</translation>
+    </message>
+    <message>
+        <source>No survival chart data are available.</source>
+        <translation>No survival chart data are available.</translation>
+    </message>
+    <message>
+        <source>Duration: {column}</source>
+        <translation>Duration: {column}</translation>
+    </message>
+    <message>
+        <source>Survival probability</source>
+        <translation>Survival probability</translation>
+    </message>
+    <message>
+        <source>At risk immediately before time</source>
+        <translation>At risk immediately before time</translation>
+    </message>
+    <message>
+        <source>Kaplan-Meier uses the same complete-case subjects as the Cox fit, without covariate adjustment.</source>
+        <translation>Kaplan-Meier uses the same complete-case subjects as the Cox fit, without covariate adjustment.</translation>
+    </message>
+    <message>
+        <source>The survival curve is not a Cox prediction or a proportional-hazards diagnostic.</source>
+        <translation>The survival curve is not a Cox prediction or a proportional-hazards diagnostic.</translation>
+    </message>
+    <message>
+        <source>Plus signs mark censoring times; tied censor marks may overlap.</source>
+        <translation>Plus signs mark censoring times; tied censor marks may overlap.</translation>
+    </message>
+    <message>
+        <source>All complete subjects are used; no survival sampling or confidence bands are applied.</source>
+        <translation>All complete subjects are used; no survival sampling or confidence bands are applied.</translation>
+    </message>
     <message><source>Select a duration column for Cox regression.</source><translation>Select a duration column for Cox regression.</translation></message>
     <message><source>Select a binary event column for Cox regression.</source><translation>Select a binary event column for Cox regression.</translation></message>
     <message><source>Select one or more predictors and click Apply.</source><translation>Select one or more predictors and click Apply.</translation></message>

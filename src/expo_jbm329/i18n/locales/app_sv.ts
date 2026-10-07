@@ -8344,6 +8344,68 @@ Snabbkommando: Ctrl+Z</translation>
 </context>
 <context>
     <name>SurvivalRegressionView</name>
+    <message>
+        <source>Model coefficients</source>
+        <translation>Modellkoefficienter</translation>
+    </message>
+    <message>
+        <source>Model comments</source>
+        <translation>Modellkommentarer</translation>
+    </message>
+    <message>
+        <source>Effects and survival</source>
+        <translation>Effekter och överlevnad</translation>
+    </message>
+    <message>
+        <source>Hazard ratios with 95% intervals</source>
+        <translation>Hazardkvoter med 95 % intervall</translation>
+    </message>
+    <message>
+        <source>Forest plot unavailable:
+all hazard ratios and intervals must be finite and positive.</source>
+        <translation>Forestdiagrammet är inte tillgängligt:
+alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
+    </message>
+    <message>
+        <source>Hazard ratio (log scale)</source>
+        <translation>Hazardkvot (logaritmisk skala)</translation>
+    </message>
+    <message>
+        <source>Overall Kaplan-Meier survival (unadjusted)</source>
+        <translation>Övergripande Kaplan-Meier-överlevnad (ojusterad)</translation>
+    </message>
+    <message>
+        <source>No survival chart data are available.</source>
+        <translation>Inga diagramdata för överlevnad är tillgängliga.</translation>
+    </message>
+    <message>
+        <source>Duration: {column}</source>
+        <translation>Tid: {column}</translation>
+    </message>
+    <message>
+        <source>Survival probability</source>
+        <translation>Överlevnadssannolikhet</translation>
+    </message>
+    <message>
+        <source>At risk immediately before time</source>
+        <translation>Antal i riskpopulationen omedelbart före tidpunkten</translation>
+    </message>
+    <message>
+        <source>Kaplan-Meier uses the same complete-case subjects as the Cox fit, without covariate adjustment.</source>
+        <translation>Kaplan-Meier använder samma individer med kompletta värden som Cox-modellen, utan justering för kovariater.</translation>
+    </message>
+    <message>
+        <source>The survival curve is not a Cox prediction or a proportional-hazards diagnostic.</source>
+        <translation>Överlevnadskurvan är inte en Cox-prediktion eller en diagnostik av antagandet om proportionella hazarder.</translation>
+    </message>
+    <message>
+        <source>Plus signs mark censoring times; tied censor marks may overlap.</source>
+        <translation>Plustecken markerar censureringstidpunkter; markeringar vid samma tidpunkt kan överlappa.</translation>
+    </message>
+    <message>
+        <source>All complete subjects are used; no survival sampling or confidence bands are applied.</source>
+        <translation>Alla individer med kompletta värden används; inget urval eller konfidensband för överlevnad används.</translation>
+    </message>
     <message><source>Select a duration column for Cox regression.</source><translation>Välj en durationkolumn för Cox-regression.</translation></message>
     <message><source>Select a binary event column for Cox regression.</source><translation>Välj en binär händelsekolumn för Cox-regression.</translation></message>
     <message><source>Select one or more predictors and click Apply.</source><translation>Välj en eller flera prediktorer och klicka på Tillämpa.</translation></message>

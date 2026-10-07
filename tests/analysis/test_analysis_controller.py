@@ -1595,6 +1595,16 @@ def test_cox_regression_uses_apply_first_background_path_and_survival_view(dialo
     assert isinstance(view, SurvivalRegressionView)
     assert view.result().error is None
     assert dlg.config_widgets[-1] is config
+    assert view.result().plot_data is not None
+    assert view.result().plot_data.at_risk[0] == size
+    canvas = view.findChild(FigureCanvasQTAgg)
+    assert canvas is not None
+    assert len(canvas.figure.axes) == 3
+    assert canvas.figure.axes[0].get_xscale() == "log"
+    np.testing.assert_array_equal(
+        canvas.figure.axes[1].lines[0].get_xdata(),
+        view.result().plot_data.times,
+    )
 
 
 def test_cox_job_is_stale_after_switching_models_away_and_back(dialog_factory):

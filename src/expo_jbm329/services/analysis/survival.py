@@ -75,6 +75,25 @@ class SurvivalTerm:
 
 
 @dataclass(frozen=True, slots=True)
+class SurvivalPlotData:
+    """Exact complete-cohort Kaplan-Meier steps and risk counts.
+
+    Arrays include time zero, then every unique observed time. Survival is
+    evaluated after events at each time; at_risk counts precede both events
+    and censoring. Censor counts at time zero are zero. Risk times/counts
+    provide five uniformly spaced display times and exact preceding risk sets.
+    """
+
+    times: tuple[float, ...]
+    survival: tuple[float, ...]
+    at_risk: tuple[int, ...]
+    events: tuple[int, ...]
+    censored: tuple[int, ...]
+    risk_times: tuple[float, ...]
+    risk_counts: tuple[int, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class SurvivalResult:
     """Cox regression result or structured validation/fitting error."""
 
@@ -91,6 +110,7 @@ class SurvivalResult:
     references: tuple[CategoricalReference, ...]
     error: SurvivalError | None
     error_column: str | None = None
+    plot_data: SurvivalPlotData | None = None
 
 
 def initialize_survival_columns(df: pd.DataFrame) -> SurvivalColumns:
@@ -374,6 +394,34 @@ def analyze_cox_regression(
         terms=terms,
         references=design.references,
         error=None,
+        plot_data=_survival_plot_data(
+            data[duration].to_numpy(dtype=np.float64),
+            data[event].to_numpy(dtype=np.int64),
+        ),
+    )
+
+
+def _survival_plot_data(durations: np.ndarray, events: np.ndarray) -> SurvivalPlotData:
+    """Calculate Kaplan-Meier steps on the validated Cox complete-case cohort.
+
+    Subjects censored at an event time remain at risk for that time's events.
+    Every unique time is retained, including censor-only times and final follow-up.
+    """
+    times, inverse, counts = np.unique(durations, return_inverse=True, return_counts=True)
+    event_counts = np.bincount(inverse, weights=events).astype(np.int64)
+    censored_counts = counts - event_counts
+    at_risk = len(durations) - np.concatenate(([0], np.cumsum(counts[:-1])))
+    survival = np.cumprod(1.0 - event_counts / at_risk)
+    risk_times = np.linspace(0.0, times[-1], 5)
+    risk_counts = len(durations) - np.searchsorted(np.sort(durations), risk_times, side="left")
+    return SurvivalPlotData(
+        times=(0.0, *(float(value) for value in times)),
+        survival=(1.0, *(float(value) for value in survival)),
+        at_risk=(len(durations), *(int(value) for value in at_risk)),
+        events=(0, *(int(value) for value in event_counts)),
+        censored=(0, *(int(value) for value in censored_counts)),
+        risk_times=tuple(float(value) for value in risk_times),
+        risk_counts=tuple(int(value) for value in risk_counts),
     )
 
 

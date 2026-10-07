@@ -13,6 +13,7 @@ from statsmodels.duration.hazard_regression import PHReg
 from expo_jbm329.services.analysis.regression import PredictorKind, build_regression_design
 from expo_jbm329.services.analysis.survival import (
     SurvivalError,
+    _survival_plot_data,  # noqa: PLC2701
     analyze_cox_regression,
     initialize_survival_columns,
     survival_term_name,
@@ -102,6 +103,9 @@ def test_uncensored_data_can_be_selected_and_fitted():
     assert result.error is None
     assert result.n_events == len(frame)
     assert result.n_censored == 0
+    assert result.plot_data is not None
+    assert sum(result.plot_data.censored) == 0
+    assert result.plot_data.survival[-1] == 0.0
 
 
 def test_constant_linear_combination_is_not_identifiable_against_baseline_hazard():
@@ -126,6 +130,15 @@ def test_complete_cases_drop_missing_and_nonfinite_predictors_with_counts():
     assert result.n_used == len(frame) - 4
     assert result.n_dropped == 4
     assert result.n_events + result.n_censored == result.n_used
+    complete = frame.replace([np.inf, -np.inf], np.nan).dropna(subset=["duration", "event", "x", "group"])
+    assert result.plot_data == _survival_plot_data(
+        complete["duration"].to_numpy(),
+        complete["event"].to_numpy(),
+    )
+    assert result.plot_data is not None
+    assert result.plot_data.at_risk[0] == result.n_used
+    assert sum(result.plot_data.events) == result.n_events
+    assert sum(result.plot_data.censored) == result.n_censored
 
 
 @pytest.mark.parametrize(
@@ -222,3 +235,64 @@ def test_convergence_warning_and_nonfinite_estimates_are_not_reported_as_success
     monkeypatch.setattr("expo_jbm329.services.analysis.survival.PHReg.fit", lambda *_args, **_kwargs: failed_fit)
     nonfinite = analyze_cox_regression(frame, "duration", "event", ["x"])
     assert nonfinite.error is SurvivalError.FIT_FAILED
+
+
+def test_kaplan_meier_hand_calculated_ties_censor_only_times_and_final_followup():
+    durations = np.array([4.0, 1.0, 2.0, 1.0, 3.0, 1.0])
+    events = np.array([0, 1, 0, 0, 1, 1])
+    data = _survival_plot_data(durations, events)
+
+    assert data.times == (0.0, 1.0, 2.0, 3.0, 4.0)
+    assert data.at_risk == (6, 6, 3, 2, 1)
+    assert data.events == (0, 2, 0, 1, 0)
+    assert data.censored == (0, 1, 1, 0, 1)
+    assert data.survival == pytest.approx((1.0, 2 / 3, 2 / 3, 1 / 3, 1 / 3))
+    assert data.risk_times == (0.0, 1.0, 2.0, 3.0, 4.0)
+    assert data.risk_counts == (6, 6, 3, 2, 1)
+    assert all(0 <= probability <= 1 for probability in data.survival)
+    assert all(left >= right for left, right in zip(data.survival, data.survival[1:], strict=False))
+
+
+def test_kaplan_meier_all_events_reaches_zero_and_handles_tied_events():
+    data = _survival_plot_data(np.array([3.0, 1.0, 2.0, 2.0]), np.ones(4, dtype=int))
+    assert data.times == (0.0, 1.0, 2.0, 3.0)
+    assert data.survival == pytest.approx((1.0, 3 / 4, 1 / 4, 0.0))
+    assert data.at_risk == (4, 4, 3, 1)
+    assert data.events == (0, 1, 2, 1)
+    assert data.censored == (0, 0, 0, 0)
+
+
+def test_kaplan_meier_same_time_events_precede_censoring():
+    data = _survival_plot_data(np.ones(4), np.array([1, 1, 0, 0]))
+    assert data.times == (0.0, 1.0)
+    assert data.survival == (1.0, 0.5)
+    assert data.at_risk == (4, 4)
+    assert data.censored == (0, 2)
+    assert data.risk_times == (0.0, 0.25, 0.5, 0.75, 1.0)
+    assert data.risk_counts == (4, 4, 4, 4, 4)
+
+
+def test_display_risk_counts_include_subjects_at_the_tick_but_not_earlier_exits():
+    data = _survival_plot_data(np.array([1.0, 3.0, 5.0, 8.0]), np.array([1, 0, 1, 0]))
+    assert data.risk_times == (0.0, 2.0, 4.0, 6.0, 8.0)
+    assert data.risk_counts == (4, 3, 2, 1, 1)
+
+
+def test_survival_chart_retains_entire_large_cohort_without_sampling():
+    frame = _frame(size=5500)
+    result = analyze_cox_regression(frame, "duration", "event", ["x"])
+    assert result.error is None
+    assert result.plot_data is not None
+    assert len(result.plot_data.times) == len(frame) + 1
+    assert result.plot_data.at_risk[0] == len(frame)
+    assert sum(result.plot_data.events) == result.n_events
+    assert sum(result.plot_data.censored) == result.n_censored
+
+
+def test_survival_error_and_initializer_have_no_plot_payload():
+    frame = _frame()
+    result = analyze_cox_regression(frame, "duration", "event", [])
+    assert result.error is SurvivalError.NO_PREDICTORS_SELECTED
+    assert result.plot_data is None
+    columns = initialize_survival_columns(frame)
+    assert columns.events
