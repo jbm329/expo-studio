@@ -390,13 +390,20 @@ class ExportController:
     # ==================================================================
     # Export CSV
     # ==================================================================
-    def export_csv(self) -> None:
-        """Export the current DataFrame to CSV format.
+    def export_csv(self, *, df: pd.DataFrame | None = None) -> None:
+        """Export the supplied or active DataFrame to CSV format.
 
         Displays a file dialog for the user to choose the export path,
         then schedules an export job via FileJobService.
+
+        Args:
+            df: DataFrame to export. None uses the active tab. Empty frames
+                show the no-dataset message without falling back. The caller
+                must keep supplied data stable until the export completes;
+                this method does not copy it.
         """
-        df = self._get_active_df()
+        if df is None:
+            df = self._get_active_df()
         if self._df_is_empty(df):
             return
 
@@ -485,9 +492,17 @@ class ExportController:
     # ==================================================================
     # Export Excel
     # ==================================================================
-    def export_excel(self) -> None:
-        """Export the current DataFrame to Excel format."""
-        df = self._get_active_df()
+    def export_excel(self, *, df: pd.DataFrame | None = None) -> None:
+        """Export the supplied or active DataFrame to Excel format.
+
+        Args:
+            df: DataFrame to export. None uses the active tab. Empty frames
+                show the no-dataset message without falling back. The caller
+                must keep supplied data stable until the export completes;
+                this method does not copy it.
+        """
+        if df is None:
+            df = self._get_active_df()
         if self._df_is_empty(df):
             return
 
@@ -575,9 +590,17 @@ class ExportController:
     # ==================================================================
     # EXPORT: Data file (pickle/feather/parquet/df)
     # ==================================================================
-    def export_data(self) -> None:
-        """Export the current DataFrame to a data file format."""
-        df = self._get_active_df()
+    def export_data(self, *, df: pd.DataFrame | None = None) -> None:
+        """Export the supplied or active DataFrame to a binary data format.
+
+        Args:
+            df: DataFrame to export. None uses the active tab. Empty frames
+                show the no-dataset message without falling back. The caller
+                must keep supplied data stable until the export completes;
+                this method does not copy it.
+        """
+        if df is None:
+            df = self._get_active_df()
         if self._df_is_empty(df):
             return
 
