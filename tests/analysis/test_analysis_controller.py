@@ -84,12 +84,14 @@ def test_overview_export_routes_explicit_frames_and_never_reads_active_data(form
     }[format_choice]
     assert method.call_count == 1
     kwargs = method.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
     if format_choice is OverviewExportFormat.EXCEL:
-        assert set(kwargs) == {"sheets"}
+        assert set(kwargs) == {"sheets", "parent_widget", "operation_target"}
         assert list(kwargs["sheets"]) == ["Sample"]
         actual = kwargs["sheets"]["Sample"]
     else:
-        assert set(kwargs) == {"df"}
+        assert set(kwargs) == {"df", "parent_widget", "operation_target"}
         actual = kwargs["df"]
     pd.testing.assert_frame_equal(actual, expected)
     assert controller._results.mock_calls == []
@@ -174,22 +176,24 @@ def test_overview_job_is_stale_after_navigating_away_and_back():
     assert dialog.exportable_overview() is None
 
 
-def test_open_analysis_dialog_scopes_injected_exporter_and_connects_request(dialog_factory):
+def test_open_analysis_dialog_reuses_injected_exporter_and_connects_request(dialog_factory):
     results = DummyResults(datasets=[DatasetRef("chosen", "Chosen", 2, 1)], active_tab_id="chosen")
     exporter = Mock()
     controller = AnalysisController(results=results, async_ops=DummyAsyncOps(), export_controller=exporter)
     _open_and_flush(controller, QWidget())
     dialog = dialog_factory[0]
-    assert exporter.for_context.call_args.kwargs == {
-        "parent_widget": dialog,
-        "operation_target": dialog.content_panel(),
-    }
+    assert exporter.mock_calls == []
     result = analyze_dataset_overview(pd.DataFrame({"a": [1]}))
     dialog.set_exportable_overview(result)
     dialog.overview_export_requested.emit(
         OverviewExportRequest(result, (OverviewExportTable.SAMPLE,), OverviewExportFormat.CSV)
     )
-    assert exporter.for_context.return_value.export_csv.call_count == 1
+    assert len(exporter.mock_calls) == 1
+    assert exporter.export_csv.call_count == 1
+    kwargs = exporter.export_csv.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    pd.testing.assert_frame_equal(kwargs["df"], pd.DataFrame({"a": [1]}))
 
 
 class DummyResults:

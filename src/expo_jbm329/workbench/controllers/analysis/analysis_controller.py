@@ -269,7 +269,7 @@ class AnalysisController:
         Args:
             results: ResultTabManager instance.
             async_ops: Controller running analyses as background jobs.
-            export_controller: Shared exporter, scoped to the analysis dialog.
+            export_controller: Shared exporter receiving per-call analysis dialog context.
             logger: Optional logger instance.
         """
         self._results = results
@@ -340,9 +340,7 @@ class AnalysisController:
             active_tab_id=self._results.active_tab_id(),
         )
         if self._export_controller is not None:
-            exporter = self._export_controller.for_context(
-                parent_widget=dialog, operation_target=dialog.content_panel()
-            )
+            exporter = self._export_controller
 
             def _handle_export(request: object) -> None:
                 self._export_overview(dialog, exporter, request)
@@ -395,11 +393,15 @@ class AnalysisController:
         # Frames belong to this export only and remain stable for the async job.
         match request.format:
             case OverviewExportFormat.EXCEL:
-                exporter.export_excel(sheets=sheets)
+                exporter.export_excel(sheets=sheets, parent_widget=dialog, operation_target=dialog.content_panel())
             case OverviewExportFormat.CSV:
-                exporter.export_csv(df=next(iter(sheets.values())))
+                exporter.export_csv(
+                    df=next(iter(sheets.values())), parent_widget=dialog, operation_target=dialog.content_panel()
+                )
             case OverviewExportFormat.BINARY:
-                exporter.export_data(df=next(iter(sheets.values())))
+                exporter.export_data(
+                    df=next(iter(sheets.values())), parent_widget=dialog, operation_target=dialog.content_panel()
+                )
 
     # ------------------------------------------------------------------
     # Renderers (GUI thread only)
