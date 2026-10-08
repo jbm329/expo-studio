@@ -369,6 +369,34 @@
 <context>
     <name>AnalysisDialog</name>
     <message>
+        <source>Reports(0)</source>
+        <translation>Rapporter(0)</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>Exportera</translation>
+    </message>
+    <message>
+        <source>Export analysis data</source>
+        <translation>Exportera analysdata</translation>
+    </message>
+    <message>
+        <source>Export results</source>
+        <translation>Exportera resultat</translation>
+    </message>
+    <message>
+        <source>Add to report</source>
+        <translation>Lägg till i rapport</translation>
+    </message>
+    <message>
+        <source>Export and report actions are layout previews only.</source>
+        <translation>Export- och rapportåtgärder visar endast layouten.</translation>
+    </message>
+    <message>
+        <source>A report can contain analyses from multiple datasets.</source>
+        <translation>En rapport kan innehålla analyser från flera dataset.</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="80"/>
         <source>Advanced analysis</source>
         <translation>Avancerad analys</translation>
@@ -438,6 +466,175 @@
         <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="329"/>
         <source>Time Series</source>
         <translation>Tidsserie</translation>
+    </message>
+</context>
+<context>
+    <name>AnalysisExportDialog</name>
+    <message>
+        <source>Export analysis data</source>
+        <translation>Exportera analysdata</translation>
+    </message>
+    <message>
+        <source>Export results</source>
+        <translation>Exportera resultat</translation>
+    </message>
+    <message>
+        <source>Layout preview only. Export processing is not implemented yet.</source>
+        <translation>Endast förhandsvisning av layouten. Export är ännu inte implementerad.</translation>
+    </message>
+    <message>
+        <source>Planned export contents</source>
+        <translation>Planerat exportinnehåll</translation>
+    </message>
+    <message>
+        <source>Original dataset</source>
+        <translation>Ursprungligt dataset</translation>
+    </message>
+    <message>
+        <source>Analysis dataset</source>
+        <translation>Analysdataset</translation>
+    </message>
+    <message>
+        <source>Predictions</source>
+        <translation>Prediktioner</translation>
+    </message>
+    <message>
+        <source>Residuals</source>
+        <translation>Residualer</translation>
+    </message>
+    <message>
+        <source>Summary / statistics tables</source>
+        <translation>Sammanfattnings- och statistiktabeller</translation>
+    </message>
+    <message>
+        <source>Coefficients</source>
+        <translation>Koefficienter</translation>
+    </message>
+    <message>
+        <source>Model metrics</source>
+        <translation>Modellmått</translation>
+    </message>
+    <message>
+        <source>Charts</source>
+        <translation>Diagram</translation>
+    </message>
+    <message>
+        <source>Preview choice only. Availability will depend on the computed analysis.</source>
+        <translation>Endast förhandsvisning av val. Tillgängligheten kommer att bero på den beräknade analysen.</translation>
+    </message>
+    <message>
+        <source>These are planned choices, not available outputs. Unsupported items will explain why they are unavailable.</source>
+        <translation>Detta är planerade val, inte tillgängliga resultat. Val som inte stöds kommer att förklara varför de inte är tillgängliga.</translation>
+    </message>
+    <message>
+        <source>Excel workbook (.xlsx)</source>
+        <translation>Excel-arbetsbok (.xlsx)</translation>
+    </message>
+    <message>
+        <source>Planned format</source>
+        <translation>Planerat format</translation>
+    </message>
+    <message>
+        <source>Standalone chart format</source>
+        <translation>Format för separata diagram</translation>
+    </message>
+    <message>
+        <source>Excel will contain tables and static chart images. Standalone charts can also be saved as PNG or SVG. The planned export includes all supported chart variants, not only the displayed chart.</source>
+        <translation>Excel kommer att innehålla tabeller och statiska diagrambilder. Separata diagram kan även sparas som PNG eller SVG. Den planerade exporten omfattar alla diagramvarianter som stöds, inte bara det visade diagrammet.</translation>
+    </message>
+    <message>
+        <source>The analysis dataset will contain the rows used by the analysis. Predictions and residuals will be offered only where supported.</source>
+        <translation>Analysdatasetet kommer att innehålla de rader som används av analysen. Prediktioner och residualer kommer endast att erbjudas där de stöds.</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>Exportera</translation>
+    </message>
+    <message>
+        <source>Not implemented yet. No file will be created.</source>
+        <translation>Ännu inte implementerat. Ingen fil kommer att skapas.</translation>
+    </message>
+</context>
+<context>
+    <name>ReportPage</name>
+    <message>
+        <source>Report details</source>
+        <translation>Rapportinformation</translation>
+    </message>
+    <message>
+        <source>Enter a report title</source>
+        <translation>Ange en rapporttitel</translation>
+    </message>
+    <message>
+        <source>Describe the purpose of this report</source>
+        <translation>Beskriv syftet med rapporten</translation>
+    </message>
+    <message>
+        <source>Title</source>
+        <translation>Titel</translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation>Beskrivning</translation>
+    </message>
+    <message>
+        <source>Selected analyses</source>
+        <translation>Valda analyser</translation>
+    </message>
+    <message>
+        <source>No analyses have been added. Report collection will be available in a later step.</source>
+        <translation>Inga analyser har lagts till. Möjligheten att samla analyser i en rapport kommer i ett senare steg.</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation>Flytta upp</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation>Flytta ned</translation>
+    </message>
+    <message>
+        <source>Edit note</source>
+        <translation>Redigera anteckning</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Ta bort</translation>
+    </message>
+    <message>
+        <source>Layout preview only. Adding analyses and generating files are not implemented yet.</source>
+        <translation>Endast förhandsvisning av layouten. Att lägga till analyser och skapa filer är ännu inte implementerat.</translation>
+    </message>
+    <message>
+        <source>Generate HTML report</source>
+        <translation>Skapa HTML-rapport</translation>
+    </message>
+    <message>
+        <source>Not implemented yet. This step previews the report layout only.</source>
+        <translation>Ännu inte implementerat. Detta steg visar endast rapportens layout.</translation>
+    </message>
+</context>
+<context>
+    <name>ReportNotesDialog</name>
+    <message>
+        <source>Add to report</source>
+        <translation>Lägg till i rapport</translation>
+    </message>
+    <message>
+        <source>Optional notes about this analysis</source>
+        <translation>Valfria anteckningar om analysen</translation>
+    </message>
+    <message>
+        <source>Notes</source>
+        <translation>Anteckningar</translation>
+    </message>
+    <message>
+        <source>Layout preview only. Adding an analysis to the report is not implemented yet.</source>
+        <translation>Endast förhandsvisning av layouten. Att lägga till en analys i rapporten är ännu inte implementerat.</translation>
+    </message>
+    <message>
+        <source>Not implemented yet. No analysis or note will be saved.</source>
+        <translation>Ännu inte implementerat. Ingen analys eller anteckning kommer att sparas.</translation>
     </message>
 </context>
 <context>

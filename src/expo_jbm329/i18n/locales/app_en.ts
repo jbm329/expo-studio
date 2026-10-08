@@ -133,6 +133,34 @@
 </context><context>
     <name>AnalysisDialog</name>
     <message>
+        <source>Reports(0)</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Export analysis data</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Export results</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Add to report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Export and report actions are layout previews only.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>A report can contain analyses from multiple datasets.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
         <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="80" />
         <source>Advanced analysis</source>
         <translation type="unfinished" />
@@ -201,6 +229,172 @@
     <message>
         <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="329" />
         <source>Time Series</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>AnalysisExportDialog</name>
+    <message>
+        <source>Export analysis data</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Export results</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Layout preview only. Export processing is not implemented yet.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Planned export contents</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Original dataset</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Analysis dataset</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Predictions</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Residuals</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Summary / statistics tables</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Coefficients</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Model metrics</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Charts</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Preview choice only. Availability will depend on the computed analysis.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>These are planned choices, not available outputs. Unsupported items will explain why they are unavailable.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Excel workbook (.xlsx)</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Planned format</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Standalone chart format</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Excel will contain tables and static chart images. Standalone charts can also be saved as PNG or SVG. The planned export includes all supported chart variants, not only the displayed chart.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>The analysis dataset will contain the rows used by the analysis. Predictions and residuals will be offered only where supported.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Not implemented yet. No file will be created.</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>ReportPage</name>
+    <message>
+        <source>Report details</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Enter a report title</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Describe the purpose of this report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Title</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Description</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Selected analyses</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>No analyses have been added. Report collection will be available in a later step.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Edit note</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Layout preview only. Adding analyses and generating files are not implemented yet.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Generate HTML report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Not implemented yet. This step previews the report layout only.</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>ReportNotesDialog</name>
+    <message>
+        <source>Add to report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Optional notes about this analysis</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Notes</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Layout preview only. Adding an analysis to the report is not implemented yet.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Not implemented yet. No analysis or note will be saved.</source>
         <translation type="unfinished" />
     </message>
 </context><context>

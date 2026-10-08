@@ -9,6 +9,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QLabel, QTableWidget, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
 from expo_jbm329.gui.dialogs.analysis.clustering_config import ClusteringConfigWidget
 from expo_jbm329.gui.dialogs.analysis.clustering_view import ClusteringView
@@ -191,6 +192,107 @@ def test_open_dialog_does_nothing_when_there_are_no_datasets(dialog_factory):
     _open_and_flush(ctrl, QWidget())
 
     assert dialog_factory == []
+
+
+def test_reports_selected_before_initial_refresh_do_not_launch_analysis(monkeypatch):
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=1)
+    dialogs: list[AnalysisDialog] = []
+
+    def open_reports(dialog):
+        dialogs.append(dialog)
+        dialog.select_reports()
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(AnalysisDialog, "exec", open_reports)
+    results = DummyResults(datasets=[dataset], active_tab_id="t1")
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(results=results, async_ops=async_ops)
+
+    parent = QWidget()
+    _open_and_flush(ctrl, parent)
+
+    assert len(dialogs) == 1
+    dialog = dialogs[0]
+    assert dialog.selected_category() is None
+    assert async_ops.calls == []
+    # Even a programmatic dataset change must not launch a report-page analysis.
+    dialog.dataset_changed.emit("t1")
+    assert async_ops.calls == []
+    assert dialog.content_widget() is None
+
+
+@pytest.mark.parametrize("recompute", [False, True])
+def test_report_navigation_discards_pending_results_and_errors(recompute):
+    frame = pd.DataFrame({"a": [1, 2, 3]})
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=1)
+    results = DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": frame})
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(results=results, async_ops=async_ops)
+    dialog = AnalysisDialog(parent=None, datasets=[dataset], active_tab_id="t1")
+    content = QLabel("Existing result")
+    dialog.set_content_widget(content)
+    if recompute:
+        ctrl._recompute_content(
+            dialog,
+            category=AnalysisCategory.OVERVIEW,
+            scope_suffix="preview",
+            compute=lambda df, callbacks: "New result",
+            apply_result=lambda result: dialog.show_placeholder(str(result)),
+            is_stale=lambda: False,
+        )
+    else:
+        ctrl._refresh_content(dialog)
+    assert len(async_ops.calls) == 1
+    call = async_ops.last_call
+
+    dialog.select_reports()
+    page = dialog.report_page()
+    assert call["stale_check"]()
+    _simulate_success(call)
+    call["on_error"]("Late error")
+    ctrl._refresh_content(dialog)
+
+    assert dialog.content_widget() is content
+    assert dialog.report_page() is page
+    assert async_ops.calls == [call]
+
+
+@pytest.mark.parametrize("category", [AnalysisCategory.OVERVIEW, AnalysisCategory.REGRESSION])
+def test_returning_from_reports_preserves_automatic_and_apply_first_behavior(monkeypatch, category):
+    frame = pd.DataFrame({"a": range(8), "b": range(1, 9)})
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=8, column_count=2)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": frame}),
+        async_ops=async_ops,
+    )
+    dialogs: list[AnalysisDialog] = []
+
+    def navigate(dialog):
+        dialogs.append(dialog)
+        dialog.select_reports()
+        QApplication.processEvents()
+        assert async_ops.calls == []
+        dialog.select_category(category)
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(AnalysisDialog, "exec", navigate)
+
+    parent = QWidget()
+    _open_and_flush(ctrl, parent)
+
+    dialog = dialogs[0]
+    assert dialog.selected_category() is category
+    if category is AnalysisCategory.OVERVIEW:
+        assert len(async_ops.calls) == 1
+        _simulate_success(async_ops.last_call)
+        assert isinstance(dialog.content_widget(), OverviewView)
+    else:
+        assert async_ops.calls == []
+        assert isinstance(dialog.config_widget(), RegressionConfigWidget)
+        assert isinstance(dialog.content_widget(), RegressionView)
+        dialog.config_widget().model_requested.emit()
+        assert len(async_ops.calls) == 1
 
 
 def test_open_dialog_builds_dialog_with_datasets_and_active_tab(dialog_factory):

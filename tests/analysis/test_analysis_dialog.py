@@ -13,12 +13,17 @@ from PyQt6.QtWidgets import (
     QFormLayout,
     QGroupBox,
     QLabel,
+    QLineEdit,
+    QListWidget,
+    QPlainTextEdit,
+    QPushButton,
     QToolTip,
     QVBoxLayout,
     QWidget,
 )
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog, build_placeholder_label
+from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog, ExportSelectionMode
 from expo_jbm329.gui.dialogs.analysis.clustering_config import ClusteringConfigWidget
 from expo_jbm329.gui.dialogs.analysis.column_combo_box import ColumnComboBox
 from expo_jbm329.gui.dialogs.analysis.correlation_config import CorrelationConfigWidget
@@ -27,6 +32,7 @@ from expo_jbm329.gui.dialogs.analysis.outliers_config import OutliersConfigWidge
 from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_config import MultivariateOutliersConfigWidget
 from expo_jbm329.gui.dialogs.analysis.pca_config import PCAConfigWidget
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
+from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDialog
 from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigWidget
 from expo_jbm329.gui.dialogs.service.common.localization import TR_CLOSE
@@ -92,7 +98,121 @@ def test_dialog_emits_dataset_changed_when_selection_changes():
 def test_dialog_lists_every_analysis_category_once():
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
 
-    assert dialog._category_list.count() == len(list(AnalysisCategory))  # noqa: SLF001
+    selector = dialog._category_list  # noqa: SLF001
+    assert selector.count() == len(list(AnalysisCategory)) + 1
+    assert [selector.item(index).data(Qt.ItemDataRole.UserRole) for index in range(len(AnalysisCategory))] == [
+        category.value for category in AnalysisCategory
+    ]
+    assert selector.item(selector.count() - 1).text() == "Reports(0)"
+
+
+def test_report_navigation_uses_full_workspace_and_preserves_details_and_analysis():
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    content, config = QWidget(), QWidget()
+    dialog.set_content_widget(content)
+    dialog.set_config_widget(config)
+    received: list[str] = []
+    dialog.category_changed.connect(received.append)
+    dialog.show()
+    page = dialog.report_page()
+    page.findChild(QLineEdit).setText("My report")
+    page.findChild(QPlainTextEdit).setPlainText("Description")
+    try:
+        dialog.select_reports()
+        QCoreApplication.processEvents()
+
+        assert dialog.selected_category() is None
+        assert received == []
+        assert page.isVisible()
+        assert page.width() == dialog._workspace_stack.width()  # noqa: SLF001
+        assert not dialog._config_panel.isVisible()  # noqa: SLF001
+        assert not dialog._action_bar.isVisible()  # noqa: SLF001
+        assert not dialog._dataset_combo.isEnabled()  # noqa: SLF001
+        assert "multiple datasets" in dialog._dataset_combo.toolTip()  # noqa: SLF001
+        _request_tooltip(dialog._dataset_combo)  # noqa: SLF001
+        assert "multiple datasets" in QToolTip.text()
+
+        dialog.select_category(AnalysisCategory.OVERVIEW)
+        assert received == [AnalysisCategory.OVERVIEW.value]
+        assert dialog._config_panel.isVisible()  # noqa: SLF001
+        assert dialog._action_bar.isVisible()  # noqa: SLF001
+        assert dialog._dataset_combo.isEnabled()  # noqa: SLF001
+        assert dialog._dataset_combo.toolTip() == ""  # noqa: SLF001
+        assert dialog.content_widget() is content
+        assert dialog.config_widget() is config
+        dialog.select_reports()
+        assert dialog.report_page() is page
+        assert page.report_title() == "My report"
+        assert page.report_description() == "Description"
+    finally:
+        dialog.close()
+
+
+@pytest.mark.parametrize("mode", list(ExportSelectionMode))
+def test_export_menu_opens_selection_preview_with_full_text_tooltips(monkeypatch, mode):
+    captured: list[AnalysisExportDialog] = []
+    monkeypatch.setattr(AnalysisExportDialog, "exec", lambda self: captured.append(self))
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    tool = next(button for button in dialog.findChildren(QPushButton) if button.menu() is not None)
+
+    tool.menu().actions()[0 if mode is ExportSelectionMode.DATA else 1].trigger()
+
+    assert len(captured) == 1
+    preview = captured[0]
+    assert preview.parent() is dialog
+    assert preview.windowTitle() == ("Export analysis data" if mode is ExportSelectionMode.DATA else "Export results")
+    for combo in preview.findChildren(QComboBox):
+        _request_tooltip(combo)
+        assert combo.currentText() in QToolTip.text()
+    assert dialog.report_page().findChild(QListWidget).count() == 0
+
+
+def test_shared_notes_action_opens_preview_for_selected_category(monkeypatch):
+    captured: list[ReportNotesDialog] = []
+    monkeypatch.setattr(ReportNotesDialog, "exec", lambda self: captured.append(self))
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog.select_category(AnalysisCategory.REGRESSION)
+    add = next(button for button in dialog.findChildren(QPushButton) if button.text() == "Add to report")
+
+    add.click()
+
+    assert len(captured) == 1
+    assert captured[0].parent() is dialog
+    assert any(label.text() == "Regression" for label in captured[0].findChildren(QLabel))
+    assert dialog._category_list.item(dialog._category_list.count() - 1).text() == "Reports(0)"  # noqa: SLF001
+
+
+def test_export_and_add_to_report_use_matching_push_button_sizes():
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog.show()
+    QCoreApplication.processEvents()
+    try:
+        buttons = dialog._action_bar.findChildren(QPushButton)  # noqa: SLF001
+        assert len(buttons) == 2
+        export, add = buttons
+        assert export.menu() is not None
+        assert [action.text() for action in export.menu().actions()] == ["Export analysis data", "Export results"]
+        assert add.menu() is None
+        assert export.size() == add.size()
+    finally:
+        dialog.close()
+
+
+def test_report_navigation_remains_reachable_when_selector_scrolls():
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog.resize(900, 700)
+    dialog.show()
+    try:
+        dialog.select_reports()
+        QCoreApplication.processEvents()
+        selector = dialog._category_list  # noqa: SLF001
+        selector.scrollToItem(selector.currentItem())
+        QCoreApplication.processEvents()
+
+        assert selector.viewport().rect().intersects(selector.visualItemRect(selector.currentItem()))
+        assert dialog.report_page().isVisible()
+    finally:
+        dialog.close()
 
 
 def test_dialog_places_the_horizontal_analysis_selector_above_the_workspace():

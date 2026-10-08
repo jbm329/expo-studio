@@ -13,7 +13,7 @@ from html import escape
 from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QEvent, QObject, Qt, pyqtSignal
-from PyQt6.QtGui import QHelpEvent
+from PyQt6.QtGui import QAction, QHelpEvent
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -27,13 +27,19 @@ from PyQt6.QtWidgets import (
     QListView,
     QListWidget,
     QListWidgetItem,
+    QMenu,
+    QPushButton,
     QScrollArea,
     QSizePolicy,
+    QStackedWidget,
     QToolTip,
     QVBoxLayout,
     QWidget,
 )
 
+from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog, ExportSelectionMode
+from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDialog
+from expo_jbm329.gui.dialogs.analysis.report_page import ReportPage
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.services.analysis.categories import AnalysisCategory
 
@@ -70,6 +76,8 @@ class _ComboToolTipFilter(QObject):
             return super().eventFilter(watched, event)
         if watched is self._combo:
             tooltip = self._combo.currentData(Qt.ItemDataRole.ToolTipRole)
+            if not self._combo.isEnabled() and self._combo.toolTip():
+                tooltip = self._combo.toolTip()
             text = self._combo.currentText()
         else:
             index = self._view.indexAt(event.pos())
@@ -143,15 +151,26 @@ class AnalysisDialog(QDialog):
         top_row.addWidget(dataset_panel)
         top_row.addWidget(analysis_panel, 1)
 
+        self._analysis_workspace = QWidget(self)
+        analysis_layout = QVBoxLayout(self._analysis_workspace)
+        analysis_layout.setContentsMargins(0, 0, 0, 0)
+        analysis_layout.setSpacing(12)
+        analysis_layout.addWidget(self._build_action_bar())
         workspace = QHBoxLayout()
         workspace.setSpacing(12)
         content_panel = self._build_content_panel()
         config_panel = self._build_config_panel()
         workspace.addWidget(content_panel, 4)
         workspace.addWidget(config_panel, 1)
+        analysis_layout.addLayout(workspace, 1)
+
+        self._workspace_stack = QStackedWidget(self)
+        self._workspace_stack.addWidget(self._analysis_workspace)
+        self._report_page = ReportPage(self)
+        self._workspace_stack.addWidget(self._report_page)
 
         root.addLayout(top_row)
-        root.addLayout(workspace, 1)
+        root.addWidget(self._workspace_stack, 1)
         root.addWidget(self._build_button_box())
 
         self._connect_signals()
@@ -196,6 +215,8 @@ class AnalysisDialog(QDialog):
             item = QListWidgetItem(self._category_label(category))
             item.setData(_CATEGORY_ROLE, category.value)
             self._category_list.addItem(item)
+        self._report_item = QListWidgetItem(self.tr("Reports(0)"))
+        self._category_list.addItem(self._report_item)
 
         # Overview is the natural starting point for exploring a dataset.
         self.select_category(AnalysisCategory.OVERVIEW)
@@ -203,6 +224,47 @@ class AnalysisDialog(QDialog):
         category_layout.addWidget(self._category_list)
         self._analysis_panel = category_group
         return category_group
+
+    def _build_action_bar(self) -> QWidget:
+        """Build shared entry points into the export and report previews."""
+        bar = QWidget(self._analysis_workspace)
+        actions = QHBoxLayout(bar)
+        actions.setContentsMargins(0, 0, 0, 0)
+        export_button = QPushButton(self.tr("Export"), bar)
+        menu = QMenu(export_button)
+        data_action = QAction(self.tr("Export analysis data"), menu)
+        menu.addAction(data_action)
+        data_action.triggered.connect(lambda: self._show_export_preview(ExportSelectionMode.DATA))
+        results_action = QAction(self.tr("Export results"), menu)
+        menu.addAction(results_action)
+        results_action.triggered.connect(lambda: self._show_export_preview(ExportSelectionMode.RESULTS))
+        export_button.setMenu(menu)
+        actions.addWidget(export_button)
+        add_button = QPushButton(self.tr("Add to report"), bar)
+        add_button.clicked.connect(self._show_notes_preview)
+        button_width = max(export_button.sizeHint().width(), add_button.sizeHint().width())
+        export_button.setMinimumWidth(button_width)
+        add_button.setMinimumWidth(button_width)
+        actions.addWidget(add_button)
+        explanation = QLabel(self.tr("Export and report actions are layout previews only."), bar)
+        explanation.setWordWrap(True)
+        actions.addWidget(explanation, 1)
+        self._action_bar = bar
+        return bar
+
+    def _show_export_preview(self, mode: ExportSelectionMode) -> None:
+        """Open planned export selections without starting an export."""
+        dialog = AnalysisExportDialog(mode, self)
+        for combo in dialog.findChildren(QComboBox):
+            _ComboToolTipFilter(combo)
+        dialog.exec()
+
+    def _show_notes_preview(self) -> None:
+        """Open the planned notes workflow for the selected analysis."""
+        category = self.selected_category()
+        if category is None:
+            return
+        ReportNotesDialog(self._category_label(category), self).exec()
 
     def _build_content_panel(self) -> QWidget:
         """Build the right-hand content/placeholder panel."""
@@ -260,10 +322,17 @@ class AnalysisDialog(QDialog):
         current: QListWidgetItem | None,
         _previous: QListWidgetItem | None,
     ) -> None:
-        """Emit category_changed for the newly selected analysis category."""
+        """Switch workspace pages and emit changes only for analysis categories."""
         if current is None:
             return
-        self.category_changed.emit(str(current.data(_CATEGORY_ROLE)))
+        reports_selected = current is self._report_item
+        self._workspace_stack.setCurrentWidget(self._report_page if reports_selected else self._analysis_workspace)
+        self._dataset_combo.setEnabled(not reports_selected)
+        self._dataset_combo.setToolTip(
+            self.tr("A report can contain analyses from multiple datasets.") if reports_selected else ""
+        )
+        if not reports_selected:
+            self.category_changed.emit(str(current.data(_CATEGORY_ROLE)))
 
     # ------------------------------------------------------------------
     # Public API
@@ -288,9 +357,17 @@ class AnalysisDialog(QDialog):
     def selected_category(self) -> AnalysisCategory | None:
         """Return the currently selected analysis category, if any."""
         item = self._category_list.currentItem()
-        if item is None:
+        if item is None or item is self._report_item:
             return None
         return AnalysisCategory(item.data(_CATEGORY_ROLE))
+
+    def select_reports(self) -> None:
+        """Show the persistent report preview without selecting an analysis."""
+        self._category_list.setCurrentItem(self._report_item)
+
+    def report_page(self) -> ReportPage:
+        """Return the report page, which lives for the whole dialog lifetime."""
+        return self._report_page
 
     def select_category(self, category: AnalysisCategory) -> None:
         """Select an analysis category in the sidebar list.

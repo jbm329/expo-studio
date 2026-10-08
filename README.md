@@ -59,6 +59,12 @@ Available analyses include:
 
 The workspace uses adjustable result sections and configurable column selections. Long-running calculations are performed in the background to keep the interface responsive, and supported analyses provide progress or cancellation where appropriate.
 
+The **Export** menu, **Add to report** notes dialog, and **Reports(0)** page currently
+preview the planned export/report workflow. You can inspect selections and enter a
+report title and description, but collecting analyses, exporting analysis outputs,
+and generating HTML reports are not implemented yet. The existing main-window data
+exports are unchanged.
+
 ### 📂 Supported Data File Formats
 
 Expo Studio supports loading a range of common tabular data formats into pandas DataFrames for interactive exploration and transformation within the workbench.
