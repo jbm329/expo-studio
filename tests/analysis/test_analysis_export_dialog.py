@@ -1,9 +1,58 @@
 from __future__ import annotations
 
+import pandas as pd
 import pytest
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QDialog, QDialogButtonBox, QLabel, QPushButton
 
 from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog, ExportSelectionMode
+from expo_jbm329.services.analysis.overview import OverviewExportFormat, OverviewExportTable, analyze_dataset_overview
+
+
+def test_overview_formats_preserve_choices_and_disable_multi_table_single_file_export():
+    overview = analyze_dataset_overview(pd.DataFrame({"a": [1, 2]}))
+    dialog = AnalysisExportDialog(ExportSelectionMode.DATA, overview=overview)
+    choices = dialog.findChildren(QCheckBox)
+    assert [choice.text() for choice in choices] == ["Columns metadata", "Sample (first 100 rows)"]
+    export = next(button for button in dialog.findChildren(QPushButton) if button.text() == "Export")
+    formats = dialog.findChild(QComboBox)
+    assert export.isEnabled()
+    choices[1].setChecked(True)
+    assert not export.isEnabled()
+    assert dialog.export_request() is None
+    formats.setCurrentIndex(1)
+    assert export.isEnabled()
+    request = dialog.export_request()
+    assert request.result is overview
+    assert request.tables == (OverviewExportTable.COLUMNS, OverviewExportTable.SAMPLE)
+    assert request.format is OverviewExportFormat.EXCEL
+    formats.setCurrentIndex(2)
+    assert all(choice.isChecked() for choice in choices)
+    assert not export.isEnabled()
+    assert any("Choose exactly one table" in label.text() for label in dialog.findChildren(QLabel))
+    choices[0].setChecked(False)
+    assert export.isEnabled()
+    assert dialog.export_request().format is OverviewExportFormat.BINARY
+    choices[1].setChecked(False)
+    assert not export.isEnabled()
+
+
+@pytest.mark.parametrize("source", [None, pd.DataFrame(), pd.DataFrame({"a": pd.Series(dtype="int64")})])
+def test_overview_empty_and_missing_results_have_explicit_disabled_tables(source):
+    result = analyze_dataset_overview(source) if source is not None else None
+    dialog = AnalysisExportDialog(ExportSelectionMode.DATA, overview=result, overview_mode=True)
+    choices = dialog.findChildren(QCheckBox)
+    assert len(choices) == 2
+    assert not choices[1].isEnabled()
+    assert bool(choices[0].isEnabled()) == (source is not None and source.shape[1] > 0)
+    assert ("empty" if source is not None else "Run Overview") in choices[1].toolTip()
+
+
+def test_overview_result_mode_remains_preview_even_with_overview_payload():
+    result = analyze_dataset_overview(pd.DataFrame({"a": [1]}))
+    dialog = AnalysisExportDialog(ExportSelectionMode.RESULTS, overview=result)
+    assert dialog.export_request() is None
+    export = next(button for button in dialog.findChildren(QPushButton) if button.text() == "Export")
+    assert not export.isEnabled()
 
 
 @pytest.mark.parametrize("mode", list(ExportSelectionMode))

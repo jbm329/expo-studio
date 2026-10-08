@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
@@ -38,6 +39,12 @@ from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.correlation import CorrelationMethod
 from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierError, MultivariateOutlierMethod
 from expo_jbm329.services.analysis.outliers import OutlierMethod
+from expo_jbm329.services.analysis.overview import (
+    OverviewExportFormat,
+    OverviewExportRequest,
+    OverviewExportTable,
+    analyze_dataset_overview,
+)
 from expo_jbm329.services.analysis.pca import PCAError
 from expo_jbm329.services.analysis.regression import RegressionError
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
@@ -46,6 +53,143 @@ from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
 
 _CONTROLLER_MODULE = "expo_jbm329.workbench.controllers.analysis.analysis_controller"
+
+
+def _overview_export_context():
+    result = analyze_dataset_overview(pd.DataFrame({"value": [1, 2]}))
+    dialog = AnalysisDialog(
+        parent=None,
+        datasets=[DatasetRef("chosen", "Chosen", 2, 1), DatasetRef("other", "Other", 2, 1)],
+        active_tab_id="chosen",
+    )
+    dialog.set_content_widget(OverviewView(result))
+    dialog.set_exportable_overview(result)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must not look up a dataset")
+    results.current_df.side_effect = AssertionError("Export must not use the active tab")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, result, Mock()
+
+
+@pytest.mark.parametrize("format_choice", list(OverviewExportFormat))
+def test_overview_export_routes_explicit_frames_and_never_reads_active_data(format_choice):
+    controller, dialog, result, exporter = _overview_export_context()
+    request = OverviewExportRequest(result, (OverviewExportTable.SAMPLE,), format_choice)
+    controller._export_overview(dialog, exporter, request)
+    expected = pd.DataFrame({"value": [1, 2]})
+    method = {
+        OverviewExportFormat.CSV: exporter.export_csv,
+        OverviewExportFormat.EXCEL: exporter.export_excel,
+        OverviewExportFormat.BINARY: exporter.export_data,
+    }[format_choice]
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    if format_choice is OverviewExportFormat.EXCEL:
+        assert set(kwargs) == {"sheets"}
+        assert list(kwargs["sheets"]) == ["Sample"]
+        actual = kwargs["sheets"]["Sample"]
+    else:
+        assert set(kwargs) == {"df"}
+        actual = kwargs["df"]
+    pd.testing.assert_frame_equal(actual, expected)
+    assert controller._results.mock_calls == []
+
+
+def test_overview_excel_routes_both_named_tables_in_one_operation():
+    controller, dialog, result, exporter = _overview_export_context()
+    request = OverviewExportRequest(
+        result, (OverviewExportTable.COLUMNS, OverviewExportTable.SAMPLE), OverviewExportFormat.EXCEL
+    )
+    controller._export_overview(dialog, exporter, request)
+    assert len(exporter.mock_calls) == 1
+    sheets = exporter.export_excel.call_args.kwargs["sheets"]
+    assert list(sheets) == ["Columns", "Sample"]
+    assert sheets["Columns"].iloc[0]["missing_fraction"] == 0.0
+    assert sheets["Sample"].shape == (2, 1)
+
+
+@pytest.mark.parametrize("format_choice", [OverviewExportFormat.CSV, OverviewExportFormat.BINARY])
+def test_overview_multi_table_single_file_request_is_rejected(format_choice):
+    controller, dialog, result, exporter = _overview_export_context()
+    request = OverviewExportRequest(result, (OverviewExportTable.COLUMNS, OverviewExportTable.SAMPLE), format_choice)
+    controller._export_overview(dialog, exporter, request)
+    assert exporter.mock_calls == []
+
+
+@pytest.mark.parametrize("invalidate", ["category", "dataset", "placeholder", "replacement", "identity"])
+def test_overview_export_rejects_stale_or_unrelated_snapshot(invalidate):
+    controller, dialog, result, exporter = _overview_export_context()
+    request = OverviewExportRequest(result, (OverviewExportTable.SAMPLE,), OverviewExportFormat.CSV)
+    match invalidate:
+        case "category":
+            dialog.select_category(AnalysisCategory.STATISTICS)
+        case "dataset":
+            dialog.select_dataset("other")
+        case "placeholder":
+            dialog.show_placeholder("Analysis failed")
+        case "replacement":
+            dialog.set_content_widget(QWidget())
+        case "identity":
+            dialog.set_exportable_overview(analyze_dataset_overview(pd.DataFrame({"value": [9]})))
+    controller._export_overview(dialog, exporter, request)
+    assert exporter.mock_calls == []
+
+
+def test_overview_export_dialog_cancellation_does_not_emit(monkeypatch):
+    from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog, ExportSelectionMode
+
+    _, dialog, _, _ = _overview_export_context()
+    requests = []
+    dialog.overview_export_requested.connect(requests.append)
+    monkeypatch.setattr(AnalysisExportDialog, "exec", lambda _self: QDialog.DialogCode.Rejected)
+    dialog._show_export_preview(ExportSelectionMode.DATA)
+    assert requests == []
+
+
+def test_overview_export_dialog_acceptance_emits_typed_snapshot_request(monkeypatch):
+    from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog, ExportSelectionMode
+
+    _, dialog, result, _ = _overview_export_context()
+    requests = []
+    dialog.overview_export_requested.connect(requests.append)
+    monkeypatch.setattr(AnalysisExportDialog, "exec", lambda _self: QDialog.DialogCode.Accepted)
+    dialog._show_export_preview(ExportSelectionMode.DATA)
+    assert requests == [OverviewExportRequest(result, (OverviewExportTable.COLUMNS,), OverviewExportFormat.CSV)]
+
+
+def test_overview_job_is_stale_after_navigating_away_and_back():
+    controller, dialog, result, _ = _overview_export_context()
+    controller._run_analysis(
+        dialog,
+        AnalysisCategory.OVERVIEW,
+        controller._category_handlers[AnalysisCategory.OVERVIEW],
+        "chosen",
+        pd.DataFrame({"value": [1, 2]}),
+    )
+    call = controller._async_ops.last_call
+    dialog.select_category(AnalysisCategory.STATISTICS)
+    dialog.select_category(AnalysisCategory.OVERVIEW)
+    assert call["stale_check"]()
+    call["on_result"](result)
+    assert dialog.exportable_overview() is None
+
+
+def test_open_analysis_dialog_scopes_injected_exporter_and_connects_request(dialog_factory):
+    results = DummyResults(datasets=[DatasetRef("chosen", "Chosen", 2, 1)], active_tab_id="chosen")
+    exporter = Mock()
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps(), export_controller=exporter)
+    _open_and_flush(controller, QWidget())
+    dialog = dialog_factory[0]
+    assert exporter.for_context.call_args.kwargs == {
+        "parent_widget": dialog,
+        "operation_target": dialog.content_panel(),
+    }
+    result = analyze_dataset_overview(pd.DataFrame({"a": [1]}))
+    dialog.set_exportable_overview(result)
+    dialog.overview_export_requested.emit(
+        OverviewExportRequest(result, (OverviewExportTable.SAMPLE,), OverviewExportFormat.CSV)
+    )
+    assert exporter.for_context.return_value.export_csv.call_count == 1
 
 
 class DummyResults:
@@ -101,6 +245,7 @@ class DummyAnalysisDialog:
         self.kwargs = kwargs
         self.category_changed = DummySignal()
         self.dataset_changed = DummySignal()
+        self.overview_export_requested = DummySignal()
         self.placeholder_calls: list[str] = []
         self.content_widgets: list[QWidget] = []
         self.config_widgets: list[QWidget | None] = []
@@ -110,6 +255,21 @@ class DummyAnalysisDialog:
         self._selected_dataset_tab_id: str | None = None
         self._current_content: QWidget | None = None
         self._current_config: QWidget | None = None
+        self._export_overview = None
+        self._analysis_revision = 0
+
+    def invalidate_overview_export(self):
+        self._export_overview = None
+        self._analysis_revision += 1
+
+    def analysis_revision(self):
+        return self._analysis_revision
+
+    def set_exportable_overview(self, result):
+        self._export_overview = result
+
+    def exportable_overview(self):
+        return self._export_overview
 
     def show_placeholder(self, text):
         self.placeholder_calls.append(text)

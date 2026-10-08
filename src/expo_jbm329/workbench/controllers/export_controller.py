@@ -212,6 +212,30 @@ class ExportController:
         """Return the FileJobService instance."""
         return self._file_jobs
 
+    def for_context(self, *, parent_widget: QWidget, operation_target: QWidget) -> ExportController:
+        """Create an export controller anchored to another workspace.
+
+        The main-window controller is never mutated, including while an export
+        job is running. Services, destination history and settings are shared.
+        """
+        controller = ExportController(
+            parent_widget=parent_widget,
+            async_ops=self._async_ops,
+            operation_target=operation_target,
+            results=self._results,
+            set_status=self._set_status,
+            file_jobs=self._file_jobs,
+            get_tab_title=self._get_tab_title,
+            open_url=self._open_url,
+            data_io=self._data_io,
+            dialogs=self._dialogs,
+            file_dialogs=self._file_dialogs,
+            dialog_state=self._dialog_state,
+            logger=self._logger,
+        )
+        controller._documents_dir = self._documents_dir
+        return controller
+
     # ==================================================================
     # Settings
     # ==================================================================

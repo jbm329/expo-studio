@@ -44,6 +44,7 @@ from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_
 from expo_jbm329.services.analysis.categories import AnalysisCategory
 
 if TYPE_CHECKING:
+    from expo_jbm329.services.analysis.overview import DatasetOverviewResult
     from expo_jbm329.utils.dataset_ref import DatasetRef
 
 _CATEGORY_ROLE = Qt.ItemDataRole.UserRole
@@ -116,6 +117,7 @@ class AnalysisDialog(QDialog):
 
     dataset_changed = pyqtSignal(str)  # dataset tab_id
     category_changed = pyqtSignal(str)  # AnalysisCategory value
+    overview_export_requested = pyqtSignal(object)  # OverviewExportRequest
 
     def __init__(
         self,
@@ -136,6 +138,9 @@ class AnalysisDialog(QDialog):
         self.setWindowFlag(Qt.WindowType.WindowMinimizeButtonHint, False)
 
         self._datasets = datasets
+        self._export_overview: DatasetOverviewResult | None = None
+        self._export_tab_id: str | None = None
+        self._analysis_revision = 0
 
         self.setWindowTitle(self.tr("Advanced analysis"))
         self.resize(1280, 900)
@@ -174,6 +179,8 @@ class AnalysisDialog(QDialog):
         root.addWidget(self._build_button_box())
 
         self._connect_signals()
+        self.dataset_changed.connect(self.invalidate_overview_export)
+        self.category_changed.connect(self.invalidate_overview_export)
 
         if self._dataset_combo.currentData():
             self.dataset_changed.emit(str(self._dataset_combo.currentData()))
@@ -246,18 +253,54 @@ class AnalysisDialog(QDialog):
         export_button.setMinimumWidth(button_width)
         add_button.setMinimumWidth(button_width)
         actions.addWidget(add_button)
-        explanation = QLabel(self.tr("Export and report actions are layout previews only."), bar)
+        explanation = QLabel(
+            self.tr("Overview data export is available after analysis. Other export and report actions are previews."),
+            bar,
+        )
         explanation.setWordWrap(True)
         actions.addWidget(explanation, 1)
         self._action_bar = bar
         return bar
 
     def _show_export_preview(self, mode: ExportSelectionMode) -> None:
-        """Open planned export selections without starting an export."""
-        dialog = AnalysisExportDialog(mode, self)
+        """Open Overview data choices or the unchanged result/category preview."""
+        overview = self.exportable_overview()
+        dialog = AnalysisExportDialog(
+            mode,
+            self,
+            overview=overview,
+            overview_mode=self.selected_category() is AnalysisCategory.OVERVIEW,
+        )
         for combo in dialog.findChildren(QComboBox):
             _ComboToolTipFilter(combo)
-        dialog.exec()
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            request = dialog.export_request()
+            if request is not None and request.result is self.exportable_overview():
+                self.overview_export_requested.emit(request)
+
+    def invalidate_overview_export(self) -> None:
+        """Disable real export as soon as displayed analysis becomes stale."""
+        self._export_overview = None
+        self._export_tab_id = None
+        self._analysis_revision += 1
+
+    def analysis_revision(self) -> int:
+        """Return the generation used to reject jobs after navigation/replacement."""
+        return self._analysis_revision
+
+    def set_exportable_overview(self, result: DatasetOverviewResult) -> None:
+        """Register the successful result currently displayed by the controller."""
+        self._export_overview = result
+        self._export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_overview(self) -> DatasetOverviewResult | None:
+        """Return only the successful snapshot for the current Overview."""
+        if (
+            self.selected_category() is AnalysisCategory.OVERVIEW
+            and self.selected_dataset_tab_id() == self._export_tab_id
+        ):
+            return self._export_overview
+        return None
 
     def _show_notes_preview(self) -> None:
         """Open the planned notes workflow for the selected analysis."""
@@ -398,6 +441,7 @@ class AnalysisDialog(QDialog):
         Args:
             widget: The widget to display in the content panel.
         """
+        self.invalidate_overview_export()
         if self._content_widget is not None:
             # A visible canvas removed from its layout can be repainted once
             # at zero size before deleteLater() runs.

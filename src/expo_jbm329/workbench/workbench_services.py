@@ -235,15 +235,6 @@ class WorkbenchServices:
         ui_invoke(result_tabs.currentChanged.connect, _update_undo_enabled)
 
         # ============================================================
-        # ADVANCED ANALYSIS
-        # ============================================================
-        analysis = AnalysisController(
-            results=results,
-            async_ops=async_ops,
-            logger=app.log_ui,
-        )
-
-        # ============================================================
         # EDITOR PANEL
         # ============================================================
         editor_tab_manager = EditorTabManager()
@@ -482,6 +473,16 @@ class WorkbenchServices:
             file_dialogs=app.file_dialogs,
             dialog_state=dialog_state,
             logger=app.log_service,
+        )
+
+        # ============================================================
+        # ADVANCED ANALYSIS
+        # ============================================================
+        analysis = AnalysisController(
+            results=results,
+            async_ops=async_ops,
+            export_controller=export,
+            logger=app.log_ui,
         )
 
         # ============================================================

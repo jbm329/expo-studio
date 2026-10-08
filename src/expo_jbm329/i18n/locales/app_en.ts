@@ -153,8 +153,8 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Export and report actions are layout previews only.</source>
-        <translation type="unfinished" />
+        <source>Overview data export is available after analysis. Other export and report actions are previews.</source>
+        <translation>Overview data export is available after analysis. Other export and report actions are previews.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -233,6 +233,46 @@
     </message>
 </context><context>
     <name>AnalysisExportDialog</name>
+    <message>
+        <source>Export Columns metadata or Sample (first 100 rows), not the original dataset. Summary and analysis results are not available for export.</source>
+        <translation>Export Columns metadata or Sample (first 100 rows), not the original dataset. Summary and analysis results are not available for export.</translation>
+    </message>
+    <message>
+        <source>Export contents</source>
+        <translation>Export contents</translation>
+    </message>
+    <message>
+        <source>Columns metadata</source>
+        <translation>Columns metadata</translation>
+    </message>
+    <message>
+        <source>Sample (first 100 rows)</source>
+        <translation>Sample (first 100 rows)</translation>
+    </message>
+    <message>
+        <source>Run Overview successfully before exporting.</source>
+        <translation>Run Overview successfully before exporting.</translation>
+    </message>
+    <message>
+        <source>This table is empty and cannot be exported.</source>
+        <translation>This table is empty and cannot be exported.</translation>
+    </message>
+    <message>
+        <source>Binary data file (Parquet / Feather / Pickle)</source>
+        <translation>Binary data file (Parquet / Feather / Pickle)</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>Format</translation>
+    </message>
+    <message>
+        <source>Excel exports selected tables as separate sheets in one workbook.</source>
+        <translation>Excel exports selected tables as separate sheets in one workbook.</translation>
+    </message>
+    <message>
+        <source>Choose exactly one table for CSV or binary export. For binary files, choose Parquet, Feather or Pickle in the save dialog.</source>
+        <translation>Choose exactly one table for CSV or binary export. For binary files, choose Parquet, Feather or Pickle in the save dialog.</translation>
+    </message>
     <message>
         <source>Export analysis data</source>
         <translation type="unfinished" />

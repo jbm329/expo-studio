@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 from PyQt6.QtGui import QAction
+from PyQt6.QtWidgets import QWidget
 
 from expo_jbm329.gui.dialogs.service.dialog_service import ProfileChoice
 from expo_jbm329.services.file_writer import FileWriter
@@ -75,6 +76,23 @@ def test_export_csv_no_df_shows_info_and_returns():
 
     assert async_ops.calls == []
     assert any(call[0] == "info" for call in dlg.calls)
+
+
+def test_scoped_export_controller_anchors_overlay_without_mutating_main_window():
+    controller, _, dialogs, _, _, _, async_ops = make_controller(df=pd.DataFrame({"active": [99]}))
+    original_parent = controller._parent
+    original_target = controller._operation_target
+    parent, target = QWidget(), QWidget()
+    scoped = controller.for_context(parent_widget=parent, operation_target=target)
+    dialogs.enqueue_save_response("overview.csv", "CSV files (*.csv)")
+    scoped.export_csv(df=pd.DataFrame({"metadata": [1]}))
+    assert async_ops.calls[0]["target"] is target
+    assert scoped._parent is parent
+    assert scoped._file_dialogs is controller._file_dialogs
+    assert scoped._dialog_state is controller._dialog_state
+    assert scoped._documents_dir == controller._documents_dir
+    assert controller._parent is original_parent
+    assert controller._operation_target is original_target
 
 
 def test_export_csv_user_cancels_does_not_run():

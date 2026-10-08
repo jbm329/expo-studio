@@ -59,11 +59,16 @@ Available analyses include:
 
 The workspace uses adjustable result sections and configurable column selections. Long-running calculations are performed in the background to keep the interface responsive, and supported analyses provide progress or cancellation where appropriate.
 
-The **Export** menu, **Add to report** notes dialog, and **Reports(0)** page currently
-preview the planned export/report workflow. You can inspect selections and enter a
-report title and description, but collecting analyses, exporting analysis outputs,
-and generating HTML reports are not implemented yet. The existing main-window data
-exports are unchanged.
+After a successful **Overview**, choose **Export → Export analysis data** to save
+**Columns metadata** or **Sample (first 100 rows)** from the displayed analysis.
+Excel can include both tables as separate sheets in one workbook. CSV and binary
+data files export exactly one selected table per operation; select Parquet,
+Feather or Pickle in the binary save dialog. Empty tables cannot be exported.
+This does not export the original dataset or the Overview Summary.
+
+Exports for other analyses and **Export results**, **Add to report**, and
+**Reports(0)** remain disabled workflow previews. Collecting analyses and generating
+HTML reports are not implemented yet. Existing main-window data exports are unchanged.
 
 ### 📂 Supported Data File Formats
 

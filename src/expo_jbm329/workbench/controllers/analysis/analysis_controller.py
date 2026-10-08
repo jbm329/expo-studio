@@ -58,7 +58,13 @@ from expo_jbm329.services.analysis.outliers import (
     default_column,
     initialize_outlier_summary,
 )
-from expo_jbm329.services.analysis.overview import analyze_dataset_overview
+from expo_jbm329.services.analysis.overview import (
+    DatasetOverviewResult,
+    OverviewExportFormat,
+    OverviewExportRequest,
+    analyze_dataset_overview,
+    overview_export_tables,
+)
 from expo_jbm329.services.analysis.paired_comparison import (
     PairedComparisonResult,
     analyze_paired_comparison,
@@ -96,7 +102,6 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
     from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierResult
     from expo_jbm329.services.analysis.outliers import OutlierColumnDetail, OutlierSummaryResult
-    from expo_jbm329.services.analysis.overview import DatasetOverviewResult
     from expo_jbm329.services.analysis.pca import PCAResult
     from expo_jbm329.services.analysis.regression import RegressionResult
     from expo_jbm329.services.analysis.statistics import DescriptiveStatisticsResult
@@ -104,6 +109,7 @@ if TYPE_CHECKING:
     from expo_jbm329.workbench.controllers.async_operation_controller import (
         AsyncOperationController,
     )
+    from expo_jbm329.workbench.controllers.export_controller import ExportController
     from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import (
         ResultTabManager,
     )
@@ -255,6 +261,7 @@ class AnalysisController:
         *,
         results: ResultTabManager,
         async_ops: AsyncOperationController,
+        export_controller: ExportController | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
         """Initialize the analysis controller.
@@ -262,10 +269,12 @@ class AnalysisController:
         Args:
             results: ResultTabManager instance.
             async_ops: Controller running analyses as background jobs.
+            export_controller: Shared exporter, scoped to the analysis dialog.
             logger: Optional logger instance.
         """
         self._results = results
         self._async_ops = async_ops
+        self._export_controller = export_controller
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
 
         self._category_handlers: dict[AnalysisCategory, _CategoryHandler] = {
@@ -330,6 +339,15 @@ class AnalysisController:
             datasets=datasets,
             active_tab_id=self._results.active_tab_id(),
         )
+        if self._export_controller is not None:
+            exporter = self._export_controller.for_context(
+                parent_widget=dialog, operation_target=dialog.content_panel()
+            )
+
+            def _handle_export(request: object) -> None:
+                self._export_overview(dialog, exporter, request)
+
+            dialog.overview_export_requested.connect(_handle_export)
 
         refresh_started = False
 
@@ -360,6 +378,28 @@ class AnalysisController:
         QTimer.singleShot(0, _refresh_initial_content)
 
         dialog.exec()
+
+    def _export_overview(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Validate snapshot identity and route owned frames to existing exporters."""
+        if not isinstance(request, OverviewExportRequest) or request.result is not dialog.exportable_overview():
+            return
+        if not any(request.format is format_choice for format_choice in OverviewExportFormat):
+            return
+        if request.format is not OverviewExportFormat.EXCEL and len(request.tables) != 1:
+            return
+        try:
+            sheets = overview_export_tables(request.result, request.tables)
+        except (TypeError, ValueError):
+            self._logger.warning("Rejected unavailable Overview export selection.")
+            return
+        # Frames belong to this export only and remain stable for the async job.
+        match request.format:
+            case OverviewExportFormat.EXCEL:
+                exporter.export_excel(sheets=sheets)
+            case OverviewExportFormat.CSV:
+                exporter.export_csv(df=next(iter(sheets.values())))
+            case OverviewExportFormat.BINARY:
+                exporter.export_data(df=next(iter(sheets.values())))
 
     # ------------------------------------------------------------------
     # Renderers (GUI thread only)
@@ -1124,6 +1164,8 @@ class AnalysisController:
     ) -> None:
         """Run a category's computation in the background with a busy overlay."""
         corr_id = uuid.uuid4().hex
+        dialog.invalidate_overview_export()
+        revision = dialog.analysis_revision()
 
         # Hide any configuration widget left over from the previous category
         # immediately - it isn't covered by the busy overlay (which only
@@ -1133,7 +1175,11 @@ class AnalysisController:
 
         def _is_stale() -> bool:
             """Discard results once the user has moved on to something else."""
-            return dialog.selected_category() != category or dialog.selected_dataset_tab_id() != tab_id
+            return (
+                dialog.selected_category() != category
+                or dialog.selected_dataset_tab_id() != tab_id
+                or dialog.analysis_revision() != revision
+            )
 
         def _work(
             *,
@@ -1146,6 +1192,8 @@ class AnalysisController:
             return handler.compute(df, _JobCallbacks(progress_cb=progress_cb, cancel_cb=cancel_cb))
 
         def _on_result(result: object) -> None:
+            if _is_stale():
+                return
             if result is None:
                 if handler.cancelable:
                     self._show_placeholder(dialog, self._tr(self.TR_ANALYSIS_CANCELLED))
@@ -1153,6 +1201,8 @@ class AnalysisController:
             content_widget, config_widget = handler.render(result, dialog)
             dialog.set_content_widget(content_widget)
             dialog.set_config_widget(config_widget)
+            if category is AnalysisCategory.OVERVIEW and isinstance(result, DatasetOverviewResult):
+                dialog.set_exportable_overview(result)
 
         def _on_error(_traceback: str) -> None:
             if _is_stale():
