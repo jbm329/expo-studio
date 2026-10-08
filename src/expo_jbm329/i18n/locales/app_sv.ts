@@ -2935,6 +2935,20 @@ Fortsätt?</translation>
 <context>
     <name>ExportController</name>
     <message>
+        <source>Export completed</source>
+        <translation>Export slutförd</translation>
+    </message>
+    <message>
+        <source>Export completed successfully.
+
+Saved to:
+{path}</source>
+        <translation>Exporten slutfördes.
+
+Sparad till:
+{path}</translation>
+    </message>
+    <message>
         <source>Supply either a DataFrame or named sheets, not both.</source>
         <translation>Ange antingen en DataFrame eller namngivna blad, inte båda.</translation>
     </message>

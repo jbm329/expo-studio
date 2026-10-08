@@ -393,14 +393,25 @@ class AnalysisController:
         # Frames belong to this export only and remain stable for the async job.
         match request.format:
             case OverviewExportFormat.EXCEL:
-                exporter.export_excel(sheets=sheets, parent_widget=dialog, operation_target=dialog.content_panel())
+                exporter.export_excel(
+                    sheets=sheets,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
             case OverviewExportFormat.CSV:
                 exporter.export_csv(
-                    df=next(iter(sheets.values())), parent_widget=dialog, operation_target=dialog.content_panel()
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
                 )
             case OverviewExportFormat.BINARY:
                 exporter.export_data(
-                    df=next(iter(sheets.values())), parent_widget=dialog, operation_target=dialog.content_panel()
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
                 )
 
     # ------------------------------------------------------------------

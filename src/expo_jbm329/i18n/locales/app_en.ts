@@ -2656,6 +2656,20 @@ Continue?</source>
 </context><context>
     <name>ExportController</name>
     <message>
+        <source>Export completed</source>
+        <translation>Export completed</translation>
+    </message>
+    <message>
+        <source>Export completed successfully.
+
+Saved to:
+{path}</source>
+        <translation>Export completed successfully.
+
+Saved to:
+{path}</translation>
+    </message>
+    <message>
         <source>Supply either a DataFrame or named sheets, not both.</source>
         <translation>Supply either a DataFrame or named sheets, not both.</translation>
     </message>

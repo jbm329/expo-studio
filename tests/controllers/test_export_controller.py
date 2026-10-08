@@ -277,6 +277,155 @@ _DATA_EXPORTS = [
 
 
 @pytest.mark.parametrize("method,writer,suffix,scope,indeterminate,cancelable,directory_key", _DATA_EXPORTS)
+@pytest.mark.parametrize("confirmation", ["omitted", False, True])
+@pytest.mark.parametrize("legacy", [False, True])
+def test_export_success_confirmation_is_opt_in_with_captured_parent_and_coerced_path(
+    monkeypatch, qt_app, method, writer, suffix, scope, indeterminate, cancelable, directory_key, confirmation, legacy
+):
+    ctrl, dialogs, file_dialogs, file_jobs, statuses, _, async_ops = make_controller(df=pd.DataFrame({"a": [1]}))
+    parent, target = QWidget(), QWidget()
+    path = rf"C:\reports\A&B <b>overview{suffix}"
+    info = Mock(wraps=dialogs.info)
+    monkeypatch.setattr(dialogs, "info", info)
+    monkeypatch.setattr(file_jobs, "coerce_save_suffix", lambda *args, **kwargs: path)
+    monkeypatch.setattr(async_ops, "run_target_overlay_operation", lambda **kwargs: async_ops.calls.append(kwargs))
+    file_dialogs.enqueue_save_response(r"C:\reports\chosen", "chosen-filter")
+    kwargs = {} if confirmation == "omitted" else {"show_success_dialog": confirmation}
+
+    getattr(ctrl, method)(parent_widget=parent, operation_target=target, **kwargs)
+    call = async_ops.calls[0]
+    ctrl._parent = QWidget()
+    result = {"ok": True, "elapsed": 1.2} if legacy else JobResult(ok=True, elapsed=1.2, path="ignored")
+    call["on_result"](result)
+    assert statuses
+    assert call["target"] is target
+    assert not info.called
+    qt_app.processEvents()
+    qt_app.processEvents()
+    if confirmation is True:
+        info.assert_called_once_with(
+            parent=parent,
+            title="Export completed",
+            text=f"Export completed successfully.\n\nSaved to:\n{path}",
+        )
+    else:
+        info.assert_not_called()
+
+
+@pytest.mark.parametrize("outcome", ["failed", "cancelled", "error", "unknown", "ok_cancelled", "ok_error"])
+def test_opt_in_export_non_success_preserves_existing_notification(monkeypatch, qt_app, outcome):
+    ctrl, dialogs, file_dialogs, _, statuses, _, async_ops = make_controller(df=pd.DataFrame({"a": [1]}))
+    parent = QWidget()
+    info, warn, critical = Mock(), Mock(), Mock()
+    monkeypatch.setattr(dialogs, "info", info)
+    monkeypatch.setattr(dialogs, "warn", warn)
+    monkeypatch.setattr(dialogs, "critical", critical)
+    monkeypatch.setattr(async_ops, "run_target_overlay_operation", lambda **kwargs: async_ops.calls.append(kwargs))
+    file_dialogs.enqueue_save_response(r"C:\reports\overview.csv", "CSV files (*.csv)")
+    ctrl.export_csv(parent_widget=parent, show_success_dialog=True)
+    call = async_ops.calls[0]
+    if outcome == "error":
+        call["on_error"]("Boom")
+    else:
+        result = (
+            object()
+            if outcome == "unknown"
+            else JobResult(
+                ok=outcome.startswith("ok_"),
+                elapsed=None,
+                cancelled=outcome in ("cancelled", "ok_cancelled"),
+                error=None if outcome in ("cancelled", "ok_cancelled") else "Boom",
+            )
+        )
+        call["on_result"](result)
+    qt_app.processEvents()
+    qt_app.processEvents()
+    assert statuses
+    if outcome in ("cancelled", "ok_cancelled"):
+        info.assert_called_once_with(parent=parent, title="Export data to CSV", text="Operation was cancelled.")
+        warn.assert_not_called()
+        critical.assert_not_called()
+    elif outcome == "error":
+        info.assert_not_called()
+        critical.assert_called_once_with(parent=parent, title="Export data to CSV", text="Boom")
+    else:
+        info.assert_not_called()
+        warn.assert_called_once_with(
+            parent=parent, title="Export data to CSV", text="Unknown job result" if outcome == "unknown" else "Boom"
+        )
+
+
+@pytest.mark.parametrize("method", ["export_csv", "export_excel", "export_data"])
+def test_opt_in_save_cancellation_has_no_confirmation(qt_app, method):
+    ctrl, dialogs, file_dialogs, _, statuses, _, async_ops = make_controller(df=pd.DataFrame({"a": [1]}))
+    file_dialogs.enqueue_save_response("", "")
+    getattr(ctrl, method)(show_success_dialog=True)
+    qt_app.processEvents()
+    qt_app.processEvents()
+    assert async_ops.calls == []
+    assert dialogs.calls == []
+    assert statuses == []
+
+
+def test_deferred_exports_capture_success_flags_independently(monkeypatch, qt_app):
+    ctrl, dialogs, file_dialogs, _, _, _, async_ops = make_controller(df=pd.DataFrame({"a": [1]}))
+    info = Mock()
+    monkeypatch.setattr(dialogs, "info", info)
+    monkeypatch.setattr(async_ops, "run_target_overlay_operation", lambda **kwargs: async_ops.calls.append(kwargs))
+    parents = [QWidget(), QWidget()]
+    paths = [r"C:\reports\overview.csv", r"C:\datasets\raw.csv"]
+    for parent, path, confirmation in zip(parents, paths, [True, False], strict=True):
+        file_dialogs.enqueue_save_response(path, "CSV files (*.csv)")
+        ctrl.export_csv(parent_widget=parent, show_success_dialog=confirmation)
+    for call in reversed(async_ops.calls):
+        call["on_result"](JobResult(ok=True, elapsed=None))
+    qt_app.processEvents()
+    qt_app.processEvents()
+    info.assert_called_once_with(
+        parent=parents[0],
+        title="Export completed",
+        text=f"Export completed successfully.\n\nSaved to:\n{paths[0]}",
+    )
+
+
+def test_success_confirmation_waits_for_actual_async_overlay_cleanup(monkeypatch, qt_app):
+    from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
+
+    ctrl, dialogs, file_dialogs, _, _, _, _ = make_controller(df=pd.DataFrame({"a": [1]}))
+    parent, target = QWidget(), QWidget()
+    manager, busy = Mock(), Mock()
+    ctrl._async_ops = AsyncOperationController(parent=parent, job_mgr=manager, busy=busy, dialogs=dialogs)
+    notifications = []
+
+    def info(**kwargs):
+        busy.hide.assert_called_with(target)
+        notifications.append(kwargs)
+
+    monkeypatch.setattr(dialogs, "info", info)
+    file_dialogs.enqueue_save_response(r"C:\reports\overview.csv", "CSV files (*.csv)")
+    ctrl.export_csv(parent_widget=parent, operation_target=target, show_success_dialog=True)
+    job = manager.run.return_value
+    job.result.connect.call_args.args[0](JobResult(ok=True, elapsed=None))
+    assert notifications == []
+    assert not busy.hide.called
+    qt_app.processEvents()
+    qt_app.processEvents()
+    assert len(notifications) == 1
+    assert notifications[0]["parent"] is parent
+
+
+@pytest.mark.parametrize("kind", [ExportKind.PROFILE, ExportKind.PROFILE_COMPARE])
+def test_profile_success_remains_silent_and_opens_report(qt_app, kind):
+    ctrl, dialogs, _, _, statuses, open_url, _ = make_controller()
+    ctrl._on_export_done(JobResult(ok=True, elapsed=None), kind, r"C:\reports\profile.html")
+    qt_app.processEvents()
+    qt_app.processEvents()
+    assert statuses
+    assert open_url["ok"]
+    assert dialogs.calls == []
+
+
+@pytest.mark.parametrize("method,writer,suffix,scope,indeterminate,cancelable,directory_key", _DATA_EXPORTS)
 @pytest.mark.parametrize("source", ["omitted", "none", "explicit", "explicit_without_active"])
 @pytest.mark.parametrize("context", ["omitted", "none", "parent", "target", "both"])
 def test_export_routes_resolved_dataframe_to_deferred_writer(

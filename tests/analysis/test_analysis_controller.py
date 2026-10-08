@@ -86,12 +86,13 @@ def test_overview_export_routes_explicit_frames_and_never_reads_active_data(form
     kwargs = method.call_args.kwargs
     assert kwargs["parent_widget"] is dialog
     assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
     if format_choice is OverviewExportFormat.EXCEL:
-        assert set(kwargs) == {"sheets", "parent_widget", "operation_target"}
+        assert set(kwargs) == {"sheets", "parent_widget", "operation_target", "show_success_dialog"}
         assert list(kwargs["sheets"]) == ["Sample"]
         actual = kwargs["sheets"]["Sample"]
     else:
-        assert set(kwargs) == {"df", "parent_widget", "operation_target"}
+        assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
         actual = kwargs["df"]
     pd.testing.assert_frame_equal(actual, expected)
     assert controller._results.mock_calls == []
@@ -105,6 +106,7 @@ def test_overview_excel_routes_both_named_tables_in_one_operation():
     controller._export_overview(dialog, exporter, request)
     assert len(exporter.mock_calls) == 1
     sheets = exporter.export_excel.call_args.kwargs["sheets"]
+    assert exporter.export_excel.call_args.kwargs["show_success_dialog"] is True
     assert list(sheets) == ["Columns", "Sample"]
     assert sheets["Columns"].iloc[0]["missing_fraction"] == 0.0
     assert sheets["Sample"].shape == (2, 1)
@@ -234,6 +236,7 @@ def test_open_analysis_dialog_reuses_injected_exporter_and_connects_request(dial
     kwargs = exporter.export_csv.call_args.kwargs
     assert kwargs["parent_widget"] is dialog
     assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
     pd.testing.assert_frame_equal(kwargs["df"], pd.DataFrame({"a": [1]}))
 
 

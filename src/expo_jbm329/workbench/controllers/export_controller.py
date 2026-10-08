@@ -15,7 +15,7 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
-from PyQt6.QtCore import QT_TR_NOOP
+from PyQt6.QtCore import QT_TR_NOOP, QTimer
 
 from expo_jbm329.gui.dialogs.service.dialog_service import DialogService, ProfileChoice
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
@@ -110,6 +110,8 @@ class ExportController:
     TR_EXPORT_STARTED_MSG = QT_TR_NOOP("Exporting data to {file_name}…")
     TR_DONE_STATUS_FILE = QT_TR_NOOP("{kind_label} completed: {file_name}")
     TR_DONE_STATUS_TIME_FILE = QT_TR_NOOP("{kind_label} completed: {time_str}: {file_name}")
+    TR_DONE_DIALOG_TITLE = QT_TR_NOOP("Export completed")
+    TR_DONE_DIALOG_TEXT = QT_TR_NOOP("Export completed successfully.\n\nSaved to:\n{path}")
 
     # Exceptions
     TR_EXCEPT_UNKNOWN_RESULT = QT_TR_NOOP("Unknown job result")
@@ -342,6 +344,7 @@ class ExportController:
         corr_id: str,
         parent_widget: QWidget | None = None,
         operation_target: QWidget | None = None,
+        show_success_dialog: bool = False,
     ) -> None:
         """Schedule an export job via AsyncOperationController.
 
@@ -358,6 +361,7 @@ class ExportController:
             corr_id: Correlation ID for logging.
             parent_widget: Callback dialog owner. None uses the default parent.
             operation_target: Overlay target override. None uses the default target.
+            show_success_dialog: Show a confirmation with the output path on success.
         """
         parent, target = self._resolve_context(parent_widget=parent_widget, operation_target=operation_target)
         self._logger.debug(
@@ -389,7 +393,9 @@ class ExportController:
             target=target,
             runner="thread",
             work=_work,
-            on_result=lambda payload: self._on_export_done(payload, kind, out_path, parent_widget=parent),
+            on_result=lambda payload: self._on_export_done(
+                payload, kind, out_path, parent_widget=parent, show_success_dialog=show_success_dialog
+            ),
             on_error=lambda err: self._on_export_error(err, kind, parent_widget=parent),
             busy_message=started_msg,
             scope=scope,
@@ -439,6 +445,7 @@ class ExportController:
         df: pd.DataFrame | None = None,
         parent_widget: QWidget | None = None,
         operation_target: QWidget | None = None,
+        show_success_dialog: bool = False,
     ) -> None:
         """Export the supplied or active DataFrame to CSV format.
 
@@ -452,6 +459,7 @@ class ExportController:
                 this method does not copy it.
             parent_widget: Dialog owner override. None uses the default parent.
             operation_target: Overlay target override. None uses the default target.
+            show_success_dialog: Show a confirmation with the output path on success.
         """
         parent, target = self._resolve_context(parent_widget=parent_widget, operation_target=operation_target)
         if df is None:
@@ -542,6 +550,7 @@ class ExportController:
             corr_id=corr,
             parent_widget=parent,
             operation_target=target,
+            show_success_dialog=show_success_dialog,
         )
 
     # ==================================================================
@@ -554,6 +563,7 @@ class ExportController:
         sheets: Mapping[str, pd.DataFrame] | None = None,
         parent_widget: QWidget | None = None,
         operation_target: QWidget | None = None,
+        show_success_dialog: bool = False,
     ) -> None:
         """Export the supplied or active DataFrame to Excel format.
 
@@ -567,6 +577,7 @@ class ExportController:
                 Named header-only frames are allowed; empty mappings are errors.
             parent_widget: Dialog owner override. None uses the default parent.
             operation_target: Overlay target override. None uses the default target.
+            show_success_dialog: Show a confirmation with the output path on success.
         """
         parent, target = self._resolve_context(parent_widget=parent_widget, operation_target=operation_target)
         source: pd.DataFrame | Mapping[str, pd.DataFrame]
@@ -690,6 +701,7 @@ class ExportController:
             corr_id=corr,
             parent_widget=parent,
             operation_target=target,
+            show_success_dialog=show_success_dialog,
         )
 
     # ==================================================================
@@ -701,6 +713,7 @@ class ExportController:
         df: pd.DataFrame | None = None,
         parent_widget: QWidget | None = None,
         operation_target: QWidget | None = None,
+        show_success_dialog: bool = False,
     ) -> None:
         """Export the supplied or active DataFrame to a binary data format.
 
@@ -711,6 +724,7 @@ class ExportController:
                 this method does not copy it.
             parent_widget: Dialog owner override. None uses the default parent.
             operation_target: Overlay target override. None uses the default target.
+            show_success_dialog: Show a confirmation with the output path on success.
         """
         parent, target = self._resolve_context(parent_widget=parent_widget, operation_target=operation_target)
         if df is None:
@@ -802,6 +816,7 @@ class ExportController:
             corr_id=corr,
             parent_widget=parent,
             operation_target=target,
+            show_success_dialog=show_success_dialog,
         )
 
     # ==================================================================
@@ -1038,7 +1053,13 @@ class ExportController:
     # ==================================================================
 
     def _on_export_done(
-        self, payload: object, kind: ExportKind, out_path: str, *, parent_widget: QWidget | None = None
+        self,
+        payload: object,
+        kind: ExportKind,
+        out_path: str,
+        *,
+        parent_widget: QWidget | None = None,
+        show_success_dialog: bool = False,
     ) -> None:
         """Present the export outcome to its captured dialog owner.
 
@@ -1047,6 +1068,7 @@ class ExportController:
             kind: Export kind.
             out_path: Output file path.
             parent_widget: Notification owner. None uses the default parent.
+            show_success_dialog: Show a confirmation with the output path on success.
         """
         parent = self._parent if parent_widget is None else parent_widget
         # Build JobResult robustly
@@ -1091,7 +1113,7 @@ class ExportController:
 
         corr = res.corr_id or "-"
         kind_label = self._tr(self._EXPORT_LABELS[kind])
-        if res.ok:
+        if res.ok and not res.cancelled and res.error is None:
             # Successful export
             file_name = Path(out_path).name
 
@@ -1111,6 +1133,18 @@ class ExportController:
 
             if kind in (ExportKind.PROFILE, ExportKind.PROFILE_COMPARE) and not self._open_url(str(out_path)):
                 self._logger.warning("ExportController: open URL failed (corr=%s, path=%s)", corr, out_path)
+            if show_success_dialog:
+
+                def show_confirmation() -> None:
+                    self._dialogs.info(
+                        parent=parent,
+                        title=self._tr(self.TR_DONE_DIALOG_TITLE),
+                        text=self._tr_fmt(self.TR_DONE_DIALOG_TEXT, path=out_path),
+                    )
+
+                # AsyncOperationController queues overlay cleanup after this callback.
+                # A second event-loop turn lets that cleanup run before the modal dialog.
+                QTimer.singleShot(0, lambda: QTimer.singleShot(0, show_confirmation))
             return
 
         if res.cancelled:
