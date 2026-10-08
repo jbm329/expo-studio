@@ -5,10 +5,11 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
+from openpyxl import load_workbook
 
 from expo_jbm329.services.data_io_service import DataIOService
 from expo_jbm329.services.file_loader import FileLoader
-from expo_jbm329.services.file_writer import FileWriter
+from expo_jbm329.services.file_writer import ExportCancelledError, FileWriter
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -110,3 +111,135 @@ def test_data_io_service_export_comparison_profile(io_service: DataIOService, tm
     assert res.ok is True
     mock_gen.assert_called_once_with(data, corr_id=None)
     io_service._writer.save_profile.assert_called_once_with(mock_report, str(dest), corr_id=None)
+
+
+@pytest.mark.parametrize("streaming", [True, False])
+def test_named_excel_service_roundtrip(
+    io_service: DataIOService, writer: FileWriter, tmp_path: Path, streaming: bool
+) -> None:
+    writer.reload_settings({"excel": {"streaming": streaming}})
+    path = tmp_path / "named.xlsx"
+    progress: list[int] = []
+    result = io_service.export_dfs_excel(
+        {"Summary": pd.DataFrame({"count": [1]}), "Empty": pd.DataFrame(columns=["value"])},
+        path,
+        progress_cb=progress.append,
+        corr_id="named-service",
+        job_id="job",
+        job_scope="export:excel",
+    )
+    assert result.ok
+    assert not result.cancelled
+    assert result.path == str(path)
+    assert result.corr_id == "named-service"
+    assert result.elapsed is not None and result.elapsed >= 0
+    assert progress[-1] == 100
+    workbook = load_workbook(path)
+    try:
+        assert workbook.sheetnames == ["Summary", "Empty"]
+        assert list(workbook["Summary"].values) == [("count",), (1,)]
+        assert list(workbook["Empty"].values) == [("value",)]
+    finally:
+        workbook.close()
+
+
+@pytest.mark.parametrize("named", [False, True])
+@pytest.mark.parametrize("outcome", ["success", "cancel", "failure"])
+def test_excel_service_shared_results_and_forwarding(
+    io_service: DataIOService, tmp_path: Path, monkeypatch, named: bool, outcome: str
+) -> None:
+    path = tmp_path / "out.xlsx"
+    frame = pd.DataFrame({"a": [1]})
+    source = {"One": frame} if named else frame
+    calls = []
+    progress: list[int] = []
+
+    def cancel() -> bool:
+        return False
+
+    def save(self, actual, dest, **kwargs):
+        calls.append((actual, dest, kwargs))
+        if outcome == "cancel":
+            message = "cancelled"
+            raise ExportCancelledError(message, path=dest, rows_written=1, sheets_written=1, corr_id="corr")
+        if outcome == "failure":
+            message = "writer failure"
+            raise ValueError(message)
+        return path
+
+    monkeypatch.setattr(FileWriter, "save_excel_sheets" if named else "save_excel", save)
+    export = io_service.export_dfs_excel if named else io_service.export_df_excel
+    result = export(source, path, progress_cb=progress.append, cancel_cb=cancel, corr_id="corr")
+    assert len(calls) == 1
+    actual, dest, kwargs = calls[0]
+    assert actual["One"] is frame if named else actual is frame
+    assert dest == str(path)
+    assert kwargs == {"progress_cb": progress.append, "cancel_cb": cancel, "corr_id": "corr", "na_rep": ""}
+    assert result.ok is (outcome == "success")
+    assert result.cancelled is (outcome == "cancel")
+    assert result.path == str(path)
+    assert result.corr_id == "corr"
+    assert result.error == ("writer failure" if outcome == "failure" else None)
+    assert (result.elapsed is not None) is (outcome != "failure")
+
+
+def test_named_service_early_cancellation_skips_writer(io_service: DataIOService, tmp_path: Path, monkeypatch) -> None:
+    def unexpected(*args, **kwargs):
+        pytest.fail("Early cancellation must not write")
+
+    monkeypatch.setattr(FileWriter, "save_excel_sheets", unexpected)
+    path = tmp_path / "out.xlsx"
+    result = io_service.export_dfs_excel(
+        {"Data": pd.DataFrame({"a": [1]})}, path, cancel_cb=lambda: True, corr_id="early"
+    )
+    assert result.cancelled and not result.ok
+    assert result.elapsed is None
+    assert result.corr_id == "early"
+    assert not path.exists()
+
+
+@pytest.mark.parametrize(
+    "sheets",
+    [
+        {},
+        {"bad:name": pd.DataFrame({"a": [1]})},
+        {"Empty": pd.DataFrame()},
+        {"Bad": object()},
+        [],
+        pd.DataFrame({"a": [1]}),
+    ],
+)
+def test_named_service_validation_returns_failed_result(io_service: DataIOService, tmp_path: Path, sheets) -> None:
+    path = tmp_path / "out.xlsx"
+    result = io_service.export_dfs_excel(sheets, path, corr_id="invalid")
+    assert not result.ok and not result.cancelled
+    assert result.error
+    assert result.path == str(path)
+    assert result.corr_id == "invalid"
+    assert not path.exists()
+
+
+def test_named_service_real_cancellation_preserves_existing(io_service: DataIOService, tmp_path: Path) -> None:
+    path = tmp_path / "out.xlsx"
+    path.write_bytes(b"original")
+    progress: list[int] = []
+    result = io_service.export_dfs_excel(
+        {"Data": pd.DataFrame({"a": range(4)})},
+        path,
+        progress_cb=progress.append,
+        cancel_cb=lambda: bool(progress and progress[-1] >= 25),
+        corr_id="during",
+    )
+    assert result.cancelled and not result.ok
+    assert result.elapsed is not None
+    assert result.error is None
+    assert path.read_bytes() == b"original"
+    assert 100 not in progress
+
+
+def test_named_service_validation_facade_preserves_frames(io_service: DataIOService) -> None:
+    frame = pd.DataFrame({"a": [1]})
+    sheets = {"One": frame}
+    captured = io_service.validate_excel_sheets(sheets)
+    assert captured is not sheets
+    assert captured["One"] is frame

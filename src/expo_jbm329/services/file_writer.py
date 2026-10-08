@@ -9,8 +9,9 @@ from __future__ import annotations
 import json
 import logging
 import pickle
+import tempfile
 import time
-from contextlib import suppress
+from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
@@ -20,10 +21,15 @@ from expo_jbm329.utils.format_utils import fmt_path, fmt_shape
 
 EXCEL_MAX_SHEET_NAME_LENGTH = 31
 ASCII_CONTROL_CHAR_LIMIT = 32
+EXCEL_MIN_ROWS = 2
+EXCEL_MAX_ROWS = 1_048_576
+EXCEL_MAX_COLUMNS = 16_384
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from typing import BinaryIO
 
+    from openpyxl import Workbook
     from openpyxl.worksheet._write_only import WriteOnlyWorksheet
 
 
@@ -343,6 +349,252 @@ class FileWriter:
     # ----------------------------------------------------------------------
     # Excel (pandas fallback or write-only streaming via openpyxl)
     # ----------------------------------------------------------------------
+    @staticmethod
+    def _excel_sheet_count(frame: pd.DataFrame, row_limit: int) -> int:
+        """Count streaming sheets including header-only frames."""
+        return max(1, (len(frame) + row_limit - 2) // (row_limit - 1))
+
+    @staticmethod
+    def _save_excel_workbook(workbook: Workbook, destination: Path | BinaryIO) -> None:
+        """Serialize with an owned archive, including failed-save cleanup."""
+        from zipfile import ZIP_DEFLATED, ZipFile
+
+        from openpyxl.writer.excel import ExcelWriter
+
+        # Workbook.save() does not close its archive when write_data() fails.
+        with ZipFile(destination, "w", ZIP_DEFLATED, allowZip64=True) as archive:
+            ExcelWriter(workbook, archive).write_data()
+
+    def validate_excel_sheets(
+        self,
+        sheets: Mapping[str, pd.DataFrame],
+        *,
+        index: bool = False,
+        streaming: bool | None = None,
+        max_rows_per_sheet: int | None = None,
+        chunk_size_rows: int | None = None,
+    ) -> dict[str, pd.DataFrame]:
+        """Validate and capture ordered workbook membership without copying data.
+
+        Callers must keep the contained frames stable until writing completes.
+
+        Args:
+            sheets: Ordered sheet names and caller-owned frames.
+            index: Include index columns in the physical column limit.
+            streaming: Write-only mode; None uses current settings.
+            max_rows_per_sheet: Physical row limit including headers.
+            chunk_size_rows: Positive streaming chunk size.
+
+        Returns:
+            A new ordered mapping containing the original frame references.
+
+        Raises:
+            ValueError: Invalid names, collisions, shape, or numeric settings.
+            TypeError: Invalid mapping, frame, or streaming setting types.
+        """
+        if not isinstance(cast("object", sheets), Mapping):
+            message = "Excel sheets must be a mapping of names to DataFrames"
+            raise TypeError(message)
+        captured = dict(sheets)
+        if not captured:
+            message = "Excel workbook requires at least one named sheet"
+            raise ValueError(message)
+        mode = self._excel_streaming if streaming is None else streaming
+        limit = self._excel_max_rows_per_sheet if max_rows_per_sheet is None else max_rows_per_sheet
+        chunk = self._excel_chunk_size if chunk_size_rows is None else chunk_size_rows
+        if not isinstance(cast("object", mode), bool):
+            message = "Excel streaming setting must be a boolean"
+            raise TypeError(message)
+        if (
+            isinstance(limit, bool)
+            or not isinstance(cast("object", limit), int)
+            or not EXCEL_MIN_ROWS <= limit <= EXCEL_MAX_ROWS
+        ):
+            message = "Excel row limit must be an integer between 2 and 1048576"
+            raise ValueError(message)
+        if isinstance(chunk, bool) or not isinstance(cast("object", chunk), int) or chunk < 1:
+            message = "Excel chunk size must be a positive integer"
+            raise ValueError(message)
+        names: set[str] = set()
+        for name, frame in captured.items():
+            self._validate_excel_sheet_name(name)
+            if not isinstance(cast("object", frame), pd.DataFrame):
+                message = f"Excel sheet {name!r} must contain a DataFrame"
+                raise TypeError(message)
+            if len(frame.columns) == 0:
+                message = f"Excel sheet {name!r} requires at least one column"
+                raise ValueError(message)
+            if len(frame.columns) + (frame.index.nlevels if index else 0) > EXCEL_MAX_COLUMNS:
+                message = f"Excel sheet {name!r} exceeds the Excel column limit"
+                raise ValueError(message)
+            header_rows = 1
+            if not mode and isinstance(frame.columns, pd.MultiIndex):
+                if not index:
+                    message = "Pandas Excel export of MultiIndex columns requires index=True"
+                    raise ValueError(message)
+                header_rows = frame.columns.nlevels + 1
+            if not mode and len(frame) + header_rows > limit:
+                message = f"Excel sheet {name!r} exceeds the row limit in pandas mode"
+                raise ValueError(message)
+            count = self._excel_sheet_count(frame, limit) if mode else 1
+            for number in range(1, count + 1):
+                generated = name if number == 1 else f"{name}_{number}"
+                self._validate_excel_sheet_name(generated)
+                folded = generated.casefold()
+                if folded in names:
+                    message = f"Duplicate Excel sheet name: {generated!r}"
+                    raise ValueError(message)
+                names.add(folded)
+        return captured
+
+    def save_excel_sheets(
+        self,
+        sheets: Mapping[str, pd.DataFrame],
+        dest: str | Path,
+        *,
+        index: bool = False,
+        na_rep: object = None,
+        streaming: bool | None = None,
+        max_rows_per_sheet: int | None = None,
+        chunk_size_rows: int | None = None,
+        progress_cb: Callable[[int], None] | None = None,
+        cancel_cb: Callable[[], bool] | None = None,
+        corr_id: str | None = None,
+    ) -> Path:
+        """Atomically write ordered named frames, preserving an existing destination.
+
+        Frames are not copied; callers must keep their data stable through completion.
+        Streaming splits rows; pandas mode rejects tables exceeding physical limits.
+
+        Args:
+            sheets: Ordered exact sheet names and caller-owned frames.
+            dest: Destination workbook.
+            index: Include each frame's index.
+            na_rep: Replacement for missing cell values.
+            streaming: Write-only mode; None uses current settings.
+            max_rows_per_sheet: Physical row limit including headers.
+            chunk_size_rows: Positive streaming chunk size.
+            progress_cb: Monotonic workbook progress; 100 follows replacement.
+            cancel_cb: Cancellation check before, during, and after rendering.
+            corr_id: Correlation identifier forwarded to logs and cancellation.
+
+        Returns:
+            The destination path after successful replacement.
+
+        Raises:
+            ExportCancelledError: Cancellation; the destination remains unchanged.
+            ValueError: Invalid request or unsupported workbook values.
+            TypeError: Invalid mapping or frame types.
+            OSError: Writing or replacing the workbook failed.
+        """
+        t0 = time.perf_counter()
+        captured = self.validate_excel_sheets(
+            sheets,
+            index=index,
+            streaming=streaming,
+            max_rows_per_sheet=max_rows_per_sheet,
+            chunk_size_rows=chunk_size_rows,
+        )
+        path = Path(dest)
+        mode = self._excel_streaming if streaming is None else streaming
+        written = 0
+        completed = 0
+        total = sum(len(frame) for frame in captured.values())
+
+        def check_cancel() -> None:
+            if cancel_cb is not None and cancel_cb():
+                message = "Named Excel export cancelled"
+                raise ExportCancelledError(
+                    message,
+                    path=fmt_path(path),
+                    rows_written=written,
+                    sheets_written=completed,
+                    corr_id=corr_id,
+                )
+
+        last_progress = -1
+
+        def progress(value: int) -> None:
+            nonlocal last_progress
+            value = min(value, 99)
+            if progress_cb is not None and value > last_progress:
+                last_progress = value
+                progress_cb(value)
+
+        progress(0)
+        check_cancel()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        # Close the handle before openpyxl/pandas opens the workbook on Windows.
+        with tempfile.NamedTemporaryFile(
+            prefix=f".{path.stem}-", suffix=".xlsx", dir=path.parent, delete=False
+        ) as handle:
+            temporary = Path(handle.name)
+        try:
+            if mode:
+                first_name, first_frame = next(iter(captured.items()))
+                self._save_excel_streaming(
+                    first_frame,
+                    temporary,
+                    sheet_name=first_name,
+                    index=index,
+                    na_rep=na_rep,
+                    max_rows_per_sheet=max_rows_per_sheet,
+                    chunk_size_rows=chunk_size_rows,
+                    progress_cb=progress,
+                    cancel_cb=cancel_cb,
+                    corr_id=corr_id,
+                    sheets=captured,
+                    rows=str(total),
+                    cols="mixed",
+                )
+                written = total
+                limit = self._excel_max_rows_per_sheet if max_rows_per_sheet is None else max_rows_per_sheet
+                completed = sum(self._excel_sheet_count(frame, limit) for frame in captured.values())
+            else:
+                with temporary.open("wb") as workbook_file:
+                    excel_writer = pd.ExcelWriter(workbook_file, engine="openpyxl")
+                    try:
+                        for name, frame in captured.items():
+                            check_cancel()
+                            frame.to_excel(
+                                excel_writer,
+                                sheet_name=name,
+                                index=index,
+                                na_rep="" if na_rep is None else str(na_rep),
+                            )
+                            written += len(frame)
+                            completed += 1
+                            progress(int(written * 100 / total) if total else int(completed * 100 / len(captured)))
+                        check_cancel()
+                        self._save_excel_workbook(excel_writer.book, workbook_file)
+                    finally:
+                        # Pandas close() would save again. Release the workbook here;
+                        # the outer context owns and closes its only file handle.
+                        excel_writer.book.close()
+            check_cancel()
+            temporary.replace(path)
+        except ExportCancelledError as error:
+            error.path = fmt_path(path)
+            raise
+        finally:
+            temporary.unlink(missing_ok=True)
+        if progress_cb is not None:
+            try:
+                progress_cb(100)
+            except Exception:
+                # Replacement has committed successfully; a notification failure
+                # cannot turn it into an atomic export failure.
+                self._logger.exception("FileWriter: progress notification failed after Excel commit (corr=%s)", corr_id)
+        self._logger.info(
+            "FileWriter: named Excel workbook written (corr=%s, path=%s, rows=%s, sheets=%s, ms=%.1f)",
+            corr_id,
+            fmt_path(path),
+            total,
+            completed,
+            (time.perf_counter() - t0) * 1000,
+        )
+        return path
+
     def save_excel(
         self,
         df: pd.DataFrame,
@@ -490,6 +742,7 @@ class FileWriter:
         t0: float | None = None,
         rows: str = "?",
         cols: str = "?",
+        sheets: Mapping[str, pd.DataFrame] | None = None,
     ) -> Path:
         """Streamed Excel export using openpyxl (write_only mode).
 
@@ -609,7 +862,8 @@ class FileWriter:
 
             return value
 
-        total = len(df.index)
+        frames = {sheet_name: df} if sheets is None else sheets
+        total = sum(len(frame) for frame in frames.values())
         if progress_cb:
             progress_cb(0)
 
@@ -620,214 +874,79 @@ class FileWriter:
         if chunk_size_rows is None:
             chunk_size_rows = self._excel_chunk_size
 
-        self._logger.debug(
-            "FileWriter: save excel (streaming) start "
-            "(corr=%s, path=%s, sheet=%r, index=%s, total_rows=%s, rows_limit_for_data=%s, chunk_size_rows=%s)",
-            corr_id,
-            fmt_path(path),
-            sheet_name,
-            index,
-            total,
-            rows_limit_for_data,
-            chunk_size_rows,
-        )
-
         t_start = t0 if t0 is not None else time.perf_counter()
         wb = Workbook(write_only=True)
-
-        with suppress(Exception):
-            default_ws = wb.active
-            if default_ws is not None:
-                wb.remove(default_ws)
-
-        def start_new_sheet(name: str) -> WriteOnlyWorksheet:
-            self._validate_excel_sheet_name(name)
-            ws = wb.create_sheet(title=name)
-            headers = []
-            if index:
-                headers.append(df.index.name or "index")
-            headers.extend(list(df.columns))
-            ws.append(headers)
-            return ws
-
-        if total == 0:
-            try:
-                _ = start_new_sheet(sheet_name)
-                wb.save(path)
-            finally:
-                with suppress(Exception):
-                    wb.close()
-            if progress_cb:
-                progress_cb(100)
-            dt_ms = (time.perf_counter() - t_start) * 1000.0
-            self._logger.info(
-                "FileWriter: excel written (streaming) "
-                "(corr=%s, engine=%s, sheets=%s, path=%s, ms=%.1f, rows=%s, cols=%s)",
-                corr_id,
-                "openpyxl-writeonly",
-                1,
-                fmt_path(path),
-                dt_ms,
-                rows,
-                cols,
-            )
-            return path
-
-        sheet_ix = 1
-        current_ws = start_new_sheet(sheet_name)
-        rows_in_current_sheet = 0
         written = 0
+        sheet_count = 0
         last_pct = -1
 
-        def maybe_progress() -> None:
-            nonlocal last_pct
-            if not progress_cb:
-                return
-            pct = int(written * 100 / total) if total else 100
-            if pct != last_pct:
-                last_pct = pct
-                progress_cb(pct)
+        def save_workbook() -> None:
+            self._save_excel_workbook(wb, path)
 
-        def ensure_new_sheet_if_needed() -> None:
-            nonlocal sheet_ix, current_ws, rows_in_current_sheet
-            if rows_in_current_sheet >= rows_limit_for_data:
-                sheet_ix += 1
-                current_ws = start_new_sheet(f"{sheet_name}_{sheet_ix}")
-                rows_in_current_sheet = 0
+        def start_new_sheet(name: str, frame: pd.DataFrame) -> WriteOnlyWorksheet:
+            nonlocal sheet_count
+            self._validate_excel_sheet_name(name)
+            ws = wb.create_sheet(title=name)
+            headers: list[Any] = []
+            if index:
+                headers.extend(name or "index" for name in frame.index.names)
+            headers.extend(list(frame.columns))
+            ws.append(headers)
+            sheet_count += 1
+            return ws
 
-        step = chunk_size_rows or total
-
-        for start in range(0, total, step):
-            if cancel_cb and cancel_cb():
-                # Flush partial workbook, then raise
-                try:
-                    wb.save(path)
-                finally:
-                    with suppress(Exception):
-                        wb.close()
-                self._logger.debug(
-                    "FileWriter: save excel (streaming) cancelled mid-run "
-                    "(corr=%s, path=%s, rows_written=%s, sheets_written=%s)",
-                    corr_id,
-                    fmt_path(path),
-                    written,
-                    sheet_ix,
-                )
-                msg = "Excel export cancelled during streaming write"
+        def check_cancel() -> None:
+            if cancel_cb is not None and cancel_cb():
+                # Legacy single-frame cancellation leaves a readable partial workbook.
+                save_workbook()
+                message = "Excel export cancelled during streaming write"
                 raise ExportCancelledError(
-                    msg,
+                    message,
                     path=fmt_path(path),
                     rows_written=written,
-                    sheets_written=sheet_ix,
+                    sheets_written=sheet_count,
                     corr_id=corr_id,
                 )
 
-            end = min(start + step, total)
-            chunk = df.iloc[start:end].copy()
-
-            with suppress(Exception):
-                tz_cols = chunk.select_dtypes(include=["datetimetz"]).columns
-                for col in tz_cols:
-                    with suppress(Exception):
-                        chunk.loc[:, col] = chunk[col].dt.tz_localize(None)
-
-            for col in chunk.columns:
-                try:
-                    col_vals = chunk[col]
-                    if col_vals.map(lambda v: isinstance(v, (bytes, bytearray))).any():
-                        chunk.loc[:, col] = col_vals.map(
-                            lambda v: v.decode("utf-8", "replace") if isinstance(v, (bytes, bytearray)) else v
-                        )
-                except (
-                    AttributeError,
-                    ConnectionError,
-                    FileNotFoundError,
-                    IndexError,
-                    KeyError,
-                    LookupError,
-                    OSError,
-                    RuntimeError,
-                    TypeError,
-                    ValueError,
-                ):
-                    pass
-
-            ws_append = current_ws.append
-
-            if index:
-                idx_values = chunk.index.to_list()
-                for j, row_vals in enumerate(chunk.itertuples(index=False, name=None)):
-                    if cancel_cb and cancel_cb():
-                        try:
-                            wb.save(path)
-                        finally:
-                            with suppress(Exception):
-                                wb.close()
-                        self._logger.debug(
-                            "FileWriter: save excel (streaming) cancelled mid-run "
-                            "(corr=%s, path=%s, rows_written=%s, sheets_written=%s)",
-                            corr_id,
-                            fmt_path(path),
-                            written,
-                            sheet_ix,
-                        )
-                        msg = "Excel export cancelled during streaming write"
-                        raise ExportCancelledError(
-                            msg,
-                            path=fmt_path(path),
-                            rows_written=written,
-                            sheets_written=sheet_ix,
-                            corr_id=corr_id,
-                        )
-
-                    ensure_new_sheet_if_needed()
-
-                    idx_clean = clean_cell(idx_values[j])
-                    cleaned = tuple(clean_cell(x) for x in row_vals)
-                    ws_append((idx_clean, *cleaned))
-
-                    rows_in_current_sheet += 1
-                    written += 1
-                    maybe_progress()
-            else:
-                for row_vals in chunk.itertuples(index=False, name=None):
-                    if cancel_cb and cancel_cb():
-                        try:
-                            wb.save(path)
-                        finally:
-                            with suppress(Exception):
-                                wb.close()
-                        self._logger.debug(
-                            "FileWriter: save excel (streaming) cancelled mid-run "
-                            "(corr=%s, path=%s, rows_written=%s, sheets_written=%s)",
-                            corr_id,
-                            fmt_path(path),
-                            written,
-                            sheet_ix,
-                        )
-                        msg = "Excel export cancelled during streaming write"
-                        raise ExportCancelledError(
-                            msg,
-                            path=fmt_path(path),
-                            rows_written=written,
-                            sheets_written=sheet_ix,
-                            corr_id=corr_id,
-                        )
-
-                    ensure_new_sheet_if_needed()
-
-                    cleaned = tuple(clean_cell(x) for x in row_vals)
-                    ws_append(cleaned)
-
-                    rows_in_current_sheet += 1
-                    written += 1
-                    maybe_progress()
-
         try:
-            wb.save(path)
+            for base_name, frame in frames.items():
+                if sheets is not None and sheet_count:
+                    check_cancel()
+                current_ws = start_new_sheet(base_name, frame)
+                sheet_ix = 1
+                rows_in_current_sheet = 0
+                step = chunk_size_rows or len(frame)
+                for start in range(0, len(frame), step):
+                    check_cancel()
+                    chunk = frame.iloc[start : start + step]
+                    for row in chunk.itertuples(index=index, name=None):
+                        check_cancel()
+                        if rows_in_current_sheet >= rows_limit_for_data:
+                            sheet_ix += 1
+                            current_ws = start_new_sheet(f"{base_name}_{sheet_ix}", frame)
+                            rows_in_current_sheet = 0
+                        values = (*row[0], *row[1:]) if index and isinstance(frame.index, pd.MultiIndex) else row
+                        current_ws.append(tuple(clean_cell(value) for value in values))
+                        rows_in_current_sheet += 1
+                        written += 1
+                        pct = int(written * 100 / total)
+                        if sheets is not None:
+                            pct = min(pct, 99)
+                        if progress_cb is not None and pct != last_pct:
+                            last_pct = pct
+                            progress_cb(pct)
+            if sheets is not None:
+                check_cancel()
+            save_workbook()
         finally:
-            with suppress(Exception):
-                wb.close()
+            # close() alone does not dispose of write-only worksheet XML files.
+            for worksheet in wb.worksheets:
+                if not worksheet.closed:
+                    worksheet.close()
+                worksheet_writer = getattr(worksheet, "_writer", None)
+                if worksheet_writer is not None and Path(worksheet_writer.out).exists():
+                    worksheet_writer.cleanup()
+            wb.close()
 
         if progress_cb:
             progress_cb(100)
@@ -837,7 +956,7 @@ class FileWriter:
             "FileWriter: excel written (streaming) (corr=%s, engine=%s, sheets=%s, path=%s, ms=%.1f, rows=%s, cols=%s)",
             corr_id,
             "openpyxl-writeonly",
-            sheet_ix,
+            sheet_count,
             fmt_path(path),
             dt_ms,
             rows,

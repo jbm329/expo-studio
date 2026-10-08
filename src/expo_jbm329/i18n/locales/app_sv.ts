@@ -2871,6 +2871,14 @@ Fortsätt?</translation>
 <context>
     <name>ExportController</name>
     <message>
+        <source>Supply either a DataFrame or named sheets, not both.</source>
+        <translation>Ange antingen en DataFrame eller namngivna blad, inte båda.</translation>
+    </message>
+    <message>
+        <source>Invalid Excel workbook: {reason}</source>
+        <translation>Ogiltig Excel-arbetsbok: {reason}</translation>
+    </message>
+    <message>
         <location filename="../../workbench/controllers/export_controller.py" line="69"/>
         <source>No dataset</source>
         <translation>Inget dataset</translation>

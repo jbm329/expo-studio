@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
+
+import pandas as pd
 
 from expo_jbm329.services.data_processing import (
     generate_comparison_profile_report,
@@ -20,10 +22,8 @@ from expo_jbm329.services.job_result import JobResult
 from expo_jbm329.utils.format_utils import fmt_path, fmt_shape
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Mapping
     from pathlib import Path
-
-    import pandas as pd
 
 
 class DataIOService:
@@ -309,16 +309,109 @@ class DataIOService:
         job_scope: str | None = None,
         corr_id: str | None = None,
     ) -> JobResult:
-        """Exports a DataFrame to Excel and returns JobResult.
+        """Export a single DataFrame with the existing Excel job semantics.
 
         Args:
-            df: The DataFrame to export.
+            df: DataFrame to export.
+            dest: Destination workbook.
+            progress_cb: Optional progress notification.
+            cancel_cb: Optional cancellation check.
+            job_id: Optional job identifier for logging.
+            job_scope: Optional job scope for logging.
+            corr_id: Optional correlation identifier.
+
+        Returns:
+            Export status, elapsed time, path, and correlation identifier.
+        """
+        return self._export_excel(
+            df,
+            dest,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+            job_id=job_id,
+            job_scope=job_scope,
+            corr_id=corr_id,
+        )
+
+    def validate_excel_sheets(self, sheets: Mapping[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+        """Capture and validate ordered sheets against the current writer settings.
+
+        Frames remain caller-owned and must be stable through export completion.
+
+        Args:
+            sheets: Exact sheet names and caller-owned frames in workbook order.
+
+        Returns:
+            A new mapping containing the original frame references.
+
+        Raises:
+            ValueError: Invalid names, collisions, frame shape, or settings.
+            TypeError: Invalid mapping or frame types.
+        """
+        return self._writer.validate_excel_sheets(sheets)
+
+    def export_dfs_excel(
+        self,
+        sheets: Mapping[str, pd.DataFrame],
+        dest: str | Path,
+        *,
+        progress_cb: Callable[[int], None] | None = None,
+        cancel_cb: Callable[[], bool] | None = None,
+        job_id: str | None = None,
+        job_scope: str | None = None,
+        corr_id: str | None = None,
+    ) -> JobResult:
+        """Export an ordered named workbook atomically using the Excel job flow.
+
+        Caller-owned frames must remain stable until this operation completes.
+        Invalid requests return failed results; cancellation preserves the destination.
+
+        Args:
+            sheets: Exact sheet names and caller-owned frames in workbook order.
+            dest: Destination workbook, replaced only after a successful write.
+            progress_cb: Optional monotonic whole-workbook progress notification.
+            cancel_cb: Optional cancellation check, including before replacement.
+            job_id: Optional job identifier for logging.
+            job_scope: Optional job scope for logging.
+            corr_id: Optional correlation identifier.
+
+        Returns:
+            Export status, elapsed time, path, and correlation identifier.
+        """
+        return self._export_excel(
+            sheets,
+            dest,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+            job_id=job_id,
+            job_scope=job_scope,
+            corr_id=corr_id,
+            named=True,
+        )
+
+    def _export_excel(
+        self,
+        df: pd.DataFrame | Mapping[str, pd.DataFrame],
+        dest: str | Path,
+        *,
+        progress_cb: Callable[[int], None] | None = None,
+        cancel_cb: Callable[[], bool] | None = None,
+        job_id: str | None = None,
+        job_scope: str | None = None,
+        corr_id: str | None = None,
+        named: bool = False,
+    ) -> JobResult:
+        """Run the shared single-frame and named-workbook Excel job handling.
+
+        Args:
+            df: The DataFrame or ordered named frames to export.
             dest: Destination path.
             progress_cb: Optional callback for progress updates.
             cancel_cb: Optional callback to check for cancellation.
             job_id: Optional job identifier.
             job_scope: Optional job scope.
             corr_id: Optional correlation identifier.
+            named: Require named-workbook validation and atomic output.
 
         Returns:
             A JobResult containing the export status.
@@ -329,11 +422,12 @@ class DataIOService:
             - Failure (unexpected exception) → ok=False, cancelled=False, error populated.
 
         Notes:
-            - When using pandas fallback in FileWriter, cancellation is honored only before write.
+            - Legacy pandas exports honor cancellation only before writing.
+            - Named pandas exports also check between sheets and before replacement.
             - When using streaming (openpyxl write_only), mid-write cancellation is supported.
         """
         dest_str = str(dest)
-        rows, columns = fmt_shape(df)
+        rows, columns = fmt_shape(df) if not named and isinstance(df, pd.DataFrame) else ("?", "mixed")
 
         self._logger.debug(
             "DataIOService: export excel start (corr=%s, path=%s, rows=%s, cols=%s, job_id=%s, scope=%s)",
@@ -355,14 +449,32 @@ class DataIOService:
         t0 = time.perf_counter()
         try:
             # Delegate to FileWriter; it will raise ExportCancelledError on user cancellation.
-            self._writer.save_excel(
-                df,
-                dest_str,
-                progress_cb=progress_cb,
-                cancel_cb=cancel_cb,
-                corr_id=corr_id,
-                na_rep="",  # keep explicit empty string for NA in Excel
-            )
+            if not named and isinstance(df, pd.DataFrame):
+                self._writer.save_excel(
+                    df,
+                    dest_str,
+                    progress_cb=progress_cb,
+                    cancel_cb=cancel_cb,
+                    corr_id=corr_id,
+                    na_rep="",
+                )
+            else:
+                df = self.validate_excel_sheets(cast("Mapping[str, pd.DataFrame]", df))
+                rows = str(sum(len(frame) for frame in df.values()))
+                self._logger.debug(
+                    "DataIOService: named Excel workbook (corr=%s, rows=%s, sheets=%s)",
+                    corr_id,
+                    rows,
+                    len(df),
+                )
+                self._writer.save_excel_sheets(
+                    df,
+                    dest_str,
+                    progress_cb=progress_cb,
+                    cancel_cb=cancel_cb,
+                    corr_id=corr_id,
+                    na_rep="",
+                )
 
             dt = time.perf_counter() - t0
             self._logger.info(

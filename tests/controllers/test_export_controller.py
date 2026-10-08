@@ -7,6 +7,7 @@ import pytest
 from PyQt6.QtGui import QAction
 
 from expo_jbm329.gui.dialogs.service.dialog_service import ProfileChoice
+from expo_jbm329.services.file_writer import FileWriter
 from expo_jbm329.services.job_result import JobResult
 from expo_jbm329.workbench.controllers.export_controller import ExportController, ExportKind
 from tests.stubs import (
@@ -450,3 +451,110 @@ def test_scheduled_callbacks_keep_completion_and_error_behavior(monkeypatch, out
     else:
         assert len(dialogs.calls) == 1
         assert dialogs.calls[0][0] == {"cancelled": "info", "failure": "warn", "error": "critical"}[outcome]
+
+
+@pytest.mark.parametrize("active", [None, pd.DataFrame({"active": [9]})])
+def test_named_excel_captures_order_and_routes_deferred_work(monkeypatch, active):
+    ctrl, dialogs, file_dialogs, file_jobs, _, _, async_ops = make_controller(df=active)
+    first = pd.DataFrame({"a": pd.Series(["x", None], dtype="string")})
+    second = pd.DataFrame(columns=["header only"])
+    sheets = {" Exact ": first, "Empty": second}
+    monkeypatch.setattr(ctrl._data_io, "validate_excel_sheets", FileWriter().validate_excel_sheets, raising=False)
+    monkeypatch.setattr(async_ops, "run_target_overlay_operation", lambda **kwargs: async_ops.calls.append(kwargs))
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("Named workbook must bypass active lookup and single-frame export")
+
+    monkeypatch.setattr(ExportController, "_get_active_df", unexpected)
+    monkeypatch.setattr(ctrl._data_io, "export_df_excel", unexpected)
+    calls = []
+    result = JobResult(ok=True, elapsed=None, path=r"C:\chosen\named.xlsx")
+
+    def save(actual, path, **kwargs):
+        calls.append((actual, path, kwargs))
+        return result
+
+    monkeypatch.setattr(ctrl._data_io, "export_dfs_excel", save, raising=False)
+
+    def choose(**kwargs):
+        sheets.clear()
+        sheets["Replacement"] = pd.DataFrame({"b": [8]})
+        return r"C:\chosen\named", "Excel files (*.xlsx)"
+
+    monkeypatch.setattr(file_dialogs, "get_save_filename", choose)
+    monkeypatch.setattr(file_jobs, "coerce_save_suffix", lambda *args, **kwargs: r"C:\chosen\named.xlsx")
+    directories = []
+    monkeypatch.setattr(ctrl._dialog_state, "set_dir", lambda key, path: directories.append((key, path)))
+
+    ctrl.export_excel(df=None, sheets=sheets)
+
+    assert len(async_ops.calls) == 1
+    assert calls == []
+    assert dialogs.calls == []
+    call = async_ops.calls[0]
+    assert call["scope"] == "export:excel"
+    assert call["cancelable"] is True
+    assert call["indeterminate"] is False
+    assert directories == [("dialogs/export_excel_dir", Path(r"C:\chosen\named.xlsx").parent)]
+
+    def progress(value):
+        pass
+
+    def cancel():
+        return False
+
+    assert call["work"](progress_cb=progress, cancel_cb=cancel, job_id="named-job", job_scope="export:excel") is result
+    actual, path, kwargs = calls[0]
+    assert list(actual) == [" Exact ", "Empty"]
+    assert actual[" Exact "] is first
+    assert actual["Empty"] is second
+    assert path == r"C:\chosen\named.xlsx"
+    assert kwargs == {
+        "progress_cb": progress,
+        "cancel_cb": cancel,
+        "job_id": "named-job",
+        "job_scope": "export:excel",
+        "corr_id": call["corr_id"],
+    }
+
+
+@pytest.mark.parametrize(
+    "sheets, conflict",
+    [
+        ({}, False),
+        ({"Bad:name": pd.DataFrame({"a": [1]})}, False),
+        ({"One": pd.DataFrame()}, False),
+        ({"One": object()}, False),
+        ({"One": pd.DataFrame({"a": [1]}), "ONE": pd.DataFrame({"a": [2]})}, False),
+        ({"One": pd.DataFrame({"a": [1]})}, True),
+    ],
+)
+def test_invalid_named_excel_notifies_before_save(monkeypatch, sheets, conflict):
+    ctrl, dialogs, file_dialogs, _, _, _, async_ops = make_controller(df=pd.DataFrame({"active": [1]}))
+    monkeypatch.setattr(ctrl._data_io, "validate_excel_sheets", FileWriter().validate_excel_sheets, raising=False)
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("Invalid named request must not open save dialog or resolve active data")
+
+    monkeypatch.setattr(ExportController, "_get_active_df", unexpected)
+    monkeypatch.setattr(file_dialogs, "get_save_filename", unexpected)
+    ctrl.export_excel(df=pd.DataFrame({"a": [1]}) if conflict else None, sheets=sheets)
+    assert async_ops.calls == []
+    assert len(dialogs.calls) == 1
+    assert dialogs.calls[0][0] == "warn"
+
+
+def test_named_excel_save_cancel_does_not_schedule(monkeypatch):
+    ctrl, dialogs, file_dialogs, _, _, _, async_ops = make_controller()
+    monkeypatch.setattr(ctrl._data_io, "validate_excel_sheets", FileWriter().validate_excel_sheets, raising=False)
+    file_dialogs.enqueue_save_response("", "")
+    monkeypatch.setattr(ctrl._dialog_state, "set_dir", lambda *args: pytest.fail("Cancelled save changed directory"))
+    ctrl.export_excel(sheets={"Header": pd.DataFrame(columns=["a"])})
+    assert async_ops.calls == []
+    assert dialogs.calls == []
+
+
+def test_excel_sheets_argument_is_keyword_only():
+    ctrl, _, _, _, _, _, _ = make_controller()
+    with pytest.raises(TypeError):
+        ctrl.export_excel(None, {"One": pd.DataFrame({"a": [1]})})

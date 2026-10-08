@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Mapping
 from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
@@ -77,6 +78,8 @@ class ExportController:
     # Excel export
     TR_KIND_EXCEL = QT_TR_NOOP("Export data to Excel")
     TR_EXPORT_EXCEL_DIALOG_FILTER = QT_TR_NOOP("Excel files (*.xlsx)")
+    TR_EXCEL_INPUT_CONFLICT = QT_TR_NOOP("Supply either a DataFrame or named sheets, not both.")
+    TR_EXCEL_INVALID_SHEETS = QT_TR_NOOP("Invalid Excel workbook: {reason}")
 
     # Datafile Export
     TR_KIND_DATAFILE = QT_TR_NOOP("Export data to binary data file")
@@ -492,7 +495,7 @@ class ExportController:
     # ==================================================================
     # Export Excel
     # ==================================================================
-    def export_excel(self, *, df: pd.DataFrame | None = None) -> None:
+    def export_excel(self, *, df: pd.DataFrame | None = None, sheets: Mapping[str, pd.DataFrame] | None = None) -> None:
         """Export the supplied or active DataFrame to Excel format.
 
         Args:
@@ -500,11 +503,34 @@ class ExportController:
                 show the no-dataset message without falling back. The caller
                 must keep supplied data stable until the export completes;
                 this method does not copy it.
+            sheets: Ordered named frames, mutually exclusive with non-None df.
+                Membership is captured before the dialog, not frame contents.
+                Named header-only frames are allowed; empty mappings are errors.
         """
-        if df is None:
-            df = self._get_active_df()
-        if self._df_is_empty(df):
-            return
+        source: pd.DataFrame | Mapping[str, pd.DataFrame]
+        if sheets is not None:
+            if df is not None:
+                self._dialogs.warn(
+                    parent=self._parent,
+                    title=self._tr(self.TR_KIND_EXCEL),
+                    text=self._tr(self.TR_EXCEL_INPUT_CONFLICT),
+                )
+                return
+            try:
+                source = self._data_io.validate_excel_sheets(sheets)
+            except (TypeError, ValueError) as error:
+                self._dialogs.warn(
+                    parent=self._parent,
+                    title=self._tr(self.TR_KIND_EXCEL),
+                    text=self._tr_fmt(self.TR_EXCEL_INVALID_SHEETS, reason=str(error)),
+                )
+                return
+        else:
+            if df is None:
+                df = self._get_active_df()
+            if self._df_is_empty(df) or df is None:
+                return
+            source = df
 
         corr = self._new_corr()
 
@@ -518,7 +544,11 @@ class ExportController:
         kind = ExportKind.EXCEL
         scope = "export:excel"
 
-        rows, columns = fmt_shape(df)
+        rows, columns = (
+            (str(sum(len(frame) for frame in source.values())), "mixed")
+            if isinstance(source, Mapping)
+            else fmt_shape(source)
+        )
         self._log_start_export(
             corr_id=corr,
             kind=kind,
@@ -557,13 +587,23 @@ class ExportController:
         self._logger.debug("ExportController: coerced path (corr=%s, kind=%s, out=%s)", corr, kind, fmt_path(path))
 
         def job(
-            df_in: pd.DataFrame,
+            df_in: pd.DataFrame | Mapping[str, pd.DataFrame],
             dest: str,
             progress_cb: Callable[[int], None] | None = None,
             cancel_cb: Callable[[], bool] | None = None,
             job_id: str | None = None,
             job_scope: str | None = None,
         ) -> JobResult:
+            if isinstance(df_in, Mapping):
+                return self._data_io.export_dfs_excel(
+                    df_in,
+                    dest,
+                    progress_cb=progress_cb,
+                    cancel_cb=cancel_cb,
+                    job_id=job_id,
+                    job_scope=job_scope,
+                    corr_id=corr,
+                )
             return self._data_io.export_df_excel(
                 df_in,
                 dest,
@@ -576,7 +616,7 @@ class ExportController:
 
         self._run_export_job(
             job_fn=job,
-            job_args=(df, path),
+            job_args=(source, path),
             started_msg=self._tr_fmt(self.TR_EXPORT_STARTED_MSG, file_name=Path(path).name),
             scope=scope,
             suffix=".xlsx",
