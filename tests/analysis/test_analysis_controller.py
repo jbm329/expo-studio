@@ -158,7 +158,7 @@ def test_overview_export_dialog_acceptance_emits_typed_snapshot_request(monkeypa
     dialog.overview_export_requested.connect(requests.append)
     monkeypatch.setattr(AnalysisExportDialog, "exec", lambda _self: QDialog.DialogCode.Accepted)
     dialog._show_export_selection()
-    assert requests == [OverviewExportRequest(result, (OverviewExportTable.COLUMNS,), OverviewExportFormat.CSV)]
+    assert requests == [OverviewExportRequest(result, (OverviewExportTable.COLUMNS,), OverviewExportFormat.EXCEL)]
 
 
 @pytest.mark.parametrize("invalidate", ["category", "dataset", "placeholder", "identity"])

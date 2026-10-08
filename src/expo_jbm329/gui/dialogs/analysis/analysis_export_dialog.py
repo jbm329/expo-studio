@@ -70,6 +70,7 @@ class AnalysisExportDialog(QDialog):
         self._format_combo.addItem(
             self.tr("Binary data file (Parquet / Feather / Pickle)"), OverviewExportFormat.BINARY
         )
+        self._format_combo.setCurrentIndex(self._format_combo.findData(OverviewExportFormat.EXCEL))
         self._format_combo.currentIndexChanged.connect(self._update_export_enabled)
         formats.addRow(self.tr("Format"), self._format_combo)
         layout.addLayout(formats)

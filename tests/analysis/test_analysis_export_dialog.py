@@ -19,8 +19,11 @@ def test_overview_formats_preserve_choices_and_disable_multi_table_single_file_e
     assert "not implemented" in choices[2].toolTip()
     export = next(button for button in dialog.findChildren(QPushButton) if button.text() == "Export")
     formats = dialog.findChild(QComboBox)
+    assert formats.currentData() is OverviewExportFormat.EXCEL
     assert export.isEnabled()
     choices[1].setChecked(True)
+    assert export.isEnabled()
+    formats.setCurrentIndex(formats.findData(OverviewExportFormat.CSV))
     assert not export.isEnabled()
     assert "exactly one table" in export.toolTip()
     assert dialog.export_request() is None
@@ -84,6 +87,7 @@ def test_export_preview_groups_all_unavailable_choices_and_cannot_export():
     export = next(button for button in dialog.findChildren(QPushButton) if button.text() == "Export")
     formats = dialog.findChild(QComboBox)
     assert formats.count() == 3
+    assert formats.currentData() is OverviewExportFormat.EXCEL
     for index in range(formats.count()):
         formats.setCurrentIndex(index)
         assert not export.isEnabled()
