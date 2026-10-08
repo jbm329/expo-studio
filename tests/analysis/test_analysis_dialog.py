@@ -23,7 +23,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog, build_placeholder_label
-from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog, ExportSelectionMode
+from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
 from expo_jbm329.gui.dialogs.analysis.clustering_config import ClusteringConfigWidget
 from expo_jbm329.gui.dialogs.analysis.column_combo_box import ColumnComboBox
 from expo_jbm329.gui.dialogs.analysis.correlation_config import CorrelationConfigWidget
@@ -148,19 +148,22 @@ def test_report_navigation_uses_full_workspace_and_preserves_details_and_analysi
         dialog.close()
 
 
-@pytest.mark.parametrize("mode", list(ExportSelectionMode))
-def test_export_menu_opens_selection_preview_with_full_text_tooltips(monkeypatch, mode):
+@pytest.mark.parametrize("category", [AnalysisCategory.OVERVIEW, AnalysisCategory.REGRESSION])
+def test_export_button_opens_selection_dialog_with_full_text_tooltips(monkeypatch, category):
     captured: list[AnalysisExportDialog] = []
     monkeypatch.setattr(AnalysisExportDialog, "exec", lambda self: captured.append(self))
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
-    tool = next(button for button in dialog.findChildren(QPushButton) if button.menu() is not None)
+    dialog.select_category(category)
+    tool = next(button for button in dialog.findChildren(QPushButton) if button.text() == "Export")
 
-    tool.menu().actions()[0 if mode is ExportSelectionMode.DATA else 1].trigger()
+    assert tool.menu() is None
+    tool.click()
 
     assert len(captured) == 1
     preview = captured[0]
     assert preview.parent() is dialog
-    assert preview.windowTitle() == ("Export analysis data" if mode is ExportSelectionMode.DATA else "Export results")
+    assert preview.windowTitle() == "Export"
+    assert [group.title() for group in preview.findChildren(QGroupBox)] == ["Data", "Results"]
     for combo in preview.findChildren(QComboBox):
         _request_tooltip(combo)
         assert combo.currentText() in QToolTip.text()
@@ -190,8 +193,7 @@ def test_export_and_add_to_report_use_matching_push_button_sizes():
         buttons = dialog._action_bar.findChildren(QPushButton)  # noqa: SLF001
         assert len(buttons) == 2
         export, add = buttons
-        assert export.menu() is not None
-        assert [action.text() for action in export.menu().actions()] == ["Export analysis data", "Export results"]
+        assert export.menu() is None
         assert add.menu() is None
         assert export.size() == add.size()
     finally:

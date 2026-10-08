@@ -138,15 +138,15 @@
     </message>
     <message>
         <source>Export</source>
-        <translation type="unfinished" />
+        <translation>Export</translation>
     </message>
     <message>
         <source>Export analysis data</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
     </message>
     <message>
         <source>Export results</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
     </message>
     <message>
         <source>Add to report</source>
@@ -234,12 +234,36 @@
 </context><context>
     <name>AnalysisExportDialog</name>
     <message>
+        <source>Data</source>
+        <translation>Data</translation>
+    </message>
+    <message>
+        <source>Results</source>
+        <translation>Results</translation>
+    </message>
+    <message>
+        <source>Summary</source>
+        <translation>Summary</translation>
+    </message>
+    <message>
+        <source>Summary export is not implemented yet.</source>
+        <translation>Summary export is not implemented yet.</translation>
+    </message>
+    <message>
+        <source>Select at least one available table to export.</source>
+        <translation>Select at least one available table to export.</translation>
+    </message>
+    <message>
+        <source>Choose exactly one table for CSV or binary export.</source>
+        <translation>Choose exactly one table for CSV or binary export.</translation>
+    </message>
+    <message>
         <source>Export Columns metadata or Sample (first 100 rows), not the original dataset. Summary and analysis results are not available for export.</source>
         <translation>Export Columns metadata or Sample (first 100 rows), not the original dataset. Summary and analysis results are not available for export.</translation>
     </message>
     <message>
         <source>Export contents</source>
-        <translation>Export contents</translation>
+        <translation type="vanished">Export contents</translation>
     </message>
     <message>
         <source>Columns metadata</source>
@@ -275,87 +299,87 @@
     </message>
     <message>
         <source>Export analysis data</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
     </message>
     <message>
         <source>Export results</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
     </message>
     <message>
         <source>Layout preview only. Export processing is not implemented yet.</source>
-        <translation type="unfinished" />
+        <translation>Layout preview only. Export processing is not implemented yet.</translation>
     </message>
     <message>
         <source>Planned export contents</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
     </message>
     <message>
         <source>Original dataset</source>
-        <translation type="unfinished" />
+        <translation>Original dataset</translation>
     </message>
     <message>
         <source>Analysis dataset</source>
-        <translation type="unfinished" />
+        <translation>Analysis dataset</translation>
     </message>
     <message>
         <source>Predictions</source>
-        <translation type="unfinished" />
+        <translation>Predictions</translation>
     </message>
     <message>
         <source>Residuals</source>
-        <translation type="unfinished" />
+        <translation>Residuals</translation>
     </message>
     <message>
         <source>Summary / statistics tables</source>
-        <translation type="unfinished" />
+        <translation>Summary / statistics tables</translation>
     </message>
     <message>
         <source>Coefficients</source>
-        <translation type="unfinished" />
+        <translation>Coefficients</translation>
     </message>
     <message>
         <source>Model metrics</source>
-        <translation type="unfinished" />
+        <translation>Model metrics</translation>
     </message>
     <message>
         <source>Charts</source>
-        <translation type="unfinished" />
+        <translation>Charts</translation>
     </message>
     <message>
         <source>Preview choice only. Availability will depend on the computed analysis.</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
     </message>
     <message>
         <source>These are planned choices, not available outputs. Unsupported items will explain why they are unavailable.</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
     </message>
     <message>
         <source>Excel workbook (.xlsx)</source>
-        <translation type="unfinished" />
+        <translation>Excel workbook (.xlsx)</translation>
     </message>
     <message>
         <source>Planned format</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
     </message>
     <message>
         <source>Standalone chart format</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
     </message>
     <message>
         <source>Excel will contain tables and static chart images. Standalone charts can also be saved as PNG or SVG. The planned export includes all supported chart variants, not only the displayed chart.</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
     </message>
     <message>
         <source>The analysis dataset will contain the rows used by the analysis. Predictions and residuals will be offered only where supported.</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
     </message>
     <message>
         <source>Export</source>
-        <translation type="unfinished" />
+        <translation>Export</translation>
     </message>
     <message>
         <source>Not implemented yet. No file will be created.</source>
-        <translation type="unfinished" />
+        <translation>Not implemented yet. No file will be created.</translation>
     </message>
 </context><context>
     <name>ReportPage</name>

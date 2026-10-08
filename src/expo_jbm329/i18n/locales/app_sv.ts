@@ -378,11 +378,11 @@
     </message>
     <message>
         <source>Export analysis data</source>
-        <translation>Exportera analysdata</translation>
+        <translation type="vanished">Exportera analysdata</translation>
     </message>
     <message>
         <source>Export results</source>
-        <translation>Exportera resultat</translation>
+        <translation type="vanished">Exportera resultat</translation>
     </message>
     <message>
         <source>Add to report</source>
@@ -471,12 +471,36 @@
 <context>
     <name>AnalysisExportDialog</name>
     <message>
+        <source>Data</source>
+        <translation>Data</translation>
+    </message>
+    <message>
+        <source>Results</source>
+        <translation>Resultat</translation>
+    </message>
+    <message>
+        <source>Summary</source>
+        <translation>Sammanfattning</translation>
+    </message>
+    <message>
+        <source>Summary export is not implemented yet.</source>
+        <translation>Export av sammanfattningen är ännu inte implementerad.</translation>
+    </message>
+    <message>
+        <source>Select at least one available table to export.</source>
+        <translation>Välj minst en tillgänglig tabell att exportera.</translation>
+    </message>
+    <message>
+        <source>Choose exactly one table for CSV or binary export.</source>
+        <translation>Välj exakt en tabell för CSV eller binär export.</translation>
+    </message>
+    <message>
         <source>Export Columns metadata or Sample (first 100 rows), not the original dataset. Summary and analysis results are not available for export.</source>
         <translation>Exportera kolumnmetadata eller ett urval (de första 100 raderna), inte det ursprungliga datasetet. Sammanfattning och analysresultat kan inte exporteras.</translation>
     </message>
     <message>
         <source>Export contents</source>
-        <translation>Exportinnehåll</translation>
+        <translation type="vanished">Exportinnehåll</translation>
     </message>
     <message>
         <source>Columns metadata</source>
@@ -512,11 +536,11 @@
     </message>
     <message>
         <source>Export analysis data</source>
-        <translation>Exportera analysdata</translation>
+        <translation type="vanished">Exportera analysdata</translation>
     </message>
     <message>
         <source>Export results</source>
-        <translation>Exportera resultat</translation>
+        <translation type="vanished">Exportera resultat</translation>
     </message>
     <message>
         <source>Layout preview only. Export processing is not implemented yet.</source>
@@ -524,7 +548,7 @@
     </message>
     <message>
         <source>Planned export contents</source>
-        <translation>Planerat exportinnehåll</translation>
+        <translation type="vanished">Planerat exportinnehåll</translation>
     </message>
     <message>
         <source>Original dataset</source>
@@ -560,11 +584,11 @@
     </message>
     <message>
         <source>Preview choice only. Availability will depend on the computed analysis.</source>
-        <translation>Endast förhandsvisning av val. Tillgängligheten kommer att bero på den beräknade analysen.</translation>
+        <translation type="vanished">Endast förhandsvisning av val. Tillgängligheten kommer att bero på den beräknade analysen.</translation>
     </message>
     <message>
         <source>These are planned choices, not available outputs. Unsupported items will explain why they are unavailable.</source>
-        <translation>Detta är planerade val, inte tillgängliga resultat. Val som inte stöds kommer att förklara varför de inte är tillgängliga.</translation>
+        <translation type="vanished">Detta är planerade val, inte tillgängliga resultat. Val som inte stöds kommer att förklara varför de inte är tillgängliga.</translation>
     </message>
     <message>
         <source>Excel workbook (.xlsx)</source>
@@ -572,19 +596,19 @@
     </message>
     <message>
         <source>Planned format</source>
-        <translation>Planerat format</translation>
+        <translation type="vanished">Planerat format</translation>
     </message>
     <message>
         <source>Standalone chart format</source>
-        <translation>Format för separata diagram</translation>
+        <translation type="vanished">Format för separata diagram</translation>
     </message>
     <message>
         <source>Excel will contain tables and static chart images. Standalone charts can also be saved as PNG or SVG. The planned export includes all supported chart variants, not only the displayed chart.</source>
-        <translation>Excel kommer att innehålla tabeller och statiska diagrambilder. Separata diagram kan även sparas som PNG eller SVG. Den planerade exporten omfattar alla diagramvarianter som stöds, inte bara det visade diagrammet.</translation>
+        <translation type="vanished">Excel kommer att innehålla tabeller och statiska diagrambilder. Separata diagram kan även sparas som PNG eller SVG. Den planerade exporten omfattar alla diagramvarianter som stöds, inte bara det visade diagrammet.</translation>
     </message>
     <message>
         <source>The analysis dataset will contain the rows used by the analysis. Predictions and residuals will be offered only where supported.</source>
-        <translation>Analysdatasetet kommer att innehålla de rader som används av analysen. Prediktioner och residualer kommer endast att erbjudas där de stöds.</translation>
+        <translation type="vanished">Analysdatasetet kommer att innehålla de rader som används av analysen. Prediktioner och residualer kommer endast att erbjudas där de stöds.</translation>
     </message>
     <message>
         <source>Export</source>

@@ -138,25 +138,66 @@ def test_overview_export_rejects_stale_or_unrelated_snapshot(invalidate):
 
 
 def test_overview_export_dialog_cancellation_does_not_emit(monkeypatch):
-    from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog, ExportSelectionMode
+    from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
 
     _, dialog, _, _ = _overview_export_context()
     requests = []
     dialog.overview_export_requested.connect(requests.append)
     monkeypatch.setattr(AnalysisExportDialog, "exec", lambda _self: QDialog.DialogCode.Rejected)
-    dialog._show_export_preview(ExportSelectionMode.DATA)
+    dialog._show_export_selection()
     assert requests == []
 
 
 def test_overview_export_dialog_acceptance_emits_typed_snapshot_request(monkeypatch):
-    from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog, ExportSelectionMode
+    from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
 
     _, dialog, result, _ = _overview_export_context()
     requests = []
     dialog.overview_export_requested.connect(requests.append)
     monkeypatch.setattr(AnalysisExportDialog, "exec", lambda _self: QDialog.DialogCode.Accepted)
-    dialog._show_export_preview(ExportSelectionMode.DATA)
+    dialog._show_export_selection()
     assert requests == [OverviewExportRequest(result, (OverviewExportTable.COLUMNS,), OverviewExportFormat.CSV)]
+
+
+@pytest.mark.parametrize("invalidate", ["category", "dataset", "placeholder", "identity"])
+def test_export_selection_rejects_snapshot_changed_while_open(monkeypatch, invalidate):
+    from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+
+    _, dialog, _, _ = _overview_export_context()
+    requests = []
+    dialog.overview_export_requested.connect(requests.append)
+
+    def accept_after_change(_self):
+        match invalidate:
+            case "category":
+                dialog.select_category(AnalysisCategory.REGRESSION)
+            case "dataset":
+                dialog.select_dataset("other")
+            case "placeholder":
+                dialog.show_placeholder("Analysis failed")
+            case "identity":
+                dialog.set_exportable_overview(analyze_dataset_overview(pd.DataFrame({"value": [9]})))
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(AnalysisExportDialog, "exec", accept_after_change)
+    dialog._show_export_selection()
+    assert requests == []
+
+
+@pytest.mark.parametrize(
+    "category", [category for category in AnalysisCategory if category is not AnalysisCategory.OVERVIEW]
+)
+def test_other_analysis_export_preview_never_emits_or_exports(monkeypatch, category):
+    from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+
+    _, dialog, _, exporter = _overview_export_context()
+    requests = []
+    dialog.overview_export_requested.connect(requests.append)
+    dialog.select_category(category)
+    monkeypatch.setattr(AnalysisExportDialog, "exec", lambda _self: QDialog.DialogCode.Accepted)
+    dialog._show_export_selection()
+    assert requests == []
+    assert exporter.mock_calls == []
 
 
 def test_overview_job_is_stale_after_navigating_away_and_back():

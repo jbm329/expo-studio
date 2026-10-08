@@ -13,7 +13,7 @@ from html import escape
 from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QEvent, QObject, Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QHelpEvent
+from PyQt6.QtGui import QHelpEvent
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -27,7 +27,6 @@ from PyQt6.QtWidgets import (
     QListView,
     QListWidget,
     QListWidgetItem,
-    QMenu,
     QPushButton,
     QScrollArea,
     QSizePolicy,
@@ -37,7 +36,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog, ExportSelectionMode
+from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
 from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDialog
 from expo_jbm329.gui.dialogs.analysis.report_page import ReportPage
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
@@ -238,14 +237,7 @@ class AnalysisDialog(QDialog):
         actions = QHBoxLayout(bar)
         actions.setContentsMargins(0, 0, 0, 0)
         export_button = QPushButton(self.tr("Export"), bar)
-        menu = QMenu(export_button)
-        data_action = QAction(self.tr("Export analysis data"), menu)
-        menu.addAction(data_action)
-        data_action.triggered.connect(lambda: self._show_export_preview(ExportSelectionMode.DATA))
-        results_action = QAction(self.tr("Export results"), menu)
-        menu.addAction(results_action)
-        results_action.triggered.connect(lambda: self._show_export_preview(ExportSelectionMode.RESULTS))
-        export_button.setMenu(menu)
+        export_button.clicked.connect(self._show_export_selection)
         actions.addWidget(export_button)
         add_button = QPushButton(self.tr("Add to report"), bar)
         add_button.clicked.connect(self._show_notes_preview)
@@ -262,11 +254,10 @@ class AnalysisDialog(QDialog):
         self._action_bar = bar
         return bar
 
-    def _show_export_preview(self, mode: ExportSelectionMode) -> None:
-        """Open Overview data choices or the unchanged result/category preview."""
+    def _show_export_selection(self) -> None:
+        """Open grouped export choices for the currently displayed analysis."""
         overview = self.exportable_overview()
         dialog = AnalysisExportDialog(
-            mode,
             self,
             overview=overview,
             overview_mode=self.selected_category() is AnalysisCategory.OVERVIEW,

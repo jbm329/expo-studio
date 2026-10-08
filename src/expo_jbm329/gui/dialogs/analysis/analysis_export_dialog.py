@@ -1,8 +1,6 @@
-"""Overview data export selection and previews for other analysis exports."""
+"""Grouped Overview export selection and unavailable previews for other analyses."""
 
 from __future__ import annotations
-
-from enum import StrEnum
 
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -26,156 +24,45 @@ from expo_jbm329.services.analysis.overview import (
 )
 
 
-class ExportSelectionMode(StrEnum):
-    """Distinguish data-table selection from analysis-result selection."""
-
-    DATA = "data"
-    RESULTS = "results"
-
-
 class AnalysisExportDialog(QDialog):
-    """Select structured Overview tables or preview future analysis outputs."""
+    """Select available Overview tables in a single Data and Results dialog."""
 
     def __init__(
         self,
-        mode: ExportSelectionMode,
         parent: QWidget | None = None,
         *,
         overview: DatasetOverviewResult | None = None,
         overview_mode: bool = False,
     ) -> None:
-        """Build an Overview data selector or a data/results workflow preview.
+        """Build grouped export choices and a format selector.
 
         Args:
-            mode: Kind of export selection to present.
             parent: Optional parent widget.
             overview: Successful displayed Overview snapshot, if available.
             overview_mode: Show disabled Overview choices even without a result.
         """
         super().__init__(parent)
-        self.setWindowTitle(
-            self.tr("Export analysis data") if mode is ExportSelectionMode.DATA else self.tr("Export results")
-        )
-        self.resize(540, 440)
-        self._overview = overview if mode is ExportSelectionMode.DATA else None
+        self.setWindowTitle(self.tr("Export"))
+        self.resize(540, 540)
+        self._overview = overview
         self._table_choices: dict[OverviewExportTable, QCheckBox] = {}
-        if mode is ExportSelectionMode.DATA and (overview_mode or self._overview is not None):
-            self._build_overview_selection()
-            return
-        layout = QVBoxLayout(self)
-        preview = QLabel(self.tr("Layout preview only. Export processing is not implemented yet."), self)
-        preview.setWordWrap(True)
-        layout.addWidget(preview)
-
-        selections = QGroupBox(self.tr("Planned export contents"), self)
-        contents = QVBoxLayout(selections)
-        choices = (
-            (
-                (self.tr("Original dataset"), False),
-                (self.tr("Analysis dataset"), True),
-                (self.tr("Predictions"), False),
-                (self.tr("Residuals"), False),
-            )
-            if mode is ExportSelectionMode.DATA
-            else (
-                (self.tr("Summary / statistics tables"), True),
-                (self.tr("Coefficients"), False),
-                (self.tr("Model metrics"), False),
-                (self.tr("Charts"), True),
-            )
-        )
-        for text, checked in choices:
-            choice = QCheckBox(text, selections)
-            choice.setChecked(checked)
-            choice.setToolTip(self.tr("Preview choice only. Availability will depend on the computed analysis."))
-            contents.addWidget(choice)
-        availability = QLabel(
-            self.tr(
-                "These are planned choices, not available outputs. "
-                "Unsupported items will explain why they are unavailable."
-            ),
-            selections,
-        )
-        availability.setWordWrap(True)
-        contents.addWidget(availability)
-        layout.addWidget(selections)
-
-        formats = QFormLayout()
-        self._format_combo = QComboBox(self)
-        if mode is ExportSelectionMode.DATA:
-            self._format_combo.addItems(["CSV", self.tr("Excel workbook (.xlsx)"), "Parquet", "Feather", "Pickle"])
-        else:
-            self._format_combo.addItem(self.tr("Excel workbook (.xlsx)"))
-        formats.addRow(self.tr("Planned format"), self._format_combo)
-        if mode is ExportSelectionMode.RESULTS:
-            self._chart_format_combo = QComboBox(self)
-            self._chart_format_combo.addItems(["PNG", "SVG"])
-            formats.addRow(self.tr("Standalone chart format"), self._chart_format_combo)
-            explanation = QLabel(
-                self.tr(
-                    "Excel will contain tables and static chart images. "
-                    "Standalone charts can also be saved as PNG or SVG. "
-                    "The planned export includes all supported chart variants, not only the displayed chart."
-                ),
-                self,
-            )
-        else:
-            explanation = QLabel(
-                self.tr(
-                    "The analysis dataset will contain the rows used by the analysis. "
-                    "Predictions and residuals will be offered only where supported."
-                ),
-                self,
-            )
-        explanation.setWordWrap(True)
-        layout.addLayout(formats)
-        layout.addWidget(explanation)
-        layout.addStretch()
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel, self)
-        export_button = QPushButton(self.tr("Export"), buttons)
-        buttons.addButton(export_button, QDialogButtonBox.ButtonRole.ActionRole)
-        export_button.setEnabled(False)
-        export_button.setToolTip(self.tr("Not implemented yet. No file will be created."))
-        buttons.rejected.connect(self.reject)
-        localize_dialog_buttons(buttons)
-        layout.addWidget(buttons)
-
-    def _build_overview_selection(self) -> None:
-        """Offer only available structured Overview tables, never the dataset."""
-        result = self._overview
+        self._overview_mode = overview_mode or overview is not None
         layout = QVBoxLayout(self)
         explanation = QLabel(
             self.tr(
                 "Export Columns metadata or Sample (first 100 rows), not the original dataset. "
                 "Summary and analysis results are not available for export."
-            ),
+            )
+            if self._overview_mode
+            else self.tr("Layout preview only. Export processing is not implemented yet."),
             self,
         )
         explanation.setWordWrap(True)
         layout.addWidget(explanation)
-        selections = QGroupBox(self.tr("Export contents"), self)
-        contents = QVBoxLayout(selections)
-        availability = {
-            OverviewExportTable.COLUMNS: result is not None and bool(result.columns),
-            OverviewExportTable.SAMPLE: result is not None and bool(result.sample_columns and result.sample_rows),
-        }
-        labels = {
-            OverviewExportTable.COLUMNS: self.tr("Columns metadata"),
-            OverviewExportTable.SAMPLE: self.tr("Sample (first 100 rows)"),
-        }
-        for table, available in availability.items():
-            choice = QCheckBox(labels[table], selections)
-            choice.setEnabled(available)
-            if not available:
-                choice.setToolTip(
-                    self.tr("Run Overview successfully before exporting.")
-                    if result is None
-                    else self.tr("This table is empty and cannot be exported.")
-                )
-            self._table_choices[table] = choice
-            choice.toggled.connect(self._update_export_enabled)
-            contents.addWidget(choice)
-        layout.addWidget(selections)
+        if self._overview_mode:
+            self._build_overview_choices(layout)
+        else:
+            self._build_preview_choices(layout)
         formats = QFormLayout()
         self._format_combo = QComboBox(self)
         self._format_combo.addItem("CSV", OverviewExportFormat.CSV)
@@ -202,6 +89,73 @@ class AnalysisExportDialog(QDialog):
             first_available.setChecked(True)
         self._update_export_enabled()
 
+    def _build_overview_choices(self, layout: QVBoxLayout) -> None:
+        """Offer only available structured Overview tables, never the dataset."""
+        result = self._overview
+        data = QGroupBox(self.tr("Data"), self)
+        contents = QVBoxLayout(data)
+        availability = {
+            OverviewExportTable.COLUMNS: result is not None and bool(result.columns),
+            OverviewExportTable.SAMPLE: result is not None and bool(result.sample_columns and result.sample_rows),
+        }
+        labels = {
+            OverviewExportTable.COLUMNS: self.tr("Columns metadata"),
+            OverviewExportTable.SAMPLE: self.tr("Sample (first 100 rows)"),
+        }
+        for table, available in availability.items():
+            choice = QCheckBox(labels[table], data)
+            choice.setEnabled(available)
+            if not available:
+                choice.setToolTip(
+                    self.tr("Run Overview successfully before exporting.")
+                    if result is None
+                    else self.tr("This table is empty and cannot be exported.")
+                )
+            self._table_choices[table] = choice
+            choice.toggled.connect(self._update_export_enabled)
+            contents.addWidget(choice)
+        layout.addWidget(data)
+        results = QGroupBox(self.tr("Results"), self)
+        contents = QVBoxLayout(results)
+        summary = QCheckBox(self.tr("Summary"), results)
+        summary.setEnabled(False)
+        reason = self.tr("Summary export is not implemented yet.")
+        summary.setToolTip(reason)
+        contents.addWidget(summary)
+        contents.addWidget(QLabel(reason, results))
+        layout.addWidget(results)
+
+    def _build_preview_choices(self, layout: QVBoxLayout) -> None:
+        """Show unavailable planned components without implying real exports."""
+        for title, labels in (
+            (
+                self.tr("Data"),
+                (
+                    self.tr("Original dataset"),
+                    self.tr("Analysis dataset"),
+                    self.tr("Predictions"),
+                    self.tr("Residuals"),
+                ),
+            ),
+            (
+                self.tr("Results"),
+                (
+                    self.tr("Summary / statistics tables"),
+                    self.tr("Coefficients"),
+                    self.tr("Model metrics"),
+                    self.tr("Charts"),
+                ),
+            ),
+        ):
+            group = QGroupBox(title, self)
+            contents = QVBoxLayout(group)
+            for text in labels:
+                choice = QCheckBox(text, group)
+                choice.setEnabled(False)
+                choice.setToolTip(self.tr("Not implemented yet. No file will be created."))
+                contents.addWidget(choice)
+            layout.addWidget(group)
+
     def export_request(self) -> OverviewExportRequest | None:
         """Return a validated selection, or None for previews/invalid choices."""
         if self._overview is None:
@@ -217,9 +171,9 @@ class AnalysisExportDialog(QDialog):
         return OverviewExportRequest(self._overview, tables, format_choice)
 
     def _update_export_enabled(self) -> None:
-        """Preserve picks across formats and explain single-table restrictions."""
+        """Preserve picks across formats and explain disabled exports."""
         excel = self._format_combo.currentData() is OverviewExportFormat.EXCEL
-        self._selection_explanation.setText(
+        format_explanation = (
             self.tr("Excel exports selected tables as separate sheets in one workbook.")
             if excel
             else self.tr(
@@ -227,4 +181,19 @@ class AnalysisExportDialog(QDialog):
                 "For binary files, choose Parquet, Feather or Pickle in the save dialog."
             )
         )
-        self._export_button.setEnabled(self.export_request() is not None)
+        request = self.export_request()
+        if not self._overview_mode:
+            reason = self.tr("Not implemented yet. No file will be created.")
+        elif self._overview is None:
+            reason = self.tr("Run Overview successfully before exporting.")
+        elif not any(choice.isEnabled() for choice in self._table_choices.values()):
+            reason = self.tr("This table is empty and cannot be exported.")
+        elif not any(choice.isEnabled() and choice.isChecked() for choice in self._table_choices.values()):
+            reason = self.tr("Select at least one available table to export.")
+        elif request is None:
+            reason = self.tr("Choose exactly one table for CSV or binary export.")
+        else:
+            reason = ""
+        self._selection_explanation.setText(f"{reason}\n{format_explanation}" if reason else format_explanation)
+        self._export_button.setEnabled(request is not None)
+        self._export_button.setToolTip(reason)
