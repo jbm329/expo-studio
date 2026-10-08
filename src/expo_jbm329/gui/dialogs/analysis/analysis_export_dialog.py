@@ -50,8 +50,7 @@ class AnalysisExportDialog(QDialog):
         layout = QVBoxLayout(self)
         explanation = QLabel(
             self.tr(
-                "Export Columns metadata or Sample (first 100 rows), not the original dataset. "
-                "Summary and analysis results are not available for export."
+                "Export the Overview Summary, Columns metadata, or Sample (first 100 rows), not the original dataset."
             )
             if self._overview_mode
             else self.tr("Layout preview only. Export processing is not implemented yet."),
@@ -94,18 +93,31 @@ class AnalysisExportDialog(QDialog):
         """Offer only available structured Overview tables, never the dataset."""
         result = self._overview
         data = QGroupBox(self.tr("Data"), self)
-        contents = QVBoxLayout(data)
+        data_layout = QVBoxLayout(data)
+        results = QGroupBox(self.tr("Results"), self)
+        results_layout = QVBoxLayout(results)
         availability = {
             OverviewExportTable.COLUMNS: result is not None and bool(result.columns),
             OverviewExportTable.SAMPLE: result is not None and bool(result.sample_columns and result.sample_rows),
+            OverviewExportTable.SUMMARY: result is not None,
         }
         labels = {
             OverviewExportTable.COLUMNS: self.tr("Columns metadata"),
             OverviewExportTable.SAMPLE: self.tr("Sample (first 100 rows)"),
+            OverviewExportTable.SUMMARY: self.tr("Summary"),
         }
         for table, available in availability.items():
-            choice = QCheckBox(labels[table], data)
+            is_summary = table is OverviewExportTable.SUMMARY
+            parent = results if is_summary else data
+            choice = QCheckBox(labels[table], parent)
             choice.setEnabled(available)
+            if is_summary:
+                choice.setToolTip(
+                    self.tr(
+                        "Dataset metrics, column-type counts, and high-missing-value warnings. "
+                        "Fractions are numeric values from 0 to 1."
+                    )
+                )
             if not available:
                 choice.setToolTip(
                     self.tr("Run Overview successfully before exporting.")
@@ -114,16 +126,8 @@ class AnalysisExportDialog(QDialog):
                 )
             self._table_choices[table] = choice
             choice.toggled.connect(self._update_export_enabled)
-            contents.addWidget(choice)
+            (results_layout if is_summary else data_layout).addWidget(choice)
         layout.addWidget(data)
-        results = QGroupBox(self.tr("Results"), self)
-        contents = QVBoxLayout(results)
-        summary = QCheckBox(self.tr("Summary"), results)
-        summary.setEnabled(False)
-        reason = self.tr("Summary export is not implemented yet.")
-        summary.setToolTip(reason)
-        contents.addWidget(summary)
-        contents.addWidget(QLabel(reason, results))
         layout.addWidget(results)
 
     def _build_preview_choices(self, layout: QVBoxLayout) -> None:

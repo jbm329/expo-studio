@@ -11,6 +11,7 @@ from expo_jbm329.services.analysis.overview import (
     overview_export_tables,
 )
 from expo_jbm329.services.data_operations.dtypes import SemanticDType
+from expo_jbm329.services.file_writer import FileWriter
 
 
 def test_export_columns_preserves_numeric_counts_and_fractions():
@@ -28,6 +29,81 @@ def test_export_columns_preserves_numeric_counts_and_fractions():
     assert pd.api.types.is_integer_dtype(frame["missing_count"].dtype)
     assert pd.api.types.is_float_dtype(frame["missing_fraction"].dtype)
     assert isinstance(frame["column"].dtype, pd.StringDtype)
+
+
+def test_export_summary_preserves_metrics_type_counts_and_warning_values():
+    source = pd.DataFrame({
+        "amount": pd.Series([1, None, 1, 2], dtype="Int64"),
+        "category": pd.Series(["a", "b", "c", "d"], dtype="string"),
+        "sparse": [None, None, 3.0, 4.0],
+    })
+    result = analyze_dataset_overview(source)
+    frame = overview_export_tables(result, (OverviewExportTable.SUMMARY,))["Summary"]
+
+    assert list(frame.columns) == ["section", "metric", "column", "count", "fraction"]
+    assert frame[["section", "metric", "count"]].to_numpy().tolist()[:4] == [
+        ["dataset", "row_count", 4],
+        ["dataset", "column_count", 3],
+        ["dataset", "missing_cell_count", 3],
+        ["dataset", "duplicate_row_count", 0],
+    ]
+    assert frame.loc[2, "fraction"] == pytest.approx(0.25)
+    assert frame.loc[3, "fraction"] == pytest.approx(0.0)
+    assert frame.loc[4:8, ["section", "metric", "count"]].to_numpy().tolist() == [
+        ["column_type", "numeric", 2],
+        ["column_type", "categorical", 1],
+        ["column_type", "datetime", 0],
+        ["column_type", "boolean", 0],
+        ["column_type", "other", 0],
+    ]
+    warnings = frame.loc[frame["section"] == "warning"]
+    assert warnings[["metric", "column", "count"]].to_numpy().tolist() == [
+        ["high_missing_values", "sparse", 2],
+        ["high_missing_values", "amount", 1],
+    ]
+    assert warnings.iloc[0]["fraction"] == pytest.approx(0.5)
+    assert pd.api.types.is_integer_dtype(frame["count"].dtype)
+    assert pd.api.types.is_float_dtype(frame["fraction"].dtype)
+    assert isinstance(frame["section"].dtype, pd.StringDtype)
+    assert isinstance(frame["column"].dtype, pd.StringDtype)
+
+
+def test_export_summary_includes_no_warning_row_for_clean_data():
+    frame = overview_export_tables(
+        analyze_dataset_overview(pd.DataFrame({"value": [1, 2]})),
+        (OverviewExportTable.SUMMARY,),
+    )["Summary"]
+    warning = frame.iloc[-1]
+
+    assert warning["section"] == "warning"
+    assert warning["metric"] == "no_high_missing_columns"
+    assert pd.isna(warning["column"])
+    assert warning["count"] == 0
+    assert warning["fraction"] == 0.0
+
+
+def test_export_summary_supports_zero_row_and_zero_column_datasets():
+    for source in (pd.DataFrame(), pd.DataFrame(index=range(3)), pd.DataFrame({"value": pd.Series(dtype="int64")})):
+        summary = overview_export_tables(analyze_dataset_overview(source), (OverviewExportTable.SUMMARY,))["Summary"]
+        assert summary.iloc[0]["count"] == source.shape[0]
+        assert summary.iloc[1]["count"] == source.shape[1]
+        assert summary.iloc[-1]["metric"] == "no_high_missing_columns"
+
+
+def test_export_summary_roundtrips_through_named_excel_sheet(tmp_path):
+    summary = overview_export_tables(
+        analyze_dataset_overview(pd.DataFrame({"value": [1, None, 3, 4]})),
+        (OverviewExportTable.SUMMARY,),
+    )["Summary"]
+    path = tmp_path / "overview.xlsx"
+    FileWriter().save_excel_sheets({"Summary": summary}, path, index=False, streaming=False)
+
+    roundtripped = pd.read_excel(path, sheet_name="Summary")
+    assert list(roundtripped.columns) == ["section", "metric", "column", "count", "fraction"]
+    assert roundtripped.loc[0, ["metric", "count"]].tolist() == ["row_count", 4]
+    assert roundtripped.loc[2, "fraction"] == pytest.approx(0.25)
+    assert roundtripped.iloc[-1]["metric"] == "high_missing_values"
+    assert roundtripped.iloc[-1]["count"] == 1
 
 
 def test_export_sample_is_bounded_typed_and_independent():
@@ -59,7 +135,7 @@ def test_export_sample_legacy_structured_rows_preserves_values_and_caps_rows():
 
 
 @pytest.mark.parametrize("source", [pd.DataFrame(), pd.DataFrame(index=range(3))])
-@pytest.mark.parametrize("table", list(OverviewExportTable))
+@pytest.mark.parametrize("table", [OverviewExportTable.COLUMNS, OverviewExportTable.SAMPLE])
 def test_export_no_columns_is_unavailable(source, table):
     with pytest.raises(ValueError, match="empty"):
         overview_export_tables(analyze_dataset_overview(source), (table,))

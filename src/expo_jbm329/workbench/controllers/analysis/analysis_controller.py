@@ -62,6 +62,7 @@ from expo_jbm329.services.analysis.overview import (
     DatasetOverviewResult,
     OverviewExportFormat,
     OverviewExportRequest,
+    OverviewExportTable,
     analyze_dataset_overview,
     overview_export_tables,
 )
@@ -387,6 +388,35 @@ class AnalysisController:
             return
         try:
             sheets = overview_export_tables(request.result, request.tables)
+            localized_sheets = {}
+            for name, frame in sheets.items():
+                table = OverviewExportTable(name)
+                sheet_name = tr("OverviewView", table.value)
+                if sheet_name in localized_sheets:
+                    self._logger.warning("Rejected Overview export because translated sheet names are not unique.")
+                    return
+                match table:
+                    case OverviewExportTable.COLUMNS:
+                        headers = {
+                            "column": tr("OverviewView", "Column"),
+                            "type": tr("OverviewView", "Type"),
+                            "storage_type": tr("OverviewView", "Storage type"),
+                            "missing_count": tr("OverviewView", "Missing"),
+                            "missing_fraction": tr("OverviewView", "Missing fraction"),
+                            "unique_count": tr("OverviewView", "Unique"),
+                        }
+                    case OverviewExportTable.SUMMARY:
+                        headers = {
+                            "section": tr("OverviewView", "Section"),
+                            "metric": tr("OverviewView", "Metric"),
+                            "column": tr("OverviewView", "Column"),
+                            "count": tr("OverviewView", "Count"),
+                            "fraction": tr("OverviewView", "Fraction"),
+                        }
+                    case OverviewExportTable.SAMPLE:
+                        headers = {}
+                localized_sheets[sheet_name] = frame.rename(columns=headers)
+            sheets = localized_sheets
         except (TypeError, ValueError):
             self._logger.warning("Rejected unavailable Overview export selection.")
             return

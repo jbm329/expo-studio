@@ -33,6 +33,7 @@ SAMPLE_ROW_LIMIT = 100
 class OverviewExportTable(StrEnum):
     """Structured Overview tables available for data export."""
 
+    SUMMARY = "Summary"
     COLUMNS = "Columns"
     SAMPLE = "Sample"
 
@@ -160,10 +161,12 @@ def overview_export_tables(
         raise ValueError(message)
     frames: dict[str, pd.DataFrame] = {}
     for table in tables:
-        if table is not OverviewExportTable.COLUMNS and table is not OverviewExportTable.SAMPLE:
+        if all(table is not supported for supported in OverviewExportTable):
             message = "Unsupported Overview table."
             raise ValueError(message)
         match table:
+            case OverviewExportTable.SUMMARY:
+                frame = _summary_export_frame(result)
             case OverviewExportTable.COLUMNS:
                 frame = pd.DataFrame(
                     [
@@ -194,6 +197,62 @@ def overview_export_tables(
             raise ValueError(message)
         frames[table.value] = frame
     return frames
+
+
+def _summary_export_frame(result: DatasetOverviewResult) -> pd.DataFrame:
+    """Build a stable, typed table of dataset metrics and Overview warnings."""
+    rows: list[tuple[str, str, str | None, int, float | None]] = [
+        ("dataset", "row_count", None, result.row_count, None),
+        ("dataset", "column_count", None, result.column_count, None),
+        (
+            "dataset",
+            "missing_cell_count",
+            None,
+            result.missing_cell_count,
+            result.missing_cell_fraction,
+        ),
+        (
+            "dataset",
+            "duplicate_row_count",
+            None,
+            result.duplicate_row_count,
+            result.duplicate_row_fraction,
+        ),
+    ]
+    type_counts = (
+        ("numeric", result.numeric_column_count),
+        ("categorical", result.categorical_column_count),
+        ("datetime", result.datetime_column_count),
+        ("boolean", result.boolean_column_count),
+        ("other", result.other_column_count),
+    )
+    for metric, count in type_counts:
+        fraction = count / result.column_count if result.column_count > 0 else 0.0
+        rows.append(("column_type", metric, None, count, fraction))
+
+    warnings = sorted(
+        (column for column in result.columns if column.missing_fraction >= HIGH_MISSING_FRACTION_THRESHOLD),
+        key=lambda column: column.missing_fraction,
+        reverse=True,
+    )
+    if warnings:
+        rows.extend(
+            ("warning", "high_missing_values", column.column, column.missing_count, column.missing_fraction)
+            for column in warnings
+        )
+    else:
+        rows.append(("warning", "no_high_missing_columns", None, 0, 0.0))
+
+    return pd.DataFrame(
+        rows,
+        columns=["section", "metric", "column", "count", "fraction"],
+    ).astype({
+        "section": pd.StringDtype(),
+        "metric": pd.StringDtype(),
+        "column": pd.StringDtype(),
+        "count": pd.Int64Dtype(),
+        "fraction": pd.Float64Dtype(),
+    })
 
 
 _CATEGORICAL_DTYPES = frozenset({SemanticDType.CATEGORY, SemanticDType.STRING})

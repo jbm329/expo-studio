@@ -483,10 +483,6 @@
         <translation>Sammanfattning</translation>
     </message>
     <message>
-        <source>Summary export is not implemented yet.</source>
-        <translation>Export av sammanfattningen är ännu inte implementerad.</translation>
-    </message>
-    <message>
         <source>Select at least one available table to export.</source>
         <translation>Välj minst en tillgänglig tabell att exportera.</translation>
     </message>
@@ -495,8 +491,12 @@
         <translation>Välj exakt en tabell för CSV eller binär export.</translation>
     </message>
     <message>
-        <source>Export Columns metadata or Sample (first 100 rows), not the original dataset. Summary and analysis results are not available for export.</source>
-        <translation>Exportera kolumnmetadata eller ett urval (de första 100 raderna), inte det ursprungliga datasetet. Sammanfattning och analysresultat kan inte exporteras.</translation>
+        <source>Export the Overview Summary, Columns metadata, or Sample (first 100 rows), not the original dataset.</source>
+        <translation>Exportera översiktens sammanfattning, kolumnmetadata eller ett urval (de första 100 raderna), inte det ursprungliga datasetet.</translation>
+    </message>
+    <message>
+        <source>Dataset metrics, column-type counts, and high-missing-value warnings. Fractions are numeric values from 0 to 1.</source>
+        <translation>Datasetmått, antal kolumner per typ och varningar för högt antal saknade värden. Andelar är numeriska värden från 0 till 1.</translation>
     </message>
     <message>
         <source>Export contents</source>
@@ -4658,6 +4658,30 @@ Sparad till:
         <location filename="../../gui/dialogs/analysis/overview_view.py" line="273"/>
         <source>Other</source>
         <translation>Annan</translation>
+    </message>
+    <message>
+        <source>Sample</source>
+        <translation>Urval</translation>
+    </message>
+    <message>
+        <source>Missing fraction</source>
+        <translation>Andel saknade värden</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation>Avsnitt</translation>
+    </message>
+    <message>
+        <source>Metric</source>
+        <translation>Mått</translation>
+    </message>
+    <message>
+        <source>Count</source>
+        <translation>Antal</translation>
+    </message>
+    <message>
+        <source>Fraction</source>
+        <translation>Andel</translation>
     </message>
 </context>
 <context>

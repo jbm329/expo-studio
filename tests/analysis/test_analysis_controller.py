@@ -50,6 +50,7 @@ from expo_jbm329.services.analysis.regression import RegressionError
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.timeseries import DecompositionModel
 from expo_jbm329.utils.dataset_ref import DatasetRef
+from expo_jbm329.workbench.controllers.analysis import analysis_controller as analysis_controller_module
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
 
 _CONTROLLER_MODULE = "expo_jbm329.workbench.controllers.analysis.analysis_controller"
@@ -98,18 +99,95 @@ def test_overview_export_routes_explicit_frames_and_never_reads_active_data(form
     assert controller._results.mock_calls == []
 
 
-def test_overview_excel_routes_both_named_tables_in_one_operation():
+def test_overview_excel_routes_all_three_named_tables_in_one_operation():
     controller, dialog, result, exporter = _overview_export_context()
     request = OverviewExportRequest(
-        result, (OverviewExportTable.COLUMNS, OverviewExportTable.SAMPLE), OverviewExportFormat.EXCEL
+        result,
+        (OverviewExportTable.COLUMNS, OverviewExportTable.SAMPLE, OverviewExportTable.SUMMARY),
+        OverviewExportFormat.EXCEL,
     )
     controller._export_overview(dialog, exporter, request)
     assert len(exporter.mock_calls) == 1
     sheets = exporter.export_excel.call_args.kwargs["sheets"]
     assert exporter.export_excel.call_args.kwargs["show_success_dialog"] is True
-    assert list(sheets) == ["Columns", "Sample"]
-    assert sheets["Columns"].iloc[0]["missing_fraction"] == 0.0
+    assert list(sheets) == ["Columns", "Sample", "Summary"]
+    assert list(sheets["Columns"].columns) == [
+        "Column",
+        "Type",
+        "Storage type",
+        "Missing",
+        "Missing fraction",
+        "Unique",
+    ]
+    assert sheets["Columns"].iloc[0]["Missing fraction"] == 0.0
     assert sheets["Sample"].shape == (2, 1)
+    assert list(sheets["Sample"].columns) == ["value"]
+    assert sheets["Summary"].iloc[0]["Metric"] == "row_count"
+
+
+def test_overview_excel_uses_translated_names_and_headers_without_translating_values(monkeypatch):
+    controller, dialog, _, exporter = _overview_export_context()
+    translations = {
+        "Columns": "Kolumner",
+        "Summary": "Sammanfattning",
+        "Sample": "Urval",
+        "Column": "Kolumn",
+        "Type": "Typ",
+        "Storage type": "Lagringstyp",
+        "Missing": "Saknas",
+        "Missing fraction": "Andel saknade värden",
+        "Unique": "Unika",
+        "Section": "Avsnitt",
+        "Metric": "Mått",
+        "Count": "Antal",
+        "Fraction": "Andel",
+    }
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    request = OverviewExportRequest(
+        dialog.exportable_overview(),
+        (OverviewExportTable.COLUMNS, OverviewExportTable.SAMPLE, OverviewExportTable.SUMMARY),
+        OverviewExportFormat.EXCEL,
+    )
+
+    controller._export_overview(dialog, exporter, request)
+    sheets = exporter.export_excel.call_args.kwargs["sheets"]
+
+    assert list(sheets) == ["Kolumner", "Urval", "Sammanfattning"]
+    assert list(sheets["Kolumner"].columns) == [
+        "Kolumn",
+        "Typ",
+        "Lagringstyp",
+        "Saknas",
+        "Andel saknade värden",
+        "Unika",
+    ]
+    assert list(sheets["Sammanfattning"].columns) == ["Avsnitt", "Mått", "Kolumn", "Antal", "Andel"]
+    assert sheets["Sammanfattning"].iloc[0]["Mått"] == "row_count"
+    assert list(sheets["Urval"].columns) == ["value"]
+    assert sheets["Urval"]["value"].dtype == "int64"
+
+
+@pytest.mark.parametrize("format_choice", [OverviewExportFormat.CSV, OverviewExportFormat.BINARY])
+def test_overview_summary_routes_translated_headers_for_csv_and_binary(format_choice, monkeypatch):
+    controller, dialog, result, exporter = _overview_export_context()
+    translations = {
+        "Section": "Avsnitt",
+        "Metric": "Mått",
+        "Column": "Kolumn",
+        "Count": "Antal",
+        "Fraction": "Andel",
+    }
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    request = OverviewExportRequest(result, (OverviewExportTable.SUMMARY,), format_choice)
+    controller._export_overview(dialog, exporter, request)
+
+    method = exporter.export_csv if format_choice is OverviewExportFormat.CSV else exporter.export_data
+    assert method.call_count == 1
+    assert list(method.call_args.kwargs["df"].columns) == ["Avsnitt", "Mått", "Kolumn", "Antal", "Andel"]
+    assert method.call_args.kwargs["df"].iloc[0]["Mått"] == "row_count"
+    assert method.call_args.kwargs["parent_widget"] is dialog
+    assert method.call_args.kwargs["operation_target"] is dialog.content_panel()
+    assert method.call_args.kwargs["show_success_dialog"] is True
 
 
 @pytest.mark.parametrize("format_choice", [OverviewExportFormat.CSV, OverviewExportFormat.BINARY])

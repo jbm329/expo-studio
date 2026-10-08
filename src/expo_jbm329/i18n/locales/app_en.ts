@@ -246,10 +246,6 @@
         <translation>Summary</translation>
     </message>
     <message>
-        <source>Summary export is not implemented yet.</source>
-        <translation>Summary export is not implemented yet.</translation>
-    </message>
-    <message>
         <source>Select at least one available table to export.</source>
         <translation>Select at least one available table to export.</translation>
     </message>
@@ -258,8 +254,12 @@
         <translation>Choose exactly one table for CSV or binary export.</translation>
     </message>
     <message>
-        <source>Export Columns metadata or Sample (first 100 rows), not the original dataset. Summary and analysis results are not available for export.</source>
-        <translation>Export Columns metadata or Sample (first 100 rows), not the original dataset. Summary and analysis results are not available for export.</translation>
+        <source>Export the Overview Summary, Columns metadata, or Sample (first 100 rows), not the original dataset.</source>
+        <translation>Export the Overview Summary, Columns metadata, or Sample (first 100 rows), not the original dataset.</translation>
+    </message>
+    <message>
+        <source>Dataset metrics, column-type counts, and high-missing-value warnings. Fractions are numeric values from 0 to 1.</source>
+        <translation>Dataset metrics, column-type counts, and high-missing-value warnings. Fractions are numeric values from 0 to 1.</translation>
     </message>
     <message>
         <source>Export contents</source>
@@ -4346,6 +4346,30 @@ Saved to:
         <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="273" />
         <source>Other</source>
         <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Sample</source>
+        <translation>Sample</translation>
+    </message>
+    <message>
+        <source>Missing fraction</source>
+        <translation>Missing fraction</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation>Section</translation>
+    </message>
+    <message>
+        <source>Metric</source>
+        <translation>Metric</translation>
+    </message>
+    <message>
+        <source>Count</source>
+        <translation>Count</translation>
+    </message>
+    <message>
+        <source>Fraction</source>
+        <translation>Fraction</translation>
     </message>
 </context><context>
     <name>PCAConfigWidget</name>

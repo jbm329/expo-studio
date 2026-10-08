@@ -60,17 +60,22 @@ Available analyses include:
 The workspace uses adjustable result sections and configurable column selections. Long-running calculations are performed in the background to keep the interface responsive, and supported analyses provide progress or cancellation where appropriate.
 
 Choose **Export** to open a single selection dialog grouped into **Data** and
-**Results**. After a successful **Overview**, select **Columns metadata** or
-**Sample (first 100 rows)** under **Data** to save tables from the displayed analysis.
-Excel can include both tables as separate sheets in one workbook. CSV and binary
-data files export exactly one selected table per operation; select Parquet,
-Feather or Pickle in the binary save dialog. Empty tables cannot be exported.
-This does not export the original dataset or the Overview Summary.
+**Results**. After a successful **Overview**, select **Summary**, **Columns
+metadata**, or **Sample (first 100 rows)** to export tables from the displayed
+analysis; the original dataset is not exported. The structured Summary has
+`section`, `metric`, `column`, `count`, and `fraction` fields. Counts and
+fractions remain numeric (fractions range from 0 to 1); warning rows identify
+columns with at least 20% missing values, or explicitly indicate when there are
+no such warnings.
 
-The **Results → Summary** choice is visibly disabled until implemented. Selections
-are retained when switching formats; Export is disabled with an explanation if
-the selection is invalid for the format. All choices for other analyses are
-disabled previews and cannot create files. **Add to report** and
+Excel can include any selected tables as separate **Summary**, **Columns**, and
+**Sample** sheets in one workbook. CSV and binary data files export exactly one
+selected table per operation; select Parquet, Feather or Pickle in the binary
+save dialog. Empty Columns and Sample tables cannot be exported, while Summary
+remains available for a successful Overview even for an empty dataset.
+Selections are retained when switching formats; Export is disabled with an
+explanation if the selection is invalid for the format. All choices for other
+analyses are disabled previews and cannot create files. **Add to report** and
 **Reports(0)** remain disabled workflow previews. Collecting analyses and generating
 HTML reports are not implemented yet. Existing main-window data exports are unchanged.
 

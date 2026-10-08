@@ -14,9 +14,9 @@ def test_overview_formats_preserve_choices_and_disable_multi_table_single_file_e
     assert [group.title() for group in dialog.findChildren(QGroupBox)] == ["Data", "Results"]
     choices = dialog.findChildren(QCheckBox)
     assert [choice.text() for choice in choices] == ["Columns metadata", "Sample (first 100 rows)", "Summary"]
-    assert not choices[2].isEnabled()
+    assert choices[2].isEnabled()
     assert not choices[2].isChecked()
-    assert "not implemented" in choices[2].toolTip()
+    assert "high-missing-value warnings" in choices[2].toolTip()
     export = next(button for button in dialog.findChildren(QPushButton) if button.text() == "Export")
     formats = dialog.findChild(QComboBox)
     assert formats.currentData() is OverviewExportFormat.EXCEL
@@ -46,6 +46,13 @@ def test_overview_formats_preserve_choices_and_disable_multi_table_single_file_e
     assert dialog.export_request().tables == (OverviewExportTable.SAMPLE,)
     assert dialog.export_request().format is OverviewExportFormat.CSV
     choices[1].setChecked(False)
+    choices[2].setChecked(True)
+    for format_choice in (OverviewExportFormat.CSV, OverviewExportFormat.BINARY):
+        formats.setCurrentIndex(formats.findData(format_choice))
+        assert export.isEnabled()
+        assert dialog.export_request().tables == (OverviewExportTable.SUMMARY,)
+        assert dialog.export_request().format is format_choice
+    choices[2].setChecked(False)
     for index in range(formats.count()):
         formats.setCurrentIndex(index)
         assert not export.isEnabled()
@@ -61,8 +68,9 @@ def test_overview_empty_and_missing_results_have_explicit_disabled_tables(source
     assert not choices[1].isEnabled()
     assert bool(choices[0].isEnabled()) == (source is not None and source.shape[1] > 0)
     assert ("empty" if source is not None else "Run Overview") in choices[1].toolTip()
-    assert not choices[2].isEnabled()
-    assert "not implemented" in choices[2].toolTip()
+    assert choices[2].isEnabled() is (source is not None)
+    if source is None:
+        assert "Run Overview" in choices[2].toolTip()
 
 
 def test_export_preview_groups_all_unavailable_choices_and_cannot_export():
