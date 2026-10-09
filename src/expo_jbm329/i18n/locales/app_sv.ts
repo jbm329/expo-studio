@@ -389,8 +389,8 @@
         <translation>Lägg till i rapport</translation>
     </message>
     <message>
-        <source>Overview and Statistics exports are available after analysis. Other export and report actions are previews.</source>
-        <translation>Export av Översikt och Statistik är tillgänglig efter analys. Övriga export- och rapportåtgärder är förhandsvisningar.</translation>
+        <source>Overview, Statistics and applied Hypothesis Tests exports are available after analysis. Other export and report actions are previews.</source>
+        <translation>Export av Översikt, Statistik och tillämpade Hypotestester är tillgänglig efter analys. Övriga export- och rapportåtgärder är förhandsvisningar.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -470,6 +470,59 @@
 </context>
 <context>
     <name>AnalysisExportDialog</name>
+    <message><source>Export computed tables and charts for the applied test, not the original dataset.</source><translation>Exportera beräknade tabeller och diagram för det tillämpade testet, inte det ursprungliga datasetet.</translation></message>
+    <message><source>Apply a hypothesis test successfully before exporting.</source><translation>Tillämpa ett hypotestest med ett giltigt resultat innan du exporterar.</translation></message>
+    <message><source>Applied test: {test}
+{roles}: {columns}</source><translation>Tillämpat test: {test}
+{roles}: {columns}</translation></message>
+    <message><source>Numeric column / grouping column</source><translation>Numerisk kolumn / gruppkolumn</translation></message>
+    <message><source>Row column / column column</source><translation>Radkolumn / kolumnkolumn</translation></message>
+    <message><source>Measurement columns (occasion order)</source><translation>Mätkolumner (ordning för mättillfällen)</translation></message>
+    <message><source>Group comparison</source><translation>Gruppjämförelse</translation></message>
+    <message><source>Chi-square independence</source><translation>Chi-två-test för oberoende</translation></message>
+    <message><source>Paired comparison</source><translation>Parad jämförelse</translation></message>
+    <message><source>Group summary</source><translation>Gruppsammanfattning</translation></message>
+    <message><source>Contingency table</source><translation>Korstabell</translation></message>
+    <message><source>Measurement summary</source><translation>Mätsammanfattning</translation></message>
+    <message><source>Test results</source><translation>Testresultat</translation></message>
+    <message><source>Test</source><translation>Test</translation></message>
+    <message><source>Test statistic</source><translation>Teststatistik</translation></message>
+    <message><source>p-value</source><translation>p-värde</translation></message>
+    <message><source>Degrees of freedom</source><translation>Frihetsgrader</translation></message>
+    <message><source>Mean difference</source><translation>Medelvärdesskillnad</translation></message>
+    <message><source>95% CI lower</source><translation>95 % KI nedre</translation></message>
+    <message><source>95% CI upper</source><translation>95 % KI övre</translation></message>
+    <message><source>Effect size</source><translation>Effektstorlek</translation></message>
+    <message><source>Effect value</source><translation>Effektvärde</translation></message>
+    <message><source>Numeric column</source><translation>Numerisk kolumn</translation></message>
+    <message><source>Grouping column</source><translation>Gruppkolumn</translation></message>
+    <message><source>Row column</source><translation>Radkolumn</translation></message>
+    <message><source>Column column</source><translation>Kolumnkolumn</translation></message>
+    <message><source>Sample count</source><translation>Antal observationer</translation></message>
+    <message><source>Yates' continuity correction</source><translation>Yates kontinuitetskorrektion</translation></message>
+    <message><source>Cochran's rule violated</source><translation>Cochrans regel uppfylls inte</translation></message>
+    <message><source>Fraction of expected counts below 5</source><translation>Andel förväntade frekvenser under 5</translation></message>
+    <message><source>Minimum expected count</source><translation>Minsta förväntade frekvens</translation></message>
+    <message><source>Odds ratio</source><translation>Oddskvot</translation></message>
+    <message><source>Total subjects</source><translation>Totalt antal individer</translation></message>
+    <message><source>Excluded subjects</source><translation>Uteslutna individer</translation></message>
+    <message><source>Notes</source><translation>Noteringar</translation></message>
+    <message><source>Measurement</source><translation>Mätning</translation></message>
+    <message><source>Welch's t-test</source><translation>Welchs t-test</translation></message>
+    <message><source>Student's t-test</source><translation>Students t-test</translation></message>
+    <message><source>Mann-Whitney U</source><translation>Mann-Whitney U</translation></message>
+    <message><source>One-way ANOVA</source><translation>Envägs-ANOVA</translation></message>
+    <message><source>Kruskal-Wallis</source><translation>Kruskal-Wallis</translation></message>
+    <message><source>Pearson's chi-square test</source><translation>Pearsons chi-två-test</translation></message>
+    <message><source>Fisher's exact test</source><translation>Fishers exakta test</translation></message>
+    <message><source>Wilcoxon signed-rank test</source><translation>Wilcoxons teckenrangtest</translation></message>
+    <message><source>Friedman test</source><translation>Friedmans test</translation></message>
+    <message><source>Cohen's d</source><translation>Cohens d</translation></message>
+    <message><source>Rank-biserial correlation</source><translation>Rangbiserial korrelation</translation></message>
+    <message><source>Eta²</source><translation>Eta²</translation></message>
+    <message><source>Epsilon²</source><translation>Epsilon²</translation></message>
+    <message><source>Cramér's V</source><translation>Cramérs V</translation></message>
+    <message><source>Kendall's W</source><translation>Kendalls W</translation></message>
     <message>
         <source>Data</source>
         <translation>Data</translation>
@@ -897,6 +950,7 @@ Vänligen se loggfil för mer information.</translation>
 </context>
 <context>
     <name>ChiSquareView</name>
+    <message><source>Contingency table</source><translation>Korstabell</translation></message>
     <message>
         <location filename="../../gui/dialogs/analysis/chi_square_view.py" line="88"/>
         <source>A chi-square test needs two categorical columns, each with between {minimum} and {maximum} distinct values.</source>

@@ -153,8 +153,8 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Overview and Statistics exports are available after analysis. Other export and report actions are previews.</source>
-        <translation>Overview and Statistics exports are available after analysis. Other export and report actions are previews.</translation>
+        <source>Overview, Statistics and applied Hypothesis Tests exports are available after analysis. Other export and report actions are previews.</source>
+        <translation>Overview, Statistics and applied Hypothesis Tests exports are available after analysis. Other export and report actions are previews.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -233,6 +233,59 @@
     </message>
 </context><context>
     <name>AnalysisExportDialog</name>
+    <message><source>Export computed tables and charts for the applied test, not the original dataset.</source><translation>Export computed tables and charts for the applied test, not the original dataset.</translation></message>
+    <message><source>Apply a hypothesis test successfully before exporting.</source><translation>Apply a hypothesis test successfully before exporting.</translation></message>
+    <message><source>Applied test: {test}
+{roles}: {columns}</source><translation>Applied test: {test}
+{roles}: {columns}</translation></message>
+    <message><source>Numeric column / grouping column</source><translation>Numeric column / grouping column</translation></message>
+    <message><source>Row column / column column</source><translation>Row column / column column</translation></message>
+    <message><source>Measurement columns (occasion order)</source><translation>Measurement columns (occasion order)</translation></message>
+    <message><source>Group comparison</source><translation>Group comparison</translation></message>
+    <message><source>Chi-square independence</source><translation>Chi-square independence</translation></message>
+    <message><source>Paired comparison</source><translation>Paired comparison</translation></message>
+    <message><source>Group summary</source><translation>Group summary</translation></message>
+    <message><source>Contingency table</source><translation>Contingency table</translation></message>
+    <message><source>Measurement summary</source><translation>Measurement summary</translation></message>
+    <message><source>Test results</source><translation>Test results</translation></message>
+    <message><source>Test</source><translation>Test</translation></message>
+    <message><source>Test statistic</source><translation>Test statistic</translation></message>
+    <message><source>p-value</source><translation>p-value</translation></message>
+    <message><source>Degrees of freedom</source><translation>Degrees of freedom</translation></message>
+    <message><source>Mean difference</source><translation>Mean difference</translation></message>
+    <message><source>95% CI lower</source><translation>95% CI lower</translation></message>
+    <message><source>95% CI upper</source><translation>95% CI upper</translation></message>
+    <message><source>Effect size</source><translation>Effect size</translation></message>
+    <message><source>Effect value</source><translation>Effect value</translation></message>
+    <message><source>Numeric column</source><translation>Numeric column</translation></message>
+    <message><source>Grouping column</source><translation>Grouping column</translation></message>
+    <message><source>Row column</source><translation>Row column</translation></message>
+    <message><source>Column column</source><translation>Column column</translation></message>
+    <message><source>Sample count</source><translation>Sample count</translation></message>
+    <message><source>Yates' continuity correction</source><translation>Yates' continuity correction</translation></message>
+    <message><source>Cochran's rule violated</source><translation>Cochran's rule violated</translation></message>
+    <message><source>Fraction of expected counts below 5</source><translation>Fraction of expected counts below 5</translation></message>
+    <message><source>Minimum expected count</source><translation>Minimum expected count</translation></message>
+    <message><source>Odds ratio</source><translation>Odds ratio</translation></message>
+    <message><source>Total subjects</source><translation>Total subjects</translation></message>
+    <message><source>Excluded subjects</source><translation>Excluded subjects</translation></message>
+    <message><source>Notes</source><translation>Notes</translation></message>
+    <message><source>Measurement</source><translation>Measurement</translation></message>
+    <message><source>Welch's t-test</source><translation>Welch's t-test</translation></message>
+    <message><source>Student's t-test</source><translation>Student's t-test</translation></message>
+    <message><source>Mann-Whitney U</source><translation>Mann-Whitney U</translation></message>
+    <message><source>One-way ANOVA</source><translation>One-way ANOVA</translation></message>
+    <message><source>Kruskal-Wallis</source><translation>Kruskal-Wallis</translation></message>
+    <message><source>Pearson's chi-square test</source><translation>Pearson's chi-square test</translation></message>
+    <message><source>Fisher's exact test</source><translation>Fisher's exact test</translation></message>
+    <message><source>Wilcoxon signed-rank test</source><translation>Wilcoxon signed-rank test</translation></message>
+    <message><source>Friedman test</source><translation>Friedman test</translation></message>
+    <message><source>Cohen's d</source><translation>Cohen's d</translation></message>
+    <message><source>Rank-biserial correlation</source><translation>Rank-biserial correlation</translation></message>
+    <message><source>Eta²</source><translation>Eta²</translation></message>
+    <message><source>Epsilon²</source><translation>Epsilon²</translation></message>
+    <message><source>Cramér's V</source><translation>Cramér's V</translation></message>
+    <message><source>Kendall's W</source><translation>Kendall's W</translation></message>
     <message>
         <source>Data</source>
         <translation>Data</translation>
@@ -646,6 +699,7 @@ Please see logs for more information.</source>
     </message>
 </context><context>
     <name>ChiSquareView</name>
+    <message><source>Contingency table</source><translation>Contingency table</translation></message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="88" />
         <source>A chi-square test needs two categorical columns, each with between {minimum} and {maximum} distinct values.</source>

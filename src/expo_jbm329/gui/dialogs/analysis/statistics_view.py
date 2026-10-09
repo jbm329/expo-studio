@@ -36,6 +36,8 @@ from expo_jbm329.services.analysis.statistics_charts import (
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from matplotlib.axes import Axes
 
     from expo_jbm329.services.analysis.statistics import (
@@ -58,7 +60,7 @@ _EXPORT_TRANSLATIONS = (
 )
 
 
-class _StatisticsCanvas(FigureCanvasQTAgg):
+class SerializedAnalysisCanvas(FigureCanvasQTAgg):
     """Serialize actual Qt rendering without waiting for an export worker."""
 
     def __init__(self, figure: Figure) -> None:
@@ -67,10 +69,31 @@ class _StatisticsCanvas(FigureCanvasQTAgg):
         self._resize_pending = False
         self._draw_pending = False
         self._pixel_ratio_pending = False
+        self._chart_builder: Callable[[], None] | None = None
         self._retry_timer = QTimer(self)
         self._retry_timer.setSingleShot(True)
         self._retry_timer.setInterval(_CHART_RETRY_INTERVAL_MS)
         self._retry_timer.timeout.connect(self._retry_render)
+
+    def build_chart(self, builder: Callable[[], None]) -> None:
+        """Build a chart when rendering is available, without blocking Qt."""
+        self._chart_builder = builder
+        self._build_pending_chart()
+
+    def _build_pending_chart(self) -> None:
+        """Serialize figure mutations with worker and live canvas drawing."""
+        if self._chart_builder is None:
+            return
+        if not STATISTICS_CHART_LOCK.acquire(blocking=False):
+            self._defer_render()
+            return
+        try:
+            builder = self._chart_builder
+            self._chart_builder = None
+            builder()
+            self.draw_idle()  # type: ignore[no-untyped-call]
+        finally:
+            STATISTICS_CHART_LOCK.release()
 
     def _defer_render(self) -> None:
         """Coalesce retries; QObject ownership cancels them on destruction."""
@@ -125,6 +148,7 @@ class _StatisticsCanvas(FigureCanvasQTAgg):
 
     def _retry_render(self) -> None:
         """Replay the latest resize and draw, then request another Qt paint."""
+        self._build_pending_chart()
         if self._pixel_ratio_pending:
             self._update_pixel_ratio()
         if self._resize_pending:
@@ -132,6 +156,9 @@ class _StatisticsCanvas(FigureCanvasQTAgg):
         if self._draw_pending:
             self.draw()
         self.update()
+
+
+_StatisticsCanvas = SerializedAnalysisCanvas
 
 
 class StatisticsView(QWidget):

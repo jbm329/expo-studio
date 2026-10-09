@@ -1,16 +1,31 @@
 from __future__ import annotations
 
+from dataclasses import replace
+from pathlib import Path
+
 import pandas as pd
 import pytest
-from PyQt6.QtWidgets import QCheckBox, QComboBox, QDialog, QDialogButtonBox, QGroupBox, QLabel, QPushButton
+from PyQt6.QtCore import Qt, QTranslator
+from PyQt6.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QGroupBox,
+    QLabel,
+    QPushButton,
+)
 
 from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportComponent, HypothesisExportRequest
 from expo_jbm329.services.analysis.overview import OverviewExportFormat, OverviewExportTable, analyze_dataset_overview
 from expo_jbm329.services.analysis.statistics import (
     StatisticsExportFormat,
     StatisticsExportTable,
     analyze_descriptive_statistics,
 )
+from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
 
 
 def test_overview_formats_preserve_choices_and_disable_multi_table_single_file_export():
@@ -168,3 +183,92 @@ def test_statistics_charts_are_disabled_without_numeric_columns():
     assert not by_text["Charts"].isEnabled()
     by_text["Categorical"].setChecked(True)
     assert dialog.export_request().tables == (StatisticsExportTable.CATEGORICAL,)
+
+
+@pytest.mark.parametrize(
+    "factory,title",
+    [
+        (group_snapshot, "Group summary"),
+        (chi_snapshot, "Contingency table"),
+        (paired_snapshot, "Measurement summary"),
+    ],
+)
+def test_hypothesis_dialog_names_applied_test_columns_and_preserves_choices(factory, title):
+    snapshot = factory()
+    dialog = AnalysisExportDialog(hypothesis=snapshot)
+    choices = dialog.findChildren(QCheckBox)
+    assert [choice.text() for choice in choices] == [title, "Test results", "Charts"]
+    identity = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied test:"))
+    assert identity.textFormat() is Qt.TextFormat.PlainText
+    assert " / ".join(snapshot.columns) in identity.text()
+    assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
+    formats = dialog.findChild(QComboBox)
+    assert formats.currentData() is StatisticsExportFormat.EXCEL
+    assert isinstance(dialog.export_request(), HypothesisExportRequest)
+    for choice in choices:
+        choice.setChecked(True)
+    for format_choice in (StatisticsExportFormat.CSV, StatisticsExportFormat.BINARY):
+        formats.setCurrentIndex(formats.findData(format_choice))
+        assert dialog.export_request() is None
+        assert all(choice.isChecked() for choice in choices)
+        assert "only in Excel" in dialog._export_button.toolTip()
+    choices[2].setChecked(False)
+    assert dialog.export_request() is None
+    assert "exactly one table" in dialog._export_button.toolTip()
+    choices[0].setChecked(False)
+    assert dialog.export_request().components == (HypothesisExportComponent.TEST_RESULTS,)
+    formats.setCurrentIndex(formats.findData(StatisticsExportFormat.EXCEL))
+    choices[1].setChecked(False)
+    choices[2].setChecked(True)
+    assert dialog.export_request().components == (HypothesisExportComponent.CHARTS,)
+    choices[2].setChecked(False)
+    assert dialog.export_request() is None
+    assert "at least one" in dialog._export_button.toolTip()
+
+
+def test_hypothesis_dialog_without_applied_result_never_enables_export():
+    dialog = AnalysisExportDialog(hypothesis_mode=True)
+    assert all(not choice.isEnabled() for choice in dialog.findChildren(QCheckBox))
+    assert dialog.export_request() is None
+    assert "Apply" in dialog._export_button.toolTip()
+    with pytest.raises(ValueError, match="only one"):
+        AnalysisExportDialog(hypothesis_mode=True, statistics_mode=True)
+
+
+@pytest.mark.parametrize("locale", ["en", "sv"])
+def test_long_applied_labels_and_translated_export_layout_fit_without_screen_caps(locale, tmp_path):
+    translator = QTranslator()
+    path = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{locale}.qm"
+    assert translator.load(str(path))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    dialog = None
+    try:
+        snapshot = group_snapshot()
+        columns = (
+            "<literal numeric column> with a long descriptive measurement name " * 3,
+            "<literal grouping column> with a long descriptive category name " * 3,
+        )
+        snapshot = replace(
+            snapshot,
+            result=replace(snapshot.result, numeric_column=columns[0], grouping_column=columns[1]),
+            columns=columns,
+        )
+        dialog = AnalysisExportDialog(hypothesis=snapshot)
+        dialog.show()
+        # Resize after show so available-screen constraints cannot cap the requested geometry.
+        dialog.resize(650, 800)
+        app.processEvents()
+        labels = dialog.findChildren(QLabel)
+        identity = next(label for label in labels if columns[0] in label.text())
+        assert identity.textFormat() is Qt.TextFormat.PlainText
+        assert identity.wordWrap()
+        assert identity.height() >= identity.heightForWidth(identity.width())
+        button_box = dialog.findChild(QDialogButtonBox)
+        assert button_box.geometry().bottom() < dialog.height()
+        assert dialog._export_button.isEnabled()
+        assert dialog.grab().save(str(tmp_path / f"hypothesis-export-{locale}.png"))
+    finally:
+        if dialog is not None:
+            dialog.close()
+        app.removeTranslator(translator)

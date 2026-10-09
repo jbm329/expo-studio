@@ -7,7 +7,7 @@ import uuid
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
-from PyQt6.QtCore import QT_TR_NOOP, QTimer
+from PyQt6.QtCore import QT_TR_NOOP, QT_TRANSLATE_NOOP, QTimer
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog, build_placeholder_label
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
@@ -46,6 +46,14 @@ from expo_jbm329.services.analysis.correlation import (
     initialize_correlation,
 )
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison, initialize_group_comparison
+from expo_jbm329.services.analysis.hypothesis_charts import HypothesisChartLabels, render_hypothesis_charts
+from expo_jbm329.services.analysis.hypothesis_export import (
+    HypothesisExportComponent,
+    HypothesisExportRequest,
+    HypothesisExportSnapshot,
+    HypothesisResult,
+    hypothesis_export_tables,
+)
 from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierMethod,
     analyze_multivariate_outliers,
@@ -126,6 +134,48 @@ if TYPE_CHECKING:
 
 # Matches AsyncOperationController's default overlay watchdog.
 _DEFAULT_TIMEOUT_MS = 60_000
+_HYPOTHESIS_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Test results"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Test"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Test statistic"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "p-value"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Degrees of freedom"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Mean difference"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "95% CI lower"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "95% CI upper"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Effect size"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Effect value"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Numeric column"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Grouping column"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Row column"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Column column"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Sample count"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Yates' continuity correction"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Cochran's rule violated"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Fraction of expected counts below 5"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Minimum expected count"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Odds ratio"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Total subjects"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Excluded subjects"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Notes"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Measurement"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Welch's t-test"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Student's t-test"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Mann-Whitney U"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "One-way ANOVA"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Kruskal-Wallis"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Pearson's chi-square test"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Fisher's exact test"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Wilcoxon signed-rank test"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Friedman test"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Cohen's d"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Rank-biserial correlation"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Eta²"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Epsilon²"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Cramér's V"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Kendall's W"),
+    QT_TRANSLATE_NOOP("ChiSquareView", "Contingency table"),
+)
 # Cancelable jobs report real progress and can be stopped by the user, so
 # they get a far longer watchdog before the "taking too long" warning.
 _CANCELABLE_TIMEOUT_MS = 600_000
@@ -357,8 +407,12 @@ class AnalysisController:
             def _handle_statistics_export(request: object) -> None:
                 self._export_statistics(dialog, exporter, request)
 
+            def _handle_hypothesis_export(request: object) -> None:
+                self._export_hypothesis(dialog, exporter, request)
+
             dialog.overview_export_requested.connect(_handle_export)
             dialog.statistics_export_requested.connect(_handle_statistics_export)
+            dialog.hypothesis_export_requested.connect(_handle_hypothesis_export)
 
         refresh_started = False
 
@@ -577,6 +631,146 @@ class AnalysisController:
                     show_success_dialog=True,
                 )
 
+    def _export_hypothesis(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Localize owned applied-result tables and render worker-owned Excel charts."""
+        if not isinstance(request, HypothesisExportRequest) or request.snapshot is not dialog.exportable_hypothesis():
+            return
+        snapshot = request.snapshot
+        charts = HypothesisExportComponent.CHARTS in request.components
+        table_choices = tuple(item for item in request.components if item is not HypothesisExportComponent.CHARTS)
+        contexts = {
+            HypothesisTest.GROUP_COMPARISON: "GroupComparisonView",
+            HypothesisTest.CHI_SQUARE: "ChiSquareView",
+            HypothesisTest.PAIRED_COMPARISON: "PairedComparisonView",
+        }
+        context = contexts[snapshot.test]
+        summaries = {
+            HypothesisTest.GROUP_COMPARISON: "Group summary",
+            HypothesisTest.CHI_SQUARE: "Contingency table",
+            HypothesisTest.PAIRED_COMPARISON: "Measurement summary",
+        }
+        common_headers = {
+            "group": "Group",
+            "count": "Count",
+            "mean": "Mean",
+            "median": "Median",
+            "std": "Std Dev",
+            "shapiro_statistic": "Shapiro W",
+            "shapiro_p_value": "Shapiro p",
+            "normal": "Normal?",
+            "measurement": "Measurement",
+            "q1": "Q1",
+            "q3": "Q3",
+        }
+        result_headers = {
+            "test": "Test",
+            "statistic": "Test statistic",
+            "p_value": "p-value",
+            "degrees_of_freedom": "Degrees of freedom",
+            "mean_difference": "Mean difference",
+            "ci_low": "95% CI lower",
+            "ci_high": "95% CI upper",
+            "effect_name": "Effect size",
+            "effect_size": "Effect value",
+            "numeric_column": "Numeric column",
+            "grouping_column": "Grouping column",
+            "row_column": "Row column",
+            "column_column": "Column column",
+            "sample_count": "Sample count",
+            "yates_correction": "Yates' continuity correction",
+            "cochran_violated": "Cochran's rule violated",
+            "low_expected_fraction": "Fraction of expected counts below 5",
+            "min_expected": "Minimum expected count",
+            "odds_ratio": "Odds ratio",
+            "total_subjects": "Total subjects",
+            "excluded_subjects": "Excluded subjects",
+            "notes": "Notes",
+        }
+        tables = hypothesis_export_tables(snapshot, table_choices) if table_choices else {}
+        sheets: dict[str, pd.DataFrame] = {}
+        for component, source_frame in tables.items():
+            frame = source_frame
+            name = summaries[snapshot.test] if component is HypothesisExportComponent.SUMMARY else "Test results"
+            sheet_name = tr(context, name)
+            if sheet_name.casefold() in {existing.casefold() for existing in sheets}:
+                message = "Translated hypothesis sheet names must be unique."
+                raise ValueError(message)
+            if component is HypothesisExportComponent.SUMMARY:
+                if snapshot.test is HypothesisTest.CHI_SQUARE:
+                    frame.columns = [
+                        snapshot.columns[0],
+                        *cast("ChiSquareResult", snapshot.result).column_labels,
+                        tr(context, "Total"),
+                    ]
+                    frame.iloc[-1, 0] = tr(context, "Total")
+                else:
+                    frame = frame.rename(columns={key: tr(context, text) for key, text in common_headers.items()})
+            else:
+                frame = frame.rename(
+                    columns={
+                        key: tr("AnalysisExportDialog", result_headers.get(key, "Measurement"))
+                        + (f" {key.removeprefix('measurement_')}" if key.startswith("measurement_") else "")
+                        for key in frame.columns
+                    }
+                )
+                # Test names are presentation labels; applied dataset column names stay literal.
+                test_header = tr("AnalysisExportDialog", "Test")
+                effect_header = tr("AnalysisExportDialog", "Effect size")
+                frame[test_header] = frame[test_header].map(
+                    lambda value: tr("AnalysisExportDialog", value) if isinstance(value, str) else value
+                )
+                if effect_header in frame:
+                    frame[effect_header] = frame[effect_header].map(
+                        lambda value: tr("AnalysisExportDialog", value) if isinstance(value, str) else value
+                    )
+            sheets[sheet_name] = frame
+        if request.format is StatisticsExportFormat.EXCEL:
+            labels = HypothesisChartLabels(
+                distribution=tr(
+                    context,
+                    "Distribution by group"
+                    if snapshot.test is HypothesisTest.GROUP_COMPARISON
+                    else "Distribution by occasion",
+                ),
+                residuals=tr("ChiSquareView", "Adjusted standardized residuals"),
+                trajectories=tr("PairedComparisonView", "Subject trajectories"),
+                value=tr("PairedComparisonView", "Value"),
+                occasion=tr("PairedComparisonView", "Measurement occasion"),
+                residual_annotations=(
+                    ChiSquareView.chart_annotations(cast("ChiSquareResult", snapshot.result))
+                    if snapshot.test is HypothesisTest.CHI_SQUARE
+                    else ()
+                ),
+            )
+
+            def make_images(
+                progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
+            ) -> tuple[ExcelChartImage, ...]:
+                return render_hypothesis_charts(snapshot, labels, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
+            exporter.export_excel(
+                sheets=sheets,
+                chart_factory=make_images if charts else None,
+                chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                parent_widget=dialog,
+                operation_target=dialog.content_panel(),
+                show_success_dialog=True,
+            )
+        elif request.format is StatisticsExportFormat.CSV:
+            exporter.export_csv(
+                df=next(iter(sheets.values())),
+                parent_widget=dialog,
+                operation_target=dialog.content_panel(),
+                show_success_dialog=True,
+            )
+        else:
+            exporter.export_data(
+                df=next(iter(sheets.values())),
+                parent_widget=dialog,
+                operation_target=dialog.content_panel(),
+                show_success_dialog=True,
+            )
+
     # ------------------------------------------------------------------
     # Renderers (GUI thread only)
     # ------------------------------------------------------------------
@@ -635,12 +829,43 @@ class AnalysisController:
             if configuration is None:
                 return
             test, selection = configuration
+
+            def apply_displayed_result(value: object) -> None:
+                """Register a snapshot only after the accepted result is displayed."""
+                content = self._render_hypothesis_test_content(test, value)
+                dialog.set_content_widget(content)
+                typed_result: HypothesisResult
+                columns: tuple[str, ...]
+                if isinstance(content, GroupComparisonView):
+                    typed_result = cast("GroupComparisonResult", value)
+                    columns = (typed_result.numeric_column, typed_result.grouping_column)
+                    notes = content.export_notes(typed_result)
+                elif isinstance(content, ChiSquareView):
+                    chi_result = cast("ChiSquareResult", value)
+                    columns = (chi_result.row_column, chi_result.column_column)
+                    notes = content.export_notes(chi_result)
+                    typed_result = chi_result
+                else:
+                    paired_result = cast("PairedComparisonResult", value)
+                    columns = paired_result.columns
+                    notes = cast("PairedComparisonView", content).export_notes(paired_result)
+                    typed_result = paired_result
+                if typed_result.error is not None:
+                    return
+                snapshot = HypothesisExportSnapshot(
+                    test,
+                    typed_result,
+                    selection if selection is not None else columns,
+                    notes,
+                )
+                dialog.set_exportable_hypothesis(snapshot)
+
             self._recompute_content(
                 dialog,
                 category=AnalysisCategory.HYPOTHESIS_TESTS,
                 scope_suffix=":".join((test.value, *(selection or ()))),
                 compute=lambda df, _callbacks: self._compute_hypothesis_test(df, test, selection),
-                apply_result=lambda r: dialog.set_content_widget(self._render_hypothesis_test_content(test, r)),
+                apply_result=apply_displayed_result,
                 is_stale=lambda: (
                     config.applied_configuration() is not configuration or config.selected_test() is not test
                 ),
@@ -1470,10 +1695,18 @@ class AnalysisController:
             return
 
         corr_id = uuid.uuid4().hex
+        if category is AnalysisCategory.HYPOTHESIS_TESTS:
+            dialog.invalidate_overview_export()
+        revision = dialog.analysis_revision()
 
         def _combined_is_stale() -> bool:
             """Discard results once the user has moved on from this exact configuration."""
-            return dialog.selected_category() != category or dialog.selected_dataset_tab_id() != tab_id or is_stale()
+            return (
+                dialog.selected_category() != category
+                or dialog.selected_dataset_tab_id() != tab_id
+                or (category is AnalysisCategory.HYPOTHESIS_TESTS and dialog.analysis_revision() != revision)
+                or is_stale()
+            )
 
         def _work(
             *,
@@ -1486,6 +1719,8 @@ class AnalysisController:
             return compute(df, _JobCallbacks(progress_cb=progress_cb, cancel_cb=cancel_cb))
 
         def _on_result(result: object) -> None:
+            if _combined_is_stale():
+                return
             if result is None:
                 if cancelable:
                     dialog.show_placeholder(self._tr(self.TR_ANALYSIS_CANCELLED))

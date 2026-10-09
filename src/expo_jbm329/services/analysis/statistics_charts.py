@@ -81,7 +81,8 @@ def render_statistics_charts(
 
     Figures use the Agg canvas and remain local to the calling worker. The
     shared lock serializes rendering against StatisticsView's figure mutations
-    and actual Qt canvas drawing. Other Matplotlib views do not use this lock.
+    and actual Qt canvas drawing. Hypothesis charts share this rendering lock
+    and serialized Qt canvas; unrelated Matplotlib views do not use it.
     """
     images: list[ExcelChartImage] = []
     total = len(columns)

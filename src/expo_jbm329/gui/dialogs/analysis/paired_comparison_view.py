@@ -6,11 +6,12 @@ import html
 import math
 from typing import TYPE_CHECKING
 
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.hypothesis_charts import HypothesisChartLabels, draw_paired_charts
 from expo_jbm329.services.analysis.paired_comparison import PairedComparisonError, PairedComparisonMethod
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 
@@ -77,23 +78,30 @@ class PairedComparisonView(QWidget):
         ]
         if method is PairedComparisonMethod.FRIEDMAN and not math.isnan(result.kendall_w):
             summary.append(self.tr("Kendall's W: {effect}").format(effect=fmt_num(result.kendall_w)))
-        summary.append(self.tr("Rows are treated as paired subjects across the selected measurement columns."))
-        summary.append(self.tr("Occasions follow the selected column order; chronological order is not inferred."))
-        summary.append(self.tr("Boxplots use all complete subjects; whiskers show the minimum and maximum."))
-        if result.plot_data is not None and result.plot_data.sampled:
-            summary.append(
-                self.tr("Trajectories show a deterministic sample of {shown} of {total} complete subjects.").format(
-                    shown=fmt_int(len(result.plot_data.trajectories)),
-                    total=fmt_int(result.complete_subjects),
-                )
-            )
-            summary.append(self.tr("Tables, boxplots and tests use all complete subjects."))
+        summary.extend(self.export_notes(result))
         label = self._build_message("<br>".join(summary))
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         panel, layout = self._build_section(self.tr("Test results"))
         layout.addWidget(label)
         return panel
+
+    def export_notes(self, result: PairedComparisonResult) -> tuple[str, ...]:
+        """Share displayed complete-cohort, ordering and trajectory-sampling guidance."""
+        notes = [
+            self.tr("Rows are treated as paired subjects across the selected measurement columns."),
+            self.tr("Occasions follow the selected column order; chronological order is not inferred."),
+            self.tr("Boxplots use all complete subjects; whiskers show the minimum and maximum."),
+        ]
+        if result.plot_data is not None and result.plot_data.sampled:
+            notes.append(
+                self.tr("Trajectories show a deterministic sample of {shown} of {total} complete subjects.").format(
+                    shown=fmt_int(len(result.plot_data.trajectories)),
+                    total=fmt_int(result.complete_subjects),
+                )
+            )
+            notes.append(self.tr("Tables, boxplots and tests use all complete subjects."))
+        return tuple(notes)
 
     def _build_section(self, title: str) -> tuple[QWidget, QVBoxLayout]:
         """Build a titled splitter section using plain-text headings."""
@@ -150,37 +158,16 @@ class PairedComparisonView(QWidget):
         """Render prepared distributions and paired trajectories without processing data."""
         panel, layout = self._build_section(self.tr("Paired measurements"))
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(260)
-        distribution = figure.add_subplot(121)
-        trajectories = figure.add_subplot(122)
-        distribution.bxp(
-            [
-                {
-                    "label": summary.column,
-                    "med": summary.median,
-                    "q1": summary.q1,
-                    "q3": summary.q3,
-                    "whislo": summary.minimum,
-                    "whishi": summary.maximum,
-                    "fliers": [],
-                }
-                for summary in result.summaries
-            ],
-            showfliers=False,
+        labels = HypothesisChartLabels(
+            distribution=self.tr("Distribution by occasion"),
+            residuals="",
+            trajectories=self.tr("Subject trajectories"),
+            value=self.tr("Value"),
+            occasion=self.tr("Measurement occasion"),
         )
-        distribution.set_title(self.tr("Distribution by occasion"))
-        distribution.set_ylabel(self.tr("Value"))
-        positions = list(range(1, len(result.columns) + 1))
-        if result.plot_data is not None:
-            for values in result.plot_data.trajectories:
-                trajectories.plot(positions, values, marker=".", color="tab:blue", alpha=0.25, linewidth=0.8)
-        trajectories.set_xticks(positions, result.columns)
-        trajectories.set_title(self.tr("Subject trajectories"))
-        trajectories.set_ylabel(self.tr("Value"))
-        for axis in (distribution, trajectories):
-            axis.set_xlabel(self.tr("Measurement occasion"))
-            axis.tick_params(axis="x", labelrotation=30)
+        canvas.build_chart(lambda: draw_paired_charts(figure, result, labels))
         layout.addWidget(canvas)
         return panel
 

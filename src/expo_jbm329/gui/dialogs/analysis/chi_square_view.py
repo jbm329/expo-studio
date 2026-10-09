@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 import html
-import math
 from typing import TYPE_CHECKING
 
-import numpy as np
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.chi_square import (
     COCHRAN_LOW_EXPECTED_COUNT,
     COCHRAN_MAX_LOW_EXPECTED_FRACTION,
@@ -20,21 +18,20 @@ from expo_jbm329.services.analysis.chi_square import (
     ChiSquareResult,
 )
 from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS, MIN_GROUPS
+from expo_jbm329.services.analysis.hypothesis_charts import MAX_ANNOTATED_CELLS as MAX_ANNOTATED_CELLS  # noqa: PLC0414
+from expo_jbm329.services.analysis.hypothesis_charts import (
+    RESIDUAL_SIGNIFICANCE_THRESHOLD,
+    draw_residual_heatmap,
+    heatmap_color_limit,
+)
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
 
 if TYPE_CHECKING:
+    import numpy as np
     from matplotlib.axes import Axes
 
 # Standard convention for statistical significance, matching GroupComparisonView.
 _SIGNIFICANCE_LEVEL = 0.05
-
-# Two-sided 5% critical value of the standard normal distribution: an
-# adjusted residual beyond it marks a cell deviating significantly from
-# independence.
-RESIDUAL_SIGNIFICANCE_THRESHOLD = 1.96
-
-# Annotating every heatmap cell becomes unreadable for large tables.
-MAX_ANNOTATED_CELLS = 100
 
 
 class ChiSquareView(QWidget):
@@ -185,39 +182,26 @@ class ChiSquareView(QWidget):
     def _build_heatmap(self, result: ChiSquareResult) -> QWidget:
         """Build a matplotlib canvas showing the adjusted standardized residuals."""
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(260)
-
-        ax = figure.add_subplot(111)
-        self._draw_heatmap(figure, ax, result)
+        canvas.build_chart(lambda: self._draw_heatmap(figure, figure.add_subplot(111), result))
 
         return canvas
 
     def _draw_heatmap(self, figure: Figure, ax: Axes, result: ChiSquareResult) -> None:
         """Draw the residual heatmap with a symmetric, diverging color scale."""
-        residuals = np.asarray(result.adjusted_residuals, dtype=float)
-        limit = self.heatmap_color_limit(residuals)
-
-        # NaN cells (undefined residuals) are left uncolored by imshow.
-        image = ax.imshow(
-            residuals,
-            cmap="RdBu_r",
-            vmin=-limit,
-            vmax=limit,
-            aspect="auto",
+        draw_residual_heatmap(
+            figure,
+            ax,
+            result,
+            self.tr("Adjusted standardized residuals"),
+            self.chart_annotations(result),
         )
-        figure.colorbar(image, ax=ax)
 
-        ax.set_xticks(range(len(result.column_labels)), labels=list(result.column_labels))
-        ax.set_yticks(range(len(result.row_labels)), labels=list(result.row_labels))
-        ax.set_xlabel(result.column_column)
-        ax.set_ylabel(result.row_column)
-        ax.set_title(self.tr("Adjusted standardized residuals"))
-
-        if residuals.size <= MAX_ANNOTATED_CELLS:
-            for (row_index, col_index), value in np.ndenumerate(residuals):
-                if math.isfinite(value):
-                    ax.text(col_index, row_index, fmt_num(float(value), sig=3), ha="center", va="center")
+    @staticmethod
+    def chart_annotations(result: ChiSquareResult) -> tuple[tuple[str, ...], ...]:
+        """Capture locale-aware annotation text before handing chart data to workers."""
+        return tuple(tuple(fmt_num(value, sig=3) for value in row) for row in result.adjusted_residuals)
 
     @staticmethod
     def heatmap_color_limit(residuals: np.ndarray) -> float:
@@ -232,10 +216,30 @@ class ChiSquareView(QWidget):
         Returns:
             The absolute limit used for both ends of the color scale.
         """
-        finite = np.abs(residuals[np.isfinite(residuals)])
-        if finite.size == 0:
-            return RESIDUAL_SIGNIFICANCE_THRESHOLD
-        return max(float(finite.max()), RESIDUAL_SIGNIFICANCE_THRESHOLD)
+        return heatmap_color_limit(residuals)
+
+    def export_notes(self, result: ChiSquareResult) -> tuple[str, ...]:
+        """Capture the displayed interpretation, correction and approximation caveats."""
+        heading = (
+            self.tr("<b>Pearson's chi-square test</b> (with Yates' continuity correction):")
+            if result.yates_correction_applied
+            else self.tr("<b>Pearson's chi-square test</b>:")
+        )
+        notes = [
+            heading.replace("<b>", "").replace("</b>", ""),
+            self._significance_text(result.p_value),
+            self._residual_guidance_text(),
+        ]
+        if result.fisher_p_value is not None and result.fisher_odds_ratio is not None:
+            notes.append(
+                self
+                .tr("<b>Fisher's exact test</b> (exact; useful when expected counts are small):")
+                .replace("<b>", "")
+                .replace("</b>", "")
+            )
+        if result.cochran_violated:
+            notes.append(self.cochran_warning_text(result))
+        return tuple(notes)
 
     # ------------------------------------------------------------------
     # Test results

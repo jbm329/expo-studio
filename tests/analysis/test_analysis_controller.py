@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 import dataclasses
+from pathlib import Path
 from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import Qt
+from openpyxl import load_workbook
+from PyQt6.QtCore import Qt, QTranslator
 from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QLabel, QTableWidget, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
+from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
 from expo_jbm329.gui.dialogs.analysis.clustering_config import ClusteringConfigWidget
 from expo_jbm329.gui.dialogs.analysis.clustering_view import ClusteringView
@@ -37,6 +40,10 @@ from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.correlation import CorrelationMethod
+from expo_jbm329.services.analysis.hypothesis_export import (
+    HypothesisExportComponent as Component,
+)
+from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportRequest
 from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierError, MultivariateOutlierMethod
 from expo_jbm329.services.analysis.outliers import OutlierMethod
 from expo_jbm329.services.analysis.overview import (
@@ -55,9 +62,11 @@ from expo_jbm329.services.analysis.statistics import (
     analyze_descriptive_statistics,
 )
 from expo_jbm329.services.analysis.timeseries import DecompositionModel
+from expo_jbm329.services.file_writer import FileWriter
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis import analysis_controller as analysis_controller_module
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
+from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
 
 _CONTROLLER_MODULE = "expo_jbm329.workbench.controllers.analysis.analysis_controller"
 
@@ -244,6 +253,118 @@ def _statistics_export_context():
     results.current_df.side_effect = AssertionError("Statistics export must not read the active dataset")
     controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
     return controller, dialog, result, Mock()
+
+
+def _hypothesis_export_context(snapshot):
+    dialog = AnalysisDialog(
+        parent=None,
+        datasets=[DatasetRef("chosen", "Chosen", 20, 4), DatasetRef("other", "Other", 20, 4)],
+        active_tab_id="chosen",
+    )
+    dialog.select_category(AnalysisCategory.HYPOTHESIS_TESTS)
+    content = AnalysisController._render_hypothesis_test_content(snapshot.test, snapshot.result)
+    dialog.set_content_widget(content)
+    snapshot = dataclasses.replace(
+        snapshot,
+        notes=tuple(note.replace("<b>", "").replace("</b>", "") for note in content.export_notes(snapshot.result)),
+    )
+    dialog.set_exportable_hypothesis(snapshot)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must never fetch an active or pending dataset")
+    results.current_df.side_effect = AssertionError("Export must never fetch active data")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, snapshot, Mock()
+
+
+@pytest.mark.parametrize("factory", [group_snapshot, chi_snapshot, paired_snapshot])
+@pytest.mark.parametrize("format_choice", list(StatisticsExportFormat))
+def test_hypothesis_exports_route_owned_numeric_frames_and_per_call_context(factory, format_choice):
+    controller, dialog, snapshot, exporter = _hypothesis_export_context(factory())
+    request = HypothesisExportRequest(snapshot, (Component.TEST_RESULTS,), format_choice)
+    controller._export_hypothesis(dialog, exporter, request)
+    method = {
+        StatisticsExportFormat.EXCEL: exporter.export_excel,
+        StatisticsExportFormat.CSV: exporter.export_csv,
+        StatisticsExportFormat.BINARY: exporter.export_data,
+    }[format_choice]
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"]
+    frame = next(iter(kwargs["sheets"].values())) if format_choice is StatisticsExportFormat.EXCEL else kwargs["df"]
+    assert frame["Test"].notna().any()
+    assert pd.api.types.is_numeric_dtype(frame["Test statistic"])
+    assert frame["Notes"].dropna().tolist() == list(snapshot.notes)
+    if format_choice is StatisticsExportFormat.EXCEL:
+        assert kwargs["chart_factory"] is None
+
+
+@pytest.mark.parametrize("factory", [group_snapshot, chi_snapshot, paired_snapshot])
+@pytest.mark.parametrize("locale", ["en", "sv"])
+@pytest.mark.parametrize("charts_only", [False, True])
+def test_hypothesis_localized_workbooks_read_back_all_types(tmp_path, factory, locale, charts_only):
+    translator = QTranslator()
+    path = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{locale}.qm"
+    assert translator.load(str(path))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        controller, dialog, snapshot, exporter = _hypothesis_export_context(factory())
+        components = (Component.CHARTS,) if charts_only else tuple(Component)
+        request = HypothesisExportRequest(snapshot, components, StatisticsExportFormat.EXCEL)
+        controller._export_hypothesis(dialog, exporter, request)
+        kwargs = exporter.export_excel.call_args.kwargs
+        chart_name = "Charts" if locale == "en" else "Diagram"
+        assert kwargs["chart_sheet_name"] == chart_name
+        images = kwargs["chart_factory"](None, None)
+        assert len(images) == 1
+        output = tmp_path / f"{locale}.xlsx"
+        FileWriter().save_excel_sheets(
+            kwargs["sheets"],
+            output,
+            chart_images=images,
+            chart_sheet_name=chart_name,
+            streaming=False,
+        )
+        workbook = load_workbook(output)
+        try:
+            assert workbook.sheetnames == [*kwargs["sheets"], chart_name]
+            assert len(workbook[chart_name]._images) == 1
+            assert workbook[chart_name]["A1"].value == " / ".join(snapshot.columns)
+            if not charts_only:
+                result_name = "Test results" if locale == "en" else "Testresultat"
+                frame = kwargs["sheets"][result_name]
+                notes_header = "Notes" if locale == "en" else "Noteringar"
+                assert frame[notes_header].dropna().tolist() == list(snapshot.notes)
+                assert isinstance(workbook[result_name]["B2"].value, (int, float))
+                if locale == "sv":
+                    assert "Teststatistik" in frame.columns
+                    assert any("→" in note or "mät" in note or "Grupp" in note for note in snapshot.notes)
+        finally:
+            workbook.close()
+    finally:
+        app.removeTranslator(translator)
+
+
+@pytest.mark.parametrize("change", ["identity", "dataset", "category", "placeholder", "replacement"])
+def test_hypothesis_export_rejects_stale_dialog_requests(change):
+    controller, dialog, snapshot, exporter = _hypothesis_export_context(group_snapshot())
+    request = HypothesisExportRequest(snapshot, (Component.SUMMARY,), StatisticsExportFormat.EXCEL)
+    match change:
+        case "identity":
+            dialog.set_exportable_hypothesis(group_snapshot())
+        case "dataset":
+            dialog._dataset_combo.setCurrentIndex(1)
+        case "category":
+            dialog.select_category(AnalysisCategory.STATISTICS)
+        case "placeholder":
+            dialog.show_placeholder("prompt")
+        case "replacement":
+            dialog.set_content_widget(QWidget())
+    controller._export_hypothesis(dialog, exporter, request)
+    controller._export_hypothesis(dialog, exporter, object())
+    assert not exporter.mock_calls
 
 
 def test_statistics_excel_exports_localized_tables_and_every_column_chart(monkeypatch):
@@ -477,6 +598,7 @@ class DummyAnalysisDialog:
         self.dataset_changed = DummySignal()
         self.overview_export_requested = DummySignal()
         self.statistics_export_requested = DummySignal()
+        self.hypothesis_export_requested = DummySignal()
         self.placeholder_calls: list[str] = []
         self.content_widgets: list[QWidget] = []
         self.config_widgets: list[QWidget | None] = []
@@ -488,10 +610,13 @@ class DummyAnalysisDialog:
         self._current_config: QWidget | None = None
         self._export_overview = None
         self._export_statistics = None
+        self._export_hypothesis = None
         self._analysis_revision = 0
 
     def invalidate_overview_export(self):
         self._export_overview = None
+        self._export_statistics = None
+        self._export_hypothesis = None
         self._analysis_revision += 1
 
     def analysis_revision(self):
@@ -509,11 +634,19 @@ class DummyAnalysisDialog:
     def exportable_statistics(self):
         return self._export_statistics
 
+    def set_exportable_hypothesis(self, snapshot):
+        self._export_hypothesis = snapshot
+
+    def exportable_hypothesis(self):
+        return self._export_hypothesis
+
     def show_placeholder(self, text):
+        self.invalidate_overview_export()
         self.placeholder_calls.append(text)
         self._current_content = None
 
     def set_content_widget(self, widget):
+        self.invalidate_overview_export()
         self.content_widgets.append(widget)
         self._current_content = widget
 
@@ -1198,6 +1331,72 @@ def _apply_hypothesis_test(async_ops: DummyAsyncOps, dlg: DummyAnalysisDialog) -
 def _select_test(config: HypothesisTestsConfigWidget, test: HypothesisTest) -> None:
     combo = config._test_combo  # noqa: SLF001
     combo.setCurrentIndex(combo.findData(test.value))
+
+
+def test_hypothesis_pending_edits_retain_displayed_applied_export_until_new_apply(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dialog = _open_hypothesis_tests(async_ops, dialog_factory)
+    assert dialog.exportable_hypothesis() is None
+    call = _apply_hypothesis_test(async_ops, dialog)
+    assert dialog.exportable_hypothesis() is None
+    _simulate_success(call)
+    snapshot = dialog.exportable_hypothesis()
+    assert snapshot is not None
+    assert snapshot.columns == ("value", "grp")
+    config = _hypothesis_tests_config(dialog)
+    _gc_numeric_combo(config).setCurrentIndex(1)
+    assert config.current_configuration() != config.applied_configuration()
+    assert dialog.exportable_hypothesis() is snapshot
+    selection_dialog = AnalysisExportDialog(hypothesis=snapshot)
+    text = "\n".join(label.text() for label in selection_dialog.findChildren(QLabel))
+    assert "value / grp" in text
+    assert "other / grp" not in text
+    second = _apply_hypothesis_test(async_ops, dialog)
+    assert dialog.exportable_hypothesis() is None
+    _simulate_success(second)
+    assert dialog.exportable_hypothesis().columns == ("other", "grp")
+
+
+@pytest.mark.parametrize("change", ["test-return", "dataset", "category-return", "prompt", "error", "apply"])
+def test_hypothesis_late_callbacks_cannot_restore_invalidated_exports(dialog_factory, change):
+    async_ops = DummyAsyncOps()
+    _, dialog = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = _hypothesis_tests_config(dialog)
+    call = _apply_hypothesis_test(async_ops, dialog)
+    value = call["work"]()
+    match change:
+        case "test-return":
+            _select_test(config, HypothesisTest.CHI_SQUARE)
+            _select_test(config, HypothesisTest.GROUP_COMPARISON)
+        case "dataset":
+            dialog._selected_dataset_tab_id = "changed"
+        case "category-return":
+            dialog.invalidate_overview_export()
+        case "prompt":
+            dialog.show_placeholder("prompt")
+        case "error":
+            call["on_error"]("failure")
+        case "apply":
+            _apply_hypothesis_test(async_ops, dialog)
+    assert call["stale_check"]()
+    call["on_result"](value)
+    assert dialog.exportable_hypothesis() is None
+
+
+def test_hypothesis_failed_and_cancelled_jobs_never_register_exports(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dialog = _open_hypothesis_tests(
+        async_ops,
+        dialog_factory,
+        pd.DataFrame({"value": [1, 2, 3], "other": [1, 2, 3]}),
+    )
+    _select_test(_hypothesis_tests_config(dialog), HypothesisTest.PAIRED_COMPARISON)
+    _simulate_success(_apply_hypothesis_test(async_ops, dialog))
+    assert dialog.exportable_hypothesis() is None
+    call = _apply_hypothesis_test(async_ops, dialog)
+    assert call["work"](cancel_cb=lambda: True) is None
+    call["on_result"](None)
+    assert dialog.exportable_hypothesis() is None
 
 
 def test_hypothesis_tests_initialize_without_a_job_and_prompt_for_apply(dialog_factory):

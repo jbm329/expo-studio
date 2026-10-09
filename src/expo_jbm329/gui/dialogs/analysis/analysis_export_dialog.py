@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -16,6 +17,12 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
+from expo_jbm329.services.analysis.categories import HypothesisTest
+from expo_jbm329.services.analysis.hypothesis_export import (
+    HypothesisExportComponent,
+    HypothesisExportRequest,
+    HypothesisExportSnapshot,
+)
 from expo_jbm329.services.analysis.overview import (
     DatasetOverviewResult,
     OverviewExportFormat,
@@ -41,6 +48,8 @@ class AnalysisExportDialog(QDialog):
         overview_mode: bool = False,
         statistics: DescriptiveStatisticsResult | None = None,
         statistics_mode: bool = False,
+        hypothesis: HypothesisExportSnapshot | None = None,
+        hypothesis_mode: bool = False,
     ) -> None:
         """Build grouped export choices and a format selector.
 
@@ -50,17 +59,22 @@ class AnalysisExportDialog(QDialog):
             overview_mode: Show disabled Overview choices even without a result.
             statistics: Successful displayed Statistics snapshot, if available.
             statistics_mode: Show Statistics export choices.
+            hypothesis: Successfully displayed applied hypothesis selection.
+            hypothesis_mode: Show hypothesis choices even before Apply.
         """
         super().__init__(parent)
         self.setWindowTitle(self.tr("Export"))
         self.resize(540, 540)
         self._overview = overview
         self._statistics = statistics
+        self._hypothesis = hypothesis
+        self._hypothesis_mode = hypothesis_mode or hypothesis is not None
+        self._hypothesis_choices: dict[HypothesisExportComponent, QCheckBox] = {}
         self._table_choices: dict[OverviewExportTable, QCheckBox] = {}
         self._statistics_choices: dict[StatisticsExportTable, QCheckBox] = {}
         self._overview_mode = overview_mode or overview is not None
         self._statistics_mode = statistics_mode or statistics is not None
-        if self._overview_mode and self._statistics_mode:
+        if sum((self._overview_mode, self._statistics_mode, self._hypothesis_mode)) > 1:
             message = "An export dialog can represent only one analysis result."
             raise ValueError(message)
         layout = QVBoxLayout(self)
@@ -72,7 +86,11 @@ class AnalysisExportDialog(QDialog):
             else (
                 self.tr("Export the available Statistics tables and numeric-column charts.")
                 if self._statistics_mode
-                else self.tr("Layout preview only. Export processing is not implemented yet.")
+                else (
+                    self.tr("Export computed tables and charts for the applied test, not the original dataset.")
+                    if self._hypothesis_mode
+                    else self.tr("Layout preview only. Export processing is not implemented yet.")
+                )
             ),
             self,
         )
@@ -82,11 +100,13 @@ class AnalysisExportDialog(QDialog):
             self._build_overview_choices(layout)
         elif self._statistics_mode:
             self._build_statistics_choices(layout)
+        elif self._hypothesis_mode:
+            self._build_hypothesis_choices(layout)
         else:
             self._build_preview_choices(layout)
         formats = QFormLayout()
         self._format_combo = QComboBox(self)
-        format_type = StatisticsExportFormat if self._statistics_mode else OverviewExportFormat
+        format_type = StatisticsExportFormat if self._statistics_mode or self._hypothesis_mode else OverviewExportFormat
         self._format_combo.addItem("CSV", format_type.CSV)
         self._format_combo.addItem(self.tr("Excel workbook (.xlsx)"), format_type.EXCEL)
         self._format_combo.addItem(self.tr("Binary data file (Parquet / Feather / Pickle)"), format_type.BINARY)
@@ -105,7 +125,13 @@ class AnalysisExportDialog(QDialog):
         buttons.rejected.connect(self.reject)
         localize_dialog_buttons(buttons)
         layout.addWidget(buttons)
-        choices = self._statistics_choices if self._statistics_mode else self._table_choices
+        choices = (
+            self._hypothesis_choices
+            if self._hypothesis_mode
+            else self._statistics_choices
+            if self._statistics_mode
+            else self._table_choices
+        )
         first_available = next((choice for choice in choices.values() if choice.isEnabled()), None)
         if first_available is not None:
             first_available.setChecked(True)
@@ -219,8 +245,75 @@ class AnalysisExportDialog(QDialog):
         layout.addWidget(data)
         layout.addWidget(results)
 
-    def export_request(self) -> OverviewExportRequest | StatisticsExportRequest | None:
+    def _build_hypothesis_choices(self, layout: QVBoxLayout) -> None:
+        """List applied identity plainly, independently of pending configuration edits."""
+        snapshot = self._hypothesis
+        if snapshot is not None:
+            names = {
+                HypothesisTest.GROUP_COMPARISON: self.tr("Group comparison"),
+                HypothesisTest.CHI_SQUARE: self.tr("Chi-square independence"),
+                HypothesisTest.PAIRED_COMPARISON: self.tr("Paired comparison"),
+            }
+            roles = {
+                HypothesisTest.GROUP_COMPARISON: self.tr("Numeric column / grouping column"),
+                HypothesisTest.CHI_SQUARE: self.tr("Row column / column column"),
+                HypothesisTest.PAIRED_COMPARISON: self.tr("Measurement columns (occasion order)"),
+            }
+            identity = QLabel(
+                self.tr("Applied test: {test}\n{roles}: {columns}").format(
+                    test=names[snapshot.test], roles=roles[snapshot.test], columns=" / ".join(snapshot.columns)
+                ),
+                self,
+            )
+            identity.setTextFormat(Qt.TextFormat.PlainText)
+            identity.setWordWrap(True)
+            identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            layout.addWidget(identity)
+        summaries = {
+            HypothesisTest.GROUP_COMPARISON: self.tr("Group summary"),
+            HypothesisTest.CHI_SQUARE: self.tr("Contingency table"),
+            HypothesisTest.PAIRED_COMPARISON: self.tr("Measurement summary"),
+        }
+        for title, components in (
+            (self.tr("Data"), (HypothesisExportComponent.SUMMARY,)),
+            (self.tr("Results"), (HypothesisExportComponent.TEST_RESULTS, HypothesisExportComponent.CHARTS)),
+        ):
+            group = QGroupBox(title, self)
+            contents = QVBoxLayout(group)
+            for component in components:
+                label = (
+                    summaries[snapshot.test]
+                    if component is HypothesisExportComponent.SUMMARY and snapshot is not None
+                    else self.tr("Summary / statistics tables")
+                    if component is HypothesisExportComponent.SUMMARY
+                    else self.tr(component.value)
+                )
+                choice = QCheckBox(label, group)
+                choice.setEnabled(snapshot is not None)
+                if snapshot is None:
+                    choice.setToolTip(self.tr("Apply a hypothesis test successfully before exporting."))
+                self._hypothesis_choices[component] = choice
+                choice.toggled.connect(self._update_export_enabled)
+                contents.addWidget(choice)
+            layout.addWidget(group)
+
+    def export_request(self) -> OverviewExportRequest | StatisticsExportRequest | HypothesisExportRequest | None:
         """Return a validated selection, or None for previews/invalid choices."""
+        if self._hypothesis_mode:
+            if self._hypothesis is None:
+                return None
+            hypothesis_components = tuple(
+                component
+                for component, choice in self._hypothesis_choices.items()
+                if choice.isEnabled() and choice.isChecked()
+            )
+            format_choice = self._format_combo.currentData()
+            if not isinstance(format_choice, StatisticsExportFormat):
+                return None
+            try:
+                return HypothesisExportRequest(self._hypothesis, hypothesis_components, format_choice)
+            except ValueError:
+                return None
         if self._statistics_mode:
             if self._statistics is None:
                 return None
@@ -251,7 +344,7 @@ class AnalysisExportDialog(QDialog):
 
     def _update_export_enabled(self) -> None:
         """Preserve picks across formats and explain disabled exports."""
-        if self._statistics_mode:
+        if self._statistics_mode or self._hypothesis_mode:
             self._update_statistics_export_enabled()
             return
         excel = self._format_combo.currentData() is OverviewExportFormat.EXCEL
@@ -292,13 +385,18 @@ class AnalysisExportDialog(QDialog):
             )
         )
         request = self.export_request()
-        selected = any(choice.isEnabled() and choice.isChecked() for choice in self._statistics_choices.values())
-        available = any(choice.isEnabled() for choice in self._statistics_choices.values())
-        chart_selected = (
-            self._statistics_choices.get(StatisticsExportTable.CHARTS) is not None
-            and self._statistics_choices[StatisticsExportTable.CHARTS].isChecked()
+        choices = self._hypothesis_choices if self._hypothesis_mode else self._statistics_choices
+        selected = any(choice.isEnabled() and choice.isChecked() for choice in choices.values())
+        available = any(choice.isEnabled() for choice in choices.values())
+        chart_choice = (
+            self._hypothesis_choices.get(HypothesisExportComponent.CHARTS)
+            if self._hypothesis_mode
+            else self._statistics_choices.get(StatisticsExportTable.CHARTS)
         )
-        if self._statistics is None:
+        chart_selected = chart_choice is not None and chart_choice.isChecked()
+        if self._hypothesis_mode and self._hypothesis is None:
+            reason = self.tr("Apply a hypothesis test successfully before exporting.")
+        elif not self._hypothesis_mode and self._statistics is None:
             reason = self.tr("Run Statistics successfully before exporting.")
         elif not available:
             reason = self.tr("This component is empty and cannot be exported.")

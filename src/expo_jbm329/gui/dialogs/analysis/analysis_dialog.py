@@ -41,6 +41,7 @@ from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDial
 from expo_jbm329.gui.dialogs.analysis.report_page import ReportPage
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportRequest, HypothesisExportSnapshot
 from expo_jbm329.services.analysis.overview import OverviewExportRequest
 from expo_jbm329.services.analysis.statistics import StatisticsExportRequest
 
@@ -121,6 +122,7 @@ class AnalysisDialog(QDialog):
     category_changed = pyqtSignal(str)  # AnalysisCategory value
     overview_export_requested = pyqtSignal(object)  # OverviewExportRequest
     statistics_export_requested = pyqtSignal(object)  # StatisticsExportRequest
+    hypothesis_export_requested = pyqtSignal(object)  # HypothesisExportRequest
 
     def __init__(
         self,
@@ -145,6 +147,8 @@ class AnalysisDialog(QDialog):
         self._export_tab_id: str | None = None
         self._export_statistics: DescriptiveStatisticsResult | None = None
         self._statistics_export_tab_id: str | None = None
+        self._export_hypothesis: HypothesisExportSnapshot | None = None
+        self._hypothesis_export_tab_id: str | None = None
         self._analysis_revision = 0
 
         self.setWindowTitle(self.tr("Advanced analysis"))
@@ -253,7 +257,7 @@ class AnalysisDialog(QDialog):
         actions.addWidget(add_button)
         explanation = QLabel(
             self.tr(
-                "Overview and Statistics exports are available after analysis. "
+                "Overview, Statistics and applied Hypothesis Tests exports are available after analysis. "
                 "Other export and report actions are previews."
             ),
             bar,
@@ -273,6 +277,8 @@ class AnalysisDialog(QDialog):
             overview_mode=self.selected_category() is AnalysisCategory.OVERVIEW,
             statistics=statistics,
             statistics_mode=self.selected_category() is AnalysisCategory.STATISTICS,
+            hypothesis=self.exportable_hypothesis(),
+            hypothesis_mode=self.selected_category() is AnalysisCategory.HYPOTHESIS_TESTS,
         )
         for combo in dialog.findChildren(QComboBox):
             _ComboToolTipFilter(combo)
@@ -282,6 +288,8 @@ class AnalysisDialog(QDialog):
                 self.overview_export_requested.emit(request)
             elif isinstance(request, StatisticsExportRequest) and request.result is self.exportable_statistics():
                 self.statistics_export_requested.emit(request)
+            elif isinstance(request, HypothesisExportRequest) and request.snapshot is self.exportable_hypothesis():
+                self.hypothesis_export_requested.emit(request)
 
     def invalidate_overview_export(self) -> None:
         """Disable real export as soon as displayed analysis becomes stale."""
@@ -289,11 +297,27 @@ class AnalysisDialog(QDialog):
         self._export_tab_id = None
         self._export_statistics = None
         self._statistics_export_tab_id = None
+        self._export_hypothesis = None
+        self._hypothesis_export_tab_id = None
         self._analysis_revision += 1
 
     def analysis_revision(self) -> int:
         """Return the generation used to reject jobs after navigation/replacement."""
         return self._analysis_revision
+
+    def set_exportable_hypothesis(self, snapshot: HypothesisExportSnapshot) -> None:
+        """Register only the successful applied result already displayed."""
+        self._export_hypothesis = snapshot
+        self._hypothesis_export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_hypothesis(self) -> HypothesisExportSnapshot | None:
+        """Return the displayed applied snapshot, independent of pending edits."""
+        if (
+            self.selected_category() is AnalysisCategory.HYPOTHESIS_TESTS
+            and self.selected_dataset_tab_id() == self._hypothesis_export_tab_id
+        ):
+            return self._export_hypothesis
+        return None
 
     def set_exportable_overview(self, result: DatasetOverviewResult) -> None:
         """Register the successful result currently displayed by the controller."""

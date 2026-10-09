@@ -408,6 +408,24 @@ def _worker_holds_chart_lock():
         assert not timed_out.is_set(), "GUI waited for the worker's chart lock"
 
 
+def test_shared_canvas_chart_builder_defers_without_blocking_and_keeps_latest_builder():
+    from matplotlib.figure import Figure
+
+    from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
+
+    figure = Figure()
+    canvas = SerializedAnalysisCanvas(figure)
+    calls = []
+    with _worker_holds_chart_lock():
+        canvas.build_chart(lambda: calls.append("old"))
+        canvas.build_chart(lambda: calls.append(STATISTICS_CHART_LOCK._is_owned()))
+        assert not calls
+    canvas._retry_render()
+    assert calls == [True]
+    canvas._retry_render()
+    assert calls == [True]
+
+
 def test_distribution_creation_defers_without_blocking_and_keeps_latest_selection(qt_app):
     result = DescriptiveStatisticsResult(columns=(_make_column_stats(column="a"), _make_column_stats(column="b")))
     with _worker_holds_chart_lock():
