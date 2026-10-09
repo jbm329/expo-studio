@@ -59,6 +59,11 @@ Available analyses include:
 
 The workspace uses adjustable result sections and configurable column selections. Long-running calculations are performed in the background to keep the interface responsive, and supported analyses provide progress or cancellation where appropriate.
 
+All regression models require **Apply** to fit. Changing the model, target,
+predictors, or Cox duration/event only updates pending selections and shows
+the Apply prompt. Returning to earlier settings does not restore old results;
+press Apply again to calculate that selection.
+
 Choose **Export** to open a single selection dialog grouped into **Data** and
 **Results**. After a successful **Overview**, select **Summary**, **Columns
 metadata**, or **Sample (first 100 rows)** to export tables from the displayed

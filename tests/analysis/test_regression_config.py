@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import pytest
 from PyQt6.QtCore import Qt
 
 from expo_jbm329.gui.dialogs.analysis.column_combo_box import exclusion_tooltip
@@ -105,6 +106,7 @@ def test_nothing_is_checked_initially_without_predictors():
 def test_select_all_and_clear_only_toggle_eligible_non_target_predictors():
     widget = RegressionConfigWidget(_result("y"))
     received = _record(widget.model_requested)
+    changed = _record(widget.configuration_changed)
 
     assert widget._select_all_button.text() == "Select all"  # noqa: SLF001
     assert widget._clear_button.text() == "Clear"  # noqa: SLF001
@@ -123,6 +125,11 @@ def test_select_all_and_clear_only_toggle_eligible_non_target_predictors():
     assert widget.checked_predictors() == ()
     assert widget.applied_predictors() == ()
     assert received == []
+    assert changed == [(), ()]
+    revision = widget.configuration_revision()
+    widget._clear_button.click()  # noqa: SLF001
+    assert changed == [(), ()]
+    assert widget.configuration_revision() == revision
 
 
 def test_the_results_predictors_are_checked_and_applied():
@@ -149,11 +156,13 @@ def test_construction_does_not_emit():
 def test_checking_predictors_updates_the_count_without_emitting():
     widget = RegressionConfigWidget(_result())
     received = _record(widget.model_requested)
+    changed = _record(widget.configuration_changed)
 
     _set_checked(widget, "x", True)
     _set_checked(widget, "g", True)
 
     assert received == []
+    assert changed == [(), ()]
     assert widget.checked_predictors() == ("x", "g")
     assert widget.applied_predictors() == ()
     assert widget._apply_button.isEnabled()  # noqa: SLF001
@@ -214,12 +223,14 @@ def test_too_many_predictors_disables_apply_and_explains():
 def test_changing_the_target_swaps_the_disabled_item_and_emits():
     widget = RegressionConfigWidget(_result("y", ("x", "z")))
     received = _record(widget.model_requested)
+    changed = _record(widget.configuration_changed)
     combo = widget._target_combo  # noqa: SLF001
 
     combo.setCurrentIndex(combo.findText("x"))
 
-    assert received == [()]
-    assert widget.model_configuration() == (RegressionModel.LINEAR, "x", ("z",))
+    assert received == []
+    assert changed == [()]
+    assert widget.model_configuration() == (RegressionModel.LINEAR, "y", ("x", "z"))
     assert widget.checked_predictors() == ("z",)
     assert not _is_enabled(_item(widget, "x"))
     assert _item(widget, "x").checkState() == Qt.CheckState.Unchecked
@@ -227,6 +238,9 @@ def test_changing_the_target_swaps_the_disabled_item_and_emits():
     assert _is_enabled(y_item)
     assert y_item.toolTip() == ""
     assert y_item.checkState() == Qt.CheckState.Unchecked
+    widget._apply_button.click()  # noqa: SLF001
+    assert received == [()]
+    assert widget.model_configuration() == (RegressionModel.LINEAR, "x", ("z",))
 
 
 def test_changing_target_before_predictors_are_applied_does_not_request_a_model():
@@ -237,17 +251,21 @@ def test_changing_target_before_predictors_are_applied_does_not_request_a_model(
     combo.setCurrentIndex(combo.findText("x"))
 
     assert received == []
-    assert widget.model_configuration() == (RegressionModel.LINEAR, "x", ())
+    assert widget.model_configuration() == (RegressionModel.LINEAR, "y", ())
+    assert widget.current_target() == "x"
 
 
-def test_clearing_the_target_is_ignored():
+def test_clearing_the_target_invalidates_pending_configuration_without_fitting():
     widget = RegressionConfigWidget(_result("y", ("x",)))
     received = _record(widget.model_requested)
+    changed = _record(widget.configuration_changed)
 
     widget._target_combo.setCurrentIndex(-1)  # noqa: SLF001
 
     assert received == []
     assert widget.applied_predictors() == ("x",)
+    assert changed == [()]
+    assert not widget._apply_button.isEnabled()  # noqa: SLF001
 
 
 def test_model_selector_updates_target_eligibility_and_remembers_each_model_target():
@@ -259,13 +277,17 @@ def test_model_selector_updates_target_eligibility_and_remembers_each_model_targ
 
     model_combo.setCurrentIndex(model_combo.findData(RegressionModel.LOGISTIC.value))
 
-    assert widget.model_configuration() == (RegressionModel.LOGISTIC, "g", ())
+    assert widget.model_configuration() == (RegressionModel.LINEAR, "y", ())
+    assert widget.current_model() is RegressionModel.LOGISTIC
+    assert widget.current_target() == "g"
     assert target_combo.eligible_columns() == ("g",)
     assert changed == [()]
 
     model_combo.setCurrentIndex(model_combo.findData(RegressionModel.POISSON.value))
 
-    assert widget.model_configuration() == (RegressionModel.POISSON, "x", ())
+    assert widget.model_configuration() == (RegressionModel.LINEAR, "y", ())
+    assert widget.current_model() is RegressionModel.POISSON
+    assert widget.current_target() == "x"
     assert target_combo.eligible_columns() == ("x", "z")
 
     model_combo.setCurrentIndex(model_combo.findData(RegressionModel.LOGISTIC.value))
@@ -284,7 +306,7 @@ def test_model_without_eligible_targets_disables_target_and_apply():
     assert not widget._apply_button.isEnabled()  # noqa: SLF001
 
 
-def test_changing_model_refits_when_predictors_are_already_applied():
+def test_changing_model_waits_for_apply_when_predictors_are_already_applied():
     widget = RegressionConfigWidget(
         _result("y", ("x", "g")),
         GeneralizedTargetColumns(binary=("g",), count=("x", "z")),
@@ -296,9 +318,12 @@ def test_changing_model_refits_when_predictors_are_already_applied():
         widget._model_combo.findData(RegressionModel.LOGISTIC.value)  # noqa: SLF001
     )
 
+    assert widget.model_configuration() == (RegressionModel.LINEAR, "y", ("x", "g"))
+    assert requested == []
+    assert changed == [()]
+    widget._apply_button.click()  # noqa: SLF001
     assert widget.model_configuration() == (RegressionModel.LOGISTIC, "g", ("x",))
     assert requested == [()]
-    assert changed == []
 
 
 def test_cox_selectors_exclude_both_outcomes_and_wait_for_apply():
@@ -345,3 +370,59 @@ def test_changing_cox_outcomes_invalidates_configuration_without_starting_a_fit(
     assert widget.current_duration() == "duration2"
     assert widget.configuration_revision() > revision
     assert requested == []
+
+
+@pytest.mark.parametrize("model", list(RegressionModel))
+def test_every_model_captures_pending_choices_only_on_apply(model):
+    df = _frame()
+    df["duration"] = np.arange(1, len(df) + 1, dtype=float)
+    df["event"] = np.arange(len(df)) % 2
+    widget = RegressionConfigWidget(
+        analyze_regression(df, "y", ["x"]),
+        GeneralizedTargetColumns(binary=("event",), count=("z",)),
+        SurvivalColumns(durations=("duration",), events=("event",)),
+    )
+    previous = widget.model_configuration()
+    requested = _record(widget.model_requested)
+    changed = _record(widget.configuration_changed)
+    widget._model_combo.setCurrentIndex(widget._model_combo.findData(model.value))  # noqa: SLF001
+    _set_checked(widget, "g", True)
+    assert requested == []
+    assert changed
+    assert widget.model_configuration() == previous
+    assert widget.applied_event() == ""
+
+    widget._apply_button.click()  # noqa: SLF001
+
+    assert requested == [()]
+    target = widget.current_duration() if model is RegressionModel.COX else widget.current_target()
+    assert widget.model_configuration() == (model, target, widget.checked_predictors())
+    assert widget.applied_event() == ("event" if model is RegressionModel.COX else "")
+    revision = widget.configuration_revision()
+    _set_checked(widget, "g", False)
+    _set_checked(widget, "g", True)
+    assert widget.configuration_revision() == revision + 2
+    assert requested == [()]
+    assert widget.model_configuration() == (model, target, widget.checked_predictors())
+
+
+def test_cox_event_is_captured_by_apply_and_pending_event_edits_do_not_change_it():
+    df = _frame()
+    df["duration"] = np.arange(1, len(df) + 1, dtype=float)
+    df["event"] = np.arange(len(df)) % 2
+    df["flag"] = 1 - df["event"]
+    widget = RegressionConfigWidget(
+        analyze_regression(df, "y", ["x"]),
+        survival_columns=SurvivalColumns(durations=("duration",), events=("event", "flag")),
+    )
+    widget._model_combo.setCurrentIndex(widget._model_combo.findData(RegressionModel.COX.value))  # noqa: SLF001
+    widget._apply_button.click()  # noqa: SLF001
+    requested = _record(widget.model_requested)
+    changed = _record(widget.configuration_changed)
+    widget._event_combo.setCurrentIndex(widget._event_combo.findText("flag"))  # noqa: SLF001
+    assert widget.applied_event() == "event"
+    assert requested == []
+    assert changed == [()]
+    widget._apply_button.click()  # noqa: SLF001
+    assert widget.applied_event() == "flag"
+    assert requested == [()]

@@ -2529,17 +2529,21 @@ def test_applying_predictors_refits_the_model_in_a_background_job(dialog_factory
     assert dlg.config_widgets[-1] is config  # the config is never rebuilt
 
 
-def test_changing_the_target_refits_without_it_as_a_predictor(dialog_factory):
+def test_changing_the_target_waits_for_apply_and_excludes_it_as_a_predictor(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_regression(async_ops, dialog_factory)
     config = _regression_config(dlg)
     _check_predictors(config, "x", "z")
     config._apply_button.click()  # noqa: SLF001
     _simulate_success(async_ops.last_call)
+    jobs_before = len(async_ops.calls)
 
     combo = config._target_combo  # noqa: SLF001
     combo.setCurrentIndex(combo.findText("x"))
 
+    assert len(async_ops.calls) == jobs_before
+    assert not isinstance(dlg.content_widget(), RegressionView)
+    config._apply_button.click()  # noqa: SLF001
     call = async_ops.last_call
     assert call["scope"] == "analysis:regression:x:z"
     _simulate_success(call)
@@ -2565,6 +2569,100 @@ def test_stale_regression_result_is_discarded(dialog_factory):
 
     _simulate_success(second)
     assert _regression_view(dlg).result().predictors == ("z",)
+
+
+@pytest.mark.parametrize("edit", ["target", "model", "predictor", "bulk"])
+@pytest.mark.parametrize("callback", ["success", "error"])
+def test_regression_edits_and_same_value_round_trips_leave_prompt_and_discard_old_jobs(
+    dialog_factory,
+    edit,
+    callback,
+):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_regression(async_ops, dialog_factory)
+    config = _regression_config(dlg)
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    call = async_ops.last_call
+    jobs_before = len(async_ops.calls)
+    if edit == "target":
+        combo = config._target_combo  # noqa: SLF001
+        combo.setCurrentIndex(combo.findText("z"))
+        combo.setCurrentIndex(combo.findText("y"))
+    elif edit == "model":
+        combo = config._model_combo  # noqa: SLF001
+        combo.setCurrentIndex(combo.findData(RegressionModel.LOGISTIC.value))
+        combo.setCurrentIndex(combo.findData(RegressionModel.LINEAR.value))
+    elif edit == "predictor":
+        _check_predictors(config, "x", "z")
+        _check_predictors(config, "x")
+    else:
+        config._select_all_button.click()  # noqa: SLF001
+        _check_predictors(config, "x")
+    assert len(async_ops.calls) == jobs_before
+    _assert_apply_prompt(ctrl, dlg)
+    contents_before = len(dlg.content_widgets)
+    if callback == "success":
+        _simulate_success(call)
+    else:
+        call["on_error"]("late error")
+    assert len(dlg.content_widgets) == contents_before
+    assert dlg.placeholder_calls == []
+    _assert_apply_prompt(ctrl, dlg)
+    config._apply_button.click()  # noqa: SLF001
+    assert len(async_ops.calls) == jobs_before + 1
+    _simulate_success(async_ops.last_call)
+    assert _regression_view(dlg).result().error is None
+
+
+@pytest.mark.parametrize("model", list(RegressionModel))
+def test_model_edits_after_fitted_result_show_prompt_without_refitting(dialog_factory, model):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_regression(async_ops, dialog_factory)
+    config = _regression_config(dlg)
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    jobs_before = len(async_ops.calls)
+    combo = config._model_combo  # noqa: SLF001
+    if model is RegressionModel.LINEAR:
+        combo.setCurrentIndex(combo.findData(RegressionModel.LOGISTIC.value))
+    combo.setCurrentIndex(combo.findData(model.value))
+    assert len(async_ops.calls) == jobs_before
+    _assert_apply_prompt(ctrl, dlg)
+
+
+def test_regression_job_is_stale_after_dataset_round_trip_without_config_edit(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_regression(async_ops, dialog_factory)
+    config = _regression_config(dlg)
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    call = async_ops.last_call
+    dlg.invalidate_overview_export()
+    dlg._selected_dataset_tab_id = "other"
+    dlg.invalidate_overview_export()
+    dlg._selected_dataset_tab_id = "t1"
+    _simulate_success(call)
+    call["on_error"]("late error")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.placeholder_calls == []
+
+
+def test_regression_apply_retries_unchanged_configuration_after_failed_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory)
+    config = _regression_config(dlg)
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    first["on_error"]("fit failed")
+    assert config._apply_button.isEnabled()  # noqa: SLF001
+    config._apply_button.click()  # noqa: SLF001
+    assert len(async_ops.calls) == 2
+    assert async_ops.last_call["scope"] == first["scope"]
+    _simulate_success(async_ops.last_call)
+    assert _regression_view(dlg).result().error is None
 
 
 def test_applying_logistic_regression_uses_glm_view_and_keeps_linear_defaults(dialog_factory):

@@ -37,12 +37,11 @@ class RegressionConfigWidget(QWidget):
 
     `model_requested` is emitted when the model should be refitted:
 
-    - when the target changes; the new target is removed from the applied
-      predictors, since a column can't predict itself;
-    - when a predictor selection is applied. Predictor checkboxes only
-      take effect once "Apply" is clicked, so ticking several predictors
-      doesn't start a fit per click. Apply stays enabled for an unchanged
-      selection, so a fit can always be rerun.
+    Only clicking Apply emits `model_requested`, capturing the pending
+    model, outcomes and predictors. Every configuration edit emits
+    `configuration_changed` so the controller can show the Apply prompt.
+    Apply stays enabled for an unchanged valid selection, so a fit can
+    always be rerun.
 
     Numeric predictors are listed first, then categorical ones, then
     categorical columns with an unsuitable number of levels, disabled
@@ -74,6 +73,9 @@ class RegressionConfigWidget(QWidget):
         super().__init__(parent)
 
         self._applied_predictors = tuple(p for p in result.predictors if p != result.target)
+        self._applied_model = RegressionModel.LINEAR
+        self._applied_target = result.target
+        self._applied_event = ""
         self._linear_targets = result.available_targets
         self._generalized_targets = (
             generalized_targets if generalized_targets is not None else GeneralizedTargetColumns(binary=(), count=())
@@ -196,23 +198,16 @@ class RegressionConfigWidget(QWidget):
     # ------------------------------------------------------------------
 
     def _on_target_changed(self, _text: str) -> None:
-        """Disable the new target and refit an already-applied model."""
-        if not self.current_target():
-            return
+        """Update pending target exclusions without requesting a fit."""
         model = self.current_model()
         self._configuration_revision += 1
         self._targets_by_model[model] = self.current_target()
-        had_applied_predictors = bool(self._applied_predictors)
         self._sync_target_item()
-        self._applied_predictors = tuple(p for p in self._applied_predictors if p != self.current_target())
         self._update_apply_state()
-        if self._applied_predictors:
-            self.model_requested.emit()
-        elif had_applied_predictors:
-            self.configuration_changed.emit()
+        self.configuration_changed.emit()
 
     def _on_model_changed(self, _index: int) -> None:
-        """Replace available targets and refit when a model already has predictors applied."""
+        """Update pending model choices and exclusions without requesting a fit."""
         model = self.current_model()
         self._configuration_revision += 1
         self._update_cox_controls()
@@ -234,17 +229,7 @@ class RegressionConfigWidget(QWidget):
         self._sync_target_item()
         self._update_target_notice()
         self._update_apply_state()
-        if not self.current_target():
-            self.configuration_changed.emit()
-            return
-        if self._applied_predictors:
-            self._applied_predictors = tuple(p for p in self._applied_predictors if p != self.current_target())
-            if self._applied_predictors:
-                self.model_requested.emit()
-            else:
-                self.configuration_changed.emit()
-        else:
-            self.configuration_changed.emit()
+        self.configuration_changed.emit()
 
     def _available_targets(self, model: RegressionModel) -> tuple[str, ...]:
         """Return the suitable outcome columns for `model`."""
@@ -353,27 +338,43 @@ class RegressionConfigWidget(QWidget):
     # ------------------------------------------------------------------
 
     def _on_predictor_check_changed(self, _item: QListWidgetItem) -> None:
-        """Refresh the selection count and Apply button after a checkbox toggle."""
+        """Invalidate the displayed fit after a pending predictor edit."""
+        self._configuration_revision += 1
         self._update_apply_state()
+        self.configuration_changed.emit()
 
     def _set_all_predictors_checked(self, *, checked: bool) -> None:
         """Set every enabled predictor to the same pending check state."""
         state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+        changed = False
         self._predictor_list.blockSignals(True)
         try:
             for item in self._checkable_items():
-                if item.data(_ELIGIBLE_ROLE) and item.flags() & Qt.ItemFlag.ItemIsEnabled:
+                if (
+                    item.data(_ELIGIBLE_ROLE)
+                    and item.flags() & Qt.ItemFlag.ItemIsEnabled
+                    and item.checkState() != state
+                ):
                     item.setCheckState(state)
+                    changed = True
         finally:
             self._predictor_list.blockSignals(False)
         self._update_apply_state()
+        if changed:
+            self._configuration_revision += 1
+            self.configuration_changed.emit()
 
     def _on_apply_clicked(self) -> None:
-        """Apply the checked predictors and request a refit."""
+        """Capture the complete pending configuration and request one refit."""
         checked = self.checked_predictors()
         if not self._has_valid_outcomes() or not self._is_valid_selection(checked):
             return
         self._applied_predictors = checked
+        self._applied_model = self.current_model()
+        self._applied_target = (
+            self.current_duration() if self._applied_model is RegressionModel.COX else self.current_target()
+        )
+        self._applied_event = self.current_event() if self._applied_model is RegressionModel.COX else ""
         self._configuration_revision += 1
         self._update_apply_state()
         self.model_requested.emit()
@@ -450,9 +451,11 @@ class RegressionConfigWidget(QWidget):
 
     def model_configuration(self) -> tuple[RegressionModel, str, tuple[str, ...]]:
         """Return the model, target and applied predictors that determine the fit."""
-        if self.current_model() is RegressionModel.COX:
-            return self.current_model(), self.current_duration(), self._applied_predictors
-        return self.current_model(), self.current_target(), self._applied_predictors
+        return self._applied_model, self._applied_target, self._applied_predictors
+
+    def applied_event(self) -> str:
+        """Return the Cox event column captured by the most recent Apply."""
+        return self._applied_event
 
     def current_duration(self) -> str:
         """Return the selected Cox duration column, or ``""`` if none is available."""
@@ -463,5 +466,5 @@ class RegressionConfigWidget(QWidget):
         return self._event_combo.current_column()
 
     def configuration_revision(self) -> int:
-        """Return a monotonically increasing token for changes to applied model configuration."""
+        """Return a generation advanced by every configuration edit and Apply."""
         return self._configuration_revision

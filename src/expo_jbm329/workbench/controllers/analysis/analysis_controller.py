@@ -1258,8 +1258,8 @@ class AnalysisController:
         """Render regression model results and the shared target/predictor config.
 
         Must run on the GUI thread. Linear regression remains the default;
-        model changes and applied predictor selections refit in a background
-        job without recreating the configuration widget.
+        all configuration edits wait for Apply before refitting in a
+        background job without recreating the configuration widget.
         """
         defaults = cast("_RegressionDefaults", result)
         regression = defaults.linear
@@ -1276,7 +1276,7 @@ class AnalysisController:
         def _handle_model_requested() -> None:
             configuration = config.model_configuration()
             model, target, predictors = configuration
-            event = config.current_event() if model is RegressionModel.COX else ""
+            event = config.applied_event()
             revision = config.configuration_revision()
             if model is RegressionModel.LINEAR:
                 scope_parts = (target, *predictors)
@@ -1310,7 +1310,7 @@ class AnalysisController:
                     dialog.config_widget() is not config
                     or config.configuration_revision() != revision
                     or config.model_configuration() != configuration
-                    or (model is RegressionModel.COX and config.current_event() != event)
+                    or config.applied_event() != event
                 ),
             )
 
@@ -1903,7 +1903,10 @@ class AnalysisController:
             return (
                 dialog.selected_category() != category
                 or dialog.selected_dataset_tab_id() != tab_id
-                or (category is AnalysisCategory.HYPOTHESIS_TESTS and dialog.analysis_revision() != revision)
+                or (
+                    category in {AnalysisCategory.HYPOTHESIS_TESTS, AnalysisCategory.REGRESSION}
+                    and dialog.analysis_revision() != revision
+                )
                 or is_stale()
             )
 
