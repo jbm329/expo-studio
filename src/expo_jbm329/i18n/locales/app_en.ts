@@ -5490,6 +5490,86 @@ Hint: {error_hint}</source>
 </context><context>
     <name>GeneralizedRegressionView</name>
     <message>
+        <source>Diagnostic interpretation</source>
+        <translation>Diagnostic interpretation</translation>
+    </message>
+    <message>
+        <source>Logistic-model diagnostics</source>
+        <translation>Logistic-model diagnostics</translation>
+    </message>
+    <message>
+        <source>Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.</source>
+        <translation>Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.</translation>
+    </message>
+    <message>
+        <source>Diagnostics unavailable: outcomes must contain both binary classes.</source>
+        <translation>Diagnostics unavailable: outcomes must contain both binary classes.</translation>
+    </message>
+    <message>
+        <source>No logistic diagnostic data are available.</source>
+        <translation>No logistic diagnostic data are available.</translation>
+    </message>
+    <message>
+        <source>Predictor odds ratios with 95% confidence intervals</source>
+        <translation>Predictor odds ratios with 95% confidence intervals</translation>
+    </message>
+    <message>
+        <source>Odds ratio (logarithmic scale; reference = 1)</source>
+        <translation>Odds ratio (logarithmic scale; reference = 1)</translation>
+    </message>
+    <message>
+        <source>No predictor effects: intercept-only model.</source>
+        <translation>No predictor effects: intercept-only model.</translation>
+    </message>
+    <message>
+        <source>Unavailable: non-finite, non-positive or invalid odds ratio / CI</source>
+        <translation>Unavailable: non-finite, non-positive or invalid odds ratio / CI</translation>
+    </message>
+    <message>
+        <source>ROC (in-sample)</source>
+        <translation>ROC (in-sample)</translation>
+    </message>
+    <message>
+        <source>False positive rate</source>
+        <translation>False positive rate</translation>
+    </message>
+    <message>
+        <source>True positive rate</source>
+        <translation>True positive rate</translation>
+    </message>
+    <message>
+        <source>AUC = {value} (in-sample)</source>
+        <translation>AUC = {value} (in-sample)</translation>
+    </message>
+    <message>
+        <source>Calibration (in-sample)</source>
+        <translation>Calibration (in-sample)</translation>
+    </message>
+    <message>
+        <source>Mean fitted event probability</source>
+        <translation>Mean fitted event probability</translation>
+    </message>
+    <message>
+        <source>Observed event fraction</source>
+        <translation>Observed event fraction</translation>
+    </message>
+    <message>
+        <source>{effect} [{low}, {high}]</source>
+        <translation>{effect} [{low}, {high}]</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Unknown</translation>
+    </message>
+    <message>
+        <source>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins; identical probabilities stay together.</source>
+        <translation>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins; identical probabilities stay together.</translation>
+    </message>
+    <message>
+        <source>Calibration bin counts: {counts}.</source>
+        <translation>Calibration bin counts: {counts}.</translation>
+    </message>
+    <message>
         <source>Charts unavailable: the fitted Negative Binomial variance is invalid.</source>
         <translation>Charts unavailable: the fitted Negative Binomial variance is invalid.</translation>
     </message>

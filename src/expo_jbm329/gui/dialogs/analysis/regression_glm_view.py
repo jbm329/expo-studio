@@ -9,13 +9,16 @@ from typing import TYPE_CHECKING
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QLabel, QScrollArea, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.logistic_charts import LogisticChartLabels, build_logistic_charts
 from expo_jbm329.services.analysis.regression import MAX_MODEL_TERMS, MAX_PREDICTORS, TermKind
 from expo_jbm329.services.analysis.regression_glm import (
     OVERDISPERSION_THRESHOLD,
     CountPlotError,
     GeneralizedRegressionError,
+    LogisticPlotError,
     RegressionModel,
     generalized_term_name,
 )
@@ -24,9 +27,11 @@ from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.regression_glm import GeneralizedRegressionResult
 
+_BINARY_LEVEL_COUNT = 2
+
 
 class GeneralizedRegressionView(QWidget):
-    """Display exponentiated coefficients, fit summary and count diagnostics."""
+    """Display exponentiated coefficients, fit summary and model diagnostics."""
 
     def __init__(self, result: GeneralizedRegressionResult, parent: QWidget | None = None) -> None:
         """Initialize the generalized regression result view.
@@ -56,15 +61,24 @@ class GeneralizedRegressionView(QWidget):
         self._summary_label.setWordWrap(True)
         self._summary_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self._summary_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        if result.model in {RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL}:
+        if result.model in {RegressionModel.LOGISTIC, RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL}:
             splitter = QSplitter(Qt.Orientation.Vertical, self)
             splitter.setChildrenCollapsible(False)
             table_panel, table_layout = self._build_section(self.tr("Model coefficients"))
             table_layout.addWidget(self._table)
             summary_panel, summary_layout = self._build_section(self.tr("Model comments"))
-            summary_layout.addWidget(self._summary_label)
+            summary_scroll = QScrollArea(summary_panel)
+            summary_scroll.setWidgetResizable(True)
+            summary_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+            summary_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+            summary_scroll.setWidget(self._summary_label)
+            summary_layout.addWidget(summary_scroll, 1)
             splitter.addWidget(table_panel)
-            splitter.addWidget(self._build_chart_section())
+            splitter.addWidget(
+                self._build_logistic_chart_section()
+                if result.model is RegressionModel.LOGISTIC
+                else self._build_chart_section()
+            )
             splitter.addWidget(summary_panel)
             splitter.setStretchFactor(0, 2)
             splitter.setStretchFactor(1, 3)
@@ -74,6 +88,57 @@ class GeneralizedRegressionView(QWidget):
         else:
             layout.addWidget(self._table, 2)
             layout.addWidget(self._summary_label, 1)
+
+    def _build_logistic_chart_section(self) -> QWidget:
+        """Present worker-prepared logistic diagnostics without blocking rendering."""
+        panel, layout = self._build_section(self.tr("Logistic-model diagnostics"))
+        result = self._result
+        if result.logistic_plot_error is LogisticPlotError.INVALID_PREDICTIONS:
+            unavailable = self.tr("Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.")
+        elif result.logistic_plot_error is LogisticPlotError.INVALID_OUTCOMES:
+            unavailable = self.tr("Diagnostics unavailable: outcomes must contain both binary classes.")
+        else:
+            unavailable = self.tr("No logistic diagnostic data are available.")
+        data = result.logistic_plot_data
+        labels = LogisticChartLabels(
+            odds_title=self.tr("Predictor odds ratios with 95% confidence intervals"),
+            odds_axis=self.tr("Odds ratio (logarithmic scale; reference = 1)"),
+            no_predictors=self.tr("No predictor effects: intercept-only model."),
+            unavailable_effect=self.tr("Unavailable: non-finite, non-positive or invalid odds ratio / CI"),
+            roc_title=self.tr("ROC (in-sample)"),
+            false_positive_axis=self.tr("False positive rate"),
+            true_positive_axis=self.tr("True positive rate"),
+            auc_annotation=self.tr("AUC = {value} (in-sample)").format(
+                value=fmt_num(data.auc, sig=4) if data is not None else ""
+            ),
+            calibration_title=self.tr("Calibration (in-sample)"),
+            probability_axis=self.tr("Mean fitted event probability"),
+            event_fraction_axis=self.tr("Observed event fraction"),
+            unavailable_diagnostics=unavailable,
+            effect_annotations=tuple(
+                self.tr("{effect} [{low}, {high}]").format(
+                    effect=fmt_num(term.effect), low=fmt_num(term.effect_ci_low), high=fmt_num(term.effect_ci_high)
+                )
+                for term in result.terms
+                if term.kind is not TermKind.INTERCEPT
+            ),
+        )
+        figure = Figure(constrained_layout=True)
+        canvas = SerializedAnalysisCanvas(figure)
+        predictor_term_count = sum(term.kind is not TermKind.INTERCEPT for term in result.terms)
+        canvas.setMinimumHeight(max(400, predictor_term_count * 24 + 320))
+        canvas.build_chart(lambda: build_logistic_charts(figure, result, labels))
+        scroll = QScrollArea(panel)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(canvas)
+        scroll.setMinimumHeight(400)
+        layout.addWidget(scroll, 1)
+        if data is None:
+            label = QLabel(unavailable, panel)
+            label.setTextFormat(Qt.TextFormat.PlainText)
+            label.setWordWrap(True)
+            layout.addWidget(label)
+        return panel
 
     def _build_section(self, title: str) -> tuple[QWidget, QVBoxLayout]:
         """Build a titled section matching the Hypothesis Tests layout."""
@@ -244,6 +309,27 @@ class GeneralizedRegressionView(QWidget):
             ),
             self.tr("AIC = {aic}").format(aic=fmt_num(result.aic)),
         ])
+        if result.model is RegressionModel.LOGISTIC:
+            data = result.logistic_plot_data
+            event = result.target_levels[1] if len(result.target_levels) == _BINARY_LEVEL_COUNT else self.tr("Unknown")
+            interpretation = self.tr(
+                "Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, "
+                "not holdout performance. All {count} complete-case fitted rows are used. "
+                "Calibration uses up to 10 quantile bins; identical probabilities stay together."
+            ).format(event=event, count=fmt_int(data.n_used if data is not None else result.n_used))
+            lines.extend([
+                "",
+                f"<b>{html.escape(self.tr('Diagnostic interpretation'))}</b>",
+                html.escape(interpretation),
+            ])
+            if data is not None:
+                lines.append(
+                    html.escape(
+                        self.tr("Calibration bin counts: {counts}.").format(
+                            counts=", ".join(fmt_int(count) for count in data.bin_counts)
+                        )
+                    )
+                )
         if result.model in {RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL}:
             if result.plot_error in {CountPlotError.INVALID_PREDICTIONS, CountPlotError.INVALID_RESIDUALS}:
                 lines.append(

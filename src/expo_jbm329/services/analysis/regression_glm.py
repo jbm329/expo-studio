@@ -33,6 +33,7 @@ _MIN_DISTINCT = 2
 _MIN_RESIDUAL_DF = 1
 OVERDISPERSION_THRESHOLD = 1.5
 _PLOT_SEED = 0
+_CALIBRATION_MAX_BINS = 10
 
 
 class RegressionModel(StrEnum):
@@ -105,6 +106,26 @@ class CountPlotError(StrEnum):
     INVALID_VARIANCE = "invalid_variance"
 
 
+class LogisticPlotError(StrEnum):
+    """Reasons fitted logistic diagnostics cannot be displayed."""
+
+    INVALID_PREDICTIONS = "invalid_predictions"
+    INVALID_OUTCOMES = "invalid_outcomes"
+
+
+@dataclass(frozen=True, slots=True)
+class LogisticRegressionPlotData:
+    """Full fitted-cohort ROC and tie-preserving quantile calibration data."""
+
+    false_positive_rates: tuple[float, ...]
+    true_positive_rates: tuple[float, ...]
+    auc: float
+    mean_probabilities: tuple[float, ...]
+    event_fractions: tuple[float, ...]
+    bin_counts: tuple[int, ...]
+    n_used: int
+
+
 @dataclass(frozen=True, slots=True)
 class GeneralizedRegressionResult:
     """Fit metadata and estimates for logistic or count regression."""
@@ -131,6 +152,8 @@ class GeneralizedRegressionResult:
     plot_data: CountRegressionPlotData | None = None
     plot_error: CountPlotError | None = None
     negative_binomial_alpha: float | None = None
+    logistic_plot_data: LogisticRegressionPlotData | None = None
+    logistic_plot_error: LogisticPlotError | None = None
 
 
 def initialize_generalized_targets(df: pd.DataFrame) -> GeneralizedTargetColumns:
@@ -418,6 +441,9 @@ def analyze_generalized_regression(
         if model in {RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL}
         else (None, None)
     )
+    logistic_plot_data, logistic_plot_error = (
+        prepare_logistic_plot_data(y, fitted_values) if model is RegressionModel.LOGISTIC else (None, None)
+    )
     dispersion_ratio = (
         _pearson_dispersion(y, fitted_values, int(fit.df_resid))
         if model is not RegressionModel.LOGISTIC and plot_error in {None, CountPlotError.INVALID_VARIANCE}
@@ -448,7 +474,72 @@ def analyze_generalized_regression(
         plot_data=plot_data,
         plot_error=plot_error,
         negative_binomial_alpha=alpha,
+        logistic_plot_data=logistic_plot_data,
+        logistic_plot_error=logistic_plot_error,
     )
+
+
+def prepare_logistic_plot_data(
+    observed: np.ndarray,
+    fitted: np.ndarray,
+) -> tuple[LogisticRegressionPlotData | None, LogisticPlotError | None]:
+    """Prepare in-sample diagnostics without sampling or clipping predictions.
+
+    Args:
+        observed: Complete-case binary outcomes encoded as zero and one.
+        fitted: Row-aligned event probabilities for the full fitted cohort.
+
+    Returns:
+        Immutable diagnostic data, or a structured validation error.
+    """
+    if (
+        observed.ndim != 1
+        or observed.size == 0
+        or observed.dtype.kind not in "biuf"
+        or not np.isfinite(observed).all()
+        or not np.array_equal(np.unique(observed), [0, 1])
+    ):
+        return None, LogisticPlotError.INVALID_OUTCOMES
+    if (
+        fitted.shape != observed.shape
+        or fitted.dtype.kind not in "biuf"
+        or not np.isfinite(fitted).all()
+        or np.any((fitted < 0) | (fitted > 1))
+    ):
+        return None, LogisticPlotError.INVALID_PREDICTIONS
+
+    order = np.argsort(-fitted, kind="stable")
+    scores = fitted[order]
+    outcomes = observed[order]
+    endpoints = np.r_[np.flatnonzero(np.diff(scores)), len(scores) - 1]
+    positives = np.cumsum(outcomes)[endpoints]
+    negatives = endpoints + 1 - positives
+    tpr = np.r_[0.0, positives / positives[-1]]
+    fpr = np.r_[0.0, negatives / negatives[-1]]
+    auc = float(np.sum(np.diff(fpr) * (tpr[:-1] + tpr[1:]) / 2))
+
+    # Duplicate quantile edges collapse; identical probabilities always stay together.
+    bin_count = min(_CALIBRATION_MAX_BINS, len(fitted))
+    cut_indices = np.ceil(np.arange(1, bin_count) * len(fitted) / bin_count).astype(int)
+    edges = np.unique(np.sort(fitted)[cut_indices])
+    assignments = np.searchsorted(edges, fitted, side="right")
+    means: list[float] = []
+    fractions: list[float] = []
+    counts: list[int] = []
+    for bin_id in np.unique(assignments):
+        selected = assignments == bin_id
+        means.append(float(np.mean(fitted[selected])))
+        fractions.append(float(np.mean(observed[selected])))
+        counts.append(int(np.count_nonzero(selected)))
+    return LogisticRegressionPlotData(
+        false_positive_rates=tuple(float(value) for value in fpr),
+        true_positive_rates=tuple(float(value) for value in tpr),
+        auc=auc,
+        mean_probabilities=tuple(means),
+        event_fractions=tuple(fractions),
+        bin_counts=tuple(counts),
+        n_used=len(observed),
+    ), None
 
 
 def _count_plot_data(

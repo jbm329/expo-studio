@@ -1,19 +1,21 @@
 from __future__ import annotations
 
 import dataclasses
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import QCoreApplication, Qt
-from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
+from PyQt6.QtCore import QCoreApplication, Qt, QTranslator
+from PyQt6.QtWidgets import QLabel, QScrollArea, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.regression_glm_view import GeneralizedRegressionView
 from expo_jbm329.services.analysis.regression_glm import (
     CountPlotError,
     CountRegressionPlotData,
     GeneralizedRegressionError,
+    LogisticPlotError,
     RegressionModel,
     analyze_generalized_regression,
 )
@@ -33,6 +35,33 @@ def _result(model: RegressionModel = RegressionModel.LOGISTIC):
 
 def _text(view: GeneralizedRegressionView) -> str:
     return "\n".join(label.text() for label in view.findChildren(QLabel))
+
+
+@pytest.mark.parametrize(
+    "model", [RegressionModel.LOGISTIC, RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL]
+)
+def test_model_comments_scroll_only_when_content_exceeds_available_space(model):
+    view = GeneralizedRegressionView(_result(model))
+    splitter = view.findChild(QSplitter)
+    scroll = splitter.widget(2).findChild(QScrollArea)
+    assert scroll.widget() is view.summary_label()
+    assert scroll.widgetResizable()
+    assert scroll.verticalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
+    assert scroll.horizontalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
+    scroll.setParent(None)
+    scroll.resize(500, 100)
+    scroll.show()
+    try:
+        QCoreApplication.processEvents()
+        assert scroll.verticalScrollBar().maximum() > 0
+        scroll.widget().setText("Short comment")
+        QCoreApplication.processEvents()
+        assert scroll.verticalScrollBar().maximum() == 0
+        assert scroll.horizontalScrollBar().maximum() == 0
+    finally:
+        scroll.close()
+        scroll.deleteLater()
+        view.close()
 
 
 @pytest.mark.parametrize(
@@ -130,12 +159,133 @@ def test_count_layout_and_charts_render_exact_fitted_data(model):
         view.close()
 
 
-@pytest.mark.parametrize("model", [RegressionModel.LOGISTIC])
-def test_other_model_layouts_remain_unchanged(model):
-    view = GeneralizedRegressionView(_result(model))
-    assert view.findChild(QSplitter) is None
-    assert view.findChild(FigureCanvasQTAgg) is None
-    assert "in-sample" not in _text(view)
+def test_logistic_layout_displays_three_diagnostics_and_cohort_caption():
+    result = _result()
+    view = GeneralizedRegressionView(result)
+    view.resize(1100, 1000)
+    view.show()
+    QCoreApplication.processEvents()
+    try:
+        splitter = view.findChild(QSplitter)
+        assert splitter is not None
+        assert splitter.count() == 3
+        assert not splitter.childrenCollapsible()
+        canvas = view.findChild(FigureCanvasQTAgg)
+        assert canvas is not None
+        canvas.draw()
+        odds, roc, calibration = canvas.figure.axes
+        assert odds.get_xscale() == "log"
+        assert roc.get_title() == "ROC (in-sample)"
+        assert calibration.get_title() == "Calibration (in-sample)"
+        assert "Positive event: 1 (coded 1)" in _text(view)
+        assert "not holdout performance" in _text(view)
+        assert "All 120 complete-case fitted rows" in _text(view)
+        assert "Calibration bin counts:" in _text(view)
+        summary = view.summary_label().text()
+        assert "Diagnostic interpretation" in summary
+        assert "Positive event:" in summary
+        assert "Calibration bin counts:" in summary
+        chart_panel = splitter.widget(1)
+        assert all("Positive event:" not in label.text() for label in chart_panel.findChildren(QLabel))
+    finally:
+        view.close()
+
+
+@pytest.mark.parametrize("error", [None, *list(LogisticPlotError)])
+def test_logistic_missing_diagnostics_preserve_coefficients_and_explain_reason(error):
+    result = dataclasses.replace(_result(), logistic_plot_data=None, logistic_plot_error=error)
+    view = GeneralizedRegressionView(result)
+    assert view.table() is not None
+    assert view.summary_label() is not None
+    assert "unavailable" in _text(view) or "No logistic diagnostic data" in _text(view)
+    canvas = view.findChild(FigureCanvasQTAgg)
+    assert canvas is not None
+    assert len(canvas.figure.axes) == 3
+    chart_panel = view.findChild(QSplitter).widget(1)
+    assert any(
+        "unavailable" in label.text() or "No logistic diagnostic data" in label.text()
+        for label in chart_panel.findChildren(QLabel)
+    )
+
+
+def test_logistic_canvas_defers_builder_while_worker_owns_rendering_lock():
+    import threading
+
+    from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
+    from expo_jbm329.services.analysis.statistics_charts import STATISTICS_CHART_LOCK
+
+    acquired = threading.Event()
+    release = threading.Event()
+
+    def hold_lock():
+        with STATISTICS_CHART_LOCK:
+            acquired.set()
+            release.wait()
+
+    worker = threading.Thread(target=hold_lock)
+    worker.start()
+    acquired.wait()
+    try:
+        view = GeneralizedRegressionView(_result())
+        canvas = view.findChild(SerializedAnalysisCanvas)
+        assert canvas is not None
+        assert canvas.figure.axes == []
+    finally:
+        release.set()
+        worker.join()
+    canvas._retry_render()
+    assert len(canvas.figure.axes) == 3
+    view.close()
+
+
+def test_logistic_diagnostic_interpretation_in_summary_escapes_source_labels():
+    result = dataclasses.replace(_result(), target_levels=("<zero>", "<one & event>"))
+    view = GeneralizedRegressionView(result)
+    assert "Positive event: &lt;one &amp; event&gt;" in _text(view)
+    assert view.summary_label() is not None
+    assert "&lt;one &amp; event&gt;" in view.summary_label().text()
+
+
+@pytest.mark.parametrize("language", ["en", "sv"])
+def test_logistic_compiled_localizations_translate_chart_labels_and_caveats(qt_app, language):
+    import expo_jbm329
+
+    translator = QTranslator()
+    path = Path(expo_jbm329.__file__).parent / "i18n" / "locales" / f"app_{language}.qm"
+    assert translator.load(str(path))
+    assert qt_app.installTranslator(translator)
+    try:
+        result = dataclasses.replace(_result(), target_levels=("literal zero", "<literal & event>"))
+        view = GeneralizedRegressionView(result)
+        canvas = view.findChild(FigureCanvasQTAgg)
+        assert canvas is not None
+        titles = [axes.get_title() for axes in canvas.figure.axes]
+        assert titles[1] == ("ROC (anpassningsdata)" if language == "sv" else "ROC (in-sample)")
+        assert titles[2] == ("Kalibrering (anpassningsdata)" if language == "sv" else "Calibration (in-sample)")
+        assert "&lt;literal &amp; event&gt;" in _text(view)
+        if language == "sv":
+            assert "inte prestanda på separat testdata" in _text(view)
+            assert "Antal rader per kalibreringsgrupp" in _text(view)
+        else:
+            assert "not holdout performance" in _text(view)
+        view.close()
+    finally:
+        qt_app.removeTranslator(translator)
+
+
+def test_logistic_many_predictors_keep_scrollable_readable_chart_rows():
+    result = _result()
+    terms = tuple(dataclasses.replace(result.terms[1], column=f"Predictor {index}") for index in range(50))
+    view = GeneralizedRegressionView(dataclasses.replace(result, terms=(result.terms[0], *terms)))
+    scroll = view.findChild(QSplitter).widget(1).findChild(QScrollArea)
+    canvas = view.findChild(FigureCanvasQTAgg)
+    assert scroll is not None
+    assert scroll.widget() is canvas
+    assert scroll.widgetResizable()
+    assert canvas is not None
+    assert canvas.minimumHeight() >= 1500
+    assert len(canvas.figure.axes[0].get_yticklabels()) == 50
+    view.close()
 
 
 @pytest.mark.parametrize(

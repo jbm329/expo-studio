@@ -102,6 +102,86 @@
 <context>
     <name>GeneralizedRegressionView</name>
     <message>
+        <source>Diagnostic interpretation</source>
+        <translation>Tolkning av diagnostik</translation>
+    </message>
+    <message>
+        <source>Logistic-model diagnostics</source>
+        <translation>Diagnostik för logistisk regression</translation>
+    </message>
+    <message>
+        <source>Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.</source>
+        <translation>Diagnostiken är inte tillgänglig: anpassade sannolikheter måste vara ändliga och mellan 0 och 1.</translation>
+    </message>
+    <message>
+        <source>Diagnostics unavailable: outcomes must contain both binary classes.</source>
+        <translation>Diagnostiken är inte tillgänglig: utfallen måste innehålla båda binära klasserna.</translation>
+    </message>
+    <message>
+        <source>No logistic diagnostic data are available.</source>
+        <translation>Inga diagnostikdata för logistisk regression är tillgängliga.</translation>
+    </message>
+    <message>
+        <source>Predictor odds ratios with 95% confidence intervals</source>
+        <translation>Prediktorernas oddskvoter med 95 % konfidensintervall</translation>
+    </message>
+    <message>
+        <source>Odds ratio (logarithmic scale; reference = 1)</source>
+        <translation>Oddskvot (logaritmisk skala; referens = 1)</translation>
+    </message>
+    <message>
+        <source>No predictor effects: intercept-only model.</source>
+        <translation>Inga prediktoreffekter: modellen har endast intercept.</translation>
+    </message>
+    <message>
+        <source>Unavailable: non-finite, non-positive or invalid odds ratio / CI</source>
+        <translation>Ej tillgänglig: icke-ändlig, icke-positiv eller ogiltig oddskvot / konfidensintervall</translation>
+    </message>
+    <message>
+        <source>ROC (in-sample)</source>
+        <translation>ROC (anpassningsdata)</translation>
+    </message>
+    <message>
+        <source>False positive rate</source>
+        <translation>Andel falskt positiva</translation>
+    </message>
+    <message>
+        <source>True positive rate</source>
+        <translation>Andel sant positiva</translation>
+    </message>
+    <message>
+        <source>AUC = {value} (in-sample)</source>
+        <translation>AUC = {value} (anpassningsdata)</translation>
+    </message>
+    <message>
+        <source>Calibration (in-sample)</source>
+        <translation>Kalibrering (anpassningsdata)</translation>
+    </message>
+    <message>
+        <source>Mean fitted event probability</source>
+        <translation>Genomsnittlig anpassad händelsesannolikhet</translation>
+    </message>
+    <message>
+        <source>Observed event fraction</source>
+        <translation>Observerad händelseandel</translation>
+    </message>
+    <message>
+        <source>{effect} [{low}, {high}]</source>
+        <translation>{effect} [{low}, {high}]</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Okänd</translation>
+    </message>
+    <message>
+        <source>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins; identical probabilities stay together.</source>
+        <translation>Positiv händelse: {event} (kodad 1). ROC/AUC och kalibrering är diagnostik på anpassningsdata, inte prestanda på separat testdata. Alla {count} fullständiga rader som modellen anpassades till används. Kalibreringen använder upp till 10 kvantilgrupper; identiska sannolikheter hålls samman.</translation>
+    </message>
+    <message>
+        <source>Calibration bin counts: {counts}.</source>
+        <translation>Antal rader per kalibreringsgrupp: {counts}.</translation>
+    </message>
+    <message>
         <source>Charts unavailable: the fitted Negative Binomial variance is invalid.</source>
         <translation>Diagrammen är inte tillgängliga: den anpassade negativa binomialvariansen är ogiltig.</translation>
     </message>
