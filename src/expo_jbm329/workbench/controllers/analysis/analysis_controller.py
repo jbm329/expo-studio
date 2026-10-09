@@ -39,6 +39,7 @@ from expo_jbm329.services.analysis.clustering import MIN_SELECTED_COLUMNS as CLU
 from expo_jbm329.services.analysis.clustering import ClusteringMethod, analyze_clustering, initialize_clustering
 from expo_jbm329.services.analysis.correlation import (
     MAX_SELECTED_COLUMNS,
+    MIN_OBSERVATIONS,
     MIN_SELECTED_COLUMNS,
     SIGNIFICANCE_LEVEL,
     CorrelationMethod,
@@ -47,7 +48,9 @@ from expo_jbm329.services.analysis.correlation import (
     default_pair,
     initialize_correlation,
 )
+from expo_jbm329.services.analysis.correlation_charts import CorrelationChartLabels, render_correlation_charts
 from expo_jbm329.services.analysis.correlation_export import (
+    CorrelationExportComponent,
     CorrelationExportRequest,
     CorrelationExportSnapshot,
     correlation_export_table,
@@ -185,6 +188,7 @@ _HYPOTHESIS_EXPORT_TRANSLATIONS = (
     QT_TRANSLATE_NOOP("ChiSquareView", "Contingency table"),
 )
 _CORRELATION_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Least-squares line: y = ({slope}) x + ({intercept})"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Strongest correlations"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Correlation method"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Coefficient"),
@@ -797,12 +801,9 @@ class AnalysisController:
                 show_success_dialog=True,
             )
 
-    def _export_correlation(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
-        """Localize and route the ranked table from the captured applied matrix."""
-        if not isinstance(request, CorrelationExportRequest) or request.snapshot is not dialog.exportable_correlation():
-            return
-        snapshot = request.snapshot
-        frame = correlation_export_table(snapshot, request.components)
+    def _localized_correlation_table(self, snapshot: CorrelationExportSnapshot) -> pd.DataFrame:
+        """Localize the ranked table while preserving numeric statistics."""
+        frame = correlation_export_table(snapshot, (CorrelationExportComponent.STRONGEST_CORRELATIONS,))
 
         methods = {
             CorrelationMethod.PEARSON: tr("CorrelationView", "Pearson"),
@@ -838,27 +839,81 @@ class AnalysisController:
             "method": tr("AnalysisExportDialog", "Correlation method"),
             "ranking_explanation": tr("AnalysisExportDialog", "Ranking and Holm explanation"),
         }
-        frame = frame.rename(columns=headers)
+        return frame.rename(columns=headers)
+
+    def _export_correlation(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Export applied tables and worker-owned chart images from one snapshot."""
+        if not isinstance(request, CorrelationExportRequest) or request.snapshot is not dialog.exportable_correlation():
+            return
+        snapshot = request.snapshot
         sheet_name = tr("AnalysisExportDialog", "Strongest correlations")
-        sheets = {sheet_name: frame}
+        sheets = (
+            {sheet_name: self._localized_correlation_table(snapshot)}
+            if CorrelationExportComponent.STRONGEST_CORRELATIONS in request.components
+            else {}
+        )
+        charts = tuple(
+            component
+            for component in request.components
+            if component is not CorrelationExportComponent.STRONGEST_CORRELATIONS
+        )
+        method_names = {
+            CorrelationMethod.PEARSON: tr("CorrelationView", "Pearson"),
+            CorrelationMethod.SPEARMAN: tr("CorrelationView", "Spearman"),
+            CorrelationMethod.KENDALL: tr("CorrelationView", "Kendall's tau-b"),
+        }
+        method_name = method_names[snapshot.matrix.method]
+        labels = CorrelationChartLabels(
+            matrix_title=tr("CorrelationView", "{method} correlation").format(method=method_name),
+            scatter_heading="{x} / {y} (" + method_name + ")",
+            line_equation=tr("AnalysisExportDialog", "Least-squares line: y = ({slope}) x + ({intercept})"),
+            descriptive_line=tr(
+                "CorrelationView",
+                "The line is a linear fit shown for reference. {method} measures monotonic, "
+                "not necessarily linear, association.",
+            ).format(method=method_name),
+            sampling=tr(
+                "CorrelationView", "Showing a random sample of {shown} of {total} points. Statistics use all points."
+            ),
+            insufficient_observations=tr(
+                "CorrelationView",
+                "Fewer than {minimum} rows have values in both columns, so no correlation can be computed.",
+            ).format(minimum=fmt_int(MIN_OBSERVATIONS)),
+            constant_input=tr(
+                "CorrelationView",
+                "At least one of the columns is constant over the rows with values in both, "
+                "so no correlation can be computed.",
+            ),
+            number_format=fmt_num,
+            count_format=fmt_int,
+            matrix_annotations=CorrelationView.chart_annotations(snapshot.matrix),
+        )
+
+        def make_images(
+            progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
+        ) -> tuple[ExcelChartImage, ...]:
+            return render_correlation_charts(snapshot, charts, labels, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
         match request.format:
             case StatisticsExportFormat.EXCEL:
                 exporter.export_excel(
                     sheets=sheets,
+                    chart_factory=make_images if charts else None,
+                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
                 )
             case StatisticsExportFormat.CSV:
                 exporter.export_csv(
-                    df=frame,
+                    df=next(iter(sheets.values())),
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
                 )
             case StatisticsExportFormat.BINARY:
                 exporter.export_data(
-                    df=frame,
+                    df=next(iter(sheets.values())),
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,

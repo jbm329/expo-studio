@@ -1005,35 +1005,70 @@ class FileWriter:
         """Add chart headings and non-overlapping image anchors to a worksheet."""
         from io import BytesIO
         from math import ceil
+        from textwrap import wrap
 
+        from openpyxl.cell import WriteOnlyCell
         from openpyxl.drawing.image import Image
+        from openpyxl.styles import Alignment
 
         streams: list[BytesIO] = []
         write_only = getattr(getattr(worksheet, "parent", None), "write_only", False)
+        if any(chart.captions for chart in chart_images):
+            cast("Worksheet", worksheet).column_dimensions["A"].width = 150
         row = 1
         for index, chart in enumerate(chart_images):
             cancel_check()
+            caption_rows: list[tuple[str, int]] = []
+            for caption in chart.captions:
+                lines = [
+                    segment
+                    for line in caption.split("\n")
+                    for segment in (wrap(line, width=95, replace_whitespace=False) or [""])
+                ]
+                # Excel caps row height; split long notes into readable cells.
+                for start in range(0, len(lines), 20):
+                    chunk = lines[start : start + 20]
+                    caption_rows.append(("\n".join(chunk), len(chunk) * 15))
             image_height_rows = ceil(chart.height_px / 20)
-            if row + image_height_rows > EXCEL_MAX_ROWS:
+            caption_start = row + image_height_rows + 1
+            last_used_row = row + image_height_rows + len(caption_rows)
+            if last_used_row > EXCEL_MAX_ROWS:
                 message = "The Charts worksheet exceeds the Excel row limit."
                 raise ValueError(message)
-            next_heading_row = row + image_height_rows + 2
+            next_heading_row = row + image_height_rows + 2 + len(caption_rows)
             if index + 1 < len(chart_images) and next_heading_row > EXCEL_MAX_ROWS:
                 message = "The Charts worksheet exceeds the Excel row limit."
                 raise ValueError(message)
             if write_only:
-                worksheet.append([chart.heading])
+                heading_cell = WriteOnlyCell(worksheet, value=chart.heading)
+                heading_cell.data_type = "s"
+                worksheet.append([heading_cell])
             else:
-                cast("Worksheet", worksheet).cell(row=row, column=1, value=chart.heading)
+                heading_cell = cast("Worksheet", worksheet).cell(row=row, column=1, value=chart.heading)
+                heading_cell.data_type = "s"
             stream = BytesIO(chart.image_data)
             streams.append(stream)
             image = Image(stream)
             image.width = chart.width_px
             image.height = chart.height_px
             worksheet.add_image(image, f"A{row + 1}")
-            if write_only and index + 1 < len(chart_images):
-                for _ in range(row + 1, next_heading_row):
+            if write_only and (caption_rows or index + 1 < len(chart_images)):
+                for _ in range(row + 1, caption_start):
                     worksheet.append([None])
+            for offset, (text, height) in enumerate(caption_rows):
+                cancel_check()
+                caption_row = caption_start + offset
+                cast("Worksheet", worksheet).row_dimensions[caption_row].height = height
+                if write_only:
+                    cell = WriteOnlyCell(worksheet, value=text)
+                else:
+                    cell = cast("Worksheet", worksheet).cell(row=caption_row, column=1, value=text)
+                cell.data_type = "s"
+                cell.alignment = Alignment(wrap_text=True, vertical="top")
+                if write_only:
+                    worksheet.append([cell])
+            if write_only and index + 1 < len(chart_images):
+                worksheet.append([None])
             row = next_heading_row
 
     # ----------------------------------------------------------------------

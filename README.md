@@ -102,9 +102,15 @@ raw and Holm-adjusted p-values, observation counts, translated strength labels,
 and an explicit Holm-significance indicator. CSV and binary files contain that
 single table; Excel is the default and writes it to a localized worksheet.
 Pending matrix edits do not change the displayed export, and pair-only detail
-recomputations keep it available. Matrix plot and Scatterplots are visible but
-disabled until chart export is implemented. No pair-detail table or raw dataset
-is included.
+recomputations keep it available. Excel can also include the **Matrix plot**
+and **Scatterplots**, independently or without the table, on one localized
+Charts sheet. Scatterplots cover every unique pair of applied columns once,
+in matrix order. Each includes a full-cohort least-squares line and its equation
+below the image; Spearman and Kendall include a descriptive-line caveat.
+Plots retain the deterministic 5,000-point sample limit and disclose sampling.
+Undefined pairs receive explanatory placeholders rather than being omitted.
+Chart preparation runs in the export worker with progress and cancellation.
+No pair-detail table or raw dataset is included.
 Selections are retained when switching formats; Export is disabled with an
 explanation if the selection is invalid for the format. All choices for other
 analyses are disabled previews and cannot create files. **Add to report** and

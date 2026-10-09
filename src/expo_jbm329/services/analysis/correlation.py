@@ -151,9 +151,10 @@ class CorrelationPairDetail:
 
     Attributes:
         method: The correlation coefficient used.
-        pair: The pair's statistics (`adjusted_p_value` is NaN - a single
-            pair involves no multiple testing). Coefficient-related fields
-            are NaN when `error` is set.
+        pair: The pair's statistics. Standalone analysis has a NaN
+            `adjusted_p_value`; chart preparation can retain precomputed
+            matrix statistics. Coefficient-related fields are NaN when
+            `error` is set.
         slope: Least-squares slope of y on x, using every valid row.
         intercept: Least-squares intercept of y on x.
         sample_x: x values of the scatterplot sample.
@@ -543,6 +544,8 @@ def analyze_correlation_pair(
     x_column: str,
     y_column: str,
     method: CorrelationMethod = CorrelationMethod.PEARSON,
+    *,
+    statistics: CorrelationPair | None = None,
 ) -> CorrelationPairDetail:
     """Analyze the correlation of a single pair of numeric columns in detail.
 
@@ -551,12 +554,17 @@ def analyze_correlation_pair(
         x_column: Column plotted on the x axis.
         y_column: Column plotted on the y axis.
         method: The correlation coefficient to compute.
+        statistics: Optional statistics already computed for this pair and
+            cohort, avoiding a second correlation test during chart export.
 
     Returns:
         The pair's statistics, least-squares line and scatterplot sample.
         `error` is set when either column is not numeric, both are the
         same, fewer than `MIN_OBSERVATIONS` rows are valid in both, or
         either column is constant over those rows.
+
+    Raises:
+        ValueError: If supplied statistics do not match the pair and cohort.
     """
     available = numeric_columns(df)
     if x_column == y_column or x_column not in available or y_column not in available:
@@ -574,7 +582,12 @@ def analyze_correlation_pair(
     if not (_is_correlatable(x) and _is_correlatable(y)):
         return _pair_error(CorrelationError.CONSTANT_INPUT, method, x_column, y_column, n)
 
-    pair = _pair_statistics(x_column, y_column, x, y, method)
+    if statistics is not None and (
+        statistics.x_column != x_column or statistics.y_column != y_column or statistics.n != n
+    ):
+        message = "Precomputed correlation statistics must match the plotted pair and cohort."
+        raise ValueError(message)
+    pair = statistics if statistics is not None else _pair_statistics(x_column, y_column, x, y, method)
     slope, intercept = (float(value) for value in np.polyfit(x, y, deg=1))
 
     if n > SCATTER_SAMPLE_SIZE:

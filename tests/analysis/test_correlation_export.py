@@ -157,8 +157,8 @@ def test_table_request_accepts_single_ranked_table_in_each_format(format_choice:
     [
         ((), Format.EXCEL),
         ((Component.STRONGEST_CORRELATIONS, Component.STRONGEST_CORRELATIONS), Format.EXCEL),
-        ((Component.MATRIX_PLOT,), Format.EXCEL),
-        ((Component.SCATTERPLOTS,), Format.EXCEL),
+        ((Component.MATRIX_PLOT,), Format.CSV),
+        ((Component.SCATTERPLOTS,), Format.BINARY),
         (("unknown",), Format.EXCEL),
     ],
 )

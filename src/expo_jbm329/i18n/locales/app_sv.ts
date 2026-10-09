@@ -531,6 +531,7 @@ Tillämpade kolumner: {columns}</translation></message>
     <message><source>Correlation method</source><translation>Korrelationsmetod</translation></message>
     <message><source>Coefficient</source><translation>Koefficient</translation></message>
     <message><source>Significant after Holm</source><translation>Signifikant efter Holm</translation></message>
+    <message><source>Least-squares line: y = ({slope}) x + ({intercept})</source><translation>Minsta kvadratlinje: y = ({slope}) x + ({intercept})</translation></message>
     <message><source>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</source><translation>Paren rangordnas efter absolutv&#228;rdet av koefficienten. Signifikans baseras p&#229; p &lt; {alpha} efter Holm-korrigering f&#246;r {count} tester.</translation></message>
     <message><source>Ranking and Holm explanation</source><translation>Förklaring av rangordning och Holm-korrigering</translation></message>
     <message><source>Strongest correlations</source><translation>Starkaste korrelationerna</translation></message>

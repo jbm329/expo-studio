@@ -294,6 +294,7 @@ Applied columns: {columns}</translation></message>
     <message><source>Correlation method</source><translation>Correlation method</translation></message>
     <message><source>Coefficient</source><translation>Coefficient</translation></message>
     <message><source>Significant after Holm</source><translation>Significant after Holm</translation></message>
+    <message><source>Least-squares line: y = ({slope}) x + ({intercept})</source><translation>Least-squares line: y = ({slope}) x + ({intercept})</translation></message>
     <message><source>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</source><translation>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</translation></message>
     <message><source>Ranking and Holm explanation</source><translation>Ranking and Holm explanation</translation></message>
     <message><source>Strongest correlations</source><translation>Strongest correlations</translation></message>

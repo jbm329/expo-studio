@@ -97,14 +97,14 @@ class CorrelationExportSnapshot:
 
 @dataclass(frozen=True, slots=True)
 class CorrelationExportRequest:
-    """A table-only export selection from one displayed correlation snapshot."""
+    """Selected applied components; charts require Excel output."""
 
     snapshot: CorrelationExportSnapshot
     components: tuple[CorrelationExportComponent, ...]
     format: StatisticsExportFormat
 
     def __post_init__(self) -> None:
-        """Validate the available component and one-table format constraints."""
+        """Validate distinct components and format-specific chart constraints."""
         if not self.components or len(set(self.components)) != len(self.components):
             message = "Select a distinct available correlation component."
             raise ValueError(message)
@@ -114,12 +114,14 @@ class CorrelationExportRequest:
         ):
             message = "Unknown correlation export component."
             raise ValueError(message)
-        if self.components != (CorrelationExportComponent.STRONGEST_CORRELATIONS,):
-            message = "Only the strongest-correlations table is available in this milestone."
-            raise ValueError(message)
         if not isinstance(self.format, StatisticsExportFormat):  # pyright: ignore[reportUnnecessaryIsInstance]
             message = "Unknown correlation export format."
             raise TypeError(message)
+        if self.format is not StatisticsExportFormat.EXCEL and self.components != (
+            CorrelationExportComponent.STRONGEST_CORRELATIONS,
+        ):
+            message = "CSV and binary exports require the ranked table only; charts require Excel."
+            raise ValueError(message)
 
 
 def correlation_export_table(

@@ -323,7 +323,7 @@ class AnalysisExportDialog(QDialog):
             layout.addWidget(group)
 
     def _build_correlation_choices(self, layout: QVBoxLayout) -> None:
-        """Offer the ranked table and visibly disabled future chart choices."""
+        """Offer applied tables and independent Excel chart components."""
         snapshot = self._correlation
         if snapshot is not None:
             method_names = {
@@ -356,11 +356,8 @@ class AnalysisExportDialog(QDialog):
         }
         for component, label in labels.items():
             choice = QCheckBox(label, results)
-            available = component is CorrelationExportComponent.STRONGEST_CORRELATIONS and snapshot is not None
-            choice.setEnabled(available)
-            if component is not CorrelationExportComponent.STRONGEST_CORRELATIONS:
-                choice.setToolTip(self.tr("Planned for a later milestone; no chart will be exported yet."))
-            elif snapshot is None:
+            choice.setEnabled(snapshot is not None)
+            if snapshot is None:
                 choice.setToolTip(self.tr("Apply a correlation matrix successfully before exporting."))
             self._correlation_choices[component] = choice
             choice.toggled.connect(self._update_export_enabled)
@@ -465,12 +462,8 @@ class AnalysisExportDialog(QDialog):
         """Preserve Statistics picks and explain format-specific constraints."""
         excel = self._format_combo.currentData() is StatisticsExportFormat.EXCEL
         format_explanation = (
-            self.tr("Excel exports the selected correlation table as a worksheet.")
-            if excel and self._correlation_mode
-            else self.tr("Excel exports selected tables as separate sheets and charts on one Charts sheet.")
+            self.tr("Excel exports selected tables as separate sheets and charts on one Charts sheet.")
             if excel
-            else self.tr("CSV and binary exports contain exactly one correlation table.")
-            if self._correlation_mode
             else self.tr(
                 "Choose exactly one table for CSV or binary export. "
                 "Charts are available only in Excel; uncheck Charts to continue."
@@ -494,6 +487,12 @@ class AnalysisExportDialog(QDialog):
             else self._statistics_choices.get(StatisticsExportTable.CHARTS)
         )
         chart_selected = chart_choice is not None and chart_choice.isChecked()
+        if self._correlation_mode:
+            chart_selected = any(
+                choice.isChecked()
+                for component, choice in self._correlation_choices.items()
+                if component is not CorrelationExportComponent.STRONGEST_CORRELATIONS
+            )
         if self._hypothesis_mode and self._hypothesis is None:
             reason = self.tr("Apply a hypothesis test successfully before exporting.")
         elif self._correlation_mode and self._correlation is None:

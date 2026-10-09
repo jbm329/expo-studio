@@ -6,8 +6,6 @@ import html
 import math
 from typing import TYPE_CHECKING
 
-import numpy as np
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -20,6 +18,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis import correlation_charts
 from expo_jbm329.services.analysis.correlation import (
     CONFIDENCE_LEVEL,
     MAX_SELECTED_COLUMNS,
@@ -30,6 +30,10 @@ from expo_jbm329.services.analysis.correlation import (
     CorrelationMethod,
     CorrelationStrength,
     correlation_strength,
+)
+from expo_jbm329.services.analysis.correlation_charts import (
+    draw_correlation_matrix,
+    draw_correlation_scatter,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 
@@ -42,16 +46,10 @@ if TYPE_CHECKING:
         CorrelationPairDetail,
     )
 
-# Beyond this many matrix columns, per-cell annotations become unreadable.
-MAX_ANNOTATED_COLUMNS = 12
-# Annotations on cells darker than this |r| are drawn in white for contrast.
-_LIGHT_TEXT_THRESHOLD = 0.6
-_ANNOTATION_FONT_SIZE = 7
-_SCATTER_POINT_SIZE = 6
-_SCATTER_ALPHA = 0.4
 
 _PAIR_COLUMN_X = 0
 _PAIR_COLUMN_Y = 1
+MAX_ANNOTATED_COLUMNS = correlation_charts.MAX_ANNOTATED_COLUMNS
 
 
 class CorrelationView(QWidget):
@@ -253,39 +251,27 @@ class CorrelationView(QWidget):
     def _build_heatmap(self, result: CorrelationMatrixResult) -> QWidget:
         """Build a matplotlib canvas showing the coefficient matrix."""
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumSize(260, 220)
 
-        ax = figure.add_subplot(111)
-        self._draw_heatmap(figure, ax, result)
+        canvas.build_chart(lambda: self._draw_heatmap(figure, figure.add_subplot(111), result))
 
         return canvas
 
     def _draw_heatmap(self, figure: Figure, ax: Axes, result: CorrelationMatrixResult) -> None:
         """Draw the coefficient matrix on a fixed, diverging [-1, 1] color scale."""
-        coefficients = np.asarray(result.coefficients, dtype=float)
+        draw_correlation_matrix(
+            figure,
+            ax,
+            result,
+            self.tr("{method} correlation").format(method=self.method_name(result.method)),
+            self.chart_annotations(result),
+        )
 
-        # NaN cells (undefined coefficients) are left uncolored by imshow.
-        image = ax.imshow(coefficients, cmap="RdBu_r", vmin=-1.0, vmax=1.0)
-        figure.colorbar(image, ax=ax)
-
-        labels = list(result.columns)
-        ax.set_xticks(range(len(labels)), labels=labels, rotation=90)
-        ax.set_yticks(range(len(labels)), labels=labels)
-        ax.set_title(self.tr("{method} correlation").format(method=self.method_name(result.method)))
-
-        if len(labels) <= MAX_ANNOTATED_COLUMNS:
-            for (row_index, col_index), value in np.ndenumerate(coefficients):
-                if math.isfinite(value):
-                    ax.text(
-                        col_index,
-                        row_index,
-                        fmt_num(float(value), sig=2),
-                        ha="center",
-                        va="center",
-                        fontsize=_ANNOTATION_FONT_SIZE,
-                        color="white" if abs(value) > _LIGHT_TEXT_THRESHOLD else "black",
-                    )
+    @staticmethod
+    def chart_annotations(result: CorrelationMatrixResult) -> tuple[tuple[str, ...], ...]:
+        """Capture locale-aware matrix text for both live and exported charts."""
+        return tuple(tuple(fmt_num(value, sig=2) for value in row) for row in result.coefficients)
 
     # ------------------------------------------------------------------
     # Ranked pairs table
@@ -416,26 +402,16 @@ class CorrelationView(QWidget):
     def _build_scatterplot(self, detail: CorrelationPairDetail) -> QWidget:
         """Build a matplotlib canvas with the pair's scatterplot and least-squares line."""
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumSize(260, 200)
 
-        ax = figure.add_subplot(111)
-        self._draw_scatterplot(ax, detail)
+        canvas.build_chart(lambda: self._draw_scatterplot(figure.add_subplot(111), detail))
 
         return canvas
 
     def _draw_scatterplot(self, ax: Axes, detail: CorrelationPairDetail) -> None:
         """Draw the (possibly sampled) points and the least-squares line over all rows."""
-        ax.scatter(detail.sample_x, detail.sample_y, s=_SCATTER_POINT_SIZE, alpha=_SCATTER_ALPHA)
-
-        x_min, x_max = min(detail.sample_x), max(detail.sample_x)
-        ax.plot(
-            [x_min, x_max],
-            [detail.slope * x_min + detail.intercept, detail.slope * x_max + detail.intercept],
-            color="tab:red",
-        )
-        ax.set_xlabel(detail.pair.x_column)
-        ax.set_ylabel(detail.pair.y_column)
+        draw_correlation_scatter(ax, detail)
 
     def _build_pair_statistics(self, detail: CorrelationPairDetail) -> QLabel:
         """Build the rich-text label describing the pair's statistics."""

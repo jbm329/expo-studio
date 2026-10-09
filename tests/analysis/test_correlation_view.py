@@ -7,6 +7,7 @@ from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtWidgets import QApplication, QLabel, QSplitter
 
 from expo_jbm329.gui.dialogs.analysis.correlation_view import MAX_ANNOTATED_COLUMNS, CorrelationView
+from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.correlation import (
     SCATTER_SAMPLE_SIZE,
     CorrelationError,
@@ -16,6 +17,7 @@ from expo_jbm329.services.analysis.correlation import (
     analyze_correlation_matrix,
     analyze_correlation_pair,
 )
+from tests.analysis.test_statistics_view import _worker_holds_chart_lock
 
 
 @pytest.fixture(autouse=True)
@@ -55,6 +57,23 @@ def _canvas_axes(widget):
 
 def _scatter_axes(view: CorrelationView):
     return [axis for axis in _canvas_axes(view.pair_panel()) if axis.get_xlabel()]
+
+
+def test_correlation_canvases_defer_matrix_and_scatter_mutations_without_blocking():
+    df = _frame()
+    result = _matrix(df)
+    detail = analyze_correlation_pair(df, "c0", "c1")
+    with _worker_holds_chart_lock():
+        view = CorrelationView(result, detail)
+        canvases = view.findChildren(SerializedAnalysisCanvas)
+        assert len(canvases) == 2
+        assert all(not canvas.figure.axes for canvas in canvases)
+        QApplication.processEvents()
+        assert all(not canvas.figure.axes for canvas in canvases)
+    for canvas in canvases:
+        canvas._retry_render()
+    assert sorted(len(canvas.figure.axes) for canvas in canvases) == [1, 2]
+    view.deleteLater()
 
 
 # ----------------------------------------------------------------------

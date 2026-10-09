@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -138,3 +139,100 @@ def test_charts_sheet_row_limit_fails_explicitly(tmp_path: Path) -> None:
         )
 
     assert not path.exists()
+
+
+@pytest.mark.parametrize("streaming", [True, False])
+def test_image_captions_are_literal_wrapped_and_do_not_overlap_following_image(
+    tmp_path: Path,
+    chart_images: tuple[ExcelChartImage, ...],
+    streaming: bool,
+) -> None:
+    captioned = replace(
+        chart_images[0],
+        heading="=literal heading",
+        captions=("=literal caption", "Long explanation " * 180),
+    )
+    path = tmp_path / "captions.xlsx"
+    FileWriter().save_excel_sheets(
+        {},
+        path,
+        chart_images=(captioned, chart_images[1]),
+        chart_sheet_name="Charts",
+        streaming=streaming,
+    )
+    workbook = load_workbook(path)
+    try:
+        sheet = workbook["Charts"]
+        assert sheet["A1"].value == "=literal heading"
+        assert sheet["A1"].data_type == "s"
+        assert sheet["A23"].value == "=literal caption"
+        assert sheet["A23"].data_type == "s"
+        assert sheet["A23"].alignment.wrap_text
+        assert sheet.row_dimensions[24].height == 300
+        assert sheet.row_dimensions[25].height <= 300
+        assert sheet["A27"].value == chart_images[1].heading
+        assert sheet._images[1].anchor._from.row == 27
+        assert sheet.column_dimensions["A"].width == 150
+    finally:
+        workbook.close()
+
+
+@pytest.mark.parametrize("streaming", [True, False])
+def test_caption_rows_are_included_in_excel_row_limit(
+    tmp_path: Path,
+    chart_images: tuple[ExcelChartImage, ...],
+    streaming: bool,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr("expo_jbm329.services.file_writer.EXCEL_MAX_ROWS", 23)
+    image = replace(chart_images[0], captions=("first note", "second note"))
+    path = tmp_path / "existing.xlsx"
+    path.write_bytes(b"original")
+    with pytest.raises(ValueError, match="row limit"):
+        FileWriter().save_excel_sheets(
+            {},
+            path,
+            chart_images=(image,),
+            chart_sheet_name="Charts",
+            streaming=streaming,
+        )
+    assert path.read_bytes() == b"original"
+    assert not list(tmp_path.glob(".existing-*.xlsx"))
+
+
+@pytest.mark.parametrize("streaming", [True, False])
+def test_cancellation_during_caption_writing_preserves_original_file(
+    tmp_path: Path,
+    chart_images: tuple[ExcelChartImage, ...],
+    streaming: bool,
+    monkeypatch,
+) -> None:
+    image = replace(chart_images[0], captions=("cancel at this note",))
+    path = tmp_path / "existing.xlsx"
+    path.write_bytes(b"original")
+    original = FileWriter._add_excel_chart_images
+
+    def cancel_during_caption(worksheet, images, *, cancel_check):
+        calls = 0
+
+        def cancel():
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                message = "Cancelled while writing captions."
+                raise ExportCancelledError(message, path=str(path))
+            cancel_check()
+
+        original(worksheet, images, cancel_check=cancel)
+
+    monkeypatch.setattr(FileWriter, "_add_excel_chart_images", staticmethod(cancel_during_caption))
+    with pytest.raises(ExportCancelledError):
+        FileWriter().save_excel_sheets(
+            {},
+            path,
+            chart_images=(image,),
+            chart_sheet_name="Charts",
+            streaming=streaming,
+        )
+    assert path.read_bytes() == b"original"
+    assert not list(tmp_path.glob(".existing-*.xlsx"))

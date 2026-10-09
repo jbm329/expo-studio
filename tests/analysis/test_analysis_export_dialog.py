@@ -244,7 +244,7 @@ def test_hypothesis_dialog_without_applied_result_never_enables_export():
         AnalysisExportDialog(hypothesis_mode=True, statistics_mode=True)
 
 
-def test_correlation_dialog_names_applied_matrix_and_only_enables_ranked_table():
+def test_correlation_dialog_names_applied_matrix_and_enables_all_components():
     snapshot = _correlation_snapshot()
     dialog = AnalysisExportDialog(correlation=snapshot)
     choices = dialog.findChildren(QCheckBox)
@@ -257,8 +257,7 @@ def test_correlation_dialog_names_applied_matrix_and_only_enables_ranked_table()
         "Scatterplots (1 pair)",
     ]
     assert choices[0].isEnabled() and choices[0].isChecked()
-    assert not choices[1].isEnabled() and not choices[2].isEnabled()
-    assert "later milestone" in choices[1].toolTip()
+    assert choices[1].isEnabled() and choices[2].isEnabled()
     assert formats.currentData() is StatisticsExportFormat.EXCEL
     identity = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied method:"))
     assert identity.textFormat() is Qt.TextFormat.PlainText
@@ -285,7 +284,29 @@ def test_correlation_dialog_without_successful_matrix_shows_disabled_choices():
     assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
     assert dialog.export_request() is None
     assert "Apply a correlation matrix" in dialog._export_button.toolTip()
-    assert all("no chart will be exported" in choice.toolTip() for choice in choices[1:])
+    assert all("Apply a correlation matrix" in choice.toolTip() for choice in choices[1:])
+
+
+def test_correlation_chart_choices_are_retained_when_switching_to_table_only_formats():
+    dialog = AnalysisExportDialog(correlation=_correlation_snapshot())
+    choices = dialog.findChildren(QCheckBox)
+    formats = dialog.findChild(QComboBox)
+    choices[0].setChecked(False)
+    choices[1].setChecked(True)
+    choices[2].setChecked(True)
+    request = dialog.export_request()
+    assert request is not None
+    assert request.components == (
+        CorrelationExportComponent.MATRIX_PLOT,
+        CorrelationExportComponent.SCATTERPLOTS,
+    )
+    for format_choice in (StatisticsExportFormat.CSV, StatisticsExportFormat.BINARY):
+        formats.setCurrentIndex(formats.findData(format_choice))
+        assert choices[1].isChecked() and choices[2].isChecked()
+        assert dialog.export_request() is None
+        assert "only in Excel" in dialog._export_button.toolTip()
+    formats.setCurrentIndex(formats.findData(StatisticsExportFormat.EXCEL))
+    assert dialog.export_request() is not None
 
 
 @pytest.mark.parametrize("locale", ["en", "sv"])

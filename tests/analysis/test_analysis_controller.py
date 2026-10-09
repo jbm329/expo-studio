@@ -1766,8 +1766,17 @@ def test_correlation_export_routes_only_localized_ranked_table(
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"] is True
     if format_choice is StatisticsExportFormat.EXCEL:
-        assert set(kwargs) == {"sheets", "parent_widget", "operation_target", "show_success_dialog"}
+        assert set(kwargs) == {
+            "sheets",
+            "chart_factory",
+            "chart_sheet_name",
+            "parent_widget",
+            "operation_target",
+            "show_success_dialog",
+        }
         assert list(kwargs["sheets"]) == ["Starkaste korrelationer"]
+        assert kwargs["chart_factory"] is None
+        assert kwargs["chart_sheet_name"] is None
         frame = kwargs["sheets"]["Starkaste korrelationer"]
     else:
         assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
@@ -1855,6 +1864,35 @@ def test_correlation_export_rejects_stale_navigation_without_dataset_lookup() ->
     controller._export_correlation(dialog, exporter, request)
 
     assert exporter.mock_calls == []
+    assert controller._results.mock_calls == []
+
+
+@pytest.mark.parametrize(
+    "components",
+    [
+        (CorrelationExportComponent.MATRIX_PLOT,),
+        (CorrelationExportComponent.SCATTERPLOTS,),
+        tuple(CorrelationExportComponent),
+    ],
+)
+def test_correlation_excel_routes_independent_and_mixed_charts_from_owned_snapshot(components):
+    controller, dialog, snapshot, exporter = _correlation_export_context()
+    request = CorrelationExportRequest(snapshot, components, StatisticsExportFormat.EXCEL)
+    controller._export_correlation(dialog, exporter, request)
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"]
+    assert bool(kwargs["sheets"]) is (CorrelationExportComponent.STRONGEST_CORRELATIONS in components)
+    assert kwargs["chart_sheet_name"] == "Charts"
+    progress = []
+    images = kwargs["chart_factory"](progress.append, None)
+    expected = int(CorrelationExportComponent.MATRIX_PLOT in components)
+    if CorrelationExportComponent.SCATTERPLOTS in components:
+        expected += len(snapshot.matrix.pairs)
+    assert len(images) == expected
+    assert progress[-1] == 100
+    assert all(image.image_data.startswith(b"\x89PNG") for image in images)
     assert controller._results.mock_calls == []
 
 

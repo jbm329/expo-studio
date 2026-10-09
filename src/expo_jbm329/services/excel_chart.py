@@ -11,12 +11,13 @@ class ExcelChartCancelledError(Exception):
 
 @dataclass(frozen=True, slots=True)
 class ExcelChartImage:
-    """A raster chart image with its worksheet heading and display dimensions."""
+    """A raster image with heading, display dimensions and optional below-image notes."""
 
     heading: str
     image_data: bytes
     width_px: int
     height_px: int
+    captions: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         """Reject payloads that cannot be embedded as visible workbook images."""
