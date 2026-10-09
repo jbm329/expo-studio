@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 from PyQt6.QtCore import QCoreApplication, QEvent, QPoint, Qt
 from PyQt6.QtGui import QHelpEvent
+from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -18,6 +19,7 @@ from PyQt6.QtWidgets import (
     QListWidget,
     QPlainTextEdit,
     QPushButton,
+    QScrollArea,
     QToolTip,
     QVBoxLayout,
     QWidget,
@@ -479,6 +481,11 @@ def test_all_configurations_share_reference_width_and_adaptive_layout(width):
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
     dialog.resize(width, 900)
     dialog.show()
+    QCoreApplication.processEvents()
+    # Resize after native window creation so screen-fit adjustments do not
+    # replace the explicit dimensions exercised by this layout test.
+    dialog.resize(width, 900)
+    QCoreApplication.processEvents()
     widths: list[int] = []
     try:
         for widget in _configuration_widgets():
@@ -502,18 +509,141 @@ def test_all_configurations_share_reference_width_and_adaptive_layout(width):
         dialog.close()
 
 
+@pytest.mark.parametrize("width", [1280, 1600])
+@pytest.mark.parametrize("translated", [False, True])
+def test_narrow_correlation_and_time_series_keep_controls_and_full_labels_accessible(monkeypatch, width, translated):
+    translations = {
+        "Select all": "Select all available columns",
+        "Clear": "Clear selected columns",
+        "Auto-detect seasonal period": "Automatically detect the seasonal period from the selected time series",
+    }
+    if translated:
+        for config_type in (CorrelationConfigWidget, TimeSeriesConfigWidget):
+            monkeypatch.setattr(config_type, "tr", lambda self, text: translations.get(text, text))
+    frame = pd.DataFrame({
+        "when": pd.date_range("2025-01-01", periods=30),
+        "a": range(30),
+        "b": range(1, 31),
+    })
+    dialog = AnalysisDialog(parent=None, datasets=[], active_tab_id=None)
+    dialog.resize(width, 900)
+    dialog.show()
+    pane_widths: list[int] = []
+    try:
+        correlation = CorrelationConfigWidget(initialize_correlation(frame), None)
+        time_series = TimeSeriesConfigWidget(initialize_time_series(frame))
+        for config in (correlation, time_series):
+            dialog.set_config_widget(config)
+            QCoreApplication.processEvents()
+            scroll = dialog._config_scroll
+            pane_widths.append(dialog._config_panel.width())
+            assert scroll.horizontalScrollBar().maximum() == 0
+            assert config.width() <= scroll.viewport().width()
+            if isinstance(config, CorrelationConfigWidget):
+                controls = [config._select_all_button, config._clear_button]
+                for button in controls:
+                    assert button.width() >= button.minimumSizeHint().width()
+                if translated:
+                    assert controls[1].y() > controls[0].y()
+                controls[1].click()
+                assert config.checked_columns() == ()
+                controls[0].click()
+                assert config.checked_columns() == ("a", "b")
+            else:
+                checkbox = config._auto_period
+                label = checkbox.findChild(QLabel)
+                assert label is not None
+                expected = translations["Auto-detect seasonal period"] if translated else "Auto-detect seasonal period"
+                assert label.text() == expected
+                assert checkbox.accessibleName() == expected
+                assert checkbox.toolTip() == expected
+                assert label.wordWrap()
+                assert label.height() >= label.heightForWidth(label.width())
+                if translated:
+                    assert label.height() > label.fontMetrics().height()
+                checked = checkbox.isChecked()
+                QTest.mouseClick(checkbox, Qt.MouseButton.LeftButton, pos=label.geometry().center())
+                assert checkbox.isChecked() is not checked
+                assert config._period_spin.isEnabled() is checked
+                checkbox.setFocus()
+                QTest.keyClick(checkbox, Qt.Key.Key_Space)
+                assert checkbox.isChecked() is checked
+                controls = [checkbox]
+            for control in controls:
+                scroll.ensureWidgetVisible(control)
+                QCoreApplication.processEvents()
+                assert control.isVisible()
+                position = control.mapTo(config, QPoint(0, 0))
+                assert position.x() >= 0
+                assert position.x() + control.width() <= config.width()
+        assert len(set(pane_widths)) == 1
+    finally:
+        dialog.close()
+
+
+@pytest.mark.parametrize("viewport_width", [225, 289])
+def test_narrow_controls_wrap_at_their_size_hints_with_larger_fonts(viewport_width):
+    frame = pd.DataFrame({
+        "when": pd.date_range("2025-01-01", periods=30),
+        "a": range(30),
+        "b": range(1, 31),
+    })
+    correlation = CorrelationConfigWidget(initialize_correlation(frame), None)
+    time_series = TimeSeriesConfigWidget(initialize_time_series(frame))
+    for config in (correlation, time_series):
+        if isinstance(config, CorrelationConfigWidget):
+            controls = [config._select_all_button, config._clear_button]
+            font_size = 24
+        else:
+            controls = [config._auto_period]
+            font_size = 18
+        for control in controls:
+            font = control.font()
+            font.setPointSize(font_size)
+            control.setFont(font)
+        AnalysisDialog._prepare_config_layout(config)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(config)
+        scroll.resize(viewport_width + 2 * scroll.frameWidth(), 700)
+        scroll.show()
+        QCoreApplication.processEvents()
+        try:
+            assert scroll.viewport().width() == viewport_width
+            assert scroll.horizontalScrollBar().maximum() == 0
+            if isinstance(config, CorrelationConfigWidget):
+                actions = controls[0].parentWidget().layout().itemAt(1).layout()
+                required_width = sum(control.minimumSizeHint().width() for control in controls)
+                required_width += actions.horizontalSpacing()
+                if required_width > actions.geometry().width():
+                    assert controls[1].y() > controls[0].y()
+                else:
+                    assert controls[1].y() == controls[0].y()
+                for control in controls:
+                    assert control.width() >= control.minimumSizeHint().width()
+            else:
+                label = controls[0].findChild(QLabel)
+                assert label is not None
+                assert label.height() >= label.heightForWidth(label.width())
+                assert label.height() > label.fontMetrics().height()
+        finally:
+            scroll.close()
+
+
 def test_tall_configuration_can_scroll_without_expanding_the_dialog():
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog.show()
+    QCoreApplication.processEvents()
+    initial_size = dialog.size()
     config = QWidget()
     config.setMinimumHeight(1200)
     dialog.set_config_widget(config)
-    dialog.show()
     QCoreApplication.processEvents()
     try:
         scrollbar = dialog._config_scroll.verticalScrollBar()  # noqa: SLF001
         assert scrollbar is not None
         assert scrollbar.maximum() > 0
-        assert dialog.height() == 900
+        assert dialog.size() == initial_size
     finally:
         dialog.close()
 

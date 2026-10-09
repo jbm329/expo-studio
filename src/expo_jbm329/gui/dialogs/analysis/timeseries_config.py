@@ -2,16 +2,70 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QCheckBox, QComboBox, QFormLayout, QLabel, QPushButton, QSpinBox, QVBoxLayout, QWidget
+from PyQt6.QtCore import QPoint, QSize, Qt, pyqtSignal
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSizePolicy,
+    QSpinBox,
+    QStyle,
+    QVBoxLayout,
+    QWidget,
+)
 
 from expo_jbm329.gui.dialogs.analysis.column_combo_box import ColumnComboBox
 from expo_jbm329.services.analysis.timeseries import DecompositionModel
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.timeseries import TimeSeriesResult
+
+
+class _WrappingCheckBox(QCheckBox):
+    """Keep a checkbox's full, clickable label readable in narrow layouts."""
+
+    def __init__(self, text: str, parent: QWidget) -> None:
+        super().__init__(parent)
+        self.setAccessibleName(text)
+        self.setToolTip(text)
+        label = QLabel(text, self)
+        label.setWordWrap(True)
+        label.setBuddy(self)
+        label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        layout = QHBoxLayout(self)
+        style = self.style()
+        if style is None:
+            message = "A checkbox requires a widget style."
+            raise RuntimeError(message)
+        indicator_width = style.pixelMetric(QStyle.PixelMetric.PM_IndicatorWidth, None, self)
+        spacing = style.pixelMetric(QStyle.PixelMetric.PM_CheckBoxLabelSpacing, None, self)
+        layout.setContentsMargins(indicator_width + spacing, 0, 0, 0)
+        layout.addWidget(label)
+        policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        policy.setHeightForWidth(True)
+        self.setSizePolicy(policy)
+
+    @override
+    def sizeHint(self) -> QSize:
+        """Include the wrapped label rather than only the native indicator."""
+        layout = self.layout()
+        return super().sizeHint() if layout is None else layout.totalSizeHint().expandedTo(super().sizeHint())
+
+    @override
+    def minimumSizeHint(self) -> QSize:
+        """Allow wrapping down to the label's longest word."""
+        layout = self.layout()
+        return super().minimumSizeHint() if layout is None else layout.totalMinimumSize()
+
+    @override
+    def hitButton(self, pos: QPoint) -> bool:
+        """Let clicking any part of the wrapped label toggle the checkbox."""
+        return self.rect().contains(pos)
 
 
 class TimeSeriesConfigWidget(QWidget):
@@ -43,7 +97,7 @@ class TimeSeriesConfigWidget(QWidget):
         self._frequency_combo.setCurrentIndex(self._frequency_combo.findData(result.resample_frequency))
         form.addRow(QLabel(self.tr("Resample to"), self), self._frequency_combo)
 
-        self._auto_period = QCheckBox(self.tr("Auto-detect seasonal period"), self)
+        self._auto_period = _WrappingCheckBox(self.tr("Auto-detect seasonal period"), self)
         self._auto_period.setChecked(result.seasonal_period is None)
         form.addRow(self._auto_period)
 
