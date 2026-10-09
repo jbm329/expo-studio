@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, cast
 
 from PyQt6.QtCore import QT_TR_NOOP, QT_TRANSLATE_NOOP, QTimer
@@ -38,12 +38,19 @@ from expo_jbm329.services.analysis.chi_square import analyze_chi_square, initial
 from expo_jbm329.services.analysis.clustering import MIN_SELECTED_COLUMNS as CLUSTERING_MIN_SELECTED_COLUMNS
 from expo_jbm329.services.analysis.clustering import ClusteringMethod, analyze_clustering, initialize_clustering
 from expo_jbm329.services.analysis.correlation import (
+    MAX_SELECTED_COLUMNS,
     MIN_SELECTED_COLUMNS,
+    SIGNIFICANCE_LEVEL,
     CorrelationMethod,
     analyze_correlation_matrix,
     analyze_correlation_pair,
     default_pair,
     initialize_correlation,
+)
+from expo_jbm329.services.analysis.correlation_export import (
+    CorrelationExportRequest,
+    CorrelationExportSnapshot,
+    correlation_export_table,
 )
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison, initialize_group_comparison
 from expo_jbm329.services.analysis.hypothesis_charts import HypothesisChartLabels, render_hypothesis_charts
@@ -105,6 +112,7 @@ from expo_jbm329.services.analysis.survival import (
     initialize_survival_columns,
 )
 from expo_jbm329.services.analysis.timeseries import analyze_time_series, initialize_time_series
+from expo_jbm329.utils.format_utils import fmt_int, fmt_num
 from expo_jbm329.utils.i18n_utils import tr
 
 if TYPE_CHECKING:
@@ -175,6 +183,18 @@ _HYPOTHESIS_EXPORT_TRANSLATIONS = (
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Cramér's V"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Kendall's W"),
     QT_TRANSLATE_NOOP("ChiSquareView", "Contingency table"),
+)
+_CORRELATION_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Strongest correlations"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Correlation method"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Coefficient"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Significant after Holm"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Ranking and Holm explanation"),
+    QT_TRANSLATE_NOOP(
+        "AnalysisExportDialog",
+        "Pairs are ranked by absolute coefficient. Significance is based on "
+        "p < {alpha} after Holm adjustment for {count} tests.",
+    ),
 )
 # Cancelable jobs report real progress and can be stopped by the user, so
 # they get a far longer watchdog before the "taking too long" warning.
@@ -270,10 +290,12 @@ class _CorrelationOutcome:
         matrix: The computed correlation matrix.
         pair_detail: The selected pair's detail, or `None` when the matrix
             has an error (and so no pair to show).
+        export_snapshot: Owned selected numeric columns for the successful matrix.
     """
 
     matrix: CorrelationMatrixResult
     pair_detail: CorrelationPairDetail | None
+    export_snapshot: CorrelationExportSnapshot | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -410,9 +432,13 @@ class AnalysisController:
             def _handle_hypothesis_export(request: object) -> None:
                 self._export_hypothesis(dialog, exporter, request)
 
+            def _handle_correlation_export(request: object) -> None:
+                self._export_correlation(dialog, exporter, request)
+
             dialog.overview_export_requested.connect(_handle_export)
             dialog.statistics_export_requested.connect(_handle_statistics_export)
             dialog.hypothesis_export_requested.connect(_handle_hypothesis_export)
+            dialog.correlation_export_requested.connect(_handle_correlation_export)
 
         refresh_started = False
 
@@ -771,6 +797,73 @@ class AnalysisController:
                 show_success_dialog=True,
             )
 
+    def _export_correlation(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Localize and route the ranked table from the captured applied matrix."""
+        if not isinstance(request, CorrelationExportRequest) or request.snapshot is not dialog.exportable_correlation():
+            return
+        snapshot = request.snapshot
+        frame = correlation_export_table(snapshot, request.components)
+
+        methods = {
+            CorrelationMethod.PEARSON: tr("CorrelationView", "Pearson"),
+            CorrelationMethod.SPEARMAN: tr("CorrelationView", "Spearman"),
+            CorrelationMethod.KENDALL: tr("CorrelationView", "Kendall's tau-b"),
+        }
+        strengths = {
+            "negligible": tr("CorrelationView", "Negligible"),
+            "weak": tr("CorrelationView", "Weak"),
+            "moderate": tr("CorrelationView", "Moderate"),
+            "strong": tr("CorrelationView", "Strong"),
+        }
+        frame["strength"] = frame["strength"].map(
+            lambda value: strengths[value] if isinstance(value, str) else tr("CorrelationView", "N/A")
+        )
+        frame["method"] = frame["method"].map(lambda value: methods[CorrelationMethod(str(value))])
+        frame["ranking_explanation"] = tr(
+            "AnalysisExportDialog",
+            "Pairs are ranked by absolute coefficient. Significance is based on "
+            "p < {alpha} after Holm adjustment for {count} tests.",
+        ).format(alpha=fmt_num(SIGNIFICANCE_LEVEL), count=fmt_int(len(snapshot.matrix.pairs)))
+        headers = {
+            "variable_1": tr("CorrelationView", "Variable 1"),
+            "variable_2": tr("CorrelationView", "Variable 2"),
+            "coefficient": tr("AnalysisExportDialog", "Coefficient"),
+            "ci_low": tr("AnalysisExportDialog", "95% CI lower"),
+            "ci_high": tr("AnalysisExportDialog", "95% CI upper"),
+            "p_value": tr("CorrelationView", "p"),
+            "adjusted_p_value": tr("CorrelationView", "Holm p"),
+            "n": tr("CorrelationView", "n"),
+            "strength": tr("CorrelationView", "Strength"),
+            "significant": tr("AnalysisExportDialog", "Significant after Holm"),
+            "method": tr("AnalysisExportDialog", "Correlation method"),
+            "ranking_explanation": tr("AnalysisExportDialog", "Ranking and Holm explanation"),
+        }
+        frame = frame.rename(columns=headers)
+        sheet_name = tr("AnalysisExportDialog", "Strongest correlations")
+        sheets = {sheet_name: frame}
+        match request.format:
+            case StatisticsExportFormat.EXCEL:
+                exporter.export_excel(
+                    sheets=sheets,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.CSV:
+                exporter.export_csv(
+                    df=frame,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.BINARY:
+                exporter.export_data(
+                    df=frame,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+
     # ------------------------------------------------------------------
     # Renderers (GUI thread only)
     # ------------------------------------------------------------------
@@ -937,9 +1030,32 @@ class AnalysisController:
         Returns:
             The outcome, or `None` if cancelled.
         """
+        configuration = initialize_correlation(df)
+        selected = configuration.columns if columns is None else tuple(columns)
+        selection_is_valid = (
+            len(selected) <= MAX_SELECTED_COLUMNS
+            and len(selected) >= MIN_SELECTED_COLUMNS
+            and len(set(selected)) == len(selected)
+            and all(column in configuration.available_columns for column in selected)
+        )
+        if not selection_is_valid:
+            # The public analyzer returns a structured selection error without
+            # indexing the frame; retain that behavior for invalid requests.
+            matrix = analyze_correlation_matrix(
+                df,
+                columns,
+                method,
+                progress_cb=callbacks.progress_cb,
+                cancel_cb=callbacks.cancel_cb,
+            )
+            if matrix is None:
+                return None
+            return _CorrelationOutcome(matrix=matrix, pair_detail=None)
+
+        matrix_data = df.loc[:, list(selected)].copy(deep=True)
         matrix = analyze_correlation_matrix(
-            df,
-            columns,
+            matrix_data,
+            selected,
             method,
             progress_cb=callbacks.progress_cb,
             cancel_cb=callbacks.cancel_cb,
@@ -948,14 +1064,16 @@ class AnalysisController:
             return None
         if matrix.error is not None:
             return _CorrelationOutcome(matrix=matrix, pair_detail=None)
+        matrix = replace(matrix, available_columns=configuration.available_columns)
 
         detail_pair = (
             pair
             if pair is not None and pair[0] != pair[1] and all(column in matrix.columns for column in pair)
             else default_pair(matrix)
         )
-        pair_detail = analyze_correlation_pair(df, *detail_pair, method) if detail_pair is not None else None
-        return _CorrelationOutcome(matrix=matrix, pair_detail=pair_detail)
+        pair_detail = analyze_correlation_pair(matrix_data, *detail_pair, method) if detail_pair is not None else None
+        snapshot = CorrelationExportSnapshot(matrix=matrix, matrix_data=matrix_data)
+        return _CorrelationOutcome(matrix=matrix, pair_detail=pair_detail, export_snapshot=snapshot)
 
     def _render_correlation(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
         """Render the Correlation Explorer's initial state: the Apply prompt and its config.
@@ -997,6 +1115,8 @@ class AnalysisController:
         only hold a placeholder pair, so the matrix's strongest pair is
         detailed instead and then synced back into the pickers.
         """
+        dialog.invalidate_correlation_export()
+        request_revision = dialog.correlation_export_revision()
         configuration = config.matrix_configuration()
         method, columns = configuration
         pair = config.current_pair() if config.is_pair_selection_enabled() else None
@@ -1007,6 +1127,10 @@ class AnalysisController:
             if outcome.matrix.error is not None:
                 config.set_pair_selection_enabled(enabled=False)
                 return
+            if outcome.export_snapshot is None:
+                message = "A successful correlation matrix must retain its worker-owned export snapshot."
+                raise ValueError(message)
+            dialog.set_exportable_correlation(outcome.export_snapshot)
             current_pair = config.current_pair()
             if current_pair is not None and not all(column in outcome.matrix.columns for column in current_pair):
                 current_pair = None
@@ -1031,7 +1155,10 @@ class AnalysisController:
                 df, callbacks, method=method, columns=columns, pair=pair
             ),
             apply_result=_apply,
-            is_stale=lambda: config.matrix_configuration() != configuration,
+            is_stale=lambda: (
+                config.matrix_configuration() != configuration
+                or dialog.correlation_export_revision() != request_revision
+            ),
             cancelable=True,
         )
 

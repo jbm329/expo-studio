@@ -18,6 +18,12 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.services.analysis.categories import HypothesisTest
+from expo_jbm329.services.analysis.correlation import CorrelationMethod
+from expo_jbm329.services.analysis.correlation_export import (
+    CorrelationExportComponent,
+    CorrelationExportRequest,
+    CorrelationExportSnapshot,
+)
 from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportComponent,
     HypothesisExportRequest,
@@ -38,7 +44,7 @@ from expo_jbm329.services.analysis.statistics import (
 
 
 class AnalysisExportDialog(QDialog):
-    """Select available Overview tables in a single Data and Results dialog."""
+    """Select components from the currently displayed analysis."""
 
     def __init__(
         self,
@@ -50,6 +56,8 @@ class AnalysisExportDialog(QDialog):
         statistics_mode: bool = False,
         hypothesis: HypothesisExportSnapshot | None = None,
         hypothesis_mode: bool = False,
+        correlation: CorrelationExportSnapshot | None = None,
+        correlation_mode: bool = False,
     ) -> None:
         """Build grouped export choices and a format selector.
 
@@ -61,6 +69,8 @@ class AnalysisExportDialog(QDialog):
             statistics_mode: Show Statistics export choices.
             hypothesis: Successfully displayed applied hypothesis selection.
             hypothesis_mode: Show hypothesis choices even before Apply.
+            correlation: Successfully displayed applied correlation matrix.
+            correlation_mode: Show correlation choices even before Apply.
         """
         super().__init__(parent)
         self.setWindowTitle(self.tr("Export"))
@@ -69,12 +79,15 @@ class AnalysisExportDialog(QDialog):
         self._statistics = statistics
         self._hypothesis = hypothesis
         self._hypothesis_mode = hypothesis_mode or hypothesis is not None
+        self._correlation = correlation
+        self._correlation_mode = correlation_mode or correlation is not None
         self._hypothesis_choices: dict[HypothesisExportComponent, QCheckBox] = {}
+        self._correlation_choices: dict[CorrelationExportComponent, QCheckBox] = {}
         self._table_choices: dict[OverviewExportTable, QCheckBox] = {}
         self._statistics_choices: dict[StatisticsExportTable, QCheckBox] = {}
         self._overview_mode = overview_mode or overview is not None
         self._statistics_mode = statistics_mode or statistics is not None
-        if sum((self._overview_mode, self._statistics_mode, self._hypothesis_mode)) > 1:
+        if sum((self._overview_mode, self._statistics_mode, self._hypothesis_mode, self._correlation_mode)) > 1:
             message = "An export dialog can represent only one analysis result."
             raise ValueError(message)
         layout = QVBoxLayout(self)
@@ -89,7 +102,11 @@ class AnalysisExportDialog(QDialog):
                 else (
                     self.tr("Export computed tables and charts for the applied test, not the original dataset.")
                     if self._hypothesis_mode
-                    else self.tr("Layout preview only. Export processing is not implemented yet.")
+                    else (
+                        self.tr("Export the strongest-correlations table for the applied matrix.")
+                        if self._correlation_mode
+                        else self.tr("Layout preview only. Export processing is not implemented yet.")
+                    )
                 )
             ),
             self,
@@ -102,11 +119,17 @@ class AnalysisExportDialog(QDialog):
             self._build_statistics_choices(layout)
         elif self._hypothesis_mode:
             self._build_hypothesis_choices(layout)
+        elif self._correlation_mode:
+            self._build_correlation_choices(layout)
         else:
             self._build_preview_choices(layout)
         formats = QFormLayout()
         self._format_combo = QComboBox(self)
-        format_type = StatisticsExportFormat if self._statistics_mode or self._hypothesis_mode else OverviewExportFormat
+        format_type = (
+            StatisticsExportFormat
+            if self._statistics_mode or self._hypothesis_mode or self._correlation_mode
+            else OverviewExportFormat
+        )
         self._format_combo.addItem("CSV", format_type.CSV)
         self._format_combo.addItem(self.tr("Excel workbook (.xlsx)"), format_type.EXCEL)
         self._format_combo.addItem(self.tr("Binary data file (Parquet / Feather / Pickle)"), format_type.BINARY)
@@ -128,6 +151,8 @@ class AnalysisExportDialog(QDialog):
         choices = (
             self._hypothesis_choices
             if self._hypothesis_mode
+            else self._correlation_choices
+            if self._correlation_mode
             else self._statistics_choices
             if self._statistics_mode
             else self._table_choices
@@ -297,8 +322,70 @@ class AnalysisExportDialog(QDialog):
                 contents.addWidget(choice)
             layout.addWidget(group)
 
-    def export_request(self) -> OverviewExportRequest | StatisticsExportRequest | HypothesisExportRequest | None:
+    def _build_correlation_choices(self, layout: QVBoxLayout) -> None:
+        """Offer the ranked table and visibly disabled future chart choices."""
+        snapshot = self._correlation
+        if snapshot is not None:
+            method_names = {
+                CorrelationMethod.PEARSON: self.tr("Pearson"),
+                CorrelationMethod.SPEARMAN: self.tr("Spearman"),
+                CorrelationMethod.KENDALL: self.tr("Kendall's tau-b"),
+            }
+            identity = QLabel(
+                self.tr("Applied method: {method}\nApplied columns: {columns}").format(
+                    method=method_names[snapshot.matrix.method],
+                    columns=" / ".join(snapshot.matrix.columns),
+                ),
+                self,
+            )
+            identity.setTextFormat(Qt.TextFormat.PlainText)
+            identity.setWordWrap(True)
+            identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            layout.addWidget(identity)
+
+        results = QGroupBox(self.tr("Results"), self)
+        contents = QVBoxLayout(results)
+        pair_count = 0 if snapshot is None else len(snapshot.matrix.columns) * (len(snapshot.matrix.columns) - 1) // 2
+        scatter_label = (
+            self.tr("Scatterplots ({count} pair)") if pair_count == 1 else self.tr("Scatterplots ({count} pairs)")
+        )
+        labels = {
+            CorrelationExportComponent.STRONGEST_CORRELATIONS: self.tr("Strongest correlations"),
+            CorrelationExportComponent.MATRIX_PLOT: self.tr("Matrix plot"),
+            CorrelationExportComponent.SCATTERPLOTS: scatter_label.format(count=pair_count),
+        }
+        for component, label in labels.items():
+            choice = QCheckBox(label, results)
+            available = component is CorrelationExportComponent.STRONGEST_CORRELATIONS and snapshot is not None
+            choice.setEnabled(available)
+            if component is not CorrelationExportComponent.STRONGEST_CORRELATIONS:
+                choice.setToolTip(self.tr("Planned for a later milestone; no chart will be exported yet."))
+            elif snapshot is None:
+                choice.setToolTip(self.tr("Apply a correlation matrix successfully before exporting."))
+            self._correlation_choices[component] = choice
+            choice.toggled.connect(self._update_export_enabled)
+            contents.addWidget(choice)
+        layout.addWidget(results)
+
+    def export_request(
+        self,
+    ) -> OverviewExportRequest | StatisticsExportRequest | HypothesisExportRequest | CorrelationExportRequest | None:
         """Return a validated selection, or None for previews/invalid choices."""
+        if self._correlation_mode:
+            if self._correlation is None:
+                return None
+            correlation_components = tuple(
+                component
+                for component, choice in self._correlation_choices.items()
+                if choice.isEnabled() and choice.isChecked()
+            )
+            format_choice = self._format_combo.currentData()
+            if not isinstance(format_choice, StatisticsExportFormat) or not correlation_components:
+                return None
+            try:
+                return CorrelationExportRequest(self._correlation, correlation_components, format_choice)
+            except ValueError:
+                return None
         if self._hypothesis_mode:
             if self._hypothesis is None:
                 return None
@@ -317,19 +404,20 @@ class AnalysisExportDialog(QDialog):
         if self._statistics_mode:
             if self._statistics is None:
                 return None
-            components = tuple(
+            statistics_choices: dict[StatisticsExportTable, QCheckBox] = self._statistics_choices
+            statistics_components = tuple(
                 component
-                for component, choice in self._statistics_choices.items()
+                for component, choice in statistics_choices.items()
                 if choice.isEnabled() and choice.isChecked()
             )
             format_choice = self._format_combo.currentData()
-            if not isinstance(format_choice, StatisticsExportFormat) or not components:
+            if not isinstance(format_choice, StatisticsExportFormat) or not statistics_components:
                 return None
-            chart_selected = StatisticsExportTable.CHARTS in components
-            table_count = sum(component is not StatisticsExportTable.CHARTS for component in components)
+            chart_selected = StatisticsExportTable.CHARTS in statistics_components
+            table_count = sum(component is not StatisticsExportTable.CHARTS for component in statistics_components)
             if format_choice is not StatisticsExportFormat.EXCEL and (chart_selected or table_count != 1):
                 return None
-            return StatisticsExportRequest(self._statistics, components, format_choice)
+            return StatisticsExportRequest(self._statistics, statistics_components, format_choice)
         if self._overview is None:
             return None
         tables = tuple(
@@ -344,7 +432,7 @@ class AnalysisExportDialog(QDialog):
 
     def _update_export_enabled(self) -> None:
         """Preserve picks across formats and explain disabled exports."""
-        if self._statistics_mode or self._hypothesis_mode:
+        if self._statistics_mode or self._hypothesis_mode or self._correlation_mode:
             self._update_statistics_export_enabled()
             return
         excel = self._format_combo.currentData() is OverviewExportFormat.EXCEL
@@ -377,26 +465,40 @@ class AnalysisExportDialog(QDialog):
         """Preserve Statistics picks and explain format-specific constraints."""
         excel = self._format_combo.currentData() is StatisticsExportFormat.EXCEL
         format_explanation = (
-            self.tr("Excel exports selected tables as separate sheets and charts on one Charts sheet.")
+            self.tr("Excel exports the selected correlation table as a worksheet.")
+            if excel and self._correlation_mode
+            else self.tr("Excel exports selected tables as separate sheets and charts on one Charts sheet.")
             if excel
+            else self.tr("CSV and binary exports contain exactly one correlation table.")
+            if self._correlation_mode
             else self.tr(
                 "Choose exactly one table for CSV or binary export. "
                 "Charts are available only in Excel; uncheck Charts to continue."
             )
         )
         request = self.export_request()
-        choices = self._hypothesis_choices if self._hypothesis_mode else self._statistics_choices
+        choices = (
+            self._hypothesis_choices
+            if self._hypothesis_mode
+            else self._correlation_choices
+            if self._correlation_mode
+            else self._statistics_choices
+        )
         selected = any(choice.isEnabled() and choice.isChecked() for choice in choices.values())
         available = any(choice.isEnabled() for choice in choices.values())
         chart_choice = (
             self._hypothesis_choices.get(HypothesisExportComponent.CHARTS)
             if self._hypothesis_mode
+            else None
+            if self._correlation_mode
             else self._statistics_choices.get(StatisticsExportTable.CHARTS)
         )
         chart_selected = chart_choice is not None and chart_choice.isChecked()
         if self._hypothesis_mode and self._hypothesis is None:
             reason = self.tr("Apply a hypothesis test successfully before exporting.")
-        elif not self._hypothesis_mode and self._statistics is None:
+        elif self._correlation_mode and self._correlation is None:
+            reason = self.tr("Apply a correlation matrix successfully before exporting.")
+        elif self._statistics_mode and self._statistics is None:
             reason = self.tr("Run Statistics successfully before exporting.")
         elif not available:
             reason = self.tr("This component is empty and cannot be exported.")

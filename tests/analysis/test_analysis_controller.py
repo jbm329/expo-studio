@@ -39,7 +39,15 @@ from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigW
 from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
-from expo_jbm329.services.analysis.correlation import CorrelationMethod
+from expo_jbm329.services.analysis.correlation import (
+    CorrelationError,
+    CorrelationMethod,
+    analyze_correlation_pair,
+)
+from expo_jbm329.services.analysis.correlation_export import (
+    CorrelationExportComponent,
+    CorrelationExportRequest,
+)
 from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportComponent as Component,
 )
@@ -599,6 +607,7 @@ class DummyAnalysisDialog:
         self.overview_export_requested = DummySignal()
         self.statistics_export_requested = DummySignal()
         self.hypothesis_export_requested = DummySignal()
+        self.correlation_export_requested = DummySignal()
         self.placeholder_calls: list[str] = []
         self.content_widgets: list[QWidget] = []
         self.config_widgets: list[QWidget | None] = []
@@ -611,13 +620,23 @@ class DummyAnalysisDialog:
         self._export_overview = None
         self._export_statistics = None
         self._export_hypothesis = None
+        self._export_correlation = None
+        self._correlation_export_revision = 0
         self._analysis_revision = 0
 
     def invalidate_overview_export(self):
         self._export_overview = None
         self._export_statistics = None
         self._export_hypothesis = None
+        self.invalidate_correlation_export()
         self._analysis_revision += 1
+
+    def invalidate_correlation_export(self):
+        self._export_correlation = None
+        self._correlation_export_revision += 1
+
+    def correlation_export_revision(self):
+        return self._correlation_export_revision
 
     def analysis_revision(self):
         return self._analysis_revision
@@ -639,6 +658,14 @@ class DummyAnalysisDialog:
 
     def exportable_hypothesis(self):
         return self._export_hypothesis
+
+    def set_exportable_correlation(self, snapshot):
+        self._export_correlation = snapshot
+
+    def exportable_correlation(self):
+        if self._selected_category is AnalysisCategory.CORRELATION:
+            return self._export_correlation
+        return None
 
     def show_placeholder(self, text):
         self.invalidate_overview_export()
@@ -1668,6 +1695,181 @@ def _correlation_df() -> pd.DataFrame:
     })
 
 
+def _correlation_export_context():
+    frame = _correlation_df()
+    frame["constant"] = 1.0
+    outcome = AnalysisController._compute_correlation(
+        frame,
+        analysis_controller_module._JobCallbacks(None, None),  # noqa: SLF001
+        columns=("a", "b", "c", "constant"),
+    )
+    assert outcome is not None and outcome.export_snapshot is not None
+    dialog = AnalysisDialog(
+        parent=None,
+        datasets=[DatasetRef("chosen", "Chosen", len(frame), len(frame.columns))],
+        active_tab_id="chosen",
+    )
+    dialog.select_category(AnalysisCategory.CORRELATION)
+    dialog.set_content_widget(CorrelationView(outcome.matrix, outcome.pair_detail))
+    dialog.set_exportable_correlation(outcome.export_snapshot)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must not look up a dataset")
+    results.current_df.side_effect = AssertionError("Export must not use the active tab")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, outcome.export_snapshot, Mock()
+
+
+@pytest.mark.parametrize("format_choice", list(StatisticsExportFormat))
+def test_correlation_export_routes_only_localized_ranked_table(
+    format_choice: StatisticsExportFormat,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    controller, dialog, snapshot, exporter = _correlation_export_context()
+    translations = {
+        "Strongest correlations": "Starkaste korrelationer",
+        "Variable 1": "Variabel 1",
+        "Variable 2": "Variabel 2",
+        "Coefficient": "Koefficient",
+        "95% CI lower": "95 % KI nedre",
+        "95% CI upper": "95 % KI övre",
+        "p": "p",
+        "Holm p": "Holm p",
+        "n": "n",
+        "Strength": "Styrka",
+        "Significant after Holm": "Signifikant efter Holm",
+        "Correlation method": "Korrelationsmetod",
+        "Ranking and Holm explanation": "Rangordning och Holm-förklaring",
+        "Pearson": "Pearson",
+        "Negligible": "Försumbar",
+        "Weak": "Svag",
+        "Moderate": "Måttlig",
+        "Strong": "Stark",
+        "N/A": "Ej tillämpligt",
+    }
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    request = CorrelationExportRequest(
+        snapshot,
+        (CorrelationExportComponent.STRONGEST_CORRELATIONS,),
+        format_choice,
+    )
+
+    controller._export_correlation(dialog, exporter, request)
+
+    method = {
+        StatisticsExportFormat.EXCEL: exporter.export_excel,
+        StatisticsExportFormat.CSV: exporter.export_csv,
+        StatisticsExportFormat.BINARY: exporter.export_data,
+    }[format_choice]
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    if format_choice is StatisticsExportFormat.EXCEL:
+        assert set(kwargs) == {"sheets", "parent_widget", "operation_target", "show_success_dialog"}
+        assert list(kwargs["sheets"]) == ["Starkaste korrelationer"]
+        frame = kwargs["sheets"]["Starkaste korrelationer"]
+    else:
+        assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+        frame = kwargs["df"]
+    assert frame.columns.tolist() == [
+        "Variabel 1",
+        "Variabel 2",
+        "Koefficient",
+        "95 % KI nedre",
+        "95 % KI övre",
+        "p",
+        "Holm p",
+        "n",
+        "Styrka",
+        "Signifikant efter Holm",
+        "Korrelationsmetod",
+        "Rangordning och Holm-förklaring",
+    ]
+    assert list(zip(frame["Variabel 1"], frame["Variabel 2"], strict=True)) == [
+        (pair.x_column, pair.y_column) for pair in snapshot.matrix.pairs
+    ]
+    assert frame["Koefficient"].iloc[0] == snapshot.matrix.pairs[0].coefficient
+    assert pd.api.types.is_numeric_dtype(frame["Koefficient"])
+    assert pd.api.types.is_numeric_dtype(frame["95 % KI nedre"])
+    assert frame["Korrelationsmetod"].eq("Pearson").all()
+    assert "Holm adjustment" in frame["Rangordning och Holm-förklaring"].iloc[0]
+    assert "*" not in frame["Rangordning och Holm-förklaring"].iloc[0]
+    assert "Ej tillämpligt" in frame["Styrka"].tolist()
+    assert frame["Koefficient"].isna().any()
+    assert frame["95 % KI nedre"].isna().any()
+    assert controller._results.mock_calls == []
+
+
+def test_correlation_export_uses_compiled_swedish_labels() -> None:
+    controller, dialog, snapshot, exporter = _correlation_export_context()
+    translator = QTranslator()
+    catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / "app_sv.qm"
+    assert translator.load(str(catalog))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        controller._export_correlation(
+            dialog,
+            exporter,
+            CorrelationExportRequest(
+                snapshot,
+                (CorrelationExportComponent.STRONGEST_CORRELATIONS,),
+                StatisticsExportFormat.EXCEL,
+            ),
+        )
+    finally:
+        app.removeTranslator(translator)
+
+    sheets = exporter.export_excel.call_args.kwargs["sheets"]
+    assert list(sheets) == ["Starkaste korrelationerna"]
+    frame = sheets["Starkaste korrelationerna"]
+    assert frame.columns.tolist() == [
+        "Variabel 1",
+        "Variabel 2",
+        "Koefficient",
+        "95 % KI nedre",
+        "95 % KI övre",
+        "p",
+        "Holm p",
+        "n",
+        "Styrka",
+        "Signifikant efter Holm",
+        "Korrelationsmetod",
+        "Förklaring av rangordning och Holm-korrigering",
+    ]
+    assert "Stark" in frame["Styrka"].tolist()
+    assert "Ej tillämpligt" in frame["Styrka"].tolist()
+    assert "Holm-korrigering" in frame["Förklaring av rangordning och Holm-korrigering"].iloc[0]
+
+
+def test_correlation_export_rejects_stale_navigation_without_dataset_lookup() -> None:
+    controller, dialog, snapshot, exporter = _correlation_export_context()
+    request = CorrelationExportRequest(
+        snapshot,
+        (CorrelationExportComponent.STRONGEST_CORRELATIONS,),
+        StatisticsExportFormat.CSV,
+    )
+    dialog.select_category(AnalysisCategory.STATISTICS)
+
+    controller._export_correlation(dialog, exporter, request)
+
+    assert exporter.mock_calls == []
+    assert controller._results.mock_calls == []
+
+
+def test_invalid_correlation_matrix_selection_returns_structured_error_without_indexing() -> None:
+    result = AnalysisController._compute_correlation(
+        _correlation_df(),
+        analysis_controller_module._JobCallbacks(None, None),  # noqa: SLF001
+        columns=("missing", "a"),
+    )
+
+    assert result is not None
+    assert result.matrix.error is CorrelationError.INVALID_COLUMN
+    assert result.export_snapshot is None
+
+
 def _open_correlation(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame | None = None):
     dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=6, column_count=4)
     ctrl = AnalysisController(
@@ -1745,6 +1947,30 @@ def test_method_change_without_apply_starts_no_job(dialog_factory):
     assert _correlation_view(dlg).method() is CorrelationMethod.PEARSON
 
 
+def test_pending_matrix_controls_and_pair_only_recompute_keep_export_snapshot(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    snapshot = dlg.exportable_correlation()
+    assert snapshot is not None
+    config = _correlation_config(dlg)
+    config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.SPEARMAN))  # noqa: SLF001
+    config._column_list.item(2).setCheckState(Qt.CheckState.Unchecked)  # noqa: SLF001
+
+    assert dlg.exportable_correlation() is snapshot
+    config.set_pair("c", "a")
+    pair_call = async_ops.last_call
+    assert pair_call["scope"] == "analysis:correlation:pair:pearson:c:a"
+    assert dlg.exportable_correlation() is snapshot
+    _simulate_success(pair_call)
+    assert dlg.exportable_correlation() is snapshot
+
+    matrix_call = _apply_correlation(async_ops, dlg)
+    assert dlg.exportable_correlation() is None
+    _simulate_success(matrix_call)
+    assert dlg.exportable_correlation() is not None
+    assert dlg.exportable_correlation().matrix.method is CorrelationMethod.SPEARMAN
+
+
 def test_correlation_apply_runs_as_a_cancelable_background_job_with_progress(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_correlation(async_ops, dialog_factory)
@@ -1768,6 +1994,36 @@ def test_correlation_job_reports_progress_through_the_injected_callback(dialog_f
 
     assert result is not None
     assert progress[-1] == 100
+
+
+def test_matrix_worker_owns_selected_columns_before_analysis_and_pair_detail(dialog_factory):
+    async_ops = DummyAsyncOps()
+    source = _correlation_df()
+    source_before = source.copy(deep=True)
+    _, dlg = _open_correlation(async_ops, dialog_factory, source)
+    call = _apply_correlation(async_ops, dlg)
+    outcome = call["work"](cancel_cb=lambda: False)
+
+    assert outcome.export_snapshot is not None
+    assert outcome.export_snapshot.matrix_data.columns.tolist() == ["a", "b", "c"]
+    pd.testing.assert_frame_equal(outcome.export_snapshot.matrix_data, source_before[["a", "b", "c"]])
+    source.loc[:, ["a", "b", "c"]] = -999.0
+    pd.testing.assert_frame_equal(outcome.export_snapshot.matrix_data, source_before[["a", "b", "c"]])
+    assert outcome.pair_detail is not None
+    expected_detail = analyze_correlation_pair(
+        source_before,
+        outcome.pair_detail.pair.x_column,
+        outcome.pair_detail.pair.y_column,
+        outcome.matrix.method,
+    )
+    assert outcome.pair_detail.pair.x_column == expected_detail.pair.x_column
+    assert outcome.pair_detail.pair.y_column == expected_detail.pair.y_column
+    assert outcome.pair_detail.pair.coefficient == expected_detail.pair.coefficient
+    assert outcome.pair_detail.pair.n == expected_detail.pair.n
+    assert np.isnan(outcome.pair_detail.pair.adjusted_p_value)
+
+    call["on_result"](outcome)
+    assert dlg.exportable_correlation() is outcome.export_snapshot
 
 
 def test_first_apply_details_the_strongest_pair_and_enables_pair_selection(dialog_factory):
@@ -1949,6 +2205,7 @@ def test_stale_matrix_recompute_is_discarded_when_applied_again(dialog_factory):
 
     combo.setCurrentIndex(combo.findData(CorrelationMethod.SPEARMAN))
     first = _apply_correlation(async_ops, dlg)
+    assert dlg.exportable_correlation() is None
     combo.setCurrentIndex(combo.findData(CorrelationMethod.KENDALL))
     second = _apply_correlation(async_ops, dlg)
 
@@ -1958,6 +2215,20 @@ def test_stale_matrix_recompute_is_discarded_when_applied_again(dialog_factory):
 
     _simulate_success(second)
     assert _correlation_view(dlg).method() is CorrelationMethod.KENDALL
+
+
+def test_repeated_apply_with_same_configuration_rejects_the_older_matrix_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_correlation(async_ops, dialog_factory)
+    first = _apply_correlation(async_ops, dlg)
+    second = _apply_correlation(async_ops, dlg)
+
+    first_result = first["work"](cancel_cb=lambda: False)
+    first["on_result"](first_result)
+    assert dlg.exportable_correlation() is None
+    second_result = second["work"](cancel_cb=lambda: False)
+    second["on_result"](second_result)
+    assert dlg.exportable_correlation() is not None
 
 
 def test_pair_change_recomputes_only_the_pair_detail_over_the_pair_panel(dialog_factory):
@@ -2024,17 +2295,16 @@ def test_pair_change_while_the_matrix_is_computing_is_caught_up_afterwards(dialo
     config = _correlation_config(dlg)
 
     matrix_call = _apply_correlation(async_ops, dlg)
-    dlg.show_placeholder("computing")  # no view is displayed while the matrix job runs
-    jobs_before = len(async_ops.calls)
-
     config.set_pair("c", "a")
-    assert len(async_ops.calls) == jobs_before  # nothing to update yet
-
-    _simulate_success(matrix_call)
-
     pair_call = async_ops.last_call
     assert pair_call["scope"] == "analysis:correlation:pair:pearson:c:a"
+
+    _simulate_success(matrix_call)
+    catchup_call = async_ops.last_call
+    assert catchup_call["scope"] == "analysis:correlation:pair:pearson:c:a"
     _simulate_success(pair_call)
+    _simulate_success(catchup_call)
+
     detail = _correlation_view(dlg).pair_detail()
     assert detail is not None
     assert (detail.pair.x_column, detail.pair.y_column) == ("c", "a")

@@ -389,8 +389,8 @@
         <translation>Lägg till i rapport</translation>
     </message>
     <message>
-        <source>Overview, Statistics and applied Hypothesis Tests exports are available after analysis. Other export and report actions are previews.</source>
-        <translation>Export av Översikt, Statistik och tillämpade Hypotestester är tillgänglig efter analys. Övriga export- och rapportåtgärder är förhandsvisningar.</translation>
+        <source>Overview, Statistics, applied Hypothesis Tests, and applied Correlation matrix exports are available after analysis. Other export and report actions are previews.</source>
+        <translation>Export av Översikt, Statistik, tillämpade Hypotestester och tillämpade korrelationsmatriser är tillgänglig efter analys. Övriga export- och rapportåtgärder är förhandsvisningar.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -523,6 +523,23 @@
     <message><source>Epsilon²</source><translation>Epsilon²</translation></message>
     <message><source>Cramér's V</source><translation>Cramérs V</translation></message>
     <message><source>Kendall's W</source><translation>Kendalls W</translation></message>
+    <message><source>Export the strongest-correlations table for the applied matrix.</source><translation>Exportera tabellen med de starkaste korrelationerna för den tillämpade matrisen.</translation></message>
+    <message><source>Apply a correlation matrix successfully before exporting.</source><translation>Tillämpa en korrelationsmatris utan fel innan du exporterar.</translation></message>
+    <message><source>Applied method: {method}
+Applied columns: {columns}</source><translation>Tillämpad metod: {method}
+Tillämpade kolumner: {columns}</translation></message>
+    <message><source>Correlation method</source><translation>Korrelationsmetod</translation></message>
+    <message><source>Coefficient</source><translation>Koefficient</translation></message>
+    <message><source>Significant after Holm</source><translation>Signifikant efter Holm</translation></message>
+    <message><source>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</source><translation>Paren rangordnas efter absolutv&#228;rdet av koefficienten. Signifikans baseras p&#229; p &lt; {alpha} efter Holm-korrigering f&#246;r {count} tester.</translation></message>
+    <message><source>Ranking and Holm explanation</source><translation>Förklaring av rangordning och Holm-korrigering</translation></message>
+    <message><source>Strongest correlations</source><translation>Starkaste korrelationerna</translation></message>
+    <message><source>Matrix plot</source><translation>Matrisdiagram</translation></message>
+    <message><source>Planned for a later milestone; no chart will be exported yet.</source><translation>Planerat till en senare milstolpe; inga diagram exporteras ännu.</translation></message>
+    <message><source>Scatterplots ({count} pair)</source><translation>Spridningsdiagram ({count} par)</translation></message>
+    <message><source>Scatterplots ({count} pairs)</source><translation>Spridningsdiagram ({count} par)</translation></message>
+    <message><source>Excel exports the selected correlation table as a worksheet.</source><translation>Excel exporterar den valda korrelationstabellen som ett kalkylblad.</translation></message>
+    <message><source>CSV and binary exports contain exactly one correlation table.</source><translation>CSV- och binärfiler innehåller exakt en korrelationstabell.</translation></message>
     <message>
         <source>Data</source>
         <translation>Data</translation>
@@ -2112,8 +2129,8 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/correlation_view.py" line="306"/>
-        <source>Pairs are ranked by absolute coefficient. * marks pairs that are significant (p &lt; {alpha}) after Holm adjustment for {count} tests. Click a row to show the pair below.</source>
-        <translation>Paren rangordnas efter absolutvärdet av koefficienten. * markerar par som är signifikanta (p &lt; {alpha}) efter Holm-korrigering för {count} tester. Klicka på en rad för att visa paret nedan.</translation>
+        <source>Pairs are ranked by absolute coefficient. * marks pairs that are significant (p &lt; {alpha}) after Holm adjustment for {count} tests.</source>
+        <translation>Paren rangordnas efter absolutvärdet av koefficienten. * markerar par som är signifikanta (p &lt; {alpha}) efter Holm-korrigering för {count} tester.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/correlation_view.py" line="321"/>

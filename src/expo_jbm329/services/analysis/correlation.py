@@ -39,6 +39,7 @@ DEFAULT_SELECTED_COLUMNS = 20
 MIN_OBSERVATIONS = 3
 
 CONFIDENCE_LEVEL = 0.95
+SIGNIFICANCE_LEVEL = 0.05
 
 SCATTER_SAMPLE_SIZE = 5_000
 # A fixed seed keeps the plotted sample identical across runs.

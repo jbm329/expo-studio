@@ -18,6 +18,8 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+from expo_jbm329.services.analysis.correlation import CorrelationMethod, analyze_correlation_matrix
+from expo_jbm329.services.analysis.correlation_export import CorrelationExportComponent, CorrelationExportSnapshot
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportComponent, HypothesisExportRequest
 from expo_jbm329.services.analysis.overview import OverviewExportFormat, OverviewExportTable, analyze_dataset_overview
 from expo_jbm329.services.analysis.statistics import (
@@ -26,6 +28,13 @@ from expo_jbm329.services.analysis.statistics import (
     analyze_descriptive_statistics,
 )
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
+
+
+def _correlation_snapshot() -> CorrelationExportSnapshot:
+    frame = pd.DataFrame({"first column": [1.0, 2.0, 3.0], "second column": [2.0, 4.0, 5.0]})
+    matrix = analyze_correlation_matrix(frame, tuple(frame.columns), CorrelationMethod.SPEARMAN)
+    assert matrix is not None
+    return CorrelationExportSnapshot(matrix, frame.copy(deep=True))
 
 
 def test_overview_formats_preserve_choices_and_disable_multi_table_single_file_export():
@@ -233,6 +242,50 @@ def test_hypothesis_dialog_without_applied_result_never_enables_export():
     assert "Apply" in dialog._export_button.toolTip()
     with pytest.raises(ValueError, match="only one"):
         AnalysisExportDialog(hypothesis_mode=True, statistics_mode=True)
+
+
+def test_correlation_dialog_names_applied_matrix_and_only_enables_ranked_table():
+    snapshot = _correlation_snapshot()
+    dialog = AnalysisExportDialog(correlation=snapshot)
+    choices = dialog.findChildren(QCheckBox)
+    formats = dialog.findChild(QComboBox)
+    export = next(button for button in dialog.findChildren(QPushButton) if button.text() == "Export")
+
+    assert [choice.text() for choice in choices] == [
+        "Strongest correlations",
+        "Matrix plot",
+        "Scatterplots (1 pair)",
+    ]
+    assert choices[0].isEnabled() and choices[0].isChecked()
+    assert not choices[1].isEnabled() and not choices[2].isEnabled()
+    assert "later milestone" in choices[1].toolTip()
+    assert formats.currentData() is StatisticsExportFormat.EXCEL
+    identity = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied method:"))
+    assert identity.textFormat() is Qt.TextFormat.PlainText
+    assert "Spearman" in identity.text()
+    assert "first column / second column" in identity.text()
+
+    for format_choice in StatisticsExportFormat:
+        formats.setCurrentIndex(formats.findData(format_choice))
+        request = dialog.export_request()
+        assert request.snapshot is snapshot
+        assert request.components == (CorrelationExportComponent.STRONGEST_CORRELATIONS,)
+        assert request.format is format_choice
+        assert export.isEnabled()
+
+
+def test_correlation_dialog_without_successful_matrix_shows_disabled_choices():
+    dialog = AnalysisExportDialog(correlation_mode=True)
+    choices = dialog.findChildren(QCheckBox)
+    assert [choice.text() for choice in choices] == [
+        "Strongest correlations",
+        "Matrix plot",
+        "Scatterplots (0 pairs)",
+    ]
+    assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
+    assert dialog.export_request() is None
+    assert "Apply a correlation matrix" in dialog._export_button.toolTip()
+    assert all("no chart will be exported" in choice.toolTip() for choice in choices[1:])
 
 
 @pytest.mark.parametrize("locale", ["en", "sv"])

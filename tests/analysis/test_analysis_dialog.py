@@ -42,7 +42,16 @@ from expo_jbm329.gui.dialogs.service.common.localization import TR_CLOSE
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.chi_square import initialize_chi_square
 from expo_jbm329.services.analysis.clustering import initialize_clustering
-from expo_jbm329.services.analysis.correlation import initialize_correlation
+from expo_jbm329.services.analysis.correlation import (
+    CorrelationMethod,
+    analyze_correlation_matrix,
+    initialize_correlation,
+)
+from expo_jbm329.services.analysis.correlation_export import (
+    CorrelationExportComponent,
+    CorrelationExportRequest,
+    CorrelationExportSnapshot,
+)
 from expo_jbm329.services.analysis.group_comparison import (
     ColumnExclusionReason,
     ExcludedColumn,
@@ -104,10 +113,61 @@ def test_statistics_export_snapshot_is_scoped_to_current_category_and_dataset():
     assert dialog.exportable_statistics() is None
     dialog.select_dataset("t1")
     assert dialog.exportable_statistics() is None
-
     dialog.set_exportable_statistics(result)
     dialog.select_category(AnalysisCategory.OVERVIEW)
     assert dialog.exportable_statistics() is None
+
+
+def test_correlation_export_snapshot_is_scoped_to_current_category_and_dataset():
+    frame = pd.DataFrame({"x": [1.0, 2.0, 3.0], "y": [2.0, 4.0, 5.0]})
+    matrix = analyze_correlation_matrix(frame, tuple(frame.columns), CorrelationMethod.PEARSON)
+    assert matrix is not None
+    snapshot = CorrelationExportSnapshot(matrix, frame.copy(deep=True))
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.CORRELATION)
+    dialog.set_exportable_correlation(snapshot)
+
+    assert dialog.exportable_correlation() is snapshot
+    dialog.select_dataset("t2")
+    assert dialog.exportable_correlation() is None
+    dialog.select_dataset("t1")
+    assert dialog.exportable_correlation() is None
+    dialog.set_exportable_correlation(snapshot)
+    dialog.select_category(AnalysisCategory.STATISTICS)
+    assert dialog.exportable_correlation() is None
+
+
+def test_correlation_export_selection_emits_only_the_current_snapshot(monkeypatch):
+    frame = pd.DataFrame({"x": [1.0, 2.0, 3.0], "y": [2.0, 4.0, 5.0]})
+    matrix = analyze_correlation_matrix(frame, tuple(frame.columns), CorrelationMethod.PEARSON)
+    assert matrix is not None
+    snapshot = CorrelationExportSnapshot(matrix, frame.copy(deep=True))
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.CORRELATION)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_correlation(snapshot)
+    received: list[CorrelationExportRequest] = []
+    dialog.correlation_export_requested.connect(received.append)
+    captured: list[AnalysisExportDialog] = []
+
+    def accept_ranked_table(export_dialog):
+        captured.append(export_dialog)
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(AnalysisExportDialog, "exec", accept_ranked_table)
+    dialog._show_export_selection()
+
+    assert len(captured) == 1
+    assert [choice.text() for choice in captured[0].findChildren(QCheckBox)] == [
+        "Strongest correlations",
+        "Matrix plot",
+        "Scatterplots (1 pair)",
+    ]
+    assert received[0].snapshot is snapshot
+    assert received[0].components == (CorrelationExportComponent.STRONGEST_CORRELATIONS,)
+    dialog.select_category(AnalysisCategory.STATISTICS)
+    dialog._show_export_selection()
+    assert len(received) == 1
 
 
 def test_statistics_export_dialog_emits_selected_chart_only_request(monkeypatch):

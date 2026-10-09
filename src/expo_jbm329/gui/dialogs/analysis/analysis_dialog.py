@@ -41,6 +41,7 @@ from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDial
 from expo_jbm329.gui.dialogs.analysis.report_page import ReportPage
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.correlation_export import CorrelationExportRequest, CorrelationExportSnapshot
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportRequest, HypothesisExportSnapshot
 from expo_jbm329.services.analysis.overview import OverviewExportRequest
 from expo_jbm329.services.analysis.statistics import StatisticsExportRequest
@@ -123,6 +124,7 @@ class AnalysisDialog(QDialog):
     overview_export_requested = pyqtSignal(object)  # OverviewExportRequest
     statistics_export_requested = pyqtSignal(object)  # StatisticsExportRequest
     hypothesis_export_requested = pyqtSignal(object)  # HypothesisExportRequest
+    correlation_export_requested = pyqtSignal(object)  # CorrelationExportRequest
 
     def __init__(
         self,
@@ -149,6 +151,9 @@ class AnalysisDialog(QDialog):
         self._statistics_export_tab_id: str | None = None
         self._export_hypothesis: HypothesisExportSnapshot | None = None
         self._hypothesis_export_tab_id: str | None = None
+        self._export_correlation: CorrelationExportSnapshot | None = None
+        self._correlation_export_tab_id: str | None = None
+        self._correlation_export_revision = 0
         self._analysis_revision = 0
 
         self.setWindowTitle(self.tr("Advanced analysis"))
@@ -257,7 +262,8 @@ class AnalysisDialog(QDialog):
         actions.addWidget(add_button)
         explanation = QLabel(
             self.tr(
-                "Overview, Statistics and applied Hypothesis Tests exports are available after analysis. "
+                "Overview, Statistics, applied Hypothesis Tests, and applied Correlation matrix exports are available "
+                "after analysis. "
                 "Other export and report actions are previews."
             ),
             bar,
@@ -279,6 +285,8 @@ class AnalysisDialog(QDialog):
             statistics_mode=self.selected_category() is AnalysisCategory.STATISTICS,
             hypothesis=self.exportable_hypothesis(),
             hypothesis_mode=self.selected_category() is AnalysisCategory.HYPOTHESIS_TESTS,
+            correlation=self.exportable_correlation(),
+            correlation_mode=self.selected_category() is AnalysisCategory.CORRELATION,
         )
         for combo in dialog.findChildren(QComboBox):
             _ComboToolTipFilter(combo)
@@ -290,6 +298,8 @@ class AnalysisDialog(QDialog):
                 self.statistics_export_requested.emit(request)
             elif isinstance(request, HypothesisExportRequest) and request.snapshot is self.exportable_hypothesis():
                 self.hypothesis_export_requested.emit(request)
+            elif isinstance(request, CorrelationExportRequest) and request.snapshot is self.exportable_correlation():
+                self.correlation_export_requested.emit(request)
 
     def invalidate_overview_export(self) -> None:
         """Disable real export as soon as displayed analysis becomes stale."""
@@ -299,7 +309,18 @@ class AnalysisDialog(QDialog):
         self._statistics_export_tab_id = None
         self._export_hypothesis = None
         self._hypothesis_export_tab_id = None
+        self.invalidate_correlation_export()
         self._analysis_revision += 1
+
+    def invalidate_correlation_export(self) -> None:
+        """Invalidate only the displayed Correlation snapshot and advance its request generation."""
+        self._export_correlation = None
+        self._correlation_export_tab_id = None
+        self._correlation_export_revision += 1
+
+    def correlation_export_revision(self) -> int:
+        """Return the request generation used to reject stale matrix jobs."""
+        return self._correlation_export_revision
 
     def analysis_revision(self) -> int:
         """Return the generation used to reject jobs after navigation/replacement."""
@@ -317,6 +338,20 @@ class AnalysisDialog(QDialog):
             and self.selected_dataset_tab_id() == self._hypothesis_export_tab_id
         ):
             return self._export_hypothesis
+        return None
+
+    def set_exportable_correlation(self, snapshot: CorrelationExportSnapshot) -> None:
+        """Register a successful matrix snapshot after its view is displayed."""
+        self._export_correlation = snapshot
+        self._correlation_export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_correlation(self) -> CorrelationExportSnapshot | None:
+        """Return the current applied matrix independent of pending configuration edits."""
+        if (
+            self.selected_category() is AnalysisCategory.CORRELATION
+            and self.selected_dataset_tab_id() == self._correlation_export_tab_id
+        ):
+            return self._export_correlation
         return None
 
     def set_exportable_overview(self, result: DatasetOverviewResult) -> None:

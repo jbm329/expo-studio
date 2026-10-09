@@ -25,6 +25,7 @@ from expo_jbm329.services.analysis.correlation import (
     MAX_SELECTED_COLUMNS,
     MIN_OBSERVATIONS,
     MIN_SELECTED_COLUMNS,
+    SIGNIFICANCE_LEVEL,
     CorrelationError,
     CorrelationMethod,
     CorrelationStrength,
@@ -40,9 +41,6 @@ if TYPE_CHECKING:
         CorrelationPair,
         CorrelationPairDetail,
     )
-
-# Standard convention for statistical significance, matching the other views.
-SIGNIFICANCE_LEVEL = 0.05
 
 # Beyond this many matrix columns, per-cell annotations become unreadable.
 MAX_ANNOTATED_COLUMNS = 12
@@ -309,7 +307,7 @@ class CorrelationView(QWidget):
         caption = QLabel(
             self.tr(
                 "Pairs are ranked by absolute coefficient. * marks pairs that are significant "
-                "(p < {alpha}) after Holm adjustment for {count} tests. Click a row to show the pair below."
+                "(p < {alpha}) after Holm adjustment for {count} tests."
             ).format(alpha=fmt_num(SIGNIFICANCE_LEVEL), count=fmt_int(len(result.pairs))),
             panel,
         )

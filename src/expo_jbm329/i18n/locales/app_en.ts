@@ -153,8 +153,8 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Overview, Statistics and applied Hypothesis Tests exports are available after analysis. Other export and report actions are previews.</source>
-        <translation>Overview, Statistics and applied Hypothesis Tests exports are available after analysis. Other export and report actions are previews.</translation>
+        <source>Overview, Statistics, applied Hypothesis Tests, and applied Correlation matrix exports are available after analysis. Other export and report actions are previews.</source>
+        <translation>Overview, Statistics, applied Hypothesis Tests, and applied Correlation matrix exports are available after analysis. Other export and report actions are previews.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -286,6 +286,23 @@
     <message><source>Epsilon²</source><translation>Epsilon²</translation></message>
     <message><source>Cramér's V</source><translation>Cramér's V</translation></message>
     <message><source>Kendall's W</source><translation>Kendall's W</translation></message>
+    <message><source>Export the strongest-correlations table for the applied matrix.</source><translation>Export the strongest-correlations table for the applied matrix.</translation></message>
+    <message><source>Apply a correlation matrix successfully before exporting.</source><translation>Apply a correlation matrix successfully before exporting.</translation></message>
+    <message><source>Applied method: {method}
+Applied columns: {columns}</source><translation>Applied method: {method}
+Applied columns: {columns}</translation></message>
+    <message><source>Correlation method</source><translation>Correlation method</translation></message>
+    <message><source>Coefficient</source><translation>Coefficient</translation></message>
+    <message><source>Significant after Holm</source><translation>Significant after Holm</translation></message>
+    <message><source>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</source><translation>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</translation></message>
+    <message><source>Ranking and Holm explanation</source><translation>Ranking and Holm explanation</translation></message>
+    <message><source>Strongest correlations</source><translation>Strongest correlations</translation></message>
+    <message><source>Matrix plot</source><translation>Matrix plot</translation></message>
+    <message><source>Planned for a later milestone; no chart will be exported yet.</source><translation>Planned for a later milestone; no chart will be exported yet.</translation></message>
+    <message><source>Scatterplots ({count} pair)</source><translation>Scatterplots ({count} pair)</translation></message>
+    <message><source>Scatterplots ({count} pairs)</source><translation>Scatterplots ({count} pairs)</translation></message>
+    <message><source>Excel exports the selected correlation table as a worksheet.</source><translation>Excel exports the selected correlation table as a worksheet.</translation></message>
+    <message><source>CSV and binary exports contain exactly one correlation table.</source><translation>CSV and binary exports contain exactly one correlation table.</translation></message>
     <message>
         <source>Data</source>
         <translation>Data</translation>
@@ -1850,7 +1867,7 @@ Please see logs for more information.</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="306" />
-        <source>Pairs are ranked by absolute coefficient. * marks pairs that are significant (p &lt; {alpha}) after Holm adjustment for {count} tests. Click a row to show the pair below.</source>
+        <source>Pairs are ranked by absolute coefficient. * marks pairs that are significant (p &lt; {alpha}) after Holm adjustment for {count} tests.</source>
         <translation type="unfinished" />
     </message>
     <message>

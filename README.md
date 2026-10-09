@@ -95,6 +95,16 @@ replacement test, or showing a prompt/error invalidates that export.
 Excel is the default, with selected tables on separate sheets and displayed
 images on one **Charts** sheet; charts-only export is supported. CSV/binary
 require exactly one table without Charts.
+After a successful **Correlation** matrix, export **Strongest correlations**
+for that applied method and column selection. The table preserves the matrix's
+complete absolute-coefficient ranking, raw coefficients and confidence bounds,
+raw and Holm-adjusted p-values, observation counts, translated strength labels,
+and an explicit Holm-significance indicator. CSV and binary files contain that
+single table; Excel is the default and writes it to a localized worksheet.
+Pending matrix edits do not change the displayed export, and pair-only detail
+recomputations keep it available. Matrix plot and Scatterplots are visible but
+disabled until chart export is implemented. No pair-detail table or raw dataset
+is included.
 Selections are retained when switching formats; Export is disabled with an
 explanation if the selection is invalid for the format. All choices for other
 analyses are disabled previews and cannot create files. **Add to report** and
