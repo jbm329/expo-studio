@@ -949,7 +949,11 @@ class AnalysisController:
         if matrix.error is not None:
             return _CorrelationOutcome(matrix=matrix, pair_detail=None)
 
-        detail_pair = pair if pair is not None else default_pair(matrix)
+        detail_pair = (
+            pair
+            if pair is not None and pair[0] != pair[1] and all(column in matrix.columns for column in pair)
+            else default_pair(matrix)
+        )
         pair_detail = analyze_correlation_pair(df, *detail_pair, method) if detail_pair is not None else None
         return _CorrelationOutcome(matrix=matrix, pair_detail=pair_detail)
 
@@ -1000,12 +1004,19 @@ class AnalysisController:
         def _apply(result: object) -> None:
             outcome = cast("_CorrelationOutcome", result)
             dialog.set_content_widget(self._build_correlation_view(outcome, config))
+            if outcome.matrix.error is not None:
+                config.set_pair_selection_enabled(enabled=False)
+                return
+            current_pair = config.current_pair()
+            if current_pair is not None and not all(column in outcome.matrix.columns for column in current_pair):
+                current_pair = None
             if outcome.pair_detail is None:
+                config.set_displayed_matrix(outcome.matrix, current_pair)
                 return
             detailed_pair = (outcome.pair_detail.pair.x_column, outcome.pair_detail.pair.y_column)
-            if pair is None:
-                config.set_pair(*detailed_pair, notify=False)
-            config.set_pair_selection_enabled(enabled=True)
+            config.set_displayed_matrix(
+                outcome.matrix, current_pair if pair is not None and current_pair is not None else detailed_pair
+            )
             # The pair may have changed while the matrix was computing; its
             # own recompute was skipped (no current view), so catch up now.
             current_pair = config.current_pair()
@@ -1033,7 +1044,13 @@ class AnalysisController:
     ) -> None:
         """Recompute only the pair detail, updating the current view's pair panel in place."""
         view = dialog.content_widget()
-        if not isinstance(view, CorrelationView) or view.table() is None:
+        if (
+            not isinstance(view, CorrelationView)
+            or view.table() is None
+            or x_column == y_column
+            or x_column not in view.columns()
+            or y_column not in view.columns()
+        ):
             # No matrix is shown (still computing, cancelled or failed);
             # the next matrix result will include the current pair.
             return

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import pytest
 from PyQt6.QtCore import Qt
 
 from expo_jbm329.gui.dialogs.analysis.correlation_config import CorrelationConfigWidget
 from expo_jbm329.services.analysis.correlation import (
     MAX_SELECTED_COLUMNS,
+    CorrelationError,
     CorrelationMatrixResult,
     CorrelationMethod,
 )
@@ -86,12 +88,12 @@ def test_select_all_and_clear_update_pending_matrix_columns_without_applying():
     assert received == []
 
 
-def test_pair_combos_list_every_available_column_excluding_x_from_y():
+def test_pair_combos_list_only_matrix_columns_excluding_x_from_y():
     widget = CorrelationConfigWidget(_make_result(), ("c", "a"))
 
-    assert _items(widget._x_combo) == ["a", "b", "c", "d"]  # noqa: SLF001
-    assert _items(widget._y_combo) == ["a", "b", "d"]  # noqa: SLF001
-    assert widget.current_pair() == ("c", "a")
+    assert _items(widget._x_combo) == ["a", "b"]  # noqa: SLF001
+    assert _items(widget._y_combo) == ["b"]  # noqa: SLF001
+    assert widget.current_pair() == ("a", "b")
 
 
 def test_without_a_pair_defaults_to_the_first_two_columns():
@@ -140,7 +142,7 @@ def test_pair_selection_is_disabled_until_enabled():
 
 
 def test_set_pair_without_notify_selects_the_pair_silently():
-    widget = CorrelationConfigWidget(_make_result(), ("a", "b"))
+    widget = CorrelationConfigWidget(_make_result(columns=("a", "b", "c")), ("a", "b"))
     received = _record(widget.pair_changed)
 
     widget.set_pair("c", "a", notify=False)
@@ -220,7 +222,7 @@ def test_selection_label_shows_the_checked_count():
 
 
 def test_changing_x_rebuilds_y_and_emits_the_pair():
-    widget = CorrelationConfigWidget(_make_result(), ("a", "b"))
+    widget = CorrelationConfigWidget(_make_result(columns=("a", "b", "c", "d")), ("a", "b"))
     received = _record(widget.pair_changed)
 
     widget._x_combo.setCurrentIndex(widget._x_combo.findText("c"))  # noqa: SLF001
@@ -239,7 +241,7 @@ def test_choosing_y_as_x_falls_back_to_first_remaining_y():
 
 
 def test_changing_y_emits_the_pair():
-    widget = CorrelationConfigWidget(_make_result(), ("a", "b"))
+    widget = CorrelationConfigWidget(_make_result(columns=("a", "b", "d")), ("a", "b"))
     received = _record(widget.pair_changed)
 
     widget._y_combo.setCurrentIndex(widget._y_combo.findText("d"))  # noqa: SLF001
@@ -248,7 +250,7 @@ def test_changing_y_emits_the_pair():
 
 
 def test_set_pair_selects_both_columns_and_emits_once():
-    widget = CorrelationConfigWidget(_make_result(), ("a", "b"))
+    widget = CorrelationConfigWidget(_make_result(columns=("a", "b", "c", "d")), ("a", "b"))
     received = _record(widget.pair_changed)
 
     widget.set_pair("d", "c")
@@ -265,6 +267,7 @@ def test_set_pair_ignores_unchanged_identical_or_unknown_pairs():
     widget.set_pair("a", "a")
     widget.set_pair("a", "missing")
     widget.set_pair("missing", "a")
+    widget.set_pair("a", "c")
 
     assert received == []
     assert widget.current_pair() == ("a", "b")
@@ -285,3 +288,59 @@ def test_x_change_to_nothing_is_ignored():
     widget._x_combo.setCurrentIndex(-1)  # noqa: SLF001
 
     assert received == []
+
+
+def test_pending_and_requested_columns_do_not_change_displayed_pair_choices():
+    widget = CorrelationConfigWidget(_make_result(), ("a", "b"))
+    received = _record(widget.pair_changed)
+    _set_checked(widget, "c", checked=True)
+    _set_checked(widget, "a", checked=False)
+    widget._apply_button.click()  # noqa: SLF001
+
+    assert widget.applied_columns() == ("b", "c")
+    assert _items(widget._x_combo) == ["a", "b"]  # noqa: SLF001
+    assert widget.current_pair() == ("a", "b")
+    assert received == []
+
+
+@pytest.mark.parametrize("pair", [("b", "c"), ("a", "d"), None])
+def test_displayed_matrix_syncs_pair_scope_silently(pair):
+    widget = CorrelationConfigWidget(_make_result(), ("a", "b"))
+    received = _record(widget.pair_changed)
+
+    widget.set_displayed_matrix(_make_result(columns=("b", "c")), pair)
+
+    assert _items(widget._x_combo) == ["b", "c"]  # noqa: SLF001
+    assert _items(widget._y_combo) == ["c"]  # noqa: SLF001
+    assert widget.current_pair() == ("b", "c")
+    assert widget.is_pair_selection_enabled()
+    assert received == []
+
+
+def test_displayed_matrix_sync_preserves_preferred_pair_orientation():
+    widget = CorrelationConfigWidget(_make_result(), ("a", "b"))
+    received = _record(widget.pair_changed)
+    widget.set_displayed_matrix(_make_result(columns=("a", "b", "c")), ("c", "a"))
+
+    assert widget.current_pair() == ("c", "a")
+    assert _items(widget._y_combo) == ["a", "b"]  # noqa: SLF001
+    assert received == []
+
+
+@pytest.mark.parametrize("failed", [True, False])
+def test_invalid_displayed_matrix_does_not_change_choices(failed):
+    widget = CorrelationConfigWidget(_make_result(), ("a", "b"))
+    result = CorrelationMatrixResult(
+        method=CorrelationMethod.PEARSON,
+        columns=("b", "c") if failed else ("b",),
+        available_columns=("a", "b", "c"),
+        coefficients=(),
+        pairs=(),
+        error=CorrelationError.INVALID_COLUMN if failed else None,
+    )
+
+    with pytest.raises(ValueError, match="successful correlation matrix"):
+        widget.set_displayed_matrix(result, None)
+
+    assert widget.current_pair() == ("a", "b")
+    assert _items(widget._x_combo) == ["a", "b"]  # noqa: SLF001

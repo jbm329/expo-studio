@@ -1844,6 +1844,88 @@ def test_apply_recomputes_the_matrix_with_the_checked_columns(dialog_factory):
     table = view.table()
     assert table is not None
     assert table.rowCount() == 1
+    assert view.columns() == ("a", "b")
+    assert config._x_combo.count() == 2  # noqa: SLF001
+    assert config.current_pair() == ("a", "b")
+
+
+def test_replacement_matrix_drops_excluded_pair_without_extra_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    config = _correlation_config(dlg)
+    config.set_pair("c", "a")
+    _simulate_success(async_ops.last_call)
+    item = config._column_list.item(2)  # noqa: SLF001
+    item.setCheckState(item.checkState().Unchecked)
+
+    call = _apply_correlation(async_ops, dlg)
+    jobs_before = len(async_ops.calls)
+    outcome = call["work"]()
+    assert outcome.pair_detail is not None
+    assert (outcome.pair_detail.pair.x_column, outcome.pair_detail.pair.y_column) == ("a", "b")
+    call["on_result"](outcome)
+
+    assert config.current_pair() == ("a", "b")
+    assert len(async_ops.calls) == jobs_before
+    detail = _correlation_view(dlg).pair_detail()
+    assert detail is not None
+    assert (detail.pair.x_column, detail.pair.y_column) == ("a", "b")
+
+
+def test_pair_controller_rejects_columns_outside_displayed_matrix(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    config = _correlation_config(dlg)
+    item = config._column_list.item(2)  # noqa: SLF001
+    item.setCheckState(item.checkState().Unchecked)
+    _simulate_success(_apply_correlation(async_ops, dlg))
+    jobs_before = len(async_ops.calls)
+
+    config.set_pair("c", "a")
+    ctrl._recompute_correlation_pair(dlg, config, "c", "a")  # noqa: SLF001
+    ctrl._recompute_correlation_pair(dlg, config, "a", "a")  # noqa: SLF001
+
+    assert len(async_ops.calls) == jobs_before
+
+
+def test_replacement_matrix_preserves_a_valid_pair_orientation(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    config = _correlation_config(dlg)
+    config.set_pair("c", "a")
+    _simulate_success(async_ops.last_call)
+    item = config._column_list.item(1)  # noqa: SLF001 - "b"
+    item.setCheckState(item.checkState().Unchecked)
+
+    call = _apply_correlation(async_ops, dlg)
+    jobs_before = len(async_ops.calls)
+    _simulate_success(call)
+
+    assert config.current_pair() == ("c", "a")
+    assert len(async_ops.calls) == jobs_before
+    detail = _correlation_view(dlg).pair_detail()
+    assert detail is not None
+    assert (detail.pair.x_column, detail.pair.y_column) == ("c", "a")
+
+
+@pytest.mark.parametrize("failed", [True, False])
+def test_unsuccessful_matrix_replacement_does_not_publish_requested_pair_columns(dialog_factory, failed):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    config = _correlation_config(dlg)
+    item = config._column_list.item(2)  # noqa: SLF001
+    item.setCheckState(item.checkState().Unchecked)
+    call = _apply_correlation(async_ops, dlg)
+
+    if failed:
+        call["on_error"]("boom")
+    else:
+        call["on_result"](None)
+
+    assert config._x_combo.count() == 3  # noqa: SLF001
+    jobs_before = len(async_ops.calls)
+    config.set_pair("c", "a")
+    assert len(async_ops.calls) == jobs_before
 
 
 def test_cancelled_matrix_recompute_shows_placeholder_and_keeps_config(dialog_factory):

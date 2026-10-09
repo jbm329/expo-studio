@@ -66,7 +66,7 @@ class CorrelationConfigWidget(QWidget):
                 pickers. Must have at least `MIN_SELECTED_COLUMNS`
                 available columns.
             pair: The ``(x, y)`` pair to select initially, or `None` for
-                the first two available columns.
+                the first two matrix columns.
             parent: Optional parent widget.
         """
         super().__init__(parent)
@@ -74,6 +74,7 @@ class CorrelationConfigWidget(QWidget):
         self._available_columns = result.available_columns
         self._applied_columns = result.columns
         self._applied_method = result.method
+        self._pair_columns = result.columns
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -151,7 +152,7 @@ class CorrelationConfigWidget(QWidget):
         x_column, y_column = pair if pair is not None else ("", "")
 
         self._x_combo = ColumnComboBox(group)
-        self._x_combo.set_columns(self._available_columns, select=x_column)
+        self._x_combo.set_columns(self._pair_columns, select=x_column)
 
         self._y_combo = ColumnComboBox(group)
         self._populate_y_combo(select=y_column)
@@ -166,7 +167,7 @@ class CorrelationConfigWidget(QWidget):
         self._y_combo.blockSignals(True)
         try:
             self._y_combo.set_columns(
-                [column for column in self._available_columns if column != x_column],
+                [column for column in self._pair_columns if column != x_column],
                 select=select,
             )
         finally:
@@ -265,8 +266,8 @@ class CorrelationConfigWidget(QWidget):
         """
         if (
             x_column == y_column
-            or x_column not in self._available_columns
-            or y_column not in self._available_columns
+            or x_column not in self._pair_columns
+            or y_column not in self._pair_columns
             or self.current_pair() == (x_column, y_column)
         ):
             return
@@ -279,6 +280,29 @@ class CorrelationConfigWidget(QWidget):
         self._populate_y_combo(select=y_column)
         if notify:
             self._emit_pair()
+
+    def set_displayed_matrix(self, result: CorrelationMatrixResult, pair: tuple[str, str] | None) -> None:
+        """Synchronize pair choices with a successful displayed matrix without signals.
+
+        Args:
+            result: Successful matrix whose columns define the pair choices.
+            pair: Preferred pair, or `None` to select the first two matrix columns.
+
+        Raises:
+            ValueError: If the matrix is failed or has an invalid column selection.
+        """
+        if result.error is not None or not self._is_valid_selection(result.columns):
+            message = "Pair choices require a successful correlation matrix."
+            raise ValueError(message)
+        self._pair_columns = result.columns
+        x_column, y_column = pair if pair is not None else ("", "")
+        self._x_combo.blockSignals(True)
+        try:
+            self._x_combo.set_columns(self._pair_columns, select=x_column)
+            self._populate_y_combo(select=y_column)
+        finally:
+            self._x_combo.blockSignals(False)
+        self.set_pair_selection_enabled(enabled=True)
 
     def set_pair_selection_enabled(self, *, enabled: bool) -> None:
         """Enable or disable the X/Y pair pickers.

@@ -155,6 +155,10 @@ class CorrelationView(QWidget):
         """Return the correlation method of the displayed matrix."""
         return self._result.method
 
+    def columns(self) -> tuple[str, ...]:
+        """Return the columns of the displayed matrix in matrix order."""
+        return self._result.columns
+
     def pair_panel(self) -> QWidget:
         """Return the widget holding the pair detail (the pair recompute's overlay target)."""
         return self._pair_panel
