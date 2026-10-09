@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     from PyQt6.QtWidgets import QWidget
 
     from expo_jbm329.services.data_io_service import DataIOService
+    from expo_jbm329.services.excel_chart import ExcelChartImage
     from expo_jbm329.services.file_job_service import FileJobService
     from expo_jbm329.utils.dialog_state import DialogState
     from expo_jbm329.workbench.controllers.async_operation_controller import (
@@ -561,6 +562,12 @@ class ExportController:
         *,
         df: pd.DataFrame | None = None,
         sheets: Mapping[str, pd.DataFrame] | None = None,
+        chart_factory: Callable[
+            [Callable[[int], None] | None, Callable[[], bool] | None],
+            Sequence[ExcelChartImage],
+        ]
+        | None = None,
+        chart_sheet_name: str | None = None,
         parent_widget: QWidget | None = None,
         operation_target: QWidget | None = None,
         show_success_dialog: bool = False,
@@ -575,12 +582,23 @@ class ExportController:
             sheets: Ordered named frames, mutually exclusive with non-None df.
                 Membership is captured before the dialog, not frame contents.
                 Named header-only frames are allowed; empty mappings are errors.
+            chart_factory: Optional worker-safe producer for embedded images.
+            chart_sheet_name: Exact worksheet name for generated images.
             parent_widget: Dialog owner override. None uses the default parent.
             operation_target: Overlay target override. None uses the default target.
             show_success_dialog: Show a confirmation with the output path on success.
         """
         parent, target = self._resolve_context(parent_widget=parent_widget, operation_target=operation_target)
         source: pd.DataFrame | Mapping[str, pd.DataFrame]
+        if (chart_factory is None) != (chart_sheet_name is None):
+            self._dialogs.warn(
+                parent=parent,
+                title=self._tr(self.TR_KIND_EXCEL),
+                text=self._tr(self.TR_EXCEL_INVALID_SHEETS).format(
+                    reason="A chart producer and worksheet name must be supplied together."
+                ),
+            )
+            return
         if sheets is not None:
             if df is not None:
                 self._dialogs.warn(
@@ -590,7 +608,11 @@ class ExportController:
                 )
                 return
             try:
-                source = self._data_io.validate_excel_sheets(sheets)
+                source = self._data_io.validate_excel_sheets(
+                    sheets,
+                    chart_sheet_name=chart_sheet_name,
+                    allow_empty=chart_factory is not None,
+                )
             except (TypeError, ValueError) as error:
                 self._dialogs.warn(
                     parent=parent,
@@ -599,6 +621,13 @@ class ExportController:
                 )
                 return
         else:
+            if chart_factory is not None:
+                self._dialogs.warn(
+                    parent=parent,
+                    title=self._tr(self.TR_KIND_EXCEL),
+                    text=self._tr(self.TR_EXCEL_INPUT_CONFLICT),
+                )
+                return
             if df is None:
                 df = self._get_active_df()
             if self._df_is_empty(df, parent_widget=parent) or df is None:
@@ -669,9 +698,21 @@ class ExportController:
             job_scope: str | None = None,
         ) -> JobResult:
             if isinstance(df_in, Mapping):
+                if chart_factory is None:
+                    return self._data_io.export_dfs_excel(
+                        df_in,
+                        dest,
+                        progress_cb=progress_cb,
+                        cancel_cb=cancel_cb,
+                        job_id=job_id,
+                        job_scope=job_scope,
+                        corr_id=corr,
+                    )
                 return self._data_io.export_dfs_excel(
                     df_in,
                     dest,
+                    chart_factory=chart_factory,
+                    chart_sheet_name=chart_sheet_name,
                     progress_cb=progress_cb,
                     cancel_cb=cancel_cb,
                     job_id=job_id,

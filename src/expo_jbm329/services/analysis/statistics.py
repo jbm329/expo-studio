@@ -19,7 +19,8 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import TYPE_CHECKING
+
+import pandas as pd
 
 from expo_jbm329.services.analysis.columns import numeric_columns
 from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS
@@ -27,11 +28,9 @@ from expo_jbm329.services.analysis.normality import shapiro_normality
 from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
 from expo_jbm329.services.data_profile.column_data_profile import profile_series
 
-if TYPE_CHECKING:
-    import pandas as pd
-
 _NAN = float("nan")
 _NORMALITY_SIGNIFICANCE_LEVEL = 0.05
+_MIN_SHAPIRO_OBSERVATIONS = 3
 _CATEGORICAL_DTYPES = frozenset({SemanticDType.BOOL, SemanticDType.STRING, SemanticDType.CATEGORY})
 
 
@@ -40,6 +39,22 @@ class DescriptiveSummaryMethod(StrEnum):
 
     MEAN_SD = "mean_sd"
     MEDIAN_IQR = "median_iqr"
+
+
+class StatisticsExportTable(StrEnum):
+    """Statistics tables available for export."""
+
+    CONTINUOUS = "Continuous"
+    CATEGORICAL = "Categorical"
+    CHARTS = "Charts"
+
+
+class StatisticsExportFormat(StrEnum):
+    """File formats supported for Statistics exports."""
+
+    CSV = "csv"
+    EXCEL = "excel"
+    BINARY = "binary"
 
 
 @dataclass(frozen=True, slots=True)
@@ -155,6 +170,15 @@ class DescriptiveStatisticsResult:
     categorical_columns: tuple[CategoricalColumnStatistics, ...] = ()
 
 
+@dataclass(frozen=True, slots=True)
+class StatisticsExportRequest:
+    """An export selection tied to the exact displayed Statistics result."""
+
+    result: DescriptiveStatisticsResult
+    tables: tuple[StatisticsExportTable, ...]
+    format: StatisticsExportFormat
+
+
 def recommended_summary_method(stats: ColumnDescriptiveStatistics) -> DescriptiveSummaryMethod:
     """Choose a presentation default from the Shapiro-Wilk result.
 
@@ -172,6 +196,193 @@ def recommended_summary_method(stats: ColumnDescriptiveStatistics) -> Descriptiv
     if math.isnan(stats.shapiro_p_value) or stats.shapiro_p_value < _NORMALITY_SIGNIFICANCE_LEVEL:
         return DescriptiveSummaryMethod.MEDIAN_IQR
     return DescriptiveSummaryMethod.MEAN_SD
+
+
+def has_summary_recommendation(stats: ColumnDescriptiveStatistics) -> bool:
+    """Return whether the Shapiro-Wilk result supports a summary recommendation."""
+    return (
+        stats.count >= _MIN_SHAPIRO_OBSERVATIONS
+        and stats.minimum < stats.maximum
+        and math.isfinite(stats.shapiro_statistic)
+        and math.isfinite(stats.shapiro_p_value)
+        and 0 <= stats.shapiro_p_value <= 1
+    )
+
+
+def statistics_export_tables(
+    result: DescriptiveStatisticsResult,
+    tables: tuple[StatisticsExportTable, ...],
+) -> dict[str, pd.DataFrame]:
+    """Build independent, typed tables from a displayed Statistics snapshot.
+
+    Args:
+        result: The immutable statistics result currently displayed.
+        tables: Distinct Continuous and/or Categorical table selections.
+            Charts are rendered separately and are not DataFrame sheets.
+
+    Returns:
+        Ordered named frames containing raw numeric values and machine-readable
+        recommendation fields.
+
+    Raises:
+        ValueError: If a table selection is empty, repeated, unsupported, or
+            unavailable in the result.
+    """
+    if not tables or len(set(tables)) != len(tables):
+        message = "Select distinct Statistics tables."
+        raise ValueError(message)
+    frames: dict[str, pd.DataFrame] = {}
+    for table in tables:
+        if table is StatisticsExportTable.CHARTS:
+            message = "Charts are workbook content, not a Statistics table."
+            raise ValueError(message)
+        if table is StatisticsExportTable.CONTINUOUS:
+            if not result.columns:
+                message = "Continuous Statistics are unavailable."
+                raise ValueError(message)
+            frames[table.value] = _continuous_export_frame(result)
+        elif table is StatisticsExportTable.CATEGORICAL:
+            if not result.categorical_columns:
+                message = "Categorical Statistics are unavailable."
+                raise ValueError(message)
+            frames[table.value] = _categorical_export_frame(result)
+        else:
+            message = "Unsupported Statistics table."
+            raise ValueError(message)
+    return frames
+
+
+def _continuous_export_frame(result: DescriptiveStatisticsResult) -> pd.DataFrame:
+    """Build the numeric, unformatted continuous summary table."""
+    columns = (
+        "column",
+        "count",
+        "missing_count",
+        "missing_fraction",
+        "mean",
+        "median",
+        "std",
+        "variance",
+        "minimum",
+        "maximum",
+        "range",
+        "q1",
+        "q3",
+        "iqr",
+        "skewness",
+        "kurtosis",
+        "mean_sd_summary",
+        "median_iqr_summary",
+        "shapiro_statistic",
+        "shapiro_p_value",
+        "recommended_summary_method",
+    )
+    rows: list[tuple[object, ...]] = []
+    for stats in result.columns:
+        recommendation = recommended_summary_method(stats).value if has_summary_recommendation(stats) else pd.NA
+        mean_sd = f"{stats.mean:g} ± {stats.std:g}" if math.isfinite(stats.mean) and math.isfinite(stats.std) else ""
+        median_iqr = (
+            f"{stats.median:g} ({stats.q1:g} to {stats.q3:g})"
+            if all(math.isfinite(value) for value in (stats.median, stats.q1, stats.q3))
+            else ""
+        )
+        rows.append((
+            stats.column,
+            stats.count,
+            stats.missing_count,
+            stats.missing_fraction,
+            stats.mean,
+            stats.median,
+            stats.std,
+            stats.variance,
+            stats.minimum,
+            stats.maximum,
+            stats.range,
+            stats.q1,
+            stats.q3,
+            stats.iqr,
+            stats.skewness,
+            stats.kurtosis,
+            mean_sd,
+            median_iqr,
+            stats.shapiro_statistic,
+            stats.shapiro_p_value,
+            recommendation,
+        ))
+    frame = pd.DataFrame(rows, columns=columns)
+    return frame.astype({
+        "column": pd.StringDtype(),
+        "count": "int64",
+        "missing_count": "int64",
+        "missing_fraction": "float64",
+        "mean": "float64",
+        "median": "float64",
+        "std": "float64",
+        "variance": "float64",
+        "minimum": "float64",
+        "maximum": "float64",
+        "range": "float64",
+        "q1": "float64",
+        "q3": "float64",
+        "iqr": "float64",
+        "skewness": "float64",
+        "kurtosis": "float64",
+        "mean_sd_summary": pd.StringDtype(),
+        "median_iqr_summary": pd.StringDtype(),
+        "shapiro_statistic": "float64",
+        "shapiro_p_value": "float64",
+        "recommended_summary_method": pd.StringDtype(),
+    })
+
+
+def _categorical_export_frame(result: DescriptiveStatisticsResult) -> pd.DataFrame:
+    """Build one row per category, retaining denominator and missing data."""
+    rows: list[tuple[object, ...]] = []
+    for column in result.categorical_columns:
+        if column.frequencies:
+            rows.extend(
+                (
+                    column.column,
+                    frequency.value,
+                    frequency.count,
+                    frequency.fraction,
+                    column.count,
+                    column.missing_count,
+                    column.missing_fraction,
+                )
+                for frequency in column.frequencies
+            )
+        else:
+            rows.append((
+                column.column,
+                pd.NA,
+                0,
+                math.nan,
+                column.count,
+                column.missing_count,
+                column.missing_fraction,
+            ))
+    frame = pd.DataFrame(
+        rows,
+        columns=(
+            "column",
+            "value",
+            "count",
+            "fraction",
+            "valid_count",
+            "missing_count",
+            "missing_fraction",
+        ),
+    )
+    return frame.astype({
+        "column": pd.StringDtype(),
+        "value": pd.StringDtype(),
+        "count": "int64",
+        "fraction": "float64",
+        "valid_count": "int64",
+        "missing_count": "int64",
+        "missing_fraction": "float64",
+    })
 
 
 def _safe_diff(minuend: float, subtrahend: float) -> float:

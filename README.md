@@ -73,6 +73,14 @@ Excel can include any selected tables as separate **Summary**, **Columns**, and
 selected table per operation; select Parquet, Feather or Pickle in the binary
 save dialog. Empty Columns and Sample tables cannot be exported, while Summary
 remains available for a successful Overview even for an empty dataset.
+After a successful **Statistics** analysis, **Continuous** and **Categorical**
+tables can be selected independently. The Continuous sheet keeps raw numeric
+statistics, Shapiro-Wilk values, and an explicit recommended-summary field; the
+Categorical sheet uses one row per level with numeric counts and fractions.
+Excel can also include **Charts**, which embeds one histogram/boxplot pair for
+every numeric column on a single Charts sheet. Charts can be exported alone or
+alongside either table. CSV and binary exports require exactly one table and
+cannot include Charts; selections remain checked when changing formats.
 Selections are retained when switching formats; Export is disabled with an
 explanation if the selection is invalid for the format. All choices for other
 analyses are disabled previews and cannot create files. **Add to report** and

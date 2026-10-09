@@ -7,6 +7,7 @@ import pytest
 from PyQt6.QtCore import QCoreApplication, QEvent, QPoint, Qt
 from PyQt6.QtGui import QHelpEvent
 from PyQt6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QDialog,
     QDialogButtonBox,
@@ -51,7 +52,12 @@ from expo_jbm329.services.analysis.paired_comparison import initialize_paired_co
 from expo_jbm329.services.analysis.pca import initialize_pca
 from expo_jbm329.services.analysis.regression import initialize_regression
 from expo_jbm329.services.analysis.regression_glm import RegressionModel, initialize_generalized_targets
-from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
+from expo_jbm329.services.analysis.statistics import (
+    StatisticsExportFormat,
+    StatisticsExportRequest,
+    StatisticsExportTable,
+    analyze_descriptive_statistics,
+)
 from expo_jbm329.services.analysis.survival import initialize_survival_columns
 from expo_jbm329.services.analysis.timeseries import initialize_time_series
 from expo_jbm329.utils.dataset_ref import DatasetRef
@@ -83,6 +89,50 @@ def test_dialog_defaults_to_first_dataset_when_no_active_tab():
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
 
     assert dialog.selected_dataset_tab_id() == "t1"
+
+
+def test_statistics_export_snapshot_is_scoped_to_current_category_and_dataset():
+    result = analyze_descriptive_statistics(pd.DataFrame({"number": [1, 2, 3]}))
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.STATISTICS)
+    dialog.set_exportable_statistics(result)
+
+    assert dialog.exportable_statistics() is result
+    dialog.select_dataset("t2")
+    assert dialog.exportable_statistics() is None
+    dialog.select_dataset("t1")
+    assert dialog.exportable_statistics() is None
+
+    dialog.set_exportable_statistics(result)
+    dialog.select_category(AnalysisCategory.OVERVIEW)
+    assert dialog.exportable_statistics() is None
+
+
+def test_statistics_export_dialog_emits_selected_chart_only_request(monkeypatch):
+    result = analyze_descriptive_statistics(pd.DataFrame({"number": [1, 2, 3]}))
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.STATISTICS)
+    dialog.set_exportable_statistics(result)
+    requests: list[StatisticsExportRequest] = []
+    dialog.statistics_export_requested.connect(requests.append)
+
+    def accept_chart_only(export_dialog):
+        choices = {choice.text(): choice for choice in export_dialog.findChildren(QCheckBox)}
+        choices["Continuous"].setChecked(False)
+        choices["Charts"].setChecked(True)
+        assert export_dialog.export_request().tables == (StatisticsExportTable.CHARTS,)
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(AnalysisExportDialog, "exec", accept_chart_only)
+    dialog._show_export_selection()
+
+    assert requests == [
+        StatisticsExportRequest(
+            result,
+            (StatisticsExportTable.CHARTS,),
+            StatisticsExportFormat.EXCEL,
+        )
+    ]
 
 
 def test_dialog_emits_dataset_changed_when_selection_changes():

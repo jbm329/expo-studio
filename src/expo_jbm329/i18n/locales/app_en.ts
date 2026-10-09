@@ -153,8 +153,8 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Overview data export is available after analysis. Other export and report actions are previews.</source>
-        <translation>Overview data export is available after analysis. Other export and report actions are previews.</translation>
+        <source>Overview and Statistics exports are available after analysis. Other export and report actions are previews.</source>
+        <translation>Overview and Statistics exports are available after analysis. Other export and report actions are previews.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -296,6 +296,46 @@
     <message>
         <source>Choose exactly one table for CSV or binary export. For binary files, choose Parquet, Feather or Pickle in the save dialog.</source>
         <translation>Choose exactly one table for CSV or binary export. For binary files, choose Parquet, Feather or Pickle in the save dialog.</translation>
+    </message>
+    <message>
+        <source>Export the available Statistics tables and numeric-column charts.</source>
+        <translation>Export the available Statistics tables and numeric-column charts.</translation>
+    </message>
+    <message>
+        <source>Continuous</source>
+        <translation>Continuous</translation>
+    </message>
+    <message>
+        <source>Categorical</source>
+        <translation>Categorical</translation>
+    </message>
+    <message>
+        <source>Run Statistics successfully before exporting.</source>
+        <translation>Run Statistics successfully before exporting.</translation>
+    </message>
+    <message>
+        <source>This component is empty and cannot be exported.</source>
+        <translation>This component is empty and cannot be exported.</translation>
+    </message>
+    <message>
+        <source>Excel exports selected tables as separate sheets and charts on one Charts sheet.</source>
+        <translation>Excel exports selected tables as separate sheets and charts on one Charts sheet.</translation>
+    </message>
+    <message>
+        <source>Choose exactly one table for CSV or binary export. Charts are available only in Excel; uncheck Charts to continue.</source>
+        <translation>Choose exactly one table for CSV or binary export. Charts are available only in Excel; uncheck Charts to continue.</translation>
+    </message>
+    <message>
+        <source>Select at least one available component to export.</source>
+        <translation>Select at least one available component to export.</translation>
+    </message>
+    <message>
+        <source>Charts are available only in Excel. Uncheck Charts to continue.</source>
+        <translation>Charts are available only in Excel. Uncheck Charts to continue.</translation>
+    </message>
+    <message>
+        <source>Counts are numeric, and fractions range from 0 to 1.</source>
+        <translation>Counts are numeric, and fractions range from 0 to 1.</translation>
     </message>
     <message>
         <source>Export analysis data</source>
@@ -7966,6 +8006,34 @@ Time: {sec:.2f}s{sample}</source>
     </message>
 </context><context>
     <name>StatisticsView</name>
+    <message>
+        <source>Charts</source>
+        <translation>Charts</translation>
+    </message>
+    <message>
+        <source>Fraction (non-missing)</source>
+        <translation>Fraction (non-missing)</translation>
+    </message>
+    <message>
+        <source>Missing fraction</source>
+        <translation>Missing fraction</translation>
+    </message>
+    <message>
+        <source>Valid count</source>
+        <translation>Valid count</translation>
+    </message>
+    <message>
+        <source>Shapiro-Wilk W</source>
+        <translation>Shapiro-Wilk W</translation>
+    </message>
+    <message>
+        <source>Shapiro-Wilk p-value</source>
+        <translation>Shapiro-Wilk p-value</translation>
+    </message>
+    <message>
+        <source>Recommended summary</source>
+        <translation>Recommended summary</translation>
+    </message>
     <message>
         <source>Mean ± SD</source>
         <translation>Mean ± SD</translation>

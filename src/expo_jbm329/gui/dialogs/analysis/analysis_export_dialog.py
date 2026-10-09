@@ -22,6 +22,12 @@ from expo_jbm329.services.analysis.overview import (
     OverviewExportRequest,
     OverviewExportTable,
 )
+from expo_jbm329.services.analysis.statistics import (
+    DescriptiveStatisticsResult,
+    StatisticsExportFormat,
+    StatisticsExportRequest,
+    StatisticsExportTable,
+)
 
 
 class AnalysisExportDialog(QDialog):
@@ -33,6 +39,8 @@ class AnalysisExportDialog(QDialog):
         *,
         overview: DatasetOverviewResult | None = None,
         overview_mode: bool = False,
+        statistics: DescriptiveStatisticsResult | None = None,
+        statistics_mode: bool = False,
     ) -> None:
         """Build grouped export choices and a format selector.
 
@@ -40,36 +48,49 @@ class AnalysisExportDialog(QDialog):
             parent: Optional parent widget.
             overview: Successful displayed Overview snapshot, if available.
             overview_mode: Show disabled Overview choices even without a result.
+            statistics: Successful displayed Statistics snapshot, if available.
+            statistics_mode: Show Statistics export choices.
         """
         super().__init__(parent)
         self.setWindowTitle(self.tr("Export"))
         self.resize(540, 540)
         self._overview = overview
+        self._statistics = statistics
         self._table_choices: dict[OverviewExportTable, QCheckBox] = {}
+        self._statistics_choices: dict[StatisticsExportTable, QCheckBox] = {}
         self._overview_mode = overview_mode or overview is not None
+        self._statistics_mode = statistics_mode or statistics is not None
+        if self._overview_mode and self._statistics_mode:
+            message = "An export dialog can represent only one analysis result."
+            raise ValueError(message)
         layout = QVBoxLayout(self)
         explanation = QLabel(
             self.tr(
                 "Export the Overview Summary, Columns metadata, or Sample (first 100 rows), not the original dataset."
             )
             if self._overview_mode
-            else self.tr("Layout preview only. Export processing is not implemented yet."),
+            else (
+                self.tr("Export the available Statistics tables and numeric-column charts.")
+                if self._statistics_mode
+                else self.tr("Layout preview only. Export processing is not implemented yet.")
+            ),
             self,
         )
         explanation.setWordWrap(True)
         layout.addWidget(explanation)
         if self._overview_mode:
             self._build_overview_choices(layout)
+        elif self._statistics_mode:
+            self._build_statistics_choices(layout)
         else:
             self._build_preview_choices(layout)
         formats = QFormLayout()
         self._format_combo = QComboBox(self)
-        self._format_combo.addItem("CSV", OverviewExportFormat.CSV)
-        self._format_combo.addItem(self.tr("Excel workbook (.xlsx)"), OverviewExportFormat.EXCEL)
-        self._format_combo.addItem(
-            self.tr("Binary data file (Parquet / Feather / Pickle)"), OverviewExportFormat.BINARY
-        )
-        self._format_combo.setCurrentIndex(self._format_combo.findData(OverviewExportFormat.EXCEL))
+        format_type = StatisticsExportFormat if self._statistics_mode else OverviewExportFormat
+        self._format_combo.addItem("CSV", format_type.CSV)
+        self._format_combo.addItem(self.tr("Excel workbook (.xlsx)"), format_type.EXCEL)
+        self._format_combo.addItem(self.tr("Binary data file (Parquet / Feather / Pickle)"), format_type.BINARY)
+        self._format_combo.setCurrentIndex(self._format_combo.findData(format_type.EXCEL))
         self._format_combo.currentIndexChanged.connect(self._update_export_enabled)
         formats.addRow(self.tr("Format"), self._format_combo)
         layout.addLayout(formats)
@@ -84,7 +105,8 @@ class AnalysisExportDialog(QDialog):
         buttons.rejected.connect(self.reject)
         localize_dialog_buttons(buttons)
         layout.addWidget(buttons)
-        first_available = next((choice for choice in self._table_choices.values() if choice.isEnabled()), None)
+        choices = self._statistics_choices if self._statistics_mode else self._table_choices
+        first_available = next((choice for choice in choices.values() if choice.isEnabled()), None)
         if first_available is not None:
             first_available.setChecked(True)
         self._update_export_enabled()
@@ -161,8 +183,60 @@ class AnalysisExportDialog(QDialog):
                 contents.addWidget(choice)
             layout.addWidget(group)
 
-    def export_request(self) -> OverviewExportRequest | None:
+    def _build_statistics_choices(self, layout: QVBoxLayout) -> None:
+        """Offer available Statistics tables and a separate Excel chart component."""
+        result = self._statistics
+        data = QGroupBox(self.tr("Data"), self)
+        data_layout = QVBoxLayout(data)
+        results = QGroupBox(self.tr("Results"), self)
+        results_layout = QVBoxLayout(results)
+        availability = {
+            StatisticsExportTable.CONTINUOUS: result is not None and bool(result.columns),
+            StatisticsExportTable.CATEGORICAL: result is not None and bool(result.categorical_columns),
+            StatisticsExportTable.CHARTS: result is not None and bool(result.columns),
+        }
+        labels = {
+            StatisticsExportTable.CONTINUOUS: self.tr("Continuous"),
+            StatisticsExportTable.CATEGORICAL: self.tr("Categorical"),
+            StatisticsExportTable.CHARTS: self.tr("Charts"),
+        }
+        for component, available in availability.items():
+            is_chart = component is StatisticsExportTable.CHARTS
+            parent = results if is_chart else data
+            choice = QCheckBox(labels[component], parent)
+            choice.setEnabled(available)
+            if component is StatisticsExportTable.CATEGORICAL and available:
+                choice.setToolTip(self.tr("Counts are numeric, and fractions range from 0 to 1."))
+            elif not available:
+                choice.setToolTip(
+                    self.tr("Run Statistics successfully before exporting.")
+                    if result is None
+                    else self.tr("This component is empty and cannot be exported.")
+                )
+            self._statistics_choices[component] = choice
+            choice.toggled.connect(self._update_export_enabled)
+            (results_layout if is_chart else data_layout).addWidget(choice)
+        layout.addWidget(data)
+        layout.addWidget(results)
+
+    def export_request(self) -> OverviewExportRequest | StatisticsExportRequest | None:
         """Return a validated selection, or None for previews/invalid choices."""
+        if self._statistics_mode:
+            if self._statistics is None:
+                return None
+            components = tuple(
+                component
+                for component, choice in self._statistics_choices.items()
+                if choice.isEnabled() and choice.isChecked()
+            )
+            format_choice = self._format_combo.currentData()
+            if not isinstance(format_choice, StatisticsExportFormat) or not components:
+                return None
+            chart_selected = StatisticsExportTable.CHARTS in components
+            table_count = sum(component is not StatisticsExportTable.CHARTS for component in components)
+            if format_choice is not StatisticsExportFormat.EXCEL and (chart_selected or table_count != 1):
+                return None
+            return StatisticsExportRequest(self._statistics, components, format_choice)
         if self._overview is None:
             return None
         tables = tuple(
@@ -177,6 +251,9 @@ class AnalysisExportDialog(QDialog):
 
     def _update_export_enabled(self) -> None:
         """Preserve picks across formats and explain disabled exports."""
+        if self._statistics_mode:
+            self._update_statistics_export_enabled()
+            return
         excel = self._format_combo.currentData() is OverviewExportFormat.EXCEL
         format_explanation = (
             self.tr("Excel exports selected tables as separate sheets in one workbook.")
@@ -195,6 +272,40 @@ class AnalysisExportDialog(QDialog):
             reason = self.tr("This table is empty and cannot be exported.")
         elif not any(choice.isEnabled() and choice.isChecked() for choice in self._table_choices.values()):
             reason = self.tr("Select at least one available table to export.")
+        elif request is None:
+            reason = self.tr("Choose exactly one table for CSV or binary export.")
+        else:
+            reason = ""
+        self._selection_explanation.setText(f"{reason}\n{format_explanation}" if reason else format_explanation)
+        self._export_button.setEnabled(request is not None)
+        self._export_button.setToolTip(reason)
+
+    def _update_statistics_export_enabled(self) -> None:
+        """Preserve Statistics picks and explain format-specific constraints."""
+        excel = self._format_combo.currentData() is StatisticsExportFormat.EXCEL
+        format_explanation = (
+            self.tr("Excel exports selected tables as separate sheets and charts on one Charts sheet.")
+            if excel
+            else self.tr(
+                "Choose exactly one table for CSV or binary export. "
+                "Charts are available only in Excel; uncheck Charts to continue."
+            )
+        )
+        request = self.export_request()
+        selected = any(choice.isEnabled() and choice.isChecked() for choice in self._statistics_choices.values())
+        available = any(choice.isEnabled() for choice in self._statistics_choices.values())
+        chart_selected = (
+            self._statistics_choices.get(StatisticsExportTable.CHARTS) is not None
+            and self._statistics_choices[StatisticsExportTable.CHARTS].isChecked()
+        )
+        if self._statistics is None:
+            reason = self.tr("Run Statistics successfully before exporting.")
+        elif not available:
+            reason = self.tr("This component is empty and cannot be exported.")
+        elif not selected:
+            reason = self.tr("Select at least one available component to export.")
+        elif not excel and chart_selected:
+            reason = self.tr("Charts are available only in Excel. Uncheck Charts to continue.")
         elif request is None:
             reason = self.tr("Choose exactly one table for CSV or binary export.")
         else:

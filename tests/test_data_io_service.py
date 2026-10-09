@@ -7,6 +7,8 @@ import pandas as pd
 import pytest
 from openpyxl import load_workbook
 
+from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
+from expo_jbm329.services.analysis.statistics_charts import StatisticsChartLabels, render_statistics_charts
 from expo_jbm329.services.data_io_service import DataIOService
 from expo_jbm329.services.file_loader import FileLoader
 from expo_jbm329.services.file_writer import ExportCancelledError, FileWriter
@@ -243,3 +245,90 @@ def test_named_service_validation_facade_preserves_frames(io_service: DataIOServ
     captured = io_service.validate_excel_sheets(sheets)
     assert captured is not sheets
     assert captured["One"] is frame
+
+
+def test_chart_only_excel_export_prepares_images_and_commits_progress(
+    io_service: DataIOService,
+    tmp_path: Path,
+) -> None:
+    result = analyze_descriptive_statistics(pd.DataFrame({"first": [1, 2, 3], "second": [3, 4, 5]}))
+    path = tmp_path / "charts-only.xlsx"
+    progress: list[int] = []
+
+    def make_charts(chart_progress, cancel_cb):
+        return render_statistics_charts(
+            result.columns,
+            StatisticsChartLabels("Histogram", "Boxplot", "No data"),
+            progress_cb=chart_progress,
+            cancel_cb=cancel_cb,
+        )
+
+    exported = io_service.export_dfs_excel(
+        {},
+        path,
+        chart_factory=make_charts,
+        chart_sheet_name="Charts",
+        progress_cb=progress.append,
+    )
+
+    assert exported.ok is True
+    assert progress == sorted(set(progress))
+    assert progress[0] == 0
+    assert progress[-1] == 100
+    workbook = load_workbook(path)
+    try:
+        assert workbook.sheetnames == ["Charts"]
+        assert len(workbook["Charts"]._images) == 2
+    finally:
+        workbook.close()
+
+
+def test_chart_export_cancellation_after_preparation_preserves_destination(
+    io_service: DataIOService,
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "existing.xlsx"
+    path.write_bytes(b"original")
+    result = analyze_descriptive_statistics(pd.DataFrame({"number": [1, 2, 3]}))
+    calls = 0
+
+    def cancel() -> bool:
+        nonlocal calls
+        calls += 1
+        return calls == 2
+
+    def make_charts(_progress_cb, _cancel_cb):
+        return render_statistics_charts(
+            result.columns,
+            StatisticsChartLabels("Histogram", "Boxplot", "No data"),
+        )
+
+    exported = io_service.export_dfs_excel(
+        {},
+        path,
+        chart_factory=make_charts,
+        chart_sheet_name="Charts",
+        cancel_cb=cancel,
+    )
+
+    assert exported.ok is False
+    assert exported.cancelled is True
+    assert path.read_bytes() == b"original"
+
+
+def test_chart_export_rejects_duplicate_chart_sheet_before_writing(
+    io_service: DataIOService,
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "collision.xlsx"
+    exported = io_service.export_dfs_excel(
+        {"Charts": pd.DataFrame({"value": [1]})},
+        path,
+        chart_factory=lambda _progress, _cancel: (),
+        chart_sheet_name="charts",
+    )
+
+    assert exported.ok is False
+    assert exported.error is not None
+    assert "Duplicate Excel sheet name" in exported.error
+    assert not path.exists()

@@ -41,9 +41,12 @@ from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDial
 from expo_jbm329.gui.dialogs.analysis.report_page import ReportPage
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.overview import OverviewExportRequest
+from expo_jbm329.services.analysis.statistics import StatisticsExportRequest
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.overview import DatasetOverviewResult
+    from expo_jbm329.services.analysis.statistics import DescriptiveStatisticsResult
     from expo_jbm329.utils.dataset_ref import DatasetRef
 
 _CATEGORY_ROLE = Qt.ItemDataRole.UserRole
@@ -117,6 +120,7 @@ class AnalysisDialog(QDialog):
     dataset_changed = pyqtSignal(str)  # dataset tab_id
     category_changed = pyqtSignal(str)  # AnalysisCategory value
     overview_export_requested = pyqtSignal(object)  # OverviewExportRequest
+    statistics_export_requested = pyqtSignal(object)  # StatisticsExportRequest
 
     def __init__(
         self,
@@ -139,6 +143,8 @@ class AnalysisDialog(QDialog):
         self._datasets = datasets
         self._export_overview: DatasetOverviewResult | None = None
         self._export_tab_id: str | None = None
+        self._export_statistics: DescriptiveStatisticsResult | None = None
+        self._statistics_export_tab_id: str | None = None
         self._analysis_revision = 0
 
         self.setWindowTitle(self.tr("Advanced analysis"))
@@ -246,7 +252,10 @@ class AnalysisDialog(QDialog):
         add_button.setMinimumWidth(button_width)
         actions.addWidget(add_button)
         explanation = QLabel(
-            self.tr("Overview data export is available after analysis. Other export and report actions are previews."),
+            self.tr(
+                "Overview and Statistics exports are available after analysis. "
+                "Other export and report actions are previews."
+            ),
             bar,
         )
         explanation.setWordWrap(True)
@@ -257,22 +266,29 @@ class AnalysisDialog(QDialog):
     def _show_export_selection(self) -> None:
         """Open grouped export choices for the currently displayed analysis."""
         overview = self.exportable_overview()
+        statistics = self.exportable_statistics()
         dialog = AnalysisExportDialog(
             self,
             overview=overview,
             overview_mode=self.selected_category() is AnalysisCategory.OVERVIEW,
+            statistics=statistics,
+            statistics_mode=self.selected_category() is AnalysisCategory.STATISTICS,
         )
         for combo in dialog.findChildren(QComboBox):
             _ComboToolTipFilter(combo)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             request = dialog.export_request()
-            if request is not None and request.result is self.exportable_overview():
+            if isinstance(request, OverviewExportRequest) and request.result is self.exportable_overview():
                 self.overview_export_requested.emit(request)
+            elif isinstance(request, StatisticsExportRequest) and request.result is self.exportable_statistics():
+                self.statistics_export_requested.emit(request)
 
     def invalidate_overview_export(self) -> None:
         """Disable real export as soon as displayed analysis becomes stale."""
         self._export_overview = None
         self._export_tab_id = None
+        self._export_statistics = None
+        self._statistics_export_tab_id = None
         self._analysis_revision += 1
 
     def analysis_revision(self) -> int:
@@ -291,6 +307,20 @@ class AnalysisDialog(QDialog):
             and self.selected_dataset_tab_id() == self._export_tab_id
         ):
             return self._export_overview
+        return None
+
+    def set_exportable_statistics(self, result: DescriptiveStatisticsResult) -> None:
+        """Register the successful Statistics snapshot currently displayed."""
+        self._export_statistics = result
+        self._statistics_export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_statistics(self) -> DescriptiveStatisticsResult | None:
+        """Return only the successful snapshot for the current Statistics analysis."""
+        if (
+            self.selected_category() is AnalysisCategory.STATISTICS
+            and self.selected_dataset_tab_id() == self._statistics_export_tab_id
+        ):
+            return self._export_statistics
         return None
 
     def _show_notes_preview(self) -> None:

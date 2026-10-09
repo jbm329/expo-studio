@@ -16,14 +16,19 @@ from expo_jbm329.services.data_processing import (
     generate_comparison_profile_report,
     generate_profile_report,
 )
+from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
 from expo_jbm329.services.file_loader import FileLoader, OperationCancelledError
 from expo_jbm329.services.file_writer import ExportCancelledError, FileWriter
 from expo_jbm329.services.job_result import JobResult
 from expo_jbm329.utils.format_utils import fmt_path, fmt_shape
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping
+    from collections.abc import Callable, Mapping, Sequence
     from pathlib import Path
+
+_EXCEL_CHART_PREPARATION_SHARE = 24
+_EXCEL_TABLE_PROGRESS_START = 25
+_EXCEL_PROGRESS_COMPLETE = 100
 
 
 class DataIOService:
@@ -333,13 +338,22 @@ class DataIOService:
             corr_id=corr_id,
         )
 
-    def validate_excel_sheets(self, sheets: Mapping[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+    def validate_excel_sheets(
+        self,
+        sheets: Mapping[str, pd.DataFrame],
+        *,
+        chart_sheet_name: str | None = None,
+        allow_empty: bool = False,
+    ) -> dict[str, pd.DataFrame]:
         """Capture and validate ordered sheets against the current writer settings.
 
         Frames remain caller-owned and must be stable through export completion.
 
         Args:
             sheets: Exact sheet names and caller-owned frames in workbook order.
+            chart_sheet_name: Optional reserved worksheet for chart content.
+            allow_empty: Permit an empty table mapping when charts will populate
+                the workbook.
 
         Returns:
             A new mapping containing the original frame references.
@@ -348,13 +362,23 @@ class DataIOService:
             ValueError: Invalid names, collisions, frame shape, or settings.
             TypeError: Invalid mapping or frame types.
         """
-        return self._writer.validate_excel_sheets(sheets)
+        return self._writer.validate_excel_sheets(
+            sheets,
+            chart_sheet_name=chart_sheet_name,
+            allow_empty=allow_empty,
+        )
 
     def export_dfs_excel(
         self,
         sheets: Mapping[str, pd.DataFrame],
         dest: str | Path,
         *,
+        chart_factory: Callable[
+            [Callable[[int], None] | None, Callable[[], bool] | None],
+            Sequence[ExcelChartImage],
+        ]
+        | None = None,
+        chart_sheet_name: str | None = None,
         progress_cb: Callable[[int], None] | None = None,
         cancel_cb: Callable[[], bool] | None = None,
         job_id: str | None = None,
@@ -369,6 +393,8 @@ class DataIOService:
         Args:
             sheets: Exact sheet names and caller-owned frames in workbook order.
             dest: Destination workbook, replaced only after a successful write.
+            chart_factory: Optional worker-safe producer for embedded chart images.
+            chart_sheet_name: Exact worksheet name reserved for the chart images.
             progress_cb: Optional monotonic whole-workbook progress notification.
             cancel_cb: Optional cancellation check, including before replacement.
             job_id: Optional job identifier for logging.
@@ -387,6 +413,8 @@ class DataIOService:
             job_scope=job_scope,
             corr_id=corr_id,
             named=True,
+            chart_factory=chart_factory,
+            chart_sheet_name=chart_sheet_name,
         )
 
     def _export_excel(
@@ -400,6 +428,12 @@ class DataIOService:
         job_scope: str | None = None,
         corr_id: str | None = None,
         named: bool = False,
+        chart_factory: Callable[
+            [Callable[[int], None] | None, Callable[[], bool] | None],
+            Sequence[ExcelChartImage],
+        ]
+        | None = None,
+        chart_sheet_name: str | None = None,
     ) -> JobResult:
         """Run the shared single-frame and named-workbook Excel job handling.
 
@@ -412,6 +446,8 @@ class DataIOService:
             job_scope: Optional job scope.
             corr_id: Optional correlation identifier.
             named: Require named-workbook validation and atomic output.
+            chart_factory: Optional background chart producer for named workbooks.
+            chart_sheet_name: Worksheet name reserved for generated chart images.
 
         Returns:
             A JobResult containing the export status.
@@ -428,6 +464,15 @@ class DataIOService:
         """
         dest_str = str(dest)
         rows, columns = fmt_shape(df) if not named and isinstance(df, pd.DataFrame) else ("?", "mixed")
+
+        if (chart_factory is None) != (chart_sheet_name is None):
+            message = "A chart producer and worksheet name must be supplied together."
+            self._logger.error("DataIOService: %s (corr=%s, path=%s)", message, corr_id, fmt_path(dest_str))
+            return JobResult(ok=False, elapsed=None, path=dest_str, error=message, corr_id=corr_id)
+        if chart_factory is not None and not named:
+            message = "Charts are supported only in named Excel workbooks."
+            self._logger.error("DataIOService: %s (corr=%s, path=%s)", message, corr_id, fmt_path(dest_str))
+            return JobResult(ok=False, elapsed=None, path=dest_str, error=message, corr_id=corr_id)
 
         self._logger.debug(
             "DataIOService: export excel start (corr=%s, path=%s, rows=%s, cols=%s, job_id=%s, scope=%s)",
@@ -459,7 +504,11 @@ class DataIOService:
                     na_rep="",
                 )
             else:
-                df = self.validate_excel_sheets(cast("Mapping[str, pd.DataFrame]", df))
+                df = self.validate_excel_sheets(
+                    cast("Mapping[str, pd.DataFrame]", df),
+                    chart_sheet_name=chart_sheet_name,
+                    allow_empty=chart_factory is not None,
+                )
                 rows = str(sum(len(frame) for frame in df.values()))
                 self._logger.debug(
                     "DataIOService: named Excel workbook (corr=%s, rows=%s, sheets=%s)",
@@ -467,14 +516,81 @@ class DataIOService:
                     rows,
                     len(df),
                 )
-                self._writer.save_excel_sheets(
-                    df,
-                    dest_str,
-                    progress_cb=progress_cb,
-                    cancel_cb=cancel_cb,
-                    corr_id=corr_id,
-                    na_rep="",
-                )
+                charts: Sequence[ExcelChartImage] = ()
+                writer_progress = progress_cb
+                if chart_factory is not None:
+                    last_progress = -1
+
+                    def report_progress(value: int) -> None:
+                        nonlocal last_progress
+                        if progress_cb is not None and value > last_progress:
+                            last_progress = value
+                            progress_cb(value)
+
+                    def chart_progress(value: int) -> None:
+                        report_progress(
+                            min(
+                                _EXCEL_CHART_PREPARATION_SHARE,
+                                int(value * _EXCEL_CHART_PREPARATION_SHARE / _EXCEL_PROGRESS_COMPLETE),
+                            )
+                        )
+
+                    report_progress(0)
+                    charts = chart_factory(chart_progress if progress_cb is not None else None, cancel_cb)
+                    if not charts:
+                        message = "The chart producer did not return any chart images."
+                        self._logger.error("DataIOService: %s (corr=%s)", message, corr_id)
+                        return JobResult(
+                            ok=False,
+                            elapsed=time.perf_counter() - t0,
+                            path=dest_str,
+                            error=message,
+                            corr_id=corr_id,
+                        )
+                    if cancel_cb is not None and cancel_cb():
+                        self._logger.info(
+                            "DataIOService: Excel export cancelled after chart preparation (corr=%s, path=%s)",
+                            corr_id,
+                            fmt_path(dest_str),
+                        )
+                        return JobResult(
+                            ok=False,
+                            elapsed=time.perf_counter() - t0,
+                            path=dest_str,
+                            cancelled=True,
+                            error=None,
+                            corr_id=corr_id,
+                        )
+
+                    def mapped_writer_progress(value: int) -> None:
+                        report_progress(
+                            _EXCEL_PROGRESS_COMPLETE
+                            if value >= _EXCEL_PROGRESS_COMPLETE
+                            else _EXCEL_TABLE_PROGRESS_START + int(value * 74 / _EXCEL_PROGRESS_COMPLETE)
+                        )
+
+                    writer_progress = mapped_writer_progress
+
+                if charts and chart_sheet_name is not None:
+                    self._writer.save_excel_sheets(
+                        df,
+                        dest_str,
+                        chart_images=charts,
+                        chart_sheet_name=chart_sheet_name,
+                        progress_cb=writer_progress,
+                        cancel_cb=cancel_cb,
+                        corr_id=corr_id,
+                        na_rep="",
+                    )
+                else:
+                    self._writer.save_excel_sheets(
+                        df,
+                        dest_str,
+                        progress_cb=writer_progress,
+                        cancel_cb=cancel_cb,
+                        corr_id=corr_id,
+                        na_rep="",
+                    )
 
             dt = time.perf_counter() - t0
             self._logger.info(
@@ -521,6 +637,18 @@ class DataIOService:
                     dt * 1000,
                 )
 
+            return JobResult(
+                ok=False,
+                elapsed=dt,
+                path=dest_str,
+                cancelled=True,
+                error=None,
+                corr_id=corr_id,
+            )
+
+        except ExcelChartCancelledError:
+            dt = time.perf_counter() - t0
+            self._logger.info("DataIOService: Excel chart preparation cancelled (corr=%s)", corr_id)
             return JobResult(
                 ok=False,
                 elapsed=dt,

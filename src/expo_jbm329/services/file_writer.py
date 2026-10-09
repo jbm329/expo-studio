@@ -26,11 +26,14 @@ EXCEL_MAX_ROWS = 1_048_576
 EXCEL_MAX_COLUMNS = 16_384
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
     from typing import BinaryIO
 
     from openpyxl import Workbook
     from openpyxl.worksheet._write_only import WriteOnlyWorksheet
+    from openpyxl.worksheet.worksheet import Worksheet
+
+    from expo_jbm329.services.excel_chart import ExcelChartImage
 
 
 class ExportCancelledError(Exception):
@@ -373,6 +376,8 @@ class FileWriter:
         streaming: bool | None = None,
         max_rows_per_sheet: int | None = None,
         chunk_size_rows: int | None = None,
+        chart_sheet_name: str | None = None,
+        allow_empty: bool = False,
     ) -> dict[str, pd.DataFrame]:
         """Validate and capture ordered workbook membership without copying data.
 
@@ -384,6 +389,8 @@ class FileWriter:
             streaming: Write-only mode; None uses current settings.
             max_rows_per_sheet: Physical row limit including headers.
             chunk_size_rows: Positive streaming chunk size.
+            chart_sheet_name: Optional reserved worksheet for embedded charts.
+            allow_empty: Allow no table sheets when chart content supplies a sheet.
 
         Returns:
             A new ordered mapping containing the original frame references.
@@ -396,7 +403,7 @@ class FileWriter:
             message = "Excel sheets must be a mapping of names to DataFrames"
             raise TypeError(message)
         captured = dict(sheets)
-        if not captured:
+        if not captured and not (allow_empty and chart_sheet_name is not None):
             message = "Excel workbook requires at least one named sheet"
             raise ValueError(message)
         mode = self._excel_streaming if streaming is None else streaming
@@ -416,6 +423,9 @@ class FileWriter:
             message = "Excel chunk size must be a positive integer"
             raise ValueError(message)
         names: set[str] = set()
+        if chart_sheet_name is not None:
+            self._validate_excel_sheet_name(chart_sheet_name)
+            names.add(chart_sheet_name.casefold())
         for name, frame in captured.items():
             self._validate_excel_sheet_name(name)
             if not isinstance(cast("object", frame), pd.DataFrame):
@@ -457,6 +467,8 @@ class FileWriter:
         streaming: bool | None = None,
         max_rows_per_sheet: int | None = None,
         chunk_size_rows: int | None = None,
+        chart_images: Sequence[ExcelChartImage] = (),
+        chart_sheet_name: str | None = None,
         progress_cb: Callable[[int], None] | None = None,
         cancel_cb: Callable[[], bool] | None = None,
         corr_id: str | None = None,
@@ -474,6 +486,8 @@ class FileWriter:
             streaming: Write-only mode; None uses current settings.
             max_rows_per_sheet: Physical row limit including headers.
             chunk_size_rows: Positive streaming chunk size.
+            chart_images: Ordered images rendered for the optional chart worksheet.
+            chart_sheet_name: Exact worksheet name for ``chart_images``.
             progress_cb: Monotonic workbook progress; 100 follows replacement.
             cancel_cb: Cancellation check before, during, and after rendering.
             corr_id: Correlation identifier forwarded to logs and cancellation.
@@ -488,12 +502,17 @@ class FileWriter:
             OSError: Writing or replacing the workbook failed.
         """
         t0 = time.perf_counter()
+        if bool(chart_images) != (chart_sheet_name is not None):
+            message = "Chart images and a chart worksheet name must be supplied together."
+            raise ValueError(message)
         captured = self.validate_excel_sheets(
             sheets,
             index=index,
             streaming=streaming,
             max_rows_per_sheet=max_rows_per_sheet,
             chunk_size_rows=chunk_size_rows,
+            chart_sheet_name=chart_sheet_name,
+            allow_empty=bool(chart_images),
         )
         path = Path(dest)
         mode = self._excel_streaming if streaming is None else streaming
@@ -531,7 +550,7 @@ class FileWriter:
             temporary = Path(handle.name)
         try:
             if mode:
-                first_name, first_frame = next(iter(captured.items()))
+                first_name, first_frame = next(iter(captured.items())) if captured else ("Data", pd.DataFrame())
                 self._save_excel_streaming(
                     first_frame,
                     temporary,
@@ -544,6 +563,8 @@ class FileWriter:
                     cancel_cb=cancel_cb,
                     corr_id=corr_id,
                     sheets=captured,
+                    chart_images=chart_images,
+                    chart_sheet_name=chart_sheet_name,
                     rows=str(total),
                     cols="mixed",
                 )
@@ -565,6 +586,10 @@ class FileWriter:
                             written += len(frame)
                             completed += 1
                             progress(int(written * 100 / total) if total else int(completed * 100 / len(captured)))
+                        if chart_images and chart_sheet_name is not None:
+                            chart_sheet = excel_writer.book.create_sheet(title=chart_sheet_name)
+                            self._add_excel_chart_images(chart_sheet, chart_images, cancel_check=check_cancel)
+                            completed += 1
                         check_cancel()
                         self._save_excel_workbook(excel_writer.book, workbook_file)
                     finally:
@@ -743,6 +768,8 @@ class FileWriter:
         rows: str = "?",
         cols: str = "?",
         sheets: Mapping[str, pd.DataFrame] | None = None,
+        chart_images: Sequence[ExcelChartImage] = (),
+        chart_sheet_name: str | None = None,
     ) -> Path:
         """Streamed Excel export using openpyxl (write_only mode).
 
@@ -937,6 +964,10 @@ class FileWriter:
                             progress_cb(pct)
             if sheets is not None:
                 check_cancel()
+            if chart_images and chart_sheet_name is not None:
+                chart_sheet = wb.create_sheet(title=chart_sheet_name)
+                self._add_excel_chart_images(chart_sheet, chart_images, cancel_check=check_cancel)
+                sheet_count += 1
             save_workbook()
         finally:
             # close() alone does not dispose of write-only worksheet XML files.
@@ -963,6 +994,47 @@ class FileWriter:
             cols,
         )
         return path
+
+    @staticmethod
+    def _add_excel_chart_images(
+        worksheet: Worksheet | WriteOnlyWorksheet,
+        chart_images: Sequence[ExcelChartImage],
+        *,
+        cancel_check: Callable[[], None],
+    ) -> None:
+        """Add chart headings and non-overlapping image anchors to a worksheet."""
+        from io import BytesIO
+        from math import ceil
+
+        from openpyxl.drawing.image import Image
+
+        streams: list[BytesIO] = []
+        write_only = getattr(getattr(worksheet, "parent", None), "write_only", False)
+        row = 1
+        for index, chart in enumerate(chart_images):
+            cancel_check()
+            image_height_rows = ceil(chart.height_px / 20)
+            if row + image_height_rows > EXCEL_MAX_ROWS:
+                message = "The Charts worksheet exceeds the Excel row limit."
+                raise ValueError(message)
+            next_heading_row = row + image_height_rows + 2
+            if index + 1 < len(chart_images) and next_heading_row > EXCEL_MAX_ROWS:
+                message = "The Charts worksheet exceeds the Excel row limit."
+                raise ValueError(message)
+            if write_only:
+                worksheet.append([chart.heading])
+            else:
+                cast("Worksheet", worksheet).cell(row=row, column=1, value=chart.heading)
+            stream = BytesIO(chart.image_data)
+            streams.append(stream)
+            image = Image(stream)
+            image.width = chart.width_px
+            image.height = chart.height_px
+            worksheet.add_image(image, f"A{row + 1}")
+            if write_only and index + 1 < len(chart_images):
+                for _ in range(row + 1, next_heading_row):
+                    worksheet.append([None])
+            row = next_heading_row
 
     # ----------------------------------------------------------------------
     # Data file dispatcher (suffix-based)

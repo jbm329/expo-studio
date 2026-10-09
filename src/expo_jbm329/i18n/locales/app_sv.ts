@@ -389,8 +389,8 @@
         <translation>Lägg till i rapport</translation>
     </message>
     <message>
-        <source>Overview data export is available after analysis. Other export and report actions are previews.</source>
-        <translation>Dataexport för Översikt är tillgänglig efter analys. Övriga export- och rapportåtgärder är förhandsvisningar.</translation>
+        <source>Overview and Statistics exports are available after analysis. Other export and report actions are previews.</source>
+        <translation>Export av Översikt och Statistik är tillgänglig efter analys. Övriga export- och rapportåtgärder är förhandsvisningar.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -533,6 +533,46 @@
     <message>
         <source>Choose exactly one table for CSV or binary export. For binary files, choose Parquet, Feather or Pickle in the save dialog.</source>
         <translation>Välj exakt en tabell för CSV eller binär export. För binära filer väljer du Parquet, Feather eller Pickle i dialogrutan för att spara.</translation>
+    </message>
+    <message>
+        <source>Export the available Statistics tables and numeric-column charts.</source>
+        <translation>Exportera tillgängliga statistiktabeller och diagram för numeriska kolumner.</translation>
+    </message>
+    <message>
+        <source>Continuous</source>
+        <translation>Kontinuerliga</translation>
+    </message>
+    <message>
+        <source>Categorical</source>
+        <translation>Kategoriska</translation>
+    </message>
+    <message>
+        <source>Run Statistics successfully before exporting.</source>
+        <translation>Kör Statistik utan fel innan du exporterar.</translation>
+    </message>
+    <message>
+        <source>This component is empty and cannot be exported.</source>
+        <translation>Den här komponenten är tom och kan inte exporteras.</translation>
+    </message>
+    <message>
+        <source>Excel exports selected tables as separate sheets and charts on one Charts sheet.</source>
+        <translation>Excel exporterar valda tabeller som separata blad och diagram på ett gemensamt diagramblad.</translation>
+    </message>
+    <message>
+        <source>Choose exactly one table for CSV or binary export. Charts are available only in Excel; uncheck Charts to continue.</source>
+        <translation>Välj exakt en tabell för CSV- eller binärexport. Diagram är endast tillgängliga i Excel; avmarkera Diagram för att fortsätta.</translation>
+    </message>
+    <message>
+        <source>Select at least one available component to export.</source>
+        <translation>Välj minst en tillgänglig komponent att exportera.</translation>
+    </message>
+    <message>
+        <source>Charts are available only in Excel. Uncheck Charts to continue.</source>
+        <translation>Diagram är endast tillgängliga i Excel. Avmarkera Diagram för att fortsätta.</translation>
+    </message>
+    <message>
+        <source>Counts are numeric, and fractions range from 0 to 1.</source>
+        <translation>Antal är numeriska och andelar ligger mellan 0 och 1.</translation>
     </message>
     <message>
         <source>Export analysis data</source>
@@ -8105,6 +8145,34 @@ Tid: {sec:.2f}s{sample}</translation>
 </context>
 <context>
     <name>StatisticsView</name>
+    <message>
+        <source>Charts</source>
+        <translation>Diagram</translation>
+    </message>
+    <message>
+        <source>Fraction (non-missing)</source>
+        <translation>Andel (icke-saknade)</translation>
+    </message>
+    <message>
+        <source>Missing fraction</source>
+        <translation>Andel saknade värden</translation>
+    </message>
+    <message>
+        <source>Valid count</source>
+        <translation>Antal giltiga</translation>
+    </message>
+    <message>
+        <source>Shapiro-Wilk W</source>
+        <translation>Shapiro-Wilk W</translation>
+    </message>
+    <message>
+        <source>Shapiro-Wilk p-value</source>
+        <translation>Shapiro-Wilk p-värde</translation>
+    </message>
+    <message>
+        <source>Recommended summary</source>
+        <translation>Rekommenderad sammanfattning</translation>
+    </message>
     <message>
         <source>Mean ± SD</source>
         <translation>Medelvärde ± standardavvikelse</translation>

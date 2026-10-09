@@ -6,6 +6,11 @@ from PyQt6.QtWidgets import QCheckBox, QComboBox, QDialog, QDialogButtonBox, QGr
 
 from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
 from expo_jbm329.services.analysis.overview import OverviewExportFormat, OverviewExportTable, analyze_dataset_overview
+from expo_jbm329.services.analysis.statistics import (
+    StatisticsExportFormat,
+    StatisticsExportTable,
+    analyze_descriptive_statistics,
+)
 
 
 def test_overview_formats_preserve_choices_and_disable_multi_table_single_file_export():
@@ -111,3 +116,55 @@ def test_export_selection_cancel_rejects_dialog(overview_mode):
     dialog.findChild(QDialogButtonBox).button(QDialogButtonBox.StandardButton.Cancel).click()
     assert not dialog.isVisible()
     assert dialog.result() == QDialog.DialogCode.Rejected
+
+
+def test_statistics_format_switching_preserves_tables_and_charts_selection():
+    result = analyze_descriptive_statistics(pd.DataFrame({"number": [1, 2, 3], "group": ["A", "B", "A"]}))
+    dialog = AnalysisExportDialog(statistics=result)
+    choices = dialog.findChildren(QCheckBox)
+    by_text = {choice.text(): choice for choice in choices}
+    formats = dialog.findChild(QComboBox)
+    export = next(button for button in dialog.findChildren(QPushButton) if button.text() == "Export")
+
+    assert formats.currentData() is StatisticsExportFormat.EXCEL
+    assert set(by_text) == {"Continuous", "Categorical", "Charts"}
+    assert by_text["Continuous"].isChecked()
+    by_text["Categorical"].setChecked(True)
+    by_text["Charts"].setChecked(True)
+    request = dialog.export_request()
+    assert request.tables == (
+        StatisticsExportTable.CONTINUOUS,
+        StatisticsExportTable.CATEGORICAL,
+        StatisticsExportTable.CHARTS,
+    )
+    assert request.format is StatisticsExportFormat.EXCEL
+
+    formats.setCurrentIndex(formats.findData(StatisticsExportFormat.CSV))
+    assert not export.isEnabled()
+    assert by_text["Charts"].isChecked()
+    assert "only in Excel" in export.toolTip()
+    assert dialog.export_request() is None
+
+    by_text["Charts"].setChecked(False)
+    assert not export.isEnabled()
+    assert "exactly one table" in export.toolTip()
+    by_text["Categorical"].setChecked(False)
+    assert export.isEnabled()
+    assert dialog.export_request().tables == (StatisticsExportTable.CONTINUOUS,)
+
+    formats.setCurrentIndex(formats.findData(StatisticsExportFormat.BINARY))
+    assert dialog.export_request().format is StatisticsExportFormat.BINARY
+    formats.setCurrentIndex(formats.findData(StatisticsExportFormat.EXCEL))
+    assert dialog.export_request().tables == (StatisticsExportTable.CONTINUOUS,)
+
+
+def test_statistics_charts_are_disabled_without_numeric_columns():
+    result = analyze_descriptive_statistics(pd.DataFrame({"group": ["A", "B", "A"]}))
+    dialog = AnalysisExportDialog(statistics=result)
+    by_text = {choice.text(): choice for choice in dialog.findChildren(QCheckBox)}
+
+    assert by_text["Categorical"].isEnabled()
+    assert not by_text["Continuous"].isEnabled()
+    assert not by_text["Charts"].isEnabled()
+    by_text["Categorical"].setChecked(True)
+    assert dialog.export_request().tables == (StatisticsExportTable.CATEGORICAL,)

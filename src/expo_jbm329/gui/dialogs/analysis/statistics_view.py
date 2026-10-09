@@ -5,10 +5,10 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QT_TRANSLATE_NOOP, Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QPaintEvent, QResizeEvent
 from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
@@ -22,7 +22,17 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS
 from expo_jbm329.services.analysis.normality import SHAPIRO_LARGE_SAMPLE_THRESHOLD
-from expo_jbm329.services.analysis.statistics import DescriptiveSummaryMethod, recommended_summary_method
+from expo_jbm329.services.analysis.statistics import (
+    DescriptiveSummaryMethod,
+    has_summary_recommendation,
+    recommended_summary_method,
+)
+from expo_jbm329.services.analysis.statistics_charts import (
+    STATISTICS_CHART_LOCK,
+    StatisticsChartLabels,
+    draw_boxplot,
+    draw_histogram,
+)
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
 
 if TYPE_CHECKING:
@@ -34,10 +44,94 @@ if TYPE_CHECKING:
         DescriptiveStatisticsResult,
     )
 
-# Standard convention for statistical significance in the normality summary.
 _FIRST_NUMERIC_TABLE_COLUMN = 2
 _SIGNIFICANCE_LEVEL = 0.05
-_MIN_SHAPIRO_OBSERVATIONS = 3
+_CHART_RETRY_INTERVAL_MS = 25
+_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("StatisticsView", "Charts"),
+    QT_TRANSLATE_NOOP("StatisticsView", "Fraction (non-missing)"),
+    QT_TRANSLATE_NOOP("StatisticsView", "Missing fraction"),
+    QT_TRANSLATE_NOOP("StatisticsView", "Valid count"),
+    QT_TRANSLATE_NOOP("StatisticsView", "Shapiro-Wilk W"),
+    QT_TRANSLATE_NOOP("StatisticsView", "Shapiro-Wilk p-value"),
+    QT_TRANSLATE_NOOP("StatisticsView", "Recommended summary"),
+)
+
+
+class _StatisticsCanvas(FigureCanvasQTAgg):
+    """Serialize actual Qt rendering without waiting for an export worker."""
+
+    def __init__(self, figure: Figure) -> None:
+        """Initialize an object-owned retry timer for rendering and resizing."""
+        super().__init__(figure)  # type: ignore[no-untyped-call]
+        self._resize_pending = False
+        self._draw_pending = False
+        self._pixel_ratio_pending = False
+        self._retry_timer = QTimer(self)
+        self._retry_timer.setSingleShot(True)
+        self._retry_timer.setInterval(_CHART_RETRY_INTERVAL_MS)
+        self._retry_timer.timeout.connect(self._retry_render)
+
+    def _defer_render(self) -> None:
+        """Coalesce retries; QObject ownership cancels them on destruction."""
+        if not self._retry_timer.isActive():
+            self._retry_timer.start()
+
+    def draw(self) -> None:
+        """Protect the actual Agg draw, including draws scheduled by Qt."""
+        if not STATISTICS_CHART_LOCK.acquire(blocking=False):
+            self._draw_pending = True
+            self._defer_render()
+            return
+        try:
+            self._draw_pending = False
+            super().draw()  # type: ignore[no-untyped-call]
+        finally:
+            STATISTICS_CHART_LOCK.release()
+
+    def resizeEvent(self, event: QResizeEvent) -> None:  # noqa: N802
+        """Defer Qt's figure-size mutation while a worker owns Matplotlib."""
+        if not STATISTICS_CHART_LOCK.acquire(blocking=False):
+            self._resize_pending = True
+            self._defer_render()
+            return
+        try:
+            self._resize_pending = False
+            super().resizeEvent(event)  # type: ignore[no-untyped-call]
+        finally:
+            STATISTICS_CHART_LOCK.release()
+
+    def paintEvent(self, event: QPaintEvent) -> None:  # noqa: N802
+        """Protect deferred drawing and renderer-buffer access during painting."""
+        if not STATISTICS_CHART_LOCK.acquire(blocking=False):
+            self._defer_render()
+            return
+        try:
+            super().paintEvent(event)  # type: ignore[no-untyped-call]
+        finally:
+            STATISTICS_CHART_LOCK.release()
+
+    def _update_pixel_ratio(self) -> None:
+        """Protect figure DPI changes on show and screen-change events."""
+        if not STATISTICS_CHART_LOCK.acquire(blocking=False):
+            self._pixel_ratio_pending = True
+            self._defer_render()
+            return
+        try:
+            self._pixel_ratio_pending = False
+            super()._update_pixel_ratio()
+        finally:
+            STATISTICS_CHART_LOCK.release()
+
+    def _retry_render(self) -> None:
+        """Replay the latest resize and draw, then request another Qt paint."""
+        if self._pixel_ratio_pending:
+            self._update_pixel_ratio()
+        if self._resize_pending:
+            self.resizeEvent(QResizeEvent(self.size(), self.size()))
+        if self._draw_pending:
+            self.draw()
+        self.update()
 
 
 class StatisticsView(QWidget):
@@ -65,6 +159,13 @@ class StatisticsView(QWidget):
         self._columns_by_name = {stats.column: stats for stats in result.columns}
         self._rows_by_column = {stats.column: row for row, stats in enumerate(result.columns)}
         self._table: QTableWidget | None = None
+        self._figure: Figure | None = None
+        self._canvas: _StatisticsCanvas | None = None
+        self._pending_distribution: ColumnDescriptiveStatistics | None = None
+        self._distribution_timer = QTimer(self)
+        self._distribution_timer.setSingleShot(True)
+        self._distribution_timer.setInterval(_CHART_RETRY_INTERVAL_MS)
+        self._distribution_timer.timeout.connect(self._update_distribution)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -277,13 +378,7 @@ class StatisticsView(QWidget):
     @staticmethod
     def _has_recommendation(stats: ColumnDescriptiveStatistics) -> bool:
         """Return whether Shapiro-Wilk provided a usable normality result."""
-        return (
-            stats.count >= _MIN_SHAPIRO_OBSERVATIONS
-            and stats.minimum < stats.maximum
-            and math.isfinite(stats.shapiro_statistic)
-            and math.isfinite(stats.shapiro_p_value)
-            and 0 <= stats.shapiro_p_value <= 1
-        )
+        return has_summary_recommendation(stats)
 
     def _marked_summary(self, stats: ColumnDescriptiveStatistics, method: DescriptiveSummaryMethod) -> str:
         """Mark only defined summaries supported by a usable Shapiro-Wilk result."""
@@ -335,9 +430,7 @@ class StatisticsView(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._build_section_title(self.tr("Distribution"), container))
 
-        self._figure = Figure(constrained_layout=True)
-        self._canvas = FigureCanvasQTAgg(self._figure)  # type: ignore[no-untyped-call]
-        layout.addWidget(self._canvas)
+        self._distribution_layout = layout
 
         return container
 
@@ -390,18 +483,42 @@ class StatisticsView(QWidget):
         row = self._rows_by_column[column]
         table.selectRow(row)
 
-        self._figure.clear()
-        ax_hist = self._figure.add_subplot(121)
-        ax_box = self._figure.add_subplot(122)
-
-        self._draw_histogram(ax_hist, stats)
-        self._draw_boxplot(ax_box, stats)
-
-        self._figure.suptitle(column)
-        self._canvas.draw_idle()  # type: ignore[no-untyped-call]
-
         self._normality_label.setText(self._normality_text(stats))
         self._recommendation_label.setText(self._recommendation_text(stats))
+        self._pending_distribution = stats
+        self._update_distribution()
+
+    def _update_distribution(self) -> None:
+        """Apply only the latest selection once Matplotlib is available."""
+        stats = self._pending_distribution
+        if stats is None:
+            return
+        if not STATISTICS_CHART_LOCK.acquire(blocking=False):
+            if not self._distribution_timer.isActive():
+                self._distribution_timer.start()
+            return
+        try:
+            if self._figure is None:
+                self._figure = Figure(constrained_layout=True)
+                self._canvas = _StatisticsCanvas(self._figure)
+                self._distribution_layout.addWidget(self._canvas)
+            self._figure.clear()
+            ax_hist = self._figure.add_subplot(121)
+            ax_box = self._figure.add_subplot(122)
+            labels = StatisticsChartLabels(
+                histogram=self.tr("Histogram"),
+                boxplot=self.tr("Boxplot"),
+                no_data=self.tr("No data"),
+            )
+            draw_histogram(ax_hist, stats, labels)
+            draw_boxplot(ax_box, stats, labels)
+            self._figure.suptitle(stats.column)
+            self._pending_distribution = None
+            self._distribution_timer.stop()
+        finally:
+            STATISTICS_CHART_LOCK.release()
+        if self._canvas is not None:
+            self._canvas.draw_idle()  # type: ignore[no-untyped-call]
 
     def _normality_text(self, stats: ColumnDescriptiveStatistics) -> str:
         """Build the Shapiro-Wilk normality test summary text for a column."""
@@ -432,37 +549,16 @@ class StatisticsView(QWidget):
 
     def _draw_histogram(self, ax: Axes, stats: ColumnDescriptiveStatistics) -> None:
         """Draw a histogram from pre-computed bin edges/counts."""
-        if not stats.histogram_bins or not stats.histogram_counts:
-            ax.text(0.5, 0.5, self.tr("No data"), ha="center", va="center", transform=ax.transAxes)
-            ax.set_xticks([])
-            ax.set_yticks([])
-            return
-
-        bins = np.asarray(stats.histogram_bins)
-        counts = np.asarray(stats.histogram_counts)
-        ax.bar(bins[:-1], counts, width=np.diff(bins), align="edge", edgecolor="#333")
-        ax.set_title(self.tr("Histogram"))
+        draw_histogram(
+            ax,
+            stats,
+            StatisticsChartLabels(self.tr("Histogram"), self.tr("Boxplot"), self.tr("No data")),
+        )
 
     def _draw_boxplot(self, ax: Axes, stats: ColumnDescriptiveStatistics) -> None:
         """Draw a min/max-whisker boxplot from the existing five-number summary."""
-        values = (stats.minimum, stats.q1, stats.median, stats.q3, stats.maximum)
-        if any(math.isnan(v) for v in values):
-            ax.text(0.5, 0.5, self.tr("No data"), ha="center", va="center", transform=ax.transAxes)
-            ax.set_xticks([])
-            ax.set_yticks([])
-            return
-
-        ax.bxp(
-            [
-                {
-                    "med": stats.median,
-                    "q1": stats.q1,
-                    "q3": stats.q3,
-                    "whislo": stats.minimum,
-                    "whishi": stats.maximum,
-                    "fliers": [],
-                }
-            ],
-            showfliers=False,
+        draw_boxplot(
+            ax,
+            stats,
+            StatisticsChartLabels(self.tr("Histogram"), self.tr("Boxplot"), self.tr("No data")),
         )
-        ax.set_title(self.tr("Boxplot"))

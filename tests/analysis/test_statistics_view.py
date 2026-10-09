@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
+from threading import Event, Thread
+
 import pandas as pd
 import pytest
+from matplotlib.backends.backend_qt import FigureCanvasQT
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import Qt
+from PyQt6 import sip
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QPaintEvent, QResizeEvent
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTabWidget
 
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
@@ -15,6 +21,7 @@ from expo_jbm329.services.analysis.statistics import (
     DescriptiveStatisticsResult,
     analyze_descriptive_statistics,
 )
+from expo_jbm329.services.analysis.statistics_charts import STATISTICS_CHART_LOCK
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
 
 
@@ -374,3 +381,140 @@ def test_normality_label_updates_when_switching_columns():
     view.show_distribution_for("b")
 
     assert "Significant evidence" in view._normality_label.text()  # noqa: SLF001
+
+
+@contextmanager
+def _worker_holds_chart_lock():
+    """Use events, not timing, to simulate a worker inside Matplotlib."""
+    acquired = Event()
+    release = Event()
+    timed_out = Event()
+
+    def worker():
+        with STATISTICS_CHART_LOCK:
+            acquired.set()
+            if not release.wait(10):
+                timed_out.set()
+
+    thread = Thread(target=worker)
+    thread.start()
+    assert acquired.wait(10)
+    try:
+        yield
+    finally:
+        release.set()
+        thread.join(10)
+        assert not thread.is_alive()
+        assert not timed_out.is_set(), "GUI waited for the worker's chart lock"
+
+
+def test_distribution_creation_defers_without_blocking_and_keeps_latest_selection(qt_app):
+    result = DescriptiveStatisticsResult(columns=(_make_column_stats(column="a"), _make_column_stats(column="b")))
+    with _worker_holds_chart_lock():
+        view = StatisticsView(result)
+        view.show_distribution_for("b")
+        qt_app.processEvents()
+        assert view._figure is None
+        assert view._canvas is None
+        assert view._distribution_timer.isActive()
+        assert "b:" in view._recommendation_label.text()
+        view._distribution_timer.timeout.emit()
+        assert view._figure is None
+
+    view._distribution_timer.timeout.emit()
+    assert view._figure._suptitle.get_text() == "b"
+    assert not view._distribution_timer.isActive()
+    sip.delete(view)
+
+
+def test_distribution_mutation_defers_and_coalesces_until_worker_finishes(qt_app):
+    view = StatisticsView(
+        DescriptiveStatisticsResult(
+            columns=(_make_column_stats(column="a"), _make_column_stats(column="b"), _make_column_stats(column="c"))
+        )
+    )
+    figure = view._figure
+    axes = tuple(figure.axes)
+    with _worker_holds_chart_lock():
+        view.show_distribution_for("b")
+        view.show_distribution_for("c")
+        qt_app.processEvents()
+        assert tuple(figure.axes) == axes
+        assert figure._suptitle.get_text() == "a"
+        assert view._canvas._draw_pending
+
+    view._distribution_timer.timeout.emit()
+    assert view._figure is figure
+    assert figure._suptitle.get_text() == "c"
+    sip.delete(view)
+
+
+def test_actual_deferred_qt_draw_holds_lock_and_retries_nonblocking(qt_app, monkeypatch):
+    view = StatisticsView(DescriptiveStatisticsResult(columns=(_make_column_stats(),)))
+    canvas = view._canvas
+    draws: list[bool] = []
+    monkeypatch.setattr(FigureCanvasQTAgg, "draw", lambda self: draws.append(STATISTICS_CHART_LOCK._is_owned()))
+    with _worker_holds_chart_lock():
+        canvas.draw_idle()
+        qt_app.processEvents()
+        canvas.draw()
+        canvas._retry_timer.timeout.emit()
+        assert draws == []
+        assert canvas._draw_pending
+        assert canvas._retry_timer.isActive()
+
+    canvas._retry_timer.timeout.emit()
+    assert draws == [True]
+    assert not canvas._draw_pending
+    sip.delete(view)
+
+
+def test_qt_resize_paint_and_dpi_changes_defer_and_hold_lock(monkeypatch):
+    view = StatisticsView(DescriptiveStatisticsResult(columns=(_make_column_stats(),)))
+    canvas = view._canvas
+    calls: list[tuple[str, bool]] = []
+    monkeypatch.setattr(
+        FigureCanvasQTAgg,
+        "resizeEvent",
+        lambda self, event: calls.append(("resize", STATISTICS_CHART_LOCK._is_owned())),
+    )
+    monkeypatch.setattr(
+        FigureCanvasQTAgg,
+        "paintEvent",
+        lambda self, event: calls.append(("paint", STATISTICS_CHART_LOCK._is_owned())),
+    )
+    monkeypatch.setattr(
+        FigureCanvasQT,
+        "_update_pixel_ratio",
+        lambda self: calls.append(("dpi", STATISTICS_CHART_LOCK._is_owned())),
+    )
+    with _worker_holds_chart_lock():
+        canvas.resizeEvent(QResizeEvent(QSize(800, 400), canvas.size()))
+        canvas.paintEvent(QPaintEvent(canvas.rect()))
+        canvas._update_pixel_ratio()
+        assert calls == []
+        assert canvas._resize_pending
+        assert canvas._pixel_ratio_pending
+
+    canvas._retry_timer.timeout.emit()
+    canvas.paintEvent(QPaintEvent(canvas.rect()))
+    assert calls == [("dpi", True), ("resize", True), ("paint", True)]
+    sip.delete(view)
+
+
+@pytest.mark.parametrize("canvas_created", [False, True])
+def test_chart_retries_are_destroyed_with_their_qt_owner(qt_app, canvas_created):
+    result = DescriptiveStatisticsResult(columns=(_make_column_stats(),))
+    view = StatisticsView(result) if canvas_created else None
+    with _worker_holds_chart_lock():
+        if view is None:
+            view = StatisticsView(result)
+        view.show_distribution_for("salary")
+        timers = [view._distribution_timer]
+        if view._canvas is not None:
+            view._canvas.draw()
+            timers.append(view._canvas._retry_timer)
+        assert all(timer.isActive() for timer in timers)
+        sip.delete(view)
+        assert all(sip.isdeleted(timer) for timer in timers)
+    qt_app.processEvents()

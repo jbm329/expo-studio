@@ -81,7 +81,15 @@ from expo_jbm329.services.analysis.regression_glm import (
     analyze_generalized_regression,
     initialize_generalized_targets,
 )
-from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
+from expo_jbm329.services.analysis.statistics import (
+    DescriptiveStatisticsResult,
+    StatisticsExportFormat,
+    StatisticsExportRequest,
+    StatisticsExportTable,
+    analyze_descriptive_statistics,
+    statistics_export_tables,
+)
+from expo_jbm329.services.analysis.statistics_charts import StatisticsChartLabels, render_statistics_charts
 from expo_jbm329.services.analysis.survival import (
     SurvivalColumns,
     SurvivalResult,
@@ -105,8 +113,8 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.outliers import OutlierColumnDetail, OutlierSummaryResult
     from expo_jbm329.services.analysis.pca import PCAResult
     from expo_jbm329.services.analysis.regression import RegressionResult
-    from expo_jbm329.services.analysis.statistics import DescriptiveStatisticsResult
     from expo_jbm329.services.analysis.timeseries import TimeSeriesResult
+    from expo_jbm329.services.excel_chart import ExcelChartImage
     from expo_jbm329.workbench.controllers.async_operation_controller import (
         AsyncOperationController,
     )
@@ -346,7 +354,11 @@ class AnalysisController:
             def _handle_export(request: object) -> None:
                 self._export_overview(dialog, exporter, request)
 
+            def _handle_statistics_export(request: object) -> None:
+                self._export_statistics(dialog, exporter, request)
+
             dialog.overview_export_requested.connect(_handle_export)
+            dialog.statistics_export_requested.connect(_handle_statistics_export)
 
         refresh_started = False
 
@@ -439,6 +451,127 @@ class AnalysisController:
             case OverviewExportFormat.BINARY:
                 exporter.export_data(
                     df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+
+    def _export_statistics(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Route validated Statistics snapshots to existing asynchronous exporters."""
+        if not isinstance(request, StatisticsExportRequest) or request.result is not dialog.exportable_statistics():
+            return
+        if request.format not in tuple(StatisticsExportFormat):
+            return
+        if len(set(request.tables)) != len(request.tables):
+            return
+        charts_selected = StatisticsExportTable.CHARTS in request.tables
+        table_choices = tuple(table for table in request.tables if table is not StatisticsExportTable.CHARTS)
+        if not charts_selected and not table_choices:
+            return
+        if request.format is not StatisticsExportFormat.EXCEL and (charts_selected or len(table_choices) != 1):
+            return
+
+        try:
+            tables = statistics_export_tables(request.result, table_choices) if table_choices else {}
+            localized_sheets: dict[str, pd.DataFrame] = {}
+            for name, frame in tables.items():
+                table = StatisticsExportTable(name)
+                sheet_name = tr("StatisticsView", table.value)
+                if sheet_name.casefold() in {existing.casefold() for existing in localized_sheets}:
+                    self._logger.warning("Rejected Statistics export because translated sheet names are not unique.")
+                    return
+                match table:
+                    case StatisticsExportTable.CONTINUOUS:
+                        headers = {
+                            "column": "Column",
+                            "count": "Count",
+                            "missing_count": "Missing count",
+                            "missing_fraction": "Missing fraction",
+                            "mean": "Mean",
+                            "median": "Median",
+                            "std": "Std Dev",
+                            "variance": "Variance",
+                            "minimum": "Min",
+                            "maximum": "Max",
+                            "range": "Range",
+                            "q1": "Q1",
+                            "q3": "Q3",
+                            "iqr": "IQR",
+                            "skewness": "Skewness",
+                            "kurtosis": "Kurtosis",
+                            "mean_sd_summary": "Mean ± SD",
+                            "median_iqr_summary": "Median (Q1 to Q3)",
+                            "shapiro_statistic": "Shapiro-Wilk W",
+                            "shapiro_p_value": "Shapiro-Wilk p-value",
+                            "recommended_summary_method": "Recommended summary",
+                        }
+                    case StatisticsExportTable.CATEGORICAL:
+                        headers = {
+                            "column": "Column",
+                            "value": "Category",
+                            "count": "Count",
+                            "fraction": "Fraction (non-missing)",
+                            "valid_count": "Valid count",
+                            "missing_count": "Missing count",
+                            "missing_fraction": "Missing fraction",
+                        }
+                    case _:
+                        return
+                localized_sheets[sheet_name] = frame.rename(
+                    columns={key: tr("StatisticsView", value) for key, value in headers.items()}
+                )
+        except (TypeError, ValueError):
+            self._logger.warning("Rejected unavailable Statistics export selection.")
+            return
+
+        match request.format:
+            case StatisticsExportFormat.EXCEL:
+                chart_sheet_name = tr("StatisticsView", StatisticsExportTable.CHARTS.value)
+                chart_factory: (
+                    Callable[
+                        [Callable[[int], None] | None, Callable[[], bool] | None],
+                        tuple[ExcelChartImage, ...],
+                    ]
+                    | None
+                ) = None
+                if charts_selected:
+                    labels = StatisticsChartLabels(
+                        histogram=tr("StatisticsView", "Histogram"),
+                        boxplot=tr("StatisticsView", "Boxplot"),
+                        no_data=tr("StatisticsView", "No data"),
+                    )
+
+                    def make_chart_images(
+                        progress_cb: Callable[[int], None] | None,
+                        cancel_cb: Callable[[], bool] | None,
+                    ) -> tuple[ExcelChartImage, ...]:
+                        return render_statistics_charts(
+                            request.result.columns,
+                            labels,
+                            progress_cb=progress_cb,
+                            cancel_cb=cancel_cb,
+                        )
+
+                    chart_factory = make_chart_images
+
+                exporter.export_excel(
+                    sheets=localized_sheets,
+                    chart_factory=chart_factory,
+                    chart_sheet_name=chart_sheet_name if charts_selected else None,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.CSV:
+                exporter.export_csv(
+                    df=next(iter(localized_sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.BINARY:
+                exporter.export_data(
+                    df=next(iter(localized_sheets.values())),
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1246,6 +1379,8 @@ class AnalysisController:
             dialog.set_config_widget(config_widget)
             if category is AnalysisCategory.OVERVIEW and isinstance(result, DatasetOverviewResult):
                 dialog.set_exportable_overview(result)
+            elif category is AnalysisCategory.STATISTICS and isinstance(result, DescriptiveStatisticsResult):
+                dialog.set_exportable_statistics(result)
 
         def _on_error(_traceback: str) -> None:
             if _is_stale():

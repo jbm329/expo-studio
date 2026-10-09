@@ -48,6 +48,12 @@ from expo_jbm329.services.analysis.overview import (
 from expo_jbm329.services.analysis.pca import PCAError
 from expo_jbm329.services.analysis.regression import RegressionError
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
+from expo_jbm329.services.analysis.statistics import (
+    StatisticsExportFormat,
+    StatisticsExportRequest,
+    StatisticsExportTable,
+    analyze_descriptive_statistics,
+)
 from expo_jbm329.services.analysis.timeseries import DecompositionModel
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis import analysis_controller as analysis_controller_module
@@ -217,6 +223,104 @@ def test_overview_export_rejects_stale_or_unrelated_snapshot(invalidate):
     assert exporter.mock_calls == []
 
 
+def _statistics_export_context():
+    result = analyze_descriptive_statistics(
+        pd.DataFrame({
+            "First numeric": [1.0, 2.0, 3.0, 4.0, 5.0],
+            "Second numeric": [5.0, 4.0, 3.0, 2.0, 1.0],
+            "Group": ["A", "A", "B", "B", None],
+        })
+    )
+    dialog = AnalysisDialog(
+        parent=None,
+        datasets=[DatasetRef("chosen", "Chosen", 5, 3), DatasetRef("other", "Other", 5, 3)],
+        active_tab_id="chosen",
+    )
+    dialog.select_category(AnalysisCategory.STATISTICS)
+    dialog.set_content_widget(StatisticsView(result))
+    dialog.set_exportable_statistics(result)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Statistics export must use its displayed snapshot")
+    results.current_df.side_effect = AssertionError("Statistics export must not read the active dataset")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, result, Mock()
+
+
+def test_statistics_excel_exports_localized_tables_and_every_column_chart(monkeypatch):
+    controller, dialog, result, exporter = _statistics_export_context()
+    translations = {
+        "Continuous": "Kontinuerliga",
+        "Categorical": "Kategoriska",
+        "Charts": "Diagram",
+        "Column": "Kolumn",
+        "Count": "Antal",
+        "Category": "Kategori",
+        "Fraction (non-missing)": "Andel (icke-saknade)",
+        "Histogram": "Histogram",
+        "Boxplot": "Lådagram",
+        "No data": "Ingen data",
+    }
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    request = StatisticsExportRequest(
+        result,
+        (
+            StatisticsExportTable.CONTINUOUS,
+            StatisticsExportTable.CATEGORICAL,
+            StatisticsExportTable.CHARTS,
+        ),
+        StatisticsExportFormat.EXCEL,
+    )
+
+    controller._export_statistics(dialog, exporter, request)
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Kontinuerliga", "Kategoriska"]
+    assert list(kwargs["sheets"]["Kontinuerliga"].columns)[0] == "Kolumn"
+    assert list(kwargs["sheets"]["Kategoriska"].columns)[:4] == [
+        "Kolumn",
+        "Kategori",
+        "Antal",
+        "Andel (icke-saknade)",
+    ]
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    images = kwargs["chart_factory"](None, None)
+    assert [image.heading for image in images] == ["First numeric", "Second numeric"]
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    assert controller._results.mock_calls == []
+
+
+@pytest.mark.parametrize(
+    ("format_choice", "method_name"),
+    [
+        (StatisticsExportFormat.CSV, "export_csv"),
+        (StatisticsExportFormat.BINARY, "export_data"),
+    ],
+)
+def test_statistics_single_table_routes_to_non_excel_exporters(format_choice, method_name, monkeypatch):
+    controller, dialog, result, exporter = _statistics_export_context()
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: text)
+    request = StatisticsExportRequest(result, (StatisticsExportTable.CATEGORICAL,), format_choice)
+
+    controller._export_statistics(dialog, exporter, request)
+
+    kwargs = getattr(exporter, method_name).call_args.kwargs
+    assert list(kwargs["df"].columns)[0] == "Column"
+    assert kwargs["show_success_dialog"] is True
+    assert exporter.export_excel.call_count == 0
+
+
+def test_statistics_export_rejects_stale_snapshot_without_lookup():
+    controller, dialog, result, exporter = _statistics_export_context()
+    request = StatisticsExportRequest(result, (StatisticsExportTable.CONTINUOUS,), StatisticsExportFormat.CSV)
+    dialog.invalidate_overview_export()
+
+    controller._export_statistics(dialog, exporter, request)
+
+    assert exporter.mock_calls == []
+
+
 def test_overview_export_dialog_cancellation_does_not_emit(monkeypatch):
     from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
 
@@ -372,6 +476,7 @@ class DummyAnalysisDialog:
         self.category_changed = DummySignal()
         self.dataset_changed = DummySignal()
         self.overview_export_requested = DummySignal()
+        self.statistics_export_requested = DummySignal()
         self.placeholder_calls: list[str] = []
         self.content_widgets: list[QWidget] = []
         self.config_widgets: list[QWidget | None] = []
@@ -382,6 +487,7 @@ class DummyAnalysisDialog:
         self._current_content: QWidget | None = None
         self._current_config: QWidget | None = None
         self._export_overview = None
+        self._export_statistics = None
         self._analysis_revision = 0
 
     def invalidate_overview_export(self):
@@ -396,6 +502,12 @@ class DummyAnalysisDialog:
 
     def exportable_overview(self):
         return self._export_overview
+
+    def set_exportable_statistics(self, result):
+        self._export_statistics = result
+
+    def exportable_statistics(self):
+        return self._export_statistics
 
     def show_placeholder(self, text):
         self.placeholder_calls.append(text)
