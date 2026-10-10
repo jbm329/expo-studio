@@ -10,7 +10,9 @@ from typing import TYPE_CHECKING
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import (
+    QFrame,
     QHeaderView,
     QLabel,
     QSplitter,
@@ -280,18 +282,26 @@ class OutliersView(QWidget):
         totals.setWordWrap(True)
         layout.addWidget(totals)
 
-        self._table = self._build_summary_table(result, panel)
-        layout.addWidget(self._table)
+        table_panel = QFrame(panel)
+        table_panel.setFrameShape(QFrame.Shape.NoFrame)
+        table_panel.setBackgroundRole(QPalette.ColorRole.Button)
+        table_panel.setAutoFillBackground(True)
+        table_layout = QVBoxLayout(table_panel)
+        table_layout.setContentsMargins(0, 0, 0, 0)
+        self._table = self._build_summary_table(result, table_panel)
+        table_layout.addWidget(self._table, 1)
 
         caption = QLabel(
             self.tr(
                 "Flagged values are potential outliers, not necessarily errors - check them before "
                 "excluding anything. Click a row to show the column below."
             ),
-            panel,
+            table_panel,
         )
         caption.setWordWrap(True)
-        layout.addWidget(caption)
+        caption.setTextFormat(Qt.TextFormat.PlainText)
+        table_layout.addWidget(caption)
+        layout.addWidget(table_panel, 1)
 
         return panel
 

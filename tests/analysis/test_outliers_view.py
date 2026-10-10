@@ -7,7 +7,8 @@ import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6.QtCore import QEvent, Qt
-from PyQt6.QtWidgets import QApplication, QLabel, QSplitter, QTableWidget
+from PyQt6.QtGui import QPalette
+from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.outliers_view import OutliersView
 from expo_jbm329.services.analysis.outliers import (
@@ -45,6 +46,24 @@ def _view(
 
 def _detail(column: str = "<a>", method: OutlierMethod = OutlierMethod.IQR) -> OutlierColumnDetail:
     return analyze_outlier_column(_frame(), column, method)
+
+
+def test_summary_caption_shares_the_tables_borderless_shaded_panel():
+    view, _ = _view()
+    table = view.table()
+    assert table is not None
+    panel = table.parentWidget()
+    assert isinstance(panel, QFrame)
+    assert panel.frameShape() is QFrame.Shape.NoFrame
+    assert panel.autoFillBackground()
+    assert panel.backgroundRole() is QPalette.ColorRole.Button
+    caption = panel.findChild(QLabel)
+    assert caption is not None
+    assert panel.layout().itemAt(0).widget() is table
+    assert panel.layout().itemAt(1).widget() is caption
+    assert caption.text().startswith("Flagged values are potential outliers")
+    assert caption.wordWrap()
+    assert caption.textFormat() is Qt.TextFormat.PlainText
 
 
 def _cells(table, row: int) -> list[str]:
