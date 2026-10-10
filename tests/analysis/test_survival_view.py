@@ -57,6 +57,22 @@ def test_cox_view_shows_hazard_ratio_table_counts_reference_and_caveats():
     assert "proportional-hazards assumption was not assessed" in text
 
 
+def test_cox_coefficient_columns_remain_content_sized_in_a_wide_view():
+    view = SurvivalRegressionView(_result())
+    table = view.table()
+    assert table is not None
+    assert not table.horizontalHeader().stretchLastSection()
+    widths = [table.columnWidth(column) for column in range(table.columnCount())]
+    view.resize(1600, 900)
+    view.show()
+    try:
+        QCoreApplication.processEvents()
+        assert [table.columnWidth(column) for column in range(table.columnCount())] == widths
+        assert sum(widths) < table.viewport().width()
+    finally:
+        view.close()
+
+
 @pytest.mark.parametrize("error", list(SurvivalError))
 def test_structured_errors_are_shown_without_a_coefficient_table(error):
     failed = dataclasses.replace(_result(), error=error)

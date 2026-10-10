@@ -262,7 +262,7 @@ class GeneralizedRegressionView(QWidget):
         table.setAlternatingRowColors(True)
         header = table.horizontalHeader()
         if header is not None:
-            header.setStretchLastSection(True)
+            header.setStretchLastSection(False)
         for row, term in enumerate(self._result.terms):
             name = self.tr("(Intercept)") if term.kind is TermKind.INTERCEPT else generalized_term_name(term)
             values = (

@@ -86,6 +86,25 @@ def test_displays_exponentiated_coefficients_and_model_summary(model, header):
     assert "AIC" in _text(view)
 
 
+@pytest.mark.parametrize(
+    "model", [RegressionModel.LOGISTIC, RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL]
+)
+def test_coefficient_columns_remain_content_sized_in_a_wide_view(model):
+    view = GeneralizedRegressionView(_result(model))
+    table = view.table()
+    assert table is not None
+    assert not table.horizontalHeader().stretchLastSection()
+    widths = [table.columnWidth(column) for column in range(table.columnCount())]
+    view.resize(1600, 900)
+    view.show()
+    try:
+        QCoreApplication.processEvents()
+        assert [table.columnWidth(column) for column in range(table.columnCount())] == widths
+        assert sum(widths) < table.viewport().width()
+    finally:
+        view.close()
+
+
 def test_logistic_summary_explains_binary_outcome_encoding():
     view = GeneralizedRegressionView(_result())
 
