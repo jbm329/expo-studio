@@ -59,6 +59,35 @@ def _scatter_axes(view: CorrelationView):
     return [axis for axis in _canvas_axes(view.pair_panel()) if axis.get_xlabel()]
 
 
+@pytest.mark.parametrize("with_pair", [False, True])
+def test_correlation_plots_header_gap_stays_fixed_when_section_grows(with_pair):
+    df = _frame()
+    detail = analyze_correlation_pair(df, "c0", "c1") if with_pair else None
+    view = CorrelationView(_matrix(df), detail)
+    panel = view.pair_panel().findChild(QSplitter).widget(0)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QApplication.processEvents()
+        layout = panel.layout()
+        heading = layout.itemAt(0).widget()
+        charts = layout.itemAt(1).widget()
+        gap = charts.y() - heading.geometry().bottom()
+        heading_height = heading.height()
+        chart_height = charts.height()
+        panel.resize(1100, 800)
+        QApplication.processEvents()
+        assert heading.height() == heading_height
+        assert charts.y() - heading.geometry().bottom() == gap
+        assert charts.height() > chart_height
+        assert layout.stretch(1) == 1
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
 def test_correlation_canvases_defer_matrix_and_scatter_mutations_without_blocking():
     df = _frame()
     result = _matrix(df)

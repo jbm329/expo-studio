@@ -114,7 +114,7 @@ class CorrelationView(QWidget):
         charts_splitter.setChildrenCollapsible(False)
         charts_splitter.addWidget(self._build_heatmap(result))
         charts_splitter.addWidget(self._scatter_panel)
-        charts_layout.addWidget(charts_splitter)
+        charts_layout.addWidget(charts_splitter, 1)
 
         statistics_section = QWidget(self._pair_panel)
         statistics_layout = QVBoxLayout(statistics_section)
