@@ -187,7 +187,7 @@ class GeneralizedRegressionView(QWidget):
         residuals.set_title(self.tr("Pearson residuals versus fitted counts"))
         residuals.set_xlabel(self.tr("Fitted count"))
         residuals.set_ylabel(self.tr("Pearson residual"))
-        layout.addWidget(canvas)
+        layout.addWidget(canvas, 1)
         return panel
 
     def result(self) -> GeneralizedRegressionResult:

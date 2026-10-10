@@ -57,7 +57,7 @@ class SurvivalRegressionView(QWidget):
         table_panel, table_layout = self._build_section(self.tr("Model coefficients"))
         table_layout.addWidget(self._table)
         summary_panel, summary_layout = self._build_section(self.tr("Model comments"))
-        summary_layout.addWidget(self._summary_label)
+        summary_layout.addWidget(self._summary_label, 1)
         splitter.addWidget(table_panel)
         splitter.addWidget(self._build_chart_section())
         splitter.addWidget(summary_panel)
@@ -90,7 +90,7 @@ class SurvivalRegressionView(QWidget):
         self._draw_forest(figure.add_subplot(grid[:, 0]))
         self._draw_survival(figure.add_subplot(grid[0, 1]))
         self._draw_risk_counts(figure.add_subplot(grid[1, 1]))
-        layout.addWidget(canvas)
+        layout.addWidget(canvas, 1)
         return panel
 
     def _draw_forest(self, axis: Axes) -> None:

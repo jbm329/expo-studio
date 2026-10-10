@@ -73,6 +73,53 @@ def test_cox_coefficient_columns_remain_content_sized_in_a_wide_view():
         view.close()
 
 
+def test_survival_chart_header_gap_stays_fixed_when_section_grows():
+    view = SurvivalRegressionView(_result())
+    panel = view.findChild(QSplitter).widget(1)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        layout = panel.layout()
+        heading = layout.itemAt(0).widget()
+        charts = layout.itemAt(1).widget()
+        gap = charts.y() - heading.geometry().bottom()
+        heading_height = heading.height()
+        panel.resize(1100, 800)
+        QCoreApplication.processEvents()
+        assert heading.height() == heading_height
+        assert charts.y() - heading.geometry().bottom() == gap
+        assert layout.stretch(1) == 1
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
+def test_cox_comments_header_gap_stays_fixed_when_section_grows():
+    view = SurvivalRegressionView(_result())
+    panel = view.findChild(QSplitter).widget(2)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        heading = panel.layout().itemAt(0).widget()
+        comments = view.summary_label()
+        gap = comments.y() - heading.geometry().bottom()
+        heading_height = heading.height()
+        panel.resize(1100, 800)
+        QCoreApplication.processEvents()
+        assert heading.height() == heading_height
+        assert comments.y() - heading.geometry().bottom() == gap
+        assert panel.layout().stretch(1) == 1
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
 @pytest.mark.parametrize("error", list(SurvivalError))
 def test_structured_errors_are_shown_without_a_coefficient_table(error):
     failed = dataclasses.replace(_result(), error=error)

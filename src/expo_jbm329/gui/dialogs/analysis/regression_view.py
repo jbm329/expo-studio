@@ -424,7 +424,7 @@ class RegressionView(QWidget):
         splitter.addWidget(self._build_canvas(lambda ax: self._draw_residuals_vs_fitted(ax, plot)))
         splitter.addWidget(self._build_canvas(lambda ax: self._draw_actual_vs_predicted(ax, plot, result.target)))
         splitter.addWidget(self._build_canvas(lambda ax: self._draw_qq(ax, plot)))
-        layout.addWidget(splitter)
+        layout.addWidget(splitter, 1)
 
         if plot.sampled:
             caption = QLabel(

@@ -105,6 +105,33 @@ def test_coefficient_columns_remain_content_sized_in_a_wide_view(model):
         view.close()
 
 
+@pytest.mark.parametrize(
+    "model", [RegressionModel.LOGISTIC, RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL]
+)
+def test_chart_header_gap_stays_fixed_when_chart_section_grows(model):
+    view = GeneralizedRegressionView(_result(model))
+    panel = view.findChild(QSplitter).widget(1)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        layout = panel.layout()
+        heading = layout.itemAt(0).widget()
+        charts = layout.itemAt(1).widget()
+        gap = charts.y() - heading.geometry().bottom()
+        heading_height = heading.height()
+        panel.resize(1100, 800)
+        QCoreApplication.processEvents()
+        assert heading.height() == heading_height
+        assert charts.y() - heading.geometry().bottom() == gap
+        assert layout.stretch(1) == 1
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
 def test_logistic_summary_explains_binary_outcome_encoding():
     view = GeneralizedRegressionView(_result())
 

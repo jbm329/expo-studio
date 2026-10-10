@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QLabel, QScrollArea, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.regression_view import LARGE_SAMPLE_SIZE, RegressionView
@@ -55,6 +55,30 @@ def _summary(view: RegressionView) -> str:
     label = view.summary_label()
     assert label is not None
     return label.text()
+
+
+def test_linear_chart_header_gap_stays_fixed_when_section_grows():
+    view = RegressionView(_fitted())
+    panel = view.findChild(QSplitter).widget(1)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        layout = panel.layout()
+        heading = layout.itemAt(0).widget()
+        charts = layout.itemAt(1).widget()
+        gap = charts.y() - heading.geometry().bottom()
+        heading_height = heading.height()
+        panel.resize(1100, 800)
+        QCoreApplication.processEvents()
+        assert heading.height() == heading_height
+        assert charts.y() - heading.geometry().bottom() == gap
+        assert layout.stretch(1) == 1
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
 
 
 # ----------------------------------------------------------------------
