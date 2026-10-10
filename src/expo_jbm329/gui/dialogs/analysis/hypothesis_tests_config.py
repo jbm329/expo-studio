@@ -132,8 +132,10 @@ class HypothesisTestsConfigWidget(QWidget):
         form.addRow(QLabel(self.tr("Test"), self), self._test_combo)
         layout.addLayout(form)
 
+        # The test pages take the free height so Apply stays anchored to the
+        # bottom of the Configuration pane for every test.
         self._stack = QStackedWidget(self)
-        layout.addWidget(self._stack)
+        layout.addWidget(self._stack, 1)
 
         self._group_comparison_config: GroupComparisonConfigWidget | None = None
         if group_comparison.available_numeric_columns and group_comparison.available_grouping_columns:
@@ -161,7 +163,6 @@ class HypothesisTestsConfigWidget(QWidget):
 
         self._apply_button = QPushButton(self.tr("Apply"), self)
         layout.addWidget(self._apply_button)
-        layout.addStretch(1)
 
         self._applied_configuration: tuple[HypothesisTest, ColumnSelection] | None = None
         self._update_apply_button()

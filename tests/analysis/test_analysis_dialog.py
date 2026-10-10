@@ -590,6 +590,54 @@ def test_all_configurations_share_reference_width_and_adaptive_layout(width):
         dialog.close()
 
 
+def _bottom_in(widget: QWidget, ancestor: QWidget) -> int:
+    """Return `widget`'s bottom edge in `ancestor` coordinates."""
+    return widget.mapTo(ancestor, QPoint(0, widget.height())).y()
+
+
+def test_hypothesis_apply_stays_at_pane_bottom_and_controls_stay_compact():
+    df = pd.DataFrame({
+        "before": [float(index) for index in range(30)],
+        "after": [float(index + 2) for index in range(30)],
+        "group": ["a", "b"] * 15,
+        "segment": ["x", "y", "z"] * 10,
+    })
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    config = HypothesisTestsConfigWidget(
+        initialize_group_comparison(df),
+        initialize_chi_square(df),
+        initialize_paired_comparison(df),
+    )
+    dialog.resize(1280, 800)
+    dialog.show()
+    dialog.set_config_widget(config)
+    QCoreApplication.processEvents()
+    try:
+        viewport = dialog._config_scroll.viewport()  # noqa: SLF001
+        apply_button = config._apply_button  # noqa: SLF001
+        stack = config._stack  # noqa: SLF001
+        for test in (*HypothesisTest, HypothesisTest.GROUP_COMPARISON):
+            config._test_combo.setCurrentIndex(config._test_combo.findData(test.value))  # noqa: SLF001
+            QCoreApplication.processEvents()
+            page = stack.currentWidget()
+            assert page is not None
+
+            assert viewport.height() - _bottom_in(apply_button, viewport) <= 1, test
+            assert apply_button.mapTo(config, QPoint(0, 0)).y() > stack.geometry().bottom(), test
+            if isinstance(page.layout(), QFormLayout):
+                combos = [combo for combo in page.findChildren(QComboBox) if combo.isVisible()]
+                rows = sorted(combo.mapTo(page, QPoint(0, 0)).y() for combo in combos)
+                assert rows[0] <= page.layout().contentsMargins().top() + 1, test
+                assert rows[1] - rows[0] <= combos[0].height() + page.layout().verticalSpacing() + 1, test
+            else:
+                checklist = page.findChild(QListWidget)
+                assert checklist is not None
+                # The occasion checklist uses the free height above Apply.
+                assert _bottom_in(checklist, config) == _bottom_in(page, config), test
+    finally:
+        dialog.close()
+
+
 @pytest.mark.parametrize("width", [1280, 1600])
 @pytest.mark.parametrize("translated", [False, True])
 def test_narrow_correlation_and_time_series_keep_controls_and_full_labels_accessible(monkeypatch, width, translated):
