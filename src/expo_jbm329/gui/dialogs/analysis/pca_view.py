@@ -60,7 +60,7 @@ class PCAView(QWidget):
         plots.setChildrenCollapsible(False)
         plots.addWidget(self._build_scree_plot(result))
         plots.addWidget(self._build_scatter_plot(result))
-        plots_layout.addWidget(plots)
+        plots_layout.addWidget(plots, 1)
 
         splitter = QSplitter(Qt.Orientation.Vertical, self)
         splitter.setChildrenCollapsible(False)
@@ -118,6 +118,7 @@ class PCAView(QWidget):
         label = QLabel(text, self)
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setWordWrap(True)
+        label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         return label
 
     def _build_summary_panel(self, result: PCAResult) -> QWidget:
@@ -127,6 +128,7 @@ class PCAView(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._build_section_title(self.tr("Summary"), panel))
         layout.addWidget(self._build_summary(result))
+        layout.addStretch(1)
         return panel
 
     def _build_scree_plot(self, result: PCAResult) -> QWidget:
