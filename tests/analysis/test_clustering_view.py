@@ -5,7 +5,7 @@ import dataclasses
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.clustering_view import ClusteringView
@@ -29,6 +29,39 @@ def _result(method: ClusteringMethod = ClusteringMethod.K_MEANS):
 
 def _labels_text(view: ClusteringView) -> str:
     return "\n".join(label.text() for label in view.findChildren(QLabel))
+
+
+@pytest.mark.parametrize("method", list(ClusteringMethod))
+@pytest.mark.parametrize("section", [0, 1])
+def test_section_headers_keep_fixed_content_gap_when_resized(method, section):
+    view = ClusteringView(_result(method))
+    panel = view.findChild(QSplitter).widget(section)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        layout = panel.layout()
+        heading = layout.itemAt(0).widget()
+        content = layout.itemAt(1).widget()
+        gap = content.y() - heading.geometry().bottom()
+        heading_geometry = (heading.y(), heading.height())
+        content_height = content.height()
+        assert heading.y() == layout.contentsMargins().top()
+        panel.resize(1100, 800)
+        QCoreApplication.processEvents()
+        assert (heading.y(), heading.height()) == heading_geometry
+        assert content.y() - heading.geometry().bottom() == gap
+        if section == 0:
+            assert content.height() == content_height
+            assert content.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+        else:
+            assert content.height() > content_height
+            assert layout.stretch(1) == 1
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
 
 
 @pytest.mark.parametrize("error", list(ClusteringError))

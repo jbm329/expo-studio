@@ -125,6 +125,7 @@ class ClusteringView(QWidget):
         label = QLabel(text, self)
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setWordWrap(True)
+        label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         return label
 
     def _build_summary_section(self, result: ClusteringResult) -> QWidget:
@@ -134,6 +135,7 @@ class ClusteringView(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._build_section_title(self.tr("Summary"), panel))
         layout.addWidget(self._summary_label(result))
+        layout.addStretch(1)
         return panel
 
     def _build_plot_section(self, result: ClusteringResult) -> QWidget:
@@ -142,7 +144,7 @@ class ClusteringView(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._build_section_title(self.tr("Cluster projection"), panel))
-        layout.addWidget(self._build_plot(result))
+        layout.addWidget(self._build_plot(result), 1)
         return panel
 
     def _build_table_section(self, result: ClusteringResult) -> QWidget:
