@@ -5,7 +5,8 @@ import dataclasses
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtWidgets import QLabel
+from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtWidgets import QLabel, QScrollArea
 
 from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
 from expo_jbm329.services.analysis.timeseries import TimeSeriesError, analyze_time_series
@@ -67,3 +68,30 @@ def test_summary_reports_cleaning_statistics():
     text = _labels_text(view)
     assert "2 invalid rows" in text
     assert "3 duplicate rows" in text
+
+
+def test_summary_is_separate_top_aligned_and_keeps_fixed_gap_when_resized():
+    view = TimeSeriesView(_result())
+    view.resize(1100, 800)
+    view.show()
+    try:
+        QCoreApplication.processEvents()
+        panel = view.layout().itemAt(0).widget()
+        heading = panel.layout().itemAt(0).widget()
+        text = panel.layout().itemAt(1).widget()
+        scroll = view.findChild(QScrollArea)
+        assert heading.text() == "Summary"
+        assert not scroll.isAncestorOf(panel)
+        assert text.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+        assert heading.y() == panel.layout().contentsMargins().top()
+        gap = text.y() - heading.geometry().bottom()
+        height = panel.height()
+        scroll_height = scroll.height()
+        view.resize(1100, 1100)
+        QCoreApplication.processEvents()
+        assert text.y() - heading.geometry().bottom() == gap
+        assert panel.height() == height
+        assert scroll.height() > scroll_height
+        assert len(scroll.findChildren(FigureCanvasQTAgg)) == 3
+    finally:
+        view.close()

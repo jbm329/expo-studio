@@ -8610,6 +8610,10 @@ Tid: {sec:.2f}s{sample}</translation>
 <context>
     <name>TimeSeriesView</name>
     <message>
+        <source>Summary</source>
+        <translation>Sammanfattning</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/analysis/timeseries_view.py" line="61"/>
         <source>A time series needs at least one datetime column.</source>
         <translation>En tidsserie kräver minst en kolumn med datum/tid.</translation>

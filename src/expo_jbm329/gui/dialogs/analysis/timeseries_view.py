@@ -8,7 +8,7 @@ import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QScrollArea, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QLabel, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
 from expo_jbm329.services.analysis.timeseries import TimeSeriesError
 from expo_jbm329.utils.format_utils import fmt_int
@@ -32,17 +32,17 @@ class TimeSeriesView(QWidget):
             root.addWidget(self._centered_label(self.error_text(result.error)))
             return
 
+        root.addWidget(self._build_summary_section(result))
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
         content = QWidget(scroll)
         layout = QVBoxLayout(content)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._summary_label(result))
         layout.addWidget(self._series_plot(result))
         layout.addWidget(self._acf_plot(result))
         layout.addWidget(self._decomposition_plot(result))
         scroll.setWidget(content)
-        root.addWidget(scroll)
+        root.addWidget(scroll, 1)
 
     def configuration(self) -> tuple[str, str, str | None, int | None, object]:
         """Return the parameters of the displayed result."""
@@ -68,6 +68,19 @@ class TimeSeriesView(QWidget):
         }
         return messages[error]
 
+    def _build_summary_section(self, result: TimeSeriesResult) -> QWidget:
+        """Build a content-sized summary separate from the scrolling charts."""
+        panel = QWidget(self)
+        panel.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        heading = QLabel(self.tr("Summary"), panel)
+        heading.setStyleSheet("font-weight: bold;")
+        layout.addWidget(heading)
+        layout.addWidget(self._summary_label(result))
+        layout.addStretch(1)
+        return panel
+
     def _summary_label(self, result: TimeSeriesResult) -> QLabel:
         """Build a text summary with data-cleaning diagnostics."""
         frequency = result.detected_frequency or self.tr("irregular")
@@ -85,6 +98,7 @@ class TimeSeriesView(QWidget):
         label = QLabel(text, self)
         label.setWordWrap(True)
         label.setTextFormat(Qt.TextFormat.RichText)
+        label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         return label
 
     def _canvas(self, height: int = 220) -> tuple[FigureCanvasQTAgg, Axes]:

@@ -8464,6 +8464,10 @@ Time: {sec:.2f}s{sample}</source>
 </context><context>
     <name>TimeSeriesView</name>
     <message>
+        <source>Summary</source>
+        <translation>Summary</translation>
+    </message>
+    <message>
         <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="61" />
         <source>A time series needs at least one datetime column.</source>
         <translation type="unfinished" />
