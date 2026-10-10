@@ -3417,6 +3417,59 @@ def test_pca_initializes_without_a_job_and_prompts_for_apply(dialog_factory):
     assert config.checked_columns() == ("a", "b", "c")
 
 
+@pytest.mark.parametrize("control", ["scaling", "feature", "all", "clear"])
+def test_pca_edits_replace_results_with_apply_prompt(dialog_factory, control):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_pca(async_ops, dialog_factory)
+    config = _pca_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    jobs_before = len(async_ops.calls)
+    if control == "scaling":
+        config._standardize_checkbox.toggle()  # noqa: SLF001
+    elif control == "feature":
+        _set_pca_checked(config, "c", False)
+    elif control == "all":
+        config._clear_button.click()  # noqa: SLF001
+        config._select_all_button.click()  # noqa: SLF001
+    else:
+        config._clear_button.click()  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.config_widget() is config
+    assert len(async_ops.calls) == jobs_before
+
+
+def test_pca_edit_round_trip_rejects_inflight_result_and_error(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_pca(async_ops, dialog_factory)
+    config = _pca_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    config._standardize_checkbox.toggle()  # noqa: SLF001
+    config._standardize_checkbox.toggle()  # noqa: SLF001
+    _simulate_success(first)
+    first["on_error"]("stale error")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.placeholder_calls == []
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    assert isinstance(dlg.content_widget(), PCAView)
+
+
+def test_repeated_pca_apply_discards_older_unchanged_fit(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_pca(async_ops, dialog_factory)
+    config = _pca_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    config._apply_button.click()  # noqa: SLF001
+    latest = async_ops.last_call
+    _simulate_success(first)
+    _assert_apply_prompt(ctrl, dlg)
+    _simulate_success(latest)
+    assert isinstance(dlg.content_widget(), PCAView)
+
+
 def test_first_pca_apply_fits_the_default_configuration(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_pca(async_ops, dialog_factory)

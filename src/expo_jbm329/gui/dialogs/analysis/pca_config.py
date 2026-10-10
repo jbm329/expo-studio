@@ -30,9 +30,12 @@ class PCAConfigWidget(QWidget):
     Checking features or changing the scaling preference only changes the
     pending configuration. The expensive fit is requested once the user
     presses Apply, so several changes don't queue several background jobs.
+    Every edit emits `configuration_changed` to replace outdated results
+    with the Apply prompt.
     """
 
     analysis_requested = pyqtSignal()
+    configuration_changed = pyqtSignal()
 
     def __init__(self, result: PCAResult, parent: QWidget | None = None) -> None:
         """Initialize the widget from the currently displayed PCA result.
@@ -43,6 +46,7 @@ class PCAConfigWidget(QWidget):
             parent: Optional parent widget.
         """
         super().__init__(parent)
+        self._configuration_revision = 0
         self._available_columns = result.available_columns
         self._applied_columns = result.columns
         self._applied_standardize = result.standardize
@@ -88,23 +92,34 @@ class PCAConfigWidget(QWidget):
         self._select_all_button.clicked.connect(lambda: self._set_all_columns_checked(checked=True))
         self._clear_button.clicked.connect(lambda: self._set_all_columns_checked(checked=False))
         self._apply_button.clicked.connect(self._on_apply_clicked)
+        self._standardize_checkbox.toggled.connect(self._on_configuration_changed)
+
+    def _on_configuration_changed(self) -> None:
+        """Invalidate the displayed fit after a pending configuration edit."""
+        self._configuration_revision += 1
+        self.configuration_changed.emit()
 
     def _on_column_check_changed(self, _item: QListWidgetItem) -> None:
         """Refresh the pending selection feedback."""
         self._update_apply_state()
+        self._on_configuration_changed()
 
     def _set_all_columns_checked(self, *, checked: bool) -> None:
         """Set every feature to the same pending check state."""
         state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+        changed = False
         self._column_list.blockSignals(True)
         try:
             for index in range(self._column_list.count()):
                 item = self._column_list.item(index)
-                if item is not None:
+                if item is not None and item.checkState() != state:
                     item.setCheckState(state)
+                    changed = True
         finally:
             self._column_list.blockSignals(False)
         self._update_apply_state()
+        if changed:
+            self._on_configuration_changed()
 
     def _on_apply_clicked(self) -> None:
         """Store a valid pending configuration and request a new PCA fit."""
@@ -113,6 +128,7 @@ class PCAConfigWidget(QWidget):
             return
         self._applied_columns = columns
         self._applied_standardize = self._standardize_checkbox.isChecked()
+        self._configuration_revision += 1
         self._update_apply_state()
         self.analysis_requested.emit()
 
@@ -141,3 +157,7 @@ class PCAConfigWidget(QWidget):
     def analysis_configuration(self) -> tuple[tuple[str, ...], bool]:
         """Return the applied ``(columns, standardize)`` configuration."""
         return self._applied_columns, self._applied_standardize
+
+    def configuration_revision(self) -> int:
+        """Return the generation advanced by every edit and valid Apply."""
+        return self._configuration_revision

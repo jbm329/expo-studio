@@ -1520,11 +1520,13 @@ class AnalysisController:
 
         config = PCAConfigWidget(pca_result)
         config.analysis_requested.connect(lambda: self._recompute_pca(dialog, config))
+        config.configuration_changed.connect(lambda: dialog.set_content_widget(self._apply_prompt()))
         return self._apply_prompt(), config
 
     def _recompute_pca(self, dialog: AnalysisDialog, config: PCAConfigWidget) -> None:
         """Run PCA for an applied feature/scaling configuration."""
         configuration = config.analysis_configuration()
+        revision = config.configuration_revision()
         columns, standardize = configuration
 
         self._recompute_content(
@@ -1533,7 +1535,11 @@ class AnalysisController:
             scope_suffix=f"fit:{'standardized' if standardize else 'raw'}:{':'.join(columns)}",
             compute=lambda df, _callbacks: analyze_pca(df, columns, standardize=standardize),
             apply_result=lambda result: dialog.set_content_widget(PCAView(cast("PCAResult", result))),
-            is_stale=lambda: config.analysis_configuration() != configuration,
+            is_stale=lambda: (
+                dialog.config_widget() is not config
+                or config.configuration_revision() != revision
+                or config.analysis_configuration() != configuration
+            ),
         )
 
     def _render_clustering(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
