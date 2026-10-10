@@ -1143,6 +1143,7 @@ class AnalysisController:
             self._recompute_correlation_matrix(dialog, config)
 
         config.matrix_requested.connect(_handle_matrix_requested)
+        config.configuration_changed.connect(lambda: dialog.set_content_widget(self._apply_prompt()))
         return self._apply_prompt(), config
 
     def _build_correlation_view(self, outcome: _CorrelationOutcome, dialog: AnalysisDialog) -> CorrelationView:

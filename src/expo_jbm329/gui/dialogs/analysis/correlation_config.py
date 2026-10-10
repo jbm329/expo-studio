@@ -35,12 +35,15 @@ class CorrelationConfigWidget(QWidget):
     checked columns only take effect then, avoiding a costly job per
     change. Apply stays enabled for unchanged valid settings so cancelled
     computations can be rerun. Pair selection belongs to the results table.
+    Method edits emit `configuration_changed` so displayed results can be
+    replaced by the Apply prompt.
 
     This widget never computes anything itself and is never recreated by
     those recomputes.
     """
 
     matrix_requested = pyqtSignal()
+    configuration_changed = pyqtSignal()
 
     def __init__(
         self,
@@ -80,6 +83,7 @@ class CorrelationConfigWidget(QWidget):
         self._select_all_button.clicked.connect(lambda: self._set_all_columns_checked(checked=True))
         self._clear_button.clicked.connect(lambda: self._set_all_columns_checked(checked=False))
         self._apply_button.clicked.connect(self._on_apply_clicked)
+        self._method_combo.currentIndexChanged.connect(self._on_method_changed)
 
     # ------------------------------------------------------------------
     # Construction
@@ -128,6 +132,10 @@ class CorrelationConfigWidget(QWidget):
     # ------------------------------------------------------------------
     # Method and matrix columns
     # ------------------------------------------------------------------
+
+    def _on_method_changed(self, _index: int) -> None:
+        """Invalidate displayed results without requesting a matrix computation."""
+        self.configuration_changed.emit()
 
     def _on_column_check_changed(self, _item: QListWidgetItem) -> None:
         """Refresh the selection count and Apply button after a checkbox toggle."""

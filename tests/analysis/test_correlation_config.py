@@ -98,11 +98,13 @@ def test_select_all_and_clear_update_pending_matrix_columns_without_applying():
 def test_method_change_is_pending_until_applied():
     widget = CorrelationConfigWidget(_make_result())
     received = _record(widget.matrix_requested)
+    edits = _record(widget.configuration_changed)
     _set_checked(widget, "c", checked=True)
 
     widget._method_combo.setCurrentIndex(widget._method_combo.findData(CorrelationMethod.KENDALL))  # noqa: SLF001
 
     assert received == []
+    assert edits == [()]
     assert widget.current_method() is CorrelationMethod.KENDALL
     assert widget.applied_method() is CorrelationMethod.PEARSON
     assert widget.matrix_configuration() == (CorrelationMethod.PEARSON, ("a", "b"))
@@ -111,6 +113,17 @@ def test_method_change_is_pending_until_applied():
 
     assert received == [()]
     assert widget.matrix_configuration() == (CorrelationMethod.KENDALL, ("a", "b", "c"))
+
+
+def test_method_round_trip_emits_each_edit_but_same_method_does_not():
+    widget = CorrelationConfigWidget(_make_result())
+    edits = _record(widget.configuration_changed)
+    combo = widget._method_combo  # noqa: SLF001
+    combo.setCurrentIndex(combo.findData(CorrelationMethod.PEARSON))
+    assert edits == []
+    combo.setCurrentIndex(combo.findData(CorrelationMethod.SPEARMAN))
+    combo.setCurrentIndex(combo.findData(CorrelationMethod.PEARSON))
+    assert edits == [(), ()]
 
 
 # ----------------------------------------------------------------------

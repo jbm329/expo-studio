@@ -1861,6 +1861,25 @@ def test_correlation_export_rejects_stale_navigation_without_dataset_lookup() ->
     assert controller._results.mock_calls == []
 
 
+@pytest.mark.parametrize("format_choice", list(StatisticsExportFormat))
+def test_method_edit_rejects_previous_correlation_export_request(format_choice):
+    controller, dialog, snapshot, exporter = _correlation_export_context()
+    _, config = controller._render_correlation(snapshot.matrix, dialog)  # noqa: SLF001
+    assert isinstance(config, CorrelationConfigWidget)
+    request = CorrelationExportRequest(
+        snapshot,
+        (CorrelationExportComponent.STRONGEST_CORRELATIONS,),
+        format_choice,
+    )
+    config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.SPEARMAN))  # noqa: SLF001
+
+    _assert_apply_prompt(controller, dialog)
+    assert dialog.exportable_correlation() is None
+    controller._export_correlation(dialog, exporter, request)  # noqa: SLF001
+    assert exporter.mock_calls == []
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
 @pytest.mark.parametrize(
     "components",
     [
@@ -1972,7 +1991,7 @@ def test_correlation_initializes_without_a_job_and_prompts_for_apply(dialog_fact
 
 def test_method_change_without_apply_starts_no_job(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    ctrl, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
     jobs_before = len(async_ops.calls)
 
@@ -1980,16 +1999,55 @@ def test_method_change_without_apply_starts_no_job(dialog_factory):
 
     assert len(async_ops.calls) == jobs_before
     assert config.matrix_configuration() == (CorrelationMethod.PEARSON, ("a", "b", "c"))
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_correlation() is None
+
+
+def test_method_edit_round_trip_discards_inflight_matrix_results_and_errors(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    call = _apply_correlation(async_ops, dlg)
+    config = _correlation_config(dlg)
+    combo = config._method_combo  # noqa: SLF001
+    combo.setCurrentIndex(combo.findData(CorrelationMethod.SPEARMAN))
+    combo.setCurrentIndex(combo.findData(CorrelationMethod.PEARSON))
+
+    _simulate_success(call)
+    call["on_error"]("stale failure")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_correlation() is None
+    assert dlg.placeholder_calls == []
+
+    _simulate_success(_apply_correlation(async_ops, dlg))
     assert _correlation_view(dlg).method() is CorrelationMethod.PEARSON
+    assert dlg.exportable_correlation() is not None
 
 
-def test_pending_matrix_controls_and_pair_only_recompute_keep_export_snapshot(dialog_factory):
+def test_method_edit_discards_inflight_pair_result_and_error(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    _click_correlation_pair(_correlation_view(dlg), "a", "c")
+    call = async_ops.last_call
+    config = _correlation_config(dlg)
+    config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.KENDALL))  # noqa: SLF001
+
+    _simulate_success(call)
+    call["on_error"]("stale pair failure")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_correlation() is None
+    assert dlg.placeholder_calls == []
+
+    _simulate_success(_apply_correlation(async_ops, dlg))
+    assert _correlation_view(dlg).method() is CorrelationMethod.KENDALL
+    assert dlg.exportable_correlation().matrix.method is CorrelationMethod.KENDALL
+
+
+def test_pending_columns_and_pair_recompute_keep_export_but_method_edit_clears_it(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_correlation(async_ops, dialog_factory)
     snapshot = dlg.exportable_correlation()
     assert snapshot is not None
     config = _correlation_config(dlg)
-    config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.SPEARMAN))  # noqa: SLF001
     config._column_list.item(2).setCheckState(Qt.CheckState.Unchecked)  # noqa: SLF001
 
     assert dlg.exportable_correlation() is snapshot
@@ -2000,6 +2058,8 @@ def test_pending_matrix_controls_and_pair_only_recompute_keep_export_snapshot(di
     _simulate_success(pair_call)
     assert dlg.exportable_correlation() is snapshot
 
+    config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.SPEARMAN))  # noqa: SLF001
+    assert dlg.exportable_correlation() is None
     matrix_call = _apply_correlation(async_ops, dlg)
     assert dlg.exportable_correlation() is None
     _simulate_success(matrix_call)
@@ -2364,18 +2424,19 @@ def test_table_pair_change_while_matrix_computes_is_preserved_on_replacement(dia
     assert (detail.pair.x_column, detail.pair.y_column) == selected_pair
 
 
-def test_pair_recompute_uses_the_displayed_matrix_method(dialog_factory):
+def test_method_change_prevents_old_table_from_requesting_pair_updates(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
     view = _correlation_view(dlg)
 
-    # Kendall is applied, but its matrix job hasn't finished: the view is still Pearson.
     config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.KENDALL))  # noqa: SLF001
     _apply_correlation(async_ops, dlg)
-    selected_pair = _click_correlation_pair(view, "c", "a")
+    jobs_before = len(async_ops.calls)
+    _click_correlation_pair(view, "c", "a")
 
-    assert async_ops.last_call["scope"] == f"analysis:correlation:pair:pearson:{selected_pair[0]}:{selected_pair[1]}"
+    assert len(async_ops.calls) == jobs_before
+    assert async_ops.last_call["scope"] == "analysis:correlation:matrix:kendall"
 
 
 def test_recompute_shows_error_placeholder_when_the_dataset_cannot_be_reloaded(dialog_factory):
