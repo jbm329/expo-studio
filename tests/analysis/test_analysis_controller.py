@@ -3784,6 +3784,61 @@ def test_time_series_initializes_without_a_job_and_prompts_for_apply(dialog_fact
     assert config.pending_configuration() == config.analysis_configuration()
 
 
+@pytest.mark.parametrize(
+    ("control", "setter", "value"),
+    [
+        ("_datetime_combo", "setCurrentIndex", -1),
+        ("_value_combo", "setCurrentIndex", 1),
+        ("_frequency_combo", "setCurrentIndex", 1),
+        ("_auto_period", "setChecked", False),
+        ("_period_spin", "setValue", 4),
+        ("_model_combo", "setCurrentIndex", 1),
+    ],
+)
+def test_time_series_edits_replace_results_with_apply_prompt(dialog_factory, control, setter, value):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_time_series(async_ops, dialog_factory)
+    config = _time_series_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    jobs_before = len(async_ops.calls)
+    getattr(getattr(config, control), setter)(value)
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.config_widget() is config
+    assert len(async_ops.calls) == jobs_before
+
+
+def test_time_series_edit_round_trip_rejects_inflight_result_and_error(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_time_series(async_ops, dialog_factory)
+    config = _time_series_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    config._auto_period.toggle()  # noqa: SLF001
+    config._auto_period.toggle()  # noqa: SLF001
+    _simulate_success(first)
+    first["on_error"]("stale error")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.placeholder_calls == []
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    assert isinstance(dlg.content_widget(), TimeSeriesView)
+
+
+def test_repeated_time_series_apply_discards_older_unchanged_result(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_time_series(async_ops, dialog_factory)
+    config = _time_series_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    config._apply_button.click()  # noqa: SLF001
+    latest = async_ops.last_call
+    _simulate_success(first)
+    _assert_apply_prompt(ctrl, dlg)
+    _simulate_success(latest)
+    assert isinstance(dlg.content_widget(), TimeSeriesView)
+
+
 def test_first_time_series_apply_analyzes_the_default_configuration(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_time_series(async_ops, dialog_factory)

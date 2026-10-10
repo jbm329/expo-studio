@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pandas as pd
+import pytest
 
 from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigWidget
 from expo_jbm329.services.analysis.timeseries import DecompositionModel, analyze_time_series
@@ -21,6 +22,31 @@ def _record(signal) -> list:
     received: list = []
     signal.connect(lambda *args: received.append(args))
     return received
+
+
+@pytest.mark.parametrize(
+    ("control", "setter", "value"),
+    [
+        ("_datetime_combo", "setCurrentIndex", -1),
+        ("_value_combo", "setCurrentIndex", 1),
+        ("_frequency_combo", "setCurrentIndex", 1),
+        ("_auto_period", "setChecked", True),
+        ("_period_spin", "setValue", 4),
+        ("_model_combo", "setCurrentIndex", 1),
+    ],
+)
+def test_every_control_edit_invalidates_without_requesting_analysis(control, setter, value):
+    widget = TimeSeriesConfigWidget(_result())
+    edits = _record(widget.configuration_changed)
+    requests = _record(widget.analysis_requested)
+    applied = widget.analysis_configuration()
+    getattr(getattr(widget, control), setter)(value)
+    assert edits == [()]
+    assert requests == []
+    assert widget.analysis_configuration() == applied
+    assert widget.configuration_revision() == 1
+    getattr(getattr(widget, control), setter)(value)
+    assert edits == [()]
 
 
 def test_initial_configuration_reflects_the_result():

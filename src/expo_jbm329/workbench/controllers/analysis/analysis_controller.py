@@ -1607,11 +1607,13 @@ class AnalysisController:
 
         config = TimeSeriesConfigWidget(series_result)
         config.analysis_requested.connect(lambda: self._recompute_time_series(dialog, config))
+        config.configuration_changed.connect(lambda: dialog.set_content_widget(self._apply_prompt()))
         return self._apply_prompt(), config
 
     def _recompute_time_series(self, dialog: AnalysisDialog, config: TimeSeriesConfigWidget) -> None:
         """Analyze one applied Time Series Explorer configuration."""
         configuration = config.analysis_configuration()
+        revision = config.configuration_revision()
         datetime_column, value_column, frequency, period, model = configuration
         frequency_scope = frequency or "original"
         period_scope = str(period) if period is not None else "auto"
@@ -1629,7 +1631,11 @@ class AnalysisController:
                 decomposition_model=model,
             ),
             apply_result=lambda result: dialog.set_content_widget(TimeSeriesView(cast("TimeSeriesResult", result))),
-            is_stale=lambda: config.analysis_configuration() != configuration,
+            is_stale=lambda: (
+                dialog.config_widget() is not config
+                or config.configuration_revision() != revision
+                or config.analysis_configuration() != configuration
+            ),
         )
 
     # ------------------------------------------------------------------

@@ -69,13 +69,19 @@ class _WrappingCheckBox(QCheckBox):
 
 
 class TimeSeriesConfigWidget(QWidget):
-    """Lets users choose one datetime/value series and its diagnostics settings."""
+    """Lets users choose one datetime/value series and its diagnostics settings.
+
+    Every edit emits `configuration_changed` to replace outdated results
+    with the Apply prompt. Only Apply requests an analysis.
+    """
 
     analysis_requested = pyqtSignal()
+    configuration_changed = pyqtSignal()
 
     def __init__(self, result: TimeSeriesResult, parent: QWidget | None = None) -> None:
         """Initialize the applied and pending controls from `result`."""
         super().__init__(parent)
+        self._configuration_revision = 0
         self._applied_configuration = self._configuration_from_result(result)
 
         layout = QVBoxLayout(self)
@@ -123,6 +129,17 @@ class TimeSeriesConfigWidget(QWidget):
 
         self._auto_period.toggled.connect(self._period_spin.setDisabled)
         self._apply_button.clicked.connect(self._on_apply_clicked)
+        self._datetime_combo.currentIndexChanged.connect(self._on_configuration_changed)
+        self._value_combo.currentIndexChanged.connect(self._on_configuration_changed)
+        self._frequency_combo.currentIndexChanged.connect(self._on_configuration_changed)
+        self._auto_period.toggled.connect(self._on_configuration_changed)
+        self._period_spin.valueChanged.connect(self._on_configuration_changed)
+        self._model_combo.currentIndexChanged.connect(self._on_configuration_changed)
+
+    def _on_configuration_changed(self) -> None:
+        """Invalidate displayed results without requesting a new analysis."""
+        self._configuration_revision += 1
+        self.configuration_changed.emit()
 
     @staticmethod
     def _configuration_from_result(
@@ -140,6 +157,7 @@ class TimeSeriesConfigWidget(QWidget):
     def _on_apply_clicked(self) -> None:
         """Store pending controls and request a single replacement analysis."""
         self._applied_configuration = self.pending_configuration()
+        self._configuration_revision += 1
         self.analysis_requested.emit()
 
     def pending_configuration(self) -> tuple[str, str, str | None, int | None, DecompositionModel]:
@@ -155,3 +173,7 @@ class TimeSeriesConfigWidget(QWidget):
     def analysis_configuration(self) -> tuple[str, str, str | None, int | None, DecompositionModel]:
         """Return the most recently applied analysis configuration."""
         return self._applied_configuration
+
+    def configuration_revision(self) -> int:
+        """Return the generation advanced by every edit and Apply."""
+        return self._configuration_revision
