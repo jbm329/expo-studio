@@ -176,7 +176,7 @@ class ChiSquareView(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._build_section_title(self.tr("Adjusted residuals"), panel))
-        layout.addWidget(self._build_heatmap(result))
+        layout.addWidget(self._build_heatmap(result), 1)
         return panel
 
     def _build_heatmap(self, result: ChiSquareResult) -> QWidget:

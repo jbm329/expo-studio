@@ -180,7 +180,7 @@ class GroupComparisonView(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._build_section_title(self.tr("Distribution"), panel))
-        layout.addWidget(self._build_boxplot(groups))
+        layout.addWidget(self._build_boxplot(groups), 1)
         return panel
 
     def _build_boxplot(self, groups: tuple[GroupSummary, ...]) -> QWidget:

@@ -169,7 +169,7 @@ class PairedComparisonView(QWidget):
             occasion=self.tr("Measurement occasion"),
         )
         canvas.build_chart(lambda: draw_paired_charts(figure, result, labels))
-        layout.addWidget(canvas)
+        layout.addWidget(canvas, 1)
         return panel
 
     def _build_message(self, text: str) -> QLabel:
