@@ -4615,6 +4615,11 @@ Saved to:
 </context><context>
     <name>PairedComparisonConfigWidget</name>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="53" />
+        <source>Measurement columns</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
         <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="56" />
         <source>Select at least two numeric columns. They are used in the order shown; each row is one subject.</source>
         <translation type="unfinished" />

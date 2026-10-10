@@ -5010,6 +5010,11 @@ Sparad till:
 <context>
     <name>PairedComparisonConfigWidget</name>
     <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="53"/>
+        <source>Measurement columns</source>
+        <translation>Mätkolumner</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="56"/>
         <source>Select at least two numeric columns. They are used in the order shown; each row is one subject.</source>
         <translation>Välj minst två numeriska kolumner. De används i den ordning de visas; varje rad motsvarar en individ.</translation>

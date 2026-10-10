@@ -8,6 +8,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QFormLayout,
+    QGroupBox,
     QLabel,
     QListWidget,
     QListWidgetItem,
@@ -51,21 +52,41 @@ class PairedComparisonConfigWidget(QWidget):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        group = QGroupBox(self.tr("Measurement columns"), self)
+        group_layout = QVBoxLayout(group)
         label = QLabel(
             self.tr("Select at least two numeric columns. They are used in the order shown; each row is one subject."),
-            self,
+            group,
         )
         label.setWordWrap(True)
-        layout.addWidget(label)
+        group_layout.addWidget(label)
 
-        self._columns_list = QListWidget(self)
+        self._columns_list = QListWidget(group)
         self._columns_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
         for column in result.available_numeric_columns:
             item = QListWidgetItem(column, self._columns_list)
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             item.setCheckState(Qt.CheckState.Checked if column in selected else Qt.CheckState.Unchecked)
-        layout.addWidget(self._columns_list)
+        group_layout.addWidget(self._columns_list)
+        self._group_layout = group_layout
+        layout.addWidget(group)
         self._columns_list.itemChanged.connect(self._on_item_changed)
+
+    def add_action_button(self, button: QPushButton) -> None:
+        """Show `button` inside the measurement-columns frame, below the checklist.
+
+        Args:
+            button: The owning configuration's Apply button.
+        """
+        self._group_layout.addWidget(button)
+
+    def remove_action_button(self, button: QPushButton) -> None:
+        """Remove `button` from the measurement-columns frame.
+
+        Args:
+            button: A button previously passed to `add_action_button`.
+        """
+        self._group_layout.removeWidget(button)
 
     def _on_item_changed(self, _item: QListWidgetItem) -> None:
         """Notify the parent that the pending occasion selection changed."""
@@ -162,7 +183,9 @@ class HypothesisTestsConfigWidget(QWidget):
             self._stack.addWidget(self._build_unavailable_label())
 
         self._apply_button = QPushButton(self.tr("Apply"), self)
+        self._layout = layout
         layout.addWidget(self._apply_button)
+        self._apply_button_in_paired_frame = False
 
         self._applied_configuration: tuple[HypothesisTest, ColumnSelection] | None = None
         self._update_apply_button()
@@ -182,8 +205,25 @@ class HypothesisTestsConfigWidget(QWidget):
     def _on_test_changed(self, index: int) -> None:
         """Show the selected test's page and announce the test change."""
         self._stack.setCurrentIndex(index)
+        self._place_apply_button()
         self._update_apply_button()
         self.test_changed.emit()
+
+    def _place_apply_button(self) -> None:
+        """Put Apply inside the paired checklist frame, matching Correlation, else at the pane bottom."""
+        paired = self._paired_comparison_config
+        in_paired_frame = paired is not None and self.selected_test() is HypothesisTest.PAIRED_COMPARISON
+        if paired is None or in_paired_frame == self._apply_button_in_paired_frame:
+            return
+        if in_paired_frame:
+            self._layout.removeWidget(self._apply_button)
+            paired.add_action_button(self._apply_button)
+        else:
+            paired.remove_action_button(self._apply_button)
+            self._apply_button.setParent(self)
+            self._layout.addWidget(self._apply_button)
+        self._apply_button.show()
+        self._apply_button_in_paired_frame = in_paired_frame
 
     def _on_apply_clicked(self) -> None:
         """Apply the pending test and column selection, and request its computation."""

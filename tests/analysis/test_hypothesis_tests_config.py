@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel
+from PyQt6.QtWidgets import QGroupBox, QLabel
 
 from expo_jbm329.gui.dialogs.analysis.chi_square_config import ChiSquareConfigWidget
 from expo_jbm329.gui.dialogs.analysis.group_comparison_config import GroupComparisonConfigWidget
@@ -174,6 +174,37 @@ def test_only_one_test_may_be_unavailable():
     _select_test(widget, HypothesisTest.GROUP_COMPARISON)
 
     assert widget._apply_button.isEnabled()  # noqa: SLF001
+    assert widget._apply_button.parentWidget() is widget  # noqa: SLF001
+
+
+def test_apply_moves_into_paired_frame_and_back_without_losing_its_connection():
+    widget = _widget()
+    paired = widget._paired_comparison_config  # noqa: SLF001
+    assert paired is not None
+    frame = paired.findChild(QGroupBox)
+    apply_button = widget._apply_button  # noqa: SLF001
+    received = _record(widget.apply_requested)
+
+    assert apply_button.parentWidget() is widget
+
+    for _ in range(2):
+        _select_test(widget, HypothesisTest.PAIRED_COMPARISON)
+        assert apply_button.parentWidget() is frame
+        assert frame.layout().indexOf(apply_button) == frame.layout().count() - 1
+        assert widget.layout().indexOf(apply_button) == -1
+
+        _select_test(widget, HypothesisTest.CHI_SQUARE)
+        assert apply_button.parentWidget() is widget
+        assert widget.layout().indexOf(apply_button) == widget.layout().count() - 1
+        assert frame.layout().indexOf(apply_button) == -1
+
+    _select_test(widget, HypothesisTest.PAIRED_COMPARISON)
+    _select_test(widget, HypothesisTest.PAIRED_COMPARISON)
+    apply_button.click()
+
+    assert apply_button.parentWidget() is frame
+    assert received == [None]
+    assert widget.applied_configuration() == (HypothesisTest.PAIRED_COMPARISON, ("value", "other"))
 
 
 def test_paired_selection_requires_two_columns_and_is_applied_in_dataset_order():
