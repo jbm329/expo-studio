@@ -121,6 +121,7 @@ class CorrelationView(QWidget):
         statistics_layout.setContentsMargins(0, 0, 0, 0)
         statistics_layout.addWidget(self._build_section_title(self.tr("Pair details"), statistics_section))
         statistics_layout.addWidget(self._statistics_panel)
+        statistics_layout.addStretch(1)
 
         detail_splitter = QSplitter(Qt.Orientation.Vertical, self._pair_panel)
         detail_splitter.setChildrenCollapsible(False)
@@ -178,9 +179,9 @@ class CorrelationView(QWidget):
         self._clear_layout(self._statistics_layout)
 
         if detail.error is not None:
-            self._statistics_layout.addWidget(
-                self._build_centered_label(self.error_text(detail.error), self._statistics_panel)
-            )
+            label = self._build_centered_label(self.error_text(detail.error), self._statistics_panel)
+            label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+            self._statistics_layout.addWidget(label)
         else:
             self._scatter_layout.addWidget(self._build_scatterplot(detail))
             self._statistics_layout.addWidget(self._build_pair_statistics(detail))

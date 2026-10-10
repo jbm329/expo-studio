@@ -88,6 +88,39 @@ def test_correlation_plots_header_gap_stays_fixed_when_section_grows(with_pair):
         view.close()
 
 
+@pytest.mark.parametrize("with_error", [False, True])
+def test_pair_details_header_and_text_stay_at_top_when_section_grows(with_error):
+    df = _frame()
+    if with_error:
+        df["c0"] = 1.0
+    detail = analyze_correlation_pair(df, "c0", "c1")
+    view = CorrelationView(_matrix(df), detail)
+    panel = view.pair_panel().findChild(QSplitter).widget(1)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QApplication.processEvents()
+        layout = panel.layout()
+        heading = layout.itemAt(0).widget()
+        text_panel = layout.itemAt(1).widget()
+        label = text_panel.findChild(QLabel)
+        gap = text_panel.y() - heading.geometry().bottom()
+        heading_geometry = (heading.y(), heading.height())
+        text_geometry = (text_panel.y(), text_panel.height(), label.y(), label.height())
+        assert heading.y() == layout.contentsMargins().top()
+        assert label.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+        panel.resize(1100, 800)
+        QApplication.processEvents()
+        assert (heading.y(), heading.height()) == heading_geometry
+        assert text_panel.y() - heading.geometry().bottom() == gap
+        assert (text_panel.y(), text_panel.height(), label.y(), label.height()) == text_geometry
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
 def test_correlation_canvases_defer_matrix_and_scatter_mutations_without_blocking():
     df = _frame()
     result = _matrix(df)
