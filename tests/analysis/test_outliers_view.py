@@ -76,6 +76,38 @@ def test_distribution_header_gap_stays_fixed_when_section_grows(column):
         view.close()
 
 
+@pytest.mark.parametrize("with_error", [False, True])
+def test_column_details_content_stays_at_top_with_fixed_heading_gap(with_error):
+    view, _ = _view()
+    detail = _detail("b")
+    if with_error:
+        detail = dataclasses.replace(detail, error=OutlierError.INVALID_COLUMN)
+    view.set_column_detail(detail)
+    panel = view._statistics_panel  # noqa: SLF001
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QApplication.processEvents()
+        layout = panel.layout()
+        labels = [layout.itemAt(index).widget() for index in range(layout.count() - 1)]
+        geometry = [(label.y(), label.height()) for label in labels]
+        assert labels[0].y() == layout.contentsMargins().top()
+        assert labels[-1].alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+        if not with_error:
+            assert labels[0].text() == "Column details"
+            gap = labels[1].y() - labels[0].geometry().bottom()
+        panel.resize(1100, 800)
+        QApplication.processEvents()
+        assert [(label.y(), label.height()) for label in labels] == geometry
+        if not with_error:
+            assert labels[1].y() - labels[0].geometry().bottom() == gap
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
 def test_summary_caption_shares_the_tables_borderless_shaded_panel():
     view, _ = _view()
     table = view.table()

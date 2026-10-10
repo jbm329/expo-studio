@@ -236,9 +236,9 @@ class OutliersView(QWidget):
             self._extremes_panel.hide()
             self._chart_panel.hide()
             self._statistics_panel.show()
-            self._statistics_layout.addWidget(
-                self._build_centered_label(self.error_text(detail.error), self._statistics_panel)
-            )
+            label = self._build_centered_label(self.error_text(detail.error), self._statistics_panel)
+            label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+            self._statistics_layout.addWidget(label)
         else:
             self._extremes_panel.show()
             self._chart_panel.show()
@@ -251,6 +251,7 @@ class OutliersView(QWidget):
             )
             self._statistics_layout.addWidget(self._build_detail_statistics(detail))
 
+        self._statistics_layout.addStretch(1)
         self._select_table_row(detail.summary.column)
 
     def error_text(self, error: OutlierError) -> str:
