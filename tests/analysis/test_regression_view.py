@@ -7,7 +7,8 @@ import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6.QtCore import QCoreApplication, Qt
-from PyQt6.QtWidgets import QLabel, QScrollArea, QSplitter, QTableWidget
+from PyQt6.QtGui import QPalette
+from PyQt6.QtWidgets import QFrame, QLabel, QScrollArea, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.regression_view import LARGE_SAMPLE_SIZE, RegressionView
 from expo_jbm329.services.analysis.regression import (
@@ -38,6 +39,25 @@ def _fitted(df: pd.DataFrame | None = None) -> RegressionResult:
 
 def _labels(view: RegressionView) -> list[str]:
     return [label.text() for label in view.findChildren(QLabel)]
+
+
+def test_coefficients_caption_shares_the_tables_borderless_shaded_panel():
+    result = _fitted()
+    view = RegressionView(result)
+    table = view.table()
+    assert table is not None
+    panel = table.parentWidget()
+    assert isinstance(panel, QFrame)
+    assert panel.frameShape() is QFrame.Shape.NoFrame
+    assert panel.autoFillBackground()
+    assert panel.backgroundRole() is QPalette.ColorRole.Button
+    caption = panel.findChild(QLabel)
+    assert caption is not None
+    assert panel.layout().itemAt(0).widget() is table
+    assert panel.layout().itemAt(1).widget() is caption
+    assert caption.wordWrap()
+    assert caption.textFormat() is Qt.TextFormat.RichText
+    assert caption.text() == view._coefficients_caption(result)  # noqa: SLF001
 
 
 def _cells(view: RegressionView, row: int) -> list[str]:

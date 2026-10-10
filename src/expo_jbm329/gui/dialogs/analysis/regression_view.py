@@ -9,7 +9,9 @@ from typing import TYPE_CHECKING
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import (
+    QFrame,
     QHeaderView,
     QLabel,
     QScrollArea,
@@ -314,13 +316,20 @@ class RegressionView(QWidget):
         title.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(title)
 
-        self._table = self._build_table(result, panel)
-        layout.addWidget(self._table)
+        table_panel = QFrame(panel)
+        table_panel.setFrameShape(QFrame.Shape.NoFrame)
+        table_panel.setBackgroundRole(QPalette.ColorRole.Button)
+        table_panel.setAutoFillBackground(True)
+        table_layout = QVBoxLayout(table_panel)
+        table_layout.setContentsMargins(0, 0, 0, 0)
+        self._table = self._build_table(result, table_panel)
+        table_layout.addWidget(self._table, 1)
 
-        caption = QLabel(self._coefficients_caption(result), panel)
+        caption = QLabel(self._coefficients_caption(result), table_panel)
         caption.setTextFormat(Qt.TextFormat.RichText)
         caption.setWordWrap(True)
-        layout.addWidget(caption)
+        table_layout.addWidget(caption)
+        layout.addWidget(table_panel, 1)
 
         return panel
 
