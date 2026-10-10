@@ -73,7 +73,7 @@ def test_builds_one_table_row_per_numeric_column():
     assert table.item(1, 0).text() == "b"
 
 
-def test_layout_has_titled_table_chart_and_text_sections_with_adjustable_dividers():
+def test_layout_has_adjustable_table_and_charts_with_content_sized_normality():
     view = StatisticsView(DescriptiveStatisticsResult(columns=(_make_column_stats(),)))
 
     splitters = view.findChildren(QSplitter)
@@ -81,7 +81,7 @@ def test_layout_has_titled_table_chart_and_text_sections_with_adjustable_divider
     splitter = splitters[0]
     assert splitter.orientation() is Qt.Orientation.Vertical
     assert splitter.childrenCollapsible() is False
-    assert splitter.count() == 3
+    assert splitter.count() == 2
 
     table = view.findChild(QTableWidget)
     assert table is not None
@@ -92,7 +92,7 @@ def test_layout_has_titled_table_chart_and_text_sections_with_adjustable_divider
     assert len(canvases) == 1
     assert any(label.text() == "Distribution" for label in splitter.widget(1).findChildren(QLabel))
 
-    assert splitter.widget(2).isAncestorOf(view._normality_label)  # noqa: SLF001
+    assert view.layout().itemAt(1).widget().isAncestorOf(view._normality_label)  # noqa: SLF001
 
 
 def test_statistics_tabs_have_extra_horizontal_padding_for_selected_text():
@@ -177,6 +177,64 @@ def test_show_distribution_for_switches_to_a_different_column():
     view.show_distribution_for("b")
 
     assert len(view._figure.axes) == 2  # noqa: SLF001
+
+
+def test_normality_text_is_top_aligned_when_section_grows():
+    result = DescriptiveStatisticsResult(columns=(_make_column_stats(),))
+    view = StatisticsView(result)
+    panel = view.layout().itemAt(1).widget()
+    panel.setParent(None)
+    panel.resize(1100, 200)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        label = view._normality_label  # noqa: SLF001
+        assert label.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+        assert label.y() == panel.layout().contentsMargins().top()
+        panel.resize(1100, 400)
+        QCoreApplication.processEvents()
+        assert label.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+        assert label.y() == panel.layout().contentsMargins().top()
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
+def test_normality_section_fits_wrapped_content_and_leaves_growth_to_charts():
+    result = DescriptiveStatisticsResult(
+        columns=(
+            _make_column_stats(column="short"),
+            _make_column_stats(column="long", count=SHAPIRO_LARGE_SAMPLE_THRESHOLD + 1),
+        )
+    )
+    view = StatisticsView(result)
+    view.resize(1100, 800)
+    view.show()
+    try:
+        QCoreApplication.processEvents()
+        panel = view.layout().itemAt(1).widget()
+        charts = view.findChild(QSplitter).widget(1)
+        assert panel.height() == panel.heightForWidth(panel.width())
+        text_height = panel.height()
+        chart_height = charts.height()
+        view.resize(1100, 1100)
+        QCoreApplication.processEvents()
+        assert panel.height() == text_height
+        assert charts.height() > chart_height
+
+        view.show_distribution_for("long")
+        view.resize(400, 1100)
+        QCoreApplication.processEvents()
+        assert panel.height() == panel.heightForWidth(panel.width())
+        assert panel.height() > text_height
+
+        view.show_distribution_for("short")
+        view.resize(1100, 1100)
+        QCoreApplication.processEvents()
+        assert panel.height() == text_height
+    finally:
+        view.close()
 
 
 def test_distribution_header_gap_stays_fixed_when_section_grows():

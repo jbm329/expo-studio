@@ -12,6 +12,7 @@ from PyQt6.QtGui import QPaintEvent, QResizeEvent
 from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
+    QSizePolicy,
     QSplitter,
     QTableWidget,
     QTableWidgetItem,
@@ -203,17 +204,20 @@ class StatisticsView(QWidget):
         splitter.addWidget(self._build_table_section(result))
         if result.columns:
             splitter.addWidget(self._build_distribution_section())
-            splitter.addWidget(self._build_normality_section())
         else:
             splitter.addWidget(self._build_no_numeric_section())
             splitter.addWidget(self._build_no_normality_section())
         splitter.setStretchFactor(0, 2)
         splitter.setStretchFactor(1, 3)
-        splitter.setStretchFactor(2, 1)
-        splitter.setSizes([250, 350, 120])
+        if result.columns:
+            splitter.setSizes([250, 350])
+        else:
+            splitter.setStretchFactor(2, 1)
+            splitter.setSizes([250, 350, 120])
         layout.addWidget(splitter, 1)
 
         if result.columns:
+            layout.addWidget(self._build_normality_section())
             self.show_distribution_for(result.columns[0].column)
 
     def _build_empty_label(self) -> QLabel:
@@ -468,12 +472,14 @@ class StatisticsView(QWidget):
     def _build_normality_section(self) -> QWidget:
         """Build the Shapiro-Wilk normality text section."""
         container = QWidget(self)
+        container.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
 
         self._normality_label = QLabel(container)
         self._normality_label.setTextFormat(Qt.TextFormat.RichText)
         self._normality_label.setWordWrap(True)
+        self._normality_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self._normality_label)
 
         return container
