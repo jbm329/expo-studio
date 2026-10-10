@@ -1361,51 +1361,51 @@ class AnalysisController:
         if not summary.available_columns:
             return OutliersView(summary, None), None
 
-        config = OutliersConfigWidget(summary, None)
+        config = OutliersConfigWidget(summary)
 
         def _handle_summary_requested() -> None:
             self._recompute_outlier_summary(dialog, config)
 
-        def _handle_column_changed(column: str) -> None:
-            self._recompute_outlier_column(dialog, config, column)
-
         config.summary_requested.connect(_handle_summary_requested)
-        config.column_changed.connect(_handle_column_changed)
         config.multivariate_requested.connect(lambda: self._switch_to_multivariate_outliers(dialog))
         return self._apply_prompt(), config
 
-    @staticmethod
-    def _build_outliers_view(outcome: _OutliersOutcome, config: OutliersConfigWidget) -> OutliersView:
-        """Build an Outlier Explorer view whose table rows select the config's column."""
+    def _build_outliers_view(self, outcome: _OutliersOutcome, dialog: AnalysisDialog) -> OutliersView:
+        """Build an Outlier Explorer view whose table rows request column details."""
         view = OutliersView(outcome.summary, outcome.detail)
-        view.column_activated.connect(config.set_column)
+
+        def _handle_column_activated(column: str) -> None:
+            if dialog.content_widget() is view:
+                self._recompute_outlier_column(dialog, column)
+
+        view.column_activated.connect(_handle_column_activated)
         return view
 
     def _recompute_outlier_summary(self, dialog: AnalysisDialog, config: OutliersConfigWidget) -> None:
         """Recompute the whole outlier summary for the config's applied method and threshold.
 
-        Before the first summary is shown, the column picker is disabled and
-        only holds a placeholder column, so the summary's top-ranked column
-        is detailed instead and then synced back into the picker.
+        Preserve the table-selected column, or detail the summary's
+        top-ranked column before a table selection exists.
         """
         configuration = config.summary_configuration()
         method, threshold = configuration
-        column = (config.current_column() or None) if config.is_column_selection_enabled() else None
+        view = dialog.content_widget()
+        column = view.selected_column() if isinstance(view, OutliersView) else None
 
         def _apply(result: object) -> None:
             outcome = cast("_OutliersOutcome", result)
-            dialog.set_content_widget(self._build_outliers_view(outcome, config))
+            current_view = dialog.content_widget()
+            latest_column = current_view.selected_column() if isinstance(current_view, OutliersView) else None
+            new_view = self._build_outliers_view(outcome, dialog)
+            dialog.set_content_widget(new_view)
             if outcome.detail is None:
                 return
-            detailed_column = outcome.detail.summary.column
-            if column is None:
-                config.set_column(detailed_column, notify=False)
-            config.set_column_selection_enabled(enabled=True)
-            # The column may have changed while the summary was computing;
-            # its own recompute was skipped (no current view), so catch up now.
-            current_column = config.current_column()
-            if current_column and current_column != detailed_column:
-                self._recompute_outlier_column(dialog, config, current_column)
+            if (
+                latest_column is not None
+                and latest_column != new_view.selected_column()
+                and any(summary.column == latest_column for summary in outcome.summary.columns)
+            ):
+                new_view.select_column(latest_column)
 
         self._recompute_content(
             dialog,
@@ -1416,17 +1416,17 @@ class AnalysisController:
             is_stale=lambda: config.summary_configuration() != configuration,
         )
 
-    def _recompute_outlier_column(self, dialog: AnalysisDialog, config: OutliersConfigWidget, column: str) -> None:
+    def _recompute_outlier_column(self, dialog: AnalysisDialog, column: str) -> None:
         """Recompute only the column detail, updating the current view's detail panel in place."""
         view = dialog.content_widget()
-        if not isinstance(view, OutliersView) or view.table() is None:
-            # No summary is shown (still computing or failed); the next
-            # summary result will include the current column.
+        if not isinstance(view, OutliersView) or view.table() is None or view.selected_column() != column:
+            # Column selection is only available in a displayed summary.
             return
 
         # The displayed summary's configuration, not the config's: a pending
         # method/threshold change will bring its own detail with the new summary.
         method, threshold = view.configuration()
+        selection_revision = view.column_selection_revision()
 
         def _apply(result: object) -> None:
             view.set_column_detail(cast("OutlierColumnDetail", result))
@@ -1437,7 +1437,11 @@ class AnalysisController:
             scope_suffix=f"column:{method.value}:{threshold}:{column}",
             compute=lambda df, _callbacks: analyze_outlier_column(df, column, method, threshold),
             apply_result=_apply,
-            is_stale=lambda: dialog.content_widget() is not view or config.current_column() != column,
+            is_stale=lambda: (
+                dialog.content_widget() is not view
+                or view.selected_column() != column
+                or view.column_selection_revision() != selection_revision
+            ),
             target=view.detail_panel(),
         )
 

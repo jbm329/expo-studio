@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pandas as pd
+from PyQt6.QtWidgets import QComboBox, QLabel
 
 from expo_jbm329.gui.dialogs.analysis.outliers_config import OutliersConfigWidget
 from expo_jbm329.services.analysis.outliers import (
@@ -35,42 +36,31 @@ def _select_method(widget: OutliersConfigWidget, method: OutlierMethod) -> None:
 
 
 def test_initial_state_reflects_the_result():
-    widget = OutliersConfigWidget(_result(OutlierMethod.Z_SCORE, 2.5), "b")
+    widget = OutliersConfigWidget(_result(OutlierMethod.Z_SCORE, 2.5))
     combo = widget._method_combo  # noqa: SLF001
 
     assert [combo.itemData(i) for i in range(combo.count())] == list(OutlierMethod)
     assert widget.summary_configuration() == (OutlierMethod.Z_SCORE, 2.5)
-    assert widget.current_column() == "b"
-    assert widget._column_combo.eligible_columns() == ("a", "b")  # noqa: SLF001
 
 
 def test_threshold_range():
-    widget = OutliersConfigWidget(_result(), None)
+    widget = OutliersConfigWidget(_result())
     spin = widget._threshold_spin  # noqa: SLF001
 
     assert spin.minimum() == MIN_THRESHOLD
     assert spin.maximum() == MAX_THRESHOLD
 
 
-def test_column_selection_starts_disabled_and_can_be_enabled():
-    widget = OutliersConfigWidget(_result(), None)
+def test_configuration_has_no_column_selection_controls():
+    widget = OutliersConfigWidget(_result())
 
-    assert widget.is_column_selection_enabled() is False
-    assert not widget._column_label.isEnabled()  # noqa: SLF001
-
-    widget.set_column_selection_enabled(enabled=True)
-
-    assert widget.is_column_selection_enabled() is True
-    assert widget._column_label.isEnabled()  # noqa: SLF001
-
-
-def test_column_defaults_to_the_first_available():
-    assert OutliersConfigWidget(_result(), None).current_column() == "a"
+    assert len(widget.findChildren(QComboBox)) == 2
+    assert all(label.text() != widget.tr("Column") for label in widget.findChildren(QLabel))
 
 
 def test_threshold_label_depends_on_the_method():
-    iqr = OutliersConfigWidget(_result(OutlierMethod.IQR), None)
-    z = OutliersConfigWidget(_result(OutlierMethod.Z_SCORE), None)
+    iqr = OutliersConfigWidget(_result(OutlierMethod.IQR))
+    z = OutliersConfigWidget(_result(OutlierMethod.Z_SCORE))
 
     assert iqr._threshold_label.text() == iqr.tr("IQR multiplier")  # noqa: SLF001
     assert z._threshold_label.text() == z.tr("Score threshold")  # noqa: SLF001
@@ -78,10 +68,9 @@ def test_threshold_label_depends_on_the_method():
 
 
 def test_construction_does_not_emit():
-    widget = OutliersConfigWidget(_result(), None)
+    widget = OutliersConfigWidget(_result())
 
     assert _record(widget.summary_requested) == []
-    assert _record(widget.column_changed) == []
 
 
 # ----------------------------------------------------------------------
@@ -90,7 +79,7 @@ def test_construction_does_not_emit():
 
 
 def test_method_change_resets_the_pending_threshold_without_emitting():
-    widget = OutliersConfigWidget(_result(OutlierMethod.IQR, 3.0), None)
+    widget = OutliersConfigWidget(_result(OutlierMethod.IQR, 3.0))
     received = _record(widget.summary_requested)
 
     _select_method(widget, OutlierMethod.MODIFIED_Z_SCORE)
@@ -103,7 +92,7 @@ def test_method_change_resets_the_pending_threshold_without_emitting():
 
 
 def test_threshold_change_is_pending_until_applied():
-    widget = OutliersConfigWidget(_result(), None)
+    widget = OutliersConfigWidget(_result())
     received = _record(widget.summary_requested)
 
     widget._threshold_spin.setValue(2.0)  # noqa: SLF001
@@ -114,7 +103,7 @@ def test_threshold_change_is_pending_until_applied():
 
 
 def test_apply_stores_the_pending_configuration_and_emits():
-    widget = OutliersConfigWidget(_result(), None)
+    widget = OutliersConfigWidget(_result())
     received = _record(widget.summary_requested)
     _select_method(widget, OutlierMethod.Z_SCORE)
     widget._threshold_spin.setValue(2.5)  # noqa: SLF001
@@ -123,49 +112,3 @@ def test_apply_stores_the_pending_configuration_and_emits():
 
     assert received == [()]
     assert widget.summary_configuration() == (OutlierMethod.Z_SCORE, 2.5)
-
-
-# ----------------------------------------------------------------------
-# Column
-# ----------------------------------------------------------------------
-
-
-def test_column_change_emits_the_column():
-    widget = OutliersConfigWidget(_result(), "a")
-    received = _record(widget.column_changed)
-
-    widget._column_combo.setCurrentIndex(1)  # noqa: SLF001
-
-    assert received == [("b",)]
-
-
-def test_clearing_the_column_does_not_emit():
-    widget = OutliersConfigWidget(_result(), "a")
-    received = _record(widget.column_changed)
-
-    widget._column_combo.setCurrentIndex(-1)  # noqa: SLF001
-
-    assert received == []
-
-
-def test_set_column_selects_and_emits_only_on_change():
-    widget = OutliersConfigWidget(_result(), "a")
-    received = _record(widget.column_changed)
-
-    widget.set_column("a")
-    widget.set_column("missing")
-    widget.set_column("t")
-    widget.set_column("b")
-
-    assert received == [("b",)]
-    assert widget.current_column() == "b"
-
-
-def test_set_column_without_notify_selects_silently():
-    widget = OutliersConfigWidget(_result(), "a")
-    received = _record(widget.column_changed)
-
-    widget.set_column("b", notify=False)
-
-    assert received == []
-    assert widget.current_column() == "b"

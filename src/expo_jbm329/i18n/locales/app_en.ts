@@ -4045,11 +4045,6 @@ Saved to:
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="100" />
-        <source>Column</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
         <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="143" />
         <source>IQR multiplier</source>
         <translation type="unfinished" />

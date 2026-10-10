@@ -4435,11 +4435,6 @@ Sparad till:
         <translation>Tillämpa</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/outliers_config.py" line="100"/>
-        <source>Column</source>
-        <translation>Kolumn</translation>
-    </message>
-    <message>
         <location filename="../../gui/dialogs/analysis/outliers_config.py" line="143"/>
         <source>IQR multiplier</source>
         <translation>IQR-multiplikator</translation>

@@ -534,7 +534,7 @@ def _configuration_widgets() -> list[QWidget]:
         CorrelationConfigWidget(initialize_correlation(df)),
         ClusteringConfigWidget(initialize_clustering(df)),
         PCAConfigWidget(initialize_pca(df)),
-        OutliersConfigWidget(initialize_outlier_summary(df), None),
+        OutliersConfigWidget(initialize_outlier_summary(df)),
         MultivariateOutliersConfigWidget(initialize_multivariate_outliers(df)),
         TimeSeriesConfigWidget(initialize_time_series(df)),
     ]

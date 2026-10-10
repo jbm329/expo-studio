@@ -162,14 +162,58 @@ def test_status_texts_are_distinct():
 
 def test_clicking_a_row_emits_the_column():
     view, result = _view()
-    received = _record(view.column_activated)
+    received = []
+    view.column_activated.connect(
+        lambda column: received.append((column, view.selected_column(), view.column_selection_revision()))
+    )
     table = view.table()
     assert table is not None
 
     table.cellClicked.emit(1, 0)
     table.cellClicked.emit(99, 0)
 
-    assert received == [(result.columns[1].column,)]
+    assert received == [(result.columns[1].column, result.columns[1].column, 1)]
+    assert view.selected_column() == result.columns[1].column
+    assert view.column_selection_revision() == 1
+
+
+def test_select_column_activates_the_canonical_summary_row():
+    view, result = _view(column=None)
+    received = _record(view.column_activated)
+    table = view.table()
+    assert table is not None
+
+    view.select_column("<a>")
+    assert view.selected_column() == "<a>"
+    assert view.column_selection_revision() == 1
+    assert table.selectedItems()[0].row() == 0
+
+    view.select_column("b")
+    assert view.selected_column() == "b"
+    assert view.column_selection_revision() == 2
+    assert received == [("<a>",), ("b",)]
+    assert table.selectedItems()[0].row() == 1
+    assert result.columns[0].column == "<a>"
+
+
+def test_select_column_rejects_a_column_missing_from_the_summary():
+    view, _ = _view(column=None)
+
+    with pytest.raises(ValueError, match="row in the displayed outlier summary"):
+        view.select_column("t")
+
+    assert view.selected_column() is None
+    assert view.column_selection_revision() == 0
+
+
+def test_setting_detail_updates_selected_column_without_advancing_selection_revision():
+    view, _ = _view()
+    assert view.selected_column() == "<a>"
+
+    view.set_column_detail(_detail("b"))
+
+    assert view.selected_column() == "b"
+    assert view.column_selection_revision() == 0
 
 
 def test_detail_highlights_its_summary_row_or_clears_the_selection():

@@ -118,6 +118,8 @@ class OutliersView(QWidget):
 
         self._result = result
         self._detail: OutlierColumnDetail | None = None
+        self._selected_column: str | None = None
+        self._column_selection_revision = 0
         self._table: QTableWidget | None = None
         self._extremes_table: QTableWidget | None = None
 
@@ -185,6 +187,30 @@ class OutliersView(QWidget):
         """Return the currently displayed column detail, if any."""
         return self._detail
 
+    def selected_column(self) -> str | None:
+        """Return the latest table-selected column, including a pending detail request."""
+        return self._selected_column
+
+    def column_selection_revision(self) -> int:
+        """Return the generation of the latest table column request."""
+        return self._column_selection_revision
+
+    def select_column(self, column: str) -> None:
+        """Select and request a summary table row.
+
+        Args:
+            column: Column whose detail should be displayed.
+
+        Raises:
+            ValueError: If the column has no row in the displayed summary.
+        """
+        for row, summary in enumerate(self._result.columns):
+            if summary.column == column:
+                self._on_cell_activated(row, 0)
+                return
+        message = "The selected column must have a row in the displayed outlier summary."
+        raise ValueError(message)
+
     def table(self) -> QTableWidget | None:
         """Return the per-column summary table, or `None` when the summary has an error."""
         return self._table
@@ -200,6 +226,7 @@ class OutliersView(QWidget):
             detail: The computed column detail to display.
         """
         self._detail = detail
+        self._selected_column = detail.summary.column
         self._extremes_table = None
         self._clear_layout(self._extremes_layout)
         self._clear_layout(self._chart_layout)
@@ -375,7 +402,11 @@ class OutliersView(QWidget):
         """Emit `column_activated` for the clicked/activated table row."""
         if not 0 <= row < len(self._result.columns):
             return
-        self.column_activated.emit(self._result.columns[row].column)
+        column = self._result.columns[row].column
+        self._selected_column = column
+        self._column_selection_revision += 1
+        self._select_table_row(column)
+        self.column_activated.emit(column)
 
     def _select_table_row(self, column: str) -> None:
         """Highlight the row of `column`, or clear the selection."""

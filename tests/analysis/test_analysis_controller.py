@@ -3029,16 +3029,6 @@ def test_outliers_initialize_without_a_job_and_prompt_for_apply(dialog_factory):
     _assert_apply_prompt(ctrl, dlg)
     config = _outliers_config(dlg)
     assert config.summary_configuration() == (OutlierMethod.IQR, 1.5)
-    assert config.is_column_selection_enabled() is False
-
-
-def test_outlier_column_change_before_the_first_apply_starts_no_job(dialog_factory):
-    async_ops = DummyAsyncOps()
-    _, dlg = _open_outliers(async_ops, dialog_factory)
-
-    _outliers_config(dlg).set_column("b")
-
-    assert async_ops.calls == []
 
 
 def test_outlier_apply_runs_as_a_background_job_with_a_standard_overlay(dialog_factory):
@@ -3053,17 +3043,15 @@ def test_outlier_apply_runs_as_a_background_job_with_a_standard_overlay(dialog_f
     assert call["indeterminate"] is True
 
 
-def test_first_outlier_apply_details_the_top_ranked_column_and_enables_column_selection(dialog_factory):
+def test_first_outlier_apply_details_the_top_ranked_column(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_outliers(async_ops, dialog_factory)
-    config = _outliers_config(dlg)
-    config.set_column("b")  # the disabled picker only holds a placeholder column
 
     _simulate_success(_apply_outliers(async_ops, dlg))
 
-    assert _detail_column(_outliers_view(dlg)) == "a"
-    assert config.current_column() == "a"
-    assert config.is_column_selection_enabled() is True
+    view = _outliers_view(dlg)
+    assert _detail_column(view) == "a"
+    assert view.selected_column() == "a"
     assert async_ops.last_call["scope"] == "analysis:outliers:summary:iqr:1.5"  # no extra column job
 
 
@@ -3216,7 +3204,7 @@ def test_applied_outlier_method_recomputes_the_summary_and_keeps_the_config(dial
     config = _outliers_config(dlg)
     first_view = _outliers_view(dlg)
     configs_before = len(dlg.config_widgets)
-    config.set_column("b")
+    first_view.select_column("b")
     _simulate_success(async_ops.last_call)
 
     _select_outlier_method(config, OutlierMethod.Z_SCORE)
@@ -3257,11 +3245,10 @@ def test_stale_outlier_summary_is_discarded_when_applied_again(dialog_factory):
 def test_outlier_column_change_recomputes_only_the_detail_over_the_detail_panel(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_outliers(async_ops, dialog_factory)
-    config = _outliers_config(dlg)
     view = _outliers_view(dlg)
     contents_before = len(dlg.content_widgets)
 
-    config.set_column("b")
+    view.select_column("b")
 
     call = async_ops.last_call
     assert call["scope"] == "analysis:outliers:column:iqr:1.5:b"
@@ -3277,26 +3264,26 @@ def test_outlier_column_change_recomputes_only_the_detail_over_the_detail_panel(
 def test_clicking_an_outlier_summary_row_selects_the_column(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_outliers(async_ops, dialog_factory)
-    config = _outliers_config(dlg)
-    table = _outliers_view(dlg).table()
+    view = _outliers_view(dlg)
+    table = view.table()
     assert table is not None
 
     table.cellClicked.emit(1, 0)
 
-    assert config.current_column() == "b"
+    assert view.selected_column() == "b"
+    assert view.column_selection_revision() == 1
     assert async_ops.last_call["scope"] == "analysis:outliers:column:iqr:1.5:b"
 
 
 def test_stale_outlier_column_recompute_is_discarded_when_the_column_changes_again(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_outliers(async_ops, dialog_factory)
-    config = _outliers_config(dlg)
     view = _outliers_view(dlg)
     initial_detail = view.column_detail()
 
-    config.set_column("b")
+    view.select_column("b")
     first = async_ops.last_call
-    config.set_column("a")
+    view.select_column("a")
     second = async_ops.last_call
 
     _simulate_success(first)
@@ -3306,37 +3293,64 @@ def test_stale_outlier_column_recompute_is_discarded_when_the_column_changes_aga
     assert _detail_column(view) == "a"
 
 
-def test_outlier_column_change_while_the_summary_is_computing_is_caught_up_afterwards(dialog_factory):
+def test_a_to_b_to_a_column_selection_discards_the_first_a_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    view = _outliers_view(dlg)
+
+    view.select_column("a")
+    first_a = async_ops.last_call
+    view.select_column("b")
+    b_call = async_ops.last_call
+    view.select_column("a")
+    last_a = async_ops.last_call
+
+    initial_detail = view.column_detail()
+    _simulate_success(first_a)
+    assert view.column_detail() is initial_detail
+    _simulate_success(b_call)
+    assert view.column_detail() is initial_detail
+
+    _simulate_success(last_a)
+    assert _detail_column(view) == "a"
+
+
+def test_outlier_column_change_during_summary_recompute_is_caught_up(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_outliers(async_ops, dialog_factory)
     config = _outliers_config(dlg)
+    original_view = _outliers_view(dlg)
 
     _select_outlier_method(config, OutlierMethod.MODIFIED_Z_SCORE)
     summary_call = _apply_outliers(async_ops, dlg)
-    dlg.show_placeholder("computing")  # no view is displayed while the summary job runs
-    jobs_before = len(async_ops.calls)
-
-    config.set_column("b")
-    assert len(async_ops.calls) == jobs_before  # nothing to update yet
+    original_view.select_column("b")
+    old_detail_call = async_ops.last_call
 
     _simulate_success(summary_call)
-    assert _detail_column(_outliers_view(dlg)) == "a"
+    updated_view = _outliers_view(dlg)
+    assert updated_view is not original_view
+    assert updated_view.selected_column() == "b"
+    assert _detail_column(updated_view) == "a"
 
-    column_call = async_ops.last_call
-    assert column_call["scope"] == "analysis:outliers:column:modified_z_score:3.5:b"
-    _simulate_success(column_call)
-    assert _detail_column(_outliers_view(dlg)) == "b"
+    caught_up_call = async_ops.last_call
+    assert caught_up_call is not old_detail_call
+    assert caught_up_call["scope"] == "analysis:outliers:column:modified_z_score:3.5:b"
+    _simulate_success(old_detail_call)
+    assert _detail_column(updated_view) == "a"
+    _simulate_success(caught_up_call)
+    assert _detail_column(updated_view) == "b"
 
 
 def test_outlier_column_recompute_uses_the_displayed_summary_configuration(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_outliers(async_ops, dialog_factory)
     config = _outliers_config(dlg)
+    view = _outliers_view(dlg)
 
-    # Z-score is applied, but its summary job hasn't finished: the view still shows IQR.
+    # Z-score is pending, so table selection still uses the displayed IQR summary.
     _select_outlier_method(config, OutlierMethod.Z_SCORE)
     _apply_outliers(async_ops, dlg)
-    config.set_column("b")
+    view.select_column("b")
 
     assert async_ops.last_call["scope"] == "analysis:outliers:column:iqr:1.5:b"
 
