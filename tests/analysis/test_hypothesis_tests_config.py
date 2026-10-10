@@ -207,6 +207,67 @@ def test_apply_moves_into_paired_frame_and_back_without_losing_its_connection():
     assert widget.applied_configuration() == (HypothesisTest.PAIRED_COMPARISON, ("value", "other"))
 
 
+def test_paired_select_all_and_clear_update_columns_and_apply_once():
+    data = _df()
+    data["third"] = [float(i) * 20 for i in range(len(data))]
+    widget = _widget(data)
+    _select_test(widget, HypothesisTest.PAIRED_COMPARISON)
+    paired = widget._paired_comparison_config  # noqa: SLF001
+    assert paired is not None
+    received = _record(paired.selection_changed)
+    frame = paired.findChild(QGroupBox)
+    buttons = [paired._select_all_button, paired._clear_button]  # noqa: SLF001
+    layout = frame.layout()
+
+    assert all(button.parentWidget() is frame for button in buttons)
+    assert layout.indexOf(widget._apply_button) == layout.count() - 1  # noqa: SLF001
+
+    paired._select_all_button.click()  # noqa: SLF001
+    assert widget.current_configuration() == (HypothesisTest.PAIRED_COMPARISON, ("value", "other", "third"))
+    assert received == [None]
+
+    paired._select_all_button.click()  # noqa: SLF001
+    assert received == [None]
+
+    paired._clear_button.click()  # noqa: SLF001
+    assert widget.current_configuration() == (HypothesisTest.PAIRED_COMPARISON, None)
+    assert not widget._apply_button.isEnabled()  # noqa: SLF001
+    assert received == [None, None]
+
+    paired._clear_button.click()  # noqa: SLF001
+    assert received == [None, None]
+
+
+def test_paired_selection_label_guides_count_and_resulting_test():
+    data = _df()
+    data["third"] = [float(i) * 20 for i in range(len(data))]
+    widget = _widget(data)
+    paired = widget._paired_comparison_config  # noqa: SLF001
+    assert paired is not None
+    label = paired._selection_label  # noqa: SLF001
+    columns = paired._columns_list  # noqa: SLF001
+    frame = paired.findChild(QGroupBox)
+    layout = frame.layout()
+    _select_test(widget, HypothesisTest.PAIRED_COMPARISON)
+
+    assert label.parentWidget() is frame
+    assert layout.indexOf(label) == layout.indexOf(widget._apply_button) - 1  # noqa: SLF001
+    assert label.text() == "2 selected - Wilcoxon signed-rank test."
+
+    columns.item(2).setCheckState(Qt.CheckState.Checked)
+    assert label.text() == "3 selected - Friedman test."
+
+    columns.item(0).setCheckState(Qt.CheckState.Unchecked)
+    columns.item(1).setCheckState(Qt.CheckState.Unchecked)
+    assert label.text() == "1 selected - select at least 2."
+
+    paired._clear_button.click()  # noqa: SLF001
+    assert label.text() == "None selected - select at least 2."
+
+    paired._select_all_button.click()  # noqa: SLF001
+    assert label.text() == "3 selected - Friedman test."
+
+
 def test_paired_selection_requires_two_columns_and_is_applied_in_dataset_order():
     data = _df()
     data["third"] = [float(i) * 20 for i in range(len(data))]

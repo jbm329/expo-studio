@@ -4620,6 +4620,36 @@ Saved to:
         <translation type="unfinished" />
     </message>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="74" />
+        <source>Select all</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="75" />
+        <source>Clear</source>
+        <translation type="unfinished" />
+    </message>
+            <message>
+                <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="146" />
+                <source>None selected - select at least {minimum}.</source>
+                <translation type="unfinished" />
+            </message>
+            <message>
+                <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="148" />
+                <source>{count} selected - select at least {minimum}.</source>
+                <translation type="unfinished" />
+            </message>
+            <message>
+                <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="153" />
+                <source>{count} selected - Wilcoxon signed-rank test.</source>
+                <translation type="unfinished" />
+            </message>
+            <message>
+                <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="154" />
+                <source>{count} selected - Friedman test.</source>
+                <translation type="unfinished" />
+            </message>
+    <message>
         <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="56" />
         <source>Select at least two numeric columns. They are used in the order shown; each row is one subject.</source>
         <translation type="unfinished" />

@@ -5015,6 +5015,36 @@ Sparad till:
         <translation>Mätkolumner</translation>
     </message>
     <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="74"/>
+        <source>Select all</source>
+        <translation>Välj alla</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="75"/>
+        <source>Clear</source>
+        <translation>Rensa</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="146"/>
+        <source>None selected - select at least {minimum}.</source>
+        <translation>Inget valt – markera minst {minimum}.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="148"/>
+        <source>{count} selected - select at least {minimum}.</source>
+        <translation>{count} markerade – markera minst {minimum}.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="153"/>
+        <source>{count} selected - Wilcoxon signed-rank test.</source>
+        <translation>{count} markerade – Wilcoxons teckenrangtest.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="154"/>
+        <source>{count} selected - Friedman test.</source>
+        <translation>{count} markerade – Friedmans test.</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="56"/>
         <source>Select at least two numeric columns. They are used in the order shown; each row is one subject.</source>
         <translation>Välj minst två numeriska kolumner. De används i den ordning de visas; varje rad motsvarar en individ.</translation>

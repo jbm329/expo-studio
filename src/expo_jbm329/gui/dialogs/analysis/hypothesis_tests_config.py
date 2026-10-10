@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QFormLayout,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
     QListWidget,
     QListWidgetItem,
@@ -21,6 +22,7 @@ from PyQt6.QtWidgets import (
 from expo_jbm329.gui.dialogs.analysis.chi_square_config import ChiSquareConfigWidget
 from expo_jbm329.gui.dialogs.analysis.group_comparison_config import GroupComparisonConfigWidget
 from expo_jbm329.services.analysis.categories import HypothesisTest
+from expo_jbm329.utils.format_utils import fmt_int
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.chi_square import ChiSquareResult
@@ -68,9 +70,42 @@ class PairedComparisonConfigWidget(QWidget):
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             item.setCheckState(Qt.CheckState.Checked if column in selected else Qt.CheckState.Unchecked)
         group_layout.addWidget(self._columns_list)
+
+        actions = QHBoxLayout()
+        actions.addStretch(1)
+        self._select_all_button = QPushButton(self.tr("Select all"), group)
+        self._clear_button = QPushButton(self.tr("Clear"), group)
+        actions.addWidget(self._select_all_button)
+        actions.addWidget(self._clear_button)
+        group_layout.addLayout(actions)
+
+        self._selection_label = QLabel(group)
+        self._selection_label.setWordWrap(True)
+        group_layout.addWidget(self._selection_label)
+        self._update_selection_label()
+
         self._group_layout = group_layout
         layout.addWidget(group)
         self._columns_list.itemChanged.connect(self._on_item_changed)
+        self._select_all_button.clicked.connect(lambda: self._set_all_columns_checked(checked=True))
+        self._clear_button.clicked.connect(lambda: self._set_all_columns_checked(checked=False))
+
+    def _set_all_columns_checked(self, *, checked: bool) -> None:
+        """Set every measurement column to the same pending check state, notifying once on change."""
+        state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+        changed = False
+        self._columns_list.blockSignals(True)
+        try:
+            for index in range(self._columns_list.count()):
+                item = self._columns_list.item(index)
+                if item is not None and item.checkState() != state:
+                    item.setCheckState(state)
+                    changed = True
+        finally:
+            self._columns_list.blockSignals(False)
+        if changed:
+            self._update_selection_label()
+            self.selection_changed.emit()
 
     def add_action_button(self, button: QPushButton) -> None:
         """Show `button` inside the measurement-columns frame, below the checklist.
@@ -90,15 +125,37 @@ class PairedComparisonConfigWidget(QWidget):
 
     def _on_item_changed(self, _item: QListWidgetItem) -> None:
         """Notify the parent that the pending occasion selection changed."""
+        self._update_selection_label()
         self.selection_changed.emit()
 
-    def selected_columns(self) -> tuple[str, ...] | None:
-        """Return checked columns in dataset order when at least two are selected."""
-        selected = tuple(
+    def _checked_columns(self) -> tuple[str, ...]:
+        """Return checked columns in dataset order."""
+        return tuple(
             item.text()
             for index in range(self._columns_list.count())
             if (item := self._columns_list.item(index)) is not None and item.checkState() is Qt.CheckState.Checked
         )
+
+    def _update_selection_label(self) -> None:
+        """Show the selection count and which test the selection will run."""
+        self._selection_label.setText(self._selection_text(len(self._checked_columns())))
+
+    def _selection_text(self, count: int) -> str:
+        """Return the translated selection count, with guidance for the resulting test."""
+        if count == 0:
+            return self.tr("None selected - select at least {minimum}.").format(minimum=fmt_int(_MIN_PAIRED_OCCASIONS))
+        if count < _MIN_PAIRED_OCCASIONS:
+            return self.tr("{count} selected - select at least {minimum}.").format(
+                count=fmt_int(count), minimum=fmt_int(_MIN_PAIRED_OCCASIONS)
+            )
+        # Mirrors the service: two occasions run Wilcoxon, more run Friedman.
+        if count == _MIN_PAIRED_OCCASIONS:
+            return self.tr("{count} selected - Wilcoxon signed-rank test.").format(count=fmt_int(count))
+        return self.tr("{count} selected - Friedman test.").format(count=fmt_int(count))
+
+    def selected_columns(self) -> tuple[str, ...] | None:
+        """Return checked columns in dataset order when at least two are selected."""
+        selected = self._checked_columns()
         return selected if len(selected) >= _MIN_PAIRED_OCCASIONS else None
 
 
