@@ -38,13 +38,19 @@ if TYPE_CHECKING:
 
 
 class ClusteringConfigWidget(QWidget):
-    """Lets users configure a clustering fit before applying it."""
+    """Lets users configure a clustering fit before applying it.
+
+    Every edit emits `configuration_changed` to replace outdated results
+    with the Apply prompt. Only Apply requests a fit.
+    """
 
     analysis_requested = pyqtSignal()
+    configuration_changed = pyqtSignal()
 
     def __init__(self, result: ClusteringResult, parent: QWidget | None = None) -> None:
         """Initialize the pending configuration from the displayed result."""
         super().__init__(parent)
+        self._configuration_revision = 0
         self._applied_columns = result.columns
         self._applied_method = result.method
         self._applied_standardize = result.standardize
@@ -122,6 +128,15 @@ class ClusteringConfigWidget(QWidget):
         self._select_all_button.clicked.connect(lambda: self._set_all_columns_checked(checked=True))
         self._clear_button.clicked.connect(lambda: self._set_all_columns_checked(checked=False))
         self._apply_button.clicked.connect(self._on_apply_clicked)
+        self._standardize_checkbox.toggled.connect(self._on_configuration_changed)
+        self._cluster_count_spin.valueChanged.connect(self._on_configuration_changed)
+        self._epsilon_spin.valueChanged.connect(self._on_configuration_changed)
+        self._min_samples_spin.valueChanged.connect(self._on_configuration_changed)
+
+    def _on_configuration_changed(self) -> None:
+        """Invalidate the displayed fit after a pending configuration edit."""
+        self._configuration_revision += 1
+        self.configuration_changed.emit()
 
     def _build_method_combo(self, method: ClusteringMethod) -> QComboBox:
         """Build the algorithm selector."""
@@ -135,6 +150,7 @@ class ClusteringConfigWidget(QWidget):
     def _on_method_changed(self, _index: int) -> None:
         """Show only parameters that apply to the selected algorithm."""
         self._update_parameter_visibility()
+        self._on_configuration_changed()
 
     def _update_parameter_visibility(self) -> None:
         """Show cluster count for partitioning methods and DBSCAN inputs otherwise."""
@@ -151,19 +167,24 @@ class ClusteringConfigWidget(QWidget):
     def _on_column_check_changed(self, _item: QListWidgetItem) -> None:
         """Update selected-feature feedback."""
         self._update_apply_state()
+        self._on_configuration_changed()
 
     def _set_all_columns_checked(self, *, checked: bool) -> None:
         """Set every feature to the same pending check state."""
         state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+        changed = False
         self._column_list.blockSignals(True)
         try:
             for index in range(self._column_list.count()):
                 item = self._column_list.item(index)
-                if item is not None:
+                if item is not None and item.checkState() != state:
                     item.setCheckState(state)
+                    changed = True
         finally:
             self._column_list.blockSignals(False)
         self._update_apply_state()
+        if changed:
+            self._on_configuration_changed()
 
     def _on_apply_clicked(self) -> None:
         """Apply a valid pending configuration and request a clustering job."""
@@ -176,6 +197,7 @@ class ClusteringConfigWidget(QWidget):
         self._applied_cluster_count = self._cluster_count_spin.value()
         self._applied_dbscan_epsilon = self._epsilon_spin.value()
         self._applied_dbscan_min_samples = self._min_samples_spin.value()
+        self._configuration_revision += 1
         self._update_apply_state()
         self.analysis_requested.emit()
 
@@ -196,6 +218,10 @@ class ClusteringConfigWidget(QWidget):
     def current_method(self) -> ClusteringMethod:
         """Return the pending algorithm choice."""
         return ClusteringMethod(self._method_combo.currentData())
+
+    def configuration_revision(self) -> int:
+        """Return the generation advanced by every edit and valid Apply."""
+        return self._configuration_revision
 
     def checked_columns(self) -> tuple[str, ...]:
         """Return pending selected features in dataset order."""

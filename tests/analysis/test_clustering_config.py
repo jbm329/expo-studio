@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from PyQt6.QtCore import Qt
 
 from expo_jbm329.gui.dialogs.analysis.clustering_config import ClusteringConfigWidget
@@ -44,6 +45,43 @@ def _record(signal) -> list:
     received: list = []
     signal.connect(lambda *args: received.append(args))
     return received
+
+
+@pytest.mark.parametrize("control", ["method", "scaling", "count", "epsilon", "samples", "feature"])
+def test_every_configuration_edit_invalidates_without_requesting_fit(control):
+    widget = ClusteringConfigWidget(_result())
+    edits = _record(widget.configuration_changed)
+    requests = _record(widget.analysis_requested)
+    applied = widget.analysis_configuration()
+    if control == "method":
+        widget._method_combo.setCurrentIndex(1)  # noqa: SLF001
+    elif control == "scaling":
+        widget._standardize_checkbox.toggle()  # noqa: SLF001
+    elif control == "count":
+        widget._cluster_count_spin.setValue(5)  # noqa: SLF001
+    elif control == "epsilon":
+        widget._epsilon_spin.setValue(1.0)  # noqa: SLF001
+    elif control == "samples":
+        widget._min_samples_spin.setValue(7)  # noqa: SLF001
+    else:
+        _set_checked(widget, "d", True)
+    assert edits == [()]
+    assert widget.configuration_revision() == 1
+    assert requests == []
+    assert widget.analysis_configuration() == applied
+
+
+def test_bulk_edits_emit_once_and_no_op_does_not_invalidate():
+    widget = ClusteringConfigWidget(_result())
+    edits = _record(widget.configuration_changed)
+    widget._select_all_button.click()  # noqa: SLF001
+    assert edits == [()]
+    widget._select_all_button.click()  # noqa: SLF001
+    assert edits == [()]
+    widget._clear_button.click()  # noqa: SLF001
+    assert edits == [(), ()]
+    widget._clear_button.click()  # noqa: SLF001
+    assert edits == [(), ()]
 
 
 def test_initial_state_reflects_the_displayed_fit():

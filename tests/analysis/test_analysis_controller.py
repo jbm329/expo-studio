@@ -3547,6 +3547,67 @@ def test_clustering_initializes_without_a_job_and_prompts_for_apply(dialog_facto
     assert config.checked_columns() == ("x", "y", "z")
 
 
+@pytest.mark.parametrize("control", ["method", "scaling", "count", "epsilon", "samples", "feature", "all", "clear"])
+def test_clustering_edits_replace_results_with_apply_prompt(dialog_factory, control):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_clustering(async_ops, dialog_factory)
+    config = _clustering_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    jobs_before = len(async_ops.calls)
+    if control == "method":
+        config._method_combo.setCurrentIndex(1)  # noqa: SLF001
+    elif control == "scaling":
+        config._standardize_checkbox.toggle()  # noqa: SLF001
+    elif control == "count":
+        config._cluster_count_spin.setValue(4)  # noqa: SLF001
+    elif control == "epsilon":
+        config._epsilon_spin.setValue(1.0)  # noqa: SLF001
+    elif control == "samples":
+        config._min_samples_spin.setValue(7)  # noqa: SLF001
+    elif control == "feature":
+        _set_clustering_checked(config, "z", False)
+    elif control == "all":
+        config._clear_button.click()  # noqa: SLF001
+        config._select_all_button.click()  # noqa: SLF001
+    else:
+        config._clear_button.click()  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.config_widget() is config
+    assert len(async_ops.calls) == jobs_before
+
+
+def test_clustering_edit_round_trip_rejects_inflight_fit_and_error(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_clustering(async_ops, dialog_factory)
+    config = _clustering_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    config._standardize_checkbox.toggle()  # noqa: SLF001
+    config._standardize_checkbox.toggle()  # noqa: SLF001
+    _simulate_success(first)
+    first["on_error"]("stale error")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.placeholder_calls == []
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    assert isinstance(dlg.content_widget(), ClusteringView)
+
+
+def test_repeated_clustering_apply_discards_older_unchanged_fit(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_clustering(async_ops, dialog_factory)
+    config = _clustering_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    config._apply_button.click()  # noqa: SLF001
+    latest = async_ops.last_call
+    _simulate_success(first)
+    _assert_apply_prompt(ctrl, dlg)
+    _simulate_success(latest)
+    assert isinstance(dlg.content_widget(), ClusteringView)
+
+
 def test_first_clustering_apply_fits_the_default_configuration(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_clustering(async_ops, dialog_factory)

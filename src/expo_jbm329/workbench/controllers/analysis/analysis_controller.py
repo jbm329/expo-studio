@@ -1550,11 +1550,13 @@ class AnalysisController:
 
         config = ClusteringConfigWidget(clustering_result)
         config.analysis_requested.connect(lambda: self._recompute_clustering(dialog, config))
+        config.configuration_changed.connect(lambda: dialog.set_content_widget(self._apply_prompt()))
         return self._apply_prompt(), config
 
     def _recompute_clustering(self, dialog: AnalysisDialog, config: ClusteringConfigWidget) -> None:
         """Run clustering for the latest applied config."""
         configuration = config.analysis_configuration()
+        revision = config.configuration_revision()
         columns, method, standardize, cluster_count, dbscan_epsilon, dbscan_min_samples = configuration
         parameters = (
             f"eps:{dbscan_epsilon}:min_samples:{dbscan_min_samples}"
@@ -1578,7 +1580,11 @@ class AnalysisController:
                 dbscan_min_samples=dbscan_min_samples,
             ),
             apply_result=lambda result: dialog.set_content_widget(ClusteringView(cast("ClusteringResult", result))),
-            is_stale=lambda: config.analysis_configuration() != configuration,
+            is_stale=lambda: (
+                dialog.config_widget() is not config
+                or config.configuration_revision() != revision
+                or config.analysis_configuration() != configuration
+            ),
         )
 
     def _render_time_series(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
