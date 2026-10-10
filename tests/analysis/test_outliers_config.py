@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pandas as pd
+import pytest
 from PyQt6.QtWidgets import QComboBox, QLabel
 
 from expo_jbm329.gui.dialogs.analysis.outliers_config import OutliersConfigWidget
@@ -33,6 +34,23 @@ def _select_method(widget: OutliersConfigWidget, method: OutlierMethod) -> None:
 # ----------------------------------------------------------------------
 # Initial state
 # ----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("control", ["method", "threshold"])
+def test_configuration_edits_emit_once_without_requesting_summary(control):
+    widget = OutliersConfigWidget(_result())
+    edits = _record(widget.configuration_changed)
+    requests = _record(widget.summary_requested)
+    applied = widget.summary_configuration()
+    if control == "method":
+        _select_method(widget, OutlierMethod.Z_SCORE)
+        assert widget.current_threshold() == DEFAULT_THRESHOLDS[OutlierMethod.Z_SCORE]
+    else:
+        widget._threshold_spin.setValue(2.5)  # noqa: SLF001
+    assert edits == [()]
+    assert requests == []
+    assert widget.configuration_revision() == 1
+    assert widget.summary_configuration() == applied
 
 
 def test_initial_state_reflects_the_result():

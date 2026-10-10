@@ -36,14 +36,20 @@ if TYPE_CHECKING:
 
 
 class MultivariateOutliersConfigWidget(QWidget):
-    """Lets users configure Isolation Forest or LOF multivariate screening."""
+    """Lets users configure Isolation Forest or LOF multivariate screening.
+
+    Every edit replaces outdated results with the Apply prompt; only Apply
+    requests a new fit.
+    """
 
     analysis_requested = pyqtSignal()
+    configuration_changed = pyqtSignal()
     univariate_requested = pyqtSignal()
 
     def __init__(self, result: MultivariateOutlierResult, parent: QWidget | None = None) -> None:
         """Initialize pending and applied controls from a displayed result."""
         super().__init__(parent)
+        self._configuration_revision = 0
         self._applied_configuration = self._configuration_from_result(result)
 
         layout = QVBoxLayout(self)
@@ -113,6 +119,14 @@ class MultivariateOutliersConfigWidget(QWidget):
         self._select_all_button.clicked.connect(lambda: self._set_all_columns_checked(checked=True))
         self._clear_button.clicked.connect(lambda: self._set_all_columns_checked(checked=False))
         self._apply_button.clicked.connect(self._on_apply_clicked)
+        self._standardize_checkbox.toggled.connect(self._on_configuration_changed)
+        self._contamination_spin.valueChanged.connect(self._on_configuration_changed)
+        self._neighbors_spin.valueChanged.connect(self._on_configuration_changed)
+
+    def _on_configuration_changed(self) -> None:
+        """Invalidate displayed results without requesting a new analysis."""
+        self._configuration_revision += 1
+        self.configuration_changed.emit()
 
     @staticmethod
     def _configuration_from_result(
@@ -123,12 +137,14 @@ class MultivariateOutliersConfigWidget(QWidget):
 
     def _on_mode_changed(self, _index: int) -> None:
         """Return to the univariate explorer when its mode is selected."""
+        self._on_configuration_changed()
         if not self._mode_combo.currentData():
             self.univariate_requested.emit()
 
     def _on_method_changed(self, _index: int) -> None:
         """Show LOF's neighbor count only for Local Outlier Factor."""
         self._update_method_controls()
+        self._on_configuration_changed()
 
     def _update_method_controls(self) -> None:
         """Toggle the LOF-only neighbor control."""
@@ -137,19 +153,24 @@ class MultivariateOutliersConfigWidget(QWidget):
     def _on_column_changed(self, _item: QListWidgetItem) -> None:
         """Refresh feature-selection feedback."""
         self._update_apply_state()
+        self._on_configuration_changed()
 
     def _set_all_columns_checked(self, *, checked: bool) -> None:
         """Set every feature to the same pending check state."""
         state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+        changed = False
         self._column_list.blockSignals(True)
         try:
             for index in range(self._column_list.count()):
                 item = self._column_list.item(index)
-                if item is not None:
+                if item is not None and item.checkState() != state:
                     item.setCheckState(state)
+                    changed = True
         finally:
             self._column_list.blockSignals(False)
         self._update_apply_state()
+        if changed:
+            self._on_configuration_changed()
 
     def _on_apply_clicked(self) -> None:
         """Store a valid pending configuration and request one refit."""
@@ -157,6 +178,7 @@ class MultivariateOutliersConfigWidget(QWidget):
         if len(columns) < MIN_SELECTED_COLUMNS:
             return
         self._applied_configuration = self.pending_configuration()
+        self._configuration_revision += 1
         self._update_apply_state()
         self.analysis_requested.emit()
 
@@ -199,3 +221,7 @@ class MultivariateOutliersConfigWidget(QWidget):
     def analysis_configuration(self) -> tuple[tuple[str, ...], MultivariateOutlierMethod, bool, float, int]:
         """Return the latest applied fit configuration."""
         return self._applied_configuration
+
+    def configuration_revision(self) -> int:
+        """Return the generation advanced by every edit and valid Apply."""
+        return self._configuration_revision

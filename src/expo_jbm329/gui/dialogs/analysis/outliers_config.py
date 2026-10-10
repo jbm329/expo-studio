@@ -29,12 +29,14 @@ class OutliersConfigWidget(QWidget):
     threshold to its conventional default. Apply remains enabled for
     unchanged settings so a failed computation can be rerun. Detail column
     selection belongs to the results table.
+    Every configuration edit replaces outdated results with the Apply prompt.
 
     This widget never computes anything itself and is never recreated by
     those recomputes.
     """
 
     summary_requested = pyqtSignal()
+    configuration_changed = pyqtSignal()
     multivariate_requested = pyqtSignal()
 
     def __init__(
@@ -51,6 +53,7 @@ class OutliersConfigWidget(QWidget):
             parent: Optional parent widget.
         """
         super().__init__(parent)
+        self._configuration_revision = 0
         self._applied_configuration = (result.method, result.threshold)
 
         layout = QVBoxLayout(self)
@@ -89,24 +92,37 @@ class OutliersConfigWidget(QWidget):
         self._method_combo.currentIndexChanged.connect(self._on_method_changed)
         self._apply_button.clicked.connect(self._on_apply_clicked)
         self._mode_combo.currentIndexChanged.connect(self._on_mode_changed)
+        self._threshold_spin.valueChanged.connect(self._on_configuration_changed)
 
     # ------------------------------------------------------------------
     # Handlers
     # ------------------------------------------------------------------
 
+    def _on_configuration_changed(self) -> None:
+        """Invalidate displayed results without requesting a new analysis."""
+        self._configuration_revision += 1
+        self.configuration_changed.emit()
+
     def _on_mode_changed(self, _index: int) -> None:
         """Request the distinct multivariate explorer when its mode is selected."""
+        self._on_configuration_changed()
         if self._mode_combo.currentData():
             self.multivariate_requested.emit()
 
     def _on_method_changed(self, _index: int) -> None:
         """Reset the pending threshold to the new method's default."""
-        self._threshold_spin.setValue(DEFAULT_THRESHOLDS[self.current_method()])
+        self._threshold_spin.blockSignals(True)
+        try:
+            self._threshold_spin.setValue(DEFAULT_THRESHOLDS[self.current_method()])
+        finally:
+            self._threshold_spin.blockSignals(False)
         self._update_threshold_texts()
+        self._on_configuration_changed()
 
     def _on_apply_clicked(self) -> None:
         """Apply the pending method and threshold, and request a new summary."""
         self._applied_configuration = (self.current_method(), self.current_threshold())
+        self._configuration_revision += 1
         self.summary_requested.emit()
 
     def _update_threshold_texts(self) -> None:
@@ -135,3 +151,7 @@ class OutliersConfigWidget(QWidget):
     def summary_configuration(self) -> tuple[OutlierMethod, float]:
         """Return the applied ``(method, threshold)`` that determine the summary."""
         return self._applied_configuration
+
+    def configuration_revision(self) -> int:
+        """Return the generation advanced by every edit and Apply."""
+        return self._configuration_revision

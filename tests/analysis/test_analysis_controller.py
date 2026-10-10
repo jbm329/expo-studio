@@ -3068,7 +3068,7 @@ def test_outliers_without_numeric_columns_show_error_without_config(dialog_facto
 
 def test_outlier_method_and_threshold_changes_start_no_job_until_applied(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    ctrl, dlg = _open_applied_outliers(async_ops, dialog_factory)
     config = _outliers_config(dlg)
     jobs_before = len(async_ops.calls)
 
@@ -3077,7 +3077,94 @@ def test_outlier_method_and_threshold_changes_start_no_job_until_applied(dialog_
 
     assert len(async_ops.calls) == jobs_before
     assert config.summary_configuration() == (OutlierMethod.IQR, 1.5)
-    assert _outliers_view(dlg).configuration() == (OutlierMethod.IQR, 1.5)
+    _assert_apply_prompt(ctrl, dlg)
+
+
+@pytest.mark.parametrize("control", ["method", "threshold"])
+def test_univariate_edit_shows_prompt_without_running_job(dialog_factory, control):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    config = _outliers_config(dlg)
+    jobs_before = len(async_ops.calls)
+    if control == "method":
+        _select_outlier_method(config, OutlierMethod.Z_SCORE)
+    else:
+        config._threshold_spin.setValue(2.5)  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.config_widget() is config
+    assert len(async_ops.calls) == jobs_before
+
+
+@pytest.mark.parametrize(
+    ("control", "setter", "value"),
+    [
+        ("_method_combo", "setCurrentIndex", 1),
+        ("_standardize_checkbox", "setChecked", False),
+        ("_contamination_spin", "setValue", 10.0),
+        ("_neighbors_spin", "setValue", 5),
+        ("feature", "setCheckState", None),
+        ("_clear_button", "click", None),
+        ("_select_all_button", "click", None),
+    ],
+)
+def test_multivariate_edit_shows_prompt_without_running_job(dialog_factory, control, setter, value):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_outliers(async_ops, dialog_factory)
+    config = _switch_to_multivariate(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    jobs_before = len(async_ops.calls)
+    if control == "feature":
+        config._column_list.item(1).setCheckState(Qt.CheckState.Unchecked)  # noqa: SLF001
+    elif value is None:
+        if control == "_select_all_button":
+            config._clear_button.click()  # noqa: SLF001
+        getattr(getattr(config, control), setter)()
+    else:
+        getattr(getattr(config, control), setter)(value)
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.config_widget() is config
+    assert len(async_ops.calls) == jobs_before
+
+
+@pytest.mark.parametrize("multivariate", [False, True])
+@pytest.mark.parametrize("repeat_apply", [False, True])
+def test_outlier_stale_fit_cannot_replace_prompt_or_newer_result(dialog_factory, multivariate, repeat_apply):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_outliers(async_ops, dialog_factory)
+    config = _switch_to_multivariate(dlg) if multivariate else _outliers_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    if not repeat_apply:
+        if multivariate:
+            config._standardize_checkbox.toggle()  # noqa: SLF001
+            config._standardize_checkbox.toggle()  # noqa: SLF001
+        else:
+            original = config.current_threshold()
+            config._threshold_spin.setValue(original + 0.5)  # noqa: SLF001
+            config._threshold_spin.setValue(original)  # noqa: SLF001
+    else:
+        config._apply_button.click()  # noqa: SLF001
+    _simulate_success(first)
+    first["on_error"]("stale failure")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.placeholder_calls == []
+    if not repeat_apply:
+        config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    assert isinstance(dlg.content_widget(), MultivariateOutliersView if multivariate else OutliersView)
+
+
+def test_univariate_edit_discards_pending_column_result_and_error(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    _outliers_view(dlg).select_column("b")
+    call = async_ops.last_call
+    _outliers_config(dlg)._threshold_spin.setValue(2.5)  # noqa: SLF001
+    _simulate_success(call)
+    call["on_error"]("stale column error")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.placeholder_calls == []
 
 
 def test_switching_outliers_to_multivariate_prompts_without_fitting(dialog_factory):
@@ -3219,7 +3306,7 @@ def test_applied_outlier_method_recomputes_the_summary_and_keeps_the_config(dial
     detail = view.column_detail()
     assert detail is not None
     assert detail.method is OutlierMethod.Z_SCORE
-    assert detail.summary.column == "b"  # the selected column is kept
+    assert detail.summary.column == "a"  # The prompt replaces the previous table selection.
     assert len(dlg.config_widgets) == configs_before
 
 
@@ -3318,10 +3405,8 @@ def test_a_to_b_to_a_column_selection_discards_the_first_a_job(dialog_factory):
 def test_outlier_column_change_during_summary_recompute_is_caught_up(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_outliers(async_ops, dialog_factory)
-    config = _outliers_config(dlg)
     original_view = _outliers_view(dlg)
 
-    _select_outlier_method(config, OutlierMethod.MODIFIED_Z_SCORE)
     summary_call = _apply_outliers(async_ops, dlg)
     original_view.select_column("b")
     old_detail_call = async_ops.last_call
@@ -3334,25 +3419,26 @@ def test_outlier_column_change_during_summary_recompute_is_caught_up(dialog_fact
 
     caught_up_call = async_ops.last_call
     assert caught_up_call is not old_detail_call
-    assert caught_up_call["scope"] == "analysis:outliers:column:modified_z_score:3.5:b"
+    assert caught_up_call["scope"] == "analysis:outliers:column:iqr:1.5:b"
     _simulate_success(old_detail_call)
     assert _detail_column(updated_view) == "a"
     _simulate_success(caught_up_call)
     assert _detail_column(updated_view) == "b"
 
 
-def test_outlier_column_recompute_uses_the_displayed_summary_configuration(dialog_factory):
+def test_outlier_configuration_edit_disables_old_table_requests(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_outliers(async_ops, dialog_factory)
     config = _outliers_config(dlg)
     view = _outliers_view(dlg)
 
-    # Z-score is pending, so table selection still uses the displayed IQR summary.
     _select_outlier_method(config, OutlierMethod.Z_SCORE)
     _apply_outliers(async_ops, dlg)
+    jobs_before = len(async_ops.calls)
     view.select_column("b")
 
-    assert async_ops.last_call["scope"] == "analysis:outliers:column:iqr:1.5:b"
+    assert len(async_ops.calls) == jobs_before
+    assert async_ops.last_call["scope"].startswith("analysis:outliers:summary:z_score:")
 
 
 # ----------------------------------------------------------------------
