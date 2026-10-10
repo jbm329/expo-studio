@@ -48,6 +48,34 @@ def _detail(column: str = "<a>", method: OutlierMethod = OutlierMethod.IQR) -> O
     return analyze_outlier_column(_frame(), column, method)
 
 
+@pytest.mark.parametrize("column", ["<a>", "b"])
+def test_distribution_header_gap_stays_fixed_when_section_grows(column):
+    view, _ = _view()
+    view.set_column_detail(_detail(column))
+    panel = view._chart_panel  # noqa: SLF001
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QApplication.processEvents()
+        layout = panel.layout()
+        heading = layout.itemAt(0).widget()
+        charts = layout.itemAt(1).widget()
+        gap = charts.y() - heading.geometry().bottom()
+        heading_height = heading.height()
+        chart_height = charts.height()
+        panel.resize(1100, 800)
+        QApplication.processEvents()
+        assert heading.height() == heading_height
+        assert charts.y() - heading.geometry().bottom() == gap
+        assert charts.height() > chart_height
+        assert layout.stretch(1) == 1
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
 def test_summary_caption_shares_the_tables_borderless_shaded_panel():
     view, _ = _view()
     table = view.table()

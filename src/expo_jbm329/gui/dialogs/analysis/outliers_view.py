@@ -245,7 +245,7 @@ class OutliersView(QWidget):
             self._statistics_panel.show()
             self._extremes_layout.addWidget(self._build_extremes_panel(detail))
             self._chart_layout.addWidget(self._build_section_title(self.tr("Distribution"), self._chart_panel))
-            self._chart_layout.addWidget(self._build_histogram(detail))
+            self._chart_layout.addWidget(self._build_histogram(detail), 1)
             self._statistics_layout.addWidget(
                 self._build_section_title(self.tr("Column details"), self._statistics_panel)
             )
