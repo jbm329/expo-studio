@@ -42,6 +42,30 @@ def _result(**overrides: object) -> PairedComparisonResult:
     return PairedComparisonResult(**values)  # type: ignore[arg-type]
 
 
+@pytest.mark.parametrize("columns", [("before", "after"), ("before", "after", "followup")])
+def test_paired_test_results_header_gap_stays_fixed_when_section_grows(columns):
+    view = PairedComparisonView(_result(columns=columns))
+    panel = view.findChild(QSplitter).widget(2)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        layout = panel.layout()
+        heading = layout.itemAt(0).widget()
+        results = layout.itemAt(1).widget()
+        gap = results.y() - heading.geometry().bottom()
+        heights = (heading.height(), results.height())
+        panel.resize(1100, 800)
+        QCoreApplication.processEvents()
+        assert (heading.height(), results.height()) == heights
+        assert results.y() - heading.geometry().bottom() == gap
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
 def test_displays_wilcoxon_result_and_complete_subject_counts():
     view = PairedComparisonView(_result())
     text = "\n".join(label.text() for label in view.findChildren(QLabel))

@@ -229,6 +229,7 @@ class GroupComparisonView(QWidget):
         layout.addWidget(self._build_test_results_label(result))
         if result.warnings:
             layout.addWidget(self._build_warnings_label(result.warnings))
+        layout.addStretch(1)
         return panel
 
     def _build_test_results_label(self, result: GroupComparisonResult) -> QLabel:

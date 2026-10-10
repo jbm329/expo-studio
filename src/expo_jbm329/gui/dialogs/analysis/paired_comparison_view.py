@@ -84,6 +84,7 @@ class PairedComparisonView(QWidget):
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         panel, layout = self._build_section(self.tr("Test results"))
         layout.addWidget(label)
+        layout.addStretch(1)
         return panel
 
     def export_notes(self, result: PairedComparisonResult) -> tuple[str, ...]:

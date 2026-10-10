@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QApplication, QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import (
@@ -41,6 +41,27 @@ def _two_by_three_result() -> ChiSquareResult:
             ("y", "c"): 5,
         })
     )
+
+
+@pytest.mark.parametrize("factory", [_two_by_three_result, lambda: _two_by_two_small_result()])
+def test_chi_square_test_results_header_gap_stays_fixed_when_section_grows(factory):
+    view = ChiSquareView(factory())
+    panel = view.findChild(QSplitter).widget(2)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        layout = panel.layout()
+        labels = [layout.itemAt(index).widget() for index in range(layout.count() - 1)]
+        geometry = [(label.y(), label.height()) for label in labels]
+        panel.resize(1100, 800)
+        QCoreApplication.processEvents()
+        assert [(label.y(), label.height()) for label in labels] == geometry
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
 
 
 def _two_by_two_small_result() -> ChiSquareResult:

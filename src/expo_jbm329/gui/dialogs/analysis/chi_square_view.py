@@ -254,6 +254,7 @@ class ChiSquareView(QWidget):
         layout.addWidget(self._build_test_results_label(result))
         if result.cochran_violated:
             layout.addWidget(self._build_cochran_warning_label(result))
+        layout.addStretch(1)
         return panel
 
     def _build_test_results_label(self, result: ChiSquareResult) -> QLabel:
