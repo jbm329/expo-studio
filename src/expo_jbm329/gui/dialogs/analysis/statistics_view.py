@@ -525,7 +525,7 @@ class StatisticsView(QWidget):
             if self._figure is None:
                 self._figure = Figure(constrained_layout=True)
                 self._canvas = _StatisticsCanvas(self._figure)
-                self._distribution_layout.addWidget(self._canvas)
+                self._distribution_layout.addWidget(self._canvas, 1)
             self._figure.clear()
             ax_hist = self._figure.add_subplot(121)
             ax_box = self._figure.add_subplot(122)

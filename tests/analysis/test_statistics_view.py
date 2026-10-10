@@ -8,7 +8,7 @@ import pytest
 from matplotlib.backends.backend_qt import FigureCanvasQT
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6 import sip
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QCoreApplication, QSize, Qt
 from PyQt6.QtGui import QPaintEvent, QResizeEvent
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTabWidget
 
@@ -177,6 +177,33 @@ def test_show_distribution_for_switches_to_a_different_column():
     view.show_distribution_for("b")
 
     assert len(view._figure.axes) == 2  # noqa: SLF001
+
+
+def test_distribution_header_gap_stays_fixed_when_section_grows():
+    result = DescriptiveStatisticsResult(columns=(_make_column_stats(),))
+    view = StatisticsView(result)
+    panel = view.findChild(QSplitter).widget(1)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        layout = panel.layout()
+        heading = layout.itemAt(0).widget()
+        charts = layout.itemAt(1).widget()
+        gap = charts.y() - heading.geometry().bottom()
+        heading_height = heading.height()
+        chart_height = charts.height()
+        panel.resize(1100, 800)
+        QCoreApplication.processEvents()
+        assert heading.height() == heading_height
+        assert charts.y() - heading.geometry().bottom() == gap
+        assert charts.height() > chart_height
+        assert layout.stretch(1) == 1
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
 
 
 @pytest.mark.parametrize("signal_name", ["cellClicked", "cellActivated"])
