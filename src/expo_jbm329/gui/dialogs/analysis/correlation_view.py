@@ -8,7 +8,9 @@ from typing import TYPE_CHECKING
 
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import (
+    QFrame,
     QHeaderView,
     QLabel,
     QSplitter,
@@ -316,18 +318,26 @@ class CorrelationView(QWidget):
         title.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(title)
 
-        self._table = self._build_table(result, panel)
-        layout.addWidget(self._table)
+        table_panel = QFrame(panel)
+        table_panel.setFrameShape(QFrame.Shape.NoFrame)
+        table_panel.setBackgroundRole(QPalette.ColorRole.Button)
+        table_panel.setAutoFillBackground(True)
+        table_layout = QVBoxLayout(table_panel)
+        table_layout.setContentsMargins(0, 0, 0, 0)
+        self._table = self._build_table(result, table_panel)
+        table_layout.addWidget(self._table, 1)
 
         caption = QLabel(
             self.tr(
                 "Pairs are ranked by absolute coefficient. * marks pairs that are significant "
                 "(p < {alpha}) after Holm adjustment for {count} tests."
             ).format(alpha=fmt_num(SIGNIFICANCE_LEVEL), count=fmt_int(len(result.pairs))),
-            panel,
+            table_panel,
         )
         caption.setWordWrap(True)
-        layout.addWidget(caption)
+        caption.setTextFormat(Qt.TextFormat.PlainText)
+        table_layout.addWidget(caption)
+        layout.addWidget(table_panel, 1)
 
         return panel
 

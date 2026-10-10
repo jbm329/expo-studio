@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 from PyQt6.QtCore import QEvent, Qt
-from PyQt6.QtWidgets import QApplication, QLabel, QSplitter
+from PyQt6.QtGui import QPalette
+from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QSplitter
 
 from expo_jbm329.gui.dialogs.analysis.correlation_view import MAX_ANNOTATED_COLUMNS, CorrelationView
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
@@ -57,6 +58,23 @@ def _canvas_axes(widget):
 
 def _scatter_axes(view: CorrelationView):
     return [axis for axis in _canvas_axes(view.pair_panel()) if axis.get_xlabel()]
+
+
+def test_ranking_caption_shares_the_tables_shaded_panel():
+    view = CorrelationView(_matrix(_frame()), None)
+    table = view.table()
+    assert table is not None
+    panel = table.parentWidget()
+    assert isinstance(panel, QFrame)
+    assert panel.frameShape() is QFrame.Shape.NoFrame
+    assert panel.autoFillBackground()
+    assert panel.backgroundRole() is QPalette.ColorRole.Button
+    caption = next(label for label in panel.findChildren(QLabel) if label.text().startswith("Pairs are ranked"))
+    assert panel.layout().itemAt(0).widget() is table
+    assert panel.layout().itemAt(1).widget() is caption
+    assert caption.wordWrap()
+    assert caption.textFormat() is Qt.TextFormat.PlainText
+    assert view.pair_panel().isAncestorOf(caption) is False
 
 
 @pytest.mark.parametrize("with_pair", [False, True])
