@@ -32,7 +32,6 @@ from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
 from expo_jbm329.gui.dialogs.analysis.regression_glm_view import GeneralizedRegressionView
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
-from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.gui.dialogs.analysis.survival_view import SurvivalRegressionView
 from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigWidget
@@ -1025,7 +1024,7 @@ def test_statistics_category_runs_as_a_background_job_with_a_busy_overlay(dialog
     assert dlg.placeholder_calls == []
 
 
-def test_statistics_category_also_builds_a_column_picker_config_widget(dialog_factory):
+def test_statistics_category_has_no_configuration_widget(dialog_factory):
     df = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
     dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=2)
     async_ops = DummyAsyncOps()
@@ -1041,10 +1040,8 @@ def test_statistics_category_also_builds_a_column_picker_config_widget(dialog_fa
     dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
     _simulate_success(async_ops.last_call)
 
-    assert len(dlg.config_widgets) == 2  # proactive None, then the real config widget
-    config = dlg.config_widgets[-1]
-    assert isinstance(config, StatisticsConfigWidget)
-    assert config.selected_column() == "a"
+    assert len(dlg.config_widgets) == 2
+    assert all(config is None for config in dlg.config_widgets)
 
 
 def test_statistics_category_shows_categorical_summaries_without_numeric_config(dialog_factory):
@@ -1069,7 +1066,7 @@ def test_statistics_category_shows_categorical_summaries_without_numeric_config(
     assert dlg.config_widgets[-1] is None
 
 
-def test_changing_the_statistics_config_column_updates_the_content_view_directly(dialog_factory):
+def test_selecting_a_statistics_table_row_updates_the_content_view_directly(dialog_factory):
     """Switching columns is a pure GUI-thread operation - it must not
     dispatch a new background job (all columns' data is already computed).
     """
@@ -1089,20 +1086,19 @@ def test_changing_the_statistics_config_column_updates_the_content_view_directly
     _simulate_success(async_ops.last_call)
 
     jobs_before = len(async_ops.calls)
-    config = dlg.config_widgets[-1]
     content = dlg.content_widgets[-1]
     assert isinstance(content, StatisticsView)
-    config._column_combo.setCurrentIndex(1)  # noqa: SLF001
+    assert dlg.config_widgets[-1] is None
+    numeric_table = next(table for table in content.findChildren(QTableWidget) if table.columnCount() == 17)
+    numeric_table.cellClicked.emit(1, 0)
 
     assert len(async_ops.calls) == jobs_before  # no new background job
-    assert config.selected_column() == "b"
-    numeric_table = next(table for table in content.findChildren(QTableWidget) if table.columnCount() == 17)
     assert numeric_table.item(1, 15).text().startswith("5")
     assert numeric_table.item(1, 16).text().startswith("5")
     assert "b: Shapiro-Wilk suggests" in content._recommendation_label.text()  # noqa: SLF001
 
 
-def test_clicking_a_statistics_table_row_updates_the_config_without_a_new_job(dialog_factory):
+def test_clicking_a_statistics_table_row_needs_no_config_or_new_job(dialog_factory):
     df = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
     dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=2)
     async_ops = DummyAsyncOps()
@@ -1122,13 +1118,13 @@ def test_clicking_a_statistics_table_row_updates_the_config_without_a_new_job(di
     content = dlg.content_widgets[-1]
     config = dlg.config_widgets[-1]
     assert isinstance(content, StatisticsView)
-    assert isinstance(config, StatisticsConfigWidget)
+    assert config is None
     table = next(table for table in content.findChildren(QTableWidget) if table.columnCount() == 17)
 
     table.cellClicked.emit(1, 0)
 
     assert len(async_ops.calls) == jobs_before
-    assert config.selected_column() == "b"
+    assert table.currentRow() == 1
     assert "b: Shapiro-Wilk suggests" in content._recommendation_label.text()  # noqa: SLF001
 
 
@@ -1143,16 +1139,14 @@ def test_switching_to_a_category_hides_a_stale_config_widget_while_loading(dialo
     _open_and_flush(ctrl, QWidget())
 
     dlg = dialog_factory[0]
-    dlg._selected_category = AnalysisCategory.STATISTICS
+    dlg._selected_category = AnalysisCategory.REGRESSION
     dlg._selected_dataset_tab_id = "t1"
-    dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
-    _simulate_success(async_ops.last_call)
+    dlg.category_changed.emit(AnalysisCategory.REGRESSION.value)
     assert dlg.config_widgets[-1] is not None
 
-    # Switch to Overview: the stale Statistics config widget must be hidden
-    # immediately, even before Overview's own job completes.
-    dlg._selected_category = AnalysisCategory.OVERVIEW
-    dlg.category_changed.emit(AnalysisCategory.OVERVIEW.value)
+    # Statistics must hide the previous config before its own job completes.
+    dlg._selected_category = AnalysisCategory.STATISTICS
+    dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
 
     assert dlg.config_widgets[-1] is None
 

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from PyQt6.QtCore import QT_TRANSLATE_NOOP, Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import QT_TRANSLATE_NOOP, Qt, QTimer
 from PyQt6.QtGui import QPaintEvent, QResizeEvent
 from PyQt6.QtWidgets import (
     QHeaderView,
@@ -165,14 +165,11 @@ class StatisticsView(QWidget):
     """Displays a `DescriptiveStatisticsResult` as a per-column stats table.
 
     Also shows a histogram/boxplot pair for one selected column at a time.
-    The selected column is driven externally (typically by a config widget
-    in the Advanced Analysis workspace's configuration pane) via
+    The numeric table selects the displayed column through
     `show_distribution_for()`; this view never re-runs the analysis itself -
     all columns' distribution data is already present in the `result` it
     was built from.
     """
-
-    column_selected = pyqtSignal(str)
 
     def __init__(self, result: DescriptiveStatisticsResult, parent: QWidget | None = None) -> None:
         """Initialize the Descriptive Statistics view.
@@ -332,6 +329,7 @@ class StatisticsView(QWidget):
             hheader.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
         self._table.cellClicked.connect(self._on_table_cell_clicked)
+        self._table.cellActivated.connect(self._on_table_cell_clicked)
         return self._table
 
     def _build_categorical_page(self, columns: tuple[CategoricalColumnStatistics, ...]) -> QWidget:
@@ -444,7 +442,6 @@ class StatisticsView(QWidget):
 
         column = column_item.text()
         self.show_distribution_for(column)
-        self.column_selected.emit(column)
 
     # ------------------------------------------------------------------
     # Distribution chart (histogram + boxplot) for one selected column

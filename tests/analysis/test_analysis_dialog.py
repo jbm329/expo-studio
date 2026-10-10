@@ -36,7 +36,6 @@ from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_config import Multiv
 from expo_jbm329.gui.dialogs.analysis.pca_config import PCAConfigWidget
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
 from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDialog
-from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigWidget
 from expo_jbm329.gui.dialogs.service.common.localization import TR_CLOSE
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
@@ -449,6 +448,29 @@ def test_set_config_widget_none_hides_the_panel_again():
         dialog.close()
 
 
+def test_statistics_table_selection_uses_full_results_area_without_configuration():
+    from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
+
+    result = analyze_descriptive_statistics(pd.DataFrame({"a": [1.0, 2, 3], "b": [4.0, 5, 6]}))
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog.set_config_widget(QWidget())
+    view = StatisticsView(result)
+    dialog.set_content_widget(view)
+    dialog.set_config_widget(None)
+    dialog.show()
+    try:
+        QCoreApplication.processEvents()
+        assert dialog.config_widget() is None
+        assert not dialog._config_panel.isVisible()  # noqa: SLF001
+        table = view._table  # noqa: SLF001
+        assert table is not None
+        table.cellClicked.emit(1, 0)
+        assert table.currentRow() == 1
+        assert "b: Shapiro-Wilk suggests" in view._recommendation_label.text()  # noqa: SLF001
+    finally:
+        dialog.close()
+
+
 def test_set_config_widget_replaces_the_previous_widget():
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
     first = QWidget()
@@ -509,7 +531,6 @@ def _configuration_widgets() -> list[QWidget]:
         "time": pd.date_range("2024-01-01", periods=30),
     })
     widgets: list[QWidget] = [
-        StatisticsConfigWidget(analyze_descriptive_statistics(df)),
         CorrelationConfigWidget(initialize_correlation(df), None),
         ClusteringConfigWidget(initialize_clustering(df)),
         PCAConfigWidget(initialize_pca(df)),

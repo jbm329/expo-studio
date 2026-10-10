@@ -28,7 +28,6 @@ from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
 from expo_jbm329.gui.dialogs.analysis.regression_glm_view import GeneralizedRegressionView
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
-from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.gui.dialogs.analysis.survival_view import SurvivalRegressionView
 from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigWidget
@@ -928,20 +927,14 @@ class AnalysisController:
         return OverviewView(cast("DatasetOverviewResult", result)), None
 
     def _render_statistics(self, result: object, _dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
-        """Render the Descriptive Statistics view and its column-picker config.
+        """Render full-width Statistics with column selection owned by its table.
 
         Must run on the GUI thread.
         """
         stats_result = cast("DescriptiveStatisticsResult", result)
         content = StatisticsView(stats_result)
 
-        if not stats_result.columns:
-            return content, None
-
-        config = StatisticsConfigWidget(stats_result)
-        config.column_changed.connect(content.show_distribution_for)
-        content.column_selected.connect(config.set_selected_column)
-        return content, config
+        return content, None
 
     def _render_hypothesis_tests(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
         """Render the Hypothesis Tests Apply prompt and its test/column-picker config.
@@ -1852,7 +1845,7 @@ class AnalysisController:
 
         Used by categories whose configuration widget selects *what* to
         compute (e.g. which columns to compare) rather than merely *how*
-        to redraw already-computed data (contrast `StatisticsConfigWidget`,
+        to redraw already-computed data (contrast the Statistics table,
         which only switches which precomputed column is shown). A
         configuration change therefore needs a new background computation,
         but the configuration widget itself - and the user's current picks

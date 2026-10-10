@@ -8287,15 +8287,6 @@ Tid: {sec:.2f}s{sample}</translation>
     </message>
 </context>
 <context>
-    <name>StatisticsConfigWidget</name>
-    <message>
-        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="69"/>
-        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="60"/>
-        <source>Column</source>
-        <translation>Kolumn</translation>
-    </message>
-</context>
-<context>
     <name>StatisticsView</name>
     <message>
         <source>Charts</source>

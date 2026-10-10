@@ -179,20 +179,18 @@ def test_show_distribution_for_switches_to_a_different_column():
     assert len(view._figure.axes) == 2  # noqa: SLF001
 
 
-def test_clicking_a_statistics_row_selects_and_displays_that_column():
+@pytest.mark.parametrize("signal_name", ["cellClicked", "cellActivated"])
+def test_selecting_a_statistics_row_displays_that_column(signal_name):
     result = DescriptiveStatisticsResult(columns=(_make_column_stats(column="a"), _make_column_stats(column="b")))
     view = StatisticsView(result)
     table = view.findChild(QTableWidget)
-    selected_columns: list[str] = []
-    view.column_selected.connect(selected_columns.append)
 
     assert table is not None
-    table.cellClicked.emit(1, 3)
+    getattr(table, signal_name).emit(1, 3)
 
     assert table.currentRow() == 1
     assert view._figure._suptitle is not None  # noqa: SLF001
     assert view._figure._suptitle.get_text() == "b"  # noqa: SLF001
-    assert selected_columns == ["b"]
 
 
 def test_show_distribution_for_unknown_column_is_a_no_op():
