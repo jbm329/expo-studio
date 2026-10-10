@@ -2070,21 +2070,6 @@ Vänligen se loggfil för mer information.</translation>
         <translation>Tillämpa</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/correlation_config.py" line="149"/>
-        <source>Scatterplot</source>
-        <translation>Spridningsdiagram</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/analysis/correlation_config.py" line="160"/>
-        <source>X variable</source>
-        <translation>X-variabel</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/analysis/correlation_config.py" line="161"/>
-        <source>Y variable</source>
-        <translation>Y-variabel</translation>
-    </message>
-    <message>
         <location filename="../../gui/dialogs/analysis/correlation_config.py" line="216"/>
         <source>{count} selected - select at least {minimum}.</source>
         <translation>{count} markerade – markera minst {minimum}.</translation>

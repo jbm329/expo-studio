@@ -1729,21 +1729,6 @@ Please see logs for more information.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="149" />
-        <source>Scatterplot</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="160" />
-        <source>X variable</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="161" />
-        <source>Y variable</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
         <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="216" />
         <source>{count} selected - select at least {minimum}.</source>
         <translation type="unfinished" />

@@ -240,16 +240,47 @@ def test_significant_pairs_are_marked_and_undefined_values_show_na():
     assert not table.item(last, 5).text().endswith("*")
 
 
-def test_clicking_a_row_emits_pair_activated():
+def test_clicking_and_activating_rows_updates_selected_pair_before_emitting():
+    result = _matrix(_frame())
+    view = CorrelationView(result, None)
+    received: list[tuple[tuple[str, str] | None, tuple[str, str]]] = []
+    view.pair_activated.connect(lambda x, y: received.append((view.selected_pair(), (x, y))))
+    table = view.table()
+    assert table is not None
+
+    assert view.selected_pair() is None
+    table.cellClicked.emit(1, 0)
+    table.cellActivated.emit(2, 0)
+    table.cellActivated.emit(99, 0)
+
+    first_pair = (result.pairs[1].x_column, result.pairs[1].y_column)
+    second_pair = (result.pairs[2].x_column, result.pairs[2].y_column)
+    assert received == [(first_pair, first_pair), (second_pair, second_pair)]
+    assert view.selected_pair() == second_pair
+    assert [index.row() for index in table.selectionModel().selectedRows()] == [2]
+
+
+def test_select_pair_activates_and_highlights_the_canonical_table_pair():
     result = _matrix(_frame())
     view = CorrelationView(result, None)
     received: list[tuple[str, str]] = []
     view.pair_activated.connect(lambda x, y: received.append((x, y)))
 
-    view._on_cell_activated(1, 0)  # noqa: SLF001
-    view._on_cell_activated(99, 0)  # noqa: SLF001 - out of range is ignored
+    pair = result.pairs[1]
+    view.select_pair(pair.y_column, pair.x_column)
 
-    assert received == [(result.pairs[1].x_column, result.pairs[1].y_column)]
+    table = view.table()
+    assert table is not None
+    assert view.selected_pair() == (pair.x_column, pair.y_column)
+    assert received == [(pair.x_column, pair.y_column)]
+    assert [index.row() for index in table.selectionModel().selectedRows()] == [1]
+
+
+def test_select_pair_raises_when_the_pair_has_no_table_row():
+    view = CorrelationView(_matrix(_frame()), None)
+
+    with pytest.raises(ValueError, match="row in the displayed correlation matrix"):
+        view.select_pair("missing-x", "missing-y")
 
 
 @pytest.mark.parametrize(
@@ -282,6 +313,7 @@ def test_initial_pair_detail_is_shown_and_its_row_selected():
     table = view.table()
 
     assert view.pair_detail() is detail
+    assert view.selected_pair() == (pair.y_column, pair.x_column)
     assert table is not None
     assert [index.row() for index in table.selectionModel().selectedRows()] == [1]
     assert len(_canvas_axes(view)) == 2
@@ -324,9 +356,11 @@ def test_set_pair_detail_replaces_the_pair_panel_content():
     result = _matrix(df)
     view = CorrelationView(result, analyze_correlation_pair(df, "c0", "c1"))
 
-    view.set_pair_detail(analyze_correlation_pair(df, "c1", "c2"))
+    detail = analyze_correlation_pair(df, "c1", "c2")
+    view.set_pair_detail(detail)
     _flush_deletes()
 
+    assert view.selected_pair() == (detail.pair.x_column, detail.pair.y_column)
     scatters = _scatter_axes(view)
     assert len(scatters) == 1
     assert scatters[0].get_xlabel() == "c1"
@@ -336,11 +370,13 @@ def test_pair_error_shows_message_and_clears_selection_for_unknown_pair():
     df = _frame()
     view = CorrelationView(_matrix(df), analyze_correlation_pair(df, "c0", "c1"))
 
-    view.set_pair_detail(analyze_correlation_pair(df, "c0", "c0"))
+    detail = analyze_correlation_pair(df, "c0", "c0")
+    view.set_pair_detail(detail)
     _flush_deletes()
 
     table = view.table()
     assert table is not None
+    assert view.selected_pair() == (detail.pair.x_column, detail.pair.y_column)
     assert table.selectionModel().selectedRows() == []
     assert _scatter_axes(view) == []
     assert "different numeric columns" in _labels_text(view.pair_panel())

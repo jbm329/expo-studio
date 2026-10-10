@@ -531,7 +531,7 @@ def _configuration_widgets() -> list[QWidget]:
         "time": pd.date_range("2024-01-01", periods=30),
     })
     widgets: list[QWidget] = [
-        CorrelationConfigWidget(initialize_correlation(df), None),
+        CorrelationConfigWidget(initialize_correlation(df)),
         ClusteringConfigWidget(initialize_clustering(df)),
         PCAConfigWidget(initialize_pca(df)),
         OutliersConfigWidget(initialize_outlier_summary(df), None),
@@ -611,7 +611,7 @@ def test_narrow_correlation_and_time_series_keep_controls_and_full_labels_access
     dialog.show()
     pane_widths: list[int] = []
     try:
-        correlation = CorrelationConfigWidget(initialize_correlation(frame), None)
+        correlation = CorrelationConfigWidget(initialize_correlation(frame))
         time_series = TimeSeriesConfigWidget(initialize_time_series(frame))
         for config in (correlation, time_series):
             dialog.set_config_widget(config)
@@ -669,7 +669,7 @@ def test_narrow_controls_wrap_at_their_size_hints_with_larger_fonts(viewport_wid
         "a": range(30),
         "b": range(1, 31),
     })
-    correlation = CorrelationConfigWidget(initialize_correlation(frame), None)
+    correlation = CorrelationConfigWidget(initialize_correlation(frame))
     time_series = TimeSeriesConfigWidget(initialize_time_series(frame))
     for config in (correlation, time_series):
         if isinstance(config, CorrelationConfigWidget):
@@ -729,15 +729,10 @@ def test_tall_configuration_can_scroll_without_expanding_the_dialog():
         dialog.close()
 
 
-@pytest.mark.parametrize("section", ["Scatterplot", "Parameters"])
-def test_bordered_configuration_forms_keep_padding_on_both_sides(section):
+def test_bordered_configuration_forms_keep_padding_on_both_sides():
     frame = pd.DataFrame({"a": range(30), "b": range(1, 31)})
-    config = (
-        CorrelationConfigWidget(initialize_correlation(frame), None)
-        if section == "Scatterplot"
-        else ClusteringConfigWidget(initialize_clustering(frame))
-    )
-    group = next(group for group in config.findChildren(QGroupBox) if group.title() == section)
+    config = ClusteringConfigWidget(initialize_clustering(frame))
+    group = next(group for group in config.findChildren(QGroupBox) if group.title() == "Parameters")
     form = group.layout()
     assert isinstance(form, QFormLayout)
     margins = form.contentsMargins()

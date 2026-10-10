@@ -1137,63 +1137,57 @@ class AnalysisController:
         if len(matrix.available_columns) < MIN_SELECTED_COLUMNS:
             return CorrelationView(matrix, None), None
 
-        config = CorrelationConfigWidget(matrix, None)
+        config = CorrelationConfigWidget(matrix)
 
         def _handle_matrix_requested() -> None:
             self._recompute_correlation_matrix(dialog, config)
 
-        def _handle_pair_changed(x_column: str, y_column: str) -> None:
-            self._recompute_correlation_pair(dialog, config, x_column, y_column)
-
         config.matrix_requested.connect(_handle_matrix_requested)
-        config.pair_changed.connect(_handle_pair_changed)
         return self._apply_prompt(), config
 
-    @staticmethod
-    def _build_correlation_view(outcome: _CorrelationOutcome, config: CorrelationConfigWidget) -> CorrelationView:
-        """Build a Correlation Explorer view whose table rows select the config's pair."""
+    def _build_correlation_view(self, outcome: _CorrelationOutcome, dialog: AnalysisDialog) -> CorrelationView:
+        """Build a Correlation Explorer view whose table rows request pair details."""
         view = CorrelationView(outcome.matrix, outcome.pair_detail)
-        view.pair_activated.connect(config.set_pair)
+
+        def _handle_pair_activated(x_column: str, y_column: str) -> None:
+            if dialog.content_widget() is view:
+                self._recompute_correlation_pair(dialog, x_column, y_column)
+
+        view.pair_activated.connect(_handle_pair_activated)
         return view
 
     def _recompute_correlation_matrix(self, dialog: AnalysisDialog, config: CorrelationConfigWidget) -> None:
         """Recompute the whole correlation matrix for the config's applied method and columns.
 
-        Before the first matrix is shown, the pair pickers are disabled and
-        only hold a placeholder pair, so the matrix's strongest pair is
-        detailed instead and then synced back into the pickers.
+        Preserve the table-selected pair when it remains in the applied
+        columns; otherwise detail the new matrix's strongest pair.
         """
         dialog.invalidate_correlation_export()
         request_revision = dialog.correlation_export_revision()
         configuration = config.matrix_configuration()
         method, columns = configuration
-        pair = config.current_pair() if config.is_pair_selection_enabled() else None
+        view = dialog.content_widget()
+        pair = view.selected_pair() if isinstance(view, CorrelationView) else None
 
         def _apply(result: object) -> None:
             outcome = cast("_CorrelationOutcome", result)
-            dialog.set_content_widget(self._build_correlation_view(outcome, config))
+            current_view = dialog.content_widget()
+            latest_pair = current_view.selected_pair() if isinstance(current_view, CorrelationView) else None
+            new_view = self._build_correlation_view(outcome, dialog)
+            dialog.set_content_widget(new_view)
             if outcome.matrix.error is not None:
-                config.set_pair_selection_enabled(enabled=False)
                 return
             if outcome.export_snapshot is None:
                 message = "A successful correlation matrix must retain its worker-owned export snapshot."
                 raise ValueError(message)
             dialog.set_exportable_correlation(outcome.export_snapshot)
-            current_pair = config.current_pair()
-            if current_pair is not None and not all(column in outcome.matrix.columns for column in current_pair):
-                current_pair = None
-            if outcome.pair_detail is None:
-                config.set_displayed_matrix(outcome.matrix, current_pair)
-                return
-            detailed_pair = (outcome.pair_detail.pair.x_column, outcome.pair_detail.pair.y_column)
-            config.set_displayed_matrix(
-                outcome.matrix, current_pair if pair is not None and current_pair is not None else detailed_pair
-            )
-            # The pair may have changed while the matrix was computing; its
-            # own recompute was skipped (no current view), so catch up now.
-            current_pair = config.current_pair()
-            if current_pair is not None and current_pair != detailed_pair:
-                self._recompute_correlation_pair(dialog, config, *current_pair)
+            if (
+                latest_pair is not None
+                and latest_pair != new_view.selected_pair()
+                and all(column in outcome.matrix.columns for column in latest_pair)
+            ):
+                # A table selection made during the matrix job still takes precedence.
+                new_view.select_pair(*latest_pair)
 
         self._recompute_content(
             dialog,
@@ -1213,7 +1207,6 @@ class AnalysisController:
     def _recompute_correlation_pair(
         self,
         dialog: AnalysisDialog,
-        config: CorrelationConfigWidget,
         x_column: str,
         y_column: str,
     ) -> None:
@@ -1226,13 +1219,13 @@ class AnalysisController:
             or x_column not in view.columns()
             or y_column not in view.columns()
         ):
-            # No matrix is shown (still computing, cancelled or failed);
-            # the next matrix result will include the current pair.
+            # Pair selection is only available in a successful displayed matrix.
             return
 
         # The displayed matrix's method, not the config's: a pending method
         # change will bring its own pair detail with the new matrix.
         method = view.method()
+        selection_revision = view.pair_selection_revision()
 
         def _apply(result: object) -> None:
             view.set_pair_detail(cast("CorrelationPairDetail", result))
@@ -1243,7 +1236,11 @@ class AnalysisController:
             scope_suffix=f"pair:{method.value}:{x_column}:{y_column}",
             compute=lambda df, _callbacks: analyze_correlation_pair(df, x_column, y_column, method),
             apply_result=_apply,
-            is_stale=lambda: dialog.content_widget() is not view or config.current_pair() != (x_column, y_column),
+            is_stale=lambda: (
+                dialog.content_widget() is not view
+                or view.selected_pair() != (x_column, y_column)
+                or view.pair_selection_revision() != selection_revision
+            ),
             target=view.pair_panel(),
         )
 

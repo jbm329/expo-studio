@@ -83,6 +83,8 @@ class CorrelationView(QWidget):
 
         self._result = result
         self._pair_detail: CorrelationPairDetail | None = None
+        self._selected_pair: tuple[str, str] | None = None
+        self._pair_selection_revision = 0
         self._table: QTableWidget | None = None
 
         layout = QVBoxLayout(self)
@@ -164,6 +166,31 @@ class CorrelationView(QWidget):
         """Return the currently displayed pair detail, if any."""
         return self._pair_detail
 
+    def selected_pair(self) -> tuple[str, str] | None:
+        """Return the latest table-selected pair, including a pending detail request."""
+        return self._selected_pair
+
+    def pair_selection_revision(self) -> int:
+        """Return the generation of the latest table pair request."""
+        return self._pair_selection_revision
+
+    def select_pair(self, x_column: str, y_column: str) -> None:
+        """Select and request the table row for a pair in the displayed matrix.
+
+        Args:
+            x_column: First column in the pair.
+            y_column: Second column in the pair.
+
+        Raises:
+            ValueError: If the pair does not have a row in the displayed matrix.
+        """
+        for row, pair in enumerate(self._result.pairs):
+            if {pair.x_column, pair.y_column} == {x_column, y_column}:
+                self._on_cell_activated(row, 0)
+                return
+        message = "The selected pair must have a row in the displayed correlation matrix."
+        raise ValueError(message)
+
     def table(self) -> QTableWidget | None:
         """Return the ranked pairs table, or `None` when the matrix has an error."""
         return self._table
@@ -175,6 +202,7 @@ class CorrelationView(QWidget):
             detail: The computed pair detail to display.
         """
         self._pair_detail = detail
+        self._selected_pair = (detail.pair.x_column, detail.pair.y_column)
         self._clear_layout(self._scatter_layout)
         self._clear_layout(self._statistics_layout)
 
@@ -373,6 +401,9 @@ class CorrelationView(QWidget):
         if not 0 <= row < len(self._result.pairs):
             return
         pair = self._result.pairs[row]
+        self._selected_pair = (pair.x_column, pair.y_column)
+        self._pair_selection_revision += 1
+        self._select_table_row(pair.x_column, pair.y_column)
         self.pair_activated.emit(pair.x_column, pair.y_column)
 
     def _select_table_row(self, x_column: str, y_column: str) -> None:

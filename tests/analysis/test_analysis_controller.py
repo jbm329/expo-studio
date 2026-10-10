@@ -1933,6 +1933,20 @@ def _correlation_view(dlg: DummyAnalysisDialog) -> CorrelationView:
     return view
 
 
+def _click_correlation_pair(view: CorrelationView, x_column: str, y_column: str) -> tuple[str, str]:
+    """Select a pair by emitting the same table signal as a user click."""
+    table = view.table()
+    assert table is not None
+    wanted = {x_column, y_column}
+    for row in range(table.rowCount()):
+        pair = (table.item(row, 0).text(), table.item(row, 1).text())
+        if set(pair) == wanted:
+            table.cellClicked.emit(row, 0)
+            assert view.selected_pair() == pair
+            return pair
+    pytest.fail("Pair is not present in the correlation table")
+
+
 def _apply_correlation(async_ops: DummyAsyncOps, dlg: DummyAnalysisDialog) -> dict:
     """Click Apply and return the matrix job's call, without completing it."""
     _correlation_config(dlg)._apply_button.click()  # noqa: SLF001
@@ -1954,16 +1968,6 @@ def test_correlation_initializes_without_a_job_and_prompts_for_apply(dialog_fact
     config = _correlation_config(dlg)
     assert config.matrix_configuration() == (CorrelationMethod.PEARSON, ("a", "b", "c"))
     assert config.checked_columns() == ("a", "b", "c")
-    assert config.is_pair_selection_enabled() is False
-
-
-def test_pair_change_before_the_first_apply_starts_no_job(dialog_factory):
-    async_ops = DummyAsyncOps()
-    _, dlg = _open_correlation(async_ops, dialog_factory)
-
-    _correlation_config(dlg).set_pair("c", "a")
-
-    assert async_ops.calls == []
 
 
 def test_method_change_without_apply_starts_no_job(dialog_factory):
@@ -1989,9 +1993,9 @@ def test_pending_matrix_controls_and_pair_only_recompute_keep_export_snapshot(di
     config._column_list.item(2).setCheckState(Qt.CheckState.Unchecked)  # noqa: SLF001
 
     assert dlg.exportable_correlation() is snapshot
-    config.set_pair("c", "a")
+    pair = _click_correlation_pair(_correlation_view(dlg), "c", "a")
     pair_call = async_ops.last_call
-    assert pair_call["scope"] == "analysis:correlation:pair:pearson:c:a"
+    assert pair_call["scope"] == f"analysis:correlation:pair:pearson:{pair[0]}:{pair[1]}"
     assert dlg.exportable_correlation() is snapshot
     _simulate_success(pair_call)
     assert dlg.exportable_correlation() is snapshot
@@ -2058,19 +2062,17 @@ def test_matrix_worker_owns_selected_columns_before_analysis_and_pair_detail(dia
     assert dlg.exportable_correlation() is outcome.export_snapshot
 
 
-def test_first_apply_details_the_strongest_pair_and_enables_pair_selection(dialog_factory):
+def test_first_apply_details_the_strongest_pair_in_the_table(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_correlation(async_ops, dialog_factory)
-    config = _correlation_config(dlg)
-    config.set_pair("c", "a")  # disabled pickers only hold a placeholder pair
 
     _simulate_success(_apply_correlation(async_ops, dlg))
 
-    detail = _correlation_view(dlg).pair_detail()
+    view = _correlation_view(dlg)
+    detail = view.pair_detail()
     assert detail is not None
     assert (detail.pair.x_column, detail.pair.y_column) == ("a", "b")
-    assert config.current_pair() == ("a", "b")
-    assert config.is_pair_selection_enabled() is True
+    assert view.selected_pair() == ("a", "b")
     assert async_ops.last_call["scope"] == "analysis:correlation:matrix:pearson"  # no extra pair job
 
 
@@ -2133,15 +2135,14 @@ def test_apply_recomputes_the_matrix_with_the_checked_columns(dialog_factory):
     assert table is not None
     assert table.rowCount() == 1
     assert view.columns() == ("a", "b")
-    assert config._x_combo.count() == 2  # noqa: SLF001
-    assert config.current_pair() == ("a", "b")
+    assert _correlation_view(dlg).selected_pair() == ("a", "b")
 
 
 def test_replacement_matrix_drops_excluded_pair_without_extra_job(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
-    config.set_pair("c", "a")
+    _click_correlation_pair(_correlation_view(dlg), "c", "a")
     _simulate_success(async_ops.last_call)
     item = config._column_list.item(2)  # noqa: SLF001
     item.setCheckState(item.checkState().Unchecked)
@@ -2153,7 +2154,7 @@ def test_replacement_matrix_drops_excluded_pair_without_extra_job(dialog_factory
     assert (outcome.pair_detail.pair.x_column, outcome.pair_detail.pair.y_column) == ("a", "b")
     call["on_result"](outcome)
 
-    assert config.current_pair() == ("a", "b")
+    assert _correlation_view(dlg).selected_pair() == ("a", "b")
     assert len(async_ops.calls) == jobs_before
     detail = _correlation_view(dlg).pair_detail()
     assert detail is not None
@@ -2169,18 +2170,17 @@ def test_pair_controller_rejects_columns_outside_displayed_matrix(dialog_factory
     _simulate_success(_apply_correlation(async_ops, dlg))
     jobs_before = len(async_ops.calls)
 
-    config.set_pair("c", "a")
-    ctrl._recompute_correlation_pair(dlg, config, "c", "a")  # noqa: SLF001
-    ctrl._recompute_correlation_pair(dlg, config, "a", "a")  # noqa: SLF001
+    ctrl._recompute_correlation_pair(dlg, "c", "a")  # noqa: SLF001
+    ctrl._recompute_correlation_pair(dlg, "a", "a")  # noqa: SLF001
 
     assert len(async_ops.calls) == jobs_before
 
 
-def test_replacement_matrix_preserves_a_valid_pair_orientation(dialog_factory):
+def test_replacement_matrix_preserves_a_valid_table_pair(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
-    config.set_pair("c", "a")
+    selected_pair = _click_correlation_pair(_correlation_view(dlg), "c", "a")
     _simulate_success(async_ops.last_call)
     item = config._column_list.item(1)  # noqa: SLF001 - "b"
     item.setCheckState(item.checkState().Unchecked)
@@ -2189,15 +2189,15 @@ def test_replacement_matrix_preserves_a_valid_pair_orientation(dialog_factory):
     jobs_before = len(async_ops.calls)
     _simulate_success(call)
 
-    assert config.current_pair() == ("c", "a")
+    assert _correlation_view(dlg).selected_pair() == selected_pair
     assert len(async_ops.calls) == jobs_before
     detail = _correlation_view(dlg).pair_detail()
     assert detail is not None
-    assert (detail.pair.x_column, detail.pair.y_column) == ("c", "a")
+    assert (detail.pair.x_column, detail.pair.y_column) == selected_pair
 
 
 @pytest.mark.parametrize("failed", [True, False])
-def test_unsuccessful_matrix_replacement_does_not_publish_requested_pair_columns(dialog_factory, failed):
+def test_unsuccessful_matrix_replacement_can_be_rerun(dialog_factory, failed):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
@@ -2210,10 +2210,11 @@ def test_unsuccessful_matrix_replacement_does_not_publish_requested_pair_columns
     else:
         call["on_result"](None)
 
-    assert config._x_combo.count() == 3  # noqa: SLF001
-    jobs_before = len(async_ops.calls)
-    config.set_pair("c", "a")
-    assert len(async_ops.calls) == jobs_before
+    assert dlg.config_widgets[-1] is config
+    retry = _apply_correlation(async_ops, dlg)
+    _simulate_success(retry)
+
+    assert _correlation_view(dlg).columns() == ("a", "b")
 
 
 def test_cancelled_matrix_recompute_shows_placeholder_and_keeps_config(dialog_factory):
@@ -2226,7 +2227,6 @@ def test_cancelled_matrix_recompute_shows_placeholder_and_keeps_config(dialog_fa
 
     assert dlg.placeholder_calls[-1] == ctrl._tr(ctrl.TR_ANALYSIS_CANCELLED)  # noqa: SLF001
     assert dlg.config_widgets[-1] is config
-    assert config.is_pair_selection_enabled() is False
 
 
 def test_stale_matrix_recompute_is_discarded_when_applied_again(dialog_factory):
@@ -2266,14 +2266,13 @@ def test_repeated_apply_with_same_configuration_rejects_the_older_matrix_job(dia
 def test_pair_change_recomputes_only_the_pair_detail_over_the_pair_panel(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_correlation(async_ops, dialog_factory)
-    config = _correlation_config(dlg)
     view = _correlation_view(dlg)
     contents_before = len(dlg.content_widgets)
 
-    config.set_pair("c", "a")
+    selected_pair = _click_correlation_pair(view, "c", "a")
 
     call = async_ops.last_call
-    assert call["scope"] == "analysis:correlation:pair:pearson:c:a"
+    assert call["scope"] == f"analysis:correlation:pair:pearson:{selected_pair[0]}:{selected_pair[1]}"
     assert call["target"] is view.pair_panel()
     assert call["cancelable"] is False
 
@@ -2282,34 +2281,32 @@ def test_pair_change_recomputes_only_the_pair_detail_over_the_pair_panel(dialog_
     assert len(dlg.content_widgets) == contents_before  # view updated in place
     detail = view.pair_detail()
     assert detail is not None
-    assert (detail.pair.x_column, detail.pair.y_column) == ("c", "a")
+    assert (detail.pair.x_column, detail.pair.y_column) == selected_pair
 
 
 def test_clicking_a_table_row_selects_the_pair_and_recomputes_it(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_correlation(async_ops, dialog_factory)
-    config = _correlation_config(dlg)
     view = _correlation_view(dlg)
     table = view.table()
     assert table is not None
 
     table.cellClicked.emit(2, 0)
 
-    last_pair = view._result.pairs[2]  # noqa: SLF001
-    assert config.current_pair() == (last_pair.x_column, last_pair.y_column)
-    assert async_ops.last_call["scope"].startswith("analysis:correlation:pair:")
+    selected_pair = (table.item(2, 0).text(), table.item(2, 1).text())
+    assert view.selected_pair() == selected_pair
+    assert async_ops.last_call["scope"] == (f"analysis:correlation:pair:pearson:{selected_pair[0]}:{selected_pair[1]}")
 
 
 def test_stale_pair_recompute_is_discarded_when_the_pair_changes_again(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_correlation(async_ops, dialog_factory)
-    config = _correlation_config(dlg)
     view = _correlation_view(dlg)
     initial_detail = view.pair_detail()
 
-    config.set_pair("c", "a")
+    _click_correlation_pair(view, "c", "a")
     first = async_ops.last_call
-    config.set_pair("b", "c")
+    latest_pair = _click_correlation_pair(view, "b", "c")
     second = async_ops.last_call
 
     _simulate_success(first)
@@ -2318,41 +2315,67 @@ def test_stale_pair_recompute_is_discarded_when_the_pair_changes_again(dialog_fa
     _simulate_success(second)
     detail = view.pair_detail()
     assert detail is not None
-    assert (detail.pair.x_column, detail.pair.y_column) == ("b", "c")
+    assert (detail.pair.x_column, detail.pair.y_column) == latest_pair
 
 
-def test_pair_change_while_the_matrix_is_computing_is_caught_up_afterwards(dialog_factory):
+def test_stale_pair_recompute_is_discarded_when_selection_returns_to_same_pair(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_correlation(async_ops, dialog_factory)
-    config = _correlation_config(dlg)
+    view = _correlation_view(dlg)
+    initial_detail = view.pair_detail()
+
+    first_pair = _click_correlation_pair(view, "c", "a")
+    first = async_ops.last_call
+    _click_correlation_pair(view, "b", "c")
+    second = async_ops.last_call
+    latest_pair = _click_correlation_pair(view, *first_pair)
+    latest = async_ops.last_call
+    assert latest_pair == first_pair
+
+    _simulate_success(first)
+    assert view.pair_detail() is initial_detail
+    _simulate_success(second)
+    assert view.pair_detail() is initial_detail
+
+    _simulate_success(latest)
+    detail = view.pair_detail()
+    assert detail is not None
+    assert (detail.pair.x_column, detail.pair.y_column) == latest_pair
+
+
+def test_table_pair_change_while_matrix_computes_is_preserved_on_replacement(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    view = _correlation_view(dlg)
 
     matrix_call = _apply_correlation(async_ops, dlg)
-    config.set_pair("c", "a")
+    selected_pair = _click_correlation_pair(view, "c", "a")
     pair_call = async_ops.last_call
-    assert pair_call["scope"] == "analysis:correlation:pair:pearson:c:a"
+    assert pair_call["scope"] == f"analysis:correlation:pair:pearson:{selected_pair[0]}:{selected_pair[1]}"
 
     _simulate_success(matrix_call)
     catchup_call = async_ops.last_call
-    assert catchup_call["scope"] == "analysis:correlation:pair:pearson:c:a"
+    assert catchup_call["scope"] == f"analysis:correlation:pair:pearson:{selected_pair[0]}:{selected_pair[1]}"
     _simulate_success(pair_call)
     _simulate_success(catchup_call)
 
     detail = _correlation_view(dlg).pair_detail()
     assert detail is not None
-    assert (detail.pair.x_column, detail.pair.y_column) == ("c", "a")
+    assert (detail.pair.x_column, detail.pair.y_column) == selected_pair
 
 
 def test_pair_recompute_uses_the_displayed_matrix_method(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
+    view = _correlation_view(dlg)
 
     # Kendall is applied, but its matrix job hasn't finished: the view is still Pearson.
     config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.KENDALL))  # noqa: SLF001
     _apply_correlation(async_ops, dlg)
-    config.set_pair("c", "a")
+    selected_pair = _click_correlation_pair(view, "c", "a")
 
-    assert async_ops.last_call["scope"] == "analysis:correlation:pair:pearson:c:a"
+    assert async_ops.last_call["scope"] == f"analysis:correlation:pair:pearson:{selected_pair[0]}:{selected_pair[1]}"
 
 
 def test_recompute_shows_error_placeholder_when_the_dataset_cannot_be_reloaded(dialog_factory):
