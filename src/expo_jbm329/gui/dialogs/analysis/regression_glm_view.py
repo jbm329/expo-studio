@@ -187,7 +187,13 @@ class GeneralizedRegressionView(QWidget):
         residuals.set_title(self.tr("Pearson residuals versus fitted counts"))
         residuals.set_xlabel(self.tr("Fitted count"))
         residuals.set_ylabel(self.tr("Pearson residual"))
-        layout.addWidget(canvas, 1)
+        # Charts keep a readable minimum height and scroll when their section is smaller.
+        scroll = QScrollArea(panel)
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll.setWidget(canvas)
+        layout.addWidget(scroll, 1)
         return panel
 
     def result(self) -> GeneralizedRegressionResult:

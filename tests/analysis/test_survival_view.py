@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6.QtCore import QCoreApplication, Qt
-from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
+from PyQt6.QtWidgets import QLabel, QScrollArea, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.survival_view import SurvivalRegressionView
 from expo_jbm329.services.analysis.survival import (
@@ -114,6 +114,42 @@ def test_cox_comments_header_gap_stays_fixed_when_section_grows():
         assert heading.height() == heading_height
         assert comments.y() - heading.geometry().bottom() == gap
         assert panel.layout().stretch(1) == 1
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
+@pytest.mark.parametrize(("section_index", "small_height"), [(1, 120), (2, 80)])
+def test_cox_chart_and_comment_sections_scroll_only_when_content_exceeds_space(section_index, small_height):
+    view = SurvivalRegressionView(_result())
+    panel = view.findChild(QSplitter).widget(section_index)
+    heading = panel.layout().itemAt(0).widget()
+    scroll = panel.layout().itemAt(1).widget()
+    assert isinstance(heading, QLabel)
+    assert isinstance(scroll, QScrollArea)
+    assert scroll.widgetResizable()
+    assert scroll.verticalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
+    assert scroll.horizontalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
+    if section_index == 1:
+        assert isinstance(scroll.widget(), FigureCanvasQTAgg)
+    else:
+        assert scroll.widget() is view.summary_label()
+    panel.setParent(None)
+    panel.resize(1100, small_height)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        bar = scroll.verticalScrollBar()
+        assert bar.maximum() > 0
+        heading_y = heading.y()
+        bar.setValue(bar.maximum())
+        QCoreApplication.processEvents()
+        assert heading.y() == heading_y
+        panel.resize(1100, 900)
+        QCoreApplication.processEvents()
+        assert bar.maximum() == 0
+        assert scroll.horizontalScrollBar().maximum() == 0
     finally:
         panel.close()
         panel.deleteLater()

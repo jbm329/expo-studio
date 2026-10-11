@@ -64,6 +64,38 @@ def test_model_comments_scroll_only_when_content_exceeds_available_space(model):
         view.close()
 
 
+@pytest.mark.parametrize("model", [RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL])
+def test_count_charts_scroll_only_when_they_exceed_the_section(model):
+    view = GeneralizedRegressionView(_result(model))
+    panel = view.findChild(QSplitter).widget(1)
+    heading = panel.layout().itemAt(0).widget()
+    scroll = panel.layout().itemAt(1).widget()
+    assert isinstance(scroll, QScrollArea)
+    assert scroll.widgetResizable()
+    assert isinstance(scroll.widget(), FigureCanvasQTAgg)
+    assert scroll.verticalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
+    assert scroll.horizontalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
+    panel.setParent(None)
+    panel.resize(1100, 120)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        bar = scroll.verticalScrollBar()
+        assert bar.maximum() > 0
+        heading_y = heading.y()
+        bar.setValue(bar.maximum())
+        QCoreApplication.processEvents()
+        assert heading.y() == heading_y
+        panel.resize(1100, 700)
+        QCoreApplication.processEvents()
+        assert bar.maximum() == 0
+        assert scroll.horizontalScrollBar().maximum() == 0
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
 @pytest.mark.parametrize(
     ("model", "header"),
     [

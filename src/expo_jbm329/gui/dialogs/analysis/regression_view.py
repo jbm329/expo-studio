@@ -442,7 +442,13 @@ class RegressionView(QWidget):
         splitter.addWidget(self._build_canvas(lambda ax: self._draw_residuals_vs_fitted(ax, plot)))
         splitter.addWidget(self._build_canvas(lambda ax: self._draw_actual_vs_predicted(ax, plot, result.target)))
         splitter.addWidget(self._build_canvas(lambda ax: self._draw_qq(ax, plot)))
-        layout.addWidget(splitter, 1)
+        # Charts keep a readable minimum size and scroll when their section is smaller.
+        scroll = QScrollArea(panel)
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll.setWidget(splitter)
+        layout.addWidget(scroll, 1)
 
         if plot.sampled:
             caption = QLabel(

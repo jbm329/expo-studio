@@ -111,6 +111,38 @@ def test_model_comments_title_stays_fixed_above_the_scrollable_text():
         view.close()
 
 
+def test_linear_diagnostic_plots_scroll_only_when_they_exceed_the_section():
+    view = RegressionView(_fitted())
+    panel = view.findChild(QSplitter).widget(1)
+    heading = panel.layout().itemAt(0).widget()
+    scroll = panel.layout().itemAt(1).widget()
+    assert isinstance(scroll, QScrollArea)
+    assert scroll.widgetResizable()
+    assert isinstance(scroll.widget(), QSplitter)
+    assert scroll.widget().orientation() is Qt.Orientation.Horizontal
+    assert scroll.verticalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
+    assert scroll.horizontalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
+    panel.setParent(None)
+    panel.resize(1100, 100)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        bar = scroll.verticalScrollBar()
+        assert bar.maximum() > 0
+        heading_y = heading.y()
+        bar.setValue(bar.maximum())
+        QCoreApplication.processEvents()
+        assert heading.y() == heading_y
+        panel.resize(1100, 700)
+        QCoreApplication.processEvents()
+        assert bar.maximum() == 0
+        assert scroll.horizontalScrollBar().maximum() == 0
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
 def test_linear_chart_header_gap_stays_fixed_when_section_grows():
     view = RegressionView(_fitted())
     panel = view.findChild(QSplitter).widget(1)
