@@ -101,8 +101,8 @@ def test_select_all_and_clear_update_pending_matrix_columns_without_applying():
 def test_method_change_is_pending_until_applied():
     widget = CorrelationConfigWidget(_make_result())
     received = _record(widget.matrix_requested)
-    edits = _record(widget.configuration_changed)
     _set_checked(widget, "c", checked=True)
+    edits = _record(widget.configuration_changed)
 
     widget._method_combo.setCurrentIndex(widget._method_combo.findData(CorrelationMethod.KENDALL))  # noqa: SLF001
 
@@ -127,6 +127,27 @@ def test_method_round_trip_emits_each_edit_but_same_method_does_not():
     combo.setCurrentIndex(combo.findData(CorrelationMethod.SPEARMAN))
     combo.setCurrentIndex(combo.findData(CorrelationMethod.PEARSON))
     assert edits == [(), ()]
+
+
+def test_column_edits_emit_configuration_changed_once_per_actual_change():
+    widget = CorrelationConfigWidget(_make_result(columns=("a", "b")))
+    edits = _record(widget.configuration_changed)
+    received = _record(widget.matrix_requested)
+
+    _set_checked(widget, "c", checked=True)
+    assert edits == [()]
+
+    widget._select_all_button.click()  # noqa: SLF001
+    assert edits == [(), ()]
+    widget._select_all_button.click()  # noqa: SLF001
+    assert edits == [(), ()]
+
+    widget._clear_button.click()  # noqa: SLF001
+    assert edits == [(), (), ()]
+    widget._clear_button.click()  # noqa: SLF001
+    assert edits == [(), (), ()]
+    assert received == []
+    assert widget.applied_columns() == ("a", "b")
 
 
 # ----------------------------------------------------------------------

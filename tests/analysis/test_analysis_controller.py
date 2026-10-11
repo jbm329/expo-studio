@@ -2092,15 +2092,13 @@ def test_method_edit_discards_inflight_pair_result_and_error(dialog_factory):
     assert dlg.exportable_correlation().matrix.method is CorrelationMethod.KENDALL
 
 
-def test_pending_columns_and_pair_recompute_keep_export_but_method_edit_clears_it(dialog_factory):
+def test_pair_recompute_keeps_export_but_column_and_method_edits_show_prompt(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    ctrl, dlg = _open_applied_correlation(async_ops, dialog_factory)
     snapshot = dlg.exportable_correlation()
     assert snapshot is not None
     config = _correlation_config(dlg)
-    config._column_list.item(2).setCheckState(Qt.CheckState.Unchecked)  # noqa: SLF001
 
-    assert dlg.exportable_correlation() is snapshot
     pair = _click_correlation_pair(_correlation_view(dlg), "c", "a")
     pair_call = async_ops.last_call
     assert pair_call["scope"] == f"analysis:correlation:pair:pearson:{pair[0]}:{pair[1]}"
@@ -2108,13 +2106,53 @@ def test_pending_columns_and_pair_recompute_keep_export_but_method_edit_clears_i
     _simulate_success(pair_call)
     assert dlg.exportable_correlation() is snapshot
 
+    jobs_before = len(async_ops.calls)
+    config._column_list.item(2).setCheckState(Qt.CheckState.Unchecked)  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_correlation() is None
+    assert len(async_ops.calls) == jobs_before
+
+    _simulate_success(_apply_correlation(async_ops, dlg))
+    assert dlg.exportable_correlation() is not None
     config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.SPEARMAN))  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
     assert dlg.exportable_correlation() is None
     matrix_call = _apply_correlation(async_ops, dlg)
     assert dlg.exportable_correlation() is None
     _simulate_success(matrix_call)
     assert dlg.exportable_correlation() is not None
     assert dlg.exportable_correlation().matrix.method is CorrelationMethod.SPEARMAN
+
+
+@pytest.mark.parametrize("edit", ["toggle", "select-all", "clear"])
+def test_correlation_column_edits_show_prompt_and_discard_in_flight_matrix(dialog_factory, edit):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_correlation(async_ops, dialog_factory)
+    config = _correlation_config(dlg)
+    if edit == "select-all":
+        # Select all must have something to change.
+        config._column_list.item(0).setCheckState(Qt.CheckState.Unchecked)  # noqa: SLF001
+    call = _apply_correlation(async_ops, dlg)
+    jobs_before = len(async_ops.calls)
+
+    match edit:
+        case "toggle":
+            item = config._column_list.item(0)  # noqa: SLF001
+            item.setCheckState(Qt.CheckState.Unchecked)
+            item.setCheckState(Qt.CheckState.Checked)
+        case "select-all":
+            config._select_all_button.click()  # noqa: SLF001
+        case "clear":
+            config._clear_button.click()  # noqa: SLF001
+
+    _assert_apply_prompt(ctrl, dlg)
+    assert len(async_ops.calls) == jobs_before
+    assert call["stale_check"]()
+    content_widgets_before = len(dlg.content_widgets)
+    _simulate_success(call)
+    assert len(dlg.content_widgets) == content_widgets_before
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_correlation() is None
 
 
 def test_correlation_apply_runs_as_a_cancelable_background_job_with_progress(dialog_factory):

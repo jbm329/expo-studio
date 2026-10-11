@@ -36,8 +36,8 @@ class CorrelationConfigWidget(QWidget):
     checked columns only take effect then, avoiding a costly job per
     change. Apply stays enabled for unchanged valid settings so cancelled
     computations can be rerun. Pair selection belongs to the results table.
-    Method edits emit `configuration_changed` so displayed results can be
-    replaced by the Apply prompt.
+    Method and column edits emit `configuration_changed` so displayed
+    results can be replaced by the Apply prompt.
 
     This widget never computes anything itself and is never recreated by
     those recomputes.
@@ -139,21 +139,26 @@ class CorrelationConfigWidget(QWidget):
         self.configuration_changed.emit()
 
     def _on_column_check_changed(self, _item: QListWidgetItem) -> None:
-        """Refresh the selection count and Apply button after a checkbox toggle."""
+        """Refresh the selection count and invalidate displayed results after a checkbox toggle."""
         self._update_apply_state()
+        self.configuration_changed.emit()
 
     def _set_all_columns_checked(self, *, checked: bool) -> None:
-        """Set every matrix column to the same pending check state."""
+        """Set every matrix column to the same pending check state, notifying once on change."""
         state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+        changed = False
         self._column_list.blockSignals(True)
         try:
             for index in range(self._column_list.count()):
                 item = self._column_list.item(index)
-                if item is not None:
+                if item is not None and item.checkState() != state:
                     item.setCheckState(state)
+                    changed = True
         finally:
             self._column_list.blockSignals(False)
         self._update_apply_state()
+        if changed:
+            self.configuration_changed.emit()
 
     def _on_apply_clicked(self) -> None:
         """Apply the selected method and checked columns, and request a matrix recompute."""

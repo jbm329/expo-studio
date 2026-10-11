@@ -50,7 +50,7 @@ Available analyses include:
 - **Overview**: Dataset dimensions, missing values, duplicate rows, column types, per-column statistics, and a sample of up to 100 rows.
 - **Statistics**: Descriptive statistics, histograms, boxplots, and Shapiro-Wilk normality tests for numeric columns. Select a numeric table row to update its charts and normality details; Statistics uses the full results area without a Configuration pane.
 - **Hypothesis Tests**: Group comparisons for numeric and categorical variables, chi-square tests of independence with adjusted residuals, and paired Wilcoxon/Friedman tests with measurement summaries, distribution boxplots, and subject trajectories.
-- **Correlation**: Pearson, Spearman, and Kendall correlation matrices, strongest-pair summaries, significance tests, heatmaps, and pairwise scatterplots. Select a row in Strongest correlations to update the scatterplot and pair details. Configuration contains only the method and matrix columns; pending matrix selections take effect only after Apply completes. Changing the method replaces results with the Apply prompt and clears the export snapshot until a new analysis completes.
+- **Correlation**: Pearson, Spearman, and Kendall correlation matrices, strongest-pair summaries, significance tests, heatmaps, and pairwise scatterplots. Select a row in Strongest correlations to update the scatterplot and pair details. Configuration contains only the method and matrix columns. Any change to the method or columns replaces results with the Apply prompt and clears the export snapshot until a new analysis completes.
 - **Regression**: Multiple linear regression with numeric and categorical predictors, coefficient estimates, confidence intervals, model summaries, diagnostic tests, and residual plots. Logistic regression includes predictor odds ratios with 95% confidence intervals on a logarithmic axis, ROC/AUC, and calibration using up to 10 approximately equal-sized quantile bins (identical probabilities stay together). ROC and calibration use every complete-case fitted row and are explicitly in-sample diagnostics, not holdout performance; the modeled positive event is identified. Unavailable odds ratios or intervals are marked explicitly without changing the coefficient table. Poisson and Negative Binomial count regression include observed-versus-fitted counts and Pearson residual plots using each model's fitted variance. Cox regression includes a hazard-ratio forest plot and an unadjusted Kaplan–Meier survival curve for the same complete-case subjects, with censoring marks and numbers at risk.
 - **Outliers**: Univariate screening using IQR, z-score, or modified z-score, and multivariate detection using Isolation Forest or Local Outlier Factor. In Univariate mode, select a summary-table row to update column details; Configuration contains only mode, method, threshold, and Apply.
 - **Clustering**: K-means, DBSCAN, and agglomerative clustering with cluster summaries and PCA-based projections.
@@ -106,8 +106,8 @@ complete absolute-coefficient ranking, raw coefficients and confidence bounds,
 raw and Holm-adjusted p-values, observation counts, translated strength labels,
 and an explicit Holm-significance indicator. CSV and binary files contain that
 single table; Excel is the default and writes it to a localized worksheet.
-Pending matrix edits do not change the displayed export, and pair-only detail
-recomputations keep it available. Excel can also include the **Matrix plot**
+Method or column edits clear the export until the next Apply completes;
+pair-only detail recomputations keep it available. Excel can also include the **Matrix plot**
 and **Scatterplots**, independently or without the table, on one localized
 Charts sheet. Scatterplots cover every unique pair of applied columns once,
 in matrix order. Each includes a full-cohort least-squares line and its equation
