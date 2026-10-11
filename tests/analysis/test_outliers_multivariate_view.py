@@ -5,6 +5,7 @@ import dataclasses
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_view import MultivariateOutliersView
@@ -13,6 +14,7 @@ from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierMethod,
     analyze_multivariate_outliers,
 )
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 
 def _result():
@@ -74,7 +76,51 @@ def test_no_flagged_rows_has_a_clear_message():
     view = MultivariateOutliersView(result)
 
     assert view.extremes_table() is None
-    assert "<b>No potential outliers</b>" in _labels_text(view)
+    splitter = view.findChildren(QSplitter)[0]
+    assert _section_title(splitter.widget(0)) == "Potential outliers"
+    assert "No potential outliers" in _labels_text(view)
+
+
+def _section_title(panel) -> str:
+    layout = panel.layout()
+    title = layout.itemAt(0).widget()
+    assert isinstance(title, QLabel)
+    assert title.textFormat() is Qt.TextFormat.PlainText
+    assert title.font().bold()
+    return title.text()
+
+
+def test_layout_has_three_resizable_titled_sections_like_regression():
+    view = MultivariateOutliersView(_result())
+    splitter = view.findChildren(QSplitter)[0]
+
+    assert splitter.orientation() is Qt.Orientation.Vertical
+    assert splitter.count() == 3
+    assert [_section_title(splitter.widget(index)) for index in range(3)] == [
+        "Potential outliers, most anomalous first",
+        "PCA projection",
+        "Model comments",
+    ]
+    table_layout = splitter.widget(0).layout()
+    assert table_layout.itemAt(1).widget() is view.extremes_table()
+    assert table_layout.stretch(1) == 1
+
+
+@pytest.mark.parametrize(("section", "small_height", "width"), [(1, 120, 1100), (2, 80, 400)])
+def test_projection_and_comments_scroll_below_a_frozen_title(section, small_height, width):
+    view = MultivariateOutliersView(dataclasses.replace(_result(), sampled=True))
+    panel = view.findChildren(QSplitter)[0].widget(section)
+
+    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=width)
+
+    if section == 1:
+        assert isinstance(content, FigureCanvasQTAgg)
+    else:
+        assert isinstance(content, QLabel)
+        assert content.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+        assert "Isolation Forest" in content.text()
+    panel.deleteLater()
+    view.close()
 
 
 def test_summary_reports_standardization_and_sampling():

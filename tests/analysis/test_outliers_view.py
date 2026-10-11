@@ -20,6 +20,7 @@ from expo_jbm329.services.analysis.outliers import (
     analyze_outlier_column,
     analyze_outlier_summary,
 )
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 _VALUES = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 100.0]
 
@@ -49,40 +50,31 @@ def _detail(column: str = "<a>", method: OutlierMethod = OutlierMethod.IQR) -> O
 
 
 @pytest.mark.parametrize("column", ["<a>", "b"])
-def test_distribution_header_gap_stays_fixed_when_section_grows(column):
+@pytest.mark.parametrize(("section", "small_height"), [("_chart_panel", 80), ("_statistics_panel", 60)])
+def test_distribution_and_column_details_scroll_below_a_frozen_title(column, section, small_height):
     view, _ = _view()
     view.set_column_detail(_detail(column))
-    panel = view._chart_panel  # noqa: SLF001
-    panel.setParent(None)
-    panel.resize(1100, 500)
-    panel.show()
+    QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete.value)
+    panel = getattr(view, section)
     try:
-        QApplication.processEvents()
-        layout = panel.layout()
-        heading = layout.itemAt(0).widget()
-        charts = layout.itemAt(1).widget()
-        gap = charts.y() - heading.geometry().bottom()
-        heading_height = heading.height()
-        chart_height = charts.height()
-        panel.resize(1100, 800)
-        QApplication.processEvents()
-        assert heading.height() == heading_height
-        assert charts.y() - heading.geometry().bottom() == gap
-        assert charts.height() > chart_height
-        assert layout.stretch(1) == 1
+        content = assert_section_scrolls_below_frozen_title(panel, small_height)
+        if section == "_chart_panel":
+            assert panel.layout().itemAt(0).widget().text() == "Distribution"
+            assert isinstance(content, FigureCanvasQTAgg)
+        else:
+            assert panel.layout().itemAt(0).widget().text() == "Column details"
+            assert isinstance(content, QLabel)
+            assert "threshold" in content.text()
+            assert content.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+            assert content.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
     finally:
-        panel.close()
         panel.deleteLater()
         view.close()
 
 
-@pytest.mark.parametrize("with_error", [False, True])
-def test_column_details_content_stays_at_top_with_fixed_heading_gap(with_error):
+def test_column_detail_error_stays_at_the_top_of_its_section():
     view, _ = _view()
-    detail = _detail("b")
-    if with_error:
-        detail = dataclasses.replace(detail, error=OutlierError.INVALID_COLUMN)
-    view.set_column_detail(detail)
+    view.set_column_detail(dataclasses.replace(_detail("b"), error=OutlierError.INVALID_COLUMN))
     panel = view._statistics_panel  # noqa: SLF001
     panel.setParent(None)
     panel.resize(1100, 500)
@@ -90,18 +82,13 @@ def test_column_details_content_stays_at_top_with_fixed_heading_gap(with_error):
     try:
         QApplication.processEvents()
         layout = panel.layout()
-        labels = [layout.itemAt(index).widget() for index in range(layout.count() - 1)]
-        geometry = [(label.y(), label.height()) for label in labels]
-        assert labels[0].y() == layout.contentsMargins().top()
-        assert labels[-1].alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
-        if not with_error:
-            assert labels[0].text() == "Column details"
-            gap = labels[1].y() - labels[0].geometry().bottom()
+        label = layout.itemAt(0).widget()
+        geometry = (label.y(), label.height())
+        assert label.y() == layout.contentsMargins().top()
+        assert label.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
         panel.resize(1100, 800)
         QApplication.processEvents()
-        assert [(label.y(), label.height()) for label in labels] == geometry
-        if not with_error:
-            assert labels[1].y() - labels[0].geometry().bottom() == gap
+        assert (label.y(), label.height()) == geometry
     finally:
         panel.close()
         panel.deleteLater()

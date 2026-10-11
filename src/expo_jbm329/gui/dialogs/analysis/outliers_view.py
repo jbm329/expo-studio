@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
 from expo_jbm329.services.analysis.outliers import (
     MAX_THRESHOLD,
     MIN_OBSERVATIONS,
@@ -239,19 +240,21 @@ class OutliersView(QWidget):
             label = self._build_centered_label(self.error_text(detail.error), self._statistics_panel)
             label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
             self._statistics_layout.addWidget(label)
+            self._statistics_layout.addStretch(1)
         else:
             self._extremes_panel.show()
             self._chart_panel.show()
             self._statistics_panel.show()
             self._extremes_layout.addWidget(self._build_extremes_panel(detail))
             self._chart_layout.addWidget(self._build_section_title(self.tr("Distribution"), self._chart_panel))
-            self._chart_layout.addWidget(self._build_histogram(detail), 1)
+            self._chart_layout.addWidget(build_section_scroll_area(self._build_histogram(detail), self._chart_panel), 1)
             self._statistics_layout.addWidget(
                 self._build_section_title(self.tr("Column details"), self._statistics_panel)
             )
-            self._statistics_layout.addWidget(self._build_detail_statistics(detail))
+            self._statistics_layout.addWidget(
+                build_section_scroll_area(self._build_detail_statistics(detail), self._statistics_panel), 1
+            )
 
-        self._statistics_layout.addStretch(1)
         self._select_table_row(detail.summary.column)
 
     def error_text(self, error: OutlierError) -> str:
@@ -472,6 +475,7 @@ class OutliersView(QWidget):
         label.setWordWrap(True)
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         return label
 
     def _detail_statistics_text(self, detail: OutlierColumnDetail) -> str:

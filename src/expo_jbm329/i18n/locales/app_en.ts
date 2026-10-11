@@ -3984,12 +3984,22 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="158" />
-        <source>&lt;b&gt;No potential outliers&lt;/b&gt;</source>
+        <source>No potential outliers</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="161" />
-        <source>&lt;b&gt;Potential outliers, most anomalous first&lt;/b&gt;</source>
+        <source>Potential outliers, most anomalous first</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="60" />
+        <source>PCA projection</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="60" />
+        <source>Model comments</source>
         <translation type="unfinished" />
     </message>
     <message>

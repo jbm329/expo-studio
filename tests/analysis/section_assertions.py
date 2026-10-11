@@ -6,7 +6,9 @@ from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QLabel, QScrollArea, QWidget
 
 
-def assert_section_scrolls_below_frozen_title(panel: QWidget, small_height: int, large_height: int = 900) -> QWidget:
+def assert_section_scrolls_below_frozen_title(
+    panel: QWidget, small_height: int, large_height: int = 900, width: int = 1100
+) -> QWidget:
     """Assert `panel` is a fixed title above content that scrolls only when needed.
 
     The panel is detached from its view and shown at both heights.
@@ -15,6 +17,7 @@ def assert_section_scrolls_below_frozen_title(panel: QWidget, small_height: int,
         panel: Titled section built by an analysis view.
         small_height: Height at which the content must overflow.
         large_height: Height at which the content must fit.
+        width: Panel width used at both heights.
 
     Returns:
         The content widget inside the section scroll area.
@@ -33,7 +36,7 @@ def assert_section_scrolls_below_frozen_title(panel: QWidget, small_height: int,
     assert content is not None
 
     panel.setParent(None)
-    panel.resize(1100, small_height)
+    panel.resize(width, small_height)
     panel.show()
     try:
         QCoreApplication.processEvents()
@@ -45,7 +48,7 @@ def assert_section_scrolls_below_frozen_title(panel: QWidget, small_height: int,
         QCoreApplication.processEvents()
         assert title.geometry() == title_geometry
 
-        panel.resize(1100, large_height)
+        panel.resize(width, large_height)
         QCoreApplication.processEvents()
         assert title.geometry() == title_geometry
         assert bar.maximum() == 0

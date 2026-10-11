@@ -4373,13 +4373,23 @@ Sparad till:
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/outliers_multivariate_view.py" line="158"/>
-        <source>&lt;b&gt;No potential outliers&lt;/b&gt;</source>
-        <translation>&lt;b&gt;Inga potentiella avvikare&lt;/b&gt;</translation>
+        <source>No potential outliers</source>
+        <translation>Inga potentiella avvikare</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/outliers_multivariate_view.py" line="161"/>
-        <source>&lt;b&gt;Potential outliers, most anomalous first&lt;/b&gt;</source>
-        <translation>&lt;b&gt;Potentiella avvikare, mest avvikande först&lt;/b&gt;</translation>
+        <source>Potential outliers, most anomalous first</source>
+        <translation>Potentiella avvikare, mest avvikande först</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/outliers_multivariate_view.py" line="60"/>
+        <source>PCA projection</source>
+        <translation>PCA-projektion</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/outliers_multivariate_view.py" line="60"/>
+        <source>Model comments</source>
+        <translation>Modellkommentarer</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/outliers_multivariate_view.py" line="164"/>
