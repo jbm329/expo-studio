@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtGui import QPalette
-from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QSplitter
+from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QScrollArea, QSplitter
 
 from expo_jbm329.gui.dialogs.analysis.correlation_view import MAX_ANNOTATED_COLUMNS, CorrelationView
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
@@ -18,6 +18,7 @@ from expo_jbm329.services.analysis.correlation import (
     analyze_correlation_matrix,
     analyze_correlation_pair,
 )
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 from tests.analysis.test_statistics_view import _worker_holds_chart_lock
 
 
@@ -78,65 +79,58 @@ def test_ranking_caption_shares_the_tables_shaded_panel():
 
 
 @pytest.mark.parametrize("with_pair", [False, True])
-def test_correlation_plots_header_gap_stays_fixed_when_section_grows(with_pair):
+def test_correlation_plots_scroll_below_a_frozen_title(with_pair):
     df = _frame()
     detail = analyze_correlation_pair(df, "c0", "c1") if with_pair else None
     view = CorrelationView(_matrix(df), detail)
     panel = view.pair_panel().findChild(QSplitter).widget(0)
-    panel.setParent(None)
-    panel.resize(1100, 500)
-    panel.show()
     try:
-        QApplication.processEvents()
-        layout = panel.layout()
-        heading = layout.itemAt(0).widget()
-        charts = layout.itemAt(1).widget()
-        gap = charts.y() - heading.geometry().bottom()
-        heading_height = heading.height()
-        chart_height = charts.height()
-        panel.resize(1100, 800)
-        QApplication.processEvents()
-        assert heading.height() == heading_height
-        assert charts.y() - heading.geometry().bottom() == gap
-        assert charts.height() > chart_height
-        assert layout.stretch(1) == 1
+        content = assert_section_scrolls_below_frozen_title(panel, 120)
+        assert isinstance(content, QSplitter)
+        assert content.orientation() is Qt.Orientation.Horizontal
+        assert len(_canvas_axes(content)) == (2 if with_pair else 1)
     finally:
-        panel.close()
         panel.deleteLater()
         view.close()
 
 
 @pytest.mark.parametrize("with_error", [False, True])
-def test_pair_details_header_and_text_stay_at_top_when_section_grows(with_error):
+def test_pair_details_scroll_below_a_frozen_title_with_text_at_the_top(with_error):
     df = _frame()
     if with_error:
         df["c0"] = 1.0
     detail = analyze_correlation_pair(df, "c0", "c1")
     view = CorrelationView(_matrix(df), detail)
     panel = view.pair_panel().findChild(QSplitter).widget(1)
-    panel.setParent(None)
-    panel.resize(1100, 500)
-    panel.show()
     try:
-        QApplication.processEvents()
-        layout = panel.layout()
-        heading = layout.itemAt(0).widget()
-        text_panel = layout.itemAt(1).widget()
-        label = text_panel.findChild(QLabel)
-        gap = text_panel.y() - heading.geometry().bottom()
-        heading_geometry = (heading.y(), heading.height())
-        text_geometry = (text_panel.y(), text_panel.height(), label.y(), label.height())
-        assert heading.y() == layout.contentsMargins().top()
+        if with_error:
+            # A one-line error always fits, so only the shared structure is checked.
+            scroll = panel.layout().itemAt(1).widget()
+            assert isinstance(scroll, QScrollArea)
+            assert panel.layout().stretch(1) == 1
+            content = scroll.widget()
+        else:
+            content = assert_section_scrolls_below_frozen_title(panel, 40)
+        assert content is view._statistics_panel  # noqa: SLF001
+        label = content.findChild(QLabel)
         assert label.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
-        panel.resize(1100, 800)
-        QApplication.processEvents()
-        assert (heading.y(), heading.height()) == heading_geometry
-        assert text_panel.y() - heading.geometry().bottom() == gap
-        assert (text_panel.y(), text_panel.height(), label.y(), label.height()) == text_geometry
+        if not with_error:
+            assert label.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
     finally:
-        panel.close()
         panel.deleteLater()
         view.close()
+
+
+def test_new_pair_detail_stays_inside_the_scrollable_pair_details():
+    df = _frame()
+    view = CorrelationView(_matrix(df), analyze_correlation_pair(df, "c0", "c1"))
+    scroll = view.pair_panel().findChild(QSplitter).widget(1).findChild(QScrollArea)
+
+    view.set_pair_detail(analyze_correlation_pair(df, "c1", "c2"))
+    _flush_deletes()
+
+    assert scroll.widget() is view._statistics_panel  # noqa: SLF001
+    assert "<b>c1</b> vs <b>c2</b>" in _labels_text(scroll.widget())
 
 
 def test_correlation_canvases_defer_matrix_and_scatter_mutations_without_blocking():

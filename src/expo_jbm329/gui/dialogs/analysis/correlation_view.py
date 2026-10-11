@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis import correlation_charts
 from expo_jbm329.services.analysis.correlation import (
@@ -118,14 +119,13 @@ class CorrelationView(QWidget):
         charts_splitter.setChildrenCollapsible(False)
         charts_splitter.addWidget(self._build_heatmap(result))
         charts_splitter.addWidget(self._scatter_panel)
-        charts_layout.addWidget(charts_splitter, 1)
+        charts_layout.addWidget(build_section_scroll_area(charts_splitter, charts_section), 1)
 
         statistics_section = QWidget(self._pair_panel)
         statistics_layout = QVBoxLayout(statistics_section)
         statistics_layout.setContentsMargins(0, 0, 0, 0)
         statistics_layout.addWidget(self._build_section_title(self.tr("Pair details"), statistics_section))
-        statistics_layout.addWidget(self._statistics_panel)
-        statistics_layout.addStretch(1)
+        statistics_layout.addWidget(build_section_scroll_area(self._statistics_panel, statistics_section), 1)
 
         detail_splitter = QSplitter(Qt.Orientation.Vertical, self._pair_panel)
         detail_splitter.setChildrenCollapsible(False)
@@ -461,6 +461,7 @@ class CorrelationView(QWidget):
         label.setWordWrap(True)
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         return label
 
     def _pair_statistics_text(self, detail: CorrelationPairDetail) -> str:
