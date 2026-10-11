@@ -170,3 +170,50 @@ def test_summary_explains_unavailable_silhouette_and_sampling():
     assert "not standardized" in text
     assert "not available" in text
     assert "deterministic sample" in text
+
+
+def test_result_returns_the_displayed_fit():
+    result = _result()
+
+    assert ClusteringView(result).result() is result
+
+
+@pytest.mark.parametrize("sampled", [False, True])
+def test_chart_labels_match_the_view_and_caption_only_a_sampled_plot(sampled):
+    result = dataclasses.replace(_result(), sampled=sampled)
+    view = ClusteringView(result)
+
+    labels = view.chart_labels()
+
+    assert labels.heading == "Cluster projection"
+    assert labels.title == "Cluster projection (internal PCA)"
+    assert (labels.pc1_axis, labels.pc2_axis) == ("PC1", "PC2")
+    assert labels.cluster_name(0) == "Cluster 1"
+    assert labels.cluster_name(-1) == "Noise"
+    expected = (f"The plot shows a deterministic sample of {len(result.sample_labels)} rows.",) if sampled else ()
+    assert labels.captions == expected
+
+
+def test_error_chart_labels_have_no_caption():
+    result = dataclasses.replace(analyze_clustering(pd.DataFrame({"x": [1.0]})), sampled=True)
+
+    assert ClusteringView(result).chart_labels().captions == ()
+
+
+def test_export_notes_are_the_plain_text_comments_and_features():
+    result = dataclasses.replace(_result(), sampled=True)
+    view = ClusteringView(result)
+
+    notes = view.export_notes()
+
+    assert notes[0].startswith("K-Means on 2 features (standardized).")
+    assert all("<" not in line for line in notes)
+    assert any(line.startswith("Silhouette score: ") for line in notes)
+    assert f"The plot shows a deterministic sample of {len(result.sample_labels)} rows." in notes
+    assert notes[-1] == "Features: x, y"
+
+
+def test_error_view_has_no_export_notes():
+    result = analyze_clustering(pd.DataFrame({"x": [1.0]}))
+
+    assert ClusteringView(result).export_notes() == ()

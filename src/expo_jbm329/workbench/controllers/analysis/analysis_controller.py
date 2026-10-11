@@ -36,6 +36,14 @@ from expo_jbm329.services.analysis.categories import AnalysisCategory, Hypothesi
 from expo_jbm329.services.analysis.chi_square import analyze_chi_square, initialize_chi_square
 from expo_jbm329.services.analysis.clustering import MIN_SELECTED_COLUMNS as CLUSTERING_MIN_SELECTED_COLUMNS
 from expo_jbm329.services.analysis.clustering import ClusteringMethod, analyze_clustering, initialize_clustering
+from expo_jbm329.services.analysis.clustering_charts import render_clustering_charts
+from expo_jbm329.services.analysis.clustering_export import (
+    ClusteringExportComponent,
+    ClusteringExportRequest,
+    ClusteringExportSnapshot,
+    ClusteringMetric,
+    clustering_export_tables,
+)
 from expo_jbm329.services.analysis.correlation import (
     MAX_SELECTED_COLUMNS,
     MIN_OBSERVATIONS,
@@ -286,6 +294,17 @@ _OUTLIERS_EXPORT_TRANSLATIONS = (
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Rows dropped because of missing or infinite values"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Inliers"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Status"),
+)
+_CLUSTERING_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Number of clusters"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Neighborhood radius (eps)"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Minimum samples"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Clusters found"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Noise rows"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Silhouette score"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Cluster"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Rows"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Share"),
 )
 # Cancelable jobs report real progress and can be stopped by the user, so
 # they get a far longer watchdog before the "taking too long" warning.
@@ -540,7 +559,12 @@ class AnalysisController:
             dialog.hypothesis_export_requested.connect(_handle_hypothesis_export)
             dialog.correlation_export_requested.connect(_handle_correlation_export)
             dialog.regression_export_requested.connect(_handle_regression_export)
+
+            def _handle_clustering_export(request: object) -> None:
+                self._export_clustering(dialog, exporter, request)
+
             dialog.outliers_export_requested.connect(_handle_outliers_export)
+            dialog.clustering_export_requested.connect(_handle_clustering_export)
 
         refresh_started = False
 
@@ -1275,6 +1299,87 @@ class AnalysisController:
                     show_success_dialog=True,
                 )
 
+    @staticmethod
+    def _localized_clustering_tables(
+        components: tuple[ClusteringExportComponent, ...],
+        snapshot: ClusteringExportSnapshot,
+    ) -> dict[str, pd.DataFrame]:
+        """Build clustering sheets with translated names, headers and metric labels.
+
+        Cluster names are already translated by the snapshot's chart labels.
+        """
+        context = "AnalysisExportDialog"
+        metric_labels = {
+            ClusteringMetric.FEATURES: tr(context, "Features"),
+            ClusteringMetric.CLUSTER_COUNT: tr(context, "Number of clusters"),
+            ClusteringMetric.DBSCAN_EPSILON: tr(context, "Neighborhood radius (eps)"),
+            ClusteringMetric.DBSCAN_MIN_SAMPLES: tr(context, "Minimum samples"),
+            ClusteringMetric.TOTAL_ROWS: tr(context, "Total rows"),
+            ClusteringMetric.ROWS_USED: tr(context, "Rows used"),
+            ClusteringMetric.ROWS_DROPPED: tr(context, "Rows dropped because of missing or infinite values"),
+            ClusteringMetric.CLUSTERS_FOUND: tr(context, "Clusters found"),
+            ClusteringMetric.NOISE_ROWS: tr(context, "Noise rows"),
+            ClusteringMetric.SILHOUETTE: tr(context, "Silhouette score"),
+        }
+        headers = {
+            "cluster": tr(context, "Cluster"),
+            "rows": tr(context, "Rows"),
+            "share": tr(context, "Share"),
+            "metric": tr(context, "Metric"),
+            "value": tr(context, "Value"),
+            "notes": tr(context, "Notes"),
+        }
+        sheet_names = {
+            ClusteringExportComponent.CLUSTER_SIZES: tr(context, "Cluster sizes"),
+            ClusteringExportComponent.MODEL_SUMMARY: tr(context, "Model summary"),
+        }
+        sheets: dict[str, pd.DataFrame] = {}
+        for component, frame in clustering_export_tables(snapshot, components).items():
+            if component is ClusteringExportComponent.MODEL_SUMMARY:
+                frame["metric"] = frame["metric"].map(
+                    lambda key: metric_labels[ClusteringMetric(key)] if isinstance(key, str) else key
+                )
+            sheets[sheet_names[component]] = frame.rename(columns=headers)
+        return sheets
+
+    def _export_clustering(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Export the displayed clustering's localized tables and worker-rendered projection."""
+        if not isinstance(request, ClusteringExportRequest) or request.snapshot is not dialog.exportable_clustering():
+            return
+        snapshot = request.snapshot
+        charts = ClusteringExportComponent.CHARTS in request.components
+        sheets = self._localized_clustering_tables(request.components, snapshot)
+
+        def make_images(
+            progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
+        ) -> tuple[ExcelChartImage, ...]:
+            return render_clustering_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
+        match request.format:
+            case StatisticsExportFormat.EXCEL:
+                exporter.export_excel(
+                    sheets=sheets,
+                    chart_factory=make_images if charts else None,
+                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.CSV:
+                exporter.export_csv(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.BINARY:
+                exporter.export_data(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+
     # ------------------------------------------------------------------
     # Renderers (GUI thread only)
     # ------------------------------------------------------------------
@@ -1979,6 +2084,14 @@ class AnalysisController:
         scale = "standardized" if standardize else "raw"
         scope_suffix = f"fit:{method.value}:{scale}:{parameters}:{':'.join(columns)}"
 
+        def _apply_result(result: object) -> None:
+            view = ClusteringView(cast("ClusteringResult", result))
+            dialog.set_content_widget(view)
+            if view.result().error is None:
+                dialog.set_exportable_clustering(
+                    ClusteringExportSnapshot(view.result(), view.chart_labels(), view.export_notes())
+                )
+
         self._recompute_content(
             dialog,
             category=AnalysisCategory.CLUSTERING,
@@ -1992,7 +2105,7 @@ class AnalysisController:
                 dbscan_epsilon=dbscan_epsilon,
                 dbscan_min_samples=dbscan_min_samples,
             ),
-            apply_result=lambda result: dialog.set_content_widget(ClusteringView(cast("ClusteringResult", result))),
+            apply_result=_apply_result,
             is_stale=lambda: (
                 dialog.config_widget() is not config
                 or config.configuration_revision() != revision

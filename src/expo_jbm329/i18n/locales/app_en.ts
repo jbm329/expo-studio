@@ -153,8 +153,8 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model and applied Outliers exports are available after analysis. Other export and report actions are previews.</source>
-        <translation>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model and applied Outliers exports are available after analysis. Other export and report actions are previews.</translation>
+        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model, applied Outliers and applied Clustering exports are available after analysis. Other export and report actions are previews.</source>
+        <translation>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model, applied Outliers and applied Clustering exports are available after analysis. Other export and report actions are previews.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -850,6 +850,70 @@ Features: {features}</translation>
         <source>Status</source>
         <translation>Status</translation>
     </message>
+    <message>
+        <source>Export the cluster sizes, model summary and chart of the applied clustering, not the original dataset.</source>
+        <translation>Export the cluster sizes, model summary and chart of the applied clustering, not the original dataset.</translation>
+    </message>
+    <message>
+        <source>Apply a clustering successfully before exporting.</source>
+        <translation>Apply a clustering successfully before exporting.</translation>
+    </message>
+    <message>
+        <source>Settings, row counts and silhouette with the displayed model comments.</source>
+        <translation>Settings, row counts and silhouette with the displayed model comments.</translation>
+    </message>
+    <message>
+        <source>K-Means</source>
+        <translation>K-Means</translation>
+    </message>
+    <message>
+        <source>DBSCAN</source>
+        <translation>DBSCAN</translation>
+    </message>
+    <message>
+        <source>Agglomerative</source>
+        <translation>Agglomerative</translation>
+    </message>
+    <message>
+        <source>Cluster sizes</source>
+        <translation>Cluster sizes</translation>
+    </message>
+    <message>
+        <source>Number of clusters</source>
+        <translation>Number of clusters</translation>
+    </message>
+    <message>
+        <source>Neighborhood radius (eps)</source>
+        <translation>Neighborhood radius (eps)</translation>
+    </message>
+    <message>
+        <source>Minimum samples</source>
+        <translation>Minimum samples</translation>
+    </message>
+    <message>
+        <source>Clusters found</source>
+        <translation>Clusters found</translation>
+    </message>
+    <message>
+        <source>Noise rows</source>
+        <translation>Noise rows</translation>
+    </message>
+    <message>
+        <source>Silhouette score</source>
+        <translation>Silhouette score</translation>
+    </message>
+    <message>
+        <source>Cluster</source>
+        <translation>Cluster</translation>
+    </message>
+    <message>
+        <source>Rows</source>
+        <translation>Rows</translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation>Share</translation>
+    </message>
 </context><context>
     <name>ReportPage</name>
     <message>
@@ -1411,6 +1475,10 @@ Please see logs for more information.</source>
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="188" />
         <source>Rows</source>
         <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Features: {columns}</source>
+        <translation>Features: {columns}</translation>
     </message>
 </context><context>
     <name>ColumnComboBox</name>

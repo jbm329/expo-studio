@@ -138,6 +138,16 @@ projection chart. Charts are Excel-only and render in the export worker with
 progress and cancellation; CSV and binary files contain exactly one table.
 Fixed headers such as Row are suffixed with " (2)" if a dataset column has the
 same name. Configuration edits clear the export until the next Apply completes.
+After a successful **Clustering** fit (K-Means, DBSCAN, or Agglomerative),
+export **Cluster sizes** (the displayed clusters with their rows and share of
+the rows used, plus a Noise row for DBSCAN), a **Model summary** of the
+features, method parameters, row counts, clusters found, noise and silhouette
+score with the model comments as notes, and **Charts** with the cluster
+projection (internal PCA), including any sampling caption. Charts are
+Excel-only and render in the export worker; CSV and binary files contain
+exactly one table. Per-row cluster assignments are not exported.
+Configuration edits clear the export until the next Apply completes, and
+failed fits cannot be exported.
 Selections are retained when switching formats; Export is disabled with an
 explanation if the selection is invalid for the format. All choices for other
 analyses are disabled previews and cannot create files. **Add to report** and

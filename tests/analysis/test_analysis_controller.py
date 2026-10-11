@@ -37,6 +37,12 @@ from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigW
 from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
+from expo_jbm329.services.analysis.clustering_export import (
+    CLUSTERING_COMPONENTS,
+    ClusteringExportComponent,
+    ClusteringExportRequest,
+    ClusteringExportSnapshot,
+)
 from expo_jbm329.services.analysis.correlation import (
     CorrelationError,
     CorrelationMethod,
@@ -86,6 +92,7 @@ from expo_jbm329.services.file_writer import FileWriter
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis import analysis_controller as analysis_controller_module
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
+from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
 from tests.analysis.test_outliers_export import multivariate_snapshot as multivariate_outliers_snapshot
 from tests.analysis.test_outliers_export import univariate_snapshot
@@ -625,6 +632,7 @@ class DummyAnalysisDialog:
         self.correlation_export_requested = DummySignal()
         self.regression_export_requested = DummySignal()
         self.outliers_export_requested = DummySignal()
+        self.clustering_export_requested = DummySignal()
         self.placeholder_calls: list[str] = []
         self.content_widgets: list[QWidget] = []
         self.config_widgets: list[QWidget | None] = []
@@ -640,6 +648,7 @@ class DummyAnalysisDialog:
         self._export_correlation = None
         self._export_regression = None
         self._export_outliers = None
+        self._export_clustering = None
         self._correlation_export_revision = 0
         self._analysis_revision = 0
 
@@ -649,6 +658,7 @@ class DummyAnalysisDialog:
         self._export_hypothesis = None
         self._export_regression = None
         self._export_outliers = None
+        self._export_clustering = None
         self.invalidate_correlation_export()
         self._analysis_revision += 1
 
@@ -702,6 +712,14 @@ class DummyAnalysisDialog:
     def exportable_outliers(self):
         if self._selected_category is AnalysisCategory.OUTLIERS:
             return self._export_outliers
+        return None
+
+    def set_exportable_clustering(self, snapshot):
+        self._export_clustering = snapshot
+
+    def exportable_clustering(self):
+        if self._selected_category is AnalysisCategory.CLUSTERING:
+            return self._export_clustering
         return None
 
     def show_placeholder(self, text):
@@ -4624,3 +4642,193 @@ def test_outlier_export_uses_compiled_swedish_labels() -> None:
     assert details.columns.tolist() == ["Mått", "Värde", "Noteringar"]
     assert details["Mått"].tolist()[:3] == ["Tröskel", "Värden", "Saknade"]
     assert sheets["Potentiella avvikare"].columns[2] == "Avstånd förbi gränsen"
+
+
+# ----------------------------------------------------------------------
+# Clustering export
+# ----------------------------------------------------------------------
+
+
+def test_successful_clustering_apply_registers_the_displayed_export_snapshot(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_clustering(async_ops, dialog_factory)
+    assert dlg.exportable_clustering() is None
+    config = _clustering_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    view = _clustering_view(dlg)
+    snapshot = dlg.exportable_clustering()
+    assert isinstance(snapshot, ClusteringExportSnapshot)
+    assert snapshot.result is view.result()
+    assert snapshot.chart_labels == view.chart_labels()
+    assert snapshot.notes == view.export_notes()
+
+    _set_clustering_checked(config, "z", False)
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_clustering() is None
+
+
+def test_failed_clustering_fit_never_registers_an_export_snapshot(dialog_factory):
+    df = pd.DataFrame({"x": [1.0, 1.0, 1.0], "y": [2.0, 2.0, 2.0]})
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_clustering(async_ops, dialog_factory, df)
+    config = _clustering_config(dlg)
+    config._cluster_count_spin.setValue(2)  # noqa: SLF001
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    assert _clustering_view(dlg).result().error is not None
+    assert dlg.exportable_clustering() is None
+
+
+def _clustering_export_context(snapshot: ClusteringExportSnapshot):
+    dialog = AnalysisDialog(parent=None, datasets=[DatasetRef("chosen", "Chosen", 10, 3)], active_tab_id="chosen")
+    dialog.select_category(AnalysisCategory.CLUSTERING)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_clustering(snapshot)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must not look up a dataset")
+    results.current_df.side_effect = AssertionError("Export must not use the active tab")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, Mock()
+
+
+_CLUSTERING_TRANSLATIONS = {
+    "Cluster sizes": "Klusterstorlekar",
+    "Model summary": "Modellsammanfattning",
+    "Charts": "Diagram",
+    "Cluster": "Kluster",
+    "Rows": "Rader",
+    "Share": "Andel",
+    "Metric": "M?tt",
+    "Value": "V?rde",
+    "Notes": "Noteringar",
+    "Features": "Variabler",
+    "Neighborhood radius (eps)": "Grannskapsradie (eps)",
+    "Noise rows": "Brusrader",
+}
+
+
+def test_clustering_excel_export_routes_localized_sheets_and_worker_chart(monkeypatch):
+    snapshot = clustering_snapshot(ClusteringMethod.DBSCAN, dbscan_min_samples=3)
+    controller, dialog, exporter = _clustering_export_context(snapshot)
+    monkeypatch.setattr(
+        analysis_controller_module, "tr", lambda _context, text: _CLUSTERING_TRANSLATIONS.get(text, text)
+    )
+    request = ClusteringExportRequest(snapshot, CLUSTERING_COMPONENTS, StatisticsExportFormat.EXCEL)
+
+    controller._export_clustering(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.export_excel.call_count == 1
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert list(kwargs["sheets"]) == ["Klusterstorlekar", "Modellsammanfattning"]
+    sizes = kwargs["sheets"]["Klusterstorlekar"]
+    assert sizes.columns.tolist() == ["Kluster", "Rader", "Andel"]
+    assert sizes["Kluster"].tolist() == ["Cluster 1", "Cluster 2", "Noise"]
+    summary = kwargs["sheets"]["Modellsammanfattning"]
+    assert summary.columns.tolist() == ["M?tt", "V?rde", "Noteringar"]
+    assert summary["M?tt"].tolist()[:2] == ["Variabler", "Grannskapsradie (eps)"]
+    assert "Brusrader" in summary["M?tt"].tolist()
+    assert summary["Noteringar"].iloc[0] == snapshot.notes[0]
+
+    progress: list[int] = []
+    images = kwargs["chart_factory"](progress.append, lambda: False)
+    assert [image.heading for image in images] == [snapshot.chart_labels.heading]
+    assert progress == [100]
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_clustering_excel_export_without_charts_has_no_chart_factory():
+    snapshot = clustering_snapshot()
+    controller, dialog, exporter = _clustering_export_context(snapshot)
+    request = ClusteringExportRequest(
+        snapshot,
+        (ClusteringExportComponent.MODEL_SUMMARY, ClusteringExportComponent.CLUSTER_SIZES),
+        StatisticsExportFormat.EXCEL,
+    )
+
+    controller._export_clustering(dialog, exporter, request)  # noqa: SLF001
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Model summary", "Cluster sizes"]
+    assert kwargs["chart_factory"] is None
+    assert kwargs["chart_sheet_name"] is None
+    assert kwargs["sheets"]["Model summary"]["Metric"].tolist()[:2] == ["Features", "Number of clusters"]
+
+
+@pytest.mark.parametrize(
+    ("format_choice", "method_name"),
+    [(StatisticsExportFormat.CSV, "export_csv"), (StatisticsExportFormat.BINARY, "export_data")],
+)
+@pytest.mark.parametrize(
+    ("component", "first_column"),
+    [(ClusteringExportComponent.CLUSTER_SIZES, "Cluster"), (ClusteringExportComponent.MODEL_SUMMARY, "Metric")],
+)
+def test_clustering_single_table_routes_to_non_excel_exporters(format_choice, method_name, component, first_column):
+    snapshot = clustering_snapshot()
+    controller, dialog, exporter = _clustering_export_context(snapshot)
+    request = ClusteringExportRequest(snapshot, (component,), format_choice)
+
+    controller._export_clustering(dialog, exporter, request)  # noqa: SLF001
+
+    method = getattr(exporter, method_name)
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    assert kwargs["df"].columns[0] == first_column
+    assert exporter.export_excel.call_count == 0
+
+
+@pytest.mark.parametrize("change", ["category", "content", "other_snapshot", "wrong_type"])
+def test_clustering_export_rejects_stale_or_foreign_requests(change):
+    snapshot = clustering_snapshot()
+    controller, dialog, exporter = _clustering_export_context(snapshot)
+    request: object = ClusteringExportRequest(
+        snapshot, (ClusteringExportComponent.CLUSTER_SIZES,), StatisticsExportFormat.CSV
+    )
+    if change == "category":
+        dialog.select_category(AnalysisCategory.STATISTICS)
+    elif change == "content":
+        dialog.set_content_widget(QWidget())
+    elif change == "other_snapshot":
+        dialog.set_exportable_clustering(clustering_snapshot())
+    else:
+        request = object()
+
+    controller._export_clustering(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.mock_calls == []
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_clustering_export_uses_compiled_swedish_labels() -> None:
+    snapshot = clustering_snapshot(ClusteringMethod.DBSCAN, dbscan_min_samples=3)
+    controller, dialog, exporter = _clustering_export_context(snapshot)
+    translator = QTranslator()
+    catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / "app_sv.qm"
+    assert translator.load(str(catalog))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        controller._export_clustering(  # noqa: SLF001
+            dialog,
+            exporter,
+            ClusteringExportRequest(snapshot, CLUSTERING_COMPONENTS, StatisticsExportFormat.EXCEL),
+        )
+    finally:
+        app.removeTranslator(translator)
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    sheets = kwargs["sheets"]
+    assert list(sheets) == ["Klusterstorlekar", "Modellsammanfattning"]
+    assert sheets["Klusterstorlekar"].columns.tolist() == ["Kluster", "Rader", "Andel"]
+    summary = sheets["Modellsammanfattning"]
+    assert summary.columns.tolist() == ["Mått", "Värde", "Noteringar"]
+    assert summary["Mått"].tolist()[:3] == ["Variabler", "Grannskapsradie (eps)", "Minsta antal observationer"]
+    assert "Silhuettpoäng" in summary["Mått"].tolist()

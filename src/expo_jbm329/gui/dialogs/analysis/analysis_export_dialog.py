@@ -18,6 +18,13 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.services.analysis.categories import HypothesisTest
+from expo_jbm329.services.analysis.clustering import ClusteringMethod
+from expo_jbm329.services.analysis.clustering_export import (
+    CLUSTERING_COMPONENTS,
+    ClusteringExportComponent,
+    ClusteringExportRequest,
+    ClusteringExportSnapshot,
+)
 from expo_jbm329.services.analysis.correlation import CorrelationMethod
 from expo_jbm329.services.analysis.correlation_export import (
     CorrelationExportComponent,
@@ -81,6 +88,8 @@ class AnalysisExportDialog(QDialog):
         outliers: OutlierExportSnapshot | None = None,
         outliers_mode: bool = False,
         outliers_multivariate: bool = False,
+        clustering: ClusteringExportSnapshot | None = None,
+        clustering_mode: bool = False,
     ) -> None:
         """Build grouped export choices and a format selector.
 
@@ -100,6 +109,8 @@ class AnalysisExportDialog(QDialog):
             outliers_mode: Show outlier choices even before Apply.
             outliers_multivariate: Show multivariate rather than univariate
                 choices before Apply; a snapshot decides by its own type.
+            clustering: Successfully displayed applied clustering fit.
+            clustering_mode: Show clustering choices even before Apply.
         """
         super().__init__(parent)
         self.setWindowTitle(self.tr("Export"))
@@ -117,10 +128,13 @@ class AnalysisExportDialog(QDialog):
         self._outliers_multivariate = (
             outliers_multivariate if outliers is None else isinstance(outliers, MultivariateOutlierExportSnapshot)
         )
+        self._clustering = clustering
+        self._clustering_mode = clustering_mode or clustering is not None
         self._hypothesis_choices: dict[HypothesisExportComponent, QCheckBox] = {}
         self._correlation_choices: dict[CorrelationExportComponent, QCheckBox] = {}
         self._regression_choices: dict[RegressionExportComponent, QCheckBox] = {}
         self._outliers_choices: dict[OutlierExportComponent, QCheckBox] = {}
+        self._clustering_choices: dict[ClusteringExportComponent, QCheckBox] = {}
         self._table_choices: dict[OverviewExportTable, QCheckBox] = {}
         self._statistics_choices: dict[StatisticsExportTable, QCheckBox] = {}
         self._overview_mode = overview_mode or overview is not None
@@ -133,6 +147,7 @@ class AnalysisExportDialog(QDialog):
                 self._correlation_mode,
                 self._regression_mode,
                 self._outliers_mode,
+                self._clustering_mode,
             ))
             > 1
         ):
@@ -154,6 +169,8 @@ class AnalysisExportDialog(QDialog):
             self._build_regression_choices(layout)
         elif self._outliers_mode:
             self._build_outliers_choices(layout)
+        elif self._clustering_mode:
+            self._build_clustering_choices(layout)
         else:
             self._build_preview_choices(layout)
         formats = QFormLayout()
@@ -186,6 +203,8 @@ class AnalysisExportDialog(QDialog):
             if self._regression_mode
             else self._outliers_choices
             if self._outliers_mode
+            else self._clustering_choices
+            if self._clustering_mode
             else self._statistics_choices
             if self._statistics_mode
             else self._table_choices
@@ -203,6 +222,7 @@ class AnalysisExportDialog(QDialog):
             or self._correlation_mode
             or self._regression_mode
             or self._outliers_mode
+            or self._clustering_mode
         )
 
     def _explanation_text(self) -> str:
@@ -224,6 +244,10 @@ class AnalysisExportDialog(QDialog):
         if self._outliers_mode:
             return self.tr(
                 "Export the displayed outlier tables and charts of the applied screening, not the original dataset."
+            )
+        if self._clustering_mode:
+            return self.tr(
+                "Export the cluster sizes, model summary and chart of the applied clustering, not the original dataset."
             )
         return self.tr("Layout preview only. Export processing is not implemented yet.")
 
@@ -546,6 +570,45 @@ class AnalysisExportDialog(QDialog):
                 label = self.tr("Charts ({count} column)") if count == 1 else self.tr("Charts ({count} columns)")
                 return label.format(count=fmt_int(count))
 
+    def _build_clustering_choices(self, layout: QVBoxLayout) -> None:
+        """List the applied clustering plainly and offer its displayed tables and chart."""
+        snapshot = self._clustering
+        if snapshot is not None:
+            method_names = {
+                ClusteringMethod.K_MEANS: self.tr("K-Means"),
+                ClusteringMethod.DBSCAN: self.tr("DBSCAN"),
+                ClusteringMethod.AGGLOMERATIVE: self.tr("Agglomerative"),
+            }
+            identity = QLabel(
+                self.tr("Applied method: {method}\nFeatures: {features}").format(
+                    method=method_names[snapshot.result.method], features=" / ".join(snapshot.result.columns)
+                ),
+                self,
+            )
+            identity.setTextFormat(Qt.TextFormat.PlainText)
+            identity.setWordWrap(True)
+            identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            layout.addWidget(identity)
+
+        results = QGroupBox(self.tr("Results"), self)
+        contents = QVBoxLayout(results)
+        labels = {
+            ClusteringExportComponent.CLUSTER_SIZES: self.tr("Cluster sizes"),
+            ClusteringExportComponent.MODEL_SUMMARY: self.tr("Model summary"),
+            ClusteringExportComponent.CHARTS: self.tr("Charts"),
+        }
+        for component in CLUSTERING_COMPONENTS:
+            choice = QCheckBox(labels[component], results)
+            if snapshot is None:
+                choice.setEnabled(False)
+                choice.setToolTip(self.tr("Apply a clustering successfully before exporting."))
+            elif component is ClusteringExportComponent.MODEL_SUMMARY:
+                choice.setToolTip(self.tr("Settings, row counts and silhouette with the displayed model comments."))
+            self._clustering_choices[component] = choice
+            choice.toggled.connect(self._update_export_enabled)
+            contents.addWidget(choice)
+        layout.addWidget(results)
+
     def export_request(
         self,
     ) -> (
@@ -555,9 +618,25 @@ class AnalysisExportDialog(QDialog):
         | CorrelationExportRequest
         | RegressionExportRequest
         | OutlierExportRequest
+        | ClusteringExportRequest
         | None
     ):
         """Return a validated selection, or None for previews/invalid choices."""
+        if self._clustering_mode:
+            if self._clustering is None:
+                return None
+            clustering_components = tuple(
+                component
+                for component, choice in self._clustering_choices.items()
+                if choice.isEnabled() and choice.isChecked()
+            )
+            format_choice = self._format_combo.currentData()
+            if not isinstance(format_choice, StatisticsExportFormat) or not clustering_components:
+                return None
+            try:
+                return ClusteringExportRequest(self._clustering, clustering_components, format_choice)
+            except ValueError:
+                return None
         if self._outliers_mode:
             if self._outliers is None:
                 return None
@@ -699,6 +778,8 @@ class AnalysisExportDialog(QDialog):
             if self._regression_mode
             else self._outliers_choices
             if self._outliers_mode
+            else self._clustering_choices
+            if self._clustering_mode
             else self._statistics_choices
         )
         selected = any(choice.isEnabled() and choice.isChecked() for choice in choices.values())
@@ -712,6 +793,8 @@ class AnalysisExportDialog(QDialog):
             if self._regression_mode
             else self._outliers_choices.get(OutlierExportComponent.CHARTS)
             if self._outliers_mode
+            else self._clustering_choices.get(ClusteringExportComponent.CHARTS)
+            if self._clustering_mode
             else self._statistics_choices.get(StatisticsExportTable.CHARTS)
         )
         chart_selected = chart_choice is not None and chart_choice.isEnabled() and chart_choice.isChecked()
@@ -729,6 +812,8 @@ class AnalysisExportDialog(QDialog):
             reason = self.tr("Apply a regression model successfully before exporting.")
         elif self._outliers_mode and self._outliers is None:
             reason = self.tr("Apply an outlier screening successfully before exporting.")
+        elif self._clustering_mode and self._clustering is None:
+            reason = self.tr("Apply a clustering successfully before exporting.")
         elif self._statistics_mode and self._statistics is None:
             reason = self.tr("Run Statistics successfully before exporting.")
         elif not available:

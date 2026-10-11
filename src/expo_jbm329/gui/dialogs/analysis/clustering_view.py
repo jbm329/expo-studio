@@ -4,24 +4,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
 from expo_jbm329.services.analysis.clustering import (
     MIN_OBSERVATIONS,
     MIN_SELECTED_COLUMNS,
     ClusteringError,
     ClusteringMethod,
 )
+from expo_jbm329.services.analysis.clustering_charts import ClusterProjectionLabels, draw_cluster_projection
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num
 
 if TYPE_CHECKING:
-    from matplotlib.axes import Axes
-
     from expo_jbm329.services.analysis.clustering import ClusteringResult
 
 _RIGHT_ALIGNED = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
@@ -65,6 +63,36 @@ class ClusteringView(QWidget):
             result.dbscan_min_samples,
         )
 
+    def result(self) -> ClusteringResult:
+        """Return the displayed clustering fit."""
+        return self._result
+
+    def chart_labels(self) -> ClusterProjectionLabels:
+        """Return the translated projection text used by the view and its export."""
+        result = self._result
+        captions = rich_text_lines([self._sample_text(result)]) if result.sampled and result.error is None else ()
+        return ClusterProjectionLabels(
+            heading=self.tr("Cluster projection"),
+            title=self.tr("Cluster projection (internal PCA)"),
+            pc1_axis=self.tr("PC1"),
+            pc2_axis=self.tr("PC2"),
+            cluster=self.tr("Cluster {number}"),
+            noise=self.tr("Noise"),
+            captions=captions,
+        )
+
+    def export_notes(self) -> tuple[str, ...]:
+        """Return the displayed model comments and applied features as plain-text lines.
+
+        Returns:
+            The lines, or an empty tuple when the view shows an error.
+        """
+        result = self._result
+        if result.error is not None:
+            return ()
+        features = self.tr("Features: {columns}").format(columns=", ".join(result.columns))
+        return (*rich_text_lines([self._summary_text(result)]), features)
+
     def cluster_table(self) -> QTableWidget | None:
         """Return the cluster size table, or `None` for errors."""
         return self._cluster_table
@@ -101,8 +129,8 @@ class ClusteringView(QWidget):
             case ClusteringMethod.AGGLOMERATIVE:
                 return self.tr("Agglomerative")
 
-    def _summary_label(self, result: ClusteringResult) -> QLabel:
-        """Build summary of method, preprocessing, rows and silhouette."""
+    def _summary_text(self, result: ClusteringResult) -> str:
+        """Return the rich-text summary of method, preprocessing, rows, silhouette and sampling."""
         scaling = self.tr("standardized") if result.standardize else self.tr("not standardized")
         text = self.tr(
             "<b>{method}</b> on {features} features ({scaling}). Used {used} of {total} rows "
@@ -120,10 +148,18 @@ class ClusteringView(QWidget):
         else:
             text += "<br>" + self.tr("Silhouette score: {score}").format(score=fmt_num(result.silhouette_score))
         if result.sampled:
-            text += "<br>" + self.tr("<i>The plot shows a deterministic sample of {count} rows.</i>").format(
-                count=fmt_int(len(result.sample_labels))
-            )
-        label = QLabel(text, self)
+            text += "<br>" + self._sample_text(result)
+        return text
+
+    def _sample_text(self, result: ClusteringResult) -> str:
+        """Return the rich-text disclosure that the plot shows a sample."""
+        return self.tr("<i>The plot shows a deterministic sample of {count} rows.</i>").format(
+            count=fmt_int(len(result.sample_labels))
+        )
+
+    def _summary_label(self, result: ClusteringResult) -> QLabel:
+        """Build summary of method, preprocessing, rows and silhouette."""
+        label = QLabel(self._summary_text(result), self)
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setWordWrap(True)
         label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
@@ -166,25 +202,8 @@ class ClusteringView(QWidget):
         figure = Figure(constrained_layout=True)
         canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
         canvas.setMinimumSize(420, 260)
-        self._draw_plot(figure.add_subplot(111), result)
+        draw_cluster_projection(figure.add_subplot(111), result, self.chart_labels())
         return canvas
-
-    def _draw_plot(self, ax: Axes, result: ClusteringResult) -> None:
-        """Draw the internal two-component PCA projection with cluster colors."""
-        labels = np.asarray(result.sample_labels)
-        x = np.asarray(result.sample_pc1)
-        y = np.asarray(result.sample_pc2)
-        for label in sorted(set(labels.tolist())):
-            mask = labels == label
-            name = self.tr("Noise") if label == -1 else self.tr("Cluster {number}").format(number=label + 1)
-            color = "0.5" if label == -1 else None
-            ax.scatter(x[mask], y[mask], s=8, alpha=0.5, label=name, color=color)
-        ax.axhline(0, color="0.8", linewidth=0.8)
-        ax.axvline(0, color="0.8", linewidth=0.8)
-        ax.set_title(self.tr("Cluster projection (internal PCA)"))
-        ax.set_xlabel(self.tr("PC1"))
-        ax.set_ylabel(self.tr("PC2"))
-        ax.legend(fontsize=8)
 
     def _build_cluster_table(self, result: ClusteringResult) -> QTableWidget:
         """Build cluster membership counts, with a DBSCAN noise row if applicable."""

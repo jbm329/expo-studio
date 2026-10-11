@@ -41,6 +41,7 @@ from expo_jbm329.gui.dialogs.service.common.localization import TR_CLOSE
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.chi_square import initialize_chi_square
 from expo_jbm329.services.analysis.clustering import initialize_clustering
+from expo_jbm329.services.analysis.clustering_export import ClusteringExportComponent, ClusteringExportRequest
 from expo_jbm329.services.analysis.correlation import (
     CorrelationMethod,
     analyze_correlation_matrix,
@@ -73,6 +74,7 @@ from expo_jbm329.services.analysis.statistics import (
 from expo_jbm329.services.analysis.survival import initialize_survival_columns
 from expo_jbm329.services.analysis.timeseries import initialize_time_series
 from expo_jbm329.utils.dataset_ref import DatasetRef
+from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_outliers_export import multivariate_snapshot as multivariate_outliers_snapshot
 from tests.analysis.test_outliers_export import univariate_snapshot
 from tests.analysis.test_regression_export import linear_snapshot
@@ -341,7 +343,7 @@ def test_report_navigation_uses_full_workspace_and_preserves_details_and_analysi
         dialog.close()
 
 
-@pytest.mark.parametrize("category", [AnalysisCategory.OVERVIEW, AnalysisCategory.CLUSTERING])
+@pytest.mark.parametrize("category", [AnalysisCategory.OVERVIEW, AnalysisCategory.PCA])
 def test_export_button_opens_selection_dialog_with_full_text_tooltips(monkeypatch, category):
     captured: list[AnalysisExportDialog] = []
     monkeypatch.setattr(AnalysisExportDialog, "exec", lambda self: captured.append(self))
@@ -1188,3 +1190,56 @@ def test_outliers_export_before_apply_follows_the_displayed_mode(monkeypatch, mu
     choices = captured[0].findChildren(QCheckBox)
     assert choices[0].text() == first_choice
     assert all(not choice.isEnabled() for choice in choices)
+
+
+def test_clustering_export_snapshot_is_scoped_to_current_category_and_dataset():
+    snapshot = clustering_snapshot()
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.OUTLIERS)
+    dialog.set_exportable_clustering(snapshot)
+    assert dialog.exportable_clustering() is None
+
+    dialog.select_category(AnalysisCategory.CLUSTERING)
+    dialog.set_exportable_clustering(snapshot)
+    assert dialog.exportable_clustering() is snapshot
+    dialog.set_content_widget(QWidget())
+    assert dialog.exportable_clustering() is None
+    dialog.set_exportable_clustering(snapshot)
+    dialog.select_dataset("t2")
+    assert dialog.exportable_clustering() is None
+    dialog.set_exportable_clustering(snapshot)
+    dialog.select_category(AnalysisCategory.STATISTICS)
+    assert dialog.exportable_clustering() is None
+
+
+def test_clustering_export_selection_emits_only_the_current_snapshot(monkeypatch):
+    snapshot = clustering_snapshot()
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.CLUSTERING)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_clustering(snapshot)
+    received: list[ClusteringExportRequest] = []
+    dialog.clustering_export_requested.connect(received.append)
+    captured: list[AnalysisExportDialog] = []
+
+    def accept_default_selection(export_dialog):
+        captured.append(export_dialog)
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(AnalysisExportDialog, "exec", accept_default_selection)
+    dialog._show_export_selection()
+
+    assert [choice.text() for choice in captured[0].findChildren(QCheckBox)] == [
+        "Cluster sizes",
+        "Model summary",
+        "Charts",
+    ]
+    assert len(received) == 1
+    assert received[0].snapshot is snapshot
+    assert received[0].components == (ClusteringExportComponent.CLUSTER_SIZES,)
+
+    dialog.set_content_widget(QWidget())
+    dialog._show_export_selection()
+    assert len(captured) == 2
+    assert all(not choice.isEnabled() for choice in captured[1].findChildren(QCheckBox))
+    assert len(received) == 1

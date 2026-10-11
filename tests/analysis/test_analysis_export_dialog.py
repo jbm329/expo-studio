@@ -18,6 +18,12 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+from expo_jbm329.services.analysis.clustering import ClusteringMethod
+from expo_jbm329.services.analysis.clustering_export import (
+    CLUSTERING_COMPONENTS,
+    ClusteringExportComponent,
+    ClusteringExportRequest,
+)
 from expo_jbm329.services.analysis.correlation import CorrelationMethod, analyze_correlation_matrix
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportComponent, CorrelationExportSnapshot
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportComponent, HypothesisExportRequest
@@ -42,6 +48,7 @@ from expo_jbm329.services.analysis.statistics import (
     analyze_descriptive_statistics,
 )
 from expo_jbm329.utils.format_utils import fmt_num
+from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
 from tests.analysis.test_outliers_export import HISTOGRAM_LABELS, multivariate_snapshot, univariate_snapshot
 from tests.analysis.test_regression_export import (
@@ -563,3 +570,68 @@ def test_outliers_dialog_without_applied_screening_never_enables_export(multivar
     assert not dialog._export_button.isEnabled()
     with pytest.raises(ValueError, match="only one"):
         AnalysisExportDialog(outliers_mode=True, regression_mode=True)
+
+
+@pytest.mark.parametrize(
+    ("method", "name"),
+    [
+        (ClusteringMethod.K_MEANS, "K-Means"),
+        (ClusteringMethod.DBSCAN, "DBSCAN"),
+        (ClusteringMethod.AGGLOMERATIVE, "Agglomerative"),
+    ],
+)
+def test_clustering_dialog_names_fit_and_defaults_to_cluster_sizes(method, name):
+    snapshot = clustering_snapshot(method, dbscan_min_samples=3)
+    dialog = AnalysisExportDialog(clustering=snapshot)
+    choices = dialog.findChildren(QCheckBox)
+    assert [choice.text() for choice in choices] == ["Cluster sizes", "Model summary", "Charts"]
+    assert all(choice.isEnabled() for choice in choices)
+    assert [choice.isChecked() for choice in choices] == [True, False, False]
+    assert "model comments" in choices[1].toolTip()
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied method:"))
+    assert label.text() == f"Applied method: {name}\nFeatures: x / y"
+    assert label.textFormat() is Qt.TextFormat.PlainText
+    assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
+    request = dialog.export_request()
+    assert isinstance(request, ClusteringExportRequest)
+    assert request.snapshot is snapshot
+    assert request.components == (ClusteringExportComponent.CLUSTER_SIZES,)
+    assert request.format is StatisticsExportFormat.EXCEL
+
+
+def test_clustering_dialog_limits_single_file_formats_to_one_table_and_keeps_choices():
+    dialog = AnalysisExportDialog(clustering=clustering_snapshot())
+    choices = dialog.findChildren(QCheckBox)
+    formats = dialog.findChild(QComboBox)
+    for choice in choices:
+        choice.setChecked(True)
+    assert dialog.export_request().components == CLUSTERING_COMPONENTS
+    for format_choice in (StatisticsExportFormat.CSV, StatisticsExportFormat.BINARY):
+        formats.setCurrentIndex(formats.findData(format_choice))
+        assert dialog.export_request() is None
+        assert not dialog._export_button.isEnabled()
+        assert all(choice.isChecked() for choice in choices)
+    assert "Charts are available only in Excel" in dialog._selection_explanation.text()
+    choices[2].setChecked(False)
+    assert dialog.export_request() is None
+    choices[0].setChecked(False)
+    request = dialog.export_request()
+    assert request.components == (ClusteringExportComponent.MODEL_SUMMARY,)
+    assert request.format is StatisticsExportFormat.BINARY
+    assert dialog._export_button.isEnabled()
+    choices[1].setChecked(False)
+    assert dialog.export_request() is None
+
+
+def test_clustering_dialog_without_applied_fit_never_enables_export():
+    dialog = AnalysisExportDialog(clustering_mode=True)
+    choices = dialog.findChildren(QCheckBox)
+    assert [choice.text() for choice in choices] == ["Cluster sizes", "Model summary", "Charts"]
+    assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
+    assert all("Apply a clustering" in choice.toolTip() for choice in choices)
+    assert "Apply a clustering" in dialog._selection_explanation.text()
+    assert not any(label.text().startswith("Applied method:") for label in dialog.findChildren(QLabel))
+    assert dialog.export_request() is None
+    assert not dialog._export_button.isEnabled()
+    with pytest.raises(ValueError, match="only one"):
+        AnalysisExportDialog(clustering_mode=True, outliers_mode=True)

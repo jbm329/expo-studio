@@ -473,8 +473,8 @@
         <translation>Lägg till i rapport</translation>
     </message>
     <message>
-        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model and applied Outliers exports are available after analysis. Other export and report actions are previews.</source>
-        <translation>Export av Översikt, Statistik, tillämpade Hypotestester, tillämpade korrelationsmatriser, tillämpade regressionsmodeller och tillämpade avvikaranalyser är tillgänglig efter analys. Övriga export- och rapportåtgärder är förhandsvisningar.</translation>
+        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model, applied Outliers and applied Clustering exports are available after analysis. Other export and report actions are previews.</source>
+        <translation>Export av Översikt, Statistik, tillämpade Hypotestester, tillämpade korrelationsmatriser, tillämpade regressionsmodeller, tillämpade avvikaranalyser och tillämpade klustringar är tillgänglig efter analys. Övriga export- och rapportåtgärder är förhandsvisningar.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -1171,6 +1171,70 @@ Variabler: {features}</translation>
         <source>Status</source>
         <translation>Status</translation>
     </message>
+    <message>
+        <source>Export the cluster sizes, model summary and chart of the applied clustering, not the original dataset.</source>
+        <translation>Exportera klusterstorlekar, modellsammanfattning och diagram från den tillämpade klustringen, inte det ursprungliga datasetet.</translation>
+    </message>
+    <message>
+        <source>Apply a clustering successfully before exporting.</source>
+        <translation>Tillämpa en klustring utan fel innan du exporterar.</translation>
+    </message>
+    <message>
+        <source>Settings, row counts and silhouette with the displayed model comments.</source>
+        <translation>Inställningar, antal rader och silhuettpoäng med de visade modellkommentarerna.</translation>
+    </message>
+    <message>
+        <source>K-Means</source>
+        <translation>K-Means</translation>
+    </message>
+    <message>
+        <source>DBSCAN</source>
+        <translation>DBSCAN</translation>
+    </message>
+    <message>
+        <source>Agglomerative</source>
+        <translation>Agglomerativ</translation>
+    </message>
+    <message>
+        <source>Cluster sizes</source>
+        <translation>Klusterstorlekar</translation>
+    </message>
+    <message>
+        <source>Number of clusters</source>
+        <translation>Antal kluster</translation>
+    </message>
+    <message>
+        <source>Neighborhood radius (eps)</source>
+        <translation>Grannskapsradie (eps)</translation>
+    </message>
+    <message>
+        <source>Minimum samples</source>
+        <translation>Minsta antal observationer</translation>
+    </message>
+    <message>
+        <source>Clusters found</source>
+        <translation>Hittade kluster</translation>
+    </message>
+    <message>
+        <source>Noise rows</source>
+        <translation>Brusrader</translation>
+    </message>
+    <message>
+        <source>Silhouette score</source>
+        <translation>Silhuettpoäng</translation>
+    </message>
+    <message>
+        <source>Cluster</source>
+        <translation>Kluster</translation>
+    </message>
+    <message>
+        <source>Rows</source>
+        <translation>Rader</translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation>Andel</translation>
+    </message>
 </context>
 <context>
     <name>ReportPage</name>
@@ -1748,6 +1812,10 @@ Vänligen se loggfil för mer information.</translation>
         <location filename="../../gui/dialogs/analysis/clustering_view.py" line="188"/>
         <source>Rows</source>
         <translation>Rader</translation>
+    </message>
+    <message>
+        <source>Features: {columns}</source>
+        <translation>Variabler: {columns}</translation>
     </message>
 </context>
 <context>
