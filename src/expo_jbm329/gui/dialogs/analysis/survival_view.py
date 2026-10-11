@@ -11,8 +11,9 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import FixedFormatter, FixedLocator, NullLocator
 from matplotlib.transforms import Bbox
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QScrollArea, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
 from expo_jbm329.services.analysis.regression import MAX_MODEL_TERMS, MAX_PREDICTORS, TermKind
 from expo_jbm329.services.analysis.survival import SurvivalError, survival_term_name
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
@@ -58,12 +59,7 @@ class SurvivalRegressionView(QWidget):
         table_layout.addWidget(self._table)
         summary_panel, summary_layout = self._build_section(self.tr("Model comments"))
         # Only the text scrolls, so the section title stays visible.
-        summary_scroll = QScrollArea(summary_panel)
-        summary_scroll.setWidgetResizable(True)
-        summary_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        summary_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        summary_scroll.setWidget(self._summary_label)
-        summary_layout.addWidget(summary_scroll, 1)
+        summary_layout.addWidget(build_section_scroll_area(self._summary_label, summary_panel), 1)
         splitter.addWidget(table_panel)
         splitter.addWidget(self._build_chart_section())
         splitter.addWidget(summary_panel)
@@ -97,12 +93,7 @@ class SurvivalRegressionView(QWidget):
         self._draw_survival(figure.add_subplot(grid[0, 1]))
         self._draw_risk_counts(figure.add_subplot(grid[1, 1]))
         # Charts keep a readable minimum height and scroll when their section is smaller.
-        scroll = QScrollArea(panel)
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        scroll.setWidget(canvas)
-        layout.addWidget(scroll, 1)
+        layout.addWidget(build_section_scroll_area(canvas, panel), 1)
         return panel
 
     def _draw_forest(self, axis: Axes) -> None:

@@ -14,7 +14,6 @@ from PyQt6.QtWidgets import (
     QFrame,
     QHeaderView,
     QLabel,
-    QScrollArea,
     QSplitter,
     QTableWidget,
     QTableWidgetItem,
@@ -22,6 +21,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
 from expo_jbm329.services.analysis.regression import (
     CONFIDENCE_LEVEL,
     DURBIN_WATSON_HIGH,
@@ -208,11 +208,7 @@ class RegressionView(QWidget):
         self._summary_label = label
 
         # Only the text scrolls, so the section title stays visible.
-        scroll = QScrollArea(panel)
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        scroll.setWidget(label)
+        scroll = build_section_scroll_area(label, panel)
         scroll.setMinimumWidth(260)
         layout.addWidget(scroll, 1)
         return panel
@@ -443,12 +439,7 @@ class RegressionView(QWidget):
         splitter.addWidget(self._build_canvas(lambda ax: self._draw_actual_vs_predicted(ax, plot, result.target)))
         splitter.addWidget(self._build_canvas(lambda ax: self._draw_qq(ax, plot)))
         # Charts keep a readable minimum size and scroll when their section is smaller.
-        scroll = QScrollArea(panel)
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        scroll.setWidget(splitter)
-        layout.addWidget(scroll, 1)
+        layout.addWidget(build_section_scroll_area(splitter, panel), 1)
 
         if plot.sampled:
             caption = QLabel(

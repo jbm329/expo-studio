@@ -9,8 +9,9 @@ from typing import TYPE_CHECKING
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QScrollArea, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.logistic_charts import LogisticChartLabels, build_logistic_charts
 from expo_jbm329.services.analysis.regression import MAX_MODEL_TERMS, MAX_PREDICTORS, TermKind
@@ -67,12 +68,7 @@ class GeneralizedRegressionView(QWidget):
             table_panel, table_layout = self._build_section(self.tr("Model coefficients"))
             table_layout.addWidget(self._table)
             summary_panel, summary_layout = self._build_section(self.tr("Model comments"))
-            summary_scroll = QScrollArea(summary_panel)
-            summary_scroll.setWidgetResizable(True)
-            summary_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-            summary_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-            summary_scroll.setWidget(self._summary_label)
-            summary_layout.addWidget(summary_scroll, 1)
+            summary_layout.addWidget(build_section_scroll_area(self._summary_label, summary_panel), 1)
             splitter.addWidget(table_panel)
             splitter.addWidget(
                 self._build_logistic_chart_section()
@@ -128,9 +124,7 @@ class GeneralizedRegressionView(QWidget):
         predictor_term_count = sum(term.kind is not TermKind.INTERCEPT for term in result.terms)
         canvas.setMinimumHeight(max(400, predictor_term_count * 24 + 320))
         canvas.build_chart(lambda: build_logistic_charts(figure, result, labels))
-        scroll = QScrollArea(panel)
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(canvas)
+        scroll = build_section_scroll_area(canvas, panel)
         scroll.setMinimumHeight(400)
         layout.addWidget(scroll, 1)
         if data is None:
@@ -188,12 +182,7 @@ class GeneralizedRegressionView(QWidget):
         residuals.set_xlabel(self.tr("Fitted count"))
         residuals.set_ylabel(self.tr("Pearson residual"))
         # Charts keep a readable minimum height and scroll when their section is smaller.
-        scroll = QScrollArea(panel)
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        scroll.setWidget(canvas)
-        layout.addWidget(scroll, 1)
+        layout.addWidget(build_section_scroll_area(canvas, panel), 1)
         return panel
 
     def result(self) -> GeneralizedRegressionResult:
