@@ -10,6 +10,7 @@ from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
 from expo_jbm329.services.analysis.clustering import (
     MIN_OBSERVATIONS,
     MIN_SELECTED_COLUMNS,
@@ -27,7 +28,7 @@ _RIGHT_ALIGNED = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 
 
 class ClusteringView(QWidget):
-    """Displays cluster summary, membership counts and an internal PCA plot."""
+    """Displays cluster sizes, an internal PCA plot and model comments in resizable sections."""
 
     def __init__(self, result: ClusteringResult, parent: QWidget | None = None) -> None:
         """Initialize the view for `result`."""
@@ -43,13 +44,13 @@ class ClusteringView(QWidget):
 
         splitter = QSplitter(Qt.Orientation.Vertical, self)
         splitter.setChildrenCollapsible(False)
-        splitter.addWidget(self._build_summary_section(result))
-        splitter.addWidget(self._build_plot_section(result))
         splitter.addWidget(self._build_table_section(result))
-        splitter.setStretchFactor(0, 1)
+        splitter.addWidget(self._build_plot_section(result))
+        splitter.addWidget(self._build_comments_section(result))
+        splitter.setStretchFactor(0, 2)
         splitter.setStretchFactor(1, 4)
-        splitter.setStretchFactor(2, 2)
-        splitter.setSizes([130, 430, 220])
+        splitter.setStretchFactor(2, 1)
+        splitter.setSizes([220, 430, 130])
         layout.addWidget(splitter, 1)
 
     def configuration(self) -> tuple[tuple[str, ...], ClusteringMethod, bool, int, float, int]:
@@ -126,35 +127,39 @@ class ClusteringView(QWidget):
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setWordWrap(True)
         label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         return label
 
-    def _build_summary_section(self, result: ClusteringResult) -> QWidget:
-        """Build the titled clustering summary section."""
-        panel = QWidget(self)
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Summary"), panel))
-        layout.addWidget(self._summary_label(result))
-        layout.addStretch(1)
+    def _build_comments_section(self, result: ClusteringResult) -> QWidget:
+        """Build the titled model-comments section with a scrollable summary."""
+        panel, layout = self._build_section(self.tr("Model comments"))
+        layout.addWidget(build_section_scroll_area(self._summary_label(result), panel), 1)
         return panel
 
     def _build_plot_section(self, result: ClusteringResult) -> QWidget:
-        """Build the titled cluster projection section."""
-        panel = QWidget(self)
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Cluster projection"), panel))
-        layout.addWidget(self._build_plot(result), 1)
+        """Build the titled, scrollable cluster projection section."""
+        panel, layout = self._build_section(self.tr("Cluster projection"))
+        layout.addWidget(build_section_scroll_area(self._build_plot(result), panel), 1)
         return panel
 
     def _build_table_section(self, result: ClusteringResult) -> QWidget:
         """Build the titled cluster-size table section."""
+        panel, layout = self._build_section(self.tr("Cluster sizes"))
+        layout.addWidget(self._build_cluster_table(result), 1)
+        return panel
+
+    def _build_section(self, title: str) -> tuple[QWidget, QVBoxLayout]:
+        """Build a titled section matching the Regression layout."""
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Cluster sizes"), panel))
-        layout.addWidget(self._build_cluster_table(result))
-        return panel
+        label = QLabel(title, panel)
+        label.setTextFormat(Qt.TextFormat.PlainText)
+        font = label.font()
+        font.setBold(True)
+        label.setFont(font)
+        layout.addWidget(label)
+        return panel, layout
 
     def _build_plot(self, result: ClusteringResult) -> QWidget:
         """Build the internal PCA projection colored by cluster label."""
@@ -219,11 +224,4 @@ class ClusteringView(QWidget):
         label = QLabel(text, self)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setWordWrap(True)
-        return label
-
-    @staticmethod
-    def _build_section_title(text: str, parent: QWidget) -> QLabel:
-        """Build a bold title for a clustering section."""
-        label = QLabel(text, parent)
-        label.setStyleSheet("font-weight: bold;")
         return label

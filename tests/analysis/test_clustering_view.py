@@ -5,7 +5,7 @@ import dataclasses
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.clustering_view import ClusteringView
@@ -15,6 +15,7 @@ from expo_jbm329.services.analysis.clustering import (
     ClusterSize,
     analyze_clustering,
 )
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 
 def _result(method: ClusteringMethod = ClusteringMethod.K_MEANS):
@@ -31,37 +32,30 @@ def _labels_text(view: ClusteringView) -> str:
     return "\n".join(label.text() for label in view.findChildren(QLabel))
 
 
+def _section_title(panel) -> str:
+    title = panel.layout().itemAt(0).widget()
+    assert isinstance(title, QLabel)
+    assert title.textFormat() is Qt.TextFormat.PlainText
+    assert title.font().bold()
+    return title.text()
+
+
 @pytest.mark.parametrize("method", list(ClusteringMethod))
-@pytest.mark.parametrize("section", [0, 1])
-def test_section_headers_keep_fixed_content_gap_when_resized(method, section):
-    view = ClusteringView(_result(method))
+@pytest.mark.parametrize(("section", "small_height", "width"), [(1, 120, 1100), (2, 60, 400)])
+def test_projection_and_comments_scroll_below_a_frozen_title(method, section, small_height, width):
+    view = ClusteringView(dataclasses.replace(_result(method), sampled=True))
     panel = view.findChild(QSplitter).widget(section)
-    panel.setParent(None)
-    panel.resize(1100, 500)
-    panel.show()
-    try:
-        QCoreApplication.processEvents()
-        layout = panel.layout()
-        heading = layout.itemAt(0).widget()
-        content = layout.itemAt(1).widget()
-        gap = content.y() - heading.geometry().bottom()
-        heading_geometry = (heading.y(), heading.height())
-        content_height = content.height()
-        assert heading.y() == layout.contentsMargins().top()
-        panel.resize(1100, 800)
-        QCoreApplication.processEvents()
-        assert (heading.y(), heading.height()) == heading_geometry
-        assert content.y() - heading.geometry().bottom() == gap
-        if section == 0:
-            assert content.height() == content_height
-            assert content.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
-        else:
-            assert content.height() > content_height
-            assert layout.stretch(1) == 1
-    finally:
-        panel.close()
-        panel.deleteLater()
-        view.close()
+
+    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=width)
+
+    if section == 1:
+        assert isinstance(content, FigureCanvasQTAgg)
+    else:
+        assert isinstance(content, QLabel)
+        assert content.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+        assert view.method_name(method) in content.text()
+    panel.deleteLater()
+    view.close()
 
 
 @pytest.mark.parametrize("error", list(ClusteringError))
@@ -106,7 +100,7 @@ def test_success_shows_projection_and_cluster_table():
     assert view.configuration() == (result.columns, result.method, True, 2, 0.5, 2)
 
 
-def test_layout_has_titled_summary_plot_and_table_with_adjustable_dividers():
+def test_layout_has_table_plot_and_comments_like_regression():
     view = ClusteringView(_result())
 
     splitters = view.findChildren(QSplitter)
@@ -115,14 +109,15 @@ def test_layout_has_titled_summary_plot_and_table_with_adjustable_dividers():
     assert splitter.orientation() is Qt.Orientation.Vertical
     assert splitter.childrenCollapsible() is False
     assert splitter.count() == 3
-
-    assert any(label.text() == "Summary" for label in splitter.widget(0).findChildren(QLabel))
+    assert [_section_title(splitter.widget(index)) for index in range(3)] == [
+        "Cluster sizes",
+        "Cluster projection",
+        "Model comments",
+    ]
+    table_layout = splitter.widget(0).layout()
+    assert table_layout.itemAt(1).widget() is view.cluster_table()
+    assert table_layout.stretch(1) == 1
     assert len(splitter.widget(1).findChildren(FigureCanvasQTAgg)) == 1
-    assert any(label.text() == "Cluster projection" for label in splitter.widget(1).findChildren(QLabel))
-    table = view.cluster_table()
-    assert table is not None
-    assert splitter.widget(2).isAncestorOf(table)
-    assert any(label.text() == "Cluster sizes" for label in splitter.widget(2).findChildren(QLabel))
 
 
 def test_projection_has_one_collection_per_cluster_and_axes():

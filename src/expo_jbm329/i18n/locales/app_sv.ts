@@ -1337,8 +1337,8 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/clustering_view.py" line="135"/>
-        <source>Summary</source>
-        <translation>Sammanfattning</translation>
+        <source>Model comments</source>
+        <translation>Modellkommentarer</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/clustering_view.py" line="144"/>

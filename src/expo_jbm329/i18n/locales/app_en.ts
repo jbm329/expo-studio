@@ -1004,7 +1004,7 @@ Please see logs for more information.</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="135" />
-        <source>Summary</source>
+        <source>Model comments</source>
         <translation type="unfinished" />
     </message>
     <message>
