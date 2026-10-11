@@ -8602,6 +8602,11 @@ Tid: {sec:.2f}s{sample}</translation>
         <translation>Månadsvis</translation>
     </message>
     <message>
+        <location filename="../../gui/dialogs/analysis/timeseries_config.py" line="41"/>
+        <source>Yearly</source>
+        <translation>Årsvis</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/analysis/timeseries_config.py" line="44"/>
         <source>Resample to</source>
         <translation>Omsampla till</translation>

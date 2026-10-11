@@ -8457,6 +8457,11 @@ Time: {sec:.2f}s{sample}</source>
         <translation type="unfinished" />
     </message>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="41" />
+        <source>Yearly</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
         <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="44" />
         <source>Resample to</source>
         <translation type="unfinished" />

@@ -65,6 +65,19 @@ def test_auto_period_disables_manual_period():
     assert widget.pending_configuration()[3] is None
 
 
+def test_resample_options_include_yearly_after_monthly():
+    widget = TimeSeriesConfigWidget(_result())
+    combo = widget._frequency_combo  # noqa: SLF001
+
+    assert [combo.itemData(index) for index in range(combo.count())] == [None, "D", "W", "MS", "YS"]
+    assert combo.itemText(combo.count() - 1) == "Yearly"
+
+    combo.setCurrentIndex(combo.findData("YS"))
+    widget._apply_button.click()  # noqa: SLF001
+
+    assert widget.analysis_configuration()[2] == "YS"
+
+
 def test_apply_captures_controls_and_emits_once():
     widget = TimeSeriesConfigWidget(_result())
     received = _record(widget.analysis_requested)

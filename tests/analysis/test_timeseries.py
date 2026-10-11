@@ -124,6 +124,21 @@ def test_explicit_resample_aggregates_and_preserves_missing_bins_as_gaps():
     assert "gaps" in result.decomposition_note
 
 
+def test_yearly_resample_averages_each_calendar_year_without_a_default_period():
+    timestamps = pd.date_range("2020-01-01", "2024-12-31", freq="MS")
+    df = pd.DataFrame({"when": timestamps, "value": timestamps.year.astype(float) + timestamps.month / 100})
+
+    result = analyze_time_series(df, resample_frequency="YS")
+
+    assert result.error is None
+    assert result.detected_frequency == "YS"
+    assert result.seasonal_period is None
+    assert [timestamp.year for timestamp in pd.DatetimeIndex(result.timestamps)] == [2020, 2021, 2022, 2023, 2024]
+    assert _result_values(result) == pytest.approx([year + 0.065 for year in range(2020, 2025)])
+    assert result.trend == ()
+    assert "seasonal period" in result.decomposition_note
+
+
 def test_irregular_original_frequency_skips_diagnostics_and_decomposition():
     df = _daily_frame(10).drop(index=[3, 6])
 

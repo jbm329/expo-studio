@@ -98,7 +98,12 @@ class TimeSeriesConfigWidget(QWidget):
 
         self._frequency_combo = QComboBox(self)
         self._frequency_combo.addItem(self.tr("Original frequency"), None)
-        for frequency, label in (("D", self.tr("Daily")), ("W", self.tr("Weekly")), ("MS", self.tr("Monthly"))):
+        for frequency, label in (
+            ("D", self.tr("Daily")),
+            ("W", self.tr("Weekly")),
+            ("MS", self.tr("Monthly")),
+            ("YS", self.tr("Yearly")),
+        ):
             self._frequency_combo.addItem(label, frequency)
         self._frequency_combo.setCurrentIndex(self._frequency_combo.findData(result.resample_frequency))
         form.addRow(QLabel(self.tr("Resample to"), self), self._frequency_combo)
