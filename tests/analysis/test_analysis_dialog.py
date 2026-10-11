@@ -672,6 +672,40 @@ def test_correlation_apply_sits_below_the_columns_frame_at_the_pane_bottom():
         dialog.close()
 
 
+def _show_config_in_dialog(config: QWidget) -> AnalysisDialog:
+    """Show `config` in a real Configuration pane and settle its layout."""
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog.resize(1280, 800)
+    dialog.show()
+    dialog.set_config_widget(config)
+    QCoreApplication.processEvents()
+    return dialog
+
+
+def test_univariate_outliers_apply_is_anchored_at_the_pane_bottom():
+    frame = pd.DataFrame({"a": [float(index) for index in range(30)], "b": [float(index % 7) for index in range(30)]})
+    config = OutliersConfigWidget(initialize_outlier_summary(frame))
+    dialog = _show_config_in_dialog(config)
+    try:
+        viewport = dialog._config_scroll.viewport()  # noqa: SLF001
+        apply_button = config._apply_button  # noqa: SLF001
+        assert config.layout().indexOf(apply_button) == config.layout().count() - 1
+        assert viewport.height() - _bottom_in(apply_button, viewport) <= 1
+        assert apply_button.mapTo(config, QPoint(0, 0)).y() > _bottom_in(config._threshold_spin, config)  # noqa: SLF001
+    finally:
+        dialog.close()
+
+
+def test_multivariate_outliers_apply_sits_below_the_features_frame_at_the_pane_bottom():
+    frame = pd.DataFrame({"a": [float(index) for index in range(30)], "b": [float(index % 7) for index in range(30)]})
+    config = MultivariateOutliersConfigWidget(initialize_multivariate_outliers(frame))
+    dialog = _show_config_in_dialog(config)
+    try:
+        _assert_apply_below_frame_at_pane_bottom(dialog, config, config._column_list.parentWidget())  # noqa: SLF001
+    finally:
+        dialog.close()
+
+
 def test_regression_apply_sits_below_the_predictors_frame_for_every_model():
     df = pd.DataFrame({
         "measurement": [float(index + 1) for index in range(30)],

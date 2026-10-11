@@ -81,11 +81,11 @@ class OutliersConfigWidget(QWidget):
         form.addRow(self._threshold_label, self._threshold_spin)
         self._update_threshold_texts()
         layout.addLayout(form)
+        # Anchors Apply to the bottom of the Configuration pane.
+        layout.addStretch(1)
 
         self._apply_button = QPushButton(self.tr("Apply"), self)
         layout.addWidget(self._apply_button)
-
-        layout.addStretch(1)
 
         # Connected only after the initial population above, so setting up
         # the default selection never emits a spurious first signal.

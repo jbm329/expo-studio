@@ -108,9 +108,10 @@ class MultivariateOutliersConfigWidget(QWidget):
         features_layout.addLayout(actions)
         self._selection_label = QLabel(features)
         features_layout.addWidget(self._selection_label)
-        self._apply_button = QPushButton(self.tr("Apply"), features)
-        features_layout.addWidget(self._apply_button)
         layout.addWidget(features, 1)
+
+        self._apply_button = QPushButton(self.tr("Apply"), self)
+        layout.addWidget(self._apply_button)
 
         self._update_apply_state()
         self._mode_combo.currentIndexChanged.connect(self._on_mode_changed)
