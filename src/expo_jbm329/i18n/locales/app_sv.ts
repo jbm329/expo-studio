@@ -473,8 +473,8 @@
         <translation>Lägg till i rapport</translation>
     </message>
     <message>
-        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model, applied Outliers, applied Clustering and applied PCA exports are available after analysis. Other export and report actions are previews.</source>
-        <translation>Export av Översikt, Statistik, tillämpade Hypotestester, tillämpade korrelationsmatriser, tillämpade regressionsmodeller, tillämpade avvikaranalyser, tillämpade klustringar och tillämpade PCA:er är tillgänglig efter analys. Övriga export- och rapportåtgärder är förhandsvisningar.</translation>
+        <source>Exports are available after an analysis has been applied. Add to report is a preview.</source>
+        <translation>Export är tillgänglig efter att en analys har tillämpats. Lägg till i rapport är en förhandsvisning.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -738,28 +738,8 @@ Tillämpade kolumner: {columns}</translation></message>
         <translation type="vanished">Exportera resultat</translation>
     </message>
     <message>
-        <source>Layout preview only. Export processing is not implemented yet.</source>
-        <translation>Endast förhandsvisning av layouten. Export är ännu inte implementerad.</translation>
-    </message>
-    <message>
         <source>Planned export contents</source>
         <translation type="vanished">Planerat exportinnehåll</translation>
-    </message>
-    <message>
-        <source>Original dataset</source>
-        <translation>Ursprungligt dataset</translation>
-    </message>
-    <message>
-        <source>Analysis dataset</source>
-        <translation>Analysdataset</translation>
-    </message>
-    <message>
-        <source>Predictions</source>
-        <translation>Prediktioner</translation>
-    </message>
-    <message>
-        <source>Residuals</source>
-        <translation>Residualer</translation>
     </message>
     <message>
         <source>Summary / statistics tables</source>
@@ -808,10 +788,6 @@ Tillämpade kolumner: {columns}</translation></message>
     <message>
         <source>Export</source>
         <translation>Exportera</translation>
-    </message>
-    <message>
-        <source>Not implemented yet. No file will be created.</source>
-        <translation>Ännu inte implementerat. Ingen fil kommer att skapas.</translation>
     </message>
     <message>
         <source>Rate ratio</source>
@@ -1278,6 +1254,78 @@ Variabler: {features}</translation>
     <message>
         <source>Cumulative share</source>
         <translation>Kumulativ andel</translation>
+    </message>
+    <message>
+        <source>Applied series: {value} by {time}</source>
+        <translation>Tillämpad serie: {value} per {time}</translation>
+    </message>
+    <message>
+        <source>Series</source>
+        <translation>Serie</translation>
+    </message>
+    <message>
+        <source>Autocorrelation</source>
+        <translation>Autokorrelation</translation>
+    </message>
+    <message>
+        <source>Apply a time series successfully before exporting.</source>
+        <translation>Tillämpa en tidsserie utan fel innan export.</translation>
+    </message>
+    <message>
+        <source>Source rows</source>
+        <translation>Källrader</translation>
+    </message>
+    <message>
+        <source>Invalid rows dropped</source>
+        <translation>Ogiltiga rader borttagna</translation>
+    </message>
+    <message>
+        <source>Duplicate rows averaged</source>
+        <translation>Dubblettrader medelvärdesbildade</translation>
+    </message>
+    <message>
+        <source>Time points</source>
+        <translation>Tidpunkter</translation>
+    </message>
+    <message>
+        <source>Seasonal period</source>
+        <translation>Säsongsperiod</translation>
+    </message>
+    <message>
+        <source>Timestamp</source>
+        <translation>Tidsstämpel</translation>
+    </message>
+    <message>
+        <source>Trend</source>
+        <translation>Trend</translation>
+    </message>
+    <message>
+        <source>Seasonal</source>
+        <translation>Säsong</translation>
+    </message>
+    <message>
+        <source>Residual</source>
+        <translation>Residual</translation>
+    </message>
+    <message>
+        <source>Lag</source>
+        <translation>Fördröjning</translation>
+    </message>
+    <message>
+        <source>One row per time point after averaging duplicate timestamps and any resampling, with the decomposition when available.</source>
+        <translation>En rad per tidpunkt efter medelvärdesbildning av dubblerade tidsstämplar och eventuell omsampling, med dekomponeringen när den finns.</translation>
+    </message>
+    <message>
+        <source>Row diagnostics and seasonal period with the displayed model comments.</source>
+        <translation>Raddiagnostik och säsongsperiod med de visade modellkommentarerna.</translation>
+    </message>
+    <message>
+        <source>The series and, when available, the autocorrelation and decomposition.</source>
+        <translation>Serien och, när de finns, autokorrelationen och dekomponeringen.</translation>
+    </message>
+    <message>
+        <source>Export the prepared series, autocorrelation, model summary and charts of the applied time series, not the original dataset.</source>
+        <translation>Exportera den förberedda serien, autokorrelationen, modellsammanfattningen och diagrammen för den tillämpade tidsserien, inte det ursprungliga datasetet.</translation>
     </message>
 </context>
 <context>
@@ -9259,6 +9307,46 @@ Tid: {sec:.2f}s{sample}</translation>
         <location filename="../../gui/dialogs/analysis/timeseries_view.py" line="134"/>
         <source>Residual</source>
         <translation>Residual</translation>
+    </message>
+    <message>
+        <source>Additive</source>
+        <translation>Additiv</translation>
+    </message>
+    <message>
+        <source>Multiplicative</source>
+        <translation>Multiplikativ</translation>
+    </message>
+    <message>
+        <source>Decomposition model: {model}</source>
+        <translation>Dekomponeringsmodell: {model}</translation>
+    </message>
+    <message>
+        <source>The autocorrelation requires a regular time frequency.</source>
+        <translation>Autokorrelationen kräver en regelbunden tidsfrekvens.</translation>
+    </message>
+    <message>
+        <source>The autocorrelation is unavailable while the series has gaps.</source>
+        <translation>Autokorrelationen är inte tillgänglig när serien har luckor.</translation>
+    </message>
+    <message>
+        <source>Seasonal decomposition requires a regular time frequency.</source>
+        <translation>Säsongsdekomponering kräver en regelbunden tidsfrekvens.</translation>
+    </message>
+    <message>
+        <source>Seasonal decomposition is unavailable while the series has gaps.</source>
+        <translation>Säsongsdekomponering är inte tillgänglig när serien har luckor.</translation>
+    </message>
+    <message>
+        <source>No seasonal period could be detected; choose one to decompose the series.</source>
+        <translation>Ingen säsongsperiod kunde identifieras; välj en för att dekomponera serien.</translation>
+    </message>
+    <message>
+        <source>Seasonal decomposition needs at least two complete seasonal cycles.</source>
+        <translation>Säsongsdekomponering kräver minst två fullständiga säsongscykler.</translation>
+    </message>
+    <message>
+        <source>Multiplicative decomposition requires all values to be greater than zero.</source>
+        <translation>Multiplikativ dekomponering kräver att alla värden är större än noll.</translation>
     </message>
 </context>
 <context>

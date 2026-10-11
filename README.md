@@ -157,9 +157,19 @@ any sampling caption. Charts are Excel-only and render in the export worker;
 CSV and binary files contain exactly one table. Per-row component scores are
 not exported. Configuration edits clear the export until the next Apply
 completes, and failed fits cannot be exported.
+After a successful **Time Series** analysis, export the prepared **Series**
+(one row per time point after averaging duplicate timestamps and any
+resampling, with trend, seasonal and residual columns when decomposed),
+**Autocorrelation** (one row per lag, when available), a **Model summary** of
+the row diagnostics and seasonal period with the model comments and any
+unavailability reasons as notes, and **Charts** with the series plot plus the
+autocorrelation and seasonal decomposition when available. Charts are
+Excel-only and render in the export worker; CSV and binary files contain
+exactly one table. Excel stores timezone-aware timestamps as local wall-clock
+time without the timezone. Configuration edits clear the export until the next
+Apply completes, and failed analyses cannot be exported.
 Selections are retained when switching formats; Export is disabled with an
-explanation if the selection is invalid for the format. All choices for other
-analyses are disabled previews and cannot create files. **Add to report** and
+explanation if the selection is invalid for the format. **Add to report** and
 **Reports(0)** remain disabled workflow previews. Collecting analyses and generating
 HTML reports are not implemented yet. Existing main-window data exports are unchanged.
 

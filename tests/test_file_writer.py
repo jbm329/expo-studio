@@ -341,14 +341,19 @@ def test_named_archive_failure_closes_handles(tmp_path: Path, writer: FileWriter
 
 
 @pytest.mark.parametrize("streaming", [True, False])
-def test_named_bad_cell_failure_is_atomic(tmp_path: Path, writer: FileWriter, streaming: bool) -> None:
+def test_named_bad_cell_failure_is_atomic(
+    tmp_path: Path, writer: FileWriter, streaming: bool, monkeypatch: pytest.MonkeyPatch
+) -> None:
     path = tmp_path / "out.xlsx"
     path.write_bytes(b"original")
-    frame = (
-        pd.DataFrame({"value": [pd.Timestamp("2026-01-01", tz="UTC")]})
-        if not streaming
-        else pd.DataFrame({"value": [1, {"unsupported": 2}]})
-    )
+    frame = pd.DataFrame({"value": [1, {"unsupported": 2}]})
+    if not streaming:
+
+        def reject_cell(*_args: object, **_kwargs: object) -> None:
+            message = "Cannot convert cell"
+            raise ValueError(message)
+
+        monkeypatch.setattr(pd.DataFrame, "to_excel", reject_cell)
     progress: list[int] = []
     with pytest.raises(ValueError):
         writer.save_excel_sheets({"One": frame}, path, streaming=streaming, progress_cb=progress.append)
@@ -502,3 +507,43 @@ def test_legacy_excel_splitting_keeps_all_rows(tmp_path: Path, writer: FileWrite
         assert values == [(value, value) if index else (value,) for value in range(5)]
     finally:
         workbook.close()
+
+
+@pytest.mark.parametrize("streaming", [True, False])
+@pytest.mark.parametrize("index", [True, False])
+def test_named_timezone_aware_datetimes_keep_wall_clock(
+    tmp_path: Path, writer: FileWriter, streaming: bool, index: bool
+) -> None:
+    stamps = pd.DatetimeIndex(["2026-01-01 09:30", "2026-07-01 18:00"], tz="Europe/Stockholm", name="stamp")
+    frame = pd.DataFrame({"when": stamps, "value": [1, 2]}, index=stamps)
+    path = tmp_path / "out.xlsx"
+
+    writer.save_excel_sheets({"One": frame}, path, streaming=streaming, index=index)
+
+    workbook = load_workbook(path)
+    try:
+        rows = list(workbook["One"].values)
+    finally:
+        workbook.close()
+    expected = [stamp.to_pydatetime().replace(tzinfo=None) for stamp in stamps]
+    when_position = 1 if index else 0
+    assert [row[when_position] for row in rows[1:]] == expected
+    if index:
+        assert [row[0] for row in rows[1:]] == expected
+    assert frame["when"].dt.tz is not None
+    assert frame.index.tz is not None
+
+
+def test_pandas_excel_writes_timezone_aware_datetimes(tmp_path: Path, writer: FileWriter) -> None:
+    stamp = pd.Timestamp("2026-03-01 12:15", tz="UTC")
+    path = tmp_path / "out.xlsx"
+
+    writer.save_excel(pd.DataFrame({"when": [stamp]}), path, streaming=False)
+
+    assert pd.read_excel(path)["when"].tolist() == [stamp.tz_localize(None)]
+
+
+def test_excel_naive_datetimes_returns_original_frame_without_timezones() -> None:
+    frame = pd.DataFrame({"when": pd.to_datetime(["2026-01-01"])}, index=pd.to_datetime(["2026-01-02"]))
+
+    assert FileWriter._excel_naive_datetimes(frame, index=True) is frame

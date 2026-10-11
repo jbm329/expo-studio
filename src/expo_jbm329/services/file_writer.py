@@ -358,6 +358,34 @@ class FileWriter:
         return max(1, (len(frame) + row_limit - 2) // (row_limit - 1))
 
     @staticmethod
+    def _excel_naive_datetimes(frame: pd.DataFrame, *, index: bool) -> pd.DataFrame:
+        """Drop timezones from datetime columns for the pandas Excel path.
+
+        Excel cannot store timezone-aware datetimes. Like the streaming path,
+        values keep their local wall-clock time and lose the timezone.
+
+        Args:
+            frame: Frame about to be written.
+            index: Whether the index is written as well.
+
+        Returns:
+            The original frame when nothing is timezone-aware, otherwise a
+            shallow copy with timezone-naive datetime columns and index.
+        """
+        aware_columns = [
+            position for position, dtype in enumerate(frame.dtypes) if isinstance(dtype, pd.DatetimeTZDtype)
+        ]
+        aware_index = index and isinstance(frame.index, pd.DatetimeIndex) and frame.index.tz is not None
+        if not aware_columns and not aware_index:
+            return frame
+        naive = frame.copy(deep=False)
+        for position in aware_columns:
+            naive.isetitem(position, naive.iloc[:, position].dt.tz_localize(None))
+        if aware_index:
+            naive.index = cast("pd.DatetimeIndex", naive.index).tz_localize(None)
+        return naive
+
+    @staticmethod
     def _save_excel_workbook(workbook: Workbook, destination: Path | BinaryIO) -> None:
         """Serialize with an owned archive, including failed-save cleanup."""
         from zipfile import ZIP_DEFLATED, ZipFile
@@ -577,7 +605,7 @@ class FileWriter:
                     try:
                         for name, frame in captured.items():
                             check_cancel()
-                            frame.to_excel(
+                            self._excel_naive_datetimes(frame, index=index).to_excel(
                                 excel_writer,
                                 sheet_name=name,
                                 index=index,
@@ -696,7 +724,9 @@ class FileWriter:
                 )
             try:
                 with pd.ExcelWriter(path, engine="openpyxl") as excel_writer:
-                    df.to_excel(excel_writer, sheet_name=sheet_name, index=index, na_rep=excel_na_rep)
+                    self._excel_naive_datetimes(df, index=index).to_excel(
+                        excel_writer, sheet_name=sheet_name, index=index, na_rep=excel_na_rep
+                    )
             except (
                 AttributeError,
                 ConnectionError,

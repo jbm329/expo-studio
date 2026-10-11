@@ -153,8 +153,8 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model, applied Outliers, applied Clustering and applied PCA exports are available after analysis. Other export and report actions are previews.</source>
-        <translation>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model, applied Outliers, applied Clustering and applied PCA exports are available after analysis. Other export and report actions are previews.</translation>
+        <source>Exports are available after an analysis has been applied. Add to report is a preview.</source>
+        <translation>Exports are available after an analysis has been applied. Add to report is a preview.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -417,28 +417,8 @@ Applied columns: {columns}</translation></message>
         <translation type="vanished" />
     </message>
     <message>
-        <source>Layout preview only. Export processing is not implemented yet.</source>
-        <translation>Layout preview only. Export processing is not implemented yet.</translation>
-    </message>
-    <message>
         <source>Planned export contents</source>
         <translation type="vanished" />
-    </message>
-    <message>
-        <source>Original dataset</source>
-        <translation>Original dataset</translation>
-    </message>
-    <message>
-        <source>Analysis dataset</source>
-        <translation>Analysis dataset</translation>
-    </message>
-    <message>
-        <source>Predictions</source>
-        <translation>Predictions</translation>
-    </message>
-    <message>
-        <source>Residuals</source>
-        <translation>Residuals</translation>
     </message>
     <message>
         <source>Summary / statistics tables</source>
@@ -487,10 +467,6 @@ Applied columns: {columns}</translation></message>
     <message>
         <source>Export</source>
         <translation>Export</translation>
-    </message>
-    <message>
-        <source>Not implemented yet. No file will be created.</source>
-        <translation>Not implemented yet. No file will be created.</translation>
     </message>
     <message>
         <source>Rate ratio</source>
@@ -957,6 +933,78 @@ Features: {features}</translation>
     <message>
         <source>Cumulative share</source>
         <translation>Cumulative share</translation>
+    </message>
+    <message>
+        <source>Applied series: {value} by {time}</source>
+        <translation>Applied series: {value} by {time}</translation>
+    </message>
+    <message>
+        <source>Series</source>
+        <translation>Series</translation>
+    </message>
+    <message>
+        <source>Autocorrelation</source>
+        <translation>Autocorrelation</translation>
+    </message>
+    <message>
+        <source>Apply a time series successfully before exporting.</source>
+        <translation>Apply a time series successfully before exporting.</translation>
+    </message>
+    <message>
+        <source>Source rows</source>
+        <translation>Source rows</translation>
+    </message>
+    <message>
+        <source>Invalid rows dropped</source>
+        <translation>Invalid rows dropped</translation>
+    </message>
+    <message>
+        <source>Duplicate rows averaged</source>
+        <translation>Duplicate rows averaged</translation>
+    </message>
+    <message>
+        <source>Time points</source>
+        <translation>Time points</translation>
+    </message>
+    <message>
+        <source>Seasonal period</source>
+        <translation>Seasonal period</translation>
+    </message>
+    <message>
+        <source>Timestamp</source>
+        <translation>Timestamp</translation>
+    </message>
+    <message>
+        <source>Trend</source>
+        <translation>Trend</translation>
+    </message>
+    <message>
+        <source>Seasonal</source>
+        <translation>Seasonal</translation>
+    </message>
+    <message>
+        <source>Residual</source>
+        <translation>Residual</translation>
+    </message>
+    <message>
+        <source>Lag</source>
+        <translation>Lag</translation>
+    </message>
+    <message>
+        <source>One row per time point after averaging duplicate timestamps and any resampling, with the decomposition when available.</source>
+        <translation>One row per time point after averaging duplicate timestamps and any resampling, with the decomposition when available.</translation>
+    </message>
+    <message>
+        <source>Row diagnostics and seasonal period with the displayed model comments.</source>
+        <translation>Row diagnostics and seasonal period with the displayed model comments.</translation>
+    </message>
+    <message>
+        <source>The series and, when available, the autocorrelation and decomposition.</source>
+        <translation>The series and, when available, the autocorrelation and decomposition.</translation>
+    </message>
+    <message>
+        <source>Export the prepared series, autocorrelation, model summary and charts of the applied time series, not the original dataset.</source>
+        <translation>Export the prepared series, autocorrelation, model summary and charts of the applied time series, not the original dataset.</translation>
     </message>
 </context><context>
     <name>ReportPage</name>
@@ -9113,6 +9161,46 @@ Time: {sec:.2f}s{sample}</source>
         <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="134" />
         <source>Residual</source>
         <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Additive</source>
+        <translation>Additive</translation>
+    </message>
+    <message>
+        <source>Multiplicative</source>
+        <translation>Multiplicative</translation>
+    </message>
+    <message>
+        <source>Decomposition model: {model}</source>
+        <translation>Decomposition model: {model}</translation>
+    </message>
+    <message>
+        <source>The autocorrelation requires a regular time frequency.</source>
+        <translation>The autocorrelation requires a regular time frequency.</translation>
+    </message>
+    <message>
+        <source>The autocorrelation is unavailable while the series has gaps.</source>
+        <translation>The autocorrelation is unavailable while the series has gaps.</translation>
+    </message>
+    <message>
+        <source>Seasonal decomposition requires a regular time frequency.</source>
+        <translation>Seasonal decomposition requires a regular time frequency.</translation>
+    </message>
+    <message>
+        <source>Seasonal decomposition is unavailable while the series has gaps.</source>
+        <translation>Seasonal decomposition is unavailable while the series has gaps.</translation>
+    </message>
+    <message>
+        <source>No seasonal period could be detected; choose one to decompose the series.</source>
+        <translation>No seasonal period could be detected; choose one to decompose the series.</translation>
+    </message>
+    <message>
+        <source>Seasonal decomposition needs at least two complete seasonal cycles.</source>
+        <translation>Seasonal decomposition needs at least two complete seasonal cycles.</translation>
+    </message>
+    <message>
+        <source>Multiplicative decomposition requires all values to be greater than zero.</source>
+        <translation>Multiplicative decomposition requires all values to be greater than zero.</translation>
     </message>
 </context><context>
     <name>ToolbarController</name>

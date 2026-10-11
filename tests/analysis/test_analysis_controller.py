@@ -94,6 +94,12 @@ from expo_jbm329.services.analysis.statistics import (
     analyze_descriptive_statistics,
 )
 from expo_jbm329.services.analysis.timeseries import DecompositionModel
+from expo_jbm329.services.analysis.timeseries_export import (
+    TIME_SERIES_COMPONENTS,
+    TimeSeriesExportComponent,
+    TimeSeriesExportRequest,
+    TimeSeriesExportSnapshot,
+)
 from expo_jbm329.services.file_writer import FileWriter
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis import analysis_controller as analysis_controller_module
@@ -104,6 +110,7 @@ from tests.analysis.test_outliers_export import multivariate_snapshot as multiva
 from tests.analysis.test_outliers_export import univariate_snapshot
 from tests.analysis.test_pca_export import pca_snapshot
 from tests.analysis.test_regression_export import cox_snapshot, linear_snapshot, logistic_snapshot
+from tests.analysis.test_timeseries_export import irregular_snapshot, time_series_snapshot
 
 _CONTROLLER_MODULE = "expo_jbm329.workbench.controllers.analysis.analysis_controller"
 
@@ -641,6 +648,7 @@ class DummyAnalysisDialog:
         self.outliers_export_requested = DummySignal()
         self.clustering_export_requested = DummySignal()
         self.pca_export_requested = DummySignal()
+        self.time_series_export_requested = DummySignal()
         self.placeholder_calls: list[str] = []
         self.content_widgets: list[QWidget] = []
         self.config_widgets: list[QWidget | None] = []
@@ -658,6 +666,7 @@ class DummyAnalysisDialog:
         self._export_outliers = None
         self._export_clustering = None
         self._export_pca = None
+        self._export_time_series = None
         self._correlation_export_revision = 0
         self._analysis_revision = 0
 
@@ -669,6 +678,7 @@ class DummyAnalysisDialog:
         self._export_outliers = None
         self._export_clustering = None
         self._export_pca = None
+        self._export_time_series = None
         self.invalidate_correlation_export()
         self._analysis_revision += 1
 
@@ -738,6 +748,14 @@ class DummyAnalysisDialog:
     def exportable_pca(self):
         if self._selected_category is AnalysisCategory.PCA:
             return self._export_pca
+        return None
+
+    def set_exportable_time_series(self, snapshot):
+        self._export_time_series = snapshot
+
+    def exportable_time_series(self):
+        if self._selected_category is AnalysisCategory.TIME_SERIES:
+            return self._export_time_series
         return None
 
     def show_placeholder(self, text):
@@ -5051,4 +5069,234 @@ def test_pca_export_uses_compiled_swedish_labels() -> None:
         "Totalt antal rader",
         "Använda rader",
         "Rader borttagna på grund av saknade eller oändliga värden",
+    ]
+
+
+# ----------------------------------------------------------------------
+# Time series export
+# ----------------------------------------------------------------------
+
+
+def test_successful_time_series_apply_registers_the_displayed_export_snapshot(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_time_series(async_ops, dialog_factory)
+    assert dlg.exportable_time_series() is None
+    config = _time_series_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    view = _time_series_view(dlg)
+    snapshot = dlg.exportable_time_series()
+    assert isinstance(snapshot, TimeSeriesExportSnapshot)
+    assert snapshot.result is view.result()
+    assert snapshot.chart_labels == view.chart_labels()
+    assert snapshot.notes == view.export_notes()
+    assert snapshot.autocorrelation_note == view.autocorrelation_note()
+
+    config._auto_period.toggle()  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_time_series() is None
+
+
+def test_failed_time_series_analysis_never_registers_an_export_snapshot(dialog_factory):
+    df = pd.DataFrame({"when": pd.date_range("2025-01-01", periods=2, freq="D"), "value": [1.0, 2.0]})
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_time_series(async_ops, dialog_factory, df)
+    _time_series_config(dlg)._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    assert _time_series_view(dlg).result().error is not None
+    assert dlg.exportable_time_series() is None
+
+
+def _time_series_export_context(snapshot: TimeSeriesExportSnapshot):
+    dialog = AnalysisDialog(parent=None, datasets=[DatasetRef("chosen", "Chosen", 10, 3)], active_tab_id="chosen")
+    dialog.select_category(AnalysisCategory.TIME_SERIES)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_time_series(snapshot)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must not look up a dataset")
+    results.current_df.side_effect = AssertionError("Export must not use the active tab")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, Mock()
+
+
+_TIME_SERIES_TRANSLATIONS = {
+    "Series": "Serie",
+    "Autocorrelation": "Autokorrelation",
+    "Model summary": "Modellsammanfattning",
+    "Charts": "Diagram",
+    "Timestamp": "Tidsstampel",
+    "Value": "Varde",
+    "Trend": "Trend",
+    "Seasonal": "Sasong",
+    "Residual": "Residual",
+    "Lag": "Fordrojning",
+    "Metric": "Matt",
+    "Notes": "Noteringar",
+    "Source rows": "Kallrader",
+    "Invalid rows dropped": "Ogiltiga rader",
+    "Duplicate rows averaged": "Dubblettrader",
+    "Time points": "Tidpunkter",
+    "Seasonal period": "Sasongsperiod",
+}
+
+
+def test_time_series_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch):
+    snapshot = time_series_snapshot()
+    controller, dialog, exporter = _time_series_export_context(snapshot)
+    monkeypatch.setattr(
+        analysis_controller_module, "tr", lambda _context, text: _TIME_SERIES_TRANSLATIONS.get(text, text)
+    )
+    request = TimeSeriesExportRequest(snapshot, TIME_SERIES_COMPONENTS, StatisticsExportFormat.EXCEL)
+
+    controller._export_time_series(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.export_excel.call_count == 1
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert list(kwargs["sheets"]) == ["Serie", "Autokorrelation", "Modellsammanfattning"]
+    series = kwargs["sheets"]["Serie"]
+    assert series.columns.tolist() == ["Tidsstampel", "Varde", "Trend", "Sasong", "Residual"]
+    assert len(series) == 21
+    assert kwargs["sheets"]["Autokorrelation"].columns.tolist() == ["Fordrojning", "Autokorrelation"]
+    summary = kwargs["sheets"]["Modellsammanfattning"]
+    assert summary.columns.tolist() == ["Matt", "Varde", "Noteringar"]
+    assert summary["Matt"].tolist() == ["Kallrader", "Ogiltiga rader", "Dubblettrader", "Tidpunkter", "Sasongsperiod"]
+    assert summary["Noteringar"].iloc[0] == snapshot.notes[0]
+
+    progress: list[int] = []
+    images = kwargs["chart_factory"](progress.append, lambda: False)
+    assert [image.heading for image in images] == [
+        snapshot.chart_labels.series_title,
+        snapshot.chart_labels.acf_title,
+        snapshot.chart_labels.decomposition_title,
+    ]
+    assert progress == [33, 66, 100]
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_time_series_excel_charts_skip_unavailable_diagnostics():
+    snapshot = irregular_snapshot()
+    controller, dialog, exporter = _time_series_export_context(snapshot)
+    request = TimeSeriesExportRequest(
+        snapshot,
+        (TimeSeriesExportComponent.SERIES, TimeSeriesExportComponent.CHARTS),
+        StatisticsExportFormat.EXCEL,
+    )
+
+    controller._export_time_series(dialog, exporter, request)  # noqa: SLF001
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Series"]
+    assert kwargs["sheets"]["Series"].columns.tolist() == ["Timestamp", "Value"]
+    images = kwargs["chart_factory"](None, None)
+    assert [image.heading for image in images] == [snapshot.chart_labels.series_title]
+
+
+def test_time_series_excel_export_without_charts_has_no_chart_factory():
+    snapshot = time_series_snapshot()
+    controller, dialog, exporter = _time_series_export_context(snapshot)
+    request = TimeSeriesExportRequest(
+        snapshot,
+        (TimeSeriesExportComponent.MODEL_SUMMARY, TimeSeriesExportComponent.SERIES),
+        StatisticsExportFormat.EXCEL,
+    )
+
+    controller._export_time_series(dialog, exporter, request)  # noqa: SLF001
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Model summary", "Series"]
+    assert kwargs["chart_factory"] is None
+    assert kwargs["chart_sheet_name"] is None
+    assert kwargs["sheets"]["Model summary"]["Metric"].tolist() == [
+        "Source rows",
+        "Invalid rows dropped",
+        "Duplicate rows averaged",
+        "Time points",
+        "Seasonal period",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("format_choice", "method_name"),
+    [(StatisticsExportFormat.CSV, "export_csv"), (StatisticsExportFormat.BINARY, "export_data")],
+)
+@pytest.mark.parametrize(
+    ("component", "first_column"),
+    [
+        (TimeSeriesExportComponent.SERIES, "Timestamp"),
+        (TimeSeriesExportComponent.AUTOCORRELATION, "Lag"),
+        (TimeSeriesExportComponent.MODEL_SUMMARY, "Metric"),
+    ],
+)
+def test_time_series_single_table_routes_to_non_excel_exporters(format_choice, method_name, component, first_column):
+    snapshot = time_series_snapshot()
+    controller, dialog, exporter = _time_series_export_context(snapshot)
+    request = TimeSeriesExportRequest(snapshot, (component,), format_choice)
+
+    controller._export_time_series(dialog, exporter, request)  # noqa: SLF001
+
+    method = getattr(exporter, method_name)
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    assert kwargs["df"].columns[0] == first_column
+    assert exporter.export_excel.call_count == 0
+
+
+@pytest.mark.parametrize("change", ["category", "content", "other_snapshot", "wrong_type"])
+def test_time_series_export_rejects_stale_or_foreign_requests(change):
+    snapshot = time_series_snapshot()
+    controller, dialog, exporter = _time_series_export_context(snapshot)
+    request: object = TimeSeriesExportRequest(snapshot, (TimeSeriesExportComponent.SERIES,), StatisticsExportFormat.CSV)
+    if change == "category":
+        dialog.select_category(AnalysisCategory.STATISTICS)
+    elif change == "content":
+        dialog.set_content_widget(QWidget())
+    elif change == "other_snapshot":
+        dialog.set_exportable_time_series(time_series_snapshot())
+    else:
+        request = object()
+
+    controller._export_time_series(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.mock_calls == []
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_time_series_export_uses_compiled_swedish_labels() -> None:
+    snapshot = time_series_snapshot()
+    controller, dialog, exporter = _time_series_export_context(snapshot)
+    translator = QTranslator()
+    catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / "app_sv.qm"
+    assert translator.load(str(catalog))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        controller._export_time_series(  # noqa: SLF001
+            dialog,
+            exporter,
+            TimeSeriesExportRequest(snapshot, TIME_SERIES_COMPONENTS, StatisticsExportFormat.EXCEL),
+        )
+    finally:
+        app.removeTranslator(translator)
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    sheets = kwargs["sheets"]
+    assert list(sheets) == ["Serie", "Autokorrelation", "Modellsammanfattning"]
+    assert sheets["Serie"].columns.tolist() == ["Tidsstämpel", "Värde", "Trend", "Säsong", "Residual"]
+    assert sheets["Autokorrelation"].columns.tolist() == ["Fördröjning", "Autokorrelation"]
+    summary = sheets["Modellsammanfattning"]
+    assert summary.columns.tolist() == ["Mått", "Värde", "Noteringar"]
+    assert summary["Mått"].tolist() == [
+        "Källrader",
+        "Ogiltiga rader borttagna",
+        "Dubblettrader medelvärdesbildade",
+        "Tidpunkter",
+        "Säsongsperiod",
     ]

@@ -153,6 +153,14 @@ from expo_jbm329.services.analysis.survival import (
     initialize_survival_columns,
 )
 from expo_jbm329.services.analysis.timeseries import analyze_time_series, initialize_time_series
+from expo_jbm329.services.analysis.timeseries_charts import render_time_series_charts
+from expo_jbm329.services.analysis.timeseries_export import (
+    TimeSeriesExportComponent,
+    TimeSeriesExportRequest,
+    TimeSeriesExportSnapshot,
+    TimeSeriesMetric,
+    time_series_export_tables,
+)
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num
 from expo_jbm329.utils.i18n_utils import tr
 
@@ -319,6 +327,18 @@ _PCA_EXPORT_TRANSLATIONS = (
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Component"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Variance"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Cumulative share"),
+)
+_TIME_SERIES_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Source rows"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Invalid rows dropped"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Duplicate rows averaged"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Time points"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Seasonal period"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Timestamp"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Trend"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Seasonal"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Residual"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Lag"),
 )
 # Cancelable jobs report real progress and can be stopped by the user, so
 # they get a far longer watchdog before the "taking too long" warning.
@@ -584,6 +604,11 @@ class AnalysisController:
                 self._export_pca(dialog, exporter, request)
 
             dialog.pca_export_requested.connect(_handle_pca_export)
+
+            def _handle_time_series_export(request: object) -> None:
+                self._export_time_series(dialog, exporter, request)
+
+            dialog.time_series_export_requested.connect(_handle_time_series_export)
 
         refresh_started = False
 
@@ -1477,6 +1502,83 @@ class AnalysisController:
                     show_success_dialog=True,
                 )
 
+    @staticmethod
+    def _localized_time_series_tables(
+        components: tuple[TimeSeriesExportComponent, ...],
+        snapshot: TimeSeriesExportSnapshot,
+    ) -> dict[str, pd.DataFrame]:
+        """Build time-series sheets with translated names, headers and metric labels."""
+        context = "AnalysisExportDialog"
+        metric_labels = {
+            TimeSeriesMetric.SOURCE_ROWS: tr(context, "Source rows"),
+            TimeSeriesMetric.INVALID_ROWS: tr(context, "Invalid rows dropped"),
+            TimeSeriesMetric.DUPLICATE_ROWS: tr(context, "Duplicate rows averaged"),
+            TimeSeriesMetric.TIME_POINTS: tr(context, "Time points"),
+            TimeSeriesMetric.SEASONAL_PERIOD: tr(context, "Seasonal period"),
+        }
+        headers = {
+            "timestamp": tr(context, "Timestamp"),
+            "value": tr(context, "Value"),
+            "trend": tr(context, "Trend"),
+            "seasonal": tr(context, "Seasonal"),
+            "residual": tr(context, "Residual"),
+            "lag": tr(context, "Lag"),
+            "autocorrelation": tr(context, "Autocorrelation"),
+            "metric": tr(context, "Metric"),
+            "notes": tr(context, "Notes"),
+        }
+        sheet_names = {
+            TimeSeriesExportComponent.SERIES: tr(context, "Series"),
+            TimeSeriesExportComponent.AUTOCORRELATION: tr(context, "Autocorrelation"),
+            TimeSeriesExportComponent.MODEL_SUMMARY: tr(context, "Model summary"),
+        }
+        sheets: dict[str, pd.DataFrame] = {}
+        for component, frame in time_series_export_tables(snapshot, components).items():
+            if component is TimeSeriesExportComponent.MODEL_SUMMARY:
+                frame["metric"] = frame["metric"].map(
+                    lambda key: metric_labels[TimeSeriesMetric(key)] if isinstance(key, str) else key
+                )
+            sheets[sheet_names[component]] = frame.rename(columns=headers)
+        return sheets
+
+    def _export_time_series(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Export the displayed time series' localized tables and worker-rendered plots."""
+        if not isinstance(request, TimeSeriesExportRequest) or request.snapshot is not dialog.exportable_time_series():
+            return
+        snapshot = request.snapshot
+        charts = TimeSeriesExportComponent.CHARTS in request.components
+        sheets = self._localized_time_series_tables(request.components, snapshot)
+
+        def make_images(
+            progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
+        ) -> tuple[ExcelChartImage, ...]:
+            return render_time_series_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
+        match request.format:
+            case StatisticsExportFormat.EXCEL:
+                exporter.export_excel(
+                    sheets=sheets,
+                    chart_factory=make_images if charts else None,
+                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.CSV:
+                exporter.export_csv(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.BINARY:
+                exporter.export_data(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+
     # ------------------------------------------------------------------
     # Renderers (GUI thread only)
     # ------------------------------------------------------------------
@@ -2241,6 +2343,16 @@ class AnalysisController:
         frequency_scope = frequency or "original"
         period_scope = str(period) if period is not None else "auto"
 
+        def _apply_result(result: object) -> None:
+            view = TimeSeriesView(cast("TimeSeriesResult", result))
+            dialog.set_content_widget(view)
+            if view.result().error is None:
+                dialog.set_exportable_time_series(
+                    TimeSeriesExportSnapshot(
+                        view.result(), view.chart_labels(), view.export_notes(), view.autocorrelation_note()
+                    )
+                )
+
         self._recompute_content(
             dialog,
             category=AnalysisCategory.TIME_SERIES,
@@ -2253,7 +2365,7 @@ class AnalysisController:
                 seasonal_period=period,
                 decomposition_model=model,
             ),
-            apply_result=lambda result: dialog.set_content_widget(TimeSeriesView(cast("TimeSeriesResult", result))),
+            apply_result=_apply_result,
             is_stale=lambda: (
                 dialog.config_widget() is not config
                 or config.configuration_revision() != revision

@@ -50,6 +50,7 @@ from expo_jbm329.services.analysis.overview import OverviewExportRequest
 from expo_jbm329.services.analysis.pca_export import PCAExportRequest, PCAExportSnapshot
 from expo_jbm329.services.analysis.regression_export import RegressionExportRequest, RegressionExportSnapshot
 from expo_jbm329.services.analysis.statistics import StatisticsExportRequest
+from expo_jbm329.services.analysis.timeseries_export import TimeSeriesExportRequest, TimeSeriesExportSnapshot
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.overview import DatasetOverviewResult
@@ -134,6 +135,7 @@ class AnalysisDialog(QDialog):
     outliers_export_requested = pyqtSignal(object)  # OutlierExportRequest
     clustering_export_requested = pyqtSignal(object)  # ClusteringExportRequest
     pca_export_requested = pyqtSignal(object)  # PCAExportRequest
+    time_series_export_requested = pyqtSignal(object)  # TimeSeriesExportRequest
 
     def __init__(
         self,
@@ -171,6 +173,8 @@ class AnalysisDialog(QDialog):
         self._clustering_export_tab_id: str | None = None
         self._export_pca: PCAExportSnapshot | None = None
         self._pca_export_tab_id: str | None = None
+        self._export_time_series: TimeSeriesExportSnapshot | None = None
+        self._time_series_export_tab_id: str | None = None
         self._analysis_revision = 0
 
         self.setWindowTitle(self.tr("Advanced analysis"))
@@ -293,11 +297,7 @@ class AnalysisDialog(QDialog):
         add_button.setMinimumWidth(button_width)
         actions.addWidget(add_button)
         explanation = QLabel(
-            self.tr(
-                "Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression "
-                "model, applied Outliers, applied Clustering and applied PCA exports are available after analysis. "
-                "Other export and report actions are previews."
-            ),
+            self.tr("Exports are available after an analysis has been applied. Add to report is a preview."),
             bar,
         )
         explanation.setWordWrap(True)
@@ -328,6 +328,8 @@ class AnalysisDialog(QDialog):
             clustering_mode=self.selected_category() is AnalysisCategory.CLUSTERING,
             pca=self.exportable_pca(),
             pca_mode=self.selected_category() is AnalysisCategory.PCA,
+            time_series=self.exportable_time_series(),
+            time_series_mode=self.selected_category() is AnalysisCategory.TIME_SERIES,
         )
         for combo in dialog.findChildren(QComboBox):
             _ComboToolTipFilter(combo)
@@ -349,6 +351,8 @@ class AnalysisDialog(QDialog):
                 self.clustering_export_requested.emit(request)
             elif isinstance(request, PCAExportRequest) and request.snapshot is self.exportable_pca():
                 self.pca_export_requested.emit(request)
+            elif isinstance(request, TimeSeriesExportRequest) and request.snapshot is self.exportable_time_series():
+                self.time_series_export_requested.emit(request)
 
     def invalidate_overview_export(self) -> None:
         """Disable real export as soon as displayed analysis becomes stale."""
@@ -366,6 +370,8 @@ class AnalysisDialog(QDialog):
         self._clustering_export_tab_id = None
         self._export_pca = None
         self._pca_export_tab_id = None
+        self._export_time_series = None
+        self._time_series_export_tab_id = None
         self.invalidate_correlation_export()
         self._analysis_revision += 1
 
@@ -465,6 +471,20 @@ class AnalysisDialog(QDialog):
             and self.selected_dataset_tab_id() == self._pca_export_tab_id
         ):
             return self._export_pca
+        return None
+
+    def set_exportable_time_series(self, snapshot: TimeSeriesExportSnapshot) -> None:
+        """Register a successful time-series analysis after its view is displayed."""
+        self._export_time_series = snapshot
+        self._time_series_export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_time_series(self) -> TimeSeriesExportSnapshot | None:
+        """Return the displayed applied time series, independent of pending configuration edits."""
+        if (
+            self.selected_category() is AnalysisCategory.TIME_SERIES
+            and self.selected_dataset_tab_id() == self._time_series_export_tab_id
+        ):
+            return self._export_time_series
         return None
 
     def set_exportable_overview(self, result: DatasetOverviewResult) -> None:

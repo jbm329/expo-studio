@@ -74,12 +74,14 @@ from expo_jbm329.services.analysis.statistics import (
 )
 from expo_jbm329.services.analysis.survival import initialize_survival_columns
 from expo_jbm329.services.analysis.timeseries import initialize_time_series
+from expo_jbm329.services.analysis.timeseries_export import TimeSeriesExportComponent, TimeSeriesExportRequest
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_outliers_export import multivariate_snapshot as multivariate_outliers_snapshot
 from tests.analysis.test_outliers_export import univariate_snapshot
 from tests.analysis.test_pca_export import pca_snapshot
 from tests.analysis.test_regression_export import linear_snapshot
+from tests.analysis.test_timeseries_export import time_series_snapshot
 
 
 def _make_datasets() -> list[DatasetRef]:
@@ -1299,3 +1301,66 @@ def test_pca_export_selection_emits_only_the_current_snapshot(monkeypatch):
     assert len(captured) == 2
     assert all(not choice.isEnabled() for choice in captured[1].findChildren(QCheckBox))
     assert len(received) == 1
+
+
+def test_time_series_export_snapshot_is_scoped_to_current_category_and_dataset():
+    snapshot = time_series_snapshot()
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.PCA)
+    dialog.set_exportable_time_series(snapshot)
+    assert dialog.exportable_time_series() is None
+
+    dialog.select_category(AnalysisCategory.TIME_SERIES)
+    dialog.set_exportable_time_series(snapshot)
+    assert dialog.exportable_time_series() is snapshot
+    dialog.set_content_widget(QWidget())
+    assert dialog.exportable_time_series() is None
+    dialog.set_exportable_time_series(snapshot)
+    dialog.select_dataset("t2")
+    assert dialog.exportable_time_series() is None
+    dialog.set_exportable_time_series(snapshot)
+    dialog.select_category(AnalysisCategory.STATISTICS)
+    assert dialog.exportable_time_series() is None
+
+
+def test_time_series_export_selection_emits_only_the_current_snapshot(monkeypatch):
+    snapshot = time_series_snapshot()
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.TIME_SERIES)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_time_series(snapshot)
+    received: list[TimeSeriesExportRequest] = []
+    dialog.time_series_export_requested.connect(received.append)
+    captured: list[AnalysisExportDialog] = []
+
+    def accept_default_selection(export_dialog):
+        captured.append(export_dialog)
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(AnalysisExportDialog, "exec", accept_default_selection)
+    dialog._show_export_selection()
+
+    assert [choice.text() for choice in captured[0].findChildren(QCheckBox)] == [
+        "Series",
+        "Autocorrelation",
+        "Model summary",
+        "Charts",
+    ]
+    assert len(received) == 1
+    assert received[0].snapshot is snapshot
+    assert received[0].components == (TimeSeriesExportComponent.SERIES,)
+
+    dialog.set_content_widget(QWidget())
+    dialog._show_export_selection()
+    assert len(captured) == 2
+    assert all(not choice.isEnabled() for choice in captured[1].findChildren(QCheckBox))
+    assert len(received) == 1
+
+
+def test_footer_explains_that_exports_follow_an_applied_analysis():
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+
+    assert any(
+        label.text() == "Exports are available after an analysis has been applied. Add to report is a preview."
+        for label in dialog.findChildren(QLabel)
+    )

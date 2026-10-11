@@ -71,6 +71,12 @@ from expo_jbm329.services.analysis.statistics import (
     StatisticsExportRequest,
     StatisticsExportTable,
 )
+from expo_jbm329.services.analysis.timeseries_export import (
+    TIME_SERIES_COMPONENTS,
+    TimeSeriesExportComponent,
+    TimeSeriesExportRequest,
+    TimeSeriesExportSnapshot,
+)
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num
 
 
@@ -98,6 +104,8 @@ class AnalysisExportDialog(QDialog):
         clustering_mode: bool = False,
         pca: PCAExportSnapshot | None = None,
         pca_mode: bool = False,
+        time_series: TimeSeriesExportSnapshot | None = None,
+        time_series_mode: bool = False,
     ) -> None:
         """Build grouped export choices and a format selector.
 
@@ -121,6 +129,11 @@ class AnalysisExportDialog(QDialog):
             clustering_mode: Show clustering choices even before Apply.
             pca: Successfully displayed applied PCA fit.
             pca_mode: Show PCA choices even before Apply.
+            time_series: Successfully displayed applied time-series analysis.
+            time_series_mode: Show time-series choices even before Apply.
+
+        Raises:
+            ValueError: If not exactly one analysis result is represented.
         """
         super().__init__(parent)
         self.setWindowTitle(self.tr("Export"))
@@ -142,12 +155,15 @@ class AnalysisExportDialog(QDialog):
         self._clustering_mode = clustering_mode or clustering is not None
         self._pca = pca
         self._pca_mode = pca_mode or pca is not None
+        self._time_series = time_series
+        self._time_series_mode = time_series_mode or time_series is not None
         self._hypothesis_choices: dict[HypothesisExportComponent, QCheckBox] = {}
         self._correlation_choices: dict[CorrelationExportComponent, QCheckBox] = {}
         self._regression_choices: dict[RegressionExportComponent, QCheckBox] = {}
         self._outliers_choices: dict[OutlierExportComponent, QCheckBox] = {}
         self._clustering_choices: dict[ClusteringExportComponent, QCheckBox] = {}
         self._pca_choices: dict[PCAExportComponent, QCheckBox] = {}
+        self._time_series_choices: dict[TimeSeriesExportComponent, QCheckBox] = {}
         self._table_choices: dict[OverviewExportTable, QCheckBox] = {}
         self._statistics_choices: dict[StatisticsExportTable, QCheckBox] = {}
         self._overview_mode = overview_mode or overview is not None
@@ -162,10 +178,11 @@ class AnalysisExportDialog(QDialog):
                 self._outliers_mode,
                 self._clustering_mode,
                 self._pca_mode,
+                self._time_series_mode,
             ))
-            > 1
+            != 1
         ):
-            message = "An export dialog can represent only one analysis result."
+            message = "An export dialog must represent exactly one analysis result."
             raise ValueError(message)
         layout = QVBoxLayout(self)
         explanation = QLabel(self._explanation_text(), self)
@@ -188,7 +205,7 @@ class AnalysisExportDialog(QDialog):
         elif self._pca_mode:
             self._build_pca_choices(layout)
         else:
-            self._build_preview_choices(layout)
+            self._build_time_series_choices(layout)
         formats = QFormLayout()
         self._format_combo = QComboBox(self)
         format_type = StatisticsExportFormat if self._uses_component_export() else OverviewExportFormat
@@ -223,6 +240,8 @@ class AnalysisExportDialog(QDialog):
             if self._clustering_mode
             else self._pca_choices
             if self._pca_mode
+            else self._time_series_choices
+            if self._time_series_mode
             else self._statistics_choices
             if self._statistics_mode
             else self._table_choices
@@ -242,6 +261,7 @@ class AnalysisExportDialog(QDialog):
             or self._outliers_mode
             or self._clustering_mode
             or self._pca_mode
+            or self._time_series_mode
         )
 
     def _explanation_text(self) -> str:
@@ -273,7 +293,10 @@ class AnalysisExportDialog(QDialog):
                 "Export the feature loadings, explained variance, model summary and charts of the applied PCA, "
                 "not the original dataset."
             )
-        return self.tr("Layout preview only. Export processing is not implemented yet.")
+        return self.tr(
+            "Export the prepared series, autocorrelation, model summary and charts of the applied time series, "
+            "not the original dataset."
+        )
 
     def _build_overview_choices(self, layout: QVBoxLayout) -> None:
         """Offer only available structured Overview tables, never the dataset."""
@@ -315,37 +338,6 @@ class AnalysisExportDialog(QDialog):
             (results_layout if is_summary else data_layout).addWidget(choice)
         layout.addWidget(data)
         layout.addWidget(results)
-
-    def _build_preview_choices(self, layout: QVBoxLayout) -> None:
-        """Show unavailable planned components without implying real exports."""
-        for title, labels in (
-            (
-                self.tr("Data"),
-                (
-                    self.tr("Original dataset"),
-                    self.tr("Analysis dataset"),
-                    self.tr("Predictions"),
-                    self.tr("Residuals"),
-                ),
-            ),
-            (
-                self.tr("Results"),
-                (
-                    self.tr("Summary / statistics tables"),
-                    self.tr("Coefficients"),
-                    self.tr("Model metrics"),
-                    self.tr("Charts"),
-                ),
-            ),
-        ):
-            group = QGroupBox(title, self)
-            contents = QVBoxLayout(group)
-            for text in labels:
-                choice = QCheckBox(text, group)
-                choice.setEnabled(False)
-                choice.setToolTip(self.tr("Not implemented yet. No file will be created."))
-                contents.addWidget(choice)
-            layout.addWidget(group)
 
     def _build_statistics_choices(self, layout: QVBoxLayout) -> None:
         """Offer available Statistics tables and a separate Excel chart component."""
@@ -667,6 +659,57 @@ class AnalysisExportDialog(QDialog):
             contents.addWidget(choice)
         layout.addWidget(results)
 
+    def _build_time_series_choices(self, layout: QVBoxLayout) -> None:
+        """List the applied series plainly and offer its prepared data, tables and charts."""
+        snapshot = self._time_series
+        if snapshot is not None:
+            identity = QLabel(
+                self.tr("Applied series: {value} by {time}").format(
+                    value=snapshot.result.value_column, time=snapshot.result.datetime_column
+                ),
+                self,
+            )
+            identity.setTextFormat(Qt.TextFormat.PlainText)
+            identity.setWordWrap(True)
+            identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            layout.addWidget(identity)
+
+        data = QGroupBox(self.tr("Data"), self)
+        data_layout = QVBoxLayout(data)
+        results = QGroupBox(self.tr("Results"), self)
+        results_layout = QVBoxLayout(results)
+        labels = {
+            TimeSeriesExportComponent.SERIES: self.tr("Series"),
+            TimeSeriesExportComponent.AUTOCORRELATION: self.tr("Autocorrelation"),
+            TimeSeriesExportComponent.MODEL_SUMMARY: self.tr("Model summary"),
+            TimeSeriesExportComponent.CHARTS: self.tr("Charts"),
+        }
+        for component in TIME_SERIES_COMPONENTS:
+            is_data = component is TimeSeriesExportComponent.SERIES
+            choice = QCheckBox(labels[component], data if is_data else results)
+            if snapshot is None:
+                choice.setEnabled(False)
+                choice.setToolTip(self.tr("Apply a time series successfully before exporting."))
+            elif component not in snapshot.components:
+                choice.setEnabled(False)
+                choice.setToolTip(snapshot.autocorrelation_note)
+            elif is_data:
+                choice.setToolTip(
+                    self.tr(
+                        "One row per time point after averaging duplicate timestamps and any resampling, "
+                        "with the decomposition when available."
+                    )
+                )
+            elif component is TimeSeriesExportComponent.MODEL_SUMMARY:
+                choice.setToolTip(self.tr("Row diagnostics and seasonal period with the displayed model comments."))
+            elif component is TimeSeriesExportComponent.CHARTS:
+                choice.setToolTip(self.tr("The series and, when available, the autocorrelation and decomposition."))
+            self._time_series_choices[component] = choice
+            choice.toggled.connect(self._update_export_enabled)
+            (data_layout if is_data else results_layout).addWidget(choice)
+        layout.addWidget(data)
+        layout.addWidget(results)
+
     def export_request(
         self,
     ) -> (
@@ -678,9 +721,25 @@ class AnalysisExportDialog(QDialog):
         | OutlierExportRequest
         | ClusteringExportRequest
         | PCAExportRequest
+        | TimeSeriesExportRequest
         | None
     ):
-        """Return a validated selection, or None for previews/invalid choices."""
+        """Return a validated selection, or None for invalid choices."""
+        if self._time_series_mode:
+            if self._time_series is None:
+                return None
+            time_series_components = tuple(
+                component
+                for component, choice in self._time_series_choices.items()
+                if choice.isEnabled() and choice.isChecked()
+            )
+            format_choice = self._format_combo.currentData()
+            if not isinstance(format_choice, StatisticsExportFormat) or not time_series_components:
+                return None
+            try:
+                return TimeSeriesExportRequest(self._time_series, time_series_components, format_choice)
+            except ValueError:
+                return None
         if self._pca_mode:
             if self._pca is None:
                 return None
@@ -815,9 +874,7 @@ class AnalysisExportDialog(QDialog):
             )
         )
         request = self.export_request()
-        if not self._overview_mode:
-            reason = self.tr("Not implemented yet. No file will be created.")
-        elif self._overview is None:
+        if self._overview is None:
             reason = self.tr("Run Overview successfully before exporting.")
         elif not any(choice.isEnabled() for choice in self._table_choices.values()):
             reason = self.tr("This table is empty and cannot be exported.")
@@ -856,6 +913,8 @@ class AnalysisExportDialog(QDialog):
             if self._clustering_mode
             else self._pca_choices
             if self._pca_mode
+            else self._time_series_choices
+            if self._time_series_mode
             else self._statistics_choices
         )
         selected = any(choice.isEnabled() and choice.isChecked() for choice in choices.values())
@@ -873,6 +932,8 @@ class AnalysisExportDialog(QDialog):
             if self._clustering_mode
             else self._pca_choices.get(PCAExportComponent.CHARTS)
             if self._pca_mode
+            else self._time_series_choices.get(TimeSeriesExportComponent.CHARTS)
+            if self._time_series_mode
             else self._statistics_choices.get(StatisticsExportTable.CHARTS)
         )
         chart_selected = chart_choice is not None and chart_choice.isEnabled() and chart_choice.isChecked()
@@ -894,6 +955,8 @@ class AnalysisExportDialog(QDialog):
             reason = self.tr("Apply a clustering successfully before exporting.")
         elif self._pca_mode and self._pca is None:
             reason = self.tr("Apply a PCA successfully before exporting.")
+        elif self._time_series_mode and self._time_series is None:
+            reason = self.tr("Apply a time series successfully before exporting.")
         elif self._statistics_mode and self._statistics is None:
             reason = self.tr("Run Statistics successfully before exporting.")
         elif not available:

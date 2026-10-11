@@ -48,6 +48,11 @@ from expo_jbm329.services.analysis.statistics import (
     StatisticsExportTable,
     analyze_descriptive_statistics,
 )
+from expo_jbm329.services.analysis.timeseries_export import (
+    TIME_SERIES_COMPONENTS,
+    TimeSeriesExportComponent,
+    TimeSeriesExportRequest,
+)
 from expo_jbm329.utils.format_utils import fmt_num
 from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
@@ -61,6 +66,7 @@ from tests.analysis.test_regression_export import (
     logistic_snapshot,
     poisson_snapshot,
 )
+from tests.analysis.test_timeseries_export import IRREGULAR_NOTE, irregular_snapshot, time_series_snapshot
 
 
 def _correlation_snapshot() -> CorrelationExportSnapshot:
@@ -135,40 +141,19 @@ def test_overview_empty_and_missing_results_have_explicit_disabled_tables(source
         assert "Run Overview" in choices[2].toolTip()
 
 
-def test_export_preview_groups_all_unavailable_choices_and_cannot_export():
-    dialog = AnalysisExportDialog()
-    groups = dialog.findChildren(QGroupBox)
-    assert [group.title() for group in groups] == ["Data", "Results"]
-    assert [choice.text() for choice in groups[0].findChildren(QCheckBox)] == [
-        "Original dataset",
-        "Analysis dataset",
-        "Predictions",
-        "Residuals",
-    ]
-    assert [choice.text() for choice in groups[1].findChildren(QCheckBox)] == [
-        "Summary / statistics tables",
-        "Coefficients",
-        "Model metrics",
-        "Charts",
-    ]
-    choices = dialog.findChildren(QCheckBox)
-    assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
-    assert all("Not implemented" in choice.toolTip() for choice in choices)
-    export = next(button for button in dialog.findChildren(QPushButton) if button.text() == "Export")
-    formats = dialog.findChild(QComboBox)
-    assert formats.count() == 3
-    assert formats.currentData() is OverviewExportFormat.EXCEL
-    for index in range(formats.count()):
-        formats.setCurrentIndex(index)
-        assert not export.isEnabled()
-        assert dialog.export_request() is None
-        assert "No file will be created" in export.toolTip()
-    assert any("No file will be created" in label.text() for label in dialog.findChildren(QLabel))
+@pytest.mark.parametrize(
+    "modes",
+    [{}, {"overview_mode": True, "time_series_mode": True}],
+    ids=["no-analysis", "two-analyses"],
+)
+def test_export_dialog_requires_exactly_one_analysis(modes):
+    with pytest.raises(ValueError, match="exactly one analysis result"):
+        AnalysisExportDialog(**modes)
 
 
-@pytest.mark.parametrize("overview_mode", [True, False])
-def test_export_selection_cancel_rejects_dialog(overview_mode):
-    dialog = AnalysisExportDialog(overview_mode=overview_mode)
+@pytest.mark.parametrize("mode", ["overview_mode", "time_series_mode"])
+def test_export_selection_cancel_rejects_dialog(mode):
+    dialog = AnalysisExportDialog(**{mode: True})
     dialog.show()
     dialog.findChild(QDialogButtonBox).button(QDialogButtonBox.StandardButton.Cancel).click()
     assert not dialog.isVisible()
@@ -273,7 +258,7 @@ def test_hypothesis_dialog_without_applied_result_never_enables_export():
     assert all(not choice.isEnabled() for choice in dialog.findChildren(QCheckBox))
     assert dialog.export_request() is None
     assert "Apply" in dialog._export_button.toolTip()
-    with pytest.raises(ValueError, match="only one"):
+    with pytest.raises(ValueError, match="exactly one"):
         AnalysisExportDialog(hypothesis_mode=True, statistics_mode=True)
 
 
@@ -459,7 +444,7 @@ def test_regression_dialog_without_applied_model_never_enables_export():
     assert not any(label.text().startswith("Applied model:") for label in dialog.findChildren(QLabel))
     assert dialog.export_request() is None
     assert not dialog._export_button.isEnabled()
-    with pytest.raises(ValueError, match="only one"):
+    with pytest.raises(ValueError, match="exactly one"):
         AnalysisExportDialog(regression_mode=True, correlation_mode=True)
 
 
@@ -570,7 +555,7 @@ def test_outliers_dialog_without_applied_screening_never_enables_export(multivar
     assert "Apply an outlier screening" in dialog._selection_explanation.text()
     assert dialog.export_request() is None
     assert not dialog._export_button.isEnabled()
-    with pytest.raises(ValueError, match="only one"):
+    with pytest.raises(ValueError, match="exactly one"):
         AnalysisExportDialog(outliers_mode=True, regression_mode=True)
 
 
@@ -635,7 +620,7 @@ def test_clustering_dialog_without_applied_fit_never_enables_export():
     assert not any(label.text().startswith("Applied method:") for label in dialog.findChildren(QLabel))
     assert dialog.export_request() is None
     assert not dialog._export_button.isEnabled()
-    with pytest.raises(ValueError, match="only one"):
+    with pytest.raises(ValueError, match="exactly one"):
         AnalysisExportDialog(clustering_mode=True, outliers_mode=True)
 
 
@@ -704,5 +689,88 @@ def test_pca_dialog_without_applied_fit_never_enables_export():
     assert not any(label.text().startswith("Applied features:") for label in dialog.findChildren(QLabel))
     assert dialog.export_request() is None
     assert not dialog._export_button.isEnabled()
-    with pytest.raises(ValueError, match="only one"):
+    with pytest.raises(ValueError, match="exactly one"):
         AnalysisExportDialog(pca_mode=True, clustering_mode=True)
+
+
+def test_time_series_dialog_names_series_and_defaults_to_series():
+    snapshot = time_series_snapshot()
+    dialog = AnalysisExportDialog(time_series=snapshot)
+    groups = dialog.findChildren(QGroupBox)
+    assert [group.title() for group in groups] == ["Data", "Results"]
+    assert [choice.text() for choice in groups[0].findChildren(QCheckBox)] == ["Series"]
+    assert [choice.text() for choice in groups[1].findChildren(QCheckBox)] == [
+        "Autocorrelation",
+        "Model summary",
+        "Charts",
+    ]
+    choices = dialog.findChildren(QCheckBox)
+    assert all(choice.isEnabled() for choice in choices)
+    assert [choice.isChecked() for choice in choices] == [True, False, False, False]
+    assert "averaging duplicate timestamps" in choices[0].toolTip()
+    assert "model comments" in choices[2].toolTip()
+    assert "decomposition" in choices[3].toolTip()
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied series:"))
+    assert label.text() == "Applied series: sales by day"
+    assert label.textFormat() is Qt.TextFormat.PlainText
+    assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
+    request = dialog.export_request()
+    assert isinstance(request, TimeSeriesExportRequest)
+    assert request.snapshot is snapshot
+    assert request.components == (TimeSeriesExportComponent.SERIES,)
+    assert request.format is StatisticsExportFormat.EXCEL
+
+
+def test_time_series_dialog_disables_unavailable_autocorrelation_with_reason():
+    dialog = AnalysisExportDialog(time_series=irregular_snapshot())
+    choices = dict(zip(TIME_SERIES_COMPONENTS, dialog.findChildren(QCheckBox), strict=True))
+    autocorrelation = choices[TimeSeriesExportComponent.AUTOCORRELATION]
+    assert not autocorrelation.isEnabled()
+    assert autocorrelation.toolTip() == IRREGULAR_NOTE
+    for choice in choices.values():
+        choice.setChecked(True)
+    assert dialog.export_request().components == (
+        TimeSeriesExportComponent.SERIES,
+        TimeSeriesExportComponent.MODEL_SUMMARY,
+        TimeSeriesExportComponent.CHARTS,
+    )
+
+
+def test_time_series_dialog_limits_single_file_formats_to_one_table_and_keeps_choices():
+    dialog = AnalysisExportDialog(time_series=time_series_snapshot())
+    choices = dialog.findChildren(QCheckBox)
+    formats = dialog.findChild(QComboBox)
+    for choice in choices:
+        choice.setChecked(True)
+    assert dialog.export_request().components == TIME_SERIES_COMPONENTS
+    for format_choice in (StatisticsExportFormat.CSV, StatisticsExportFormat.BINARY):
+        formats.setCurrentIndex(formats.findData(format_choice))
+        assert dialog.export_request() is None
+        assert not dialog._export_button.isEnabled()
+        assert all(choice.isChecked() for choice in choices)
+    assert "Charts are available only in Excel" in dialog._selection_explanation.text()
+    choices[3].setChecked(False)
+    assert dialog.export_request() is None
+    choices[0].setChecked(False)
+    choices[2].setChecked(False)
+    request = dialog.export_request()
+    assert request.components == (TimeSeriesExportComponent.AUTOCORRELATION,)
+    assert request.format is StatisticsExportFormat.BINARY
+    assert dialog._export_button.isEnabled()
+    choices[1].setChecked(False)
+    assert dialog.export_request() is None
+    assert "Select at least one available component" in dialog._selection_explanation.text()
+
+
+def test_time_series_dialog_without_applied_series_never_enables_export():
+    dialog = AnalysisExportDialog(time_series_mode=True)
+    choices = dialog.findChildren(QCheckBox)
+    assert [choice.text() for choice in choices] == ["Series", "Autocorrelation", "Model summary", "Charts"]
+    assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
+    assert all("Apply a time series" in choice.toolTip() for choice in choices)
+    assert "Apply a time series" in dialog._selection_explanation.text()
+    assert not any(label.text().startswith("Applied series:") for label in dialog.findChildren(QLabel))
+    assert dialog.export_request() is None
+    assert not dialog._export_button.isEnabled()
+    with pytest.raises(ValueError, match="exactly one"):
+        AnalysisExportDialog(time_series_mode=True, pca_mode=True)
