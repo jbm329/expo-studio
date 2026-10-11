@@ -473,8 +473,8 @@
         <translation>Lägg till i rapport</translation>
     </message>
     <message>
-        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model, applied Outliers and applied Clustering exports are available after analysis. Other export and report actions are previews.</source>
-        <translation>Export av Översikt, Statistik, tillämpade Hypotestester, tillämpade korrelationsmatriser, tillämpade regressionsmodeller, tillämpade avvikaranalyser och tillämpade klustringar är tillgänglig efter analys. Övriga export- och rapportåtgärder är förhandsvisningar.</translation>
+        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model, applied Outliers, applied Clustering and applied PCA exports are available after analysis. Other export and report actions are previews.</source>
+        <translation>Export av Översikt, Statistik, tillämpade Hypotestester, tillämpade korrelationsmatriser, tillämpade regressionsmodeller, tillämpade avvikaranalyser, tillämpade klustringar och tillämpade PCA:er är tillgänglig efter analys. Övriga export- och rapportåtgärder är förhandsvisningar.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -1234,6 +1234,50 @@ Variabler: {features}</translation>
     <message>
         <source>Share</source>
         <translation>Andel</translation>
+    </message>
+    <message>
+        <source>Applied features: {features}</source>
+        <translation>Tillämpade variabler: {features}</translation>
+    </message>
+    <message>
+        <source>Feature loadings</source>
+        <translation>Variabelladdningar</translation>
+    </message>
+    <message>
+        <source>Explained variance</source>
+        <translation>Förklarad varians</translation>
+    </message>
+    <message>
+        <source>Apply a PCA successfully before exporting.</source>
+        <translation>Tillämpa en PCA utan fel innan export.</translation>
+    </message>
+    <message>
+        <source>Variance, share and cumulative share per component, as in the scree plot.</source>
+        <translation>Varians, andel och kumulativ andel per komponent, som i scree-diagrammet.</translation>
+    </message>
+    <message>
+        <source>Feature and row counts with the displayed model comments.</source>
+        <translation>Antal variabler och rader med de visade modellkommentarerna.</translation>
+    </message>
+    <message>
+        <source>Export the feature loadings, explained variance, model summary and charts of the applied PCA, not the original dataset.</source>
+        <translation>Exportera variabelladdningar, förklarad varians, modellsammanfattning och diagram för den tillämpade PCA:n, inte den ursprungliga datamängden.</translation>
+    </message>
+    <message>
+        <source>Feature</source>
+        <translation>Variabel</translation>
+    </message>
+    <message>
+        <source>Component</source>
+        <translation>Komponent</translation>
+    </message>
+    <message>
+        <source>Variance</source>
+        <translation>Varians</translation>
+    </message>
+    <message>
+        <source>Cumulative share</source>
+        <translation>Kumulativ andel</translation>
     </message>
 </context>
 <context>
@@ -5453,6 +5497,10 @@ Sparad till:
         <location filename="../../gui/dialogs/analysis/pca_view.py" line="181"/>
         <source>Feature</source>
         <translation>Variabel</translation>
+    </message>
+    <message>
+        <source>Features: {columns}</source>
+        <translation>Variabler: {columns}</translation>
     </message>
 </context>
 <context>

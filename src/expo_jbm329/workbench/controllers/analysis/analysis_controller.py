@@ -112,6 +112,14 @@ from expo_jbm329.services.analysis.paired_comparison import (
 )
 from expo_jbm329.services.analysis.pca import MIN_SELECTED_COLUMNS as PCA_MIN_SELECTED_COLUMNS
 from expo_jbm329.services.analysis.pca import analyze_pca, initialize_pca
+from expo_jbm329.services.analysis.pca_charts import render_pca_charts
+from expo_jbm329.services.analysis.pca_export import (
+    PCAExportComponent,
+    PCAExportRequest,
+    PCAExportSnapshot,
+    PCAMetric,
+    pca_export_tables,
+)
 from expo_jbm329.services.analysis.regression import SIGNIFICANCE_LEVEL as REGRESSION_SIGNIFICANCE
 from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression, initialize_regression
 from expo_jbm329.services.analysis.regression_charts import render_regression_charts
@@ -305,6 +313,12 @@ _CLUSTERING_EXPORT_TRANSLATIONS = (
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Cluster"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Rows"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Share"),
+)
+_PCA_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Feature"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Component"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Variance"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Cumulative share"),
 )
 # Cancelable jobs report real progress and can be stopped by the user, so
 # they get a far longer watchdog before the "taking too long" warning.
@@ -565,6 +579,11 @@ class AnalysisController:
 
             dialog.outliers_export_requested.connect(_handle_outliers_export)
             dialog.clustering_export_requested.connect(_handle_clustering_export)
+
+            def _handle_pca_export(request: object) -> None:
+                self._export_pca(dialog, exporter, request)
+
+            dialog.pca_export_requested.connect(_handle_pca_export)
 
         refresh_started = False
 
@@ -1380,6 +1399,84 @@ class AnalysisController:
                     show_success_dialog=True,
                 )
 
+    @staticmethod
+    def _localized_pca_tables(
+        components: tuple[PCAExportComponent, ...],
+        snapshot: PCAExportSnapshot,
+    ) -> dict[str, pd.DataFrame]:
+        """Build PCA sheets with translated names, headers and metric labels.
+
+        Component names such as ``PC1`` are displayed untranslated, as in the view.
+        """
+        context = "AnalysisExportDialog"
+        metric_labels = {
+            PCAMetric.FEATURES: tr(context, "Features"),
+            PCAMetric.TOTAL_ROWS: tr(context, "Total rows"),
+            PCAMetric.ROWS_USED: tr(context, "Rows used"),
+            PCAMetric.ROWS_DROPPED: tr(context, "Rows dropped because of missing or infinite values"),
+        }
+        headers = {
+            "feature": tr(context, "Feature"),
+            "component": tr(context, "Component"),
+            "variance": tr(context, "Variance"),
+            "share": tr(context, "Share"),
+            "cumulative_share": tr(context, "Cumulative share"),
+            "metric": tr(context, "Metric"),
+            "value": tr(context, "Value"),
+            "notes": tr(context, "Notes"),
+        }
+        sheet_names = {
+            PCAExportComponent.FEATURE_LOADINGS: tr(context, "Feature loadings"),
+            PCAExportComponent.EXPLAINED_VARIANCE: tr(context, "Explained variance"),
+            PCAExportComponent.MODEL_SUMMARY: tr(context, "Model summary"),
+        }
+        sheets: dict[str, pd.DataFrame] = {}
+        for component, frame in pca_export_tables(snapshot, components).items():
+            if component is PCAExportComponent.MODEL_SUMMARY:
+                frame["metric"] = frame["metric"].map(
+                    lambda key: metric_labels[PCAMetric(key)] if isinstance(key, str) else key
+                )
+            sheets[sheet_names[component]] = frame.rename(columns=headers)
+        return sheets
+
+    def _export_pca(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Export the displayed PCA's localized tables and worker-rendered plots."""
+        if not isinstance(request, PCAExportRequest) or request.snapshot is not dialog.exportable_pca():
+            return
+        snapshot = request.snapshot
+        charts = PCAExportComponent.CHARTS in request.components
+        sheets = self._localized_pca_tables(request.components, snapshot)
+
+        def make_images(
+            progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
+        ) -> tuple[ExcelChartImage, ...]:
+            return render_pca_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
+        match request.format:
+            case StatisticsExportFormat.EXCEL:
+                exporter.export_excel(
+                    sheets=sheets,
+                    chart_factory=make_images if charts else None,
+                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.CSV:
+                exporter.export_csv(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.BINARY:
+                exporter.export_data(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+
     # ------------------------------------------------------------------
     # Renderers (GUI thread only)
     # ------------------------------------------------------------------
@@ -2041,12 +2138,18 @@ class AnalysisController:
         revision = config.configuration_revision()
         columns, standardize = configuration
 
+        def _apply_result(result: object) -> None:
+            view = PCAView(cast("PCAResult", result))
+            dialog.set_content_widget(view)
+            if view.result().error is None:
+                dialog.set_exportable_pca(PCAExportSnapshot(view.result(), view.chart_labels(), view.export_notes()))
+
         self._recompute_content(
             dialog,
             category=AnalysisCategory.PCA,
             scope_suffix=f"fit:{'standardized' if standardize else 'raw'}:{':'.join(columns)}",
             compute=lambda df, _callbacks: analyze_pca(df, columns, standardize=standardize),
-            apply_result=lambda result: dialog.set_content_widget(PCAView(cast("PCAResult", result))),
+            apply_result=_apply_result,
             is_stale=lambda: (
                 dialog.config_widget() is not config
                 or config.configuration_revision() != revision

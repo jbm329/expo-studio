@@ -53,6 +53,12 @@ from expo_jbm329.services.analysis.overview import (
     OverviewExportRequest,
     OverviewExportTable,
 )
+from expo_jbm329.services.analysis.pca_export import (
+    PCA_COMPONENTS,
+    PCAExportComponent,
+    PCAExportRequest,
+    PCAExportSnapshot,
+)
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
     RegressionExportRequest,
@@ -90,6 +96,8 @@ class AnalysisExportDialog(QDialog):
         outliers_multivariate: bool = False,
         clustering: ClusteringExportSnapshot | None = None,
         clustering_mode: bool = False,
+        pca: PCAExportSnapshot | None = None,
+        pca_mode: bool = False,
     ) -> None:
         """Build grouped export choices and a format selector.
 
@@ -111,6 +119,8 @@ class AnalysisExportDialog(QDialog):
                 choices before Apply; a snapshot decides by its own type.
             clustering: Successfully displayed applied clustering fit.
             clustering_mode: Show clustering choices even before Apply.
+            pca: Successfully displayed applied PCA fit.
+            pca_mode: Show PCA choices even before Apply.
         """
         super().__init__(parent)
         self.setWindowTitle(self.tr("Export"))
@@ -130,11 +140,14 @@ class AnalysisExportDialog(QDialog):
         )
         self._clustering = clustering
         self._clustering_mode = clustering_mode or clustering is not None
+        self._pca = pca
+        self._pca_mode = pca_mode or pca is not None
         self._hypothesis_choices: dict[HypothesisExportComponent, QCheckBox] = {}
         self._correlation_choices: dict[CorrelationExportComponent, QCheckBox] = {}
         self._regression_choices: dict[RegressionExportComponent, QCheckBox] = {}
         self._outliers_choices: dict[OutlierExportComponent, QCheckBox] = {}
         self._clustering_choices: dict[ClusteringExportComponent, QCheckBox] = {}
+        self._pca_choices: dict[PCAExportComponent, QCheckBox] = {}
         self._table_choices: dict[OverviewExportTable, QCheckBox] = {}
         self._statistics_choices: dict[StatisticsExportTable, QCheckBox] = {}
         self._overview_mode = overview_mode or overview is not None
@@ -148,6 +161,7 @@ class AnalysisExportDialog(QDialog):
                 self._regression_mode,
                 self._outliers_mode,
                 self._clustering_mode,
+                self._pca_mode,
             ))
             > 1
         ):
@@ -171,6 +185,8 @@ class AnalysisExportDialog(QDialog):
             self._build_outliers_choices(layout)
         elif self._clustering_mode:
             self._build_clustering_choices(layout)
+        elif self._pca_mode:
+            self._build_pca_choices(layout)
         else:
             self._build_preview_choices(layout)
         formats = QFormLayout()
@@ -205,6 +221,8 @@ class AnalysisExportDialog(QDialog):
             if self._outliers_mode
             else self._clustering_choices
             if self._clustering_mode
+            else self._pca_choices
+            if self._pca_mode
             else self._statistics_choices
             if self._statistics_mode
             else self._table_choices
@@ -223,6 +241,7 @@ class AnalysisExportDialog(QDialog):
             or self._regression_mode
             or self._outliers_mode
             or self._clustering_mode
+            or self._pca_mode
         )
 
     def _explanation_text(self) -> str:
@@ -248,6 +267,11 @@ class AnalysisExportDialog(QDialog):
         if self._clustering_mode:
             return self.tr(
                 "Export the cluster sizes, model summary and chart of the applied clustering, not the original dataset."
+            )
+        if self._pca_mode:
+            return self.tr(
+                "Export the feature loadings, explained variance, model summary and charts of the applied PCA, "
+                "not the original dataset."
             )
         return self.tr("Layout preview only. Export processing is not implemented yet.")
 
@@ -609,6 +633,40 @@ class AnalysisExportDialog(QDialog):
             contents.addWidget(choice)
         layout.addWidget(results)
 
+    def _build_pca_choices(self, layout: QVBoxLayout) -> None:
+        """List the applied PCA features plainly and offer its displayed tables and charts."""
+        snapshot = self._pca
+        if snapshot is not None:
+            identity = QLabel(
+                self.tr("Applied features: {features}").format(features=" / ".join(snapshot.result.columns)), self
+            )
+            identity.setTextFormat(Qt.TextFormat.PlainText)
+            identity.setWordWrap(True)
+            identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            layout.addWidget(identity)
+
+        results = QGroupBox(self.tr("Results"), self)
+        contents = QVBoxLayout(results)
+        labels = {
+            PCAExportComponent.FEATURE_LOADINGS: self.tr("Feature loadings"),
+            PCAExportComponent.EXPLAINED_VARIANCE: self.tr("Explained variance"),
+            PCAExportComponent.MODEL_SUMMARY: self.tr("Model summary"),
+            PCAExportComponent.CHARTS: self.tr("Charts"),
+        }
+        for component in PCA_COMPONENTS:
+            choice = QCheckBox(labels[component], results)
+            if snapshot is None:
+                choice.setEnabled(False)
+                choice.setToolTip(self.tr("Apply a PCA successfully before exporting."))
+            elif component is PCAExportComponent.EXPLAINED_VARIANCE:
+                choice.setToolTip(self.tr("Variance, share and cumulative share per component, as in the scree plot."))
+            elif component is PCAExportComponent.MODEL_SUMMARY:
+                choice.setToolTip(self.tr("Feature and row counts with the displayed model comments."))
+            self._pca_choices[component] = choice
+            choice.toggled.connect(self._update_export_enabled)
+            contents.addWidget(choice)
+        layout.addWidget(results)
+
     def export_request(
         self,
     ) -> (
@@ -619,9 +677,25 @@ class AnalysisExportDialog(QDialog):
         | RegressionExportRequest
         | OutlierExportRequest
         | ClusteringExportRequest
+        | PCAExportRequest
         | None
     ):
         """Return a validated selection, or None for previews/invalid choices."""
+        if self._pca_mode:
+            if self._pca is None:
+                return None
+            pca_components = tuple(
+                component
+                for component, choice in self._pca_choices.items()
+                if choice.isEnabled() and choice.isChecked()
+            )
+            format_choice = self._format_combo.currentData()
+            if not isinstance(format_choice, StatisticsExportFormat) or not pca_components:
+                return None
+            try:
+                return PCAExportRequest(self._pca, pca_components, format_choice)
+            except ValueError:
+                return None
         if self._clustering_mode:
             if self._clustering is None:
                 return None
@@ -780,6 +854,8 @@ class AnalysisExportDialog(QDialog):
             if self._outliers_mode
             else self._clustering_choices
             if self._clustering_mode
+            else self._pca_choices
+            if self._pca_mode
             else self._statistics_choices
         )
         selected = any(choice.isEnabled() and choice.isChecked() for choice in choices.values())
@@ -795,6 +871,8 @@ class AnalysisExportDialog(QDialog):
             if self._outliers_mode
             else self._clustering_choices.get(ClusteringExportComponent.CHARTS)
             if self._clustering_mode
+            else self._pca_choices.get(PCAExportComponent.CHARTS)
+            if self._pca_mode
             else self._statistics_choices.get(StatisticsExportTable.CHARTS)
         )
         chart_selected = chart_choice is not None and chart_choice.isEnabled() and chart_choice.isChecked()
@@ -814,6 +892,8 @@ class AnalysisExportDialog(QDialog):
             reason = self.tr("Apply an outlier screening successfully before exporting.")
         elif self._clustering_mode and self._clustering is None:
             reason = self.tr("Apply a clustering successfully before exporting.")
+        elif self._pca_mode and self._pca is None:
+            reason = self.tr("Apply a PCA successfully before exporting.")
         elif self._statistics_mode and self._statistics is None:
             reason = self.tr("Run Statistics successfully before exporting.")
         elif not available:

@@ -148,6 +148,15 @@ Excel-only and render in the export worker; CSV and binary files contain
 exactly one table. Per-row cluster assignments are not exported.
 Configuration edits clear the export until the next Apply completes, and
 failed fits cannot be exported.
+After a successful **PCA** fit, export the displayed **Feature loadings** (one
+row per feature, one column per component), **Explained variance** (variance,
+share and cumulative share per component, the values behind the scree plot), a
+**Model summary** of the feature and row counts with the model comments as
+notes, and **Charts** with the scree plot and the PC1-vs-PC2 plot, including
+any sampling caption. Charts are Excel-only and render in the export worker;
+CSV and binary files contain exactly one table. Per-row component scores are
+not exported. Configuration edits clear the export until the next Apply
+completes, and failed fits cannot be exported.
 Selections are retained when switching formats; Export is disabled with an
 explanation if the selection is invalid for the format. All choices for other
 analyses are disabled previews and cannot create files. **Add to report** and

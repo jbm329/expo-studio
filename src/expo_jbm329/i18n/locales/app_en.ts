@@ -153,8 +153,8 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model, applied Outliers and applied Clustering exports are available after analysis. Other export and report actions are previews.</source>
-        <translation>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model, applied Outliers and applied Clustering exports are available after analysis. Other export and report actions are previews.</translation>
+        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model, applied Outliers, applied Clustering and applied PCA exports are available after analysis. Other export and report actions are previews.</source>
+        <translation>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model, applied Outliers, applied Clustering and applied PCA exports are available after analysis. Other export and report actions are previews.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -913,6 +913,50 @@ Features: {features}</translation>
     <message>
         <source>Share</source>
         <translation>Share</translation>
+    </message>
+    <message>
+        <source>Applied features: {features}</source>
+        <translation>Applied features: {features}</translation>
+    </message>
+    <message>
+        <source>Feature loadings</source>
+        <translation>Feature loadings</translation>
+    </message>
+    <message>
+        <source>Explained variance</source>
+        <translation>Explained variance</translation>
+    </message>
+    <message>
+        <source>Apply a PCA successfully before exporting.</source>
+        <translation>Apply a PCA successfully before exporting.</translation>
+    </message>
+    <message>
+        <source>Variance, share and cumulative share per component, as in the scree plot.</source>
+        <translation>Variance, share and cumulative share per component, as in the scree plot.</translation>
+    </message>
+    <message>
+        <source>Feature and row counts with the displayed model comments.</source>
+        <translation>Feature and row counts with the displayed model comments.</translation>
+    </message>
+    <message>
+        <source>Export the feature loadings, explained variance, model summary and charts of the applied PCA, not the original dataset.</source>
+        <translation>Export the feature loadings, explained variance, model summary and charts of the applied PCA, not the original dataset.</translation>
+    </message>
+    <message>
+        <source>Feature</source>
+        <translation>Feature</translation>
+    </message>
+    <message>
+        <source>Component</source>
+        <translation>Component</translation>
+    </message>
+    <message>
+        <source>Variance</source>
+        <translation>Variance</translation>
+    </message>
+    <message>
+        <source>Cumulative share</source>
+        <translation>Cumulative share</translation>
     </message>
 </context><context>
     <name>ReportPage</name>
@@ -5055,6 +5099,10 @@ Saved to:
         <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="181" />
         <source>Feature</source>
         <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Features: {columns}</source>
+        <translation>Features: {columns}</translation>
     </message>
 </context><context>
     <name>PairedComparisonConfigWidget</name>

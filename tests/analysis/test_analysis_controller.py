@@ -74,6 +74,12 @@ from expo_jbm329.services.analysis.overview import (
     analyze_dataset_overview,
 )
 from expo_jbm329.services.analysis.pca import PCAError
+from expo_jbm329.services.analysis.pca_export import (
+    PCA_COMPONENTS,
+    PCAExportComponent,
+    PCAExportRequest,
+    PCAExportSnapshot,
+)
 from expo_jbm329.services.analysis.regression import RegressionError
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
@@ -96,6 +102,7 @@ from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
 from tests.analysis.test_outliers_export import multivariate_snapshot as multivariate_outliers_snapshot
 from tests.analysis.test_outliers_export import univariate_snapshot
+from tests.analysis.test_pca_export import pca_snapshot
 from tests.analysis.test_regression_export import cox_snapshot, linear_snapshot, logistic_snapshot
 
 _CONTROLLER_MODULE = "expo_jbm329.workbench.controllers.analysis.analysis_controller"
@@ -633,6 +640,7 @@ class DummyAnalysisDialog:
         self.regression_export_requested = DummySignal()
         self.outliers_export_requested = DummySignal()
         self.clustering_export_requested = DummySignal()
+        self.pca_export_requested = DummySignal()
         self.placeholder_calls: list[str] = []
         self.content_widgets: list[QWidget] = []
         self.config_widgets: list[QWidget | None] = []
@@ -649,6 +657,7 @@ class DummyAnalysisDialog:
         self._export_regression = None
         self._export_outliers = None
         self._export_clustering = None
+        self._export_pca = None
         self._correlation_export_revision = 0
         self._analysis_revision = 0
 
@@ -659,6 +668,7 @@ class DummyAnalysisDialog:
         self._export_regression = None
         self._export_outliers = None
         self._export_clustering = None
+        self._export_pca = None
         self.invalidate_correlation_export()
         self._analysis_revision += 1
 
@@ -720,6 +730,14 @@ class DummyAnalysisDialog:
     def exportable_clustering(self):
         if self._selected_category is AnalysisCategory.CLUSTERING:
             return self._export_clustering
+        return None
+
+    def set_exportable_pca(self, snapshot):
+        self._export_pca = snapshot
+
+    def exportable_pca(self):
+        if self._selected_category is AnalysisCategory.PCA:
+            return self._export_pca
         return None
 
     def show_placeholder(self, text):
@@ -4832,3 +4850,205 @@ def test_clustering_export_uses_compiled_swedish_labels() -> None:
     assert summary.columns.tolist() == ["Mått", "Värde", "Noteringar"]
     assert summary["Mått"].tolist()[:3] == ["Variabler", "Grannskapsradie (eps)", "Minsta antal observationer"]
     assert "Silhuettpoäng" in summary["Mått"].tolist()
+
+
+# ----------------------------------------------------------------------
+# PCA export
+# ----------------------------------------------------------------------
+
+
+def test_successful_pca_apply_registers_the_displayed_export_snapshot(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_pca(async_ops, dialog_factory)
+    assert dlg.exportable_pca() is None
+    config = _pca_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    view = _pca_view(dlg)
+    snapshot = dlg.exportable_pca()
+    assert isinstance(snapshot, PCAExportSnapshot)
+    assert snapshot.result is view.result()
+    assert snapshot.chart_labels == view.chart_labels()
+    assert snapshot.notes == view.export_notes()
+
+    _set_pca_checked(config, "c", False)
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_pca() is None
+
+
+def test_failed_pca_fit_never_registers_an_export_snapshot(dialog_factory):
+    df = pd.DataFrame({"a": [1.0, 1.0, 1.0], "b": [2.0, 2.0, 2.0]})
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_pca(async_ops, dialog_factory, df)
+    _pca_config(dlg)._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    assert _pca_view(dlg).result().error is not None
+    assert dlg.exportable_pca() is None
+
+
+def _pca_export_context(snapshot: PCAExportSnapshot):
+    dialog = AnalysisDialog(parent=None, datasets=[DatasetRef("chosen", "Chosen", 10, 3)], active_tab_id="chosen")
+    dialog.select_category(AnalysisCategory.PCA)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_pca(snapshot)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must not look up a dataset")
+    results.current_df.side_effect = AssertionError("Export must not use the active tab")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, Mock()
+
+
+_PCA_TRANSLATIONS = {
+    "Feature loadings": "Variabelladdningar",
+    "Explained variance": "Forklarad varians",
+    "Model summary": "Modellsammanfattning",
+    "Charts": "Diagram",
+    "Feature": "Variabel",
+    "Component": "Komponent",
+    "Variance": "Varians",
+    "Share": "Andel",
+    "Cumulative share": "Kumulativ andel",
+    "Metric": "Matt",
+    "Value": "Varde",
+    "Notes": "Noteringar",
+    "Features": "Variabler",
+}
+
+
+def test_pca_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch):
+    snapshot = pca_snapshot()
+    controller, dialog, exporter = _pca_export_context(snapshot)
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: _PCA_TRANSLATIONS.get(text, text))
+    request = PCAExportRequest(snapshot, PCA_COMPONENTS, StatisticsExportFormat.EXCEL)
+
+    controller._export_pca(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.export_excel.call_count == 1
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert list(kwargs["sheets"]) == ["Variabelladdningar", "Forklarad varians", "Modellsammanfattning"]
+    assert kwargs["sheets"]["Variabelladdningar"].columns.tolist() == ["Variabel", "PC1", "PC2", "PC3"]
+    variance = kwargs["sheets"]["Forklarad varians"]
+    assert variance.columns.tolist() == ["Komponent", "Varians", "Andel", "Kumulativ andel"]
+    assert variance["Komponent"].tolist() == ["PC1", "PC2", "PC3"]
+    summary = kwargs["sheets"]["Modellsammanfattning"]
+    assert summary.columns.tolist() == ["Matt", "Varde", "Noteringar"]
+    assert summary["Matt"].iloc[0] == "Variabler"
+    assert summary["Noteringar"].iloc[0] == snapshot.notes[0]
+
+    progress: list[int] = []
+    images = kwargs["chart_factory"](progress.append, lambda: False)
+    assert [image.heading for image in images] == [
+        snapshot.chart_labels.scree_title,
+        snapshot.chart_labels.scatter_title,
+    ]
+    assert progress == [50, 100]
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_pca_excel_export_without_charts_has_no_chart_factory():
+    snapshot = pca_snapshot()
+    controller, dialog, exporter = _pca_export_context(snapshot)
+    request = PCAExportRequest(
+        snapshot,
+        (PCAExportComponent.MODEL_SUMMARY, PCAExportComponent.FEATURE_LOADINGS),
+        StatisticsExportFormat.EXCEL,
+    )
+
+    controller._export_pca(dialog, exporter, request)  # noqa: SLF001
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Model summary", "Feature loadings"]
+    assert kwargs["chart_factory"] is None
+    assert kwargs["chart_sheet_name"] is None
+    assert kwargs["sheets"]["Model summary"]["Metric"].tolist()[:4] == [
+        "Features",
+        "Total rows",
+        "Rows used",
+        "Rows dropped because of missing or infinite values",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("format_choice", "method_name"),
+    [(StatisticsExportFormat.CSV, "export_csv"), (StatisticsExportFormat.BINARY, "export_data")],
+)
+@pytest.mark.parametrize(
+    ("component", "first_column"),
+    [
+        (PCAExportComponent.FEATURE_LOADINGS, "Feature"),
+        (PCAExportComponent.EXPLAINED_VARIANCE, "Component"),
+        (PCAExportComponent.MODEL_SUMMARY, "Metric"),
+    ],
+)
+def test_pca_single_table_routes_to_non_excel_exporters(format_choice, method_name, component, first_column):
+    snapshot = pca_snapshot()
+    controller, dialog, exporter = _pca_export_context(snapshot)
+    request = PCAExportRequest(snapshot, (component,), format_choice)
+
+    controller._export_pca(dialog, exporter, request)  # noqa: SLF001
+
+    method = getattr(exporter, method_name)
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    assert kwargs["df"].columns[0] == first_column
+    assert exporter.export_excel.call_count == 0
+
+
+@pytest.mark.parametrize("change", ["category", "content", "other_snapshot", "wrong_type"])
+def test_pca_export_rejects_stale_or_foreign_requests(change):
+    snapshot = pca_snapshot()
+    controller, dialog, exporter = _pca_export_context(snapshot)
+    request: object = PCAExportRequest(snapshot, (PCAExportComponent.FEATURE_LOADINGS,), StatisticsExportFormat.CSV)
+    if change == "category":
+        dialog.select_category(AnalysisCategory.STATISTICS)
+    elif change == "content":
+        dialog.set_content_widget(QWidget())
+    elif change == "other_snapshot":
+        dialog.set_exportable_pca(pca_snapshot())
+    else:
+        request = object()
+
+    controller._export_pca(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.mock_calls == []
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_pca_export_uses_compiled_swedish_labels() -> None:
+    snapshot = pca_snapshot()
+    controller, dialog, exporter = _pca_export_context(snapshot)
+    translator = QTranslator()
+    catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / "app_sv.qm"
+    assert translator.load(str(catalog))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        controller._export_pca(  # noqa: SLF001
+            dialog,
+            exporter,
+            PCAExportRequest(snapshot, PCA_COMPONENTS, StatisticsExportFormat.EXCEL),
+        )
+    finally:
+        app.removeTranslator(translator)
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    sheets = kwargs["sheets"]
+    assert list(sheets) == ["Variabelladdningar", "Förklarad varians", "Modellsammanfattning"]
+    assert sheets["Variabelladdningar"].columns.tolist() == ["Variabel", "PC1", "PC2", "PC3"]
+    assert sheets["Förklarad varians"].columns.tolist() == ["Komponent", "Varians", "Andel", "Kumulativ andel"]
+    summary = sheets["Modellsammanfattning"]
+    assert summary.columns.tolist() == ["Mått", "Värde", "Noteringar"]
+    assert summary["Mått"].tolist()[:4] == [
+        "Variabler",
+        "Totalt antal rader",
+        "Använda rader",
+        "Rader borttagna på grund av saknade eller oändliga värden",
+    ]

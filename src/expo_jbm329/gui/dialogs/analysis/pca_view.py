@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
@@ -18,13 +17,13 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
 from expo_jbm329.services.analysis.pca import MIN_OBSERVATIONS, MIN_SELECTED_COLUMNS, PCAError
+from expo_jbm329.services.analysis.pca_charts import PCAChartLabels, draw_score_plot, draw_scree_plot
+from expo_jbm329.services.analysis.pca_export import component_name
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_pct
 
 if TYPE_CHECKING:
-    from matplotlib.axes import Axes
-
     from expo_jbm329.services.analysis.pca import PCAResult
 
 
@@ -74,6 +73,44 @@ class PCAView(QWidget):
         """Return the selected columns and scaling used by this displayed fit."""
         return self._result.columns, self._result.standardize
 
+    def result(self) -> PCAResult:
+        """Return the displayed PCA fit."""
+        return self._result
+
+    def chart_labels(self) -> PCAChartLabels:
+        """Return the translated plot text used by the view and its export."""
+        result = self._result
+        ratios = result.explained_variance_ratio
+        # Error results have no fitted ratios; their labels are never drawn or exported.
+        pc1_axis = self.tr("PC1 ({variance})").format(variance=fmt_pct(ratios[0])) if ratios else component_name(0)
+        pc2_axis = (
+            self.tr("PC2 ({variance})").format(variance=fmt_pct(ratios[1])) if len(ratios) > 1 else component_name(1)
+        )
+        captions = rich_text_lines([self._sample_text(result)]) if result.sampled and result.error is None else ()
+        return PCAChartLabels(
+            scree_title=self.tr("Scree plot"),
+            explained=self.tr("Explained variance"),
+            cumulative=self.tr("Cumulative"),
+            component_axis=self.tr("Component"),
+            variance_axis=self.tr("Explained variance (%)"),
+            scatter_title=self.tr("PC1 vs PC2"),
+            pc1_axis=pc1_axis,
+            pc2_axis=pc2_axis,
+            scatter_captions=captions,
+        )
+
+    def export_notes(self) -> tuple[str, ...]:
+        """Return the displayed model comments and applied features as plain-text lines.
+
+        Returns:
+            The lines, or an empty tuple when the view shows an error.
+        """
+        result = self._result
+        if result.error is not None:
+            return ()
+        features = self.tr("Features: {columns}").format(columns=", ".join(result.columns))
+        return (*rich_text_lines([self._summary_text(result)]), features)
+
     def loadings_table(self) -> QTableWidget | None:
         """Return the feature-loading table, or `None` for an error result."""
         return self._loadings_table
@@ -95,8 +132,8 @@ class PCAView(QWidget):
         }
         return messages[error]
 
-    def _build_summary(self, result: PCAResult) -> QLabel:
-        """Build the fit summary and complete-case warning."""
+    def _summary_text(self, result: PCAResult) -> str:
+        """Return the rich-text fit summary, complete-case warning and sampling disclosure."""
         scaling = self.tr("standardized") if result.standardize else self.tr("not standardized")
         text = self.tr(
             "<b>{features} features</b>, {scaling}. PCA used {used} of {total} rows "
@@ -109,10 +146,18 @@ class PCAView(QWidget):
             dropped=fmt_int(result.rows_dropped),
         )
         if result.sampled:
-            text += "<br>" + self.tr("<i>The PC1-vs-PC2 plot shows a deterministic sample of {count} rows.</i>").format(
-                count=fmt_int(len(result.sample_pc1))
-            )
-        label = QLabel(text, self)
+            text += "<br>" + self._sample_text(result)
+        return text
+
+    def _sample_text(self, result: PCAResult) -> str:
+        """Return the rich-text disclosure that the score plot shows a sample."""
+        return self.tr("<i>The PC1-vs-PC2 plot shows a deterministic sample of {count} rows.</i>").format(
+            count=fmt_int(len(result.sample_pc1))
+        )
+
+    def _build_summary(self, result: PCAResult) -> QLabel:
+        """Build the fit summary and complete-case warning."""
+        label = QLabel(self._summary_text(result), self)
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setWordWrap(True)
         label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
@@ -130,46 +175,22 @@ class PCAView(QWidget):
         figure = Figure(constrained_layout=True)
         canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
         canvas.setMinimumSize(280, 220)
-        self._draw_scree_plot(figure.add_subplot(111), result)
+        draw_scree_plot(figure.add_subplot(111), result, self.chart_labels())
         return canvas
-
-    def _draw_scree_plot(self, ax: Axes, result: PCAResult) -> None:
-        """Draw the per-component bars and cumulative-variance line."""
-        positions = np.arange(1, len(result.explained_variance_ratio) + 1)
-        percentages = np.asarray(result.explained_variance_ratio) * 100
-        cumulative = np.asarray(result.cumulative_variance_ratio) * 100
-        ax.bar(positions, percentages, label=self.tr("Explained variance"))
-        ax.plot(positions, cumulative, color="tab:red", marker="o", label=self.tr("Cumulative"))
-        ax.set_title(self.tr("Scree plot"))
-        ax.set_xlabel(self.tr("Component"))
-        ax.set_ylabel(self.tr("Explained variance (%)"))
-        ax.set_xticks(positions)
-        ax.set_ylim(0, 105)
-        ax.legend(fontsize=8)
 
     def _build_scatter_plot(self, result: PCAResult) -> QWidget:
         """Build the PC1-vs-PC2 score scatterplot."""
         figure = Figure(constrained_layout=True)
         canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
         canvas.setMinimumSize(280, 220)
-        self._draw_scatter_plot(figure.add_subplot(111), result)
+        draw_score_plot(figure.add_subplot(111), result, self.chart_labels())
         return canvas
-
-    def _draw_scatter_plot(self, ax: Axes, result: PCAResult) -> None:
-        """Draw PC1 and PC2 scores with their explained-variance labels."""
-        pc1, pc2 = result.explained_variance_ratio[:2]
-        ax.scatter(result.sample_pc1, result.sample_pc2, s=6, alpha=0.4)
-        ax.axhline(0, color="0.7", linewidth=0.8)
-        ax.axvline(0, color="0.7", linewidth=0.8)
-        ax.set_title(self.tr("PC1 vs PC2"))
-        ax.set_xlabel(self.tr("PC1 ({variance})").format(variance=fmt_pct(pc1)))
-        ax.set_ylabel(self.tr("PC2 ({variance})").format(variance=fmt_pct(pc2)))
 
     def _build_loadings_panel(self, result: PCAResult) -> QWidget:
         """Build the titled feature-loadings table section."""
         panel, layout = self._build_section(self.tr("Feature loadings"))
 
-        headers = [self.tr("Feature"), *(f"PC{index}" for index in range(1, len(result.columns) + 1))]
+        headers = [self.tr("Feature"), *(component_name(index) for index in range(len(result.columns)))]
         table = QTableWidget(panel)
         table.setColumnCount(len(headers))
         table.setRowCount(len(result.columns))

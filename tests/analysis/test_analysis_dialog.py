@@ -62,6 +62,7 @@ from expo_jbm329.services.analysis.outliers import initialize_outlier_summary
 from expo_jbm329.services.analysis.outliers_export import OutlierExportComponent, OutlierExportRequest
 from expo_jbm329.services.analysis.paired_comparison import initialize_paired_comparison
 from expo_jbm329.services.analysis.pca import initialize_pca
+from expo_jbm329.services.analysis.pca_export import PCAExportComponent, PCAExportRequest
 from expo_jbm329.services.analysis.regression import initialize_regression
 from expo_jbm329.services.analysis.regression_export import RegressionExportComponent, RegressionExportRequest
 from expo_jbm329.services.analysis.regression_glm import RegressionModel, initialize_generalized_targets
@@ -77,6 +78,7 @@ from expo_jbm329.utils.dataset_ref import DatasetRef
 from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_outliers_export import multivariate_snapshot as multivariate_outliers_snapshot
 from tests.analysis.test_outliers_export import univariate_snapshot
+from tests.analysis.test_pca_export import pca_snapshot
 from tests.analysis.test_regression_export import linear_snapshot
 
 
@@ -343,7 +345,7 @@ def test_report_navigation_uses_full_workspace_and_preserves_details_and_analysi
         dialog.close()
 
 
-@pytest.mark.parametrize("category", [AnalysisCategory.OVERVIEW, AnalysisCategory.PCA])
+@pytest.mark.parametrize("category", [AnalysisCategory.OVERVIEW, AnalysisCategory.TIME_SERIES])
 def test_export_button_opens_selection_dialog_with_full_text_tooltips(monkeypatch, category):
     captured: list[AnalysisExportDialog] = []
     monkeypatch.setattr(AnalysisExportDialog, "exec", lambda self: captured.append(self))
@@ -1237,6 +1239,60 @@ def test_clustering_export_selection_emits_only_the_current_snapshot(monkeypatch
     assert len(received) == 1
     assert received[0].snapshot is snapshot
     assert received[0].components == (ClusteringExportComponent.CLUSTER_SIZES,)
+
+    dialog.set_content_widget(QWidget())
+    dialog._show_export_selection()
+    assert len(captured) == 2
+    assert all(not choice.isEnabled() for choice in captured[1].findChildren(QCheckBox))
+    assert len(received) == 1
+
+
+def test_pca_export_snapshot_is_scoped_to_current_category_and_dataset():
+    snapshot = pca_snapshot()
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.CLUSTERING)
+    dialog.set_exportable_pca(snapshot)
+    assert dialog.exportable_pca() is None
+
+    dialog.select_category(AnalysisCategory.PCA)
+    dialog.set_exportable_pca(snapshot)
+    assert dialog.exportable_pca() is snapshot
+    dialog.set_content_widget(QWidget())
+    assert dialog.exportable_pca() is None
+    dialog.set_exportable_pca(snapshot)
+    dialog.select_dataset("t2")
+    assert dialog.exportable_pca() is None
+    dialog.set_exportable_pca(snapshot)
+    dialog.select_category(AnalysisCategory.STATISTICS)
+    assert dialog.exportable_pca() is None
+
+
+def test_pca_export_selection_emits_only_the_current_snapshot(monkeypatch):
+    snapshot = pca_snapshot()
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.PCA)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_pca(snapshot)
+    received: list[PCAExportRequest] = []
+    dialog.pca_export_requested.connect(received.append)
+    captured: list[AnalysisExportDialog] = []
+
+    def accept_default_selection(export_dialog):
+        captured.append(export_dialog)
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(AnalysisExportDialog, "exec", accept_default_selection)
+    dialog._show_export_selection()
+
+    assert [choice.text() for choice in captured[0].findChildren(QCheckBox)] == [
+        "Feature loadings",
+        "Explained variance",
+        "Model summary",
+        "Charts",
+    ]
+    assert len(received) == 1
+    assert received[0].snapshot is snapshot
+    assert received[0].components == (PCAExportComponent.FEATURE_LOADINGS,)
 
     dialog.set_content_widget(QWidget())
     dialog._show_export_selection()

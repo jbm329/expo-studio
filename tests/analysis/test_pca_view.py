@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.services.analysis.pca import PCAError, PCAResult, analyze_pca
+from expo_jbm329.utils.format_utils import fmt_pct
 from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 
@@ -189,3 +190,64 @@ def test_no_component_values_are_not_needed_to_display_error():
     view = PCAView(result)
 
     assert "At least 2 complete rows" in _labels_text(view)
+
+
+def test_result_returns_the_displayed_fit():
+    result = _result()
+
+    assert PCAView(result).result() is result
+
+
+@pytest.mark.parametrize("sampled", [False, True])
+def test_chart_labels_match_the_view_and_caption_only_a_sampled_plot(sampled):
+    result = dataclasses.replace(_result(), sampled=sampled)
+    view = PCAView(result)
+
+    labels = view.chart_labels()
+
+    assert labels.scree_title == "Scree plot"
+    assert (labels.explained, labels.cumulative) == ("Explained variance", "Cumulative")
+    assert (labels.component_axis, labels.variance_axis) == ("Component", "Explained variance (%)")
+    assert labels.scatter_title == "PC1 vs PC2"
+    pc1, pc2 = result.explained_variance_ratio[:2]
+    assert labels.pc1_axis == f"PC1 ({fmt_pct(pc1)})"
+    assert labels.pc2_axis == f"PC2 ({fmt_pct(pc2)})"
+    expected = (
+        (f"The PC1-vs-PC2 plot shows a deterministic sample of {len(result.sample_pc1)} rows.",) if sampled else ()
+    )
+    assert labels.scatter_captions == expected
+
+
+def test_displayed_plots_use_the_shared_chart_labels():
+    view = PCAView(_result())
+    labels = view.chart_labels()
+
+    axes = {ax.get_title(): ax for ax in _axes(view)}
+
+    assert set(axes) == {labels.scree_title, labels.scatter_title}
+    scores = axes[labels.scatter_title]
+    assert (scores.get_xlabel(), scores.get_ylabel()) == (labels.pc1_axis, labels.pc2_axis)
+
+
+def test_error_chart_labels_have_no_caption_or_variance():
+    result = dataclasses.replace(analyze_pca(pd.DataFrame({"x": [1.0]})), sampled=True)
+
+    labels = PCAView(result).chart_labels()
+
+    assert labels.scatter_captions == ()
+    assert (labels.pc1_axis, labels.pc2_axis) == ("PC1", "PC2")
+
+
+def test_export_notes_are_the_plain_text_comments_and_features():
+    result = dataclasses.replace(_result(), sampled=True)
+
+    notes = PCAView(result).export_notes()
+
+    assert notes[0].startswith("3 features, standardized.")
+    assert all("<" not in line for line in notes)
+    assert f"The PC1-vs-PC2 plot shows a deterministic sample of {len(result.sample_pc1)} rows." in notes
+    assert notes[-1] == "Features: a, b, c"
+
+
+def test_error_view_has_no_export_notes():
+    assert PCAView(analyze_pca(pd.DataFrame({"x": [1.0]}))).export_notes() == ()

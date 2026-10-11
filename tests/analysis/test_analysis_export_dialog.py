@@ -36,6 +36,7 @@ from expo_jbm329.services.analysis.outliers_export import (
     UnivariateOutlierExportSnapshot,
 )
 from expo_jbm329.services.analysis.overview import OverviewExportFormat, OverviewExportTable, analyze_dataset_overview
+from expo_jbm329.services.analysis.pca_export import PCA_COMPONENTS, PCAExportComponent, PCAExportRequest
 from expo_jbm329.services.analysis.regression_charts import RegressionChartLabels
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
@@ -51,6 +52,7 @@ from expo_jbm329.utils.format_utils import fmt_num
 from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
 from tests.analysis.test_outliers_export import HISTOGRAM_LABELS, multivariate_snapshot, univariate_snapshot
+from tests.analysis.test_pca_export import pca_snapshot
 from tests.analysis.test_regression_export import (
     LINEAR_LABELS,
     cox_snapshot,
@@ -635,3 +637,72 @@ def test_clustering_dialog_without_applied_fit_never_enables_export():
     assert not dialog._export_button.isEnabled()
     with pytest.raises(ValueError, match="only one"):
         AnalysisExportDialog(clustering_mode=True, outliers_mode=True)
+
+
+def test_pca_dialog_names_features_and_defaults_to_feature_loadings():
+    snapshot = pca_snapshot()
+    dialog = AnalysisExportDialog(pca=snapshot)
+    choices = dialog.findChildren(QCheckBox)
+    assert [choice.text() for choice in choices] == [
+        "Feature loadings",
+        "Explained variance",
+        "Model summary",
+        "Charts",
+    ]
+    assert all(choice.isEnabled() for choice in choices)
+    assert [choice.isChecked() for choice in choices] == [True, False, False, False]
+    assert "scree plot" in choices[1].toolTip()
+    assert "model comments" in choices[2].toolTip()
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied features:"))
+    assert label.text() == "Applied features: x / y / z"
+    assert label.textFormat() is Qt.TextFormat.PlainText
+    assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
+    request = dialog.export_request()
+    assert isinstance(request, PCAExportRequest)
+    assert request.snapshot is snapshot
+    assert request.components == (PCAExportComponent.FEATURE_LOADINGS,)
+    assert request.format is StatisticsExportFormat.EXCEL
+
+
+def test_pca_dialog_limits_single_file_formats_to_one_table_and_keeps_choices():
+    dialog = AnalysisExportDialog(pca=pca_snapshot())
+    choices = dialog.findChildren(QCheckBox)
+    formats = dialog.findChild(QComboBox)
+    for choice in choices:
+        choice.setChecked(True)
+    assert dialog.export_request().components == PCA_COMPONENTS
+    for format_choice in (StatisticsExportFormat.CSV, StatisticsExportFormat.BINARY):
+        formats.setCurrentIndex(formats.findData(format_choice))
+        assert dialog.export_request() is None
+        assert not dialog._export_button.isEnabled()
+        assert all(choice.isChecked() for choice in choices)
+    assert "Charts are available only in Excel" in dialog._selection_explanation.text()
+    choices[3].setChecked(False)
+    assert dialog.export_request() is None
+    choices[0].setChecked(False)
+    choices[2].setChecked(False)
+    request = dialog.export_request()
+    assert request.components == (PCAExportComponent.EXPLAINED_VARIANCE,)
+    assert request.format is StatisticsExportFormat.BINARY
+    assert dialog._export_button.isEnabled()
+    choices[1].setChecked(False)
+    assert dialog.export_request() is None
+
+
+def test_pca_dialog_without_applied_fit_never_enables_export():
+    dialog = AnalysisExportDialog(pca_mode=True)
+    choices = dialog.findChildren(QCheckBox)
+    assert [choice.text() for choice in choices] == [
+        "Feature loadings",
+        "Explained variance",
+        "Model summary",
+        "Charts",
+    ]
+    assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
+    assert all("Apply a PCA" in choice.toolTip() for choice in choices)
+    assert "Apply a PCA" in dialog._selection_explanation.text()
+    assert not any(label.text().startswith("Applied features:") for label in dialog.findChildren(QLabel))
+    assert dialog.export_request() is None
+    assert not dialog._export_button.isEnabled()
+    with pytest.raises(ValueError, match="only one"):
+        AnalysisExportDialog(pca_mode=True, clustering_mode=True)

@@ -47,6 +47,7 @@ from expo_jbm329.services.analysis.correlation_export import CorrelationExportRe
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportRequest, HypothesisExportSnapshot
 from expo_jbm329.services.analysis.outliers_export import OutlierExportRequest, OutlierExportSnapshot
 from expo_jbm329.services.analysis.overview import OverviewExportRequest
+from expo_jbm329.services.analysis.pca_export import PCAExportRequest, PCAExportSnapshot
 from expo_jbm329.services.analysis.regression_export import RegressionExportRequest, RegressionExportSnapshot
 from expo_jbm329.services.analysis.statistics import StatisticsExportRequest
 
@@ -132,6 +133,7 @@ class AnalysisDialog(QDialog):
     regression_export_requested = pyqtSignal(object)  # RegressionExportRequest
     outliers_export_requested = pyqtSignal(object)  # OutlierExportRequest
     clustering_export_requested = pyqtSignal(object)  # ClusteringExportRequest
+    pca_export_requested = pyqtSignal(object)  # PCAExportRequest
 
     def __init__(
         self,
@@ -167,6 +169,8 @@ class AnalysisDialog(QDialog):
         self._outliers_export_tab_id: str | None = None
         self._export_clustering: ClusteringExportSnapshot | None = None
         self._clustering_export_tab_id: str | None = None
+        self._export_pca: PCAExportSnapshot | None = None
+        self._pca_export_tab_id: str | None = None
         self._analysis_revision = 0
 
         self.setWindowTitle(self.tr("Advanced analysis"))
@@ -291,7 +295,7 @@ class AnalysisDialog(QDialog):
         explanation = QLabel(
             self.tr(
                 "Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression "
-                "model, applied Outliers and applied Clustering exports are available after analysis. "
+                "model, applied Outliers, applied Clustering and applied PCA exports are available after analysis. "
                 "Other export and report actions are previews."
             ),
             bar,
@@ -322,6 +326,8 @@ class AnalysisDialog(QDialog):
             outliers_multivariate=isinstance(self.config_widget(), MultivariateOutliersConfigWidget),
             clustering=self.exportable_clustering(),
             clustering_mode=self.selected_category() is AnalysisCategory.CLUSTERING,
+            pca=self.exportable_pca(),
+            pca_mode=self.selected_category() is AnalysisCategory.PCA,
         )
         for combo in dialog.findChildren(QComboBox):
             _ComboToolTipFilter(combo)
@@ -341,6 +347,8 @@ class AnalysisDialog(QDialog):
                 self.outliers_export_requested.emit(request)
             elif isinstance(request, ClusteringExportRequest) and request.snapshot is self.exportable_clustering():
                 self.clustering_export_requested.emit(request)
+            elif isinstance(request, PCAExportRequest) and request.snapshot is self.exportable_pca():
+                self.pca_export_requested.emit(request)
 
     def invalidate_overview_export(self) -> None:
         """Disable real export as soon as displayed analysis becomes stale."""
@@ -356,6 +364,8 @@ class AnalysisDialog(QDialog):
         self._outliers_export_tab_id = None
         self._export_clustering = None
         self._clustering_export_tab_id = None
+        self._export_pca = None
+        self._pca_export_tab_id = None
         self.invalidate_correlation_export()
         self._analysis_revision += 1
 
@@ -441,6 +451,20 @@ class AnalysisDialog(QDialog):
             and self.selected_dataset_tab_id() == self._clustering_export_tab_id
         ):
             return self._export_clustering
+        return None
+
+    def set_exportable_pca(self, snapshot: PCAExportSnapshot) -> None:
+        """Register a successful PCA fit after its view is displayed."""
+        self._export_pca = snapshot
+        self._pca_export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_pca(self) -> PCAExportSnapshot | None:
+        """Return the displayed applied PCA, independent of pending configuration edits."""
+        if (
+            self.selected_category() is AnalysisCategory.PCA
+            and self.selected_dataset_tab_id() == self._pca_export_tab_id
+        ):
+            return self._export_pca
         return None
 
     def set_exportable_overview(self, result: DatasetOverviewResult) -> None:
