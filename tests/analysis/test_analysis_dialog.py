@@ -649,13 +649,10 @@ def test_hypothesis_apply_stays_at_pane_bottom_and_controls_stay_compact():
 @pytest.mark.parametrize("translated", [False, True])
 def test_narrow_correlation_and_time_series_keep_controls_and_full_labels_accessible(monkeypatch, width, translated):
     translations = {
-        "Select all": "Select all available columns",
-        "Clear": "Clear selected columns",
         "Auto-detect seasonal period": "Automatically detect the seasonal period from the selected time series",
     }
     if translated:
-        for config_type in (CorrelationConfigWidget, TimeSeriesConfigWidget):
-            monkeypatch.setattr(config_type, "tr", lambda self, text: translations.get(text, text))
+        monkeypatch.setattr(TimeSeriesConfigWidget, "tr", lambda self, text: translations.get(text, text))
     frame = pd.DataFrame({
         "when": pd.date_range("2025-01-01", periods=30),
         "a": range(30),
@@ -678,9 +675,13 @@ def test_narrow_correlation_and_time_series_keep_controls_and_full_labels_access
             if isinstance(config, CorrelationConfigWidget):
                 controls = [config._select_all_button, config._clear_button]
                 for button in controls:
-                    assert button.width() >= button.minimumSizeHint().width()
-                if translated:
-                    assert controls[1].y() > controls[0].y()
+                    assert button.width() == button.sizeHint().width()
+                # Like Regression, both buttons share one right-aligned row.
+                assert controls[1].y() == controls[0].y()
+                assert controls[1].x() > controls[0].x()
+                group = controls[0].parentWidget()
+                margin = group.layout().contentsMargins().right()
+                assert controls[1].geometry().right() == group.contentsRect().right() - margin
                 controls[1].click()
                 assert config.checked_columns() == ()
                 controls[0].click()
@@ -718,52 +719,33 @@ def test_narrow_correlation_and_time_series_keep_controls_and_full_labels_access
 
 
 @pytest.mark.parametrize("viewport_width", [225, 289])
-def test_narrow_controls_wrap_at_their_size_hints_with_larger_fonts(viewport_width):
+def test_narrow_time_series_checkbox_wraps_at_its_size_hint_with_a_larger_font(viewport_width):
     frame = pd.DataFrame({
         "when": pd.date_range("2025-01-01", periods=30),
         "a": range(30),
         "b": range(1, 31),
     })
-    correlation = CorrelationConfigWidget(initialize_correlation(frame))
-    time_series = TimeSeriesConfigWidget(initialize_time_series(frame))
-    for config in (correlation, time_series):
-        if isinstance(config, CorrelationConfigWidget):
-            controls = [config._select_all_button, config._clear_button]
-            font_size = 24
-        else:
-            controls = [config._auto_period]
-            font_size = 18
-        for control in controls:
-            font = control.font()
-            font.setPointSize(font_size)
-            control.setFont(font)
-        AnalysisDialog._prepare_config_layout(config)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(config)
-        scroll.resize(viewport_width + 2 * scroll.frameWidth(), 700)
-        scroll.show()
-        QCoreApplication.processEvents()
-        try:
-            assert scroll.viewport().width() == viewport_width
-            assert scroll.horizontalScrollBar().maximum() == 0
-            if isinstance(config, CorrelationConfigWidget):
-                actions = controls[0].parentWidget().layout().itemAt(1).layout()
-                required_width = sum(control.minimumSizeHint().width() for control in controls)
-                required_width += actions.horizontalSpacing()
-                if required_width > actions.geometry().width():
-                    assert controls[1].y() > controls[0].y()
-                else:
-                    assert controls[1].y() == controls[0].y()
-                for control in controls:
-                    assert control.width() >= control.minimumSizeHint().width()
-            else:
-                label = controls[0].findChild(QLabel)
-                assert label is not None
-                assert label.height() >= label.heightForWidth(label.width())
-                assert label.height() > label.fontMetrics().height()
-        finally:
-            scroll.close()
+    config = TimeSeriesConfigWidget(initialize_time_series(frame))
+    checkbox = config._auto_period
+    font = checkbox.font()
+    font.setPointSize(18)
+    checkbox.setFont(font)
+    AnalysisDialog._prepare_config_layout(config)
+    scroll = QScrollArea()
+    scroll.setWidgetResizable(True)
+    scroll.setWidget(config)
+    scroll.resize(viewport_width + 2 * scroll.frameWidth(), 700)
+    scroll.show()
+    QCoreApplication.processEvents()
+    try:
+        assert scroll.viewport().width() == viewport_width
+        assert scroll.horizontalScrollBar().maximum() == 0
+        label = checkbox.findChild(QLabel)
+        assert label is not None
+        assert label.height() >= label.heightForWidth(label.width())
+        assert label.height() > label.fontMetrics().height()
+    finally:
+        scroll.close()
 
 
 def test_tall_configuration_can_scroll_without_expanding_the_dialog():

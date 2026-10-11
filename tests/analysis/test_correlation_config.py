@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QComboBox, QGroupBox
+from PyQt6.QtWidgets import QComboBox, QGroupBox, QHBoxLayout
 
 from expo_jbm329.gui.dialogs.analysis.correlation_config import CorrelationConfigWidget
 from expo_jbm329.services.analysis.correlation import (
@@ -76,8 +76,11 @@ def test_select_all_and_clear_update_pending_matrix_columns_without_applying():
     group_layout = widget._select_all_button.parentWidget().layout()  # noqa: SLF001
     assert group_layout.itemAt(0).widget() is widget._column_list  # noqa: SLF001
     button_row = group_layout.itemAt(1).layout()
-    assert button_row.indexOf(widget._select_all_button) >= 0  # noqa: SLF001
-    assert button_row.indexOf(widget._clear_button) >= 0  # noqa: SLF001
+    assert isinstance(button_row, QHBoxLayout)
+    # Matches Regression: a leading stretch right-aligns both buttons at their natural size.
+    assert button_row.itemAt(0).spacerItem() is not None
+    assert button_row.indexOf(widget._select_all_button) == 1  # noqa: SLF001
+    assert button_row.indexOf(widget._clear_button) == 2  # noqa: SLF001
     widget._clear_button.click()  # noqa: SLF001
     assert widget.checked_columns() == ()
     assert widget.applied_columns() == ("a", "b")

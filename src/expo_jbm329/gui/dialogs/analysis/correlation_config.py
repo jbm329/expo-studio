@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QFormLayout,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
     QListWidget,
     QListWidgetItem,
@@ -112,12 +113,12 @@ class CorrelationConfigWidget(QWidget):
 
         group_layout.addWidget(self._column_list)
 
-        actions = QFormLayout()
-        actions.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
-        actions.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        actions = QHBoxLayout()
+        actions.addStretch(1)
         self._select_all_button = QPushButton(self.tr("Select all"), group)
         self._clear_button = QPushButton(self.tr("Clear"), group)
-        actions.addRow(self._select_all_button, self._clear_button)
+        actions.addWidget(self._select_all_button)
+        actions.addWidget(self._clear_button)
         group_layout.addLayout(actions)
 
         self._selection_label = QLabel(group)
