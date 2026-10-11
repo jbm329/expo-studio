@@ -20,6 +20,8 @@ from expo_jbm329.services.analysis.outliers import (
     analyze_outlier_column,
     analyze_outlier_summary,
 )
+from expo_jbm329.services.analysis.outliers_charts import OutlierHistogramLabels
+from expo_jbm329.utils.format_utils import fmt_num
 from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 _VALUES = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 100.0]
@@ -468,3 +470,63 @@ def test_detail_on_an_error_summary_has_no_row_to_select():
 
     assert view.column_detail() is not None
     assert view.table() is None
+
+
+# ----------------------------------------------------------------------
+# Export text
+# ----------------------------------------------------------------------
+
+
+def test_histogram_labels_are_shared_by_the_displayed_chart():
+    view, result = _view()
+    canvas = view.findChildren(FigureCanvasQTAgg)[0]
+    axes = canvas.figure.axes[0]
+
+    assert view.result() is result
+    assert view.histogram_labels() == OutlierHistogramLabels("Inside the fences", "Potential outliers", "Count")
+    assert [text.get_text() for text in axes.get_legend().get_texts()] == ["Inside the fences", "Potential outliers"]
+    assert axes.get_ylabel() == "Count"
+
+
+def test_summary_notes_are_the_plain_displayed_totals_and_caveat():
+    view, _ = _view()
+
+    notes = view.summary_notes()
+
+    assert len(notes) == 2
+    assert notes[0].startswith(f"IQR (Tukey's fences), threshold {fmt_num(1.5)}: 1 of 10 rows")
+    assert "<b>" not in notes[0]
+    assert notes[1].startswith("Flagged values are potential outliers, not necessarily errors")
+
+
+def test_detail_notes_are_the_plain_displayed_title_and_statistics():
+    view, _ = _view()
+
+    notes = view.detail_notes()
+
+    assert notes[0] == "Potential outliers, most extreme first"
+    assert notes[1] == f"<a> - IQR (Tukey's fences), threshold {fmt_num(1.5)}"
+    assert any(line.startswith("Q1 = ") for line in notes)
+
+
+def test_detail_notes_describe_a_column_without_flagged_rows():
+    view, _ = _view(column="b")
+
+    assert view.detail_notes()[0] == "No potential outliers"
+
+
+def test_detail_notes_count_the_listed_rows_when_more_are_flagged():
+    view, _ = _view()
+    detail = _detail()
+    summary = dataclasses.replace(detail.summary, outlier_count=5)
+    view.set_column_detail(dataclasses.replace(detail, summary=summary))
+
+    assert view.detail_notes()[0] == "The 1 most extreme of 5 potential outliers"
+
+
+def test_detail_notes_are_empty_without_a_successful_detail():
+    view, _ = _view(column=None)
+    assert view.detail_notes() == ()
+
+    view.set_column_detail(dataclasses.replace(_detail(), error=OutlierError.INVALID_COLUMN))
+    assert view.detail_notes() == ()

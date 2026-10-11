@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import html
-import math
-from itertools import pairwise
 from typing import TYPE_CHECKING
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
@@ -22,7 +20,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
 from expo_jbm329.services.analysis.outliers import (
     MAX_THRESHOLD,
     MIN_OBSERVATIONS,
@@ -32,11 +30,10 @@ from expo_jbm329.services.analysis.outliers import (
     OutlierMethod,
     max_possible_z_score,
 )
+from expo_jbm329.services.analysis.outliers_charts import OutlierHistogramLabels, draw_outlier_histogram
 from expo_jbm329.utils.format_utils import fmt_cell, fmt_int, fmt_num, fmt_pct
 
 if TYPE_CHECKING:
-    from matplotlib.axes import Axes
-
     from expo_jbm329.services.analysis.outliers import (
         ColumnOutlierSummary,
         ExtremeObservation,
@@ -179,6 +176,38 @@ class OutliersView(QWidget):
     def configuration(self) -> tuple[OutlierMethod, float]:
         """Return the ``(method, threshold)`` of the displayed summary."""
         return self._result.method, self._result.threshold
+
+    def result(self) -> OutlierSummaryResult:
+        """Return the displayed outlier summary."""
+        return self._result
+
+    def histogram_labels(self) -> OutlierHistogramLabels:
+        """Return the translated histogram text used by the view and its export."""
+        return OutlierHistogramLabels(
+            inside=self.tr("Inside the fences"),
+            outliers=self.tr("Potential outliers"),
+            count_axis=self.tr("Count"),
+        )
+
+    def summary_notes(self) -> tuple[str, ...]:
+        """Return the displayed summary totals and screening caveat as plain-text lines."""
+        return rich_text_lines([
+            self._totals_text(self._result),
+            self.tr(
+                "Flagged values are potential outliers, not necessarily errors - check them before excluding anything."
+            ),
+        ])
+
+    def detail_notes(self) -> tuple[str, ...]:
+        """Return the displayed column detail's title and statistics as plain-text lines.
+
+        Returns:
+            The lines, or an empty tuple when no successful detail is displayed.
+        """
+        detail = self._detail
+        if detail is None or detail.error is not None:
+            return ()
+        return rich_text_lines([self._extremes_title(detail), self._detail_statistics_text(detail)])
 
     def detail_panel(self) -> QWidget:
         """Return the widget holding the column detail (the detail recompute's overlay target)."""
@@ -441,33 +470,8 @@ class OutliersView(QWidget):
         figure = Figure(constrained_layout=True)
         canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
         canvas.setMinimumSize(240, 160)
-        self._draw_histogram(figure.add_subplot(111), detail)
+        draw_outlier_histogram(figure.add_subplot(111), detail, self.histogram_labels())
         return canvas
-
-    def _draw_histogram(self, ax: Axes, detail: OutlierColumnDetail) -> None:
-        """Draw stacked inlier/outlier bars over shared bins, with the fences marked."""
-        ax.set_title(detail.summary.column, fontsize=10)
-        edges = detail.histogram_edges
-        if not edges:
-            return
-        lefts = edges[:-1]
-        widths = [right - left for left, right in pairwise(edges)]
-        ax.bar(lefts, detail.inlier_counts, width=widths, align="edge", label=self.tr("Inside the fences"))
-        ax.bar(
-            lefts,
-            detail.outlier_counts,
-            width=widths,
-            align="edge",
-            bottom=detail.inlier_counts,
-            color="tab:red",
-            label=self.tr("Potential outliers"),
-        )
-        for fence in (detail.summary.lower_fence, detail.summary.upper_fence):
-            if math.isfinite(fence):
-                ax.axvline(fence, color="tab:red", linestyle="--", linewidth=1)
-        ax.set_ylabel(self.tr("Count"), fontsize=9)
-        ax.tick_params(labelsize=8)
-        ax.legend(fontsize=8)
 
     def _build_detail_statistics(self, detail: OutlierColumnDetail) -> QLabel:
         """Build the rich-text label describing the column's screening."""
@@ -567,15 +571,7 @@ class OutliersView(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         shown = len(detail.extremes)
-        if shown == 0:
-            title_text = self.tr("<b>No potential outliers</b>")
-        elif shown < detail.summary.outlier_count:
-            title_text = self.tr("<b>The {shown} most extreme of {total} potential outliers</b>").format(
-                shown=fmt_int(shown), total=fmt_int(detail.summary.outlier_count)
-            )
-        else:
-            title_text = self.tr("<b>Potential outliers, most extreme first</b>")
-        title = QLabel(title_text, panel)
+        title = QLabel(self._extremes_title(detail), panel)
         title.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(title)
 
@@ -586,6 +582,17 @@ class OutliersView(QWidget):
             layout.addStretch(1)
 
         return panel
+
+    def _extremes_title(self, detail: OutlierColumnDetail) -> str:
+        """Return the rich-text title describing how many flagged rows are listed."""
+        shown = len(detail.extremes)
+        if shown == 0:
+            return self.tr("<b>No potential outliers</b>")
+        if shown < detail.summary.outlier_count:
+            return self.tr("<b>The {shown} most extreme of {total} potential outliers</b>").format(
+                shown=fmt_int(shown), total=fmt_int(detail.summary.outlier_count)
+            )
+        return self.tr("<b>Potential outliers, most extreme first</b>")
 
     def _build_extremes_table(self, detail: OutlierColumnDetail, parent: QWidget) -> QTableWidget:
         """Build the table of flagged rows: row number, value, score, then every other column."""

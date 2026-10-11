@@ -69,11 +69,25 @@ from expo_jbm329.services.analysis.multivariate_outliers import (
     initialize_multivariate_outliers,
 )
 from expo_jbm329.services.analysis.outliers import (
+    ColumnOutlierStatus,
     OutlierMethod,
     analyze_outlier_column,
     analyze_outlier_summary,
     default_column,
     initialize_outlier_summary,
+)
+from expo_jbm329.services.analysis.outliers_charts import (
+    render_multivariate_outlier_charts,
+    render_univariate_outlier_charts,
+)
+from expo_jbm329.services.analysis.outliers_export import (
+    MultivariateOutlierExportSnapshot,
+    OutlierExportComponent,
+    OutlierExportRequest,
+    OutlierExportSnapshot,
+    OutlierMetric,
+    UnivariateOutlierExportSnapshot,
+    outlier_export_tables,
 )
 from expo_jbm329.services.analysis.overview import (
     DatasetOverviewResult,
@@ -248,6 +262,31 @@ _REGRESSION_EXPORT_TRANSLATIONS = (
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Events"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Censored"),
 )
+_OUTLIERS_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Threshold"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Values"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Missing"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Potential outliers"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Potential outlier share"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Low potential outliers"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "High potential outliers"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Lower fence"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Upper fence"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Q1"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Q3"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "IQR"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Mean"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Standard deviation"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Median"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "MAD"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Features"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Expected outlier fraction"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "LOF neighbors"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Total rows"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Rows dropped because of missing or infinite values"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Inliers"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Status"),
+)
 # Cancelable jobs report real progress and can be stopped by the user, so
 # they get a far longer watchdog before the "taking too long" warning.
 _CANCELABLE_TIMEOUT_MS = 600_000
@@ -358,10 +397,13 @@ class _OutliersOutcome:
         summary: The per-column outlier summary.
         detail: The selected column's detail, or `None` when the summary
             has an error (and so no column to show).
+        data: Owned copy of the screened numeric columns for chart
+            export, or `None` when the summary has an error.
     """
 
     summary: OutlierSummaryResult
     detail: OutlierColumnDetail | None
+    data: pd.DataFrame | None = None
 
 
 class AnalysisController:
@@ -490,11 +532,15 @@ class AnalysisController:
             def _handle_regression_export(request: object) -> None:
                 self._export_regression(dialog, exporter, request)
 
+            def _handle_outliers_export(request: object) -> None:
+                self._export_outliers(dialog, exporter, request)
+
             dialog.overview_export_requested.connect(_handle_export)
             dialog.statistics_export_requested.connect(_handle_statistics_export)
             dialog.hypothesis_export_requested.connect(_handle_hypothesis_export)
             dialog.correlation_export_requested.connect(_handle_correlation_export)
             dialog.regression_export_requested.connect(_handle_regression_export)
+            dialog.outliers_export_requested.connect(_handle_outliers_export)
 
         refresh_started = False
 
@@ -1092,6 +1138,143 @@ class AnalysisController:
                     show_success_dialog=True,
                 )
 
+    @staticmethod
+    def _outlier_score_label(snapshot: OutlierExportSnapshot) -> str:
+        """Return the displayed score header of the snapshot's potential outliers."""
+        if isinstance(snapshot, MultivariateOutlierExportSnapshot):
+            return tr("MultivariateOutliersView", "Anomaly score")
+        score_headers = {
+            OutlierMethod.IQR: tr("OutliersView", "Distance past fence"),
+            OutlierMethod.Z_SCORE: tr("OutliersView", "z"),
+            OutlierMethod.MODIFIED_Z_SCORE: tr("OutliersView", "Modified z"),
+        }
+        return score_headers[snapshot.summary.method]
+
+    def _localized_outlier_tables(
+        self,
+        snapshot: OutlierExportSnapshot,
+        components: tuple[OutlierExportComponent, ...],
+    ) -> dict[str, pd.DataFrame]:
+        """Build outlier sheets with translated names, headers, statuses and metric labels."""
+        context = "AnalysisExportDialog"
+        view_context = "OutliersView"
+        metric_labels = {
+            OutlierMetric.THRESHOLD: tr(context, "Threshold"),
+            OutlierMetric.VALUES: tr(context, "Values"),
+            OutlierMetric.MISSING: tr(context, "Missing"),
+            OutlierMetric.OUTLIERS: tr(context, "Potential outliers"),
+            OutlierMetric.OUTLIER_SHARE: tr(context, "Potential outlier share"),
+            OutlierMetric.LOW: tr(context, "Low potential outliers"),
+            OutlierMetric.HIGH: tr(context, "High potential outliers"),
+            OutlierMetric.LOWER_FENCE: tr(context, "Lower fence"),
+            OutlierMetric.UPPER_FENCE: tr(context, "Upper fence"),
+            OutlierMetric.Q1: tr(context, "Q1"),
+            OutlierMetric.Q3: tr(context, "Q3"),
+            OutlierMetric.IQR: tr(context, "IQR"),
+            OutlierMetric.MEAN: tr(context, "Mean"),
+            OutlierMetric.STD: tr(context, "Standard deviation"),
+            OutlierMetric.MEDIAN: tr(context, "Median"),
+            OutlierMetric.MAD: tr(context, "MAD"),
+            OutlierMetric.FEATURES: tr(context, "Features"),
+            OutlierMetric.CONTAMINATION: tr(context, "Expected outlier fraction"),
+            OutlierMetric.LOF_NEIGHBORS: tr(context, "LOF neighbors"),
+            OutlierMetric.TOTAL_ROWS: tr(context, "Total rows"),
+            OutlierMetric.ROWS_USED: tr(context, "Rows used"),
+            OutlierMetric.ROWS_DROPPED: tr(context, "Rows dropped because of missing or infinite values"),
+            OutlierMetric.INLIERS: tr(context, "Inliers"),
+        }
+        status_labels = {
+            ColumnOutlierStatus.NOT_ENOUGH_OBSERVATIONS: tr(view_context, "Too few values"),
+            ColumnOutlierStatus.ZERO_SPREAD: tr(view_context, "No spread"),
+        }
+        summary_headers = {
+            "column": tr(view_context, "Column"),
+            "values": tr(view_context, "Values"),
+            "missing": tr(view_context, "Missing"),
+            "outliers": tr(view_context, "Outliers"),
+            "share": tr(view_context, "Share"),
+            "low": tr(view_context, "Low"),
+            "high": tr(view_context, "High"),
+            "lower_fence": tr(view_context, "Lower fence"),
+            "upper_fence": tr(view_context, "Upper fence"),
+            "status": tr(context, "Status"),
+            "notes": tr(context, "Notes"),
+        }
+        metric_headers = {
+            "metric": tr(context, "Metric"),
+            "value": tr(context, "Value"),
+            "notes": tr(context, "Notes"),
+        }
+        sheet_names = {
+            OutlierExportComponent.COLUMN_SUMMARY: tr(context, "Column summary"),
+            OutlierExportComponent.COLUMN_DETAILS: tr(context, "Column details"),
+            OutlierExportComponent.MODEL_SUMMARY: tr(context, "Model summary"),
+            OutlierExportComponent.POTENTIAL_OUTLIERS: tr(context, "Potential outliers"),
+        }
+        tables = outlier_export_tables(
+            snapshot,
+            components,
+            row_label=tr(view_context, "Row"),
+            score_label=self._outlier_score_label(snapshot),
+        )
+        sheets: dict[str, pd.DataFrame] = {}
+        for component, frame in tables.items():
+            match component:
+                case OutlierExportComponent.COLUMN_SUMMARY:
+                    frame["status"] = frame["status"].map(
+                        lambda key: status_labels[ColumnOutlierStatus(key)] if isinstance(key, str) else key
+                    )
+                    localized = frame.rename(columns=summary_headers)
+                case OutlierExportComponent.COLUMN_DETAILS | OutlierExportComponent.MODEL_SUMMARY:
+                    frame["metric"] = frame["metric"].map(
+                        lambda key: metric_labels[OutlierMetric(key)] if isinstance(key, str) else key
+                    )
+                    localized = frame.rename(columns=metric_headers)
+                case _:
+                    localized = frame
+            sheets[sheet_names[component]] = localized
+        return sheets
+
+    def _export_outliers(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Export the displayed screening's localized tables and worker-rendered charts."""
+        if not isinstance(request, OutlierExportRequest) or request.snapshot is not dialog.exportable_outliers():
+            return
+        snapshot = request.snapshot
+        charts = OutlierExportComponent.CHARTS in request.components
+        sheets = self._localized_outlier_tables(snapshot, request.components)
+
+        def make_images(
+            progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
+        ) -> tuple[ExcelChartImage, ...]:
+            if isinstance(snapshot, UnivariateOutlierExportSnapshot):
+                return render_univariate_outlier_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+            return render_multivariate_outlier_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
+        match request.format:
+            case StatisticsExportFormat.EXCEL:
+                exporter.export_excel(
+                    sheets=sheets,
+                    chart_factory=make_images if charts else None,
+                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.CSV:
+                exporter.export_csv(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.BINARY:
+                exporter.export_data(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+
     # ------------------------------------------------------------------
     # Renderers (GUI thread only)
     # ------------------------------------------------------------------
@@ -1530,7 +1713,10 @@ class AnalysisController:
         detail = (
             analyze_outlier_column(df, detail_column, method, summary.threshold) if detail_column is not None else None
         )
-        return _OutliersOutcome(summary=summary, detail=detail)
+        # The export renders every column's histogram later, so it needs data
+        # that later edits of the dataset tab cannot change.
+        data = df.loc[:, list(summary.available_columns)].copy(deep=True)
+        return _OutliersOutcome(summary=summary, detail=detail, data=data)
 
     def _render_outliers(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
         """Render the Outlier Explorer's initial state: the Apply prompt and its config.
@@ -1585,6 +1771,19 @@ class AnalysisController:
             latest_column = current_view.selected_column() if isinstance(current_view, OutliersView) else None
             new_view = self._build_outliers_view(outcome, dialog)
             dialog.set_content_widget(new_view)
+            if outcome.data is not None and outcome.summary.error is None and outcome.summary.columns:
+                detail = new_view.column_detail()
+                displayed_detail = detail if detail is not None and detail.error is None else None
+                dialog.set_exportable_outliers(
+                    UnivariateOutlierExportSnapshot(
+                        summary=outcome.summary,
+                        data=outcome.data,
+                        chart_labels=new_view.histogram_labels(),
+                        summary_notes=new_view.summary_notes(),
+                        detail=displayed_detail,
+                        detail_notes=new_view.detail_notes(),
+                    )
+                )
             if outcome.detail is None:
                 return
             if (
@@ -1620,7 +1819,12 @@ class AnalysisController:
         selection_revision = view.column_selection_revision()
 
         def _apply(result: object) -> None:
-            view.set_column_detail(cast("OutlierColumnDetail", result))
+            detail = cast("OutlierColumnDetail", result)
+            view.set_column_detail(detail)
+            snapshot = dialog.exportable_outliers()
+            if isinstance(snapshot, UnivariateOutlierExportSnapshot) and snapshot.summary is view.result():
+                displayed_detail = detail if detail.error is None else None
+                dialog.set_exportable_outliers(snapshot.with_detail(displayed_detail, view.detail_notes()))
 
         self._recompute_content(
             dialog,
@@ -1682,6 +1886,14 @@ class AnalysisController:
             scope_parts.append(f"neighbors:{lof_neighbors}")
         scope_parts.extend(columns)
 
+        def _apply_result(result: object) -> None:
+            view = MultivariateOutliersView(cast("MultivariateOutlierResult", result))
+            dialog.set_content_widget(view)
+            if view.result().error is None:
+                dialog.set_exportable_outliers(
+                    MultivariateOutlierExportSnapshot(view.result(), view.chart_labels(), view.export_notes())
+                )
+
         self._recompute_content(
             dialog,
             category=AnalysisCategory.OUTLIERS,
@@ -1694,9 +1906,7 @@ class AnalysisController:
                 contamination=contamination,
                 lof_neighbors=lof_neighbors,
             ),
-            apply_result=lambda result: dialog.set_content_widget(
-                MultivariateOutliersView(cast("MultivariateOutlierResult", result))
-            ),
+            apply_result=_apply_result,
             is_stale=lambda: (
                 dialog.config_widget() is not config
                 or config.configuration_revision() != revision

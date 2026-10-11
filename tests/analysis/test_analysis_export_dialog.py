@@ -21,6 +21,14 @@ from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExpo
 from expo_jbm329.services.analysis.correlation import CorrelationMethod, analyze_correlation_matrix
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportComponent, CorrelationExportSnapshot
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportComponent, HypothesisExportRequest
+from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierMethod
+from expo_jbm329.services.analysis.outliers import OutlierMethod, analyze_outlier_summary
+from expo_jbm329.services.analysis.outliers_export import (
+    UNIVARIATE_COMPONENTS,
+    OutlierExportComponent,
+    OutlierExportRequest,
+    UnivariateOutlierExportSnapshot,
+)
 from expo_jbm329.services.analysis.overview import OverviewExportFormat, OverviewExportTable, analyze_dataset_overview
 from expo_jbm329.services.analysis.regression_charts import RegressionChartLabels
 from expo_jbm329.services.analysis.regression_export import (
@@ -33,7 +41,9 @@ from expo_jbm329.services.analysis.statistics import (
     StatisticsExportTable,
     analyze_descriptive_statistics,
 )
+from expo_jbm329.utils.format_utils import fmt_num
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
+from tests.analysis.test_outliers_export import HISTOGRAM_LABELS, multivariate_snapshot, univariate_snapshot
 from tests.analysis.test_regression_export import (
     LINEAR_LABELS,
     cox_snapshot,
@@ -442,3 +452,114 @@ def test_regression_dialog_without_applied_model_never_enables_export():
     assert not dialog._export_button.isEnabled()
     with pytest.raises(ValueError, match="only one"):
         AnalysisExportDialog(regression_mode=True, correlation_mode=True)
+
+
+def test_univariate_outliers_dialog_names_screening_and_defaults_to_column_summary():
+    snapshot = univariate_snapshot()
+    dialog = AnalysisExportDialog(outliers=snapshot)
+    choices = dialog.findChildren(QCheckBox)
+    assert [choice.text() for choice in choices] == [
+        "Column summary",
+        "Column details",
+        "Potential outliers",
+        "Charts (3 columns)",
+    ]
+    assert all(choice.isEnabled() for choice in choices)
+    assert [choice.isChecked() for choice in choices] == [True, False, False, False]
+    assert "at most 100" in choices[2].toolTip()
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied method:"))
+    assert label.text() == f"Applied method: IQR (Tukey's fences), threshold {fmt_num(1.5)}\nSelected column: a"
+    assert label.textFormat() is Qt.TextFormat.PlainText
+    assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
+    request = dialog.export_request()
+    assert isinstance(request, OutlierExportRequest)
+    assert request.snapshot is snapshot
+    assert request.components == (OutlierExportComponent.COLUMN_SUMMARY,)
+    assert request.format is StatisticsExportFormat.EXCEL
+
+
+def test_univariate_outliers_dialog_disables_empty_components():
+    dialog = AnalysisExportDialog(outliers=univariate_snapshot(column=None))
+    choices = dialog.findChildren(QCheckBox)
+    assert [choice.isEnabled() for choice in choices] == [True, False, False, True]
+    assert all("empty" in choice.toolTip() for choice in choices[1:3])
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied method:"))
+    assert "Selected column" not in label.text()
+
+
+def test_single_charted_column_uses_singular_label():
+    df = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 50.0]})
+    summary = analyze_outlier_summary(df)
+    dialog = AnalysisExportDialog(outliers=UnivariateOutlierExportSnapshot(summary, df.copy(), HISTOGRAM_LABELS))
+    assert dialog.findChildren(QCheckBox)[-1].text() == "Charts (1 column)"
+
+
+@pytest.mark.parametrize(
+    ("method", "name"),
+    [
+        (MultivariateOutlierMethod.ISOLATION_FOREST, "Isolation Forest"),
+        (MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR, "Local Outlier Factor"),
+    ],
+)
+def test_multivariate_outliers_dialog_names_fit_and_offers_its_components(method, name):
+    snapshot = multivariate_snapshot(method)
+    dialog = AnalysisExportDialog(outliers=snapshot, outliers_multivariate=False)
+    choices = dialog.findChildren(QCheckBox)
+    assert [choice.text() for choice in choices] == ["Model summary", "Potential outliers", "Charts"]
+    assert [choice.isChecked() for choice in choices] == [True, False, False]
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied method:"))
+    assert label.text() == f"Applied method: {name}\nFeatures: x / y"
+    assert dialog.export_request().components == (OutlierExportComponent.MODEL_SUMMARY,)
+
+
+@pytest.mark.parametrize("method", [OutlierMethod.Z_SCORE, OutlierMethod.MODIFIED_Z_SCORE])
+def test_outliers_dialog_names_every_univariate_method(method):
+    dialog = AnalysisExportDialog(outliers=univariate_snapshot(method))
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied method:"))
+    assert ("Modified Z-score" in label.text()) is (method is OutlierMethod.MODIFIED_Z_SCORE)
+    assert "Z-score" in label.text()
+
+
+def test_outliers_dialog_limits_single_file_formats_to_one_table_and_keeps_choices():
+    dialog = AnalysisExportDialog(outliers=univariate_snapshot())
+    choices = dialog.findChildren(QCheckBox)
+    formats = dialog.findChild(QComboBox)
+    for choice in choices:
+        choice.setChecked(True)
+    assert dialog.export_request().components == UNIVARIATE_COMPONENTS
+    for format_choice in (StatisticsExportFormat.CSV, StatisticsExportFormat.BINARY):
+        formats.setCurrentIndex(formats.findData(format_choice))
+        assert dialog.export_request() is None
+        assert not dialog._export_button.isEnabled()
+        assert all(choice.isChecked() for choice in choices)
+    assert "Charts are available only in Excel" in dialog._selection_explanation.text()
+    choices[3].setChecked(False)
+    assert dialog.export_request() is None
+    choices[0].setChecked(False)
+    choices[1].setChecked(False)
+    request = dialog.export_request()
+    assert request.components == (OutlierExportComponent.POTENTIAL_OUTLIERS,)
+    assert request.format is StatisticsExportFormat.BINARY
+    assert dialog._export_button.isEnabled()
+    choices[2].setChecked(False)
+    assert dialog.export_request() is None
+
+
+@pytest.mark.parametrize(
+    ("multivariate", "texts"),
+    [
+        (False, ["Column summary", "Column details", "Potential outliers", "Charts"]),
+        (True, ["Model summary", "Potential outliers", "Charts"]),
+    ],
+)
+def test_outliers_dialog_without_applied_screening_never_enables_export(multivariate, texts):
+    dialog = AnalysisExportDialog(outliers_mode=True, outliers_multivariate=multivariate)
+    choices = dialog.findChildren(QCheckBox)
+    assert [choice.text() for choice in choices] == texts
+    assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
+    assert all("Apply an outlier screening" in choice.toolTip() for choice in choices)
+    assert "Apply an outlier screening" in dialog._selection_explanation.text()
+    assert dialog.export_request() is None
+    assert not dialog._export_button.isEnabled()
+    with pytest.raises(ValueError, match="only one"):
+        AnalysisExportDialog(outliers_mode=True, regression_mode=True)

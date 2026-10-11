@@ -153,8 +153,8 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, and applied Regression model exports are available after analysis. Other export and report actions are previews.</source>
-        <translation>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, and applied Regression model exports are available after analysis. Other export and report actions are previews.</translation>
+        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model and applied Outliers exports are available after analysis. Other export and report actions are previews.</source>
+        <translation>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model and applied Outliers exports are available after analysis. Other export and report actions are previews.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -691,6 +691,164 @@ Predictors: {predictors}</translation>
     <message>
         <source>Fit statistics and diagnostics with the displayed model comments.</source>
         <translation>Fit statistics and diagnostics with the displayed model comments.</translation>
+    </message>
+    <message>
+        <source>Export the displayed outlier tables and charts of the applied screening, not the original dataset.</source>
+        <translation>Export the displayed outlier tables and charts of the applied screening, not the original dataset.</translation>
+    </message>
+    <message>
+        <source>Apply an outlier screening successfully before exporting.</source>
+        <translation>Apply an outlier screening successfully before exporting.</translation>
+    </message>
+    <message>
+        <source>The displayed rows, at most 100, most extreme first.</source>
+        <translation>The displayed rows, at most 100, most extreme first.</translation>
+    </message>
+    <message>
+        <source>Applied method: {method}, threshold {threshold}</source>
+        <translation>Applied method: {method}, threshold {threshold}</translation>
+    </message>
+    <message>
+        <source>Selected column: {column}</source>
+        <translation>Selected column: {column}</translation>
+    </message>
+    <message>
+        <source>Applied method: {method}
+Features: {features}</source>
+        <translation>Applied method: {method}
+Features: {features}</translation>
+    </message>
+    <message>
+        <source>Column summary</source>
+        <translation>Column summary</translation>
+    </message>
+    <message>
+        <source>Column details</source>
+        <translation>Column details</translation>
+    </message>
+    <message>
+        <source>Model summary</source>
+        <translation>Model summary</translation>
+    </message>
+    <message>
+        <source>Potential outliers</source>
+        <translation>Potential outliers</translation>
+    </message>
+    <message>
+        <source>Charts ({count} column)</source>
+        <translation>Charts ({count} column)</translation>
+    </message>
+    <message>
+        <source>Charts ({count} columns)</source>
+        <translation>Charts ({count} columns)</translation>
+    </message>
+    <message>
+        <source>IQR (Tukey&apos;s fences)</source>
+        <translation>IQR (Tukey&apos;s fences)</translation>
+    </message>
+    <message>
+        <source>Z-score</source>
+        <translation>Z-score</translation>
+    </message>
+    <message>
+        <source>Modified Z-score</source>
+        <translation>Modified Z-score</translation>
+    </message>
+    <message>
+        <source>Isolation Forest</source>
+        <translation>Isolation Forest</translation>
+    </message>
+    <message>
+        <source>Local Outlier Factor</source>
+        <translation>Local Outlier Factor</translation>
+    </message>
+    <message>
+        <source>Threshold</source>
+        <translation>Threshold</translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation>Values</translation>
+    </message>
+    <message>
+        <source>Missing</source>
+        <translation>Missing</translation>
+    </message>
+    <message>
+        <source>Potential outlier share</source>
+        <translation>Potential outlier share</translation>
+    </message>
+    <message>
+        <source>Low potential outliers</source>
+        <translation>Low potential outliers</translation>
+    </message>
+    <message>
+        <source>High potential outliers</source>
+        <translation>High potential outliers</translation>
+    </message>
+    <message>
+        <source>Lower fence</source>
+        <translation>Lower fence</translation>
+    </message>
+    <message>
+        <source>Upper fence</source>
+        <translation>Upper fence</translation>
+    </message>
+    <message>
+        <source>Q1</source>
+        <translation>Q1</translation>
+    </message>
+    <message>
+        <source>Q3</source>
+        <translation>Q3</translation>
+    </message>
+    <message>
+        <source>IQR</source>
+        <translation>IQR</translation>
+    </message>
+    <message>
+        <source>Mean</source>
+        <translation>Mean</translation>
+    </message>
+    <message>
+        <source>Standard deviation</source>
+        <translation>Standard deviation</translation>
+    </message>
+    <message>
+        <source>Median</source>
+        <translation>Median</translation>
+    </message>
+    <message>
+        <source>MAD</source>
+        <translation>MAD</translation>
+    </message>
+    <message>
+        <source>Features</source>
+        <translation>Features</translation>
+    </message>
+    <message>
+        <source>Expected outlier fraction</source>
+        <translation>Expected outlier fraction</translation>
+    </message>
+    <message>
+        <source>LOF neighbors</source>
+        <translation>LOF neighbors</translation>
+    </message>
+    <message>
+        <source>Total rows</source>
+        <translation>Total rows</translation>
+    </message>
+    <message>
+        <source>Rows dropped because of missing or infinite values</source>
+        <translation>Rows dropped because of missing or infinite values</translation>
+    </message>
+    <message>
+        <source>Inliers</source>
+        <translation>Inliers</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>Status</translation>
     </message>
 </context><context>
     <name>ReportPage</name>
@@ -4212,6 +4370,10 @@ Saved to:
         <source>Anomaly score</source>
         <translation type="unfinished" />
     </message>
+    <message>
+        <source>Features: {columns}</source>
+        <translation>Features: {columns}</translation>
+    </message>
 </context><context>
     <name>OutliersConfigWidget</name>
     <message>
@@ -4490,6 +4652,10 @@ Saved to:
         <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="549" />
         <source>Row</source>
         <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Flagged values are potential outliers, not necessarily errors - check them before excluding anything.</source>
+        <translation>Flagged values are potential outliers, not necessarily errors - check them before excluding anything.</translation>
     </message>
 </context><context>
     <name>OverviewView</name>

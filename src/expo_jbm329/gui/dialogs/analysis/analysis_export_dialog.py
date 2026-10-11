@@ -29,6 +29,17 @@ from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportRequest,
     HypothesisExportSnapshot,
 )
+from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierMethod
+from expo_jbm329.services.analysis.outliers import OutlierMethod
+from expo_jbm329.services.analysis.outliers_export import (
+    MULTIVARIATE_COMPONENTS,
+    UNIVARIATE_COMPONENTS,
+    MultivariateOutlierExportSnapshot,
+    OutlierExportComponent,
+    OutlierExportRequest,
+    OutlierExportSnapshot,
+    UnivariateOutlierExportSnapshot,
+)
 from expo_jbm329.services.analysis.overview import (
     DatasetOverviewResult,
     OverviewExportFormat,
@@ -47,6 +58,7 @@ from expo_jbm329.services.analysis.statistics import (
     StatisticsExportRequest,
     StatisticsExportTable,
 )
+from expo_jbm329.utils.format_utils import fmt_int, fmt_num
 
 
 class AnalysisExportDialog(QDialog):
@@ -66,6 +78,9 @@ class AnalysisExportDialog(QDialog):
         correlation_mode: bool = False,
         regression: RegressionExportSnapshot | None = None,
         regression_mode: bool = False,
+        outliers: OutlierExportSnapshot | None = None,
+        outliers_mode: bool = False,
+        outliers_multivariate: bool = False,
     ) -> None:
         """Build grouped export choices and a format selector.
 
@@ -81,6 +96,10 @@ class AnalysisExportDialog(QDialog):
             correlation_mode: Show correlation choices even before Apply.
             regression: Successfully displayed applied regression model.
             regression_mode: Show regression choices even before Apply.
+            outliers: Successfully displayed applied outlier screening.
+            outliers_mode: Show outlier choices even before Apply.
+            outliers_multivariate: Show multivariate rather than univariate
+                choices before Apply; a snapshot decides by its own type.
         """
         super().__init__(parent)
         self.setWindowTitle(self.tr("Export"))
@@ -93,9 +112,15 @@ class AnalysisExportDialog(QDialog):
         self._correlation_mode = correlation_mode or correlation is not None
         self._regression = regression
         self._regression_mode = regression_mode or regression is not None
+        self._outliers = outliers
+        self._outliers_mode = outliers_mode or outliers is not None
+        self._outliers_multivariate = (
+            outliers_multivariate if outliers is None else isinstance(outliers, MultivariateOutlierExportSnapshot)
+        )
         self._hypothesis_choices: dict[HypothesisExportComponent, QCheckBox] = {}
         self._correlation_choices: dict[CorrelationExportComponent, QCheckBox] = {}
         self._regression_choices: dict[RegressionExportComponent, QCheckBox] = {}
+        self._outliers_choices: dict[OutlierExportComponent, QCheckBox] = {}
         self._table_choices: dict[OverviewExportTable, QCheckBox] = {}
         self._statistics_choices: dict[StatisticsExportTable, QCheckBox] = {}
         self._overview_mode = overview_mode or overview is not None
@@ -107,6 +132,7 @@ class AnalysisExportDialog(QDialog):
                 self._hypothesis_mode,
                 self._correlation_mode,
                 self._regression_mode,
+                self._outliers_mode,
             ))
             > 1
         ):
@@ -126,15 +152,13 @@ class AnalysisExportDialog(QDialog):
             self._build_correlation_choices(layout)
         elif self._regression_mode:
             self._build_regression_choices(layout)
+        elif self._outliers_mode:
+            self._build_outliers_choices(layout)
         else:
             self._build_preview_choices(layout)
         formats = QFormLayout()
         self._format_combo = QComboBox(self)
-        format_type = (
-            StatisticsExportFormat
-            if self._statistics_mode or self._hypothesis_mode or self._correlation_mode or self._regression_mode
-            else OverviewExportFormat
-        )
+        format_type = StatisticsExportFormat if self._uses_component_export() else OverviewExportFormat
         self._format_combo.addItem("CSV", format_type.CSV)
         self._format_combo.addItem(self.tr("Excel workbook (.xlsx)"), format_type.EXCEL)
         self._format_combo.addItem(self.tr("Binary data file (Parquet / Feather / Pickle)"), format_type.BINARY)
@@ -160,6 +184,8 @@ class AnalysisExportDialog(QDialog):
             if self._correlation_mode
             else self._regression_choices
             if self._regression_mode
+            else self._outliers_choices
+            if self._outliers_mode
             else self._statistics_choices
             if self._statistics_mode
             else self._table_choices
@@ -168,6 +194,16 @@ class AnalysisExportDialog(QDialog):
         if first_available is not None:
             first_available.setChecked(True)
         self._update_export_enabled()
+
+    def _uses_component_export(self) -> bool:
+        """Return whether the mode uses component checkboxes with Excel-only charts."""
+        return (
+            self._statistics_mode
+            or self._hypothesis_mode
+            or self._correlation_mode
+            or self._regression_mode
+            or self._outliers_mode
+        )
 
     def _explanation_text(self) -> str:
         """Return the translated description of what the current mode exports."""
@@ -184,6 +220,10 @@ class AnalysisExportDialog(QDialog):
         if self._regression_mode:
             return self.tr(
                 "Export the coefficients, model metrics and charts of the applied model, not the original dataset."
+            )
+        if self._outliers_mode:
+            return self.tr(
+                "Export the displayed outlier tables and charts of the applied screening, not the original dataset."
             )
         return self.tr("Layout preview only. Export processing is not implemented yet.")
 
@@ -437,6 +477,75 @@ class AnalysisExportDialog(QDialog):
             contents.addWidget(choice)
         layout.addWidget(results)
 
+    def _build_outliers_choices(self, layout: QVBoxLayout) -> None:
+        """List the applied screening plainly and offer its displayed tables and charts."""
+        snapshot = self._outliers
+        if snapshot is not None:
+            identity = QLabel(self._outliers_identity_text(snapshot), self)
+            identity.setTextFormat(Qt.TextFormat.PlainText)
+            identity.setWordWrap(True)
+            identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            layout.addWidget(identity)
+
+        results = QGroupBox(self.tr("Results"), self)
+        contents = QVBoxLayout(results)
+        components = MULTIVARIATE_COMPONENTS if self._outliers_multivariate else UNIVARIATE_COMPONENTS
+        for component in components:
+            choice = QCheckBox(self._outliers_component_label(component), results)
+            if snapshot is None:
+                choice.setEnabled(False)
+                choice.setToolTip(self.tr("Apply an outlier screening successfully before exporting."))
+            elif not snapshot.is_available(component):
+                choice.setEnabled(False)
+                choice.setToolTip(self.tr("This component is empty and cannot be exported."))
+            elif component is OutlierExportComponent.POTENTIAL_OUTLIERS:
+                choice.setToolTip(self.tr("The displayed rows, at most 100, most extreme first."))
+            self._outliers_choices[component] = choice
+            choice.toggled.connect(self._update_export_enabled)
+            contents.addWidget(choice)
+        layout.addWidget(results)
+
+    def _outliers_identity_text(self, snapshot: OutlierExportSnapshot) -> str:
+        """Return the plain-text description of the applied screening."""
+        if isinstance(snapshot, UnivariateOutlierExportSnapshot):
+            method_names = {
+                OutlierMethod.IQR: self.tr("IQR (Tukey's fences)"),
+                OutlierMethod.Z_SCORE: self.tr("Z-score"),
+                OutlierMethod.MODIFIED_Z_SCORE: self.tr("Modified Z-score"),
+            }
+            text = self.tr("Applied method: {method}, threshold {threshold}").format(
+                method=method_names[snapshot.summary.method], threshold=fmt_num(snapshot.summary.threshold)
+            )
+            if snapshot.detail is not None:
+                text += "\n" + self.tr("Selected column: {column}").format(column=snapshot.detail.summary.column)
+            return text
+        multivariate_names = {
+            MultivariateOutlierMethod.ISOLATION_FOREST: self.tr("Isolation Forest"),
+            MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR: self.tr("Local Outlier Factor"),
+        }
+        return self.tr("Applied method: {method}\nFeatures: {features}").format(
+            method=multivariate_names[snapshot.result.method], features=" / ".join(snapshot.result.columns)
+        )
+
+    def _outliers_component_label(self, component: OutlierExportComponent) -> str:
+        """Return the translated checkbox text of an outlier component."""
+        match component:
+            case OutlierExportComponent.COLUMN_SUMMARY:
+                return self.tr("Column summary")
+            case OutlierExportComponent.COLUMN_DETAILS:
+                return self.tr("Column details")
+            case OutlierExportComponent.MODEL_SUMMARY:
+                return self.tr("Model summary")
+            case OutlierExportComponent.POTENTIAL_OUTLIERS:
+                return self.tr("Potential outliers")
+            case OutlierExportComponent.CHARTS:
+                snapshot = self._outliers
+                if not isinstance(snapshot, UnivariateOutlierExportSnapshot):
+                    return self.tr("Charts")
+                count = len(snapshot.chart_columns)
+                label = self.tr("Charts ({count} column)") if count == 1 else self.tr("Charts ({count} columns)")
+                return label.format(count=fmt_int(count))
+
     def export_request(
         self,
     ) -> (
@@ -445,9 +554,25 @@ class AnalysisExportDialog(QDialog):
         | HypothesisExportRequest
         | CorrelationExportRequest
         | RegressionExportRequest
+        | OutlierExportRequest
         | None
     ):
         """Return a validated selection, or None for previews/invalid choices."""
+        if self._outliers_mode:
+            if self._outliers is None:
+                return None
+            outlier_components = tuple(
+                component
+                for component, choice in self._outliers_choices.items()
+                if choice.isEnabled() and choice.isChecked()
+            )
+            format_choice = self._format_combo.currentData()
+            if not isinstance(format_choice, StatisticsExportFormat) or not outlier_components:
+                return None
+            try:
+                return OutlierExportRequest(self._outliers, outlier_components, format_choice)
+            except ValueError:
+                return None
         if self._regression_mode:
             if self._regression is None:
                 return None
@@ -524,7 +649,7 @@ class AnalysisExportDialog(QDialog):
 
     def _update_export_enabled(self) -> None:
         """Preserve picks across formats and explain disabled exports."""
-        if self._statistics_mode or self._hypothesis_mode or self._correlation_mode or self._regression_mode:
+        if self._uses_component_export():
             self._update_statistics_export_enabled()
             return
         excel = self._format_combo.currentData() is OverviewExportFormat.EXCEL
@@ -572,6 +697,8 @@ class AnalysisExportDialog(QDialog):
             if self._correlation_mode
             else self._regression_choices
             if self._regression_mode
+            else self._outliers_choices
+            if self._outliers_mode
             else self._statistics_choices
         )
         selected = any(choice.isEnabled() and choice.isChecked() for choice in choices.values())
@@ -583,6 +710,8 @@ class AnalysisExportDialog(QDialog):
             if self._correlation_mode
             else self._regression_choices.get(RegressionExportComponent.CHARTS)
             if self._regression_mode
+            else self._outliers_choices.get(OutlierExportComponent.CHARTS)
+            if self._outliers_mode
             else self._statistics_choices.get(StatisticsExportTable.CHARTS)
         )
         chart_selected = chart_choice is not None and chart_choice.isEnabled() and chart_choice.isChecked()
@@ -598,6 +727,8 @@ class AnalysisExportDialog(QDialog):
             reason = self.tr("Apply a correlation matrix successfully before exporting.")
         elif self._regression_mode and self._regression is None:
             reason = self.tr("Apply a regression model successfully before exporting.")
+        elif self._outliers_mode and self._outliers is None:
+            reason = self.tr("Apply an outlier screening successfully before exporting.")
         elif self._statistics_mode and self._statistics is None:
             reason = self.tr("Run Statistics successfully before exporting.")
         elif not available:

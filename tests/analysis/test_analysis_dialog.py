@@ -58,6 +58,7 @@ from expo_jbm329.services.analysis.group_comparison import (
 )
 from expo_jbm329.services.analysis.multivariate_outliers import initialize_multivariate_outliers
 from expo_jbm329.services.analysis.outliers import initialize_outlier_summary
+from expo_jbm329.services.analysis.outliers_export import OutlierExportComponent, OutlierExportRequest
 from expo_jbm329.services.analysis.paired_comparison import initialize_paired_comparison
 from expo_jbm329.services.analysis.pca import initialize_pca
 from expo_jbm329.services.analysis.regression import initialize_regression
@@ -72,6 +73,8 @@ from expo_jbm329.services.analysis.statistics import (
 from expo_jbm329.services.analysis.survival import initialize_survival_columns
 from expo_jbm329.services.analysis.timeseries import initialize_time_series
 from expo_jbm329.utils.dataset_ref import DatasetRef
+from tests.analysis.test_outliers_export import multivariate_snapshot as multivariate_outliers_snapshot
+from tests.analysis.test_outliers_export import univariate_snapshot
 from tests.analysis.test_regression_export import linear_snapshot
 
 
@@ -1104,3 +1107,84 @@ def test_popup_tooltips_preserve_disabled_reasons_and_ignore_separators(monkeypa
     finally:
         combo.hidePopup()
         dialog.close()
+
+
+def test_outliers_export_snapshot_is_scoped_to_current_category_and_dataset():
+    snapshot = univariate_snapshot()
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.REGRESSION)
+    dialog.set_exportable_outliers(snapshot)
+    assert dialog.exportable_outliers() is None
+
+    dialog.select_category(AnalysisCategory.OUTLIERS)
+    dialog.set_exportable_outliers(snapshot)
+    assert dialog.exportable_outliers() is snapshot
+    dialog.set_content_widget(QWidget())
+    assert dialog.exportable_outliers() is None
+    dialog.set_exportable_outliers(snapshot)
+    dialog.select_dataset("t2")
+    assert dialog.exportable_outliers() is None
+    dialog.set_exportable_outliers(snapshot)
+    dialog.select_category(AnalysisCategory.STATISTICS)
+    assert dialog.exportable_outliers() is None
+
+
+def test_outliers_export_selection_emits_only_the_current_snapshot(monkeypatch):
+    snapshot = multivariate_outliers_snapshot()
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.OUTLIERS)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_outliers(snapshot)
+    received: list[OutlierExportRequest] = []
+    dialog.outliers_export_requested.connect(received.append)
+    captured: list[AnalysisExportDialog] = []
+
+    def accept_default_selection(export_dialog):
+        captured.append(export_dialog)
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(AnalysisExportDialog, "exec", accept_default_selection)
+    dialog._show_export_selection()
+
+    assert [choice.text() for choice in captured[0].findChildren(QCheckBox)] == [
+        "Model summary",
+        "Potential outliers",
+        "Charts",
+    ]
+    assert len(received) == 1
+    assert received[0].snapshot is snapshot
+    assert received[0].components == (OutlierExportComponent.MODEL_SUMMARY,)
+
+    dialog.set_content_widget(QWidget())
+    dialog._show_export_selection()
+    assert len(captured) == 2
+    assert all(not choice.isEnabled() for choice in captured[1].findChildren(QCheckBox))
+    assert len(received) == 1
+
+
+@pytest.mark.parametrize(
+    ("multivariate", "first_choice"),
+    [(False, "Column summary"), (True, "Model summary")],
+)
+def test_outliers_export_before_apply_follows_the_displayed_mode(monkeypatch, multivariate, first_choice):
+    df = pd.DataFrame({"x": [1.0, 2.0, 3.0, 4.0], "y": [2.0, 1.0, 4.0, 3.0]})
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.OUTLIERS)
+    config = (
+        MultivariateOutliersConfigWidget(initialize_multivariate_outliers(df))
+        if multivariate
+        else OutliersConfigWidget(initialize_outlier_summary(df))
+    )
+    dialog.set_config_widget(config)
+    captured: list[AnalysisExportDialog] = []
+
+    def reject(export_dialog):
+        captured.append(export_dialog)
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(AnalysisExportDialog, "exec", reject)
+    dialog._show_export_selection()
+
+    choices = captured[0].findChildren(QCheckBox)
+    assert choices[0].text() == first_choice
+    assert all(not choice.isEnabled() for choice in choices)

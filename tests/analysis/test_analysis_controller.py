@@ -52,6 +52,15 @@ from expo_jbm329.services.analysis.hypothesis_export import (
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportRequest
 from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierError, MultivariateOutlierMethod
 from expo_jbm329.services.analysis.outliers import OutlierMethod
+from expo_jbm329.services.analysis.outliers_export import MULTIVARIATE_COMPONENTS as MULTIVARIATE_OUTLIER_COMPONENTS
+from expo_jbm329.services.analysis.outliers_export import UNIVARIATE_COMPONENTS as UNIVARIATE_OUTLIER_COMPONENTS
+from expo_jbm329.services.analysis.outliers_export import (
+    MultivariateOutlierExportSnapshot,
+    OutlierExportComponent,
+    OutlierExportRequest,
+    OutlierExportSnapshot,
+    UnivariateOutlierExportSnapshot,
+)
 from expo_jbm329.services.analysis.overview import (
     OverviewExportFormat,
     OverviewExportRequest,
@@ -78,6 +87,8 @@ from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis import analysis_controller as analysis_controller_module
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
+from tests.analysis.test_outliers_export import multivariate_snapshot as multivariate_outliers_snapshot
+from tests.analysis.test_outliers_export import univariate_snapshot
 from tests.analysis.test_regression_export import cox_snapshot, linear_snapshot, logistic_snapshot
 
 _CONTROLLER_MODULE = "expo_jbm329.workbench.controllers.analysis.analysis_controller"
@@ -613,6 +624,7 @@ class DummyAnalysisDialog:
         self.hypothesis_export_requested = DummySignal()
         self.correlation_export_requested = DummySignal()
         self.regression_export_requested = DummySignal()
+        self.outliers_export_requested = DummySignal()
         self.placeholder_calls: list[str] = []
         self.content_widgets: list[QWidget] = []
         self.config_widgets: list[QWidget | None] = []
@@ -627,6 +639,7 @@ class DummyAnalysisDialog:
         self._export_hypothesis = None
         self._export_correlation = None
         self._export_regression = None
+        self._export_outliers = None
         self._correlation_export_revision = 0
         self._analysis_revision = 0
 
@@ -635,6 +648,7 @@ class DummyAnalysisDialog:
         self._export_statistics = None
         self._export_hypothesis = None
         self._export_regression = None
+        self._export_outliers = None
         self.invalidate_correlation_export()
         self._analysis_revision += 1
 
@@ -680,6 +694,14 @@ class DummyAnalysisDialog:
     def exportable_regression(self):
         if self._selected_category is AnalysisCategory.REGRESSION:
             return self._export_regression
+        return None
+
+    def set_exportable_outliers(self, snapshot):
+        self._export_outliers = snapshot
+
+    def exportable_outliers(self):
+        if self._selected_category is AnalysisCategory.OUTLIERS:
+            return self._export_outliers
         return None
 
     def show_placeholder(self, text):
@@ -4298,3 +4320,307 @@ def test_regression_export_uses_compiled_swedish_labels() -> None:
     assert "Hazardkvot, 95 % KI nedre" in coefficients.columns
     assert metrics.columns[0] == "Mått"
     assert "Händelser" in metrics.iloc[:, 0].tolist()
+
+
+# ----------------------------------------------------------------------
+# Outliers export
+# ----------------------------------------------------------------------
+
+
+def test_successful_outlier_summary_apply_registers_the_displayed_export_snapshot(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_outliers(async_ops, dialog_factory)
+    assert dlg.exportable_outliers() is None
+
+    _simulate_success(_apply_outliers(async_ops, dlg))
+
+    view = _outliers_view(dlg)
+    snapshot = dlg.exportable_outliers()
+    assert isinstance(snapshot, UnivariateOutlierExportSnapshot)
+    assert snapshot.summary is view.result()
+    assert snapshot.detail is view.column_detail()
+    assert snapshot.chart_labels == view.histogram_labels()
+    assert snapshot.summary_notes == view.summary_notes()
+    assert snapshot.detail_notes == view.detail_notes()
+    assert snapshot.data.columns.tolist() == ["a", "b"]
+    assert snapshot.data["a"].tolist() == _outliers_df()["a"].tolist()
+
+    _outliers_config(dlg)._threshold_spin.setValue(2.5)  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_outliers() is None
+
+
+def test_outlier_column_detail_apply_updates_the_registered_snapshot(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    view = _outliers_view(dlg)
+    first = dlg.exportable_outliers()
+    assert isinstance(first, UnivariateOutlierExportSnapshot)
+
+    view.select_column("b")
+    _simulate_success(async_ops.last_call)
+
+    snapshot = dlg.exportable_outliers()
+    assert isinstance(snapshot, UnivariateOutlierExportSnapshot)
+    assert snapshot is not first
+    assert snapshot.summary is first.summary
+    assert snapshot.data is first.data
+    assert snapshot.detail is view.column_detail()
+    assert snapshot.detail is not None
+    assert snapshot.detail.summary.column == "b"
+    assert snapshot.detail_notes == view.detail_notes()
+
+
+def test_outlier_column_detail_for_a_replaced_summary_is_not_registered(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    view = _outliers_view(dlg)
+    view.select_column("b")
+    call = async_ops.last_call
+    foreign = univariate_snapshot()
+    dlg.set_exportable_outliers(foreign)
+
+    _simulate_success(call)
+
+    assert dlg.exportable_outliers() is foreign
+
+
+def test_outlier_summary_without_screened_columns_exports_tables_but_no_charts(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory, pd.DataFrame({"a": [1.0, None], "t": ["x", "y"]}))
+
+    _simulate_success(_apply_outliers(async_ops, dlg))
+
+    snapshot = dlg.exportable_outliers()
+    assert isinstance(snapshot, UnivariateOutlierExportSnapshot)
+    assert snapshot.chart_columns == ()
+    assert snapshot.is_available(OutlierExportComponent.COLUMN_SUMMARY)
+    assert not snapshot.is_available(OutlierExportComponent.CHARTS)
+
+
+def test_successful_multivariate_outlier_apply_registers_the_displayed_export_snapshot(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    config = _switch_to_multivariate(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    view = _multivariate_outliers_view(dlg)
+    snapshot = dlg.exportable_outliers()
+    assert isinstance(snapshot, MultivariateOutlierExportSnapshot)
+    assert snapshot.result is view.result()
+    assert snapshot.chart_labels == view.chart_labels()
+    assert snapshot.notes == view.export_notes()
+
+
+def test_failed_multivariate_outlier_fit_never_registers_an_export_snapshot(dialog_factory):
+    df = pd.DataFrame({"a": [1.0, None, 3.0], "b": [None, 2.0, None]})
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory, df)
+    config = _switch_to_multivariate(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    assert _multivariate_outliers_view(dlg).result().error is not None
+    assert dlg.exportable_outliers() is None
+
+
+def _outliers_export_context(snapshot: OutlierExportSnapshot):
+    dialog = AnalysisDialog(parent=None, datasets=[DatasetRef("chosen", "Chosen", 10, 3)], active_tab_id="chosen")
+    dialog.select_category(AnalysisCategory.OUTLIERS)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_outliers(snapshot)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must not look up a dataset")
+    results.current_df.side_effect = AssertionError("Export must not use the active tab")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, Mock()
+
+
+_OUTLIERS_TRANSLATIONS = {
+    "Column summary": "Kolumnsammanfattning",
+    "Column details": "Kolumndetaljer",
+    "Model summary": "Modellsammanfattning",
+    "Potential outliers": "Potentiella avvikare",
+    "Charts": "Diagram",
+    "Column": "Kolumn",
+    "Status": "Status SV",
+    "Too few values": "F?r f? v?rden",
+    "Threshold": "Tr?skel",
+    "Features": "Variabler",
+    "Metric": "M?tt",
+    "Value": "V?rde",
+    "Notes": "Anteckningar",
+    "Row": "Rad",
+    "Distance past fence": "Avst?nd bortom gr?ns",
+    "Anomaly score": "Avvikelsepo?ng",
+}
+
+
+def test_univariate_outlier_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch):
+    snapshot = univariate_snapshot()
+    controller, dialog, exporter = _outliers_export_context(snapshot)
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: _OUTLIERS_TRANSLATIONS.get(text, text))
+    request = OutlierExportRequest(snapshot, UNIVARIATE_OUTLIER_COMPONENTS, StatisticsExportFormat.EXCEL)
+
+    controller._export_outliers(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.export_excel.call_count == 1
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert list(kwargs["sheets"]) == ["Kolumnsammanfattning", "Kolumndetaljer", "Potentiella avvikare"]
+    summary = kwargs["sheets"]["Kolumnsammanfattning"]
+    assert summary.columns[0] == "Kolumn"
+    assert summary.columns[-2:].tolist() == ["Status SV", "Anteckningar"]
+    assert summary.loc[summary["Kolumn"] == "few", "Status SV"].tolist() == ["F?r f? v?rden"]
+    assert summary["Status SV"].isna().sum() == len(summary) - 1
+    details = kwargs["sheets"]["Kolumndetaljer"]
+    assert details.columns.tolist() == ["M?tt", "V?rde", "Anteckningar"]
+    assert details["M?tt"].iloc[0] == "Tr?skel"
+    assert details["V?rde"].iloc[0] == 1.5
+    potential = kwargs["sheets"]["Potentiella avvikare"]
+    assert potential.columns[:3].tolist() == ["Rad", "a", "Avst?nd bortom gr?ns"]
+
+    progress: list[int] = []
+    images = kwargs["chart_factory"](progress.append, lambda: False)
+    assert [image.heading for image in images] == list(snapshot.chart_columns)
+    assert progress[-1] == 100
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_multivariate_outlier_excel_export_uses_model_summary_and_projection_chart(monkeypatch):
+    snapshot = multivariate_outliers_snapshot()
+    controller, dialog, exporter = _outliers_export_context(snapshot)
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: _OUTLIERS_TRANSLATIONS.get(text, text))
+    request = OutlierExportRequest(snapshot, MULTIVARIATE_OUTLIER_COMPONENTS, StatisticsExportFormat.EXCEL)
+
+    controller._export_outliers(dialog, exporter, request)  # noqa: SLF001
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Modellsammanfattning", "Potentiella avvikare"]
+    model = kwargs["sheets"]["Modellsammanfattning"]
+    assert model["M?tt"].iloc[0] == "Variabler"
+    assert model["Anteckningar"].iloc[0] == snapshot.notes[0]
+    assert kwargs["sheets"]["Potentiella avvikare"].columns[:2].tolist() == ["Rad", "Avvikelsepo?ng"]
+    images = kwargs["chart_factory"](None, None)
+    assert len(images) == 1
+    assert images[0].heading == snapshot.chart_labels.heading
+
+
+def test_outlier_excel_export_without_charts_has_no_chart_factory():
+    snapshot = univariate_snapshot()
+    controller, dialog, exporter = _outliers_export_context(snapshot)
+    request = OutlierExportRequest(
+        snapshot,
+        (OutlierExportComponent.POTENTIAL_OUTLIERS, OutlierExportComponent.COLUMN_SUMMARY),
+        StatisticsExportFormat.EXCEL,
+    )
+
+    controller._export_outliers(dialog, exporter, request)  # noqa: SLF001
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Potential outliers", "Column summary"]
+    assert kwargs["chart_factory"] is None
+    assert kwargs["chart_sheet_name"] is None
+
+
+@pytest.mark.parametrize(
+    ("format_choice", "method_name"),
+    [(StatisticsExportFormat.CSV, "export_csv"), (StatisticsExportFormat.BINARY, "export_data")],
+)
+@pytest.mark.parametrize(
+    ("multivariate", "component", "first_column"),
+    [
+        (False, OutlierExportComponent.COLUMN_SUMMARY, "Column"),
+        (False, OutlierExportComponent.COLUMN_DETAILS, "Metric"),
+        (False, OutlierExportComponent.POTENTIAL_OUTLIERS, "Row (2)"),
+        (True, OutlierExportComponent.MODEL_SUMMARY, "Metric"),
+        (True, OutlierExportComponent.POTENTIAL_OUTLIERS, "Row"),
+    ],
+)
+def test_outlier_single_table_routes_to_non_excel_exporters(
+    format_choice, method_name, multivariate, component, first_column
+):
+    snapshot = multivariate_outliers_snapshot() if multivariate else univariate_snapshot()
+    controller, dialog, exporter = _outliers_export_context(snapshot)
+    request = OutlierExportRequest(snapshot, (component,), format_choice)
+
+    controller._export_outliers(dialog, exporter, request)  # noqa: SLF001
+
+    method = getattr(exporter, method_name)
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    assert kwargs["df"].columns[0] == first_column
+    assert exporter.export_excel.call_count == 0
+
+
+@pytest.mark.parametrize(
+    ("method", "score_header"),
+    [
+        (OutlierMethod.IQR, "Distance past fence"),
+        (OutlierMethod.Z_SCORE, "z"),
+        (OutlierMethod.MODIFIED_Z_SCORE, "Modified z"),
+    ],
+)
+def test_univariate_outlier_score_header_follows_the_method(method, score_header):
+    assert AnalysisController._outlier_score_label(univariate_snapshot(method)) == score_header  # noqa: SLF001
+    assert (
+        AnalysisController._outlier_score_label(multivariate_outliers_snapshot())  # noqa: SLF001
+        == "Anomaly score"
+    )
+
+
+@pytest.mark.parametrize("change", ["category", "content", "other_snapshot", "wrong_type"])
+def test_outlier_export_rejects_stale_or_foreign_requests(change):
+    snapshot = univariate_snapshot()
+    controller, dialog, exporter = _outliers_export_context(snapshot)
+    request: object = OutlierExportRequest(
+        snapshot, (OutlierExportComponent.COLUMN_SUMMARY,), StatisticsExportFormat.CSV
+    )
+    if change == "category":
+        dialog.select_category(AnalysisCategory.STATISTICS)
+    elif change == "content":
+        dialog.set_content_widget(QWidget())
+    elif change == "other_snapshot":
+        dialog.set_exportable_outliers(univariate_snapshot())
+    else:
+        request = object()
+
+    controller._export_outliers(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.mock_calls == []
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_outlier_export_uses_compiled_swedish_labels() -> None:
+    snapshot = univariate_snapshot()
+    controller, dialog, exporter = _outliers_export_context(snapshot)
+    translator = QTranslator()
+    catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / "app_sv.qm"
+    assert translator.load(str(catalog))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        controller._export_outliers(  # noqa: SLF001
+            dialog,
+            exporter,
+            OutlierExportRequest(snapshot, UNIVARIATE_OUTLIER_COMPONENTS, StatisticsExportFormat.EXCEL),
+        )
+    finally:
+        app.removeTranslator(translator)
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    sheets = kwargs["sheets"]
+    assert list(sheets) == ["Kolumnsammanfattning", "Kolumndetaljer", "Potentiella avvikare"]
+    summary = sheets["Kolumnsammanfattning"]
+    assert summary.columns[0] == "Kolumn"
+    assert "För få värden" in summary["Status"].dropna().tolist()
+    details = sheets["Kolumndetaljer"]
+    assert details.columns.tolist() == ["Mått", "Värde", "Noteringar"]
+    assert details["Mått"].tolist()[:3] == ["Tröskel", "Värden", "Saknade"]
+    assert sheets["Potentiella avvikare"].columns[2] == "Avstånd förbi gränsen"

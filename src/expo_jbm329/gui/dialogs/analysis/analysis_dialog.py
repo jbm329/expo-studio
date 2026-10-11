@@ -37,12 +37,14 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_config import MultivariateOutliersConfigWidget
 from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDialog
 from expo_jbm329.gui.dialogs.analysis.report_page import ReportPage
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportRequest, CorrelationExportSnapshot
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportRequest, HypothesisExportSnapshot
+from expo_jbm329.services.analysis.outliers_export import OutlierExportRequest, OutlierExportSnapshot
 from expo_jbm329.services.analysis.overview import OverviewExportRequest
 from expo_jbm329.services.analysis.regression_export import RegressionExportRequest, RegressionExportSnapshot
 from expo_jbm329.services.analysis.statistics import StatisticsExportRequest
@@ -127,6 +129,7 @@ class AnalysisDialog(QDialog):
     hypothesis_export_requested = pyqtSignal(object)  # HypothesisExportRequest
     correlation_export_requested = pyqtSignal(object)  # CorrelationExportRequest
     regression_export_requested = pyqtSignal(object)  # RegressionExportRequest
+    outliers_export_requested = pyqtSignal(object)  # OutlierExportRequest
 
     def __init__(
         self,
@@ -158,6 +161,8 @@ class AnalysisDialog(QDialog):
         self._correlation_export_revision = 0
         self._export_regression: RegressionExportSnapshot | None = None
         self._regression_export_tab_id: str | None = None
+        self._export_outliers: OutlierExportSnapshot | None = None
+        self._outliers_export_tab_id: str | None = None
         self._analysis_revision = 0
 
         self.setWindowTitle(self.tr("Advanced analysis"))
@@ -281,8 +286,8 @@ class AnalysisDialog(QDialog):
         actions.addWidget(add_button)
         explanation = QLabel(
             self.tr(
-                "Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, and applied Regression "
-                "model exports are available after analysis. "
+                "Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression "
+                "model and applied Outliers exports are available after analysis. "
                 "Other export and report actions are previews."
             ),
             bar,
@@ -308,6 +313,9 @@ class AnalysisDialog(QDialog):
             correlation_mode=self.selected_category() is AnalysisCategory.CORRELATION,
             regression=self.exportable_regression(),
             regression_mode=self.selected_category() is AnalysisCategory.REGRESSION,
+            outliers=self.exportable_outliers(),
+            outliers_mode=self.selected_category() is AnalysisCategory.OUTLIERS,
+            outliers_multivariate=isinstance(self.config_widget(), MultivariateOutliersConfigWidget),
         )
         for combo in dialog.findChildren(QComboBox):
             _ComboToolTipFilter(combo)
@@ -323,6 +331,8 @@ class AnalysisDialog(QDialog):
                 self.correlation_export_requested.emit(request)
             elif isinstance(request, RegressionExportRequest) and request.snapshot is self.exportable_regression():
                 self.regression_export_requested.emit(request)
+            elif isinstance(request, OutlierExportRequest) and request.snapshot is self.exportable_outliers():
+                self.outliers_export_requested.emit(request)
 
     def invalidate_overview_export(self) -> None:
         """Disable real export as soon as displayed analysis becomes stale."""
@@ -334,6 +344,8 @@ class AnalysisDialog(QDialog):
         self._hypothesis_export_tab_id = None
         self._export_regression = None
         self._regression_export_tab_id = None
+        self._export_outliers = None
+        self._outliers_export_tab_id = None
         self.invalidate_correlation_export()
         self._analysis_revision += 1
 
@@ -391,6 +403,20 @@ class AnalysisDialog(QDialog):
             and self.selected_dataset_tab_id() == self._regression_export_tab_id
         ):
             return self._export_regression
+        return None
+
+    def set_exportable_outliers(self, snapshot: OutlierExportSnapshot) -> None:
+        """Register a successful screening after its view is displayed or its column detail changes."""
+        self._export_outliers = snapshot
+        self._outliers_export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_outliers(self) -> OutlierExportSnapshot | None:
+        """Return the displayed applied screening, independent of pending configuration edits."""
+        if (
+            self.selected_category() is AnalysisCategory.OUTLIERS
+            and self.selected_dataset_tab_id() == self._outliers_export_tab_id
+        ):
+            return self._export_outliers
         return None
 
     def set_exportable_overview(self, result: DatasetOverviewResult) -> None:

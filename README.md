@@ -127,6 +127,17 @@ Charts sheet, including any sampling caption. Excel is the default and can
 combine all three; CSV and binary files contain exactly one table without
 Charts. Configuration edits clear the export until the next Apply completes,
 and failed fits cannot be exported.
+After a successful univariate **Outliers** screening, export the **Column
+summary** (every numeric column, with status and notes for columns that could
+not be screened), the **Column details** of the selected column as a
+metric/value/notes table, its **Potential outliers** (the displayed rows, at
+most 100, most extreme first, with all dataset columns), and **Charts** with
+one histogram per screened column; unscreened columns are skipped. Multivariate
+screening exports a **Model summary**, its **Potential outliers**, and the PCA
+projection chart. Charts are Excel-only and render in the export worker with
+progress and cancellation; CSV and binary files contain exactly one table.
+Fixed headers such as Row are suffixed with " (2)" if a dataset column has the
+same name. Configuration edits clear the export until the next Apply completes.
 Selections are retained when switching formats; Export is disabled with an
 explanation if the selection is invalid for the format. All choices for other
 analyses are disabled previews and cannot create files. **Add to report** and

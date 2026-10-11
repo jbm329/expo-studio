@@ -14,6 +14,7 @@ from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierMethod,
     analyze_multivariate_outliers,
 )
+from expo_jbm329.services.analysis.outliers_charts import OutlierProjectionLabels
 from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 
@@ -136,3 +137,53 @@ def test_method_name_translates_every_method():
     view = MultivariateOutliersView(_result())
 
     assert view.method_name(MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR) == "Local Outlier Factor"
+
+
+# ----------------------------------------------------------------------
+# Export text
+# ----------------------------------------------------------------------
+
+
+def test_chart_labels_are_shared_by_the_displayed_projection():
+    result = _result()
+    view = MultivariateOutliersView(result)
+    axes = view.findChildren(FigureCanvasQTAgg)[0].figure.axes[0]
+
+    labels = view.chart_labels()
+
+    assert view.result() is result
+    assert labels == OutlierProjectionLabels(
+        heading="PCA projection",
+        title="PCA projection (visualization only)",
+        pc1_axis="PC1",
+        pc2_axis="PC2",
+        inliers="Inliers",
+        outliers="Potential outliers",
+    )
+    assert axes.get_title() == labels.title
+    assert [text.get_text() for text in axes.get_legend().get_texts()] == ["Inliers", "Potential outliers"]
+
+
+def test_sampled_projection_has_a_plain_caption():
+    view = MultivariateOutliersView(dataclasses.replace(_result(), sampled=True))
+
+    assert view.chart_labels().captions == ("The projection shows a deterministic sample of 7 rows.",)
+
+
+def test_export_notes_are_the_plain_model_comments_and_features():
+    result = _result()
+    notes = MultivariateOutliersView(result).export_notes()
+
+    assert notes[0].startswith("Isolation Forest on 2 features (standardized):")
+    assert "<b>" not in notes[0]
+    assert notes[1] == "Scores rank observations within this fit. Potential outliers are not necessarily errors."
+    assert notes[-1] == "Features: x, y"
+
+
+def test_export_text_of_an_error_view_has_no_notes_or_caption():
+    view = MultivariateOutliersView(
+        dataclasses.replace(_result(), error=MultivariateOutlierError.NO_VARIATION, sampled=True)
+    )
+
+    assert view.export_notes() == ()
+    assert view.chart_labels().captions == ()

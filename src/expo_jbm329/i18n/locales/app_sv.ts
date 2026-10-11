@@ -473,8 +473,8 @@
         <translation>Lägg till i rapport</translation>
     </message>
     <message>
-        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, and applied Regression model exports are available after analysis. Other export and report actions are previews.</source>
-        <translation>Export av Översikt, Statistik, tillämpade Hypotestester, tillämpade korrelationsmatriser och tillämpade regressionsmodeller är tillgänglig efter analys. Övriga export- och rapportåtgärder är förhandsvisningar.</translation>
+        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, applied Regression model and applied Outliers exports are available after analysis. Other export and report actions are previews.</source>
+        <translation>Export av Översikt, Statistik, tillämpade Hypotestester, tillämpade korrelationsmatriser, tillämpade regressionsmodeller och tillämpade avvikaranalyser är tillgänglig efter analys. Övriga export- och rapportåtgärder är förhandsvisningar.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -1012,6 +1012,164 @@ Prediktorer: {predictors}</translation>
     <message>
         <source>Fit statistics and diagnostics with the displayed model comments.</source>
         <translation>Anpassningsmått och diagnostik med de visade modellkommentarerna.</translation>
+    </message>
+    <message>
+        <source>Export the displayed outlier tables and charts of the applied screening, not the original dataset.</source>
+        <translation>Exportera de visade avvikartabellerna och diagrammen från den tillämpade screeningen, inte det ursprungliga datasetet.</translation>
+    </message>
+    <message>
+        <source>Apply an outlier screening successfully before exporting.</source>
+        <translation>Tillämpa en avvikarscreening utan fel innan du exporterar.</translation>
+    </message>
+    <message>
+        <source>The displayed rows, at most 100, most extreme first.</source>
+        <translation>De visade raderna, högst 100, mest extrema först.</translation>
+    </message>
+    <message>
+        <source>Applied method: {method}, threshold {threshold}</source>
+        <translation>Tillämpad metod: {method}, tröskel {threshold}</translation>
+    </message>
+    <message>
+        <source>Selected column: {column}</source>
+        <translation>Vald kolumn: {column}</translation>
+    </message>
+    <message>
+        <source>Applied method: {method}
+Features: {features}</source>
+        <translation>Tillämpad metod: {method}
+Variabler: {features}</translation>
+    </message>
+    <message>
+        <source>Column summary</source>
+        <translation>Kolumnsammanfattning</translation>
+    </message>
+    <message>
+        <source>Column details</source>
+        <translation>Kolumndetaljer</translation>
+    </message>
+    <message>
+        <source>Model summary</source>
+        <translation>Modellsammanfattning</translation>
+    </message>
+    <message>
+        <source>Potential outliers</source>
+        <translation>Potentiella avvikare</translation>
+    </message>
+    <message>
+        <source>Charts ({count} column)</source>
+        <translation>Diagram ({count} kolumn)</translation>
+    </message>
+    <message>
+        <source>Charts ({count} columns)</source>
+        <translation>Diagram ({count} kolumner)</translation>
+    </message>
+    <message>
+        <source>IQR (Tukey&apos;s fences)</source>
+        <translation>IQR (Tukeys gränser)</translation>
+    </message>
+    <message>
+        <source>Z-score</source>
+        <translation>Z-poäng</translation>
+    </message>
+    <message>
+        <source>Modified Z-score</source>
+        <translation>Modifierad Z-poäng</translation>
+    </message>
+    <message>
+        <source>Isolation Forest</source>
+        <translation>Isolation Forest</translation>
+    </message>
+    <message>
+        <source>Local Outlier Factor</source>
+        <translation>Local Outlier Factor</translation>
+    </message>
+    <message>
+        <source>Threshold</source>
+        <translation>Tröskel</translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation>Värden</translation>
+    </message>
+    <message>
+        <source>Missing</source>
+        <translation>Saknade</translation>
+    </message>
+    <message>
+        <source>Potential outlier share</source>
+        <translation>Andel potentiella avvikare</translation>
+    </message>
+    <message>
+        <source>Low potential outliers</source>
+        <translation>Låga potentiella avvikare</translation>
+    </message>
+    <message>
+        <source>High potential outliers</source>
+        <translation>Höga potentiella avvikare</translation>
+    </message>
+    <message>
+        <source>Lower fence</source>
+        <translation>Nedre gräns</translation>
+    </message>
+    <message>
+        <source>Upper fence</source>
+        <translation>Övre gräns</translation>
+    </message>
+    <message>
+        <source>Q1</source>
+        <translation>Q1</translation>
+    </message>
+    <message>
+        <source>Q3</source>
+        <translation>Q3</translation>
+    </message>
+    <message>
+        <source>IQR</source>
+        <translation>IQR</translation>
+    </message>
+    <message>
+        <source>Mean</source>
+        <translation>Medelvärde</translation>
+    </message>
+    <message>
+        <source>Standard deviation</source>
+        <translation>Standardavvikelse</translation>
+    </message>
+    <message>
+        <source>Median</source>
+        <translation>Median</translation>
+    </message>
+    <message>
+        <source>MAD</source>
+        <translation>MAD</translation>
+    </message>
+    <message>
+        <source>Features</source>
+        <translation>Variabler</translation>
+    </message>
+    <message>
+        <source>Expected outlier fraction</source>
+        <translation>Förväntad andel avvikande observationer</translation>
+    </message>
+    <message>
+        <source>LOF neighbors</source>
+        <translation>LOF-grannar</translation>
+    </message>
+    <message>
+        <source>Total rows</source>
+        <translation>Totalt antal rader</translation>
+    </message>
+    <message>
+        <source>Rows dropped because of missing or infinite values</source>
+        <translation>Rader borttagna på grund av saknade eller oändliga värden</translation>
+    </message>
+    <message>
+        <source>Inliers</source>
+        <translation>Inomliggande observationer</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>Status</translation>
     </message>
 </context>
 <context>
@@ -4605,6 +4763,10 @@ Sparad till:
         <source>Anomaly score</source>
         <translation>Avvikelsepoäng</translation>
     </message>
+    <message>
+        <source>Features: {columns}</source>
+        <translation>Variabler: {columns}</translation>
+    </message>
 </context>
 <context>
     <name>OutliersConfigWidget</name>
@@ -4885,6 +5047,10 @@ Sparad till:
         <location filename="../../gui/dialogs/analysis/outliers_view.py" line="549"/>
         <source>Row</source>
         <translation>Rad</translation>
+    </message>
+    <message>
+        <source>Flagged values are potential outliers, not necessarily errors - check them before excluding anything.</source>
+        <translation>Flaggade värden är potentiella avvikare, inte nödvändigtvis felaktiga värden – kontrollera dem innan något exkluderas.</translation>
     </message>
 </context>
 <context>
