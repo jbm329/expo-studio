@@ -645,6 +645,19 @@ def test_hypothesis_apply_stays_at_pane_bottom_and_controls_stay_compact():
         dialog.close()
 
 
+def _assert_apply_below_frame_at_pane_bottom(dialog: AnalysisDialog, config: QWidget, group: QWidget) -> None:
+    """Assert Apply is outside `group`, directly below it and at the pane bottom."""
+    viewport = dialog._config_scroll.viewport()  # noqa: SLF001
+    apply_button = config._apply_button  # noqa: SLF001
+    assert isinstance(group, QGroupBox)
+    assert apply_button.parentWidget() is config
+    assert group.layout().indexOf(apply_button) == -1
+    assert config.layout().indexOf(apply_button) == config.layout().count() - 1
+    assert viewport.height() - _bottom_in(apply_button, viewport) <= 1
+    gap = apply_button.mapTo(config, QPoint(0, 0)).y() - _bottom_in(group, config)
+    assert 0 <= gap <= config.layout().spacing() + 1
+
+
 def test_correlation_apply_sits_below_the_columns_frame_at_the_pane_bottom():
     frame = pd.DataFrame({"a": range(30), "b": range(1, 31), "c": [index % 7 for index in range(30)]})
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
@@ -654,17 +667,34 @@ def test_correlation_apply_sits_below_the_columns_frame_at_the_pane_bottom():
     dialog.set_config_widget(config)
     QCoreApplication.processEvents()
     try:
-        viewport = dialog._config_scroll.viewport()  # noqa: SLF001
-        apply_button = config._apply_button  # noqa: SLF001
-        group = config._column_list.parentWidget()  # noqa: SLF001
-        assert isinstance(group, QGroupBox)
+        _assert_apply_below_frame_at_pane_bottom(dialog, config, config._column_list.parentWidget())  # noqa: SLF001
+    finally:
+        dialog.close()
 
-        assert apply_button.parentWidget() is config
-        assert group.layout().indexOf(apply_button) == -1
-        assert config.layout().indexOf(apply_button) == config.layout().count() - 1
-        assert viewport.height() - _bottom_in(apply_button, viewport) <= 1
-        gap = apply_button.mapTo(config, QPoint(0, 0)).y() - _bottom_in(group, config)
-        assert 0 <= gap <= config.layout().spacing() + 1
+
+def test_regression_apply_sits_below_the_predictors_frame_for_every_model():
+    df = pd.DataFrame({
+        "measurement": [float(index + 1) for index in range(30)],
+        "other_measurement": [float(index % 7) for index in range(30)],
+        "event": [0, 1] * 15,
+        "group": ["a", "b"] * 15,
+    })
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    config = RegressionConfigWidget(
+        initialize_regression(df),
+        initialize_generalized_targets(df),
+        initialize_survival_columns(df),
+    )
+    dialog.resize(1280, 800)
+    dialog.show()
+    dialog.set_config_widget(config)
+    QCoreApplication.processEvents()
+    try:
+        for model in (*RegressionModel, RegressionModel.LINEAR):
+            config._model_combo.setCurrentIndex(config._model_combo.findData(model.value))  # noqa: SLF001
+            QCoreApplication.processEvents()
+            group = config._predictor_list.parentWidget()  # noqa: SLF001
+            _assert_apply_below_frame_at_pane_bottom(dialog, config, group)
     finally:
         dialog.close()
 

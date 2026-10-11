@@ -117,7 +117,10 @@ class RegressionConfigWidget(QWidget):
         self._target_notice.setWordWrap(True)
         layout.addWidget(self._target_notice)
 
-        layout.addWidget(self._build_predictors_group(result))
+        layout.addWidget(self._build_predictors_group(result), 1)
+
+        self._apply_button = QPushButton(self.tr("Apply"), self)
+        layout.addWidget(self._apply_button)
 
         self._sync_target_item()
         self._update_cox_controls()
@@ -140,7 +143,7 @@ class RegressionConfigWidget(QWidget):
     # ------------------------------------------------------------------
 
     def _build_predictors_group(self, result: RegressionResult) -> QGroupBox:
-        """Build the checkable predictor list with its count label and Apply button."""
+        """Build the checkable predictor list with its selection actions and count label."""
         group = QGroupBox(self.tr("Predictors"), self)
         group_layout = QVBoxLayout(group)
 
@@ -170,9 +173,6 @@ class RegressionConfigWidget(QWidget):
         self._selection_label = QLabel(group)
         self._selection_label.setWordWrap(True)
         group_layout.addWidget(self._selection_label)
-
-        self._apply_button = QPushButton(self.tr("Apply"), group)
-        group_layout.addWidget(self._apply_button)
 
         return group
 
