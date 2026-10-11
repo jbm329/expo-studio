@@ -733,6 +733,22 @@ def test_pca_apply_sits_below_the_features_frame_at_the_pane_bottom():
         dialog.close()
 
 
+def test_time_series_apply_is_anchored_at_the_pane_bottom():
+    frame = pd.DataFrame({
+        "time": pd.date_range("2024-01-01", periods=30),
+        "value": [float(index % 7) for index in range(30)],
+    })
+    config = TimeSeriesConfigWidget(initialize_time_series(frame))
+    dialog = _show_config_in_dialog(config)
+    try:
+        viewport = dialog._config_scroll.viewport()  # noqa: SLF001
+        apply_button = config._apply_button  # noqa: SLF001
+        assert config.layout().indexOf(apply_button) == config.layout().count() - 1
+        assert viewport.height() - _bottom_in(apply_button, viewport) <= 1
+    finally:
+        dialog.close()
+
+
 def test_regression_apply_sits_below_the_predictors_frame_for_every_model():
     df = pd.DataFrame({
         "measurement": [float(index + 1) for index in range(30)],

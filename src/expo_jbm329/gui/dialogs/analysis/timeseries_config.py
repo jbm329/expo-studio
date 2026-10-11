@@ -123,9 +123,10 @@ class TimeSeriesConfigWidget(QWidget):
         hint = QLabel(self.tr("Duplicate timestamps are averaged. Gaps are preserved and are not interpolated."), self)
         hint.setWordWrap(True)
         layout.addWidget(hint)
+        # Anchors Apply to the bottom of the Configuration pane.
+        layout.addStretch(1)
         self._apply_button = QPushButton(self.tr("Apply"), self)
         layout.addWidget(self._apply_button)
-        layout.addStretch(1)
 
         self._auto_period.toggled.connect(self._period_spin.setDisabled)
         self._apply_button.clicked.connect(self._on_apply_clicked)

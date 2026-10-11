@@ -55,7 +55,7 @@ Available analyses include:
 - **Outliers**: Univariate screening using IQR, z-score, or modified z-score, and multivariate detection using Isolation Forest or Local Outlier Factor. In Univariate mode, select a summary-table row to update column details; Configuration contains only mode, method, threshold, and Apply, which is anchored at the bottom of the pane. In Multivariate mode, Apply sits directly below the Features frame.
 - **Clustering**: K-means, DBSCAN, and agglomerative clustering with cluster summaries and PCA-based projections. Apply sits directly below the Features frame.
 - **PCA**: Principal component analysis with optional standardization, explained variance, score plots, and feature loadings. Apply sits directly below the Features frame.
-- **Time Series**: Series preparation, optional resampling, autocorrelation, and additive or multiplicative seasonal decomposition.
+- **Time Series**: Series preparation, optional resampling, autocorrelation, and additive or multiplicative seasonal decomposition. Apply is anchored at the bottom of the Configuration pane.
 
 The workspace uses adjustable result sections and configurable column selections. Long-running calculations are performed in the background to keep the interface responsive, and supported analyses provide progress or cancellation where appropriate.
 
