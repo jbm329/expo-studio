@@ -4569,7 +4569,7 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="128" />
-        <source>Summary</source>
+        <source>Model comments</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -4614,7 +4614,7 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="177" />
-        <source>&lt;b&gt;Feature loadings&lt;/b&gt;</source>
+        <source>Feature loadings</source>
         <translation type="unfinished" />
     </message>
     <message>

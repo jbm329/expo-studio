@@ -4963,8 +4963,8 @@ Sparad till:
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/pca_view.py" line="128"/>
-        <source>Summary</source>
-        <translation>Sammanfattning</translation>
+        <source>Model comments</source>
+        <translation>Modellkommentarer</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/pca_view.py" line="145"/>
@@ -5008,8 +5008,8 @@ Sparad till:
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/pca_view.py" line="177"/>
-        <source>&lt;b&gt;Feature loadings&lt;/b&gt;</source>
-        <translation>&lt;b&gt;Variabelladdningar&lt;/b&gt;</translation>
+        <source>Feature loadings</source>
+        <translation>Variabelladdningar</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/pca_view.py" line="181"/>

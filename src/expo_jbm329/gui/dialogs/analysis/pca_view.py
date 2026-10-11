@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
 from expo_jbm329.services.analysis.pca import MIN_OBSERVATIONS, MIN_SELECTED_COLUMNS, PCAError
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_pct
 
@@ -31,7 +32,7 @@ _RIGHT_ALIGNED = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 
 
 class PCAView(QWidget):
-    """Displays PCA summary, explained variance, loadings and PC1-vs-PC2."""
+    """Displays feature loadings, PCA plots and model comments in resizable sections."""
 
     def __init__(self, result: PCAResult, parent: QWidget | None = None) -> None:
         """Initialize the result view.
@@ -51,26 +52,22 @@ class PCAView(QWidget):
             layout.addWidget(self._build_centered_label(self.error_text(result.error)))
             return
 
-        plots_panel = QWidget(self)
-        plots_layout = QVBoxLayout(plots_panel)
-        plots_layout.setContentsMargins(0, 0, 0, 0)
-        plots_layout.addWidget(self._build_section_title(self.tr("PCA plots"), plots_panel))
-
+        plots_panel, plots_layout = self._build_section(self.tr("PCA plots"))
         plots = QSplitter(Qt.Orientation.Horizontal, plots_panel)
         plots.setChildrenCollapsible(False)
         plots.addWidget(self._build_scree_plot(result))
         plots.addWidget(self._build_scatter_plot(result))
-        plots_layout.addWidget(plots, 1)
+        plots_layout.addWidget(build_section_scroll_area(plots, plots_panel), 1)
 
         splitter = QSplitter(Qt.Orientation.Vertical, self)
         splitter.setChildrenCollapsible(False)
-        splitter.addWidget(self._build_summary_panel(result))
-        splitter.addWidget(plots_panel)
         splitter.addWidget(self._build_loadings_panel(result))
-        splitter.setStretchFactor(0, 1)
+        splitter.addWidget(plots_panel)
+        splitter.addWidget(self._build_comments_panel(result))
+        splitter.setStretchFactor(0, 2)
         splitter.setStretchFactor(1, 4)
-        splitter.setStretchFactor(2, 2)
-        splitter.setSizes([130, 420, 230])
+        splitter.setStretchFactor(2, 1)
+        splitter.setSizes([230, 420, 130])
         layout.addWidget(splitter, 1)
 
     def configuration(self) -> tuple[tuple[str, ...], bool]:
@@ -119,16 +116,13 @@ class PCAView(QWidget):
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setWordWrap(True)
         label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         return label
 
-    def _build_summary_panel(self, result: PCAResult) -> QWidget:
-        """Build the titled PCA summary section."""
-        panel = QWidget(self)
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Summary"), panel))
-        layout.addWidget(self._build_summary(result))
-        layout.addStretch(1)
+    def _build_comments_panel(self, result: PCAResult) -> QWidget:
+        """Build the titled model-comments section with a scrollable summary."""
+        panel, layout = self._build_section(self.tr("Model comments"))
+        layout.addWidget(build_section_scroll_area(self._build_summary(result), panel), 1)
         return panel
 
     def _build_scree_plot(self, result: PCAResult) -> QWidget:
@@ -172,13 +166,8 @@ class PCAView(QWidget):
         ax.set_ylabel(self.tr("PC2 ({variance})").format(variance=fmt_pct(pc2)))
 
     def _build_loadings_panel(self, result: PCAResult) -> QWidget:
-        """Build the feature-loadings table beneath the charts."""
-        panel = QWidget(self)
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 0, 0, 0)
-        label = QLabel(self.tr("<b>Feature loadings</b>"), panel)
-        label.setTextFormat(Qt.TextFormat.RichText)
-        layout.addWidget(label)
+        """Build the titled feature-loadings table section."""
+        panel, layout = self._build_section(self.tr("Feature loadings"))
 
         headers = [self.tr("Feature"), *(f"PC{index}" for index in range(1, len(result.columns) + 1))]
         table = QTableWidget(panel)
@@ -203,7 +192,7 @@ class PCAView(QWidget):
         hheader = table.horizontalHeader()
         if hheader is not None:
             hheader.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        layout.addWidget(table)
+        layout.addWidget(table, 1)
         self._loadings_table = table
         return panel
 
@@ -214,9 +203,15 @@ class PCAView(QWidget):
         label.setWordWrap(True)
         return label
 
-    @staticmethod
-    def _build_section_title(text: str, parent: QWidget) -> QLabel:
-        """Build a bold title for a PCA section."""
-        label = QLabel(text, parent)
-        label.setStyleSheet("font-weight: bold;")
-        return label
+    def _build_section(self, title: str) -> tuple[QWidget, QVBoxLayout]:
+        """Build a titled section matching the Regression layout."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        label = QLabel(title, panel)
+        label.setTextFormat(Qt.TextFormat.PlainText)
+        font = label.font()
+        font.setBold(True)
+        label.setFont(font)
+        layout.addWidget(label)
+        return panel, layout

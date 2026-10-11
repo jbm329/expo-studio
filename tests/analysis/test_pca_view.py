@@ -5,11 +5,12 @@ import dataclasses
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.services.analysis.pca import PCAError, PCAResult, analyze_pca
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 
 def _result(*, standardize: bool = True) -> PCAResult:
@@ -31,39 +32,37 @@ def _axes(view: PCAView):
     return [canvas.figure.axes[0] for canvas in view.findChildren(FigureCanvasQTAgg)]
 
 
-@pytest.mark.parametrize("section", [0, 1])
-def test_pca_section_headers_keep_fixed_content_gap_when_resized(section):
-    view = PCAView(_result())
-    splitter = next(
+def _sections(view: PCAView) -> QSplitter:
+    return next(
         splitter for splitter in view.findChildren(QSplitter) if splitter.orientation() is Qt.Orientation.Vertical
     )
-    panel = splitter.widget(section)
-    panel.setParent(None)
-    panel.resize(1100, 500)
-    panel.show()
-    try:
-        QCoreApplication.processEvents()
-        layout = panel.layout()
-        heading = layout.itemAt(0).widget()
-        content = layout.itemAt(1).widget()
-        gap = content.y() - heading.geometry().bottom()
-        heading_geometry = (heading.y(), heading.height())
-        content_height = content.height()
-        assert heading.y() == layout.contentsMargins().top()
-        panel.resize(1100, 800)
-        QCoreApplication.processEvents()
-        assert (heading.y(), heading.height()) == heading_geometry
-        assert content.y() - heading.geometry().bottom() == gap
-        if section == 0:
-            assert content.height() == content_height
-            assert content.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
-        else:
-            assert content.height() > content_height
-            assert layout.stretch(1) == 1
-    finally:
-        panel.close()
-        panel.deleteLater()
-        view.close()
+
+
+def _section_title(panel) -> str:
+    title = panel.layout().itemAt(0).widget()
+    assert isinstance(title, QLabel)
+    assert title.textFormat() is Qt.TextFormat.PlainText
+    assert title.font().bold()
+    return title.text()
+
+
+@pytest.mark.parametrize(("section", "small_height", "width"), [(1, 120, 1100), (2, 50, 300)])
+def test_plots_and_comments_scroll_below_a_frozen_title(section, small_height, width):
+    view = PCAView(dataclasses.replace(_result(), sampled=True))
+    panel = _sections(view).widget(section)
+
+    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=width)
+
+    if section == 1:
+        assert isinstance(content, QSplitter)
+        assert content.orientation() is Qt.Orientation.Horizontal
+        assert len(content.findChildren(FigureCanvasQTAgg)) == 2
+    else:
+        assert isinstance(content, QLabel)
+        assert content.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+        assert "features" in content.text()
+    panel.deleteLater()
+    view.close()
 
 
 @pytest.mark.parametrize("error", list(PCAError))
@@ -96,7 +95,7 @@ def test_success_shows_scree_scatter_and_feature_loadings():
     assert view.configuration() == (result.columns, True)
 
 
-def test_layout_has_titled_summary_plots_and_loadings_with_adjustable_dividers():
+def test_layout_has_loadings_plots_and_comments_like_regression():
     view = PCAView(_result())
 
     splitters = view.findChildren(QSplitter)
@@ -108,13 +107,15 @@ def test_layout_has_titled_summary_plots_and_loadings_with_adjustable_dividers()
 
     sections = vertical[0]
     assert sections.count() == 3
-    assert any(label.text() == "Summary" for label in sections.widget(0).findChildren(QLabel))
+    assert [_section_title(sections.widget(index)) for index in range(3)] == [
+        "Feature loadings",
+        "PCA plots",
+        "Model comments",
+    ]
+    table_layout = sections.widget(0).layout()
+    assert table_layout.itemAt(1).widget() is view.loadings_table()
+    assert table_layout.stretch(1) == 1
     assert len(sections.widget(1).findChildren(FigureCanvasQTAgg)) == 2
-    assert any(label.text() == "PCA plots" for label in sections.widget(1).findChildren(QLabel))
-    table = view.loadings_table()
-    assert table is not None
-    assert sections.widget(2).isAncestorOf(table)
-    assert any("Feature loadings" in label.text() for label in sections.widget(2).findChildren(QLabel))
 
 
 def test_scree_plot_shows_component_and_cumulative_variance():
