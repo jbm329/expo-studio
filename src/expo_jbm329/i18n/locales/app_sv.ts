@@ -8603,6 +8603,11 @@ Tid: {sec:.2f}s{sample}</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/timeseries_config.py" line="41"/>
+        <source>Quarterly</source>
+        <translation>Kvartalsvis</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/timeseries_config.py" line="41"/>
         <source>Yearly</source>
         <translation>Årsvis</translation>
     </message>

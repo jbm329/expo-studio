@@ -124,6 +124,21 @@ def test_explicit_resample_aggregates_and_preserves_missing_bins_as_gaps():
     assert "gaps" in result.decomposition_note
 
 
+def test_quarterly_resample_averages_each_quarter_with_a_yearly_season():
+    timestamps = pd.date_range("2020-01-01", "2022-12-31", freq="MS")
+    df = pd.DataFrame({"when": timestamps, "value": np.arange(len(timestamps), dtype=float) + 1})
+
+    result = analyze_time_series(df, resample_frequency="QS")
+
+    assert result.error is None
+    assert result.detected_frequency == "QS"
+    assert result.seasonal_period == 4
+    assert len(result.values) == 12
+    assert _result_values(result) == pytest.approx([3 * quarter + 2.0 for quarter in range(12)])
+    assert len(result.trend) == 12
+    assert result.decomposition_note is None
+
+
 def test_yearly_resample_averages_each_calendar_year_without_a_default_period():
     timestamps = pd.date_range("2020-01-01", "2024-12-31", freq="MS")
     df = pd.DataFrame({"when": timestamps, "value": timestamps.year.astype(float) + timestamps.month / 100})

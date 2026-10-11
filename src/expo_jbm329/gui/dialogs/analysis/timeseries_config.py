@@ -102,6 +102,7 @@ class TimeSeriesConfigWidget(QWidget):
             ("D", self.tr("Daily")),
             ("W", self.tr("Weekly")),
             ("MS", self.tr("Monthly")),
+            ("QS", self.tr("Quarterly")),
             ("YS", self.tr("Yearly")),
         ):
             self._frequency_combo.addItem(label, frequency)

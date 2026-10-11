@@ -8458,6 +8458,11 @@ Time: {sec:.2f}s{sample}</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="41" />
+        <source>Quarterly</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="41" />
         <source>Yearly</source>
         <translation type="unfinished" />
     </message>
