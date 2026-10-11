@@ -118,9 +118,10 @@ class ClusteringConfigWidget(QWidget):
         self._selection_label = QLabel(features)
         self._selection_label.setWordWrap(True)
         features_layout.addWidget(self._selection_label)
-        self._apply_button = QPushButton(self.tr("Apply"), features)
-        features_layout.addWidget(self._apply_button)
         layout.addWidget(features, 1)
+
+        self._apply_button = QPushButton(self.tr("Apply"), self)
+        layout.addWidget(self._apply_button)
 
         self._update_apply_state()
         self._method_combo.currentIndexChanged.connect(self._on_method_changed)

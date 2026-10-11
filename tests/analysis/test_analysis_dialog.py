@@ -706,6 +706,19 @@ def test_multivariate_outliers_apply_sits_below_the_features_frame_at_the_pane_b
         dialog.close()
 
 
+def test_clustering_apply_sits_below_the_features_frame_at_the_pane_bottom():
+    frame = pd.DataFrame({"a": [float(index) for index in range(30)], "b": [float(index % 7) for index in range(30)]})
+    config = ClusteringConfigWidget(initialize_clustering(frame))
+    dialog = _show_config_in_dialog(config)
+    try:
+        for method_index in (*range(config._method_combo.count()), 0):  # noqa: SLF001
+            config._method_combo.setCurrentIndex(method_index)  # noqa: SLF001
+            QCoreApplication.processEvents()
+            _assert_apply_below_frame_at_pane_bottom(dialog, config, config._column_list.parentWidget())  # noqa: SLF001
+    finally:
+        dialog.close()
+
+
 def test_regression_apply_sits_below_the_predictors_frame_for_every_model():
     df = pd.DataFrame({
         "measurement": [float(index + 1) for index in range(30)],
