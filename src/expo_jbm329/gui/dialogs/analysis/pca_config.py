@@ -83,9 +83,10 @@ class PCAConfigWidget(QWidget):
         self._selection_label.setWordWrap(True)
         group_layout.addWidget(self._selection_label)
 
-        self._apply_button = QPushButton(self.tr("Apply"), group)
-        group_layout.addWidget(self._apply_button)
         layout.addWidget(group, 1)
+
+        self._apply_button = QPushButton(self.tr("Apply"), self)
+        layout.addWidget(self._apply_button)
 
         self._update_apply_state()
         self._column_list.itemChanged.connect(self._on_column_check_changed)

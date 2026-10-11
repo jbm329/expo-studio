@@ -719,6 +719,20 @@ def test_clustering_apply_sits_below_the_features_frame_at_the_pane_bottom():
         dialog.close()
 
 
+def test_pca_apply_sits_below_the_features_frame_at_the_pane_bottom():
+    frame = pd.DataFrame({
+        "a": [float(index) for index in range(30)],
+        "b": [float(index % 7) for index in range(30)],
+        "c": [float(index % 5) for index in range(30)],
+    })
+    config = PCAConfigWidget(initialize_pca(frame))
+    dialog = _show_config_in_dialog(config)
+    try:
+        _assert_apply_below_frame_at_pane_bottom(dialog, config, config._column_list.parentWidget())  # noqa: SLF001
+    finally:
+        dialog.close()
+
+
 def test_regression_apply_sits_below_the_predictors_frame_for_every_model():
     df = pd.DataFrame({
         "measurement": [float(index + 1) for index in range(30)],
