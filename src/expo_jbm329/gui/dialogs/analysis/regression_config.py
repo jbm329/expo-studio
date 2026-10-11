@@ -110,8 +110,11 @@ class RegressionConfigWidget(QWidget):
         self._event_combo = ColumnComboBox(self)
         first_event = next((column for column in self._survival_columns.events if column != first_duration), "")
         self._event_combo.set_columns(self._survival_columns.events, select=first_event)
-        self._event_label = QLabel(self.tr("Event (1 = event; 0 = censored)"), self)
+        self._event_label = QLabel(self.tr("Event"), self)
         target_form.addRow(self._event_label, self._event_combo)
+        self._event_coding_label = QLabel(self.tr("1 = event, 0 = censored"), self)
+        self._event_coding_label.setWordWrap(True)
+        target_form.addRow(self._event_coding_label)
         layout.addLayout(target_form)
         self._target_notice = QLabel(self)
         self._target_notice.setWordWrap(True)
@@ -250,6 +253,7 @@ class RegressionConfigWidget(QWidget):
         self._duration_combo.setVisible(is_cox)
         self._event_label.setVisible(is_cox)
         self._event_combo.setVisible(is_cox)
+        self._event_coding_label.setVisible(is_cox)
 
     def _update_cox_choices(self) -> None:
         """Keep duration and event selections distinct when they share columns."""

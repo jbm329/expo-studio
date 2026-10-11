@@ -326,6 +326,28 @@ def test_changing_model_waits_for_apply_when_predictors_are_already_applied():
     assert requested == [()]
 
 
+def test_cox_event_label_is_short_with_its_coding_on_a_separate_row():
+    columns = SurvivalColumns(durations=("duration",), events=("event",))
+    widget = RegressionConfigWidget(_result(), survival_columns=columns)
+    coding = widget._event_coding_label  # noqa: SLF001
+    form = widget._event_label.parentWidget().layout().itemAt(0).layout()  # noqa: SLF001
+    event_row, _ = form.getWidgetPosition(widget._event_combo)  # noqa: SLF001
+    coding_row, coding_role = form.getWidgetPosition(coding)
+
+    assert widget._event_label.text() == "Event"  # noqa: SLF001
+    assert coding.text() == "1 = event, 0 = censored"
+    assert coding.wordWrap()
+    assert coding_row == event_row + 1
+    assert coding_role.name == "SpanningRole"
+    assert coding.isHidden()
+
+    widget._model_combo.setCurrentIndex(widget._model_combo.findData(RegressionModel.COX.value))  # noqa: SLF001
+    assert not coding.isHidden()
+
+    widget._model_combo.setCurrentIndex(widget._model_combo.findData(RegressionModel.LINEAR.value))  # noqa: SLF001
+    assert coding.isHidden()
+
+
 def test_cox_selectors_exclude_both_outcomes_and_wait_for_apply():
     columns = SurvivalColumns(durations=("duration", "event"), events=("event", "flag"))
     df = _frame()

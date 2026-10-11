@@ -8711,7 +8711,8 @@ Shortcut: Ctrl+Z</source>
     <name>RegressionConfigWidget</name>
     <message><source>Cox proportional-hazards regression</source><translation>Cox proportional-hazards regression</translation></message>
     <message><source>Duration</source><translation>Duration</translation></message>
-    <message><source>Event (1 = event; 0 = censored)</source><translation>Event (1 = event; 0 = censored)</translation></message>
+    <message><source>Event</source><translation>Event</translation></message>
+    <message><source>1 = event, 0 = censored</source><translation>1 = event, 0 = censored</translation></message>
     <message><source>This column is an outcome and cannot be a predictor.</source><translation>This column is an outcome and cannot be a predictor.</translation></message>
     <message><source>Cox regression needs distinct numeric duration and binary event columns.</source><translation>Cox regression needs distinct numeric duration and binary event columns.</translation></message>
 </context>

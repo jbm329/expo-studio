@@ -8863,7 +8863,8 @@ Snabbkommando: Ctrl+Z</translation>
     <name>RegressionConfigWidget</name>
     <message><source>Cox proportional-hazards regression</source><translation>Cox-regression med proportionella hazarder</translation></message>
     <message><source>Duration</source><translation>Duration</translation></message>
-    <message><source>Event (1 = event; 0 = censored)</source><translation>Händelse (1 = händelse; 0 = censurerad)</translation></message>
+    <message><source>Event</source><translation>Händelse</translation></message>
+    <message><source>1 = event, 0 = censored</source><translation>1 = händelse, 0 = censurerad</translation></message>
     <message><source>This column is an outcome and cannot be a predictor.</source><translation>Kolumnen är ett utfall och kan inte användas som prediktor.</translation></message>
     <message><source>Cox regression needs distinct numeric duration and binary event columns.</source><translation>Cox-regression kräver olika numeriska duration- och binära händelsekolumner.</translation></message>
 </context>
