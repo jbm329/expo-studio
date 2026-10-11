@@ -623,10 +623,10 @@ def test_hypothesis_apply_stays_at_pane_bottom_and_controls_stay_compact():
             assert page is not None
 
             assert apply_button.isVisible(), test
+            assert apply_button.parentWidget() is config, test
+            assert viewport.height() - _bottom_in(apply_button, viewport) <= 1, test
+            assert apply_button.mapTo(config, QPoint(0, 0)).y() > stack.geometry().bottom(), test
             if isinstance(page.layout(), QFormLayout):
-                assert apply_button.parentWidget() is config, test
-                assert viewport.height() - _bottom_in(apply_button, viewport) <= 1, test
-                assert apply_button.mapTo(config, QPoint(0, 0)).y() > stack.geometry().bottom(), test
                 combos = [combo for combo in page.findChildren(QComboBox) if combo.isVisible()]
                 rows = sorted(combo.mapTo(page, QPoint(0, 0)).y() for combo in combos)
                 assert rows[0] <= page.layout().contentsMargins().top() + 1, test
@@ -637,11 +637,10 @@ def test_hypothesis_apply_stays_at_pane_bottom_and_controls_stay_compact():
                 assert checklist is not None
                 assert group is not None
                 assert checklist.parentWidget() is group
-                # Like Correlation, Apply sits inside the frame below the checklist.
-                assert apply_button.parentWidget() is group, test
-                assert _bottom_in(group, viewport) == viewport.height(), test
-                assert apply_button.mapTo(group, QPoint(0, 0)).y() > _bottom_in(checklist, group), test
-                assert group.height() - _bottom_in(apply_button, group) < 20, test
+                # The framed checklist fills the free height directly above Apply.
+                assert _bottom_in(group, config) == _bottom_in(page, config), test
+                gap = apply_button.mapTo(config, QPoint(0, 0)).y() - _bottom_in(group, config)
+                assert 0 <= gap <= config.layout().spacing() + 1, test
     finally:
         dialog.close()
 

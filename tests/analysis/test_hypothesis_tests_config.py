@@ -177,7 +177,7 @@ def test_only_one_test_may_be_unavailable():
     assert widget._apply_button.parentWidget() is widget  # noqa: SLF001
 
 
-def test_apply_moves_into_paired_frame_and_back_without_losing_its_connection():
+def test_apply_stays_below_the_paired_frame_for_every_test():
     widget = _widget()
     paired = widget._paired_comparison_config  # noqa: SLF001
     assert paired is not None
@@ -185,24 +185,14 @@ def test_apply_moves_into_paired_frame_and_back_without_losing_its_connection():
     apply_button = widget._apply_button  # noqa: SLF001
     received = _record(widget.apply_requested)
 
-    assert apply_button.parentWidget() is widget
-
-    for _ in range(2):
-        _select_test(widget, HypothesisTest.PAIRED_COMPARISON)
-        assert apply_button.parentWidget() is frame
-        assert frame.layout().indexOf(apply_button) == frame.layout().count() - 1
-        assert widget.layout().indexOf(apply_button) == -1
-
-        _select_test(widget, HypothesisTest.CHI_SQUARE)
+    for test in (*HypothesisTest, HypothesisTest.GROUP_COMPARISON, HypothesisTest.PAIRED_COMPARISON):
+        _select_test(widget, test)
         assert apply_button.parentWidget() is widget
         assert widget.layout().indexOf(apply_button) == widget.layout().count() - 1
         assert frame.layout().indexOf(apply_button) == -1
 
-    _select_test(widget, HypothesisTest.PAIRED_COMPARISON)
-    _select_test(widget, HypothesisTest.PAIRED_COMPARISON)
     apply_button.click()
 
-    assert apply_button.parentWidget() is frame
     assert received == [None]
     assert widget.applied_configuration() == (HypothesisTest.PAIRED_COMPARISON, ("value", "other"))
 
@@ -220,7 +210,7 @@ def test_paired_select_all_and_clear_update_columns_and_apply_once():
     layout = frame.layout()
 
     assert all(button.parentWidget() is frame for button in buttons)
-    assert layout.indexOf(widget._apply_button) == layout.count() - 1  # noqa: SLF001
+    assert layout.indexOf(paired._selection_label) == layout.count() - 1  # noqa: SLF001
 
     paired._select_all_button.click()  # noqa: SLF001
     assert widget.current_configuration() == (HypothesisTest.PAIRED_COMPARISON, ("value", "other", "third"))
@@ -251,7 +241,7 @@ def test_paired_selection_label_guides_count_and_resulting_test():
     _select_test(widget, HypothesisTest.PAIRED_COMPARISON)
 
     assert label.parentWidget() is frame
-    assert layout.indexOf(label) == layout.indexOf(widget._apply_button) - 1  # noqa: SLF001
+    assert layout.indexOf(label) == layout.count() - 1
     assert label.text() == "2 selected - Wilcoxon signed-rank test."
 
     columns.item(2).setCheckState(Qt.CheckState.Checked)
