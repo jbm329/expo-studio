@@ -5665,8 +5665,13 @@ Tips: {error_hint}</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/regression_view.py" line="212"/>
-        <source>&lt;b&gt;Model summary&lt;/b&gt;</source>
-        <translation>&lt;b&gt;Modellsammanfattning&lt;/b&gt;</translation>
+        <source>Model comments</source>
+        <translation>Modellkommentarer</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_view.py" line="212"/>
+        <source>Linear regression</source>
+        <translation>Linjär regression</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/regression_view.py" line="213"/>

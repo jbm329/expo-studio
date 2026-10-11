@@ -194,7 +194,12 @@ class RegressionView(QWidget):
     # ------------------------------------------------------------------
 
     def _build_summary(self, result: RegressionResult) -> QWidget:
-        """Build a scrollable rich-text label with the summary, diagnostics and warnings."""
+        """Build the "Model comments" section with a fixed title above scrollable text."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_title(self.tr("Model comments"), panel))
+
         label = QLabel(self._summary_text(result))
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setWordWrap(True)
@@ -202,16 +207,20 @@ class RegressionView(QWidget):
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self._summary_label = label
 
-        scroll = QScrollArea(self)
+        # Only the text scrolls, so the section title stays visible.
+        scroll = QScrollArea(panel)
         scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll.setWidget(label)
         scroll.setMinimumWidth(260)
-        return scroll
+        layout.addWidget(scroll, 1)
+        return panel
 
     def _summary_text(self, result: RegressionResult) -> str:
         """Return the rich text for the model summary, diagnostics and warnings."""
         lines = [
-            self.tr("<b>Model summary</b>"),
+            f"<b>{_esc(self.tr('Linear regression'))}</b>",
             self.tr("Target: <b>{target}</b>").format(target=_esc(result.target)),
             self.tr("Rows used: {used} ({dropped} dropped because of missing values)").format(
                 used=fmt_int(result.n_used), dropped=fmt_int(result.n_dropped)

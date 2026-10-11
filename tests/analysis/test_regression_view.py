@@ -77,6 +77,40 @@ def _summary(view: RegressionView) -> str:
     return label.text()
 
 
+def test_model_comments_title_stays_fixed_above_the_scrollable_text():
+    view = RegressionView(_fitted())
+    panel = view.findChild(QSplitter).widget(2)
+    layout = panel.layout()
+    title = layout.itemAt(0).widget()
+    scroll = layout.itemAt(1).widget()
+
+    assert isinstance(title, QLabel)
+    assert title.text() == "Model comments"
+    assert isinstance(scroll, QScrollArea)
+    assert scroll.widget() is view.summary_label()
+    assert title.parentWidget() is panel
+    assert scroll.verticalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
+    assert _summary(view).startswith("<b>Linear regression</b>")
+    assert "Model summary" not in _summary(view)
+
+    panel.setParent(None)
+    panel.resize(500, 120)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        bar = scroll.verticalScrollBar()
+        assert bar.maximum() > 0
+        title_y = title.mapTo(panel, title.rect().topLeft()).y()
+        bar.setValue(bar.maximum())
+        QCoreApplication.processEvents()
+        assert title.isVisible()
+        assert title.mapTo(panel, title.rect().topLeft()).y() == title_y
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
 def test_linear_chart_header_gap_stays_fixed_when_section_grows():
     view = RegressionView(_fitted())
     panel = view.findChild(QSplitter).widget(1)
@@ -324,7 +358,7 @@ def test_layout_places_coefficients_above_plots_and_summary_below():
 
     summary = view.summary_label()
     assert summary is not None
-    assert isinstance(sections.widget(2), QScrollArea)
+    assert sections.widget(2).findChild(QScrollArea).widget() is summary
     assert sections.widget(2).isAncestorOf(summary)
 
 

@@ -5259,7 +5259,12 @@ Hint: {error_hint}</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="212" />
-        <source>&lt;b&gt;Model summary&lt;/b&gt;</source>
+        <source>Model comments</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="212" />
+        <source>Linear regression</source>
         <translation type="unfinished" />
     </message>
     <message>
