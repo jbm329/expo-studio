@@ -153,11 +153,13 @@ class HypothesisTestsConfigWidget(QWidget):
     Column changes are pending until the user clicks Apply, which stores
     the configuration and emits `apply_requested`; `AnalysisController`
     then computes the applied test. Switching test emits `test_changed`
-    so the content pane can stop showing the previous test's result.
+    and every column edit emits `configuration_changed`, so the content
+    pane can replace results that no longer match the settings.
     Apply is disabled for a test the dataset has no eligible columns for.
     """
 
     test_changed = pyqtSignal()
+    configuration_changed = pyqtSignal()
     apply_requested = pyqtSignal()
 
     def __init__(
@@ -180,6 +182,7 @@ class HypothesisTestsConfigWidget(QWidget):
             parent: Optional parent widget.
         """
         super().__init__(parent)
+        self._configuration_revision = 0
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -201,7 +204,7 @@ class HypothesisTestsConfigWidget(QWidget):
         self._group_comparison_config: GroupComparisonConfigWidget | None = None
         if group_comparison.available_numeric_columns and group_comparison.available_grouping_columns:
             self._group_comparison_config = GroupComparisonConfigWidget(group_comparison, self._stack)
-            self._group_comparison_config.selection_changed.connect(self._update_apply_button)
+            self._group_comparison_config.selection_changed.connect(self._on_selection_changed)
             self._stack.addWidget(self._group_comparison_config)
         else:
             self._stack.addWidget(self._build_unavailable_label())
@@ -209,7 +212,7 @@ class HypothesisTestsConfigWidget(QWidget):
         self._chi_square_config: ChiSquareConfigWidget | None = None
         if len(chi_square.available_columns) >= _COLUMNS_PER_CHI_SQUARE_TEST:
             self._chi_square_config = ChiSquareConfigWidget(chi_square, self._stack)
-            self._chi_square_config.selection_changed.connect(self._update_apply_button)
+            self._chi_square_config.selection_changed.connect(self._on_selection_changed)
             self._stack.addWidget(self._chi_square_config)
         else:
             self._stack.addWidget(self._build_unavailable_label())
@@ -217,7 +220,7 @@ class HypothesisTestsConfigWidget(QWidget):
         self._paired_comparison_config: PairedComparisonConfigWidget | None = None
         if len(paired_comparison.available_numeric_columns) >= _MIN_PAIRED_OCCASIONS:
             self._paired_comparison_config = PairedComparisonConfigWidget(paired_comparison, self._stack)
-            self._paired_comparison_config.selection_changed.connect(self._update_apply_button)
+            self._paired_comparison_config.selection_changed.connect(self._on_selection_changed)
             self._stack.addWidget(self._paired_comparison_config)
         else:
             self._stack.addWidget(self._build_unavailable_label())
@@ -243,13 +246,25 @@ class HypothesisTestsConfigWidget(QWidget):
     def _on_test_changed(self, index: int) -> None:
         """Show the selected test's page and announce the test change."""
         self._stack.setCurrentIndex(index)
+        self._configuration_revision += 1
         self._update_apply_button()
         self.test_changed.emit()
+
+    def _on_selection_changed(self) -> None:
+        """Record a pending column edit and announce that applied results are outdated."""
+        self._configuration_revision += 1
+        self._update_apply_button()
+        self.configuration_changed.emit()
 
     def _on_apply_clicked(self) -> None:
         """Apply the pending test and column selection, and request its computation."""
         self._applied_configuration = self.current_configuration()
+        self._configuration_revision += 1
         self.apply_requested.emit()
+
+    def configuration_revision(self) -> int:
+        """Return the generation advanced by every edit, test switch and Apply."""
+        return self._configuration_revision
 
     def _update_apply_button(self) -> None:
         """Enable Apply only when the selected test is available for the dataset."""

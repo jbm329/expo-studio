@@ -943,8 +943,8 @@ class AnalysisController:
         clicks Apply; the configuration widget's `apply_requested` signal is
         wired to `_recompute_content`, which dispatches a background job and
         replaces only the content pane, leaving this exact configuration
-        widget instance (and the user's picks) in place. Switching test
-        replaces the previous test's result with the prompt again.
+        widget instance (and the user's picks) in place. Switching test or
+        editing columns replaces the previous result with the prompt again.
         """
         defaults = cast("_HypothesisTestsDefaults", result)
         config = HypothesisTestsConfigWidget(
@@ -970,6 +970,7 @@ class AnalysisController:
             if configuration is None:
                 return
             test, selection = configuration
+            revision = config.configuration_revision()
 
             def apply_displayed_result(value: object) -> None:
                 """Register a snapshot only after the accepted result is displayed."""
@@ -1008,11 +1009,14 @@ class AnalysisController:
                 compute=lambda df, _callbacks: self._compute_hypothesis_test(df, test, selection),
                 apply_result=apply_displayed_result,
                 is_stale=lambda: (
-                    config.applied_configuration() is not configuration or config.selected_test() is not test
+                    config.applied_configuration() is not configuration
+                    or config.selected_test() is not test
+                    or config.configuration_revision() != revision
                 ),
             )
 
         config.test_changed.connect(lambda: dialog.set_content_widget(_unapplied_content()))
+        config.configuration_changed.connect(lambda: dialog.set_content_widget(_unapplied_content()))
         config.apply_requested.connect(_handle_apply_requested)
         return _unapplied_content(), config
 

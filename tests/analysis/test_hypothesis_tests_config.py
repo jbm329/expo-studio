@@ -87,16 +87,51 @@ def test_switching_test_shows_its_page_and_emits_test_changed_once():
 def test_inner_selection_changes_are_pending_until_applied():
     widget = _widget()
     test_changes = _record(widget.test_changed)
+    edits = _record(widget.configuration_changed)
     applies = _record(widget.apply_requested)
     gc_config = widget._group_comparison_config  # noqa: SLF001
     assert gc_config is not None
+    revision = widget.configuration_revision()
 
     gc_config._numeric_combo.setCurrentIndex(1)  # noqa: SLF001
 
     assert test_changes == []
+    assert edits == [None]
+    assert widget.configuration_revision() == revision + 1
     assert applies == []
     assert widget.group_comparison_selection() == ("other", "grp")
     assert widget.applied_configuration() is None
+
+
+def test_every_test_edit_emits_configuration_changed_once():
+    widget = _widget()
+    edits = _record(widget.configuration_changed)
+    chi = widget._chi_square_config  # noqa: SLF001
+    paired = widget._paired_comparison_config  # noqa: SLF001
+    assert chi is not None
+    assert paired is not None
+
+    _select_test(widget, HypothesisTest.CHI_SQUARE)
+    assert edits == []
+    chi._row_combo.setCurrentIndex(chi._row_combo.findText("color"))  # noqa: SLF001
+    assert edits == [None]
+
+    _select_test(widget, HypothesisTest.PAIRED_COMPARISON)
+    paired._columns_list.item(0).setCheckState(Qt.CheckState.Unchecked)  # noqa: SLF001
+    paired._select_all_button.click()  # noqa: SLF001
+    paired._select_all_button.click()  # noqa: SLF001
+    assert edits == [None, None, None]
+
+
+def test_test_switch_and_apply_advance_the_revision():
+    widget = _widget()
+    revision = widget.configuration_revision()
+
+    _select_test(widget, HypothesisTest.CHI_SQUARE)
+    assert widget.configuration_revision() == revision + 1
+
+    widget._apply_button.click()  # noqa: SLF001
+    assert widget.configuration_revision() == revision + 2
 
 
 def test_apply_stores_the_current_configuration_and_emits():
@@ -126,6 +161,7 @@ def test_construction_does_not_emit():
     widget = _widget()
 
     assert _record(widget.test_changed) == []
+    assert _record(widget.configuration_changed) == []
     assert _record(widget.apply_requested) == []
 
 

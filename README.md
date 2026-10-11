@@ -94,9 +94,9 @@ the paired **Measurement summary**, distribution/trajectory chart pair, and
 Wilcoxon/Friedman results (including Kendall's W). **Test results** retain numeric
 statistics, applied column names, and displayed assumptions, caveats and sampling
 notes. No unselected columns, combinations, raw subjects or new computations are
-exported. Pending column edits retain the last displayed result; the export dialog
-names its applied test and columns. Switching test/dataset/category, starting a
-replacement test, or showing a prompt/error invalidates that export.
+exported. The export dialog names the applied test and columns. Any column edit
+or test switch replaces the result with the Apply prompt; that, a dataset/category
+change, starting a replacement test, or showing an error invalidates that export.
 Excel is the default, with selected tables on separate sheets and displayed
 images on one **Charts** sheet; charts-only export is supported. CSV/binary
 require exactly one table without Charts.

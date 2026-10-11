@@ -13,7 +13,6 @@ from PyQt6.QtCore import Qt, QTranslator
 from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QLabel, QTableWidget, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
-from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
 from expo_jbm329.gui.dialogs.analysis.clustering_config import ClusteringConfigWidget
 from expo_jbm329.gui.dialogs.analysis.clustering_view import ClusteringView
@@ -1354,9 +1353,9 @@ def _select_test(config: HypothesisTestsConfigWidget, test: HypothesisTest) -> N
     combo.setCurrentIndex(combo.findData(test.value))
 
 
-def test_hypothesis_pending_edits_retain_displayed_applied_export_until_new_apply(dialog_factory):
+def test_hypothesis_column_edits_show_apply_prompt_and_clear_export_until_new_apply(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dialog = _open_hypothesis_tests(async_ops, dialog_factory)
+    ctrl, dialog = _open_hypothesis_tests(async_ops, dialog_factory)
     assert dialog.exportable_hypothesis() is None
     call = _apply_hypothesis_test(async_ops, dialog)
     assert dialog.exportable_hypothesis() is None
@@ -1365,20 +1364,22 @@ def test_hypothesis_pending_edits_retain_displayed_applied_export_until_new_appl
     assert snapshot is not None
     assert snapshot.columns == ("value", "grp")
     config = _hypothesis_tests_config(dialog)
+    jobs_before = len(async_ops.calls)
+
     _gc_numeric_combo(config).setCurrentIndex(1)
+
     assert config.current_configuration() != config.applied_configuration()
-    assert dialog.exportable_hypothesis() is snapshot
-    selection_dialog = AnalysisExportDialog(hypothesis=snapshot)
-    text = "\n".join(label.text() for label in selection_dialog.findChildren(QLabel))
-    assert "value / grp" in text
-    assert "other / grp" not in text
-    second = _apply_hypothesis_test(async_ops, dialog)
+    _assert_apply_prompt(ctrl, dialog)
     assert dialog.exportable_hypothesis() is None
+    assert len(async_ops.calls) == jobs_before
+    second = _apply_hypothesis_test(async_ops, dialog)
     _simulate_success(second)
     assert dialog.exportable_hypothesis().columns == ("other", "grp")
 
 
-@pytest.mark.parametrize("change", ["test-return", "dataset", "category-return", "prompt", "error", "apply"])
+@pytest.mark.parametrize(
+    "change", ["test-return", "column-edit", "column-return", "dataset", "category-return", "prompt", "error", "apply"]
+)
 def test_hypothesis_late_callbacks_cannot_restore_invalidated_exports(dialog_factory, change):
     async_ops = DummyAsyncOps()
     _, dialog = _open_hypothesis_tests(async_ops, dialog_factory)
@@ -1389,6 +1390,11 @@ def test_hypothesis_late_callbacks_cannot_restore_invalidated_exports(dialog_fac
         case "test-return":
             _select_test(config, HypothesisTest.CHI_SQUARE)
             _select_test(config, HypothesisTest.GROUP_COMPARISON)
+        case "column-edit":
+            _gc_numeric_combo(config).setCurrentIndex(1)
+        case "column-return":
+            _gc_numeric_combo(config).setCurrentIndex(1)
+            _gc_numeric_combo(config).setCurrentIndex(0)
         case "dataset":
             dialog._selected_dataset_tab_id = "changed"
         case "category-return":
@@ -1475,17 +1481,61 @@ def test_applying_a_hypothesis_test_runs_a_background_job_and_keeps_the_config(d
     assert len(dlg.config_widgets) == config_widgets_before
 
 
-def test_column_change_after_apply_keeps_the_result_until_applied_again(dialog_factory):
+def test_column_change_after_apply_shows_the_apply_prompt_without_a_job(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
     _simulate_success(_apply_hypothesis_test(async_ops, dlg))
-    view = dlg.content_widget()
+    assert isinstance(dlg.content_widget(), GroupComparisonView)
     jobs_before = len(async_ops.calls)
 
     _gc_numeric_combo(_hypothesis_tests_config(dlg)).setCurrentIndex(1)
 
     assert len(async_ops.calls) == jobs_before
-    assert dlg.content_widget() is view
+    _assert_apply_prompt(ctrl, dlg)
+
+
+def test_chi_square_and_paired_edits_show_the_apply_prompt(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = _hypothesis_tests_config(dlg)
+
+    _select_test(config, HypothesisTest.CHI_SQUARE)
+    _simulate_success(_apply_hypothesis_test(async_ops, dlg))
+    assert isinstance(dlg.content_widget(), ChiSquareView)
+    chi_config = config._chi_square_config  # noqa: SLF001
+    assert chi_config is not None
+    chi_config._row_combo.setCurrentIndex(chi_config._row_combo.findText("color"))  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+
+    _select_test(config, HypothesisTest.PAIRED_COMPARISON)
+    _simulate_success(_apply_hypothesis_test(async_ops, dlg))
+    assert isinstance(dlg.content_widget(), PairedComparisonView)
+    paired = config._paired_comparison_config  # noqa: SLF001
+    assert paired is not None
+    paired._columns_list.item(0).setCheckState(Qt.CheckState.Unchecked)  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+
+    paired._select_all_button.click()  # noqa: SLF001
+    _simulate_success(_apply_hypothesis_test(async_ops, dlg))
+    paired._clear_button.click()  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_hypothesis() is None
+
+
+def test_in_flight_hypothesis_result_is_discarded_after_a_column_edit(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = _hypothesis_tests_config(dlg)
+    call = _apply_hypothesis_test(async_ops, dlg)
+
+    _gc_numeric_combo(config).setCurrentIndex(1)
+    _gc_numeric_combo(config).setCurrentIndex(0)
+    content_widgets_before = len(dlg.content_widgets)
+    _simulate_success(call)
+
+    assert len(dlg.content_widgets) == content_widgets_before
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_hypothesis() is None
 
 
 def test_stale_hypothesis_test_result_is_discarded_when_applied_again(dialog_factory):
