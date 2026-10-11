@@ -95,6 +95,30 @@ def test_dialog_has_maximize_and_close_buttons_but_no_minimize_button():
     assert not flags & Qt.WindowType.WindowMinimizeButtonHint
 
 
+def test_dialog_can_be_resized_shorter_than_tall_word_wrapped_content():
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    content = QWidget()
+    layout = QVBoxLayout(content)
+    for _ in range(40):
+        label = QLabel("A long explanation that wraps across several lines in the result pane. " * 3, content)
+        label.setWordWrap(True)
+        layout.addWidget(label)
+    dialog.set_content_widget(content)
+    dialog.show()
+    try:
+        QCoreApplication.processEvents()
+        assert content.hasHeightForWidth()
+        assert not dialog.hasHeightForWidth()
+
+        dialog.resize(1100, 600)
+        QCoreApplication.processEvents()
+
+        assert dialog.height() == max(600, dialog.minimumSizeHint().height())
+        assert dialog.height() < content.heightForWidth(content.width())
+    finally:
+        dialog.close()
+
+
 def test_dialog_defaults_to_first_dataset_when_no_active_tab():
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
 

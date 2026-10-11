@@ -199,6 +199,21 @@ class AnalysisDialog(QDialog):
         if self._dataset_combo.currentData():
             self.dataset_changed.emit(str(self._dataset_combo.currentData()))
 
+    @override
+    def hasHeightForWidth(self) -> bool:
+        """Let the user resize the window freely.
+
+        Word-wrapped labels make every ancestor layout report a height-for-width
+        equal to its preferred height. Qt applies that height to top-level windows
+        while they are resized interactively, which snaps the dialog to a tall
+        height that cannot be reduced. Child layouts still use height-for-width
+        internally to lay out wrapped text.
+
+        Returns:
+            Always `False`.
+        """
+        return False
+
     # ------------------------------------------------------------------
     # UI building
     # ------------------------------------------------------------------
