@@ -74,7 +74,10 @@ class CorrelationConfigWidget(QWidget):
         method_form.addRow(QLabel(self.tr("Method"), self), self._method_combo)
         layout.addLayout(method_form)
 
-        layout.addWidget(self._build_columns_group())
+        layout.addWidget(self._build_columns_group(), 1)
+
+        self._apply_button = QPushButton(self.tr("Apply"), self)
+        layout.addWidget(self._apply_button)
 
         self._update_apply_state()
 
@@ -100,7 +103,7 @@ class CorrelationConfigWidget(QWidget):
         return combo
 
     def _build_columns_group(self) -> QGroupBox:
-        """Build the checkable matrix-column list with its count label and Apply button."""
+        """Build the checkable matrix-column list with its selection actions and count label."""
         group = QGroupBox(self.tr("Columns in matrix"), self)
         group_layout = QVBoxLayout(group)
 
@@ -124,9 +127,6 @@ class CorrelationConfigWidget(QWidget):
         self._selection_label = QLabel(group)
         self._selection_label.setWordWrap(True)
         group_layout.addWidget(self._selection_label)
-
-        self._apply_button = QPushButton(self.tr("Apply"), group)
-        group_layout.addWidget(self._apply_button)
 
         return group
 

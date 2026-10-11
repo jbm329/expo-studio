@@ -645,6 +645,30 @@ def test_hypothesis_apply_stays_at_pane_bottom_and_controls_stay_compact():
         dialog.close()
 
 
+def test_correlation_apply_sits_below_the_columns_frame_at_the_pane_bottom():
+    frame = pd.DataFrame({"a": range(30), "b": range(1, 31), "c": [index % 7 for index in range(30)]})
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    config = CorrelationConfigWidget(initialize_correlation(frame))
+    dialog.resize(1280, 800)
+    dialog.show()
+    dialog.set_config_widget(config)
+    QCoreApplication.processEvents()
+    try:
+        viewport = dialog._config_scroll.viewport()  # noqa: SLF001
+        apply_button = config._apply_button  # noqa: SLF001
+        group = config._column_list.parentWidget()  # noqa: SLF001
+        assert isinstance(group, QGroupBox)
+
+        assert apply_button.parentWidget() is config
+        assert group.layout().indexOf(apply_button) == -1
+        assert config.layout().indexOf(apply_button) == config.layout().count() - 1
+        assert viewport.height() - _bottom_in(apply_button, viewport) <= 1
+        gap = apply_button.mapTo(config, QPoint(0, 0)).y() - _bottom_in(group, config)
+        assert 0 <= gap <= config.layout().spacing() + 1
+    finally:
+        dialog.close()
+
+
 @pytest.mark.parametrize("width", [1280, 1600])
 @pytest.mark.parametrize("translated", [False, True])
 def test_narrow_correlation_and_time_series_keep_controls_and_full_labels_accessible(monkeypatch, width, translated):
