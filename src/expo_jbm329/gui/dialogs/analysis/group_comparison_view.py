@@ -9,6 +9,7 @@ from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.group_comparison import (
     MAX_GROUPS,
@@ -180,7 +181,7 @@ class GroupComparisonView(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._build_section_title(self.tr("Distribution"), panel))
-        layout.addWidget(self._build_boxplot(groups), 1)
+        layout.addWidget(build_section_scroll_area(self._build_boxplot(groups), panel), 1)
         return panel
 
     def _build_boxplot(self, groups: tuple[GroupSummary, ...]) -> QWidget:
@@ -226,10 +227,14 @@ class GroupComparisonView(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._build_section_title(self.tr("Test results"), panel))
-        layout.addWidget(self._build_test_results_label(result))
+        content = QWidget(panel)
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.addWidget(self._build_test_results_label(result))
         if result.warnings:
-            layout.addWidget(self._build_warnings_label(result.warnings))
-        layout.addStretch(1)
+            content_layout.addWidget(self._build_warnings_label(result.warnings))
+        content_layout.addStretch(1)
+        layout.addWidget(build_section_scroll_area(content, panel), 1)
         return panel
 
     def _build_test_results_label(self, result: GroupComparisonResult) -> QLabel:
@@ -237,6 +242,7 @@ class GroupComparisonView(QWidget):
         label = QLabel(self)
         label.setWordWrap(True)
         label.setTextFormat(Qt.TextFormat.RichText)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
 
         if result.pairwise is not None:
             label.setText(self._pairwise_text(result.pairwise, result.groups))
@@ -331,6 +337,7 @@ class GroupComparisonView(QWidget):
         """Build the caveats label listing every non-blocking per-group warning."""
         label = QLabel(self)
         label.setWordWrap(True)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         label.setText("<br>".join(self._warning_text(warning) for warning in group_warnings))
         return label
 

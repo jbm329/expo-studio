@@ -9,6 +9,7 @@ from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.chi_square import (
     COCHRAN_LOW_EXPECTED_COUNT,
@@ -176,7 +177,7 @@ class ChiSquareView(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._build_section_title(self.tr("Adjusted residuals"), panel))
-        layout.addWidget(self._build_heatmap(result), 1)
+        layout.addWidget(build_section_scroll_area(self._build_heatmap(result), panel), 1)
         return panel
 
     def _build_heatmap(self, result: ChiSquareResult) -> QWidget:
@@ -251,10 +252,14 @@ class ChiSquareView(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._build_section_title(self.tr("Test results"), panel))
-        layout.addWidget(self._build_test_results_label(result))
+        content = QWidget(panel)
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.addWidget(self._build_test_results_label(result))
         if result.cochran_violated:
-            layout.addWidget(self._build_cochran_warning_label(result))
-        layout.addStretch(1)
+            content_layout.addWidget(self._build_cochran_warning_label(result))
+        content_layout.addStretch(1)
+        layout.addWidget(build_section_scroll_area(content, panel), 1)
         return panel
 
     def _build_test_results_label(self, result: ChiSquareResult) -> QLabel:
@@ -262,6 +267,7 @@ class ChiSquareView(QWidget):
         label = QLabel(self)
         label.setWordWrap(True)
         label.setTextFormat(Qt.TextFormat.RichText)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         label.setText(self.test_results_text(result))
         return label
 
@@ -324,6 +330,7 @@ class ChiSquareView(QWidget):
         """Build the caveat shown when Cochran's rule of thumb is violated."""
         label = QLabel(self.cochran_warning_text(result), self)
         label.setWordWrap(True)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         return label
 
     def cochran_warning_text(self, result: ChiSquareResult) -> str:

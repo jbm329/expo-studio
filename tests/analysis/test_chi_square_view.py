@@ -15,6 +15,7 @@ from expo_jbm329.gui.dialogs.analysis.chi_square_view import (
     ChiSquareView,
 )
 from expo_jbm329.services.analysis.chi_square import ChiSquareError, ChiSquareResult, analyze_chi_square
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 
 @pytest.fixture(autouse=True)
@@ -70,22 +71,19 @@ def _two_by_three_result() -> ChiSquareResult:
 
 
 @pytest.mark.parametrize("factory", [_two_by_three_result, lambda: _two_by_two_small_result()])
-def test_chi_square_test_results_header_gap_stays_fixed_when_section_grows(factory):
+@pytest.mark.parametrize(("section", "small_height"), [(1, 120), (2, 60)])
+def test_heatmap_and_results_sections_scroll_below_a_frozen_title(factory, section, small_height):
     view = ChiSquareView(factory())
-    panel = view.findChild(QSplitter).widget(2)
-    panel.setParent(None)
-    panel.resize(1100, 500)
-    panel.show()
+    panel = view.findChild(QSplitter).widget(section)
     try:
-        QCoreApplication.processEvents()
-        layout = panel.layout()
-        labels = [layout.itemAt(index).widget() for index in range(layout.count() - 1)]
-        geometry = [(label.y(), label.height()) for label in labels]
-        panel.resize(1100, 800)
-        QCoreApplication.processEvents()
-        assert [(label.y(), label.height()) for label in labels] == geometry
+        content = assert_section_scrolls_below_frozen_title(panel, small_height)
+        if section == 1:
+            assert isinstance(content, FigureCanvasQTAgg)
+        else:
+            labels = content.findChildren(QLabel)
+            assert any("Pearson" in label.text() for label in labels)
+            assert all(label.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse for label in labels)
     finally:
-        panel.close()
         panel.deleteLater()
         view.close()
 

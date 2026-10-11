@@ -15,6 +15,7 @@ from expo_jbm329.services.analysis.paired_comparison import (
     initialize_paired_comparison,
 )
 from expo_jbm329.utils.format_utils import fmt_num
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 
 @pytest.mark.parametrize("columns", [("before", "after"), ("before", "after", "followup")])
@@ -70,25 +71,19 @@ def _result(**overrides: object) -> PairedComparisonResult:
 
 
 @pytest.mark.parametrize("columns", [("before", "after"), ("before", "after", "followup")])
-def test_paired_test_results_header_gap_stays_fixed_when_section_grows(columns):
+@pytest.mark.parametrize(("section", "small_height"), [(1, 120), (2, 60)])
+def test_chart_and_results_sections_scroll_below_a_frozen_title(columns, section, small_height):
     view = PairedComparisonView(_result(columns=columns))
-    panel = view.findChild(QSplitter).widget(2)
-    panel.setParent(None)
-    panel.resize(1100, 500)
-    panel.show()
+    panel = view.findChild(QSplitter).widget(section)
     try:
-        QCoreApplication.processEvents()
-        layout = panel.layout()
-        heading = layout.itemAt(0).widget()
-        results = layout.itemAt(1).widget()
-        gap = results.y() - heading.geometry().bottom()
-        heights = (heading.height(), results.height())
-        panel.resize(1100, 800)
-        QCoreApplication.processEvents()
-        assert (heading.height(), results.height()) == heights
-        assert results.y() - heading.geometry().bottom() == gap
+        content = assert_section_scrolls_below_frozen_title(panel, small_height)
+        if section == 1:
+            assert isinstance(content, FigureCanvasQTAgg)
+        else:
+            assert isinstance(content, QLabel)
+            assert "Wilcoxon signed-rank test" in content.text()
+            assert content.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
     finally:
-        panel.close()
         panel.deleteLater()
         view.close()
 

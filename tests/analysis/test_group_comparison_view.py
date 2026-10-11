@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
@@ -14,6 +15,7 @@ from expo_jbm329.services.analysis.group_comparison import (
     MultiGroupComparisonResult,
     PairwiseComparisonResult,
 )
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 
 def test_distribution_header_gap_stays_fixed_when_section_grows():
@@ -42,25 +44,19 @@ def test_distribution_header_gap_stays_fixed_when_section_grows():
         view.close()
 
 
-def test_group_test_results_header_gap_stays_fixed_when_section_grows():
+@pytest.mark.parametrize(("section", "small_height"), [(1, 120), (2, 60)])
+def test_chart_and_results_sections_scroll_below_a_frozen_title(section, small_height):
     view = GroupComparisonView(_make_result())
-    panel = view.findChild(QSplitter).widget(2)
-    panel.setParent(None)
-    panel.resize(1100, 500)
-    panel.show()
+    panel = view.findChild(QSplitter).widget(section)
     try:
-        QCoreApplication.processEvents()
-        layout = panel.layout()
-        heading = layout.itemAt(0).widget()
-        results = layout.itemAt(1).widget()
-        gap = results.y() - heading.geometry().bottom()
-        heights = (heading.height(), results.height())
-        panel.resize(1100, 800)
-        QCoreApplication.processEvents()
-        assert (heading.height(), results.height()) == heights
-        assert results.y() - heading.geometry().bottom() == gap
+        content = assert_section_scrolls_below_frozen_title(panel, small_height)
+        if section == 1:
+            assert isinstance(content, FigureCanvasQTAgg)
+        else:
+            labels = content.findChildren(QLabel)
+            assert any("Welch" in label.text() for label in labels)
+            assert all(label.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse for label in labels)
     finally:
-        panel.close()
         panel.deleteLater()
         view.close()
 

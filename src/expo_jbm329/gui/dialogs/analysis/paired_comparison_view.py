@@ -10,6 +10,7 @@ from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.hypothesis_charts import HypothesisChartLabels, draw_paired_charts
 from expo_jbm329.services.analysis.paired_comparison import PairedComparisonError, PairedComparisonMethod
@@ -83,8 +84,7 @@ class PairedComparisonView(QWidget):
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         panel, layout = self._build_section(self.tr("Test results"))
-        layout.addWidget(label)
-        layout.addStretch(1)
+        layout.addWidget(build_section_scroll_area(label, panel), 1)
         return panel
 
     def export_notes(self, result: PairedComparisonResult) -> tuple[str, ...]:
@@ -169,7 +169,7 @@ class PairedComparisonView(QWidget):
             occasion=self.tr("Measurement occasion"),
         )
         canvas.build_chart(lambda: draw_paired_charts(figure, result, labels))
-        layout.addWidget(canvas, 1)
+        layout.addWidget(build_section_scroll_area(canvas, panel), 1)
         return panel
 
     def _build_message(self, text: str) -> QLabel:
