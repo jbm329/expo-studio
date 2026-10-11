@@ -5,11 +5,12 @@ import dataclasses
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import QCoreApplication, Qt
-from PyQt6.QtWidgets import QLabel, QScrollArea
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QLabel, QSplitter
 
 from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
 from expo_jbm329.services.analysis.timeseries import TimeSeriesError, analyze_time_series
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 
 def _result():
@@ -70,28 +71,41 @@ def test_summary_reports_cleaning_statistics():
     assert "3 duplicate rows" in text
 
 
-def test_summary_is_separate_top_aligned_and_keeps_fixed_gap_when_resized():
+def _section_title(panel) -> str:
+    title = panel.layout().itemAt(0).widget()
+    assert isinstance(title, QLabel)
+    assert title.textFormat() is Qt.TextFormat.PlainText
+    assert title.font().bold()
+    return title.text()
+
+
+def test_layout_has_resizable_charts_and_comments_sections_like_regression():
     view = TimeSeriesView(_result())
-    view.resize(1100, 800)
-    view.show()
-    try:
-        QCoreApplication.processEvents()
-        panel = view.layout().itemAt(0).widget()
-        heading = panel.layout().itemAt(0).widget()
-        text = panel.layout().itemAt(1).widget()
-        scroll = view.findChild(QScrollArea)
-        assert heading.text() == "Summary"
-        assert not scroll.isAncestorOf(panel)
-        assert text.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
-        assert heading.y() == panel.layout().contentsMargins().top()
-        gap = text.y() - heading.geometry().bottom()
-        height = panel.height()
-        scroll_height = scroll.height()
-        view.resize(1100, 1100)
-        QCoreApplication.processEvents()
-        assert text.y() - heading.geometry().bottom() == gap
-        assert panel.height() == height
-        assert scroll.height() > scroll_height
-        assert len(scroll.findChildren(FigureCanvasQTAgg)) == 3
-    finally:
-        view.close()
+
+    splitters = view.findChildren(QSplitter)
+    assert len(splitters) == 1
+    splitter = splitters[0]
+    assert splitter.orientation() is Qt.Orientation.Vertical
+    assert splitter.childrenCollapsible() is False
+    assert [_section_title(splitter.widget(index)) for index in range(splitter.count())] == [
+        "Charts",
+        "Model comments",
+    ]
+    assert len(splitter.widget(0).findChildren(FigureCanvasQTAgg)) == 3
+
+
+@pytest.mark.parametrize(("section", "small_height", "width"), [(0, 300, 1100), (1, 50, 150)])
+def test_charts_and_comments_scroll_below_a_frozen_title(section, small_height, width):
+    view = TimeSeriesView(_result())
+    panel = view.findChild(QSplitter).widget(section)
+
+    content = assert_section_scrolls_below_frozen_title(panel, small_height, large_height=1200, width=width)
+
+    if section == 0:
+        assert len(content.findChildren(FigureCanvasQTAgg)) == 3
+    else:
+        assert isinstance(content, QLabel)
+        assert content.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+        assert "time points" in content.text()
+    panel.deleteLater()
+    view.close()

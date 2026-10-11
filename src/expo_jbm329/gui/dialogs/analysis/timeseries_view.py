@@ -8,8 +8,9 @@ import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QLabel, QSplitter, QVBoxLayout, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
 from expo_jbm329.services.analysis.timeseries import TimeSeriesError
 from expo_jbm329.utils.format_utils import fmt_int
 
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 
 
 class TimeSeriesView(QWidget):
-    """Displays the source series, autocorrelation and seasonal components."""
+    """Displays charts and model comments in resizable sections."""
 
     def __init__(self, result: TimeSeriesResult, parent: QWidget | None = None) -> None:
         """Initialize a view from one complete time-series result."""
@@ -32,17 +33,14 @@ class TimeSeriesView(QWidget):
             root.addWidget(self._centered_label(self.error_text(result.error)))
             return
 
-        root.addWidget(self._build_summary_section(result))
-        scroll = QScrollArea(self)
-        scroll.setWidgetResizable(True)
-        content = QWidget(scroll)
-        layout = QVBoxLayout(content)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._series_plot(result))
-        layout.addWidget(self._acf_plot(result))
-        layout.addWidget(self._decomposition_plot(result))
-        scroll.setWidget(content)
-        root.addWidget(scroll, 1)
+        splitter = QSplitter(Qt.Orientation.Vertical, self)
+        splitter.setChildrenCollapsible(False)
+        splitter.addWidget(self._build_charts_section(result))
+        splitter.addWidget(self._build_comments_section(result))
+        splitter.setStretchFactor(0, 4)
+        splitter.setStretchFactor(1, 1)
+        splitter.setSizes([600, 130])
+        root.addWidget(splitter, 1)
 
     def configuration(self) -> tuple[str, str, str | None, int | None, object]:
         """Return the parameters of the displayed result."""
@@ -68,18 +66,36 @@ class TimeSeriesView(QWidget):
         }
         return messages[error]
 
-    def _build_summary_section(self, result: TimeSeriesResult) -> QWidget:
-        """Build a content-sized summary separate from the scrolling charts."""
+    def _build_charts_section(self, result: TimeSeriesResult) -> QWidget:
+        """Build the titled section with all charts in one scroll area."""
+        panel, layout = self._build_section(self.tr("Charts"))
+        content = QWidget(panel)
+        charts = QVBoxLayout(content)
+        charts.setContentsMargins(0, 0, 0, 0)
+        charts.addWidget(self._series_plot(result))
+        charts.addWidget(self._acf_plot(result))
+        charts.addWidget(self._decomposition_plot(result))
+        layout.addWidget(build_section_scroll_area(content, panel), 1)
+        return panel
+
+    def _build_comments_section(self, result: TimeSeriesResult) -> QWidget:
+        """Build the titled model-comments section with a scrollable summary."""
+        panel, layout = self._build_section(self.tr("Model comments"))
+        layout.addWidget(build_section_scroll_area(self._summary_label(result), panel), 1)
+        return panel
+
+    def _build_section(self, title: str) -> tuple[QWidget, QVBoxLayout]:
+        """Build a titled section matching the Regression layout."""
         panel = QWidget(self)
-        panel.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
-        heading = QLabel(self.tr("Summary"), panel)
-        heading.setStyleSheet("font-weight: bold;")
-        layout.addWidget(heading)
-        layout.addWidget(self._summary_label(result))
-        layout.addStretch(1)
-        return panel
+        label = QLabel(title, panel)
+        label.setTextFormat(Qt.TextFormat.PlainText)
+        font = label.font()
+        font.setBold(True)
+        label.setFont(font)
+        layout.addWidget(label)
+        return panel, layout
 
     def _summary_label(self, result: TimeSeriesResult) -> QLabel:
         """Build a text summary with data-cleaning diagnostics."""
@@ -99,6 +115,7 @@ class TimeSeriesView(QWidget):
         label.setWordWrap(True)
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         return label
 
     def _canvas(self, height: int = 220) -> tuple[FigureCanvasQTAgg, Axes]:

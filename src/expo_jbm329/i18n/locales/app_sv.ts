@@ -8709,6 +8709,16 @@ Tid: {sec:.2f}s{sample}</translation>
         <translation>Minst 3 giltiga tidsobservationer krävs.</translation>
     </message>
     <message>
+        <location filename="../../gui/dialogs/analysis/timeseries_view.py" line="70"/>
+        <source>Charts</source>
+        <translation>Diagram</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/timeseries_view.py" line="82"/>
+        <source>Model comments</source>
+        <translation>Modellkommentarer</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/analysis/timeseries_view.py" line="73"/>
         <source>irregular</source>
         <translation>oregelbunden</translation>

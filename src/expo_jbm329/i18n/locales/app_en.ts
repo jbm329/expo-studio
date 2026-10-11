@@ -8563,6 +8563,16 @@ Time: {sec:.2f}s{sample}</source>
         <translation type="unfinished" />
     </message>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="70" />
+        <source>Charts</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="82" />
+        <source>Model comments</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
         <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="73" />
         <source>irregular</source>
         <translation type="unfinished" />
