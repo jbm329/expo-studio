@@ -405,3 +405,29 @@ def test_missing_plot_data_draws_no_plots():
     view = RegressionView(dataclasses.replace(_fitted(), plot=None))
 
     assert view.findChildren(FigureCanvasQTAgg) == []
+
+
+def test_chart_labels_name_the_target_and_explain_sampling_only_when_sampled():
+    labels = RegressionView(_fitted()).chart_labels()
+    assert labels.heading == "Linear regression: <y>"
+    assert labels.model.predicted_axis == "Predicted <y>"
+    assert labels.captions == ()
+    df = _frame(size=PLOT_SAMPLE_SIZE + 100)
+    sampled = RegressionView(analyze_regression(df, "<y>", ["x"])).chart_labels()
+    assert len(sampled.captions) == 1
+    assert "random sample" in sampled.captions[0]
+
+
+def test_export_notes_are_plain_text_comments_and_reference_levels():
+    notes = RegressionView(_fitted()).export_notes()
+    assert notes
+    assert not any("<b>" in note or "<br>" in note or "<sup>" in note or "&lt;" in note for note in notes)
+    assert "Target: <y>" in notes
+    assert any(note.startswith("R² = ") for note in notes)
+    assert "g: reference level b (3 levels)" in notes
+
+
+def test_export_notes_are_empty_for_errors():
+    result = analyze_regression(_frame(), "<y>", [])
+    assert result.error is not None
+    assert RegressionView(result).export_notes() == ()

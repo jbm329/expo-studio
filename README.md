@@ -116,6 +116,17 @@ Plots retain the deterministic 5,000-point sample limit and disclose sampling.
 Undefined pairs receive explanatory placeholders rather than being omitted.
 Chart preparation runs in the export worker with progress and cancellation.
 No pair-detail table or raw dataset is included.
+After a successful **Regression** model (linear, logistic, Poisson, negative
+binomial, or Cox), export **Coefficients**, **Model metrics**, and **Charts**
+for the applied model. Coefficients keep numeric estimates, standard errors,
+test statistics, p-values, confidence bounds, and the model's VIF, odds/rate
+ratio, or hazard ratio columns plus a significance indicator. Model metrics
+list the displayed fit statistics and diagnostics with the model comments as
+notes. Charts reproduce the displayed diagnostic plots as one image on the
+Charts sheet, including any sampling caption. Excel is the default and can
+combine all three; CSV and binary files contain exactly one table without
+Charts. Configuration edits clear the export until the next Apply completes,
+and failed fits cannot be exported.
 Selections are retained when switching formats; Export is disabled with an
 explanation if the selection is invalid for the format. All choices for other
 analyses are disabled previews and cannot create files. **Add to report** and

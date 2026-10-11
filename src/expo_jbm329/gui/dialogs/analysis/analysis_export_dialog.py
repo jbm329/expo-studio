@@ -35,6 +35,12 @@ from expo_jbm329.services.analysis.overview import (
     OverviewExportRequest,
     OverviewExportTable,
 )
+from expo_jbm329.services.analysis.regression_export import (
+    RegressionExportComponent,
+    RegressionExportRequest,
+    RegressionExportSnapshot,
+)
+from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.statistics import (
     DescriptiveStatisticsResult,
     StatisticsExportFormat,
@@ -58,6 +64,8 @@ class AnalysisExportDialog(QDialog):
         hypothesis_mode: bool = False,
         correlation: CorrelationExportSnapshot | None = None,
         correlation_mode: bool = False,
+        regression: RegressionExportSnapshot | None = None,
+        regression_mode: bool = False,
     ) -> None:
         """Build grouped export choices and a format selector.
 
@@ -71,6 +79,8 @@ class AnalysisExportDialog(QDialog):
             hypothesis_mode: Show hypothesis choices even before Apply.
             correlation: Successfully displayed applied correlation matrix.
             correlation_mode: Show correlation choices even before Apply.
+            regression: Successfully displayed applied regression model.
+            regression_mode: Show regression choices even before Apply.
         """
         super().__init__(parent)
         self.setWindowTitle(self.tr("Export"))
@@ -81,36 +91,29 @@ class AnalysisExportDialog(QDialog):
         self._hypothesis_mode = hypothesis_mode or hypothesis is not None
         self._correlation = correlation
         self._correlation_mode = correlation_mode or correlation is not None
+        self._regression = regression
+        self._regression_mode = regression_mode or regression is not None
         self._hypothesis_choices: dict[HypothesisExportComponent, QCheckBox] = {}
         self._correlation_choices: dict[CorrelationExportComponent, QCheckBox] = {}
+        self._regression_choices: dict[RegressionExportComponent, QCheckBox] = {}
         self._table_choices: dict[OverviewExportTable, QCheckBox] = {}
         self._statistics_choices: dict[StatisticsExportTable, QCheckBox] = {}
         self._overview_mode = overview_mode or overview is not None
         self._statistics_mode = statistics_mode or statistics is not None
-        if sum((self._overview_mode, self._statistics_mode, self._hypothesis_mode, self._correlation_mode)) > 1:
+        if (
+            sum((
+                self._overview_mode,
+                self._statistics_mode,
+                self._hypothesis_mode,
+                self._correlation_mode,
+                self._regression_mode,
+            ))
+            > 1
+        ):
             message = "An export dialog can represent only one analysis result."
             raise ValueError(message)
         layout = QVBoxLayout(self)
-        explanation = QLabel(
-            self.tr(
-                "Export the Overview Summary, Columns metadata, or Sample (first 100 rows), not the original dataset."
-            )
-            if self._overview_mode
-            else (
-                self.tr("Export the available Statistics tables and numeric-column charts.")
-                if self._statistics_mode
-                else (
-                    self.tr("Export computed tables and charts for the applied test, not the original dataset.")
-                    if self._hypothesis_mode
-                    else (
-                        self.tr("Export the strongest-correlations table for the applied matrix.")
-                        if self._correlation_mode
-                        else self.tr("Layout preview only. Export processing is not implemented yet.")
-                    )
-                )
-            ),
-            self,
-        )
+        explanation = QLabel(self._explanation_text(), self)
         explanation.setWordWrap(True)
         layout.addWidget(explanation)
         if self._overview_mode:
@@ -121,13 +124,15 @@ class AnalysisExportDialog(QDialog):
             self._build_hypothesis_choices(layout)
         elif self._correlation_mode:
             self._build_correlation_choices(layout)
+        elif self._regression_mode:
+            self._build_regression_choices(layout)
         else:
             self._build_preview_choices(layout)
         formats = QFormLayout()
         self._format_combo = QComboBox(self)
         format_type = (
             StatisticsExportFormat
-            if self._statistics_mode or self._hypothesis_mode or self._correlation_mode
+            if self._statistics_mode or self._hypothesis_mode or self._correlation_mode or self._regression_mode
             else OverviewExportFormat
         )
         self._format_combo.addItem("CSV", format_type.CSV)
@@ -153,6 +158,8 @@ class AnalysisExportDialog(QDialog):
             if self._hypothesis_mode
             else self._correlation_choices
             if self._correlation_mode
+            else self._regression_choices
+            if self._regression_mode
             else self._statistics_choices
             if self._statistics_mode
             else self._table_choices
@@ -161,6 +168,24 @@ class AnalysisExportDialog(QDialog):
         if first_available is not None:
             first_available.setChecked(True)
         self._update_export_enabled()
+
+    def _explanation_text(self) -> str:
+        """Return the translated description of what the current mode exports."""
+        if self._overview_mode:
+            return self.tr(
+                "Export the Overview Summary, Columns metadata, or Sample (first 100 rows), not the original dataset."
+            )
+        if self._statistics_mode:
+            return self.tr("Export the available Statistics tables and numeric-column charts.")
+        if self._hypothesis_mode:
+            return self.tr("Export computed tables and charts for the applied test, not the original dataset.")
+        if self._correlation_mode:
+            return self.tr("Export the strongest-correlations table for the applied matrix.")
+        if self._regression_mode:
+            return self.tr(
+                "Export the coefficients, model metrics and charts of the applied model, not the original dataset."
+            )
+        return self.tr("Layout preview only. Export processing is not implemented yet.")
 
     def _build_overview_choices(self, layout: QVBoxLayout) -> None:
         """Offer only available structured Overview tables, never the dataset."""
@@ -364,10 +389,80 @@ class AnalysisExportDialog(QDialog):
             contents.addWidget(choice)
         layout.addWidget(results)
 
+    def _build_regression_choices(self, layout: QVBoxLayout) -> None:
+        """List the applied model plainly and offer its result tables and charts."""
+        snapshot = self._regression
+        if snapshot is not None:
+            model_names = {
+                RegressionModel.LINEAR: self.tr("Linear regression"),
+                RegressionModel.LOGISTIC: self.tr("Logistic regression"),
+                RegressionModel.POISSON: self.tr("Poisson regression"),
+                RegressionModel.NEGATIVE_BINOMIAL: self.tr("Negative binomial regression"),
+                RegressionModel.COX: self.tr("Cox proportional-hazards regression"),
+            }
+            outcome_role = self.tr("Duration / event") if snapshot.model is RegressionModel.COX else self.tr("Target")
+            identity = QLabel(
+                self.tr("Applied model: {model}\n{role}: {outcome}\nPredictors: {predictors}").format(
+                    model=model_names[snapshot.model],
+                    role=outcome_role,
+                    outcome=" / ".join(snapshot.outcome_columns),
+                    predictors=" / ".join(snapshot.predictors),
+                ),
+                self,
+            )
+            identity.setTextFormat(Qt.TextFormat.PlainText)
+            identity.setWordWrap(True)
+            identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            layout.addWidget(identity)
+
+        results = QGroupBox(self.tr("Results"), self)
+        contents = QVBoxLayout(results)
+        labels = {
+            RegressionExportComponent.COEFFICIENTS: self.tr("Coefficients"),
+            RegressionExportComponent.MODEL_METRICS: self.tr("Model metrics"),
+            RegressionExportComponent.CHARTS: self.tr("Charts"),
+        }
+        for component, label in labels.items():
+            choice = QCheckBox(label, results)
+            if snapshot is None:
+                choice.setEnabled(False)
+                choice.setToolTip(self.tr("Apply a regression model successfully before exporting."))
+            elif component is RegressionExportComponent.CHARTS and not snapshot.has_charts:
+                choice.setEnabled(False)
+                choice.setToolTip(self.tr("This component is empty and cannot be exported."))
+            elif component is RegressionExportComponent.MODEL_METRICS:
+                choice.setToolTip(self.tr("Fit statistics and diagnostics with the displayed model comments."))
+            self._regression_choices[component] = choice
+            choice.toggled.connect(self._update_export_enabled)
+            contents.addWidget(choice)
+        layout.addWidget(results)
+
     def export_request(
         self,
-    ) -> OverviewExportRequest | StatisticsExportRequest | HypothesisExportRequest | CorrelationExportRequest | None:
+    ) -> (
+        OverviewExportRequest
+        | StatisticsExportRequest
+        | HypothesisExportRequest
+        | CorrelationExportRequest
+        | RegressionExportRequest
+        | None
+    ):
         """Return a validated selection, or None for previews/invalid choices."""
+        if self._regression_mode:
+            if self._regression is None:
+                return None
+            regression_components = tuple(
+                component
+                for component, choice in self._regression_choices.items()
+                if choice.isEnabled() and choice.isChecked()
+            )
+            format_choice = self._format_combo.currentData()
+            if not isinstance(format_choice, StatisticsExportFormat) or not regression_components:
+                return None
+            try:
+                return RegressionExportRequest(self._regression, regression_components, format_choice)
+            except ValueError:
+                return None
         if self._correlation_mode:
             if self._correlation is None:
                 return None
@@ -429,7 +524,7 @@ class AnalysisExportDialog(QDialog):
 
     def _update_export_enabled(self) -> None:
         """Preserve picks across formats and explain disabled exports."""
-        if self._statistics_mode or self._hypothesis_mode or self._correlation_mode:
+        if self._statistics_mode or self._hypothesis_mode or self._correlation_mode or self._regression_mode:
             self._update_statistics_export_enabled()
             return
         excel = self._format_combo.currentData() is OverviewExportFormat.EXCEL
@@ -475,6 +570,8 @@ class AnalysisExportDialog(QDialog):
             if self._hypothesis_mode
             else self._correlation_choices
             if self._correlation_mode
+            else self._regression_choices
+            if self._regression_mode
             else self._statistics_choices
         )
         selected = any(choice.isEnabled() and choice.isChecked() for choice in choices.values())
@@ -484,9 +581,11 @@ class AnalysisExportDialog(QDialog):
             if self._hypothesis_mode
             else None
             if self._correlation_mode
+            else self._regression_choices.get(RegressionExportComponent.CHARTS)
+            if self._regression_mode
             else self._statistics_choices.get(StatisticsExportTable.CHARTS)
         )
-        chart_selected = chart_choice is not None and chart_choice.isChecked()
+        chart_selected = chart_choice is not None and chart_choice.isEnabled() and chart_choice.isChecked()
         if self._correlation_mode:
             chart_selected = any(
                 choice.isChecked()
@@ -497,6 +596,8 @@ class AnalysisExportDialog(QDialog):
             reason = self.tr("Apply a hypothesis test successfully before exporting.")
         elif self._correlation_mode and self._correlation is None:
             reason = self.tr("Apply a correlation matrix successfully before exporting.")
+        elif self._regression_mode and self._regression is None:
+            reason = self.tr("Apply a regression model successfully before exporting.")
         elif self._statistics_mode and self._statistics is None:
             reason = self.tr("Run Statistics successfully before exporting.")
         elif not available:

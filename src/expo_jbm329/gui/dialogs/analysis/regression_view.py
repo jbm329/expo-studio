@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
 from expo_jbm329.services.analysis.regression import (
     CONFIDENCE_LEVEL,
     DURBIN_WATSON_HIGH,
@@ -34,6 +34,13 @@ from expo_jbm329.services.analysis.regression import (
     RegressionWarningReason,
     TermKind,
     term_name,
+)
+from expo_jbm329.services.analysis.regression_charts import (
+    LinearChartLabels,
+    RegressionChartLabels,
+    draw_actual_vs_predicted,
+    draw_normal_qq,
+    draw_residuals_vs_fitted,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 
@@ -53,8 +60,6 @@ if TYPE_CHECKING:
 # Above this many rows, normality tests flag even negligible deviations.
 LARGE_SAMPLE_SIZE = 5_000
 
-_SCATTER_POINT_SIZE = 6
-_SCATTER_ALPHA = 0.4
 _TERM_COLUMN = 0
 _TITLE_FONT_SIZE = 10
 _LABEL_FONT_SIZE = 9
@@ -125,6 +130,23 @@ class RegressionView(QWidget):
     def summary_label(self) -> QLabel | None:
         """Return the summary/diagnostics label, or `None` when the result has an error."""
         return self._summary_label
+
+    def chart_labels(self) -> RegressionChartLabels:
+        """Return the translated chart text shared by the displayed and exported charts."""
+        result = self._result
+        plot = result.plot
+        return RegressionChartLabels(
+            heading=self.tr("Linear regression: {target}").format(target=result.target),
+            model=self._linear_chart_labels(result),
+            captions=(self._sampling_caption(result, plot),) if plot is not None and plot.sampled else (),
+        )
+
+    def export_notes(self) -> tuple[str, ...]:
+        """Return the displayed model comments and reference levels as plain-text lines."""
+        result = self._result
+        if result.error is not None:
+            return ()
+        return rich_text_lines((self._summary_text(result), "<br>".join(self._reference_lines(result))))
 
     def error_text(self, result: RegressionResult) -> str:
         """Return the translated message for `result`'s structured error.
@@ -400,23 +422,26 @@ class RegressionView(QWidget):
     def _coefficients_caption(self, result: RegressionResult) -> str:
         """Return the rich-text caption explaining significance marks and reference levels."""
         lines = [
-            self.tr("* marks coefficients significant at p &lt, {alpha}.").format(alpha=fmt_num(SIGNIFICANCE_LEVEL))
+            self.tr("* marks coefficients significant at p &lt; {alpha}.").format(alpha=fmt_num(SIGNIFICANCE_LEVEL)),
+            *self._reference_lines(result),
         ]
-        if result.references:
-            lines.append(
-                self.tr(
-                    "Each categorical level is compared with its column's reference level (the most frequent level):"
-                )
-            )
-            lines.extend(
+        return "<br>".join(lines)
+
+    def _reference_lines(self, result: RegressionResult) -> list[str]:
+        """Return rich-text lines naming each categorical predictor's reference level."""
+        if not result.references:
+            return []
+        return [
+            self.tr("Each categorical level is compared with its column's reference level (the most frequent level):"),
+            *(
                 self.tr("{column}: reference level <b>{level}</b> ({count} levels)").format(
                     column=_esc(reference.column),
                     level=_esc(reference.reference_level),
                     count=fmt_int(reference.level_count),
                 )
                 for reference in result.references
-            )
-        return "<br>".join(lines)
+            ),
+        ]
 
     # ------------------------------------------------------------------
     # Plots
@@ -433,25 +458,41 @@ class RegressionView(QWidget):
         if plot is None:
             return panel
 
+        labels = self._linear_chart_labels(result)
         splitter = QSplitter(Qt.Orientation.Horizontal, panel)
         splitter.setChildrenCollapsible(False)
-        splitter.addWidget(self._build_canvas(lambda ax: self._draw_residuals_vs_fitted(ax, plot)))
-        splitter.addWidget(self._build_canvas(lambda ax: self._draw_actual_vs_predicted(ax, plot, result.target)))
-        splitter.addWidget(self._build_canvas(lambda ax: self._draw_qq(ax, plot)))
+        splitter.addWidget(self._build_canvas(lambda ax: draw_residuals_vs_fitted(ax, plot, labels)))
+        splitter.addWidget(self._build_canvas(lambda ax: draw_actual_vs_predicted(ax, plot, labels)))
+        splitter.addWidget(self._build_canvas(lambda ax: draw_normal_qq(ax, plot, labels)))
         # Charts keep a readable minimum size and scroll when their section is smaller.
         layout.addWidget(build_section_scroll_area(splitter, panel), 1)
 
         if plot.sampled:
-            caption = QLabel(
-                self.tr("Plots show a random sample of {shown} of {total} rows. Statistics use all rows.").format(
-                    shown=fmt_int(len(plot.actual)), total=fmt_int(result.n_used)
-                ),
-                panel,
-            )
+            caption = QLabel(self._sampling_caption(result, plot), panel)
             caption.setWordWrap(True)
             layout.addWidget(caption)
 
         return panel
+
+    def _sampling_caption(self, result: RegressionResult, plot: RegressionPlotData) -> str:
+        """Return the translated note explaining that the plots show sampled rows."""
+        return self.tr("Plots show a random sample of {shown} of {total} rows. Statistics use all rows.").format(
+            shown=fmt_int(len(plot.actual)), total=fmt_int(result.n_used)
+        )
+
+    def _linear_chart_labels(self, result: RegressionResult) -> LinearChartLabels:
+        """Return the translated titles and axis labels of the three diagnostic plots."""
+        return LinearChartLabels(
+            residuals_title=self.tr("Residuals vs fitted"),
+            fitted_axis=self.tr("Fitted value"),
+            residual_axis=self.tr("Residual"),
+            actual_title=self.tr("Actual vs predicted"),
+            predicted_axis=self.tr("Predicted {target}").format(target=result.target),
+            actual_axis=self.tr("Actual {target}").format(target=result.target),
+            qq_title=self.tr("Normal Q-Q plot of residuals"),
+            theoretical_axis=self.tr("Theoretical quantile"),
+            standardized_axis=self.tr("Standardized residual"),
+        )
 
     @staticmethod
     def _build_section_title(text: str, parent: QWidget) -> QLabel:
@@ -473,31 +514,3 @@ class RegressionView(QWidget):
         ax.yaxis.label.set_fontsize(_LABEL_FONT_SIZE)
         ax.tick_params(labelsize=_TICK_FONT_SIZE)
         return canvas
-
-    def _draw_residuals_vs_fitted(self, ax: Axes, plot: RegressionPlotData) -> None:
-        """Draw residuals against fitted values with a zero reference line."""
-        ax.scatter(plot.fitted, plot.residuals, s=_SCATTER_POINT_SIZE, alpha=_SCATTER_ALPHA)
-        ax.axhline(0.0, color="tab:red")
-        ax.set_title(self.tr("Residuals vs fitted"))
-        ax.set_xlabel(self.tr("Fitted value"))
-        ax.set_ylabel(self.tr("Residual"))
-
-    def _draw_actual_vs_predicted(self, ax: Axes, plot: RegressionPlotData, target: str) -> None:
-        """Draw observed against predicted values with the identity line."""
-        ax.scatter(plot.fitted, plot.actual, s=_SCATTER_POINT_SIZE, alpha=_SCATTER_ALPHA)
-        values = (*plot.fitted, *plot.actual)
-        low, high = min(values), max(values)
-        ax.plot([low, high], [low, high], color="tab:red")
-        ax.set_title(self.tr("Actual vs predicted"))
-        ax.set_xlabel(self.tr("Predicted {target}").format(target=target))
-        ax.set_ylabel(self.tr("Actual {target}").format(target=target))
-
-    def _draw_qq(self, ax: Axes, plot: RegressionPlotData) -> None:
-        """Draw standardized residual quantiles against normal quantiles with the identity line."""
-        ax.scatter(plot.qq_theoretical, plot.qq_sample, s=_SCATTER_POINT_SIZE, alpha=_SCATTER_ALPHA)
-        low = min(plot.qq_theoretical[0], plot.qq_sample[0])
-        high = max(plot.qq_theoretical[-1], plot.qq_sample[-1])
-        ax.plot([low, high], [low, high], color="tab:red")
-        ax.set_title(self.tr("Normal Q-Q plot of residuals"))
-        ax.set_xlabel(self.tr("Theoretical quantile"))
-        ax.set_ylabel(self.tr("Standardized residual"))

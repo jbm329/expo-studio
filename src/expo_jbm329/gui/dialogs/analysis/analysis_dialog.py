@@ -44,6 +44,7 @@ from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportRequest, CorrelationExportSnapshot
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportRequest, HypothesisExportSnapshot
 from expo_jbm329.services.analysis.overview import OverviewExportRequest
+from expo_jbm329.services.analysis.regression_export import RegressionExportRequest, RegressionExportSnapshot
 from expo_jbm329.services.analysis.statistics import StatisticsExportRequest
 
 if TYPE_CHECKING:
@@ -125,6 +126,7 @@ class AnalysisDialog(QDialog):
     statistics_export_requested = pyqtSignal(object)  # StatisticsExportRequest
     hypothesis_export_requested = pyqtSignal(object)  # HypothesisExportRequest
     correlation_export_requested = pyqtSignal(object)  # CorrelationExportRequest
+    regression_export_requested = pyqtSignal(object)  # RegressionExportRequest
 
     def __init__(
         self,
@@ -154,6 +156,8 @@ class AnalysisDialog(QDialog):
         self._export_correlation: CorrelationExportSnapshot | None = None
         self._correlation_export_tab_id: str | None = None
         self._correlation_export_revision = 0
+        self._export_regression: RegressionExportSnapshot | None = None
+        self._regression_export_tab_id: str | None = None
         self._analysis_revision = 0
 
         self.setWindowTitle(self.tr("Advanced analysis"))
@@ -277,8 +281,8 @@ class AnalysisDialog(QDialog):
         actions.addWidget(add_button)
         explanation = QLabel(
             self.tr(
-                "Overview, Statistics, applied Hypothesis Tests, and applied Correlation matrix exports are available "
-                "after analysis. "
+                "Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, and applied Regression "
+                "model exports are available after analysis. "
                 "Other export and report actions are previews."
             ),
             bar,
@@ -302,6 +306,8 @@ class AnalysisDialog(QDialog):
             hypothesis_mode=self.selected_category() is AnalysisCategory.HYPOTHESIS_TESTS,
             correlation=self.exportable_correlation(),
             correlation_mode=self.selected_category() is AnalysisCategory.CORRELATION,
+            regression=self.exportable_regression(),
+            regression_mode=self.selected_category() is AnalysisCategory.REGRESSION,
         )
         for combo in dialog.findChildren(QComboBox):
             _ComboToolTipFilter(combo)
@@ -315,6 +321,8 @@ class AnalysisDialog(QDialog):
                 self.hypothesis_export_requested.emit(request)
             elif isinstance(request, CorrelationExportRequest) and request.snapshot is self.exportable_correlation():
                 self.correlation_export_requested.emit(request)
+            elif isinstance(request, RegressionExportRequest) and request.snapshot is self.exportable_regression():
+                self.regression_export_requested.emit(request)
 
     def invalidate_overview_export(self) -> None:
         """Disable real export as soon as displayed analysis becomes stale."""
@@ -324,6 +332,8 @@ class AnalysisDialog(QDialog):
         self._statistics_export_tab_id = None
         self._export_hypothesis = None
         self._hypothesis_export_tab_id = None
+        self._export_regression = None
+        self._regression_export_tab_id = None
         self.invalidate_correlation_export()
         self._analysis_revision += 1
 
@@ -367,6 +377,20 @@ class AnalysisDialog(QDialog):
             and self.selected_dataset_tab_id() == self._correlation_export_tab_id
         ):
             return self._export_correlation
+        return None
+
+    def set_exportable_regression(self, snapshot: RegressionExportSnapshot) -> None:
+        """Register a successful fitted model after its view is displayed."""
+        self._export_regression = snapshot
+        self._regression_export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_regression(self) -> RegressionExportSnapshot | None:
+        """Return the displayed applied model, independent of pending configuration edits."""
+        if (
+            self.selected_category() is AnalysisCategory.REGRESSION
+            and self.selected_dataset_tab_id() == self._regression_export_tab_id
+        ):
+            return self._export_regression
         return None
 
     def set_exportable_overview(self, result: DatasetOverviewResult) -> None:

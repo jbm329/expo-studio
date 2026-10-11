@@ -61,6 +61,7 @@ from expo_jbm329.services.analysis.outliers import initialize_outlier_summary
 from expo_jbm329.services.analysis.paired_comparison import initialize_paired_comparison
 from expo_jbm329.services.analysis.pca import initialize_pca
 from expo_jbm329.services.analysis.regression import initialize_regression
+from expo_jbm329.services.analysis.regression_export import RegressionExportComponent, RegressionExportRequest
 from expo_jbm329.services.analysis.regression_glm import RegressionModel, initialize_generalized_targets
 from expo_jbm329.services.analysis.statistics import (
     StatisticsExportFormat,
@@ -71,6 +72,7 @@ from expo_jbm329.services.analysis.statistics import (
 from expo_jbm329.services.analysis.survival import initialize_survival_columns
 from expo_jbm329.services.analysis.timeseries import initialize_time_series
 from expo_jbm329.utils.dataset_ref import DatasetRef
+from tests.analysis.test_regression_export import linear_snapshot
 
 
 def _make_datasets() -> list[DatasetRef]:
@@ -193,6 +195,59 @@ def test_correlation_export_selection_emits_only_the_current_snapshot(monkeypatc
     assert len(received) == 1
 
 
+def test_regression_export_snapshot_is_scoped_to_current_category_and_dataset():
+    snapshot = linear_snapshot()
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.CORRELATION)
+    dialog.set_exportable_regression(snapshot)
+    assert dialog.exportable_regression() is None
+
+    dialog.select_category(AnalysisCategory.REGRESSION)
+    dialog.set_exportable_regression(snapshot)
+    assert dialog.exportable_regression() is snapshot
+    dialog.set_content_widget(QWidget())
+    assert dialog.exportable_regression() is None
+    dialog.set_exportable_regression(snapshot)
+    dialog.select_dataset("t2")
+    assert dialog.exportable_regression() is None
+    dialog.set_exportable_regression(snapshot)
+    dialog.select_category(AnalysisCategory.STATISTICS)
+    assert dialog.exportable_regression() is None
+
+
+def test_regression_export_selection_emits_only_the_current_snapshot(monkeypatch):
+    snapshot = linear_snapshot()
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.REGRESSION)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_regression(snapshot)
+    received: list[RegressionExportRequest] = []
+    dialog.regression_export_requested.connect(received.append)
+    captured: list[AnalysisExportDialog] = []
+
+    def accept_default_selection(export_dialog):
+        captured.append(export_dialog)
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(AnalysisExportDialog, "exec", accept_default_selection)
+    dialog._show_export_selection()
+
+    assert [choice.text() for choice in captured[0].findChildren(QCheckBox)] == [
+        "Coefficients",
+        "Model metrics",
+        "Charts",
+    ]
+    assert len(received) == 1
+    assert received[0].snapshot is snapshot
+    assert received[0].components == (RegressionExportComponent.COEFFICIENTS,)
+
+    dialog.set_content_widget(QWidget())
+    dialog._show_export_selection()
+    assert len(captured) == 2
+    assert all(not choice.isEnabled() for choice in captured[1].findChildren(QCheckBox))
+    assert len(received) == 1
+
+
 def test_statistics_export_dialog_emits_selected_chart_only_request(monkeypatch):
     result = analyze_descriptive_statistics(pd.DataFrame({"number": [1, 2, 3]}))
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
@@ -283,7 +338,7 @@ def test_report_navigation_uses_full_workspace_and_preserves_details_and_analysi
         dialog.close()
 
 
-@pytest.mark.parametrize("category", [AnalysisCategory.OVERVIEW, AnalysisCategory.REGRESSION])
+@pytest.mark.parametrize("category", [AnalysisCategory.OVERVIEW, AnalysisCategory.CLUSTERING])
 def test_export_button_opens_selection_dialog_with_full_text_tooltips(monkeypatch, category):
     captured: list[AnalysisExportDialog] = []
     monkeypatch.setattr(AnalysisExportDialog, "exec", lambda self: captured.append(self))

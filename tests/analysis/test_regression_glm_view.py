@@ -430,3 +430,41 @@ def test_narrow_and_large_finite_counts_render_without_warnings(fitted):
         canvas.draw()
     finally:
         view.close()
+
+
+@pytest.mark.parametrize(
+    ("model", "heading"),
+    [
+        (RegressionModel.LOGISTIC, "Logistic regression: binary"),
+        (RegressionModel.POISSON, "Poisson regression: count"),
+        (RegressionModel.NEGATIVE_BINOMIAL, "Negative binomial regression: count"),
+    ],
+)
+def test_chart_labels_name_the_model_and_target(model, heading):
+    labels = GeneralizedRegressionView(_result(model)).chart_labels()
+    assert labels.heading == heading
+    assert labels.captions == ()
+
+
+@pytest.mark.parametrize("model", [RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL])
+def test_sampled_count_chart_labels_carry_the_sampling_caption(model):
+    result = _result(model)
+    assert result.plot_data is not None
+    result = dataclasses.replace(result, n_used=6000, plot_data=dataclasses.replace(result.plot_data, sampled=True))
+    captions = GeneralizedRegressionView(result).chart_labels().captions
+    assert len(captions) == 1
+    assert "sample of 120 of 6" in captions[0]
+
+
+@pytest.mark.parametrize(
+    "model", [RegressionModel.LOGISTIC, RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL]
+)
+def test_export_notes_are_plain_text_model_comments(model):
+    notes = GeneralizedRegressionView(_result(model)).export_notes()
+    assert notes
+    assert not any("<b>" in note or "<br>" in note or "&lt;" in note for note in notes)
+
+
+def test_export_notes_are_empty_for_errors():
+    result = dataclasses.replace(_result(), error=GeneralizedRegressionError.NO_PREDICTORS_SELECTED)
+    assert GeneralizedRegressionView(result).export_notes() == ()

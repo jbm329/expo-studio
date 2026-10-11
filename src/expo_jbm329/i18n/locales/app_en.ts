@@ -153,8 +153,8 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Overview, Statistics, applied Hypothesis Tests, and applied Correlation matrix exports are available after analysis. Other export and report actions are previews.</source>
-        <translation>Overview, Statistics, applied Hypothesis Tests, and applied Correlation matrix exports are available after analysis. Other export and report actions are previews.</translation>
+        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, and applied Regression model exports are available after analysis. Other export and report actions are previews.</source>
+        <translation>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, and applied Regression model exports are available after analysis. Other export and report actions are previews.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -491,6 +491,206 @@ Applied columns: {columns}</translation></message>
     <message>
         <source>Not implemented yet. No file will be created.</source>
         <translation>Not implemented yet. No file will be created.</translation>
+    </message>
+    <message>
+        <source>Rate ratio</source>
+        <translation>Rate ratio</translation>
+    </message>
+    <message>
+        <source>Hazard ratio</source>
+        <translation>Hazard ratio</translation>
+    </message>
+    <message>
+        <source>{name}, 95% CI lower</source>
+        <translation>{name}, 95% CI lower</translation>
+    </message>
+    <message>
+        <source>{name}, 95% CI upper</source>
+        <translation>{name}, 95% CI upper</translation>
+    </message>
+    <message>
+        <source>Term</source>
+        <translation>Term</translation>
+    </message>
+    <message>
+        <source>Estimate</source>
+        <translation>Estimate</translation>
+    </message>
+    <message>
+        <source>Std. error</source>
+        <translation>Std. error</translation>
+    </message>
+    <message>
+        <source>t statistic</source>
+        <translation>t statistic</translation>
+    </message>
+    <message>
+        <source>z statistic</source>
+        <translation>z statistic</translation>
+    </message>
+    <message>
+        <source>VIF</source>
+        <translation>VIF</translation>
+    </message>
+    <message>
+        <source>Significant at p &lt; {alpha}</source>
+        <translation>Significant at p &lt; {alpha}</translation>
+    </message>
+    <message>
+        <source>(Intercept)</source>
+        <translation>(Intercept)</translation>
+    </message>
+    <message>
+        <source>Metric</source>
+        <translation>Metric</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation>Value</translation>
+    </message>
+    <message>
+        <source>Rows used</source>
+        <translation>Rows used</translation>
+    </message>
+    <message>
+        <source>Rows dropped because of missing values</source>
+        <translation>Rows dropped because of missing values</translation>
+    </message>
+    <message>
+        <source>R²</source>
+        <translation>R²</translation>
+    </message>
+    <message>
+        <source>Adjusted R²</source>
+        <translation>Adjusted R²</translation>
+    </message>
+    <message>
+        <source>F statistic</source>
+        <translation>F statistic</translation>
+    </message>
+    <message>
+        <source>F-test p-value</source>
+        <translation>F-test p-value</translation>
+    </message>
+    <message>
+        <source>Model degrees of freedom</source>
+        <translation>Model degrees of freedom</translation>
+    </message>
+    <message>
+        <source>Residual degrees of freedom</source>
+        <translation>Residual degrees of freedom</translation>
+    </message>
+    <message>
+        <source>RMSE</source>
+        <translation>RMSE</translation>
+    </message>
+    <message>
+        <source>AIC</source>
+        <translation>AIC</translation>
+    </message>
+    <message>
+        <source>Breusch-Pagan LM</source>
+        <translation>Breusch-Pagan LM</translation>
+    </message>
+    <message>
+        <source>Breusch-Pagan p-value</source>
+        <translation>Breusch-Pagan p-value</translation>
+    </message>
+    <message>
+        <source>Jarque-Bera JB</source>
+        <translation>Jarque-Bera JB</translation>
+    </message>
+    <message>
+        <source>Jarque-Bera p-value</source>
+        <translation>Jarque-Bera p-value</translation>
+    </message>
+    <message>
+        <source>Durbin-Watson</source>
+        <translation>Durbin-Watson</translation>
+    </message>
+    <message>
+        <source>Largest VIF</source>
+        <translation>Largest VIF</translation>
+    </message>
+    <message>
+        <source>Log-likelihood</source>
+        <translation>Log-likelihood</translation>
+    </message>
+    <message>
+        <source>Null-model log-likelihood</source>
+        <translation>Null-model log-likelihood</translation>
+    </message>
+    <message>
+        <source>McFadden pseudo R²</source>
+        <translation>McFadden pseudo R²</translation>
+    </message>
+    <message>
+        <source>AUC (in-sample)</source>
+        <translation>AUC (in-sample)</translation>
+    </message>
+    <message>
+        <source>Pearson dispersion</source>
+        <translation>Pearson dispersion</translation>
+    </message>
+    <message>
+        <source>NB2 alpha</source>
+        <translation>NB2 alpha</translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation>Events</translation>
+    </message>
+    <message>
+        <source>Censored</source>
+        <translation>Censored</translation>
+    </message>
+    <message>
+        <source>Export the coefficients, model metrics and charts of the applied model, not the original dataset.</source>
+        <translation>Export the coefficients, model metrics and charts of the applied model, not the original dataset.</translation>
+    </message>
+    <message>
+        <source>Applied model: {model}
+{role}: {outcome}
+Predictors: {predictors}</source>
+        <translation>Applied model: {model}
+{role}: {outcome}
+Predictors: {predictors}</translation>
+    </message>
+    <message>
+        <source>Duration / event</source>
+        <translation>Duration / event</translation>
+    </message>
+    <message>
+        <source>Target</source>
+        <translation>Target</translation>
+    </message>
+    <message>
+        <source>Linear regression</source>
+        <translation>Linear regression</translation>
+    </message>
+    <message>
+        <source>Logistic regression</source>
+        <translation>Logistic regression</translation>
+    </message>
+    <message>
+        <source>Poisson regression</source>
+        <translation>Poisson regression</translation>
+    </message>
+    <message>
+        <source>Negative binomial regression</source>
+        <translation>Negative binomial regression</translation>
+    </message>
+    <message>
+        <source>Cox proportional-hazards regression</source>
+        <translation>Cox proportional-hazards regression</translation>
+    </message>
+    <message>
+        <source>Apply a regression model successfully before exporting.</source>
+        <translation>Apply a regression model successfully before exporting.</translation>
+    </message>
+    <message>
+        <source>Fit statistics and diagnostics with the displayed model comments.</source>
+        <translation>Fit statistics and diagnostics with the displayed model comments.</translation>
     </message>
 </context><context>
     <name>ReportPage</name>
@@ -5449,7 +5649,7 @@ Hint: {error_hint}</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="389" />
-        <source>* marks coefficients significant at p &amp;lt, {alpha}.</source>
+        <source>* marks coefficients significant at p &amp;lt; {alpha}.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -5516,6 +5716,10 @@ Hint: {error_hint}</source>
         <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="488" />
         <source>Standardized residual</source>
         <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Linear regression: {target}</source>
+        <translation>Linear regression: {target}</translation>
     </message>
 </context><context>
     <name>GeneralizedRegressionView</name>
@@ -5829,6 +6033,10 @@ Hint: {error_hint}</source>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="192" />
         <source>This diagnostic is advisory; the selected model was not changed.</source>
         <translation>This diagnostic is advisory; the selected model was not changed.</translation>
+    </message>
+    <message>
+        <source>{model}: {target}</source>
+        <translation>{model}: {target}</translation>
     </message>
 </context><context>
     <name>RestAuthWidget</name>
@@ -8842,5 +9050,9 @@ all hazard ratios and intervals must be finite and positive.</translation>
     <message><source>Reference for {column}: {level}</source><translation>Reference for {column}: {level}</translation></message>
     <message><source>Efron method was used to handle tied event times.</source><translation>Efron method was used to handle tied event times.</translation></message>
     <message><source>The proportional-hazards assumption was not assessed.</source><translation>The proportional-hazards assumption was not assessed.</translation></message>
+    <message>
+        <source>Cox proportional-hazards regression: {duration} / {event}</source>
+        <translation>Cox proportional-hazards regression: {duration} / {event}</translation>
+    </message>
 </context>
 </TS>

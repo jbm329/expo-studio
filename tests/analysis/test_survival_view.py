@@ -281,3 +281,23 @@ def test_tied_event_and_censor_marks_draw_at_post_event_survival():
         np.testing.assert_array_equal(survival.lines[1].get_ydata(), [0.5])
     finally:
         view.close()
+
+
+def test_chart_labels_name_duration_and_event_with_locale_formatters():
+    labels = SurvivalRegressionView(_result()).chart_labels()
+    assert labels.heading == "Cox proportional-hazards regression: duration / event"
+    assert labels.captions == ()
+    assert labels.model.tick_format(1.234) == fmt_num(1.234, sig=2)
+    assert labels.model.time_format(1.234) == fmt_num(1.234, sig=3)
+    assert labels.model.count_format(1234) == fmt_int(1234)
+
+
+def test_export_notes_are_plain_text_model_comments():
+    notes = SurvivalRegressionView(_result()).export_notes()
+    assert notes
+    assert not any("<b>" in note or "<br>" in note for note in notes)
+
+
+def test_export_notes_are_empty_for_errors():
+    result = dataclasses.replace(_result(), error=SurvivalError.NO_PREDICTORS_SELECTED)
+    assert SurvivalRegressionView(result).export_notes() == ()

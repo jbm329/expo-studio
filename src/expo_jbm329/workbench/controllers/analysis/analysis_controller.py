@@ -90,7 +90,16 @@ from expo_jbm329.services.analysis.paired_comparison import (
 )
 from expo_jbm329.services.analysis.pca import MIN_SELECTED_COLUMNS as PCA_MIN_SELECTED_COLUMNS
 from expo_jbm329.services.analysis.pca import analyze_pca, initialize_pca
+from expo_jbm329.services.analysis.regression import SIGNIFICANCE_LEVEL as REGRESSION_SIGNIFICANCE
 from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression, initialize_regression
+from expo_jbm329.services.analysis.regression_charts import render_regression_charts
+from expo_jbm329.services.analysis.regression_export import (
+    RegressionExportComponent,
+    RegressionExportRequest,
+    RegressionExportSnapshot,
+    RegressionMetric,
+    regression_export_tables,
+)
 from expo_jbm329.services.analysis.regression_glm import (
     GeneralizedRegressionResult,
     GeneralizedTargetColumns,
@@ -198,6 +207,46 @@ _CORRELATION_EXPORT_TRANSLATIONS = (
         "Pairs are ranked by absolute coefficient. Significance is based on "
         "p < {alpha} after Holm adjustment for {count} tests.",
     ),
+)
+_REGRESSION_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Rate ratio"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Hazard ratio"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "{name}, 95% CI lower"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "{name}, 95% CI upper"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Term"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Estimate"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Std. error"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "t statistic"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "z statistic"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "VIF"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Significant at p < {alpha}"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "(Intercept)"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Metric"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Value"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Rows used"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Rows dropped because of missing values"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "R²"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Adjusted R²"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "F statistic"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "F-test p-value"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Model degrees of freedom"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Residual degrees of freedom"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "RMSE"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "AIC"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Breusch-Pagan LM"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Breusch-Pagan p-value"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Jarque-Bera JB"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Jarque-Bera p-value"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Durbin-Watson"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Largest VIF"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Log-likelihood"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Null-model log-likelihood"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "McFadden pseudo R²"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "AUC (in-sample)"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Pearson dispersion"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "NB2 alpha"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Events"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Censored"),
 )
 # Cancelable jobs report real progress and can be stopped by the user, so
 # they get a far longer watchdog before the "taking too long" warning.
@@ -438,10 +487,14 @@ class AnalysisController:
             def _handle_correlation_export(request: object) -> None:
                 self._export_correlation(dialog, exporter, request)
 
+            def _handle_regression_export(request: object) -> None:
+                self._export_regression(dialog, exporter, request)
+
             dialog.overview_export_requested.connect(_handle_export)
             dialog.statistics_export_requested.connect(_handle_statistics_export)
             dialog.hypothesis_export_requested.connect(_handle_hypothesis_export)
             dialog.correlation_export_requested.connect(_handle_correlation_export)
+            dialog.regression_export_requested.connect(_handle_regression_export)
 
         refresh_started = False
 
@@ -918,6 +971,127 @@ class AnalysisController:
                     show_success_dialog=True,
                 )
 
+    def _localized_regression_tables(
+        self,
+        snapshot: RegressionExportSnapshot,
+        components: tuple[RegressionExportComponent, ...],
+    ) -> dict[str, pd.DataFrame]:
+        """Build regression sheets with translated names, headers and metric labels."""
+        context = "AnalysisExportDialog"
+        effect_names = {
+            RegressionModel.LOGISTIC: tr(context, "Odds ratio"),
+            RegressionModel.POISSON: tr(context, "Rate ratio"),
+            RegressionModel.NEGATIVE_BINOMIAL: tr(context, "Rate ratio"),
+        }
+        effect_name = effect_names.get(snapshot.model, "")
+        hazard_name = tr(context, "Hazard ratio")
+        ci_low = tr(context, "{name}, 95% CI lower")
+        ci_high = tr(context, "{name}, 95% CI upper")
+        coefficient_headers = {
+            "term": tr(context, "Term"),
+            "estimate": tr(context, "Estimate"),
+            "std_error": tr(context, "Std. error"),
+            "t_statistic": tr(context, "t statistic"),
+            "z_statistic": tr(context, "z statistic"),
+            "p_value": tr(context, "p-value"),
+            "ci_low": tr(context, "95% CI lower"),
+            "ci_high": tr(context, "95% CI upper"),
+            "vif": tr(context, "VIF"),
+            "effect": effect_name,
+            "effect_ci_low": ci_low.format(name=effect_name),
+            "effect_ci_high": ci_high.format(name=effect_name),
+            "hazard_ratio": hazard_name,
+            "hazard_ratio_ci_low": ci_low.format(name=hazard_name),
+            "hazard_ratio_ci_high": ci_high.format(name=hazard_name),
+            "significant": tr(context, "Significant at p < {alpha}").format(alpha=fmt_num(REGRESSION_SIGNIFICANCE)),
+        }
+        metric_labels = {
+            RegressionMetric.ROWS_USED: tr(context, "Rows used"),
+            RegressionMetric.ROWS_DROPPED: tr(context, "Rows dropped because of missing values"),
+            RegressionMetric.R_SQUARED: tr(context, "R²"),
+            RegressionMetric.ADJUSTED_R_SQUARED: tr(context, "Adjusted R²"),
+            RegressionMetric.F_STATISTIC: tr(context, "F statistic"),
+            RegressionMetric.F_P_VALUE: tr(context, "F-test p-value"),
+            RegressionMetric.DF_MODEL: tr(context, "Model degrees of freedom"),
+            RegressionMetric.DF_RESIDUAL: tr(context, "Residual degrees of freedom"),
+            RegressionMetric.RMSE: tr(context, "RMSE"),
+            RegressionMetric.AIC: tr(context, "AIC"),
+            RegressionMetric.BREUSCH_PAGAN_STATISTIC: tr(context, "Breusch-Pagan LM"),
+            RegressionMetric.BREUSCH_PAGAN_P_VALUE: tr(context, "Breusch-Pagan p-value"),
+            RegressionMetric.JARQUE_BERA_STATISTIC: tr(context, "Jarque-Bera JB"),
+            RegressionMetric.JARQUE_BERA_P_VALUE: tr(context, "Jarque-Bera p-value"),
+            RegressionMetric.DURBIN_WATSON: tr(context, "Durbin-Watson"),
+            RegressionMetric.MAX_VIF: tr(context, "Largest VIF"),
+            RegressionMetric.LOG_LIKELIHOOD: tr(context, "Log-likelihood"),
+            RegressionMetric.NULL_LOG_LIKELIHOOD: tr(context, "Null-model log-likelihood"),
+            RegressionMetric.PSEUDO_R_SQUARED: tr(context, "McFadden pseudo R²"),
+            RegressionMetric.AUC: tr(context, "AUC (in-sample)"),
+            RegressionMetric.DISPERSION_RATIO: tr(context, "Pearson dispersion"),
+            RegressionMetric.NEGATIVE_BINOMIAL_ALPHA: tr(context, "NB2 alpha"),
+            RegressionMetric.EVENTS: tr(context, "Events"),
+            RegressionMetric.CENSORED: tr(context, "Censored"),
+        }
+        sheet_names = {
+            RegressionExportComponent.COEFFICIENTS: tr(context, "Coefficients"),
+            RegressionExportComponent.MODEL_METRICS: tr(context, "Model metrics"),
+        }
+        tables = regression_export_tables(snapshot, components, intercept_label=tr(context, "(Intercept)"))
+        sheets: dict[str, pd.DataFrame] = {}
+        for component, frame in tables.items():
+            if component is RegressionExportComponent.MODEL_METRICS:
+                frame["metric"] = frame["metric"].map(
+                    lambda key: metric_labels[RegressionMetric(key)] if isinstance(key, str) else key
+                )
+                localized = frame.rename(
+                    columns={
+                        "metric": tr(context, "Metric"),
+                        "value": tr(context, "Value"),
+                        "notes": tr(context, "Notes"),
+                    }
+                )
+            else:
+                localized = frame.rename(columns=coefficient_headers)
+            sheets[sheet_names[component]] = localized
+        return sheets
+
+    def _export_regression(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Export the displayed model's localized tables and worker-rendered charts."""
+        if not isinstance(request, RegressionExportRequest) or request.snapshot is not dialog.exportable_regression():
+            return
+        snapshot = request.snapshot
+        charts = RegressionExportComponent.CHARTS in request.components
+        sheets = self._localized_regression_tables(snapshot, request.components)
+
+        def make_images(
+            progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
+        ) -> tuple[ExcelChartImage, ...]:
+            return render_regression_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
+        match request.format:
+            case StatisticsExportFormat.EXCEL:
+                exporter.export_excel(
+                    sheets=sheets,
+                    chart_factory=make_images if charts else None,
+                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.CSV:
+                exporter.export_csv(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.BINARY:
+                exporter.export_data(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+
     # ------------------------------------------------------------------
     # Renderers (GUI thread only)
     # ------------------------------------------------------------------
@@ -1288,12 +1462,19 @@ class AnalysisController:
                 return analyze_generalized_regression(df, model, target, predictors)
 
             def _apply_result(computed: object) -> None:
+                view: RegressionView | SurvivalRegressionView | GeneralizedRegressionView
                 if model is RegressionModel.LINEAR:
-                    dialog.set_content_widget(RegressionView(cast("RegressionResult", computed)))
+                    view = RegressionView(cast("RegressionResult", computed))
                 elif model is RegressionModel.COX:
-                    dialog.set_content_widget(SurvivalRegressionView(cast("SurvivalResult", computed)))
+                    view = SurvivalRegressionView(cast("SurvivalResult", computed))
                 else:
-                    dialog.set_content_widget(GeneralizedRegressionView(cast("GeneralizedRegressionResult", computed)))
+                    view = GeneralizedRegressionView(cast("GeneralizedRegressionResult", computed))
+                dialog.set_content_widget(view)
+                # Register only after display so the snapshot matches what the user sees.
+                if view.result().error is None:
+                    dialog.set_exportable_regression(
+                        RegressionExportSnapshot(view.result(), view.chart_labels(), view.export_notes())
+                    )
 
             self._recompute_content(
                 dialog,

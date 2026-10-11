@@ -22,12 +22,26 @@ from expo_jbm329.services.analysis.correlation import CorrelationMethod, analyze
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportComponent, CorrelationExportSnapshot
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportComponent, HypothesisExportRequest
 from expo_jbm329.services.analysis.overview import OverviewExportFormat, OverviewExportTable, analyze_dataset_overview
+from expo_jbm329.services.analysis.regression_charts import RegressionChartLabels
+from expo_jbm329.services.analysis.regression_export import (
+    RegressionExportComponent,
+    RegressionExportRequest,
+    RegressionExportSnapshot,
+)
 from expo_jbm329.services.analysis.statistics import (
     StatisticsExportFormat,
     StatisticsExportTable,
     analyze_descriptive_statistics,
 )
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
+from tests.analysis.test_regression_export import (
+    LINEAR_LABELS,
+    cox_snapshot,
+    linear_result,
+    linear_snapshot,
+    logistic_snapshot,
+    poisson_snapshot,
+)
 
 
 def _correlation_snapshot() -> CorrelationExportSnapshot:
@@ -346,3 +360,85 @@ def test_long_applied_labels_and_translated_export_layout_fit_without_screen_cap
         if dialog is not None:
             dialog.close()
         app.removeTranslator(translator)
+
+
+@pytest.mark.parametrize(
+    ("factory", "identity"),
+    [
+        (linear_snapshot, "Applied model: Linear regression\nTarget: y\nPredictors: x / g"),
+        (logistic_snapshot, "Applied model: Logistic regression\nTarget: binary\nPredictors: x"),
+        (poisson_snapshot, "Applied model: Poisson regression\nTarget: count\nPredictors: x"),
+        (
+            cox_snapshot,
+            (
+                "Applied model: Cox proportional-hazards regression\nDuration / event: duration / event\n"
+                "Predictors: x / group"
+            ),
+        ),
+    ],
+)
+def test_regression_dialog_names_applied_model_and_defaults_to_coefficients(factory, identity):
+    snapshot = factory()
+    dialog = AnalysisExportDialog(regression=snapshot)
+    choices = dialog.findChildren(QCheckBox)
+    assert [choice.text() for choice in choices] == ["Coefficients", "Model metrics", "Charts"]
+    assert all(choice.isEnabled() for choice in choices)
+    assert [choice.isChecked() for choice in choices] == [True, False, False]
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied model:"))
+    assert label.text() == identity
+    assert label.textFormat() is Qt.TextFormat.PlainText
+    assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
+    assert "model comments" in choices[1].toolTip()
+    request = dialog.export_request()
+    assert isinstance(request, RegressionExportRequest)
+    assert request.snapshot is snapshot
+    assert request.components == (RegressionExportComponent.COEFFICIENTS,)
+    assert request.format is StatisticsExportFormat.EXCEL
+
+
+def test_regression_dialog_limits_single_file_formats_to_one_table_and_keeps_choices():
+    dialog = AnalysisExportDialog(regression=linear_snapshot())
+    choices = dialog.findChildren(QCheckBox)
+    formats = dialog.findChild(QComboBox)
+    for choice in choices:
+        choice.setChecked(True)
+    assert dialog.export_request().components == tuple(RegressionExportComponent)
+    for format_choice in (StatisticsExportFormat.CSV, StatisticsExportFormat.BINARY):
+        formats.setCurrentIndex(formats.findData(format_choice))
+        assert dialog.export_request() is None
+        assert not dialog._export_button.isEnabled()
+        assert all(choice.isChecked() for choice in choices)
+    choices[2].setChecked(False)
+    assert dialog.export_request() is None
+    choices[0].setChecked(False)
+    request = dialog.export_request()
+    assert request.components == (RegressionExportComponent.MODEL_METRICS,)
+    assert request.format is StatisticsExportFormat.BINARY
+    assert dialog._export_button.isEnabled()
+    choices[1].setChecked(False)
+    assert dialog.export_request() is None
+
+
+def test_regression_charts_are_disabled_when_the_model_drew_none():
+    snapshot = RegressionExportSnapshot(replace(linear_result(), plot=None), RegressionChartLabels("h", LINEAR_LABELS))
+    dialog = AnalysisExportDialog(regression=snapshot)
+    choices = dialog.findChildren(QCheckBox)
+    assert not choices[2].isEnabled()
+    assert "empty" in choices[2].toolTip()
+    choices[2].setChecked(True)
+    choices[0].setChecked(False)
+    assert dialog.export_request() is None
+    assert not dialog._export_button.isEnabled()
+
+
+def test_regression_dialog_without_applied_model_never_enables_export():
+    dialog = AnalysisExportDialog(regression_mode=True)
+    choices = dialog.findChildren(QCheckBox)
+    assert [choice.text() for choice in choices] == ["Coefficients", "Model metrics", "Charts"]
+    assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
+    assert all("Apply a regression model" in choice.toolTip() for choice in choices)
+    assert not any(label.text().startswith("Applied model:") for label in dialog.findChildren(QLabel))
+    assert dialog.export_request() is None
+    assert not dialog._export_button.isEnabled()
+    with pytest.raises(ValueError, match="only one"):
+        AnalysisExportDialog(regression_mode=True, correlation_mode=True)

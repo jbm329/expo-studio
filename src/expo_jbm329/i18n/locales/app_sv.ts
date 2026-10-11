@@ -412,6 +412,10 @@
         <source>This diagnostic is advisory; the selected model was not changed.</source>
         <translation>Diagnostiken är vägledande; den valda modellen ändrades inte.</translation>
     </message>
+    <message>
+        <source>{model}: {target}</source>
+        <translation>{model}: {target}</translation>
+    </message>
 </context>
 <context>
     <name>AnalysisController</name>
@@ -469,8 +473,8 @@
         <translation>Lägg till i rapport</translation>
     </message>
     <message>
-        <source>Overview, Statistics, applied Hypothesis Tests, and applied Correlation matrix exports are available after analysis. Other export and report actions are previews.</source>
-        <translation>Export av Översikt, Statistik, tillämpade Hypotestester och tillämpade korrelationsmatriser är tillgänglig efter analys. Övriga export- och rapportåtgärder är förhandsvisningar.</translation>
+        <source>Overview, Statistics, applied Hypothesis Tests, applied Correlation matrix, and applied Regression model exports are available after analysis. Other export and report actions are previews.</source>
+        <translation>Export av Översikt, Statistik, tillämpade Hypotestester, tillämpade korrelationsmatriser och tillämpade regressionsmodeller är tillgänglig efter analys. Övriga export- och rapportåtgärder är förhandsvisningar.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -808,6 +812,206 @@ Tillämpade kolumner: {columns}</translation></message>
     <message>
         <source>Not implemented yet. No file will be created.</source>
         <translation>Ännu inte implementerat. Ingen fil kommer att skapas.</translation>
+    </message>
+    <message>
+        <source>Rate ratio</source>
+        <translation>Incidenskvot</translation>
+    </message>
+    <message>
+        <source>Hazard ratio</source>
+        <translation>Hazardkvot</translation>
+    </message>
+    <message>
+        <source>{name}, 95% CI lower</source>
+        <translation>{name}, 95 % KI nedre</translation>
+    </message>
+    <message>
+        <source>{name}, 95% CI upper</source>
+        <translation>{name}, 95 % KI övre</translation>
+    </message>
+    <message>
+        <source>Term</source>
+        <translation>Term</translation>
+    </message>
+    <message>
+        <source>Estimate</source>
+        <translation>Skattning</translation>
+    </message>
+    <message>
+        <source>Std. error</source>
+        <translation>Standardfel</translation>
+    </message>
+    <message>
+        <source>t statistic</source>
+        <translation>t-statistika</translation>
+    </message>
+    <message>
+        <source>z statistic</source>
+        <translation>z-statistika</translation>
+    </message>
+    <message>
+        <source>VIF</source>
+        <translation>VIF</translation>
+    </message>
+    <message>
+        <source>Significant at p &lt; {alpha}</source>
+        <translation>Signifikant vid p &lt; {alpha}</translation>
+    </message>
+    <message>
+        <source>(Intercept)</source>
+        <translation>(Intercept)</translation>
+    </message>
+    <message>
+        <source>Metric</source>
+        <translation>Mått</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation>Värde</translation>
+    </message>
+    <message>
+        <source>Rows used</source>
+        <translation>Använda rader</translation>
+    </message>
+    <message>
+        <source>Rows dropped because of missing values</source>
+        <translation>Rader borttagna på grund av saknade värden</translation>
+    </message>
+    <message>
+        <source>R²</source>
+        <translation>R²</translation>
+    </message>
+    <message>
+        <source>Adjusted R²</source>
+        <translation>Justerat R²</translation>
+    </message>
+    <message>
+        <source>F statistic</source>
+        <translation>F-statistika</translation>
+    </message>
+    <message>
+        <source>F-test p-value</source>
+        <translation>p-värde för F-test</translation>
+    </message>
+    <message>
+        <source>Model degrees of freedom</source>
+        <translation>Frihetsgrader för modellen</translation>
+    </message>
+    <message>
+        <source>Residual degrees of freedom</source>
+        <translation>Frihetsgrader för residualer</translation>
+    </message>
+    <message>
+        <source>RMSE</source>
+        <translation>RMSE</translation>
+    </message>
+    <message>
+        <source>AIC</source>
+        <translation>AIC</translation>
+    </message>
+    <message>
+        <source>Breusch-Pagan LM</source>
+        <translation>Breusch-Pagan LM</translation>
+    </message>
+    <message>
+        <source>Breusch-Pagan p-value</source>
+        <translation>Breusch-Pagan p-värde</translation>
+    </message>
+    <message>
+        <source>Jarque-Bera JB</source>
+        <translation>Jarque-Bera JB</translation>
+    </message>
+    <message>
+        <source>Jarque-Bera p-value</source>
+        <translation>Jarque-Bera p-värde</translation>
+    </message>
+    <message>
+        <source>Durbin-Watson</source>
+        <translation>Durbin-Watson</translation>
+    </message>
+    <message>
+        <source>Largest VIF</source>
+        <translation>Största VIF</translation>
+    </message>
+    <message>
+        <source>Log-likelihood</source>
+        <translation>Log-likelihood</translation>
+    </message>
+    <message>
+        <source>Null-model log-likelihood</source>
+        <translation>Log-likelihood för nollmodellen</translation>
+    </message>
+    <message>
+        <source>McFadden pseudo R²</source>
+        <translation>McFaddens pseudo-R²</translation>
+    </message>
+    <message>
+        <source>AUC (in-sample)</source>
+        <translation>AUC (anpassningsdata)</translation>
+    </message>
+    <message>
+        <source>Pearson dispersion</source>
+        <translation>Pearsondispersion</translation>
+    </message>
+    <message>
+        <source>NB2 alpha</source>
+        <translation>NB2-alfa</translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation>Händelser</translation>
+    </message>
+    <message>
+        <source>Censored</source>
+        <translation>Censurerade</translation>
+    </message>
+    <message>
+        <source>Export the coefficients, model metrics and charts of the applied model, not the original dataset.</source>
+        <translation>Exportera koefficienter, modellmått och diagram för den tillämpade modellen, inte det ursprungliga datasetet.</translation>
+    </message>
+    <message>
+        <source>Applied model: {model}
+{role}: {outcome}
+Predictors: {predictors}</source>
+        <translation>Tillämpad modell: {model}
+{role}: {outcome}
+Prediktorer: {predictors}</translation>
+    </message>
+    <message>
+        <source>Duration / event</source>
+        <translation>Duration / händelse</translation>
+    </message>
+    <message>
+        <source>Target</source>
+        <translation>Målvariabel</translation>
+    </message>
+    <message>
+        <source>Linear regression</source>
+        <translation>Linjär regression</translation>
+    </message>
+    <message>
+        <source>Logistic regression</source>
+        <translation>Logistisk regression</translation>
+    </message>
+    <message>
+        <source>Poisson regression</source>
+        <translation>Poissonregression</translation>
+    </message>
+    <message>
+        <source>Negative binomial regression</source>
+        <translation>Negativ binomial regression</translation>
+    </message>
+    <message>
+        <source>Cox proportional-hazards regression</source>
+        <translation>Cox-regression med proportionella hazarder</translation>
+    </message>
+    <message>
+        <source>Apply a regression model successfully before exporting.</source>
+        <translation>Tillämpa en regressionsmodell utan fel innan du exporterar.</translation>
+    </message>
+    <message>
+        <source>Fit statistics and diagnostics with the displayed model comments.</source>
+        <translation>Anpassningsmått och diagnostik med de visade modellkommentarerna.</translation>
     </message>
 </context>
 <context>
@@ -5855,7 +6059,7 @@ Tips: {error_hint}</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/regression_view.py" line="389"/>
-        <source>* marks coefficients significant at p &amp;lt, {alpha}.</source>
+        <source>* marks coefficients significant at p &amp;lt; {alpha}.</source>
         <translation>* markerar koefficienter som är statistiskt signifikanta vid p &amp;lt; {alpha}.</translation>
     </message>
     <message>
@@ -5922,6 +6126,10 @@ Tips: {error_hint}</translation>
         <location filename="../../gui/dialogs/analysis/regression_view.py" line="488"/>
         <source>Standardized residual</source>
         <translation>Standardiserad residual</translation>
+    </message>
+    <message>
+        <source>Linear regression: {target}</source>
+        <translation>Linjär regression: {target}</translation>
     </message>
 </context>
 <context>
@@ -8994,5 +9202,9 @@ alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
     <message><source>Reference for {column}: {level}</source><translation>Referens för {column}: {level}</translation></message>
     <message><source>Efron method was used to handle tied event times.</source><translation>Efrons metod användes för att hantera bundna händelsetider.</translation></message>
     <message><source>The proportional-hazards assumption was not assessed.</source><translation>Antagandet om proportionella hazarder har inte utvärderats.</translation></message>
+    <message>
+        <source>Cox proportional-hazards regression: {duration} / {event}</source>
+        <translation>Cox-regression med proportionella hazarder: {duration} / {event}</translation>
+    </message>
 </context>
 </TS>

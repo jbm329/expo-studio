@@ -60,6 +60,11 @@ from expo_jbm329.services.analysis.overview import (
 )
 from expo_jbm329.services.analysis.pca import PCAError
 from expo_jbm329.services.analysis.regression import RegressionError
+from expo_jbm329.services.analysis.regression_export import (
+    RegressionExportComponent,
+    RegressionExportRequest,
+    RegressionExportSnapshot,
+)
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.statistics import (
     StatisticsExportFormat,
@@ -73,6 +78,7 @@ from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis import analysis_controller as analysis_controller_module
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
+from tests.analysis.test_regression_export import cox_snapshot, linear_snapshot, logistic_snapshot
 
 _CONTROLLER_MODULE = "expo_jbm329.workbench.controllers.analysis.analysis_controller"
 
@@ -606,6 +612,7 @@ class DummyAnalysisDialog:
         self.statistics_export_requested = DummySignal()
         self.hypothesis_export_requested = DummySignal()
         self.correlation_export_requested = DummySignal()
+        self.regression_export_requested = DummySignal()
         self.placeholder_calls: list[str] = []
         self.content_widgets: list[QWidget] = []
         self.config_widgets: list[QWidget | None] = []
@@ -619,6 +626,7 @@ class DummyAnalysisDialog:
         self._export_statistics = None
         self._export_hypothesis = None
         self._export_correlation = None
+        self._export_regression = None
         self._correlation_export_revision = 0
         self._analysis_revision = 0
 
@@ -626,6 +634,7 @@ class DummyAnalysisDialog:
         self._export_overview = None
         self._export_statistics = None
         self._export_hypothesis = None
+        self._export_regression = None
         self.invalidate_correlation_export()
         self._analysis_revision += 1
 
@@ -663,6 +672,14 @@ class DummyAnalysisDialog:
     def exportable_correlation(self):
         if self._selected_category is AnalysisCategory.CORRELATION:
             return self._export_correlation
+        return None
+
+    def set_exportable_regression(self, snapshot):
+        self._export_regression = snapshot
+
+    def exportable_regression(self):
+        if self._selected_category is AnalysisCategory.REGRESSION:
+            return self._export_regression
         return None
 
     def show_placeholder(self, text):
@@ -4052,3 +4069,232 @@ def test_time_series_apply_recomputes_and_keeps_config(dialog_factory):
     _simulate_success(call)
     assert _time_series_view(dlg).configuration() == ("when", "other", "W", 3, DecompositionModel.MULTIPLICATIVE)
     assert len(dlg.config_widgets) == configs_before
+
+
+# ----------------------------------------------------------------------
+# Regression export
+# ----------------------------------------------------------------------
+
+
+def test_successful_regression_apply_registers_the_displayed_export_snapshot(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_regression(async_ops, dialog_factory)
+    assert dlg.exportable_regression() is None
+    config = _regression_config(dlg)
+    _check_predictors(config, "x", "g")
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    view = _regression_view(dlg)
+    snapshot = dlg.exportable_regression()
+    assert isinstance(snapshot, RegressionExportSnapshot)
+    assert snapshot.result is view.result()
+    assert snapshot.chart_labels == view.chart_labels()
+    assert snapshot.notes == view.export_notes()
+
+    _check_predictors(config, "x")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_regression() is None
+
+
+@pytest.mark.parametrize("model", [RegressionModel.LOGISTIC, RegressionModel.COX])
+def test_glm_and_cox_applies_register_export_snapshots(dialog_factory, model):
+    rng = np.random.default_rng(31)
+    size = 160
+    x = rng.normal(size=size)
+    event_time = rng.exponential(scale=np.exp(-0.35 * x), size=size)
+    censor_time = rng.exponential(scale=1.6, size=size)
+    df = pd.DataFrame({
+        "duration": np.minimum(event_time, censor_time),
+        "event": (event_time <= censor_time).astype(int),
+        "x": x,
+    })
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    config._model_combo.setCurrentIndex(config._model_combo.findData(model.value))  # noqa: SLF001
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    view = dlg.content_widget()
+    assert isinstance(view, GeneralizedRegressionView | SurvivalRegressionView)
+    snapshot = dlg.exportable_regression()
+    assert snapshot is not None
+    assert snapshot.model is model
+    assert snapshot.result is view.result()
+
+
+def test_failed_regression_fit_never_registers_an_export_snapshot(dialog_factory):
+    df = _regression_df()
+    df["y"] = 1.0
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    assert _regression_view(dlg).result().error is not None
+    assert dlg.exportable_regression() is None
+
+
+def _regression_export_context(snapshot: RegressionExportSnapshot):
+    dialog = AnalysisDialog(parent=None, datasets=[DatasetRef("chosen", "Chosen", 10, 3)], active_tab_id="chosen")
+    dialog.select_category(AnalysisCategory.REGRESSION)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_regression(snapshot)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must not look up a dataset")
+    results.current_df.side_effect = AssertionError("Export must not use the active tab")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, Mock()
+
+
+_REGRESSION_TRANSLATIONS = {
+    "Coefficients": "Koefficienter",
+    "Model metrics": "Modellm?tt",
+    "Charts": "Diagram",
+    "Term": "Term",
+    "Estimate": "Skattning",
+    "(Intercept)": "(Intercept SV)",
+    "Odds ratio": "Oddskvot",
+    "{name}, 95% CI lower": "{name}, 95 % KI nedre",
+    "Metric": "M?tt",
+    "Value": "V?rde",
+    "Notes": "Anteckningar",
+    "Rows used": "Anv?nda rader",
+    "Events": "H?ndelser",
+    "Hazard ratio": "Riskkvot",
+}
+
+
+def test_regression_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch):
+    snapshot = logistic_snapshot()
+    controller, dialog, exporter = _regression_export_context(snapshot)
+    monkeypatch.setattr(
+        analysis_controller_module, "tr", lambda _context, text: _REGRESSION_TRANSLATIONS.get(text, text)
+    )
+    request = RegressionExportRequest(snapshot, tuple(RegressionExportComponent), StatisticsExportFormat.EXCEL)
+
+    controller._export_regression(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.export_excel.call_count == 1
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert list(kwargs["sheets"]) == ["Koefficienter", "Modellm?tt"]
+    coefficients = kwargs["sheets"]["Koefficienter"]
+    assert coefficients.columns[:2].tolist() == ["Term", "Skattning"]
+    assert "Oddskvot" in coefficients.columns
+    assert "Oddskvot, 95 % KI nedre" in coefficients.columns
+    assert coefficients["Term"].iloc[0] == "(Intercept SV)"
+    assert pd.api.types.is_float_dtype(coefficients["Skattning"])
+    metrics = kwargs["sheets"]["Modellm?tt"]
+    assert metrics.columns.tolist() == ["M?tt", "V?rde", "Anteckningar"]
+    assert metrics["M?tt"].iloc[0] == "Anv?nda rader"
+    assert metrics["V?rde"].iloc[0] == snapshot.result.n_used
+    assert metrics["Anteckningar"].iloc[0] == snapshot.notes[0]
+
+    progress: list[int] = []
+    images = kwargs["chart_factory"](progress.append, lambda: False)
+    assert len(images) == 1
+    assert images[0].heading == snapshot.chart_labels.heading
+    assert progress == [100]
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_regression_cox_tables_use_hazard_ratio_headers(monkeypatch):
+    snapshot = cox_snapshot()
+    controller, dialog, exporter = _regression_export_context(snapshot)
+    monkeypatch.setattr(
+        analysis_controller_module, "tr", lambda _context, text: _REGRESSION_TRANSLATIONS.get(text, text)
+    )
+    request = RegressionExportRequest(
+        snapshot,
+        (RegressionExportComponent.MODEL_METRICS, RegressionExportComponent.COEFFICIENTS),
+        StatisticsExportFormat.EXCEL,
+    )
+
+    controller._export_regression(dialog, exporter, request)  # noqa: SLF001
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Modellm?tt", "Koefficienter"]
+    assert kwargs["chart_factory"] is None
+    assert kwargs["chart_sheet_name"] is None
+    assert "Riskkvot" in kwargs["sheets"]["Koefficienter"].columns
+    assert "Riskkvot, 95 % KI nedre" in kwargs["sheets"]["Koefficienter"].columns
+    assert "H?ndelser" in kwargs["sheets"]["Modellm?tt"]["M?tt"].tolist()
+
+
+@pytest.mark.parametrize(
+    ("format_choice", "method_name"),
+    [(StatisticsExportFormat.CSV, "export_csv"), (StatisticsExportFormat.BINARY, "export_data")],
+)
+@pytest.mark.parametrize("component", [RegressionExportComponent.COEFFICIENTS, RegressionExportComponent.MODEL_METRICS])
+def test_regression_single_table_routes_to_non_excel_exporters(format_choice, method_name, component):
+    snapshot = linear_snapshot()
+    controller, dialog, exporter = _regression_export_context(snapshot)
+    request = RegressionExportRequest(snapshot, (component,), format_choice)
+
+    controller._export_regression(dialog, exporter, request)  # noqa: SLF001
+
+    method = getattr(exporter, method_name)
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    first_column = "Term" if component is RegressionExportComponent.COEFFICIENTS else "Metric"
+    assert kwargs["df"].columns[0] == first_column
+    assert exporter.export_excel.call_count == 0
+
+
+@pytest.mark.parametrize("change", ["category", "content", "other_snapshot", "wrong_type"])
+def test_regression_export_rejects_stale_or_foreign_requests(change):
+    snapshot = linear_snapshot()
+    controller, dialog, exporter = _regression_export_context(snapshot)
+    request: object = RegressionExportRequest(
+        snapshot, (RegressionExportComponent.COEFFICIENTS,), StatisticsExportFormat.CSV
+    )
+    if change == "category":
+        dialog.select_category(AnalysisCategory.STATISTICS)
+    elif change == "content":
+        dialog.set_content_widget(QWidget())
+    elif change == "other_snapshot":
+        dialog.set_exportable_regression(linear_snapshot())
+    else:
+        request = object()
+
+    controller._export_regression(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.mock_calls == []
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_regression_export_uses_compiled_swedish_labels() -> None:
+    snapshot = cox_snapshot()
+    controller, dialog, exporter = _regression_export_context(snapshot)
+    translator = QTranslator()
+    catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / "app_sv.qm"
+    assert translator.load(str(catalog))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        controller._export_regression(  # noqa: SLF001
+            dialog,
+            exporter,
+            RegressionExportRequest(snapshot, tuple(RegressionExportComponent), StatisticsExportFormat.EXCEL),
+        )
+    finally:
+        app.removeTranslator(translator)
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    sheets = kwargs["sheets"]
+    assert len(sheets) == 2
+    coefficients, metrics = sheets.values()
+    assert "Hazardkvot" in coefficients.columns
+    assert "Hazardkvot, 95 % KI nedre" in coefficients.columns
+    assert metrics.columns[0] == "Mått"
+    assert "Händelser" in metrics.iloc[:, 0].tolist()
