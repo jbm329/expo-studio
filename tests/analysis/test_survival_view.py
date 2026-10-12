@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6.QtCore import QCoreApplication, Qt
-from PyQt6.QtWidgets import QLabel, QScrollArea, QSplitter, QTableWidget
+from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.survival_view import SurvivalRegressionView
 from expo_jbm329.services.analysis.survival import (
@@ -17,6 +17,7 @@ from expo_jbm329.services.analysis.survival import (
     survival_term_name,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 
 def _result():
@@ -124,36 +125,13 @@ def test_cox_comments_header_gap_stays_fixed_when_section_grows():
 def test_cox_chart_and_comment_sections_scroll_only_when_content_exceeds_space(section_index, small_height):
     view = SurvivalRegressionView(_result())
     panel = view.findChild(QSplitter).widget(section_index)
-    heading = panel.layout().itemAt(0).widget()
-    scroll = panel.layout().itemAt(1).widget()
-    assert isinstance(heading, QLabel)
-    assert isinstance(scroll, QScrollArea)
-    assert scroll.widgetResizable()
-    assert scroll.verticalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
-    assert scroll.horizontalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
+    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=1100)
     if section_index == 1:
-        assert isinstance(scroll.widget(), FigureCanvasQTAgg)
+        assert isinstance(content, FigureCanvasQTAgg)
     else:
-        assert scroll.widget() is view.summary_label()
-    panel.setParent(None)
-    panel.resize(1100, small_height)
-    panel.show()
-    try:
-        QCoreApplication.processEvents()
-        bar = scroll.verticalScrollBar()
-        assert bar.maximum() > 0
-        heading_y = heading.y()
-        bar.setValue(bar.maximum())
-        QCoreApplication.processEvents()
-        assert heading.y() == heading_y
-        panel.resize(1100, 900)
-        QCoreApplication.processEvents()
-        assert bar.maximum() == 0
-        assert scroll.horizontalScrollBar().maximum() == 0
-    finally:
-        panel.close()
-        panel.deleteLater()
-        view.close()
+        assert content is view.summary_label()
+    panel.deleteLater()
+    view.close()
 
 
 @pytest.mark.parametrize("error", list(SurvivalError))

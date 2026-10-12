@@ -3,7 +3,15 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QLabel, QScrollArea, QWidget
+
+
+def _wait_for(predicate, timeout_ms: int = 500) -> None:
+    elapsed = 0
+    while not predicate() and elapsed < timeout_ms:
+        QTest.qWait(10)
+        elapsed += 10
 
 
 def assert_section_scrolls_below_frozen_title(
@@ -39,9 +47,9 @@ def assert_section_scrolls_below_frozen_title(
     panel.resize(width, small_height)
     panel.show()
     try:
-        QCoreApplication.processEvents()
         bar = scroll.verticalScrollBar()
         assert bar is not None
+        _wait_for(lambda: bar.maximum() > 0)
         assert bar.maximum() > 0
         title_geometry = title.geometry()
         bar.setValue(bar.maximum())
@@ -49,7 +57,7 @@ def assert_section_scrolls_below_frozen_title(
         assert title.geometry() == title_geometry
 
         panel.resize(width, large_height)
-        QCoreApplication.processEvents()
+        _wait_for(lambda: bar.maximum() == 0 and panel.height() == large_height)
         assert title.geometry() == title_geometry
         assert bar.maximum() == 0
         horizontal = scroll.horizontalScrollBar()
