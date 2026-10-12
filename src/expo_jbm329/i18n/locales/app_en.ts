@@ -231,6 +231,10 @@
         <source>Time Series</source>
         <translation type="unfinished" />
     </message>
+    <message>
+        <source>Reports({count})</source>
+        <translation type="unfinished" />
+    </message>
 </context><context>
     <name>AnalysisExportDialog</name>
     <message><source>Export computed tables and charts for the applied test, not the original dataset.</source><translation>Export computed tables and charts for the applied test, not the original dataset.</translation></message>
@@ -1033,10 +1037,6 @@ Features: {features}</translation>
         <translation type="unfinished" />
     </message>
     <message>
-        <source>No analyses have been added. Report collection will be available in a later step.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
         <source>Move up</source>
         <translation type="unfinished" />
     </message>
@@ -1045,15 +1045,7 @@ Features: {features}</translation>
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Edit note</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
         <source>Remove</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Layout preview only. Adding analyses and generating files are not implemented yet.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -1061,7 +1053,75 @@ Features: {features}</translation>
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Not implemented yet. This step previews the report layout only.</source>
+        <source>No analyses have been added to this report.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Edit entry</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Edit report entry</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Save changes</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Remove from report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Include in report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Add analyses, arrange the report, then generate an HTML file.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>HTML generation will be available in the next step.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>{rows} rows x {columns} columns - {date}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Overview</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Statistics</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Hypothesis Tests</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Correlation</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Regression</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Outliers</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Clustering</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>PCA</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Time Series</source>
         <translation type="unfinished" />
     </message>
 </context><context>
@@ -1079,11 +1139,115 @@ Features: {features}</translation>
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Layout preview only. Adding an analysis to the report is not implemented yet.</source>
+        <source>Edit report entry</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Not implemented yet. No analysis or note will be saved.</source>
+        <source>Save changes</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Remove from report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Include in report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Summary</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Columns metadata</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Sample (first 100 rows)</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Continuous</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Categorical</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Charts</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Group summary</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Contingency table</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Measurement summary</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Test results</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Strongest correlations</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Matrix plot</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Scatterplots</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Coefficients</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Model metrics</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Column summary</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Column details</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Potential outliers</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Cluster sizes</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Feature loadings</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Explained variance</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Model summary</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Series</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Autocorrelation</source>
         <translation type="unfinished" />
     </message>
 </context><context>

@@ -551,6 +551,10 @@
         <source>Time Series</source>
         <translation>Tidsserie</translation>
     </message>
+    <message>
+        <source>Reports({count})</source>
+        <translation>Rapporter({count})</translation>
+    </message>
 </context>
 <context>
     <name>AnalysisExportDialog</name>
@@ -1355,10 +1359,6 @@ Variabler: {features}</translation>
         <translation>Valda analyser</translation>
     </message>
     <message>
-        <source>No analyses have been added. Report collection will be available in a later step.</source>
-        <translation>Inga analyser har lagts till. Möjligheten att samla analyser i en rapport kommer i ett senare steg.</translation>
-    </message>
-    <message>
         <source>Move up</source>
         <translation>Flytta upp</translation>
     </message>
@@ -1367,24 +1367,84 @@ Variabler: {features}</translation>
         <translation>Flytta ned</translation>
     </message>
     <message>
-        <source>Edit note</source>
-        <translation>Redigera anteckning</translation>
-    </message>
-    <message>
         <source>Remove</source>
         <translation>Ta bort</translation>
-    </message>
-    <message>
-        <source>Layout preview only. Adding analyses and generating files are not implemented yet.</source>
-        <translation>Endast förhandsvisning av layouten. Att lägga till analyser och skapa filer är ännu inte implementerat.</translation>
     </message>
     <message>
         <source>Generate HTML report</source>
         <translation>Skapa HTML-rapport</translation>
     </message>
     <message>
-        <source>Not implemented yet. This step previews the report layout only.</source>
-        <translation>Ännu inte implementerat. Detta steg visar endast rapportens layout.</translation>
+        <source>No analyses have been added to this report.</source>
+        <translation>Inga analyser har lagts till i rapporten.</translation>
+    </message>
+    <message>
+        <source>Edit entry</source>
+        <translation>Redigera analys</translation>
+    </message>
+    <message>
+        <source>Edit report entry</source>
+        <translation>Redigera rapportanalys</translation>
+    </message>
+    <message>
+        <source>Save changes</source>
+        <translation>Spara ändringar</translation>
+    </message>
+    <message>
+        <source>Remove from report</source>
+        <translation>Ta bort från rapporten</translation>
+    </message>
+    <message>
+        <source>Include in report</source>
+        <translation>Ta med i rapporten</translation>
+    </message>
+    <message>
+        <source>Add analyses, arrange the report, then generate an HTML file.</source>
+        <translation>Lägg till analyser och ordna rapporten innan du skapar en HTML-fil.</translation>
+    </message>
+    <message>
+        <source>HTML generation will be available in the next step.</source>
+        <translation>HTML-generering blir tillgänglig i nästa steg.</translation>
+    </message>
+    <message>
+        <source>{rows} rows x {columns} columns - {date}</source>
+        <translation>{rows} rader x {columns} kolumner - {date}</translation>
+    </message>
+    <message>
+        <source>Overview</source>
+        <translation>Översikt</translation>
+    </message>
+    <message>
+        <source>Statistics</source>
+        <translation>Statistik</translation>
+    </message>
+    <message>
+        <source>Hypothesis Tests</source>
+        <translation>Hypotestester</translation>
+    </message>
+    <message>
+        <source>Correlation</source>
+        <translation>Korrelation</translation>
+    </message>
+    <message>
+        <source>Regression</source>
+        <translation>Regression</translation>
+    </message>
+    <message>
+        <source>Outliers</source>
+        <translation>Avvikare</translation>
+    </message>
+    <message>
+        <source>Clustering</source>
+        <translation>Klustring</translation>
+    </message>
+    <message>
+        <source>PCA</source>
+        <translation>PCA</translation>
+    </message>
+    <message>
+        <source>Time Series</source>
+        <translation>Tidsserie</translation>
     </message>
 </context>
 <context>
@@ -1402,12 +1462,116 @@ Variabler: {features}</translation>
         <translation>Anteckningar</translation>
     </message>
     <message>
-        <source>Layout preview only. Adding an analysis to the report is not implemented yet.</source>
-        <translation>Endast förhandsvisning av layouten. Att lägga till en analys i rapporten är ännu inte implementerat.</translation>
+        <source>Edit report entry</source>
+        <translation>Redigera rapportanalys</translation>
     </message>
     <message>
-        <source>Not implemented yet. No analysis or note will be saved.</source>
-        <translation>Ännu inte implementerat. Ingen analys eller anteckning kommer att sparas.</translation>
+        <source>Save changes</source>
+        <translation>Spara ändringar</translation>
+    </message>
+    <message>
+        <source>Remove from report</source>
+        <translation>Ta bort från rapporten</translation>
+    </message>
+    <message>
+        <source>Include in report</source>
+        <translation>Ta med i rapporten</translation>
+    </message>
+    <message>
+        <source>Summary</source>
+        <translation>Sammanfattning</translation>
+    </message>
+    <message>
+        <source>Columns metadata</source>
+        <translation>Kolumnmetadata</translation>
+    </message>
+    <message>
+        <source>Sample (first 100 rows)</source>
+        <translation>Urval (första 100 raderna)</translation>
+    </message>
+    <message>
+        <source>Continuous</source>
+        <translation>Kontinuerliga variabler</translation>
+    </message>
+    <message>
+        <source>Categorical</source>
+        <translation>Kategoriska variabler</translation>
+    </message>
+    <message>
+        <source>Charts</source>
+        <translation>Diagram</translation>
+    </message>
+    <message>
+        <source>Group summary</source>
+        <translation>Gruppsammanfattning</translation>
+    </message>
+    <message>
+        <source>Contingency table</source>
+        <translation>Kontingenstabell</translation>
+    </message>
+    <message>
+        <source>Measurement summary</source>
+        <translation>Mätningssammanfattning</translation>
+    </message>
+    <message>
+        <source>Test results</source>
+        <translation>Testresultat</translation>
+    </message>
+    <message>
+        <source>Strongest correlations</source>
+        <translation>Starkaste korrelationer</translation>
+    </message>
+    <message>
+        <source>Matrix plot</source>
+        <translation>Matrisdiagram</translation>
+    </message>
+    <message>
+        <source>Scatterplots</source>
+        <translation>Spridningsdiagram</translation>
+    </message>
+    <message>
+        <source>Coefficients</source>
+        <translation>Koefficienter</translation>
+    </message>
+    <message>
+        <source>Model metrics</source>
+        <translation>Modellmått</translation>
+    </message>
+    <message>
+        <source>Column summary</source>
+        <translation>Kolumnsammanfattning</translation>
+    </message>
+    <message>
+        <source>Column details</source>
+        <translation>Kolumndetaljer</translation>
+    </message>
+    <message>
+        <source>Potential outliers</source>
+        <translation>Möjliga avvikare</translation>
+    </message>
+    <message>
+        <source>Cluster sizes</source>
+        <translation>Klusterstorlekar</translation>
+    </message>
+    <message>
+        <source>Feature loadings</source>
+        <translation>Variabelladdningar</translation>
+    </message>
+    <message>
+        <source>Explained variance</source>
+        <translation>Förklarad varians</translation>
+    </message>
+    <message>
+        <source>Model summary</source>
+        <translation>Modellsammanfattning</translation>
+    </message>
+    <message>
+        <source>Series</source>
+        <translation>Serie</translation>
+    </message>
+    <message>
+        <source>Autocorrelation</source>
+        <translation>Autokorrelation</translation>
     </message>
 </context>
 <context>

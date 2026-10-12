@@ -369,19 +369,123 @@ def test_export_button_opens_selection_dialog_with_full_text_tooltips(monkeypatc
     assert dialog.report_page().findChild(QListWidget).count() == 0
 
 
-def test_shared_notes_action_opens_preview_for_selected_category(monkeypatch):
+def test_add_to_report_captures_applied_analysis_components_and_note(monkeypatch):
     captured: list[ReportNotesDialog] = []
-    monkeypatch.setattr(ReportNotesDialog, "exec", lambda self: captured.append(self))
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
-    dialog.select_category(AnalysisCategory.REGRESSION)
+
+    def accept_new_entry(report_dialog):
+        report_dialog.findChild(QPlainTextEdit).setPlainText("Useful analysis note")
+        report_dialog.findChildren(QCheckBox)[0].setChecked(False)
+        captured.append(report_dialog)
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(
+        ReportNotesDialog,
+        "exec",
+        accept_new_entry,
+    )
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(AnalysisCategory.PCA)
+    snapshot = pca_snapshot()
+    dialog.set_exportable_pca(snapshot)
     add = next(button for button in dialog.findChildren(QPushButton) if button.text() == "Add to report")
 
     add.click()
 
     assert len(captured) == 1
     assert captured[0].parent() is dialog
-    assert any(label.text() == "Regression" for label in captured[0].findChildren(QLabel))
+    assert any(label.text() == "PCA" for label in captured[0].findChildren(QLabel))
+    assert len(captured[0].selected_components()) == 3
+    assert len(dialog.report_document().entries) == 1
+    entry = dialog.report_document().entries[0]
+    assert entry.note == "Useful analysis note"
+    assert entry.selected_components == tuple(component.key for component in entry.components[1:])
+    assert dialog._category_list.item(dialog._category_list.count() - 1).text() == "Reports(1)"  # noqa: SLF001
+    assert next(button for button in dialog.findChildren(QPushButton) if button.text() == "Remove from report")
+
+    dialog.select_reports()
+    edit_dialogs: list[ReportNotesDialog] = []
+
+    def accept_edit(report_dialog):
+        assert report_dialog.notes() == "Useful analysis note"
+        assert report_dialog.selected_components() == entry.selected_components
+        report_dialog.findChild(QPlainTextEdit).setPlainText("Revised note")
+        edit_dialogs.append(report_dialog)
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", accept_edit)
+    dialog.report_page()._edit_button.click()  # noqa: SLF001
+    assert len(edit_dialogs) == 1
+    assert len(dialog.report_document().entries) == 1
+    assert dialog.report_document().entries[0].note == "Revised note"
+    dialog.report_page()._remove_button.click()  # noqa: SLF001
+    assert dialog.report_document().entries == ()
     assert dialog._category_list.item(dialog._category_list.count() - 1).text() == "Reports(0)"  # noqa: SLF001
+
+
+@pytest.mark.parametrize(
+    ("category", "factory_name"),
+    [
+        (AnalysisCategory.OVERVIEW, "overview"),
+        (AnalysisCategory.STATISTICS, "statistics"),
+        (AnalysisCategory.HYPOTHESIS_TESTS, "hypothesis"),
+        (AnalysisCategory.CORRELATION, "correlation"),
+        (AnalysisCategory.REGRESSION, "regression"),
+        (AnalysisCategory.OUTLIERS, "outliers"),
+        (AnalysisCategory.CLUSTERING, "clustering"),
+        (AnalysisCategory.PCA, "pca"),
+        (AnalysisCategory.TIME_SERIES, "time_series"),
+    ],
+)
+def test_add_to_report_uses_current_applied_snapshot_for_each_analysis(monkeypatch, category, factory_name):
+    from expo_jbm329.services.analysis.overview import analyze_dataset_overview
+    from tests.analysis.test_clustering_export import clustering_snapshot
+    from tests.analysis.test_correlation_export import _snapshot as correlation_snapshot
+    from tests.analysis.test_hypothesis_export import group_snapshot
+    from tests.analysis.test_outliers_export import univariate_snapshot
+    from tests.analysis.test_regression_export import linear_snapshot
+    from tests.analysis.test_timeseries_export import time_series_snapshot
+
+    frame = pd.DataFrame({"value": [1.0, 2.0, 3.0], "other": [4.0, 5.0, 6.0]})
+    snapshots = {
+        "overview": analyze_dataset_overview(frame),
+        "statistics": analyze_descriptive_statistics(frame),
+        "hypothesis": group_snapshot(),
+        "correlation": correlation_snapshot(),
+        "regression": linear_snapshot(),
+        "outliers": univariate_snapshot(),
+        "clustering": clustering_snapshot(),
+        "pca": pca_snapshot(),
+        "time_series": time_series_snapshot(),
+    }
+    setters = {
+        "overview": "set_exportable_overview",
+        "statistics": "set_exportable_statistics",
+        "hypothesis": "set_exportable_hypothesis",
+        "correlation": "set_exportable_correlation",
+        "regression": "set_exportable_regression",
+        "outliers": "set_exportable_outliers",
+        "clustering": "set_exportable_clustering",
+        "pca": "set_exportable_pca",
+        "time_series": "set_exportable_time_series",
+    }
+    captured: list[ReportNotesDialog] = []
+    monkeypatch.setattr(
+        ReportNotesDialog,
+        "exec",
+        lambda self: (captured.append(self), QDialog.DialogCode.Accepted)[1],
+    )
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog.select_category(category)
+    snapshot = snapshots[factory_name]
+    getattr(dialog, setters[factory_name])(snapshot)
+
+    next(button for button in dialog.findChildren(QPushButton) if button.text() == "Add to report").click()
+
+    assert len(dialog.report_document().entries) == 1
+    entry = dialog.report_document().entries[0]
+    assert entry.category is category
+    assert entry.snapshot is snapshot
+    assert len(captured[0].selected_components()) == len(entry.components)
 
 
 def test_export_and_add_to_report_use_matching_push_button_sizes():

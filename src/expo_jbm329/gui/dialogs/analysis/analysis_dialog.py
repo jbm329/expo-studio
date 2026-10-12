@@ -49,6 +49,12 @@ from expo_jbm329.services.analysis.outliers_export import OutlierExportRequest, 
 from expo_jbm329.services.analysis.overview import OverviewExportRequest
 from expo_jbm329.services.analysis.pca_export import PCAExportRequest, PCAExportSnapshot
 from expo_jbm329.services.analysis.regression_export import RegressionExportRequest, RegressionExportSnapshot
+from expo_jbm329.services.analysis.report import (
+    ReportDocument,
+    ReportEntry,
+    ReportSnapshot,
+    create_report_entry,
+)
 from expo_jbm329.services.analysis.statistics import StatisticsExportRequest
 from expo_jbm329.services.analysis.timeseries_export import TimeSeriesExportRequest, TimeSeriesExportSnapshot
 
@@ -156,6 +162,7 @@ class AnalysisDialog(QDialog):
         self.setWindowFlag(Qt.WindowType.WindowMinimizeButtonHint, False)
 
         self._datasets = datasets
+        self._report_document = ReportDocument()
         self._export_overview: DatasetOverviewResult | None = None
         self._export_tab_id: str | None = None
         self._export_statistics: DescriptiveStatisticsResult | None = None
@@ -207,6 +214,9 @@ class AnalysisDialog(QDialog):
         self._workspace_stack = QStackedWidget(self)
         self._workspace_stack.addWidget(self._analysis_workspace)
         self._report_page = ReportPage(self)
+        self._report_page.edit_requested.connect(self._edit_report_entry)
+        self._report_page.remove_requested.connect(self._remove_report_entry)
+        self._report_page.move_requested.connect(self._move_report_entry)
         self._workspace_stack.addWidget(self._report_page)
 
         root.addLayout(top_row)
@@ -291,7 +301,7 @@ class AnalysisDialog(QDialog):
         export_button.clicked.connect(self._show_export_selection)
         actions.addWidget(export_button)
         add_button = QPushButton(self.tr("Add to report"), bar)
-        add_button.clicked.connect(self._show_notes_preview)
+        add_button.clicked.connect(self._toggle_report_entry)
         button_width = max(export_button.sizeHint().width(), add_button.sizeHint().width())
         export_button.setMinimumWidth(button_width)
         add_button.setMinimumWidth(button_width)
@@ -303,6 +313,7 @@ class AnalysisDialog(QDialog):
         explanation.setWordWrap(True)
         actions.addWidget(explanation, 1)
         self._action_bar = bar
+        self._report_action_button = add_button
         return bar
 
     def _show_export_selection(self) -> None:
@@ -374,6 +385,7 @@ class AnalysisDialog(QDialog):
         self._time_series_export_tab_id = None
         self.invalidate_correlation_export()
         self._analysis_revision += 1
+        self._update_report_action()
 
     def invalidate_correlation_export(self) -> None:
         """Invalidate only the displayed Correlation snapshot and advance its request generation."""
@@ -393,6 +405,7 @@ class AnalysisDialog(QDialog):
         """Register only the successful applied result already displayed."""
         self._export_hypothesis = snapshot
         self._hypothesis_export_tab_id = self.selected_dataset_tab_id()
+        self._update_report_action()
 
     def exportable_hypothesis(self) -> HypothesisExportSnapshot | None:
         """Return the displayed applied snapshot, independent of pending edits."""
@@ -407,6 +420,7 @@ class AnalysisDialog(QDialog):
         """Register a successful matrix snapshot after its view is displayed."""
         self._export_correlation = snapshot
         self._correlation_export_tab_id = self.selected_dataset_tab_id()
+        self._update_report_action()
 
     def exportable_correlation(self) -> CorrelationExportSnapshot | None:
         """Return the current applied matrix independent of pending configuration edits."""
@@ -421,6 +435,7 @@ class AnalysisDialog(QDialog):
         """Register a successful fitted model after its view is displayed."""
         self._export_regression = snapshot
         self._regression_export_tab_id = self.selected_dataset_tab_id()
+        self._update_report_action()
 
     def exportable_regression(self) -> RegressionExportSnapshot | None:
         """Return the displayed applied model, independent of pending configuration edits."""
@@ -435,6 +450,7 @@ class AnalysisDialog(QDialog):
         """Register a successful screening after its view is displayed or its column detail changes."""
         self._export_outliers = snapshot
         self._outliers_export_tab_id = self.selected_dataset_tab_id()
+        self._update_report_action()
 
     def exportable_outliers(self) -> OutlierExportSnapshot | None:
         """Return the displayed applied screening, independent of pending configuration edits."""
@@ -449,6 +465,7 @@ class AnalysisDialog(QDialog):
         """Register a successful clustering fit after its view is displayed."""
         self._export_clustering = snapshot
         self._clustering_export_tab_id = self.selected_dataset_tab_id()
+        self._update_report_action()
 
     def exportable_clustering(self) -> ClusteringExportSnapshot | None:
         """Return the displayed applied clustering, independent of pending configuration edits."""
@@ -463,6 +480,7 @@ class AnalysisDialog(QDialog):
         """Register a successful PCA fit after its view is displayed."""
         self._export_pca = snapshot
         self._pca_export_tab_id = self.selected_dataset_tab_id()
+        self._update_report_action()
 
     def exportable_pca(self) -> PCAExportSnapshot | None:
         """Return the displayed applied PCA, independent of pending configuration edits."""
@@ -477,6 +495,7 @@ class AnalysisDialog(QDialog):
         """Register a successful time-series analysis after its view is displayed."""
         self._export_time_series = snapshot
         self._time_series_export_tab_id = self.selected_dataset_tab_id()
+        self._update_report_action()
 
     def exportable_time_series(self) -> TimeSeriesExportSnapshot | None:
         """Return the displayed applied time series, independent of pending configuration edits."""
@@ -491,6 +510,7 @@ class AnalysisDialog(QDialog):
         """Register the successful result currently displayed by the controller."""
         self._export_overview = result
         self._export_tab_id = self.selected_dataset_tab_id()
+        self._update_report_action()
 
     def exportable_overview(self) -> DatasetOverviewResult | None:
         """Return only the successful snapshot for the current Overview."""
@@ -505,6 +525,7 @@ class AnalysisDialog(QDialog):
         """Register the successful Statistics snapshot currently displayed."""
         self._export_statistics = result
         self._statistics_export_tab_id = self.selected_dataset_tab_id()
+        self._update_report_action()
 
     def exportable_statistics(self) -> DescriptiveStatisticsResult | None:
         """Return only the successful snapshot for the current Statistics analysis."""
@@ -515,12 +536,103 @@ class AnalysisDialog(QDialog):
             return self._export_statistics
         return None
 
-    def _show_notes_preview(self) -> None:
-        """Open the planned notes workflow for the selected analysis."""
+    def report_document(self) -> ReportDocument:
+        """Return the report draft owned by this analysis window."""
+        return self._report_document
+
+    def _current_report_candidate(self) -> ReportEntry | None:
         category = self.selected_category()
-        if category is None:
+        dataset_id = self.selected_dataset_tab_id()
+        if category is None or dataset_id is None:
+            return None
+        dataset = next((item for item in self._datasets if item.tab_id == dataset_id), None)
+        if dataset is None:
+            return None
+        snapshot: ReportSnapshot | None
+        match category:
+            case AnalysisCategory.OVERVIEW:
+                snapshot = self.exportable_overview()
+            case AnalysisCategory.STATISTICS:
+                snapshot = self.exportable_statistics()
+            case AnalysisCategory.HYPOTHESIS_TESTS:
+                snapshot = self.exportable_hypothesis()
+            case AnalysisCategory.CORRELATION:
+                snapshot = self.exportable_correlation()
+            case AnalysisCategory.REGRESSION:
+                snapshot = self.exportable_regression()
+            case AnalysisCategory.OUTLIERS:
+                snapshot = self.exportable_outliers()
+            case AnalysisCategory.CLUSTERING:
+                snapshot = self.exportable_clustering()
+            case AnalysisCategory.PCA:
+                snapshot = self.exportable_pca()
+            case AnalysisCategory.TIME_SERIES:
+                snapshot = self.exportable_time_series()
+        if snapshot is None:
+            return None
+        return create_report_entry(category, dataset, snapshot)
+
+    def _update_report_action(self) -> None:
+        candidate = self._current_report_candidate()
+        entry = None if candidate is None else self._report_document.get(candidate.entry_id)
+        if candidate is None:
+            self._report_action_button.setText(self.tr("Add to report"))
+            self._report_action_button.setEnabled(False)
+        elif entry is None:
+            self._report_action_button.setText(self.tr("Add to report"))
+            self._report_action_button.setEnabled(True)
+        else:
+            self._report_action_button.setText(self.tr("Remove from report"))
+            self._report_action_button.setEnabled(True)
+
+    def _toggle_report_entry(self) -> None:
+        candidate = self._current_report_candidate()
+        if candidate is None:
             return
-        ReportNotesDialog(self._category_label(category), self).exec()
+        existing = self._report_document.get(candidate.entry_id)
+        if existing is not None:
+            self._remove_report_entry(existing.entry_id)
+            return
+        self._edit_report_candidate(candidate, existing=None)
+
+    def _edit_report_entry(self, entry_id: str) -> None:
+        entry = self._report_document.get(entry_id)
+        if entry is not None:
+            self._edit_report_candidate(entry, existing=entry)
+
+    def _edit_report_candidate(self, candidate: ReportEntry, *, existing: ReportEntry | None) -> None:
+        components = candidate.components
+        dialog = ReportNotesDialog(
+            self._category_label(candidate.category),
+            self,
+            components=components,
+            selected_components=None if existing is None else existing.selected_components,
+            note="" if existing is None else existing.note,
+            existing=existing is not None,
+        )
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        if dialog.remove_requested():
+            self._remove_report_entry(candidate.entry_id)
+            return
+        updated = candidate.with_selection(dialog.selected_components(), dialog.notes())
+        self._report_document.upsert(updated)
+        self._refresh_report_page()
+
+    def _remove_report_entry(self, entry_id: str) -> None:
+        if self._report_document.remove(entry_id):
+            self._refresh_report_page()
+
+    def _move_report_entry(self, entry_id: str, offset: int) -> None:
+        if self._report_document.move(entry_id, offset):
+            self._refresh_report_page(selected_entry_id=entry_id)
+
+    def _refresh_report_page(self, *, selected_entry_id: str | None = None) -> None:
+        self._report_page.set_entries(self._report_document.entries)
+        if selected_entry_id is not None:
+            self._report_page.select_entry(selected_entry_id)
+        self._report_item.setText(self.tr("Reports({count})").format(count=len(self._report_document.entries)))
+        self._update_report_action()
 
     def _build_content_panel(self) -> QWidget:
         """Build the right-hand content/placeholder panel."""
