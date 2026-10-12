@@ -66,6 +66,7 @@ from expo_jbm329.services.analysis.pca_export import PCAExportComponent, PCAExpo
 from expo_jbm329.services.analysis.regression import initialize_regression
 from expo_jbm329.services.analysis.regression_export import RegressionExportComponent, RegressionExportRequest
 from expo_jbm329.services.analysis.regression_glm import RegressionModel, initialize_generalized_targets
+from expo_jbm329.services.analysis.report import ReportDocument, create_report_entry
 from expo_jbm329.services.analysis.statistics import (
     StatisticsExportFormat,
     StatisticsExportRequest,
@@ -95,6 +96,44 @@ def test_dialog_selects_active_tab_on_init():
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t2")
 
     assert dialog.selected_dataset_tab_id() == "t2"
+
+
+def test_report_preview_captures_title_description_order_and_immutable_entry_selections():
+    datasets = _make_datasets()
+    dialog = AnalysisDialog(parent=None, datasets=datasets, active_tab_id="t1")
+    first = create_report_entry(AnalysisCategory.PCA, datasets[0], pca_snapshot())
+    second = create_report_entry(AnalysisCategory.PCA, datasets[1], pca_snapshot())
+    draft = dialog.report_document()
+    draft.upsert(second)
+    draft.upsert(first)
+    page = dialog.report_page()
+    page.set_entries(draft.entries)
+    page.findChild(QLineEdit).setText("<b>Report title</b>")
+    page.findChild(QPlainTextEdit).setPlainText("Purpose\nSecond line")
+    requests: list[ReportDocument] = []
+    dialog.report_preview_requested.connect(requests.append)
+
+    page._preview_button.click()
+    captured = requests[0]
+    draft.remove(second.entry_id)
+    draft.upsert(first.with_selection(("model_summary",), "New note"))
+    page.findChild(QLineEdit).setText("Changed title")
+
+    assert captured is not draft
+    assert captured.title == "<b>Report title</b>"
+    assert captured.description == "Purpose\nSecond line"
+    assert captured.entries == (second, first)
+    assert captured.entries[1].note == ""
+
+
+def test_empty_report_does_not_emit_preview_request():
+    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    requests: list[ReportDocument] = []
+    dialog.report_preview_requested.connect(requests.append)
+
+    dialog._request_report_preview()
+
+    assert requests == []
 
 
 def test_dialog_has_maximize_and_close_buttons_but_no_minimize_button():
@@ -1465,6 +1504,6 @@ def test_footer_explains_that_exports_follow_an_applied_analysis():
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
 
     assert any(
-        label.text() == "Exports are available after an analysis has been applied. Add to report is a preview."
+        label.text() == "Export and Add to report are available after an analysis has been applied."
         for label in dialog.findChildren(QLabel)
     )

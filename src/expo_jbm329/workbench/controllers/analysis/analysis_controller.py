@@ -41,14 +41,11 @@ from expo_jbm329.services.analysis.clustering_export import (
     ClusteringExportComponent,
     ClusteringExportRequest,
     ClusteringExportSnapshot,
-    ClusteringMetric,
-    clustering_export_tables,
 )
 from expo_jbm329.services.analysis.correlation import (
     MAX_SELECTED_COLUMNS,
     MIN_OBSERVATIONS,
     MIN_SELECTED_COLUMNS,
-    SIGNIFICANCE_LEVEL,
     CorrelationMethod,
     analyze_correlation_matrix,
     analyze_correlation_pair,
@@ -60,7 +57,6 @@ from expo_jbm329.services.analysis.correlation_export import (
     CorrelationExportComponent,
     CorrelationExportRequest,
     CorrelationExportSnapshot,
-    correlation_export_table,
 )
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison, initialize_group_comparison
 from expo_jbm329.services.analysis.hypothesis_charts import HypothesisChartLabels, render_hypothesis_charts
@@ -69,7 +65,6 @@ from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportRequest,
     HypothesisExportSnapshot,
     HypothesisResult,
-    hypothesis_export_tables,
 )
 from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierMethod,
@@ -77,7 +72,6 @@ from expo_jbm329.services.analysis.multivariate_outliers import (
     initialize_multivariate_outliers,
 )
 from expo_jbm329.services.analysis.outliers import (
-    ColumnOutlierStatus,
     OutlierMethod,
     analyze_outlier_column,
     analyze_outlier_summary,
@@ -93,17 +87,13 @@ from expo_jbm329.services.analysis.outliers_export import (
     OutlierExportComponent,
     OutlierExportRequest,
     OutlierExportSnapshot,
-    OutlierMetric,
     UnivariateOutlierExportSnapshot,
-    outlier_export_tables,
 )
 from expo_jbm329.services.analysis.overview import (
     DatasetOverviewResult,
     OverviewExportFormat,
     OverviewExportRequest,
-    OverviewExportTable,
     analyze_dataset_overview,
-    overview_export_tables,
 )
 from expo_jbm329.services.analysis.paired_comparison import (
     PairedComparisonResult,
@@ -117,18 +107,13 @@ from expo_jbm329.services.analysis.pca_export import (
     PCAExportComponent,
     PCAExportRequest,
     PCAExportSnapshot,
-    PCAMetric,
-    pca_export_tables,
 )
-from expo_jbm329.services.analysis.regression import SIGNIFICANCE_LEVEL as REGRESSION_SIGNIFICANCE
 from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression, initialize_regression
 from expo_jbm329.services.analysis.regression_charts import render_regression_charts
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
     RegressionExportRequest,
     RegressionExportSnapshot,
-    RegressionMetric,
-    regression_export_tables,
 )
 from expo_jbm329.services.analysis.regression_glm import (
     GeneralizedRegressionResult,
@@ -137,13 +122,18 @@ from expo_jbm329.services.analysis.regression_glm import (
     analyze_generalized_regression,
     initialize_generalized_targets,
 )
+from expo_jbm329.services.analysis.report import (
+    ReportDocument,
+    capture_report_labels,
+    localized_report_tables,
+    render_report_html,
+)
 from expo_jbm329.services.analysis.statistics import (
     DescriptiveStatisticsResult,
     StatisticsExportFormat,
     StatisticsExportRequest,
     StatisticsExportTable,
     analyze_descriptive_statistics,
-    statistics_export_tables,
 )
 from expo_jbm329.services.analysis.statistics_charts import StatisticsChartLabels, render_statistics_charts
 from expo_jbm329.services.analysis.survival import (
@@ -158,9 +148,8 @@ from expo_jbm329.services.analysis.timeseries_export import (
     TimeSeriesExportComponent,
     TimeSeriesExportRequest,
     TimeSeriesExportSnapshot,
-    TimeSeriesMetric,
-    time_series_export_tables,
 )
+from expo_jbm329.services.excel_chart import ExcelChartCancelledError
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num
 from expo_jbm329.utils.i18n_utils import tr
 
@@ -478,6 +467,10 @@ class AnalysisController:
     TR_ANALYSIS_OPERATION = QT_TR_NOOP("generate analysis")
     TR_ANALYSIS_CANCELLED = QT_TR_NOOP("Analysis cancelled.")
     TR_APPLY_PROMPT = QT_TR_NOOP("Choose settings and click Apply.")
+    TR_REPORT_PREPARING = QT_TR_NOOP("Preparing report preview...")
+    TR_REPORT_OPERATION = QT_TR_NOOP("prepare report preview")
+    TR_REPORT_CANCELLED = QT_TR_NOOP("Report preview cancelled.")
+    TR_REPORT_ERROR = QT_TR_NOOP("Could not prepare report preview.\n{error}")
 
     @staticmethod
     def _tr(text: str) -> str:
@@ -567,6 +560,7 @@ class AnalysisController:
             datasets=datasets,
             active_tab_id=self._results.active_tab_id(),
         )
+        self._connect_report_preview(dialog)
         if self._export_controller is not None:
             exporter = self._export_controller
 
@@ -640,6 +634,108 @@ class AnalysisController:
 
         dialog.exec()
 
+    def _connect_report_preview(self, dialog: AnalysisDialog) -> None:
+        """Wire report snapshots to background preparation and a GUI-thread preview."""
+        generation = 0
+        closed = False
+        busy = False
+
+        def mark_closed(*_: object) -> None:
+            nonlocal closed
+            closed = True
+
+        dialog.finished.connect(mark_closed)
+        dialog.destroyed.connect(mark_closed)
+
+        def prepare(request: object) -> None:
+            nonlocal generation, busy
+            if closed or busy:
+                return
+            if not isinstance(request, ReportDocument) or not request.entries:
+                self._logger.warning("Rejected empty or invalid report preview request.")
+                return
+            generation += 1
+            revision = generation
+            busy = True
+            page = dialog.report_page()
+            page.set_preview_status("")
+            page.set_preview_busy(True)
+            labels = capture_report_labels(tr, fmt_num, fmt_int)
+
+            def stale() -> bool:
+                return closed or generation != revision
+
+            def work(
+                *,
+                progress_cb: Callable[[int], None] | None = None,
+                cancel_cb: Callable[[], bool] | None = None,
+                **_: object,
+            ) -> str | None:
+                def cancelled() -> bool:
+                    return closed or (cancel_cb is not None and cancel_cb())
+
+                try:
+                    return render_report_html(
+                        request,
+                        labels=labels,
+                        progress_cb=progress_cb,
+                        cancel_cb=cancelled,
+                    )
+                except ExcelChartCancelledError:
+                    self._logger.info("Report preview preparation cancelled.")
+                    return None
+
+            def on_result(html: str | None) -> None:
+                if stale():
+                    return
+                if html is None:
+                    page.set_preview_status(self._tr(self.TR_REPORT_CANCELLED))
+                else:
+                    self._show_report_preview(dialog, html)
+
+            def on_error(error: str) -> None:
+                if not stale():
+                    page.set_preview_status(self._tr(self.TR_REPORT_ERROR).format(error=error))
+
+            def on_finished() -> None:
+                nonlocal busy
+                if not stale():
+                    busy = False
+                    page.set_preview_busy(False)
+
+            try:
+                self._async_ops.run_target_overlay_operation(
+                    target=page,
+                    runner="pool",
+                    work=work,
+                    on_result=on_result,
+                    on_error=on_error,
+                    on_finished=on_finished,
+                    busy_message=self._tr(self.TR_REPORT_PREPARING),
+                    scope=f"analysis:report-preview:{id(dialog)}",
+                    operation_name=self._tr(self.TR_REPORT_OPERATION),
+                    stale_check=stale,
+                    corr_id=uuid.uuid4().hex,
+                    cancelable=True,
+                    indeterminate=False,
+                    timeout_ms=self._overlay_timeout_ms(cancelable=True),
+                )
+            except (RuntimeError, ValueError) as error:
+                self._logger.exception("Failed to start report preview preparation.")
+                on_error(str(error))
+                on_finished()
+
+        dialog.report_preview_requested.connect(prepare)
+
+    @staticmethod
+    def _show_report_preview(dialog: AnalysisDialog, html: str) -> None:
+        """Display prepared HTML without initializing a browser in worker threads."""
+        from expo_jbm329.gui.dialogs.analysis.report_preview_dialog import ReportPreviewDialog
+
+        preview = ReportPreviewDialog(html, parent=dialog)
+        dialog.finished.connect(preview.close)
+        preview.show()
+
     def _export_overview(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
         """Validate snapshot identity and route owned frames to existing exporters."""
         if not isinstance(request, OverviewExportRequest) or request.result is not dialog.exportable_overview():
@@ -649,38 +745,19 @@ class AnalysisController:
         if request.format is not OverviewExportFormat.EXCEL and len(request.tables) != 1:
             return
         try:
-            sheets = overview_export_tables(request.result, request.tables)
-            localized_sheets = {}
-            for name, frame in sheets.items():
-                table = OverviewExportTable(name)
-                sheet_name = tr("OverviewView", table.value)
-                if sheet_name in localized_sheets:
-                    self._logger.warning("Rejected Overview export because translated sheet names are not unique.")
-                    return
-                match table:
-                    case OverviewExportTable.COLUMNS:
-                        headers = {
-                            "column": tr("OverviewView", "Column"),
-                            "type": tr("OverviewView", "Type"),
-                            "storage_type": tr("OverviewView", "Storage type"),
-                            "missing_count": tr("OverviewView", "Missing"),
-                            "missing_fraction": tr("OverviewView", "Missing fraction"),
-                            "unique_count": tr("OverviewView", "Unique"),
-                        }
-                    case OverviewExportTable.SUMMARY:
-                        headers = {
-                            "section": tr("OverviewView", "Section"),
-                            "metric": tr("OverviewView", "Metric"),
-                            "column": tr("OverviewView", "Column"),
-                            "count": tr("OverviewView", "Count"),
-                            "fraction": tr("OverviewView", "Fraction"),
-                        }
-                    case OverviewExportTable.SAMPLE:
-                        headers = {}
-                localized_sheets[sheet_name] = frame.rename(columns=headers)
-            sheets = localized_sheets
+            sheets = localized_report_tables(
+                AnalysisCategory.OVERVIEW,
+                request.result,
+                tuple(table.value for table in request.tables),
+                translate=tr,
+                number_format=fmt_num,
+                count_format=fmt_int,
+            )
         except (TypeError, ValueError):
             self._logger.warning("Rejected unavailable Overview export selection.")
+            return
+        if len(sheets) != len(request.tables):
+            self._logger.warning("Rejected Overview export because translated sheet names are not unique.")
             return
         # Frames belong to this export only and remain stable for the async job.
         match request.format:
@@ -722,56 +799,20 @@ class AnalysisController:
             return
 
         try:
-            tables = statistics_export_tables(request.result, table_choices) if table_choices else {}
-            localized_sheets: dict[str, pd.DataFrame] = {}
-            for name, frame in tables.items():
-                table = StatisticsExportTable(name)
-                sheet_name = tr("StatisticsView", table.value)
-                if sheet_name.casefold() in {existing.casefold() for existing in localized_sheets}:
-                    self._logger.warning("Rejected Statistics export because translated sheet names are not unique.")
-                    return
-                match table:
-                    case StatisticsExportTable.CONTINUOUS:
-                        headers = {
-                            "column": "Column",
-                            "count": "Count",
-                            "missing_count": "Missing count",
-                            "missing_fraction": "Missing fraction",
-                            "mean": "Mean",
-                            "median": "Median",
-                            "std": "Std Dev",
-                            "variance": "Variance",
-                            "minimum": "Min",
-                            "maximum": "Max",
-                            "range": "Range",
-                            "q1": "Q1",
-                            "q3": "Q3",
-                            "iqr": "IQR",
-                            "skewness": "Skewness",
-                            "kurtosis": "Kurtosis",
-                            "mean_sd_summary": "Mean ± SD",
-                            "median_iqr_summary": "Median (Q1 to Q3)",
-                            "shapiro_statistic": "Shapiro-Wilk W",
-                            "shapiro_p_value": "Shapiro-Wilk p-value",
-                            "recommended_summary_method": "Recommended summary",
-                        }
-                    case StatisticsExportTable.CATEGORICAL:
-                        headers = {
-                            "column": "Column",
-                            "value": "Category",
-                            "count": "Count",
-                            "fraction": "Fraction (non-missing)",
-                            "valid_count": "Valid count",
-                            "missing_count": "Missing count",
-                            "missing_fraction": "Missing fraction",
-                        }
-                    case _:
-                        return
-                localized_sheets[sheet_name] = frame.rename(
-                    columns={key: tr("StatisticsView", value) for key, value in headers.items()}
-                )
+            localized_sheets = localized_report_tables(
+                AnalysisCategory.STATISTICS,
+                request.result,
+                tuple(table.value for table in table_choices),
+                translate=tr,
+                number_format=fmt_num,
+                count_format=fmt_int,
+            )
         except (TypeError, ValueError):
             self._logger.warning("Rejected unavailable Statistics export selection.")
+            return
+        sheet_names = tuple(localized_sheets)
+        if len(sheet_names) != len({name.casefold() for name in sheet_names}):
+            self._logger.warning("Rejected Statistics export because translated sheet names are not unique.")
             return
 
         match request.format:
@@ -840,86 +881,22 @@ class AnalysisController:
             HypothesisTest.PAIRED_COMPARISON: "PairedComparisonView",
         }
         context = contexts[snapshot.test]
-        summaries = {
-            HypothesisTest.GROUP_COMPARISON: "Group summary",
-            HypothesisTest.CHI_SQUARE: "Contingency table",
-            HypothesisTest.PAIRED_COMPARISON: "Measurement summary",
+        hypothesis_keys = {
+            HypothesisExportComponent.SUMMARY: "summary",
+            HypothesisExportComponent.TEST_RESULTS: "test_results",
         }
-        common_headers = {
-            "group": "Group",
-            "count": "Count",
-            "mean": "Mean",
-            "median": "Median",
-            "std": "Std Dev",
-            "shapiro_statistic": "Shapiro W",
-            "shapiro_p_value": "Shapiro p",
-            "normal": "Normal?",
-            "measurement": "Measurement",
-            "q1": "Q1",
-            "q3": "Q3",
-        }
-        result_headers = {
-            "test": "Test",
-            "statistic": "Test statistic",
-            "p_value": "p-value",
-            "degrees_of_freedom": "Degrees of freedom",
-            "mean_difference": "Mean difference",
-            "ci_low": "95% CI lower",
-            "ci_high": "95% CI upper",
-            "effect_name": "Effect size",
-            "effect_size": "Effect value",
-            "numeric_column": "Numeric column",
-            "grouping_column": "Grouping column",
-            "row_column": "Row column",
-            "column_column": "Column column",
-            "sample_count": "Sample count",
-            "yates_correction": "Yates' continuity correction",
-            "cochran_violated": "Cochran's rule violated",
-            "low_expected_fraction": "Fraction of expected counts below 5",
-            "min_expected": "Minimum expected count",
-            "odds_ratio": "Odds ratio",
-            "total_subjects": "Total subjects",
-            "excluded_subjects": "Excluded subjects",
-            "notes": "Notes",
-        }
-        tables = hypothesis_export_tables(snapshot, table_choices) if table_choices else {}
-        sheets: dict[str, pd.DataFrame] = {}
-        for component, source_frame in tables.items():
-            frame = source_frame
-            name = summaries[snapshot.test] if component is HypothesisExportComponent.SUMMARY else "Test results"
-            sheet_name = tr(context, name)
-            if sheet_name.casefold() in {existing.casefold() for existing in sheets}:
-                message = "Translated hypothesis sheet names must be unique."
-                raise ValueError(message)
-            if component is HypothesisExportComponent.SUMMARY:
-                if snapshot.test is HypothesisTest.CHI_SQUARE:
-                    frame.columns = [
-                        snapshot.columns[0],
-                        *cast("ChiSquareResult", snapshot.result).column_labels,
-                        tr(context, "Total"),
-                    ]
-                    frame.iloc[-1, 0] = tr(context, "Total")
-                else:
-                    frame = frame.rename(columns={key: tr(context, text) for key, text in common_headers.items()})
-            else:
-                frame = frame.rename(
-                    columns={
-                        key: tr("AnalysisExportDialog", result_headers.get(key, "Measurement"))
-                        + (f" {key.removeprefix('measurement_')}" if key.startswith("measurement_") else "")
-                        for key in frame.columns
-                    }
-                )
-                # Test names are presentation labels; applied dataset column names stay literal.
-                test_header = tr("AnalysisExportDialog", "Test")
-                effect_header = tr("AnalysisExportDialog", "Effect size")
-                frame[test_header] = frame[test_header].map(
-                    lambda value: tr("AnalysisExportDialog", value) if isinstance(value, str) else value
-                )
-                if effect_header in frame:
-                    frame[effect_header] = frame[effect_header].map(
-                        lambda value: tr("AnalysisExportDialog", value) if isinstance(value, str) else value
-                    )
-            sheets[sheet_name] = frame
+        sheets = localized_report_tables(
+            AnalysisCategory.HYPOTHESIS_TESTS,
+            snapshot,
+            tuple(hypothesis_keys[item] for item in table_choices),
+            translate=tr,
+            number_format=fmt_num,
+            count_format=fmt_int,
+        )
+        sheet_names = tuple(sheets)
+        if len(sheet_names) != len({name.casefold() for name in sheet_names}):
+            message = "Translated hypothesis sheet names must be unique."
+            raise ValueError(message)
         if request.format is StatisticsExportFormat.EXCEL:
             labels = HypothesisChartLabels(
                 distribution=tr(
@@ -969,43 +946,15 @@ class AnalysisController:
 
     def _localized_correlation_table(self, snapshot: CorrelationExportSnapshot) -> pd.DataFrame:
         """Localize the ranked table while preserving numeric statistics."""
-        frame = correlation_export_table(snapshot, (CorrelationExportComponent.STRONGEST_CORRELATIONS,))
-
-        methods = {
-            CorrelationMethod.PEARSON: tr("CorrelationView", "Pearson"),
-            CorrelationMethod.SPEARMAN: tr("CorrelationView", "Spearman"),
-            CorrelationMethod.KENDALL: tr("CorrelationView", "Kendall's tau-b"),
-        }
-        strengths = {
-            "negligible": tr("CorrelationView", "Negligible"),
-            "weak": tr("CorrelationView", "Weak"),
-            "moderate": tr("CorrelationView", "Moderate"),
-            "strong": tr("CorrelationView", "Strong"),
-        }
-        frame["strength"] = frame["strength"].map(
-            lambda value: strengths[value] if isinstance(value, str) else tr("CorrelationView", "N/A")
+        sheets = localized_report_tables(
+            AnalysisCategory.CORRELATION,
+            snapshot,
+            (CorrelationExportComponent.STRONGEST_CORRELATIONS.value,),
+            translate=tr,
+            number_format=fmt_num,
+            count_format=fmt_int,
         )
-        frame["method"] = frame["method"].map(lambda value: methods[CorrelationMethod(str(value))])
-        frame["ranking_explanation"] = tr(
-            "AnalysisExportDialog",
-            "Pairs are ranked by absolute coefficient. Significance is based on "
-            "p < {alpha} after Holm adjustment for {count} tests.",
-        ).format(alpha=fmt_num(SIGNIFICANCE_LEVEL), count=fmt_int(len(snapshot.matrix.pairs)))
-        headers = {
-            "variable_1": tr("CorrelationView", "Variable 1"),
-            "variable_2": tr("CorrelationView", "Variable 2"),
-            "coefficient": tr("AnalysisExportDialog", "Coefficient"),
-            "ci_low": tr("AnalysisExportDialog", "95% CI lower"),
-            "ci_high": tr("AnalysisExportDialog", "95% CI upper"),
-            "p_value": tr("CorrelationView", "p"),
-            "adjusted_p_value": tr("CorrelationView", "Holm p"),
-            "n": tr("CorrelationView", "n"),
-            "strength": tr("CorrelationView", "Strength"),
-            "significant": tr("AnalysisExportDialog", "Significant after Holm"),
-            "method": tr("AnalysisExportDialog", "Correlation method"),
-            "ranking_explanation": tr("AnalysisExportDialog", "Ranking and Holm explanation"),
-        }
-        return frame.rename(columns=headers)
+        return next(iter(sheets.values()))
 
     def _export_correlation(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
         """Export applied tables and worker-owned chart images from one snapshot."""
@@ -1091,82 +1040,14 @@ class AnalysisController:
         components: tuple[RegressionExportComponent, ...],
     ) -> dict[str, pd.DataFrame]:
         """Build regression sheets with translated names, headers and metric labels."""
-        context = "AnalysisExportDialog"
-        effect_names = {
-            RegressionModel.LOGISTIC: tr(context, "Odds ratio"),
-            RegressionModel.POISSON: tr(context, "Rate ratio"),
-            RegressionModel.NEGATIVE_BINOMIAL: tr(context, "Rate ratio"),
-        }
-        effect_name = effect_names.get(snapshot.model, "")
-        hazard_name = tr(context, "Hazard ratio")
-        ci_low = tr(context, "{name}, 95% CI lower")
-        ci_high = tr(context, "{name}, 95% CI upper")
-        coefficient_headers = {
-            "term": tr(context, "Term"),
-            "estimate": tr(context, "Estimate"),
-            "std_error": tr(context, "Std. error"),
-            "t_statistic": tr(context, "t statistic"),
-            "z_statistic": tr(context, "z statistic"),
-            "p_value": tr(context, "p-value"),
-            "ci_low": tr(context, "95% CI lower"),
-            "ci_high": tr(context, "95% CI upper"),
-            "vif": tr(context, "VIF"),
-            "effect": effect_name,
-            "effect_ci_low": ci_low.format(name=effect_name),
-            "effect_ci_high": ci_high.format(name=effect_name),
-            "hazard_ratio": hazard_name,
-            "hazard_ratio_ci_low": ci_low.format(name=hazard_name),
-            "hazard_ratio_ci_high": ci_high.format(name=hazard_name),
-            "significant": tr(context, "Significant at p < {alpha}").format(alpha=fmt_num(REGRESSION_SIGNIFICANCE)),
-        }
-        metric_labels = {
-            RegressionMetric.ROWS_USED: tr(context, "Rows used"),
-            RegressionMetric.ROWS_DROPPED: tr(context, "Rows dropped because of missing values"),
-            RegressionMetric.R_SQUARED: tr(context, "R²"),
-            RegressionMetric.ADJUSTED_R_SQUARED: tr(context, "Adjusted R²"),
-            RegressionMetric.F_STATISTIC: tr(context, "F statistic"),
-            RegressionMetric.F_P_VALUE: tr(context, "F-test p-value"),
-            RegressionMetric.DF_MODEL: tr(context, "Model degrees of freedom"),
-            RegressionMetric.DF_RESIDUAL: tr(context, "Residual degrees of freedom"),
-            RegressionMetric.RMSE: tr(context, "RMSE"),
-            RegressionMetric.AIC: tr(context, "AIC"),
-            RegressionMetric.BREUSCH_PAGAN_STATISTIC: tr(context, "Breusch-Pagan LM"),
-            RegressionMetric.BREUSCH_PAGAN_P_VALUE: tr(context, "Breusch-Pagan p-value"),
-            RegressionMetric.JARQUE_BERA_STATISTIC: tr(context, "Jarque-Bera JB"),
-            RegressionMetric.JARQUE_BERA_P_VALUE: tr(context, "Jarque-Bera p-value"),
-            RegressionMetric.DURBIN_WATSON: tr(context, "Durbin-Watson"),
-            RegressionMetric.MAX_VIF: tr(context, "Largest VIF"),
-            RegressionMetric.LOG_LIKELIHOOD: tr(context, "Log-likelihood"),
-            RegressionMetric.NULL_LOG_LIKELIHOOD: tr(context, "Null-model log-likelihood"),
-            RegressionMetric.PSEUDO_R_SQUARED: tr(context, "McFadden pseudo R²"),
-            RegressionMetric.AUC: tr(context, "AUC (in-sample)"),
-            RegressionMetric.DISPERSION_RATIO: tr(context, "Pearson dispersion"),
-            RegressionMetric.NEGATIVE_BINOMIAL_ALPHA: tr(context, "NB2 alpha"),
-            RegressionMetric.EVENTS: tr(context, "Events"),
-            RegressionMetric.CENSORED: tr(context, "Censored"),
-        }
-        sheet_names = {
-            RegressionExportComponent.COEFFICIENTS: tr(context, "Coefficients"),
-            RegressionExportComponent.MODEL_METRICS: tr(context, "Model metrics"),
-        }
-        tables = regression_export_tables(snapshot, components, intercept_label=tr(context, "(Intercept)"))
-        sheets: dict[str, pd.DataFrame] = {}
-        for component, frame in tables.items():
-            if component is RegressionExportComponent.MODEL_METRICS:
-                frame["metric"] = frame["metric"].map(
-                    lambda key: metric_labels[RegressionMetric(key)] if isinstance(key, str) else key
-                )
-                localized = frame.rename(
-                    columns={
-                        "metric": tr(context, "Metric"),
-                        "value": tr(context, "Value"),
-                        "notes": tr(context, "Notes"),
-                    }
-                )
-            else:
-                localized = frame.rename(columns=coefficient_headers)
-            sheets[sheet_names[component]] = localized
-        return sheets
+        return localized_report_tables(
+            AnalysisCategory.REGRESSION,
+            snapshot,
+            tuple(component.value for component in components),
+            translate=tr,
+            number_format=fmt_num,
+            count_format=fmt_int,
+        )
 
     def _export_regression(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
         """Export the displayed model's localized tables and worker-rendered charts."""
@@ -1224,84 +1105,14 @@ class AnalysisController:
         components: tuple[OutlierExportComponent, ...],
     ) -> dict[str, pd.DataFrame]:
         """Build outlier sheets with translated names, headers, statuses and metric labels."""
-        context = "AnalysisExportDialog"
-        view_context = "OutliersView"
-        metric_labels = {
-            OutlierMetric.THRESHOLD: tr(context, "Threshold"),
-            OutlierMetric.VALUES: tr(context, "Values"),
-            OutlierMetric.MISSING: tr(context, "Missing"),
-            OutlierMetric.OUTLIERS: tr(context, "Potential outliers"),
-            OutlierMetric.OUTLIER_SHARE: tr(context, "Potential outlier share"),
-            OutlierMetric.LOW: tr(context, "Low potential outliers"),
-            OutlierMetric.HIGH: tr(context, "High potential outliers"),
-            OutlierMetric.LOWER_FENCE: tr(context, "Lower fence"),
-            OutlierMetric.UPPER_FENCE: tr(context, "Upper fence"),
-            OutlierMetric.Q1: tr(context, "Q1"),
-            OutlierMetric.Q3: tr(context, "Q3"),
-            OutlierMetric.IQR: tr(context, "IQR"),
-            OutlierMetric.MEAN: tr(context, "Mean"),
-            OutlierMetric.STD: tr(context, "Standard deviation"),
-            OutlierMetric.MEDIAN: tr(context, "Median"),
-            OutlierMetric.MAD: tr(context, "MAD"),
-            OutlierMetric.FEATURES: tr(context, "Features"),
-            OutlierMetric.CONTAMINATION: tr(context, "Expected outlier fraction"),
-            OutlierMetric.LOF_NEIGHBORS: tr(context, "LOF neighbors"),
-            OutlierMetric.TOTAL_ROWS: tr(context, "Total rows"),
-            OutlierMetric.ROWS_USED: tr(context, "Rows used"),
-            OutlierMetric.ROWS_DROPPED: tr(context, "Rows dropped because of missing or infinite values"),
-            OutlierMetric.INLIERS: tr(context, "Inliers"),
-        }
-        status_labels = {
-            ColumnOutlierStatus.NOT_ENOUGH_OBSERVATIONS: tr(view_context, "Too few values"),
-            ColumnOutlierStatus.ZERO_SPREAD: tr(view_context, "No spread"),
-        }
-        summary_headers = {
-            "column": tr(view_context, "Column"),
-            "values": tr(view_context, "Values"),
-            "missing": tr(view_context, "Missing"),
-            "outliers": tr(view_context, "Outliers"),
-            "share": tr(view_context, "Share"),
-            "low": tr(view_context, "Low"),
-            "high": tr(view_context, "High"),
-            "lower_fence": tr(view_context, "Lower fence"),
-            "upper_fence": tr(view_context, "Upper fence"),
-            "status": tr(context, "Status"),
-            "notes": tr(context, "Notes"),
-        }
-        metric_headers = {
-            "metric": tr(context, "Metric"),
-            "value": tr(context, "Value"),
-            "notes": tr(context, "Notes"),
-        }
-        sheet_names = {
-            OutlierExportComponent.COLUMN_SUMMARY: tr(context, "Column summary"),
-            OutlierExportComponent.COLUMN_DETAILS: tr(context, "Column details"),
-            OutlierExportComponent.MODEL_SUMMARY: tr(context, "Model summary"),
-            OutlierExportComponent.POTENTIAL_OUTLIERS: tr(context, "Potential outliers"),
-        }
-        tables = outlier_export_tables(
+        return localized_report_tables(
+            AnalysisCategory.OUTLIERS,
             snapshot,
-            components,
-            row_label=tr(view_context, "Row"),
-            score_label=self._outlier_score_label(snapshot),
+            tuple(component.value for component in components),
+            translate=tr,
+            number_format=fmt_num,
+            count_format=fmt_int,
         )
-        sheets: dict[str, pd.DataFrame] = {}
-        for component, frame in tables.items():
-            match component:
-                case OutlierExportComponent.COLUMN_SUMMARY:
-                    frame["status"] = frame["status"].map(
-                        lambda key: status_labels[ColumnOutlierStatus(key)] if isinstance(key, str) else key
-                    )
-                    localized = frame.rename(columns=summary_headers)
-                case OutlierExportComponent.COLUMN_DETAILS | OutlierExportComponent.MODEL_SUMMARY:
-                    frame["metric"] = frame["metric"].map(
-                        lambda key: metric_labels[OutlierMetric(key)] if isinstance(key, str) else key
-                    )
-                    localized = frame.rename(columns=metric_headers)
-                case _:
-                    localized = frame
-            sheets[sheet_names[component]] = localized
-        return sheets
 
     def _export_outliers(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
         """Export the displayed screening's localized tables and worker-rendered charts."""
@@ -1352,39 +1163,14 @@ class AnalysisController:
 
         Cluster names are already translated by the snapshot's chart labels.
         """
-        context = "AnalysisExportDialog"
-        metric_labels = {
-            ClusteringMetric.FEATURES: tr(context, "Features"),
-            ClusteringMetric.CLUSTER_COUNT: tr(context, "Number of clusters"),
-            ClusteringMetric.DBSCAN_EPSILON: tr(context, "Neighborhood radius (eps)"),
-            ClusteringMetric.DBSCAN_MIN_SAMPLES: tr(context, "Minimum samples"),
-            ClusteringMetric.TOTAL_ROWS: tr(context, "Total rows"),
-            ClusteringMetric.ROWS_USED: tr(context, "Rows used"),
-            ClusteringMetric.ROWS_DROPPED: tr(context, "Rows dropped because of missing or infinite values"),
-            ClusteringMetric.CLUSTERS_FOUND: tr(context, "Clusters found"),
-            ClusteringMetric.NOISE_ROWS: tr(context, "Noise rows"),
-            ClusteringMetric.SILHOUETTE: tr(context, "Silhouette score"),
-        }
-        headers = {
-            "cluster": tr(context, "Cluster"),
-            "rows": tr(context, "Rows"),
-            "share": tr(context, "Share"),
-            "metric": tr(context, "Metric"),
-            "value": tr(context, "Value"),
-            "notes": tr(context, "Notes"),
-        }
-        sheet_names = {
-            ClusteringExportComponent.CLUSTER_SIZES: tr(context, "Cluster sizes"),
-            ClusteringExportComponent.MODEL_SUMMARY: tr(context, "Model summary"),
-        }
-        sheets: dict[str, pd.DataFrame] = {}
-        for component, frame in clustering_export_tables(snapshot, components).items():
-            if component is ClusteringExportComponent.MODEL_SUMMARY:
-                frame["metric"] = frame["metric"].map(
-                    lambda key: metric_labels[ClusteringMetric(key)] if isinstance(key, str) else key
-                )
-            sheets[sheet_names[component]] = frame.rename(columns=headers)
-        return sheets
+        return localized_report_tables(
+            AnalysisCategory.CLUSTERING,
+            snapshot,
+            tuple(component.value for component in components),
+            translate=tr,
+            number_format=fmt_num,
+            count_format=fmt_int,
+        )
 
     def _export_clustering(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
         """Export the displayed clustering's localized tables and worker-rendered projection."""
@@ -1433,36 +1219,14 @@ class AnalysisController:
 
         Component names such as ``PC1`` are displayed untranslated, as in the view.
         """
-        context = "AnalysisExportDialog"
-        metric_labels = {
-            PCAMetric.FEATURES: tr(context, "Features"),
-            PCAMetric.TOTAL_ROWS: tr(context, "Total rows"),
-            PCAMetric.ROWS_USED: tr(context, "Rows used"),
-            PCAMetric.ROWS_DROPPED: tr(context, "Rows dropped because of missing or infinite values"),
-        }
-        headers = {
-            "feature": tr(context, "Feature"),
-            "component": tr(context, "Component"),
-            "variance": tr(context, "Variance"),
-            "share": tr(context, "Share"),
-            "cumulative_share": tr(context, "Cumulative share"),
-            "metric": tr(context, "Metric"),
-            "value": tr(context, "Value"),
-            "notes": tr(context, "Notes"),
-        }
-        sheet_names = {
-            PCAExportComponent.FEATURE_LOADINGS: tr(context, "Feature loadings"),
-            PCAExportComponent.EXPLAINED_VARIANCE: tr(context, "Explained variance"),
-            PCAExportComponent.MODEL_SUMMARY: tr(context, "Model summary"),
-        }
-        sheets: dict[str, pd.DataFrame] = {}
-        for component, frame in pca_export_tables(snapshot, components).items():
-            if component is PCAExportComponent.MODEL_SUMMARY:
-                frame["metric"] = frame["metric"].map(
-                    lambda key: metric_labels[PCAMetric(key)] if isinstance(key, str) else key
-                )
-            sheets[sheet_names[component]] = frame.rename(columns=headers)
-        return sheets
+        return localized_report_tables(
+            AnalysisCategory.PCA,
+            snapshot,
+            tuple(component.value for component in components),
+            translate=tr,
+            number_format=fmt_num,
+            count_format=fmt_int,
+        )
 
     def _export_pca(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
         """Export the displayed PCA's localized tables and worker-rendered plots."""
@@ -1508,38 +1272,14 @@ class AnalysisController:
         snapshot: TimeSeriesExportSnapshot,
     ) -> dict[str, pd.DataFrame]:
         """Build time-series sheets with translated names, headers and metric labels."""
-        context = "AnalysisExportDialog"
-        metric_labels = {
-            TimeSeriesMetric.SOURCE_ROWS: tr(context, "Source rows"),
-            TimeSeriesMetric.INVALID_ROWS: tr(context, "Invalid rows dropped"),
-            TimeSeriesMetric.DUPLICATE_ROWS: tr(context, "Duplicate rows averaged"),
-            TimeSeriesMetric.TIME_POINTS: tr(context, "Time points"),
-            TimeSeriesMetric.SEASONAL_PERIOD: tr(context, "Seasonal period"),
-        }
-        headers = {
-            "timestamp": tr(context, "Timestamp"),
-            "value": tr(context, "Value"),
-            "trend": tr(context, "Trend"),
-            "seasonal": tr(context, "Seasonal"),
-            "residual": tr(context, "Residual"),
-            "lag": tr(context, "Lag"),
-            "autocorrelation": tr(context, "Autocorrelation"),
-            "metric": tr(context, "Metric"),
-            "notes": tr(context, "Notes"),
-        }
-        sheet_names = {
-            TimeSeriesExportComponent.SERIES: tr(context, "Series"),
-            TimeSeriesExportComponent.AUTOCORRELATION: tr(context, "Autocorrelation"),
-            TimeSeriesExportComponent.MODEL_SUMMARY: tr(context, "Model summary"),
-        }
-        sheets: dict[str, pd.DataFrame] = {}
-        for component, frame in time_series_export_tables(snapshot, components).items():
-            if component is TimeSeriesExportComponent.MODEL_SUMMARY:
-                frame["metric"] = frame["metric"].map(
-                    lambda key: metric_labels[TimeSeriesMetric(key)] if isinstance(key, str) else key
-                )
-            sheets[sheet_names[component]] = frame.rename(columns=headers)
-        return sheets
+        return localized_report_tables(
+            AnalysisCategory.TIME_SERIES,
+            snapshot,
+            tuple(component.value for component in components),
+            translate=tr,
+            number_format=fmt_num,
+            count_format=fmt_int,
+        )
 
     def _export_time_series(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
         """Export the displayed time series' localized tables and worker-rendered plots."""

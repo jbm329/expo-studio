@@ -31,6 +31,7 @@ class ReportPage(QWidget):
     edit_requested = pyqtSignal(str)
     remove_requested = pyqtSignal(str)
     move_requested = pyqtSignal(str, int)
+    preview_requested = pyqtSignal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Build the empty report page.
@@ -39,6 +40,7 @@ class ReportPage(QWidget):
             parent: Optional parent widget.
         """
         super().__init__(parent)
+        self._preview_busy = False
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(12)
@@ -87,11 +89,20 @@ class ReportPage(QWidget):
         explanation = QLabel(self.tr("Add analyses, arrange the report, then generate an HTML file."), self)
         explanation.setWordWrap(True)
         footer.addWidget(explanation, 1)
+        self._preview_button = QPushButton(self.tr("Preview"), self)
+        self._preview_button.setEnabled(False)
+        self._preview_button.clicked.connect(self.preview_requested)
+        footer.addWidget(self._preview_button)
         self._generate_button = QPushButton(self.tr("Generate HTML report"), self)
         self._generate_button.setEnabled(False)
         self._generate_button.setToolTip(self.tr("HTML generation will be available in the next step."))
         footer.addWidget(self._generate_button)
         layout.addLayout(footer)
+        self._preview_status = QLabel(self)
+        self._preview_status.setWordWrap(True)
+        self._preview_status.setTextFormat(Qt.TextFormat.PlainText)
+        self._preview_status.hide()
+        layout.addWidget(self._preview_status)
         self._update_controls()
 
     def report_title(self) -> str:
@@ -101,6 +112,16 @@ class ReportPage(QWidget):
     def report_description(self) -> str:
         """Return the plain-text description entered in this window."""
         return self._description.toPlainText()
+
+    def set_preview_busy(self, busy: bool) -> None:
+        """Prevent duplicate preview requests while report content is prepared."""
+        self._preview_busy = busy
+        self._update_controls()
+
+    def set_preview_status(self, text: str) -> None:
+        """Present a preview failure or cancellation as literal text."""
+        self._preview_status.setText(text)
+        self._preview_status.setVisible(bool(text))
 
     def set_entries(self, entries: tuple[ReportEntry, ...]) -> None:
         """Replace the visible ordered entry list."""
@@ -178,3 +199,4 @@ class ReportPage(QWidget):
         self._move_down_button.setEnabled(has_selection and row < self._entries.count() - 1)
         self._edit_button.setEnabled(has_selection)
         self._remove_button.setEnabled(has_selection)
+        self._preview_button.setEnabled(self._entries.count() > 0 and not self._preview_busy)

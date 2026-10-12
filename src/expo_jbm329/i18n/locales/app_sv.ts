@@ -420,6 +420,24 @@
 <context>
     <name>AnalysisController</name>
     <message>
+        <source>Preparing report preview...</source>
+        <translation>Förbereder rapportförhandsvisning...</translation>
+    </message>
+    <message>
+        <source>prepare report preview</source>
+        <translation>förbereda rapportförhandsvisning</translation>
+    </message>
+    <message>
+        <source>Report preview cancelled.</source>
+        <translation>Rapportförhandsvisningen avbröts.</translation>
+    </message>
+    <message>
+        <source>Could not prepare report preview.
+{error}</source>
+        <translation>Kunde inte förbereda rapportförhandsvisningen.
+{error}</translation>
+    </message>
+    <message>
         <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="217"/>
         <source>This analysis is not implemented yet.</source>
         <translation>Denna analys är inte implementerad än.</translation>
@@ -473,8 +491,8 @@
         <translation>Lägg till i rapport</translation>
     </message>
     <message>
-        <source>Exports are available after an analysis has been applied. Add to report is a preview.</source>
-        <translation>Export är tillgänglig efter att en analys har tillämpats. Lägg till i rapport är en förhandsvisning.</translation>
+        <source>Export and Add to report are available after an analysis has been applied.</source>
+        <translation>Exportera och Lägg till i rapport är tillgängliga efter att en analys har tillämpats.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -558,6 +576,12 @@
 </context>
 <context>
     <name>AnalysisExportDialog</name>
+    <message><source>Total</source><translation>Totalt</translation></message>
+    <message><source>N/A</source><translation>Ej tillgängligt</translation></message>
+    <message><source>Dataset</source><translation>Dataset</translation></message>
+    <message><source>Columns</source><translation>Kolumner</translation></message>
+    <message><source>Analysis date</source><translation>Analysdatum</translation></message>
+    <message><source>Expo version</source><translation>Expo-version</translation></message>
     <message><source>Export computed tables and charts for the applied test, not the original dataset.</source><translation>Exportera beräknade tabeller och diagram för det tillämpade testet, inte det ursprungliga datasetet.</translation></message>
     <message><source>Apply a hypothesis test successfully before exporting.</source><translation>Tillämpa ett hypotestest med ett giltigt resultat innan du exporterar.</translation></message>
     <message><source>Applied test: {test}
@@ -1335,6 +1359,10 @@ Variabler: {features}</translation>
 <context>
     <name>ReportPage</name>
     <message>
+        <source>Preview</source>
+        <translation>Förhandsvisa</translation>
+    </message>
+    <message>
         <source>Report details</source>
         <translation>Rapportinformation</translation>
     </message>
@@ -1730,6 +1758,9 @@ Vänligen se loggfil för mer information.</translation>
 </context>
 <context>
     <name>ChiSquareView</name>
+    <message><source>Row</source><translation>Rad</translation></message>
+    <message><source>Column</source><translation>Kolumn</translation></message>
+    <message><source>Group</source><translation>Grupp</translation></message>
     <message><source>Contingency table</source><translation>Korstabell</translation></message>
     <message>
         <location filename="../../gui/dialogs/analysis/chi_square_view.py" line="88"/>
@@ -2773,6 +2804,9 @@ Vänligen se loggfil för mer information.</translation>
 </context>
 <context>
     <name>CorrelationView</name>
+    <message><source>Strongest correlations</source><translation>Starkaste korrelationer</translation></message>
+    <message><source>Matrix plot</source><translation>Matrisdiagram</translation></message>
+    <message><source>Scatterplots</source><translation>Spridningsdiagram</translation></message>
     <message>
         <location filename="../../gui/dialogs/analysis/correlation_view.py" line="115"/>
         <source>Correlation plots</source>
@@ -5379,6 +5413,8 @@ Sparad till:
 </context>
 <context>
     <name>OverviewView</name>
+    <message><source>Columns metadata</source><translation>Kolumnmetadata</translation></message>
+    <message><source>Sample (first 100 rows)</source><translation>Urval (de första 100 raderna)</translation></message>
     <message>
         <location filename="../../gui/dialogs/analysis/overview_view.py" line="85"/>
         <source>Summary</source>
@@ -9020,6 +9056,7 @@ Tid: {sec:.2f}s{sample}</translation>
 </context>
 <context>
     <name>StatisticsView</name>
+    <message><source>Histogram and boxplot</source><translation>Histogram och lådagram</translation></message>
     <message>
         <source>Charts</source>
         <translation>Diagram</translation>
@@ -9739,6 +9776,21 @@ alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
     <message>
         <source>Cox proportional-hazards regression: {duration} / {event}</source>
         <translation>Cox-regression med proportionella hazarder: {duration} / {event}</translation>
+    </message>
+</context>
+<context>
+    <name>ReportPreviewDialog</name>
+    <message>
+        <source>Report preview</source>
+        <translation>Rapportförhandsvisning</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Stäng</translation>
+    </message>
+    <message>
+        <source>The report preview could not be loaded.</source>
+        <translation>Rapportförhandsvisningen kunde inte läsas in.</translation>
     </message>
 </context>
 </TS>

@@ -20,6 +20,7 @@ def gui_main() -> int:
     Initializes the QApplication, shows a splash screen, and starts the main window.
     :return: Int
     """
+    QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     app = QApplication(sys.argv)
     run_bootstrap()
 

@@ -33,6 +33,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - PCA with optional standardization, explained variance, feature loadings, and score plots
 - Time-series preparation with optional resampling, autocorrelation, and additive or multiplicative seasonal decomposition
 - Export for all nine analyses: applied-result tables and available charts in Excel; one table per CSV or binary export
+- Session report drafts for all nine analyses with selected components, notes, metadata, ordering, and asynchronous in-app HTML preview
 - Consistent Analysis configuration pane widths, adaptive layouts, and scrolling
 
 ## [1.0.0] - 2026-10-06

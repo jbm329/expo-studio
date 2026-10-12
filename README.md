@@ -65,6 +65,13 @@ combine selected tables and available charts; CSV and binary exports contain
 one selected table. Charts are available in Excel only. Exports contain the
 selected analysis results, not a full dataset dump.
 
+Use **Add to report** to collect applied analyses, select their components, and
+add notes. The **Reports** page lets you edit and reorder entries, add a title
+and description, and **Preview** the report in an in-app HTML window. Preview
+preparation runs in the background; each preview captures the report at the
+time you click. Drafts last for the Advanced Analysis window's lifetime.
+Saving HTML reports and PDF output are not yet available.
+
 ### 📂 Supported Data File Formats
 
 Expo Studio supports loading a range of common tabular data formats into pandas DataFrames for interactive exploration and transformation within the workbench.

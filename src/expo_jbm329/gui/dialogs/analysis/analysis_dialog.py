@@ -142,6 +142,7 @@ class AnalysisDialog(QDialog):
     clustering_export_requested = pyqtSignal(object)  # ClusteringExportRequest
     pca_export_requested = pyqtSignal(object)  # PCAExportRequest
     time_series_export_requested = pyqtSignal(object)  # TimeSeriesExportRequest
+    report_preview_requested = pyqtSignal(object)  # Captured ReportDocument
 
     def __init__(
         self,
@@ -217,6 +218,7 @@ class AnalysisDialog(QDialog):
         self._report_page.edit_requested.connect(self._edit_report_entry)
         self._report_page.remove_requested.connect(self._remove_report_entry)
         self._report_page.move_requested.connect(self._move_report_entry)
+        self._report_page.preview_requested.connect(self._request_report_preview)
         self._workspace_stack.addWidget(self._report_page)
 
         root.addLayout(top_row)
@@ -293,7 +295,7 @@ class AnalysisDialog(QDialog):
         return category_group
 
     def _build_action_bar(self) -> QWidget:
-        """Build shared entry points into the export and report previews."""
+        """Build shared actions for exporting results and collecting report entries."""
         bar = QWidget(self._analysis_workspace)
         actions = QHBoxLayout(bar)
         actions.setContentsMargins(0, 0, 0, 0)
@@ -307,7 +309,7 @@ class AnalysisDialog(QDialog):
         add_button.setMinimumWidth(button_width)
         actions.addWidget(add_button)
         explanation = QLabel(
-            self.tr("Exports are available after an analysis has been applied. Add to report is a preview."),
+            self.tr("Export and Add to report are available after an analysis has been applied."),
             bar,
         )
         explanation.setWordWrap(True)
@@ -539,6 +541,17 @@ class AnalysisDialog(QDialog):
     def report_document(self) -> ReportDocument:
         """Return the report draft owned by this analysis window."""
         return self._report_document
+
+    def _request_report_preview(self) -> None:
+        if not self._report_document.entries:
+            return
+        document = ReportDocument(
+            title=self._report_page.report_title(),
+            description=self._report_page.report_description(),
+        )
+        for entry in self._report_document.entries:
+            document.upsert(entry)
+        self.report_preview_requested.emit(document)
 
     def _current_report_candidate(self) -> ReportEntry | None:
         category = self.selected_category()

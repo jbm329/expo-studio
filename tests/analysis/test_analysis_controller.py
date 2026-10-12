@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import dataclasses
+import sys
 from pathlib import Path
+from types import ModuleType
 from unittest.mock import Mock
 
 import numpy as np
@@ -87,6 +89,7 @@ from expo_jbm329.services.analysis.regression_export import (
     RegressionExportSnapshot,
 )
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
+from expo_jbm329.services.analysis.report import ReportDocument, create_report_entry
 from expo_jbm329.services.analysis.statistics import (
     StatisticsExportFormat,
     StatisticsExportRequest,
@@ -100,6 +103,7 @@ from expo_jbm329.services.analysis.timeseries_export import (
     TimeSeriesExportRequest,
     TimeSeriesExportSnapshot,
 )
+from expo_jbm329.services.excel_chart import ExcelChartCancelledError
 from expo_jbm329.services.file_writer import FileWriter
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis import analysis_controller as analysis_controller_module
@@ -603,6 +607,157 @@ class DummyResults:
         return self._dfs[tab_id]
 
 
+def _report_preview_context(monkeypatch):
+    dialog = AnalysisDialog(
+        parent=None,
+        datasets=[DatasetRef("chosen", "Chosen", 2, 1)],
+        active_tab_id="chosen",
+    )
+    document = ReportDocument(title="Captured report", description="Purpose")
+    document.upsert(create_report_entry(AnalysisCategory.PCA, DatasetRef("chosen", "Chosen", 2, 1), pca_snapshot()))
+    operations = DummyAsyncOps()
+    controller = AnalysisController(results=Mock(), async_ops=operations)
+    preview = Mock()
+    monkeypatch.setattr(controller, "_show_report_preview", preview)
+    controller._connect_report_preview(dialog)
+    return controller, dialog, document, operations, preview
+
+
+def test_report_preview_runs_in_background_without_reading_active_datasets(monkeypatch):
+    controller, dialog, document, operations, preview = _report_preview_context(monkeypatch)
+    renderer = Mock(return_value="<html>Report</html>")
+    monkeypatch.setattr(analysis_controller_module, "render_report_html", renderer)
+
+    dialog.report_preview_requested.emit(document)
+
+    assert renderer.call_count == 0
+    assert not dialog.report_page()._preview_button.isEnabled()
+    call = operations.last_call
+    assert call["runner"] == "pool"
+    assert call["target"] is dialog.report_page()
+    assert call["cancelable"]
+    assert not call["indeterminate"]
+    progress = Mock()
+    html = call["work"](progress_cb=progress)
+    assert renderer.call_args.args == (document,)
+    assert renderer.call_args.kwargs["progress_cb"] is progress
+    assert not renderer.call_args.kwargs["cancel_cb"]()
+    call["on_result"](html)
+    preview.assert_called_once_with(dialog, "<html>Report</html>")
+    call["on_finished"]()
+    assert controller._results.mock_calls == []
+
+
+def test_report_preview_captures_translations_before_worker_execution(monkeypatch):
+    _, dialog, document, operations, _ = _report_preview_context(monkeypatch)
+    translate = Mock(side_effect=lambda _context, text: f"Captured: {text}")
+    monkeypatch.setattr(analysis_controller_module, "tr", translate)
+    renderer = Mock(return_value="<html>Localized</html>")
+    monkeypatch.setattr(analysis_controller_module, "render_report_html", renderer)
+
+    dialog.report_preview_requested.emit(document)
+    assert translate.call_count > 0
+    translate.reset_mock()
+    operations.last_call["work"]()
+
+    translate.assert_not_called()
+    assert renderer.call_args.kwargs["labels"] is not None
+
+
+def test_report_preview_rejects_invalid_empty_and_duplicate_requests(monkeypatch):
+    _, dialog, document, operations, _ = _report_preview_context(monkeypatch)
+    dialog.report_preview_requested.emit(None)
+    dialog.report_preview_requested.emit(ReportDocument())
+    assert operations.calls == []
+    dialog.report_preview_requested.emit(document)
+    dialog.report_preview_requested.emit(document)
+    assert len(operations.calls) == 1
+    operations.last_call["on_finished"]()
+    dialog.report_preview_requested.emit(document)
+    assert len(operations.calls) == 2
+
+
+def test_report_preview_reports_errors_and_cancellation_and_restores_button(monkeypatch):
+    _, dialog, document, operations, preview = _report_preview_context(monkeypatch)
+    dialog.report_page().set_entries(document.entries)
+    renderer = Mock(side_effect=ExcelChartCancelledError)
+    monkeypatch.setattr(analysis_controller_module, "render_report_html", renderer)
+    dialog.report_preview_requested.emit(document)
+    call = operations.last_call
+
+    assert call["work"](cancel_cb=lambda: True) is None
+    call["on_result"](None)
+    assert dialog.report_page()._preview_status.text() == "Report preview cancelled."
+    call["on_error"]("Rendering failed")
+    assert "Rendering failed" in dialog.report_page()._preview_status.text()
+    call["on_finished"]()
+    assert dialog.report_page()._preview_button.isEnabled()
+    preview.assert_not_called()
+
+
+@pytest.mark.parametrize("close_signal", ["finished", "destroyed"])
+def test_report_preview_ignores_callbacks_after_analysis_window_closes(monkeypatch, close_signal):
+    _, dialog, document, operations, preview = _report_preview_context(monkeypatch)
+    dialog.report_preview_requested.emit(document)
+    call = operations.last_call
+
+    if close_signal == "finished":
+        dialog.reject()
+    else:
+        dialog.destroyed.emit(dialog)
+    assert call["stale_check"]()
+    call["on_result"]("<html>Late result</html>")
+    call["on_error"]("Late error")
+    call["on_finished"]()
+    dialog.report_preview_requested.emit(document)
+    assert len(operations.calls) == 1
+    preview.assert_not_called()
+    assert not dialog.report_page()._preview_status.text()
+
+
+def test_report_preview_old_callbacks_do_not_replace_new_preview(monkeypatch):
+    _, dialog, document, operations, preview = _report_preview_context(monkeypatch)
+    dialog.report_preview_requested.emit(document)
+    previous = operations.last_call
+    previous["on_finished"]()
+    dialog.report_preview_requested.emit(document)
+
+    assert previous["stale_check"]()
+    previous["on_result"]("<html>Old report</html>")
+    previous["on_error"]("Old error")
+    previous["on_finished"]()
+    preview.assert_not_called()
+    assert not dialog.report_page()._preview_status.text()
+    assert not dialog.report_page()._preview_button.isEnabled()
+
+
+def test_report_preview_scheduling_failure_is_visible_and_allows_retry(monkeypatch):
+    _, dialog, document, operations, _ = _report_preview_context(monkeypatch)
+    dialog.report_page().set_entries(document.entries)
+    operations.run_target_overlay_operation = Mock(side_effect=RuntimeError("Worker unavailable"))
+
+    dialog.report_preview_requested.emit(document)
+
+    assert "Worker unavailable" in dialog.report_page()._preview_status.text()
+    assert dialog.report_page()._preview_button.isEnabled()
+
+
+def test_prepared_preview_window_is_parented_shown_and_closed_with_analysis_dialog(monkeypatch):
+    dialog = AnalysisDialog(parent=None, datasets=[], active_tab_id=None)
+    module_name = "expo_jbm329.gui.dialogs.analysis.report_preview_dialog"
+    module = ModuleType(module_name)
+    factory = Mock()
+    module.ReportPreviewDialog = factory
+    monkeypatch.setitem(sys.modules, module_name, module)
+
+    AnalysisController._show_report_preview(dialog, "<html>Prepared</html>")
+
+    factory.assert_called_once_with("<html>Prepared</html>", parent=dialog)
+    factory.return_value.show.assert_called_once_with()
+    dialog.reject()
+    factory.return_value.close.assert_called_once()
+
+
 class DummyAsyncOps:
     """Records run_target_overlay_operation calls without executing anything.
 
@@ -649,6 +804,9 @@ class DummyAnalysisDialog:
         self.clustering_export_requested = DummySignal()
         self.pca_export_requested = DummySignal()
         self.time_series_export_requested = DummySignal()
+        self.report_preview_requested = DummySignal()
+        self.finished = DummySignal()
+        self.destroyed = DummySignal()
         self.placeholder_calls: list[str] = []
         self.content_widgets: list[QWidget] = []
         self.config_widgets: list[QWidget | None] = []

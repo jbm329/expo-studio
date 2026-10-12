@@ -55,6 +55,7 @@ def test_report_processing_controls_are_disabled_and_explained():
         "Edit entry",
         "Remove",
         "Generate HTML report",
+        "Preview",
     }
     assert all(not button.isEnabled() for button in buttons)
     assert "next step" in page._generate_button.toolTip()  # noqa: SLF001
@@ -74,6 +75,7 @@ def test_report_page_lists_metadata_and_enables_entry_actions():
     assert page._move_down_button.isEnabled()  # noqa: SLF001
     assert page._edit_button.isEnabled()  # noqa: SLF001
     assert page._remove_button.isEnabled()  # noqa: SLF001
+    assert page._preview_button.isEnabled()  # noqa: SLF001
     assert not page._empty_message.isVisible()  # noqa: SLF001
 
 
@@ -97,3 +99,24 @@ def test_report_page_emits_selected_entry_actions_and_preserves_selection():
     assert edits == ["two"]
     assert removals == ["two"]
     assert moves == [("two", -1)]
+
+
+def test_report_preview_is_enabled_only_for_nonempty_idle_reports():
+    page = ReportPage()
+    requests: list[bool] = []
+    page.preview_requested.connect(lambda: requests.append(True))
+
+    page._preview_button.click()  # noqa: SLF001
+    assert requests == []
+    page.set_entries((_entry("one", "Employees"),))
+    page._preview_button.click()  # noqa: SLF001
+    assert requests == [True]
+    page.set_preview_busy(True)
+    page.set_entries((_entry("two", "Sales"),))
+    assert not page._preview_button.isEnabled()  # noqa: SLF001
+    page._preview_button.click()  # noqa: SLF001
+    assert requests == [True]
+    page.set_preview_busy(False)
+    assert page._preview_button.isEnabled()  # noqa: SLF001
+    page.set_entries(())
+    assert not page._preview_button.isEnabled()  # noqa: SLF001

@@ -101,6 +101,24 @@
 </context><context>
     <name>AnalysisController</name>
     <message>
+        <source>Preparing report preview...</source>
+        <translation>Preparing report preview...</translation>
+    </message>
+    <message>
+        <source>prepare report preview</source>
+        <translation>prepare report preview</translation>
+    </message>
+    <message>
+        <source>Report preview cancelled.</source>
+        <translation>Report preview cancelled.</translation>
+    </message>
+    <message>
+        <source>Could not prepare report preview.
+{error}</source>
+        <translation>Could not prepare report preview.
+{error}</translation>
+    </message>
+    <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="217" />
         <source>This analysis is not implemented yet.</source>
         <translation type="unfinished" />
@@ -153,8 +171,8 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Exports are available after an analysis has been applied. Add to report is a preview.</source>
-        <translation>Exports are available after an analysis has been applied. Add to report is a preview.</translation>
+        <source>Export and Add to report are available after an analysis has been applied.</source>
+        <translation>Export and Add to report are available after an analysis has been applied.</translation>
     </message>
     <message>
         <source>A report can contain analyses from multiple datasets.</source>
@@ -237,6 +255,12 @@
     </message>
 </context><context>
     <name>AnalysisExportDialog</name>
+    <message><source>Total</source><translation>Total</translation></message>
+    <message><source>N/A</source><translation>N/A</translation></message>
+    <message><source>Dataset</source><translation>Dataset</translation></message>
+    <message><source>Columns</source><translation>Columns</translation></message>
+    <message><source>Analysis date</source><translation>Analysis date</translation></message>
+    <message><source>Expo version</source><translation>Expo version</translation></message>
     <message><source>Export computed tables and charts for the applied test, not the original dataset.</source><translation>Export computed tables and charts for the applied test, not the original dataset.</translation></message>
     <message><source>Apply a hypothesis test successfully before exporting.</source><translation>Apply a hypothesis test successfully before exporting.</translation></message>
     <message><source>Applied test: {test}
@@ -1013,6 +1037,10 @@ Features: {features}</translation>
 </context><context>
     <name>ReportPage</name>
     <message>
+        <source>Preview</source>
+        <translation>Preview</translation>
+    </message>
+    <message>
         <source>Report details</source>
         <translation type="unfinished" />
     </message>
@@ -1395,6 +1423,9 @@ Please see logs for more information.</source>
     </message>
 </context><context>
     <name>ChiSquareView</name>
+    <message><source>Row</source><translation>Row</translation></message>
+    <message><source>Column</source><translation>Column</translation></message>
+    <message><source>Group</source><translation>Group</translation></message>
     <message><source>Contingency table</source><translation>Contingency table</translation></message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="88" />
@@ -2427,6 +2458,9 @@ Please see logs for more information.</source>
     </message>
 </context><context>
     <name>CorrelationView</name>
+    <message><source>Strongest correlations</source><translation>Strongest correlations</translation></message>
+    <message><source>Matrix plot</source><translation>Matrix plot</translation></message>
+    <message><source>Scatterplots</source><translation>Scatterplots</translation></message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="115" />
         <source>Correlation plots</source>
@@ -4983,6 +5017,8 @@ Saved to:
     </message>
 </context><context>
     <name>OverviewView</name>
+    <message><source>Columns metadata</source><translation>Columns metadata</translation></message>
+    <message><source>Sample (first 100 rows)</source><translation>Sample (first 100 rows)</translation></message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="85" />
         <source>Summary</source>
@@ -8882,6 +8918,7 @@ Time: {sec:.2f}s{sample}</source>
     </message>
 </context><context>
     <name>StatisticsView</name>
+    <message><source>Histogram and boxplot</source><translation>Histogram and boxplot</translation></message>
     <message>
         <source>Charts</source>
         <translation>Charts</translation>
@@ -9587,6 +9624,21 @@ all hazard ratios and intervals must be finite and positive.</translation>
     <message>
         <source>Cox proportional-hazards regression: {duration} / {event}</source>
         <translation>Cox proportional-hazards regression: {duration} / {event}</translation>
+    </message>
+</context>
+<context>
+    <name>ReportPreviewDialog</name>
+    <message>
+        <source>Report preview</source>
+        <translation>Report preview</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Close</translation>
+    </message>
+    <message>
+        <source>The report preview could not be loaded.</source>
+        <translation>The report preview could not be loaded.</translation>
     </message>
 </context>
 </TS>
