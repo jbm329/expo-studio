@@ -15,6 +15,34 @@ from expo_jbm329.services.analysis.paired_comparison import (
     initialize_paired_comparison,
 )
 from expo_jbm329.utils.format_utils import fmt_num
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
+
+
+@pytest.mark.parametrize("columns", [("before", "after"), ("before", "after", "followup")])
+def test_paired_measurements_header_gap_stays_fixed_when_section_grows(columns):
+    view = PairedComparisonView(_result(columns=columns))
+    panel = view.findChild(QSplitter).widget(1)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        layout = panel.layout()
+        heading = layout.itemAt(0).widget()
+        charts = layout.itemAt(1).widget()
+        gap = charts.y() - heading.geometry().bottom()
+        heading_height = heading.height()
+        chart_height = charts.height()
+        panel.resize(1100, 800)
+        QCoreApplication.processEvents()
+        assert heading.height() == heading_height
+        assert charts.y() - heading.geometry().bottom() == gap
+        assert charts.height() > chart_height
+        assert layout.stretch(1) == 1
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
 
 
 def _result(**overrides: object) -> PairedComparisonResult:
@@ -40,6 +68,24 @@ def _result(**overrides: object) -> PairedComparisonResult:
     }
     values.update(overrides)
     return PairedComparisonResult(**values)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("columns", [("before", "after"), ("before", "after", "followup")])
+@pytest.mark.parametrize(("section", "small_height"), [(1, 120), (2, 60)])
+def test_chart_and_results_sections_scroll_below_a_frozen_title(columns, section, small_height):
+    view = PairedComparisonView(_result(columns=columns))
+    panel = view.findChild(QSplitter).widget(section)
+    try:
+        content = assert_section_scrolls_below_frozen_title(panel, small_height)
+        if section == 1:
+            assert isinstance(content, FigureCanvasQTAgg)
+        else:
+            assert isinstance(content, QLabel)
+            assert "Wilcoxon signed-rank test" in content.text()
+            assert content.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+    finally:
+        panel.deleteLater()
+        view.close()
 
 
 def test_displays_wilcoxon_result_and_complete_subject_counts():

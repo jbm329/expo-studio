@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import logging
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, cast
 
-from PyQt6.QtCore import QT_TR_NOOP, QTimer
+from PyQt6.QtCore import QT_TR_NOOP, QT_TRANSLATE_NOOP, QTimer
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog, build_placeholder_label
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
@@ -28,7 +28,6 @@ from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
 from expo_jbm329.gui.dialogs.analysis.regression_glm_view import GeneralizedRegressionView
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
-from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.gui.dialogs.analysis.survival_view import SurvivalRegressionView
 from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigWidget
@@ -37,28 +36,75 @@ from expo_jbm329.services.analysis.categories import AnalysisCategory, Hypothesi
 from expo_jbm329.services.analysis.chi_square import analyze_chi_square, initialize_chi_square
 from expo_jbm329.services.analysis.clustering import MIN_SELECTED_COLUMNS as CLUSTERING_MIN_SELECTED_COLUMNS
 from expo_jbm329.services.analysis.clustering import ClusteringMethod, analyze_clustering, initialize_clustering
+from expo_jbm329.services.analysis.clustering_charts import render_clustering_charts
+from expo_jbm329.services.analysis.clustering_export import (
+    ClusteringExportComponent,
+    ClusteringExportRequest,
+    ClusteringExportSnapshot,
+    ClusteringMetric,
+    clustering_export_tables,
+)
 from expo_jbm329.services.analysis.correlation import (
+    MAX_SELECTED_COLUMNS,
+    MIN_OBSERVATIONS,
     MIN_SELECTED_COLUMNS,
+    SIGNIFICANCE_LEVEL,
     CorrelationMethod,
     analyze_correlation_matrix,
     analyze_correlation_pair,
     default_pair,
     initialize_correlation,
 )
+from expo_jbm329.services.analysis.correlation_charts import CorrelationChartLabels, render_correlation_charts
+from expo_jbm329.services.analysis.correlation_export import (
+    CorrelationExportComponent,
+    CorrelationExportRequest,
+    CorrelationExportSnapshot,
+    correlation_export_table,
+)
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison, initialize_group_comparison
+from expo_jbm329.services.analysis.hypothesis_charts import HypothesisChartLabels, render_hypothesis_charts
+from expo_jbm329.services.analysis.hypothesis_export import (
+    HypothesisExportComponent,
+    HypothesisExportRequest,
+    HypothesisExportSnapshot,
+    HypothesisResult,
+    hypothesis_export_tables,
+)
 from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierMethod,
     analyze_multivariate_outliers,
     initialize_multivariate_outliers,
 )
 from expo_jbm329.services.analysis.outliers import (
+    ColumnOutlierStatus,
     OutlierMethod,
     analyze_outlier_column,
     analyze_outlier_summary,
     default_column,
     initialize_outlier_summary,
 )
-from expo_jbm329.services.analysis.overview import analyze_dataset_overview
+from expo_jbm329.services.analysis.outliers_charts import (
+    render_multivariate_outlier_charts,
+    render_univariate_outlier_charts,
+)
+from expo_jbm329.services.analysis.outliers_export import (
+    MultivariateOutlierExportSnapshot,
+    OutlierExportComponent,
+    OutlierExportRequest,
+    OutlierExportSnapshot,
+    OutlierMetric,
+    UnivariateOutlierExportSnapshot,
+    outlier_export_tables,
+)
+from expo_jbm329.services.analysis.overview import (
+    DatasetOverviewResult,
+    OverviewExportFormat,
+    OverviewExportRequest,
+    OverviewExportTable,
+    analyze_dataset_overview,
+    overview_export_tables,
+)
 from expo_jbm329.services.analysis.paired_comparison import (
     PairedComparisonResult,
     analyze_paired_comparison,
@@ -66,7 +112,24 @@ from expo_jbm329.services.analysis.paired_comparison import (
 )
 from expo_jbm329.services.analysis.pca import MIN_SELECTED_COLUMNS as PCA_MIN_SELECTED_COLUMNS
 from expo_jbm329.services.analysis.pca import analyze_pca, initialize_pca
+from expo_jbm329.services.analysis.pca_charts import render_pca_charts
+from expo_jbm329.services.analysis.pca_export import (
+    PCAExportComponent,
+    PCAExportRequest,
+    PCAExportSnapshot,
+    PCAMetric,
+    pca_export_tables,
+)
+from expo_jbm329.services.analysis.regression import SIGNIFICANCE_LEVEL as REGRESSION_SIGNIFICANCE
 from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression, initialize_regression
+from expo_jbm329.services.analysis.regression_charts import render_regression_charts
+from expo_jbm329.services.analysis.regression_export import (
+    RegressionExportComponent,
+    RegressionExportRequest,
+    RegressionExportSnapshot,
+    RegressionMetric,
+    regression_export_tables,
+)
 from expo_jbm329.services.analysis.regression_glm import (
     GeneralizedRegressionResult,
     GeneralizedTargetColumns,
@@ -74,7 +137,15 @@ from expo_jbm329.services.analysis.regression_glm import (
     analyze_generalized_regression,
     initialize_generalized_targets,
 )
-from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
+from expo_jbm329.services.analysis.statistics import (
+    DescriptiveStatisticsResult,
+    StatisticsExportFormat,
+    StatisticsExportRequest,
+    StatisticsExportTable,
+    analyze_descriptive_statistics,
+    statistics_export_tables,
+)
+from expo_jbm329.services.analysis.statistics_charts import StatisticsChartLabels, render_statistics_charts
 from expo_jbm329.services.analysis.survival import (
     SurvivalColumns,
     SurvivalResult,
@@ -82,6 +153,15 @@ from expo_jbm329.services.analysis.survival import (
     initialize_survival_columns,
 )
 from expo_jbm329.services.analysis.timeseries import analyze_time_series, initialize_time_series
+from expo_jbm329.services.analysis.timeseries_charts import render_time_series_charts
+from expo_jbm329.services.analysis.timeseries_export import (
+    TimeSeriesExportComponent,
+    TimeSeriesExportRequest,
+    TimeSeriesExportSnapshot,
+    TimeSeriesMetric,
+    time_series_export_tables,
+)
+from expo_jbm329.utils.format_utils import fmt_int, fmt_num
 from expo_jbm329.utils.i18n_utils import tr
 
 if TYPE_CHECKING:
@@ -96,14 +176,14 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
     from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierResult
     from expo_jbm329.services.analysis.outliers import OutlierColumnDetail, OutlierSummaryResult
-    from expo_jbm329.services.analysis.overview import DatasetOverviewResult
     from expo_jbm329.services.analysis.pca import PCAResult
     from expo_jbm329.services.analysis.regression import RegressionResult
-    from expo_jbm329.services.analysis.statistics import DescriptiveStatisticsResult
     from expo_jbm329.services.analysis.timeseries import TimeSeriesResult
+    from expo_jbm329.services.excel_chart import ExcelChartImage
     from expo_jbm329.workbench.controllers.async_operation_controller import (
         AsyncOperationController,
     )
+    from expo_jbm329.workbench.controllers.export_controller import ExportController
     from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import (
         ResultTabManager,
     )
@@ -111,6 +191,155 @@ if TYPE_CHECKING:
 
 # Matches AsyncOperationController's default overlay watchdog.
 _DEFAULT_TIMEOUT_MS = 60_000
+_HYPOTHESIS_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Test results"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Test"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Test statistic"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "p-value"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Degrees of freedom"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Mean difference"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "95% CI lower"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "95% CI upper"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Effect size"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Effect value"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Numeric column"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Grouping column"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Row column"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Column column"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Sample count"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Yates' continuity correction"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Cochran's rule violated"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Fraction of expected counts below 5"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Minimum expected count"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Odds ratio"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Total subjects"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Excluded subjects"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Notes"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Measurement"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Welch's t-test"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Student's t-test"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Mann-Whitney U"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "One-way ANOVA"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Kruskal-Wallis"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Pearson's chi-square test"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Fisher's exact test"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Wilcoxon signed-rank test"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Friedman test"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Cohen's d"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Rank-biserial correlation"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Eta²"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Epsilon²"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Cramér's V"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Kendall's W"),
+    QT_TRANSLATE_NOOP("ChiSquareView", "Contingency table"),
+)
+_CORRELATION_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Least-squares line: y = ({slope}) x + ({intercept})"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Strongest correlations"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Correlation method"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Coefficient"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Significant after Holm"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Ranking and Holm explanation"),
+    QT_TRANSLATE_NOOP(
+        "AnalysisExportDialog",
+        "Pairs are ranked by absolute coefficient. Significance is based on "
+        "p < {alpha} after Holm adjustment for {count} tests.",
+    ),
+)
+_REGRESSION_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Rate ratio"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Hazard ratio"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "{name}, 95% CI lower"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "{name}, 95% CI upper"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Term"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Estimate"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Std. error"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "t statistic"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "z statistic"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "VIF"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Significant at p < {alpha}"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "(Intercept)"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Metric"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Value"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Rows used"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Rows dropped because of missing values"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "R²"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Adjusted R²"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "F statistic"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "F-test p-value"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Model degrees of freedom"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Residual degrees of freedom"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "RMSE"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "AIC"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Breusch-Pagan LM"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Breusch-Pagan p-value"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Jarque-Bera JB"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Jarque-Bera p-value"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Durbin-Watson"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Largest VIF"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Log-likelihood"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Null-model log-likelihood"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "McFadden pseudo R²"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "AUC (in-sample)"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Pearson dispersion"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "NB2 alpha"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Events"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Censored"),
+)
+_OUTLIERS_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Threshold"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Values"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Missing"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Potential outliers"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Potential outlier share"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Low potential outliers"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "High potential outliers"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Lower fence"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Upper fence"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Q1"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Q3"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "IQR"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Mean"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Standard deviation"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Median"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "MAD"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Features"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Expected outlier fraction"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "LOF neighbors"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Total rows"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Rows dropped because of missing or infinite values"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Inliers"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Status"),
+)
+_CLUSTERING_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Number of clusters"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Neighborhood radius (eps)"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Minimum samples"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Clusters found"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Noise rows"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Silhouette score"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Cluster"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Rows"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Share"),
+)
+_PCA_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Feature"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Component"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Variance"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Cumulative share"),
+)
+_TIME_SERIES_EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Source rows"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Invalid rows dropped"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Duplicate rows averaged"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Time points"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Seasonal period"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Timestamp"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Trend"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Seasonal"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Residual"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Lag"),
+)
 # Cancelable jobs report real progress and can be stopped by the user, so
 # they get a far longer watchdog before the "taking too long" warning.
 _CANCELABLE_TIMEOUT_MS = 600_000
@@ -205,10 +434,12 @@ class _CorrelationOutcome:
         matrix: The computed correlation matrix.
         pair_detail: The selected pair's detail, or `None` when the matrix
             has an error (and so no pair to show).
+        export_snapshot: Owned selected numeric columns for the successful matrix.
     """
 
     matrix: CorrelationMatrixResult
     pair_detail: CorrelationPairDetail | None
+    export_snapshot: CorrelationExportSnapshot | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -219,10 +450,13 @@ class _OutliersOutcome:
         summary: The per-column outlier summary.
         detail: The selected column's detail, or `None` when the summary
             has an error (and so no column to show).
+        data: Owned copy of the screened numeric columns for chart
+            export, or `None` when the summary has an error.
     """
 
     summary: OutlierSummaryResult
     detail: OutlierColumnDetail | None
+    data: pd.DataFrame | None = None
 
 
 class AnalysisController:
@@ -255,6 +489,7 @@ class AnalysisController:
         *,
         results: ResultTabManager,
         async_ops: AsyncOperationController,
+        export_controller: ExportController | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
         """Initialize the analysis controller.
@@ -262,10 +497,12 @@ class AnalysisController:
         Args:
             results: ResultTabManager instance.
             async_ops: Controller running analyses as background jobs.
+            export_controller: Shared exporter receiving per-call analysis dialog context.
             logger: Optional logger instance.
         """
         self._results = results
         self._async_ops = async_ops
+        self._export_controller = export_controller
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
 
         self._category_handlers: dict[AnalysisCategory, _CategoryHandler] = {
@@ -330,6 +567,48 @@ class AnalysisController:
             datasets=datasets,
             active_tab_id=self._results.active_tab_id(),
         )
+        if self._export_controller is not None:
+            exporter = self._export_controller
+
+            def _handle_export(request: object) -> None:
+                self._export_overview(dialog, exporter, request)
+
+            def _handle_statistics_export(request: object) -> None:
+                self._export_statistics(dialog, exporter, request)
+
+            def _handle_hypothesis_export(request: object) -> None:
+                self._export_hypothesis(dialog, exporter, request)
+
+            def _handle_correlation_export(request: object) -> None:
+                self._export_correlation(dialog, exporter, request)
+
+            def _handle_regression_export(request: object) -> None:
+                self._export_regression(dialog, exporter, request)
+
+            def _handle_outliers_export(request: object) -> None:
+                self._export_outliers(dialog, exporter, request)
+
+            dialog.overview_export_requested.connect(_handle_export)
+            dialog.statistics_export_requested.connect(_handle_statistics_export)
+            dialog.hypothesis_export_requested.connect(_handle_hypothesis_export)
+            dialog.correlation_export_requested.connect(_handle_correlation_export)
+            dialog.regression_export_requested.connect(_handle_regression_export)
+
+            def _handle_clustering_export(request: object) -> None:
+                self._export_clustering(dialog, exporter, request)
+
+            dialog.outliers_export_requested.connect(_handle_outliers_export)
+            dialog.clustering_export_requested.connect(_handle_clustering_export)
+
+            def _handle_pca_export(request: object) -> None:
+                self._export_pca(dialog, exporter, request)
+
+            dialog.pca_export_requested.connect(_handle_pca_export)
+
+            def _handle_time_series_export(request: object) -> None:
+                self._export_time_series(dialog, exporter, request)
+
+            dialog.time_series_export_requested.connect(_handle_time_series_export)
 
         refresh_started = False
 
@@ -361,6 +640,945 @@ class AnalysisController:
 
         dialog.exec()
 
+    def _export_overview(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Validate snapshot identity and route owned frames to existing exporters."""
+        if not isinstance(request, OverviewExportRequest) or request.result is not dialog.exportable_overview():
+            return
+        if not any(request.format is format_choice for format_choice in OverviewExportFormat):
+            return
+        if request.format is not OverviewExportFormat.EXCEL and len(request.tables) != 1:
+            return
+        try:
+            sheets = overview_export_tables(request.result, request.tables)
+            localized_sheets = {}
+            for name, frame in sheets.items():
+                table = OverviewExportTable(name)
+                sheet_name = tr("OverviewView", table.value)
+                if sheet_name in localized_sheets:
+                    self._logger.warning("Rejected Overview export because translated sheet names are not unique.")
+                    return
+                match table:
+                    case OverviewExportTable.COLUMNS:
+                        headers = {
+                            "column": tr("OverviewView", "Column"),
+                            "type": tr("OverviewView", "Type"),
+                            "storage_type": tr("OverviewView", "Storage type"),
+                            "missing_count": tr("OverviewView", "Missing"),
+                            "missing_fraction": tr("OverviewView", "Missing fraction"),
+                            "unique_count": tr("OverviewView", "Unique"),
+                        }
+                    case OverviewExportTable.SUMMARY:
+                        headers = {
+                            "section": tr("OverviewView", "Section"),
+                            "metric": tr("OverviewView", "Metric"),
+                            "column": tr("OverviewView", "Column"),
+                            "count": tr("OverviewView", "Count"),
+                            "fraction": tr("OverviewView", "Fraction"),
+                        }
+                    case OverviewExportTable.SAMPLE:
+                        headers = {}
+                localized_sheets[sheet_name] = frame.rename(columns=headers)
+            sheets = localized_sheets
+        except (TypeError, ValueError):
+            self._logger.warning("Rejected unavailable Overview export selection.")
+            return
+        # Frames belong to this export only and remain stable for the async job.
+        match request.format:
+            case OverviewExportFormat.EXCEL:
+                exporter.export_excel(
+                    sheets=sheets,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case OverviewExportFormat.CSV:
+                exporter.export_csv(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case OverviewExportFormat.BINARY:
+                exporter.export_data(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+
+    def _export_statistics(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Route validated Statistics snapshots to existing asynchronous exporters."""
+        if not isinstance(request, StatisticsExportRequest) or request.result is not dialog.exportable_statistics():
+            return
+        if request.format not in tuple(StatisticsExportFormat):
+            return
+        if len(set(request.tables)) != len(request.tables):
+            return
+        charts_selected = StatisticsExportTable.CHARTS in request.tables
+        table_choices = tuple(table for table in request.tables if table is not StatisticsExportTable.CHARTS)
+        if not charts_selected and not table_choices:
+            return
+        if request.format is not StatisticsExportFormat.EXCEL and (charts_selected or len(table_choices) != 1):
+            return
+
+        try:
+            tables = statistics_export_tables(request.result, table_choices) if table_choices else {}
+            localized_sheets: dict[str, pd.DataFrame] = {}
+            for name, frame in tables.items():
+                table = StatisticsExportTable(name)
+                sheet_name = tr("StatisticsView", table.value)
+                if sheet_name.casefold() in {existing.casefold() for existing in localized_sheets}:
+                    self._logger.warning("Rejected Statistics export because translated sheet names are not unique.")
+                    return
+                match table:
+                    case StatisticsExportTable.CONTINUOUS:
+                        headers = {
+                            "column": "Column",
+                            "count": "Count",
+                            "missing_count": "Missing count",
+                            "missing_fraction": "Missing fraction",
+                            "mean": "Mean",
+                            "median": "Median",
+                            "std": "Std Dev",
+                            "variance": "Variance",
+                            "minimum": "Min",
+                            "maximum": "Max",
+                            "range": "Range",
+                            "q1": "Q1",
+                            "q3": "Q3",
+                            "iqr": "IQR",
+                            "skewness": "Skewness",
+                            "kurtosis": "Kurtosis",
+                            "mean_sd_summary": "Mean ± SD",
+                            "median_iqr_summary": "Median (Q1 to Q3)",
+                            "shapiro_statistic": "Shapiro-Wilk W",
+                            "shapiro_p_value": "Shapiro-Wilk p-value",
+                            "recommended_summary_method": "Recommended summary",
+                        }
+                    case StatisticsExportTable.CATEGORICAL:
+                        headers = {
+                            "column": "Column",
+                            "value": "Category",
+                            "count": "Count",
+                            "fraction": "Fraction (non-missing)",
+                            "valid_count": "Valid count",
+                            "missing_count": "Missing count",
+                            "missing_fraction": "Missing fraction",
+                        }
+                    case _:
+                        return
+                localized_sheets[sheet_name] = frame.rename(
+                    columns={key: tr("StatisticsView", value) for key, value in headers.items()}
+                )
+        except (TypeError, ValueError):
+            self._logger.warning("Rejected unavailable Statistics export selection.")
+            return
+
+        match request.format:
+            case StatisticsExportFormat.EXCEL:
+                chart_sheet_name = tr("StatisticsView", StatisticsExportTable.CHARTS.value)
+                chart_factory: (
+                    Callable[
+                        [Callable[[int], None] | None, Callable[[], bool] | None],
+                        tuple[ExcelChartImage, ...],
+                    ]
+                    | None
+                ) = None
+                if charts_selected:
+                    labels = StatisticsChartLabels(
+                        histogram=tr("StatisticsView", "Histogram"),
+                        boxplot=tr("StatisticsView", "Boxplot"),
+                        no_data=tr("StatisticsView", "No data"),
+                    )
+
+                    def make_chart_images(
+                        progress_cb: Callable[[int], None] | None,
+                        cancel_cb: Callable[[], bool] | None,
+                    ) -> tuple[ExcelChartImage, ...]:
+                        return render_statistics_charts(
+                            request.result.columns,
+                            labels,
+                            progress_cb=progress_cb,
+                            cancel_cb=cancel_cb,
+                        )
+
+                    chart_factory = make_chart_images
+
+                exporter.export_excel(
+                    sheets=localized_sheets,
+                    chart_factory=chart_factory,
+                    chart_sheet_name=chart_sheet_name if charts_selected else None,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.CSV:
+                exporter.export_csv(
+                    df=next(iter(localized_sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.BINARY:
+                exporter.export_data(
+                    df=next(iter(localized_sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+
+    def _export_hypothesis(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Localize owned applied-result tables and render worker-owned Excel charts."""
+        if not isinstance(request, HypothesisExportRequest) or request.snapshot is not dialog.exportable_hypothesis():
+            return
+        snapshot = request.snapshot
+        charts = HypothesisExportComponent.CHARTS in request.components
+        table_choices = tuple(item for item in request.components if item is not HypothesisExportComponent.CHARTS)
+        contexts = {
+            HypothesisTest.GROUP_COMPARISON: "GroupComparisonView",
+            HypothesisTest.CHI_SQUARE: "ChiSquareView",
+            HypothesisTest.PAIRED_COMPARISON: "PairedComparisonView",
+        }
+        context = contexts[snapshot.test]
+        summaries = {
+            HypothesisTest.GROUP_COMPARISON: "Group summary",
+            HypothesisTest.CHI_SQUARE: "Contingency table",
+            HypothesisTest.PAIRED_COMPARISON: "Measurement summary",
+        }
+        common_headers = {
+            "group": "Group",
+            "count": "Count",
+            "mean": "Mean",
+            "median": "Median",
+            "std": "Std Dev",
+            "shapiro_statistic": "Shapiro W",
+            "shapiro_p_value": "Shapiro p",
+            "normal": "Normal?",
+            "measurement": "Measurement",
+            "q1": "Q1",
+            "q3": "Q3",
+        }
+        result_headers = {
+            "test": "Test",
+            "statistic": "Test statistic",
+            "p_value": "p-value",
+            "degrees_of_freedom": "Degrees of freedom",
+            "mean_difference": "Mean difference",
+            "ci_low": "95% CI lower",
+            "ci_high": "95% CI upper",
+            "effect_name": "Effect size",
+            "effect_size": "Effect value",
+            "numeric_column": "Numeric column",
+            "grouping_column": "Grouping column",
+            "row_column": "Row column",
+            "column_column": "Column column",
+            "sample_count": "Sample count",
+            "yates_correction": "Yates' continuity correction",
+            "cochran_violated": "Cochran's rule violated",
+            "low_expected_fraction": "Fraction of expected counts below 5",
+            "min_expected": "Minimum expected count",
+            "odds_ratio": "Odds ratio",
+            "total_subjects": "Total subjects",
+            "excluded_subjects": "Excluded subjects",
+            "notes": "Notes",
+        }
+        tables = hypothesis_export_tables(snapshot, table_choices) if table_choices else {}
+        sheets: dict[str, pd.DataFrame] = {}
+        for component, source_frame in tables.items():
+            frame = source_frame
+            name = summaries[snapshot.test] if component is HypothesisExportComponent.SUMMARY else "Test results"
+            sheet_name = tr(context, name)
+            if sheet_name.casefold() in {existing.casefold() for existing in sheets}:
+                message = "Translated hypothesis sheet names must be unique."
+                raise ValueError(message)
+            if component is HypothesisExportComponent.SUMMARY:
+                if snapshot.test is HypothesisTest.CHI_SQUARE:
+                    frame.columns = [
+                        snapshot.columns[0],
+                        *cast("ChiSquareResult", snapshot.result).column_labels,
+                        tr(context, "Total"),
+                    ]
+                    frame.iloc[-1, 0] = tr(context, "Total")
+                else:
+                    frame = frame.rename(columns={key: tr(context, text) for key, text in common_headers.items()})
+            else:
+                frame = frame.rename(
+                    columns={
+                        key: tr("AnalysisExportDialog", result_headers.get(key, "Measurement"))
+                        + (f" {key.removeprefix('measurement_')}" if key.startswith("measurement_") else "")
+                        for key in frame.columns
+                    }
+                )
+                # Test names are presentation labels; applied dataset column names stay literal.
+                test_header = tr("AnalysisExportDialog", "Test")
+                effect_header = tr("AnalysisExportDialog", "Effect size")
+                frame[test_header] = frame[test_header].map(
+                    lambda value: tr("AnalysisExportDialog", value) if isinstance(value, str) else value
+                )
+                if effect_header in frame:
+                    frame[effect_header] = frame[effect_header].map(
+                        lambda value: tr("AnalysisExportDialog", value) if isinstance(value, str) else value
+                    )
+            sheets[sheet_name] = frame
+        if request.format is StatisticsExportFormat.EXCEL:
+            labels = HypothesisChartLabels(
+                distribution=tr(
+                    context,
+                    "Distribution by group"
+                    if snapshot.test is HypothesisTest.GROUP_COMPARISON
+                    else "Distribution by occasion",
+                ),
+                residuals=tr("ChiSquareView", "Adjusted standardized residuals"),
+                trajectories=tr("PairedComparisonView", "Subject trajectories"),
+                value=tr("PairedComparisonView", "Value"),
+                occasion=tr("PairedComparisonView", "Measurement occasion"),
+                residual_annotations=(
+                    ChiSquareView.chart_annotations(cast("ChiSquareResult", snapshot.result))
+                    if snapshot.test is HypothesisTest.CHI_SQUARE
+                    else ()
+                ),
+            )
+
+            def make_images(
+                progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
+            ) -> tuple[ExcelChartImage, ...]:
+                return render_hypothesis_charts(snapshot, labels, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
+            exporter.export_excel(
+                sheets=sheets,
+                chart_factory=make_images if charts else None,
+                chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                parent_widget=dialog,
+                operation_target=dialog.content_panel(),
+                show_success_dialog=True,
+            )
+        elif request.format is StatisticsExportFormat.CSV:
+            exporter.export_csv(
+                df=next(iter(sheets.values())),
+                parent_widget=dialog,
+                operation_target=dialog.content_panel(),
+                show_success_dialog=True,
+            )
+        else:
+            exporter.export_data(
+                df=next(iter(sheets.values())),
+                parent_widget=dialog,
+                operation_target=dialog.content_panel(),
+                show_success_dialog=True,
+            )
+
+    def _localized_correlation_table(self, snapshot: CorrelationExportSnapshot) -> pd.DataFrame:
+        """Localize the ranked table while preserving numeric statistics."""
+        frame = correlation_export_table(snapshot, (CorrelationExportComponent.STRONGEST_CORRELATIONS,))
+
+        methods = {
+            CorrelationMethod.PEARSON: tr("CorrelationView", "Pearson"),
+            CorrelationMethod.SPEARMAN: tr("CorrelationView", "Spearman"),
+            CorrelationMethod.KENDALL: tr("CorrelationView", "Kendall's tau-b"),
+        }
+        strengths = {
+            "negligible": tr("CorrelationView", "Negligible"),
+            "weak": tr("CorrelationView", "Weak"),
+            "moderate": tr("CorrelationView", "Moderate"),
+            "strong": tr("CorrelationView", "Strong"),
+        }
+        frame["strength"] = frame["strength"].map(
+            lambda value: strengths[value] if isinstance(value, str) else tr("CorrelationView", "N/A")
+        )
+        frame["method"] = frame["method"].map(lambda value: methods[CorrelationMethod(str(value))])
+        frame["ranking_explanation"] = tr(
+            "AnalysisExportDialog",
+            "Pairs are ranked by absolute coefficient. Significance is based on "
+            "p < {alpha} after Holm adjustment for {count} tests.",
+        ).format(alpha=fmt_num(SIGNIFICANCE_LEVEL), count=fmt_int(len(snapshot.matrix.pairs)))
+        headers = {
+            "variable_1": tr("CorrelationView", "Variable 1"),
+            "variable_2": tr("CorrelationView", "Variable 2"),
+            "coefficient": tr("AnalysisExportDialog", "Coefficient"),
+            "ci_low": tr("AnalysisExportDialog", "95% CI lower"),
+            "ci_high": tr("AnalysisExportDialog", "95% CI upper"),
+            "p_value": tr("CorrelationView", "p"),
+            "adjusted_p_value": tr("CorrelationView", "Holm p"),
+            "n": tr("CorrelationView", "n"),
+            "strength": tr("CorrelationView", "Strength"),
+            "significant": tr("AnalysisExportDialog", "Significant after Holm"),
+            "method": tr("AnalysisExportDialog", "Correlation method"),
+            "ranking_explanation": tr("AnalysisExportDialog", "Ranking and Holm explanation"),
+        }
+        return frame.rename(columns=headers)
+
+    def _export_correlation(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Export applied tables and worker-owned chart images from one snapshot."""
+        if not isinstance(request, CorrelationExportRequest) or request.snapshot is not dialog.exportable_correlation():
+            return
+        snapshot = request.snapshot
+        sheet_name = tr("AnalysisExportDialog", "Strongest correlations")
+        sheets = (
+            {sheet_name: self._localized_correlation_table(snapshot)}
+            if CorrelationExportComponent.STRONGEST_CORRELATIONS in request.components
+            else {}
+        )
+        charts = tuple(
+            component
+            for component in request.components
+            if component is not CorrelationExportComponent.STRONGEST_CORRELATIONS
+        )
+        method_names = {
+            CorrelationMethod.PEARSON: tr("CorrelationView", "Pearson"),
+            CorrelationMethod.SPEARMAN: tr("CorrelationView", "Spearman"),
+            CorrelationMethod.KENDALL: tr("CorrelationView", "Kendall's tau-b"),
+        }
+        method_name = method_names[snapshot.matrix.method]
+        labels = CorrelationChartLabels(
+            matrix_title=tr("CorrelationView", "{method} correlation").format(method=method_name),
+            scatter_heading="{x} / {y} (" + method_name + ")",
+            line_equation=tr("AnalysisExportDialog", "Least-squares line: y = ({slope}) x + ({intercept})"),
+            descriptive_line=tr(
+                "CorrelationView",
+                "The line is a linear fit shown for reference. {method} measures monotonic, "
+                "not necessarily linear, association.",
+            ).format(method=method_name),
+            sampling=tr(
+                "CorrelationView", "Showing a random sample of {shown} of {total} points. Statistics use all points."
+            ),
+            insufficient_observations=tr(
+                "CorrelationView",
+                "Fewer than {minimum} rows have values in both columns, so no correlation can be computed.",
+            ).format(minimum=fmt_int(MIN_OBSERVATIONS)),
+            constant_input=tr(
+                "CorrelationView",
+                "At least one of the columns is constant over the rows with values in both, "
+                "so no correlation can be computed.",
+            ),
+            number_format=fmt_num,
+            count_format=fmt_int,
+            matrix_annotations=CorrelationView.chart_annotations(snapshot.matrix),
+        )
+
+        def make_images(
+            progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
+        ) -> tuple[ExcelChartImage, ...]:
+            return render_correlation_charts(snapshot, charts, labels, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
+        match request.format:
+            case StatisticsExportFormat.EXCEL:
+                exporter.export_excel(
+                    sheets=sheets,
+                    chart_factory=make_images if charts else None,
+                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.CSV:
+                exporter.export_csv(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.BINARY:
+                exporter.export_data(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+
+    def _localized_regression_tables(
+        self,
+        snapshot: RegressionExportSnapshot,
+        components: tuple[RegressionExportComponent, ...],
+    ) -> dict[str, pd.DataFrame]:
+        """Build regression sheets with translated names, headers and metric labels."""
+        context = "AnalysisExportDialog"
+        effect_names = {
+            RegressionModel.LOGISTIC: tr(context, "Odds ratio"),
+            RegressionModel.POISSON: tr(context, "Rate ratio"),
+            RegressionModel.NEGATIVE_BINOMIAL: tr(context, "Rate ratio"),
+        }
+        effect_name = effect_names.get(snapshot.model, "")
+        hazard_name = tr(context, "Hazard ratio")
+        ci_low = tr(context, "{name}, 95% CI lower")
+        ci_high = tr(context, "{name}, 95% CI upper")
+        coefficient_headers = {
+            "term": tr(context, "Term"),
+            "estimate": tr(context, "Estimate"),
+            "std_error": tr(context, "Std. error"),
+            "t_statistic": tr(context, "t statistic"),
+            "z_statistic": tr(context, "z statistic"),
+            "p_value": tr(context, "p-value"),
+            "ci_low": tr(context, "95% CI lower"),
+            "ci_high": tr(context, "95% CI upper"),
+            "vif": tr(context, "VIF"),
+            "effect": effect_name,
+            "effect_ci_low": ci_low.format(name=effect_name),
+            "effect_ci_high": ci_high.format(name=effect_name),
+            "hazard_ratio": hazard_name,
+            "hazard_ratio_ci_low": ci_low.format(name=hazard_name),
+            "hazard_ratio_ci_high": ci_high.format(name=hazard_name),
+            "significant": tr(context, "Significant at p < {alpha}").format(alpha=fmt_num(REGRESSION_SIGNIFICANCE)),
+        }
+        metric_labels = {
+            RegressionMetric.ROWS_USED: tr(context, "Rows used"),
+            RegressionMetric.ROWS_DROPPED: tr(context, "Rows dropped because of missing values"),
+            RegressionMetric.R_SQUARED: tr(context, "R²"),
+            RegressionMetric.ADJUSTED_R_SQUARED: tr(context, "Adjusted R²"),
+            RegressionMetric.F_STATISTIC: tr(context, "F statistic"),
+            RegressionMetric.F_P_VALUE: tr(context, "F-test p-value"),
+            RegressionMetric.DF_MODEL: tr(context, "Model degrees of freedom"),
+            RegressionMetric.DF_RESIDUAL: tr(context, "Residual degrees of freedom"),
+            RegressionMetric.RMSE: tr(context, "RMSE"),
+            RegressionMetric.AIC: tr(context, "AIC"),
+            RegressionMetric.BREUSCH_PAGAN_STATISTIC: tr(context, "Breusch-Pagan LM"),
+            RegressionMetric.BREUSCH_PAGAN_P_VALUE: tr(context, "Breusch-Pagan p-value"),
+            RegressionMetric.JARQUE_BERA_STATISTIC: tr(context, "Jarque-Bera JB"),
+            RegressionMetric.JARQUE_BERA_P_VALUE: tr(context, "Jarque-Bera p-value"),
+            RegressionMetric.DURBIN_WATSON: tr(context, "Durbin-Watson"),
+            RegressionMetric.MAX_VIF: tr(context, "Largest VIF"),
+            RegressionMetric.LOG_LIKELIHOOD: tr(context, "Log-likelihood"),
+            RegressionMetric.NULL_LOG_LIKELIHOOD: tr(context, "Null-model log-likelihood"),
+            RegressionMetric.PSEUDO_R_SQUARED: tr(context, "McFadden pseudo R²"),
+            RegressionMetric.AUC: tr(context, "AUC (in-sample)"),
+            RegressionMetric.DISPERSION_RATIO: tr(context, "Pearson dispersion"),
+            RegressionMetric.NEGATIVE_BINOMIAL_ALPHA: tr(context, "NB2 alpha"),
+            RegressionMetric.EVENTS: tr(context, "Events"),
+            RegressionMetric.CENSORED: tr(context, "Censored"),
+        }
+        sheet_names = {
+            RegressionExportComponent.COEFFICIENTS: tr(context, "Coefficients"),
+            RegressionExportComponent.MODEL_METRICS: tr(context, "Model metrics"),
+        }
+        tables = regression_export_tables(snapshot, components, intercept_label=tr(context, "(Intercept)"))
+        sheets: dict[str, pd.DataFrame] = {}
+        for component, frame in tables.items():
+            if component is RegressionExportComponent.MODEL_METRICS:
+                frame["metric"] = frame["metric"].map(
+                    lambda key: metric_labels[RegressionMetric(key)] if isinstance(key, str) else key
+                )
+                localized = frame.rename(
+                    columns={
+                        "metric": tr(context, "Metric"),
+                        "value": tr(context, "Value"),
+                        "notes": tr(context, "Notes"),
+                    }
+                )
+            else:
+                localized = frame.rename(columns=coefficient_headers)
+            sheets[sheet_names[component]] = localized
+        return sheets
+
+    def _export_regression(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Export the displayed model's localized tables and worker-rendered charts."""
+        if not isinstance(request, RegressionExportRequest) or request.snapshot is not dialog.exportable_regression():
+            return
+        snapshot = request.snapshot
+        charts = RegressionExportComponent.CHARTS in request.components
+        sheets = self._localized_regression_tables(snapshot, request.components)
+
+        def make_images(
+            progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
+        ) -> tuple[ExcelChartImage, ...]:
+            return render_regression_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
+        match request.format:
+            case StatisticsExportFormat.EXCEL:
+                exporter.export_excel(
+                    sheets=sheets,
+                    chart_factory=make_images if charts else None,
+                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.CSV:
+                exporter.export_csv(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.BINARY:
+                exporter.export_data(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+
+    @staticmethod
+    def _outlier_score_label(snapshot: OutlierExportSnapshot) -> str:
+        """Return the displayed score header of the snapshot's potential outliers."""
+        if isinstance(snapshot, MultivariateOutlierExportSnapshot):
+            return tr("MultivariateOutliersView", "Anomaly score")
+        score_headers = {
+            OutlierMethod.IQR: tr("OutliersView", "Distance past fence"),
+            OutlierMethod.Z_SCORE: tr("OutliersView", "z"),
+            OutlierMethod.MODIFIED_Z_SCORE: tr("OutliersView", "Modified z"),
+        }
+        return score_headers[snapshot.summary.method]
+
+    def _localized_outlier_tables(
+        self,
+        snapshot: OutlierExportSnapshot,
+        components: tuple[OutlierExportComponent, ...],
+    ) -> dict[str, pd.DataFrame]:
+        """Build outlier sheets with translated names, headers, statuses and metric labels."""
+        context = "AnalysisExportDialog"
+        view_context = "OutliersView"
+        metric_labels = {
+            OutlierMetric.THRESHOLD: tr(context, "Threshold"),
+            OutlierMetric.VALUES: tr(context, "Values"),
+            OutlierMetric.MISSING: tr(context, "Missing"),
+            OutlierMetric.OUTLIERS: tr(context, "Potential outliers"),
+            OutlierMetric.OUTLIER_SHARE: tr(context, "Potential outlier share"),
+            OutlierMetric.LOW: tr(context, "Low potential outliers"),
+            OutlierMetric.HIGH: tr(context, "High potential outliers"),
+            OutlierMetric.LOWER_FENCE: tr(context, "Lower fence"),
+            OutlierMetric.UPPER_FENCE: tr(context, "Upper fence"),
+            OutlierMetric.Q1: tr(context, "Q1"),
+            OutlierMetric.Q3: tr(context, "Q3"),
+            OutlierMetric.IQR: tr(context, "IQR"),
+            OutlierMetric.MEAN: tr(context, "Mean"),
+            OutlierMetric.STD: tr(context, "Standard deviation"),
+            OutlierMetric.MEDIAN: tr(context, "Median"),
+            OutlierMetric.MAD: tr(context, "MAD"),
+            OutlierMetric.FEATURES: tr(context, "Features"),
+            OutlierMetric.CONTAMINATION: tr(context, "Expected outlier fraction"),
+            OutlierMetric.LOF_NEIGHBORS: tr(context, "LOF neighbors"),
+            OutlierMetric.TOTAL_ROWS: tr(context, "Total rows"),
+            OutlierMetric.ROWS_USED: tr(context, "Rows used"),
+            OutlierMetric.ROWS_DROPPED: tr(context, "Rows dropped because of missing or infinite values"),
+            OutlierMetric.INLIERS: tr(context, "Inliers"),
+        }
+        status_labels = {
+            ColumnOutlierStatus.NOT_ENOUGH_OBSERVATIONS: tr(view_context, "Too few values"),
+            ColumnOutlierStatus.ZERO_SPREAD: tr(view_context, "No spread"),
+        }
+        summary_headers = {
+            "column": tr(view_context, "Column"),
+            "values": tr(view_context, "Values"),
+            "missing": tr(view_context, "Missing"),
+            "outliers": tr(view_context, "Outliers"),
+            "share": tr(view_context, "Share"),
+            "low": tr(view_context, "Low"),
+            "high": tr(view_context, "High"),
+            "lower_fence": tr(view_context, "Lower fence"),
+            "upper_fence": tr(view_context, "Upper fence"),
+            "status": tr(context, "Status"),
+            "notes": tr(context, "Notes"),
+        }
+        metric_headers = {
+            "metric": tr(context, "Metric"),
+            "value": tr(context, "Value"),
+            "notes": tr(context, "Notes"),
+        }
+        sheet_names = {
+            OutlierExportComponent.COLUMN_SUMMARY: tr(context, "Column summary"),
+            OutlierExportComponent.COLUMN_DETAILS: tr(context, "Column details"),
+            OutlierExportComponent.MODEL_SUMMARY: tr(context, "Model summary"),
+            OutlierExportComponent.POTENTIAL_OUTLIERS: tr(context, "Potential outliers"),
+        }
+        tables = outlier_export_tables(
+            snapshot,
+            components,
+            row_label=tr(view_context, "Row"),
+            score_label=self._outlier_score_label(snapshot),
+        )
+        sheets: dict[str, pd.DataFrame] = {}
+        for component, frame in tables.items():
+            match component:
+                case OutlierExportComponent.COLUMN_SUMMARY:
+                    frame["status"] = frame["status"].map(
+                        lambda key: status_labels[ColumnOutlierStatus(key)] if isinstance(key, str) else key
+                    )
+                    localized = frame.rename(columns=summary_headers)
+                case OutlierExportComponent.COLUMN_DETAILS | OutlierExportComponent.MODEL_SUMMARY:
+                    frame["metric"] = frame["metric"].map(
+                        lambda key: metric_labels[OutlierMetric(key)] if isinstance(key, str) else key
+                    )
+                    localized = frame.rename(columns=metric_headers)
+                case _:
+                    localized = frame
+            sheets[sheet_names[component]] = localized
+        return sheets
+
+    def _export_outliers(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Export the displayed screening's localized tables and worker-rendered charts."""
+        if not isinstance(request, OutlierExportRequest) or request.snapshot is not dialog.exportable_outliers():
+            return
+        snapshot = request.snapshot
+        charts = OutlierExportComponent.CHARTS in request.components
+        sheets = self._localized_outlier_tables(snapshot, request.components)
+
+        def make_images(
+            progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
+        ) -> tuple[ExcelChartImage, ...]:
+            if isinstance(snapshot, UnivariateOutlierExportSnapshot):
+                return render_univariate_outlier_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+            return render_multivariate_outlier_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
+        match request.format:
+            case StatisticsExportFormat.EXCEL:
+                exporter.export_excel(
+                    sheets=sheets,
+                    chart_factory=make_images if charts else None,
+                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.CSV:
+                exporter.export_csv(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.BINARY:
+                exporter.export_data(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+
+    @staticmethod
+    def _localized_clustering_tables(
+        components: tuple[ClusteringExportComponent, ...],
+        snapshot: ClusteringExportSnapshot,
+    ) -> dict[str, pd.DataFrame]:
+        """Build clustering sheets with translated names, headers and metric labels.
+
+        Cluster names are already translated by the snapshot's chart labels.
+        """
+        context = "AnalysisExportDialog"
+        metric_labels = {
+            ClusteringMetric.FEATURES: tr(context, "Features"),
+            ClusteringMetric.CLUSTER_COUNT: tr(context, "Number of clusters"),
+            ClusteringMetric.DBSCAN_EPSILON: tr(context, "Neighborhood radius (eps)"),
+            ClusteringMetric.DBSCAN_MIN_SAMPLES: tr(context, "Minimum samples"),
+            ClusteringMetric.TOTAL_ROWS: tr(context, "Total rows"),
+            ClusteringMetric.ROWS_USED: tr(context, "Rows used"),
+            ClusteringMetric.ROWS_DROPPED: tr(context, "Rows dropped because of missing or infinite values"),
+            ClusteringMetric.CLUSTERS_FOUND: tr(context, "Clusters found"),
+            ClusteringMetric.NOISE_ROWS: tr(context, "Noise rows"),
+            ClusteringMetric.SILHOUETTE: tr(context, "Silhouette score"),
+        }
+        headers = {
+            "cluster": tr(context, "Cluster"),
+            "rows": tr(context, "Rows"),
+            "share": tr(context, "Share"),
+            "metric": tr(context, "Metric"),
+            "value": tr(context, "Value"),
+            "notes": tr(context, "Notes"),
+        }
+        sheet_names = {
+            ClusteringExportComponent.CLUSTER_SIZES: tr(context, "Cluster sizes"),
+            ClusteringExportComponent.MODEL_SUMMARY: tr(context, "Model summary"),
+        }
+        sheets: dict[str, pd.DataFrame] = {}
+        for component, frame in clustering_export_tables(snapshot, components).items():
+            if component is ClusteringExportComponent.MODEL_SUMMARY:
+                frame["metric"] = frame["metric"].map(
+                    lambda key: metric_labels[ClusteringMetric(key)] if isinstance(key, str) else key
+                )
+            sheets[sheet_names[component]] = frame.rename(columns=headers)
+        return sheets
+
+    def _export_clustering(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Export the displayed clustering's localized tables and worker-rendered projection."""
+        if not isinstance(request, ClusteringExportRequest) or request.snapshot is not dialog.exportable_clustering():
+            return
+        snapshot = request.snapshot
+        charts = ClusteringExportComponent.CHARTS in request.components
+        sheets = self._localized_clustering_tables(request.components, snapshot)
+
+        def make_images(
+            progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
+        ) -> tuple[ExcelChartImage, ...]:
+            return render_clustering_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
+        match request.format:
+            case StatisticsExportFormat.EXCEL:
+                exporter.export_excel(
+                    sheets=sheets,
+                    chart_factory=make_images if charts else None,
+                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.CSV:
+                exporter.export_csv(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.BINARY:
+                exporter.export_data(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+
+    @staticmethod
+    def _localized_pca_tables(
+        components: tuple[PCAExportComponent, ...],
+        snapshot: PCAExportSnapshot,
+    ) -> dict[str, pd.DataFrame]:
+        """Build PCA sheets with translated names, headers and metric labels.
+
+        Component names such as ``PC1`` are displayed untranslated, as in the view.
+        """
+        context = "AnalysisExportDialog"
+        metric_labels = {
+            PCAMetric.FEATURES: tr(context, "Features"),
+            PCAMetric.TOTAL_ROWS: tr(context, "Total rows"),
+            PCAMetric.ROWS_USED: tr(context, "Rows used"),
+            PCAMetric.ROWS_DROPPED: tr(context, "Rows dropped because of missing or infinite values"),
+        }
+        headers = {
+            "feature": tr(context, "Feature"),
+            "component": tr(context, "Component"),
+            "variance": tr(context, "Variance"),
+            "share": tr(context, "Share"),
+            "cumulative_share": tr(context, "Cumulative share"),
+            "metric": tr(context, "Metric"),
+            "value": tr(context, "Value"),
+            "notes": tr(context, "Notes"),
+        }
+        sheet_names = {
+            PCAExportComponent.FEATURE_LOADINGS: tr(context, "Feature loadings"),
+            PCAExportComponent.EXPLAINED_VARIANCE: tr(context, "Explained variance"),
+            PCAExportComponent.MODEL_SUMMARY: tr(context, "Model summary"),
+        }
+        sheets: dict[str, pd.DataFrame] = {}
+        for component, frame in pca_export_tables(snapshot, components).items():
+            if component is PCAExportComponent.MODEL_SUMMARY:
+                frame["metric"] = frame["metric"].map(
+                    lambda key: metric_labels[PCAMetric(key)] if isinstance(key, str) else key
+                )
+            sheets[sheet_names[component]] = frame.rename(columns=headers)
+        return sheets
+
+    def _export_pca(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Export the displayed PCA's localized tables and worker-rendered plots."""
+        if not isinstance(request, PCAExportRequest) or request.snapshot is not dialog.exportable_pca():
+            return
+        snapshot = request.snapshot
+        charts = PCAExportComponent.CHARTS in request.components
+        sheets = self._localized_pca_tables(request.components, snapshot)
+
+        def make_images(
+            progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
+        ) -> tuple[ExcelChartImage, ...]:
+            return render_pca_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
+        match request.format:
+            case StatisticsExportFormat.EXCEL:
+                exporter.export_excel(
+                    sheets=sheets,
+                    chart_factory=make_images if charts else None,
+                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.CSV:
+                exporter.export_csv(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.BINARY:
+                exporter.export_data(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+
+    @staticmethod
+    def _localized_time_series_tables(
+        components: tuple[TimeSeriesExportComponent, ...],
+        snapshot: TimeSeriesExportSnapshot,
+    ) -> dict[str, pd.DataFrame]:
+        """Build time-series sheets with translated names, headers and metric labels."""
+        context = "AnalysisExportDialog"
+        metric_labels = {
+            TimeSeriesMetric.SOURCE_ROWS: tr(context, "Source rows"),
+            TimeSeriesMetric.INVALID_ROWS: tr(context, "Invalid rows dropped"),
+            TimeSeriesMetric.DUPLICATE_ROWS: tr(context, "Duplicate rows averaged"),
+            TimeSeriesMetric.TIME_POINTS: tr(context, "Time points"),
+            TimeSeriesMetric.SEASONAL_PERIOD: tr(context, "Seasonal period"),
+        }
+        headers = {
+            "timestamp": tr(context, "Timestamp"),
+            "value": tr(context, "Value"),
+            "trend": tr(context, "Trend"),
+            "seasonal": tr(context, "Seasonal"),
+            "residual": tr(context, "Residual"),
+            "lag": tr(context, "Lag"),
+            "autocorrelation": tr(context, "Autocorrelation"),
+            "metric": tr(context, "Metric"),
+            "notes": tr(context, "Notes"),
+        }
+        sheet_names = {
+            TimeSeriesExportComponent.SERIES: tr(context, "Series"),
+            TimeSeriesExportComponent.AUTOCORRELATION: tr(context, "Autocorrelation"),
+            TimeSeriesExportComponent.MODEL_SUMMARY: tr(context, "Model summary"),
+        }
+        sheets: dict[str, pd.DataFrame] = {}
+        for component, frame in time_series_export_tables(snapshot, components).items():
+            if component is TimeSeriesExportComponent.MODEL_SUMMARY:
+                frame["metric"] = frame["metric"].map(
+                    lambda key: metric_labels[TimeSeriesMetric(key)] if isinstance(key, str) else key
+                )
+            sheets[sheet_names[component]] = frame.rename(columns=headers)
+        return sheets
+
+    def _export_time_series(self, dialog: AnalysisDialog, exporter: ExportController, request: object) -> None:
+        """Export the displayed time series' localized tables and worker-rendered plots."""
+        if not isinstance(request, TimeSeriesExportRequest) or request.snapshot is not dialog.exportable_time_series():
+            return
+        snapshot = request.snapshot
+        charts = TimeSeriesExportComponent.CHARTS in request.components
+        sheets = self._localized_time_series_tables(request.components, snapshot)
+
+        def make_images(
+            progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
+        ) -> tuple[ExcelChartImage, ...]:
+            return render_time_series_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
+        match request.format:
+            case StatisticsExportFormat.EXCEL:
+                exporter.export_excel(
+                    sheets=sheets,
+                    chart_factory=make_images if charts else None,
+                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.CSV:
+                exporter.export_csv(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+            case StatisticsExportFormat.BINARY:
+                exporter.export_data(
+                    df=next(iter(sheets.values())),
+                    parent_widget=dialog,
+                    operation_target=dialog.content_panel(),
+                    show_success_dialog=True,
+                )
+
     # ------------------------------------------------------------------
     # Renderers (GUI thread only)
     # ------------------------------------------------------------------
@@ -370,20 +1588,14 @@ class AnalysisController:
         return OverviewView(cast("DatasetOverviewResult", result)), None
 
     def _render_statistics(self, result: object, _dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
-        """Render the Descriptive Statistics view and its column-picker config.
+        """Render full-width Statistics with column selection owned by its table.
 
         Must run on the GUI thread.
         """
         stats_result = cast("DescriptiveStatisticsResult", result)
         content = StatisticsView(stats_result)
 
-        if not stats_result.columns:
-            return content, None
-
-        config = StatisticsConfigWidget(stats_result)
-        config.column_changed.connect(content.show_distribution_for)
-        content.column_selected.connect(config.set_selected_column)
-        return content, config
+        return content, None
 
     def _render_hypothesis_tests(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
         """Render the Hypothesis Tests Apply prompt and its test/column-picker config.
@@ -392,8 +1604,8 @@ class AnalysisController:
         clicks Apply; the configuration widget's `apply_requested` signal is
         wired to `_recompute_content`, which dispatches a background job and
         replaces only the content pane, leaving this exact configuration
-        widget instance (and the user's picks) in place. Switching test
-        replaces the previous test's result with the prompt again.
+        widget instance (and the user's picks) in place. Switching test or
+        editing columns replaces the previous result with the prompt again.
         """
         defaults = cast("_HypothesisTestsDefaults", result)
         config = HypothesisTestsConfigWidget(
@@ -419,18 +1631,53 @@ class AnalysisController:
             if configuration is None:
                 return
             test, selection = configuration
+            revision = config.configuration_revision()
+
+            def apply_displayed_result(value: object) -> None:
+                """Register a snapshot only after the accepted result is displayed."""
+                content = self._render_hypothesis_test_content(test, value)
+                dialog.set_content_widget(content)
+                typed_result: HypothesisResult
+                columns: tuple[str, ...]
+                if isinstance(content, GroupComparisonView):
+                    typed_result = cast("GroupComparisonResult", value)
+                    columns = (typed_result.numeric_column, typed_result.grouping_column)
+                    notes = content.export_notes(typed_result)
+                elif isinstance(content, ChiSquareView):
+                    chi_result = cast("ChiSquareResult", value)
+                    columns = (chi_result.row_column, chi_result.column_column)
+                    notes = content.export_notes(chi_result)
+                    typed_result = chi_result
+                else:
+                    paired_result = cast("PairedComparisonResult", value)
+                    columns = paired_result.columns
+                    notes = cast("PairedComparisonView", content).export_notes(paired_result)
+                    typed_result = paired_result
+                if typed_result.error is not None:
+                    return
+                snapshot = HypothesisExportSnapshot(
+                    test,
+                    typed_result,
+                    selection if selection is not None else columns,
+                    notes,
+                )
+                dialog.set_exportable_hypothesis(snapshot)
+
             self._recompute_content(
                 dialog,
                 category=AnalysisCategory.HYPOTHESIS_TESTS,
                 scope_suffix=":".join((test.value, *(selection or ()))),
                 compute=lambda df, _callbacks: self._compute_hypothesis_test(df, test, selection),
-                apply_result=lambda r: dialog.set_content_widget(self._render_hypothesis_test_content(test, r)),
+                apply_result=apply_displayed_result,
                 is_stale=lambda: (
-                    config.applied_configuration() is not configuration or config.selected_test() is not test
+                    config.applied_configuration() is not configuration
+                    or config.selected_test() is not test
+                    or config.configuration_revision() != revision
                 ),
             )
 
         config.test_changed.connect(lambda: dialog.set_content_widget(_unapplied_content()))
+        config.configuration_changed.connect(lambda: dialog.set_content_widget(_unapplied_content()))
         config.apply_requested.connect(_handle_apply_requested)
         return _unapplied_content(), config
 
@@ -496,9 +1743,32 @@ class AnalysisController:
         Returns:
             The outcome, or `None` if cancelled.
         """
+        configuration = initialize_correlation(df)
+        selected = configuration.columns if columns is None else tuple(columns)
+        selection_is_valid = (
+            len(selected) <= MAX_SELECTED_COLUMNS
+            and len(selected) >= MIN_SELECTED_COLUMNS
+            and len(set(selected)) == len(selected)
+            and all(column in configuration.available_columns for column in selected)
+        )
+        if not selection_is_valid:
+            # The public analyzer returns a structured selection error without
+            # indexing the frame; retain that behavior for invalid requests.
+            matrix = analyze_correlation_matrix(
+                df,
+                columns,
+                method,
+                progress_cb=callbacks.progress_cb,
+                cancel_cb=callbacks.cancel_cb,
+            )
+            if matrix is None:
+                return None
+            return _CorrelationOutcome(matrix=matrix, pair_detail=None)
+
+        matrix_data = df.loc[:, list(selected)].copy(deep=True)
         matrix = analyze_correlation_matrix(
-            df,
-            columns,
+            matrix_data,
+            selected,
             method,
             progress_cb=callbacks.progress_cb,
             cancel_cb=callbacks.cancel_cb,
@@ -507,10 +1777,16 @@ class AnalysisController:
             return None
         if matrix.error is not None:
             return _CorrelationOutcome(matrix=matrix, pair_detail=None)
+        matrix = replace(matrix, available_columns=configuration.available_columns)
 
-        detail_pair = pair if pair is not None else default_pair(matrix)
-        pair_detail = analyze_correlation_pair(df, *detail_pair, method) if detail_pair is not None else None
-        return _CorrelationOutcome(matrix=matrix, pair_detail=pair_detail)
+        detail_pair = (
+            pair
+            if pair is not None and pair[0] != pair[1] and all(column in matrix.columns for column in pair)
+            else default_pair(matrix)
+        )
+        pair_detail = analyze_correlation_pair(matrix_data, *detail_pair, method) if detail_pair is not None else None
+        snapshot = CorrelationExportSnapshot(matrix=matrix, matrix_data=matrix_data)
+        return _CorrelationOutcome(matrix=matrix, pair_detail=pair_detail, export_snapshot=snapshot)
 
     def _render_correlation(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
         """Render the Correlation Explorer's initial state: the Apply prompt and its config.
@@ -526,50 +1802,58 @@ class AnalysisController:
         if len(matrix.available_columns) < MIN_SELECTED_COLUMNS:
             return CorrelationView(matrix, None), None
 
-        config = CorrelationConfigWidget(matrix, None)
+        config = CorrelationConfigWidget(matrix)
 
         def _handle_matrix_requested() -> None:
             self._recompute_correlation_matrix(dialog, config)
 
-        def _handle_pair_changed(x_column: str, y_column: str) -> None:
-            self._recompute_correlation_pair(dialog, config, x_column, y_column)
-
         config.matrix_requested.connect(_handle_matrix_requested)
-        config.pair_changed.connect(_handle_pair_changed)
+        config.configuration_changed.connect(lambda: dialog.set_content_widget(self._apply_prompt()))
         return self._apply_prompt(), config
 
-    @staticmethod
-    def _build_correlation_view(outcome: _CorrelationOutcome, config: CorrelationConfigWidget) -> CorrelationView:
-        """Build a Correlation Explorer view whose table rows select the config's pair."""
+    def _build_correlation_view(self, outcome: _CorrelationOutcome, dialog: AnalysisDialog) -> CorrelationView:
+        """Build a Correlation Explorer view whose table rows request pair details."""
         view = CorrelationView(outcome.matrix, outcome.pair_detail)
-        view.pair_activated.connect(config.set_pair)
+
+        def _handle_pair_activated(x_column: str, y_column: str) -> None:
+            if dialog.content_widget() is view:
+                self._recompute_correlation_pair(dialog, x_column, y_column)
+
+        view.pair_activated.connect(_handle_pair_activated)
         return view
 
     def _recompute_correlation_matrix(self, dialog: AnalysisDialog, config: CorrelationConfigWidget) -> None:
         """Recompute the whole correlation matrix for the config's applied method and columns.
 
-        Before the first matrix is shown, the pair pickers are disabled and
-        only hold a placeholder pair, so the matrix's strongest pair is
-        detailed instead and then synced back into the pickers.
+        Preserve the table-selected pair when it remains in the applied
+        columns; otherwise detail the new matrix's strongest pair.
         """
+        dialog.invalidate_correlation_export()
+        request_revision = dialog.correlation_export_revision()
         configuration = config.matrix_configuration()
         method, columns = configuration
-        pair = config.current_pair() if config.is_pair_selection_enabled() else None
+        view = dialog.content_widget()
+        pair = view.selected_pair() if isinstance(view, CorrelationView) else None
 
         def _apply(result: object) -> None:
             outcome = cast("_CorrelationOutcome", result)
-            dialog.set_content_widget(self._build_correlation_view(outcome, config))
-            if outcome.pair_detail is None:
+            current_view = dialog.content_widget()
+            latest_pair = current_view.selected_pair() if isinstance(current_view, CorrelationView) else None
+            new_view = self._build_correlation_view(outcome, dialog)
+            dialog.set_content_widget(new_view)
+            if outcome.matrix.error is not None:
                 return
-            detailed_pair = (outcome.pair_detail.pair.x_column, outcome.pair_detail.pair.y_column)
-            if pair is None:
-                config.set_pair(*detailed_pair, notify=False)
-            config.set_pair_selection_enabled(enabled=True)
-            # The pair may have changed while the matrix was computing; its
-            # own recompute was skipped (no current view), so catch up now.
-            current_pair = config.current_pair()
-            if current_pair is not None and current_pair != detailed_pair:
-                self._recompute_correlation_pair(dialog, config, *current_pair)
+            if outcome.export_snapshot is None:
+                message = "A successful correlation matrix must retain its worker-owned export snapshot."
+                raise ValueError(message)
+            dialog.set_exportable_correlation(outcome.export_snapshot)
+            if (
+                latest_pair is not None
+                and latest_pair != new_view.selected_pair()
+                and all(column in outcome.matrix.columns for column in latest_pair)
+            ):
+                # A table selection made during the matrix job still takes precedence.
+                new_view.select_pair(*latest_pair)
 
         self._recompute_content(
             dialog,
@@ -579,27 +1863,35 @@ class AnalysisController:
                 df, callbacks, method=method, columns=columns, pair=pair
             ),
             apply_result=_apply,
-            is_stale=lambda: config.matrix_configuration() != configuration,
+            is_stale=lambda: (
+                config.matrix_configuration() != configuration
+                or dialog.correlation_export_revision() != request_revision
+            ),
             cancelable=True,
         )
 
     def _recompute_correlation_pair(
         self,
         dialog: AnalysisDialog,
-        config: CorrelationConfigWidget,
         x_column: str,
         y_column: str,
     ) -> None:
         """Recompute only the pair detail, updating the current view's pair panel in place."""
         view = dialog.content_widget()
-        if not isinstance(view, CorrelationView) or view.table() is None:
-            # No matrix is shown (still computing, cancelled or failed);
-            # the next matrix result will include the current pair.
+        if (
+            not isinstance(view, CorrelationView)
+            or view.table() is None
+            or x_column == y_column
+            or x_column not in view.columns()
+            or y_column not in view.columns()
+        ):
+            # Pair selection is only available in a successful displayed matrix.
             return
 
         # The displayed matrix's method, not the config's: a pending method
         # change will bring its own pair detail with the new matrix.
         method = view.method()
+        selection_revision = view.pair_selection_revision()
 
         def _apply(result: object) -> None:
             view.set_pair_detail(cast("CorrelationPairDetail", result))
@@ -610,7 +1902,11 @@ class AnalysisController:
             scope_suffix=f"pair:{method.value}:{x_column}:{y_column}",
             compute=lambda df, _callbacks: analyze_correlation_pair(df, x_column, y_column, method),
             apply_result=_apply,
-            is_stale=lambda: dialog.content_widget() is not view or config.current_pair() != (x_column, y_column),
+            is_stale=lambda: (
+                dialog.content_widget() is not view
+                or view.selected_pair() != (x_column, y_column)
+                or view.pair_selection_revision() != selection_revision
+            ),
             target=view.pair_panel(),
         )
 
@@ -618,8 +1914,8 @@ class AnalysisController:
         """Render regression model results and the shared target/predictor config.
 
         Must run on the GUI thread. Linear regression remains the default;
-        model changes and applied predictor selections refit in a background
-        job without recreating the configuration widget.
+        all configuration edits wait for Apply before refitting in a
+        background job without recreating the configuration widget.
         """
         defaults = cast("_RegressionDefaults", result)
         regression = defaults.linear
@@ -636,7 +1932,7 @@ class AnalysisController:
         def _handle_model_requested() -> None:
             configuration = config.model_configuration()
             model, target, predictors = configuration
-            event = config.current_event() if model is RegressionModel.COX else ""
+            event = config.applied_event()
             revision = config.configuration_revision()
             if model is RegressionModel.LINEAR:
                 scope_parts = (target, *predictors)
@@ -653,12 +1949,19 @@ class AnalysisController:
                 return analyze_generalized_regression(df, model, target, predictors)
 
             def _apply_result(computed: object) -> None:
+                view: RegressionView | SurvivalRegressionView | GeneralizedRegressionView
                 if model is RegressionModel.LINEAR:
-                    dialog.set_content_widget(RegressionView(cast("RegressionResult", computed)))
+                    view = RegressionView(cast("RegressionResult", computed))
                 elif model is RegressionModel.COX:
-                    dialog.set_content_widget(SurvivalRegressionView(cast("SurvivalResult", computed)))
+                    view = SurvivalRegressionView(cast("SurvivalResult", computed))
                 else:
-                    dialog.set_content_widget(GeneralizedRegressionView(cast("GeneralizedRegressionResult", computed)))
+                    view = GeneralizedRegressionView(cast("GeneralizedRegressionResult", computed))
+                dialog.set_content_widget(view)
+                # Register only after display so the snapshot matches what the user sees.
+                if view.result().error is None:
+                    dialog.set_exportable_regression(
+                        RegressionExportSnapshot(view.result(), view.chart_labels(), view.export_notes())
+                    )
 
             self._recompute_content(
                 dialog,
@@ -670,7 +1973,7 @@ class AnalysisController:
                     dialog.config_widget() is not config
                     or config.configuration_revision() != revision
                     or config.model_configuration() != configuration
-                    or (model is RegressionModel.COX and config.current_event() != event)
+                    or config.applied_event() != event
                 ),
             )
 
@@ -714,7 +2017,10 @@ class AnalysisController:
         detail = (
             analyze_outlier_column(df, detail_column, method, summary.threshold) if detail_column is not None else None
         )
-        return _OutliersOutcome(summary=summary, detail=detail)
+        # The export renders every column's histogram later, so it needs data
+        # that later edits of the dataset tab cannot change.
+        data = df.loc[:, list(summary.available_columns)].copy(deep=True)
+        return _OutliersOutcome(summary=summary, detail=detail, data=data)
 
     def _render_outliers(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
         """Render the Outlier Explorer's initial state: the Apply prompt and its config.
@@ -730,51 +2036,66 @@ class AnalysisController:
         if not summary.available_columns:
             return OutliersView(summary, None), None
 
-        config = OutliersConfigWidget(summary, None)
+        config = OutliersConfigWidget(summary)
 
         def _handle_summary_requested() -> None:
             self._recompute_outlier_summary(dialog, config)
 
-        def _handle_column_changed(column: str) -> None:
-            self._recompute_outlier_column(dialog, config, column)
-
         config.summary_requested.connect(_handle_summary_requested)
-        config.column_changed.connect(_handle_column_changed)
+        config.configuration_changed.connect(lambda: dialog.set_content_widget(self._apply_prompt()))
         config.multivariate_requested.connect(lambda: self._switch_to_multivariate_outliers(dialog))
         return self._apply_prompt(), config
 
-    @staticmethod
-    def _build_outliers_view(outcome: _OutliersOutcome, config: OutliersConfigWidget) -> OutliersView:
-        """Build an Outlier Explorer view whose table rows select the config's column."""
+    def _build_outliers_view(self, outcome: _OutliersOutcome, dialog: AnalysisDialog) -> OutliersView:
+        """Build an Outlier Explorer view whose table rows request column details."""
         view = OutliersView(outcome.summary, outcome.detail)
-        view.column_activated.connect(config.set_column)
+
+        def _handle_column_activated(column: str) -> None:
+            if dialog.content_widget() is view:
+                self._recompute_outlier_column(dialog, column)
+
+        view.column_activated.connect(_handle_column_activated)
         return view
 
     def _recompute_outlier_summary(self, dialog: AnalysisDialog, config: OutliersConfigWidget) -> None:
         """Recompute the whole outlier summary for the config's applied method and threshold.
 
-        Before the first summary is shown, the column picker is disabled and
-        only holds a placeholder column, so the summary's top-ranked column
-        is detailed instead and then synced back into the picker.
+        Preserve the table-selected column, or detail the summary's
+        top-ranked column before a table selection exists.
         """
         configuration = config.summary_configuration()
+        revision = config.configuration_revision()
         method, threshold = configuration
-        column = (config.current_column() or None) if config.is_column_selection_enabled() else None
+        view = dialog.content_widget()
+        column = view.selected_column() if isinstance(view, OutliersView) else None
 
         def _apply(result: object) -> None:
             outcome = cast("_OutliersOutcome", result)
-            dialog.set_content_widget(self._build_outliers_view(outcome, config))
+            current_view = dialog.content_widget()
+            latest_column = current_view.selected_column() if isinstance(current_view, OutliersView) else None
+            new_view = self._build_outliers_view(outcome, dialog)
+            dialog.set_content_widget(new_view)
+            if outcome.data is not None and outcome.summary.error is None and outcome.summary.columns:
+                detail = new_view.column_detail()
+                displayed_detail = detail if detail is not None and detail.error is None else None
+                dialog.set_exportable_outliers(
+                    UnivariateOutlierExportSnapshot(
+                        summary=outcome.summary,
+                        data=outcome.data,
+                        chart_labels=new_view.histogram_labels(),
+                        summary_notes=new_view.summary_notes(),
+                        detail=displayed_detail,
+                        detail_notes=new_view.detail_notes(),
+                    )
+                )
             if outcome.detail is None:
                 return
-            detailed_column = outcome.detail.summary.column
-            if column is None:
-                config.set_column(detailed_column, notify=False)
-            config.set_column_selection_enabled(enabled=True)
-            # The column may have changed while the summary was computing;
-            # its own recompute was skipped (no current view), so catch up now.
-            current_column = config.current_column()
-            if current_column and current_column != detailed_column:
-                self._recompute_outlier_column(dialog, config, current_column)
+            if (
+                latest_column is not None
+                and latest_column != new_view.selected_column()
+                and any(summary.column == latest_column for summary in outcome.summary.columns)
+            ):
+                new_view.select_column(latest_column)
 
         self._recompute_content(
             dialog,
@@ -782,23 +2103,32 @@ class AnalysisController:
             scope_suffix=f"summary:{method.value}:{threshold}",
             compute=lambda df, _callbacks: self._compute_outliers(df, method, threshold, column),
             apply_result=_apply,
-            is_stale=lambda: config.summary_configuration() != configuration,
+            is_stale=lambda: (
+                dialog.config_widget() is not config
+                or config.configuration_revision() != revision
+                or config.summary_configuration() != configuration
+            ),
         )
 
-    def _recompute_outlier_column(self, dialog: AnalysisDialog, config: OutliersConfigWidget, column: str) -> None:
+    def _recompute_outlier_column(self, dialog: AnalysisDialog, column: str) -> None:
         """Recompute only the column detail, updating the current view's detail panel in place."""
         view = dialog.content_widget()
-        if not isinstance(view, OutliersView) or view.table() is None:
-            # No summary is shown (still computing or failed); the next
-            # summary result will include the current column.
+        if not isinstance(view, OutliersView) or view.table() is None or view.selected_column() != column:
+            # Column selection is only available in a displayed summary.
             return
 
         # The displayed summary's configuration, not the config's: a pending
         # method/threshold change will bring its own detail with the new summary.
         method, threshold = view.configuration()
+        selection_revision = view.column_selection_revision()
 
         def _apply(result: object) -> None:
-            view.set_column_detail(cast("OutlierColumnDetail", result))
+            detail = cast("OutlierColumnDetail", result)
+            view.set_column_detail(detail)
+            snapshot = dialog.exportable_outliers()
+            if isinstance(snapshot, UnivariateOutlierExportSnapshot) and snapshot.summary is view.result():
+                displayed_detail = detail if detail.error is None else None
+                dialog.set_exportable_outliers(snapshot.with_detail(displayed_detail, view.detail_notes()))
 
         self._recompute_content(
             dialog,
@@ -806,7 +2136,11 @@ class AnalysisController:
             scope_suffix=f"column:{method.value}:{threshold}:{column}",
             compute=lambda df, _callbacks: analyze_outlier_column(df, column, method, threshold),
             apply_result=_apply,
-            is_stale=lambda: dialog.content_widget() is not view or config.current_column() != column,
+            is_stale=lambda: (
+                dialog.content_widget() is not view
+                or view.selected_column() != column
+                or view.column_selection_revision() != selection_revision
+            ),
             target=view.detail_panel(),
         )
 
@@ -829,6 +2163,7 @@ class AnalysisController:
         multivariate_config.analysis_requested.connect(
             lambda: self._recompute_multivariate_outliers(dialog, multivariate_config)
         )
+        multivariate_config.configuration_changed.connect(lambda: dialog.set_content_widget(self._apply_prompt()))
         multivariate_config.univariate_requested.connect(lambda: self._refresh_content(dialog))
         content = (
             self._apply_prompt() if multivariate_result.error is None else MultivariateOutliersView(multivariate_result)
@@ -843,6 +2178,7 @@ class AnalysisController:
     ) -> None:
         """Refit multivariate screening while preserving its configuration widget."""
         configuration = config.analysis_configuration()
+        revision = config.configuration_revision()
         columns, method, standardize, contamination, lof_neighbors = configuration
         scope_parts = [
             "multivariate",
@@ -853,6 +2189,14 @@ class AnalysisController:
         if method is MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR:
             scope_parts.append(f"neighbors:{lof_neighbors}")
         scope_parts.extend(columns)
+
+        def _apply_result(result: object) -> None:
+            view = MultivariateOutliersView(cast("MultivariateOutlierResult", result))
+            dialog.set_content_widget(view)
+            if view.result().error is None:
+                dialog.set_exportable_outliers(
+                    MultivariateOutlierExportSnapshot(view.result(), view.chart_labels(), view.export_notes())
+                )
 
         self._recompute_content(
             dialog,
@@ -866,10 +2210,12 @@ class AnalysisController:
                 contamination=contamination,
                 lof_neighbors=lof_neighbors,
             ),
-            apply_result=lambda result: dialog.set_content_widget(
-                MultivariateOutliersView(cast("MultivariateOutlierResult", result))
+            apply_result=_apply_result,
+            is_stale=lambda: (
+                dialog.config_widget() is not config
+                or config.configuration_revision() != revision
+                or config.analysis_configuration() != configuration
             ),
-            is_stale=lambda: dialog.config_widget() is not config or config.analysis_configuration() != configuration,
         )
 
     def _render_pca(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
@@ -885,20 +2231,32 @@ class AnalysisController:
 
         config = PCAConfigWidget(pca_result)
         config.analysis_requested.connect(lambda: self._recompute_pca(dialog, config))
+        config.configuration_changed.connect(lambda: dialog.set_content_widget(self._apply_prompt()))
         return self._apply_prompt(), config
 
     def _recompute_pca(self, dialog: AnalysisDialog, config: PCAConfigWidget) -> None:
         """Run PCA for an applied feature/scaling configuration."""
         configuration = config.analysis_configuration()
+        revision = config.configuration_revision()
         columns, standardize = configuration
+
+        def _apply_result(result: object) -> None:
+            view = PCAView(cast("PCAResult", result))
+            dialog.set_content_widget(view)
+            if view.result().error is None:
+                dialog.set_exportable_pca(PCAExportSnapshot(view.result(), view.chart_labels(), view.export_notes()))
 
         self._recompute_content(
             dialog,
             category=AnalysisCategory.PCA,
             scope_suffix=f"fit:{'standardized' if standardize else 'raw'}:{':'.join(columns)}",
             compute=lambda df, _callbacks: analyze_pca(df, columns, standardize=standardize),
-            apply_result=lambda result: dialog.set_content_widget(PCAView(cast("PCAResult", result))),
-            is_stale=lambda: config.analysis_configuration() != configuration,
+            apply_result=_apply_result,
+            is_stale=lambda: (
+                dialog.config_widget() is not config
+                or config.configuration_revision() != revision
+                or config.analysis_configuration() != configuration
+            ),
         )
 
     def _render_clustering(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
@@ -915,11 +2273,13 @@ class AnalysisController:
 
         config = ClusteringConfigWidget(clustering_result)
         config.analysis_requested.connect(lambda: self._recompute_clustering(dialog, config))
+        config.configuration_changed.connect(lambda: dialog.set_content_widget(self._apply_prompt()))
         return self._apply_prompt(), config
 
     def _recompute_clustering(self, dialog: AnalysisDialog, config: ClusteringConfigWidget) -> None:
         """Run clustering for the latest applied config."""
         configuration = config.analysis_configuration()
+        revision = config.configuration_revision()
         columns, method, standardize, cluster_count, dbscan_epsilon, dbscan_min_samples = configuration
         parameters = (
             f"eps:{dbscan_epsilon}:min_samples:{dbscan_min_samples}"
@@ -928,6 +2288,14 @@ class AnalysisController:
         )
         scale = "standardized" if standardize else "raw"
         scope_suffix = f"fit:{method.value}:{scale}:{parameters}:{':'.join(columns)}"
+
+        def _apply_result(result: object) -> None:
+            view = ClusteringView(cast("ClusteringResult", result))
+            dialog.set_content_widget(view)
+            if view.result().error is None:
+                dialog.set_exportable_clustering(
+                    ClusteringExportSnapshot(view.result(), view.chart_labels(), view.export_notes())
+                )
 
         self._recompute_content(
             dialog,
@@ -942,8 +2310,12 @@ class AnalysisController:
                 dbscan_epsilon=dbscan_epsilon,
                 dbscan_min_samples=dbscan_min_samples,
             ),
-            apply_result=lambda result: dialog.set_content_widget(ClusteringView(cast("ClusteringResult", result))),
-            is_stale=lambda: config.analysis_configuration() != configuration,
+            apply_result=_apply_result,
+            is_stale=lambda: (
+                dialog.config_widget() is not config
+                or config.configuration_revision() != revision
+                or config.analysis_configuration() != configuration
+            ),
         )
 
     def _render_time_series(self, result: object, dialog: AnalysisDialog) -> tuple[QWidget, QWidget | None]:
@@ -960,14 +2332,26 @@ class AnalysisController:
 
         config = TimeSeriesConfigWidget(series_result)
         config.analysis_requested.connect(lambda: self._recompute_time_series(dialog, config))
+        config.configuration_changed.connect(lambda: dialog.set_content_widget(self._apply_prompt()))
         return self._apply_prompt(), config
 
     def _recompute_time_series(self, dialog: AnalysisDialog, config: TimeSeriesConfigWidget) -> None:
         """Analyze one applied Time Series Explorer configuration."""
         configuration = config.analysis_configuration()
+        revision = config.configuration_revision()
         datetime_column, value_column, frequency, period, model = configuration
         frequency_scope = frequency or "original"
         period_scope = str(period) if period is not None else "auto"
+
+        def _apply_result(result: object) -> None:
+            view = TimeSeriesView(cast("TimeSeriesResult", result))
+            dialog.set_content_widget(view)
+            if view.result().error is None:
+                dialog.set_exportable_time_series(
+                    TimeSeriesExportSnapshot(
+                        view.result(), view.chart_labels(), view.export_notes(), view.autocorrelation_note()
+                    )
+                )
 
         self._recompute_content(
             dialog,
@@ -981,8 +2365,12 @@ class AnalysisController:
                 seasonal_period=period,
                 decomposition_model=model,
             ),
-            apply_result=lambda result: dialog.set_content_widget(TimeSeriesView(cast("TimeSeriesResult", result))),
-            is_stale=lambda: config.analysis_configuration() != configuration,
+            apply_result=_apply_result,
+            is_stale=lambda: (
+                dialog.config_widget() is not config
+                or config.configuration_revision() != revision
+                or config.analysis_configuration() != configuration
+            ),
         )
 
     # ------------------------------------------------------------------
@@ -1124,6 +2512,8 @@ class AnalysisController:
     ) -> None:
         """Run a category's computation in the background with a busy overlay."""
         corr_id = uuid.uuid4().hex
+        dialog.invalidate_overview_export()
+        revision = dialog.analysis_revision()
 
         # Hide any configuration widget left over from the previous category
         # immediately - it isn't covered by the busy overlay (which only
@@ -1133,7 +2523,11 @@ class AnalysisController:
 
         def _is_stale() -> bool:
             """Discard results once the user has moved on to something else."""
-            return dialog.selected_category() != category or dialog.selected_dataset_tab_id() != tab_id
+            return (
+                dialog.selected_category() != category
+                or dialog.selected_dataset_tab_id() != tab_id
+                or dialog.analysis_revision() != revision
+            )
 
         def _work(
             *,
@@ -1146,6 +2540,8 @@ class AnalysisController:
             return handler.compute(df, _JobCallbacks(progress_cb=progress_cb, cancel_cb=cancel_cb))
 
         def _on_result(result: object) -> None:
+            if _is_stale():
+                return
             if result is None:
                 if handler.cancelable:
                     self._show_placeholder(dialog, self._tr(self.TR_ANALYSIS_CANCELLED))
@@ -1153,6 +2549,10 @@ class AnalysisController:
             content_widget, config_widget = handler.render(result, dialog)
             dialog.set_content_widget(content_widget)
             dialog.set_config_widget(config_widget)
+            if category is AnalysisCategory.OVERVIEW and isinstance(result, DatasetOverviewResult):
+                dialog.set_exportable_overview(result)
+            elif category is AnalysisCategory.STATISTICS and isinstance(result, DescriptiveStatisticsResult):
+                dialog.set_exportable_statistics(result)
 
         def _on_error(_traceback: str) -> None:
             if _is_stale():
@@ -1200,7 +2600,7 @@ class AnalysisController:
 
         Used by categories whose configuration widget selects *what* to
         compute (e.g. which columns to compare) rather than merely *how*
-        to redraw already-computed data (contrast `StatisticsConfigWidget`,
+        to redraw already-computed data (contrast the Statistics table,
         which only switches which precomputed column is shown). A
         configuration change therefore needs a new background computation,
         but the configuration widget itself - and the user's current picks
@@ -1242,10 +2642,21 @@ class AnalysisController:
             return
 
         corr_id = uuid.uuid4().hex
+        if category is AnalysisCategory.HYPOTHESIS_TESTS:
+            dialog.invalidate_overview_export()
+        revision = dialog.analysis_revision()
 
         def _combined_is_stale() -> bool:
             """Discard results once the user has moved on from this exact configuration."""
-            return dialog.selected_category() != category or dialog.selected_dataset_tab_id() != tab_id or is_stale()
+            return (
+                dialog.selected_category() != category
+                or dialog.selected_dataset_tab_id() != tab_id
+                or (
+                    category in {AnalysisCategory.HYPOTHESIS_TESTS, AnalysisCategory.REGRESSION}
+                    and dialog.analysis_revision() != revision
+                )
+                or is_stale()
+            )
 
         def _work(
             *,
@@ -1258,6 +2669,8 @@ class AnalysisController:
             return compute(df, _JobCallbacks(progress_cb=progress_cb, cancel_cb=cancel_cb))
 
         def _on_result(result: object) -> None:
+            if _combined_is_stale():
+                return
             if result is None:
                 if cancelable:
                     dialog.show_placeholder(self._tr(self.TR_ANALYSIS_CANCELLED))

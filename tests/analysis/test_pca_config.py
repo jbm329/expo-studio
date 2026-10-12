@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from PyQt6.QtCore import Qt
 
 from expo_jbm329.gui.dialogs.analysis.pca_config import PCAConfigWidget
@@ -40,6 +41,36 @@ def _record(signal) -> list:
     received: list = []
     signal.connect(lambda *args: received.append(args))
     return received
+
+
+@pytest.mark.parametrize("control", ["scaling", "feature"])
+def test_edits_invalidate_without_changing_applied_settings_or_requesting_fit(control):
+    widget = PCAConfigWidget(_result())
+    edits = _record(widget.configuration_changed)
+    requests = _record(widget.analysis_requested)
+    applied = widget.analysis_configuration()
+    assert widget.configuration_revision() == 0
+    if control == "scaling":
+        widget._standardize_checkbox.toggle()  # noqa: SLF001
+    else:
+        _set_checked(widget, "d", True)
+    assert edits == [()]
+    assert requests == []
+    assert widget.analysis_configuration() == applied
+    assert widget.configuration_revision() == 1
+
+
+def test_bulk_edits_emit_once_and_no_op_preserves_revision():
+    widget = PCAConfigWidget(_result())
+    edits = _record(widget.configuration_changed)
+    widget._select_all_button.click()  # noqa: SLF001
+    widget._select_all_button.click()  # noqa: SLF001
+    assert edits == [()]
+    assert widget.configuration_revision() == 1
+    widget._clear_button.click()  # noqa: SLF001
+    widget._clear_button.click()  # noqa: SLF001
+    assert edits == [(), ()]
+    assert widget.configuration_revision() == 2
 
 
 def test_initial_state_reflects_the_displayed_fit():

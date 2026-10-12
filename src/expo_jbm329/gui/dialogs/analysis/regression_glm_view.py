@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import html
-from itertools import chain
 from typing import TYPE_CHECKING
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
@@ -11,22 +10,29 @@ from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.logistic_charts import LogisticChartLabels, build_logistic_charts
 from expo_jbm329.services.analysis.regression import MAX_MODEL_TERMS, MAX_PREDICTORS, TermKind
+from expo_jbm329.services.analysis.regression_charts import CountChartLabels, RegressionChartLabels, draw_count_charts
 from expo_jbm329.services.analysis.regression_glm import (
     OVERDISPERSION_THRESHOLD,
     CountPlotError,
     GeneralizedRegressionError,
+    LogisticPlotError,
     RegressionModel,
     generalized_term_name,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 
 if TYPE_CHECKING:
-    from expo_jbm329.services.analysis.regression_glm import GeneralizedRegressionResult
+    from expo_jbm329.services.analysis.regression_glm import CountRegressionPlotData, GeneralizedRegressionResult
+
+_BINARY_LEVEL_COUNT = 2
 
 
 class GeneralizedRegressionView(QWidget):
-    """Display exponentiated coefficients, fit summary and count diagnostics."""
+    """Display exponentiated coefficients, fit summary and model diagnostics."""
 
     def __init__(self, result: GeneralizedRegressionResult, parent: QWidget | None = None) -> None:
         """Initialize the generalized regression result view.
@@ -56,15 +62,19 @@ class GeneralizedRegressionView(QWidget):
         self._summary_label.setWordWrap(True)
         self._summary_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self._summary_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        if result.model in {RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL}:
+        if result.model in {RegressionModel.LOGISTIC, RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL}:
             splitter = QSplitter(Qt.Orientation.Vertical, self)
             splitter.setChildrenCollapsible(False)
             table_panel, table_layout = self._build_section(self.tr("Model coefficients"))
             table_layout.addWidget(self._table)
             summary_panel, summary_layout = self._build_section(self.tr("Model comments"))
-            summary_layout.addWidget(self._summary_label)
+            summary_layout.addWidget(build_section_scroll_area(self._summary_label, summary_panel), 1)
             splitter.addWidget(table_panel)
-            splitter.addWidget(self._build_chart_section())
+            splitter.addWidget(
+                self._build_logistic_chart_section()
+                if result.model is RegressionModel.LOGISTIC
+                else self._build_chart_section()
+            )
             splitter.addWidget(summary_panel)
             splitter.setStretchFactor(0, 2)
             splitter.setStretchFactor(1, 3)
@@ -74,6 +84,60 @@ class GeneralizedRegressionView(QWidget):
         else:
             layout.addWidget(self._table, 2)
             layout.addWidget(self._summary_label, 1)
+
+    def _build_logistic_chart_section(self) -> QWidget:
+        """Present worker-prepared logistic diagnostics without blocking rendering."""
+        panel, layout = self._build_section(self.tr("Logistic-model diagnostics"))
+        result = self._result
+        labels = self._logistic_chart_labels()
+        figure = Figure(constrained_layout=True)
+        canvas = SerializedAnalysisCanvas(figure)
+        predictor_term_count = sum(term.kind is not TermKind.INTERCEPT for term in result.terms)
+        canvas.setMinimumHeight(max(400, predictor_term_count * 24 + 320))
+        canvas.build_chart(lambda: build_logistic_charts(figure, result, labels))
+        scroll = build_section_scroll_area(canvas, panel)
+        scroll.setMinimumHeight(400)
+        layout.addWidget(scroll, 1)
+        if result.logistic_plot_data is None:
+            label = QLabel(labels.unavailable_diagnostics, panel)
+            label.setTextFormat(Qt.TextFormat.PlainText)
+            label.setWordWrap(True)
+            layout.addWidget(label)
+        return panel
+
+    def _logistic_chart_labels(self) -> LogisticChartLabels:
+        """Return the translated odds-ratio, ROC and calibration chart text."""
+        result = self._result
+        if result.logistic_plot_error is LogisticPlotError.INVALID_PREDICTIONS:
+            unavailable = self.tr("Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.")
+        elif result.logistic_plot_error is LogisticPlotError.INVALID_OUTCOMES:
+            unavailable = self.tr("Diagnostics unavailable: outcomes must contain both binary classes.")
+        else:
+            unavailable = self.tr("No logistic diagnostic data are available.")
+        data = result.logistic_plot_data
+        return LogisticChartLabels(
+            odds_title=self.tr("Predictor odds ratios with 95% confidence intervals"),
+            odds_axis=self.tr("Odds ratio (logarithmic scale; reference = 1)"),
+            no_predictors=self.tr("No predictor effects: intercept-only model."),
+            unavailable_effect=self.tr("Unavailable: non-finite, non-positive or invalid odds ratio / CI"),
+            roc_title=self.tr("ROC (in-sample)"),
+            false_positive_axis=self.tr("False positive rate"),
+            true_positive_axis=self.tr("True positive rate"),
+            auc_annotation=self.tr("AUC = {value} (in-sample)").format(
+                value=fmt_num(data.auc, sig=4) if data is not None else ""
+            ),
+            calibration_title=self.tr("Calibration (in-sample)"),
+            probability_axis=self.tr("Mean fitted event probability"),
+            event_fraction_axis=self.tr("Observed event fraction"),
+            unavailable_diagnostics=unavailable,
+            effect_annotations=tuple(
+                self.tr("{effect} [{low}, {high}]").format(
+                    effect=fmt_num(term.effect), low=fmt_num(term.effect_ci_low), high=fmt_num(term.effect_ci_high)
+                )
+                for term in result.terms
+                if term.kind is not TermKind.INTERCEPT
+            ),
+        )
 
     def _build_section(self, title: str) -> tuple[QWidget, QVBoxLayout]:
         """Build a titled section matching the Hypothesis Tests layout."""
@@ -109,21 +173,20 @@ class GeneralizedRegressionView(QWidget):
         figure = Figure(constrained_layout=True)
         canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
         canvas.setMinimumHeight(260)
-        comparison = figure.add_subplot(121)
-        residuals = figure.add_subplot(122)
-        comparison.scatter(data.fitted, data.observed, alpha=0.35, s=12)
-        upper = max(chain(data.fitted, data.observed))
-        comparison.plot([0, upper], [0, upper], linestyle="--", color="tab:red")
-        comparison.set_title(self.tr("Observed versus fitted counts"))
-        comparison.set_xlabel(self.tr("Fitted count"))
-        comparison.set_ylabel(self.tr("Observed count"))
-        residuals.scatter(data.fitted, data.pearson_residuals, alpha=0.35, s=12)
-        residuals.axhline(0, linestyle="--", color="tab:red")
-        residuals.set_title(self.tr("Pearson residuals versus fitted counts"))
-        residuals.set_xlabel(self.tr("Fitted count"))
-        residuals.set_ylabel(self.tr("Pearson residual"))
-        layout.addWidget(canvas)
+        draw_count_charts(figure, data, self._count_chart_labels())
+        # Charts keep a readable minimum height and scroll when their section is smaller.
+        layout.addWidget(build_section_scroll_area(canvas, panel), 1)
         return panel
+
+    def _count_chart_labels(self) -> CountChartLabels:
+        """Return the translated observed-versus-fitted and residual chart text."""
+        return CountChartLabels(
+            comparison_title=self.tr("Observed versus fitted counts"),
+            fitted_axis=self.tr("Fitted count"),
+            observed_axis=self.tr("Observed count"),
+            residuals_title=self.tr("Pearson residuals versus fitted counts"),
+            pearson_axis=self.tr("Pearson residual"),
+        )
 
     def result(self) -> GeneralizedRegressionResult:
         """Return the displayed result."""
@@ -136,6 +199,37 @@ class GeneralizedRegressionView(QWidget):
     def summary_label(self) -> QLabel | None:
         """Return the model summary, or `None` when fitting failed."""
         return self._summary_label
+
+    def chart_labels(self) -> RegressionChartLabels:
+        """Return the translated chart text shared by the displayed and exported charts."""
+        result = self._result
+        heading = self.tr("{model}: {target}").format(model=self._model_name(), target=result.target)
+        if result.model is RegressionModel.LOGISTIC:
+            return RegressionChartLabels(heading=heading, model=self._logistic_chart_labels())
+        data = result.plot_data
+        captions = (self._count_sampling_caption(data),) if data is not None and data.sampled else ()
+        return RegressionChartLabels(heading=heading, model=self._count_chart_labels(), captions=captions)
+
+    def export_notes(self) -> tuple[str, ...]:
+        """Return the displayed model comments as plain-text lines."""
+        if self._result.error is not None:
+            return ()
+        return rich_text_lines((self._summary_text(),))
+
+    def _model_name(self) -> str:
+        """Return the translated name of the fitted model."""
+        if self._result.model is RegressionModel.LOGISTIC:
+            return self.tr("Logistic regression")
+        if self._result.model is RegressionModel.POISSON:
+            return self.tr("Poisson regression")
+        return self.tr("Negative binomial regression")
+
+    def _count_sampling_caption(self, data: CountRegressionPlotData) -> str:
+        """Return the translated note explaining that count charts show sampled rows."""
+        return self.tr("Charts show a deterministic sample of {shown} of {total} fitted rows.").format(
+            shown=fmt_int(len(data.observed)),
+            total=fmt_int(self._result.n_used),
+        )
 
     def error_text(self, result: GeneralizedRegressionResult) -> str:
         """Translate a structured fitting error."""
@@ -197,7 +291,7 @@ class GeneralizedRegressionView(QWidget):
         table.setAlternatingRowColors(True)
         header = table.horizontalHeader()
         if header is not None:
-            header.setStretchLastSection(True)
+            header.setStretchLastSection(False)
         for row, term in enumerate(self._result.terms):
             name = self.tr("(Intercept)") if term.kind is TermKind.INTERCEPT else generalized_term_name(term)
             values = (
@@ -215,17 +309,13 @@ class GeneralizedRegressionView(QWidget):
     def _summary_text(self) -> str:
         """Build the translated summary and dispersion guidance."""
         result = self._result
+        model_name = self._model_name()
         if result.model is RegressionModel.LOGISTIC:
-            model_name = self.tr("Logistic regression")
             outcome_note = self.tr("Outcome coding: {zero} = 0; {one} = 1.").format(
                 zero=html.escape(result.target_levels[0]),
                 one=html.escape(result.target_levels[1]),
             )
-        elif result.model is RegressionModel.POISSON:
-            model_name = self.tr("Poisson regression")
-            outcome_note = ""
         else:
-            model_name = self.tr("Negative binomial regression")
             outcome_note = ""
         lines = [
             self.tr("<b>{model}</b>").format(model=model_name),
@@ -244,6 +334,27 @@ class GeneralizedRegressionView(QWidget):
             ),
             self.tr("AIC = {aic}").format(aic=fmt_num(result.aic)),
         ])
+        if result.model is RegressionModel.LOGISTIC:
+            data = result.logistic_plot_data
+            event = result.target_levels[1] if len(result.target_levels) == _BINARY_LEVEL_COUNT else self.tr("Unknown")
+            interpretation = self.tr(
+                "Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, "
+                "not holdout performance. All {count} complete-case fitted rows are used. "
+                "Calibration uses up to 10 quantile bins; identical probabilities stay together."
+            ).format(event=event, count=fmt_int(data.n_used if data is not None else result.n_used))
+            lines.extend([
+                "",
+                f"<b>{html.escape(self.tr('Diagnostic interpretation'))}</b>",
+                html.escape(interpretation),
+            ])
+            if data is not None:
+                lines.append(
+                    html.escape(
+                        self.tr("Calibration bin counts: {counts}.").format(
+                            counts=", ".join(fmt_int(count) for count in data.bin_counts)
+                        )
+                    )
+                )
         if result.model in {RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL}:
             if result.plot_error in {CountPlotError.INVALID_PREDICTIONS, CountPlotError.INVALID_RESIDUALS}:
                 lines.append(
@@ -288,11 +399,6 @@ class GeneralizedRegressionView(QWidget):
                     )
                 )
             if result.plot_data.sampled:
-                lines.append(
-                    self.tr("Charts show a deterministic sample of {shown} of {total} fitted rows.").format(
-                        shown=fmt_int(len(result.plot_data.observed)),
-                        total=fmt_int(result.n_used),
-                    )
-                )
+                lines.append(self._count_sampling_caption(result.plot_data))
                 lines.append(self.tr("Coefficient estimates and dispersion diagnostics use all fitted rows."))
         return "<br>".join(lines)

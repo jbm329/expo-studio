@@ -11,13 +11,12 @@ Explorer) rather than duplicated here.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from enum import StrEnum
+
+import pandas as pd
 
 from expo_jbm329.services.analysis.columns import NUMERIC_DTYPES
 from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
-
-if TYPE_CHECKING:
-    import pandas as pd
 
 # A column is flagged as a "high missing" warning once its share of missing
 # values crosses this fraction. 20% is a common, conservative data-quality
@@ -29,6 +28,22 @@ HIGH_MISSING_FRACTION_THRESHOLD = 0.2
 # encoding/parsing problems and get a feel for the values without turning
 # the overview into a second data grid.
 SAMPLE_ROW_LIMIT = 100
+
+
+class OverviewExportTable(StrEnum):
+    """Structured Overview tables available for data export."""
+
+    SUMMARY = "Summary"
+    COLUMNS = "Columns"
+    SAMPLE = "Sample"
+
+
+class OverviewExportFormat(StrEnum):
+    """Export pipelines supported for Overview tables."""
+
+    CSV = "csv"
+    EXCEL = "excel"
+    BINARY = "binary"
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,6 +96,9 @@ class DatasetOverviewResult:
         sample_rows: The first `SAMPLE_ROW_LIMIT` rows as raw values, kept
             unformatted so the view owns all locale-aware presentation.
         sample_truncated: Whether the dataset has more rows than the sample.
+        sample_frame: Owned, bounded dtype-preserving snapshot for export.
+            Consumers must never mutate it; export helpers return independent
+            frames. None supports results created without an export snapshot.
     """
 
     row_count: int
@@ -105,6 +123,136 @@ class DatasetOverviewResult:
     sample_columns: tuple[str, ...] = field(default_factory=tuple)
     sample_rows: tuple[tuple[object, ...], ...] = field(default_factory=tuple)
     sample_truncated: bool = False
+    # This owned, bounded snapshot must not be mutated after publication.
+    sample_frame: pd.DataFrame | None = field(default=None, repr=False, compare=False)
+
+
+@dataclass(frozen=True, slots=True)
+class OverviewExportRequest:
+    """A selection tied to the exact displayed Overview result."""
+
+    result: DatasetOverviewResult
+    tables: tuple[OverviewExportTable, ...]
+    format: OverviewExportFormat
+
+
+def overview_export_tables(
+    result: DatasetOverviewResult,
+    tables: tuple[OverviewExportTable, ...],
+) -> dict[str, pd.DataFrame]:
+    """Build independent export frames from structured Overview data.
+
+    Missing fractions remain numeric fractions, not formatted percentages.
+    Samples contain at most the first 100 rows and never access the dataset.
+    Empty tables are not exportable, matching the single-frame exporters.
+
+    Args:
+        result: The displayed, stable analysis snapshot.
+        tables: Nonempty, distinct supported table choices.
+
+    Returns:
+        Ordered named frames owned by the export operation.
+
+    Raises:
+        ValueError: If a selection is empty, repeated, unsupported or unavailable.
+    """
+    if not tables or len(set(tables)) != len(tables):
+        message = "Select distinct Overview tables."
+        raise ValueError(message)
+    frames: dict[str, pd.DataFrame] = {}
+    for table in tables:
+        if all(table is not supported for supported in OverviewExportTable):
+            message = "Unsupported Overview table."
+            raise ValueError(message)
+        match table:
+            case OverviewExportTable.SUMMARY:
+                frame = _summary_export_frame(result)
+            case OverviewExportTable.COLUMNS:
+                frame = pd.DataFrame(
+                    [
+                        (
+                            column.column,
+                            column.semantic_dtype.value,
+                            column.dtype_name,
+                            column.missing_count,
+                            column.missing_fraction,
+                            column.unique_count,
+                        )
+                        for column in result.columns
+                    ],
+                    columns=["column", "type", "storage_type", "missing_count", "missing_fraction", "unique_count"],
+                ).astype({"column": pd.StringDtype(), "type": pd.StringDtype(), "storage_type": pd.StringDtype()})
+            case OverviewExportTable.SAMPLE:
+                frame = (
+                    result.sample_frame.head(SAMPLE_ROW_LIMIT).copy(deep=True)
+                    if result.sample_frame is not None
+                    else pd.DataFrame(result.sample_rows[:SAMPLE_ROW_LIMIT], columns=list(result.sample_columns))
+                )
+                frame.columns = list(result.sample_columns)
+            case _:
+                message = "Unsupported Overview table."
+                raise ValueError(message)
+        if frame.empty:
+            message = f"Overview table {table.value} is empty."
+            raise ValueError(message)
+        frames[table.value] = frame
+    return frames
+
+
+def _summary_export_frame(result: DatasetOverviewResult) -> pd.DataFrame:
+    """Build a stable, typed table of dataset metrics and Overview warnings."""
+    rows: list[tuple[str, str, str | None, int, float | None]] = [
+        ("dataset", "row_count", None, result.row_count, None),
+        ("dataset", "column_count", None, result.column_count, None),
+        (
+            "dataset",
+            "missing_cell_count",
+            None,
+            result.missing_cell_count,
+            result.missing_cell_fraction,
+        ),
+        (
+            "dataset",
+            "duplicate_row_count",
+            None,
+            result.duplicate_row_count,
+            result.duplicate_row_fraction,
+        ),
+    ]
+    type_counts = (
+        ("numeric", result.numeric_column_count),
+        ("categorical", result.categorical_column_count),
+        ("datetime", result.datetime_column_count),
+        ("boolean", result.boolean_column_count),
+        ("other", result.other_column_count),
+    )
+    for metric, count in type_counts:
+        fraction = count / result.column_count if result.column_count > 0 else 0.0
+        rows.append(("column_type", metric, None, count, fraction))
+
+    warnings = sorted(
+        (column for column in result.columns if column.missing_fraction >= HIGH_MISSING_FRACTION_THRESHOLD),
+        key=lambda column: column.missing_fraction,
+        reverse=True,
+    )
+    if warnings:
+        rows.extend(
+            ("warning", "high_missing_values", column.column, column.missing_count, column.missing_fraction)
+            for column in warnings
+        )
+    else:
+        rows.append(("warning", "no_high_missing_columns", None, 0, 0.0))
+
+    return pd.DataFrame(
+        rows,
+        columns=["section", "metric", "column", "count", "fraction"],
+    ).astype({
+        "section": pd.StringDtype(),
+        "metric": pd.StringDtype(),
+        "column": pd.StringDtype(),
+        "count": pd.Int64Dtype(),
+        "fraction": pd.Float64Dtype(),
+    })
 
 
 _CATEGORICAL_DTYPES = frozenset({SemanticDType.CATEGORY, SemanticDType.STRING})
@@ -202,4 +350,5 @@ def analyze_dataset_overview(df: pd.DataFrame) -> DatasetOverviewResult:
         sample_columns=tuple(str(column) for column in df.columns),
         sample_rows=_sample_rows(df),
         sample_truncated=row_count > SAMPLE_ROW_LIMIT,
+        sample_frame=df.head(SAMPLE_ROW_LIMIT).copy(deep=True),
     )

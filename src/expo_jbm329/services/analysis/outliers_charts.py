@@ -1,0 +1,221 @@
+"""Qt-free outlier histograms, PCA projections and their Excel images."""
+
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass
+from io import BytesIO
+from itertools import pairwise
+from typing import TYPE_CHECKING
+
+import numpy as np
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.figure import Figure
+
+from expo_jbm329.services.analysis.outliers import analyze_outlier_column
+from expo_jbm329.services.analysis.statistics_charts import STATISTICS_CHART_LOCK
+from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from matplotlib.axes import Axes
+
+    from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierResult
+    from expo_jbm329.services.analysis.outliers import OutlierColumnDetail
+    from expo_jbm329.services.analysis.outliers_export import (
+        MultivariateOutlierExportSnapshot,
+        UnivariateOutlierExportSnapshot,
+    )
+
+_EXPORT_DPI = 120
+_HISTOGRAM_FIGURE_SIZE = (8.0, 3.75)
+_PROJECTION_FIGURE_SIZE = (8.0, 6.0)
+
+
+@dataclass(frozen=True, slots=True)
+class OutlierHistogramLabels:
+    """Translated univariate histogram text captured on the GUI thread."""
+
+    inside: str
+    outliers: str
+    count_axis: str
+
+
+@dataclass(frozen=True, slots=True)
+class OutlierProjectionLabels:
+    """Translated multivariate projection text captured on the GUI thread.
+
+    Attributes:
+        heading: Excel heading above the exported image.
+        title: Axes title stating that the projection is only a visualization.
+        pc1_axis: X-axis label.
+        pc2_axis: Y-axis label.
+        inliers: Legend label of the unflagged rows.
+        outliers: Legend label of the flagged rows.
+        captions: Lines written below the exported image.
+    """
+
+    heading: str
+    title: str
+    pc1_axis: str
+    pc2_axis: str
+    inliers: str
+    outliers: str
+    captions: tuple[str, ...] = ()
+
+
+def draw_outlier_histogram(ax: Axes, detail: OutlierColumnDetail, labels: OutlierHistogramLabels) -> None:
+    """Draw stacked inlier/outlier bars over shared bins, with the fences marked.
+
+    Args:
+        ax: Target axes.
+        detail: Screened column detail with precomputed histogram bins.
+        labels: Translated legend and axis text.
+    """
+    ax.set_title(detail.summary.column, fontsize=10)
+    edges = detail.histogram_edges
+    if not edges:
+        return
+    lefts = edges[:-1]
+    widths = [right - left for left, right in pairwise(edges)]
+    ax.bar(lefts, detail.inlier_counts, width=widths, align="edge", label=labels.inside)
+    ax.bar(
+        lefts,
+        detail.outlier_counts,
+        width=widths,
+        align="edge",
+        bottom=detail.inlier_counts,
+        color="tab:red",
+        label=labels.outliers,
+    )
+    for fence in (detail.summary.lower_fence, detail.summary.upper_fence):
+        if math.isfinite(fence):
+            ax.axvline(fence, color="tab:red", linestyle="--", linewidth=1)
+    ax.set_ylabel(labels.count_axis, fontsize=9)
+    ax.tick_params(labelsize=8)
+    ax.legend(fontsize=8)
+
+
+def draw_outlier_projection(ax: Axes, result: MultivariateOutlierResult, labels: OutlierProjectionLabels) -> None:
+    """Draw the PCA visualization without implying that the model used only two features.
+
+    Args:
+        ax: Target axes.
+        result: Successful multivariate fit with its projected sample.
+        labels: Translated title, axis and legend text.
+    """
+    x = np.asarray(result.sample_pc1)
+    y = np.asarray(result.sample_pc2)
+    outliers = np.asarray(result.sample_outliers, dtype=bool)
+    ax.scatter(x[~outliers], y[~outliers], s=7, alpha=0.35, label=labels.inliers)
+    ax.scatter(x[outliers], y[outliers], s=12, alpha=0.7, color="tab:red", label=labels.outliers)
+    ax.axhline(0, color="0.8", linewidth=0.8)
+    ax.axvline(0, color="0.8", linewidth=0.8)
+    ax.set_title(labels.title)
+    ax.set_xlabel(labels.pc1_axis)
+    ax.set_ylabel(labels.pc2_axis)
+    ax.legend(fontsize=8)
+
+
+def render_univariate_outlier_charts(
+    snapshot: UnivariateOutlierExportSnapshot,
+    *,
+    progress_cb: Callable[[int], None] | None = None,
+    cancel_cb: Callable[[], bool] | None = None,
+) -> tuple[ExcelChartImage, ...]:
+    """Render one histogram image per screened column, in summary order.
+
+    Each column is screened again from the snapshot's owned data copy with
+    the applied method and threshold, so the images match the displayed
+    histogram of whichever column the user selects.
+
+    Args:
+        snapshot: Applied summary with owned numeric data and chart text.
+        progress_cb: Optional per-column progress (0-100).
+        cancel_cb: Optional cancellation callback, checked for every column.
+
+    Returns:
+        PNG images owned by the worker.
+
+    Raises:
+        ExcelChartCancelledError: If cancellation is requested.
+        ValueError: If no column was screened.
+    """
+    columns = snapshot.chart_columns
+    if not columns:
+        message = "The exported outlier summary has no screened column to chart."
+        raise ValueError(message)
+    summary = snapshot.summary
+    images: list[ExcelChartImage] = []
+    for index, column in enumerate(columns):
+        if cancel_cb is not None and cancel_cb():
+            raise ExcelChartCancelledError
+        detail = analyze_outlier_column(snapshot.data, column, summary.method, summary.threshold)
+        if detail.error is not None:
+            message = f"Column {column!r} could not be screened for the chart export."
+            raise ValueError(message)
+        with STATISTICS_CHART_LOCK:
+            figure = Figure(figsize=_HISTOGRAM_FIGURE_SIZE, dpi=_EXPORT_DPI, constrained_layout=True)
+            canvas = FigureCanvasAgg(figure)
+            draw_outlier_histogram(figure.add_subplot(111), detail, snapshot.chart_labels)
+            output = BytesIO()
+            canvas.print_png(output)  # type: ignore[no-untyped-call]
+        images.append(_image(column, output, _HISTOGRAM_FIGURE_SIZE))
+        if progress_cb is not None:
+            progress_cb(math.ceil((index + 1) * 100 / len(columns)))
+    if cancel_cb is not None and cancel_cb():
+        raise ExcelChartCancelledError
+    return tuple(images)
+
+
+def render_multivariate_outlier_charts(
+    snapshot: MultivariateOutlierExportSnapshot,
+    *,
+    progress_cb: Callable[[int], None] | None = None,
+    cancel_cb: Callable[[], bool] | None = None,
+) -> tuple[ExcelChartImage, ...]:
+    """Render the displayed PCA projection as one image.
+
+    Args:
+        snapshot: Successful fit with its projected sample and chart text.
+        progress_cb: Optional image preparation progress.
+        cancel_cb: Optional cancellation callback.
+
+    Returns:
+        One PNG image owned by the worker, never a live Qt canvas.
+
+    Raises:
+        ExcelChartCancelledError: If cancellation is requested before or after drawing.
+    """
+    if cancel_cb is not None and cancel_cb():
+        raise ExcelChartCancelledError
+    labels = snapshot.chart_labels
+    with STATISTICS_CHART_LOCK:
+        figure = Figure(figsize=_PROJECTION_FIGURE_SIZE, dpi=_EXPORT_DPI, constrained_layout=True)
+        canvas = FigureCanvasAgg(figure)
+        draw_outlier_projection(figure.add_subplot(111), snapshot.result, labels)
+        output = BytesIO()
+        canvas.print_png(output)  # type: ignore[no-untyped-call]
+    if cancel_cb is not None and cancel_cb():
+        raise ExcelChartCancelledError
+    if progress_cb is not None:
+        progress_cb(100)
+    return (_image(labels.heading, output, _PROJECTION_FIGURE_SIZE, labels.captions),)
+
+
+def _image(
+    heading: str,
+    output: BytesIO,
+    size: tuple[float, float],
+    captions: tuple[str, ...] = (),
+) -> ExcelChartImage:
+    """Wrap rendered PNG bytes with their pixel size."""
+    width, height = size
+    return ExcelChartImage(
+        heading,
+        output.getvalue(),
+        round(width * _EXPORT_DPI),
+        round(height * _EXPORT_DPI),
+        captions,
+    )

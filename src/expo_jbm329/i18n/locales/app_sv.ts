@@ -102,6 +102,86 @@
 <context>
     <name>GeneralizedRegressionView</name>
     <message>
+        <source>Diagnostic interpretation</source>
+        <translation>Tolkning av diagnostik</translation>
+    </message>
+    <message>
+        <source>Logistic-model diagnostics</source>
+        <translation>Diagnostik för logistisk regression</translation>
+    </message>
+    <message>
+        <source>Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.</source>
+        <translation>Diagnostiken är inte tillgänglig: anpassade sannolikheter måste vara ändliga och mellan 0 och 1.</translation>
+    </message>
+    <message>
+        <source>Diagnostics unavailable: outcomes must contain both binary classes.</source>
+        <translation>Diagnostiken är inte tillgänglig: utfallen måste innehålla båda binära klasserna.</translation>
+    </message>
+    <message>
+        <source>No logistic diagnostic data are available.</source>
+        <translation>Inga diagnostikdata för logistisk regression är tillgängliga.</translation>
+    </message>
+    <message>
+        <source>Predictor odds ratios with 95% confidence intervals</source>
+        <translation>Prediktorernas oddskvoter med 95 % konfidensintervall</translation>
+    </message>
+    <message>
+        <source>Odds ratio (logarithmic scale; reference = 1)</source>
+        <translation>Oddskvot (logaritmisk skala; referens = 1)</translation>
+    </message>
+    <message>
+        <source>No predictor effects: intercept-only model.</source>
+        <translation>Inga prediktoreffekter: modellen har endast intercept.</translation>
+    </message>
+    <message>
+        <source>Unavailable: non-finite, non-positive or invalid odds ratio / CI</source>
+        <translation>Ej tillgänglig: icke-ändlig, icke-positiv eller ogiltig oddskvot / konfidensintervall</translation>
+    </message>
+    <message>
+        <source>ROC (in-sample)</source>
+        <translation>ROC (anpassningsdata)</translation>
+    </message>
+    <message>
+        <source>False positive rate</source>
+        <translation>Andel falskt positiva</translation>
+    </message>
+    <message>
+        <source>True positive rate</source>
+        <translation>Andel sant positiva</translation>
+    </message>
+    <message>
+        <source>AUC = {value} (in-sample)</source>
+        <translation>AUC = {value} (anpassningsdata)</translation>
+    </message>
+    <message>
+        <source>Calibration (in-sample)</source>
+        <translation>Kalibrering (anpassningsdata)</translation>
+    </message>
+    <message>
+        <source>Mean fitted event probability</source>
+        <translation>Genomsnittlig anpassad händelsesannolikhet</translation>
+    </message>
+    <message>
+        <source>Observed event fraction</source>
+        <translation>Observerad händelseandel</translation>
+    </message>
+    <message>
+        <source>{effect} [{low}, {high}]</source>
+        <translation>{effect} [{low}, {high}]</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Okänd</translation>
+    </message>
+    <message>
+        <source>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins; identical probabilities stay together.</source>
+        <translation>Positiv händelse: {event} (kodad 1). ROC/AUC och kalibrering är diagnostik på anpassningsdata, inte prestanda på separat testdata. Alla {count} fullständiga rader som modellen anpassades till används. Kalibreringen använder upp till 10 kvantilgrupper; identiska sannolikheter hålls samman.</translation>
+    </message>
+    <message>
+        <source>Calibration bin counts: {counts}.</source>
+        <translation>Antal rader per kalibreringsgrupp: {counts}.</translation>
+    </message>
+    <message>
         <source>Charts unavailable: the fitted Negative Binomial variance is invalid.</source>
         <translation>Diagrammen är inte tillgängliga: den anpassade negativa binomialvariansen är ogiltig.</translation>
     </message>
@@ -332,6 +412,10 @@
         <source>This diagnostic is advisory; the selected model was not changed.</source>
         <translation>Diagnostiken är vägledande; den valda modellen ändrades inte.</translation>
     </message>
+    <message>
+        <source>{model}: {target}</source>
+        <translation>{model}: {target}</translation>
+    </message>
 </context>
 <context>
     <name>AnalysisController</name>
@@ -368,6 +452,34 @@
 </context>
 <context>
     <name>AnalysisDialog</name>
+    <message>
+        <source>Reports(0)</source>
+        <translation>Rapporter(0)</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>Exportera</translation>
+    </message>
+    <message>
+        <source>Export analysis data</source>
+        <translation type="vanished">Exportera analysdata</translation>
+    </message>
+    <message>
+        <source>Export results</source>
+        <translation type="vanished">Exportera resultat</translation>
+    </message>
+    <message>
+        <source>Add to report</source>
+        <translation>Lägg till i rapport</translation>
+    </message>
+    <message>
+        <source>Exports are available after an analysis has been applied. Add to report is a preview.</source>
+        <translation>Export är tillgänglig efter att en analys har tillämpats. Lägg till i rapport är en förhandsvisning.</translation>
+    </message>
+    <message>
+        <source>A report can contain analyses from multiple datasets.</source>
+        <translation>En rapport kan innehålla analyser från flera dataset.</translation>
+    </message>
     <message>
         <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="80"/>
         <source>Advanced analysis</source>
@@ -438,6 +550,864 @@
         <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="329"/>
         <source>Time Series</source>
         <translation>Tidsserie</translation>
+    </message>
+</context>
+<context>
+    <name>AnalysisExportDialog</name>
+    <message><source>Export computed tables and charts for the applied test, not the original dataset.</source><translation>Exportera beräknade tabeller och diagram för det tillämpade testet, inte det ursprungliga datasetet.</translation></message>
+    <message><source>Apply a hypothesis test successfully before exporting.</source><translation>Tillämpa ett hypotestest med ett giltigt resultat innan du exporterar.</translation></message>
+    <message><source>Applied test: {test}
+{roles}: {columns}</source><translation>Tillämpat test: {test}
+{roles}: {columns}</translation></message>
+    <message><source>Numeric column / grouping column</source><translation>Numerisk kolumn / gruppkolumn</translation></message>
+    <message><source>Row column / column column</source><translation>Radkolumn / kolumnkolumn</translation></message>
+    <message><source>Measurement columns (occasion order)</source><translation>Mätkolumner (ordning för mättillfällen)</translation></message>
+    <message><source>Group comparison</source><translation>Gruppjämförelse</translation></message>
+    <message><source>Chi-square independence</source><translation>Chi-två-test för oberoende</translation></message>
+    <message><source>Paired comparison</source><translation>Parad jämförelse</translation></message>
+    <message><source>Group summary</source><translation>Gruppsammanfattning</translation></message>
+    <message><source>Contingency table</source><translation>Korstabell</translation></message>
+    <message><source>Measurement summary</source><translation>Mätsammanfattning</translation></message>
+    <message><source>Test results</source><translation>Testresultat</translation></message>
+    <message><source>Test</source><translation>Test</translation></message>
+    <message><source>Test statistic</source><translation>Teststatistik</translation></message>
+    <message><source>p-value</source><translation>p-värde</translation></message>
+    <message><source>Degrees of freedom</source><translation>Frihetsgrader</translation></message>
+    <message><source>Mean difference</source><translation>Medelvärdesskillnad</translation></message>
+    <message><source>95% CI lower</source><translation>95 % KI nedre</translation></message>
+    <message><source>95% CI upper</source><translation>95 % KI övre</translation></message>
+    <message><source>Effect size</source><translation>Effektstorlek</translation></message>
+    <message><source>Effect value</source><translation>Effektvärde</translation></message>
+    <message><source>Numeric column</source><translation>Numerisk kolumn</translation></message>
+    <message><source>Grouping column</source><translation>Gruppkolumn</translation></message>
+    <message><source>Row column</source><translation>Radkolumn</translation></message>
+    <message><source>Column column</source><translation>Kolumnkolumn</translation></message>
+    <message><source>Sample count</source><translation>Antal observationer</translation></message>
+    <message><source>Yates' continuity correction</source><translation>Yates kontinuitetskorrektion</translation></message>
+    <message><source>Cochran's rule violated</source><translation>Cochrans regel uppfylls inte</translation></message>
+    <message><source>Fraction of expected counts below 5</source><translation>Andel förväntade frekvenser under 5</translation></message>
+    <message><source>Minimum expected count</source><translation>Minsta förväntade frekvens</translation></message>
+    <message><source>Odds ratio</source><translation>Oddskvot</translation></message>
+    <message><source>Total subjects</source><translation>Totalt antal individer</translation></message>
+    <message><source>Excluded subjects</source><translation>Uteslutna individer</translation></message>
+    <message><source>Notes</source><translation>Noteringar</translation></message>
+    <message><source>Measurement</source><translation>Mätning</translation></message>
+    <message><source>Welch's t-test</source><translation>Welchs t-test</translation></message>
+    <message><source>Student's t-test</source><translation>Students t-test</translation></message>
+    <message><source>Mann-Whitney U</source><translation>Mann-Whitney U</translation></message>
+    <message><source>One-way ANOVA</source><translation>Envägs-ANOVA</translation></message>
+    <message><source>Kruskal-Wallis</source><translation>Kruskal-Wallis</translation></message>
+    <message><source>Pearson's chi-square test</source><translation>Pearsons chi-två-test</translation></message>
+    <message><source>Fisher's exact test</source><translation>Fishers exakta test</translation></message>
+    <message><source>Wilcoxon signed-rank test</source><translation>Wilcoxons teckenrangtest</translation></message>
+    <message><source>Friedman test</source><translation>Friedmans test</translation></message>
+    <message><source>Cohen's d</source><translation>Cohens d</translation></message>
+    <message><source>Rank-biserial correlation</source><translation>Rangbiserial korrelation</translation></message>
+    <message><source>Eta²</source><translation>Eta²</translation></message>
+    <message><source>Epsilon²</source><translation>Epsilon²</translation></message>
+    <message><source>Cramér's V</source><translation>Cramérs V</translation></message>
+    <message><source>Kendall's W</source><translation>Kendalls W</translation></message>
+    <message><source>Export the strongest-correlations table for the applied matrix.</source><translation>Exportera tabellen med de starkaste korrelationerna för den tillämpade matrisen.</translation></message>
+    <message><source>Apply a correlation matrix successfully before exporting.</source><translation>Tillämpa en korrelationsmatris utan fel innan du exporterar.</translation></message>
+    <message><source>Applied method: {method}
+Applied columns: {columns}</source><translation>Tillämpad metod: {method}
+Tillämpade kolumner: {columns}</translation></message>
+    <message><source>Correlation method</source><translation>Korrelationsmetod</translation></message>
+    <message><source>Coefficient</source><translation>Koefficient</translation></message>
+    <message><source>Significant after Holm</source><translation>Signifikant efter Holm</translation></message>
+    <message><source>Least-squares line: y = ({slope}) x + ({intercept})</source><translation>Minsta kvadratlinje: y = ({slope}) x + ({intercept})</translation></message>
+    <message><source>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</source><translation>Paren rangordnas efter absolutv&#228;rdet av koefficienten. Signifikans baseras p&#229; p &lt; {alpha} efter Holm-korrigering f&#246;r {count} tester.</translation></message>
+    <message><source>Ranking and Holm explanation</source><translation>Förklaring av rangordning och Holm-korrigering</translation></message>
+    <message><source>Strongest correlations</source><translation>Starkaste korrelationerna</translation></message>
+    <message><source>Matrix plot</source><translation>Matrisdiagram</translation></message>
+    <message><source>Planned for a later milestone; no chart will be exported yet.</source><translation>Planerat till en senare milstolpe; inga diagram exporteras ännu.</translation></message>
+    <message><source>Scatterplots ({count} pair)</source><translation>Spridningsdiagram ({count} par)</translation></message>
+    <message><source>Scatterplots ({count} pairs)</source><translation>Spridningsdiagram ({count} par)</translation></message>
+    <message><source>Excel exports the selected correlation table as a worksheet.</source><translation>Excel exporterar den valda korrelationstabellen som ett kalkylblad.</translation></message>
+    <message><source>CSV and binary exports contain exactly one correlation table.</source><translation>CSV- och binärfiler innehåller exakt en korrelationstabell.</translation></message>
+    <message>
+        <source>Data</source>
+        <translation>Data</translation>
+    </message>
+    <message>
+        <source>Results</source>
+        <translation>Resultat</translation>
+    </message>
+    <message>
+        <source>Summary</source>
+        <translation>Sammanfattning</translation>
+    </message>
+    <message>
+        <source>Select at least one available table to export.</source>
+        <translation>Välj minst en tillgänglig tabell att exportera.</translation>
+    </message>
+    <message>
+        <source>Choose exactly one table for CSV or binary export.</source>
+        <translation>Välj exakt en tabell för CSV eller binär export.</translation>
+    </message>
+    <message>
+        <source>Export the Overview Summary, Columns metadata, or Sample (first 100 rows), not the original dataset.</source>
+        <translation>Exportera översiktens sammanfattning, kolumnmetadata eller ett urval (de första 100 raderna), inte det ursprungliga datasetet.</translation>
+    </message>
+    <message>
+        <source>Dataset metrics, column-type counts, and high-missing-value warnings. Fractions are numeric values from 0 to 1.</source>
+        <translation>Datasetmått, antal kolumner per typ och varningar för högt antal saknade värden. Andelar är numeriska värden från 0 till 1.</translation>
+    </message>
+    <message>
+        <source>Export contents</source>
+        <translation type="vanished">Exportinnehåll</translation>
+    </message>
+    <message>
+        <source>Columns metadata</source>
+        <translation>Kolumnmetadata</translation>
+    </message>
+    <message>
+        <source>Sample (first 100 rows)</source>
+        <translation>Urval (de första 100 raderna)</translation>
+    </message>
+    <message>
+        <source>Run Overview successfully before exporting.</source>
+        <translation>Kör Översikt utan fel innan du exporterar.</translation>
+    </message>
+    <message>
+        <source>This table is empty and cannot be exported.</source>
+        <translation>Tabellen är tom och kan inte exporteras.</translation>
+    </message>
+    <message>
+        <source>Binary data file (Parquet / Feather / Pickle)</source>
+        <translation>Binär datafil (Parquet / Feather / Pickle)</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>Format</translation>
+    </message>
+    <message>
+        <source>Excel exports selected tables as separate sheets in one workbook.</source>
+        <translation>Excel exporterar de valda tabellerna som separata blad i en arbetsbok.</translation>
+    </message>
+    <message>
+        <source>Choose exactly one table for CSV or binary export. For binary files, choose Parquet, Feather or Pickle in the save dialog.</source>
+        <translation>Välj exakt en tabell för CSV eller binär export. För binära filer väljer du Parquet, Feather eller Pickle i dialogrutan för att spara.</translation>
+    </message>
+    <message>
+        <source>Export the available Statistics tables and numeric-column charts.</source>
+        <translation>Exportera tillgängliga statistiktabeller och diagram för numeriska kolumner.</translation>
+    </message>
+    <message>
+        <source>Continuous</source>
+        <translation>Kontinuerliga</translation>
+    </message>
+    <message>
+        <source>Categorical</source>
+        <translation>Kategoriska</translation>
+    </message>
+    <message>
+        <source>Run Statistics successfully before exporting.</source>
+        <translation>Kör Statistik utan fel innan du exporterar.</translation>
+    </message>
+    <message>
+        <source>This component is empty and cannot be exported.</source>
+        <translation>Den här komponenten är tom och kan inte exporteras.</translation>
+    </message>
+    <message>
+        <source>Excel exports selected tables as separate sheets and charts on one Charts sheet.</source>
+        <translation>Excel exporterar valda tabeller som separata blad och diagram på ett gemensamt diagramblad.</translation>
+    </message>
+    <message>
+        <source>Choose exactly one table for CSV or binary export. Charts are available only in Excel; uncheck Charts to continue.</source>
+        <translation>Välj exakt en tabell för CSV- eller binärexport. Diagram är endast tillgängliga i Excel; avmarkera Diagram för att fortsätta.</translation>
+    </message>
+    <message>
+        <source>Select at least one available component to export.</source>
+        <translation>Välj minst en tillgänglig komponent att exportera.</translation>
+    </message>
+    <message>
+        <source>Charts are available only in Excel. Uncheck Charts to continue.</source>
+        <translation>Diagram är endast tillgängliga i Excel. Avmarkera Diagram för att fortsätta.</translation>
+    </message>
+    <message>
+        <source>Counts are numeric, and fractions range from 0 to 1.</source>
+        <translation>Antal är numeriska och andelar ligger mellan 0 och 1.</translation>
+    </message>
+    <message>
+        <source>Export analysis data</source>
+        <translation type="vanished">Exportera analysdata</translation>
+    </message>
+    <message>
+        <source>Export results</source>
+        <translation type="vanished">Exportera resultat</translation>
+    </message>
+    <message>
+        <source>Planned export contents</source>
+        <translation type="vanished">Planerat exportinnehåll</translation>
+    </message>
+    <message>
+        <source>Summary / statistics tables</source>
+        <translation>Sammanfattnings- och statistiktabeller</translation>
+    </message>
+    <message>
+        <source>Coefficients</source>
+        <translation>Koefficienter</translation>
+    </message>
+    <message>
+        <source>Model metrics</source>
+        <translation>Modellmått</translation>
+    </message>
+    <message>
+        <source>Charts</source>
+        <translation>Diagram</translation>
+    </message>
+    <message>
+        <source>Preview choice only. Availability will depend on the computed analysis.</source>
+        <translation type="vanished">Endast förhandsvisning av val. Tillgängligheten kommer att bero på den beräknade analysen.</translation>
+    </message>
+    <message>
+        <source>These are planned choices, not available outputs. Unsupported items will explain why they are unavailable.</source>
+        <translation type="vanished">Detta är planerade val, inte tillgängliga resultat. Val som inte stöds kommer att förklara varför de inte är tillgängliga.</translation>
+    </message>
+    <message>
+        <source>Excel workbook (.xlsx)</source>
+        <translation>Excel-arbetsbok (.xlsx)</translation>
+    </message>
+    <message>
+        <source>Planned format</source>
+        <translation type="vanished">Planerat format</translation>
+    </message>
+    <message>
+        <source>Standalone chart format</source>
+        <translation type="vanished">Format för separata diagram</translation>
+    </message>
+    <message>
+        <source>Excel will contain tables and static chart images. Standalone charts can also be saved as PNG or SVG. The planned export includes all supported chart variants, not only the displayed chart.</source>
+        <translation type="vanished">Excel kommer att innehålla tabeller och statiska diagrambilder. Separata diagram kan även sparas som PNG eller SVG. Den planerade exporten omfattar alla diagramvarianter som stöds, inte bara det visade diagrammet.</translation>
+    </message>
+    <message>
+        <source>The analysis dataset will contain the rows used by the analysis. Predictions and residuals will be offered only where supported.</source>
+        <translation type="vanished">Analysdatasetet kommer att innehålla de rader som används av analysen. Prediktioner och residualer kommer endast att erbjudas där de stöds.</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>Exportera</translation>
+    </message>
+    <message>
+        <source>Rate ratio</source>
+        <translation>Incidenskvot</translation>
+    </message>
+    <message>
+        <source>Hazard ratio</source>
+        <translation>Hazardkvot</translation>
+    </message>
+    <message>
+        <source>{name}, 95% CI lower</source>
+        <translation>{name}, 95 % KI nedre</translation>
+    </message>
+    <message>
+        <source>{name}, 95% CI upper</source>
+        <translation>{name}, 95 % KI övre</translation>
+    </message>
+    <message>
+        <source>Term</source>
+        <translation>Term</translation>
+    </message>
+    <message>
+        <source>Estimate</source>
+        <translation>Skattning</translation>
+    </message>
+    <message>
+        <source>Std. error</source>
+        <translation>Standardfel</translation>
+    </message>
+    <message>
+        <source>t statistic</source>
+        <translation>t-statistika</translation>
+    </message>
+    <message>
+        <source>z statistic</source>
+        <translation>z-statistika</translation>
+    </message>
+    <message>
+        <source>VIF</source>
+        <translation>VIF</translation>
+    </message>
+    <message>
+        <source>Significant at p &lt; {alpha}</source>
+        <translation>Signifikant vid p &lt; {alpha}</translation>
+    </message>
+    <message>
+        <source>(Intercept)</source>
+        <translation>(Intercept)</translation>
+    </message>
+    <message>
+        <source>Metric</source>
+        <translation>Mått</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation>Värde</translation>
+    </message>
+    <message>
+        <source>Rows used</source>
+        <translation>Använda rader</translation>
+    </message>
+    <message>
+        <source>Rows dropped because of missing values</source>
+        <translation>Rader borttagna på grund av saknade värden</translation>
+    </message>
+    <message>
+        <source>R²</source>
+        <translation>R²</translation>
+    </message>
+    <message>
+        <source>Adjusted R²</source>
+        <translation>Justerat R²</translation>
+    </message>
+    <message>
+        <source>F statistic</source>
+        <translation>F-statistika</translation>
+    </message>
+    <message>
+        <source>F-test p-value</source>
+        <translation>p-värde för F-test</translation>
+    </message>
+    <message>
+        <source>Model degrees of freedom</source>
+        <translation>Frihetsgrader för modellen</translation>
+    </message>
+    <message>
+        <source>Residual degrees of freedom</source>
+        <translation>Frihetsgrader för residualer</translation>
+    </message>
+    <message>
+        <source>RMSE</source>
+        <translation>RMSE</translation>
+    </message>
+    <message>
+        <source>AIC</source>
+        <translation>AIC</translation>
+    </message>
+    <message>
+        <source>Breusch-Pagan LM</source>
+        <translation>Breusch-Pagan LM</translation>
+    </message>
+    <message>
+        <source>Breusch-Pagan p-value</source>
+        <translation>Breusch-Pagan p-värde</translation>
+    </message>
+    <message>
+        <source>Jarque-Bera JB</source>
+        <translation>Jarque-Bera JB</translation>
+    </message>
+    <message>
+        <source>Jarque-Bera p-value</source>
+        <translation>Jarque-Bera p-värde</translation>
+    </message>
+    <message>
+        <source>Durbin-Watson</source>
+        <translation>Durbin-Watson</translation>
+    </message>
+    <message>
+        <source>Largest VIF</source>
+        <translation>Största VIF</translation>
+    </message>
+    <message>
+        <source>Log-likelihood</source>
+        <translation>Log-likelihood</translation>
+    </message>
+    <message>
+        <source>Null-model log-likelihood</source>
+        <translation>Log-likelihood för nollmodellen</translation>
+    </message>
+    <message>
+        <source>McFadden pseudo R²</source>
+        <translation>McFaddens pseudo-R²</translation>
+    </message>
+    <message>
+        <source>AUC (in-sample)</source>
+        <translation>AUC (anpassningsdata)</translation>
+    </message>
+    <message>
+        <source>Pearson dispersion</source>
+        <translation>Pearsondispersion</translation>
+    </message>
+    <message>
+        <source>NB2 alpha</source>
+        <translation>NB2-alfa</translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation>Händelser</translation>
+    </message>
+    <message>
+        <source>Censored</source>
+        <translation>Censurerade</translation>
+    </message>
+    <message>
+        <source>Export the coefficients, model metrics and charts of the applied model, not the original dataset.</source>
+        <translation>Exportera koefficienter, modellmått och diagram för den tillämpade modellen, inte det ursprungliga datasetet.</translation>
+    </message>
+    <message>
+        <source>Applied model: {model}
+{role}: {outcome}
+Predictors: {predictors}</source>
+        <translation>Tillämpad modell: {model}
+{role}: {outcome}
+Prediktorer: {predictors}</translation>
+    </message>
+    <message>
+        <source>Duration / event</source>
+        <translation>Duration / händelse</translation>
+    </message>
+    <message>
+        <source>Target</source>
+        <translation>Målvariabel</translation>
+    </message>
+    <message>
+        <source>Linear regression</source>
+        <translation>Linjär regression</translation>
+    </message>
+    <message>
+        <source>Logistic regression</source>
+        <translation>Logistisk regression</translation>
+    </message>
+    <message>
+        <source>Poisson regression</source>
+        <translation>Poissonregression</translation>
+    </message>
+    <message>
+        <source>Negative binomial regression</source>
+        <translation>Negativ binomial regression</translation>
+    </message>
+    <message>
+        <source>Cox proportional-hazards regression</source>
+        <translation>Cox-regression med proportionella hazarder</translation>
+    </message>
+    <message>
+        <source>Apply a regression model successfully before exporting.</source>
+        <translation>Tillämpa en regressionsmodell utan fel innan du exporterar.</translation>
+    </message>
+    <message>
+        <source>Fit statistics and diagnostics with the displayed model comments.</source>
+        <translation>Anpassningsmått och diagnostik med de visade modellkommentarerna.</translation>
+    </message>
+    <message>
+        <source>Export the displayed outlier tables and charts of the applied screening, not the original dataset.</source>
+        <translation>Exportera de visade avvikartabellerna och diagrammen från den tillämpade screeningen, inte det ursprungliga datasetet.</translation>
+    </message>
+    <message>
+        <source>Apply an outlier screening successfully before exporting.</source>
+        <translation>Tillämpa en avvikarscreening utan fel innan du exporterar.</translation>
+    </message>
+    <message>
+        <source>The displayed rows, at most 100, most extreme first.</source>
+        <translation>De visade raderna, högst 100, mest extrema först.</translation>
+    </message>
+    <message>
+        <source>Applied method: {method}, threshold {threshold}</source>
+        <translation>Tillämpad metod: {method}, tröskel {threshold}</translation>
+    </message>
+    <message>
+        <source>Selected column: {column}</source>
+        <translation>Vald kolumn: {column}</translation>
+    </message>
+    <message>
+        <source>Applied method: {method}
+Features: {features}</source>
+        <translation>Tillämpad metod: {method}
+Variabler: {features}</translation>
+    </message>
+    <message>
+        <source>Column summary</source>
+        <translation>Kolumnsammanfattning</translation>
+    </message>
+    <message>
+        <source>Column details</source>
+        <translation>Kolumndetaljer</translation>
+    </message>
+    <message>
+        <source>Model summary</source>
+        <translation>Modellsammanfattning</translation>
+    </message>
+    <message>
+        <source>Potential outliers</source>
+        <translation>Potentiella avvikare</translation>
+    </message>
+    <message>
+        <source>Charts ({count} column)</source>
+        <translation>Diagram ({count} kolumn)</translation>
+    </message>
+    <message>
+        <source>Charts ({count} columns)</source>
+        <translation>Diagram ({count} kolumner)</translation>
+    </message>
+    <message>
+        <source>IQR (Tukey&apos;s fences)</source>
+        <translation>IQR (Tukeys gränser)</translation>
+    </message>
+    <message>
+        <source>Z-score</source>
+        <translation>Z-poäng</translation>
+    </message>
+    <message>
+        <source>Modified Z-score</source>
+        <translation>Modifierad Z-poäng</translation>
+    </message>
+    <message>
+        <source>Isolation Forest</source>
+        <translation>Isolation Forest</translation>
+    </message>
+    <message>
+        <source>Local Outlier Factor</source>
+        <translation>Local Outlier Factor</translation>
+    </message>
+    <message>
+        <source>Threshold</source>
+        <translation>Tröskel</translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation>Värden</translation>
+    </message>
+    <message>
+        <source>Missing</source>
+        <translation>Saknade</translation>
+    </message>
+    <message>
+        <source>Potential outlier share</source>
+        <translation>Andel potentiella avvikare</translation>
+    </message>
+    <message>
+        <source>Low potential outliers</source>
+        <translation>Låga potentiella avvikare</translation>
+    </message>
+    <message>
+        <source>High potential outliers</source>
+        <translation>Höga potentiella avvikare</translation>
+    </message>
+    <message>
+        <source>Lower fence</source>
+        <translation>Nedre gräns</translation>
+    </message>
+    <message>
+        <source>Upper fence</source>
+        <translation>Övre gräns</translation>
+    </message>
+    <message>
+        <source>Q1</source>
+        <translation>Q1</translation>
+    </message>
+    <message>
+        <source>Q3</source>
+        <translation>Q3</translation>
+    </message>
+    <message>
+        <source>IQR</source>
+        <translation>IQR</translation>
+    </message>
+    <message>
+        <source>Mean</source>
+        <translation>Medelvärde</translation>
+    </message>
+    <message>
+        <source>Standard deviation</source>
+        <translation>Standardavvikelse</translation>
+    </message>
+    <message>
+        <source>Median</source>
+        <translation>Median</translation>
+    </message>
+    <message>
+        <source>MAD</source>
+        <translation>MAD</translation>
+    </message>
+    <message>
+        <source>Features</source>
+        <translation>Variabler</translation>
+    </message>
+    <message>
+        <source>Expected outlier fraction</source>
+        <translation>Förväntad andel avvikande observationer</translation>
+    </message>
+    <message>
+        <source>LOF neighbors</source>
+        <translation>LOF-grannar</translation>
+    </message>
+    <message>
+        <source>Total rows</source>
+        <translation>Totalt antal rader</translation>
+    </message>
+    <message>
+        <source>Rows dropped because of missing or infinite values</source>
+        <translation>Rader borttagna på grund av saknade eller oändliga värden</translation>
+    </message>
+    <message>
+        <source>Inliers</source>
+        <translation>Inomliggande observationer</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>Status</translation>
+    </message>
+    <message>
+        <source>Export the cluster sizes, model summary and chart of the applied clustering, not the original dataset.</source>
+        <translation>Exportera klusterstorlekar, modellsammanfattning och diagram från den tillämpade klustringen, inte det ursprungliga datasetet.</translation>
+    </message>
+    <message>
+        <source>Apply a clustering successfully before exporting.</source>
+        <translation>Tillämpa en klustring utan fel innan du exporterar.</translation>
+    </message>
+    <message>
+        <source>Settings, row counts and silhouette with the displayed model comments.</source>
+        <translation>Inställningar, antal rader och silhuettpoäng med de visade modellkommentarerna.</translation>
+    </message>
+    <message>
+        <source>K-Means</source>
+        <translation>K-Means</translation>
+    </message>
+    <message>
+        <source>DBSCAN</source>
+        <translation>DBSCAN</translation>
+    </message>
+    <message>
+        <source>Agglomerative</source>
+        <translation>Agglomerativ</translation>
+    </message>
+    <message>
+        <source>Cluster sizes</source>
+        <translation>Klusterstorlekar</translation>
+    </message>
+    <message>
+        <source>Number of clusters</source>
+        <translation>Antal kluster</translation>
+    </message>
+    <message>
+        <source>Neighborhood radius (eps)</source>
+        <translation>Grannskapsradie (eps)</translation>
+    </message>
+    <message>
+        <source>Minimum samples</source>
+        <translation>Minsta antal observationer</translation>
+    </message>
+    <message>
+        <source>Clusters found</source>
+        <translation>Hittade kluster</translation>
+    </message>
+    <message>
+        <source>Noise rows</source>
+        <translation>Brusrader</translation>
+    </message>
+    <message>
+        <source>Silhouette score</source>
+        <translation>Silhuettpoäng</translation>
+    </message>
+    <message>
+        <source>Cluster</source>
+        <translation>Kluster</translation>
+    </message>
+    <message>
+        <source>Rows</source>
+        <translation>Rader</translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation>Andel</translation>
+    </message>
+    <message>
+        <source>Applied features: {features}</source>
+        <translation>Tillämpade variabler: {features}</translation>
+    </message>
+    <message>
+        <source>Feature loadings</source>
+        <translation>Variabelladdningar</translation>
+    </message>
+    <message>
+        <source>Explained variance</source>
+        <translation>Förklarad varians</translation>
+    </message>
+    <message>
+        <source>Apply a PCA successfully before exporting.</source>
+        <translation>Tillämpa en PCA utan fel innan export.</translation>
+    </message>
+    <message>
+        <source>Variance, share and cumulative share per component, as in the scree plot.</source>
+        <translation>Varians, andel och kumulativ andel per komponent, som i scree-diagrammet.</translation>
+    </message>
+    <message>
+        <source>Feature and row counts with the displayed model comments.</source>
+        <translation>Antal variabler och rader med de visade modellkommentarerna.</translation>
+    </message>
+    <message>
+        <source>Export the feature loadings, explained variance, model summary and charts of the applied PCA, not the original dataset.</source>
+        <translation>Exportera variabelladdningar, förklarad varians, modellsammanfattning och diagram för den tillämpade PCA:n, inte den ursprungliga datamängden.</translation>
+    </message>
+    <message>
+        <source>Feature</source>
+        <translation>Variabel</translation>
+    </message>
+    <message>
+        <source>Component</source>
+        <translation>Komponent</translation>
+    </message>
+    <message>
+        <source>Variance</source>
+        <translation>Varians</translation>
+    </message>
+    <message>
+        <source>Cumulative share</source>
+        <translation>Kumulativ andel</translation>
+    </message>
+    <message>
+        <source>Applied series: {value} by {time}</source>
+        <translation>Tillämpad serie: {value} per {time}</translation>
+    </message>
+    <message>
+        <source>Series</source>
+        <translation>Serie</translation>
+    </message>
+    <message>
+        <source>Autocorrelation</source>
+        <translation>Autokorrelation</translation>
+    </message>
+    <message>
+        <source>Apply a time series successfully before exporting.</source>
+        <translation>Tillämpa en tidsserie utan fel innan export.</translation>
+    </message>
+    <message>
+        <source>Source rows</source>
+        <translation>Källrader</translation>
+    </message>
+    <message>
+        <source>Invalid rows dropped</source>
+        <translation>Ogiltiga rader borttagna</translation>
+    </message>
+    <message>
+        <source>Duplicate rows averaged</source>
+        <translation>Dubblettrader medelvärdesbildade</translation>
+    </message>
+    <message>
+        <source>Time points</source>
+        <translation>Tidpunkter</translation>
+    </message>
+    <message>
+        <source>Seasonal period</source>
+        <translation>Säsongsperiod</translation>
+    </message>
+    <message>
+        <source>Timestamp</source>
+        <translation>Tidsstämpel</translation>
+    </message>
+    <message>
+        <source>Trend</source>
+        <translation>Trend</translation>
+    </message>
+    <message>
+        <source>Seasonal</source>
+        <translation>Säsong</translation>
+    </message>
+    <message>
+        <source>Residual</source>
+        <translation>Residual</translation>
+    </message>
+    <message>
+        <source>Lag</source>
+        <translation>Fördröjning</translation>
+    </message>
+    <message>
+        <source>One row per time point after averaging duplicate timestamps and any resampling, with the decomposition when available.</source>
+        <translation>En rad per tidpunkt efter medelvärdesbildning av dubblerade tidsstämplar och eventuell omsampling, med dekomponeringen när den finns.</translation>
+    </message>
+    <message>
+        <source>Row diagnostics and seasonal period with the displayed model comments.</source>
+        <translation>Raddiagnostik och säsongsperiod med de visade modellkommentarerna.</translation>
+    </message>
+    <message>
+        <source>The series and, when available, the autocorrelation and decomposition.</source>
+        <translation>Serien och, när de finns, autokorrelationen och dekomponeringen.</translation>
+    </message>
+    <message>
+        <source>Export the prepared series, autocorrelation, model summary and charts of the applied time series, not the original dataset.</source>
+        <translation>Exportera den förberedda serien, autokorrelationen, modellsammanfattningen och diagrammen för den tillämpade tidsserien, inte det ursprungliga datasetet.</translation>
+    </message>
+</context>
+<context>
+    <name>ReportPage</name>
+    <message>
+        <source>Report details</source>
+        <translation>Rapportinformation</translation>
+    </message>
+    <message>
+        <source>Enter a report title</source>
+        <translation>Ange en rapporttitel</translation>
+    </message>
+    <message>
+        <source>Describe the purpose of this report</source>
+        <translation>Beskriv syftet med rapporten</translation>
+    </message>
+    <message>
+        <source>Title</source>
+        <translation>Titel</translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation>Beskrivning</translation>
+    </message>
+    <message>
+        <source>Selected analyses</source>
+        <translation>Valda analyser</translation>
+    </message>
+    <message>
+        <source>No analyses have been added. Report collection will be available in a later step.</source>
+        <translation>Inga analyser har lagts till. Möjligheten att samla analyser i en rapport kommer i ett senare steg.</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation>Flytta upp</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation>Flytta ned</translation>
+    </message>
+    <message>
+        <source>Edit note</source>
+        <translation>Redigera anteckning</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Ta bort</translation>
+    </message>
+    <message>
+        <source>Layout preview only. Adding analyses and generating files are not implemented yet.</source>
+        <translation>Endast förhandsvisning av layouten. Att lägga till analyser och skapa filer är ännu inte implementerat.</translation>
+    </message>
+    <message>
+        <source>Generate HTML report</source>
+        <translation>Skapa HTML-rapport</translation>
+    </message>
+    <message>
+        <source>Not implemented yet. This step previews the report layout only.</source>
+        <translation>Ännu inte implementerat. Detta steg visar endast rapportens layout.</translation>
+    </message>
+</context>
+<context>
+    <name>ReportNotesDialog</name>
+    <message>
+        <source>Add to report</source>
+        <translation>Lägg till i rapport</translation>
+    </message>
+    <message>
+        <source>Optional notes about this analysis</source>
+        <translation>Valfria anteckningar om analysen</translation>
+    </message>
+    <message>
+        <source>Notes</source>
+        <translation>Anteckningar</translation>
+    </message>
+    <message>
+        <source>Layout preview only. Adding an analysis to the report is not implemented yet.</source>
+        <translation>Endast förhandsvisning av layouten. Att lägga till en analys i rapporten är ännu inte implementerat.</translation>
+    </message>
+    <message>
+        <source>Not implemented yet. No analysis or note will be saved.</source>
+        <translation>Ännu inte implementerat. Ingen analys eller anteckning kommer att sparas.</translation>
     </message>
 </context>
 <context>
@@ -596,6 +1566,7 @@ Vänligen se loggfil för mer information.</translation>
 </context>
 <context>
     <name>ChiSquareView</name>
+    <message><source>Contingency table</source><translation>Korstabell</translation></message>
     <message>
         <location filename="../../gui/dialogs/analysis/chi_square_view.py" line="88"/>
         <source>A chi-square test needs two categorical columns, each with between {minimum} and {maximum} distinct values.</source>
@@ -884,8 +1855,8 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/clustering_view.py" line="135"/>
-        <source>Summary</source>
-        <translation>Sammanfattning</translation>
+        <source>Model comments</source>
+        <translation>Modellkommentarer</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/clustering_view.py" line="144"/>
@@ -933,6 +1904,10 @@ Vänligen se loggfil för mer information.</translation>
         <location filename="../../gui/dialogs/analysis/clustering_view.py" line="188"/>
         <source>Rows</source>
         <translation>Rader</translation>
+    </message>
+    <message>
+        <source>Features: {columns}</source>
+        <translation>Variabler: {columns}</translation>
     </message>
 </context>
 <context>
@@ -1617,21 +2592,6 @@ Vänligen se loggfil för mer information.</translation>
         <translation>Tillämpa</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/correlation_config.py" line="149"/>
-        <source>Scatterplot</source>
-        <translation>Spridningsdiagram</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/analysis/correlation_config.py" line="160"/>
-        <source>X variable</source>
-        <translation>X-variabel</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/analysis/correlation_config.py" line="161"/>
-        <source>Y variable</source>
-        <translation>Y-variabel</translation>
-    </message>
-    <message>
         <location filename="../../gui/dialogs/analysis/correlation_config.py" line="216"/>
         <source>{count} selected - select at least {minimum}.</source>
         <translation>{count} markerade – markera minst {minimum}.</translation>
@@ -1757,8 +2717,8 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/correlation_view.py" line="306"/>
-        <source>Pairs are ranked by absolute coefficient. * marks pairs that are significant (p &lt; {alpha}) after Holm adjustment for {count} tests. Click a row to show the pair below.</source>
-        <translation>Paren rangordnas efter absolutvärdet av koefficienten. * markerar par som är signifikanta (p &lt; {alpha}) efter Holm-korrigering för {count} tester. Klicka på en rad för att visa paret nedan.</translation>
+        <source>Pairs are ranked by absolute coefficient. * marks pairs that are significant (p &lt; {alpha}) after Holm adjustment for {count} tests.</source>
+        <translation>Paren rangordnas efter absolutvärdet av koefficienten. * markerar par som är signifikanta (p &lt; {alpha}) efter Holm-korrigering för {count} tester.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/correlation_view.py" line="321"/>
@@ -2673,6 +3633,28 @@ Fortsätt?</translation>
 </context>
 <context>
     <name>ExportController</name>
+    <message>
+        <source>Export completed</source>
+        <translation>Export slutförd</translation>
+    </message>
+    <message>
+        <source>Export completed successfully.
+
+Saved to:
+{path}</source>
+        <translation>Exporten slutfördes.
+
+Sparad till:
+{path}</translation>
+    </message>
+    <message>
+        <source>Supply either a DataFrame or named sheets, not both.</source>
+        <translation>Ange antingen en DataFrame eller namngivna blad, inte båda.</translation>
+    </message>
+    <message>
+        <source>Invalid Excel workbook: {reason}</source>
+        <translation>Ogiltig Excel-arbetsbok: {reason}</translation>
+    </message>
     <message>
         <location filename="../../workbench/controllers/export_controller.py" line="69"/>
         <source>No dataset</source>
@@ -3913,13 +4895,23 @@ Fortsätt?</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/outliers_multivariate_view.py" line="158"/>
-        <source>&lt;b&gt;No potential outliers&lt;/b&gt;</source>
-        <translation>&lt;b&gt;Inga potentiella avvikare&lt;/b&gt;</translation>
+        <source>No potential outliers</source>
+        <translation>Inga potentiella avvikare</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/outliers_multivariate_view.py" line="161"/>
-        <source>&lt;b&gt;Potential outliers, most anomalous first&lt;/b&gt;</source>
-        <translation>&lt;b&gt;Potentiella avvikare, mest avvikande först&lt;/b&gt;</translation>
+        <source>Potential outliers, most anomalous first</source>
+        <translation>Potentiella avvikare, mest avvikande först</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/outliers_multivariate_view.py" line="60"/>
+        <source>PCA projection</source>
+        <translation>PCA-projektion</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/outliers_multivariate_view.py" line="60"/>
+        <source>Model comments</source>
+        <translation>Modellkommentarer</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/outliers_multivariate_view.py" line="164"/>
@@ -3930,6 +4922,10 @@ Fortsätt?</translation>
         <location filename="../../gui/dialogs/analysis/outliers_multivariate_view.py" line="164"/>
         <source>Anomaly score</source>
         <translation>Avvikelsepoäng</translation>
+    </message>
+    <message>
+        <source>Features: {columns}</source>
+        <translation>Variabler: {columns}</translation>
     </message>
 </context>
 <context>
@@ -3973,11 +4969,6 @@ Fortsätt?</translation>
         <location filename="../../gui/dialogs/analysis/outliers_config.py" line="96"/>
         <source>Apply</source>
         <translation>Tillämpa</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/analysis/outliers_config.py" line="100"/>
-        <source>Column</source>
-        <translation>Kolumn</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/outliers_config.py" line="143"/>
@@ -4217,6 +5208,10 @@ Fortsätt?</translation>
         <source>Row</source>
         <translation>Rad</translation>
     </message>
+    <message>
+        <source>Flagged values are potential outliers, not necessarily errors - check them before excluding anything.</source>
+        <translation>Flaggade värden är potentiella avvikare, inte nödvändigtvis felaktiga värden – kontrollera dem innan något exkluderas.</translation>
+    </message>
 </context>
 <context>
     <name>OverviewView</name>
@@ -4376,6 +5371,30 @@ Fortsätt?</translation>
         <source>Other</source>
         <translation>Annan</translation>
     </message>
+    <message>
+        <source>Sample</source>
+        <translation>Urval</translation>
+    </message>
+    <message>
+        <source>Missing fraction</source>
+        <translation>Andel saknade värden</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation>Avsnitt</translation>
+    </message>
+    <message>
+        <source>Metric</source>
+        <translation>Mått</translation>
+    </message>
+    <message>
+        <source>Count</source>
+        <translation>Antal</translation>
+    </message>
+    <message>
+        <source>Fraction</source>
+        <translation>Andel</translation>
+    </message>
 </context>
 <context>
     <name>PCAConfigWidget</name>
@@ -4474,8 +5493,8 @@ Fortsätt?</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/pca_view.py" line="128"/>
-        <source>Summary</source>
-        <translation>Sammanfattning</translation>
+        <source>Model comments</source>
+        <translation>Modellkommentarer</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/pca_view.py" line="145"/>
@@ -4519,17 +5538,56 @@ Fortsätt?</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/pca_view.py" line="177"/>
-        <source>&lt;b&gt;Feature loadings&lt;/b&gt;</source>
-        <translation>&lt;b&gt;Variabelladdningar&lt;/b&gt;</translation>
+        <source>Feature loadings</source>
+        <translation>Variabelladdningar</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/pca_view.py" line="181"/>
         <source>Feature</source>
         <translation>Variabel</translation>
     </message>
+    <message>
+        <source>Features: {columns}</source>
+        <translation>Variabler: {columns}</translation>
+    </message>
 </context>
 <context>
     <name>PairedComparisonConfigWidget</name>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="53"/>
+        <source>Measurement columns</source>
+        <translation>Mätkolumner</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="74"/>
+        <source>Select all</source>
+        <translation>Välj alla</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="75"/>
+        <source>Clear</source>
+        <translation>Rensa</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="146"/>
+        <source>None selected - select at least {minimum}.</source>
+        <translation>Inget valt – markera minst {minimum}.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="148"/>
+        <source>{count} selected - select at least {minimum}.</source>
+        <translation>{count} markerade – markera minst {minimum}.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="153"/>
+        <source>{count} selected - Wilcoxon signed-rank test.</source>
+        <translation>{count} markerade – Wilcoxons teckenrangtest.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="154"/>
+        <source>{count} selected - Friedman test.</source>
+        <translation>{count} markerade – Friedmans test.</translation>
+    </message>
     <message>
         <location filename="../../gui/dialogs/analysis/hypothesis_tests_config.py" line="56"/>
         <source>Select at least two numeric columns. They are used in the order shown; each row is one subject.</source>
@@ -5151,8 +6209,13 @@ Tips: {error_hint}</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/regression_view.py" line="212"/>
-        <source>&lt;b&gt;Model summary&lt;/b&gt;</source>
-        <translation>&lt;b&gt;Modellsammanfattning&lt;/b&gt;</translation>
+        <source>Model comments</source>
+        <translation>Modellkommentarer</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/regression_view.py" line="212"/>
+        <source>Linear regression</source>
+        <translation>Linjär regression</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/regression_view.py" line="213"/>
@@ -5326,7 +6389,7 @@ Tips: {error_hint}</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/regression_view.py" line="389"/>
-        <source>* marks coefficients significant at p &amp;lt, {alpha}.</source>
+        <source>* marks coefficients significant at p &amp;lt; {alpha}.</source>
         <translation>* markerar koefficienter som är statistiskt signifikanta vid p &amp;lt; {alpha}.</translation>
     </message>
     <message>
@@ -5393,6 +6456,10 @@ Tips: {error_hint}</translation>
         <location filename="../../gui/dialogs/analysis/regression_view.py" line="488"/>
         <source>Standardized residual</source>
         <translation>Standardiserad residual</translation>
+    </message>
+    <message>
+        <source>Linear regression: {target}</source>
+        <translation>Linjär regression: {target}</translation>
     </message>
 </context>
 <context>
@@ -7788,16 +8855,35 @@ Tid: {sec:.2f}s{sample}</translation>
     </message>
 </context>
 <context>
-    <name>StatisticsConfigWidget</name>
-    <message>
-        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="69"/>
-        <location filename="../../gui/dialogs/analysis/statistics_config.py" line="60"/>
-        <source>Column</source>
-        <translation>Kolumn</translation>
-    </message>
-</context>
-<context>
     <name>StatisticsView</name>
+    <message>
+        <source>Charts</source>
+        <translation>Diagram</translation>
+    </message>
+    <message>
+        <source>Fraction (non-missing)</source>
+        <translation>Andel (icke-saknade)</translation>
+    </message>
+    <message>
+        <source>Missing fraction</source>
+        <translation>Andel saknade värden</translation>
+    </message>
+    <message>
+        <source>Valid count</source>
+        <translation>Antal giltiga</translation>
+    </message>
+    <message>
+        <source>Shapiro-Wilk W</source>
+        <translation>Shapiro-Wilk W</translation>
+    </message>
+    <message>
+        <source>Shapiro-Wilk p-value</source>
+        <translation>Shapiro-Wilk p-värde</translation>
+    </message>
+    <message>
+        <source>Recommended summary</source>
+        <translation>Rekommenderad sammanfattning</translation>
+    </message>
     <message>
         <source>Mean ± SD</source>
         <translation>Medelvärde ± standardavvikelse</translation>
@@ -8069,6 +9155,16 @@ Tid: {sec:.2f}s{sample}</translation>
         <translation>Månadsvis</translation>
     </message>
     <message>
+        <location filename="../../gui/dialogs/analysis/timeseries_config.py" line="41"/>
+        <source>Quarterly</source>
+        <translation>Kvartalsvis</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/timeseries_config.py" line="41"/>
+        <source>Yearly</source>
+        <translation>Årsvis</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/analysis/timeseries_config.py" line="44"/>
         <source>Resample to</source>
         <translation>Omsampla till</translation>
@@ -8112,6 +9208,10 @@ Tid: {sec:.2f}s{sample}</translation>
 <context>
     <name>TimeSeriesView</name>
     <message>
+        <source>Summary</source>
+        <translation>Sammanfattning</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/analysis/timeseries_view.py" line="61"/>
         <source>A time series needs at least one datetime column.</source>
         <translation>En tidsserie kräver minst en kolumn med datum/tid.</translation>
@@ -8145,6 +9245,16 @@ Tid: {sec:.2f}s{sample}</translation>
         <location filename="../../gui/dialogs/analysis/timeseries_view.py" line="67"/>
         <source>At least 3 valid time observations are needed.</source>
         <translation>Minst 3 giltiga tidsobservationer krävs.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/timeseries_view.py" line="70"/>
+        <source>Charts</source>
+        <translation>Diagram</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/timeseries_view.py" line="82"/>
+        <source>Model comments</source>
+        <translation>Modellkommentarer</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/timeseries_view.py" line="73"/>
@@ -8197,6 +9307,46 @@ Tid: {sec:.2f}s{sample}</translation>
         <location filename="../../gui/dialogs/analysis/timeseries_view.py" line="134"/>
         <source>Residual</source>
         <translation>Residual</translation>
+    </message>
+    <message>
+        <source>Additive</source>
+        <translation>Additiv</translation>
+    </message>
+    <message>
+        <source>Multiplicative</source>
+        <translation>Multiplikativ</translation>
+    </message>
+    <message>
+        <source>Decomposition model: {model}</source>
+        <translation>Dekomponeringsmodell: {model}</translation>
+    </message>
+    <message>
+        <source>The autocorrelation requires a regular time frequency.</source>
+        <translation>Autokorrelationen kräver en regelbunden tidsfrekvens.</translation>
+    </message>
+    <message>
+        <source>The autocorrelation is unavailable while the series has gaps.</source>
+        <translation>Autokorrelationen är inte tillgänglig när serien har luckor.</translation>
+    </message>
+    <message>
+        <source>Seasonal decomposition requires a regular time frequency.</source>
+        <translation>Säsongsdekomponering kräver en regelbunden tidsfrekvens.</translation>
+    </message>
+    <message>
+        <source>Seasonal decomposition is unavailable while the series has gaps.</source>
+        <translation>Säsongsdekomponering är inte tillgänglig när serien har luckor.</translation>
+    </message>
+    <message>
+        <source>No seasonal period could be detected; choose one to decompose the series.</source>
+        <translation>Ingen säsongsperiod kunde identifieras; välj en för att dekomponera serien.</translation>
+    </message>
+    <message>
+        <source>Seasonal decomposition needs at least two complete seasonal cycles.</source>
+        <translation>Säsongsdekomponering kräver minst två fullständiga säsongscykler.</translation>
+    </message>
+    <message>
+        <source>Multiplicative decomposition requires all values to be greater than zero.</source>
+        <translation>Multiplikativ dekomponering kräver att alla värden är större än noll.</translation>
     </message>
 </context>
 <context>
@@ -8326,7 +9476,8 @@ Snabbkommando: Ctrl+Z</translation>
     <name>RegressionConfigWidget</name>
     <message><source>Cox proportional-hazards regression</source><translation>Cox-regression med proportionella hazarder</translation></message>
     <message><source>Duration</source><translation>Duration</translation></message>
-    <message><source>Event (1 = event; 0 = censored)</source><translation>Händelse (1 = händelse; 0 = censurerad)</translation></message>
+    <message><source>Event</source><translation>Händelse</translation></message>
+    <message><source>1 = event, 0 = censored</source><translation>1 = händelse, 0 = censurerad</translation></message>
     <message><source>This column is an outcome and cannot be a predictor.</source><translation>Kolumnen är ett utfall och kan inte användas som prediktor.</translation></message>
     <message><source>Cox regression needs distinct numeric duration and binary event columns.</source><translation>Cox-regression kräver olika numeriska duration- och binära händelsekolumner.</translation></message>
 </context>
@@ -8421,5 +9572,9 @@ alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
     <message><source>Reference for {column}: {level}</source><translation>Referens för {column}: {level}</translation></message>
     <message><source>Efron method was used to handle tied event times.</source><translation>Efrons metod användes för att hantera bundna händelsetider.</translation></message>
     <message><source>The proportional-hazards assumption was not assessed.</source><translation>Antagandet om proportionella hazarder har inte utvärderats.</translation></message>
+    <message>
+        <source>Cox proportional-hazards regression: {duration} / {event}</source>
+        <translation>Cox-regression med proportionella hazarder: {duration} / {event}</translation>
+    </message>
 </context>
 </TS>

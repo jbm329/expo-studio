@@ -42,6 +42,24 @@ def test_info_is_logged(dialogs: NullDialogService, parent: QWidget) -> None:
     assert dialogs.calls[-1][0] == "info"
 
 
+def test_qt_info_displays_path_as_literal_plain_text(monkeypatch, parent: QWidget) -> None:
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QMessageBox
+
+    from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
+
+    text = "Export completed successfully.\n\nSaved to:\nC:\\reports\\A&B <b>overview.csv"
+    observed = []
+
+    def inspect_message(message: QMessageBox) -> int:
+        observed.append((message.textFormat(), message.text()))
+        return 0
+
+    monkeypatch.setattr(QMessageBox, "exec", inspect_message)
+    QtDialogService().info(parent, "Export completed", text)
+    assert observed == [(Qt.TextFormat.PlainText, text)]
+
+
 def test_warn_is_logged(dialogs: NullDialogService, parent: QWidget) -> None:
     dialogs.warn(parent, "Title", "Text")
     assert dialogs.calls[-1][0] == "warn"

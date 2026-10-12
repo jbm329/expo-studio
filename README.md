@@ -43,21 +43,27 @@ The project is still in its infancy and may change significantly.
 
 ### 📈 Advanced Analysis
 
-The **Advanced Analysis** workspace provides interactive statistical tools for datasets loaded in result tabs. Open it with **Analyze data** in the toolbar, then choose a dataset and analysis category.
+The **Advanced Analysis** workspace provides statistical and machine-learning
+tools for datasets in result tabs. Open it with **Analyze data**, then choose a
+dataset and analysis.
 
-Available analyses include:
+- **Overview** profiles dataset structure, missing values, duplicates, and columns.
+- **Statistics** summarizes numeric and categorical data, distributions, and normality.
+- **Hypothesis Tests** compares groups, tests categorical associations, and analyzes paired measurements.
+- **Correlation** explores Pearson, Spearman, or Kendall relationships with matrix and pairwise plots.
+- **Regression** fits linear, logistic, Poisson, Negative Binomial, and Cox models with diagnostics.
+- **Outliers** detects univariate and multivariate anomalies.
+- **Clustering** groups observations using K-means, DBSCAN, or agglomerative clustering.
+- **PCA** reduces numeric data to principal components and shows loadings and explained variance.
+- **Time Series** prepares and analyzes series with optional resampling, autocorrelation, and seasonal decomposition.
 
-- **Overview**: Dataset dimensions, missing values, duplicate rows, column types, per-column statistics, and a sample of up to 100 rows.
-- **Statistics**: Descriptive statistics, histograms, boxplots, and Shapiro-Wilk normality tests for numeric columns.
-- **Hypothesis Tests**: Group comparisons for numeric and categorical variables, chi-square tests of independence with adjusted residuals, and paired Wilcoxon/Friedman tests with measurement summaries, distribution boxplots, and subject trajectories.
-- **Correlation**: Pearson, Spearman, and Kendall correlation matrices, strongest-pair summaries, significance tests, heatmaps, and pairwise scatterplots.
-- **Regression**: Multiple linear regression with numeric and categorical predictors, coefficient estimates, confidence intervals, model summaries, diagnostic tests, and residual plots. Poisson and Negative Binomial count regression include observed-versus-fitted counts and Pearson residual plots using each model's fitted variance. Cox regression includes a hazard-ratio forest plot and an unadjusted Kaplan–Meier survival curve for the same complete-case subjects, with censoring marks and numbers at risk.
-- **Outliers**: Univariate screening using IQR, z-score, or modified z-score, and multivariate detection using Isolation Forest or Local Outlier Factor.
-- **Clustering**: K-means, DBSCAN, and agglomerative clustering with cluster summaries and PCA-based projections.
-- **PCA**: Principal component analysis with optional standardization, explained variance, score plots, and feature loadings.
-- **Time Series**: Series preparation, optional resampling, autocorrelation, and additive or multiplicative seasonal decomposition.
+Long-running analyses run in the background where needed, and exports use the
+latest successful analysis result.
 
-The workspace uses adjustable result sections and configurable column selections. Long-running calculations are performed in the background to keep the interface responsive, and supported analyses provide progress or cancellation where appropriate.
+Export is available for successfully applied results. Excel workbooks can
+combine selected tables and available charts; CSV and binary exports contain
+one selected table. Charts are available in Excel only. Exports contain the
+selected analysis results, not a full dataset dump.
 
 ### 📂 Supported Data File Formats
 

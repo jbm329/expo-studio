@@ -27,17 +27,34 @@ from PyQt6.QtWidgets import (
     QListView,
     QListWidget,
     QListWidgetItem,
+    QPushButton,
     QScrollArea,
     QSizePolicy,
+    QStackedWidget,
     QToolTip,
     QVBoxLayout,
     QWidget,
 )
 
+from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_config import MultivariateOutliersConfigWidget
+from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDialog
+from expo_jbm329.gui.dialogs.analysis.report_page import ReportPage
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.clustering_export import ClusteringExportRequest, ClusteringExportSnapshot
+from expo_jbm329.services.analysis.correlation_export import CorrelationExportRequest, CorrelationExportSnapshot
+from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportRequest, HypothesisExportSnapshot
+from expo_jbm329.services.analysis.outliers_export import OutlierExportRequest, OutlierExportSnapshot
+from expo_jbm329.services.analysis.overview import OverviewExportRequest
+from expo_jbm329.services.analysis.pca_export import PCAExportRequest, PCAExportSnapshot
+from expo_jbm329.services.analysis.regression_export import RegressionExportRequest, RegressionExportSnapshot
+from expo_jbm329.services.analysis.statistics import StatisticsExportRequest
+from expo_jbm329.services.analysis.timeseries_export import TimeSeriesExportRequest, TimeSeriesExportSnapshot
 
 if TYPE_CHECKING:
+    from expo_jbm329.services.analysis.overview import DatasetOverviewResult
+    from expo_jbm329.services.analysis.statistics import DescriptiveStatisticsResult
     from expo_jbm329.utils.dataset_ref import DatasetRef
 
 _CATEGORY_ROLE = Qt.ItemDataRole.UserRole
@@ -70,6 +87,8 @@ class _ComboToolTipFilter(QObject):
             return super().eventFilter(watched, event)
         if watched is self._combo:
             tooltip = self._combo.currentData(Qt.ItemDataRole.ToolTipRole)
+            if not self._combo.isEnabled() and self._combo.toolTip():
+                tooltip = self._combo.toolTip()
             text = self._combo.currentText()
         else:
             index = self._view.indexAt(event.pos())
@@ -108,6 +127,15 @@ class AnalysisDialog(QDialog):
 
     dataset_changed = pyqtSignal(str)  # dataset tab_id
     category_changed = pyqtSignal(str)  # AnalysisCategory value
+    overview_export_requested = pyqtSignal(object)  # OverviewExportRequest
+    statistics_export_requested = pyqtSignal(object)  # StatisticsExportRequest
+    hypothesis_export_requested = pyqtSignal(object)  # HypothesisExportRequest
+    correlation_export_requested = pyqtSignal(object)  # CorrelationExportRequest
+    regression_export_requested = pyqtSignal(object)  # RegressionExportRequest
+    outliers_export_requested = pyqtSignal(object)  # OutlierExportRequest
+    clustering_export_requested = pyqtSignal(object)  # ClusteringExportRequest
+    pca_export_requested = pyqtSignal(object)  # PCAExportRequest
+    time_series_export_requested = pyqtSignal(object)  # TimeSeriesExportRequest
 
     def __init__(
         self,
@@ -128,6 +156,26 @@ class AnalysisDialog(QDialog):
         self.setWindowFlag(Qt.WindowType.WindowMinimizeButtonHint, False)
 
         self._datasets = datasets
+        self._export_overview: DatasetOverviewResult | None = None
+        self._export_tab_id: str | None = None
+        self._export_statistics: DescriptiveStatisticsResult | None = None
+        self._statistics_export_tab_id: str | None = None
+        self._export_hypothesis: HypothesisExportSnapshot | None = None
+        self._hypothesis_export_tab_id: str | None = None
+        self._export_correlation: CorrelationExportSnapshot | None = None
+        self._correlation_export_tab_id: str | None = None
+        self._correlation_export_revision = 0
+        self._export_regression: RegressionExportSnapshot | None = None
+        self._regression_export_tab_id: str | None = None
+        self._export_outliers: OutlierExportSnapshot | None = None
+        self._outliers_export_tab_id: str | None = None
+        self._export_clustering: ClusteringExportSnapshot | None = None
+        self._clustering_export_tab_id: str | None = None
+        self._export_pca: PCAExportSnapshot | None = None
+        self._pca_export_tab_id: str | None = None
+        self._export_time_series: TimeSeriesExportSnapshot | None = None
+        self._time_series_export_tab_id: str | None = None
+        self._analysis_revision = 0
 
         self.setWindowTitle(self.tr("Advanced analysis"))
         self.resize(1280, 900)
@@ -143,21 +191,49 @@ class AnalysisDialog(QDialog):
         top_row.addWidget(dataset_panel)
         top_row.addWidget(analysis_panel, 1)
 
+        self._analysis_workspace = QWidget(self)
+        analysis_layout = QVBoxLayout(self._analysis_workspace)
+        analysis_layout.setContentsMargins(0, 0, 0, 0)
+        analysis_layout.setSpacing(12)
+        analysis_layout.addWidget(self._build_action_bar())
         workspace = QHBoxLayout()
         workspace.setSpacing(12)
         content_panel = self._build_content_panel()
         config_panel = self._build_config_panel()
         workspace.addWidget(content_panel, 4)
         workspace.addWidget(config_panel, 1)
+        analysis_layout.addLayout(workspace, 1)
+
+        self._workspace_stack = QStackedWidget(self)
+        self._workspace_stack.addWidget(self._analysis_workspace)
+        self._report_page = ReportPage(self)
+        self._workspace_stack.addWidget(self._report_page)
 
         root.addLayout(top_row)
-        root.addLayout(workspace, 1)
+        root.addWidget(self._workspace_stack, 1)
         root.addWidget(self._build_button_box())
 
         self._connect_signals()
+        self.dataset_changed.connect(self.invalidate_overview_export)
+        self.category_changed.connect(self.invalidate_overview_export)
 
         if self._dataset_combo.currentData():
             self.dataset_changed.emit(str(self._dataset_combo.currentData()))
+
+    @override
+    def hasHeightForWidth(self) -> bool:
+        """Let the user resize the window freely.
+
+        Word-wrapped labels make every ancestor layout report a height-for-width
+        equal to its preferred height. Qt applies that height to top-level windows
+        while they are resized interactively, which snaps the dialog to a tall
+        height that cannot be reduced. Child layouts still use height-for-width
+        internally to lay out wrapped text.
+
+        Returns:
+            Always `False`.
+        """
+        return False
 
     # ------------------------------------------------------------------
     # UI building
@@ -196,6 +272,8 @@ class AnalysisDialog(QDialog):
             item = QListWidgetItem(self._category_label(category))
             item.setData(_CATEGORY_ROLE, category.value)
             self._category_list.addItem(item)
+        self._report_item = QListWidgetItem(self.tr("Reports(0)"))
+        self._category_list.addItem(self._report_item)
 
         # Overview is the natural starting point for exploring a dataset.
         self.select_category(AnalysisCategory.OVERVIEW)
@@ -203,6 +281,246 @@ class AnalysisDialog(QDialog):
         category_layout.addWidget(self._category_list)
         self._analysis_panel = category_group
         return category_group
+
+    def _build_action_bar(self) -> QWidget:
+        """Build shared entry points into the export and report previews."""
+        bar = QWidget(self._analysis_workspace)
+        actions = QHBoxLayout(bar)
+        actions.setContentsMargins(0, 0, 0, 0)
+        export_button = QPushButton(self.tr("Export"), bar)
+        export_button.clicked.connect(self._show_export_selection)
+        actions.addWidget(export_button)
+        add_button = QPushButton(self.tr("Add to report"), bar)
+        add_button.clicked.connect(self._show_notes_preview)
+        button_width = max(export_button.sizeHint().width(), add_button.sizeHint().width())
+        export_button.setMinimumWidth(button_width)
+        add_button.setMinimumWidth(button_width)
+        actions.addWidget(add_button)
+        explanation = QLabel(
+            self.tr("Exports are available after an analysis has been applied. Add to report is a preview."),
+            bar,
+        )
+        explanation.setWordWrap(True)
+        actions.addWidget(explanation, 1)
+        self._action_bar = bar
+        return bar
+
+    def _show_export_selection(self) -> None:
+        """Open grouped export choices for the currently displayed analysis."""
+        overview = self.exportable_overview()
+        statistics = self.exportable_statistics()
+        dialog = AnalysisExportDialog(
+            self,
+            overview=overview,
+            overview_mode=self.selected_category() is AnalysisCategory.OVERVIEW,
+            statistics=statistics,
+            statistics_mode=self.selected_category() is AnalysisCategory.STATISTICS,
+            hypothesis=self.exportable_hypothesis(),
+            hypothesis_mode=self.selected_category() is AnalysisCategory.HYPOTHESIS_TESTS,
+            correlation=self.exportable_correlation(),
+            correlation_mode=self.selected_category() is AnalysisCategory.CORRELATION,
+            regression=self.exportable_regression(),
+            regression_mode=self.selected_category() is AnalysisCategory.REGRESSION,
+            outliers=self.exportable_outliers(),
+            outliers_mode=self.selected_category() is AnalysisCategory.OUTLIERS,
+            outliers_multivariate=isinstance(self.config_widget(), MultivariateOutliersConfigWidget),
+            clustering=self.exportable_clustering(),
+            clustering_mode=self.selected_category() is AnalysisCategory.CLUSTERING,
+            pca=self.exportable_pca(),
+            pca_mode=self.selected_category() is AnalysisCategory.PCA,
+            time_series=self.exportable_time_series(),
+            time_series_mode=self.selected_category() is AnalysisCategory.TIME_SERIES,
+        )
+        for combo in dialog.findChildren(QComboBox):
+            _ComboToolTipFilter(combo)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            request = dialog.export_request()
+            if isinstance(request, OverviewExportRequest) and request.result is self.exportable_overview():
+                self.overview_export_requested.emit(request)
+            elif isinstance(request, StatisticsExportRequest) and request.result is self.exportable_statistics():
+                self.statistics_export_requested.emit(request)
+            elif isinstance(request, HypothesisExportRequest) and request.snapshot is self.exportable_hypothesis():
+                self.hypothesis_export_requested.emit(request)
+            elif isinstance(request, CorrelationExportRequest) and request.snapshot is self.exportable_correlation():
+                self.correlation_export_requested.emit(request)
+            elif isinstance(request, RegressionExportRequest) and request.snapshot is self.exportable_regression():
+                self.regression_export_requested.emit(request)
+            elif isinstance(request, OutlierExportRequest) and request.snapshot is self.exportable_outliers():
+                self.outliers_export_requested.emit(request)
+            elif isinstance(request, ClusteringExportRequest) and request.snapshot is self.exportable_clustering():
+                self.clustering_export_requested.emit(request)
+            elif isinstance(request, PCAExportRequest) and request.snapshot is self.exportable_pca():
+                self.pca_export_requested.emit(request)
+            elif isinstance(request, TimeSeriesExportRequest) and request.snapshot is self.exportable_time_series():
+                self.time_series_export_requested.emit(request)
+
+    def invalidate_overview_export(self) -> None:
+        """Disable real export as soon as displayed analysis becomes stale."""
+        self._export_overview = None
+        self._export_tab_id = None
+        self._export_statistics = None
+        self._statistics_export_tab_id = None
+        self._export_hypothesis = None
+        self._hypothesis_export_tab_id = None
+        self._export_regression = None
+        self._regression_export_tab_id = None
+        self._export_outliers = None
+        self._outliers_export_tab_id = None
+        self._export_clustering = None
+        self._clustering_export_tab_id = None
+        self._export_pca = None
+        self._pca_export_tab_id = None
+        self._export_time_series = None
+        self._time_series_export_tab_id = None
+        self.invalidate_correlation_export()
+        self._analysis_revision += 1
+
+    def invalidate_correlation_export(self) -> None:
+        """Invalidate only the displayed Correlation snapshot and advance its request generation."""
+        self._export_correlation = None
+        self._correlation_export_tab_id = None
+        self._correlation_export_revision += 1
+
+    def correlation_export_revision(self) -> int:
+        """Return the request generation used to reject stale matrix jobs."""
+        return self._correlation_export_revision
+
+    def analysis_revision(self) -> int:
+        """Return the generation used to reject jobs after navigation/replacement."""
+        return self._analysis_revision
+
+    def set_exportable_hypothesis(self, snapshot: HypothesisExportSnapshot) -> None:
+        """Register only the successful applied result already displayed."""
+        self._export_hypothesis = snapshot
+        self._hypothesis_export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_hypothesis(self) -> HypothesisExportSnapshot | None:
+        """Return the displayed applied snapshot, independent of pending edits."""
+        if (
+            self.selected_category() is AnalysisCategory.HYPOTHESIS_TESTS
+            and self.selected_dataset_tab_id() == self._hypothesis_export_tab_id
+        ):
+            return self._export_hypothesis
+        return None
+
+    def set_exportable_correlation(self, snapshot: CorrelationExportSnapshot) -> None:
+        """Register a successful matrix snapshot after its view is displayed."""
+        self._export_correlation = snapshot
+        self._correlation_export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_correlation(self) -> CorrelationExportSnapshot | None:
+        """Return the current applied matrix independent of pending configuration edits."""
+        if (
+            self.selected_category() is AnalysisCategory.CORRELATION
+            and self.selected_dataset_tab_id() == self._correlation_export_tab_id
+        ):
+            return self._export_correlation
+        return None
+
+    def set_exportable_regression(self, snapshot: RegressionExportSnapshot) -> None:
+        """Register a successful fitted model after its view is displayed."""
+        self._export_regression = snapshot
+        self._regression_export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_regression(self) -> RegressionExportSnapshot | None:
+        """Return the displayed applied model, independent of pending configuration edits."""
+        if (
+            self.selected_category() is AnalysisCategory.REGRESSION
+            and self.selected_dataset_tab_id() == self._regression_export_tab_id
+        ):
+            return self._export_regression
+        return None
+
+    def set_exportable_outliers(self, snapshot: OutlierExportSnapshot) -> None:
+        """Register a successful screening after its view is displayed or its column detail changes."""
+        self._export_outliers = snapshot
+        self._outliers_export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_outliers(self) -> OutlierExportSnapshot | None:
+        """Return the displayed applied screening, independent of pending configuration edits."""
+        if (
+            self.selected_category() is AnalysisCategory.OUTLIERS
+            and self.selected_dataset_tab_id() == self._outliers_export_tab_id
+        ):
+            return self._export_outliers
+        return None
+
+    def set_exportable_clustering(self, snapshot: ClusteringExportSnapshot) -> None:
+        """Register a successful clustering fit after its view is displayed."""
+        self._export_clustering = snapshot
+        self._clustering_export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_clustering(self) -> ClusteringExportSnapshot | None:
+        """Return the displayed applied clustering, independent of pending configuration edits."""
+        if (
+            self.selected_category() is AnalysisCategory.CLUSTERING
+            and self.selected_dataset_tab_id() == self._clustering_export_tab_id
+        ):
+            return self._export_clustering
+        return None
+
+    def set_exportable_pca(self, snapshot: PCAExportSnapshot) -> None:
+        """Register a successful PCA fit after its view is displayed."""
+        self._export_pca = snapshot
+        self._pca_export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_pca(self) -> PCAExportSnapshot | None:
+        """Return the displayed applied PCA, independent of pending configuration edits."""
+        if (
+            self.selected_category() is AnalysisCategory.PCA
+            and self.selected_dataset_tab_id() == self._pca_export_tab_id
+        ):
+            return self._export_pca
+        return None
+
+    def set_exportable_time_series(self, snapshot: TimeSeriesExportSnapshot) -> None:
+        """Register a successful time-series analysis after its view is displayed."""
+        self._export_time_series = snapshot
+        self._time_series_export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_time_series(self) -> TimeSeriesExportSnapshot | None:
+        """Return the displayed applied time series, independent of pending configuration edits."""
+        if (
+            self.selected_category() is AnalysisCategory.TIME_SERIES
+            and self.selected_dataset_tab_id() == self._time_series_export_tab_id
+        ):
+            return self._export_time_series
+        return None
+
+    def set_exportable_overview(self, result: DatasetOverviewResult) -> None:
+        """Register the successful result currently displayed by the controller."""
+        self._export_overview = result
+        self._export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_overview(self) -> DatasetOverviewResult | None:
+        """Return only the successful snapshot for the current Overview."""
+        if (
+            self.selected_category() is AnalysisCategory.OVERVIEW
+            and self.selected_dataset_tab_id() == self._export_tab_id
+        ):
+            return self._export_overview
+        return None
+
+    def set_exportable_statistics(self, result: DescriptiveStatisticsResult) -> None:
+        """Register the successful Statistics snapshot currently displayed."""
+        self._export_statistics = result
+        self._statistics_export_tab_id = self.selected_dataset_tab_id()
+
+    def exportable_statistics(self) -> DescriptiveStatisticsResult | None:
+        """Return only the successful snapshot for the current Statistics analysis."""
+        if (
+            self.selected_category() is AnalysisCategory.STATISTICS
+            and self.selected_dataset_tab_id() == self._statistics_export_tab_id
+        ):
+            return self._export_statistics
+        return None
+
+    def _show_notes_preview(self) -> None:
+        """Open the planned notes workflow for the selected analysis."""
+        category = self.selected_category()
+        if category is None:
+            return
+        ReportNotesDialog(self._category_label(category), self).exec()
 
     def _build_content_panel(self) -> QWidget:
         """Build the right-hand content/placeholder panel."""
@@ -260,10 +578,17 @@ class AnalysisDialog(QDialog):
         current: QListWidgetItem | None,
         _previous: QListWidgetItem | None,
     ) -> None:
-        """Emit category_changed for the newly selected analysis category."""
+        """Switch workspace pages and emit changes only for analysis categories."""
         if current is None:
             return
-        self.category_changed.emit(str(current.data(_CATEGORY_ROLE)))
+        reports_selected = current is self._report_item
+        self._workspace_stack.setCurrentWidget(self._report_page if reports_selected else self._analysis_workspace)
+        self._dataset_combo.setEnabled(not reports_selected)
+        self._dataset_combo.setToolTip(
+            self.tr("A report can contain analyses from multiple datasets.") if reports_selected else ""
+        )
+        if not reports_selected:
+            self.category_changed.emit(str(current.data(_CATEGORY_ROLE)))
 
     # ------------------------------------------------------------------
     # Public API
@@ -288,9 +613,17 @@ class AnalysisDialog(QDialog):
     def selected_category(self) -> AnalysisCategory | None:
         """Return the currently selected analysis category, if any."""
         item = self._category_list.currentItem()
-        if item is None:
+        if item is None or item is self._report_item:
             return None
         return AnalysisCategory(item.data(_CATEGORY_ROLE))
+
+    def select_reports(self) -> None:
+        """Show the persistent report preview without selecting an analysis."""
+        self._category_list.setCurrentItem(self._report_item)
+
+    def report_page(self) -> ReportPage:
+        """Return the report page, which lives for the whole dialog lifetime."""
+        return self._report_page
 
     def select_category(self, category: AnalysisCategory) -> None:
         """Select an analysis category in the sidebar list.
@@ -321,6 +654,7 @@ class AnalysisDialog(QDialog):
         Args:
             widget: The widget to display in the content panel.
         """
+        self.invalidate_overview_export()
         if self._content_widget is not None:
             # A visible canvas removed from its layout can be repainted once
             # at zero size before deleteLater() runs.

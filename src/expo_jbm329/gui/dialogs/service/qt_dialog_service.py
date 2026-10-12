@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Literal
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox, QWidget
 
 from expo_jbm329.gui.dialogs.service.common.localization import (
@@ -51,10 +52,11 @@ class QtDialogService(DialogService):
     # ------------------------------------------------------------------
 
     def info(self, parent: QWidget, title: str, text: str) -> None:
-        """Show an informational message box."""
+        """Show an informational message box with literal plain text."""
         msg = QMessageBox(parent)
         msg.setWindowTitle(title)
         msg.setIcon(QMessageBox.Icon.Information)
+        msg.setTextFormat(Qt.TextFormat.PlainText)
         msg.setText(text)
         msg.setStandardButtons(QMessageBox.StandardButton.Ok)
         localize_messagebox_buttons(msg)

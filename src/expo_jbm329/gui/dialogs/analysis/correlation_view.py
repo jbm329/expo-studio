@@ -6,11 +6,11 @@ import html
 import math
 from typing import TYPE_CHECKING
 
-import numpy as np
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import (
+    QFrame,
     QHeaderView,
     QLabel,
     QSplitter,
@@ -20,15 +20,23 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
+from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis import correlation_charts
 from expo_jbm329.services.analysis.correlation import (
     CONFIDENCE_LEVEL,
     MAX_SELECTED_COLUMNS,
     MIN_OBSERVATIONS,
     MIN_SELECTED_COLUMNS,
+    SIGNIFICANCE_LEVEL,
     CorrelationError,
     CorrelationMethod,
     CorrelationStrength,
     correlation_strength,
+)
+from expo_jbm329.services.analysis.correlation_charts import (
+    draw_correlation_matrix,
+    draw_correlation_scatter,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 
@@ -41,19 +49,10 @@ if TYPE_CHECKING:
         CorrelationPairDetail,
     )
 
-# Standard convention for statistical significance, matching the other views.
-SIGNIFICANCE_LEVEL = 0.05
-
-# Beyond this many matrix columns, per-cell annotations become unreadable.
-MAX_ANNOTATED_COLUMNS = 12
-# Annotations on cells darker than this |r| are drawn in white for contrast.
-_LIGHT_TEXT_THRESHOLD = 0.6
-_ANNOTATION_FONT_SIZE = 7
-_SCATTER_POINT_SIZE = 6
-_SCATTER_ALPHA = 0.4
 
 _PAIR_COLUMN_X = 0
 _PAIR_COLUMN_Y = 1
+MAX_ANNOTATED_COLUMNS = correlation_charts.MAX_ANNOTATED_COLUMNS
 
 
 class CorrelationView(QWidget):
@@ -87,6 +86,8 @@ class CorrelationView(QWidget):
 
         self._result = result
         self._pair_detail: CorrelationPairDetail | None = None
+        self._selected_pair: tuple[str, str] | None = None
+        self._pair_selection_revision = 0
         self._table: QTableWidget | None = None
 
         layout = QVBoxLayout(self)
@@ -118,13 +119,13 @@ class CorrelationView(QWidget):
         charts_splitter.setChildrenCollapsible(False)
         charts_splitter.addWidget(self._build_heatmap(result))
         charts_splitter.addWidget(self._scatter_panel)
-        charts_layout.addWidget(charts_splitter)
+        charts_layout.addWidget(build_section_scroll_area(charts_splitter, charts_section), 1)
 
         statistics_section = QWidget(self._pair_panel)
         statistics_layout = QVBoxLayout(statistics_section)
         statistics_layout.setContentsMargins(0, 0, 0, 0)
         statistics_layout.addWidget(self._build_section_title(self.tr("Pair details"), statistics_section))
-        statistics_layout.addWidget(self._statistics_panel)
+        statistics_layout.addWidget(build_section_scroll_area(self._statistics_panel, statistics_section), 1)
 
         detail_splitter = QSplitter(Qt.Orientation.Vertical, self._pair_panel)
         detail_splitter.setChildrenCollapsible(False)
@@ -155,6 +156,10 @@ class CorrelationView(QWidget):
         """Return the correlation method of the displayed matrix."""
         return self._result.method
 
+    def columns(self) -> tuple[str, ...]:
+        """Return the columns of the displayed matrix in matrix order."""
+        return self._result.columns
+
     def pair_panel(self) -> QWidget:
         """Return the widget holding the pair detail (the pair recompute's overlay target)."""
         return self._pair_panel
@@ -162,6 +167,31 @@ class CorrelationView(QWidget):
     def pair_detail(self) -> CorrelationPairDetail | None:
         """Return the currently displayed pair detail, if any."""
         return self._pair_detail
+
+    def selected_pair(self) -> tuple[str, str] | None:
+        """Return the latest table-selected pair, including a pending detail request."""
+        return self._selected_pair
+
+    def pair_selection_revision(self) -> int:
+        """Return the generation of the latest table pair request."""
+        return self._pair_selection_revision
+
+    def select_pair(self, x_column: str, y_column: str) -> None:
+        """Select and request the table row for a pair in the displayed matrix.
+
+        Args:
+            x_column: First column in the pair.
+            y_column: Second column in the pair.
+
+        Raises:
+            ValueError: If the pair does not have a row in the displayed matrix.
+        """
+        for row, pair in enumerate(self._result.pairs):
+            if {pair.x_column, pair.y_column} == {x_column, y_column}:
+                self._on_cell_activated(row, 0)
+                return
+        message = "The selected pair must have a row in the displayed correlation matrix."
+        raise ValueError(message)
 
     def table(self) -> QTableWidget | None:
         """Return the ranked pairs table, or `None` when the matrix has an error."""
@@ -174,13 +204,14 @@ class CorrelationView(QWidget):
             detail: The computed pair detail to display.
         """
         self._pair_detail = detail
+        self._selected_pair = (detail.pair.x_column, detail.pair.y_column)
         self._clear_layout(self._scatter_layout)
         self._clear_layout(self._statistics_layout)
 
         if detail.error is not None:
-            self._statistics_layout.addWidget(
-                self._build_centered_label(self.error_text(detail.error), self._statistics_panel)
-            )
+            label = self._build_centered_label(self.error_text(detail.error), self._statistics_panel)
+            label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+            self._statistics_layout.addWidget(label)
         else:
             self._scatter_layout.addWidget(self._build_scatterplot(detail))
             self._statistics_layout.addWidget(self._build_pair_statistics(detail))
@@ -251,39 +282,27 @@ class CorrelationView(QWidget):
     def _build_heatmap(self, result: CorrelationMatrixResult) -> QWidget:
         """Build a matplotlib canvas showing the coefficient matrix."""
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumSize(260, 220)
 
-        ax = figure.add_subplot(111)
-        self._draw_heatmap(figure, ax, result)
+        canvas.build_chart(lambda: self._draw_heatmap(figure, figure.add_subplot(111), result))
 
         return canvas
 
     def _draw_heatmap(self, figure: Figure, ax: Axes, result: CorrelationMatrixResult) -> None:
         """Draw the coefficient matrix on a fixed, diverging [-1, 1] color scale."""
-        coefficients = np.asarray(result.coefficients, dtype=float)
+        draw_correlation_matrix(
+            figure,
+            ax,
+            result,
+            self.tr("{method} correlation").format(method=self.method_name(result.method)),
+            self.chart_annotations(result),
+        )
 
-        # NaN cells (undefined coefficients) are left uncolored by imshow.
-        image = ax.imshow(coefficients, cmap="RdBu_r", vmin=-1.0, vmax=1.0)
-        figure.colorbar(image, ax=ax)
-
-        labels = list(result.columns)
-        ax.set_xticks(range(len(labels)), labels=labels, rotation=90)
-        ax.set_yticks(range(len(labels)), labels=labels)
-        ax.set_title(self.tr("{method} correlation").format(method=self.method_name(result.method)))
-
-        if len(labels) <= MAX_ANNOTATED_COLUMNS:
-            for (row_index, col_index), value in np.ndenumerate(coefficients):
-                if math.isfinite(value):
-                    ax.text(
-                        col_index,
-                        row_index,
-                        fmt_num(float(value), sig=2),
-                        ha="center",
-                        va="center",
-                        fontsize=_ANNOTATION_FONT_SIZE,
-                        color="white" if abs(value) > _LIGHT_TEXT_THRESHOLD else "black",
-                    )
+    @staticmethod
+    def chart_annotations(result: CorrelationMatrixResult) -> tuple[tuple[str, ...], ...]:
+        """Capture locale-aware matrix text for both live and exported charts."""
+        return tuple(tuple(fmt_num(value, sig=2) for value in row) for row in result.coefficients)
 
     # ------------------------------------------------------------------
     # Ranked pairs table
@@ -299,18 +318,26 @@ class CorrelationView(QWidget):
         title.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(title)
 
-        self._table = self._build_table(result, panel)
-        layout.addWidget(self._table)
+        table_panel = QFrame(panel)
+        table_panel.setFrameShape(QFrame.Shape.NoFrame)
+        table_panel.setBackgroundRole(QPalette.ColorRole.Button)
+        table_panel.setAutoFillBackground(True)
+        table_layout = QVBoxLayout(table_panel)
+        table_layout.setContentsMargins(0, 0, 0, 0)
+        self._table = self._build_table(result, table_panel)
+        table_layout.addWidget(self._table, 1)
 
         caption = QLabel(
             self.tr(
                 "Pairs are ranked by absolute coefficient. * marks pairs that are significant "
-                "(p < {alpha}) after Holm adjustment for {count} tests. Click a row to show the pair below."
+                "(p < {alpha}) after Holm adjustment for {count} tests."
             ).format(alpha=fmt_num(SIGNIFICANCE_LEVEL), count=fmt_int(len(result.pairs))),
-            panel,
+            table_panel,
         )
         caption.setWordWrap(True)
-        layout.addWidget(caption)
+        caption.setTextFormat(Qt.TextFormat.PlainText)
+        table_layout.addWidget(caption)
+        layout.addWidget(table_panel, 1)
 
         return panel
 
@@ -384,6 +411,9 @@ class CorrelationView(QWidget):
         if not 0 <= row < len(self._result.pairs):
             return
         pair = self._result.pairs[row]
+        self._selected_pair = (pair.x_column, pair.y_column)
+        self._pair_selection_revision += 1
+        self._select_table_row(pair.x_column, pair.y_column)
         self.pair_activated.emit(pair.x_column, pair.y_column)
 
     def _select_table_row(self, x_column: str, y_column: str) -> None:
@@ -414,26 +444,16 @@ class CorrelationView(QWidget):
     def _build_scatterplot(self, detail: CorrelationPairDetail) -> QWidget:
         """Build a matplotlib canvas with the pair's scatterplot and least-squares line."""
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumSize(260, 200)
 
-        ax = figure.add_subplot(111)
-        self._draw_scatterplot(ax, detail)
+        canvas.build_chart(lambda: self._draw_scatterplot(figure.add_subplot(111), detail))
 
         return canvas
 
     def _draw_scatterplot(self, ax: Axes, detail: CorrelationPairDetail) -> None:
         """Draw the (possibly sampled) points and the least-squares line over all rows."""
-        ax.scatter(detail.sample_x, detail.sample_y, s=_SCATTER_POINT_SIZE, alpha=_SCATTER_ALPHA)
-
-        x_min, x_max = min(detail.sample_x), max(detail.sample_x)
-        ax.plot(
-            [x_min, x_max],
-            [detail.slope * x_min + detail.intercept, detail.slope * x_max + detail.intercept],
-            color="tab:red",
-        )
-        ax.set_xlabel(detail.pair.x_column)
-        ax.set_ylabel(detail.pair.y_column)
+        draw_correlation_scatter(ax, detail)
 
     def _build_pair_statistics(self, detail: CorrelationPairDetail) -> QLabel:
         """Build the rich-text label describing the pair's statistics."""
@@ -441,6 +461,7 @@ class CorrelationView(QWidget):
         label.setWordWrap(True)
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         return label
 
     def _pair_statistics_text(self, detail: CorrelationPairDetail) -> str:

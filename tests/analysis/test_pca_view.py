@@ -10,6 +10,8 @@ from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.services.analysis.pca import PCAError, PCAResult, analyze_pca
+from expo_jbm329.utils.format_utils import fmt_pct
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 
 def _result(*, standardize: bool = True) -> PCAResult:
@@ -29,6 +31,39 @@ def _labels_text(view: PCAView) -> str:
 
 def _axes(view: PCAView):
     return [canvas.figure.axes[0] for canvas in view.findChildren(FigureCanvasQTAgg)]
+
+
+def _sections(view: PCAView) -> QSplitter:
+    return next(
+        splitter for splitter in view.findChildren(QSplitter) if splitter.orientation() is Qt.Orientation.Vertical
+    )
+
+
+def _section_title(panel) -> str:
+    title = panel.layout().itemAt(0).widget()
+    assert isinstance(title, QLabel)
+    assert title.textFormat() is Qt.TextFormat.PlainText
+    assert title.font().bold()
+    return title.text()
+
+
+@pytest.mark.parametrize(("section", "small_height", "width"), [(1, 120, 1100), (2, 50, 300)])
+def test_plots_and_comments_scroll_below_a_frozen_title(section, small_height, width):
+    view = PCAView(dataclasses.replace(_result(), sampled=True))
+    panel = _sections(view).widget(section)
+
+    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=width)
+
+    if section == 1:
+        assert isinstance(content, QSplitter)
+        assert content.orientation() is Qt.Orientation.Horizontal
+        assert len(content.findChildren(FigureCanvasQTAgg)) == 2
+    else:
+        assert isinstance(content, QLabel)
+        assert content.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+        assert "features" in content.text()
+    panel.deleteLater()
+    view.close()
 
 
 @pytest.mark.parametrize("error", list(PCAError))
@@ -61,7 +96,7 @@ def test_success_shows_scree_scatter_and_feature_loadings():
     assert view.configuration() == (result.columns, True)
 
 
-def test_layout_has_titled_summary_plots_and_loadings_with_adjustable_dividers():
+def test_layout_has_loadings_plots_and_comments_like_regression():
     view = PCAView(_result())
 
     splitters = view.findChildren(QSplitter)
@@ -73,13 +108,15 @@ def test_layout_has_titled_summary_plots_and_loadings_with_adjustable_dividers()
 
     sections = vertical[0]
     assert sections.count() == 3
-    assert any(label.text() == "Summary" for label in sections.widget(0).findChildren(QLabel))
+    assert [_section_title(sections.widget(index)) for index in range(3)] == [
+        "Feature loadings",
+        "PCA plots",
+        "Model comments",
+    ]
+    table_layout = sections.widget(0).layout()
+    assert table_layout.itemAt(1).widget() is view.loadings_table()
+    assert table_layout.stretch(1) == 1
     assert len(sections.widget(1).findChildren(FigureCanvasQTAgg)) == 2
-    assert any(label.text() == "PCA plots" for label in sections.widget(1).findChildren(QLabel))
-    table = view.loadings_table()
-    assert table is not None
-    assert sections.widget(2).isAncestorOf(table)
-    assert any("Feature loadings" in label.text() for label in sections.widget(2).findChildren(QLabel))
 
 
 def test_scree_plot_shows_component_and_cumulative_variance():
@@ -153,3 +190,64 @@ def test_no_component_values_are_not_needed_to_display_error():
     view = PCAView(result)
 
     assert "At least 2 complete rows" in _labels_text(view)
+
+
+def test_result_returns_the_displayed_fit():
+    result = _result()
+
+    assert PCAView(result).result() is result
+
+
+@pytest.mark.parametrize("sampled", [False, True])
+def test_chart_labels_match_the_view_and_caption_only_a_sampled_plot(sampled):
+    result = dataclasses.replace(_result(), sampled=sampled)
+    view = PCAView(result)
+
+    labels = view.chart_labels()
+
+    assert labels.scree_title == "Scree plot"
+    assert (labels.explained, labels.cumulative) == ("Explained variance", "Cumulative")
+    assert (labels.component_axis, labels.variance_axis) == ("Component", "Explained variance (%)")
+    assert labels.scatter_title == "PC1 vs PC2"
+    pc1, pc2 = result.explained_variance_ratio[:2]
+    assert labels.pc1_axis == f"PC1 ({fmt_pct(pc1)})"
+    assert labels.pc2_axis == f"PC2 ({fmt_pct(pc2)})"
+    expected = (
+        (f"The PC1-vs-PC2 plot shows a deterministic sample of {len(result.sample_pc1)} rows.",) if sampled else ()
+    )
+    assert labels.scatter_captions == expected
+
+
+def test_displayed_plots_use_the_shared_chart_labels():
+    view = PCAView(_result())
+    labels = view.chart_labels()
+
+    axes = {ax.get_title(): ax for ax in _axes(view)}
+
+    assert set(axes) == {labels.scree_title, labels.scatter_title}
+    scores = axes[labels.scatter_title]
+    assert (scores.get_xlabel(), scores.get_ylabel()) == (labels.pc1_axis, labels.pc2_axis)
+
+
+def test_error_chart_labels_have_no_caption_or_variance():
+    result = dataclasses.replace(analyze_pca(pd.DataFrame({"x": [1.0]})), sampled=True)
+
+    labels = PCAView(result).chart_labels()
+
+    assert labels.scatter_captions == ()
+    assert (labels.pc1_axis, labels.pc2_axis) == ("PC1", "PC2")
+
+
+def test_export_notes_are_the_plain_text_comments_and_features():
+    result = dataclasses.replace(_result(), sampled=True)
+
+    notes = PCAView(result).export_notes()
+
+    assert notes[0].startswith("3 features, standardized.")
+    assert all("<" not in line for line in notes)
+    assert f"The PC1-vs-PC2 plot shows a deterministic sample of {len(result.sample_pc1)} rows." in notes
+    assert notes[-1] == "Features: a, b, c"
+
+
+def test_error_view_has_no_export_notes():
+    assert PCAView(analyze_pca(pd.DataFrame({"x": [1.0]}))).export_notes() == ()

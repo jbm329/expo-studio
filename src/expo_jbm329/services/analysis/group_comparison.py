@@ -29,6 +29,7 @@ from expo_jbm329.services.analysis.normality import shapiro_normality
 
 _NAN = float("nan")
 _CONFIDENCE_LEVEL = 0.95
+_SIGNIFICANCE_LEVEL = 0.05
 
 # A group needs at least this many observations for a standard deviation
 # (and any confidence interval/effect size derived from it) to be defined.
@@ -156,6 +157,21 @@ class GroupSummary:
     maximum: float
     shapiro_statistic: float
     shapiro_p_value: float
+
+
+def group_normality_verdict(group: GroupSummary) -> bool | None:
+    """Return the shared displayed/exported normality verdict for one group.
+
+    Args:
+        group: Precomputed per-group Shapiro-Wilk result.
+
+    Returns:
+        True when normality is not rejected, False when rejected, or None
+        when the normality test could not be computed.
+    """
+    if math.isnan(group.shapiro_p_value):
+        return None
+    return group.shapiro_p_value >= _SIGNIFICANCE_LEVEL
 
 
 @dataclass(frozen=True, slots=True)

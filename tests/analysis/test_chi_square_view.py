@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QApplication, QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import (
@@ -15,6 +15,7 @@ from expo_jbm329.gui.dialogs.analysis.chi_square_view import (
     ChiSquareView,
 )
 from expo_jbm329.services.analysis.chi_square import ChiSquareError, ChiSquareResult, analyze_chi_square
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 
 @pytest.fixture(autouse=True)
@@ -23,6 +24,32 @@ def _flush_deferred_paints():
     # widgets are garbage collected.
     yield
     QApplication.processEvents()
+
+
+def test_adjusted_residuals_header_gap_stays_fixed_when_section_grows():
+    view = ChiSquareView(_two_by_three_result())
+    panel = view.findChild(QSplitter).widget(1)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        layout = panel.layout()
+        heading = layout.itemAt(0).widget()
+        charts = layout.itemAt(1).widget()
+        gap = charts.y() - heading.geometry().bottom()
+        heading_height = heading.height()
+        chart_height = charts.height()
+        panel.resize(1100, 800)
+        QCoreApplication.processEvents()
+        assert heading.height() == heading_height
+        assert charts.y() - heading.geometry().bottom() == gap
+        assert charts.height() > chart_height
+        assert layout.stretch(1) == 1
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
 
 
 def _table_df(counts: dict[tuple[str, str], int]) -> pd.DataFrame:
@@ -41,6 +68,24 @@ def _two_by_three_result() -> ChiSquareResult:
             ("y", "c"): 5,
         })
     )
+
+
+@pytest.mark.parametrize("factory", [_two_by_three_result, lambda: _two_by_two_small_result()])
+@pytest.mark.parametrize(("section", "small_height"), [(1, 120), (2, 60)])
+def test_heatmap_and_results_sections_scroll_below_a_frozen_title(factory, section, small_height):
+    view = ChiSquareView(factory())
+    panel = view.findChild(QSplitter).widget(section)
+    try:
+        content = assert_section_scrolls_below_frozen_title(panel, small_height)
+        if section == 1:
+            assert isinstance(content, FigureCanvasQTAgg)
+        else:
+            labels = content.findChildren(QLabel)
+            assert any("Pearson" in label.text() for label in labels)
+            assert all(label.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse for label in labels)
+    finally:
+        panel.deleteLater()
+        view.close()
 
 
 def _two_by_two_small_result() -> ChiSquareResult:

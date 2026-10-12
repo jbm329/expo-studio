@@ -4,9 +4,11 @@ import numpy as np
 import pandas as pd
 import pytest
 from PyQt6.QtCore import QEvent, Qt
-from PyQt6.QtWidgets import QApplication, QLabel, QSplitter
+from PyQt6.QtGui import QPalette
+from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QScrollArea, QSplitter
 
 from expo_jbm329.gui.dialogs.analysis.correlation_view import MAX_ANNOTATED_COLUMNS, CorrelationView
+from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.correlation import (
     SCATTER_SAMPLE_SIZE,
     CorrelationError,
@@ -16,6 +18,8 @@ from expo_jbm329.services.analysis.correlation import (
     analyze_correlation_matrix,
     analyze_correlation_pair,
 )
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
+from tests.analysis.test_statistics_view import _worker_holds_chart_lock
 
 
 @pytest.fixture(autouse=True)
@@ -55,6 +59,95 @@ def _canvas_axes(widget):
 
 def _scatter_axes(view: CorrelationView):
     return [axis for axis in _canvas_axes(view.pair_panel()) if axis.get_xlabel()]
+
+
+def test_ranking_caption_shares_the_tables_shaded_panel():
+    view = CorrelationView(_matrix(_frame()), None)
+    table = view.table()
+    assert table is not None
+    panel = table.parentWidget()
+    assert isinstance(panel, QFrame)
+    assert panel.frameShape() is QFrame.Shape.NoFrame
+    assert panel.autoFillBackground()
+    assert panel.backgroundRole() is QPalette.ColorRole.Button
+    caption = next(label for label in panel.findChildren(QLabel) if label.text().startswith("Pairs are ranked"))
+    assert panel.layout().itemAt(0).widget() is table
+    assert panel.layout().itemAt(1).widget() is caption
+    assert caption.wordWrap()
+    assert caption.textFormat() is Qt.TextFormat.PlainText
+    assert view.pair_panel().isAncestorOf(caption) is False
+
+
+@pytest.mark.parametrize("with_pair", [False, True])
+def test_correlation_plots_scroll_below_a_frozen_title(with_pair):
+    df = _frame()
+    detail = analyze_correlation_pair(df, "c0", "c1") if with_pair else None
+    view = CorrelationView(_matrix(df), detail)
+    panel = view.pair_panel().findChild(QSplitter).widget(0)
+    try:
+        content = assert_section_scrolls_below_frozen_title(panel, 120)
+        assert isinstance(content, QSplitter)
+        assert content.orientation() is Qt.Orientation.Horizontal
+        assert len(_canvas_axes(content)) == (2 if with_pair else 1)
+    finally:
+        panel.deleteLater()
+        view.close()
+
+
+@pytest.mark.parametrize("with_error", [False, True])
+def test_pair_details_scroll_below_a_frozen_title_with_text_at_the_top(with_error):
+    df = _frame()
+    if with_error:
+        df["c0"] = 1.0
+    detail = analyze_correlation_pair(df, "c0", "c1")
+    view = CorrelationView(_matrix(df), detail)
+    panel = view.pair_panel().findChild(QSplitter).widget(1)
+    try:
+        if with_error:
+            # A one-line error always fits, so only the shared structure is checked.
+            scroll = panel.layout().itemAt(1).widget()
+            assert isinstance(scroll, QScrollArea)
+            assert panel.layout().stretch(1) == 1
+            content = scroll.widget()
+        else:
+            content = assert_section_scrolls_below_frozen_title(panel, 40)
+        assert content is view._statistics_panel  # noqa: SLF001
+        label = content.findChild(QLabel)
+        assert label.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+        if not with_error:
+            assert label.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+    finally:
+        panel.deleteLater()
+        view.close()
+
+
+def test_new_pair_detail_stays_inside_the_scrollable_pair_details():
+    df = _frame()
+    view = CorrelationView(_matrix(df), analyze_correlation_pair(df, "c0", "c1"))
+    scroll = view.pair_panel().findChild(QSplitter).widget(1).findChild(QScrollArea)
+
+    view.set_pair_detail(analyze_correlation_pair(df, "c1", "c2"))
+    _flush_deletes()
+
+    assert scroll.widget() is view._statistics_panel  # noqa: SLF001
+    assert "<b>c1</b> vs <b>c2</b>" in _labels_text(scroll.widget())
+
+
+def test_correlation_canvases_defer_matrix_and_scatter_mutations_without_blocking():
+    df = _frame()
+    result = _matrix(df)
+    detail = analyze_correlation_pair(df, "c0", "c1")
+    with _worker_holds_chart_lock():
+        view = CorrelationView(result, detail)
+        canvases = view.findChildren(SerializedAnalysisCanvas)
+        assert len(canvases) == 2
+        assert all(not canvas.figure.axes for canvas in canvases)
+        QApplication.processEvents()
+        assert all(not canvas.figure.axes for canvas in canvases)
+    for canvas in canvases:
+        canvas._retry_render()
+    assert sorted(len(canvas.figure.axes) for canvas in canvases) == [1, 2]
+    view.deleteLater()
 
 
 # ----------------------------------------------------------------------
@@ -159,16 +252,47 @@ def test_significant_pairs_are_marked_and_undefined_values_show_na():
     assert not table.item(last, 5).text().endswith("*")
 
 
-def test_clicking_a_row_emits_pair_activated():
+def test_clicking_and_activating_rows_updates_selected_pair_before_emitting():
+    result = _matrix(_frame())
+    view = CorrelationView(result, None)
+    received: list[tuple[tuple[str, str] | None, tuple[str, str]]] = []
+    view.pair_activated.connect(lambda x, y: received.append((view.selected_pair(), (x, y))))
+    table = view.table()
+    assert table is not None
+
+    assert view.selected_pair() is None
+    table.cellClicked.emit(1, 0)
+    table.cellActivated.emit(2, 0)
+    table.cellActivated.emit(99, 0)
+
+    first_pair = (result.pairs[1].x_column, result.pairs[1].y_column)
+    second_pair = (result.pairs[2].x_column, result.pairs[2].y_column)
+    assert received == [(first_pair, first_pair), (second_pair, second_pair)]
+    assert view.selected_pair() == second_pair
+    assert [index.row() for index in table.selectionModel().selectedRows()] == [2]
+
+
+def test_select_pair_activates_and_highlights_the_canonical_table_pair():
     result = _matrix(_frame())
     view = CorrelationView(result, None)
     received: list[tuple[str, str]] = []
     view.pair_activated.connect(lambda x, y: received.append((x, y)))
 
-    view._on_cell_activated(1, 0)  # noqa: SLF001
-    view._on_cell_activated(99, 0)  # noqa: SLF001 - out of range is ignored
+    pair = result.pairs[1]
+    view.select_pair(pair.y_column, pair.x_column)
 
-    assert received == [(result.pairs[1].x_column, result.pairs[1].y_column)]
+    table = view.table()
+    assert table is not None
+    assert view.selected_pair() == (pair.x_column, pair.y_column)
+    assert received == [(pair.x_column, pair.y_column)]
+    assert [index.row() for index in table.selectionModel().selectedRows()] == [1]
+
+
+def test_select_pair_raises_when_the_pair_has_no_table_row():
+    view = CorrelationView(_matrix(_frame()), None)
+
+    with pytest.raises(ValueError, match="row in the displayed correlation matrix"):
+        view.select_pair("missing-x", "missing-y")
 
 
 @pytest.mark.parametrize(
@@ -201,6 +325,7 @@ def test_initial_pair_detail_is_shown_and_its_row_selected():
     table = view.table()
 
     assert view.pair_detail() is detail
+    assert view.selected_pair() == (pair.y_column, pair.x_column)
     assert table is not None
     assert [index.row() for index in table.selectionModel().selectedRows()] == [1]
     assert len(_canvas_axes(view)) == 2
@@ -243,9 +368,11 @@ def test_set_pair_detail_replaces_the_pair_panel_content():
     result = _matrix(df)
     view = CorrelationView(result, analyze_correlation_pair(df, "c0", "c1"))
 
-    view.set_pair_detail(analyze_correlation_pair(df, "c1", "c2"))
+    detail = analyze_correlation_pair(df, "c1", "c2")
+    view.set_pair_detail(detail)
     _flush_deletes()
 
+    assert view.selected_pair() == (detail.pair.x_column, detail.pair.y_column)
     scatters = _scatter_axes(view)
     assert len(scatters) == 1
     assert scatters[0].get_xlabel() == "c1"
@@ -255,11 +382,13 @@ def test_pair_error_shows_message_and_clears_selection_for_unknown_pair():
     df = _frame()
     view = CorrelationView(_matrix(df), analyze_correlation_pair(df, "c0", "c1"))
 
-    view.set_pair_detail(analyze_correlation_pair(df, "c0", "c0"))
+    detail = analyze_correlation_pair(df, "c0", "c0")
+    view.set_pair_detail(detail)
     _flush_deletes()
 
     table = view.table()
     assert table is not None
+    assert view.selected_pair() == (detail.pair.x_column, detail.pair.y_column)
     assert table.selectionModel().selectedRows() == []
     assert _scatter_axes(view) == []
     assert "different numeric columns" in _labels_text(view.pair_panel())

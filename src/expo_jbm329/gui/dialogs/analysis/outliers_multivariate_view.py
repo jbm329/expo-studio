@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
@@ -18,6 +17,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
 from expo_jbm329.services.analysis.multivariate_outliers import (
     MAX_CONTAMINATION,
     MIN_CONTAMINATION,
@@ -26,11 +26,10 @@ from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierError,
     MultivariateOutlierMethod,
 )
+from expo_jbm329.services.analysis.outliers_charts import OutlierProjectionLabels, draw_outlier_projection
 from expo_jbm329.utils.format_utils import fmt_cell, fmt_int, fmt_num, fmt_pct
 
 if TYPE_CHECKING:
-    from matplotlib.axes import Axes
-
     from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierResult
 
 _RIGHT_ALIGNED = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
@@ -38,7 +37,7 @@ _FIXED_TABLE_COLUMNS = 2
 
 
 class MultivariateOutliersView(QWidget):
-    """Displays multivariate anomaly summary, PCA projection and flagged rows."""
+    """Displays flagged rows, a PCA projection and model comments in resizable sections."""
 
     def __init__(self, result: MultivariateOutlierResult, parent: QWidget | None = None) -> None:
         """Initialize the view from a multivariate anomaly fit."""
@@ -51,11 +50,15 @@ class MultivariateOutliersView(QWidget):
             layout.addWidget(self._centered_label(self.error_text(result.error)))
             return
 
-        layout.addWidget(self._summary_label(result))
         splitter = QSplitter(Qt.Orientation.Vertical, self)
         splitter.setChildrenCollapsible(False)
-        splitter.addWidget(self._projection(result))
         splitter.addWidget(self._extremes_panel(result))
+        splitter.addWidget(self._projection_panel(result))
+        splitter.addWidget(self._comments_panel(result))
+        splitter.setStretchFactor(0, 2)
+        splitter.setStretchFactor(1, 3)
+        splitter.setStretchFactor(2, 1)
+        splitter.setSizes([250, 350, 160])
         layout.addWidget(splitter, 1)
 
     def configuration(self) -> tuple[tuple[str, ...], MultivariateOutlierMethod, bool, float, int]:
@@ -100,8 +103,53 @@ class MultivariateOutliersView(QWidget):
             case MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR:
                 return self.tr("Local Outlier Factor")
 
+    def result(self) -> MultivariateOutlierResult:
+        """Return the displayed multivariate fit."""
+        return self._result
+
+    def chart_labels(self) -> OutlierProjectionLabels:
+        """Return the translated projection text used by the view and its export."""
+        result = self._result
+        captions = rich_text_lines([self._sample_text(result)]) if result.sampled and result.error is None else ()
+        return OutlierProjectionLabels(
+            heading=self.tr("PCA projection"),
+            title=self.tr("PCA projection (visualization only)"),
+            pc1_axis=self.tr("PC1"),
+            pc2_axis=self.tr("PC2"),
+            inliers=self.tr("Inliers"),
+            outliers=self.tr("Potential outliers"),
+            captions=captions,
+        )
+
+    def export_notes(self) -> tuple[str, ...]:
+        """Return the displayed model comments and applied features as plain-text lines.
+
+        Returns:
+            The lines, or an empty tuple when the view shows an error.
+        """
+        result = self._result
+        if result.error is not None:
+            return ()
+        features = self.tr("Features: {columns}").format(columns=", ".join(result.columns))
+        return (*rich_text_lines([self._summary_text(result)]), features)
+
+    def _comments_panel(self, result: MultivariateOutlierResult) -> QWidget:
+        """Build the titled model-comments section with a scrollable fit summary."""
+        panel, layout = self._build_section(self.tr("Model comments"))
+        layout.addWidget(build_section_scroll_area(self._summary_label(result), panel), 1)
+        return panel
+
     def _summary_label(self, result: MultivariateOutlierResult) -> QLabel:
         """Build an explanatory fit summary."""
+        label = QLabel(self._summary_text(result), self)
+        label.setTextFormat(Qt.TextFormat.RichText)
+        label.setWordWrap(True)
+        label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        return label
+
+    def _summary_text(self, result: MultivariateOutlierResult) -> str:
+        """Return the rich-text fit summary with its sampling and interpretation caveats."""
         scaling = self.tr("standardized") if result.standardize else self.tr("not standardized")
         text = self.tr(
             "<b>{method}</b> on {features} features ({scaling}): {outliers} of {used} complete rows "
@@ -116,51 +164,41 @@ class MultivariateOutliersView(QWidget):
             dropped=fmt_int(result.rows_dropped),
         )
         if result.sampled:
-            text += "<br>" + self.tr("<i>The projection shows a deterministic sample of {count} rows.</i>").format(
-                count=fmt_int(len(result.sample_outliers))
-            )
+            text += "<br>" + self._sample_text(result)
         text += "<br>" + self.tr(
             "<i>Scores rank observations within this fit. Potential outliers are not necessarily errors.</i>"
         )
-        label = QLabel(text, self)
-        label.setTextFormat(Qt.TextFormat.RichText)
-        label.setWordWrap(True)
-        return label
+        return text
 
-    def _projection(self, result: MultivariateOutlierResult) -> QWidget:
-        """Build a PCA visualization colored by flagged status."""
+    def _sample_text(self, result: MultivariateOutlierResult) -> str:
+        """Return the rich-text note that the projection shows a sample."""
+        return self.tr("<i>The projection shows a deterministic sample of {count} rows.</i>").format(
+            count=fmt_int(len(result.sample_outliers))
+        )
+
+    def _projection_panel(self, result: MultivariateOutlierResult) -> QWidget:
+        """Build the titled, scrollable PCA visualization colored by flagged status."""
+        panel, layout = self._build_section(self.tr("PCA projection"))
         figure = Figure(constrained_layout=True)
         canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
         canvas.setMinimumSize(360, 240)
-        self._draw_projection(figure.add_subplot(111), result)
-        return canvas
-
-    def _draw_projection(self, axis: Axes, result: MultivariateOutlierResult) -> None:
-        """Draw internal PCA plot without implying that the model used only two features."""
-        x = np.asarray(result.sample_pc1)
-        y = np.asarray(result.sample_pc2)
-        outliers = np.asarray(result.sample_outliers)
-        axis.scatter(x[~outliers], y[~outliers], s=7, alpha=0.35, label=self.tr("Inliers"))
-        axis.scatter(x[outliers], y[outliers], s=12, alpha=0.7, color="tab:red", label=self.tr("Potential outliers"))
-        axis.axhline(0, color="0.8", linewidth=0.8)
-        axis.axvline(0, color="0.8", linewidth=0.8)
-        axis.set_title(self.tr("PCA projection (visualization only)"))
-        axis.set_xlabel(self.tr("PC1"))
-        axis.set_ylabel(self.tr("PC2"))
-        axis.legend(fontsize=8)
+        draw_outlier_projection(figure.add_subplot(111), result, self.chart_labels())
+        layout.addWidget(build_section_scroll_area(canvas, panel), 1)
+        return panel
 
     def _extremes_panel(self, result: MultivariateOutlierResult) -> QWidget:
-        """Build the ranked top-100 flagged-observation table."""
-        panel = QWidget(self)
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 0, 0, 0)
+        """Build the titled, ranked top-100 flagged-observation table."""
         if not result.extremes:
-            layout.addWidget(QLabel(self.tr("<b>No potential outliers</b>"), panel))
+            panel, layout = self._build_section(self.tr("Potential outliers"))
+            message = QLabel(self.tr("No potential outliers"), panel)
+            message.setTextFormat(Qt.TextFormat.PlainText)
+            message.setWordWrap(True)
+            message.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            layout.addWidget(message)
+            layout.addStretch(1)
             return panel
 
-        title = QLabel(self.tr("<b>Potential outliers, most anomalous first</b>"), panel)
-        title.setTextFormat(Qt.TextFormat.RichText)
-        layout.addWidget(title)
+        panel, layout = self._build_section(self.tr("Potential outliers, most anomalous first"))
         headers = [self.tr("Row"), self.tr("Anomaly score"), *result.row_columns]
         table = QTableWidget(panel)
         table.setColumnCount(len(headers))
@@ -188,9 +226,22 @@ class MultivariateOutliersView(QWidget):
         header = table.horizontalHeader()
         if header is not None:
             header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        layout.addWidget(table)
+        layout.addWidget(table, 1)
         self._extremes_table = table
         return panel
+
+    def _build_section(self, title: str) -> tuple[QWidget, QVBoxLayout]:
+        """Build a titled section matching the Regression layout."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        label = QLabel(title, panel)
+        label.setTextFormat(Qt.TextFormat.PlainText)
+        font = label.font()
+        font.setBold(True)
+        label.setFont(font)
+        layout.addWidget(label)
+        return panel, layout
 
     def _centered_label(self, text: str) -> QLabel:
         """Build a centered, word-wrapped message label."""

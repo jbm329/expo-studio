@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.group_comparison_view import GroupComparisonView
@@ -14,6 +15,50 @@ from expo_jbm329.services.analysis.group_comparison import (
     MultiGroupComparisonResult,
     PairwiseComparisonResult,
 )
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
+
+
+def test_distribution_header_gap_stays_fixed_when_section_grows():
+    view = GroupComparisonView(_make_result())
+    panel = view.findChild(QSplitter).widget(1)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        layout = panel.layout()
+        heading = layout.itemAt(0).widget()
+        charts = layout.itemAt(1).widget()
+        gap = charts.y() - heading.geometry().bottom()
+        heading_height = heading.height()
+        chart_height = charts.height()
+        panel.resize(1100, 800)
+        QCoreApplication.processEvents()
+        assert heading.height() == heading_height
+        assert charts.y() - heading.geometry().bottom() == gap
+        assert charts.height() > chart_height
+        assert layout.stretch(1) == 1
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
+@pytest.mark.parametrize(("section", "small_height"), [(1, 120), (2, 60)])
+def test_chart_and_results_sections_scroll_below_a_frozen_title(section, small_height):
+    view = GroupComparisonView(_make_result())
+    panel = view.findChild(QSplitter).widget(section)
+    try:
+        content = assert_section_scrolls_below_frozen_title(panel, small_height)
+        if section == 1:
+            assert isinstance(content, FigureCanvasQTAgg)
+        else:
+            labels = content.findChildren(QLabel)
+            assert any("Welch" in label.text() for label in labels)
+            assert all(label.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse for label in labels)
+    finally:
+        panel.deleteLater()
+        view.close()
 
 
 def _make_group(label: str, **overrides: object) -> GroupSummary:

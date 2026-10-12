@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import html
-import math
 from typing import TYPE_CHECKING
 
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
+from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.group_comparison import (
     MAX_GROUPS,
     MIN_GROUPS,
@@ -18,7 +18,9 @@ from expo_jbm329.services.analysis.group_comparison import (
     GroupComparisonResult,
     GroupComparisonWarning,
     GroupWarningReason,
+    group_normality_verdict,
 )
+from expo_jbm329.services.analysis.hypothesis_charts import draw_group_distribution
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 
 if TYPE_CHECKING:
@@ -29,9 +31,6 @@ if TYPE_CHECKING:
         MultiGroupComparisonResult,
         PairwiseComparisonResult,
     )
-
-# Standard convention for statistical significance, matching StatisticsView.
-_SIGNIFICANCE_LEVEL = 0.05
 
 
 class GroupComparisonView(QWidget):
@@ -165,9 +164,10 @@ class GroupComparisonView(QWidget):
 
     def _normality_verdict(self, group: GroupSummary) -> str:
         """Return a compact Yes/No/N-A normality verdict for one group."""
-        if math.isnan(group.shapiro_p_value):
+        verdict = group_normality_verdict(group)
+        if verdict is None:
             return self.tr("N/A")
-        if group.shapiro_p_value < _SIGNIFICANCE_LEVEL:
+        if not verdict:
             return self.tr("No")
         return self.tr("Yes")
 
@@ -181,36 +181,41 @@ class GroupComparisonView(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._build_section_title(self.tr("Distribution"), panel))
-        layout.addWidget(self._build_boxplot(groups))
+        layout.addWidget(build_section_scroll_area(self._build_boxplot(groups), panel), 1)
         return panel
 
     def _build_boxplot(self, groups: tuple[GroupSummary, ...]) -> QWidget:
         """Build a matplotlib canvas with one boxplot per group, side by side."""
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(260)
-
-        ax = figure.add_subplot(111)
-        self._draw_boxplot(ax, groups)
+        canvas.build_chart(lambda: self._draw_boxplot(figure.add_subplot(111), groups))
 
         return canvas
 
     def _draw_boxplot(self, ax: Axes, groups: tuple[GroupSummary, ...]) -> None:
         """Draw one box per group from each group's precomputed five-number summary."""
-        stats = [
-            {
-                "label": group.label,
-                "med": group.median,
-                "q1": group.q1,
-                "q3": group.q3,
-                "whislo": group.minimum,
-                "whishi": group.maximum,
-                "fliers": [],
-            }
-            for group in groups
-        ]
-        ax.bxp(stats, showfliers=False)
-        ax.set_title(self.tr("Distribution by group"))
+        draw_group_distribution(ax, groups, self.tr("Distribution by group"))
+
+    def export_notes(self, result: GroupComparisonResult) -> tuple[str, ...]:
+        """Capture displayed guidance and test assumptions without scraping labels."""
+        assumptions = (
+            (
+                self.tr("<b>Welch's t-test</b> (does not assume equal variances):"),
+                self.tr("<b>Student's t-test</b> (assumes equal variances):"),
+                self.tr("<b>Mann-Whitney U</b>:"),
+            )
+            if result.pairwise is not None
+            else (
+                self.tr("<b>One-way ANOVA</b> (assumes equal variances across groups):"),
+                self.tr("<b>Kruskal-Wallis</b> (does not assume equal variances):"),
+            )
+        )
+        return (
+            *(text.replace("<b>", "").replace("</b>", "") for text in assumptions),
+            self._normality_guidance(result.groups),
+            *(self._warning_text(warning) for warning in result.warnings),
+        )
 
     # ------------------------------------------------------------------
     # Test results
@@ -222,9 +227,14 @@ class GroupComparisonView(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._build_section_title(self.tr("Test results"), panel))
-        layout.addWidget(self._build_test_results_label(result))
+        content = QWidget(panel)
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.addWidget(self._build_test_results_label(result))
         if result.warnings:
-            layout.addWidget(self._build_warnings_label(result.warnings))
+            content_layout.addWidget(self._build_warnings_label(result.warnings))
+        content_layout.addStretch(1)
+        layout.addWidget(build_section_scroll_area(content, panel), 1)
         return panel
 
     def _build_test_results_label(self, result: GroupComparisonResult) -> QLabel:
@@ -232,6 +242,7 @@ class GroupComparisonView(QWidget):
         label = QLabel(self)
         label.setWordWrap(True)
         label.setTextFormat(Qt.TextFormat.RichText)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
 
         if result.pairwise is not None:
             label.setText(self._pairwise_text(result.pairwise, result.groups))
@@ -316,7 +327,7 @@ class GroupComparisonView(QWidget):
     @staticmethod
     def _any_group_non_normal(groups: tuple[GroupSummary, ...]) -> bool:
         """Return True if any group's normality is rejected or could not be tested."""
-        return any(math.isnan(group.shapiro_p_value) or group.shapiro_p_value < _SIGNIFICANCE_LEVEL for group in groups)
+        return any(group_normality_verdict(group) is not True for group in groups)
 
     # ------------------------------------------------------------------
     # Warnings
@@ -326,6 +337,7 @@ class GroupComparisonView(QWidget):
         """Build the caveats label listing every non-blocking per-group warning."""
         label = QLabel(self)
         label.setWordWrap(True)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         label.setText("<br>".join(self._warning_text(warning) for warning in group_warnings))
         return label
 

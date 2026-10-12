@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class GroupComparisonConfigWidget(QWidget):
     """Lets the user pick the numeric column and grouping column to compare.
 
-    Unlike `StatisticsConfigWidget`, changing either selection here always
+    Unlike selecting a Statistics table row, changing either selection here always
     requires a new background computation - which statistical tests apply,
     and their results, depend on *which* two columns are selected, unlike
     switching to a different precomputed column's histogram.

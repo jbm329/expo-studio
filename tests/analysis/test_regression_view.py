@@ -6,8 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QScrollArea, QSplitter, QTableWidget
+from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtGui import QPalette
+from PyQt6.QtWidgets import QFrame, QLabel, QScrollArea, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.regression_view import LARGE_SAMPLE_SIZE, RegressionView
 from expo_jbm329.services.analysis.regression import (
@@ -18,6 +19,7 @@ from expo_jbm329.services.analysis.regression import (
     RegressionWarningReason,
     analyze_regression,
 )
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 
 def _frame(size: int = 60, seed: int = 3) -> pd.DataFrame:
@@ -40,6 +42,25 @@ def _labels(view: RegressionView) -> list[str]:
     return [label.text() for label in view.findChildren(QLabel)]
 
 
+def test_coefficients_caption_shares_the_tables_borderless_shaded_panel():
+    result = _fitted()
+    view = RegressionView(result)
+    table = view.table()
+    assert table is not None
+    panel = table.parentWidget()
+    assert isinstance(panel, QFrame)
+    assert panel.frameShape() is QFrame.Shape.NoFrame
+    assert panel.autoFillBackground()
+    assert panel.backgroundRole() is QPalette.ColorRole.Button
+    caption = panel.findChild(QLabel)
+    assert caption is not None
+    assert panel.layout().itemAt(0).widget() is table
+    assert panel.layout().itemAt(1).widget() is caption
+    assert caption.wordWrap()
+    assert caption.textFormat() is Qt.TextFormat.RichText
+    assert caption.text() == view._coefficients_caption(result)  # noqa: SLF001
+
+
 def _cells(view: RegressionView, row: int) -> list[str]:
     table = view.table()
     assert table is not None
@@ -55,6 +76,74 @@ def _summary(view: RegressionView) -> str:
     label = view.summary_label()
     assert label is not None
     return label.text()
+
+
+def test_model_comments_title_stays_fixed_above_the_scrollable_text():
+    view = RegressionView(_fitted())
+    panel = view.findChild(QSplitter).widget(2)
+    layout = panel.layout()
+    title = layout.itemAt(0).widget()
+    scroll = layout.itemAt(1).widget()
+
+    assert isinstance(title, QLabel)
+    assert title.text() == "Model comments"
+    assert isinstance(scroll, QScrollArea)
+    assert scroll.widget() is view.summary_label()
+    assert title.parentWidget() is panel
+    assert scroll.verticalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
+    assert _summary(view).startswith("<b>Linear regression</b>")
+    assert "Model summary" not in _summary(view)
+
+    panel.setParent(None)
+    panel.resize(500, 120)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        bar = scroll.verticalScrollBar()
+        assert bar.maximum() > 0
+        title_y = title.mapTo(panel, title.rect().topLeft()).y()
+        bar.setValue(bar.maximum())
+        QCoreApplication.processEvents()
+        assert title.isVisible()
+        assert title.mapTo(panel, title.rect().topLeft()).y() == title_y
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
+def test_linear_diagnostic_plots_scroll_only_when_they_exceed_the_section():
+    view = RegressionView(_fitted())
+    panel = view.findChild(QSplitter).widget(1)
+    content = assert_section_scrolls_below_frozen_title(panel, 100, large_height=700, width=1100)
+    assert isinstance(content, QSplitter)
+    assert content.orientation() is Qt.Orientation.Horizontal
+    panel.deleteLater()
+    view.close()
+
+
+def test_linear_chart_header_gap_stays_fixed_when_section_grows():
+    view = RegressionView(_fitted())
+    panel = view.findChild(QSplitter).widget(1)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        layout = panel.layout()
+        heading = layout.itemAt(0).widget()
+        charts = layout.itemAt(1).widget()
+        gap = charts.y() - heading.geometry().bottom()
+        heading_height = heading.height()
+        panel.resize(1100, 800)
+        QCoreApplication.processEvents()
+        assert heading.height() == heading_height
+        assert charts.y() - heading.geometry().bottom() == gap
+        assert layout.stretch(1) == 1
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
 
 
 # ----------------------------------------------------------------------
@@ -280,7 +369,7 @@ def test_layout_places_coefficients_above_plots_and_summary_below():
 
     summary = view.summary_label()
     assert summary is not None
-    assert isinstance(sections.widget(2), QScrollArea)
+    assert sections.widget(2).findChild(QScrollArea).widget() is summary
     assert sections.widget(2).isAncestorOf(summary)
 
 
@@ -295,3 +384,29 @@ def test_missing_plot_data_draws_no_plots():
     view = RegressionView(dataclasses.replace(_fitted(), plot=None))
 
     assert view.findChildren(FigureCanvasQTAgg) == []
+
+
+def test_chart_labels_name_the_target_and_explain_sampling_only_when_sampled():
+    labels = RegressionView(_fitted()).chart_labels()
+    assert labels.heading == "Linear regression: <y>"
+    assert labels.model.predicted_axis == "Predicted <y>"
+    assert labels.captions == ()
+    df = _frame(size=PLOT_SAMPLE_SIZE + 100)
+    sampled = RegressionView(analyze_regression(df, "<y>", ["x"])).chart_labels()
+    assert len(sampled.captions) == 1
+    assert "random sample" in sampled.captions[0]
+
+
+def test_export_notes_are_plain_text_comments_and_reference_levels():
+    notes = RegressionView(_fitted()).export_notes()
+    assert notes
+    assert not any("<b>" in note or "<br>" in note or "<sup>" in note or "&lt;" in note for note in notes)
+    assert "Target: <y>" in notes
+    assert any(note.startswith("R² = ") for note in notes)
+    assert "g: reference level b (3 levels)" in notes
+
+
+def test_export_notes_are_empty_for_errors():
+    result = analyze_regression(_frame(), "<y>", [])
+    assert result.error is not None
+    assert RegressionView(result).export_notes() == ()

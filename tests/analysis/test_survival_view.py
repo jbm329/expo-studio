@@ -17,6 +17,7 @@ from expo_jbm329.services.analysis.survival import (
     survival_term_name,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 
 def _result():
@@ -55,6 +56,82 @@ def test_cox_view_shows_hazard_ratio_table_counts_reference_and_caveats():
     assert "Reference for group:" in text
     assert "Efron" in text
     assert "proportional-hazards assumption was not assessed" in text
+
+
+def test_cox_coefficient_columns_remain_content_sized_in_a_wide_view():
+    view = SurvivalRegressionView(_result())
+    table = view.table()
+    assert table is not None
+    assert not table.horizontalHeader().stretchLastSection()
+    widths = [table.columnWidth(column) for column in range(table.columnCount())]
+    view.resize(1600, 900)
+    view.show()
+    try:
+        QCoreApplication.processEvents()
+        assert [table.columnWidth(column) for column in range(table.columnCount())] == widths
+        assert sum(widths) < table.viewport().width()
+    finally:
+        view.close()
+
+
+def test_survival_chart_header_gap_stays_fixed_when_section_grows():
+    view = SurvivalRegressionView(_result())
+    panel = view.findChild(QSplitter).widget(1)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        layout = panel.layout()
+        heading = layout.itemAt(0).widget()
+        charts = layout.itemAt(1).widget()
+        gap = charts.y() - heading.geometry().bottom()
+        heading_height = heading.height()
+        panel.resize(1100, 800)
+        QCoreApplication.processEvents()
+        assert heading.height() == heading_height
+        assert charts.y() - heading.geometry().bottom() == gap
+        assert layout.stretch(1) == 1
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
+def test_cox_comments_header_gap_stays_fixed_when_section_grows():
+    view = SurvivalRegressionView(_result())
+    panel = view.findChild(QSplitter).widget(2)
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QCoreApplication.processEvents()
+        heading = panel.layout().itemAt(0).widget()
+        comments = view.summary_label()
+        gap = comments.y() - heading.geometry().bottom()
+        heading_height = heading.height()
+        panel.resize(1100, 800)
+        QCoreApplication.processEvents()
+        assert heading.height() == heading_height
+        assert comments.y() - heading.geometry().bottom() == gap
+        assert panel.layout().stretch(1) == 1
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
+@pytest.mark.parametrize(("section_index", "small_height"), [(1, 120), (2, 80)])
+def test_cox_chart_and_comment_sections_scroll_only_when_content_exceeds_space(section_index, small_height):
+    view = SurvivalRegressionView(_result())
+    panel = view.findChild(QSplitter).widget(section_index)
+    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=1100)
+    if section_index == 1:
+        assert isinstance(content, FigureCanvasQTAgg)
+    else:
+        assert content is view.summary_label()
+    panel.deleteLater()
+    view.close()
 
 
 @pytest.mark.parametrize("error", list(SurvivalError))
@@ -182,3 +259,23 @@ def test_tied_event_and_censor_marks_draw_at_post_event_survival():
         np.testing.assert_array_equal(survival.lines[1].get_ydata(), [0.5])
     finally:
         view.close()
+
+
+def test_chart_labels_name_duration_and_event_with_locale_formatters():
+    labels = SurvivalRegressionView(_result()).chart_labels()
+    assert labels.heading == "Cox proportional-hazards regression: duration / event"
+    assert labels.captions == ()
+    assert labels.model.tick_format(1.234) == fmt_num(1.234, sig=2)
+    assert labels.model.time_format(1.234) == fmt_num(1.234, sig=3)
+    assert labels.model.count_format(1234) == fmt_int(1234)
+
+
+def test_export_notes_are_plain_text_model_comments():
+    notes = SurvivalRegressionView(_result()).export_notes()
+    assert notes
+    assert not any("<b>" in note or "<br>" in note for note in notes)
+
+
+def test_export_notes_are_empty_for_errors():
+    result = dataclasses.replace(_result(), error=SurvivalError.NO_PREDICTORS_SELECTED)
+    assert SurvivalRegressionView(result).export_notes() == ()

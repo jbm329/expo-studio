@@ -10,11 +10,12 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Mapping
 from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
-from PyQt6.QtCore import QT_TR_NOOP
+from PyQt6.QtCore import QT_TR_NOOP, QTimer
 
 from expo_jbm329.gui.dialogs.service.dialog_service import DialogService, ProfileChoice
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
@@ -35,6 +36,7 @@ if TYPE_CHECKING:
     from PyQt6.QtWidgets import QWidget
 
     from expo_jbm329.services.data_io_service import DataIOService
+    from expo_jbm329.services.excel_chart import ExcelChartImage
     from expo_jbm329.services.file_job_service import FileJobService
     from expo_jbm329.utils.dialog_state import DialogState
     from expo_jbm329.workbench.controllers.async_operation_controller import (
@@ -77,6 +79,8 @@ class ExportController:
     # Excel export
     TR_KIND_EXCEL = QT_TR_NOOP("Export data to Excel")
     TR_EXPORT_EXCEL_DIALOG_FILTER = QT_TR_NOOP("Excel files (*.xlsx)")
+    TR_EXCEL_INPUT_CONFLICT = QT_TR_NOOP("Supply either a DataFrame or named sheets, not both.")
+    TR_EXCEL_INVALID_SHEETS = QT_TR_NOOP("Invalid Excel workbook: {reason}")
 
     # Datafile Export
     TR_KIND_DATAFILE = QT_TR_NOOP("Export data to binary data file")
@@ -107,6 +111,8 @@ class ExportController:
     TR_EXPORT_STARTED_MSG = QT_TR_NOOP("Exporting data to {file_name}…")
     TR_DONE_STATUS_FILE = QT_TR_NOOP("{kind_label} completed: {file_name}")
     TR_DONE_STATUS_TIME_FILE = QT_TR_NOOP("{kind_label} completed: {time_str}: {file_name}")
+    TR_DONE_DIALOG_TITLE = QT_TR_NOOP("Export completed")
+    TR_DONE_DIALOG_TEXT = QT_TR_NOOP("Export completed successfully.\n\nSaved to:\n{path}")
 
     # Exceptions
     TR_EXCEPT_UNKNOWN_RESULT = QT_TR_NOOP("Unknown job result")
@@ -281,7 +287,32 @@ class ExportController:
         """
         return self._results.current_df()
 
-    def _choose_export_path(self, title: str, base_dir: str, default_name: str, filter_str: str) -> tuple[str, str]:
+    def _resolve_context(
+        self, *, parent_widget: QWidget | None = None, operation_target: QWidget | None = None
+    ) -> tuple[QWidget, QWidget]:
+        """Resolve per-call UI context without changing controller defaults.
+
+        Args:
+            parent_widget: Dialog owner override. None uses the default parent.
+            operation_target: Overlay target override. None uses the default target.
+
+        Returns:
+            The resolved dialog parent and overlay target.
+        """
+        return (
+            self._parent if parent_widget is None else parent_widget,
+            self._operation_target if operation_target is None else operation_target,
+        )
+
+    def _choose_export_path(
+        self,
+        title: str,
+        base_dir: str,
+        default_name: str,
+        filter_str: str,
+        *,
+        parent_widget: QWidget | None = None,
+    ) -> tuple[str, str]:
         """Display a save file dialog to choose export path.
 
         Args:
@@ -289,13 +320,15 @@ class ExportController:
             base_dir: The default directory path.
             default_name: The default filename.
             filter_str: The file filter string (e.g., "CSV-filer (*.csv)").
+            parent_widget: Dialog owner override. None uses the default parent.
 
         Returns:
             tuple[str, str]: The (chosen_path, selected_filter) or ("", "") if cancelled.
         """
         initial = str(Path(base_dir) / default_name)
         req = SaveFileRequest(title=title, initial_path=initial, filter_str=filter_str)
-        return self._file_dialogs.get_save_filename(parent=self._parent, req=req)
+        parent = self._parent if parent_widget is None else parent_widget
+        return self._file_dialogs.get_save_filename(parent=parent, req=req)
 
     def _run_export_job(
         self,
@@ -310,6 +343,9 @@ class ExportController:
         indeterminate: bool,
         cancelable: bool,
         corr_id: str,
+        parent_widget: QWidget | None = None,
+        operation_target: QWidget | None = None,
+        show_success_dialog: bool = False,
     ) -> None:
         """Schedule an export job via AsyncOperationController.
 
@@ -324,7 +360,11 @@ class ExportController:
             indeterminate: Whether progress is indeterminate.
             cancelable: Whether the job can be canceled.
             corr_id: Correlation ID for logging.
+            parent_widget: Callback dialog owner. None uses the default parent.
+            operation_target: Overlay target override. None uses the default target.
+            show_success_dialog: Show a confirmation with the output path on success.
         """
+        parent, target = self._resolve_context(parent_widget=parent_widget, operation_target=operation_target)
         self._logger.debug(
             "ExportController: scheduling async export job (corr=%s, kind=%s, scope=%s, suffix=%s, indeterminate=%s)",
             corr_id,
@@ -351,11 +391,13 @@ class ExportController:
             )
 
         self._async_ops.run_target_overlay_operation(
-            target=self._operation_target,
+            target=target,
             runner="thread",
             work=_work,
-            on_result=lambda payload: self._on_export_done(payload, kind, out_path),
-            on_error=lambda err: self._on_export_error(err, kind),
+            on_result=lambda payload: self._on_export_done(
+                payload, kind, out_path, parent_widget=parent, show_success_dialog=show_success_dialog
+            ),
+            on_error=lambda err: self._on_export_error(err, kind, parent_widget=parent),
             busy_message=started_msg,
             scope=scope,
             operation_name=self._tr(self._EXPORT_LABELS[kind]),
@@ -368,12 +410,20 @@ class ExportController:
             corr_id=corr_id,
         )
 
-    def _df_is_empty(self, df: pd.DataFrame | None) -> bool:
-        """Check if a DataFrame is empty."""
+    def _df_is_empty(self, df: pd.DataFrame | None, *, parent_widget: QWidget | None = None) -> bool:
+        """Check for missing data and notify its owner.
+
+        Args:
+            df: DataFrame to check.
+            parent_widget: Notification owner. None uses the default parent.
+
+        Returns:
+            Whether the DataFrame is missing or empty.
+        """
         empty = False
         if df is None or df.empty:
             self._dialogs.info(
-                parent=self._parent,
+                parent=self._parent if parent_widget is None else parent_widget,
                 title=self._tr(self.TR_NO_DATASET_TITLE),
                 text=self._tr(self.TR_NO_DATASET_TEXT),
             )
@@ -390,14 +440,32 @@ class ExportController:
     # ==================================================================
     # Export CSV
     # ==================================================================
-    def export_csv(self) -> None:
-        """Export the current DataFrame to CSV format.
+    def export_csv(
+        self,
+        *,
+        df: pd.DataFrame | None = None,
+        parent_widget: QWidget | None = None,
+        operation_target: QWidget | None = None,
+        show_success_dialog: bool = False,
+    ) -> None:
+        """Export the supplied or active DataFrame to CSV format.
 
         Displays a file dialog for the user to choose the export path,
         then schedules an export job via FileJobService.
+
+        Args:
+            df: DataFrame to export. None uses the active tab. Empty frames
+                show the no-dataset message without falling back. The caller
+                must keep supplied data stable until the export completes;
+                this method does not copy it.
+            parent_widget: Dialog owner override. None uses the default parent.
+            operation_target: Overlay target override. None uses the default target.
+            show_success_dialog: Show a confirmation with the output path on success.
         """
-        df = self._get_active_df()
-        if self._df_is_empty(df):
+        parent, target = self._resolve_context(parent_widget=parent_widget, operation_target=operation_target)
+        if df is None:
+            df = self._get_active_df()
+        if self._df_is_empty(df, parent_widget=parent):
             return
 
         corr = self._new_corr()
@@ -427,6 +495,7 @@ class ExportController:
             base_dir=str(start_dir),
             default_name=default_name,
             filter_str=self._tr(self.TR_EXPORT_CSV_DIALOG_FILTER),
+            parent_widget=parent,
         )
         if not path:
             self._logger.debug("ExportController: export canceled by user (corr=%s, kind=%s)", corr, kind)
@@ -480,16 +549,90 @@ class ExportController:
             indeterminate=False,
             cancelable=True,
             corr_id=corr,
+            parent_widget=parent,
+            operation_target=target,
+            show_success_dialog=show_success_dialog,
         )
 
     # ==================================================================
     # Export Excel
     # ==================================================================
-    def export_excel(self) -> None:
-        """Export the current DataFrame to Excel format."""
-        df = self._get_active_df()
-        if self._df_is_empty(df):
+    def export_excel(
+        self,
+        *,
+        df: pd.DataFrame | None = None,
+        sheets: Mapping[str, pd.DataFrame] | None = None,
+        chart_factory: Callable[
+            [Callable[[int], None] | None, Callable[[], bool] | None],
+            Sequence[ExcelChartImage],
+        ]
+        | None = None,
+        chart_sheet_name: str | None = None,
+        parent_widget: QWidget | None = None,
+        operation_target: QWidget | None = None,
+        show_success_dialog: bool = False,
+    ) -> None:
+        """Export the supplied or active DataFrame to Excel format.
+
+        Args:
+            df: DataFrame to export. None uses the active tab. Empty frames
+                show the no-dataset message without falling back. The caller
+                must keep supplied data stable until the export completes;
+                this method does not copy it.
+            sheets: Ordered named frames, mutually exclusive with non-None df.
+                Membership is captured before the dialog, not frame contents.
+                Named header-only frames are allowed; empty mappings are errors.
+            chart_factory: Optional worker-safe producer for embedded images.
+            chart_sheet_name: Exact worksheet name for generated images.
+            parent_widget: Dialog owner override. None uses the default parent.
+            operation_target: Overlay target override. None uses the default target.
+            show_success_dialog: Show a confirmation with the output path on success.
+        """
+        parent, target = self._resolve_context(parent_widget=parent_widget, operation_target=operation_target)
+        source: pd.DataFrame | Mapping[str, pd.DataFrame]
+        if (chart_factory is None) != (chart_sheet_name is None):
+            self._dialogs.warn(
+                parent=parent,
+                title=self._tr(self.TR_KIND_EXCEL),
+                text=self._tr(self.TR_EXCEL_INVALID_SHEETS).format(
+                    reason="A chart producer and worksheet name must be supplied together."
+                ),
+            )
             return
+        if sheets is not None:
+            if df is not None:
+                self._dialogs.warn(
+                    parent=parent,
+                    title=self._tr(self.TR_KIND_EXCEL),
+                    text=self._tr(self.TR_EXCEL_INPUT_CONFLICT),
+                )
+                return
+            try:
+                source = self._data_io.validate_excel_sheets(
+                    sheets,
+                    chart_sheet_name=chart_sheet_name,
+                    allow_empty=chart_factory is not None,
+                )
+            except (TypeError, ValueError) as error:
+                self._dialogs.warn(
+                    parent=parent,
+                    title=self._tr(self.TR_KIND_EXCEL),
+                    text=self._tr_fmt(self.TR_EXCEL_INVALID_SHEETS, reason=str(error)),
+                )
+                return
+        else:
+            if chart_factory is not None:
+                self._dialogs.warn(
+                    parent=parent,
+                    title=self._tr(self.TR_KIND_EXCEL),
+                    text=self._tr(self.TR_EXCEL_INPUT_CONFLICT),
+                )
+                return
+            if df is None:
+                df = self._get_active_df()
+            if self._df_is_empty(df, parent_widget=parent) or df is None:
+                return
+            source = df
 
         corr = self._new_corr()
 
@@ -503,7 +646,11 @@ class ExportController:
         kind = ExportKind.EXCEL
         scope = "export:excel"
 
-        rows, columns = fmt_shape(df)
+        rows, columns = (
+            (str(sum(len(frame) for frame in source.values())), "mixed")
+            if isinstance(source, Mapping)
+            else fmt_shape(source)
+        )
         self._log_start_export(
             corr_id=corr,
             kind=kind,
@@ -518,6 +665,7 @@ class ExportController:
             base_dir=str(start_dir),
             default_name=default_name,
             filter_str=self._tr(self.TR_EXPORT_EXCEL_DIALOG_FILTER),
+            parent_widget=parent,
         )
 
         if not path:
@@ -542,13 +690,35 @@ class ExportController:
         self._logger.debug("ExportController: coerced path (corr=%s, kind=%s, out=%s)", corr, kind, fmt_path(path))
 
         def job(
-            df_in: pd.DataFrame,
+            df_in: pd.DataFrame | Mapping[str, pd.DataFrame],
             dest: str,
             progress_cb: Callable[[int], None] | None = None,
             cancel_cb: Callable[[], bool] | None = None,
             job_id: str | None = None,
             job_scope: str | None = None,
         ) -> JobResult:
+            if isinstance(df_in, Mapping):
+                if chart_factory is None:
+                    return self._data_io.export_dfs_excel(
+                        df_in,
+                        dest,
+                        progress_cb=progress_cb,
+                        cancel_cb=cancel_cb,
+                        job_id=job_id,
+                        job_scope=job_scope,
+                        corr_id=corr,
+                    )
+                return self._data_io.export_dfs_excel(
+                    df_in,
+                    dest,
+                    chart_factory=chart_factory,
+                    chart_sheet_name=chart_sheet_name,
+                    progress_cb=progress_cb,
+                    cancel_cb=cancel_cb,
+                    job_id=job_id,
+                    job_scope=job_scope,
+                    corr_id=corr,
+                )
             return self._data_io.export_df_excel(
                 df_in,
                 dest,
@@ -561,7 +731,7 @@ class ExportController:
 
         self._run_export_job(
             job_fn=job,
-            job_args=(df, path),
+            job_args=(source, path),
             started_msg=self._tr_fmt(self.TR_EXPORT_STARTED_MSG, file_name=Path(path).name),
             scope=scope,
             suffix=".xlsx",
@@ -570,15 +740,37 @@ class ExportController:
             indeterminate=False,
             cancelable=True,
             corr_id=corr,
+            parent_widget=parent,
+            operation_target=target,
+            show_success_dialog=show_success_dialog,
         )
 
     # ==================================================================
     # EXPORT: Data file (pickle/feather/parquet/df)
     # ==================================================================
-    def export_data(self) -> None:
-        """Export the current DataFrame to a data file format."""
-        df = self._get_active_df()
-        if self._df_is_empty(df):
+    def export_data(
+        self,
+        *,
+        df: pd.DataFrame | None = None,
+        parent_widget: QWidget | None = None,
+        operation_target: QWidget | None = None,
+        show_success_dialog: bool = False,
+    ) -> None:
+        """Export the supplied or active DataFrame to a binary data format.
+
+        Args:
+            df: DataFrame to export. None uses the active tab. Empty frames
+                show the no-dataset message without falling back. The caller
+                must keep supplied data stable until the export completes;
+                this method does not copy it.
+            parent_widget: Dialog owner override. None uses the default parent.
+            operation_target: Overlay target override. None uses the default target.
+            show_success_dialog: Show a confirmation with the output path on success.
+        """
+        parent, target = self._resolve_context(parent_widget=parent_widget, operation_target=operation_target)
+        if df is None:
+            df = self._get_active_df()
+        if self._df_is_empty(df, parent_widget=parent):
             return
 
         corr = self._new_corr()
@@ -608,6 +800,7 @@ class ExportController:
             base_dir=str(start_dir),
             default_name=default_name,
             filter_str=self._tr(self.TR_EXPORT_DATAFILE_DIALOG_FILTER),
+            parent_widget=parent,
         )
         if not path:
             self._logger.debug("ExportController: export canceled by user (corr=%s, kind=%s)", corr, kind)
@@ -662,6 +855,9 @@ class ExportController:
             indeterminate=True,
             cancelable=False,
             corr_id=corr,
+            parent_widget=parent,
+            operation_target=target,
+            show_success_dialog=show_success_dialog,
         )
 
     # ==================================================================
@@ -897,7 +1093,25 @@ class ExportController:
     # Callbacks
     # ==================================================================
 
-    def _on_export_done(self, payload: object, kind: ExportKind, out_path: str) -> None:
+    def _on_export_done(
+        self,
+        payload: object,
+        kind: ExportKind,
+        out_path: str,
+        *,
+        parent_widget: QWidget | None = None,
+        show_success_dialog: bool = False,
+    ) -> None:
+        """Present the export outcome to its captured dialog owner.
+
+        Args:
+            payload: Job result or legacy completion payload.
+            kind: Export kind.
+            out_path: Output file path.
+            parent_widget: Notification owner. None uses the default parent.
+            show_success_dialog: Show a confirmation with the output path on success.
+        """
+        parent = self._parent if parent_widget is None else parent_widget
         # Build JobResult robustly
         try:
             if isinstance(payload, JobResult):
@@ -940,7 +1154,7 @@ class ExportController:
 
         corr = res.corr_id or "-"
         kind_label = self._tr(self._EXPORT_LABELS[kind])
-        if res.ok:
+        if res.ok and not res.cancelled and res.error is None:
             # Successful export
             file_name = Path(out_path).name
 
@@ -960,12 +1174,24 @@ class ExportController:
 
             if kind in (ExportKind.PROFILE, ExportKind.PROFILE_COMPARE) and not self._open_url(str(out_path)):
                 self._logger.warning("ExportController: open URL failed (corr=%s, path=%s)", corr, out_path)
+            if show_success_dialog:
+
+                def show_confirmation() -> None:
+                    self._dialogs.info(
+                        parent=parent,
+                        title=self._tr(self.TR_DONE_DIALOG_TITLE),
+                        text=self._tr_fmt(self.TR_DONE_DIALOG_TEXT, path=out_path),
+                    )
+
+                # AsyncOperationController queues overlay cleanup after this callback.
+                # A second event-loop turn lets that cleanup run before the modal dialog.
+                QTimer.singleShot(0, lambda: QTimer.singleShot(0, show_confirmation))
             return
 
         if res.cancelled:
             self._logger.info("ExportController: export cancelled (corr=%s, kind=%s)", corr, kind)
             self._set_status(self._tr_fmt(self.TR_DONE_STATUS_CANCEL, kind_label=kind_label), 8000)
-            self._dialogs.info(parent=self._parent, title=kind_label, text=self._tr(self.TR_DONE_CANCEL_DIALOG_TEXT))
+            self._dialogs.info(parent=parent, title=kind_label, text=self._tr(self.TR_DONE_CANCEL_DIALOG_TEXT))
             return
 
         # Failed export
@@ -977,9 +1203,16 @@ class ExportController:
             res.error or self._tr(self.TR_EXCEPT_UNKNOWN_ERROR),
         )
         self._set_status(fail_status, 8000)
-        self._dialogs.warn(parent=self._parent, title=kind_label, text=res.error or fail_status)
+        self._dialogs.warn(parent=parent, title=kind_label, text=res.error or fail_status)
 
-    def _on_export_error(self, err: str, kind: ExportKind) -> None:
+    def _on_export_error(self, err: str, kind: ExportKind, *, parent_widget: QWidget | None = None) -> None:
+        """Present an asynchronous export error to its captured owner.
+
+        Args:
+            err: Error reported by the job runner.
+            kind: Export kind.
+            parent_widget: Notification owner. None uses the default parent.
+        """
         corr = "-"
         kind_label = self._tr(self._EXPORT_LABELS[kind])
         if isinstance(err, JobResult):
@@ -991,4 +1224,6 @@ class ExportController:
         self._logger.error("ExportController: export failed (corr=%s, kind=%s): %s", corr, kind, msg)
         self._set_status(self._tr_fmt(self.TR_DONE_STATUS_FAIL, kind_label=kind_label), 8000)
 
-        self._dialogs.critical(parent=self._parent, title=kind_label, text=msg)
+        self._dialogs.critical(
+            parent=self._parent if parent_widget is None else parent_widget, title=kind_label, text=msg
+        )

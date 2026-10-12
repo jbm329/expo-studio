@@ -8,6 +8,8 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QFormLayout,
+    QGroupBox,
+    QHBoxLayout,
     QLabel,
     QListWidget,
     QListWidgetItem,
@@ -20,6 +22,7 @@ from PyQt6.QtWidgets import (
 from expo_jbm329.gui.dialogs.analysis.chi_square_config import ChiSquareConfigWidget
 from expo_jbm329.gui.dialogs.analysis.group_comparison_config import GroupComparisonConfigWidget
 from expo_jbm329.services.analysis.categories import HypothesisTest
+from expo_jbm329.utils.format_utils import fmt_int
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.chi_square import ChiSquareResult
@@ -51,33 +54,91 @@ class PairedComparisonConfigWidget(QWidget):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        group = QGroupBox(self.tr("Measurement columns"), self)
+        group_layout = QVBoxLayout(group)
         label = QLabel(
             self.tr("Select at least two numeric columns. They are used in the order shown; each row is one subject."),
-            self,
+            group,
         )
         label.setWordWrap(True)
-        layout.addWidget(label)
+        group_layout.addWidget(label)
 
-        self._columns_list = QListWidget(self)
+        self._columns_list = QListWidget(group)
         self._columns_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
         for column in result.available_numeric_columns:
             item = QListWidgetItem(column, self._columns_list)
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             item.setCheckState(Qt.CheckState.Checked if column in selected else Qt.CheckState.Unchecked)
-        layout.addWidget(self._columns_list)
+        group_layout.addWidget(self._columns_list)
+
+        actions = QHBoxLayout()
+        actions.addStretch(1)
+        self._select_all_button = QPushButton(self.tr("Select all"), group)
+        self._clear_button = QPushButton(self.tr("Clear"), group)
+        actions.addWidget(self._select_all_button)
+        actions.addWidget(self._clear_button)
+        group_layout.addLayout(actions)
+
+        self._selection_label = QLabel(group)
+        self._selection_label.setWordWrap(True)
+        group_layout.addWidget(self._selection_label)
+        self._update_selection_label()
+
+        layout.addWidget(group)
         self._columns_list.itemChanged.connect(self._on_item_changed)
+        self._select_all_button.clicked.connect(lambda: self._set_all_columns_checked(checked=True))
+        self._clear_button.clicked.connect(lambda: self._set_all_columns_checked(checked=False))
+
+    def _set_all_columns_checked(self, *, checked: bool) -> None:
+        """Set every measurement column to the same pending check state, notifying once on change."""
+        state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+        changed = False
+        self._columns_list.blockSignals(True)
+        try:
+            for index in range(self._columns_list.count()):
+                item = self._columns_list.item(index)
+                if item is not None and item.checkState() != state:
+                    item.setCheckState(state)
+                    changed = True
+        finally:
+            self._columns_list.blockSignals(False)
+        if changed:
+            self._update_selection_label()
+            self.selection_changed.emit()
 
     def _on_item_changed(self, _item: QListWidgetItem) -> None:
         """Notify the parent that the pending occasion selection changed."""
+        self._update_selection_label()
         self.selection_changed.emit()
 
-    def selected_columns(self) -> tuple[str, ...] | None:
-        """Return checked columns in dataset order when at least two are selected."""
-        selected = tuple(
+    def _checked_columns(self) -> tuple[str, ...]:
+        """Return checked columns in dataset order."""
+        return tuple(
             item.text()
             for index in range(self._columns_list.count())
             if (item := self._columns_list.item(index)) is not None and item.checkState() is Qt.CheckState.Checked
         )
+
+    def _update_selection_label(self) -> None:
+        """Show the selection count and which test the selection will run."""
+        self._selection_label.setText(self._selection_text(len(self._checked_columns())))
+
+    def _selection_text(self, count: int) -> str:
+        """Return the translated selection count, with guidance for the resulting test."""
+        if count == 0:
+            return self.tr("None selected - select at least {minimum}.").format(minimum=fmt_int(_MIN_PAIRED_OCCASIONS))
+        if count < _MIN_PAIRED_OCCASIONS:
+            return self.tr("{count} selected - select at least {minimum}.").format(
+                count=fmt_int(count), minimum=fmt_int(_MIN_PAIRED_OCCASIONS)
+            )
+        # Mirrors the service: two occasions run Wilcoxon, more run Friedman.
+        if count == _MIN_PAIRED_OCCASIONS:
+            return self.tr("{count} selected - Wilcoxon signed-rank test.").format(count=fmt_int(count))
+        return self.tr("{count} selected - Friedman test.").format(count=fmt_int(count))
+
+    def selected_columns(self) -> tuple[str, ...] | None:
+        """Return checked columns in dataset order when at least two are selected."""
+        selected = self._checked_columns()
         return selected if len(selected) >= _MIN_PAIRED_OCCASIONS else None
 
 
@@ -92,11 +153,13 @@ class HypothesisTestsConfigWidget(QWidget):
     Column changes are pending until the user clicks Apply, which stores
     the configuration and emits `apply_requested`; `AnalysisController`
     then computes the applied test. Switching test emits `test_changed`
-    so the content pane can stop showing the previous test's result.
+    and every column edit emits `configuration_changed`, so the content
+    pane can replace results that no longer match the settings.
     Apply is disabled for a test the dataset has no eligible columns for.
     """
 
     test_changed = pyqtSignal()
+    configuration_changed = pyqtSignal()
     apply_requested = pyqtSignal()
 
     def __init__(
@@ -119,6 +182,7 @@ class HypothesisTestsConfigWidget(QWidget):
             parent: Optional parent widget.
         """
         super().__init__(parent)
+        self._configuration_revision = 0
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -132,13 +196,15 @@ class HypothesisTestsConfigWidget(QWidget):
         form.addRow(QLabel(self.tr("Test"), self), self._test_combo)
         layout.addLayout(form)
 
+        # The test pages take the free height so Apply stays anchored to the
+        # bottom of the Configuration pane for every test.
         self._stack = QStackedWidget(self)
-        layout.addWidget(self._stack)
+        layout.addWidget(self._stack, 1)
 
         self._group_comparison_config: GroupComparisonConfigWidget | None = None
         if group_comparison.available_numeric_columns and group_comparison.available_grouping_columns:
             self._group_comparison_config = GroupComparisonConfigWidget(group_comparison, self._stack)
-            self._group_comparison_config.selection_changed.connect(self._update_apply_button)
+            self._group_comparison_config.selection_changed.connect(self._on_selection_changed)
             self._stack.addWidget(self._group_comparison_config)
         else:
             self._stack.addWidget(self._build_unavailable_label())
@@ -146,7 +212,7 @@ class HypothesisTestsConfigWidget(QWidget):
         self._chi_square_config: ChiSquareConfigWidget | None = None
         if len(chi_square.available_columns) >= _COLUMNS_PER_CHI_SQUARE_TEST:
             self._chi_square_config = ChiSquareConfigWidget(chi_square, self._stack)
-            self._chi_square_config.selection_changed.connect(self._update_apply_button)
+            self._chi_square_config.selection_changed.connect(self._on_selection_changed)
             self._stack.addWidget(self._chi_square_config)
         else:
             self._stack.addWidget(self._build_unavailable_label())
@@ -154,14 +220,13 @@ class HypothesisTestsConfigWidget(QWidget):
         self._paired_comparison_config: PairedComparisonConfigWidget | None = None
         if len(paired_comparison.available_numeric_columns) >= _MIN_PAIRED_OCCASIONS:
             self._paired_comparison_config = PairedComparisonConfigWidget(paired_comparison, self._stack)
-            self._paired_comparison_config.selection_changed.connect(self._update_apply_button)
+            self._paired_comparison_config.selection_changed.connect(self._on_selection_changed)
             self._stack.addWidget(self._paired_comparison_config)
         else:
             self._stack.addWidget(self._build_unavailable_label())
 
         self._apply_button = QPushButton(self.tr("Apply"), self)
         layout.addWidget(self._apply_button)
-        layout.addStretch(1)
 
         self._applied_configuration: tuple[HypothesisTest, ColumnSelection] | None = None
         self._update_apply_button()
@@ -181,13 +246,25 @@ class HypothesisTestsConfigWidget(QWidget):
     def _on_test_changed(self, index: int) -> None:
         """Show the selected test's page and announce the test change."""
         self._stack.setCurrentIndex(index)
+        self._configuration_revision += 1
         self._update_apply_button()
         self.test_changed.emit()
+
+    def _on_selection_changed(self) -> None:
+        """Record a pending column edit and announce that applied results are outdated."""
+        self._configuration_revision += 1
+        self._update_apply_button()
+        self.configuration_changed.emit()
 
     def _on_apply_clicked(self) -> None:
         """Apply the pending test and column selection, and request its computation."""
         self._applied_configuration = self.current_configuration()
+        self._configuration_revision += 1
         self.apply_requested.emit()
+
+    def configuration_revision(self) -> int:
+        """Return the generation advanced by every edit, test switch and Apply."""
+        return self._configuration_revision
 
     def _update_apply_button(self) -> None:
         """Enable Apply only when the selected test is available for the dataset."""

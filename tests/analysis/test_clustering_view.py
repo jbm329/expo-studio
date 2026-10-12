@@ -15,6 +15,7 @@ from expo_jbm329.services.analysis.clustering import (
     ClusterSize,
     analyze_clustering,
 )
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 
 def _result(method: ClusteringMethod = ClusteringMethod.K_MEANS):
@@ -29,6 +30,32 @@ def _result(method: ClusteringMethod = ClusteringMethod.K_MEANS):
 
 def _labels_text(view: ClusteringView) -> str:
     return "\n".join(label.text() for label in view.findChildren(QLabel))
+
+
+def _section_title(panel) -> str:
+    title = panel.layout().itemAt(0).widget()
+    assert isinstance(title, QLabel)
+    assert title.textFormat() is Qt.TextFormat.PlainText
+    assert title.font().bold()
+    return title.text()
+
+
+@pytest.mark.parametrize("method", list(ClusteringMethod))
+@pytest.mark.parametrize(("section", "small_height", "width"), [(1, 120, 1100), (2, 60, 400)])
+def test_projection_and_comments_scroll_below_a_frozen_title(method, section, small_height, width):
+    view = ClusteringView(dataclasses.replace(_result(method), sampled=True))
+    panel = view.findChild(QSplitter).widget(section)
+
+    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=width)
+
+    if section == 1:
+        assert isinstance(content, FigureCanvasQTAgg)
+    else:
+        assert isinstance(content, QLabel)
+        assert content.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+        assert view.method_name(method) in content.text()
+    panel.deleteLater()
+    view.close()
 
 
 @pytest.mark.parametrize("error", list(ClusteringError))
@@ -73,7 +100,7 @@ def test_success_shows_projection_and_cluster_table():
     assert view.configuration() == (result.columns, result.method, True, 2, 0.5, 2)
 
 
-def test_layout_has_titled_summary_plot_and_table_with_adjustable_dividers():
+def test_layout_has_table_plot_and_comments_like_regression():
     view = ClusteringView(_result())
 
     splitters = view.findChildren(QSplitter)
@@ -82,14 +109,15 @@ def test_layout_has_titled_summary_plot_and_table_with_adjustable_dividers():
     assert splitter.orientation() is Qt.Orientation.Vertical
     assert splitter.childrenCollapsible() is False
     assert splitter.count() == 3
-
-    assert any(label.text() == "Summary" for label in splitter.widget(0).findChildren(QLabel))
+    assert [_section_title(splitter.widget(index)) for index in range(3)] == [
+        "Cluster sizes",
+        "Cluster projection",
+        "Model comments",
+    ]
+    table_layout = splitter.widget(0).layout()
+    assert table_layout.itemAt(1).widget() is view.cluster_table()
+    assert table_layout.stretch(1) == 1
     assert len(splitter.widget(1).findChildren(FigureCanvasQTAgg)) == 1
-    assert any(label.text() == "Cluster projection" for label in splitter.widget(1).findChildren(QLabel))
-    table = view.cluster_table()
-    assert table is not None
-    assert splitter.widget(2).isAncestorOf(table)
-    assert any(label.text() == "Cluster sizes" for label in splitter.widget(2).findChildren(QLabel))
 
 
 def test_projection_has_one_collection_per_cluster_and_axes():
@@ -142,3 +170,50 @@ def test_summary_explains_unavailable_silhouette_and_sampling():
     assert "not standardized" in text
     assert "not available" in text
     assert "deterministic sample" in text
+
+
+def test_result_returns_the_displayed_fit():
+    result = _result()
+
+    assert ClusteringView(result).result() is result
+
+
+@pytest.mark.parametrize("sampled", [False, True])
+def test_chart_labels_match_the_view_and_caption_only_a_sampled_plot(sampled):
+    result = dataclasses.replace(_result(), sampled=sampled)
+    view = ClusteringView(result)
+
+    labels = view.chart_labels()
+
+    assert labels.heading == "Cluster projection"
+    assert labels.title == "Cluster projection (internal PCA)"
+    assert (labels.pc1_axis, labels.pc2_axis) == ("PC1", "PC2")
+    assert labels.cluster_name(0) == "Cluster 1"
+    assert labels.cluster_name(-1) == "Noise"
+    expected = (f"The plot shows a deterministic sample of {len(result.sample_labels)} rows.",) if sampled else ()
+    assert labels.captions == expected
+
+
+def test_error_chart_labels_have_no_caption():
+    result = dataclasses.replace(analyze_clustering(pd.DataFrame({"x": [1.0]})), sampled=True)
+
+    assert ClusteringView(result).chart_labels().captions == ()
+
+
+def test_export_notes_are_the_plain_text_comments_and_features():
+    result = dataclasses.replace(_result(), sampled=True)
+    view = ClusteringView(result)
+
+    notes = view.export_notes()
+
+    assert notes[0].startswith("K-Means on 2 features (standardized).")
+    assert all("<" not in line for line in notes)
+    assert any(line.startswith("Silhouette score: ") for line in notes)
+    assert f"The plot shows a deterministic sample of {len(result.sample_labels)} rows." in notes
+    assert notes[-1] == "Features: x, y"
+
+
+def test_error_view_has_no_export_notes():
+    result = analyze_clustering(pd.DataFrame({"x": [1.0]}))
+
+    assert ClusteringView(result).export_notes() == ()

@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import dataclasses
+from pathlib import Path
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import Qt
+from openpyxl import load_workbook
+from PyQt6.QtCore import Qt, QTranslator
 from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QLabel, QTableWidget, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
 from expo_jbm329.gui.dialogs.analysis.clustering_config import ClusteringConfigWidget
 from expo_jbm329.gui.dialogs.analysis.clustering_view import ClusteringView
@@ -27,24 +31,560 @@ from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
 from expo_jbm329.gui.dialogs.analysis.regression_glm_view import GeneralizedRegressionView
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
-from expo_jbm329.gui.dialogs.analysis.statistics_config import StatisticsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.gui.dialogs.analysis.survival_view import SurvivalRegressionView
 from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigWidget
 from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
-from expo_jbm329.services.analysis.correlation import CorrelationMethod
+from expo_jbm329.services.analysis.clustering_export import (
+    CLUSTERING_COMPONENTS,
+    ClusteringExportComponent,
+    ClusteringExportRequest,
+    ClusteringExportSnapshot,
+)
+from expo_jbm329.services.analysis.correlation import (
+    CorrelationError,
+    CorrelationMethod,
+    analyze_correlation_pair,
+)
+from expo_jbm329.services.analysis.correlation_export import (
+    CorrelationExportComponent,
+    CorrelationExportRequest,
+)
+from expo_jbm329.services.analysis.hypothesis_export import (
+    HypothesisExportComponent as Component,
+)
+from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportRequest
 from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierError, MultivariateOutlierMethod
 from expo_jbm329.services.analysis.outliers import OutlierMethod
+from expo_jbm329.services.analysis.outliers_export import MULTIVARIATE_COMPONENTS as MULTIVARIATE_OUTLIER_COMPONENTS
+from expo_jbm329.services.analysis.outliers_export import UNIVARIATE_COMPONENTS as UNIVARIATE_OUTLIER_COMPONENTS
+from expo_jbm329.services.analysis.outliers_export import (
+    MultivariateOutlierExportSnapshot,
+    OutlierExportComponent,
+    OutlierExportRequest,
+    OutlierExportSnapshot,
+    UnivariateOutlierExportSnapshot,
+)
+from expo_jbm329.services.analysis.overview import (
+    OverviewExportFormat,
+    OverviewExportRequest,
+    OverviewExportTable,
+    analyze_dataset_overview,
+)
 from expo_jbm329.services.analysis.pca import PCAError
+from expo_jbm329.services.analysis.pca_export import (
+    PCA_COMPONENTS,
+    PCAExportComponent,
+    PCAExportRequest,
+    PCAExportSnapshot,
+)
 from expo_jbm329.services.analysis.regression import RegressionError
+from expo_jbm329.services.analysis.regression_export import (
+    RegressionExportComponent,
+    RegressionExportRequest,
+    RegressionExportSnapshot,
+)
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
+from expo_jbm329.services.analysis.statistics import (
+    StatisticsExportFormat,
+    StatisticsExportRequest,
+    StatisticsExportTable,
+    analyze_descriptive_statistics,
+)
 from expo_jbm329.services.analysis.timeseries import DecompositionModel
+from expo_jbm329.services.analysis.timeseries_export import (
+    TIME_SERIES_COMPONENTS,
+    TimeSeriesExportComponent,
+    TimeSeriesExportRequest,
+    TimeSeriesExportSnapshot,
+)
+from expo_jbm329.services.file_writer import FileWriter
 from expo_jbm329.utils.dataset_ref import DatasetRef
+from expo_jbm329.workbench.controllers.analysis import analysis_controller as analysis_controller_module
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
+from tests.analysis.test_clustering_export import clustering_snapshot
+from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
+from tests.analysis.test_outliers_export import multivariate_snapshot as multivariate_outliers_snapshot
+from tests.analysis.test_outliers_export import univariate_snapshot
+from tests.analysis.test_pca_export import pca_snapshot
+from tests.analysis.test_regression_export import cox_snapshot, linear_snapshot, logistic_snapshot
+from tests.analysis.test_timeseries_export import irregular_snapshot, time_series_snapshot
 
 _CONTROLLER_MODULE = "expo_jbm329.workbench.controllers.analysis.analysis_controller"
+
+
+def _overview_export_context():
+    result = analyze_dataset_overview(pd.DataFrame({"value": [1, 2]}))
+    dialog = AnalysisDialog(
+        parent=None,
+        datasets=[DatasetRef("chosen", "Chosen", 2, 1), DatasetRef("other", "Other", 2, 1)],
+        active_tab_id="chosen",
+    )
+    dialog.set_content_widget(OverviewView(result))
+    dialog.set_exportable_overview(result)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must not look up a dataset")
+    results.current_df.side_effect = AssertionError("Export must not use the active tab")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, result, Mock()
+
+
+@pytest.mark.parametrize("format_choice", list(OverviewExportFormat))
+def test_overview_export_routes_explicit_frames_and_never_reads_active_data(format_choice):
+    controller, dialog, result, exporter = _overview_export_context()
+    request = OverviewExportRequest(result, (OverviewExportTable.SAMPLE,), format_choice)
+    controller._export_overview(dialog, exporter, request)
+    expected = pd.DataFrame({"value": [1, 2]})
+    method = {
+        OverviewExportFormat.CSV: exporter.export_csv,
+        OverviewExportFormat.EXCEL: exporter.export_excel,
+        OverviewExportFormat.BINARY: exporter.export_data,
+    }[format_choice]
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    if format_choice is OverviewExportFormat.EXCEL:
+        assert set(kwargs) == {"sheets", "parent_widget", "operation_target", "show_success_dialog"}
+        assert list(kwargs["sheets"]) == ["Sample"]
+        actual = kwargs["sheets"]["Sample"]
+    else:
+        assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+        actual = kwargs["df"]
+    pd.testing.assert_frame_equal(actual, expected)
+    assert controller._results.mock_calls == []
+
+
+def test_overview_excel_routes_all_three_named_tables_in_one_operation():
+    controller, dialog, result, exporter = _overview_export_context()
+    request = OverviewExportRequest(
+        result,
+        (OverviewExportTable.COLUMNS, OverviewExportTable.SAMPLE, OverviewExportTable.SUMMARY),
+        OverviewExportFormat.EXCEL,
+    )
+    controller._export_overview(dialog, exporter, request)
+    assert len(exporter.mock_calls) == 1
+    sheets = exporter.export_excel.call_args.kwargs["sheets"]
+    assert exporter.export_excel.call_args.kwargs["show_success_dialog"] is True
+    assert list(sheets) == ["Columns", "Sample", "Summary"]
+    assert list(sheets["Columns"].columns) == [
+        "Column",
+        "Type",
+        "Storage type",
+        "Missing",
+        "Missing fraction",
+        "Unique",
+    ]
+    assert sheets["Columns"].iloc[0]["Missing fraction"] == 0.0
+    assert sheets["Sample"].shape == (2, 1)
+    assert list(sheets["Sample"].columns) == ["value"]
+    assert sheets["Summary"].iloc[0]["Metric"] == "row_count"
+
+
+def test_overview_excel_uses_translated_names_and_headers_without_translating_values(monkeypatch):
+    controller, dialog, _, exporter = _overview_export_context()
+    translations = {
+        "Columns": "Kolumner",
+        "Summary": "Sammanfattning",
+        "Sample": "Urval",
+        "Column": "Kolumn",
+        "Type": "Typ",
+        "Storage type": "Lagringstyp",
+        "Missing": "Saknas",
+        "Missing fraction": "Andel saknade värden",
+        "Unique": "Unika",
+        "Section": "Avsnitt",
+        "Metric": "Mått",
+        "Count": "Antal",
+        "Fraction": "Andel",
+    }
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    request = OverviewExportRequest(
+        dialog.exportable_overview(),
+        (OverviewExportTable.COLUMNS, OverviewExportTable.SAMPLE, OverviewExportTable.SUMMARY),
+        OverviewExportFormat.EXCEL,
+    )
+
+    controller._export_overview(dialog, exporter, request)
+    sheets = exporter.export_excel.call_args.kwargs["sheets"]
+
+    assert list(sheets) == ["Kolumner", "Urval", "Sammanfattning"]
+    assert list(sheets["Kolumner"].columns) == [
+        "Kolumn",
+        "Typ",
+        "Lagringstyp",
+        "Saknas",
+        "Andel saknade värden",
+        "Unika",
+    ]
+    assert list(sheets["Sammanfattning"].columns) == ["Avsnitt", "Mått", "Kolumn", "Antal", "Andel"]
+    assert sheets["Sammanfattning"].iloc[0]["Mått"] == "row_count"
+    assert list(sheets["Urval"].columns) == ["value"]
+    assert sheets["Urval"]["value"].dtype == "int64"
+
+
+@pytest.mark.parametrize("format_choice", [OverviewExportFormat.CSV, OverviewExportFormat.BINARY])
+def test_overview_summary_routes_translated_headers_for_csv_and_binary(format_choice, monkeypatch):
+    controller, dialog, result, exporter = _overview_export_context()
+    translations = {
+        "Section": "Avsnitt",
+        "Metric": "Mått",
+        "Column": "Kolumn",
+        "Count": "Antal",
+        "Fraction": "Andel",
+    }
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    request = OverviewExportRequest(result, (OverviewExportTable.SUMMARY,), format_choice)
+    controller._export_overview(dialog, exporter, request)
+
+    method = exporter.export_csv if format_choice is OverviewExportFormat.CSV else exporter.export_data
+    assert method.call_count == 1
+    assert list(method.call_args.kwargs["df"].columns) == ["Avsnitt", "Mått", "Kolumn", "Antal", "Andel"]
+    assert method.call_args.kwargs["df"].iloc[0]["Mått"] == "row_count"
+    assert method.call_args.kwargs["parent_widget"] is dialog
+    assert method.call_args.kwargs["operation_target"] is dialog.content_panel()
+    assert method.call_args.kwargs["show_success_dialog"] is True
+
+
+@pytest.mark.parametrize("format_choice", [OverviewExportFormat.CSV, OverviewExportFormat.BINARY])
+def test_overview_multi_table_single_file_request_is_rejected(format_choice):
+    controller, dialog, result, exporter = _overview_export_context()
+    request = OverviewExportRequest(result, (OverviewExportTable.COLUMNS, OverviewExportTable.SAMPLE), format_choice)
+    controller._export_overview(dialog, exporter, request)
+    assert exporter.mock_calls == []
+
+
+@pytest.mark.parametrize("invalidate", ["category", "dataset", "placeholder", "replacement", "identity"])
+def test_overview_export_rejects_stale_or_unrelated_snapshot(invalidate):
+    controller, dialog, result, exporter = _overview_export_context()
+    request = OverviewExportRequest(result, (OverviewExportTable.SAMPLE,), OverviewExportFormat.CSV)
+    match invalidate:
+        case "category":
+            dialog.select_category(AnalysisCategory.STATISTICS)
+        case "dataset":
+            dialog.select_dataset("other")
+        case "placeholder":
+            dialog.show_placeholder("Analysis failed")
+        case "replacement":
+            dialog.set_content_widget(QWidget())
+        case "identity":
+            dialog.set_exportable_overview(analyze_dataset_overview(pd.DataFrame({"value": [9]})))
+    controller._export_overview(dialog, exporter, request)
+    assert exporter.mock_calls == []
+
+
+def _statistics_export_context():
+    result = analyze_descriptive_statistics(
+        pd.DataFrame({
+            "First numeric": [1.0, 2.0, 3.0, 4.0, 5.0],
+            "Second numeric": [5.0, 4.0, 3.0, 2.0, 1.0],
+            "Group": ["A", "A", "B", "B", None],
+        })
+    )
+    dialog = AnalysisDialog(
+        parent=None,
+        datasets=[DatasetRef("chosen", "Chosen", 5, 3), DatasetRef("other", "Other", 5, 3)],
+        active_tab_id="chosen",
+    )
+    dialog.select_category(AnalysisCategory.STATISTICS)
+    dialog.set_content_widget(StatisticsView(result))
+    dialog.set_exportable_statistics(result)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Statistics export must use its displayed snapshot")
+    results.current_df.side_effect = AssertionError("Statistics export must not read the active dataset")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, result, Mock()
+
+
+def _hypothesis_export_context(snapshot):
+    dialog = AnalysisDialog(
+        parent=None,
+        datasets=[DatasetRef("chosen", "Chosen", 20, 4), DatasetRef("other", "Other", 20, 4)],
+        active_tab_id="chosen",
+    )
+    dialog.select_category(AnalysisCategory.HYPOTHESIS_TESTS)
+    content = AnalysisController._render_hypothesis_test_content(snapshot.test, snapshot.result)
+    dialog.set_content_widget(content)
+    snapshot = dataclasses.replace(
+        snapshot,
+        notes=tuple(note.replace("<b>", "").replace("</b>", "") for note in content.export_notes(snapshot.result)),
+    )
+    dialog.set_exportable_hypothesis(snapshot)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must never fetch an active or pending dataset")
+    results.current_df.side_effect = AssertionError("Export must never fetch active data")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, snapshot, Mock()
+
+
+@pytest.mark.parametrize("factory", [group_snapshot, chi_snapshot, paired_snapshot])
+@pytest.mark.parametrize("format_choice", list(StatisticsExportFormat))
+def test_hypothesis_exports_route_owned_numeric_frames_and_per_call_context(factory, format_choice):
+    controller, dialog, snapshot, exporter = _hypothesis_export_context(factory())
+    request = HypothesisExportRequest(snapshot, (Component.TEST_RESULTS,), format_choice)
+    controller._export_hypothesis(dialog, exporter, request)
+    method = {
+        StatisticsExportFormat.EXCEL: exporter.export_excel,
+        StatisticsExportFormat.CSV: exporter.export_csv,
+        StatisticsExportFormat.BINARY: exporter.export_data,
+    }[format_choice]
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"]
+    frame = next(iter(kwargs["sheets"].values())) if format_choice is StatisticsExportFormat.EXCEL else kwargs["df"]
+    assert frame["Test"].notna().any()
+    assert pd.api.types.is_numeric_dtype(frame["Test statistic"])
+    assert frame["Notes"].dropna().tolist() == list(snapshot.notes)
+    if format_choice is StatisticsExportFormat.EXCEL:
+        assert kwargs["chart_factory"] is None
+
+
+@pytest.mark.parametrize("factory", [group_snapshot, chi_snapshot, paired_snapshot])
+@pytest.mark.parametrize("locale", ["en", "sv"])
+@pytest.mark.parametrize("charts_only", [False, True])
+def test_hypothesis_localized_workbooks_read_back_all_types(tmp_path, factory, locale, charts_only):
+    translator = QTranslator()
+    path = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{locale}.qm"
+    assert translator.load(str(path))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        controller, dialog, snapshot, exporter = _hypothesis_export_context(factory())
+        components = (Component.CHARTS,) if charts_only else tuple(Component)
+        request = HypothesisExportRequest(snapshot, components, StatisticsExportFormat.EXCEL)
+        controller._export_hypothesis(dialog, exporter, request)
+        kwargs = exporter.export_excel.call_args.kwargs
+        chart_name = "Charts" if locale == "en" else "Diagram"
+        assert kwargs["chart_sheet_name"] == chart_name
+        images = kwargs["chart_factory"](None, None)
+        assert len(images) == 1
+        output = tmp_path / f"{locale}.xlsx"
+        FileWriter().save_excel_sheets(
+            kwargs["sheets"],
+            output,
+            chart_images=images,
+            chart_sheet_name=chart_name,
+            streaming=False,
+        )
+        workbook = load_workbook(output)
+        try:
+            assert workbook.sheetnames == [*kwargs["sheets"], chart_name]
+            assert len(workbook[chart_name]._images) == 1
+            assert workbook[chart_name]["A1"].value == " / ".join(snapshot.columns)
+            if not charts_only:
+                result_name = "Test results" if locale == "en" else "Testresultat"
+                frame = kwargs["sheets"][result_name]
+                notes_header = "Notes" if locale == "en" else "Noteringar"
+                assert frame[notes_header].dropna().tolist() == list(snapshot.notes)
+                assert isinstance(workbook[result_name]["B2"].value, (int, float))
+                if locale == "sv":
+                    assert "Teststatistik" in frame.columns
+                    assert any("→" in note or "mät" in note or "Grupp" in note for note in snapshot.notes)
+        finally:
+            workbook.close()
+    finally:
+        app.removeTranslator(translator)
+
+
+@pytest.mark.parametrize("change", ["identity", "dataset", "category", "placeholder", "replacement"])
+def test_hypothesis_export_rejects_stale_dialog_requests(change):
+    controller, dialog, snapshot, exporter = _hypothesis_export_context(group_snapshot())
+    request = HypothesisExportRequest(snapshot, (Component.SUMMARY,), StatisticsExportFormat.EXCEL)
+    match change:
+        case "identity":
+            dialog.set_exportable_hypothesis(group_snapshot())
+        case "dataset":
+            dialog._dataset_combo.setCurrentIndex(1)
+        case "category":
+            dialog.select_category(AnalysisCategory.STATISTICS)
+        case "placeholder":
+            dialog.show_placeholder("prompt")
+        case "replacement":
+            dialog.set_content_widget(QWidget())
+    controller._export_hypothesis(dialog, exporter, request)
+    controller._export_hypothesis(dialog, exporter, object())
+    assert not exporter.mock_calls
+
+
+def test_statistics_excel_exports_localized_tables_and_every_column_chart(monkeypatch):
+    controller, dialog, result, exporter = _statistics_export_context()
+    translations = {
+        "Continuous": "Kontinuerliga",
+        "Categorical": "Kategoriska",
+        "Charts": "Diagram",
+        "Column": "Kolumn",
+        "Count": "Antal",
+        "Category": "Kategori",
+        "Fraction (non-missing)": "Andel (icke-saknade)",
+        "Histogram": "Histogram",
+        "Boxplot": "Lådagram",
+        "No data": "Ingen data",
+    }
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    request = StatisticsExportRequest(
+        result,
+        (
+            StatisticsExportTable.CONTINUOUS,
+            StatisticsExportTable.CATEGORICAL,
+            StatisticsExportTable.CHARTS,
+        ),
+        StatisticsExportFormat.EXCEL,
+    )
+
+    controller._export_statistics(dialog, exporter, request)
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Kontinuerliga", "Kategoriska"]
+    assert list(kwargs["sheets"]["Kontinuerliga"].columns)[0] == "Kolumn"
+    assert list(kwargs["sheets"]["Kategoriska"].columns)[:4] == [
+        "Kolumn",
+        "Kategori",
+        "Antal",
+        "Andel (icke-saknade)",
+    ]
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    images = kwargs["chart_factory"](None, None)
+    assert [image.heading for image in images] == ["First numeric", "Second numeric"]
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    assert controller._results.mock_calls == []
+
+
+@pytest.mark.parametrize(
+    ("format_choice", "method_name"),
+    [
+        (StatisticsExportFormat.CSV, "export_csv"),
+        (StatisticsExportFormat.BINARY, "export_data"),
+    ],
+)
+def test_statistics_single_table_routes_to_non_excel_exporters(format_choice, method_name, monkeypatch):
+    controller, dialog, result, exporter = _statistics_export_context()
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: text)
+    request = StatisticsExportRequest(result, (StatisticsExportTable.CATEGORICAL,), format_choice)
+
+    controller._export_statistics(dialog, exporter, request)
+
+    kwargs = getattr(exporter, method_name).call_args.kwargs
+    assert list(kwargs["df"].columns)[0] == "Column"
+    assert kwargs["show_success_dialog"] is True
+    assert exporter.export_excel.call_count == 0
+
+
+def test_statistics_export_rejects_stale_snapshot_without_lookup():
+    controller, dialog, result, exporter = _statistics_export_context()
+    request = StatisticsExportRequest(result, (StatisticsExportTable.CONTINUOUS,), StatisticsExportFormat.CSV)
+    dialog.invalidate_overview_export()
+
+    controller._export_statistics(dialog, exporter, request)
+
+    assert exporter.mock_calls == []
+
+
+def test_overview_export_dialog_cancellation_does_not_emit(monkeypatch):
+    from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+
+    _, dialog, _, _ = _overview_export_context()
+    requests = []
+    dialog.overview_export_requested.connect(requests.append)
+    monkeypatch.setattr(AnalysisExportDialog, "exec", lambda _self: QDialog.DialogCode.Rejected)
+    dialog._show_export_selection()
+    assert requests == []
+
+
+def test_overview_export_dialog_acceptance_emits_typed_snapshot_request(monkeypatch):
+    from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+
+    _, dialog, result, _ = _overview_export_context()
+    requests = []
+    dialog.overview_export_requested.connect(requests.append)
+    monkeypatch.setattr(AnalysisExportDialog, "exec", lambda _self: QDialog.DialogCode.Accepted)
+    dialog._show_export_selection()
+    assert requests == [OverviewExportRequest(result, (OverviewExportTable.COLUMNS,), OverviewExportFormat.EXCEL)]
+
+
+@pytest.mark.parametrize("invalidate", ["category", "dataset", "placeholder", "identity"])
+def test_export_selection_rejects_snapshot_changed_while_open(monkeypatch, invalidate):
+    from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+
+    _, dialog, _, _ = _overview_export_context()
+    requests = []
+    dialog.overview_export_requested.connect(requests.append)
+
+    def accept_after_change(_self):
+        match invalidate:
+            case "category":
+                dialog.select_category(AnalysisCategory.REGRESSION)
+            case "dataset":
+                dialog.select_dataset("other")
+            case "placeholder":
+                dialog.show_placeholder("Analysis failed")
+            case "identity":
+                dialog.set_exportable_overview(analyze_dataset_overview(pd.DataFrame({"value": [9]})))
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(AnalysisExportDialog, "exec", accept_after_change)
+    dialog._show_export_selection()
+    assert requests == []
+
+
+@pytest.mark.parametrize(
+    "category", [category for category in AnalysisCategory if category is not AnalysisCategory.OVERVIEW]
+)
+def test_other_analysis_export_preview_never_emits_or_exports(monkeypatch, category):
+    from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+
+    _, dialog, _, exporter = _overview_export_context()
+    requests = []
+    dialog.overview_export_requested.connect(requests.append)
+    dialog.select_category(category)
+    monkeypatch.setattr(AnalysisExportDialog, "exec", lambda _self: QDialog.DialogCode.Accepted)
+    dialog._show_export_selection()
+    assert requests == []
+    assert exporter.mock_calls == []
+
+
+def test_overview_job_is_stale_after_navigating_away_and_back():
+    controller, dialog, result, _ = _overview_export_context()
+    controller._run_analysis(
+        dialog,
+        AnalysisCategory.OVERVIEW,
+        controller._category_handlers[AnalysisCategory.OVERVIEW],
+        "chosen",
+        pd.DataFrame({"value": [1, 2]}),
+    )
+    call = controller._async_ops.last_call
+    dialog.select_category(AnalysisCategory.STATISTICS)
+    dialog.select_category(AnalysisCategory.OVERVIEW)
+    assert call["stale_check"]()
+    call["on_result"](result)
+    assert dialog.exportable_overview() is None
+
+
+def test_open_analysis_dialog_reuses_injected_exporter_and_connects_request(dialog_factory):
+    results = DummyResults(datasets=[DatasetRef("chosen", "Chosen", 2, 1)], active_tab_id="chosen")
+    exporter = Mock()
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps(), export_controller=exporter)
+    _open_and_flush(controller, QWidget())
+    dialog = dialog_factory[0]
+    assert exporter.mock_calls == []
+    result = analyze_dataset_overview(pd.DataFrame({"a": [1]}))
+    dialog.set_exportable_overview(result)
+    dialog.overview_export_requested.emit(
+        OverviewExportRequest(result, (OverviewExportTable.SAMPLE,), OverviewExportFormat.CSV)
+    )
+    assert len(exporter.mock_calls) == 1
+    assert exporter.export_csv.call_count == 1
+    kwargs = exporter.export_csv.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    pd.testing.assert_frame_equal(kwargs["df"], pd.DataFrame({"a": [1]}))
 
 
 class DummyResults:
@@ -100,6 +640,15 @@ class DummyAnalysisDialog:
         self.kwargs = kwargs
         self.category_changed = DummySignal()
         self.dataset_changed = DummySignal()
+        self.overview_export_requested = DummySignal()
+        self.statistics_export_requested = DummySignal()
+        self.hypothesis_export_requested = DummySignal()
+        self.correlation_export_requested = DummySignal()
+        self.regression_export_requested = DummySignal()
+        self.outliers_export_requested = DummySignal()
+        self.clustering_export_requested = DummySignal()
+        self.pca_export_requested = DummySignal()
+        self.time_series_export_requested = DummySignal()
         self.placeholder_calls: list[str] = []
         self.content_widgets: list[QWidget] = []
         self.config_widgets: list[QWidget | None] = []
@@ -109,12 +658,113 @@ class DummyAnalysisDialog:
         self._selected_dataset_tab_id: str | None = None
         self._current_content: QWidget | None = None
         self._current_config: QWidget | None = None
+        self._export_overview = None
+        self._export_statistics = None
+        self._export_hypothesis = None
+        self._export_correlation = None
+        self._export_regression = None
+        self._export_outliers = None
+        self._export_clustering = None
+        self._export_pca = None
+        self._export_time_series = None
+        self._correlation_export_revision = 0
+        self._analysis_revision = 0
+
+    def invalidate_overview_export(self):
+        self._export_overview = None
+        self._export_statistics = None
+        self._export_hypothesis = None
+        self._export_regression = None
+        self._export_outliers = None
+        self._export_clustering = None
+        self._export_pca = None
+        self._export_time_series = None
+        self.invalidate_correlation_export()
+        self._analysis_revision += 1
+
+    def invalidate_correlation_export(self):
+        self._export_correlation = None
+        self._correlation_export_revision += 1
+
+    def correlation_export_revision(self):
+        return self._correlation_export_revision
+
+    def analysis_revision(self):
+        return self._analysis_revision
+
+    def set_exportable_overview(self, result):
+        self._export_overview = result
+
+    def exportable_overview(self):
+        return self._export_overview
+
+    def set_exportable_statistics(self, result):
+        self._export_statistics = result
+
+    def exportable_statistics(self):
+        return self._export_statistics
+
+    def set_exportable_hypothesis(self, snapshot):
+        self._export_hypothesis = snapshot
+
+    def exportable_hypothesis(self):
+        return self._export_hypothesis
+
+    def set_exportable_correlation(self, snapshot):
+        self._export_correlation = snapshot
+
+    def exportable_correlation(self):
+        if self._selected_category is AnalysisCategory.CORRELATION:
+            return self._export_correlation
+        return None
+
+    def set_exportable_regression(self, snapshot):
+        self._export_regression = snapshot
+
+    def exportable_regression(self):
+        if self._selected_category is AnalysisCategory.REGRESSION:
+            return self._export_regression
+        return None
+
+    def set_exportable_outliers(self, snapshot):
+        self._export_outliers = snapshot
+
+    def exportable_outliers(self):
+        if self._selected_category is AnalysisCategory.OUTLIERS:
+            return self._export_outliers
+        return None
+
+    def set_exportable_clustering(self, snapshot):
+        self._export_clustering = snapshot
+
+    def exportable_clustering(self):
+        if self._selected_category is AnalysisCategory.CLUSTERING:
+            return self._export_clustering
+        return None
+
+    def set_exportable_pca(self, snapshot):
+        self._export_pca = snapshot
+
+    def exportable_pca(self):
+        if self._selected_category is AnalysisCategory.PCA:
+            return self._export_pca
+        return None
+
+    def set_exportable_time_series(self, snapshot):
+        self._export_time_series = snapshot
+
+    def exportable_time_series(self):
+        if self._selected_category is AnalysisCategory.TIME_SERIES:
+            return self._export_time_series
+        return None
 
     def show_placeholder(self, text):
+        self.invalidate_overview_export()
         self.placeholder_calls.append(text)
         self._current_content = None
 
     def set_content_widget(self, widget):
+        self.invalidate_overview_export()
         self.content_widgets.append(widget)
         self._current_content = widget
 
@@ -191,6 +841,107 @@ def test_open_dialog_does_nothing_when_there_are_no_datasets(dialog_factory):
     _open_and_flush(ctrl, QWidget())
 
     assert dialog_factory == []
+
+
+def test_reports_selected_before_initial_refresh_do_not_launch_analysis(monkeypatch):
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=1)
+    dialogs: list[AnalysisDialog] = []
+
+    def open_reports(dialog):
+        dialogs.append(dialog)
+        dialog.select_reports()
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(AnalysisDialog, "exec", open_reports)
+    results = DummyResults(datasets=[dataset], active_tab_id="t1")
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(results=results, async_ops=async_ops)
+
+    parent = QWidget()
+    _open_and_flush(ctrl, parent)
+
+    assert len(dialogs) == 1
+    dialog = dialogs[0]
+    assert dialog.selected_category() is None
+    assert async_ops.calls == []
+    # Even a programmatic dataset change must not launch a report-page analysis.
+    dialog.dataset_changed.emit("t1")
+    assert async_ops.calls == []
+    assert dialog.content_widget() is None
+
+
+@pytest.mark.parametrize("recompute", [False, True])
+def test_report_navigation_discards_pending_results_and_errors(recompute):
+    frame = pd.DataFrame({"a": [1, 2, 3]})
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=1)
+    results = DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": frame})
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(results=results, async_ops=async_ops)
+    dialog = AnalysisDialog(parent=None, datasets=[dataset], active_tab_id="t1")
+    content = QLabel("Existing result")
+    dialog.set_content_widget(content)
+    if recompute:
+        ctrl._recompute_content(
+            dialog,
+            category=AnalysisCategory.OVERVIEW,
+            scope_suffix="preview",
+            compute=lambda df, callbacks: "New result",
+            apply_result=lambda result: dialog.show_placeholder(str(result)),
+            is_stale=lambda: False,
+        )
+    else:
+        ctrl._refresh_content(dialog)
+    assert len(async_ops.calls) == 1
+    call = async_ops.last_call
+
+    dialog.select_reports()
+    page = dialog.report_page()
+    assert call["stale_check"]()
+    _simulate_success(call)
+    call["on_error"]("Late error")
+    ctrl._refresh_content(dialog)
+
+    assert dialog.content_widget() is content
+    assert dialog.report_page() is page
+    assert async_ops.calls == [call]
+
+
+@pytest.mark.parametrize("category", [AnalysisCategory.OVERVIEW, AnalysisCategory.REGRESSION])
+def test_returning_from_reports_preserves_automatic_and_apply_first_behavior(monkeypatch, category):
+    frame = pd.DataFrame({"a": range(8), "b": range(1, 9)})
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=8, column_count=2)
+    async_ops = DummyAsyncOps()
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": frame}),
+        async_ops=async_ops,
+    )
+    dialogs: list[AnalysisDialog] = []
+
+    def navigate(dialog):
+        dialogs.append(dialog)
+        dialog.select_reports()
+        QApplication.processEvents()
+        assert async_ops.calls == []
+        dialog.select_category(category)
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(AnalysisDialog, "exec", navigate)
+
+    parent = QWidget()
+    _open_and_flush(ctrl, parent)
+
+    dialog = dialogs[0]
+    assert dialog.selected_category() is category
+    if category is AnalysisCategory.OVERVIEW:
+        assert len(async_ops.calls) == 1
+        _simulate_success(async_ops.last_call)
+        assert isinstance(dialog.content_widget(), OverviewView)
+    else:
+        assert async_ops.calls == []
+        assert isinstance(dialog.config_widget(), RegressionConfigWidget)
+        assert isinstance(dialog.content_widget(), RegressionView)
+        dialog.config_widget().model_requested.emit()
+        assert len(async_ops.calls) == 1
 
 
 def test_open_dialog_builds_dialog_with_datasets_and_active_tab(dialog_factory):
@@ -365,7 +1116,7 @@ def test_statistics_category_runs_as_a_background_job_with_a_busy_overlay(dialog
     assert dlg.placeholder_calls == []
 
 
-def test_statistics_category_also_builds_a_column_picker_config_widget(dialog_factory):
+def test_statistics_category_has_no_configuration_widget(dialog_factory):
     df = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
     dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=2)
     async_ops = DummyAsyncOps()
@@ -381,10 +1132,8 @@ def test_statistics_category_also_builds_a_column_picker_config_widget(dialog_fa
     dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
     _simulate_success(async_ops.last_call)
 
-    assert len(dlg.config_widgets) == 2  # proactive None, then the real config widget
-    config = dlg.config_widgets[-1]
-    assert isinstance(config, StatisticsConfigWidget)
-    assert config.selected_column() == "a"
+    assert len(dlg.config_widgets) == 2
+    assert all(config is None for config in dlg.config_widgets)
 
 
 def test_statistics_category_shows_categorical_summaries_without_numeric_config(dialog_factory):
@@ -409,7 +1158,7 @@ def test_statistics_category_shows_categorical_summaries_without_numeric_config(
     assert dlg.config_widgets[-1] is None
 
 
-def test_changing_the_statistics_config_column_updates_the_content_view_directly(dialog_factory):
+def test_selecting_a_statistics_table_row_updates_the_content_view_directly(dialog_factory):
     """Switching columns is a pure GUI-thread operation - it must not
     dispatch a new background job (all columns' data is already computed).
     """
@@ -429,20 +1178,19 @@ def test_changing_the_statistics_config_column_updates_the_content_view_directly
     _simulate_success(async_ops.last_call)
 
     jobs_before = len(async_ops.calls)
-    config = dlg.config_widgets[-1]
     content = dlg.content_widgets[-1]
     assert isinstance(content, StatisticsView)
-    config._column_combo.setCurrentIndex(1)  # noqa: SLF001
+    assert dlg.config_widgets[-1] is None
+    numeric_table = next(table for table in content.findChildren(QTableWidget) if table.columnCount() == 17)
+    numeric_table.cellClicked.emit(1, 0)
 
     assert len(async_ops.calls) == jobs_before  # no new background job
-    assert config.selected_column() == "b"
-    numeric_table = next(table for table in content.findChildren(QTableWidget) if table.columnCount() == 17)
     assert numeric_table.item(1, 15).text().startswith("5")
     assert numeric_table.item(1, 16).text().startswith("5")
     assert "b: Shapiro-Wilk suggests" in content._recommendation_label.text()  # noqa: SLF001
 
 
-def test_clicking_a_statistics_table_row_updates_the_config_without_a_new_job(dialog_factory):
+def test_clicking_a_statistics_table_row_needs_no_config_or_new_job(dialog_factory):
     df = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
     dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=3, column_count=2)
     async_ops = DummyAsyncOps()
@@ -462,13 +1210,13 @@ def test_clicking_a_statistics_table_row_updates_the_config_without_a_new_job(di
     content = dlg.content_widgets[-1]
     config = dlg.config_widgets[-1]
     assert isinstance(content, StatisticsView)
-    assert isinstance(config, StatisticsConfigWidget)
+    assert config is None
     table = next(table for table in content.findChildren(QTableWidget) if table.columnCount() == 17)
 
     table.cellClicked.emit(1, 0)
 
     assert len(async_ops.calls) == jobs_before
-    assert config.selected_column() == "b"
+    assert table.currentRow() == 1
     assert "b: Shapiro-Wilk suggests" in content._recommendation_label.text()  # noqa: SLF001
 
 
@@ -483,16 +1231,14 @@ def test_switching_to_a_category_hides_a_stale_config_widget_while_loading(dialo
     _open_and_flush(ctrl, QWidget())
 
     dlg = dialog_factory[0]
-    dlg._selected_category = AnalysisCategory.STATISTICS
+    dlg._selected_category = AnalysisCategory.REGRESSION
     dlg._selected_dataset_tab_id = "t1"
-    dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
-    _simulate_success(async_ops.last_call)
+    dlg.category_changed.emit(AnalysisCategory.REGRESSION.value)
     assert dlg.config_widgets[-1] is not None
 
-    # Switch to Overview: the stale Statistics config widget must be hidden
-    # immediately, even before Overview's own job completes.
-    dlg._selected_category = AnalysisCategory.OVERVIEW
-    dlg.category_changed.emit(AnalysisCategory.OVERVIEW.value)
+    # Statistics must hide the previous config before its own job completes.
+    dlg._selected_category = AnalysisCategory.STATISTICS
+    dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
 
     assert dlg.config_widgets[-1] is None
 
@@ -700,6 +1446,79 @@ def _select_test(config: HypothesisTestsConfigWidget, test: HypothesisTest) -> N
     combo.setCurrentIndex(combo.findData(test.value))
 
 
+def test_hypothesis_column_edits_show_apply_prompt_and_clear_export_until_new_apply(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dialog = _open_hypothesis_tests(async_ops, dialog_factory)
+    assert dialog.exportable_hypothesis() is None
+    call = _apply_hypothesis_test(async_ops, dialog)
+    assert dialog.exportable_hypothesis() is None
+    _simulate_success(call)
+    snapshot = dialog.exportable_hypothesis()
+    assert snapshot is not None
+    assert snapshot.columns == ("value", "grp")
+    config = _hypothesis_tests_config(dialog)
+    jobs_before = len(async_ops.calls)
+
+    _gc_numeric_combo(config).setCurrentIndex(1)
+
+    assert config.current_configuration() != config.applied_configuration()
+    _assert_apply_prompt(ctrl, dialog)
+    assert dialog.exportable_hypothesis() is None
+    assert len(async_ops.calls) == jobs_before
+    second = _apply_hypothesis_test(async_ops, dialog)
+    _simulate_success(second)
+    assert dialog.exportable_hypothesis().columns == ("other", "grp")
+
+
+@pytest.mark.parametrize(
+    "change", ["test-return", "column-edit", "column-return", "dataset", "category-return", "prompt", "error", "apply"]
+)
+def test_hypothesis_late_callbacks_cannot_restore_invalidated_exports(dialog_factory, change):
+    async_ops = DummyAsyncOps()
+    _, dialog = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = _hypothesis_tests_config(dialog)
+    call = _apply_hypothesis_test(async_ops, dialog)
+    value = call["work"]()
+    match change:
+        case "test-return":
+            _select_test(config, HypothesisTest.CHI_SQUARE)
+            _select_test(config, HypothesisTest.GROUP_COMPARISON)
+        case "column-edit":
+            _gc_numeric_combo(config).setCurrentIndex(1)
+        case "column-return":
+            _gc_numeric_combo(config).setCurrentIndex(1)
+            _gc_numeric_combo(config).setCurrentIndex(0)
+        case "dataset":
+            dialog._selected_dataset_tab_id = "changed"
+        case "category-return":
+            dialog.invalidate_overview_export()
+        case "prompt":
+            dialog.show_placeholder("prompt")
+        case "error":
+            call["on_error"]("failure")
+        case "apply":
+            _apply_hypothesis_test(async_ops, dialog)
+    assert call["stale_check"]()
+    call["on_result"](value)
+    assert dialog.exportable_hypothesis() is None
+
+
+def test_hypothesis_failed_and_cancelled_jobs_never_register_exports(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dialog = _open_hypothesis_tests(
+        async_ops,
+        dialog_factory,
+        pd.DataFrame({"value": [1, 2, 3], "other": [1, 2, 3]}),
+    )
+    _select_test(_hypothesis_tests_config(dialog), HypothesisTest.PAIRED_COMPARISON)
+    _simulate_success(_apply_hypothesis_test(async_ops, dialog))
+    assert dialog.exportable_hypothesis() is None
+    call = _apply_hypothesis_test(async_ops, dialog)
+    assert call["work"](cancel_cb=lambda: True) is None
+    call["on_result"](None)
+    assert dialog.exportable_hypothesis() is None
+
+
 def test_hypothesis_tests_initialize_without_a_job_and_prompt_for_apply(dialog_factory):
     async_ops = DummyAsyncOps()
     ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
@@ -755,17 +1574,61 @@ def test_applying_a_hypothesis_test_runs_a_background_job_and_keeps_the_config(d
     assert len(dlg.config_widgets) == config_widgets_before
 
 
-def test_column_change_after_apply_keeps_the_result_until_applied_again(dialog_factory):
+def test_column_change_after_apply_shows_the_apply_prompt_without_a_job(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
     _simulate_success(_apply_hypothesis_test(async_ops, dlg))
-    view = dlg.content_widget()
+    assert isinstance(dlg.content_widget(), GroupComparisonView)
     jobs_before = len(async_ops.calls)
 
     _gc_numeric_combo(_hypothesis_tests_config(dlg)).setCurrentIndex(1)
 
     assert len(async_ops.calls) == jobs_before
-    assert dlg.content_widget() is view
+    _assert_apply_prompt(ctrl, dlg)
+
+
+def test_chi_square_and_paired_edits_show_the_apply_prompt(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = _hypothesis_tests_config(dlg)
+
+    _select_test(config, HypothesisTest.CHI_SQUARE)
+    _simulate_success(_apply_hypothesis_test(async_ops, dlg))
+    assert isinstance(dlg.content_widget(), ChiSquareView)
+    chi_config = config._chi_square_config  # noqa: SLF001
+    assert chi_config is not None
+    chi_config._row_combo.setCurrentIndex(chi_config._row_combo.findText("color"))  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+
+    _select_test(config, HypothesisTest.PAIRED_COMPARISON)
+    _simulate_success(_apply_hypothesis_test(async_ops, dlg))
+    assert isinstance(dlg.content_widget(), PairedComparisonView)
+    paired = config._paired_comparison_config  # noqa: SLF001
+    assert paired is not None
+    paired._columns_list.item(0).setCheckState(Qt.CheckState.Unchecked)  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+
+    paired._select_all_button.click()  # noqa: SLF001
+    _simulate_success(_apply_hypothesis_test(async_ops, dlg))
+    paired._clear_button.click()  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_hypothesis() is None
+
+
+def test_in_flight_hypothesis_result_is_discarded_after_a_column_edit(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_hypothesis_tests(async_ops, dialog_factory)
+    config = _hypothesis_tests_config(dlg)
+    call = _apply_hypothesis_test(async_ops, dlg)
+
+    _gc_numeric_combo(config).setCurrentIndex(1)
+    _gc_numeric_combo(config).setCurrentIndex(0)
+    content_widgets_before = len(dlg.content_widgets)
+    _simulate_success(call)
+
+    assert len(dlg.content_widgets) == content_widgets_before
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_hypothesis() is None
 
 
 def test_stale_hypothesis_test_result_is_discarded_when_applied_again(dialog_factory):
@@ -969,6 +1832,238 @@ def _correlation_df() -> pd.DataFrame:
     })
 
 
+def _correlation_export_context():
+    frame = _correlation_df()
+    frame["constant"] = 1.0
+    outcome = AnalysisController._compute_correlation(
+        frame,
+        analysis_controller_module._JobCallbacks(None, None),  # noqa: SLF001
+        columns=("a", "b", "c", "constant"),
+    )
+    assert outcome is not None and outcome.export_snapshot is not None
+    dialog = AnalysisDialog(
+        parent=None,
+        datasets=[DatasetRef("chosen", "Chosen", len(frame), len(frame.columns))],
+        active_tab_id="chosen",
+    )
+    dialog.select_category(AnalysisCategory.CORRELATION)
+    dialog.set_content_widget(CorrelationView(outcome.matrix, outcome.pair_detail))
+    dialog.set_exportable_correlation(outcome.export_snapshot)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must not look up a dataset")
+    results.current_df.side_effect = AssertionError("Export must not use the active tab")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, outcome.export_snapshot, Mock()
+
+
+@pytest.mark.parametrize("format_choice", list(StatisticsExportFormat))
+def test_correlation_export_routes_only_localized_ranked_table(
+    format_choice: StatisticsExportFormat,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    controller, dialog, snapshot, exporter = _correlation_export_context()
+    translations = {
+        "Strongest correlations": "Starkaste korrelationer",
+        "Variable 1": "Variabel 1",
+        "Variable 2": "Variabel 2",
+        "Coefficient": "Koefficient",
+        "95% CI lower": "95 % KI nedre",
+        "95% CI upper": "95 % KI övre",
+        "p": "p",
+        "Holm p": "Holm p",
+        "n": "n",
+        "Strength": "Styrka",
+        "Significant after Holm": "Signifikant efter Holm",
+        "Correlation method": "Korrelationsmetod",
+        "Ranking and Holm explanation": "Rangordning och Holm-förklaring",
+        "Pearson": "Pearson",
+        "Negligible": "Försumbar",
+        "Weak": "Svag",
+        "Moderate": "Måttlig",
+        "Strong": "Stark",
+        "N/A": "Ej tillämpligt",
+    }
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    request = CorrelationExportRequest(
+        snapshot,
+        (CorrelationExportComponent.STRONGEST_CORRELATIONS,),
+        format_choice,
+    )
+
+    controller._export_correlation(dialog, exporter, request)
+
+    method = {
+        StatisticsExportFormat.EXCEL: exporter.export_excel,
+        StatisticsExportFormat.CSV: exporter.export_csv,
+        StatisticsExportFormat.BINARY: exporter.export_data,
+    }[format_choice]
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    if format_choice is StatisticsExportFormat.EXCEL:
+        assert set(kwargs) == {
+            "sheets",
+            "chart_factory",
+            "chart_sheet_name",
+            "parent_widget",
+            "operation_target",
+            "show_success_dialog",
+        }
+        assert list(kwargs["sheets"]) == ["Starkaste korrelationer"]
+        assert kwargs["chart_factory"] is None
+        assert kwargs["chart_sheet_name"] is None
+        frame = kwargs["sheets"]["Starkaste korrelationer"]
+    else:
+        assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+        frame = kwargs["df"]
+    assert frame.columns.tolist() == [
+        "Variabel 1",
+        "Variabel 2",
+        "Koefficient",
+        "95 % KI nedre",
+        "95 % KI övre",
+        "p",
+        "Holm p",
+        "n",
+        "Styrka",
+        "Signifikant efter Holm",
+        "Korrelationsmetod",
+        "Rangordning och Holm-förklaring",
+    ]
+    assert list(zip(frame["Variabel 1"], frame["Variabel 2"], strict=True)) == [
+        (pair.x_column, pair.y_column) for pair in snapshot.matrix.pairs
+    ]
+    assert frame["Koefficient"].iloc[0] == snapshot.matrix.pairs[0].coefficient
+    assert pd.api.types.is_numeric_dtype(frame["Koefficient"])
+    assert pd.api.types.is_numeric_dtype(frame["95 % KI nedre"])
+    assert frame["Korrelationsmetod"].eq("Pearson").all()
+    assert "Holm adjustment" in frame["Rangordning och Holm-förklaring"].iloc[0]
+    assert "*" not in frame["Rangordning och Holm-förklaring"].iloc[0]
+    assert "Ej tillämpligt" in frame["Styrka"].tolist()
+    assert frame["Koefficient"].isna().any()
+    assert frame["95 % KI nedre"].isna().any()
+    assert controller._results.mock_calls == []
+
+
+def test_correlation_export_uses_compiled_swedish_labels() -> None:
+    controller, dialog, snapshot, exporter = _correlation_export_context()
+    translator = QTranslator()
+    catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / "app_sv.qm"
+    assert translator.load(str(catalog))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        controller._export_correlation(
+            dialog,
+            exporter,
+            CorrelationExportRequest(
+                snapshot,
+                (CorrelationExportComponent.STRONGEST_CORRELATIONS,),
+                StatisticsExportFormat.EXCEL,
+            ),
+        )
+    finally:
+        app.removeTranslator(translator)
+
+    sheets = exporter.export_excel.call_args.kwargs["sheets"]
+    assert list(sheets) == ["Starkaste korrelationerna"]
+    frame = sheets["Starkaste korrelationerna"]
+    assert frame.columns.tolist() == [
+        "Variabel 1",
+        "Variabel 2",
+        "Koefficient",
+        "95 % KI nedre",
+        "95 % KI övre",
+        "p",
+        "Holm p",
+        "n",
+        "Styrka",
+        "Signifikant efter Holm",
+        "Korrelationsmetod",
+        "Förklaring av rangordning och Holm-korrigering",
+    ]
+    assert "Stark" in frame["Styrka"].tolist()
+    assert "Ej tillämpligt" in frame["Styrka"].tolist()
+    assert "Holm-korrigering" in frame["Förklaring av rangordning och Holm-korrigering"].iloc[0]
+
+
+def test_correlation_export_rejects_stale_navigation_without_dataset_lookup() -> None:
+    controller, dialog, snapshot, exporter = _correlation_export_context()
+    request = CorrelationExportRequest(
+        snapshot,
+        (CorrelationExportComponent.STRONGEST_CORRELATIONS,),
+        StatisticsExportFormat.CSV,
+    )
+    dialog.select_category(AnalysisCategory.STATISTICS)
+
+    controller._export_correlation(dialog, exporter, request)
+
+    assert exporter.mock_calls == []
+    assert controller._results.mock_calls == []
+
+
+@pytest.mark.parametrize("format_choice", list(StatisticsExportFormat))
+def test_method_edit_rejects_previous_correlation_export_request(format_choice):
+    controller, dialog, snapshot, exporter = _correlation_export_context()
+    _, config = controller._render_correlation(snapshot.matrix, dialog)  # noqa: SLF001
+    assert isinstance(config, CorrelationConfigWidget)
+    request = CorrelationExportRequest(
+        snapshot,
+        (CorrelationExportComponent.STRONGEST_CORRELATIONS,),
+        format_choice,
+    )
+    config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.SPEARMAN))  # noqa: SLF001
+
+    _assert_apply_prompt(controller, dialog)
+    assert dialog.exportable_correlation() is None
+    controller._export_correlation(dialog, exporter, request)  # noqa: SLF001
+    assert exporter.mock_calls == []
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+@pytest.mark.parametrize(
+    "components",
+    [
+        (CorrelationExportComponent.MATRIX_PLOT,),
+        (CorrelationExportComponent.SCATTERPLOTS,),
+        tuple(CorrelationExportComponent),
+    ],
+)
+def test_correlation_excel_routes_independent_and_mixed_charts_from_owned_snapshot(components):
+    controller, dialog, snapshot, exporter = _correlation_export_context()
+    request = CorrelationExportRequest(snapshot, components, StatisticsExportFormat.EXCEL)
+    controller._export_correlation(dialog, exporter, request)
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"]
+    assert bool(kwargs["sheets"]) is (CorrelationExportComponent.STRONGEST_CORRELATIONS in components)
+    assert kwargs["chart_sheet_name"] == "Charts"
+    progress = []
+    images = kwargs["chart_factory"](progress.append, None)
+    expected = int(CorrelationExportComponent.MATRIX_PLOT in components)
+    if CorrelationExportComponent.SCATTERPLOTS in components:
+        expected += len(snapshot.matrix.pairs)
+    assert len(images) == expected
+    assert progress[-1] == 100
+    assert all(image.image_data.startswith(b"\x89PNG") for image in images)
+    assert controller._results.mock_calls == []
+
+
+def test_invalid_correlation_matrix_selection_returns_structured_error_without_indexing() -> None:
+    result = AnalysisController._compute_correlation(
+        _correlation_df(),
+        analysis_controller_module._JobCallbacks(None, None),  # noqa: SLF001
+        columns=("missing", "a"),
+    )
+
+    assert result is not None
+    assert result.matrix.error is CorrelationError.INVALID_COLUMN
+    assert result.export_snapshot is None
+
+
 def _open_correlation(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame | None = None):
     dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=6, column_count=4)
     ctrl = AnalysisController(
@@ -1000,6 +2095,20 @@ def _correlation_view(dlg: DummyAnalysisDialog) -> CorrelationView:
     return view
 
 
+def _click_correlation_pair(view: CorrelationView, x_column: str, y_column: str) -> tuple[str, str]:
+    """Select a pair by emitting the same table signal as a user click."""
+    table = view.table()
+    assert table is not None
+    wanted = {x_column, y_column}
+    for row in range(table.rowCount()):
+        pair = (table.item(row, 0).text(), table.item(row, 1).text())
+        if set(pair) == wanted:
+            table.cellClicked.emit(row, 0)
+            assert view.selected_pair() == pair
+            return pair
+    pytest.fail("Pair is not present in the correlation table")
+
+
 def _apply_correlation(async_ops: DummyAsyncOps, dlg: DummyAnalysisDialog) -> dict:
     """Click Apply and return the matrix job's call, without completing it."""
     _correlation_config(dlg)._apply_button.click()  # noqa: SLF001
@@ -1021,21 +2130,11 @@ def test_correlation_initializes_without_a_job_and_prompts_for_apply(dialog_fact
     config = _correlation_config(dlg)
     assert config.matrix_configuration() == (CorrelationMethod.PEARSON, ("a", "b", "c"))
     assert config.checked_columns() == ("a", "b", "c")
-    assert config.is_pair_selection_enabled() is False
-
-
-def test_pair_change_before_the_first_apply_starts_no_job(dialog_factory):
-    async_ops = DummyAsyncOps()
-    _, dlg = _open_correlation(async_ops, dialog_factory)
-
-    _correlation_config(dlg).set_pair("c", "a")
-
-    assert async_ops.calls == []
 
 
 def test_method_change_without_apply_starts_no_job(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    ctrl, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
     jobs_before = len(async_ops.calls)
 
@@ -1043,7 +2142,110 @@ def test_method_change_without_apply_starts_no_job(dialog_factory):
 
     assert len(async_ops.calls) == jobs_before
     assert config.matrix_configuration() == (CorrelationMethod.PEARSON, ("a", "b", "c"))
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_correlation() is None
+
+
+def test_method_edit_round_trip_discards_inflight_matrix_results_and_errors(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    call = _apply_correlation(async_ops, dlg)
+    config = _correlation_config(dlg)
+    combo = config._method_combo  # noqa: SLF001
+    combo.setCurrentIndex(combo.findData(CorrelationMethod.SPEARMAN))
+    combo.setCurrentIndex(combo.findData(CorrelationMethod.PEARSON))
+
+    _simulate_success(call)
+    call["on_error"]("stale failure")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_correlation() is None
+    assert dlg.placeholder_calls == []
+
+    _simulate_success(_apply_correlation(async_ops, dlg))
     assert _correlation_view(dlg).method() is CorrelationMethod.PEARSON
+    assert dlg.exportable_correlation() is not None
+
+
+def test_method_edit_discards_inflight_pair_result_and_error(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    _click_correlation_pair(_correlation_view(dlg), "a", "c")
+    call = async_ops.last_call
+    config = _correlation_config(dlg)
+    config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.KENDALL))  # noqa: SLF001
+
+    _simulate_success(call)
+    call["on_error"]("stale pair failure")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_correlation() is None
+    assert dlg.placeholder_calls == []
+
+    _simulate_success(_apply_correlation(async_ops, dlg))
+    assert _correlation_view(dlg).method() is CorrelationMethod.KENDALL
+    assert dlg.exportable_correlation().matrix.method is CorrelationMethod.KENDALL
+
+
+def test_pair_recompute_keeps_export_but_column_and_method_edits_show_prompt(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    snapshot = dlg.exportable_correlation()
+    assert snapshot is not None
+    config = _correlation_config(dlg)
+
+    pair = _click_correlation_pair(_correlation_view(dlg), "c", "a")
+    pair_call = async_ops.last_call
+    assert pair_call["scope"] == f"analysis:correlation:pair:pearson:{pair[0]}:{pair[1]}"
+    assert dlg.exportable_correlation() is snapshot
+    _simulate_success(pair_call)
+    assert dlg.exportable_correlation() is snapshot
+
+    jobs_before = len(async_ops.calls)
+    config._column_list.item(2).setCheckState(Qt.CheckState.Unchecked)  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_correlation() is None
+    assert len(async_ops.calls) == jobs_before
+
+    _simulate_success(_apply_correlation(async_ops, dlg))
+    assert dlg.exportable_correlation() is not None
+    config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.SPEARMAN))  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_correlation() is None
+    matrix_call = _apply_correlation(async_ops, dlg)
+    assert dlg.exportable_correlation() is None
+    _simulate_success(matrix_call)
+    assert dlg.exportable_correlation() is not None
+    assert dlg.exportable_correlation().matrix.method is CorrelationMethod.SPEARMAN
+
+
+@pytest.mark.parametrize("edit", ["toggle", "select-all", "clear"])
+def test_correlation_column_edits_show_prompt_and_discard_in_flight_matrix(dialog_factory, edit):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_correlation(async_ops, dialog_factory)
+    config = _correlation_config(dlg)
+    if edit == "select-all":
+        # Select all must have something to change.
+        config._column_list.item(0).setCheckState(Qt.CheckState.Unchecked)  # noqa: SLF001
+    call = _apply_correlation(async_ops, dlg)
+    jobs_before = len(async_ops.calls)
+
+    match edit:
+        case "toggle":
+            item = config._column_list.item(0)  # noqa: SLF001
+            item.setCheckState(Qt.CheckState.Unchecked)
+            item.setCheckState(Qt.CheckState.Checked)
+        case "select-all":
+            config._select_all_button.click()  # noqa: SLF001
+        case "clear":
+            config._clear_button.click()  # noqa: SLF001
+
+    _assert_apply_prompt(ctrl, dlg)
+    assert len(async_ops.calls) == jobs_before
+    assert call["stale_check"]()
+    content_widgets_before = len(dlg.content_widgets)
+    _simulate_success(call)
+    assert len(dlg.content_widgets) == content_widgets_before
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_correlation() is None
 
 
 def test_correlation_apply_runs_as_a_cancelable_background_job_with_progress(dialog_factory):
@@ -1071,19 +2273,47 @@ def test_correlation_job_reports_progress_through_the_injected_callback(dialog_f
     assert progress[-1] == 100
 
 
-def test_first_apply_details_the_strongest_pair_and_enables_pair_selection(dialog_factory):
+def test_matrix_worker_owns_selected_columns_before_analysis_and_pair_detail(dialog_factory):
+    async_ops = DummyAsyncOps()
+    source = _correlation_df()
+    source_before = source.copy(deep=True)
+    _, dlg = _open_correlation(async_ops, dialog_factory, source)
+    call = _apply_correlation(async_ops, dlg)
+    outcome = call["work"](cancel_cb=lambda: False)
+
+    assert outcome.export_snapshot is not None
+    assert outcome.export_snapshot.matrix_data.columns.tolist() == ["a", "b", "c"]
+    pd.testing.assert_frame_equal(outcome.export_snapshot.matrix_data, source_before[["a", "b", "c"]])
+    source.loc[:, ["a", "b", "c"]] = -999.0
+    pd.testing.assert_frame_equal(outcome.export_snapshot.matrix_data, source_before[["a", "b", "c"]])
+    assert outcome.pair_detail is not None
+    expected_detail = analyze_correlation_pair(
+        source_before,
+        outcome.pair_detail.pair.x_column,
+        outcome.pair_detail.pair.y_column,
+        outcome.matrix.method,
+    )
+    assert outcome.pair_detail.pair.x_column == expected_detail.pair.x_column
+    assert outcome.pair_detail.pair.y_column == expected_detail.pair.y_column
+    assert outcome.pair_detail.pair.coefficient == expected_detail.pair.coefficient
+    assert outcome.pair_detail.pair.n == expected_detail.pair.n
+    assert np.isnan(outcome.pair_detail.pair.adjusted_p_value)
+
+    call["on_result"](outcome)
+    assert dlg.exportable_correlation() is outcome.export_snapshot
+
+
+def test_first_apply_details_the_strongest_pair_in_the_table(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_correlation(async_ops, dialog_factory)
-    config = _correlation_config(dlg)
-    config.set_pair("c", "a")  # disabled pickers only hold a placeholder pair
 
     _simulate_success(_apply_correlation(async_ops, dlg))
 
-    detail = _correlation_view(dlg).pair_detail()
+    view = _correlation_view(dlg)
+    detail = view.pair_detail()
     assert detail is not None
     assert (detail.pair.x_column, detail.pair.y_column) == ("a", "b")
-    assert config.current_pair() == ("a", "b")
-    assert config.is_pair_selection_enabled() is True
+    assert view.selected_pair() == ("a", "b")
     assert async_ops.last_call["scope"] == "analysis:correlation:matrix:pearson"  # no extra pair job
 
 
@@ -1145,6 +2375,87 @@ def test_apply_recomputes_the_matrix_with_the_checked_columns(dialog_factory):
     table = view.table()
     assert table is not None
     assert table.rowCount() == 1
+    assert view.columns() == ("a", "b")
+    assert _correlation_view(dlg).selected_pair() == ("a", "b")
+
+
+def test_replacement_matrix_drops_excluded_pair_without_extra_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    config = _correlation_config(dlg)
+    _click_correlation_pair(_correlation_view(dlg), "c", "a")
+    _simulate_success(async_ops.last_call)
+    item = config._column_list.item(2)  # noqa: SLF001
+    item.setCheckState(item.checkState().Unchecked)
+
+    call = _apply_correlation(async_ops, dlg)
+    jobs_before = len(async_ops.calls)
+    outcome = call["work"]()
+    assert outcome.pair_detail is not None
+    assert (outcome.pair_detail.pair.x_column, outcome.pair_detail.pair.y_column) == ("a", "b")
+    call["on_result"](outcome)
+
+    assert _correlation_view(dlg).selected_pair() == ("a", "b")
+    assert len(async_ops.calls) == jobs_before
+    detail = _correlation_view(dlg).pair_detail()
+    assert detail is not None
+    assert (detail.pair.x_column, detail.pair.y_column) == ("a", "b")
+
+
+def test_pair_controller_rejects_columns_outside_displayed_matrix(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    config = _correlation_config(dlg)
+    item = config._column_list.item(2)  # noqa: SLF001
+    item.setCheckState(item.checkState().Unchecked)
+    _simulate_success(_apply_correlation(async_ops, dlg))
+    jobs_before = len(async_ops.calls)
+
+    ctrl._recompute_correlation_pair(dlg, "c", "a")  # noqa: SLF001
+    ctrl._recompute_correlation_pair(dlg, "a", "a")  # noqa: SLF001
+
+    assert len(async_ops.calls) == jobs_before
+
+
+def test_replacement_matrix_preserves_a_valid_table_pair(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    config = _correlation_config(dlg)
+    selected_pair = _click_correlation_pair(_correlation_view(dlg), "c", "a")
+    _simulate_success(async_ops.last_call)
+    item = config._column_list.item(1)  # noqa: SLF001 - "b"
+    item.setCheckState(item.checkState().Unchecked)
+
+    call = _apply_correlation(async_ops, dlg)
+    jobs_before = len(async_ops.calls)
+    _simulate_success(call)
+
+    assert _correlation_view(dlg).selected_pair() == selected_pair
+    assert len(async_ops.calls) == jobs_before
+    detail = _correlation_view(dlg).pair_detail()
+    assert detail is not None
+    assert (detail.pair.x_column, detail.pair.y_column) == selected_pair
+
+
+@pytest.mark.parametrize("failed", [True, False])
+def test_unsuccessful_matrix_replacement_can_be_rerun(dialog_factory, failed):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    config = _correlation_config(dlg)
+    item = config._column_list.item(2)  # noqa: SLF001
+    item.setCheckState(item.checkState().Unchecked)
+    call = _apply_correlation(async_ops, dlg)
+
+    if failed:
+        call["on_error"]("boom")
+    else:
+        call["on_result"](None)
+
+    assert dlg.config_widgets[-1] is config
+    retry = _apply_correlation(async_ops, dlg)
+    _simulate_success(retry)
+
+    assert _correlation_view(dlg).columns() == ("a", "b")
 
 
 def test_cancelled_matrix_recompute_shows_placeholder_and_keeps_config(dialog_factory):
@@ -1157,7 +2468,6 @@ def test_cancelled_matrix_recompute_shows_placeholder_and_keeps_config(dialog_fa
 
     assert dlg.placeholder_calls[-1] == ctrl._tr(ctrl.TR_ANALYSIS_CANCELLED)  # noqa: SLF001
     assert dlg.config_widgets[-1] is config
-    assert config.is_pair_selection_enabled() is False
 
 
 def test_stale_matrix_recompute_is_discarded_when_applied_again(dialog_factory):
@@ -1168,6 +2478,7 @@ def test_stale_matrix_recompute_is_discarded_when_applied_again(dialog_factory):
 
     combo.setCurrentIndex(combo.findData(CorrelationMethod.SPEARMAN))
     first = _apply_correlation(async_ops, dlg)
+    assert dlg.exportable_correlation() is None
     combo.setCurrentIndex(combo.findData(CorrelationMethod.KENDALL))
     second = _apply_correlation(async_ops, dlg)
 
@@ -1179,17 +2490,30 @@ def test_stale_matrix_recompute_is_discarded_when_applied_again(dialog_factory):
     assert _correlation_view(dlg).method() is CorrelationMethod.KENDALL
 
 
+def test_repeated_apply_with_same_configuration_rejects_the_older_matrix_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_correlation(async_ops, dialog_factory)
+    first = _apply_correlation(async_ops, dlg)
+    second = _apply_correlation(async_ops, dlg)
+
+    first_result = first["work"](cancel_cb=lambda: False)
+    first["on_result"](first_result)
+    assert dlg.exportable_correlation() is None
+    second_result = second["work"](cancel_cb=lambda: False)
+    second["on_result"](second_result)
+    assert dlg.exportable_correlation() is not None
+
+
 def test_pair_change_recomputes_only_the_pair_detail_over_the_pair_panel(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_correlation(async_ops, dialog_factory)
-    config = _correlation_config(dlg)
     view = _correlation_view(dlg)
     contents_before = len(dlg.content_widgets)
 
-    config.set_pair("c", "a")
+    selected_pair = _click_correlation_pair(view, "c", "a")
 
     call = async_ops.last_call
-    assert call["scope"] == "analysis:correlation:pair:pearson:c:a"
+    assert call["scope"] == f"analysis:correlation:pair:pearson:{selected_pair[0]}:{selected_pair[1]}"
     assert call["target"] is view.pair_panel()
     assert call["cancelable"] is False
 
@@ -1198,34 +2522,32 @@ def test_pair_change_recomputes_only_the_pair_detail_over_the_pair_panel(dialog_
     assert len(dlg.content_widgets) == contents_before  # view updated in place
     detail = view.pair_detail()
     assert detail is not None
-    assert (detail.pair.x_column, detail.pair.y_column) == ("c", "a")
+    assert (detail.pair.x_column, detail.pair.y_column) == selected_pair
 
 
 def test_clicking_a_table_row_selects_the_pair_and_recomputes_it(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_correlation(async_ops, dialog_factory)
-    config = _correlation_config(dlg)
     view = _correlation_view(dlg)
     table = view.table()
     assert table is not None
 
     table.cellClicked.emit(2, 0)
 
-    last_pair = view._result.pairs[2]  # noqa: SLF001
-    assert config.current_pair() == (last_pair.x_column, last_pair.y_column)
-    assert async_ops.last_call["scope"].startswith("analysis:correlation:pair:")
+    selected_pair = (table.item(2, 0).text(), table.item(2, 1).text())
+    assert view.selected_pair() == selected_pair
+    assert async_ops.last_call["scope"] == (f"analysis:correlation:pair:pearson:{selected_pair[0]}:{selected_pair[1]}")
 
 
 def test_stale_pair_recompute_is_discarded_when_the_pair_changes_again(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_correlation(async_ops, dialog_factory)
-    config = _correlation_config(dlg)
     view = _correlation_view(dlg)
     initial_detail = view.pair_detail()
 
-    config.set_pair("c", "a")
+    _click_correlation_pair(view, "c", "a")
     first = async_ops.last_call
-    config.set_pair("b", "c")
+    latest_pair = _click_correlation_pair(view, "b", "c")
     second = async_ops.last_call
 
     _simulate_success(first)
@@ -1234,42 +2556,68 @@ def test_stale_pair_recompute_is_discarded_when_the_pair_changes_again(dialog_fa
     _simulate_success(second)
     detail = view.pair_detail()
     assert detail is not None
-    assert (detail.pair.x_column, detail.pair.y_column) == ("b", "c")
+    assert (detail.pair.x_column, detail.pair.y_column) == latest_pair
 
 
-def test_pair_change_while_the_matrix_is_computing_is_caught_up_afterwards(dialog_factory):
+def test_stale_pair_recompute_is_discarded_when_selection_returns_to_same_pair(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_correlation(async_ops, dialog_factory)
-    config = _correlation_config(dlg)
+    view = _correlation_view(dlg)
+    initial_detail = view.pair_detail()
+
+    first_pair = _click_correlation_pair(view, "c", "a")
+    first = async_ops.last_call
+    _click_correlation_pair(view, "b", "c")
+    second = async_ops.last_call
+    latest_pair = _click_correlation_pair(view, *first_pair)
+    latest = async_ops.last_call
+    assert latest_pair == first_pair
+
+    _simulate_success(first)
+    assert view.pair_detail() is initial_detail
+    _simulate_success(second)
+    assert view.pair_detail() is initial_detail
+
+    _simulate_success(latest)
+    detail = view.pair_detail()
+    assert detail is not None
+    assert (detail.pair.x_column, detail.pair.y_column) == latest_pair
+
+
+def test_table_pair_change_while_matrix_computes_is_preserved_on_replacement(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_correlation(async_ops, dialog_factory)
+    view = _correlation_view(dlg)
 
     matrix_call = _apply_correlation(async_ops, dlg)
-    dlg.show_placeholder("computing")  # no view is displayed while the matrix job runs
-    jobs_before = len(async_ops.calls)
-
-    config.set_pair("c", "a")
-    assert len(async_ops.calls) == jobs_before  # nothing to update yet
+    selected_pair = _click_correlation_pair(view, "c", "a")
+    pair_call = async_ops.last_call
+    assert pair_call["scope"] == f"analysis:correlation:pair:pearson:{selected_pair[0]}:{selected_pair[1]}"
 
     _simulate_success(matrix_call)
-
-    pair_call = async_ops.last_call
-    assert pair_call["scope"] == "analysis:correlation:pair:pearson:c:a"
+    catchup_call = async_ops.last_call
+    assert catchup_call["scope"] == f"analysis:correlation:pair:pearson:{selected_pair[0]}:{selected_pair[1]}"
     _simulate_success(pair_call)
+    _simulate_success(catchup_call)
+
     detail = _correlation_view(dlg).pair_detail()
     assert detail is not None
-    assert (detail.pair.x_column, detail.pair.y_column) == ("c", "a")
+    assert (detail.pair.x_column, detail.pair.y_column) == selected_pair
 
 
-def test_pair_recompute_uses_the_displayed_matrix_method(dialog_factory):
+def test_method_change_prevents_old_table_from_requesting_pair_updates(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_correlation(async_ops, dialog_factory)
     config = _correlation_config(dlg)
+    view = _correlation_view(dlg)
 
-    # Kendall is applied, but its matrix job hasn't finished: the view is still Pearson.
     config._method_combo.setCurrentIndex(config._method_combo.findData(CorrelationMethod.KENDALL))  # noqa: SLF001
     _apply_correlation(async_ops, dlg)
-    config.set_pair("c", "a")
+    jobs_before = len(async_ops.calls)
+    _click_correlation_pair(view, "c", "a")
 
-    assert async_ops.last_call["scope"] == "analysis:correlation:pair:pearson:c:a"
+    assert len(async_ops.calls) == jobs_before
+    assert async_ops.last_call["scope"] == "analysis:correlation:matrix:kendall"
 
 
 def test_recompute_shows_error_placeholder_when_the_dataset_cannot_be_reloaded(dialog_factory):
@@ -1440,17 +2788,21 @@ def test_applying_predictors_refits_the_model_in_a_background_job(dialog_factory
     assert dlg.config_widgets[-1] is config  # the config is never rebuilt
 
 
-def test_changing_the_target_refits_without_it_as_a_predictor(dialog_factory):
+def test_changing_the_target_waits_for_apply_and_excludes_it_as_a_predictor(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_regression(async_ops, dialog_factory)
     config = _regression_config(dlg)
     _check_predictors(config, "x", "z")
     config._apply_button.click()  # noqa: SLF001
     _simulate_success(async_ops.last_call)
+    jobs_before = len(async_ops.calls)
 
     combo = config._target_combo  # noqa: SLF001
     combo.setCurrentIndex(combo.findText("x"))
 
+    assert len(async_ops.calls) == jobs_before
+    assert not isinstance(dlg.content_widget(), RegressionView)
+    config._apply_button.click()  # noqa: SLF001
     call = async_ops.last_call
     assert call["scope"] == "analysis:regression:x:z"
     _simulate_success(call)
@@ -1476,6 +2828,100 @@ def test_stale_regression_result_is_discarded(dialog_factory):
 
     _simulate_success(second)
     assert _regression_view(dlg).result().predictors == ("z",)
+
+
+@pytest.mark.parametrize("edit", ["target", "model", "predictor", "bulk"])
+@pytest.mark.parametrize("callback", ["success", "error"])
+def test_regression_edits_and_same_value_round_trips_leave_prompt_and_discard_old_jobs(
+    dialog_factory,
+    edit,
+    callback,
+):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_regression(async_ops, dialog_factory)
+    config = _regression_config(dlg)
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    call = async_ops.last_call
+    jobs_before = len(async_ops.calls)
+    if edit == "target":
+        combo = config._target_combo  # noqa: SLF001
+        combo.setCurrentIndex(combo.findText("z"))
+        combo.setCurrentIndex(combo.findText("y"))
+    elif edit == "model":
+        combo = config._model_combo  # noqa: SLF001
+        combo.setCurrentIndex(combo.findData(RegressionModel.LOGISTIC.value))
+        combo.setCurrentIndex(combo.findData(RegressionModel.LINEAR.value))
+    elif edit == "predictor":
+        _check_predictors(config, "x", "z")
+        _check_predictors(config, "x")
+    else:
+        config._select_all_button.click()  # noqa: SLF001
+        _check_predictors(config, "x")
+    assert len(async_ops.calls) == jobs_before
+    _assert_apply_prompt(ctrl, dlg)
+    contents_before = len(dlg.content_widgets)
+    if callback == "success":
+        _simulate_success(call)
+    else:
+        call["on_error"]("late error")
+    assert len(dlg.content_widgets) == contents_before
+    assert dlg.placeholder_calls == []
+    _assert_apply_prompt(ctrl, dlg)
+    config._apply_button.click()  # noqa: SLF001
+    assert len(async_ops.calls) == jobs_before + 1
+    _simulate_success(async_ops.last_call)
+    assert _regression_view(dlg).result().error is None
+
+
+@pytest.mark.parametrize("model", list(RegressionModel))
+def test_model_edits_after_fitted_result_show_prompt_without_refitting(dialog_factory, model):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_regression(async_ops, dialog_factory)
+    config = _regression_config(dlg)
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    jobs_before = len(async_ops.calls)
+    combo = config._model_combo  # noqa: SLF001
+    if model is RegressionModel.LINEAR:
+        combo.setCurrentIndex(combo.findData(RegressionModel.LOGISTIC.value))
+    combo.setCurrentIndex(combo.findData(model.value))
+    assert len(async_ops.calls) == jobs_before
+    _assert_apply_prompt(ctrl, dlg)
+
+
+def test_regression_job_is_stale_after_dataset_round_trip_without_config_edit(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_regression(async_ops, dialog_factory)
+    config = _regression_config(dlg)
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    call = async_ops.last_call
+    dlg.invalidate_overview_export()
+    dlg._selected_dataset_tab_id = "other"
+    dlg.invalidate_overview_export()
+    dlg._selected_dataset_tab_id = "t1"
+    _simulate_success(call)
+    call["on_error"]("late error")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.placeholder_calls == []
+
+
+def test_regression_apply_retries_unchanged_configuration_after_failed_job(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory)
+    config = _regression_config(dlg)
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    first["on_error"]("fit failed")
+    assert config._apply_button.isEnabled()  # noqa: SLF001
+    config._apply_button.click()  # noqa: SLF001
+    assert len(async_ops.calls) == 2
+    assert async_ops.last_call["scope"] == first["scope"]
+    _simulate_success(async_ops.last_call)
+    assert _regression_view(dlg).result().error is None
 
 
 def test_applying_logistic_regression_uses_glm_view_and_keeps_linear_defaults(dialog_factory):
@@ -1764,16 +3210,6 @@ def test_outliers_initialize_without_a_job_and_prompt_for_apply(dialog_factory):
     _assert_apply_prompt(ctrl, dlg)
     config = _outliers_config(dlg)
     assert config.summary_configuration() == (OutlierMethod.IQR, 1.5)
-    assert config.is_column_selection_enabled() is False
-
-
-def test_outlier_column_change_before_the_first_apply_starts_no_job(dialog_factory):
-    async_ops = DummyAsyncOps()
-    _, dlg = _open_outliers(async_ops, dialog_factory)
-
-    _outliers_config(dlg).set_column("b")
-
-    assert async_ops.calls == []
 
 
 def test_outlier_apply_runs_as_a_background_job_with_a_standard_overlay(dialog_factory):
@@ -1788,17 +3224,15 @@ def test_outlier_apply_runs_as_a_background_job_with_a_standard_overlay(dialog_f
     assert call["indeterminate"] is True
 
 
-def test_first_outlier_apply_details_the_top_ranked_column_and_enables_column_selection(dialog_factory):
+def test_first_outlier_apply_details_the_top_ranked_column(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_outliers(async_ops, dialog_factory)
-    config = _outliers_config(dlg)
-    config.set_column("b")  # the disabled picker only holds a placeholder column
 
     _simulate_success(_apply_outliers(async_ops, dlg))
 
-    assert _detail_column(_outliers_view(dlg)) == "a"
-    assert config.current_column() == "a"
-    assert config.is_column_selection_enabled() is True
+    view = _outliers_view(dlg)
+    assert _detail_column(view) == "a"
+    assert view.selected_column() == "a"
     assert async_ops.last_call["scope"] == "analysis:outliers:summary:iqr:1.5"  # no extra column job
 
 
@@ -1815,7 +3249,7 @@ def test_outliers_without_numeric_columns_show_error_without_config(dialog_facto
 
 def test_outlier_method_and_threshold_changes_start_no_job_until_applied(dialog_factory):
     async_ops = DummyAsyncOps()
-    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    ctrl, dlg = _open_applied_outliers(async_ops, dialog_factory)
     config = _outliers_config(dlg)
     jobs_before = len(async_ops.calls)
 
@@ -1824,7 +3258,94 @@ def test_outlier_method_and_threshold_changes_start_no_job_until_applied(dialog_
 
     assert len(async_ops.calls) == jobs_before
     assert config.summary_configuration() == (OutlierMethod.IQR, 1.5)
-    assert _outliers_view(dlg).configuration() == (OutlierMethod.IQR, 1.5)
+    _assert_apply_prompt(ctrl, dlg)
+
+
+@pytest.mark.parametrize("control", ["method", "threshold"])
+def test_univariate_edit_shows_prompt_without_running_job(dialog_factory, control):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    config = _outliers_config(dlg)
+    jobs_before = len(async_ops.calls)
+    if control == "method":
+        _select_outlier_method(config, OutlierMethod.Z_SCORE)
+    else:
+        config._threshold_spin.setValue(2.5)  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.config_widget() is config
+    assert len(async_ops.calls) == jobs_before
+
+
+@pytest.mark.parametrize(
+    ("control", "setter", "value"),
+    [
+        ("_method_combo", "setCurrentIndex", 1),
+        ("_standardize_checkbox", "setChecked", False),
+        ("_contamination_spin", "setValue", 10.0),
+        ("_neighbors_spin", "setValue", 5),
+        ("feature", "setCheckState", None),
+        ("_clear_button", "click", None),
+        ("_select_all_button", "click", None),
+    ],
+)
+def test_multivariate_edit_shows_prompt_without_running_job(dialog_factory, control, setter, value):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_outliers(async_ops, dialog_factory)
+    config = _switch_to_multivariate(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    jobs_before = len(async_ops.calls)
+    if control == "feature":
+        config._column_list.item(1).setCheckState(Qt.CheckState.Unchecked)  # noqa: SLF001
+    elif value is None:
+        if control == "_select_all_button":
+            config._clear_button.click()  # noqa: SLF001
+        getattr(getattr(config, control), setter)()
+    else:
+        getattr(getattr(config, control), setter)(value)
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.config_widget() is config
+    assert len(async_ops.calls) == jobs_before
+
+
+@pytest.mark.parametrize("multivariate", [False, True])
+@pytest.mark.parametrize("repeat_apply", [False, True])
+def test_outlier_stale_fit_cannot_replace_prompt_or_newer_result(dialog_factory, multivariate, repeat_apply):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_outliers(async_ops, dialog_factory)
+    config = _switch_to_multivariate(dlg) if multivariate else _outliers_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    if not repeat_apply:
+        if multivariate:
+            config._standardize_checkbox.toggle()  # noqa: SLF001
+            config._standardize_checkbox.toggle()  # noqa: SLF001
+        else:
+            original = config.current_threshold()
+            config._threshold_spin.setValue(original + 0.5)  # noqa: SLF001
+            config._threshold_spin.setValue(original)  # noqa: SLF001
+    else:
+        config._apply_button.click()  # noqa: SLF001
+    _simulate_success(first)
+    first["on_error"]("stale failure")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.placeholder_calls == []
+    if not repeat_apply:
+        config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    assert isinstance(dlg.content_widget(), MultivariateOutliersView if multivariate else OutliersView)
+
+
+def test_univariate_edit_discards_pending_column_result_and_error(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    _outliers_view(dlg).select_column("b")
+    call = async_ops.last_call
+    _outliers_config(dlg)._threshold_spin.setValue(2.5)  # noqa: SLF001
+    _simulate_success(call)
+    call["on_error"]("stale column error")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.placeholder_calls == []
 
 
 def test_switching_outliers_to_multivariate_prompts_without_fitting(dialog_factory):
@@ -1951,7 +3472,7 @@ def test_applied_outlier_method_recomputes_the_summary_and_keeps_the_config(dial
     config = _outliers_config(dlg)
     first_view = _outliers_view(dlg)
     configs_before = len(dlg.config_widgets)
-    config.set_column("b")
+    first_view.select_column("b")
     _simulate_success(async_ops.last_call)
 
     _select_outlier_method(config, OutlierMethod.Z_SCORE)
@@ -1966,7 +3487,7 @@ def test_applied_outlier_method_recomputes_the_summary_and_keeps_the_config(dial
     detail = view.column_detail()
     assert detail is not None
     assert detail.method is OutlierMethod.Z_SCORE
-    assert detail.summary.column == "b"  # the selected column is kept
+    assert detail.summary.column == "a"  # The prompt replaces the previous table selection.
     assert len(dlg.config_widgets) == configs_before
 
 
@@ -1992,11 +3513,10 @@ def test_stale_outlier_summary_is_discarded_when_applied_again(dialog_factory):
 def test_outlier_column_change_recomputes_only_the_detail_over_the_detail_panel(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_outliers(async_ops, dialog_factory)
-    config = _outliers_config(dlg)
     view = _outliers_view(dlg)
     contents_before = len(dlg.content_widgets)
 
-    config.set_column("b")
+    view.select_column("b")
 
     call = async_ops.last_call
     assert call["scope"] == "analysis:outliers:column:iqr:1.5:b"
@@ -2012,26 +3532,26 @@ def test_outlier_column_change_recomputes_only_the_detail_over_the_detail_panel(
 def test_clicking_an_outlier_summary_row_selects_the_column(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_outliers(async_ops, dialog_factory)
-    config = _outliers_config(dlg)
-    table = _outliers_view(dlg).table()
+    view = _outliers_view(dlg)
+    table = view.table()
     assert table is not None
 
     table.cellClicked.emit(1, 0)
 
-    assert config.current_column() == "b"
+    assert view.selected_column() == "b"
+    assert view.column_selection_revision() == 1
     assert async_ops.last_call["scope"] == "analysis:outliers:column:iqr:1.5:b"
 
 
 def test_stale_outlier_column_recompute_is_discarded_when_the_column_changes_again(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_outliers(async_ops, dialog_factory)
-    config = _outliers_config(dlg)
     view = _outliers_view(dlg)
     initial_detail = view.column_detail()
 
-    config.set_column("b")
+    view.select_column("b")
     first = async_ops.last_call
-    config.set_column("a")
+    view.select_column("a")
     second = async_ops.last_call
 
     _simulate_success(first)
@@ -2041,39 +3561,65 @@ def test_stale_outlier_column_recompute_is_discarded_when_the_column_changes_aga
     assert _detail_column(view) == "a"
 
 
-def test_outlier_column_change_while_the_summary_is_computing_is_caught_up_afterwards(dialog_factory):
+def test_a_to_b_to_a_column_selection_discards_the_first_a_job(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_outliers(async_ops, dialog_factory)
-    config = _outliers_config(dlg)
+    view = _outliers_view(dlg)
 
-    _select_outlier_method(config, OutlierMethod.MODIFIED_Z_SCORE)
+    view.select_column("a")
+    first_a = async_ops.last_call
+    view.select_column("b")
+    b_call = async_ops.last_call
+    view.select_column("a")
+    last_a = async_ops.last_call
+
+    initial_detail = view.column_detail()
+    _simulate_success(first_a)
+    assert view.column_detail() is initial_detail
+    _simulate_success(b_call)
+    assert view.column_detail() is initial_detail
+
+    _simulate_success(last_a)
+    assert _detail_column(view) == "a"
+
+
+def test_outlier_column_change_during_summary_recompute_is_caught_up(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    original_view = _outliers_view(dlg)
+
     summary_call = _apply_outliers(async_ops, dlg)
-    dlg.show_placeholder("computing")  # no view is displayed while the summary job runs
-    jobs_before = len(async_ops.calls)
-
-    config.set_column("b")
-    assert len(async_ops.calls) == jobs_before  # nothing to update yet
+    original_view.select_column("b")
+    old_detail_call = async_ops.last_call
 
     _simulate_success(summary_call)
-    assert _detail_column(_outliers_view(dlg)) == "a"
+    updated_view = _outliers_view(dlg)
+    assert updated_view is not original_view
+    assert updated_view.selected_column() == "b"
+    assert _detail_column(updated_view) == "a"
 
-    column_call = async_ops.last_call
-    assert column_call["scope"] == "analysis:outliers:column:modified_z_score:3.5:b"
-    _simulate_success(column_call)
-    assert _detail_column(_outliers_view(dlg)) == "b"
+    caught_up_call = async_ops.last_call
+    assert caught_up_call is not old_detail_call
+    assert caught_up_call["scope"] == "analysis:outliers:column:iqr:1.5:b"
+    _simulate_success(old_detail_call)
+    assert _detail_column(updated_view) == "a"
+    _simulate_success(caught_up_call)
+    assert _detail_column(updated_view) == "b"
 
 
-def test_outlier_column_recompute_uses_the_displayed_summary_configuration(dialog_factory):
+def test_outlier_configuration_edit_disables_old_table_requests(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_applied_outliers(async_ops, dialog_factory)
     config = _outliers_config(dlg)
+    view = _outliers_view(dlg)
 
-    # Z-score is applied, but its summary job hasn't finished: the view still shows IQR.
     _select_outlier_method(config, OutlierMethod.Z_SCORE)
     _apply_outliers(async_ops, dlg)
-    config.set_column("b")
+    jobs_before = len(async_ops.calls)
+    view.select_column("b")
 
-    assert async_ops.last_call["scope"] == "analysis:outliers:column:iqr:1.5:b"
+    assert len(async_ops.calls) == jobs_before
+    assert async_ops.last_call["scope"].startswith("analysis:outliers:summary:z_score:")
 
 
 # ----------------------------------------------------------------------
@@ -2136,6 +3682,59 @@ def test_pca_initializes_without_a_job_and_prompts_for_apply(dialog_factory):
     config = _pca_config(dlg)
     assert config.analysis_configuration() == (("a", "b", "c"), True)
     assert config.checked_columns() == ("a", "b", "c")
+
+
+@pytest.mark.parametrize("control", ["scaling", "feature", "all", "clear"])
+def test_pca_edits_replace_results_with_apply_prompt(dialog_factory, control):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_pca(async_ops, dialog_factory)
+    config = _pca_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    jobs_before = len(async_ops.calls)
+    if control == "scaling":
+        config._standardize_checkbox.toggle()  # noqa: SLF001
+    elif control == "feature":
+        _set_pca_checked(config, "c", False)
+    elif control == "all":
+        config._clear_button.click()  # noqa: SLF001
+        config._select_all_button.click()  # noqa: SLF001
+    else:
+        config._clear_button.click()  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.config_widget() is config
+    assert len(async_ops.calls) == jobs_before
+
+
+def test_pca_edit_round_trip_rejects_inflight_result_and_error(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_pca(async_ops, dialog_factory)
+    config = _pca_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    config._standardize_checkbox.toggle()  # noqa: SLF001
+    config._standardize_checkbox.toggle()  # noqa: SLF001
+    _simulate_success(first)
+    first["on_error"]("stale error")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.placeholder_calls == []
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    assert isinstance(dlg.content_widget(), PCAView)
+
+
+def test_repeated_pca_apply_discards_older_unchanged_fit(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_pca(async_ops, dialog_factory)
+    config = _pca_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    config._apply_button.click()  # noqa: SLF001
+    latest = async_ops.last_call
+    _simulate_success(first)
+    _assert_apply_prompt(ctrl, dlg)
+    _simulate_success(latest)
+    assert isinstance(dlg.content_widget(), PCAView)
 
 
 def test_first_pca_apply_fits_the_default_configuration(dialog_factory):
@@ -2268,6 +3867,67 @@ def test_clustering_initializes_without_a_job_and_prompts_for_apply(dialog_facto
     assert config.checked_columns() == ("x", "y", "z")
 
 
+@pytest.mark.parametrize("control", ["method", "scaling", "count", "epsilon", "samples", "feature", "all", "clear"])
+def test_clustering_edits_replace_results_with_apply_prompt(dialog_factory, control):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_clustering(async_ops, dialog_factory)
+    config = _clustering_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    jobs_before = len(async_ops.calls)
+    if control == "method":
+        config._method_combo.setCurrentIndex(1)  # noqa: SLF001
+    elif control == "scaling":
+        config._standardize_checkbox.toggle()  # noqa: SLF001
+    elif control == "count":
+        config._cluster_count_spin.setValue(4)  # noqa: SLF001
+    elif control == "epsilon":
+        config._epsilon_spin.setValue(1.0)  # noqa: SLF001
+    elif control == "samples":
+        config._min_samples_spin.setValue(7)  # noqa: SLF001
+    elif control == "feature":
+        _set_clustering_checked(config, "z", False)
+    elif control == "all":
+        config._clear_button.click()  # noqa: SLF001
+        config._select_all_button.click()  # noqa: SLF001
+    else:
+        config._clear_button.click()  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.config_widget() is config
+    assert len(async_ops.calls) == jobs_before
+
+
+def test_clustering_edit_round_trip_rejects_inflight_fit_and_error(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_clustering(async_ops, dialog_factory)
+    config = _clustering_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    config._standardize_checkbox.toggle()  # noqa: SLF001
+    config._standardize_checkbox.toggle()  # noqa: SLF001
+    _simulate_success(first)
+    first["on_error"]("stale error")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.placeholder_calls == []
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    assert isinstance(dlg.content_widget(), ClusteringView)
+
+
+def test_repeated_clustering_apply_discards_older_unchanged_fit(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_clustering(async_ops, dialog_factory)
+    config = _clustering_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    config._apply_button.click()  # noqa: SLF001
+    latest = async_ops.last_call
+    _simulate_success(first)
+    _assert_apply_prompt(ctrl, dlg)
+    _simulate_success(latest)
+    assert isinstance(dlg.content_widget(), ClusteringView)
+
+
 def test_first_clustering_apply_fits_the_default_configuration(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_clustering(async_ops, dialog_factory)
@@ -2391,6 +4051,61 @@ def test_time_series_initializes_without_a_job_and_prompts_for_apply(dialog_fact
     assert config.pending_configuration() == config.analysis_configuration()
 
 
+@pytest.mark.parametrize(
+    ("control", "setter", "value"),
+    [
+        ("_datetime_combo", "setCurrentIndex", -1),
+        ("_value_combo", "setCurrentIndex", 1),
+        ("_frequency_combo", "setCurrentIndex", 1),
+        ("_auto_period", "setChecked", False),
+        ("_period_spin", "setValue", 4),
+        ("_model_combo", "setCurrentIndex", 1),
+    ],
+)
+def test_time_series_edits_replace_results_with_apply_prompt(dialog_factory, control, setter, value):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_time_series(async_ops, dialog_factory)
+    config = _time_series_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    jobs_before = len(async_ops.calls)
+    getattr(getattr(config, control), setter)(value)
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.config_widget() is config
+    assert len(async_ops.calls) == jobs_before
+
+
+def test_time_series_edit_round_trip_rejects_inflight_result_and_error(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_time_series(async_ops, dialog_factory)
+    config = _time_series_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    config._auto_period.toggle()  # noqa: SLF001
+    config._auto_period.toggle()  # noqa: SLF001
+    _simulate_success(first)
+    first["on_error"]("stale error")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.placeholder_calls == []
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    assert isinstance(dlg.content_widget(), TimeSeriesView)
+
+
+def test_repeated_time_series_apply_discards_older_unchanged_result(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_time_series(async_ops, dialog_factory)
+    config = _time_series_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    first = async_ops.last_call
+    config._apply_button.click()  # noqa: SLF001
+    latest = async_ops.last_call
+    _simulate_success(first)
+    _assert_apply_prompt(ctrl, dlg)
+    _simulate_success(latest)
+    assert isinstance(dlg.content_widget(), TimeSeriesView)
+
+
 def test_first_time_series_apply_analyzes_the_default_configuration(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_time_series(async_ops, dialog_factory)
@@ -2430,3 +4145,1158 @@ def test_time_series_apply_recomputes_and_keeps_config(dialog_factory):
     _simulate_success(call)
     assert _time_series_view(dlg).configuration() == ("when", "other", "W", 3, DecompositionModel.MULTIPLICATIVE)
     assert len(dlg.config_widgets) == configs_before
+
+
+# ----------------------------------------------------------------------
+# Regression export
+# ----------------------------------------------------------------------
+
+
+def test_successful_regression_apply_registers_the_displayed_export_snapshot(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_regression(async_ops, dialog_factory)
+    assert dlg.exportable_regression() is None
+    config = _regression_config(dlg)
+    _check_predictors(config, "x", "g")
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    view = _regression_view(dlg)
+    snapshot = dlg.exportable_regression()
+    assert isinstance(snapshot, RegressionExportSnapshot)
+    assert snapshot.result is view.result()
+    assert snapshot.chart_labels == view.chart_labels()
+    assert snapshot.notes == view.export_notes()
+
+    _check_predictors(config, "x")
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_regression() is None
+
+
+@pytest.mark.parametrize("model", [RegressionModel.LOGISTIC, RegressionModel.COX])
+def test_glm_and_cox_applies_register_export_snapshots(dialog_factory, model):
+    rng = np.random.default_rng(31)
+    size = 160
+    x = rng.normal(size=size)
+    event_time = rng.exponential(scale=np.exp(-0.35 * x), size=size)
+    censor_time = rng.exponential(scale=1.6, size=size)
+    df = pd.DataFrame({
+        "duration": np.minimum(event_time, censor_time),
+        "event": (event_time <= censor_time).astype(int),
+        "x": x,
+    })
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    config._model_combo.setCurrentIndex(config._model_combo.findData(model.value))  # noqa: SLF001
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    view = dlg.content_widget()
+    assert isinstance(view, GeneralizedRegressionView | SurvivalRegressionView)
+    snapshot = dlg.exportable_regression()
+    assert snapshot is not None
+    assert snapshot.model is model
+    assert snapshot.result is view.result()
+
+
+def test_failed_regression_fit_never_registers_an_export_snapshot(dialog_factory):
+    df = _regression_df()
+    df["y"] = 1.0
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_regression(async_ops, dialog_factory, df)
+    config = _regression_config(dlg)
+    _check_predictors(config, "x")
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    assert _regression_view(dlg).result().error is not None
+    assert dlg.exportable_regression() is None
+
+
+def _regression_export_context(snapshot: RegressionExportSnapshot):
+    dialog = AnalysisDialog(parent=None, datasets=[DatasetRef("chosen", "Chosen", 10, 3)], active_tab_id="chosen")
+    dialog.select_category(AnalysisCategory.REGRESSION)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_regression(snapshot)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must not look up a dataset")
+    results.current_df.side_effect = AssertionError("Export must not use the active tab")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, Mock()
+
+
+_REGRESSION_TRANSLATIONS = {
+    "Coefficients": "Koefficienter",
+    "Model metrics": "Modellm?tt",
+    "Charts": "Diagram",
+    "Term": "Term",
+    "Estimate": "Skattning",
+    "(Intercept)": "(Intercept SV)",
+    "Odds ratio": "Oddskvot",
+    "{name}, 95% CI lower": "{name}, 95 % KI nedre",
+    "Metric": "M?tt",
+    "Value": "V?rde",
+    "Notes": "Anteckningar",
+    "Rows used": "Anv?nda rader",
+    "Events": "H?ndelser",
+    "Hazard ratio": "Riskkvot",
+}
+
+
+def test_regression_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch):
+    snapshot = logistic_snapshot()
+    controller, dialog, exporter = _regression_export_context(snapshot)
+    monkeypatch.setattr(
+        analysis_controller_module, "tr", lambda _context, text: _REGRESSION_TRANSLATIONS.get(text, text)
+    )
+    request = RegressionExportRequest(snapshot, tuple(RegressionExportComponent), StatisticsExportFormat.EXCEL)
+
+    controller._export_regression(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.export_excel.call_count == 1
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert list(kwargs["sheets"]) == ["Koefficienter", "Modellm?tt"]
+    coefficients = kwargs["sheets"]["Koefficienter"]
+    assert coefficients.columns[:2].tolist() == ["Term", "Skattning"]
+    assert "Oddskvot" in coefficients.columns
+    assert "Oddskvot, 95 % KI nedre" in coefficients.columns
+    assert coefficients["Term"].iloc[0] == "(Intercept SV)"
+    assert pd.api.types.is_float_dtype(coefficients["Skattning"])
+    metrics = kwargs["sheets"]["Modellm?tt"]
+    assert metrics.columns.tolist() == ["M?tt", "V?rde", "Anteckningar"]
+    assert metrics["M?tt"].iloc[0] == "Anv?nda rader"
+    assert metrics["V?rde"].iloc[0] == snapshot.result.n_used
+    assert metrics["Anteckningar"].iloc[0] == snapshot.notes[0]
+
+    progress: list[int] = []
+    images = kwargs["chart_factory"](progress.append, lambda: False)
+    assert len(images) == 1
+    assert images[0].heading == snapshot.chart_labels.heading
+    assert progress == [100]
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_regression_cox_tables_use_hazard_ratio_headers(monkeypatch):
+    snapshot = cox_snapshot()
+    controller, dialog, exporter = _regression_export_context(snapshot)
+    monkeypatch.setattr(
+        analysis_controller_module, "tr", lambda _context, text: _REGRESSION_TRANSLATIONS.get(text, text)
+    )
+    request = RegressionExportRequest(
+        snapshot,
+        (RegressionExportComponent.MODEL_METRICS, RegressionExportComponent.COEFFICIENTS),
+        StatisticsExportFormat.EXCEL,
+    )
+
+    controller._export_regression(dialog, exporter, request)  # noqa: SLF001
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Modellm?tt", "Koefficienter"]
+    assert kwargs["chart_factory"] is None
+    assert kwargs["chart_sheet_name"] is None
+    assert "Riskkvot" in kwargs["sheets"]["Koefficienter"].columns
+    assert "Riskkvot, 95 % KI nedre" in kwargs["sheets"]["Koefficienter"].columns
+    assert "H?ndelser" in kwargs["sheets"]["Modellm?tt"]["M?tt"].tolist()
+
+
+@pytest.mark.parametrize(
+    ("format_choice", "method_name"),
+    [(StatisticsExportFormat.CSV, "export_csv"), (StatisticsExportFormat.BINARY, "export_data")],
+)
+@pytest.mark.parametrize("component", [RegressionExportComponent.COEFFICIENTS, RegressionExportComponent.MODEL_METRICS])
+def test_regression_single_table_routes_to_non_excel_exporters(format_choice, method_name, component):
+    snapshot = linear_snapshot()
+    controller, dialog, exporter = _regression_export_context(snapshot)
+    request = RegressionExportRequest(snapshot, (component,), format_choice)
+
+    controller._export_regression(dialog, exporter, request)  # noqa: SLF001
+
+    method = getattr(exporter, method_name)
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    first_column = "Term" if component is RegressionExportComponent.COEFFICIENTS else "Metric"
+    assert kwargs["df"].columns[0] == first_column
+    assert exporter.export_excel.call_count == 0
+
+
+@pytest.mark.parametrize("change", ["category", "content", "other_snapshot", "wrong_type"])
+def test_regression_export_rejects_stale_or_foreign_requests(change):
+    snapshot = linear_snapshot()
+    controller, dialog, exporter = _regression_export_context(snapshot)
+    request: object = RegressionExportRequest(
+        snapshot, (RegressionExportComponent.COEFFICIENTS,), StatisticsExportFormat.CSV
+    )
+    if change == "category":
+        dialog.select_category(AnalysisCategory.STATISTICS)
+    elif change == "content":
+        dialog.set_content_widget(QWidget())
+    elif change == "other_snapshot":
+        dialog.set_exportable_regression(linear_snapshot())
+    else:
+        request = object()
+
+    controller._export_regression(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.mock_calls == []
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_regression_export_uses_compiled_swedish_labels() -> None:
+    snapshot = cox_snapshot()
+    controller, dialog, exporter = _regression_export_context(snapshot)
+    translator = QTranslator()
+    catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / "app_sv.qm"
+    assert translator.load(str(catalog))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        controller._export_regression(  # noqa: SLF001
+            dialog,
+            exporter,
+            RegressionExportRequest(snapshot, tuple(RegressionExportComponent), StatisticsExportFormat.EXCEL),
+        )
+    finally:
+        app.removeTranslator(translator)
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    sheets = kwargs["sheets"]
+    assert len(sheets) == 2
+    coefficients, metrics = sheets.values()
+    assert "Hazardkvot" in coefficients.columns
+    assert "Hazardkvot, 95 % KI nedre" in coefficients.columns
+    assert metrics.columns[0] == "Mått"
+    assert "Händelser" in metrics.iloc[:, 0].tolist()
+
+
+# ----------------------------------------------------------------------
+# Outliers export
+# ----------------------------------------------------------------------
+
+
+def test_successful_outlier_summary_apply_registers_the_displayed_export_snapshot(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_outliers(async_ops, dialog_factory)
+    assert dlg.exportable_outliers() is None
+
+    _simulate_success(_apply_outliers(async_ops, dlg))
+
+    view = _outliers_view(dlg)
+    snapshot = dlg.exportable_outliers()
+    assert isinstance(snapshot, UnivariateOutlierExportSnapshot)
+    assert snapshot.summary is view.result()
+    assert snapshot.detail is view.column_detail()
+    assert snapshot.chart_labels == view.histogram_labels()
+    assert snapshot.summary_notes == view.summary_notes()
+    assert snapshot.detail_notes == view.detail_notes()
+    assert snapshot.data.columns.tolist() == ["a", "b"]
+    assert snapshot.data["a"].tolist() == _outliers_df()["a"].tolist()
+
+    _outliers_config(dlg)._threshold_spin.setValue(2.5)  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_outliers() is None
+
+
+def test_outlier_column_detail_apply_updates_the_registered_snapshot(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    view = _outliers_view(dlg)
+    first = dlg.exportable_outliers()
+    assert isinstance(first, UnivariateOutlierExportSnapshot)
+
+    view.select_column("b")
+    _simulate_success(async_ops.last_call)
+
+    snapshot = dlg.exportable_outliers()
+    assert isinstance(snapshot, UnivariateOutlierExportSnapshot)
+    assert snapshot is not first
+    assert snapshot.summary is first.summary
+    assert snapshot.data is first.data
+    assert snapshot.detail is view.column_detail()
+    assert snapshot.detail is not None
+    assert snapshot.detail.summary.column == "b"
+    assert snapshot.detail_notes == view.detail_notes()
+
+
+def test_outlier_column_detail_for_a_replaced_summary_is_not_registered(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    view = _outliers_view(dlg)
+    view.select_column("b")
+    call = async_ops.last_call
+    foreign = univariate_snapshot()
+    dlg.set_exportable_outliers(foreign)
+
+    _simulate_success(call)
+
+    assert dlg.exportable_outliers() is foreign
+
+
+def test_outlier_summary_without_screened_columns_exports_tables_but_no_charts(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory, pd.DataFrame({"a": [1.0, None], "t": ["x", "y"]}))
+
+    _simulate_success(_apply_outliers(async_ops, dlg))
+
+    snapshot = dlg.exportable_outliers()
+    assert isinstance(snapshot, UnivariateOutlierExportSnapshot)
+    assert snapshot.chart_columns == ()
+    assert snapshot.is_available(OutlierExportComponent.COLUMN_SUMMARY)
+    assert not snapshot.is_available(OutlierExportComponent.CHARTS)
+
+
+def test_successful_multivariate_outlier_apply_registers_the_displayed_export_snapshot(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    config = _switch_to_multivariate(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    view = _multivariate_outliers_view(dlg)
+    snapshot = dlg.exportable_outliers()
+    assert isinstance(snapshot, MultivariateOutlierExportSnapshot)
+    assert snapshot.result is view.result()
+    assert snapshot.chart_labels == view.chart_labels()
+    assert snapshot.notes == view.export_notes()
+
+
+def test_failed_multivariate_outlier_fit_never_registers_an_export_snapshot(dialog_factory):
+    df = pd.DataFrame({"a": [1.0, None, 3.0], "b": [None, 2.0, None]})
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory, df)
+    config = _switch_to_multivariate(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    assert _multivariate_outliers_view(dlg).result().error is not None
+    assert dlg.exportable_outliers() is None
+
+
+def _outliers_export_context(snapshot: OutlierExportSnapshot):
+    dialog = AnalysisDialog(parent=None, datasets=[DatasetRef("chosen", "Chosen", 10, 3)], active_tab_id="chosen")
+    dialog.select_category(AnalysisCategory.OUTLIERS)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_outliers(snapshot)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must not look up a dataset")
+    results.current_df.side_effect = AssertionError("Export must not use the active tab")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, Mock()
+
+
+_OUTLIERS_TRANSLATIONS = {
+    "Column summary": "Kolumnsammanfattning",
+    "Column details": "Kolumndetaljer",
+    "Model summary": "Modellsammanfattning",
+    "Potential outliers": "Potentiella avvikare",
+    "Charts": "Diagram",
+    "Column": "Kolumn",
+    "Status": "Status SV",
+    "Too few values": "F?r f? v?rden",
+    "Threshold": "Tr?skel",
+    "Features": "Variabler",
+    "Metric": "M?tt",
+    "Value": "V?rde",
+    "Notes": "Anteckningar",
+    "Row": "Rad",
+    "Distance past fence": "Avst?nd bortom gr?ns",
+    "Anomaly score": "Avvikelsepo?ng",
+}
+
+
+def test_univariate_outlier_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch):
+    snapshot = univariate_snapshot()
+    controller, dialog, exporter = _outliers_export_context(snapshot)
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: _OUTLIERS_TRANSLATIONS.get(text, text))
+    request = OutlierExportRequest(snapshot, UNIVARIATE_OUTLIER_COMPONENTS, StatisticsExportFormat.EXCEL)
+
+    controller._export_outliers(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.export_excel.call_count == 1
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert list(kwargs["sheets"]) == ["Kolumnsammanfattning", "Kolumndetaljer", "Potentiella avvikare"]
+    summary = kwargs["sheets"]["Kolumnsammanfattning"]
+    assert summary.columns[0] == "Kolumn"
+    assert summary.columns[-2:].tolist() == ["Status SV", "Anteckningar"]
+    assert summary.loc[summary["Kolumn"] == "few", "Status SV"].tolist() == ["F?r f? v?rden"]
+    assert summary["Status SV"].isna().sum() == len(summary) - 1
+    details = kwargs["sheets"]["Kolumndetaljer"]
+    assert details.columns.tolist() == ["M?tt", "V?rde", "Anteckningar"]
+    assert details["M?tt"].iloc[0] == "Tr?skel"
+    assert details["V?rde"].iloc[0] == 1.5
+    potential = kwargs["sheets"]["Potentiella avvikare"]
+    assert potential.columns[:3].tolist() == ["Rad", "a", "Avst?nd bortom gr?ns"]
+
+    progress: list[int] = []
+    images = kwargs["chart_factory"](progress.append, lambda: False)
+    assert [image.heading for image in images] == list(snapshot.chart_columns)
+    assert progress[-1] == 100
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_multivariate_outlier_excel_export_uses_model_summary_and_projection_chart(monkeypatch):
+    snapshot = multivariate_outliers_snapshot()
+    controller, dialog, exporter = _outliers_export_context(snapshot)
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: _OUTLIERS_TRANSLATIONS.get(text, text))
+    request = OutlierExportRequest(snapshot, MULTIVARIATE_OUTLIER_COMPONENTS, StatisticsExportFormat.EXCEL)
+
+    controller._export_outliers(dialog, exporter, request)  # noqa: SLF001
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Modellsammanfattning", "Potentiella avvikare"]
+    model = kwargs["sheets"]["Modellsammanfattning"]
+    assert model["M?tt"].iloc[0] == "Variabler"
+    assert model["Anteckningar"].iloc[0] == snapshot.notes[0]
+    assert kwargs["sheets"]["Potentiella avvikare"].columns[:2].tolist() == ["Rad", "Avvikelsepo?ng"]
+    images = kwargs["chart_factory"](None, None)
+    assert len(images) == 1
+    assert images[0].heading == snapshot.chart_labels.heading
+
+
+def test_outlier_excel_export_without_charts_has_no_chart_factory():
+    snapshot = univariate_snapshot()
+    controller, dialog, exporter = _outliers_export_context(snapshot)
+    request = OutlierExportRequest(
+        snapshot,
+        (OutlierExportComponent.POTENTIAL_OUTLIERS, OutlierExportComponent.COLUMN_SUMMARY),
+        StatisticsExportFormat.EXCEL,
+    )
+
+    controller._export_outliers(dialog, exporter, request)  # noqa: SLF001
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Potential outliers", "Column summary"]
+    assert kwargs["chart_factory"] is None
+    assert kwargs["chart_sheet_name"] is None
+
+
+@pytest.mark.parametrize(
+    ("format_choice", "method_name"),
+    [(StatisticsExportFormat.CSV, "export_csv"), (StatisticsExportFormat.BINARY, "export_data")],
+)
+@pytest.mark.parametrize(
+    ("multivariate", "component", "first_column"),
+    [
+        (False, OutlierExportComponent.COLUMN_SUMMARY, "Column"),
+        (False, OutlierExportComponent.COLUMN_DETAILS, "Metric"),
+        (False, OutlierExportComponent.POTENTIAL_OUTLIERS, "Row (2)"),
+        (True, OutlierExportComponent.MODEL_SUMMARY, "Metric"),
+        (True, OutlierExportComponent.POTENTIAL_OUTLIERS, "Row"),
+    ],
+)
+def test_outlier_single_table_routes_to_non_excel_exporters(
+    format_choice, method_name, multivariate, component, first_column
+):
+    snapshot = multivariate_outliers_snapshot() if multivariate else univariate_snapshot()
+    controller, dialog, exporter = _outliers_export_context(snapshot)
+    request = OutlierExportRequest(snapshot, (component,), format_choice)
+
+    controller._export_outliers(dialog, exporter, request)  # noqa: SLF001
+
+    method = getattr(exporter, method_name)
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    assert kwargs["df"].columns[0] == first_column
+    assert exporter.export_excel.call_count == 0
+
+
+@pytest.mark.parametrize(
+    ("method", "score_header"),
+    [
+        (OutlierMethod.IQR, "Distance past fence"),
+        (OutlierMethod.Z_SCORE, "z"),
+        (OutlierMethod.MODIFIED_Z_SCORE, "Modified z"),
+    ],
+)
+def test_univariate_outlier_score_header_follows_the_method(method, score_header):
+    assert AnalysisController._outlier_score_label(univariate_snapshot(method)) == score_header  # noqa: SLF001
+    assert (
+        AnalysisController._outlier_score_label(multivariate_outliers_snapshot())  # noqa: SLF001
+        == "Anomaly score"
+    )
+
+
+@pytest.mark.parametrize("change", ["category", "content", "other_snapshot", "wrong_type"])
+def test_outlier_export_rejects_stale_or_foreign_requests(change):
+    snapshot = univariate_snapshot()
+    controller, dialog, exporter = _outliers_export_context(snapshot)
+    request: object = OutlierExportRequest(
+        snapshot, (OutlierExportComponent.COLUMN_SUMMARY,), StatisticsExportFormat.CSV
+    )
+    if change == "category":
+        dialog.select_category(AnalysisCategory.STATISTICS)
+    elif change == "content":
+        dialog.set_content_widget(QWidget())
+    elif change == "other_snapshot":
+        dialog.set_exportable_outliers(univariate_snapshot())
+    else:
+        request = object()
+
+    controller._export_outliers(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.mock_calls == []
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_outlier_export_uses_compiled_swedish_labels() -> None:
+    snapshot = univariate_snapshot()
+    controller, dialog, exporter = _outliers_export_context(snapshot)
+    translator = QTranslator()
+    catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / "app_sv.qm"
+    assert translator.load(str(catalog))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        controller._export_outliers(  # noqa: SLF001
+            dialog,
+            exporter,
+            OutlierExportRequest(snapshot, UNIVARIATE_OUTLIER_COMPONENTS, StatisticsExportFormat.EXCEL),
+        )
+    finally:
+        app.removeTranslator(translator)
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    sheets = kwargs["sheets"]
+    assert list(sheets) == ["Kolumnsammanfattning", "Kolumndetaljer", "Potentiella avvikare"]
+    summary = sheets["Kolumnsammanfattning"]
+    assert summary.columns[0] == "Kolumn"
+    assert "För få värden" in summary["Status"].dropna().tolist()
+    details = sheets["Kolumndetaljer"]
+    assert details.columns.tolist() == ["Mått", "Värde", "Noteringar"]
+    assert details["Mått"].tolist()[:3] == ["Tröskel", "Värden", "Saknade"]
+    assert sheets["Potentiella avvikare"].columns[2] == "Avstånd förbi gränsen"
+
+
+# ----------------------------------------------------------------------
+# Clustering export
+# ----------------------------------------------------------------------
+
+
+def test_successful_clustering_apply_registers_the_displayed_export_snapshot(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_clustering(async_ops, dialog_factory)
+    assert dlg.exportable_clustering() is None
+    config = _clustering_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    view = _clustering_view(dlg)
+    snapshot = dlg.exportable_clustering()
+    assert isinstance(snapshot, ClusteringExportSnapshot)
+    assert snapshot.result is view.result()
+    assert snapshot.chart_labels == view.chart_labels()
+    assert snapshot.notes == view.export_notes()
+
+    _set_clustering_checked(config, "z", False)
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_clustering() is None
+
+
+def test_failed_clustering_fit_never_registers_an_export_snapshot(dialog_factory):
+    df = pd.DataFrame({"x": [1.0, 1.0, 1.0], "y": [2.0, 2.0, 2.0]})
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_clustering(async_ops, dialog_factory, df)
+    config = _clustering_config(dlg)
+    config._cluster_count_spin.setValue(2)  # noqa: SLF001
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    assert _clustering_view(dlg).result().error is not None
+    assert dlg.exportable_clustering() is None
+
+
+def _clustering_export_context(snapshot: ClusteringExportSnapshot):
+    dialog = AnalysisDialog(parent=None, datasets=[DatasetRef("chosen", "Chosen", 10, 3)], active_tab_id="chosen")
+    dialog.select_category(AnalysisCategory.CLUSTERING)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_clustering(snapshot)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must not look up a dataset")
+    results.current_df.side_effect = AssertionError("Export must not use the active tab")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, Mock()
+
+
+_CLUSTERING_TRANSLATIONS = {
+    "Cluster sizes": "Klusterstorlekar",
+    "Model summary": "Modellsammanfattning",
+    "Charts": "Diagram",
+    "Cluster": "Kluster",
+    "Rows": "Rader",
+    "Share": "Andel",
+    "Metric": "M?tt",
+    "Value": "V?rde",
+    "Notes": "Noteringar",
+    "Features": "Variabler",
+    "Neighborhood radius (eps)": "Grannskapsradie (eps)",
+    "Noise rows": "Brusrader",
+}
+
+
+def test_clustering_excel_export_routes_localized_sheets_and_worker_chart(monkeypatch):
+    snapshot = clustering_snapshot(ClusteringMethod.DBSCAN, dbscan_min_samples=3)
+    controller, dialog, exporter = _clustering_export_context(snapshot)
+    monkeypatch.setattr(
+        analysis_controller_module, "tr", lambda _context, text: _CLUSTERING_TRANSLATIONS.get(text, text)
+    )
+    request = ClusteringExportRequest(snapshot, CLUSTERING_COMPONENTS, StatisticsExportFormat.EXCEL)
+
+    controller._export_clustering(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.export_excel.call_count == 1
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert list(kwargs["sheets"]) == ["Klusterstorlekar", "Modellsammanfattning"]
+    sizes = kwargs["sheets"]["Klusterstorlekar"]
+    assert sizes.columns.tolist() == ["Kluster", "Rader", "Andel"]
+    assert sizes["Kluster"].tolist() == ["Cluster 1", "Cluster 2", "Noise"]
+    summary = kwargs["sheets"]["Modellsammanfattning"]
+    assert summary.columns.tolist() == ["M?tt", "V?rde", "Noteringar"]
+    assert summary["M?tt"].tolist()[:2] == ["Variabler", "Grannskapsradie (eps)"]
+    assert "Brusrader" in summary["M?tt"].tolist()
+    assert summary["Noteringar"].iloc[0] == snapshot.notes[0]
+
+    progress: list[int] = []
+    images = kwargs["chart_factory"](progress.append, lambda: False)
+    assert [image.heading for image in images] == [snapshot.chart_labels.heading]
+    assert progress == [100]
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_clustering_excel_export_without_charts_has_no_chart_factory():
+    snapshot = clustering_snapshot()
+    controller, dialog, exporter = _clustering_export_context(snapshot)
+    request = ClusteringExportRequest(
+        snapshot,
+        (ClusteringExportComponent.MODEL_SUMMARY, ClusteringExportComponent.CLUSTER_SIZES),
+        StatisticsExportFormat.EXCEL,
+    )
+
+    controller._export_clustering(dialog, exporter, request)  # noqa: SLF001
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Model summary", "Cluster sizes"]
+    assert kwargs["chart_factory"] is None
+    assert kwargs["chart_sheet_name"] is None
+    assert kwargs["sheets"]["Model summary"]["Metric"].tolist()[:2] == ["Features", "Number of clusters"]
+
+
+@pytest.mark.parametrize(
+    ("format_choice", "method_name"),
+    [(StatisticsExportFormat.CSV, "export_csv"), (StatisticsExportFormat.BINARY, "export_data")],
+)
+@pytest.mark.parametrize(
+    ("component", "first_column"),
+    [(ClusteringExportComponent.CLUSTER_SIZES, "Cluster"), (ClusteringExportComponent.MODEL_SUMMARY, "Metric")],
+)
+def test_clustering_single_table_routes_to_non_excel_exporters(format_choice, method_name, component, first_column):
+    snapshot = clustering_snapshot()
+    controller, dialog, exporter = _clustering_export_context(snapshot)
+    request = ClusteringExportRequest(snapshot, (component,), format_choice)
+
+    controller._export_clustering(dialog, exporter, request)  # noqa: SLF001
+
+    method = getattr(exporter, method_name)
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    assert kwargs["df"].columns[0] == first_column
+    assert exporter.export_excel.call_count == 0
+
+
+@pytest.mark.parametrize("change", ["category", "content", "other_snapshot", "wrong_type"])
+def test_clustering_export_rejects_stale_or_foreign_requests(change):
+    snapshot = clustering_snapshot()
+    controller, dialog, exporter = _clustering_export_context(snapshot)
+    request: object = ClusteringExportRequest(
+        snapshot, (ClusteringExportComponent.CLUSTER_SIZES,), StatisticsExportFormat.CSV
+    )
+    if change == "category":
+        dialog.select_category(AnalysisCategory.STATISTICS)
+    elif change == "content":
+        dialog.set_content_widget(QWidget())
+    elif change == "other_snapshot":
+        dialog.set_exportable_clustering(clustering_snapshot())
+    else:
+        request = object()
+
+    controller._export_clustering(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.mock_calls == []
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_clustering_export_uses_compiled_swedish_labels() -> None:
+    snapshot = clustering_snapshot(ClusteringMethod.DBSCAN, dbscan_min_samples=3)
+    controller, dialog, exporter = _clustering_export_context(snapshot)
+    translator = QTranslator()
+    catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / "app_sv.qm"
+    assert translator.load(str(catalog))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        controller._export_clustering(  # noqa: SLF001
+            dialog,
+            exporter,
+            ClusteringExportRequest(snapshot, CLUSTERING_COMPONENTS, StatisticsExportFormat.EXCEL),
+        )
+    finally:
+        app.removeTranslator(translator)
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    sheets = kwargs["sheets"]
+    assert list(sheets) == ["Klusterstorlekar", "Modellsammanfattning"]
+    assert sheets["Klusterstorlekar"].columns.tolist() == ["Kluster", "Rader", "Andel"]
+    summary = sheets["Modellsammanfattning"]
+    assert summary.columns.tolist() == ["Mått", "Värde", "Noteringar"]
+    assert summary["Mått"].tolist()[:3] == ["Variabler", "Grannskapsradie (eps)", "Minsta antal observationer"]
+    assert "Silhuettpoäng" in summary["Mått"].tolist()
+
+
+# ----------------------------------------------------------------------
+# PCA export
+# ----------------------------------------------------------------------
+
+
+def test_successful_pca_apply_registers_the_displayed_export_snapshot(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_pca(async_ops, dialog_factory)
+    assert dlg.exportable_pca() is None
+    config = _pca_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    view = _pca_view(dlg)
+    snapshot = dlg.exportable_pca()
+    assert isinstance(snapshot, PCAExportSnapshot)
+    assert snapshot.result is view.result()
+    assert snapshot.chart_labels == view.chart_labels()
+    assert snapshot.notes == view.export_notes()
+
+    _set_pca_checked(config, "c", False)
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_pca() is None
+
+
+def test_failed_pca_fit_never_registers_an_export_snapshot(dialog_factory):
+    df = pd.DataFrame({"a": [1.0, 1.0, 1.0], "b": [2.0, 2.0, 2.0]})
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_pca(async_ops, dialog_factory, df)
+    _pca_config(dlg)._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    assert _pca_view(dlg).result().error is not None
+    assert dlg.exportable_pca() is None
+
+
+def _pca_export_context(snapshot: PCAExportSnapshot):
+    dialog = AnalysisDialog(parent=None, datasets=[DatasetRef("chosen", "Chosen", 10, 3)], active_tab_id="chosen")
+    dialog.select_category(AnalysisCategory.PCA)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_pca(snapshot)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must not look up a dataset")
+    results.current_df.side_effect = AssertionError("Export must not use the active tab")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, Mock()
+
+
+_PCA_TRANSLATIONS = {
+    "Feature loadings": "Variabelladdningar",
+    "Explained variance": "Forklarad varians",
+    "Model summary": "Modellsammanfattning",
+    "Charts": "Diagram",
+    "Feature": "Variabel",
+    "Component": "Komponent",
+    "Variance": "Varians",
+    "Share": "Andel",
+    "Cumulative share": "Kumulativ andel",
+    "Metric": "Matt",
+    "Value": "Varde",
+    "Notes": "Noteringar",
+    "Features": "Variabler",
+}
+
+
+def test_pca_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch):
+    snapshot = pca_snapshot()
+    controller, dialog, exporter = _pca_export_context(snapshot)
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: _PCA_TRANSLATIONS.get(text, text))
+    request = PCAExportRequest(snapshot, PCA_COMPONENTS, StatisticsExportFormat.EXCEL)
+
+    controller._export_pca(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.export_excel.call_count == 1
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert list(kwargs["sheets"]) == ["Variabelladdningar", "Forklarad varians", "Modellsammanfattning"]
+    assert kwargs["sheets"]["Variabelladdningar"].columns.tolist() == ["Variabel", "PC1", "PC2", "PC3"]
+    variance = kwargs["sheets"]["Forklarad varians"]
+    assert variance.columns.tolist() == ["Komponent", "Varians", "Andel", "Kumulativ andel"]
+    assert variance["Komponent"].tolist() == ["PC1", "PC2", "PC3"]
+    summary = kwargs["sheets"]["Modellsammanfattning"]
+    assert summary.columns.tolist() == ["Matt", "Varde", "Noteringar"]
+    assert summary["Matt"].iloc[0] == "Variabler"
+    assert summary["Noteringar"].iloc[0] == snapshot.notes[0]
+
+    progress: list[int] = []
+    images = kwargs["chart_factory"](progress.append, lambda: False)
+    assert [image.heading for image in images] == [
+        snapshot.chart_labels.scree_title,
+        snapshot.chart_labels.scatter_title,
+    ]
+    assert progress == [50, 100]
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_pca_excel_export_without_charts_has_no_chart_factory():
+    snapshot = pca_snapshot()
+    controller, dialog, exporter = _pca_export_context(snapshot)
+    request = PCAExportRequest(
+        snapshot,
+        (PCAExportComponent.MODEL_SUMMARY, PCAExportComponent.FEATURE_LOADINGS),
+        StatisticsExportFormat.EXCEL,
+    )
+
+    controller._export_pca(dialog, exporter, request)  # noqa: SLF001
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Model summary", "Feature loadings"]
+    assert kwargs["chart_factory"] is None
+    assert kwargs["chart_sheet_name"] is None
+    assert kwargs["sheets"]["Model summary"]["Metric"].tolist()[:4] == [
+        "Features",
+        "Total rows",
+        "Rows used",
+        "Rows dropped because of missing or infinite values",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("format_choice", "method_name"),
+    [(StatisticsExportFormat.CSV, "export_csv"), (StatisticsExportFormat.BINARY, "export_data")],
+)
+@pytest.mark.parametrize(
+    ("component", "first_column"),
+    [
+        (PCAExportComponent.FEATURE_LOADINGS, "Feature"),
+        (PCAExportComponent.EXPLAINED_VARIANCE, "Component"),
+        (PCAExportComponent.MODEL_SUMMARY, "Metric"),
+    ],
+)
+def test_pca_single_table_routes_to_non_excel_exporters(format_choice, method_name, component, first_column):
+    snapshot = pca_snapshot()
+    controller, dialog, exporter = _pca_export_context(snapshot)
+    request = PCAExportRequest(snapshot, (component,), format_choice)
+
+    controller._export_pca(dialog, exporter, request)  # noqa: SLF001
+
+    method = getattr(exporter, method_name)
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    assert kwargs["df"].columns[0] == first_column
+    assert exporter.export_excel.call_count == 0
+
+
+@pytest.mark.parametrize("change", ["category", "content", "other_snapshot", "wrong_type"])
+def test_pca_export_rejects_stale_or_foreign_requests(change):
+    snapshot = pca_snapshot()
+    controller, dialog, exporter = _pca_export_context(snapshot)
+    request: object = PCAExportRequest(snapshot, (PCAExportComponent.FEATURE_LOADINGS,), StatisticsExportFormat.CSV)
+    if change == "category":
+        dialog.select_category(AnalysisCategory.STATISTICS)
+    elif change == "content":
+        dialog.set_content_widget(QWidget())
+    elif change == "other_snapshot":
+        dialog.set_exportable_pca(pca_snapshot())
+    else:
+        request = object()
+
+    controller._export_pca(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.mock_calls == []
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_pca_export_uses_compiled_swedish_labels() -> None:
+    snapshot = pca_snapshot()
+    controller, dialog, exporter = _pca_export_context(snapshot)
+    translator = QTranslator()
+    catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / "app_sv.qm"
+    assert translator.load(str(catalog))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        controller._export_pca(  # noqa: SLF001
+            dialog,
+            exporter,
+            PCAExportRequest(snapshot, PCA_COMPONENTS, StatisticsExportFormat.EXCEL),
+        )
+    finally:
+        app.removeTranslator(translator)
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    sheets = kwargs["sheets"]
+    assert list(sheets) == ["Variabelladdningar", "Förklarad varians", "Modellsammanfattning"]
+    assert sheets["Variabelladdningar"].columns.tolist() == ["Variabel", "PC1", "PC2", "PC3"]
+    assert sheets["Förklarad varians"].columns.tolist() == ["Komponent", "Varians", "Andel", "Kumulativ andel"]
+    summary = sheets["Modellsammanfattning"]
+    assert summary.columns.tolist() == ["Mått", "Värde", "Noteringar"]
+    assert summary["Mått"].tolist()[:4] == [
+        "Variabler",
+        "Totalt antal rader",
+        "Använda rader",
+        "Rader borttagna på grund av saknade eller oändliga värden",
+    ]
+
+
+# ----------------------------------------------------------------------
+# Time series export
+# ----------------------------------------------------------------------
+
+
+def test_successful_time_series_apply_registers_the_displayed_export_snapshot(dialog_factory):
+    async_ops = DummyAsyncOps()
+    ctrl, dlg = _open_time_series(async_ops, dialog_factory)
+    assert dlg.exportable_time_series() is None
+    config = _time_series_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    view = _time_series_view(dlg)
+    snapshot = dlg.exportable_time_series()
+    assert isinstance(snapshot, TimeSeriesExportSnapshot)
+    assert snapshot.result is view.result()
+    assert snapshot.chart_labels == view.chart_labels()
+    assert snapshot.notes == view.export_notes()
+    assert snapshot.autocorrelation_note == view.autocorrelation_note()
+
+    config._auto_period.toggle()  # noqa: SLF001
+    _assert_apply_prompt(ctrl, dlg)
+    assert dlg.exportable_time_series() is None
+
+
+def test_failed_time_series_analysis_never_registers_an_export_snapshot(dialog_factory):
+    df = pd.DataFrame({"when": pd.date_range("2025-01-01", periods=2, freq="D"), "value": [1.0, 2.0]})
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_time_series(async_ops, dialog_factory, df)
+    _time_series_config(dlg)._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+
+    assert _time_series_view(dlg).result().error is not None
+    assert dlg.exportable_time_series() is None
+
+
+def _time_series_export_context(snapshot: TimeSeriesExportSnapshot):
+    dialog = AnalysisDialog(parent=None, datasets=[DatasetRef("chosen", "Chosen", 10, 3)], active_tab_id="chosen")
+    dialog.select_category(AnalysisCategory.TIME_SERIES)
+    dialog.set_content_widget(QWidget())
+    dialog.set_exportable_time_series(snapshot)
+    results = Mock()
+    results.get_df_by_tab_id.side_effect = AssertionError("Export must not look up a dataset")
+    results.current_df.side_effect = AssertionError("Export must not use the active tab")
+    controller = AnalysisController(results=results, async_ops=DummyAsyncOps())
+    return controller, dialog, Mock()
+
+
+_TIME_SERIES_TRANSLATIONS = {
+    "Series": "Serie",
+    "Autocorrelation": "Autokorrelation",
+    "Model summary": "Modellsammanfattning",
+    "Charts": "Diagram",
+    "Timestamp": "Tidsstampel",
+    "Value": "Varde",
+    "Trend": "Trend",
+    "Seasonal": "Sasong",
+    "Residual": "Residual",
+    "Lag": "Fordrojning",
+    "Metric": "Matt",
+    "Notes": "Noteringar",
+    "Source rows": "Kallrader",
+    "Invalid rows dropped": "Ogiltiga rader",
+    "Duplicate rows averaged": "Dubblettrader",
+    "Time points": "Tidpunkter",
+    "Seasonal period": "Sasongsperiod",
+}
+
+
+def test_time_series_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch):
+    snapshot = time_series_snapshot()
+    controller, dialog, exporter = _time_series_export_context(snapshot)
+    monkeypatch.setattr(
+        analysis_controller_module, "tr", lambda _context, text: _TIME_SERIES_TRANSLATIONS.get(text, text)
+    )
+    request = TimeSeriesExportRequest(snapshot, TIME_SERIES_COMPONENTS, StatisticsExportFormat.EXCEL)
+
+    controller._export_time_series(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.export_excel.call_count == 1
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["parent_widget"] is dialog
+    assert kwargs["operation_target"] is dialog.content_panel()
+    assert kwargs["show_success_dialog"] is True
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert list(kwargs["sheets"]) == ["Serie", "Autokorrelation", "Modellsammanfattning"]
+    series = kwargs["sheets"]["Serie"]
+    assert series.columns.tolist() == ["Tidsstampel", "Varde", "Trend", "Sasong", "Residual"]
+    assert len(series) == 21
+    assert kwargs["sheets"]["Autokorrelation"].columns.tolist() == ["Fordrojning", "Autokorrelation"]
+    summary = kwargs["sheets"]["Modellsammanfattning"]
+    assert summary.columns.tolist() == ["Matt", "Varde", "Noteringar"]
+    assert summary["Matt"].tolist() == ["Kallrader", "Ogiltiga rader", "Dubblettrader", "Tidpunkter", "Sasongsperiod"]
+    assert summary["Noteringar"].iloc[0] == snapshot.notes[0]
+
+    progress: list[int] = []
+    images = kwargs["chart_factory"](progress.append, lambda: False)
+    assert [image.heading for image in images] == [
+        snapshot.chart_labels.series_title,
+        snapshot.chart_labels.acf_title,
+        snapshot.chart_labels.decomposition_title,
+    ]
+    assert progress == [33, 66, 100]
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_time_series_excel_charts_skip_unavailable_diagnostics():
+    snapshot = irregular_snapshot()
+    controller, dialog, exporter = _time_series_export_context(snapshot)
+    request = TimeSeriesExportRequest(
+        snapshot,
+        (TimeSeriesExportComponent.SERIES, TimeSeriesExportComponent.CHARTS),
+        StatisticsExportFormat.EXCEL,
+    )
+
+    controller._export_time_series(dialog, exporter, request)  # noqa: SLF001
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Series"]
+    assert kwargs["sheets"]["Series"].columns.tolist() == ["Timestamp", "Value"]
+    images = kwargs["chart_factory"](None, None)
+    assert [image.heading for image in images] == [snapshot.chart_labels.series_title]
+
+
+def test_time_series_excel_export_without_charts_has_no_chart_factory():
+    snapshot = time_series_snapshot()
+    controller, dialog, exporter = _time_series_export_context(snapshot)
+    request = TimeSeriesExportRequest(
+        snapshot,
+        (TimeSeriesExportComponent.MODEL_SUMMARY, TimeSeriesExportComponent.SERIES),
+        StatisticsExportFormat.EXCEL,
+    )
+
+    controller._export_time_series(dialog, exporter, request)  # noqa: SLF001
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert list(kwargs["sheets"]) == ["Model summary", "Series"]
+    assert kwargs["chart_factory"] is None
+    assert kwargs["chart_sheet_name"] is None
+    assert kwargs["sheets"]["Model summary"]["Metric"].tolist() == [
+        "Source rows",
+        "Invalid rows dropped",
+        "Duplicate rows averaged",
+        "Time points",
+        "Seasonal period",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("format_choice", "method_name"),
+    [(StatisticsExportFormat.CSV, "export_csv"), (StatisticsExportFormat.BINARY, "export_data")],
+)
+@pytest.mark.parametrize(
+    ("component", "first_column"),
+    [
+        (TimeSeriesExportComponent.SERIES, "Timestamp"),
+        (TimeSeriesExportComponent.AUTOCORRELATION, "Lag"),
+        (TimeSeriesExportComponent.MODEL_SUMMARY, "Metric"),
+    ],
+)
+def test_time_series_single_table_routes_to_non_excel_exporters(format_choice, method_name, component, first_column):
+    snapshot = time_series_snapshot()
+    controller, dialog, exporter = _time_series_export_context(snapshot)
+    request = TimeSeriesExportRequest(snapshot, (component,), format_choice)
+
+    controller._export_time_series(dialog, exporter, request)  # noqa: SLF001
+
+    method = getattr(exporter, method_name)
+    assert method.call_count == 1
+    kwargs = method.call_args.kwargs
+    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    assert kwargs["df"].columns[0] == first_column
+    assert exporter.export_excel.call_count == 0
+
+
+@pytest.mark.parametrize("change", ["category", "content", "other_snapshot", "wrong_type"])
+def test_time_series_export_rejects_stale_or_foreign_requests(change):
+    snapshot = time_series_snapshot()
+    controller, dialog, exporter = _time_series_export_context(snapshot)
+    request: object = TimeSeriesExportRequest(snapshot, (TimeSeriesExportComponent.SERIES,), StatisticsExportFormat.CSV)
+    if change == "category":
+        dialog.select_category(AnalysisCategory.STATISTICS)
+    elif change == "content":
+        dialog.set_content_widget(QWidget())
+    elif change == "other_snapshot":
+        dialog.set_exportable_time_series(time_series_snapshot())
+    else:
+        request = object()
+
+    controller._export_time_series(dialog, exporter, request)  # noqa: SLF001
+
+    assert exporter.mock_calls == []
+    assert controller._results.mock_calls == []  # noqa: SLF001
+
+
+def test_time_series_export_uses_compiled_swedish_labels() -> None:
+    snapshot = time_series_snapshot()
+    controller, dialog, exporter = _time_series_export_context(snapshot)
+    translator = QTranslator()
+    catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / "app_sv.qm"
+    assert translator.load(str(catalog))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        controller._export_time_series(  # noqa: SLF001
+            dialog,
+            exporter,
+            TimeSeriesExportRequest(snapshot, TIME_SERIES_COMPONENTS, StatisticsExportFormat.EXCEL),
+        )
+    finally:
+        app.removeTranslator(translator)
+
+    kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["chart_sheet_name"] == "Diagram"
+    sheets = kwargs["sheets"]
+    assert list(sheets) == ["Serie", "Autokorrelation", "Modellsammanfattning"]
+    assert sheets["Serie"].columns.tolist() == ["Tidsstämpel", "Värde", "Trend", "Säsong", "Residual"]
+    assert sheets["Autokorrelation"].columns.tolist() == ["Fördröjning", "Autokorrelation"]
+    summary = sheets["Modellsammanfattning"]
+    assert summary.columns.tolist() == ["Mått", "Värde", "Noteringar"]
+    assert summary["Mått"].tolist() == [
+        "Källrader",
+        "Ogiltiga rader borttagna",
+        "Dubblettrader medelvärdesbildade",
+        "Tidpunkter",
+        "Säsongsperiod",
+    ]

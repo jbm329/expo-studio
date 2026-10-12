@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from PyQt6.QtCore import Qt
 
 from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_config import MultivariateOutliersConfigWidget
@@ -44,6 +45,43 @@ def _record(signal) -> list:
     received: list = []
     signal.connect(lambda *args: received.append(args))
     return received
+
+
+@pytest.mark.parametrize(
+    ("control", "setter", "value"),
+    [
+        ("_method_combo", "setCurrentIndex", 1),
+        ("_standardize_checkbox", "setChecked", False),
+        ("_contamination_spin", "setValue", 10.0),
+        ("_neighbors_spin", "setValue", 5),
+    ],
+)
+def test_configuration_edits_emit_once_without_requesting_fit(control, setter, value):
+    widget = MultivariateOutliersConfigWidget(_result())
+    edits = _record(widget.configuration_changed)
+    requests = _record(widget.analysis_requested)
+    applied = widget.analysis_configuration()
+    getattr(getattr(widget, control), setter)(value)
+    assert edits == [()]
+    assert requests == []
+    assert widget.configuration_revision() == 1
+    assert widget.analysis_configuration() == applied
+
+
+def test_feature_and_bulk_edits_emit_once_and_no_op_does_not_invalidate():
+    widget = MultivariateOutliersConfigWidget(_result())
+    edits = _record(widget.configuration_changed)
+    _set_checked(widget, "d", True)
+    assert edits == [()]
+    widget._select_all_button.click()  # noqa: SLF001
+    assert edits == [()]
+    widget._clear_button.click()  # noqa: SLF001
+    assert edits == [(), ()]
+    widget._clear_button.click()  # noqa: SLF001
+    assert edits == [(), ()]
+    widget._select_all_button.click()  # noqa: SLF001
+    assert edits == [(), (), ()]
+    assert widget.configuration_revision() == 3
 
 
 def test_initial_state_reflects_result():

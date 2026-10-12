@@ -13,11 +13,13 @@ from expo_jbm329.services.analysis.regression import PLOT_SAMPLE_SIZE
 from expo_jbm329.services.analysis.regression_glm import (
     CountPlotError,
     GeneralizedRegressionError,
+    LogisticPlotError,
     RegressionModel,
     _count_plot_data,  # noqa: PLC2701
     analyze_generalized_regression,
     generalized_term_name,
     initialize_generalized_targets,
+    prepare_logistic_plot_data,
 )
 
 
@@ -43,6 +45,146 @@ def _count_frame(size: int = 500, seed: int = 8, *, overdispersed: bool = False)
 
 def _term(result, name: str):
     return next(term for term in result.terms if generalized_term_name(term) == name)
+
+
+def test_logistic_diagnostics_exact_hand_calculated_roc_and_auc():
+    data, error = prepare_logistic_plot_data(np.array([0, 0, 1, 1]), np.array([0.1, 0.4, 0.35, 0.8]))
+    assert error is None
+    assert data is not None
+    assert data.false_positive_rates == (0, 0, 0.5, 0.5, 1)
+    assert data.true_positive_rates == (0, 0.5, 0.5, 1, 1)
+    assert data.auc == 0.75
+    assert data.mean_probabilities == (0.1, 0.35, 0.4, 0.8)
+    assert data.event_fractions == (0, 1, 0, 1)
+    assert data.bin_counts == (1, 1, 1, 1)
+
+
+@pytest.mark.parametrize("scores", [[0.5, 0.5, 0.5, 0.5], [0.1, 0.1, 0.9, 0.9]])
+def test_logistic_diagnostics_roc_ties_are_not_order_dependent(scores):
+    observed = np.array([0, 1, 0, 1])
+    data, error = prepare_logistic_plot_data(observed, np.array(scores))
+    assert error is None
+    assert data is not None
+    assert data.auc == 0.5
+    reversed_data, _ = prepare_logistic_plot_data(observed[::-1], np.array(scores)[::-1])
+    assert reversed_data == data
+    assert sum(data.bin_counts) == 4
+    if len(set(scores)) == 1:
+        assert data.bin_counts == (4,)
+        assert data.mean_probabilities == (0.5,)
+        assert data.event_fractions == (0.5,)
+        assert data.false_positive_rates == (0, 1)
+        assert data.true_positive_rates == (0, 1)
+    else:
+        assert data.bin_counts == (2, 2)
+
+
+@pytest.mark.parametrize("size", [2, 3, 9, 10, 11, 101, 6000])
+def test_logistic_calibration_quantiles_cover_all_rows_without_sampling(size):
+    fitted = np.linspace(0, 1, size)
+    data, error = prepare_logistic_plot_data(np.arange(size) % 2, fitted)
+    assert error is None
+    assert data is not None
+    assert data.n_used == size
+    assert sum(data.bin_counts) == size
+    assert len(data.bin_counts) <= 10
+    assert max(data.bin_counts) - min(data.bin_counts) <= 1
+    assert tuple(sorted(data.mean_probabilities)) == data.mean_probabilities
+
+
+def test_logistic_calibration_never_splits_large_tied_groups():
+    fitted = np.repeat([0.1, 0.4, 0.6, 0.9], [30, 2, 13, 5])
+    data, error = prepare_logistic_plot_data(np.arange(len(fitted)) % 2, fitted)
+    assert error is None
+    assert data is not None
+    assert sum(data.bin_counts) == len(fitted)
+    assert len(data.bin_counts) <= 4
+    assert data.bin_counts[0] == 30
+
+
+@pytest.mark.parametrize(
+    "fitted",
+    [
+        [-0.1, 0.5],
+        [0.5, 1.1],
+        [np.nan, 0.5],
+        [np.inf, 0.5],
+        [0.5],
+        [[0.5], [0.5]],
+        ["0.1", "0.5"],
+        [0.1 + 1j, 0.5],
+        [None, 0.5],
+    ],
+)
+def test_logistic_diagnostics_reject_invalid_predictions(fitted):
+    data, error = prepare_logistic_plot_data(np.array([0, 1]), np.array(fitted))
+    assert data is None
+    assert error is LogisticPlotError.INVALID_PREDICTIONS
+
+
+@pytest.mark.parametrize(
+    "observed",
+    [[], [0, 0], [1, 1], [0, 2], [0, np.nan], [0, np.inf], [[0], [1]], ["no", "yes"], [0, 1j], [None, 1]],
+)
+def test_logistic_diagnostics_reject_invalid_outcomes(observed):
+    data, error = prepare_logistic_plot_data(np.array(observed), np.array([0.2, 0.8]))
+    assert data is None
+    assert error is LogisticPlotError.INVALID_OUTCOMES
+
+
+def test_logistic_diagnostics_accept_boolean_labels_and_endpoint_probabilities():
+    data, error = prepare_logistic_plot_data(np.array([False, True]), np.array([0.0, 1.0]))
+    assert error is None
+    assert data is not None
+    assert data.auc == 1
+    assert data.bin_counts == (1, 1)
+    assert data.mean_probabilities == (0, 1)
+
+
+@pytest.mark.parametrize("encoding", ["number", "bool", "text", "category"])
+def test_logistic_diagnostics_use_existing_event_encoding_and_complete_case_cohort(encoding):
+    df = _binary_frame()
+    if encoding in {"number", "bool"}:
+        df["outcome"] = (df["outcome"] == "control").astype("boolean" if encoding == "bool" else "Int64")
+    elif encoding == "category":
+        df["outcome"] = df["outcome"].astype("category")
+    df.loc[0, "x"] = np.nan
+    df.loc[1, "x"] = np.inf
+    df.loc[2, "outcome"] = None
+    result = analyze_generalized_regression(df, RegressionModel.LOGISTIC, "outcome", ["x"])
+    assert result.error is None
+    assert result.logistic_plot_error is None
+    assert result.n_used == 497
+    assert result.n_dropped == 3
+    data = result.logistic_plot_data
+    assert data is not None
+    complete = df.replace([np.inf, -np.inf], np.nan).dropna()
+    observed = (complete["outcome"].astype(str) == result.target_levels[1]).to_numpy(dtype=float)
+    coefficient = result.terms[1].estimate
+    intercept = result.terms[0].estimate
+    probability = 1 / (1 + np.exp(-(intercept + coefficient * complete["x"].to_numpy())))
+    expected, _ = prepare_logistic_plot_data(observed, probability)
+    assert expected is not None
+    assert data.auc == pytest.approx(expected.auc)
+    np.testing.assert_allclose(data.mean_probabilities, expected.mean_probabilities)
+    assert data.bin_counts == expected.bin_counts
+    assert sum(data.bin_counts) == result.n_used
+
+
+def test_logistic_chart_only_validation_failure_preserves_fitted_coefficients(monkeypatch):
+    original_fit = sm.Logit.fit
+
+    def fit_with_invalid_predictions(self, *args, **kwargs):
+        fit = original_fit(self, *args, **kwargs)
+        fit.predict = lambda matrix: np.full(len(matrix), np.nan)
+        return fit
+
+    monkeypatch.setattr(sm.Logit, "fit", fit_with_invalid_predictions)
+    result = analyze_generalized_regression(_binary_frame(), RegressionModel.LOGISTIC, "outcome", ["x"])
+    assert result.error is None
+    assert len(result.terms) == 2
+    assert result.logistic_plot_data is None
+    assert result.logistic_plot_error is LogisticPlotError.INVALID_PREDICTIONS
 
 
 def test_initializer_classifies_binary_and_nonnegative_integer_targets():

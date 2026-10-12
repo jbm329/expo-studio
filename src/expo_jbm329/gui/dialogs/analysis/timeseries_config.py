@@ -2,10 +2,22 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QCheckBox, QComboBox, QFormLayout, QLabel, QPushButton, QSpinBox, QVBoxLayout, QWidget
+from PyQt6.QtCore import QPoint, QSize, Qt, pyqtSignal
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSizePolicy,
+    QSpinBox,
+    QStyle,
+    QVBoxLayout,
+    QWidget,
+)
 
 from expo_jbm329.gui.dialogs.analysis.column_combo_box import ColumnComboBox
 from expo_jbm329.services.analysis.timeseries import DecompositionModel
@@ -14,14 +26,62 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.timeseries import TimeSeriesResult
 
 
+class _WrappingCheckBox(QCheckBox):
+    """Keep a checkbox's full, clickable label readable in narrow layouts."""
+
+    def __init__(self, text: str, parent: QWidget) -> None:
+        super().__init__(parent)
+        self.setAccessibleName(text)
+        self.setToolTip(text)
+        label = QLabel(text, self)
+        label.setWordWrap(True)
+        label.setBuddy(self)
+        label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        layout = QHBoxLayout(self)
+        style = self.style()
+        if style is None:
+            message = "A checkbox requires a widget style."
+            raise RuntimeError(message)
+        indicator_width = style.pixelMetric(QStyle.PixelMetric.PM_IndicatorWidth, None, self)
+        spacing = style.pixelMetric(QStyle.PixelMetric.PM_CheckBoxLabelSpacing, None, self)
+        layout.setContentsMargins(indicator_width + spacing, 0, 0, 0)
+        layout.addWidget(label)
+        policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        policy.setHeightForWidth(True)
+        self.setSizePolicy(policy)
+
+    @override
+    def sizeHint(self) -> QSize:
+        """Include the wrapped label rather than only the native indicator."""
+        layout = self.layout()
+        return super().sizeHint() if layout is None else layout.totalSizeHint().expandedTo(super().sizeHint())
+
+    @override
+    def minimumSizeHint(self) -> QSize:
+        """Allow wrapping down to the label's longest word."""
+        layout = self.layout()
+        return super().minimumSizeHint() if layout is None else layout.totalMinimumSize()
+
+    @override
+    def hitButton(self, pos: QPoint) -> bool:
+        """Let clicking any part of the wrapped label toggle the checkbox."""
+        return self.rect().contains(pos)
+
+
 class TimeSeriesConfigWidget(QWidget):
-    """Lets users choose one datetime/value series and its diagnostics settings."""
+    """Lets users choose one datetime/value series and its diagnostics settings.
+
+    Every edit emits `configuration_changed` to replace outdated results
+    with the Apply prompt. Only Apply requests an analysis.
+    """
 
     analysis_requested = pyqtSignal()
+    configuration_changed = pyqtSignal()
 
     def __init__(self, result: TimeSeriesResult, parent: QWidget | None = None) -> None:
         """Initialize the applied and pending controls from `result`."""
         super().__init__(parent)
+        self._configuration_revision = 0
         self._applied_configuration = self._configuration_from_result(result)
 
         layout = QVBoxLayout(self)
@@ -38,12 +98,18 @@ class TimeSeriesConfigWidget(QWidget):
 
         self._frequency_combo = QComboBox(self)
         self._frequency_combo.addItem(self.tr("Original frequency"), None)
-        for frequency, label in (("D", self.tr("Daily")), ("W", self.tr("Weekly")), ("MS", self.tr("Monthly"))):
+        for frequency, label in (
+            ("D", self.tr("Daily")),
+            ("W", self.tr("Weekly")),
+            ("MS", self.tr("Monthly")),
+            ("QS", self.tr("Quarterly")),
+            ("YS", self.tr("Yearly")),
+        ):
             self._frequency_combo.addItem(label, frequency)
         self._frequency_combo.setCurrentIndex(self._frequency_combo.findData(result.resample_frequency))
         form.addRow(QLabel(self.tr("Resample to"), self), self._frequency_combo)
 
-        self._auto_period = QCheckBox(self.tr("Auto-detect seasonal period"), self)
+        self._auto_period = _WrappingCheckBox(self.tr("Auto-detect seasonal period"), self)
         self._auto_period.setChecked(result.seasonal_period is None)
         form.addRow(self._auto_period)
 
@@ -63,12 +129,24 @@ class TimeSeriesConfigWidget(QWidget):
         hint = QLabel(self.tr("Duplicate timestamps are averaged. Gaps are preserved and are not interpolated."), self)
         hint.setWordWrap(True)
         layout.addWidget(hint)
+        # Anchors Apply to the bottom of the Configuration pane.
+        layout.addStretch(1)
         self._apply_button = QPushButton(self.tr("Apply"), self)
         layout.addWidget(self._apply_button)
-        layout.addStretch(1)
 
         self._auto_period.toggled.connect(self._period_spin.setDisabled)
         self._apply_button.clicked.connect(self._on_apply_clicked)
+        self._datetime_combo.currentIndexChanged.connect(self._on_configuration_changed)
+        self._value_combo.currentIndexChanged.connect(self._on_configuration_changed)
+        self._frequency_combo.currentIndexChanged.connect(self._on_configuration_changed)
+        self._auto_period.toggled.connect(self._on_configuration_changed)
+        self._period_spin.valueChanged.connect(self._on_configuration_changed)
+        self._model_combo.currentIndexChanged.connect(self._on_configuration_changed)
+
+    def _on_configuration_changed(self) -> None:
+        """Invalidate displayed results without requesting a new analysis."""
+        self._configuration_revision += 1
+        self.configuration_changed.emit()
 
     @staticmethod
     def _configuration_from_result(
@@ -86,6 +164,7 @@ class TimeSeriesConfigWidget(QWidget):
     def _on_apply_clicked(self) -> None:
         """Store pending controls and request a single replacement analysis."""
         self._applied_configuration = self.pending_configuration()
+        self._configuration_revision += 1
         self.analysis_requested.emit()
 
     def pending_configuration(self) -> tuple[str, str, str | None, int | None, DecompositionModel]:
@@ -101,3 +180,7 @@ class TimeSeriesConfigWidget(QWidget):
     def analysis_configuration(self) -> tuple[str, str, str | None, int | None, DecompositionModel]:
         """Return the most recently applied analysis configuration."""
         return self._applied_configuration
+
+    def configuration_revision(self) -> int:
+        """Return the generation advanced by every edit and Apply."""
+        return self._configuration_revision

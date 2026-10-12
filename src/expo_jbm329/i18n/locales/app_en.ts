@@ -133,6 +133,34 @@
 </context><context>
     <name>AnalysisDialog</name>
     <message>
+        <source>Reports(0)</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>Export</translation>
+    </message>
+    <message>
+        <source>Export analysis data</source>
+        <translation type="vanished" />
+    </message>
+    <message>
+        <source>Export results</source>
+        <translation type="vanished" />
+    </message>
+    <message>
+        <source>Add to report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Exports are available after an analysis has been applied. Add to report is a preview.</source>
+        <translation>Exports are available after an analysis has been applied. Add to report is a preview.</translation>
+    </message>
+    <message>
+        <source>A report can contain analyses from multiple datasets.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
         <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="80" />
         <source>Advanced analysis</source>
         <translation type="unfinished" />
@@ -201,6 +229,861 @@
     <message>
         <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="329" />
         <source>Time Series</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>AnalysisExportDialog</name>
+    <message><source>Export computed tables and charts for the applied test, not the original dataset.</source><translation>Export computed tables and charts for the applied test, not the original dataset.</translation></message>
+    <message><source>Apply a hypothesis test successfully before exporting.</source><translation>Apply a hypothesis test successfully before exporting.</translation></message>
+    <message><source>Applied test: {test}
+{roles}: {columns}</source><translation>Applied test: {test}
+{roles}: {columns}</translation></message>
+    <message><source>Numeric column / grouping column</source><translation>Numeric column / grouping column</translation></message>
+    <message><source>Row column / column column</source><translation>Row column / column column</translation></message>
+    <message><source>Measurement columns (occasion order)</source><translation>Measurement columns (occasion order)</translation></message>
+    <message><source>Group comparison</source><translation>Group comparison</translation></message>
+    <message><source>Chi-square independence</source><translation>Chi-square independence</translation></message>
+    <message><source>Paired comparison</source><translation>Paired comparison</translation></message>
+    <message><source>Group summary</source><translation>Group summary</translation></message>
+    <message><source>Contingency table</source><translation>Contingency table</translation></message>
+    <message><source>Measurement summary</source><translation>Measurement summary</translation></message>
+    <message><source>Test results</source><translation>Test results</translation></message>
+    <message><source>Test</source><translation>Test</translation></message>
+    <message><source>Test statistic</source><translation>Test statistic</translation></message>
+    <message><source>p-value</source><translation>p-value</translation></message>
+    <message><source>Degrees of freedom</source><translation>Degrees of freedom</translation></message>
+    <message><source>Mean difference</source><translation>Mean difference</translation></message>
+    <message><source>95% CI lower</source><translation>95% CI lower</translation></message>
+    <message><source>95% CI upper</source><translation>95% CI upper</translation></message>
+    <message><source>Effect size</source><translation>Effect size</translation></message>
+    <message><source>Effect value</source><translation>Effect value</translation></message>
+    <message><source>Numeric column</source><translation>Numeric column</translation></message>
+    <message><source>Grouping column</source><translation>Grouping column</translation></message>
+    <message><source>Row column</source><translation>Row column</translation></message>
+    <message><source>Column column</source><translation>Column column</translation></message>
+    <message><source>Sample count</source><translation>Sample count</translation></message>
+    <message><source>Yates' continuity correction</source><translation>Yates' continuity correction</translation></message>
+    <message><source>Cochran's rule violated</source><translation>Cochran's rule violated</translation></message>
+    <message><source>Fraction of expected counts below 5</source><translation>Fraction of expected counts below 5</translation></message>
+    <message><source>Minimum expected count</source><translation>Minimum expected count</translation></message>
+    <message><source>Odds ratio</source><translation>Odds ratio</translation></message>
+    <message><source>Total subjects</source><translation>Total subjects</translation></message>
+    <message><source>Excluded subjects</source><translation>Excluded subjects</translation></message>
+    <message><source>Notes</source><translation>Notes</translation></message>
+    <message><source>Measurement</source><translation>Measurement</translation></message>
+    <message><source>Welch's t-test</source><translation>Welch's t-test</translation></message>
+    <message><source>Student's t-test</source><translation>Student's t-test</translation></message>
+    <message><source>Mann-Whitney U</source><translation>Mann-Whitney U</translation></message>
+    <message><source>One-way ANOVA</source><translation>One-way ANOVA</translation></message>
+    <message><source>Kruskal-Wallis</source><translation>Kruskal-Wallis</translation></message>
+    <message><source>Pearson's chi-square test</source><translation>Pearson's chi-square test</translation></message>
+    <message><source>Fisher's exact test</source><translation>Fisher's exact test</translation></message>
+    <message><source>Wilcoxon signed-rank test</source><translation>Wilcoxon signed-rank test</translation></message>
+    <message><source>Friedman test</source><translation>Friedman test</translation></message>
+    <message><source>Cohen's d</source><translation>Cohen's d</translation></message>
+    <message><source>Rank-biserial correlation</source><translation>Rank-biserial correlation</translation></message>
+    <message><source>Eta²</source><translation>Eta²</translation></message>
+    <message><source>Epsilon²</source><translation>Epsilon²</translation></message>
+    <message><source>Cramér's V</source><translation>Cramér's V</translation></message>
+    <message><source>Kendall's W</source><translation>Kendall's W</translation></message>
+    <message><source>Export the strongest-correlations table for the applied matrix.</source><translation>Export the strongest-correlations table for the applied matrix.</translation></message>
+    <message><source>Apply a correlation matrix successfully before exporting.</source><translation>Apply a correlation matrix successfully before exporting.</translation></message>
+    <message><source>Applied method: {method}
+Applied columns: {columns}</source><translation>Applied method: {method}
+Applied columns: {columns}</translation></message>
+    <message><source>Correlation method</source><translation>Correlation method</translation></message>
+    <message><source>Coefficient</source><translation>Coefficient</translation></message>
+    <message><source>Significant after Holm</source><translation>Significant after Holm</translation></message>
+    <message><source>Least-squares line: y = ({slope}) x + ({intercept})</source><translation>Least-squares line: y = ({slope}) x + ({intercept})</translation></message>
+    <message><source>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</source><translation>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</translation></message>
+    <message><source>Ranking and Holm explanation</source><translation>Ranking and Holm explanation</translation></message>
+    <message><source>Strongest correlations</source><translation>Strongest correlations</translation></message>
+    <message><source>Matrix plot</source><translation>Matrix plot</translation></message>
+    <message><source>Planned for a later milestone; no chart will be exported yet.</source><translation>Planned for a later milestone; no chart will be exported yet.</translation></message>
+    <message><source>Scatterplots ({count} pair)</source><translation>Scatterplots ({count} pair)</translation></message>
+    <message><source>Scatterplots ({count} pairs)</source><translation>Scatterplots ({count} pairs)</translation></message>
+    <message><source>Excel exports the selected correlation table as a worksheet.</source><translation>Excel exports the selected correlation table as a worksheet.</translation></message>
+    <message><source>CSV and binary exports contain exactly one correlation table.</source><translation>CSV and binary exports contain exactly one correlation table.</translation></message>
+    <message>
+        <source>Data</source>
+        <translation>Data</translation>
+    </message>
+    <message>
+        <source>Results</source>
+        <translation>Results</translation>
+    </message>
+    <message>
+        <source>Summary</source>
+        <translation>Summary</translation>
+    </message>
+    <message>
+        <source>Select at least one available table to export.</source>
+        <translation>Select at least one available table to export.</translation>
+    </message>
+    <message>
+        <source>Choose exactly one table for CSV or binary export.</source>
+        <translation>Choose exactly one table for CSV or binary export.</translation>
+    </message>
+    <message>
+        <source>Export the Overview Summary, Columns metadata, or Sample (first 100 rows), not the original dataset.</source>
+        <translation>Export the Overview Summary, Columns metadata, or Sample (first 100 rows), not the original dataset.</translation>
+    </message>
+    <message>
+        <source>Dataset metrics, column-type counts, and high-missing-value warnings. Fractions are numeric values from 0 to 1.</source>
+        <translation>Dataset metrics, column-type counts, and high-missing-value warnings. Fractions are numeric values from 0 to 1.</translation>
+    </message>
+    <message>
+        <source>Export contents</source>
+        <translation type="vanished">Export contents</translation>
+    </message>
+    <message>
+        <source>Columns metadata</source>
+        <translation>Columns metadata</translation>
+    </message>
+    <message>
+        <source>Sample (first 100 rows)</source>
+        <translation>Sample (first 100 rows)</translation>
+    </message>
+    <message>
+        <source>Run Overview successfully before exporting.</source>
+        <translation>Run Overview successfully before exporting.</translation>
+    </message>
+    <message>
+        <source>This table is empty and cannot be exported.</source>
+        <translation>This table is empty and cannot be exported.</translation>
+    </message>
+    <message>
+        <source>Binary data file (Parquet / Feather / Pickle)</source>
+        <translation>Binary data file (Parquet / Feather / Pickle)</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>Format</translation>
+    </message>
+    <message>
+        <source>Excel exports selected tables as separate sheets in one workbook.</source>
+        <translation>Excel exports selected tables as separate sheets in one workbook.</translation>
+    </message>
+    <message>
+        <source>Choose exactly one table for CSV or binary export. For binary files, choose Parquet, Feather or Pickle in the save dialog.</source>
+        <translation>Choose exactly one table for CSV or binary export. For binary files, choose Parquet, Feather or Pickle in the save dialog.</translation>
+    </message>
+    <message>
+        <source>Export the available Statistics tables and numeric-column charts.</source>
+        <translation>Export the available Statistics tables and numeric-column charts.</translation>
+    </message>
+    <message>
+        <source>Continuous</source>
+        <translation>Continuous</translation>
+    </message>
+    <message>
+        <source>Categorical</source>
+        <translation>Categorical</translation>
+    </message>
+    <message>
+        <source>Run Statistics successfully before exporting.</source>
+        <translation>Run Statistics successfully before exporting.</translation>
+    </message>
+    <message>
+        <source>This component is empty and cannot be exported.</source>
+        <translation>This component is empty and cannot be exported.</translation>
+    </message>
+    <message>
+        <source>Excel exports selected tables as separate sheets and charts on one Charts sheet.</source>
+        <translation>Excel exports selected tables as separate sheets and charts on one Charts sheet.</translation>
+    </message>
+    <message>
+        <source>Choose exactly one table for CSV or binary export. Charts are available only in Excel; uncheck Charts to continue.</source>
+        <translation>Choose exactly one table for CSV or binary export. Charts are available only in Excel; uncheck Charts to continue.</translation>
+    </message>
+    <message>
+        <source>Select at least one available component to export.</source>
+        <translation>Select at least one available component to export.</translation>
+    </message>
+    <message>
+        <source>Charts are available only in Excel. Uncheck Charts to continue.</source>
+        <translation>Charts are available only in Excel. Uncheck Charts to continue.</translation>
+    </message>
+    <message>
+        <source>Counts are numeric, and fractions range from 0 to 1.</source>
+        <translation>Counts are numeric, and fractions range from 0 to 1.</translation>
+    </message>
+    <message>
+        <source>Export analysis data</source>
+        <translation type="vanished" />
+    </message>
+    <message>
+        <source>Export results</source>
+        <translation type="vanished" />
+    </message>
+    <message>
+        <source>Planned export contents</source>
+        <translation type="vanished" />
+    </message>
+    <message>
+        <source>Summary / statistics tables</source>
+        <translation>Summary / statistics tables</translation>
+    </message>
+    <message>
+        <source>Coefficients</source>
+        <translation>Coefficients</translation>
+    </message>
+    <message>
+        <source>Model metrics</source>
+        <translation>Model metrics</translation>
+    </message>
+    <message>
+        <source>Charts</source>
+        <translation>Charts</translation>
+    </message>
+    <message>
+        <source>Preview choice only. Availability will depend on the computed analysis.</source>
+        <translation type="vanished" />
+    </message>
+    <message>
+        <source>These are planned choices, not available outputs. Unsupported items will explain why they are unavailable.</source>
+        <translation type="vanished" />
+    </message>
+    <message>
+        <source>Excel workbook (.xlsx)</source>
+        <translation>Excel workbook (.xlsx)</translation>
+    </message>
+    <message>
+        <source>Planned format</source>
+        <translation type="vanished" />
+    </message>
+    <message>
+        <source>Standalone chart format</source>
+        <translation type="vanished" />
+    </message>
+    <message>
+        <source>Excel will contain tables and static chart images. Standalone charts can also be saved as PNG or SVG. The planned export includes all supported chart variants, not only the displayed chart.</source>
+        <translation type="vanished" />
+    </message>
+    <message>
+        <source>The analysis dataset will contain the rows used by the analysis. Predictions and residuals will be offered only where supported.</source>
+        <translation type="vanished" />
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>Export</translation>
+    </message>
+    <message>
+        <source>Rate ratio</source>
+        <translation>Rate ratio</translation>
+    </message>
+    <message>
+        <source>Hazard ratio</source>
+        <translation>Hazard ratio</translation>
+    </message>
+    <message>
+        <source>{name}, 95% CI lower</source>
+        <translation>{name}, 95% CI lower</translation>
+    </message>
+    <message>
+        <source>{name}, 95% CI upper</source>
+        <translation>{name}, 95% CI upper</translation>
+    </message>
+    <message>
+        <source>Term</source>
+        <translation>Term</translation>
+    </message>
+    <message>
+        <source>Estimate</source>
+        <translation>Estimate</translation>
+    </message>
+    <message>
+        <source>Std. error</source>
+        <translation>Std. error</translation>
+    </message>
+    <message>
+        <source>t statistic</source>
+        <translation>t statistic</translation>
+    </message>
+    <message>
+        <source>z statistic</source>
+        <translation>z statistic</translation>
+    </message>
+    <message>
+        <source>VIF</source>
+        <translation>VIF</translation>
+    </message>
+    <message>
+        <source>Significant at p &lt; {alpha}</source>
+        <translation>Significant at p &lt; {alpha}</translation>
+    </message>
+    <message>
+        <source>(Intercept)</source>
+        <translation>(Intercept)</translation>
+    </message>
+    <message>
+        <source>Metric</source>
+        <translation>Metric</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation>Value</translation>
+    </message>
+    <message>
+        <source>Rows used</source>
+        <translation>Rows used</translation>
+    </message>
+    <message>
+        <source>Rows dropped because of missing values</source>
+        <translation>Rows dropped because of missing values</translation>
+    </message>
+    <message>
+        <source>R²</source>
+        <translation>R²</translation>
+    </message>
+    <message>
+        <source>Adjusted R²</source>
+        <translation>Adjusted R²</translation>
+    </message>
+    <message>
+        <source>F statistic</source>
+        <translation>F statistic</translation>
+    </message>
+    <message>
+        <source>F-test p-value</source>
+        <translation>F-test p-value</translation>
+    </message>
+    <message>
+        <source>Model degrees of freedom</source>
+        <translation>Model degrees of freedom</translation>
+    </message>
+    <message>
+        <source>Residual degrees of freedom</source>
+        <translation>Residual degrees of freedom</translation>
+    </message>
+    <message>
+        <source>RMSE</source>
+        <translation>RMSE</translation>
+    </message>
+    <message>
+        <source>AIC</source>
+        <translation>AIC</translation>
+    </message>
+    <message>
+        <source>Breusch-Pagan LM</source>
+        <translation>Breusch-Pagan LM</translation>
+    </message>
+    <message>
+        <source>Breusch-Pagan p-value</source>
+        <translation>Breusch-Pagan p-value</translation>
+    </message>
+    <message>
+        <source>Jarque-Bera JB</source>
+        <translation>Jarque-Bera JB</translation>
+    </message>
+    <message>
+        <source>Jarque-Bera p-value</source>
+        <translation>Jarque-Bera p-value</translation>
+    </message>
+    <message>
+        <source>Durbin-Watson</source>
+        <translation>Durbin-Watson</translation>
+    </message>
+    <message>
+        <source>Largest VIF</source>
+        <translation>Largest VIF</translation>
+    </message>
+    <message>
+        <source>Log-likelihood</source>
+        <translation>Log-likelihood</translation>
+    </message>
+    <message>
+        <source>Null-model log-likelihood</source>
+        <translation>Null-model log-likelihood</translation>
+    </message>
+    <message>
+        <source>McFadden pseudo R²</source>
+        <translation>McFadden pseudo R²</translation>
+    </message>
+    <message>
+        <source>AUC (in-sample)</source>
+        <translation>AUC (in-sample)</translation>
+    </message>
+    <message>
+        <source>Pearson dispersion</source>
+        <translation>Pearson dispersion</translation>
+    </message>
+    <message>
+        <source>NB2 alpha</source>
+        <translation>NB2 alpha</translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation>Events</translation>
+    </message>
+    <message>
+        <source>Censored</source>
+        <translation>Censored</translation>
+    </message>
+    <message>
+        <source>Export the coefficients, model metrics and charts of the applied model, not the original dataset.</source>
+        <translation>Export the coefficients, model metrics and charts of the applied model, not the original dataset.</translation>
+    </message>
+    <message>
+        <source>Applied model: {model}
+{role}: {outcome}
+Predictors: {predictors}</source>
+        <translation>Applied model: {model}
+{role}: {outcome}
+Predictors: {predictors}</translation>
+    </message>
+    <message>
+        <source>Duration / event</source>
+        <translation>Duration / event</translation>
+    </message>
+    <message>
+        <source>Target</source>
+        <translation>Target</translation>
+    </message>
+    <message>
+        <source>Linear regression</source>
+        <translation>Linear regression</translation>
+    </message>
+    <message>
+        <source>Logistic regression</source>
+        <translation>Logistic regression</translation>
+    </message>
+    <message>
+        <source>Poisson regression</source>
+        <translation>Poisson regression</translation>
+    </message>
+    <message>
+        <source>Negative binomial regression</source>
+        <translation>Negative binomial regression</translation>
+    </message>
+    <message>
+        <source>Cox proportional-hazards regression</source>
+        <translation>Cox proportional-hazards regression</translation>
+    </message>
+    <message>
+        <source>Apply a regression model successfully before exporting.</source>
+        <translation>Apply a regression model successfully before exporting.</translation>
+    </message>
+    <message>
+        <source>Fit statistics and diagnostics with the displayed model comments.</source>
+        <translation>Fit statistics and diagnostics with the displayed model comments.</translation>
+    </message>
+    <message>
+        <source>Export the displayed outlier tables and charts of the applied screening, not the original dataset.</source>
+        <translation>Export the displayed outlier tables and charts of the applied screening, not the original dataset.</translation>
+    </message>
+    <message>
+        <source>Apply an outlier screening successfully before exporting.</source>
+        <translation>Apply an outlier screening successfully before exporting.</translation>
+    </message>
+    <message>
+        <source>The displayed rows, at most 100, most extreme first.</source>
+        <translation>The displayed rows, at most 100, most extreme first.</translation>
+    </message>
+    <message>
+        <source>Applied method: {method}, threshold {threshold}</source>
+        <translation>Applied method: {method}, threshold {threshold}</translation>
+    </message>
+    <message>
+        <source>Selected column: {column}</source>
+        <translation>Selected column: {column}</translation>
+    </message>
+    <message>
+        <source>Applied method: {method}
+Features: {features}</source>
+        <translation>Applied method: {method}
+Features: {features}</translation>
+    </message>
+    <message>
+        <source>Column summary</source>
+        <translation>Column summary</translation>
+    </message>
+    <message>
+        <source>Column details</source>
+        <translation>Column details</translation>
+    </message>
+    <message>
+        <source>Model summary</source>
+        <translation>Model summary</translation>
+    </message>
+    <message>
+        <source>Potential outliers</source>
+        <translation>Potential outliers</translation>
+    </message>
+    <message>
+        <source>Charts ({count} column)</source>
+        <translation>Charts ({count} column)</translation>
+    </message>
+    <message>
+        <source>Charts ({count} columns)</source>
+        <translation>Charts ({count} columns)</translation>
+    </message>
+    <message>
+        <source>IQR (Tukey&apos;s fences)</source>
+        <translation>IQR (Tukey&apos;s fences)</translation>
+    </message>
+    <message>
+        <source>Z-score</source>
+        <translation>Z-score</translation>
+    </message>
+    <message>
+        <source>Modified Z-score</source>
+        <translation>Modified Z-score</translation>
+    </message>
+    <message>
+        <source>Isolation Forest</source>
+        <translation>Isolation Forest</translation>
+    </message>
+    <message>
+        <source>Local Outlier Factor</source>
+        <translation>Local Outlier Factor</translation>
+    </message>
+    <message>
+        <source>Threshold</source>
+        <translation>Threshold</translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation>Values</translation>
+    </message>
+    <message>
+        <source>Missing</source>
+        <translation>Missing</translation>
+    </message>
+    <message>
+        <source>Potential outlier share</source>
+        <translation>Potential outlier share</translation>
+    </message>
+    <message>
+        <source>Low potential outliers</source>
+        <translation>Low potential outliers</translation>
+    </message>
+    <message>
+        <source>High potential outliers</source>
+        <translation>High potential outliers</translation>
+    </message>
+    <message>
+        <source>Lower fence</source>
+        <translation>Lower fence</translation>
+    </message>
+    <message>
+        <source>Upper fence</source>
+        <translation>Upper fence</translation>
+    </message>
+    <message>
+        <source>Q1</source>
+        <translation>Q1</translation>
+    </message>
+    <message>
+        <source>Q3</source>
+        <translation>Q3</translation>
+    </message>
+    <message>
+        <source>IQR</source>
+        <translation>IQR</translation>
+    </message>
+    <message>
+        <source>Mean</source>
+        <translation>Mean</translation>
+    </message>
+    <message>
+        <source>Standard deviation</source>
+        <translation>Standard deviation</translation>
+    </message>
+    <message>
+        <source>Median</source>
+        <translation>Median</translation>
+    </message>
+    <message>
+        <source>MAD</source>
+        <translation>MAD</translation>
+    </message>
+    <message>
+        <source>Features</source>
+        <translation>Features</translation>
+    </message>
+    <message>
+        <source>Expected outlier fraction</source>
+        <translation>Expected outlier fraction</translation>
+    </message>
+    <message>
+        <source>LOF neighbors</source>
+        <translation>LOF neighbors</translation>
+    </message>
+    <message>
+        <source>Total rows</source>
+        <translation>Total rows</translation>
+    </message>
+    <message>
+        <source>Rows dropped because of missing or infinite values</source>
+        <translation>Rows dropped because of missing or infinite values</translation>
+    </message>
+    <message>
+        <source>Inliers</source>
+        <translation>Inliers</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>Status</translation>
+    </message>
+    <message>
+        <source>Export the cluster sizes, model summary and chart of the applied clustering, not the original dataset.</source>
+        <translation>Export the cluster sizes, model summary and chart of the applied clustering, not the original dataset.</translation>
+    </message>
+    <message>
+        <source>Apply a clustering successfully before exporting.</source>
+        <translation>Apply a clustering successfully before exporting.</translation>
+    </message>
+    <message>
+        <source>Settings, row counts and silhouette with the displayed model comments.</source>
+        <translation>Settings, row counts and silhouette with the displayed model comments.</translation>
+    </message>
+    <message>
+        <source>K-Means</source>
+        <translation>K-Means</translation>
+    </message>
+    <message>
+        <source>DBSCAN</source>
+        <translation>DBSCAN</translation>
+    </message>
+    <message>
+        <source>Agglomerative</source>
+        <translation>Agglomerative</translation>
+    </message>
+    <message>
+        <source>Cluster sizes</source>
+        <translation>Cluster sizes</translation>
+    </message>
+    <message>
+        <source>Number of clusters</source>
+        <translation>Number of clusters</translation>
+    </message>
+    <message>
+        <source>Neighborhood radius (eps)</source>
+        <translation>Neighborhood radius (eps)</translation>
+    </message>
+    <message>
+        <source>Minimum samples</source>
+        <translation>Minimum samples</translation>
+    </message>
+    <message>
+        <source>Clusters found</source>
+        <translation>Clusters found</translation>
+    </message>
+    <message>
+        <source>Noise rows</source>
+        <translation>Noise rows</translation>
+    </message>
+    <message>
+        <source>Silhouette score</source>
+        <translation>Silhouette score</translation>
+    </message>
+    <message>
+        <source>Cluster</source>
+        <translation>Cluster</translation>
+    </message>
+    <message>
+        <source>Rows</source>
+        <translation>Rows</translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation>Share</translation>
+    </message>
+    <message>
+        <source>Applied features: {features}</source>
+        <translation>Applied features: {features}</translation>
+    </message>
+    <message>
+        <source>Feature loadings</source>
+        <translation>Feature loadings</translation>
+    </message>
+    <message>
+        <source>Explained variance</source>
+        <translation>Explained variance</translation>
+    </message>
+    <message>
+        <source>Apply a PCA successfully before exporting.</source>
+        <translation>Apply a PCA successfully before exporting.</translation>
+    </message>
+    <message>
+        <source>Variance, share and cumulative share per component, as in the scree plot.</source>
+        <translation>Variance, share and cumulative share per component, as in the scree plot.</translation>
+    </message>
+    <message>
+        <source>Feature and row counts with the displayed model comments.</source>
+        <translation>Feature and row counts with the displayed model comments.</translation>
+    </message>
+    <message>
+        <source>Export the feature loadings, explained variance, model summary and charts of the applied PCA, not the original dataset.</source>
+        <translation>Export the feature loadings, explained variance, model summary and charts of the applied PCA, not the original dataset.</translation>
+    </message>
+    <message>
+        <source>Feature</source>
+        <translation>Feature</translation>
+    </message>
+    <message>
+        <source>Component</source>
+        <translation>Component</translation>
+    </message>
+    <message>
+        <source>Variance</source>
+        <translation>Variance</translation>
+    </message>
+    <message>
+        <source>Cumulative share</source>
+        <translation>Cumulative share</translation>
+    </message>
+    <message>
+        <source>Applied series: {value} by {time}</source>
+        <translation>Applied series: {value} by {time}</translation>
+    </message>
+    <message>
+        <source>Series</source>
+        <translation>Series</translation>
+    </message>
+    <message>
+        <source>Autocorrelation</source>
+        <translation>Autocorrelation</translation>
+    </message>
+    <message>
+        <source>Apply a time series successfully before exporting.</source>
+        <translation>Apply a time series successfully before exporting.</translation>
+    </message>
+    <message>
+        <source>Source rows</source>
+        <translation>Source rows</translation>
+    </message>
+    <message>
+        <source>Invalid rows dropped</source>
+        <translation>Invalid rows dropped</translation>
+    </message>
+    <message>
+        <source>Duplicate rows averaged</source>
+        <translation>Duplicate rows averaged</translation>
+    </message>
+    <message>
+        <source>Time points</source>
+        <translation>Time points</translation>
+    </message>
+    <message>
+        <source>Seasonal period</source>
+        <translation>Seasonal period</translation>
+    </message>
+    <message>
+        <source>Timestamp</source>
+        <translation>Timestamp</translation>
+    </message>
+    <message>
+        <source>Trend</source>
+        <translation>Trend</translation>
+    </message>
+    <message>
+        <source>Seasonal</source>
+        <translation>Seasonal</translation>
+    </message>
+    <message>
+        <source>Residual</source>
+        <translation>Residual</translation>
+    </message>
+    <message>
+        <source>Lag</source>
+        <translation>Lag</translation>
+    </message>
+    <message>
+        <source>One row per time point after averaging duplicate timestamps and any resampling, with the decomposition when available.</source>
+        <translation>One row per time point after averaging duplicate timestamps and any resampling, with the decomposition when available.</translation>
+    </message>
+    <message>
+        <source>Row diagnostics and seasonal period with the displayed model comments.</source>
+        <translation>Row diagnostics and seasonal period with the displayed model comments.</translation>
+    </message>
+    <message>
+        <source>The series and, when available, the autocorrelation and decomposition.</source>
+        <translation>The series and, when available, the autocorrelation and decomposition.</translation>
+    </message>
+    <message>
+        <source>Export the prepared series, autocorrelation, model summary and charts of the applied time series, not the original dataset.</source>
+        <translation>Export the prepared series, autocorrelation, model summary and charts of the applied time series, not the original dataset.</translation>
+    </message>
+</context><context>
+    <name>ReportPage</name>
+    <message>
+        <source>Report details</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Enter a report title</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Describe the purpose of this report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Title</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Description</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Selected analyses</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>No analyses have been added. Report collection will be available in a later step.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Edit note</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Layout preview only. Adding analyses and generating files are not implemented yet.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Generate HTML report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Not implemented yet. This step previews the report layout only.</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>ReportNotesDialog</name>
+    <message>
+        <source>Add to report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Optional notes about this analysis</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Notes</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Layout preview only. Adding an analysis to the report is not implemented yet.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Not implemented yet. No analysis or note will be saved.</source>
         <translation type="unfinished" />
     </message>
 </context><context>
@@ -348,6 +1231,7 @@ Please see logs for more information.</source>
     </message>
 </context><context>
     <name>ChiSquareView</name>
+    <message><source>Contingency table</source><translation>Contingency table</translation></message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="88" />
         <source>A chi-square test needs two categorical columns, each with between {minimum} and {maximum} distinct values.</source>
@@ -634,7 +1518,7 @@ Please see logs for more information.</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="135" />
-        <source>Summary</source>
+        <source>Model comments</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -683,6 +1567,10 @@ Please see logs for more information.</source>
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="188" />
         <source>Rows</source>
         <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Features: {columns}</source>
+        <translation>Features: {columns}</translation>
     </message>
 </context><context>
     <name>ColumnComboBox</name>
@@ -1359,21 +2247,6 @@ Please see logs for more information.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="149" />
-        <source>Scatterplot</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="160" />
-        <source>X variable</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="161" />
-        <source>Y variable</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
         <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="216" />
         <source>{count} selected - select at least {minimum}.</source>
         <translation type="unfinished" />
@@ -1498,7 +2371,7 @@ Please see logs for more information.</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="306" />
-        <source>Pairs are ranked by absolute coefficient. * marks pairs that are significant (p &lt; {alpha}) after Holm adjustment for {count} tests. Click a row to show the pair below.</source>
+        <source>Pairs are ranked by absolute coefficient. * marks pairs that are significant (p &lt; {alpha}) after Holm adjustment for {count} tests.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -2397,6 +3270,28 @@ Continue?</source>
     </message>
 </context><context>
     <name>ExportController</name>
+    <message>
+        <source>Export completed</source>
+        <translation>Export completed</translation>
+    </message>
+    <message>
+        <source>Export completed successfully.
+
+Saved to:
+{path}</source>
+        <translation>Export completed successfully.
+
+Saved to:
+{path}</translation>
+    </message>
+    <message>
+        <source>Supply either a DataFrame or named sheets, not both.</source>
+        <translation>Supply either a DataFrame or named sheets, not both.</translation>
+    </message>
+    <message>
+        <source>Invalid Excel workbook: {reason}</source>
+        <translation>Invalid Excel workbook: {reason}</translation>
+    </message>
     <message>
         <location filename="..\..\workbench\controllers\export_controller.py" line="69" />
         <source>No dataset</source>
@@ -3607,12 +4502,22 @@ Continue?</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="158" />
-        <source>&lt;b&gt;No potential outliers&lt;/b&gt;</source>
+        <source>No potential outliers</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="161" />
-        <source>&lt;b&gt;Potential outliers, most anomalous first&lt;/b&gt;</source>
+        <source>Potential outliers, most anomalous first</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="60" />
+        <source>PCA projection</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="60" />
+        <source>Model comments</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -3624,6 +4529,10 @@ Continue?</source>
         <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="164" />
         <source>Anomaly score</source>
         <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Features: {columns}</source>
+        <translation>Features: {columns}</translation>
     </message>
 </context><context>
     <name>OutliersConfigWidget</name>
@@ -3665,11 +4574,6 @@ Continue?</source>
     <message>
         <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="96" />
         <source>Apply</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="100" />
-        <source>Column</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -3909,6 +4813,10 @@ Continue?</source>
         <source>Row</source>
         <translation type="unfinished" />
     </message>
+    <message>
+        <source>Flagged values are potential outliers, not necessarily errors - check them before excluding anything.</source>
+        <translation>Flagged values are potential outliers, not necessarily errors - check them before excluding anything.</translation>
+    </message>
 </context><context>
     <name>OverviewView</name>
     <message>
@@ -4067,6 +4975,30 @@ Continue?</source>
         <source>Other</source>
         <translation type="unfinished" />
     </message>
+    <message>
+        <source>Sample</source>
+        <translation>Sample</translation>
+    </message>
+    <message>
+        <source>Missing fraction</source>
+        <translation>Missing fraction</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation>Section</translation>
+    </message>
+    <message>
+        <source>Metric</source>
+        <translation>Metric</translation>
+    </message>
+    <message>
+        <source>Count</source>
+        <translation>Count</translation>
+    </message>
+    <message>
+        <source>Fraction</source>
+        <translation>Fraction</translation>
+    </message>
 </context><context>
     <name>PCAConfigWidget</name>
     <message>
@@ -4163,7 +5095,7 @@ Continue?</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="128" />
-        <source>Summary</source>
+        <source>Model comments</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -4208,7 +5140,7 @@ Continue?</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="177" />
-        <source>&lt;b&gt;Feature loadings&lt;/b&gt;</source>
+        <source>Feature loadings</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -4216,8 +5148,47 @@ Continue?</source>
         <source>Feature</source>
         <translation type="unfinished" />
     </message>
+    <message>
+        <source>Features: {columns}</source>
+        <translation>Features: {columns}</translation>
+    </message>
 </context><context>
     <name>PairedComparisonConfigWidget</name>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="53" />
+        <source>Measurement columns</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="74" />
+        <source>Select all</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="75" />
+        <source>Clear</source>
+        <translation type="unfinished" />
+    </message>
+            <message>
+                <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="146" />
+                <source>None selected - select at least {minimum}.</source>
+                <translation type="unfinished" />
+            </message>
+            <message>
+                <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="148" />
+                <source>{count} selected - select at least {minimum}.</source>
+                <translation type="unfinished" />
+            </message>
+            <message>
+                <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="153" />
+                <source>{count} selected - Wilcoxon signed-rank test.</source>
+                <translation type="unfinished" />
+            </message>
+            <message>
+                <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="154" />
+                <source>{count} selected - Friedman test.</source>
+                <translation type="unfinished" />
+            </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="56" />
         <source>Select at least two numeric columns. They are used in the order shown; each row is one subject.</source>
@@ -4828,7 +5799,12 @@ Hint: {error_hint}</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="212" />
-        <source>&lt;b&gt;Model summary&lt;/b&gt;</source>
+        <source>Model comments</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="212" />
+        <source>Linear regression</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -5003,7 +5979,7 @@ Hint: {error_hint}</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="389" />
-        <source>* marks coefficients significant at p &amp;lt, {alpha}.</source>
+        <source>* marks coefficients significant at p &amp;lt; {alpha}.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -5071,8 +6047,92 @@ Hint: {error_hint}</source>
         <source>Standardized residual</source>
         <translation type="unfinished" />
     </message>
+    <message>
+        <source>Linear regression: {target}</source>
+        <translation>Linear regression: {target}</translation>
+    </message>
 </context><context>
     <name>GeneralizedRegressionView</name>
+    <message>
+        <source>Diagnostic interpretation</source>
+        <translation>Diagnostic interpretation</translation>
+    </message>
+    <message>
+        <source>Logistic-model diagnostics</source>
+        <translation>Logistic-model diagnostics</translation>
+    </message>
+    <message>
+        <source>Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.</source>
+        <translation>Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.</translation>
+    </message>
+    <message>
+        <source>Diagnostics unavailable: outcomes must contain both binary classes.</source>
+        <translation>Diagnostics unavailable: outcomes must contain both binary classes.</translation>
+    </message>
+    <message>
+        <source>No logistic diagnostic data are available.</source>
+        <translation>No logistic diagnostic data are available.</translation>
+    </message>
+    <message>
+        <source>Predictor odds ratios with 95% confidence intervals</source>
+        <translation>Predictor odds ratios with 95% confidence intervals</translation>
+    </message>
+    <message>
+        <source>Odds ratio (logarithmic scale; reference = 1)</source>
+        <translation>Odds ratio (logarithmic scale; reference = 1)</translation>
+    </message>
+    <message>
+        <source>No predictor effects: intercept-only model.</source>
+        <translation>No predictor effects: intercept-only model.</translation>
+    </message>
+    <message>
+        <source>Unavailable: non-finite, non-positive or invalid odds ratio / CI</source>
+        <translation>Unavailable: non-finite, non-positive or invalid odds ratio / CI</translation>
+    </message>
+    <message>
+        <source>ROC (in-sample)</source>
+        <translation>ROC (in-sample)</translation>
+    </message>
+    <message>
+        <source>False positive rate</source>
+        <translation>False positive rate</translation>
+    </message>
+    <message>
+        <source>True positive rate</source>
+        <translation>True positive rate</translation>
+    </message>
+    <message>
+        <source>AUC = {value} (in-sample)</source>
+        <translation>AUC = {value} (in-sample)</translation>
+    </message>
+    <message>
+        <source>Calibration (in-sample)</source>
+        <translation>Calibration (in-sample)</translation>
+    </message>
+    <message>
+        <source>Mean fitted event probability</source>
+        <translation>Mean fitted event probability</translation>
+    </message>
+    <message>
+        <source>Observed event fraction</source>
+        <translation>Observed event fraction</translation>
+    </message>
+    <message>
+        <source>{effect} [{low}, {high}]</source>
+        <translation>{effect} [{low}, {high}]</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Unknown</translation>
+    </message>
+    <message>
+        <source>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins; identical probabilities stay together.</source>
+        <translation>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins; identical probabilities stay together.</translation>
+    </message>
+    <message>
+        <source>Calibration bin counts: {counts}.</source>
+        <translation>Calibration bin counts: {counts}.</translation>
+    </message>
     <message>
         <source>Charts unavailable: the fitted Negative Binomial variance is invalid.</source>
         <translation>Charts unavailable: the fitted Negative Binomial variance is invalid.</translation>
@@ -5303,6 +6363,10 @@ Hint: {error_hint}</source>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="192" />
         <source>This diagnostic is advisory; the selected model was not changed.</source>
         <translation>This diagnostic is advisory; the selected model was not changed.</translation>
+    </message>
+    <message>
+        <source>{model}: {target}</source>
+        <translation>{model}: {target}</translation>
     </message>
 </context><context>
     <name>RestAuthWidget</name>
@@ -7653,15 +8717,35 @@ Time: {sec:.2f}s{sample}</source>
         <translation type="unfinished" />
     </message>
 </context><context>
-    <name>StatisticsConfigWidget</name>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_config.py" line="69" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_config.py" line="60" />
-        <source>Column</source>
-        <translation type="unfinished" />
-    </message>
-</context><context>
     <name>StatisticsView</name>
+    <message>
+        <source>Charts</source>
+        <translation>Charts</translation>
+    </message>
+    <message>
+        <source>Fraction (non-missing)</source>
+        <translation>Fraction (non-missing)</translation>
+    </message>
+    <message>
+        <source>Missing fraction</source>
+        <translation>Missing fraction</translation>
+    </message>
+    <message>
+        <source>Valid count</source>
+        <translation>Valid count</translation>
+    </message>
+    <message>
+        <source>Shapiro-Wilk W</source>
+        <translation>Shapiro-Wilk W</translation>
+    </message>
+    <message>
+        <source>Shapiro-Wilk p-value</source>
+        <translation>Shapiro-Wilk p-value</translation>
+    </message>
+    <message>
+        <source>Recommended summary</source>
+        <translation>Recommended summary</translation>
+    </message>
     <message>
         <source>Mean ± SD</source>
         <translation>Mean ± SD</translation>
@@ -7926,6 +9010,16 @@ Time: {sec:.2f}s{sample}</source>
         <translation type="unfinished" />
     </message>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="41" />
+        <source>Quarterly</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="41" />
+        <source>Yearly</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
         <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="44" />
         <source>Resample to</source>
         <translation type="unfinished" />
@@ -7968,6 +9062,10 @@ Time: {sec:.2f}s{sample}</source>
 </context><context>
     <name>TimeSeriesView</name>
     <message>
+        <source>Summary</source>
+        <translation>Summary</translation>
+    </message>
+    <message>
         <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="61" />
         <source>A time series needs at least one datetime column.</source>
         <translation type="unfinished" />
@@ -8000,6 +9098,16 @@ Time: {sec:.2f}s{sample}</source>
     <message>
         <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="67" />
         <source>At least 3 valid time observations are needed.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="70" />
+        <source>Charts</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="82" />
+        <source>Model comments</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -8053,6 +9161,46 @@ Time: {sec:.2f}s{sample}</source>
         <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="134" />
         <source>Residual</source>
         <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Additive</source>
+        <translation>Additive</translation>
+    </message>
+    <message>
+        <source>Multiplicative</source>
+        <translation>Multiplicative</translation>
+    </message>
+    <message>
+        <source>Decomposition model: {model}</source>
+        <translation>Decomposition model: {model}</translation>
+    </message>
+    <message>
+        <source>The autocorrelation requires a regular time frequency.</source>
+        <translation>The autocorrelation requires a regular time frequency.</translation>
+    </message>
+    <message>
+        <source>The autocorrelation is unavailable while the series has gaps.</source>
+        <translation>The autocorrelation is unavailable while the series has gaps.</translation>
+    </message>
+    <message>
+        <source>Seasonal decomposition requires a regular time frequency.</source>
+        <translation>Seasonal decomposition requires a regular time frequency.</translation>
+    </message>
+    <message>
+        <source>Seasonal decomposition is unavailable while the series has gaps.</source>
+        <translation>Seasonal decomposition is unavailable while the series has gaps.</translation>
+    </message>
+    <message>
+        <source>No seasonal period could be detected; choose one to decompose the series.</source>
+        <translation>No seasonal period could be detected; choose one to decompose the series.</translation>
+    </message>
+    <message>
+        <source>Seasonal decomposition needs at least two complete seasonal cycles.</source>
+        <translation>Seasonal decomposition needs at least two complete seasonal cycles.</translation>
+    </message>
+    <message>
+        <source>Multiplicative decomposition requires all values to be greater than zero.</source>
+        <translation>Multiplicative decomposition requires all values to be greater than zero.</translation>
     </message>
 </context><context>
     <name>ToolbarController</name>
@@ -8176,7 +9324,8 @@ Shortcut: Ctrl+Z</source>
     <name>RegressionConfigWidget</name>
     <message><source>Cox proportional-hazards regression</source><translation>Cox proportional-hazards regression</translation></message>
     <message><source>Duration</source><translation>Duration</translation></message>
-    <message><source>Event (1 = event; 0 = censored)</source><translation>Event (1 = event; 0 = censored)</translation></message>
+    <message><source>Event</source><translation>Event</translation></message>
+    <message><source>1 = event, 0 = censored</source><translation>1 = event, 0 = censored</translation></message>
     <message><source>This column is an outcome and cannot be a predictor.</source><translation>This column is an outcome and cannot be a predictor.</translation></message>
     <message><source>Cox regression needs distinct numeric duration and binary event columns.</source><translation>Cox regression needs distinct numeric duration and binary event columns.</translation></message>
 </context>
@@ -8271,5 +9420,9 @@ all hazard ratios and intervals must be finite and positive.</translation>
     <message><source>Reference for {column}: {level}</source><translation>Reference for {column}: {level}</translation></message>
     <message><source>Efron method was used to handle tied event times.</source><translation>Efron method was used to handle tied event times.</translation></message>
     <message><source>The proportional-hazards assumption was not assessed.</source><translation>The proportional-hazards assumption was not assessed.</translation></message>
+    <message>
+        <source>Cox proportional-hazards regression: {duration} / {event}</source>
+        <translation>Cox proportional-hazards regression: {duration} / {event}</translation>
+    </message>
 </context>
 </TS>

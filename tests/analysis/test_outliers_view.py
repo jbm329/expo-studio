@@ -7,7 +7,8 @@ import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6.QtCore import QEvent, Qt
-from PyQt6.QtWidgets import QApplication, QLabel, QSplitter, QTableWidget
+from PyQt6.QtGui import QPalette
+from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.outliers_view import OutliersView
 from expo_jbm329.services.analysis.outliers import (
@@ -19,6 +20,9 @@ from expo_jbm329.services.analysis.outliers import (
     analyze_outlier_column,
     analyze_outlier_summary,
 )
+from expo_jbm329.services.analysis.outliers_charts import OutlierHistogramLabels
+from expo_jbm329.utils.format_utils import fmt_num
+from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
 _VALUES = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 100.0]
 
@@ -45,6 +49,70 @@ def _view(
 
 def _detail(column: str = "<a>", method: OutlierMethod = OutlierMethod.IQR) -> OutlierColumnDetail:
     return analyze_outlier_column(_frame(), column, method)
+
+
+@pytest.mark.parametrize("column", ["<a>", "b"])
+@pytest.mark.parametrize(("section", "small_height"), [("_chart_panel", 80), ("_statistics_panel", 60)])
+def test_distribution_and_column_details_scroll_below_a_frozen_title(column, section, small_height):
+    view, _ = _view()
+    view.set_column_detail(_detail(column))
+    QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete.value)
+    panel = getattr(view, section)
+    try:
+        content = assert_section_scrolls_below_frozen_title(panel, small_height)
+        if section == "_chart_panel":
+            assert panel.layout().itemAt(0).widget().text() == "Distribution"
+            assert isinstance(content, FigureCanvasQTAgg)
+        else:
+            assert panel.layout().itemAt(0).widget().text() == "Column details"
+            assert isinstance(content, QLabel)
+            assert "threshold" in content.text()
+            assert content.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+            assert content.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+    finally:
+        panel.deleteLater()
+        view.close()
+
+
+def test_column_detail_error_stays_at_the_top_of_its_section():
+    view, _ = _view()
+    view.set_column_detail(dataclasses.replace(_detail("b"), error=OutlierError.INVALID_COLUMN))
+    panel = view._statistics_panel  # noqa: SLF001
+    panel.setParent(None)
+    panel.resize(1100, 500)
+    panel.show()
+    try:
+        QApplication.processEvents()
+        layout = panel.layout()
+        label = layout.itemAt(0).widget()
+        geometry = (label.y(), label.height())
+        assert label.y() == layout.contentsMargins().top()
+        assert label.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+        panel.resize(1100, 800)
+        QApplication.processEvents()
+        assert (label.y(), label.height()) == geometry
+    finally:
+        panel.close()
+        panel.deleteLater()
+        view.close()
+
+
+def test_summary_caption_shares_the_tables_borderless_shaded_panel():
+    view, _ = _view()
+    table = view.table()
+    assert table is not None
+    panel = table.parentWidget()
+    assert isinstance(panel, QFrame)
+    assert panel.frameShape() is QFrame.Shape.NoFrame
+    assert panel.autoFillBackground()
+    assert panel.backgroundRole() is QPalette.ColorRole.Button
+    caption = panel.findChild(QLabel)
+    assert caption is not None
+    assert panel.layout().itemAt(0).widget() is table
+    assert panel.layout().itemAt(1).widget() is caption
+    assert caption.text().startswith("Flagged values are potential outliers")
+    assert caption.wordWrap()
+    assert caption.textFormat() is Qt.TextFormat.PlainText
 
 
 def _cells(table, row: int) -> list[str]:
@@ -143,14 +211,58 @@ def test_status_texts_are_distinct():
 
 def test_clicking_a_row_emits_the_column():
     view, result = _view()
-    received = _record(view.column_activated)
+    received = []
+    view.column_activated.connect(
+        lambda column: received.append((column, view.selected_column(), view.column_selection_revision()))
+    )
     table = view.table()
     assert table is not None
 
     table.cellClicked.emit(1, 0)
     table.cellClicked.emit(99, 0)
 
-    assert received == [(result.columns[1].column,)]
+    assert received == [(result.columns[1].column, result.columns[1].column, 1)]
+    assert view.selected_column() == result.columns[1].column
+    assert view.column_selection_revision() == 1
+
+
+def test_select_column_activates_the_canonical_summary_row():
+    view, result = _view(column=None)
+    received = _record(view.column_activated)
+    table = view.table()
+    assert table is not None
+
+    view.select_column("<a>")
+    assert view.selected_column() == "<a>"
+    assert view.column_selection_revision() == 1
+    assert table.selectedItems()[0].row() == 0
+
+    view.select_column("b")
+    assert view.selected_column() == "b"
+    assert view.column_selection_revision() == 2
+    assert received == [("<a>",), ("b",)]
+    assert table.selectedItems()[0].row() == 1
+    assert result.columns[0].column == "<a>"
+
+
+def test_select_column_rejects_a_column_missing_from_the_summary():
+    view, _ = _view(column=None)
+
+    with pytest.raises(ValueError, match="row in the displayed outlier summary"):
+        view.select_column("t")
+
+    assert view.selected_column() is None
+    assert view.column_selection_revision() == 0
+
+
+def test_setting_detail_updates_selected_column_without_advancing_selection_revision():
+    view, _ = _view()
+    assert view.selected_column() == "<a>"
+
+    view.set_column_detail(_detail("b"))
+
+    assert view.selected_column() == "b"
+    assert view.column_selection_revision() == 0
 
 
 def test_detail_highlights_its_summary_row_or_clears_the_selection():
@@ -358,3 +470,63 @@ def test_detail_on_an_error_summary_has_no_row_to_select():
 
     assert view.column_detail() is not None
     assert view.table() is None
+
+
+# ----------------------------------------------------------------------
+# Export text
+# ----------------------------------------------------------------------
+
+
+def test_histogram_labels_are_shared_by_the_displayed_chart():
+    view, result = _view()
+    canvas = view.findChildren(FigureCanvasQTAgg)[0]
+    axes = canvas.figure.axes[0]
+
+    assert view.result() is result
+    assert view.histogram_labels() == OutlierHistogramLabels("Inside the fences", "Potential outliers", "Count")
+    assert [text.get_text() for text in axes.get_legend().get_texts()] == ["Inside the fences", "Potential outliers"]
+    assert axes.get_ylabel() == "Count"
+
+
+def test_summary_notes_are_the_plain_displayed_totals_and_caveat():
+    view, _ = _view()
+
+    notes = view.summary_notes()
+
+    assert len(notes) == 2
+    assert notes[0].startswith(f"IQR (Tukey's fences), threshold {fmt_num(1.5)}: 1 of 10 rows")
+    assert "<b>" not in notes[0]
+    assert notes[1].startswith("Flagged values are potential outliers, not necessarily errors")
+
+
+def test_detail_notes_are_the_plain_displayed_title_and_statistics():
+    view, _ = _view()
+
+    notes = view.detail_notes()
+
+    assert notes[0] == "Potential outliers, most extreme first"
+    assert notes[1] == f"<a> - IQR (Tukey's fences), threshold {fmt_num(1.5)}"
+    assert any(line.startswith("Q1 = ") for line in notes)
+
+
+def test_detail_notes_describe_a_column_without_flagged_rows():
+    view, _ = _view(column="b")
+
+    assert view.detail_notes()[0] == "No potential outliers"
+
+
+def test_detail_notes_count_the_listed_rows_when_more_are_flagged():
+    view, _ = _view()
+    detail = _detail()
+    summary = dataclasses.replace(detail.summary, outlier_count=5)
+    view.set_column_detail(dataclasses.replace(detail, summary=summary))
+
+    assert view.detail_notes()[0] == "The 1 most extreme of 5 potential outliers"
+
+
+def test_detail_notes_are_empty_without_a_successful_detail():
+    view, _ = _view(column=None)
+    assert view.detail_notes() == ()
+
+    view.set_column_detail(dataclasses.replace(_detail(), error=OutlierError.INVALID_COLUMN))
+    assert view.detail_notes() == ()

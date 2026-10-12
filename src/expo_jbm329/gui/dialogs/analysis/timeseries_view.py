@@ -4,13 +4,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QScrollArea, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QLabel, QSplitter, QVBoxLayout, QWidget
 
-from expo_jbm329.services.analysis.timeseries import TimeSeriesError
+from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.services.analysis.timeseries import DecompositionModel, TimeSeriesError
+from expo_jbm329.services.analysis.timeseries_charts import (
+    DECOMPOSITION_PANELS,
+    TimeSeriesChartLabels,
+    draw_acf_plot,
+    draw_decomposition,
+    draw_series_plot,
+    has_autocorrelation,
+    has_decomposition,
+)
 from expo_jbm329.utils.format_utils import fmt_int
 
 if TYPE_CHECKING:
@@ -20,7 +29,7 @@ if TYPE_CHECKING:
 
 
 class TimeSeriesView(QWidget):
-    """Displays the source series, autocorrelation and seasonal components."""
+    """Displays charts and model comments in resizable sections."""
 
     def __init__(self, result: TimeSeriesResult, parent: QWidget | None = None) -> None:
         """Initialize a view from one complete time-series result."""
@@ -32,17 +41,14 @@ class TimeSeriesView(QWidget):
             root.addWidget(self._centered_label(self.error_text(result.error)))
             return
 
-        scroll = QScrollArea(self)
-        scroll.setWidgetResizable(True)
-        content = QWidget(scroll)
-        layout = QVBoxLayout(content)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._summary_label(result))
-        layout.addWidget(self._series_plot(result))
-        layout.addWidget(self._acf_plot(result))
-        layout.addWidget(self._decomposition_plot(result))
-        scroll.setWidget(content)
-        root.addWidget(scroll)
+        splitter = QSplitter(Qt.Orientation.Vertical, self)
+        splitter.setChildrenCollapsible(False)
+        splitter.addWidget(self._build_charts_section(result))
+        splitter.addWidget(self._build_comments_section(result))
+        splitter.setStretchFactor(0, 4)
+        splitter.setStretchFactor(1, 1)
+        splitter.setSizes([600, 130])
+        root.addWidget(splitter, 1)
 
     def configuration(self) -> tuple[str, str, str | None, int | None, object]:
         """Return the parameters of the displayed result."""
@@ -54,6 +60,84 @@ class TimeSeriesView(QWidget):
             result.seasonal_period,
             result.decomposition_model,
         )
+
+    def result(self) -> TimeSeriesResult:
+        """Return the displayed time-series analysis."""
+        return self._result
+
+    def chart_labels(self) -> TimeSeriesChartLabels:
+        """Return the translated plot text used by the view and its export."""
+        return TimeSeriesChartLabels(
+            series_title=self.tr("Series"),
+            value_axis=self._result.value_column,
+            acf_title=self.tr("Autocorrelation"),
+            lag_axis=self.tr("Lag"),
+            acf_axis=self.tr("Autocorrelation"),
+            decomposition_title=self.tr("Seasonal decomposition"),
+            observed=self.tr("Observed"),
+            trend=self.tr("Trend"),
+            seasonal=self.tr("Seasonal"),
+            residual=self.tr("Residual"),
+        )
+
+    def export_notes(self) -> tuple[str, ...]:
+        """Return the displayed comments, decomposition model and unavailability reasons.
+
+        Returns:
+            Plain-text lines, or an empty tuple when the view shows an error.
+        """
+        result = self._result
+        if result.error is not None:
+            return ()
+        models = {
+            DecompositionModel.ADDITIVE: self.tr("Additive"),
+            DecompositionModel.MULTIPLICATIVE: self.tr("Multiplicative"),
+        }
+        lines = [
+            *rich_text_lines([self._summary_text(result)]),
+            self.tr("Decomposition model: {model}").format(model=models[result.decomposition_model]),
+        ]
+        lines.extend(self.note_text(note) for note in (result.diagnostics_note, result.decomposition_note) if note)
+        return tuple(lines)
+
+    def autocorrelation_note(self) -> str:
+        """Return the translated reason the autocorrelation is unavailable, or an empty string."""
+        note = self._result.diagnostics_note
+        return self.note_text(note) if note else ""
+
+    def note_text(self, note: str) -> str:
+        """Return the translated explanation of why a diagnostic is unavailable.
+
+        Args:
+            note: English explanation produced by the time-series service.
+
+        Returns:
+            The translation, or `note` unchanged when it is not a known explanation.
+        """
+        translations = {
+            "The autocorrelation requires a regular time frequency.": self.tr(
+                "The autocorrelation requires a regular time frequency."
+            ),
+            "The autocorrelation is unavailable while the series has gaps.": self.tr(
+                "The autocorrelation is unavailable while the series has gaps."
+            ),
+            "Seasonal decomposition requires a regular time frequency.": self.tr(
+                "Seasonal decomposition requires a regular time frequency."
+            ),
+            "Seasonal decomposition is unavailable while the series has gaps.": self.tr(
+                "Seasonal decomposition is unavailable while the series has gaps."
+            ),
+            "No seasonal period could be detected; choose one to decompose the series.": self.tr(
+                "No seasonal period could be detected; choose one to decompose the series."
+            ),
+            "Seasonal decomposition needs at least two complete seasonal cycles.": self.tr(
+                "Seasonal decomposition needs at least two complete seasonal cycles."
+            ),
+            "Multiplicative decomposition requires all values to be greater than zero.": self.tr(
+                "Multiplicative decomposition requires all values to be greater than zero."
+            ),
+        }
+        return translations.get(note, note)
 
     def error_text(self, error: TimeSeriesError) -> str:
         """Return translated text for `error`."""
@@ -68,10 +152,41 @@ class TimeSeriesView(QWidget):
         }
         return messages[error]
 
-    def _summary_label(self, result: TimeSeriesResult) -> QLabel:
-        """Build a text summary with data-cleaning diagnostics."""
+    def _build_charts_section(self, result: TimeSeriesResult) -> QWidget:
+        """Build the titled section with all charts in one scroll area."""
+        panel, layout = self._build_section(self.tr("Charts"))
+        content = QWidget(panel)
+        charts = QVBoxLayout(content)
+        charts.setContentsMargins(0, 0, 0, 0)
+        charts.addWidget(self._series_plot(result))
+        charts.addWidget(self._acf_plot(result))
+        charts.addWidget(self._decomposition_plot(result))
+        layout.addWidget(build_section_scroll_area(content, panel), 1)
+        return panel
+
+    def _build_comments_section(self, result: TimeSeriesResult) -> QWidget:
+        """Build the titled model-comments section with a scrollable summary."""
+        panel, layout = self._build_section(self.tr("Model comments"))
+        layout.addWidget(build_section_scroll_area(self._summary_label(result), panel), 1)
+        return panel
+
+    def _build_section(self, title: str) -> tuple[QWidget, QVBoxLayout]:
+        """Build a titled section matching the Regression layout."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        label = QLabel(title, panel)
+        label.setTextFormat(Qt.TextFormat.PlainText)
+        font = label.font()
+        font.setBold(True)
+        label.setFont(font)
+        layout.addWidget(label)
+        return panel, layout
+
+    def _summary_text(self, result: TimeSeriesResult) -> str:
+        """Return the rich-text summary with data-cleaning diagnostics."""
         frequency = result.detected_frequency or self.tr("irregular")
-        text = self.tr(
+        return self.tr(
             "<b>{value}</b> by <b>{time}</b>: {points} time points, frequency {frequency}. "
             "{invalid} invalid rows dropped. {duplicates} duplicate rows averaged."
         ).format(
@@ -82,9 +197,14 @@ class TimeSeriesView(QWidget):
             invalid=fmt_int(result.invalid_rows),
             duplicates=fmt_int(result.duplicate_rows),
         )
-        label = QLabel(text, self)
+
+    def _summary_label(self, result: TimeSeriesResult) -> QLabel:
+        """Build a text summary with data-cleaning diagnostics."""
+        label = QLabel(self._summary_text(result), self)
         label.setWordWrap(True)
         label.setTextFormat(Qt.TextFormat.RichText)
+        label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         return label
 
     def _canvas(self, height: int = 220) -> tuple[FigureCanvasQTAgg, Axes]:
@@ -97,49 +217,38 @@ class TimeSeriesView(QWidget):
     def _series_plot(self, result: TimeSeriesResult) -> QWidget:
         """Build the original or resampled series chart."""
         canvas, axis = self._canvas()
-        axis.plot(result.timestamps, result.values, marker="o", markersize=3)  # type: ignore[arg-type]
-        axis.set_title(self.tr("Series"))
-        axis.set_ylabel(result.value_column)
-        axis.tick_params(axis="x", rotation=30)
+        draw_series_plot(axis, result, self.chart_labels())
         return canvas
 
     def _acf_plot(self, result: TimeSeriesResult) -> QWidget:
         """Build ACF stems or an explanation when the metric is unavailable."""
         canvas, axis = self._canvas()
-        if result.acf_values:
-            lags = np.arange(1, len(result.acf_values) + 1)
-            axis.vlines(lags, 0, result.acf_values)
-            axis.scatter(lags, result.acf_values, s=12)
-            axis.axhline(0, color="0.5", linewidth=0.8)
-            axis.set_xlabel(self.tr("Lag"))
-            axis.set_ylabel(self.tr("Autocorrelation"))
+        labels = self.chart_labels()
+        if has_autocorrelation(result):
+            draw_acf_plot(axis, result, labels)
         else:
-            axis.text(0.5, 0.5, result.diagnostics_note or "", ha="center", va="center", wrap=True)
-            axis.set_axis_off()
-        axis.set_title(self.tr("Autocorrelation"))
+            self._draw_unavailable(axis, labels.acf_title, result.diagnostics_note)
         return canvas
 
     def _decomposition_plot(self, result: TimeSeriesResult) -> QWidget:
         """Build seasonal components or show why decomposition is unavailable."""
-        if not result.trend:
+        labels = self.chart_labels()
+        if not has_decomposition(result):
             canvas, axis = self._canvas()
-            axis.text(0.5, 0.5, result.decomposition_note or "", ha="center", va="center", wrap=True)
-            axis.set_title(self.tr("Seasonal decomposition"))
-            axis.set_axis_off()
+            self._draw_unavailable(axis, labels.decomposition_title, result.decomposition_note)
             return canvas
 
         figure = Figure(constrained_layout=True)
         canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
         canvas.setMinimumHeight(400)
-        labels = (self.tr("Observed"), self.tr("Trend"), self.tr("Seasonal"), self.tr("Residual"))
-        series = (result.values, result.trend, result.seasonal, result.residual)
-        axes = figure.subplots(4, 1, sharex=True)
-        for axis, label, values in zip(axes, labels, series, strict=True):
-            axis.plot(result.timestamps, values)
-            axis.set_ylabel(label)
-        axes[0].set_title(self.tr("Seasonal decomposition"))
-        axes[-1].tick_params(axis="x", rotation=30)
+        draw_decomposition(list(figure.subplots(DECOMPOSITION_PANELS, 1, sharex=True)), result, labels)
         return canvas
+
+    def _draw_unavailable(self, axis: Axes, title: str, note: str | None) -> None:
+        """Draw a titled, axis-free explanation in place of an unavailable chart."""
+        axis.text(0.5, 0.5, self.note_text(note) if note else "", ha="center", va="center", wrap=True)
+        axis.set_title(title)
+        axis.set_axis_off()
 
     def _centered_label(self, text: str) -> QLabel:
         """Build centered error text."""
