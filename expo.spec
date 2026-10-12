@@ -62,11 +62,17 @@ qt6_libs = filter_qt_binaries(collect_dynamic_libs("PyQt6.Qt6")) if IS_WIN else 
 
 datas += qt6_plugins
 binaries += qt6_libs
+# QtWebEngine runtime data and license metadata are loaded dynamically by Chromium
+# and must be present in frozen builds and third-party notices.
+datas += copy_metadata("PyQt6-WebEngine")
+datas += copy_metadata("PyQt6-WebEngine-Qt6")
 
 # -------------------------------
 # Hidden imports (Core + optional profiling)
 # -------------------------------
 hiddenimports = []
+# Include the WebEngine hook and runtime files for the analysis preview.
+hiddenimports += ["expo_jbm329.gui.dialogs.analysis.report_preview_dialog"]
 hiddenimports += collect_submodules("jinja2")
 hiddenimports += ["matplotlib.backends.backend_svg"]
 # sqlglot loads dialects lazily via importlib (e.g. sqlglot.dialects.sqlite),
