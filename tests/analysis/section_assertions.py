@@ -2,16 +2,54 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QLabel, QScrollArea, QWidget
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
-def _wait_for(predicate, timeout_ms: int = 500) -> None:
+
+def _wait_for(predicate: Callable[[], bool], timeout_ms: int = 2000) -> None:
     elapsed = 0
     while not predicate() and elapsed < timeout_ms:
         QTest.qWait(10)
         elapsed += 10
+
+
+def _required_content_height(content: QWidget, viewport_width: int) -> int:
+    """Return the height a resizable scroll area must give `content` at `viewport_width`.
+
+    Mirrors how `QScrollArea` sizes a resizable widget: height-for-width when supported,
+    otherwise the effective minimum size.
+    """
+    if content.hasHeightForWidth():
+        return content.heightForWidth(viewport_width)
+    return max(content.minimumSize().height(), content.minimumSizeHint().height())
+
+
+def _overflow_height(panel: QWidget, title: QLabel, scroll: QScrollArea, content: QWidget, small_height: int) -> int:
+    """Return a panel height at which the section content is guaranteed to overflow.
+
+    Text content depends on the available fonts (e.g. a bare CI runner using the offscreen
+    platform), so a fixed caller height alone is not reliable. The returned height never
+    exceeds `small_height`, keeping caller expectations intact.
+    """
+    layout = panel.layout()
+    assert layout is not None
+    viewport = scroll.viewport()
+    assert viewport is not None
+    required = _required_content_height(content, viewport.width())
+    assert required >= 2, (
+        f"Section content reports no measurable height (required={required}, "
+        f"sizeHint={content.sizeHint()}, minimumSizeHint={content.minimumSizeHint()}, "
+        f"font={content.font().family()!r}); check that fonts are available."
+    )
+    margins = layout.contentsMargins()
+    chrome = margins.top() + margins.bottom() + title.height() + layout.spacing() + 2 * scroll.frameWidth()
+    return min(small_height, chrome + required // 2)
 
 
 def assert_section_scrolls_below_frozen_title(
@@ -44,13 +82,23 @@ def assert_section_scrolls_below_frozen_title(
     assert content is not None
 
     panel.setParent(None)
+    # The scroll area's default minimum size hint can exceed short font-dependent content and
+    # keep the detached panel too tall to overflow; the behavior under test is the scrolling.
+    scroll.setMinimumHeight(1)
     panel.resize(width, small_height)
     panel.show()
     try:
         bar = scroll.verticalScrollBar()
         assert bar is not None
+        QCoreApplication.processEvents()
+        panel.resize(width, _overflow_height(panel, title, scroll, content, small_height))
         _wait_for(lambda: bar.maximum() > 0)
-        assert bar.maximum() > 0
+        viewport = scroll.viewport()
+        assert viewport is not None
+        assert bar.maximum() > 0, (
+            f"Content did not overflow: panel={panel.size()}, viewport={viewport.size()}, "
+            f"content={content.size()}, font={content.font().family()!r}"
+        )
         title_geometry = title.geometry()
         bar.setValue(bar.maximum())
         QCoreApplication.processEvents()
