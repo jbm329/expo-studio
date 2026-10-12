@@ -43,135 +43,27 @@ The project is still in its infancy and may change significantly.
 
 ### 📈 Advanced Analysis
 
-The **Advanced Analysis** workspace provides interactive statistical tools for datasets loaded in result tabs. Open it with **Analyze data** in the toolbar, then choose a dataset and analysis category.
+The **Advanced Analysis** workspace provides statistical and machine-learning
+tools for datasets in result tabs. Open it with **Analyze data**, then choose a
+dataset and analysis.
 
-Available analyses include:
+- **Overview** profiles dataset structure, missing values, duplicates, and columns.
+- **Statistics** summarizes numeric and categorical data, distributions, and normality.
+- **Hypothesis Tests** compares groups, tests categorical associations, and analyzes paired measurements.
+- **Correlation** explores Pearson, Spearman, or Kendall relationships with matrix and pairwise plots.
+- **Regression** fits linear, logistic, Poisson, Negative Binomial, and Cox models with diagnostics.
+- **Outliers** detects univariate and multivariate anomalies.
+- **Clustering** groups observations using K-means, DBSCAN, or agglomerative clustering.
+- **PCA** reduces numeric data to principal components and shows loadings and explained variance.
+- **Time Series** prepares and analyzes series with optional resampling, autocorrelation, and seasonal decomposition.
 
-- **Overview**: Dataset dimensions, missing values, duplicate rows, column types, per-column statistics, and a sample of up to 100 rows.
-- **Statistics**: Descriptive statistics, histograms, boxplots, and Shapiro-Wilk normality tests for numeric columns. Select a numeric table row to update its charts and normality details; Statistics uses the full results area without a Configuration pane.
-- **Hypothesis Tests**: Group comparisons for numeric and categorical variables, chi-square tests of independence with adjusted residuals, and paired Wilcoxon/Friedman tests with measurement summaries, distribution boxplots, and subject trajectories.
-- **Correlation**: Pearson, Spearman, and Kendall correlation matrices, strongest-pair summaries, significance tests, heatmaps, and pairwise scatterplots. Select a row in Strongest correlations to update the scatterplot and pair details. Configuration contains only the method and matrix columns. Any change to the method or columns replaces results with the Apply prompt and clears the export snapshot until a new analysis completes.
-- **Regression**: Multiple linear regression with numeric and categorical predictors, coefficient estimates, confidence intervals, model summaries, diagnostic tests, and residual plots. Logistic regression includes predictor odds ratios with 95% confidence intervals on a logarithmic axis, ROC/AUC, and calibration using up to 10 approximately equal-sized quantile bins (identical probabilities stay together). ROC and calibration use every complete-case fitted row and are explicitly in-sample diagnostics, not holdout performance; the modeled positive event is identified. Unavailable odds ratios or intervals are marked explicitly without changing the coefficient table. Poisson and Negative Binomial count regression include observed-versus-fitted counts and Pearson residual plots using each model's fitted variance. Cox regression includes a hazard-ratio forest plot and an unadjusted Kaplan–Meier survival curve for the same complete-case subjects, with censoring marks and numbers at risk.
-- **Outliers**: Univariate screening using IQR, z-score, or modified z-score, and multivariate detection using Isolation Forest or Local Outlier Factor. In Univariate mode, select a summary-table row to update column details; Configuration contains only mode, method, threshold, and Apply, which is anchored at the bottom of the pane. In Multivariate mode, Apply sits directly below the Features frame.
-- **Clustering**: K-means, DBSCAN, and agglomerative clustering with cluster summaries and PCA-based projections. Apply sits directly below the Features frame.
-- **PCA**: Principal component analysis with optional standardization, explained variance, score plots, and feature loadings. Apply sits directly below the Features frame.
-- **Time Series**: Series preparation, optional resampling, autocorrelation, and additive or multiplicative seasonal decomposition. Apply is anchored at the bottom of the Configuration pane.
+Long-running analyses run in the background where needed, and exports use the
+latest successful analysis result.
 
-The workspace uses adjustable result sections and configurable column selections. Long-running calculations are performed in the background to keep the interface responsive, and supported analyses provide progress or cancellation where appropriate.
-
-All regression models require **Apply** to fit. Changing the model, target,
-predictors, or Cox duration/event only updates pending selections and shows
-the Apply prompt. Returning to earlier settings does not restore old results;
-press Apply again to calculate that selection.
-
-Choose **Export** to open a single selection dialog grouped into **Data** and
-**Results**. After a successful **Overview**, select **Summary**, **Columns
-metadata**, or **Sample (first 100 rows)** to export tables from the displayed
-analysis; the original dataset is not exported. The structured Summary has
-`section`, `metric`, `column`, `count`, and `fraction` fields. Counts and
-fractions remain numeric (fractions range from 0 to 1); warning rows identify
-columns with at least 20% missing values, or explicitly indicate when there are
-no such warnings.
-
-Excel can include any selected tables as separate **Summary**, **Columns**, and
-**Sample** sheets in one workbook. CSV and binary data files export exactly one
-selected table per operation; select Parquet, Feather or Pickle in the binary
-save dialog. Empty Columns and Sample tables cannot be exported, while Summary
-remains available for a successful Overview even for an empty dataset.
-After a successful **Statistics** analysis, **Continuous** and **Categorical**
-tables can be selected independently. The Continuous sheet keeps raw numeric
-statistics, Shapiro-Wilk values, and an explicit recommended-summary field; the
-Categorical sheet uses one row per level with numeric counts and fractions.
-Excel can also include **Charts**, which embeds one histogram/boxplot pair for
-every numeric column on a single Charts sheet. Charts can be exported alone or
-alongside either table. CSV and binary exports require exactly one table and
-cannot include Charts; selections remain checked when changing formats.
-After applying **Hypothesis Tests**, export only the successful displayed
-selection: **Group summary** and distribution with all displayed Welch/Student/
-Mann–Whitney or ANOVA/Kruskal–Wallis results; the chi-square **Contingency table**
-and adjusted-residual heatmap with Pearson/Fisher results where applicable; or
-the paired **Measurement summary**, distribution/trajectory chart pair, and
-Wilcoxon/Friedman results (including Kendall's W). **Test results** retain numeric
-statistics, applied column names, and displayed assumptions, caveats and sampling
-notes. No unselected columns, combinations, raw subjects or new computations are
-exported. The export dialog names the applied test and columns. Any column edit
-or test switch replaces the result with the Apply prompt; that, a dataset/category
-change, starting a replacement test, or showing an error invalidates that export.
-Excel is the default, with selected tables on separate sheets and displayed
-images on one **Charts** sheet; charts-only export is supported. CSV/binary
-require exactly one table without Charts.
-After a successful **Correlation** matrix, export **Strongest correlations**
-for that applied method and column selection. The table preserves the matrix's
-complete absolute-coefficient ranking, raw coefficients and confidence bounds,
-raw and Holm-adjusted p-values, observation counts, translated strength labels,
-and an explicit Holm-significance indicator. CSV and binary files contain that
-single table; Excel is the default and writes it to a localized worksheet.
-Method or column edits clear the export until the next Apply completes;
-pair-only detail recomputations keep it available. Excel can also include the **Matrix plot**
-and **Scatterplots**, independently or without the table, on one localized
-Charts sheet. Scatterplots cover every unique pair of applied columns once,
-in matrix order. Each includes a full-cohort least-squares line and its equation
-below the image; Spearman and Kendall include a descriptive-line caveat.
-Plots retain the deterministic 5,000-point sample limit and disclose sampling.
-Undefined pairs receive explanatory placeholders rather than being omitted.
-Chart preparation runs in the export worker with progress and cancellation.
-No pair-detail table or raw dataset is included.
-After a successful **Regression** model (linear, logistic, Poisson, negative
-binomial, or Cox), export **Coefficients**, **Model metrics**, and **Charts**
-for the applied model. Coefficients keep numeric estimates, standard errors,
-test statistics, p-values, confidence bounds, and the model's VIF, odds/rate
-ratio, or hazard ratio columns plus a significance indicator. Model metrics
-list the displayed fit statistics and diagnostics with the model comments as
-notes. Charts reproduce the displayed diagnostic plots as one image on the
-Charts sheet, including any sampling caption. Excel is the default and can
-combine all three; CSV and binary files contain exactly one table without
-Charts. Configuration edits clear the export until the next Apply completes,
-and failed fits cannot be exported.
-After a successful univariate **Outliers** screening, export the **Column
-summary** (every numeric column, with status and notes for columns that could
-not be screened), the **Column details** of the selected column as a
-metric/value/notes table, its **Potential outliers** (the displayed rows, at
-most 100, most extreme first, with all dataset columns), and **Charts** with
-one histogram per screened column; unscreened columns are skipped. Multivariate
-screening exports a **Model summary**, its **Potential outliers**, and the PCA
-projection chart. Charts are Excel-only and render in the export worker with
-progress and cancellation; CSV and binary files contain exactly one table.
-Fixed headers such as Row are suffixed with " (2)" if a dataset column has the
-same name. Configuration edits clear the export until the next Apply completes.
-After a successful **Clustering** fit (K-Means, DBSCAN, or Agglomerative),
-export **Cluster sizes** (the displayed clusters with their rows and share of
-the rows used, plus a Noise row for DBSCAN), a **Model summary** of the
-features, method parameters, row counts, clusters found, noise and silhouette
-score with the model comments as notes, and **Charts** with the cluster
-projection (internal PCA), including any sampling caption. Charts are
-Excel-only and render in the export worker; CSV and binary files contain
-exactly one table. Per-row cluster assignments are not exported.
-Configuration edits clear the export until the next Apply completes, and
-failed fits cannot be exported.
-After a successful **PCA** fit, export the displayed **Feature loadings** (one
-row per feature, one column per component), **Explained variance** (variance,
-share and cumulative share per component, the values behind the scree plot), a
-**Model summary** of the feature and row counts with the model comments as
-notes, and **Charts** with the scree plot and the PC1-vs-PC2 plot, including
-any sampling caption. Charts are Excel-only and render in the export worker;
-CSV and binary files contain exactly one table. Per-row component scores are
-not exported. Configuration edits clear the export until the next Apply
-completes, and failed fits cannot be exported.
-After a successful **Time Series** analysis, export the prepared **Series**
-(one row per time point after averaging duplicate timestamps and any
-resampling, with trend, seasonal and residual columns when decomposed),
-**Autocorrelation** (one row per lag, when available), a **Model summary** of
-the row diagnostics and seasonal period with the model comments and any
-unavailability reasons as notes, and **Charts** with the series plot plus the
-autocorrelation and seasonal decomposition when available. Charts are
-Excel-only and render in the export worker; CSV and binary files contain
-exactly one table. Excel stores timezone-aware timestamps as local wall-clock
-time without the timezone. Configuration edits clear the export until the next
-Apply completes, and failed analyses cannot be exported.
-Selections are retained when switching formats; Export is disabled with an
-explanation if the selection is invalid for the format. **Add to report** and
-**Reports(0)** remain disabled workflow previews. Collecting analyses and generating
-HTML reports are not implemented yet. Existing main-window data exports are unchanged.
+Export is available for successfully applied results. Excel workbooks can
+combine selected tables and available charts; CSV and binary exports contain
+one selected table. Charts are available in Excel only. Exports contain the
+selected analysis results, not a full dataset dump.
 
 ### 📂 Supported Data File Formats
 
