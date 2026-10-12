@@ -10,20 +10,30 @@ and this project follows [Semantic Versioning](https://semver.org/).
 ### Added
 - Categorical tab in Statistics with frequency counts, percentages, and separate missing-value counts
 - Continuous mean/SD and median/quartile summaries with Shapiro-Wilk reporting guidance
-- Student's t-test alongside Welch's t-test and Mann-Whitney U for two-group comparisons
-- Guidance on Fisher's exact test for 2x2 tables with small expected counts
-- Paired comparison using Wilcoxon signed-rank tests for two measurement occasions
-- Paired comparison using Friedman tests and Kendall's W for three or more measurement occasions
-- Paired measurement summaries, distribution boxplots, and subject trajectory charts
-- Logistic regression for binary outcomes with odds ratios and confidence intervals
-- Poisson regression for count outcomes with rate ratios and advisory dispersion diagnostics
-- Poisson observed-versus-fitted count and Pearson residual charts
-- Negative Binomial regression for overdispersed count outcomes with rate ratios and confidence intervals
-- Negative Binomial observed-versus-fitted count and variance-adjusted Pearson residual charts
-- Cox proportional-hazards regression with duration/event configuration, hazard ratios, and confidence intervals
-- Cox hazard-ratio forest plots and unadjusted Kaplan-Meier curves with censoring marks and numbers at risk
+- Dataset Overview with dimensions, missingness, duplicates, column profiles, warnings, and a 100-row sample
+- Shapiro-Wilk normality tests and distribution charts for numeric columns
+- Welch's t-test for two-group comparisons, with group-level normality checks
+- Student's t-test as an equal-variance alternative for two-group comparisons
+- Mann-Whitney U test as a nonparametric two-group comparison
+- One-way ANOVA for parametric comparisons across three or more groups
+- Kruskal-Wallis test as a nonparametric multi-group comparison
+- Pearson chi-square test with expected counts and adjusted residuals
+- Fisher's exact test guidance and results for applicable 2x2 tables
+- Wilcoxon signed-rank test for two repeated measurements
+- Friedman test and Kendall's W for three or more repeated measurements, with distribution and subject-trajectory charts
+- Pearson, Spearman, and Kendall tau-b correlation matrices with confidence intervals, significance tests, and Holm adjustment
+- Multiple linear regression with numeric and categorical predictors, confidence intervals, summaries, and diagnostics
+- Logistic regression for binary outcomes with odds ratios, ROC/AUC, and calibration diagnostics
+- Poisson regression for count outcomes with rate ratios and dispersion diagnostics
+- Negative Binomial regression for overdispersed counts with rate ratios and confidence intervals
+- Cox proportional-hazards regression with hazard ratios, forest plots, and Kaplan-Meier survival curves
+- Univariate outlier screening using IQR, z-score, and modified z-score methods
+- Multivariate outlier detection using Isolation Forest and Local Outlier Factor
+- K-means, DBSCAN, and agglomerative clustering with cluster summaries and PCA projections
+- PCA with optional standardization, explained variance, feature loadings, and score plots
+- Time-series preparation with optional resampling, autocorrelation, and additive or multiplicative seasonal decomposition
+- Export for all nine analyses: applied-result tables and available charts in Excel; one table per CSV or binary export
 - Consistent Analysis configuration pane widths, adaptive layouts, and scrolling
-- Full-text hover tooltips for Analysis dropdowns, preserving disabled-option explanations
 
 ## [1.0.0] - 2026-10-06
 
