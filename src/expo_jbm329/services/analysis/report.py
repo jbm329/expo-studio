@@ -1599,7 +1599,11 @@ def prepare_report_content(
                 )
             elif component.kind == "table":
                 table_title, frame = next(localized_tables)
-                prepared_table = _prepare_table(component.key, table_title, frame)
+                prepared_table = (
+                    _prepare_overview_columns(overview, table_title, translate, count_format)
+                    if overview is not None and component.key == "Columns"
+                    else _prepare_table(component.key, table_title, frame)
+                )
                 prepared_components.append(
                     PreparedReportComponent(component.key, label, component.kind, (prepared_table,))
                 )
@@ -1683,6 +1687,36 @@ def _prepare_overview_summary(
         )
         or (label("No issues detected."),),
     )
+
+
+def _prepare_overview_columns(
+    result: DatasetOverviewResult,
+    title: str,
+    translate: Callable[[str, str], str],
+    count_format: Callable[[int], str],
+) -> PreparedReportTable:
+    """Combine missing counts and percentages for report presentation only."""
+    frame = overview_export_tables(result, (OverviewExportTable.COLUMNS,))["Columns"]
+    frame["missing_count"] = pd.Series(
+        [
+            f"{count_format(int(count))} ({fmt_pct(float(fraction), decimals=2)})"
+            for count, fraction in zip(frame["missing_count"], frame["missing_fraction"], strict=True)
+        ],
+        dtype=pd.StringDtype(),
+    )
+    frame = frame.drop(columns="missing_fraction").rename(
+        columns={
+            key: translate("OverviewView", label)
+            for key, label in (
+                ("column", "Column"),
+                ("type", "Type"),
+                ("storage_type", "Storage type"),
+                ("missing_count", "Missing"),
+                ("unique_count", "Unique"),
+            )
+        }
+    )
+    return _prepare_table("Columns", title, frame)
 
 
 def _prepare_table(key: str, title: str, frame: pd.DataFrame) -> PreparedReportTable:

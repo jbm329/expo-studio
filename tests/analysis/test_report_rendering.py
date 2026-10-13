@@ -477,6 +477,32 @@ def test_overview_unselected_summary_keeps_columns_and_sample_as_tables() -> Non
     assert '<div class="overview-summary">' not in html
 
 
+def test_overview_report_columns_combine_missing_count_and_two_decimal_percentage() -> None:
+    result = analyze_dataset_overview(pd.DataFrame({"value": [1, None, None], "complete": [1, 2, 3]}))
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.OVERVIEW, result, ("Columns",)))
+
+    prepared = prepare_report_content(
+        document,
+        translate=lambda _context, text: f"Localized {text}",
+        count_format=lambda count: f"count:{count}",
+    )
+    table = prepared.entries[0].components[0].tables[0]
+
+    assert table.headers == (
+        "Localized Column",
+        "Localized Type",
+        "Localized Storage type",
+        "Localized Missing",
+        "Localized Unique",
+    )
+    assert table.rows[0][3] == f"count:2 ({fmt_pct(2 / 3, decimals=2)})"
+    assert table.rows[1][3] == f"count:0 ({fmt_pct(0, decimals=2)})"
+    exported = localized_report_tables(AnalysisCategory.OVERVIEW, result, ("Columns",))["Columns"]
+    assert exported["Missing"].tolist() == [2, 0]
+    assert exported["Missing fraction"].tolist() == [2 / 3, 0]
+
+
 def test_prepared_overview_summary_rejects_mixed_content() -> None:
     summary = PreparedOverviewSummary((), "Types", (), "Issues", ())
     with pytest.raises(ValueError, match="text content only"):
