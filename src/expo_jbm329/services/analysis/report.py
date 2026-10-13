@@ -77,7 +77,7 @@ from expo_jbm329.services.analysis.timeseries_export import (
     time_series_export_tables,
 )
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
-from expo_jbm329.utils.format_utils import fmt_int, fmt_num
+from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_pct
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -430,6 +430,17 @@ class PreparedReportTable:
 
 
 @dataclass(frozen=True, slots=True)
+class PreparedOverviewSummary:
+    """Readable Overview facts, type counts and captured issue messages."""
+
+    facts: tuple[tuple[str, str], ...]
+    types_heading: str
+    column_types: tuple[tuple[str, str], ...]
+    issues_heading: str
+    issues: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class PreparedReportComponent:
     """One selected report component, with domain tables or worker-rendered charts."""
 
@@ -438,12 +449,18 @@ class PreparedReportComponent:
     kind: str
     tables: tuple[PreparedReportTable, ...] = ()
     charts: tuple[ExcelChartImage, ...] = ()
+    overview_summary: PreparedOverviewSummary | None = None
 
     def __post_init__(self) -> None:
         """Ensure prepared content agrees with its selected component kind."""
         if not self.key or not self.label or self.kind not in {"table", "chart"}:
             message = "A prepared report component requires a key, label, and supported kind."
             raise ValueError(message)
+        if self.overview_summary is not None:
+            if self.kind != "table" or self.tables or self.charts:
+                message = "A prepared Overview summary must contain text content only."
+                raise ValueError(message)
+            return
         if self.kind == "table" and (len(self.tables) != 1 or self.charts):
             message = "A prepared table component must contain exactly one table."
             raise ValueError(message)
@@ -533,6 +550,18 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
         "Metric",
         "Count",
         "Fraction",
+        "Rows",
+        "Missing values",
+        "Duplicate rows",
+        "Column types",
+        "Numeric columns",
+        "Categorical columns",
+        "Datetime columns",
+        "Boolean columns",
+        "Other columns",
+        "Potential issues",
+        "No issues detected.",
+        "⚠ {column} has {pct} missing values.",
     ),
     "StatisticsView": (
         "Continuous",
@@ -1521,7 +1550,12 @@ def prepare_report_content(
             next(component for component in entry.components if component.key == key)
             for key in entry.selected_components
         )
-        table_keys = tuple(component.key for component in selected if component.kind == "table")
+        overview = entry.snapshot if isinstance(entry.snapshot, DatasetOverviewResult) else None
+        table_keys = tuple(
+            component.key
+            for component in selected
+            if component.kind == "table" and not (overview is not None and component.key == "Summary")
+        )
         localized_tables = iter(
             localized_report_tables(
                 entry.category,
@@ -1554,7 +1588,16 @@ def prepare_report_content(
                 _component_translation_context(entry.category, entry.snapshot, component.key),
                 component.label,
             )
-            if component.kind == "table":
+            if overview is not None and component.key == "Summary":
+                prepared_components.append(
+                    PreparedReportComponent(
+                        component.key,
+                        label,
+                        component.kind,
+                        overview_summary=_prepare_overview_summary(overview, translate, count_format),
+                    )
+                )
+            elif component.kind == "table":
                 table_title, frame = next(localized_tables)
                 prepared_table = _prepare_table(component.key, table_title, frame)
                 prepared_components.append(
@@ -1596,6 +1639,49 @@ def prepare_report_content(
             translate("AnalysisExportDialog", "Analysis date"),
             translate("AnalysisExportDialog", "Expo version"),
         ),
+    )
+
+
+def _prepare_overview_summary(
+    result: DatasetOverviewResult,
+    translate: Callable[[str, str], str],
+    count_format: Callable[[int], str],
+) -> PreparedOverviewSummary:
+    """Prepare the view's Overview facts without constructing or inspecting widgets."""
+
+    def label(text: str) -> str:
+        return translate("OverviewView", text)
+
+    return PreparedOverviewSummary(
+        facts=(
+            (label("Rows"), count_format(result.row_count)),
+            (label("Columns"), count_format(result.column_count)),
+            (
+                label("Missing values"),
+                f"{count_format(result.missing_cell_count)} ({fmt_pct(result.missing_cell_fraction)})",
+            ),
+            (
+                label("Duplicate rows"),
+                f"{count_format(result.duplicate_row_count)} ({fmt_pct(result.duplicate_row_fraction)})",
+            ),
+        ),
+        types_heading=label("Column types"),
+        column_types=tuple(
+            (label(text), count_format(count))
+            for text, count in (
+                ("Numeric columns", result.numeric_column_count),
+                ("Categorical columns", result.categorical_column_count),
+                ("Datetime columns", result.datetime_column_count),
+                ("Boolean columns", result.boolean_column_count),
+                ("Other columns", result.other_column_count),
+            )
+        ),
+        issues_heading=label("Potential issues"),
+        issues=tuple(
+            label("⚠ {column} has {pct} missing values.").format(column=column, pct=fmt_pct(fraction))
+            for column, fraction in result.high_missing_columns
+        )
+        or (label("No issues detected."),),
     )
 
 
@@ -1923,6 +2009,21 @@ def render_prepared_report_html(
                 '<section class="report-component">',
                 f"<h3>{_html_escape(component.label)}</h3>",
             ])
+            summary = component.overview_summary
+            if summary is not None:
+                parts.append('<div class="overview-summary">')
+                for heading, facts in ((None, summary.facts), (summary.types_heading, summary.column_types)):
+                    if heading is not None:
+                        parts.append(f"<h4>{_html_escape(heading)}</h4>")
+                    parts.append('<dl class="overview-facts">')
+                    parts.extend(
+                        f"<div><dt>{_html_escape(label)}</dt><dd><strong>{_html_escape(value)}</strong></dd></div>"
+                        for label, value in facts
+                    )
+                    parts.append("</dl>")
+                parts.append(f"<h4>{_html_escape(summary.issues_heading)}</h4>")
+                parts.extend(f'<p class="overview-issue">{_html_escape(issue)}</p>' for issue in summary.issues)
+                parts.append("</div>")
             for table in component.tables:
                 parts.append('<div class="table-scroll">')
                 caption_class = ' class="visually-hidden"' if _same_heading(table.title, component.label) else ""
@@ -2020,6 +2121,12 @@ h2 { border-bottom: 1px solid #d9e0e8; padding-bottom: .4rem; }
 .metadata dt { font-weight: 700; }
 .metadata dd { margin: 0; }
 .report-component { margin: 1.5rem 0; break-inside: avoid; }
+.overview-summary h4 { margin: 1rem 0 .4rem; }
+.overview-facts { margin: .5rem 0; display: flex; flex-wrap: wrap; gap: .4rem 1.5rem; }
+.overview-facts div { display: flex; gap: .4rem; }
+.overview-facts dt::after { content: ":"; }
+.overview-facts dd { margin: 0; }
+.overview-issue { margin: .4rem 0; overflow-wrap: anywhere; }
 .table-scroll { overflow-x: auto; margin: .75rem 0 1.25rem; }
 table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
 caption { text-align: left; font-weight: 700; padding: .5rem 0; }

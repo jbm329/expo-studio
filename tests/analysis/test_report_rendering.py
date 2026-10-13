@@ -12,6 +12,7 @@ from expo_jbm329.services.analysis.correlation_export import CorrelationExportCo
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportSnapshot
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.report import (
+    PreparedOverviewSummary,
     PreparedReportComponent,
     PreparedReportDocument,
     PreparedReportEntry,
@@ -29,6 +30,7 @@ from expo_jbm329.services.analysis.report import (
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
 from expo_jbm329.utils.dataset_ref import DatasetRef
+from expo_jbm329.utils.format_utils import fmt_pct
 from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_correlation_export import _snapshot as correlation_snapshot
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
@@ -155,7 +157,7 @@ def test_preparation_renders_selected_categories_and_variants(monkeypatch) -> No
     assert len(prepared.entries) == len(document.entries)
     assert all(entry.components for entry in prepared.entries)
     assert prepared.entries[0].category == "AnalysisDialog: Overview"
-    assert prepared.entries[0].components[0].tables[0].rows
+    assert prepared.entries[0].components[0].overview_summary.facts
     assert prepared.entries[1].components[1].charts
     assert [component.key for component in prepared.entries[5].components] == [
         "strongest_correlations",
@@ -398,6 +400,87 @@ def test_chart_cancellation_from_existing_renderer_propagates(monkeypatch) -> No
 
     with pytest.raises(ExcelChartCancelledError):
         prepare_report_content(document)
+
+
+@pytest.mark.parametrize("with_warnings", [False, True])
+def test_overview_summary_is_readable_text_with_view_facts_and_issues(with_warnings) -> None:
+    frame = pd.DataFrame({
+        "<measure>": [None, None, 3] if with_warnings else [1, 1, 3],
+        "group": ["a", "a", "b"],
+        "flag": [True, True, False],
+        "date": pd.to_datetime(["2026-01-01", "2026-01-01", "2026-01-02"]),
+    })
+    result = analyze_dataset_overview(frame)
+    document = ReportDocument(title="Overview")
+    document.upsert(_entry(AnalysisCategory.OVERVIEW, result, ("Summary",)))
+
+    prepared = prepare_report_content(document)
+    component = prepared.entries[0].components[0]
+    summary = component.overview_summary
+    assert summary is not None
+    assert dict(summary.facts)["Rows"] == "3"
+    assert dict(summary.facts)["Columns"] == "4"
+    assert (
+        dict(summary.facts)["Missing values"]
+        == f"{result.missing_cell_count} ({fmt_pct(result.missing_cell_fraction)})"
+    )
+    assert (
+        dict(summary.facts)["Duplicate rows"]
+        == f"{result.duplicate_row_count} ({fmt_pct(result.duplicate_row_fraction)})"
+    )
+    assert dict(summary.column_types) == {
+        "Numeric columns": "1",
+        "Categorical columns": "1",
+        "Datetime columns": "1",
+        "Boolean columns": "1",
+        "Other columns": "0",
+    }
+    assert not component.tables
+    html = render_prepared_report_html(prepared)
+    assert "<table>" not in html
+    assert '<dl class="overview-facts">' in html
+    assert "<h3>Summary</h3>" in html
+    assert "<h4>Column types</h4>" in html
+    assert "<h4>Potential issues</h4>" in html
+    if with_warnings:
+        assert "&lt;measure&gt;" in html
+        assert "missing values." in html
+    else:
+        assert "No issues detected." in html
+    assert "Missing values" in html and "Duplicate rows" in html
+
+
+def test_overview_empty_summary_localizes_text_and_preserves_export_table() -> None:
+    result = analyze_dataset_overview(pd.DataFrame())
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.OVERVIEW, result))
+    options = capture_report_labels(lambda _context, text: f"Translated {text}")
+
+    prepared = prepare_report_content(document, labels=options)
+    html = render_prepared_report_html(prepared)
+
+    assert "Translated Column types" in html
+    assert "Translated No issues detected." in html
+    assert "<strong>0</strong>" in html
+    assert "<table>" not in html
+    tables = localized_report_tables(AnalysisCategory.OVERVIEW, result, ("Summary",))
+    assert tables["Summary"].shape[0] > 0
+
+
+def test_overview_unselected_summary_keeps_columns_and_sample_as_tables() -> None:
+    result = analyze_dataset_overview(pd.DataFrame({"value": [1, 2]}))
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.OVERVIEW, result, ("Columns", "Sample")))
+    html = render_report_html(document)
+
+    assert html.count("<table>") == 2
+    assert '<div class="overview-summary">' not in html
+
+
+def test_prepared_overview_summary_rejects_mixed_content() -> None:
+    summary = PreparedOverviewSummary((), "Types", (), "Issues", ())
+    with pytest.raises(ValueError, match="text content only"):
+        PreparedReportComponent("summary", "Summary", "chart", overview_summary=summary)
 
 
 def test_html_report_is_accessible_self_contained_and_escapes_plain_text() -> None:
