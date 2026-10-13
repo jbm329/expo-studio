@@ -477,6 +477,62 @@ def test_html_report_is_accessible_self_contained_and_escapes_plain_text() -> No
     assert "td { white-space: pre-wrap; }" in html
 
 
+@pytest.mark.parametrize(
+    ("component_label", "content_title", "redundant"),
+    [
+        ("Summary", "Summary", True),
+        ("Summary", " \nSUMMARY\t ", True),
+        ("Sammanfattning", "sammanfattning", True),
+        ("Summary", "Model summary", False),
+        ("Summary", "Summary details", False),
+        ("<Summary>", "<Summary>", True),
+    ],
+)
+def test_report_hides_only_redundant_content_titles(component_label, content_title, redundant) -> None:
+    from html import escape
+
+    table = PreparedReportTable("summary", content_title, ("Value",), ((1,),))
+    other_table = PreparedReportTable("details", "Distinct table", ("Value",), ((2,),))
+    chart = ExcelChartImage(content_title, b"png", 80, 40, ("Keep this explanation.",))
+    other_chart = ExcelChartImage("Distinct chart", b"other-png", 80, 40)
+    document = PreparedReportDocument(
+        "Report",
+        "",
+        (
+            PreparedReportEntry(
+                "id",
+                "Dataset",
+                2,
+                1,
+                "Overview",
+                "2026-10-13",
+                "1.0",
+                "",
+                (
+                    PreparedReportComponent("summary", component_label, "table", tables=(table,)),
+                    PreparedReportComponent("details", "Other table section", "table", tables=(other_table,)),
+                    PreparedReportComponent("charts", component_label, "chart", charts=(chart, other_chart)),
+                ),
+            ),
+        ),
+        "N/A",
+        ("Dataset", "Rows", "Columns", "Date", "Version"),
+    )
+
+    html = render_prepared_report_html(document)
+
+    hidden_class = ' class="visually-hidden"' if redundant else ""
+    assert f"<h3>{escape(component_label)}</h3>" in html
+    assert f"<caption{hidden_class}>{escape(content_title)}</caption>" in html
+    assert f"<strong{hidden_class}>{escape(content_title)}</strong>" in html
+    assert f'alt="{escape(content_title)}"' in html
+    assert "<caption>Distinct table</caption>" in html
+    assert "<strong>Distinct chart</strong>" in html
+    assert "<p>Keep this explanation.</p>" in html
+    assert ".visually-hidden {" in html
+    assert "display: none" not in html
+
+
 def test_render_report_html_renders_real_worker_chart_and_inline_png() -> None:
     snapshot = analyze_descriptive_statistics(pd.DataFrame({"value": [1.0, 2.0, 3.0, 4.0]}))
     document = ReportDocument(title="Statistics report", description="Real chart render")

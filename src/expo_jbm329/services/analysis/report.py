@@ -1925,7 +1925,8 @@ def render_prepared_report_html(
             ])
             for table in component.tables:
                 parts.append('<div class="table-scroll">')
-                parts.append(f"<table><caption>{_html_escape(table.title)}</caption><thead><tr>")
+                caption_class = ' class="visually-hidden"' if _same_heading(table.title, component.label) else ""
+                parts.append(f"<table><caption{caption_class}>{_html_escape(table.title)}</caption><thead><tr>")
                 parts.extend(f'<th scope="col">{_html_escape(header)}</th>' for header in table.headers)
                 parts.append("</tr></thead><tbody>")
                 for row in table.rows:
@@ -1940,13 +1941,14 @@ def render_prepared_report_html(
                 check_cancel()
                 encoded = b64encode(chart.image_data).decode("ascii")
                 alt = chart.heading
+                heading_class = ' class="visually-hidden"' if _same_heading(chart.heading, component.label) else ""
                 parts.extend([
                     '<figure class="report-chart">',
                     (
                         f'<img src="data:image/png;base64,{encoded}" alt="{_html_escape(alt)}" '
                         f'width="{chart.width_px}" height="{chart.height_px}">'
                     ),
-                    f"<figcaption><strong>{_html_escape(chart.heading)}</strong>",
+                    f"<figcaption><strong{heading_class}>{_html_escape(chart.heading)}</strong>",
                 ])
                 parts.extend(f"<p>{_html_escape(caption)}</p>" for caption in chart.captions)
                 parts.extend(["</figcaption>", "</figure>"])
@@ -1961,6 +1963,11 @@ def render_prepared_report_html(
         progress_cb(_PROGRESS_COMPLETE)
     parts.extend(["</main>", "</body>", "</html>"])
     return "\n".join(parts)
+
+
+def _same_heading(title: str, component_label: str) -> bool:
+    """Compare plain-text titles without insignificant whitespace or case."""
+    return " ".join(title.split()).casefold() == " ".join(component_label.split()).casefold()
 
 
 def _format_cell(
@@ -1996,6 +2003,10 @@ def _html_escape(value: object) -> str:
 _REPORT_CSS = """
 :root { color-scheme: light; font-family: system-ui, sans-serif; color: #202938; background: #f3f5f8; }
 * { box-sizing: border-box; }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
 body { margin: 0; line-height: 1.5; }
 .report { max-width: 1100px; margin: 0 auto; padding: 2rem; background: #fff; }
 .report-header { border-bottom: 2px solid #d9e0e8; margin-bottom: 2rem; padding-bottom: 1rem; }
