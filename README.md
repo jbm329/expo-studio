@@ -83,6 +83,9 @@ at the top; dataset dimensions remain available in Overview.
 Hypothesis-test HTML reports show captured explanatory notes as separate
 paragraphs below the selected Test results table; spreadsheet and data exports
 retain their existing Notes column.
+Logistic, Poisson, Negative Binomial, and Cox HTML reports show captured model
+notes as separate paragraphs below the selected Model metrics table; exports
+retain their existing Notes column. Linear regression reports are unchanged.
 Correlation entries are titled by their applied method and show the ordered
 columns used. Pearson, Spearman, and Kendall results can coexist; changing
 columns within a method requires an explicit replacement, and rerunning the

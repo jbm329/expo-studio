@@ -1025,9 +1025,10 @@ def _localized_report_tables(
     labels: ReportRenderOptions | None = None,
     split_overview_samples: bool = False,
     hypothesis_test_results: pd.DataFrame | None = None,
+    regression_model_metrics: pd.DataFrame | None = None,
     include_correlation_explanation: bool = True,
 ) -> dict[str, pd.DataFrame]:
-    """Build localized tables, optionally using report-only raw hypothesis rows."""
+    """Build localized tables, optionally using report-only raw result rows."""
     if labels is not None:
         translate = labels.translate
         number_format = labels.number_format
@@ -1356,12 +1357,16 @@ def _localized_report_tables(
                 regression_table = regression_table_keys.get(key)
                 if regression_table is None:
                     continue
-                frame = regression_export_tables(
-                    snapshot,
-                    (regression_table,),
-                    intercept_label=regression_intercept_label(translate),
-                )[regression_table]
                 if regression_table is RegressionExportComponent.MODEL_METRICS:
+                    frame = (
+                        regression_model_metrics
+                        if regression_model_metrics is not None
+                        else regression_export_tables(
+                            snapshot,
+                            (regression_table,),
+                            intercept_label=regression_intercept_label(translate),
+                        )[regression_table]
+                    )
                     frame["metric"] = frame["metric"].map(
                         lambda metric: (
                             translate("AnalysisExportDialog", regression_metric_labels[RegressionMetric(metric)])
@@ -1371,6 +1376,11 @@ def _localized_report_tables(
                     )
                     regression_headers = {"metric": "Metric", "value": "Value", "notes": "Notes"}
                 else:
+                    frame = regression_export_tables(
+                        snapshot,
+                        (regression_table,),
+                        intercept_label=regression_intercept_label(translate),
+                    )[regression_table]
                     regression_headers = regression_coefficient_headers
                 title = regression_component_label(
                     snapshot.model,
@@ -1727,6 +1737,7 @@ def prepare_report_content(
                 number_format=number_format,
                 count_format=count_format,
                 hypothesis_test_results=_hypothesis_report_rows(entry.snapshot, table_keys),
+                regression_model_metrics=_regression_report_rows(entry.snapshot, table_keys),
                 include_correlation_explanation=False,
             ).items()
         )
@@ -1784,6 +1795,12 @@ def prepare_report_content(
                         paragraphs = (
                             _correlation_ranking_explanation(entry.snapshot, translate, number_format, count_format),
                         )
+                    elif (
+                        isinstance(entry.snapshot, RegressionExportSnapshot)
+                        and entry.snapshot.model is not RegressionModel.LINEAR
+                        and component.key == RegressionExportComponent.MODEL_METRICS.value
+                    ):
+                        paragraphs = entry.snapshot.notes
                     prepared_components.append(
                         PreparedReportComponent(
                             component.key,
@@ -1971,6 +1988,27 @@ def _hypothesis_report_rows(
         message = "Hypothesis test results must include their raw test and notes columns."
         raise ValueError(message)
     return raw_results.loc[raw_results["test"].notna()].drop(columns="notes").copy()
+
+
+def _regression_report_rows(
+    snapshot: ReportSnapshot,
+    component_keys: Sequence[str],
+) -> pd.DataFrame | None:
+    """Separate non-linear regression notes from metric rows before localization."""
+    if (
+        not isinstance(snapshot, RegressionExportSnapshot)
+        or snapshot.model is RegressionModel.LINEAR
+        or RegressionExportComponent.MODEL_METRICS.value not in component_keys
+    ):
+        return None
+    raw_metrics = regression_export_tables(
+        snapshot,
+        (RegressionExportComponent.MODEL_METRICS,),
+    )[RegressionExportComponent.MODEL_METRICS]
+    if "metric" not in raw_metrics.columns or "notes" not in raw_metrics.columns:
+        message = "Regression model metrics must include their raw metric and notes columns."
+        raise ValueError(message)
+    return raw_metrics.loc[raw_metrics["metric"].notna()].drop(columns="notes").copy()
 
 
 def _component_translation_context(
