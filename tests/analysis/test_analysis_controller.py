@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import sys
+from itertools import combinations
 from pathlib import Path
 from types import ModuleType
 from unittest.mock import Mock
@@ -2249,8 +2250,8 @@ def test_correlation_export_uses_compiled_swedish_labels() -> None:
         app.removeTranslator(translator)
 
     sheets = exporter.export_excel.call_args.kwargs["sheets"]
-    assert list(sheets) == ["Starkaste korrelationerna"]
-    frame = sheets["Starkaste korrelationerna"]
+    assert list(sheets) == ["Starkaste korrelationer"]
+    frame = sheets["Starkaste korrelationer"]
     assert frame.columns.tolist() == [
         "Variabel 1",
         "Variabel 2",
@@ -2321,13 +2322,19 @@ def test_correlation_excel_routes_independent_and_mixed_charts_from_owned_snapsh
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"]
     assert bool(kwargs["sheets"]) is (CorrelationExportComponent.STRONGEST_CORRELATIONS in components)
-    assert kwargs["chart_sheet_name"] == "Charts"
+    assert kwargs["chart_sheet_name"] == "Correlation plots"
     progress = []
     images = kwargs["chart_factory"](progress.append, None)
     expected = int(CorrelationExportComponent.MATRIX_PLOT in components)
     if CorrelationExportComponent.SCATTERPLOTS in components:
         expected += len(snapshot.matrix.pairs)
     assert len(images) == expected
+    expected_headings = (["Correlation matrix"] if CorrelationExportComponent.MATRIX_PLOT in components else []) + (
+        [f"{x_column} vs {y_column}" for x_column, y_column in combinations(snapshot.matrix.columns, 2)]
+        if CorrelationExportComponent.SCATTERPLOTS in components
+        else []
+    )
+    assert [image.heading for image in images] == expected_headings
     assert progress[-1] == 100
     assert all(image.image_data.startswith(b"\x89PNG") for image in images)
     assert controller._results.mock_calls == []

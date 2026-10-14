@@ -109,6 +109,11 @@ from expo_jbm329.services.analysis.pca_export import (
     PCAExportRequest,
     PCAExportSnapshot,
 )
+from expo_jbm329.services.analysis.presentation import (
+    PresentationLabel,
+    correlation_method_label,
+    translate_presentation_label,
+)
 from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression, initialize_regression
 from expo_jbm329.services.analysis.regression_charts import render_regression_charts
 from expo_jbm329.services.analysis.regression_export import (
@@ -226,7 +231,6 @@ _HYPOTHESIS_EXPORT_TRANSLATIONS = (
 )
 _CORRELATION_EXPORT_TRANSLATIONS = (
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Least-squares line: y = ({slope}) x + ({intercept})"),
-    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Strongest correlations"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Correlation method"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Coefficient"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Significant after Holm"),
@@ -1001,7 +1005,7 @@ class AnalysisController:
         if not isinstance(request, CorrelationExportRequest) or request.snapshot is not dialog.exportable_correlation():
             return
         snapshot = request.snapshot
-        sheet_name = tr("AnalysisExportDialog", "Strongest correlations")
+        sheet_name = translate_presentation_label(PresentationLabel.STRONGEST_CORRELATIONS, tr)
         sheets = (
             {sheet_name: self._localized_correlation_table(snapshot)}
             if CorrelationExportComponent.STRONGEST_CORRELATIONS in request.components
@@ -1012,15 +1016,10 @@ class AnalysisController:
             for component in request.components
             if component is not CorrelationExportComponent.STRONGEST_CORRELATIONS
         )
-        method_names = {
-            CorrelationMethod.PEARSON: tr("CorrelationView", "Pearson"),
-            CorrelationMethod.SPEARMAN: tr("CorrelationView", "Spearman"),
-            CorrelationMethod.KENDALL: tr("CorrelationView", "Kendall's tau-b"),
-        }
-        method_name = method_names[snapshot.matrix.method]
+        method_name = correlation_method_label(snapshot.matrix.method, tr)
         labels = CorrelationChartLabels(
-            matrix_title=tr("CorrelationView", "{method} correlation").format(method=method_name),
-            scatter_heading="{x} / {y} (" + method_name + ")",
+            matrix_title=translate_presentation_label(PresentationLabel.CORRELATION_MATRIX, tr),
+            scatter_heading=translate_presentation_label(PresentationLabel.SCATTERPLOT_TITLE, tr),
             line_equation=tr("AnalysisExportDialog", "Least-squares line: y = ({slope}) x + ({intercept})"),
             descriptive_line=tr(
                 "CorrelationView",
@@ -1054,7 +1053,9 @@ class AnalysisController:
                 exporter.export_excel(
                     sheets=sheets,
                     chart_factory=make_images if charts else None,
-                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    chart_sheet_name=(
+                        translate_presentation_label(PresentationLabel.CORRELATION_PLOTS, tr) if charts else None
+                    ),
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,

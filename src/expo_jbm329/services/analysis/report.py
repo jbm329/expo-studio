@@ -60,6 +60,15 @@ from expo_jbm329.services.analysis.overview import (
 )
 from expo_jbm329.services.analysis.pca_charts import render_pca_charts
 from expo_jbm329.services.analysis.pca_export import PCAExportComponent, PCAExportSnapshot, PCAMetric, pca_export_tables
+from expo_jbm329.services.analysis.presentation import (
+    ConfigurationField,
+    PresentationLabel,
+    build_analysis_presentation,
+    correlation_method_label,
+    presentation_label_source,
+    presentation_label_sources,
+    translate_presentation_label,
+)
 from expo_jbm329.services.analysis.regression import SIGNIFICANCE_LEVEL as REGRESSION_SIGNIFICANCE
 from expo_jbm329.services.analysis.regression_charts import render_regression_charts
 from expo_jbm329.services.analysis.regression_export import (
@@ -136,11 +145,19 @@ class ReportEntry:
     components: tuple[ReportComponent, ...]
     selected_components: tuple[str, ...]
     note: str = ""
+    capture_id: str | None = None
 
     def __post_init__(self) -> None:
         """Ensure identity, metadata, and selected components are coherent."""
         if not self.entry_id or not self.dataset_id or not self.dataset_name:
             message = "A report entry requires dataset identity and an entry key."
+            raise ValueError(message)
+        if self.category is AnalysisCategory.CORRELATION:
+            if not isinstance(self.snapshot, CorrelationExportSnapshot) or self.capture_id != self.snapshot.capture_id:
+                message = "A correlation report entry requires its applied-result capture identifier."
+                raise ValueError(message)
+        elif self.capture_id is not None:
+            message = "Only a Correlation report entry can carry a capture identifier."
             raise ValueError(message)
         if self.dataset_rows < 0 or self.dataset_columns < 0:
             message = "Report dataset dimensions cannot be negative."
@@ -172,6 +189,7 @@ class ReportEntry:
             components=self.components,
             selected_components=selected_components,
             note=note,
+            capture_id=self.capture_id,
         )
 
 
@@ -241,6 +259,7 @@ def create_report_entry(
         snapshot=snapshot,
         components=components,
         selected_components=tuple(component.key for component in components),
+        capture_id=snapshot.capture_id if isinstance(snapshot, CorrelationExportSnapshot) else None,
     )
 
 
@@ -275,9 +294,13 @@ def available_report_components(category: AnalysisCategory, snapshot: ReportSnap
             )
         case AnalysisCategory.CORRELATION if isinstance(snapshot, CorrelationExportSnapshot):
             component_values = (
-                ("strongest_correlations", "Strongest correlations", "table"),
-                ("matrix_plot", "Matrix plot", "chart"),
-                ("scatterplots", "Scatterplots", "chart"),
+                (
+                    "strongest_correlations",
+                    presentation_label_source(PresentationLabel.STRONGEST_CORRELATIONS)[1],
+                    "table",
+                ),
+                ("matrix_plot", presentation_label_source(PresentationLabel.CORRELATION_MATRIX)[1], "chart"),
+                ("scatterplots", presentation_label_source(PresentationLabel.SCATTERPLOTS)[1], "chart"),
             )
         case AnalysisCategory.REGRESSION if isinstance(snapshot, RegressionExportSnapshot):
             components = [("coefficients", "Coefficients", "table"), ("model_metrics", "Model metrics", "table")]
@@ -344,7 +367,7 @@ def report_entry_identity(category: AnalysisCategory, dataset_id: str, snapshot:
         case AnalysisCategory.HYPOTHESIS_TESTS if isinstance(snapshot, HypothesisExportSnapshot):
             config = (snapshot.test.value, snapshot.columns)
         case AnalysisCategory.CORRELATION if isinstance(snapshot, CorrelationExportSnapshot):
-            config = (snapshot.matrix.method.value, snapshot.matrix.columns)
+            config = (snapshot.matrix.method.value,)
         case AnalysisCategory.REGRESSION if isinstance(snapshot, RegressionExportSnapshot):
             regression_result = snapshot.result
             terms = tuple((term.kind.value, term.column, term.level) for term in regression_result.terms)
@@ -393,6 +416,15 @@ def report_entry_identity(category: AnalysisCategory, dataset_id: str, snapshot:
             raise TypeError(message)
     payload = [dataset_id, category.value, _json_value(config)]
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+
+
+def correlation_report_configuration(entry: ReportEntry) -> tuple[str, tuple[str, ...]]:
+    """Return the full ordered Correlation configuration for replacement review."""
+    if entry.category is not AnalysisCategory.CORRELATION or not isinstance(entry.snapshot, CorrelationExportSnapshot):
+        message = "Correlation configuration requires a correlation report entry."
+        raise TypeError(message)
+    snapshot = entry.snapshot
+    return snapshot.matrix.method.value, snapshot.matrix.columns
 
 
 def _overview_component_available(result: DatasetOverviewResult, component: str) -> bool:
@@ -491,6 +523,8 @@ class PreparedReportEntry:
     app_version: str
     note: str
     components: tuple[PreparedReportComponent, ...]
+    title: str = ""
+    configuration: tuple[ConfigurationField, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -535,7 +569,6 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
         "Overview",
         "Statistics",
         "Hypothesis Tests",
-        "Correlation",
         "Regression",
         "Outliers",
         "Clustering",
@@ -653,7 +686,6 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
         "Epsilon²",
         "Cramér's V",
         "Kendall's W",
-        "Strongest correlations",
         "Coefficient",
         "Significant after Holm",
         "Correlation method",
@@ -812,10 +844,7 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
         "Moderate",
         "Strong",
         "N/A",
-        "Strongest correlations",
-        "Matrix plot",
-        "Scatterplots",
-        "{method} correlation",
+        *(source for context, source in presentation_label_sources() if context == "CorrelationView"),
         (
             "The line is a linear fit shown for reference. {method} measures monotonic, "
             "not necessarily linear, association."
@@ -1134,15 +1163,12 @@ def localized_report_tables(
                     "moderate": translate("CorrelationView", "Moderate"),
                     "strong": translate("CorrelationView", "Strong"),
                 }
-                methods = {
-                    CorrelationMethod.PEARSON: translate("CorrelationView", "Pearson"),
-                    CorrelationMethod.SPEARMAN: translate("CorrelationView", "Spearman"),
-                    CorrelationMethod.KENDALL: translate("CorrelationView", "Kendall's tau-b"),
-                }
                 frame["strength"] = frame["strength"].map(
                     lambda value: strengths[value] if isinstance(value, str) else translate("CorrelationView", "N/A")
                 )
-                frame["method"] = frame["method"].map(lambda value: methods[CorrelationMethod(str(value))])
+                frame["method"] = frame["method"].map(
+                    lambda value: correlation_method_label(CorrelationMethod(str(value)), translate)
+                )
                 frame["ranking_explanation"] = translate(
                     "AnalysisExportDialog",
                     "Pairs are ranked by absolute coefficient. Significance is based on "
@@ -1166,7 +1192,7 @@ def localized_report_tables(
                     "ranking_explanation": ("AnalysisExportDialog", "Ranking and Holm explanation"),
                 }
                 add(
-                    translate("AnalysisExportDialog", "Strongest correlations"),
+                    translate_presentation_label(PresentationLabel.STRONGEST_CORRELATIONS, translate),
                     frame.rename(
                         columns={
                             name: translate(context, label) for name, (context, label) in correlation_headers.items()
@@ -1663,17 +1689,20 @@ def prepare_report_content(
                 prepared_components.append(PreparedReportComponent(component.key, label, component.kind, charts=images))
             completed += 1
             report_progress()
+        presentation = build_analysis_presentation(entry.category, entry.snapshot, translate)
         prepared_entries.append(
             PreparedReportEntry(
                 entry.entry_id,
                 entry.dataset_name,
                 entry.dataset_rows,
                 entry.dataset_columns,
-                translate("AnalysisDialog", _category_title(entry.category)),
+                presentation.category,
                 entry.analysis_date,
                 entry.app_version,
                 entry.note,
                 tuple(prepared_components),
+                title=presentation.title,
+                configuration=presentation.configuration,
             )
         )
     check_cancel()
@@ -1799,20 +1828,6 @@ def _prepare_table(key: str, title: str, frame: pd.DataFrame) -> PreparedReportT
     )
 
 
-def _category_title(category: AnalysisCategory) -> str:
-    return {
-        AnalysisCategory.OVERVIEW: "Overview",
-        AnalysisCategory.STATISTICS: "Statistics",
-        AnalysisCategory.HYPOTHESIS_TESTS: "Hypothesis Tests",
-        AnalysisCategory.CORRELATION: "Correlation",
-        AnalysisCategory.REGRESSION: "Regression",
-        AnalysisCategory.OUTLIERS: "Outliers",
-        AnalysisCategory.CLUSTERING: "Clustering",
-        AnalysisCategory.PCA: "PCA",
-        AnalysisCategory.TIME_SERIES: "Time Series",
-    }[category]
-
-
 def _component_translation_context(
     category: AnalysisCategory,
     snapshot: ReportSnapshot,
@@ -1827,7 +1842,7 @@ def _component_translation_context(
             }[snapshot.test]
         return "AnalysisExportDialog"
     if category is AnalysisCategory.CORRELATION:
-        return "AnalysisExportDialog" if component_key == "strongest_correlations" else "CorrelationView"
+        return "CorrelationView"
     return {
         AnalysisCategory.OVERVIEW: "OverviewView",
         AnalysisCategory.STATISTICS: "StatisticsView",
@@ -1911,22 +1926,16 @@ def _render_entry_charts(
             }[key]
             for key in component_keys
         )
-        method_names = {
-            CorrelationMethod.PEARSON: translate("CorrelationView", "Pearson"),
-            CorrelationMethod.SPEARMAN: translate("CorrelationView", "Spearman"),
-            CorrelationMethod.KENDALL: translate("CorrelationView", "Kendall's tau-b"),
-        }
-        method = method_names[snapshot.matrix.method]
         annotations = tuple(tuple(number_format(value) for value in row) for row in snapshot.matrix.coefficients)
         correlation_labels = CorrelationChartLabels(
-            translate("CorrelationView", "{method} correlation").format(method=method),
-            "{x} / {y} (" + method + ")",
+            translate_presentation_label(PresentationLabel.CORRELATION_MATRIX, translate),
+            translate_presentation_label(PresentationLabel.SCATTERPLOT_TITLE, translate),
             translate("AnalysisExportDialog", "Least-squares line: y = ({slope}) x + ({intercept})"),
             translate(
                 "CorrelationView",
                 "The line is a linear fit shown for reference. {method} measures monotonic, "
                 "not necessarily linear, association.",
-            ).format(method=method),
+            ).format(method=correlation_method_label(snapshot.matrix.method, translate)),
             translate(
                 "CorrelationView",
                 "Showing a random sample of {shown} of {total} points. Statistics use all points.",
@@ -2108,8 +2117,15 @@ def render_prepared_report_html(
         check_cancel()
         parts.extend([
             '<article class="analysis-entry">',
-            f"<h2>{_html_escape(entry.category)}</h2>",
+            f"<h2>{_html_escape(entry.title or entry.category)}</h2>",
         ])
+        if entry.configuration:
+            parts.append('<dl class="applied-configuration">')
+            parts.extend(
+                f"<div><dt>{_html_escape(field.label)}</dt><dd>{_html_escape(field.display_value)}</dd></div>"
+                for field in entry.configuration
+            )
+            parts.append("</dl>")
         if entry.note:
             parts.append(f'<p class="report-note">{_html_escape(entry.note)}</p>')
         for component in entry.components:
@@ -2236,6 +2252,10 @@ h2 { border-bottom: 1px solid #d9e0e8; padding-bottom: .4rem; }
 .metadata div { display: flex; gap: .4rem; }
 .metadata dt { font-weight: 700; }
 .metadata dd { margin: 0; }
+.applied-configuration { display: flex; flex-wrap: wrap; gap: .4rem 1rem; margin: -.8rem 0 1rem; }
+.applied-configuration div { display: flex; flex-wrap: wrap; gap: .35rem; min-width: 0; }
+.applied-configuration dt { font-weight: 700; }
+.applied-configuration dd { margin: 0; overflow-wrap: anywhere; }
 .report-component { margin: 1.5rem 0; break-inside: avoid; }
 .overview-summary { border: 1px solid #ccd5df; padding: .75rem 1rem; }
 .overview-summary h4 { margin: .5rem 0 .4rem; }

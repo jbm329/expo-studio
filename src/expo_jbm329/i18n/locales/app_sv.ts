@@ -509,6 +509,10 @@
         <source>Add to report</source>
         <translation>Lägg till i rapport</translation>
     </message>
+    <message><source>Replace report result</source><translation>Ersätt rapportresultat</translation></message>
+    <message><source>Update report result</source><translation>Uppdatera rapportresultat</translation></message>
+    <message><source>Replace in report</source><translation>Ersätt i rapporten</translation></message>
+    <message><source>Update result</source><translation>Uppdatera resultat</translation></message>
     <message>
         <source>Export and Add to report are available after an analysis has been applied.</source>
         <translation>Exportera och Lägg till i rapport är tillgängliga efter att en analys har tillämpats.</translation>
@@ -1521,6 +1525,11 @@ Variabler: {features}</translation>
         <source>Remove from report</source>
         <translation>Ta bort från rapporten</translation>
     </message>
+    <message><source>Review report result</source><translation>Granska rapportresultat</translation></message>
+    <message><source>Stored and incoming configuration</source><translation>Sparad och inkommande konfiguration</translation></message>
+    <message><source>Stored result</source><translation>Sparat resultat</translation></message>
+    <message><source>Incoming result</source><translation>Nytt resultat</translation></message>
+    <message><source>Unavailable stored selections: {components}</source><translation>Otillgängliga sparade val: {components}</translation></message>
     <message>
         <source>Include in report</source>
         <translation>Ta med i rapporten</translation>
@@ -2824,6 +2833,11 @@ Vänligen se loggfil för mer information.</translation>
 </context>
 <context>
     <name>CorrelationView</name>
+    <message><source>Correlation</source><translation>Korrelation</translation></message>
+    <message><source>{category} — {method}</source><translation>{category} — {method}</translation></message>
+    <message><source>Columns:</source><translation>Kolumner:</translation></message>
+    <message><source>Correlation matrix</source><translation>Korrelationsmatris</translation></message>
+    <message><source>{x} vs {y}</source><translation>{x} mot {y}</translation></message>
     <message><source>Strongest correlations</source><translation>Starkaste korrelationer</translation></message>
     <message><source>Matrix plot</source><translation>Matrisdiagram</translation></message>
     <message><source>Scatterplots</source><translation>Spridningsdiagram</translation></message>

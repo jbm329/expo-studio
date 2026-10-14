@@ -76,6 +76,11 @@ preparation runs in the background; each preview captures the report at the
 time you click. Drafts last for the Advanced Analysis window's lifetime.
 HTML reports show the dataset, report generation date, and Expo version once
 at the top; dataset dimensions remain available in Overview.
+Correlation entries are titled by their applied method and show the ordered
+columns used. Pearson, Spearman, and Kendall results can coexist; changing
+columns within a method requires an explicit replacement, and rerunning the
+same configuration requires an explicit result update. The captured result,
+notes, and component selection remain unchanged if that review is canceled.
 Use **Generate HTML report** to save a self-contained HTML file and open it
 in your default browser. Report generation runs in the background; canceled
 or failed saves preserve existing files. PDF output is not yet available.

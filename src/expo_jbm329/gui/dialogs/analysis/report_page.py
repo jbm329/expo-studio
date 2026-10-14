@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, QRect, QSize, Qt, pyqtSignal
+from PyQt6.QtGui import QFontMetrics
 from PyQt6.QtWidgets import (
     QFormLayout,
     QGroupBox,
@@ -19,7 +20,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.presentation import build_analysis_presentation
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.report import ReportEntry
@@ -69,6 +70,7 @@ class ReportPage(QWidget):
         analyses_layout.addWidget(self._empty_message)
         self._entries = QListWidget(analyses)
         self._entries.setAccessibleName(self.tr("Selected analyses"))
+        self._entries.setWordWrap(True)
         self._entries.currentRowChanged.connect(self._update_controls)
         analyses_layout.addWidget(self._entries, 1)
         controls = QHBoxLayout()
@@ -130,28 +132,37 @@ class ReportPage(QWidget):
         self._entries.blockSignals(True)
         self._entries.clear()
         selected_item: QListWidgetItem | None = None
-        category_labels = {
-            AnalysisCategory.OVERVIEW: "Overview",
-            AnalysisCategory.STATISTICS: "Statistics",
-            AnalysisCategory.HYPOTHESIS_TESTS: "Hypothesis Tests",
-            AnalysisCategory.CORRELATION: "Correlation",
-            AnalysisCategory.REGRESSION: "Regression",
-            AnalysisCategory.OUTLIERS: "Outliers",
-            AnalysisCategory.CLUSTERING: "Clustering",
-            AnalysisCategory.PCA: "PCA",
-            AnalysisCategory.TIME_SERIES: "Time Series",
-        }
         for entry in entries:
-            item = QListWidgetItem(
-                f"{self.tr(category_labels[entry.category])} - {entry.dataset_name}",
-                self._entries,
+            presentation = build_analysis_presentation(
+                entry.category,
+                entry.snapshot,
+                lambda context, source: QCoreApplication.translate(
+                    "ReportPage" if context == "AnalysisDialog" else context,
+                    source,
+                ),
             )
+            text = f"{presentation.title} - {entry.dataset_name}"
+            if presentation.summary_lines:
+                text = "\n".join((text, *presentation.summary_lines))
+            item = QListWidgetItem(text, self._entries)
             item.setData(Qt.ItemDataRole.UserRole, entry.entry_id)
-            item.setToolTip(
-                self.tr("{rows} rows x {columns} columns - {date}").format(
-                    rows=entry.dataset_rows, columns=entry.dataset_columns, date=entry.analysis_date
-                )
+            tooltip = QCoreApplication.translate("ReportPage", "{rows} rows x {columns} columns - {date}").format(
+                rows=entry.dataset_rows,
+                columns=entry.dataset_columns,
+                date=entry.analysis_date,
             )
+            if presentation.summary_lines:
+                tooltip = "\n".join((tooltip, *presentation.summary_lines))
+            item.setToolTip(tooltip)
+            if presentation.summary_lines:
+                viewport = self._entries.viewport()
+                width = max(240, (viewport.width() if viewport is not None else 0) - 20)
+                bounds = QFontMetrics(self._entries.font()).boundingRect(
+                    QRect(0, 0, width, 10000),
+                    Qt.TextFlag.TextWordWrap,
+                    text,
+                )
+                item.setSizeHint(QSize(0, bounds.height() + 12))
             if entry.entry_id == selected_id:
                 selected_item = item
         if selected_item is not None:

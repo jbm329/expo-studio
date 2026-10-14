@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
-from expo_jbm329.services.analysis.categories import HypothesisTest
+from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.clustering_export import (
     CLUSTERING_COMPONENTS,
@@ -25,7 +25,6 @@ from expo_jbm329.services.analysis.clustering_export import (
     ClusteringExportRequest,
     ClusteringExportSnapshot,
 )
-from expo_jbm329.services.analysis.correlation import CorrelationMethod
 from expo_jbm329.services.analysis.correlation_export import (
     CorrelationExportComponent,
     CorrelationExportRequest,
@@ -59,6 +58,11 @@ from expo_jbm329.services.analysis.pca_export import (
     PCAExportComponent,
     PCAExportRequest,
     PCAExportSnapshot,
+)
+from expo_jbm329.services.analysis.presentation import (
+    PresentationLabel,
+    build_analysis_presentation,
+    translate_presentation_label,
 )
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
@@ -443,16 +447,13 @@ class AnalysisExportDialog(QDialog):
         """Offer applied tables and independent Excel chart components."""
         snapshot = self._correlation
         if snapshot is not None:
-            method_names = {
-                CorrelationMethod.PEARSON: self.tr("Pearson"),
-                CorrelationMethod.SPEARMAN: self.tr("Spearman"),
-                CorrelationMethod.KENDALL: self.tr("Kendall's tau-b"),
-            }
+            presentation = build_analysis_presentation(
+                AnalysisCategory.CORRELATION,
+                snapshot,
+                QCoreApplication.translate,
+            )
             identity = QLabel(
-                self.tr("Applied method: {method}\nApplied columns: {columns}").format(
-                    method=method_names[snapshot.matrix.method],
-                    columns=" / ".join(snapshot.matrix.columns),
-                ),
+                "\n".join((presentation.title, *presentation.summary_lines)),
                 self,
             )
             identity.setTextFormat(Qt.TextFormat.PlainText)
@@ -462,14 +463,18 @@ class AnalysisExportDialog(QDialog):
 
         results = QGroupBox(self.tr("Results"), self)
         contents = QVBoxLayout(results)
-        pair_count = 0 if snapshot is None else len(snapshot.matrix.columns) * (len(snapshot.matrix.columns) - 1) // 2
-        scatter_label = (
-            self.tr("Scatterplots ({count} pair)") if pair_count == 1 else self.tr("Scatterplots ({count} pairs)")
+        scatter_label = translate_presentation_label(
+            PresentationLabel.SCATTERPLOTS,
+            QCoreApplication.translate,
         )
         labels = {
-            CorrelationExportComponent.STRONGEST_CORRELATIONS: self.tr("Strongest correlations"),
-            CorrelationExportComponent.MATRIX_PLOT: self.tr("Matrix plot"),
-            CorrelationExportComponent.SCATTERPLOTS: scatter_label.format(count=pair_count),
+            CorrelationExportComponent.STRONGEST_CORRELATIONS: translate_presentation_label(
+                PresentationLabel.STRONGEST_CORRELATIONS, QCoreApplication.translate
+            ),
+            CorrelationExportComponent.MATRIX_PLOT: translate_presentation_label(
+                PresentationLabel.CORRELATION_MATRIX, QCoreApplication.translate
+            ),
+            CorrelationExportComponent.SCATTERPLOTS: scatter_label,
         }
         for component, label in labels.items():
             choice = QCheckBox(label, results)

@@ -308,16 +308,15 @@ def test_correlation_dialog_names_applied_matrix_and_enables_all_components():
 
     assert [choice.text() for choice in choices] == [
         "Strongest correlations",
-        "Matrix plot",
-        "Scatterplots (1 pair)",
+        "Correlation matrix",
+        "Scatterplots",
     ]
     assert choices[0].isEnabled() and choices[0].isChecked()
     assert choices[1].isEnabled() and choices[2].isEnabled()
     assert formats.currentData() is StatisticsExportFormat.EXCEL
-    identity = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied method:"))
+    identity = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Correlation — Spearman"))
     assert identity.textFormat() is Qt.TextFormat.PlainText
-    assert "Spearman" in identity.text()
-    assert "first column / second column" in identity.text()
+    assert "Columns: first column, second column" in identity.text()
 
     for format_choice in StatisticsExportFormat:
         formats.setCurrentIndex(formats.findData(format_choice))
@@ -333,8 +332,8 @@ def test_correlation_dialog_without_successful_matrix_shows_disabled_choices():
     choices = dialog.findChildren(QCheckBox)
     assert [choice.text() for choice in choices] == [
         "Strongest correlations",
-        "Matrix plot",
-        "Scatterplots (0 pairs)",
+        "Correlation matrix",
+        "Scatterplots",
     ]
     assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
     assert dialog.export_request() is None

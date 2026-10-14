@@ -11,6 +11,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Advanced Analysis now stays bound to the active ready dataset for the whole modal session; report entries share that source
 - Advanced Analysis displays the source dataset name and dimensions in the window title instead of a separate dataset pane
 - HTML reports show dataset, report generation date, and Expo version once at the top, without row/column metadata
+- Correlation presentations share configured method/column labels across Analysis, Reports, HTML, and exports; same-method column changes and reruns require explicit review before replacing a captured report result
 
 ### Added
 - Categorical tab in Statistics with frequency counts, percentages, and separate missing-value counts
@@ -39,6 +40,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Time-series preparation with optional resampling, autocorrelation, and additive or multiplicative seasonal decomposition
 - Export for all nine analyses: applied-result tables and available charts in Excel; one table per CSV or binary export
 - Session report drafts for all nine analyses with selected components, notes, metadata, ordering, and asynchronous in-app HTML preview
+- Correlation report entries show their applied method and ordered columns; different methods coexist while column changes and rerun captures can be explicitly replaced or updated
 - Self-contained HTML report saving with background generation, safe replacement, and automatic opening in the default browser
 - Consistent Analysis configuration pane widths, adaptive layouts, and scrolling
 

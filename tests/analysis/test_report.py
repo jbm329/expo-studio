@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from enum import StrEnum
 
 import pandas as pd
 import pytest
 
 from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.correlation import CorrelationMethod, analyze_correlation_matrix
+from expo_jbm329.services.analysis.correlation_export import CorrelationExportSnapshot
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.report import (
     ReportComponent,
@@ -13,6 +16,7 @@ from expo_jbm329.services.analysis.report import (
     ReportEntry,
     _json_value,
     available_report_components,
+    correlation_report_configuration,
     create_report_entry,
     report_entry_identity,
 )
@@ -102,6 +106,82 @@ def test_report_entry_identity_uses_dataset_category_and_applied_configuration()
     assert identity == report_entry_identity(AnalysisCategory.PCA, "tab-1", pca_snapshot())
     assert identity != report_entry_identity(AnalysisCategory.PCA, "tab-2", snapshot)
     assert identity != report_entry_identity(AnalysisCategory.CLUSTERING, "tab-1", clustering_snapshot())
+
+
+def test_correlation_report_slot_uses_dataset_and_method_but_not_columns():
+    first = correlation_snapshot()
+    reordered_columns = tuple(reversed(first.matrix.columns[:3]))
+    reordered_data = first.matrix_data.loc[:, list(reordered_columns)].copy(deep=True)
+    reordered_matrix = analyze_correlation_matrix(reordered_data, reordered_columns, first.matrix.method)
+    assert reordered_matrix is not None
+    reordered = CorrelationExportSnapshot(reordered_matrix, reordered_data)
+    another_method_matrix = analyze_correlation_matrix(
+        first.matrix_data,
+        first.matrix.columns,
+        CorrelationMethod.SPEARMAN,
+    )
+    assert another_method_matrix is not None
+    another_method = CorrelationExportSnapshot(another_method_matrix, first.matrix_data.copy(deep=True))
+
+    assert report_entry_identity(AnalysisCategory.CORRELATION, "tab-1", first) == report_entry_identity(
+        AnalysisCategory.CORRELATION, "tab-1", reordered
+    )
+    assert report_entry_identity(AnalysisCategory.CORRELATION, "tab-1", first) != report_entry_identity(
+        AnalysisCategory.CORRELATION, "tab-1", another_method
+    )
+    assert report_entry_identity(AnalysisCategory.CORRELATION, "tab-1", first) != report_entry_identity(
+        AnalysisCategory.CORRELATION, "tab-2", first
+    )
+    assert correlation_report_configuration(create_report_entry(AnalysisCategory.CORRELATION, DATASET, reordered)) == (
+        first.matrix.method.value,
+        reordered_columns,
+    )
+
+
+def test_correlation_capture_identity_is_stable_for_candidate_inspection_and_changes_on_rerun():
+    snapshot = correlation_snapshot()
+    first = create_report_entry(AnalysisCategory.CORRELATION, DATASET, snapshot)
+    inspected_again = create_report_entry(AnalysisCategory.CORRELATION, DATASET, snapshot)
+    rerun_snapshot = CorrelationExportSnapshot(snapshot.matrix, snapshot.matrix_data.copy(deep=True))
+    rerun = create_report_entry(AnalysisCategory.CORRELATION, DATASET, rerun_snapshot)
+
+    assert first.capture_id == snapshot.capture_id
+    assert inspected_again.capture_id == first.capture_id
+    assert rerun.capture_id == rerun_snapshot.capture_id
+    assert rerun.capture_id != first.capture_id
+    assert rerun.entry_id == first.entry_id
+    assert first.with_selection(first.selected_components, "Saved note").capture_id == first.capture_id
+
+
+def test_correlation_report_entry_requires_its_snapshot_capture_identifier():
+    entry = create_report_entry(AnalysisCategory.CORRELATION, DATASET, correlation_snapshot())
+
+    with pytest.raises(ValueError, match="applied-result capture identifier"):
+        replace(entry, capture_id="unrelated-capture")
+
+
+def test_correlation_report_upsert_preserves_position_note_and_valid_component_selection():
+    first_snapshot = correlation_snapshot()
+    first = create_report_entry(AnalysisCategory.CORRELATION, DATASET, first_snapshot).with_selection(
+        ("strongest_correlations", "matrix_plot"),
+        "Keep this note",
+    )
+    other = create_report_entry(AnalysisCategory.PCA, DATASET, pca_snapshot())
+    rerun_snapshot = CorrelationExportSnapshot(first_snapshot.matrix, first_snapshot.matrix_data.copy(deep=True))
+    incoming = create_report_entry(AnalysisCategory.CORRELATION, DATASET, rerun_snapshot).with_selection(
+        first.selected_components,
+        first.note,
+    )
+    document = ReportDocument()
+    document.upsert(first)
+    document.upsert(other)
+
+    document.upsert(incoming)
+
+    assert document.entries == (incoming, other)
+    assert document.entries[0].note == "Keep this note"
+    assert document.entries[0].selected_components == ("strongest_correlations", "matrix_plot")
+    assert document.entries[0].snapshot is rerun_snapshot
 
 
 def test_report_document_upserts_moves_and_removes_without_duplicates():

@@ -254,8 +254,8 @@ def test_correlation_export_selection_emits_only_the_current_snapshot(monkeypatc
     assert len(captured) == 1
     assert [choice.text() for choice in captured[0].findChildren(QCheckBox)] == [
         "Strongest correlations",
-        "Matrix plot",
-        "Scatterplots (1 pair)",
+        "Correlation matrix",
+        "Scatterplots",
     ]
     assert received[0].snapshot is snapshot
     assert received[0].components == (CorrelationExportComponent.STRONGEST_CORRELATIONS,)
@@ -467,6 +467,93 @@ def test_add_to_report_captures_applied_analysis_components_and_note(monkeypatch
     dialog.report_page()._remove_button.click()  # noqa: SLF001
     assert dialog.report_document().entries == ()
     assert dialog._category_list.item(dialog._category_list.count() - 1).text() == "Reports(0)"  # noqa: SLF001
+
+
+def test_correlation_report_slot_explicitly_updates_or_replaces_frozen_capture(monkeypatch):
+    frame = pd.DataFrame({
+        "Age": [1.0, 2.0, 3.0, 4.0],
+        "Income": [2.0, 1.0, 4.0, 3.0],
+        "Score": [4.0, 3.0, 2.0, 1.0],
+    })
+
+    def snapshot(columns: tuple[str, ...], method: CorrelationMethod = CorrelationMethod.SPEARMAN):
+        selected = frame.loc[:, list(columns)].copy(deep=True)
+        matrix = analyze_correlation_matrix(selected, columns, method)
+        assert matrix is not None
+        return CorrelationExportSnapshot(matrix, selected)
+
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
+    dialog.select_category(AnalysisCategory.CORRELATION)
+    first_snapshot = snapshot(("Age", "Income"))
+    dialog.set_exportable_correlation(first_snapshot)
+    monkeypatch.setattr(
+        ReportNotesDialog,
+        "exec",
+        lambda self: (self.findChild(QPlainTextEdit).setPlainText("Keep this note"), QDialog.DialogCode.Accepted)[1],
+    )
+    dialog._toggle_report_entry()  # noqa: SLF001
+    original = dialog.report_document().entries[0]
+    assert original.snapshot is first_snapshot
+    assert original.note == "Keep this note"
+    assert original.selected_components == tuple(component.key for component in original.components)
+
+    rerun = snapshot(("Age", "Income"))
+    dialog.set_exportable_correlation(rerun)
+    action = dialog._report_action_button  # noqa: SLF001
+    assert action.text() == "Update report result"
+    original_entries = dialog.report_document().entries
+    rejected_dialogs: list[ReportNotesDialog] = []
+
+    def cancel_update(review_dialog):
+        rejected_dialogs.append(review_dialog)
+        assert review_dialog.notes() == "Keep this note"
+        assert "Correlation — Spearman" in [label.text() for label in review_dialog.findChildren(QLabel)]
+        assert any("Columns: Age, Income" in label.text() for label in review_dialog.findChildren(QLabel))
+        assert any(button.text() == "Update result" for button in review_dialog.findChildren(QPushButton))
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", cancel_update)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    assert len(rejected_dialogs) == 1
+    assert dialog.report_document().entries == original_entries
+    assert dialog.report_document().entries[0].snapshot is first_snapshot
+
+    def accept_update(review_dialog):
+        assert review_dialog.notes() == "Keep this note"
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", accept_update)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    updated = dialog.report_document().entries[0]
+    assert updated.entry_id == original.entry_id
+    assert updated.snapshot is rerun
+    assert updated.capture_id == rerun.capture_id
+    assert updated.note == original.note
+    assert updated.selected_components == original.selected_components
+
+    replacement = snapshot(("Score", "Age", "Income"))
+    dialog.set_exportable_correlation(replacement)
+    assert action.text() == "Replace report result"
+
+    def accept_replace(review_dialog):
+        assert review_dialog.notes() == "Keep this note"
+        assert any("Columns: Age, Income" in label.text() for label in review_dialog.findChildren(QLabel))
+        assert any("Columns: Score, Age, Income" in label.text() for label in review_dialog.findChildren(QLabel))
+        assert any(button.text() == "Replace in report" for button in review_dialog.findChildren(QPushButton))
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", accept_replace)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    replaced = dialog.report_document().entries[0]
+    assert replaced.entry_id == original.entry_id
+    assert replaced.snapshot is replacement
+    assert replaced.note == original.note
+    assert replaced.selected_components == original.selected_components
+
+    dialog.set_exportable_correlation(replacement)
+    assert action.text() == "Remove from report"
+    action.click()
+    assert dialog.report_document().entries == ()
 
 
 @pytest.mark.parametrize(

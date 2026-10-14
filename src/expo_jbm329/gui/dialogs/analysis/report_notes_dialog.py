@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -35,6 +35,11 @@ class ReportNotesDialog(QDialog):
         selected_components: tuple[str, ...] | None = None,
         note: str = "",
         existing: bool = False,
+        configuration: tuple[str, ...] = (),
+        component_translation_context: str | None = None,
+        review: tuple[tuple[str, ...], tuple[str, ...]] | None = None,
+        action_label: str | None = None,
+        unavailable_components: tuple[str, ...] = (),
     ) -> None:
         """Build the component and notes editor.
 
@@ -45,15 +50,53 @@ class ReportNotesDialog(QDialog):
             selected_components: Component keys already selected for an existing entry.
             note: Existing report note.
             existing: Whether this dialog edits an existing entry.
+            configuration: Plain-text applied settings shown below the title.
+            component_translation_context: Optional canonical Qt translation context.
+            review: Stored and incoming configuration lines shown during explicit replacement/update.
+            action_label: Optional accept-button label for a reviewed result.
+            unavailable_components: Previously selected components absent from the incoming result.
         """
         super().__init__(parent)
-        self.setWindowTitle(self.tr("Edit report entry") if existing else self.tr("Add to report"))
+        if review is None:
+            self.setWindowTitle(self.tr("Edit report entry") if existing else self.tr("Add to report"))
+        else:
+            self.setWindowTitle(self.tr("Review report result"))
         self.resize(520, 360)
         layout = QVBoxLayout(self)
         heading = QLabel(analysis_label, self)
         heading.setTextFormat(Qt.TextFormat.PlainText)
         heading.setWordWrap(True)
         layout.addWidget(heading)
+        if configuration:
+            settings = QLabel("\n".join(configuration), self)
+            settings.setWordWrap(True)
+            settings.setTextFormat(Qt.TextFormat.PlainText)
+            settings.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            layout.addWidget(settings)
+        if review is not None:
+            review_box = QGroupBox(self.tr("Stored and incoming configuration"), self)
+            review_layout = QVBoxLayout(review_box)
+            for title, lines in zip(
+                (self.tr("Stored result"), self.tr("Incoming result")),
+                review,
+                strict=True,
+            ):
+                detail = QLabel("\n".join((title, *lines)), review_box)
+                detail.setWordWrap(True)
+                detail.setTextFormat(Qt.TextFormat.PlainText)
+                detail.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+                review_layout.addWidget(detail)
+            layout.addWidget(review_box)
+        if unavailable_components:
+            unavailable_label = QLabel(
+                self.tr("Unavailable stored selections: {components}").format(
+                    components=", ".join(unavailable_components)
+                ),
+                self,
+            )
+            unavailable_label.setWordWrap(True)
+            unavailable_label.setTextFormat(Qt.TextFormat.PlainText)
+            layout.addWidget(unavailable_label)
         self._component_choices: dict[str, QCheckBox] = {}
         if components:
             group = QGroupBox(self.tr("Include in report"), self)
@@ -64,7 +107,11 @@ class ReportNotesDialog(QDialog):
                 else {component.key for component in components}
             )
             for component in components:
-                label = self.tr(component.label)
+                label = (
+                    QCoreApplication.translate(component_translation_context, component.label)
+                    if component_translation_context is not None
+                    else self.tr(component.label)
+                )
                 choice = QCheckBox(label, group)
                 choice.setChecked(component.key in selected)
                 choice.toggled.connect(self._update_save_enabled)
@@ -79,12 +126,13 @@ class ReportNotesDialog(QDialog):
         layout.addWidget(notes_label)
         layout.addWidget(self._notes, 1)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel, self)
-        self._save_button = QPushButton(self.tr("Save changes") if existing else self.tr("Add to report"), buttons)
+        default_action = self.tr("Save changes") if existing else self.tr("Add to report")
+        self._save_button = QPushButton(action_label or default_action, buttons)
         buttons.addButton(self._save_button, QDialogButtonBox.ButtonRole.AcceptRole)
         self._update_save_enabled()
         self._save_button.clicked.connect(self.accept)
         self._remove_requested = False
-        if existing:
+        if existing and review is None:
             remove_button = QPushButton(self.tr("Remove from report"), buttons)
             buttons.addButton(remove_button, QDialogButtonBox.ButtonRole.DestructiveRole)
             remove_button.clicked.connect(self._remove_entry)

@@ -4,7 +4,9 @@ from PyQt6.QtWidgets import QLabel, QLineEdit, QListWidget, QPlainTextEdit, QPus
 
 from expo_jbm329.gui.dialogs.analysis.report_page import ReportPage
 from expo_jbm329.services.analysis.categories import AnalysisCategory
-from expo_jbm329.services.analysis.report import ReportComponent, ReportEntry
+from expo_jbm329.services.analysis.report import ReportComponent, ReportEntry, create_report_entry
+from expo_jbm329.utils.dataset_ref import DatasetRef
+from tests.analysis.test_correlation_export import _snapshot as correlation_snapshot
 from tests.analysis.test_pca_export import pca_snapshot
 
 
@@ -78,6 +80,22 @@ def test_report_page_lists_metadata_and_enables_entry_actions():
     assert page._preview_button.isEnabled()  # noqa: SLF001
     assert page._generate_button.isEnabled()  # noqa: SLF001
     assert not page._empty_message.isVisible()  # noqa: SLF001
+
+
+def test_correlation_report_list_shows_configured_title_and_ordered_columns():
+    page = ReportPage()
+    entry = create_report_entry(
+        AnalysisCategory.CORRELATION,
+        DatasetRef("correlation-tab", "Employees", 12, 4),
+        correlation_snapshot(),
+    )
+
+    page.set_entries((entry,))
+
+    item = page.findChild(QListWidget).item(0)
+    assert item.text().startswith("Correlation — Pearson - Employees\nColumns: ")
+    assert item.text().splitlines()[1] == f"Columns: {', '.join(entry.snapshot.matrix.columns)}"
+    assert item.sizeHint().height() > 24
 
 
 def test_report_page_emits_selected_entry_actions_and_preserves_selection():

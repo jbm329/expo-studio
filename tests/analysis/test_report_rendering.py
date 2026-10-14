@@ -10,7 +10,8 @@ import pytest
 
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
-from expo_jbm329.services.analysis.correlation_export import CorrelationExportComponent
+from expo_jbm329.services.analysis.correlation import CorrelationMethod, analyze_correlation_matrix
+from expo_jbm329.services.analysis.correlation_export import CorrelationExportComponent, CorrelationExportSnapshot
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportSnapshot
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.report import (
@@ -297,7 +298,7 @@ def test_correlation_charts_follow_selection_order_and_only_selected_keys(monkey
         "matrix_plot",
     ]
     assert prepared.entries[0].components[0].charts[0].heading == "scatter"
-    assert prepared.entries[0].components[1].charts[0].heading == "Pearson correlation"
+    assert prepared.entries[0].components[1].charts[0].heading == "Correlation matrix"
 
 
 def test_correlation_renderer_cannot_return_an_unselected_chart(monkeypatch) -> None:
@@ -821,6 +822,56 @@ def test_render_report_html_renders_real_worker_chart_and_inline_png() -> None:
     assert "Histogram and boxplot" in html
     assert progress_values == sorted(progress_values)
     assert progress_values[-1] == 100
+
+
+def test_correlation_report_uses_shared_configured_title_summary_and_semantic_heading():
+    frame = pd.DataFrame({
+        "<Age & income>": [1.0, 2.0, 3.0, 4.0],
+        "Score": [4.0, 3.0, 2.0, 1.0],
+    })
+    matrix = analyze_correlation_matrix(frame, tuple(frame.columns), CorrelationMethod.SPEARMAN)
+    assert matrix is not None
+    snapshot = CorrelationExportSnapshot(matrix, frame.copy(deep=True))
+    entry = create_report_entry(AnalysisCategory.CORRELATION, DATASET, snapshot).with_selection(
+        ("strongest_correlations",),
+        "",
+    )
+    document = ReportDocument()
+    document.upsert(entry)
+
+    prepared = prepare_report_content(document)
+    html = render_prepared_report_html(prepared)
+
+    assert prepared.entries[0].title == "Correlation — Spearman"
+    assert prepared.entries[0].configuration[0].items == ("<Age & income>", "Score")
+    assert "<h2>Correlation — Spearman</h2>" in html
+    assert "<dt>Columns:</dt><dd>&lt;Age &amp; income&gt;, Score</dd>" in html
+    assert "<h3>Strongest correlations</h3>" in html
+    assert "<script>" not in html
+
+
+def test_correlation_presentation_labels_are_captured_before_report_preparation():
+    entry = _entry(
+        AnalysisCategory.CORRELATION,
+        correlation_snapshot(),
+        ("strongest_correlations",),
+    )
+    document = ReportDocument()
+    document.upsert(entry)
+    translations = {
+        "Correlation": "Korrelation",
+        "Columns:": "Kolumner:",
+        "Strongest correlations": "Starkaste korrelationer",
+    }
+    options = capture_report_labels(
+        lambda context, source: translations.get(source, source) if context == "CorrelationView" else source
+    )
+
+    prepared = prepare_report_content(document, labels=options)
+
+    assert prepared.entries[0].title == "Korrelation — Pearson"
+    assert prepared.entries[0].configuration[0].label == "Kolumner:"
+    assert prepared.entries[0].components[0].label == "Starkaste korrelationer"
 
 
 def test_report_html_lists_all_captured_datasets_in_header() -> None:

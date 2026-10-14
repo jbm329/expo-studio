@@ -67,3 +67,27 @@ def test_existing_entry_dialog_restores_choices_note_and_supports_removal():
 
     assert dialog.result() == QDialog.DialogCode.Accepted
     assert dialog.remove_requested()
+
+
+def test_correlation_review_shows_old_and_new_configuration_and_prefills_entry():
+    dialog = ReportNotesDialog(
+        "Correlation — Spearman",
+        components=COMPONENTS,
+        selected_components=("charts",),
+        note="Saved note",
+        configuration=("Columns: Age, Income, Score",),
+        component_translation_context="CorrelationView",
+        review=(
+            ("Correlation — Spearman", "Columns: Age, Income"),
+            ("Correlation — Spearman", "Columns: Age, Income, Score"),
+        ),
+        action_label="Replace in report",
+    )
+
+    assert dialog.notes() == "Saved note"
+    assert dialog.selected_components() == ("charts",)
+    assert any("Columns: Age, Income" in label.text() for label in dialog.findChildren(QLabel))
+    assert any("Columns: Age, Income, Score" in label.text() for label in dialog.findChildren(QLabel))
+    assert any(button.text() == "Replace in report" for button in dialog.findChildren(QPushButton))
+    assert not any(button.text() == "Remove from report" for button in dialog.findChildren(QPushButton))
+    assert not dialog.remove_requested()

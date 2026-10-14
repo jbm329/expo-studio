@@ -10,9 +10,9 @@ which computes analyses in the background and swaps in the resulting view.
 from __future__ import annotations
 
 from html import escape
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, Literal, override
 
-from PyQt6.QtCore import QEvent, QObject, Qt, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, QEvent, QObject, Qt, pyqtSignal
 from PyQt6.QtGui import QHelpEvent
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -48,11 +48,19 @@ from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportRequ
 from expo_jbm329.services.analysis.outliers_export import OutlierExportRequest, OutlierExportSnapshot
 from expo_jbm329.services.analysis.overview import OverviewExportRequest
 from expo_jbm329.services.analysis.pca_export import PCAExportRequest, PCAExportSnapshot
+from expo_jbm329.services.analysis.presentation import (
+    PresentationLabel,
+    analysis_category_source,
+    build_analysis_presentation,
+    presentation_label_source,
+    translate_presentation_label,
+)
 from expo_jbm329.services.analysis.regression_export import RegressionExportRequest, RegressionExportSnapshot
 from expo_jbm329.services.analysis.report import (
     ReportDocument,
     ReportEntry,
     ReportSnapshot,
+    correlation_report_configuration,
     create_report_entry,
 )
 from expo_jbm329.services.analysis.statistics import StatisticsExportRequest
@@ -572,6 +580,12 @@ class AnalysisDialog(QDialog):
         elif entry is None:
             self._report_action_button.setText(self.tr("Add to report"))
             self._report_action_button.setEnabled(True)
+        elif candidate.category is AnalysisCategory.CORRELATION and candidate.capture_id != entry.capture_id:
+            if correlation_report_configuration(candidate) != correlation_report_configuration(entry):
+                self._report_action_button.setText(self.tr("Replace report result"))
+            else:
+                self._report_action_button.setText(self.tr("Update report result"))
+            self._report_action_button.setEnabled(True)
         else:
             self._report_action_button.setText(self.tr("Remove from report"))
             self._report_action_button.setEnabled(True)
@@ -582,7 +596,15 @@ class AnalysisDialog(QDialog):
             return
         existing = self._report_document.get(candidate.entry_id)
         if existing is not None:
-            self._remove_report_entry(existing.entry_id)
+            if candidate.category is AnalysisCategory.CORRELATION and candidate.capture_id != existing.capture_id:
+                mode: Literal["replace", "update"] = (
+                    "replace"
+                    if correlation_report_configuration(candidate) != correlation_report_configuration(existing)
+                    else "update"
+                )
+                self._edit_report_candidate(candidate, existing=existing, review_mode=mode)
+            else:
+                self._remove_report_entry(existing.entry_id)
             return
         self._edit_report_candidate(candidate, existing=None)
 
@@ -591,15 +613,61 @@ class AnalysisDialog(QDialog):
         if entry is not None:
             self._edit_report_candidate(entry, existing=entry)
 
-    def _edit_report_candidate(self, candidate: ReportEntry, *, existing: ReportEntry | None) -> None:
+    def _edit_report_candidate(
+        self,
+        candidate: ReportEntry,
+        *,
+        existing: ReportEntry | None,
+        review_mode: Literal["replace", "update"] | None = None,
+    ) -> None:
         components = candidate.components
+        presentation = build_analysis_presentation(
+            candidate.category,
+            candidate.snapshot,
+            QCoreApplication.translate,
+        )
+        existing_components = set() if existing is None else set(existing.selected_components)
+        available_components = {component.key for component in components}
+        selected = existing_components & available_components
+        unavailable_components: list[str] = []
+        if existing is not None and candidate.category is AnalysisCategory.CORRELATION:
+            unavailable_context, _source = presentation_label_source(PresentationLabel.STRONGEST_CORRELATIONS)
+            unavailable_components.extend(
+                QCoreApplication.translate(unavailable_context, component.label)
+                for component in existing.components
+                if component.key in existing_components and component.key not in available_components
+            )
+        review: tuple[tuple[str, ...], tuple[str, ...]] | None = None
+        action_label: str | None = None
+        if review_mode is not None and existing is not None:
+            old_presentation = build_analysis_presentation(
+                existing.category,
+                existing.snapshot,
+                QCoreApplication.translate,
+            )
+            review = (
+                (old_presentation.title, *old_presentation.summary_lines),
+                (presentation.title, *presentation.summary_lines),
+            )
+            action_label = self.tr("Replace in report") if review_mode == "replace" else self.tr("Update result")
+        component_context = (
+            presentation_label_source(PresentationLabel.STRONGEST_CORRELATIONS)[0]
+            if candidate.category is AnalysisCategory.CORRELATION
+            else None
+        )
+        selected_components = tuple(component.key for component in components if component.key in selected)
         dialog = ReportNotesDialog(
-            self._category_label(candidate.category),
+            presentation.title,
             self,
             components=components,
-            selected_components=None if existing is None else existing.selected_components,
+            selected_components=selected_components or None,
             note="" if existing is None else existing.note,
-            existing=existing is not None,
+            existing=existing is not None and review_mode is None,
+            configuration=presentation.summary_lines,
+            component_translation_context=component_context,
+            review=review,
+            action_label=action_label,
+            unavailable_components=tuple(unavailable_components),
         )
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
@@ -815,15 +883,6 @@ class AnalysisDialog(QDialog):
 
     def _category_label(self, category: AnalysisCategory) -> str:
         """Return the translated display label for an analysis category."""
-        labels = {
-            AnalysisCategory.OVERVIEW: self.tr("Overview"),
-            AnalysisCategory.STATISTICS: self.tr("Statistics"),
-            AnalysisCategory.HYPOTHESIS_TESTS: self.tr("Hypothesis Tests"),
-            AnalysisCategory.CORRELATION: self.tr("Correlation"),
-            AnalysisCategory.REGRESSION: self.tr("Regression"),
-            AnalysisCategory.OUTLIERS: self.tr("Outliers"),
-            AnalysisCategory.CLUSTERING: self.tr("Clustering"),
-            AnalysisCategory.PCA: self.tr("PCA"),
-            AnalysisCategory.TIME_SERIES: self.tr("Time Series"),
-        }
-        return labels[category]
+        if category is AnalysisCategory.CORRELATION:
+            return translate_presentation_label(PresentationLabel.CORRELATION, QCoreApplication.translate)
+        return self.tr(analysis_category_source(category))

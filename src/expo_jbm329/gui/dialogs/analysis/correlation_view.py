@@ -7,7 +7,7 @@ import math
 from typing import TYPE_CHECKING
 
 from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import (
     QFrame,
@@ -37,6 +37,12 @@ from expo_jbm329.services.analysis.correlation import (
 from expo_jbm329.services.analysis.correlation_charts import (
     draw_correlation_matrix,
     draw_correlation_scatter,
+)
+from expo_jbm329.services.analysis.presentation import (
+    PresentationLabel,
+    build_correlation_presentation,
+    correlation_method_label,
+    translate_presentation_label,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 
@@ -110,10 +116,29 @@ class CorrelationView(QWidget):
             layout.addWidget(self._build_centered_label(self.error_text(result.error)))
             return
 
+        presentation = build_correlation_presentation(
+            result.method,
+            result.columns,
+            QCoreApplication.translate,
+        )
+        identity = QLabel("\n".join((presentation.title, *presentation.summary_lines)), self)
+        identity.setTextFormat(Qt.TextFormat.PlainText)
+        identity.setWordWrap(True)
+        identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(identity)
+
         charts_section = QWidget(self._pair_panel)
         charts_layout = QVBoxLayout(charts_section)
         charts_layout.setContentsMargins(0, 0, 0, 0)
-        charts_layout.addWidget(self._build_section_title(self.tr("Correlation plots"), charts_section))
+        charts_layout.addWidget(
+            self._build_section_title(
+                translate_presentation_label(
+                    PresentationLabel.CORRELATION_PLOTS,
+                    QCoreApplication.translate,
+                ),
+                charts_section,
+            )
+        )
 
         charts_splitter = QSplitter(Qt.Orientation.Horizontal, charts_section)
         charts_splitter.setChildrenCollapsible(False)
@@ -253,13 +278,7 @@ class CorrelationView(QWidget):
 
     def method_name(self, method: CorrelationMethod) -> str:
         """Return the translated display name for `method`."""
-        match method:
-            case CorrelationMethod.PEARSON:
-                return self.tr("Pearson")
-            case CorrelationMethod.SPEARMAN:
-                return self.tr("Spearman")
-            case CorrelationMethod.KENDALL:
-                return self.tr("Kendall's tau-b")
+        return correlation_method_label(method, QCoreApplication.translate)
 
     def strength_text(self, strength: CorrelationStrength | None) -> str:
         """Return the translated strength label, or "N/A" when undefined."""
@@ -295,7 +314,10 @@ class CorrelationView(QWidget):
             figure,
             ax,
             result,
-            self.tr("{method} correlation").format(method=self.method_name(result.method)),
+            translate_presentation_label(
+                PresentationLabel.CORRELATION_MATRIX,
+                QCoreApplication.translate,
+            ),
             self.chart_annotations(result),
         )
 
@@ -314,7 +336,11 @@ class CorrelationView(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        title = QLabel(self.tr("<b>Strongest correlations</b>"), panel)
+        heading = translate_presentation_label(
+            PresentationLabel.STRONGEST_CORRELATIONS,
+            QCoreApplication.translate,
+        )
+        title = QLabel(f"<b>{html.escape(heading)}</b>", panel)
         title.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(title)
 
@@ -467,10 +493,12 @@ class CorrelationView(QWidget):
     def _pair_statistics_text(self, detail: CorrelationPairDetail) -> str:
         """Build the pair statistics text, including line and sampling notes."""
         pair = detail.pair
+        pair_title = translate_presentation_label(
+            PresentationLabel.SCATTERPLOT_TITLE,
+            QCoreApplication.translate,
+        ).format(x=html.escape(pair.x_column), y=html.escape(pair.y_column))
         lines = [
-            self.tr("<b>{x}</b> vs <b>{y}</b> ({method})").format(
-                x=html.escape(pair.x_column), y=html.escape(pair.y_column), method=self.method_name(detail.method)
-            ),
+            f"<b>{pair_title}</b>",
             self.tr("{symbol} = {value} ({strength})").format(
                 symbol=self.coefficient_symbol(detail.method),
                 value=fmt_num(pair.coefficient, sig=3),

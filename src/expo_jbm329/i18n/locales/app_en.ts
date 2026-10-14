@@ -189,6 +189,10 @@
         <source>Add to report</source>
         <translation type="unfinished" />
     </message>
+    <message><source>Replace report result</source><translation>Replace report result</translation></message>
+    <message><source>Update report result</source><translation>Update report result</translation></message>
+    <message><source>Replace in report</source><translation>Replace in report</translation></message>
+    <message><source>Update result</source><translation>Update result</translation></message>
     <message>
         <source>Export and Add to report are available after an analysis has been applied.</source>
         <translation>Export and Add to report are available after an analysis has been applied.</translation>
@@ -1198,6 +1202,11 @@ Features: {features}</translation>
         <source>Remove from report</source>
         <translation type="unfinished" />
     </message>
+    <message><source>Review report result</source><translation>Review report result</translation></message>
+    <message><source>Stored and incoming configuration</source><translation>Stored and incoming configuration</translation></message>
+    <message><source>Stored result</source><translation>Stored result</translation></message>
+    <message><source>Incoming result</source><translation>Incoming result</translation></message>
+    <message><source>Unavailable stored selections: {components}</source><translation>Unavailable stored selections: {components}</translation></message>
     <message>
         <source>Include in report</source>
         <translation type="unfinished" />
@@ -2478,6 +2487,11 @@ Please see logs for more information.</source>
     </message>
 </context><context>
     <name>CorrelationView</name>
+    <message><source>Correlation</source><translation>Correlation</translation></message>
+    <message><source>{category} — {method}</source><translation>{category} — {method}</translation></message>
+    <message><source>Columns:</source><translation>Columns:</translation></message>
+    <message><source>Correlation matrix</source><translation>Correlation matrix</translation></message>
+    <message><source>{x} vs {y}</source><translation>{x} vs {y}</translation></message>
     <message><source>Strongest correlations</source><translation>Strongest correlations</translation></message>
     <message><source>Matrix plot</source><translation>Matrix plot</translation></message>
     <message><source>Scatterplots</source><translation>Scatterplots</translation></message>

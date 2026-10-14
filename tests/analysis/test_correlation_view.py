@@ -130,7 +130,7 @@ def test_new_pair_detail_stays_inside_the_scrollable_pair_details():
     _flush_deletes()
 
     assert scroll.widget() is view._statistics_panel  # noqa: SLF001
-    assert "<b>c1</b> vs <b>c2</b>" in _labels_text(scroll.widget())
+    assert "<b>c1 vs c2</b>" in _labels_text(scroll.widget())
 
 
 def test_correlation_canvases_defer_matrix_and_scatter_mutations_without_blocking():
@@ -192,7 +192,8 @@ def test_heatmap_is_annotated_for_small_matrices():
     (heatmap,) = _canvas_axes(view)
 
     assert len(heatmap.texts) == 9
-    assert "Pearson" in heatmap.get_title()
+    assert heatmap.get_title() == "Correlation matrix"
+    assert "Correlation — Pearson" in _labels_text(view)
 
 
 def test_heatmap_is_not_annotated_for_large_matrices():

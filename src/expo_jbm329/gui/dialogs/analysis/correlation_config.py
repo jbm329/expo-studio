@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QFormLayout,
@@ -23,6 +23,7 @@ from expo_jbm329.services.analysis.correlation import (
     MIN_SELECTED_COLUMNS,
     CorrelationMethod,
 )
+from expo_jbm329.services.analysis.presentation import correlation_method_label
 from expo_jbm329.utils.format_utils import fmt_int
 
 if TYPE_CHECKING:
@@ -96,9 +97,10 @@ class CorrelationConfigWidget(QWidget):
     def _build_method_combo(self, method: CorrelationMethod) -> QComboBox:
         """Build the method picker with `method` selected."""
         combo = QComboBox(self)
-        combo.addItem(self.tr("Pearson"), CorrelationMethod.PEARSON)
-        combo.addItem(self.tr("Spearman"), CorrelationMethod.SPEARMAN)
-        combo.addItem(self.tr("Kendall's tau-b"), CorrelationMethod.KENDALL)
+        translate = QCoreApplication.translate
+        combo.addItem(correlation_method_label(CorrelationMethod.PEARSON, translate), CorrelationMethod.PEARSON)
+        combo.addItem(correlation_method_label(CorrelationMethod.SPEARMAN, translate), CorrelationMethod.SPEARMAN)
+        combo.addItem(correlation_method_label(CorrelationMethod.KENDALL, translate), CorrelationMethod.KENDALL)
         combo.setCurrentIndex(combo.findData(method))
         return combo
 
