@@ -63,6 +63,7 @@ from expo_jbm329.services.analysis.outliers_export import OutlierExportComponent
 from expo_jbm329.services.analysis.paired_comparison import initialize_paired_comparison
 from expo_jbm329.services.analysis.pca import initialize_pca
 from expo_jbm329.services.analysis.pca_export import PCAExportComponent, PCAExportRequest
+from expo_jbm329.services.analysis.presentation import AnalysisPresentation, ConfigurationField
 from expo_jbm329.services.analysis.regression import initialize_regression
 from expo_jbm329.services.analysis.regression_export import RegressionExportComponent, RegressionExportRequest
 from expo_jbm329.services.analysis.regression_glm import RegressionModel, initialize_generalized_targets
@@ -556,6 +557,77 @@ def test_correlation_report_slot_explicitly_updates_or_replaces_frozen_capture(m
     assert dialog.report_document().entries == ()
 
 
+def test_hypothesis_report_slots_coexist_and_identical_reruns_require_atomic_update(monkeypatch):
+    from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
+
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
+    dialog.select_category(AnalysisCategory.HYPOTHESIS_TESTS)
+    first_snapshot = group_snapshot()
+
+    def accept_add(report_dialog):
+        report_dialog._component_choices["charts"].setChecked(False)  # noqa: SLF001
+        report_dialog.findChild(QPlainTextEdit).setPlainText("Retain this hypothesis note")
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", accept_add)
+    dialog.set_exportable_hypothesis(first_snapshot)
+    first_candidate = dialog._current_report_candidate()  # noqa: SLF001
+    inspected_candidate = dialog._current_report_candidate()  # noqa: SLF001
+    assert first_candidate is not None
+    assert inspected_candidate is not None
+    assert first_candidate.capture_id == inspected_candidate.capture_id == first_snapshot.capture_id
+    dialog._toggle_report_entry()  # noqa: SLF001
+    original = dialog.report_document().entries[0]
+
+    for snapshot in (chi_snapshot(), paired_snapshot()):
+        dialog.set_exportable_hypothesis(snapshot)
+        dialog._toggle_report_entry()  # noqa: SLF001
+
+    assert len(dialog.report_document().entries) == 3
+    assert len({entry.entry_id for entry in dialog.report_document().entries}) == 3
+    assert [entry.snapshot.test for entry in dialog.report_document().entries] == [
+        HypothesisTest.GROUP_COMPARISON,
+        HypothesisTest.CHI_SQUARE,
+        HypothesisTest.PAIRED_COMPARISON,
+    ]
+
+    rerun = group_snapshot()
+    dialog.set_exportable_hypothesis(rerun)
+    action = dialog._report_action_button  # noqa: SLF001
+    assert action.text() == "Update report result"
+    before_cancel = dialog.report_document().entries
+
+    def cancel_update(review_dialog):
+        assert review_dialog.notes() == "Retain this hypothesis note"
+        assert review_dialog.selected_components() == ("summary", "test_results")
+        labels = [label.text() for label in review_dialog.findChildren(QLabel)]
+        assert any("Hypothesis Tests — Group comparison" in label for label in labels)
+        assert any("Tests computed: Welch's t-test, Student's t-test, Mann-Whitney U" in label for label in labels)
+        assert any(button.text() == "Update result" for button in review_dialog.findChildren(QPushButton))
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", cancel_update)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    assert dialog.report_document().entries == before_cancel
+    assert dialog.report_document().entries[0].snapshot is first_snapshot
+
+    def accept_update(review_dialog):
+        assert review_dialog.notes() == "Retain this hypothesis note"
+        assert review_dialog.selected_components() == ("summary", "test_results")
+        review_dialog.findChild(QPlainTextEdit).setPlainText("Reviewed rerun")
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", accept_update)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    updated = dialog.report_document().entries[0]
+    assert updated.entry_id == original.entry_id
+    assert updated.snapshot is rerun
+    assert updated.capture_id == rerun.capture_id
+    assert updated.note == "Reviewed rerun"
+    assert updated.selected_components == original.selected_components == ("summary", "test_results")
+    assert dialog.report_document().entries[1:] == before_cancel[1:]
+
+
 @pytest.mark.parametrize(
     ("category", "factory_name"),
     [
@@ -720,6 +792,24 @@ def test_content_panel_is_a_stable_widget_across_content_changes():
     dialog.show_placeholder("Hello")
 
     assert dialog.content_panel() is panel_before
+
+
+def test_applied_hypothesis_presentation_is_visible_and_cleared_with_replaced_content():
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
+    presentation = AnalysisPresentation(
+        "Hypothesis Tests",
+        "Hypothesis Tests — Group comparison",
+        (ConfigurationField("Numeric variable:", ("value",)),),
+    )
+
+    dialog.set_analysis_presentation(presentation)
+    labels = dialog.content_panel().findChildren(QLabel)
+    assert any(label.text() == presentation.title for label in labels)
+    assert any(label.text() == "Numeric variable: value" for label in labels)
+    assert all(label.textFormat() is Qt.TextFormat.PlainText for label in labels[-2:])
+
+    dialog.set_content_widget(QWidget())
+    assert dialog._analysis_presentation_widget is None  # noqa: SLF001
 
 
 def test_set_content_widget_replaces_the_previous_widget():

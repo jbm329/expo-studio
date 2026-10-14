@@ -12,7 +12,7 @@ import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from openpyxl import load_workbook
-from PyQt6.QtCore import Qt, QTranslator
+from PyQt6.QtCore import QCoreApplication, Qt, QTranslator
 from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QLabel, QTableWidget, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
@@ -83,6 +83,7 @@ from expo_jbm329.services.analysis.pca_export import (
     PCAExportRequest,
     PCAExportSnapshot,
 )
+from expo_jbm329.services.analysis.presentation import AnalysisPresentation, build_analysis_presentation
 from expo_jbm329.services.analysis.regression import RegressionError
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
@@ -400,11 +401,41 @@ def test_hypothesis_localized_workbooks_read_back_all_types(tmp_path, factory, l
     app.installTranslator(translator)
     try:
         controller, dialog, snapshot, exporter = _hypothesis_export_context(factory())
+        presentation = build_analysis_presentation(
+            AnalysisCategory.HYPOTHESIS_TESTS,
+            snapshot,
+            QCoreApplication.translate,
+        )
+        expected_titles = {
+            HypothesisTest.GROUP_COMPARISON: (
+                "Hypothesis Tests — Group comparison",
+                "Hypotesprövningar — Gruppjämförelse",
+            ),
+            HypothesisTest.CHI_SQUARE: (
+                "Hypothesis Tests — Categorical association",
+                "Hypotesprövningar — Kategoriskt samband",
+            ),
+            HypothesisTest.PAIRED_COMPARISON: (
+                "Hypothesis Tests — Wilcoxon signed-rank"
+                if len(snapshot.columns) == 2
+                else "Hypothesis Tests — Friedman",
+                "Hypotesprövningar — Wilcoxons teckenrang"
+                if len(snapshot.columns) == 2
+                else "Hypotesprövningar — Friedman",
+            ),
+        }
+        assert presentation.title == expected_titles[snapshot.test][0 if locale == "en" else 1]
+        assert presentation.summary_lines
         components = (Component.CHARTS,) if charts_only else tuple(Component)
         request = HypothesisExportRequest(snapshot, components, StatisticsExportFormat.EXCEL)
         controller._export_hypothesis(dialog, exporter, request)
         kwargs = exporter.export_excel.call_args.kwargs
-        chart_name = "Charts" if locale == "en" else "Diagram"
+        chart_names = {
+            HypothesisTest.GROUP_COMPARISON: ("Group distributions", "Gruppfördelningar"),
+            HypothesisTest.CHI_SQUARE: ("Association plots", "Sambandsdiagram"),
+            HypothesisTest.PAIRED_COMPARISON: ("Paired measurement plots", "Diagram för parade mätvärden"),
+        }
+        chart_name = chart_names[snapshot.test][0 if locale == "en" else 1]
         assert kwargs["chart_sheet_name"] == chart_name
         images = kwargs["chart_factory"](None, None)
         assert len(images) == 1
@@ -928,6 +959,7 @@ class DummyAnalysisDialog:
         self._source_tab_id: str | None = kwargs["source_dataset"].tab_id
         self._current_content: QWidget | None = None
         self._current_config: QWidget | None = None
+        self.analysis_presentation: AnalysisPresentation | None = None
         self._export_overview = None
         self._export_statistics = None
         self._export_hypothesis = None
@@ -1037,6 +1069,10 @@ class DummyAnalysisDialog:
         self.invalidate_overview_export()
         self.content_widgets.append(widget)
         self._current_content = widget
+        self.analysis_presentation = None
+
+    def set_analysis_presentation(self, presentation: AnalysisPresentation) -> None:
+        self.analysis_presentation = presentation
 
     def content_widget(self):
         return self._current_content
@@ -1752,6 +1788,7 @@ def test_hypothesis_column_edits_show_apply_prompt_and_clear_export_until_new_ap
     assert config.current_configuration() != config.applied_configuration()
     _assert_apply_prompt(ctrl, dialog)
     assert dialog.exportable_hypothesis() is None
+    assert dialog.analysis_presentation is None
     assert len(async_ops.calls) == jobs_before
     second = _apply_hypothesis_test(async_ops, dialog)
     _simulate_success(second)
@@ -1857,6 +1894,13 @@ def test_applying_a_hypothesis_test_runs_a_background_job_and_keeps_the_config(d
     _simulate_success(call)
 
     assert isinstance(dlg.content_widget(), GroupComparisonView)
+    assert dlg.analysis_presentation is not None
+    assert dlg.analysis_presentation.title == "Hypothesis Tests — Group comparison"
+    assert dlg.analysis_presentation.summary_lines == (
+        "Numeric variable: other",
+        "Grouping variable: grp",
+        "Tests computed: Welch's t-test, Student's t-test, Mann-Whitney U",
+    )
     assert len(dlg.config_widgets) == config_widgets_before
 
 

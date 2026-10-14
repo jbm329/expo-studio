@@ -6,7 +6,7 @@ import html
 from typing import TYPE_CHECKING
 
 from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
@@ -25,6 +25,7 @@ from expo_jbm329.services.analysis.hypothesis_charts import (
     draw_residual_heatmap,
     heatmap_color_limit,
 )
+from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
 
 if TYPE_CHECKING:
@@ -106,7 +107,12 @@ class ChiSquareView(QWidget):
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Observed counts"), panel))
+        layout.addWidget(
+            self._build_section_title(
+                translate_presentation_label(PresentationLabel.CONTINGENCY_TABLE, QCoreApplication.translate),
+                panel,
+            )
+        )
         layout.addWidget(self._build_caption_label(result))
         layout.addWidget(self._build_table(result))
         return panel
@@ -176,7 +182,12 @@ class ChiSquareView(QWidget):
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Adjusted residuals"), panel))
+        layout.addWidget(
+            self._build_section_title(
+                translate_presentation_label(PresentationLabel.ASSOCIATION_PLOTS, QCoreApplication.translate),
+                panel,
+            )
+        )
         layout.addWidget(build_section_scroll_area(self._build_heatmap(result), panel), 1)
         return panel
 
@@ -251,7 +262,12 @@ class ChiSquareView(QWidget):
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Test results"), panel))
+        layout.addWidget(
+            self._build_section_title(
+                translate_presentation_label(PresentationLabel.TEST_RESULTS, QCoreApplication.translate),
+                panel,
+            )
+        )
         content = QWidget(panel)
         content_layout = QVBoxLayout(content)
         content_layout.setContentsMargins(0, 0, 0, 0)

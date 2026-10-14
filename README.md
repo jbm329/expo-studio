@@ -53,7 +53,9 @@ analyze another dataset. The window title shows the source name and its row/colu
   Overview Sample exports use the actual first/last 10 rows (including overlap): separate First/Last
   sheets in Excel, or one table with a sample-group column in CSV and binary formats.
 - **Statistics** summarizes numeric and categorical data, distributions, and normality.
-- **Hypothesis Tests** compares groups, tests categorical associations, and analyzes paired measurements.
+- **Hypothesis Tests** compares groups, tests categorical associations, and analyzes paired measurements. Applied test
+  families and ordered variable roles are shown consistently in Analysis, Reports, HTML, and export choices; distinct
+  selections can coexist in a report, while rerunning an identical selection requires explicit review to update it.
 - **Correlation** explores Pearson, Spearman, or Kendall relationships with matrix and pairwise plots.
 - **Regression** fits linear, logistic, Poisson, Negative Binomial, and Cox models with diagnostics.
 - **Outliers** detects univariate and multivariate anomalies.

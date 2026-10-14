@@ -49,6 +49,7 @@ from expo_jbm329.services.analysis.outliers_export import OutlierExportRequest, 
 from expo_jbm329.services.analysis.overview import OverviewExportRequest
 from expo_jbm329.services.analysis.pca_export import PCAExportRequest, PCAExportSnapshot
 from expo_jbm329.services.analysis.presentation import (
+    AnalysisPresentation,
     PresentationLabel,
     analysis_category_source,
     build_analysis_presentation,
@@ -580,8 +581,13 @@ class AnalysisDialog(QDialog):
         elif entry is None:
             self._report_action_button.setText(self.tr("Add to report"))
             self._report_action_button.setEnabled(True)
-        elif candidate.category is AnalysisCategory.CORRELATION and candidate.capture_id != entry.capture_id:
-            if correlation_report_configuration(candidate) != correlation_report_configuration(entry):
+        elif (
+            candidate.category in {AnalysisCategory.CORRELATION, AnalysisCategory.HYPOTHESIS_TESTS}
+            and candidate.capture_id != entry.capture_id
+        ):
+            if candidate.category is AnalysisCategory.CORRELATION and correlation_report_configuration(
+                candidate
+            ) != correlation_report_configuration(entry):
                 self._report_action_button.setText(self.tr("Replace report result"))
             else:
                 self._report_action_button.setText(self.tr("Update report result"))
@@ -596,10 +602,14 @@ class AnalysisDialog(QDialog):
             return
         existing = self._report_document.get(candidate.entry_id)
         if existing is not None:
-            if candidate.category is AnalysisCategory.CORRELATION and candidate.capture_id != existing.capture_id:
+            if (
+                candidate.category in {AnalysisCategory.CORRELATION, AnalysisCategory.HYPOTHESIS_TESTS}
+                and candidate.capture_id != existing.capture_id
+            ):
                 mode: Literal["replace", "update"] = (
                     "replace"
-                    if correlation_report_configuration(candidate) != correlation_report_configuration(existing)
+                    if candidate.category is AnalysisCategory.CORRELATION
+                    and correlation_report_configuration(candidate) != correlation_report_configuration(existing)
                     else "update"
                 )
                 self._edit_report_candidate(candidate, existing=existing, review_mode=mode)
@@ -630,8 +640,15 @@ class AnalysisDialog(QDialog):
         available_components = {component.key for component in components}
         selected = existing_components & available_components
         unavailable_components: list[str] = []
-        if existing is not None and candidate.category is AnalysisCategory.CORRELATION:
-            unavailable_context, _source = presentation_label_source(PresentationLabel.STRONGEST_CORRELATIONS)
+        if existing is not None and candidate.category in {
+            AnalysisCategory.CORRELATION,
+            AnalysisCategory.HYPOTHESIS_TESTS,
+        }:
+            unavailable_context = (
+                "HypothesisPresentation"
+                if candidate.category is AnalysisCategory.HYPOTHESIS_TESTS
+                else presentation_label_source(PresentationLabel.STRONGEST_CORRELATIONS)[0]
+            )
             unavailable_components.extend(
                 QCoreApplication.translate(unavailable_context, component.label)
                 for component in existing.components
@@ -651,7 +668,9 @@ class AnalysisDialog(QDialog):
             )
             action_label = self.tr("Replace in report") if review_mode == "replace" else self.tr("Update result")
         component_context = (
-            presentation_label_source(PresentationLabel.STRONGEST_CORRELATIONS)[0]
+            "HypothesisPresentation"
+            if candidate.category is AnalysisCategory.HYPOTHESIS_TESTS
+            else presentation_label_source(PresentationLabel.STRONGEST_CORRELATIONS)[0]
             if candidate.category is AnalysisCategory.CORRELATION
             else None
         )
@@ -699,6 +718,7 @@ class AnalysisDialog(QDialog):
         self._content_panel = panel
         self._content_layout = QVBoxLayout(panel)
         self._content_widget: QWidget | None = None
+        self._analysis_presentation_widget: QWidget | None = None
 
         return panel
 
@@ -803,6 +823,11 @@ class AnalysisDialog(QDialog):
             widget: The widget to display in the content panel.
         """
         self.invalidate_overview_export()
+        if self._analysis_presentation_widget is not None:
+            self._analysis_presentation_widget.hide()
+            self._content_layout.removeWidget(self._analysis_presentation_widget)
+            self._analysis_presentation_widget.deleteLater()
+            self._analysis_presentation_widget = None
         if self._content_widget is not None:
             # A visible canvas removed from its layout can be repainted once
             # at zero size before deleteLater() runs.
@@ -812,6 +837,31 @@ class AnalysisDialog(QDialog):
 
         self._content_layout.addWidget(widget)
         self._content_widget = widget
+
+    def set_analysis_presentation(self, presentation: AnalysisPresentation) -> None:
+        """Show the configured title and applied settings above the current result."""
+        if self._analysis_presentation_widget is not None:
+            self._analysis_presentation_widget.hide()
+            self._content_layout.removeWidget(self._analysis_presentation_widget)
+            self._analysis_presentation_widget.deleteLater()
+        summary = "\n".join(presentation.summary_lines)
+        container = QWidget(self._content_panel)
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        title = QLabel(presentation.title, container)
+        title.setTextFormat(Qt.TextFormat.PlainText)
+        title.setWordWrap(True)
+        font = title.font()
+        font.setBold(True)
+        title.setFont(font)
+        layout.addWidget(title)
+        details = QLabel(summary, container)
+        details.setTextFormat(Qt.TextFormat.PlainText)
+        details.setWordWrap(True)
+        details.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(details)
+        self._content_layout.insertWidget(0, container)
+        self._analysis_presentation_widget = container
 
     def content_widget(self) -> QWidget | None:
         """Return the widget currently displayed in the content panel."""

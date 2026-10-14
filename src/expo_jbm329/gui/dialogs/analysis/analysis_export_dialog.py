@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
-from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
+from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.clustering_export import (
     CLUSTERING_COMPONENTS,
@@ -62,6 +62,7 @@ from expo_jbm329.services.analysis.pca_export import (
 from expo_jbm329.services.analysis.presentation import (
     PresentationLabel,
     build_analysis_presentation,
+    hypothesis_component_label,
     translate_presentation_label,
 )
 from expo_jbm329.services.analysis.regression_export import (
@@ -395,31 +396,16 @@ class AnalysisExportDialog(QDialog):
         """List applied identity plainly, independently of pending configuration edits."""
         snapshot = self._hypothesis
         if snapshot is not None:
-            names = {
-                HypothesisTest.GROUP_COMPARISON: self.tr("Group comparison"),
-                HypothesisTest.CHI_SQUARE: self.tr("Chi-square independence"),
-                HypothesisTest.PAIRED_COMPARISON: self.tr("Paired comparison"),
-            }
-            roles = {
-                HypothesisTest.GROUP_COMPARISON: self.tr("Numeric column / grouping column"),
-                HypothesisTest.CHI_SQUARE: self.tr("Row column / column column"),
-                HypothesisTest.PAIRED_COMPARISON: self.tr("Measurement columns (occasion order)"),
-            }
-            identity = QLabel(
-                self.tr("Applied test: {test}\n{roles}: {columns}").format(
-                    test=names[snapshot.test], roles=roles[snapshot.test], columns=" / ".join(snapshot.columns)
-                ),
-                self,
+            presentation = build_analysis_presentation(
+                AnalysisCategory.HYPOTHESIS_TESTS,
+                snapshot,
+                QCoreApplication.translate,
             )
+            identity = QLabel("\n".join((presentation.title, *presentation.summary_lines)), self)
             identity.setTextFormat(Qt.TextFormat.PlainText)
             identity.setWordWrap(True)
             identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             layout.addWidget(identity)
-        summaries = {
-            HypothesisTest.GROUP_COMPARISON: self.tr("Group summary"),
-            HypothesisTest.CHI_SQUARE: self.tr("Contingency table"),
-            HypothesisTest.PAIRED_COMPARISON: self.tr("Measurement summary"),
-        }
         for title, components in (
             (self.tr("Data"), (HypothesisExportComponent.SUMMARY,)),
             (self.tr("Results"), (HypothesisExportComponent.TEST_RESULTS, HypothesisExportComponent.CHARTS)),
@@ -428,10 +414,12 @@ class AnalysisExportDialog(QDialog):
             contents = QVBoxLayout(group)
             for component in components:
                 label = (
-                    summaries[snapshot.test]
+                    hypothesis_component_label(snapshot, component, QCoreApplication.translate)
                     if component is HypothesisExportComponent.SUMMARY and snapshot is not None
                     else self.tr("Summary / statistics tables")
                     if component is HypothesisExportComponent.SUMMARY
+                    else hypothesis_component_label(snapshot, component, QCoreApplication.translate)
+                    if component is HypothesisExportComponent.CHARTS and snapshot is not None
                     else self.tr(component.value)
                 )
                 choice = QCheckBox(label, group)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import UTC, datetime
+from html import escape
 from unittest.mock import patch
 
 import numpy as np
@@ -12,6 +13,7 @@ from expo_jbm329.services.analysis.categories import AnalysisCategory, Hypothesi
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.correlation import CorrelationMethod, analyze_correlation_matrix
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportComponent, CorrelationExportSnapshot
+from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportSnapshot
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.report import (
@@ -101,6 +103,67 @@ def test_localized_report_tables_reuse_export_builders_and_cover_categories() ->
         assert all(title.startswith("localized ") for title in tables)
         assert all(frame.shape[1] > 0 for frame in tables.values())
         assert len({id(frame) for frame in tables.values()}) == len(tables)
+
+
+def test_hypothesis_html_uses_shared_configured_title_components_and_escaped_role_values():
+    numeric_column = "<numeric>" + "_measurement" * 20
+    grouping_column = "group & <label>" + "_category" * 20
+    frame = pd.DataFrame({
+        numeric_column: [1.0, 2.0, 3.0, 4.0],
+        grouping_column: ["A", "A", "B", "B"],
+    })
+    result = analyze_group_comparison(frame, numeric_column, grouping_column)
+    snapshot = HypothesisExportSnapshot(
+        HypothesisTest.GROUP_COMPARISON,
+        result,
+        (result.numeric_column, result.grouping_column),
+    )
+    entry = _entry(
+        AnalysisCategory.HYPOTHESIS_TESTS,
+        snapshot,
+        ("summary", "test_results"),
+    )
+    document = ReportDocument()
+    document.upsert(entry)
+
+    prepared = prepare_report_content(document)
+    prepared_entry = prepared.entries[0]
+    component_labels = tuple(component.label for component in prepared_entry.components)
+    table_titles = tuple(table.title for component in prepared_entry.components for table in component.tables)
+    html = render_prepared_report_html(prepared)
+
+    assert prepared_entry.title == "Hypothesis Tests — Group comparison"
+    assert prepared_entry.configuration[0].display_value == numeric_column
+    assert prepared_entry.configuration[1].display_value == grouping_column
+    assert component_labels == ("Group summary", "Test results")
+    assert table_titles == component_labels
+    assert f"<dt>Numeric variable:</dt><dd>{escape(numeric_column)}</dd>" in html
+    assert f"<dt>Grouping variable:</dt><dd>{escape(grouping_column)}</dd>" in html
+    assert "Hypothesis Tests — Group comparison" in html
+    assert "&lt;numeric&gt;" in html
+    assert numeric_column not in html
+    assert grouping_column not in html
+
+
+def test_hypothesis_report_labels_are_captured_before_worker_preparation():
+    snapshot = paired_snapshot(3)
+    entry = _entry(AnalysisCategory.HYPOTHESIS_TESTS, snapshot, ("summary",))
+    document = ReportDocument()
+    document.upsert(entry)
+
+    def translate(context: str, text: str) -> str:
+        if context == "HypothesisPresentation" and text != "{category} — {method}":
+            return f"sv:{text}"
+        return text
+
+    labels = capture_report_labels(translate=translate)
+
+    prepared = prepare_report_content(document, labels=labels)
+
+    assert prepared.entries[0].title == "sv:Hypothesis Tests — sv:Friedman"
+    assert prepared.entries[0].configuration[0].label == "sv:Measurement variables (selected order):"
+    assert prepared.entries[0].components[0].label == "sv:Measurement summary"
+    assert prepared.entries[0].components[0].tables[0].title == "sv:Measurement summary"
 
 
 def test_preparation_renders_selected_categories_and_variants(monkeypatch) -> None:

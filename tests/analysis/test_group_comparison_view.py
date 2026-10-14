@@ -192,7 +192,7 @@ def test_layout_has_titled_table_chart_and_results_with_adjustable_dividers():
     assert splitter.widget(0).isAncestorOf(table)
     assert any(label.text() == "Group summary" for label in splitter.widget(0).findChildren(QLabel))
     assert len(splitter.widget(1).findChildren(FigureCanvasQTAgg)) == 1
-    assert any(label.text() == "Distribution" for label in splitter.widget(1).findChildren(QLabel))
+    assert any(label.text() == "Group distributions" for label in splitter.widget(1).findChildren(QLabel))
     assert any(label.text() == "Test results" for label in splitter.widget(2).findChildren(QLabel))
     assert any("Welch" in label.text() for label in splitter.widget(2).findChildren(QLabel))
 

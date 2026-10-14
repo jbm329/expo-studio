@@ -7,13 +7,14 @@ import math
 from typing import TYPE_CHECKING
 
 from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.hypothesis_charts import HypothesisChartLabels, draw_paired_charts
 from expo_jbm329.services.analysis.paired_comparison import PairedComparisonError, PairedComparisonMethod
+from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 
 if TYPE_CHECKING:
@@ -83,7 +84,9 @@ class PairedComparisonView(QWidget):
         label = self._build_message("<br>".join(summary))
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        panel, layout = self._build_section(self.tr("Test results"))
+        panel, layout = self._build_section(
+            translate_presentation_label(PresentationLabel.TEST_RESULTS, QCoreApplication.translate)
+        )
         layout.addWidget(build_section_scroll_area(label, panel), 1)
         return panel
 
@@ -119,7 +122,9 @@ class PairedComparisonView(QWidget):
 
     def _build_table_section(self, result: PairedComparisonResult) -> QWidget:
         """Build one non-editable summary row per selected occasion."""
-        panel, layout = self._build_section(self.tr("Measurement summary"))
+        panel, layout = self._build_section(
+            translate_presentation_label(PresentationLabel.MEASUREMENT_SUMMARY, QCoreApplication.translate)
+        )
         table = QTableWidget(len(result.summaries), 7, panel)
         table.setHorizontalHeaderLabels([
             self.tr("Measurement"),
@@ -157,7 +162,9 @@ class PairedComparisonView(QWidget):
 
     def _build_chart_section(self, result: PairedComparisonResult) -> QWidget:
         """Render prepared distributions and paired trajectories without processing data."""
-        panel, layout = self._build_section(self.tr("Paired measurements"))
+        panel, layout = self._build_section(
+            translate_presentation_label(PresentationLabel.PAIRED_MEASUREMENT_PLOTS, QCoreApplication.translate)
+        )
         figure = Figure(constrained_layout=True)
         canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(260)

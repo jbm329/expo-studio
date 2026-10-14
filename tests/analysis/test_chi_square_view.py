@@ -146,9 +146,9 @@ def test_layout_has_titled_table_heatmap_and_results_with_adjustable_dividers():
     table = view.findChild(QTableWidget)
     assert table is not None
     assert splitter.widget(0).isAncestorOf(table)
-    assert any(label.text() == "Observed counts" for label in splitter.widget(0).findChildren(QLabel))
+    assert any(label.text() == "Contingency table" for label in splitter.widget(0).findChildren(QLabel))
     assert len(splitter.widget(1).findChildren(FigureCanvasQTAgg)) == 1
-    assert any(label.text() == "Adjusted residuals" for label in splitter.widget(1).findChildren(QLabel))
+    assert any(label.text() == "Association plots" for label in splitter.widget(1).findChildren(QLabel))
     assert any(label.text() == "Test results" for label in splitter.widget(2).findChildren(QLabel))
     assert any("Pearson" in label.text() for label in splitter.widget(2).findChildren(QLabel))
 

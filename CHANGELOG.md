@@ -12,6 +12,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Advanced Analysis displays the source dataset name and dimensions in the window title instead of a separate dataset pane
 - HTML reports show dataset, report generation date, and Expo version once at the top, without row/column metadata
 - Correlation presentations share configured method/column labels across Analysis, Reports, HTML, and exports; same-method column changes and reruns require explicit review before replacing a captured report result
+- Hypothesis Tests share applied test-family, ordered variable-role, computed-test, and chart-component labels across Analysis, Reports, HTML, and exports; distinct selections coexist and identical reruns require explicit review
 
 ### Added
 - Categorical tab in Statistics with frequency counts, percentages, and separate missing-value counts

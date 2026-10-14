@@ -65,6 +65,7 @@ from expo_jbm329.services.analysis.presentation import (
     PresentationLabel,
     build_analysis_presentation,
     correlation_method_label,
+    hypothesis_component_label,
     presentation_label_source,
     presentation_label_sources,
     translate_presentation_label,
@@ -156,8 +157,12 @@ class ReportEntry:
             if not isinstance(self.snapshot, CorrelationExportSnapshot) or self.capture_id != self.snapshot.capture_id:
                 message = "A correlation report entry requires its applied-result capture identifier."
                 raise ValueError(message)
+        elif self.category is AnalysisCategory.HYPOTHESIS_TESTS:
+            if not isinstance(self.snapshot, HypothesisExportSnapshot) or self.capture_id != self.snapshot.capture_id:
+                message = "A hypothesis report entry requires its applied-result capture identifier."
+                raise ValueError(message)
         elif self.capture_id is not None:
-            message = "Only a Correlation report entry can carry a capture identifier."
+            message = "Only a report entry with a stable applied-result capture can carry a capture identifier."
             raise ValueError(message)
         if self.dataset_rows < 0 or self.dataset_columns < 0:
             message = "Report dataset dimensions cannot be negative."
@@ -259,7 +264,9 @@ def create_report_entry(
         snapshot=snapshot,
         components=components,
         selected_components=tuple(component.key for component in components),
-        capture_id=snapshot.capture_id if isinstance(snapshot, CorrelationExportSnapshot) else None,
+        capture_id=(
+            snapshot.capture_id if isinstance(snapshot, (CorrelationExportSnapshot, HypothesisExportSnapshot)) else None
+        ),
     )
 
 
@@ -282,15 +289,22 @@ def available_report_components(category: AnalysisCategory, snapshot: ReportSnap
                 candidates.append(("Categorical", "Categorical", "table"))
             component_values = tuple(candidates)
         case AnalysisCategory.HYPOTHESIS_TESTS if isinstance(snapshot, HypothesisExportSnapshot):
-            summary_label = {
-                "group_comparison": "Group summary",
-                "chi_square": "Contingency table",
-                "paired_comparison": "Measurement summary",
-            }[snapshot.test.value]
             component_values = (
-                ("summary", summary_label, "table"),
-                ("test_results", "Test results", "table"),
-                ("charts", "Charts", "chart"),
+                (
+                    HypothesisExportComponent.SUMMARY.value,
+                    hypothesis_component_label(snapshot, HypothesisExportComponent.SUMMARY, _identity_translate),
+                    "table",
+                ),
+                (
+                    "test_results",
+                    hypothesis_component_label(snapshot, HypothesisExportComponent.TEST_RESULTS, _identity_translate),
+                    "table",
+                ),
+                (
+                    "charts",
+                    hypothesis_component_label(snapshot, HypothesisExportComponent.CHARTS, _identity_translate),
+                    "chart",
+                ),
             )
         case AnalysisCategory.CORRELATION if isinstance(snapshot, CorrelationExportSnapshot):
             component_values = (
@@ -829,6 +843,9 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
         "Measurement occasion",
         "Distribution by occasion",
     ),
+    "HypothesisPresentation": tuple(
+        source for context, source in presentation_label_sources() if context == "HypothesisPresentation"
+    ),
     "CorrelationView": (
         "Variable 1",
         "Variable 2",
@@ -1061,11 +1078,8 @@ def localized_report_tables(
                 HypothesisTest.CHI_SQUARE: "ChiSquareView",
                 HypothesisTest.PAIRED_COMPARISON: "PairedComparisonView",
             }[snapshot.test]
-            summary_title = {
-                HypothesisTest.GROUP_COMPARISON: "Group summary",
-                HypothesisTest.CHI_SQUARE: "Contingency table",
-                HypothesisTest.PAIRED_COMPARISON: "Measurement summary",
-            }[snapshot.test]
+            summary_title = hypothesis_component_label(snapshot, HypothesisExportComponent.SUMMARY, translate)
+            results_title = hypothesis_component_label(snapshot, HypothesisExportComponent.TEST_RESULTS, translate)
             common_headers = {
                 "group": "Group",
                 "count": "Count",
@@ -1113,7 +1127,7 @@ def localized_report_tables(
                     continue
                 frame = hypothesis_export_tables(snapshot, (hypothesis_table,))[hypothesis_table]
                 if hypothesis_table is HypothesisExportComponent.SUMMARY:
-                    title = translate(context, summary_title)
+                    title = summary_title
                     if snapshot.test is HypothesisTest.CHI_SQUARE:
                         from expo_jbm329.services.analysis.chi_square import ChiSquareResult
 
@@ -1132,7 +1146,7 @@ def localized_report_tables(
                             columns={name: translate(context, label) for name, label in common_headers.items()}
                         )
                 else:
-                    title = translate(context, "Test results")
+                    title = results_title
                     frame = frame.rename(
                         columns={
                             name: translate("AnalysisExportDialog", result_headers.get(name, "Measurement"))
@@ -1653,7 +1667,7 @@ def prepare_report_content(
         for component in selected:
             check_cancel()
             label = translate(
-                _component_translation_context(entry.category, entry.snapshot, component.key),
+                _component_translation_context(entry.category, entry.snapshot),
                 component.label,
             )
             if overview is not None and component.key == "Summary":
@@ -1831,16 +1845,9 @@ def _prepare_table(key: str, title: str, frame: pd.DataFrame) -> PreparedReportT
 def _component_translation_context(
     category: AnalysisCategory,
     snapshot: ReportSnapshot,
-    component_key: str,
 ) -> str:
     if category is AnalysisCategory.HYPOTHESIS_TESTS and isinstance(snapshot, HypothesisExportSnapshot):
-        if component_key == "summary":
-            return {
-                HypothesisTest.GROUP_COMPARISON: "GroupComparisonView",
-                HypothesisTest.CHI_SQUARE: "ChiSquareView",
-                HypothesisTest.PAIRED_COMPARISON: "PairedComparisonView",
-            }[snapshot.test]
-        return "AnalysisExportDialog"
+        return "HypothesisPresentation"
     if category is AnalysisCategory.CORRELATION:
         return "CorrelationView"
     return {

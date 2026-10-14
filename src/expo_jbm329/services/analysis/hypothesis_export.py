@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 import pandas as pd
 
@@ -37,10 +38,14 @@ class HypothesisExportSnapshot:
     result: HypothesisResult
     columns: tuple[str, ...]
     notes: tuple[str, ...] = ()
+    capture_id: str = field(default_factory=lambda: uuid4().hex)
 
     def __post_init__(self) -> None:
         """Reject metadata initializers, failed results and mismatched selections."""
         result = self.result
+        if not self.capture_id:
+            message = "A hypothesis snapshot requires a stable capture identifier."
+            raise ValueError(message)
         if not isinstance(  # pyright: ignore[reportUnnecessaryIsInstance]
             result,
             (GroupComparisonResult, ChiSquareResult, PairedComparisonResult),

@@ -9689,4 +9689,34 @@ all hazard ratios and intervals must be finite and positive.</translation>
         <translation>The report preview could not be loaded.</translation>
     </message>
 </context>
+<context>
+    <name>HypothesisPresentation</name>
+    <message><source>Hypothesis Tests</source><translation>Hypothesis Tests</translation></message>
+    <message><source>{category} — {method}</source><translation>{category} — {method}</translation></message>
+    <message><source>Group comparison</source><translation>Group comparison</translation></message>
+    <message><source>Categorical association</source><translation>Categorical association</translation></message>
+    <message><source>Wilcoxon signed-rank</source><translation>Wilcoxon signed-rank</translation></message>
+    <message><source>Friedman</source><translation>Friedman</translation></message>
+    <message><source>Numeric variable:</source><translation>Numeric variable:</translation></message>
+    <message><source>Grouping variable:</source><translation>Grouping variable:</translation></message>
+    <message><source>Row variable:</source><translation>Row variable:</translation></message>
+    <message><source>Column variable:</source><translation>Column variable:</translation></message>
+    <message><source>Measurement variables (selected order):</source><translation>Measurement variables (selected order):</translation></message>
+    <message><source>Tests computed:</source><translation>Tests computed:</translation></message>
+    <message><source>Tests available:</source><translation>Tests available:</translation></message>
+    <message><source>Welch's t-test</source><translation>Welch's t-test</translation></message>
+    <message><source>Student's t-test</source><translation>Student's t-test</translation></message>
+    <message><source>Mann-Whitney U</source><translation>Mann-Whitney U</translation></message>
+    <message><source>One-way ANOVA</source><translation>One-way ANOVA</translation></message>
+    <message><source>Kruskal-Wallis</source><translation>Kruskal-Wallis</translation></message>
+    <message><source>Pearson's chi-square test</source><translation>Pearson's chi-square test</translation></message>
+    <message><source>Fisher's exact test</source><translation>Fisher's exact test</translation></message>
+    <message><source>Group summary</source><translation>Group summary</translation></message>
+    <message><source>Contingency table</source><translation>Contingency table</translation></message>
+    <message><source>Measurement summary</source><translation>Measurement summary</translation></message>
+    <message><source>Test results</source><translation>Test results</translation></message>
+    <message><source>Group distributions</source><translation>Group distributions</translation></message>
+    <message><source>Association plots</source><translation>Association plots</translation></message>
+    <message><source>Paired measurement plots</source><translation>Paired measurement plots</translation></message>
+</context>
 </TS>

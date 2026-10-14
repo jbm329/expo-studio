@@ -7,9 +7,13 @@ import pandas as pd
 import pytest
 
 from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.chi_square import analyze_chi_square
 from expo_jbm329.services.analysis.correlation import CorrelationMethod, analyze_correlation_matrix
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportSnapshot
+from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
+from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportSnapshot
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
+from expo_jbm329.services.analysis.paired_comparison import analyze_paired_comparison
 from expo_jbm329.services.analysis.report import (
     ReportComponent,
     ReportDocument,
@@ -24,7 +28,7 @@ from expo_jbm329.services.analysis.statistics import analyze_descriptive_statist
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_correlation_export import _snapshot as correlation_snapshot
-from tests.analysis.test_hypothesis_export import group_snapshot
+from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
 from tests.analysis.test_outliers_export import multivariate_snapshot, univariate_snapshot
 from tests.analysis.test_pca_export import pca_snapshot
 from tests.analysis.test_regression_export import linear_snapshot
@@ -158,6 +162,72 @@ def test_correlation_report_entry_requires_its_snapshot_capture_identifier():
 
     with pytest.raises(ValueError, match="applied-result capture identifier"):
         replace(entry, capture_id="unrelated-capture")
+
+
+def test_hypothesis_slots_preserve_family_and_ordered_roles_and_capture_identity():
+    group = group_snapshot()
+    categorical = chi_snapshot()
+    paired = paired_snapshot()
+    rerun = group_snapshot()
+    group_entry = create_report_entry(AnalysisCategory.HYPOTHESIS_TESTS, DATASET, group)
+    alternate_group_result = analyze_group_comparison(
+        pd.DataFrame({
+            "Other value": [1.0, 2.0, 3.0, 4.0],
+            "Other group": ["A", "A", "B", "B"],
+        }),
+        "Other value",
+        "Other group",
+    )
+    alternate_group = HypothesisExportSnapshot(
+        group.test,
+        alternate_group_result,
+        ("Other value", "Other group"),
+    )
+    paired_data = pd.DataFrame({"first": range(8), "second": range(1, 9), "third": range(2, 10)})
+    paired_columns = ("first", "second", "third")
+    reversed_paired_columns = tuple(reversed(paired_columns))
+    reversed_paired = HypothesisExportSnapshot(
+        paired.test,
+        analyze_paired_comparison(paired_data, reversed_paired_columns),
+        reversed_paired_columns,
+    )
+    categorical_data = pd.DataFrame({
+        "row": ["A", "A", "B", "B"],
+        "column": ["X", "Y", "X", "Y"],
+    })
+    reversed_categorical = HypothesisExportSnapshot(
+        categorical.test,
+        analyze_chi_square(categorical_data, "column", "row"),
+        ("column", "row"),
+    )
+
+    assert group_entry.capture_id == group.capture_id
+    assert group_entry.entry_id == report_entry_identity(AnalysisCategory.HYPOTHESIS_TESTS, DATASET.tab_id, group)
+    assert group_entry.entry_id == create_report_entry(AnalysisCategory.HYPOTHESIS_TESTS, DATASET, group).entry_id
+    assert group_entry.capture_id == create_report_entry(AnalysisCategory.HYPOTHESIS_TESTS, DATASET, group).capture_id
+    assert group_entry.entry_id != create_report_entry(AnalysisCategory.HYPOTHESIS_TESTS, DATASET, categorical).entry_id
+    assert group_entry.entry_id != create_report_entry(AnalysisCategory.HYPOTHESIS_TESTS, DATASET, paired).entry_id
+    assert group_entry.entry_id != report_entry_identity(
+        AnalysisCategory.HYPOTHESIS_TESTS, DATASET.tab_id, alternate_group
+    )
+    assert report_entry_identity(
+        AnalysisCategory.HYPOTHESIS_TESTS, DATASET.tab_id, categorical
+    ) != report_entry_identity(AnalysisCategory.HYPOTHESIS_TESTS, DATASET.tab_id, reversed_categorical)
+    assert report_entry_identity(AnalysisCategory.HYPOTHESIS_TESTS, DATASET.tab_id, paired) != report_entry_identity(
+        AnalysisCategory.HYPOTHESIS_TESTS, DATASET.tab_id, reversed_paired
+    )
+
+    rerun_entry = create_report_entry(AnalysisCategory.HYPOTHESIS_TESTS, DATASET, rerun)
+    assert rerun_entry.entry_id == group_entry.entry_id
+    assert rerun_entry.capture_id != group_entry.capture_id
+    assert group_entry.with_selection(group_entry.selected_components, "reviewed").capture_id == group_entry.capture_id
+
+
+def test_hypothesis_report_entry_requires_its_snapshot_capture_identifier():
+    entry = create_report_entry(AnalysisCategory.HYPOTHESIS_TESTS, DATASET, group_snapshot())
+
+    with pytest.raises(ValueError, match="hypothesis report entry requires"):
+        replace(entry, capture_id=None)
 
 
 def test_correlation_report_upsert_preserves_position_note_and_valid_component_selection():

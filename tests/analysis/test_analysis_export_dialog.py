@@ -250,21 +250,46 @@ def test_statistics_charts_are_disabled_without_numeric_columns():
 
 
 @pytest.mark.parametrize(
-    "factory,title",
+    "factory,title,summary",
     [
-        (group_snapshot, "Group summary"),
-        (chi_snapshot, "Contingency table"),
-        (paired_snapshot, "Measurement summary"),
+        (
+            group_snapshot,
+            "Group summary",
+            (
+                "Numeric variable: Value",
+                "Grouping variable: Group",
+                "Tests computed: Welch's t-test, Student's t-test, Mann-Whitney U",
+            ),
+        ),
+        (
+            chi_snapshot,
+            "Contingency table",
+            (
+                "Row variable: Row",
+                "Column variable: Column",
+                "Tests available: Pearson's chi-square test, Fisher's exact test",
+            ),
+        ),
+        (
+            paired_snapshot,
+            "Measurement summary",
+            ("Measurement variables (selected order): Time 1, Time 0",),
+        ),
     ],
 )
-def test_hypothesis_dialog_names_applied_test_columns_and_preserves_choices(factory, title):
+def test_hypothesis_dialog_uses_applied_presentation_and_preserves_choices(factory, title, summary):
     snapshot = factory()
     dialog = AnalysisExportDialog(hypothesis=snapshot)
     choices = dialog.findChildren(QCheckBox)
-    assert [choice.text() for choice in choices] == [title, "Test results", "Charts"]
-    identity = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied test:"))
+    chart_title = {
+        "Group summary": "Group distributions",
+        "Contingency table": "Association plots",
+        "Measurement summary": "Paired measurement plots",
+    }[title]
+    assert [choice.text() for choice in choices] == [title, "Test results", chart_title]
+    identity = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Hypothesis Tests —"))
     assert identity.textFormat() is Qt.TextFormat.PlainText
-    assert " / ".join(snapshot.columns) in identity.text()
+    assert all(line in identity.text() for line in summary)
     assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
     formats = dialog.findChild(QComboBox)
     assert formats.currentData() is StatisticsExportFormat.EXCEL

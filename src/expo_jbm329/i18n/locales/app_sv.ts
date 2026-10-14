@@ -9844,4 +9844,34 @@ alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
         <translation>Rapportförhandsvisningen kunde inte läsas in.</translation>
     </message>
 </context>
+<context>
+    <name>HypothesisPresentation</name>
+    <message><source>Hypothesis Tests</source><translation>Hypotesprövningar</translation></message>
+    <message><source>{category} — {method}</source><translation>{category} — {method}</translation></message>
+    <message><source>Group comparison</source><translation>Gruppjämförelse</translation></message>
+    <message><source>Categorical association</source><translation>Kategoriskt samband</translation></message>
+    <message><source>Wilcoxon signed-rank</source><translation>Wilcoxons teckenrang</translation></message>
+    <message><source>Friedman</source><translation>Friedman</translation></message>
+    <message><source>Numeric variable:</source><translation>Numerisk variabel:</translation></message>
+    <message><source>Grouping variable:</source><translation>Grupperingsvariabel:</translation></message>
+    <message><source>Row variable:</source><translation>Radvariabel:</translation></message>
+    <message><source>Column variable:</source><translation>Kolumnvariabel:</translation></message>
+    <message><source>Measurement variables (selected order):</source><translation>Mätvariabler (vald ordning):</translation></message>
+    <message><source>Tests computed:</source><translation>Genomförda test:</translation></message>
+    <message><source>Tests available:</source><translation>Tillgängliga test:</translation></message>
+    <message><source>Welch's t-test</source><translation>Welch's t-test</translation></message>
+    <message><source>Student's t-test</source><translation>Student's t-test</translation></message>
+    <message><source>Mann-Whitney U</source><translation>Mann-Whitney U</translation></message>
+    <message><source>One-way ANOVA</source><translation>Envägs-ANOVA</translation></message>
+    <message><source>Kruskal-Wallis</source><translation>Kruskal-Wallis</translation></message>
+    <message><source>Pearson's chi-square test</source><translation>Pearsons chi-två-test</translation></message>
+    <message><source>Fisher's exact test</source><translation>Fishers exakta test</translation></message>
+    <message><source>Group summary</source><translation>Gruppsammanfattning</translation></message>
+    <message><source>Contingency table</source><translation>Kontingenstabell</translation></message>
+    <message><source>Measurement summary</source><translation>Mätvärdessammanfattning</translation></message>
+    <message><source>Test results</source><translation>Testresultat</translation></message>
+    <message><source>Group distributions</source><translation>Gruppfördelningar</translation></message>
+    <message><source>Association plots</source><translation>Sambandsdiagram</translation></message>
+    <message><source>Paired measurement plots</source><translation>Diagram för parade mätvärden</translation></message>
+</context>
 </TS>

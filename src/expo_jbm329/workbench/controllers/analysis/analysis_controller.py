@@ -111,7 +111,9 @@ from expo_jbm329.services.analysis.pca_export import (
 )
 from expo_jbm329.services.analysis.presentation import (
     PresentationLabel,
+    build_analysis_presentation,
     correlation_method_label,
+    hypothesis_component_label,
     translate_presentation_label,
 )
 from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression, initialize_regression
@@ -228,6 +230,35 @@ _HYPOTHESIS_EXPORT_TRANSLATIONS = (
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Cramér's V"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Kendall's W"),
     QT_TRANSLATE_NOOP("ChiSquareView", "Contingency table"),
+)
+_HYPOTHESIS_PRESENTATION_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Hypothesis Tests"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "{category} — {method}"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Group comparison"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Categorical association"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Wilcoxon signed-rank"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Friedman"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Numeric variable:"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Grouping variable:"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Row variable:"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Column variable:"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Measurement variables (selected order):"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Tests computed:"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Tests available:"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Welch's t-test"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Student's t-test"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Mann-Whitney U"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "One-way ANOVA"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Kruskal-Wallis"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Pearson's chi-square test"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Fisher's exact test"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Group summary"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Contingency table"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Measurement summary"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Test results"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Group distributions"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Association plots"),
+    QT_TRANSLATE_NOOP("HypothesisPresentation", "Paired measurement plots"),
 )
 _CORRELATION_EXPORT_TRANSLATIONS = (
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Least-squares line: y = ({slope}) x + ({intercept})"),
@@ -968,7 +999,9 @@ class AnalysisController:
             exporter.export_excel(
                 sheets=sheets,
                 chart_factory=make_images if charts else None,
-                chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                chart_sheet_name=(
+                    hypothesis_component_label(snapshot, HypothesisExportComponent.CHARTS, tr) if charts else None
+                ),
                 parent_widget=dialog,
                 operation_target=dialog.content_panel(),
                 show_success_dialog=True,
@@ -1443,6 +1476,9 @@ class AnalysisController:
                     notes,
                 )
                 dialog.set_exportable_hypothesis(snapshot)
+                dialog.set_analysis_presentation(
+                    build_analysis_presentation(AnalysisCategory.HYPOTHESIS_TESTS, snapshot, tr)
+                )
 
             self._recompute_content(
                 dialog,
