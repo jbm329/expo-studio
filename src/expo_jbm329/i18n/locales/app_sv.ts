@@ -5439,6 +5439,10 @@ Sparad till:
 </context>
 <context>
     <name>OverviewView</name>
+    <message>
+        <source>Dataset statistics</source>
+        <translation>Datasetstatistik</translation>
+    </message>
     <message><source>Columns metadata</source><translation>Kolumnmetadata</translation></message>
     <message><source>Sample (first 100 rows)</source><translation>Urval (de första 100 raderna)</translation></message>
     <message>

@@ -86,6 +86,7 @@ class OverviewView(QWidget):
         panel_layout.addWidget(self._build_section_header(self.tr("Summary")))
         content = QWidget()
         layout = QVBoxLayout(content)
+        layout.addWidget(self._build_section_header(self.tr("Dataset statistics")))
         layout.addWidget(self._build_summary_label())
         layout.addWidget(self._build_section_header(self.tr("Column types")))
         layout.addWidget(self._build_column_types_label())

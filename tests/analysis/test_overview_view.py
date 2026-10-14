@@ -198,6 +198,8 @@ def test_summary_panel_is_framed_and_sits_left_of_the_columns_table():
     assert scroll.horizontalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAlwaysOff
     assert "Summary" in _labels_text(panel)
     assert "Summary" not in _labels_text(scroll)
+    assert scroll.widget().layout().itemAt(0).widget().text() == "Dataset statistics"
+    assert scroll.widget().layout().itemAt(1).widget().text().startswith("Rows:")
     assert panel.layout().itemAt(0).widget().text() == "Summary"
     assert panel.layout().itemAt(1).widget() is scroll
 

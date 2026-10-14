@@ -5043,6 +5043,10 @@ Saved to:
     </message>
 </context><context>
     <name>OverviewView</name>
+    <message>
+        <source>Dataset statistics</source>
+        <translation>Dataset statistics</translation>
+    </message>
     <message><source>Columns metadata</source><translation>Columns metadata</translation></message>
     <message><source>Sample (first 100 rows)</source><translation>Sample (first 100 rows)</translation></message>
     <message>
