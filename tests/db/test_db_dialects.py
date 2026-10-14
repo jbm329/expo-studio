@@ -105,11 +105,17 @@ def test_postgres_dialect():
     assert "information_schema.columns" in cols_sql.lower()
     assert "'public'" in cols_sql
     assert "'my_table'" in cols_sql
+    assert 'COLUMN_NAME AS "COLUMN_NAME"' in cols_sql
+    assert 'DATA_TYPE AS "DATA_TYPE"' in cols_sql
+    assert 'IS_NULLABLE AS "IS_NULLABLE"' in cols_sql
 
     all_cols_sql = dialect.sql_all_columns()
     assert all_cols_sql is not None
     assert "information_schema.columns" in all_cols_sql.lower()
     assert "pg_catalog" in all_cols_sql.lower()
+    assert 'TABLE_SCHEMA AS "TABLE_SCHEMA"' in all_cols_sql
+    assert 'TABLE_NAME AS "TABLE_NAME"' in all_cols_sql
+    assert 'COLUMN_NAME AS "COLUMN_NAME"' in all_cols_sql
 
 
 @pytest.mark.parametrize(

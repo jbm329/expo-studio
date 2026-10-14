@@ -160,7 +160,7 @@ class PostgresDialect(DialectProtocol):
             A SQL query string to list columns from INFORMATION_SCHEMA.
         """
         return (
-            "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE "  # noqa: S608 - literals are escaped
+            'SELECT COLUMN_NAME AS "COLUMN_NAME", DATA_TYPE AS "DATA_TYPE", IS_NULLABLE AS "IS_NULLABLE" '  # noqa: S608
             "FROM INFORMATION_SCHEMA.COLUMNS "
             f"WHERE TABLE_SCHEMA = {self._literal(schema)} AND TABLE_NAME = {self._literal(object_name)} "
             "ORDER BY ORDINAL_POSITION"
@@ -174,12 +174,12 @@ class PostgresDialect(DialectProtocol):
         """
         return (
             "SELECT "
-            "  TABLE_SCHEMA, "
-            "  TABLE_NAME, "
-            "  COLUMN_NAME, "
-            "  DATA_TYPE, "
-            "  IS_NULLABLE, "
-            "  ORDINAL_POSITION "
+            '  TABLE_SCHEMA AS "TABLE_SCHEMA", '
+            '  TABLE_NAME AS "TABLE_NAME", '
+            '  COLUMN_NAME AS "COLUMN_NAME", '
+            '  DATA_TYPE AS "DATA_TYPE", '
+            '  IS_NULLABLE AS "IS_NULLABLE", '
+            '  ORDINAL_POSITION AS "ORDINAL_POSITION" '
             "FROM INFORMATION_SCHEMA.COLUMNS "
             "WHERE TABLE_SCHEMA NOT IN ('pg_catalog', 'information_schema') "
             "ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION"

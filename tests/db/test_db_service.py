@@ -8,6 +8,7 @@ import pytest
 from expo_jbm329.db.core.errors import BulkColumnListingNotSupportedError
 from expo_jbm329.db.core.interfaces import DialectProtocol, DriverProtocol
 from expo_jbm329.db.core.models import ConnectionConfig, SqlError, TimeoutConfig
+from expo_jbm329.db.dialects.postgres import PostgresDialect
 from expo_jbm329.db.service import DbService
 
 
@@ -216,3 +217,81 @@ def test_list_all_columns_map_unsupported_dialect_runs_no_sql(db_service, mock_d
 
 def test_list_all_columns_map_unsupported_error_is_attribute_error():
     assert issubclass(BulkColumnListingNotSupportedError, AttributeError)
+
+
+@pytest.mark.parametrize(
+    "columns",
+    [
+        {"COLUMN_NAME": ["id", "name"], "DATA_TYPE": ["int", "text"], "IS_NULLABLE": ["NO", "YES"]},
+        {"column_name": ["id", "name"], "data_type": ["int", "text"], "is_nullable": ["NO", "YES"]},
+        {"Column_Name": ["id", "name"], "Data_Type": ["int", "text"], "Is_Nullable": ["NO", "YES"]},
+    ],
+)
+def test_list_columns_case_resilient(db_service, mock_driver, conn_config, columns):
+    mock_driver.execute_df.return_value = pd.DataFrame(columns)
+
+    cols = db_service.list_columns(conn_config, "public", "users")
+
+    assert len(cols) == 2
+    assert cols[0]["COLUMN_NAME"] == "id"
+    assert cols[0]["DATA_TYPE"] == "int"
+    assert cols[0]["IS_NULLABLE"] == "NO"
+    assert cols[1]["COLUMN_NAME"] == "name"
+    assert cols[1]["DATA_TYPE"] == "text"
+    assert cols[1]["IS_NULLABLE"] == "YES"
+
+
+@pytest.mark.parametrize(
+    "columns",
+    [
+        {
+            "TABLE_SCHEMA": ["public"],
+            "TABLE_NAME": ["users"],
+            "COLUMN_NAME": ["id"],
+            "DATA_TYPE": ["int"],
+            "IS_NULLABLE": ["NO"],
+        },
+        {
+            "table_schema": ["public"],
+            "table_name": ["users"],
+            "column_name": ["id"],
+            "data_type": ["int"],
+            "is_nullable": ["NO"],
+        },
+    ],
+)
+def test_list_all_columns_map_case_resilient(mock_driver, columns):
+    dialect = PostgresDialect()
+    service = DbService(driver=mock_driver, dialect=dialect)
+    mock_driver.execute_df.return_value = pd.DataFrame(columns)
+    conn = ConnectionConfig(name="pg", engine="postgresql", protocol="psycopg")
+
+    cols_map = service.list_all_columns_map(conn)
+
+    assert ("public", "users") in cols_map
+    assert cols_map[("public", "users")][0]["COLUMN_NAME"] == "id"
+
+
+def test_build_select_columns_auto_postgres(mock_driver):
+    dialect = PostgresDialect()
+    service = DbService(driver=mock_driver, dialect=dialect)
+    mock_driver.execute_df.return_value = pd.DataFrame({
+        "column_name": ["id", "username"],
+        "data_type": ["integer", "text"],
+        "is_nullable": ["NO", "YES"],
+    })
+    conn = ConnectionConfig(name="pg", engine="postgresql", protocol="psycopg")
+
+    # Double-click style (with_schema=False, top_n=1000)
+    sql_double_click = service.build_select_columns_auto(conn, "public", "users", top_n=1000, with_schema=False)
+    assert sql_double_click == 'SELECT\n    "id",\n    "username"\nFROM "public"."users" LIMIT 1000'
+
+    # Context menu style (with_schema=True, top_n=1000)
+    sql_with_schema = service.build_select_columns_auto(conn, "public", "users", top_n=1000, with_schema=True)
+    assert sql_with_schema == (
+        'SELECT\n    "public"."users"."id",\n    "public"."users"."username"\nFROM "public"."users" LIMIT 1000'
+    )
+
+    # Context menu SELECT *
+    sql_star = service.build_select_star("public", "users", top_n=1000)
+    assert sql_star == 'SELECT *\nFROM "public"."users" LIMIT 1000'
