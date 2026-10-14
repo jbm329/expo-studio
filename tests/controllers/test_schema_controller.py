@@ -10,7 +10,9 @@ from PyQt6.QtWidgets import QTreeWidgetItem, QWidget
 
 from expo_jbm329.db.dialects.mssql import MssqlDialect
 from expo_jbm329.db.dialects.mysql import MySqlDialect
+from expo_jbm329.db.dialects.postgres import PostgresDialect
 from expo_jbm329.db.dialects.sqlite import SqliteDialect
+from expo_jbm329.utils.format_utils import fmt_int
 from expo_jbm329.workbench.controllers.schema_controller import SchemaController
 from tests.qt_stubs import StubTree
 
@@ -188,6 +190,7 @@ def test_init_registers_drag_text_provider():
     [
         (MssqlDialect(), "[dbo].[Tbl]", "[dbo].[Tbl].[A]"),
         (MySqlDialect(), "`dbo`.`Tbl`", "`dbo`.`Tbl`.`A`"),
+        (PostgresDialect(), '"dbo"."Tbl"', '"dbo"."Tbl"."A"'),
         (SqliteDialect(), '"dbo"."Tbl"', '"dbo"."Tbl"."A"'),
     ],
 )
@@ -233,6 +236,17 @@ def test_build_drag_text_without_connection_uses_ansi():
     [
         (MssqlDialect(), 500, ("SELECT * TOP 500", "SELECT TOP 500", "SELECT TOP 500 (schema)")),
         (MySqlDialect(), 500, ("SELECT * LIMIT 500", "SELECT LIMIT 500", "SELECT LIMIT 500 (schema)")),
+        (
+            PostgresDialect(),
+            2000,
+            (
+                f"SELECT * LIMIT {fmt_int(2000)}",
+                f"SELECT LIMIT {fmt_int(2000)}",
+                f"SELECT LIMIT {fmt_int(2000)} (schema)",
+            ),
+        ),
+        (PostgresDialect(), 1000, ("SELECT * LIMIT 1000", "SELECT LIMIT 1000", "SELECT LIMIT 1000 (schema)")),
+        (PostgresDialect(), 500, ("SELECT * LIMIT 500", "SELECT LIMIT 500", "SELECT LIMIT 500 (schema)")),
         (SqliteDialect(), 0, ("SELECT *", "SELECT", "SELECT (schema)")),
     ],
 )
@@ -241,3 +255,50 @@ def test_select_menu_labels_are_dialect_aware(dialect, top_n, expected):
     ctrl.reload_settings({"workbench": {"gen_top_n": top_n}})
 
     assert ctrl._select_menu_labels(dialect) == expected
+
+
+def test_postgres_table_double_click_and_context_menu_queries(monkeypatch):
+    ctrl, tree, schema_mgr, inserted_sql, *_ = make_ctrl(resolve_dialect=lambda _conn: PostgresDialect())
+    ctrl.refresh_connections(["Conn1"])
+    ctrl.load_schema_tree("Conn1")
+    tbl_item = tree.topLevelItem(0).child(0).child(0).child(0)
+
+    meta = {"schema": "public", "name": "users", "type": "table"}
+    tbl_item.setData(0, Qt.ItemDataRole.UserRole, meta)
+
+    # Mock build_select_columns_auto to simulate DB metadata returned for PostgreSQL
+    def _mock_build_select(conn, schema, name, top_n=None, with_schema=False, corr_id=None):
+        cols = ['"public"."users"."id"', '"public"."users"."name"'] if with_schema else ['"id"', '"name"']
+        indent = "    "
+        proj = f",\n{indent}".join(cols)
+        limit_str = f" LIMIT {top_n}" if top_n else ""
+        return f'SELECT\n{indent}{proj}\nFROM "{schema}"."{name}"{limit_str};'
+
+    monkeypatch.setattr(
+        "expo_jbm329.workbench.controllers.schema_controller.build_select_columns_auto",
+        _mock_build_select,
+    )
+    monkeypatch.setattr(
+        "expo_jbm329.workbench.controllers.schema_controller.build_select_star",
+        lambda conn, schema, name, top_n=None: (
+            f'SELECT *\nFROM "{schema}"."{name}"' + (f" LIMIT {top_n}" if top_n else "") + ";"
+        ),
+    )
+
+    # 1. Double-click table node (triggers SELECT columns without schema)
+    ctrl._on_item_double_clicked(tbl_item)
+    assert inserted_sql[-1] == 'SELECT\n    "id",\n    "name"\nFROM "public"."users" LIMIT 1000;'
+
+    # 2. Context menu: SELECT * LIMIT 1,000
+    ctrl._insert_select_star(tbl_item, meta)
+    assert inserted_sql[-1] == 'SELECT *\nFROM "public"."users" LIMIT 1000;'
+
+    # 3. Context menu: SELECT LIMIT 1,000 (columns without schema)
+    ctrl._insert_select_columns(tbl_item, meta, with_schema=False)
+    assert inserted_sql[-1] == 'SELECT\n    "id",\n    "name"\nFROM "public"."users" LIMIT 1000;'
+
+    # 4. Context menu: SELECT LIMIT 1,000 (schema) (columns with schema)
+    ctrl._insert_select_columns(tbl_item, meta, with_schema=True)
+    assert inserted_sql[-1] == (
+        'SELECT\n    "public"."users"."id",\n    "public"."users"."name"\nFROM "public"."users" LIMIT 1000;'
+    )
