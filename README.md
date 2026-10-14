@@ -70,7 +70,9 @@ add notes. The **Reports** page lets you edit and reorder entries, add a title
 and description, and **Preview** the report in an in-app HTML window. Preview
 preparation runs in the background; each preview captures the report at the
 time you click. Drafts last for the Advanced Analysis window's lifetime.
-Saving HTML reports and PDF output are not yet available.
+Use **Generate HTML report** to save a self-contained HTML file and open it
+in your default browser. Report generation runs in the background; canceled
+or failed saves preserve existing files. PDF output is not yet available.
 
 ### 📂 Supported Data File Formats
 

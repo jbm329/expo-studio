@@ -101,6 +101,16 @@
 </context><context>
     <name>AnalysisController</name>
     <message>
+        <source>Could not save HTML report.
+{error}</source>
+        <translation>Could not save HTML report.
+{error}</translation>
+    </message>
+    <message>
+        <source>HTML report saving is unavailable.</source>
+        <translation>HTML report saving is unavailable.</translation>
+    </message>
+    <message>
         <source>Preparing report preview...</source>
         <translation>Preparing report preview...</translation>
     </message>
@@ -3468,6 +3478,22 @@ Continue?</source>
     </message>
 </context><context>
     <name>ExportController</name>
+    <message><source>Generate HTML report</source><translation>Generate HTML report</translation></message>
+    <message><source>Generating HTML report…</source><translation>Generating HTML report…</translation></message>
+    <message><source>Replace existing report?</source><translation>Replace existing report?</translation></message>
+    <message><source>The file already exists. Replace it?
+
+{path}</source><translation>The file already exists. Replace it?
+
+{path}</translation></message>
+    <message><source>Report saved</source><translation>Report saved</translation></message>
+    <message><source>The report was saved, but could not be opened in the default browser.
+
+Saved to:
+{path}</source><translation>The report was saved, but could not be opened in the default browser.
+
+Saved to:
+{path}</translation></message>
     <message>
         <source>Export completed</source>
         <translation>Export completed</translation>

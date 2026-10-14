@@ -98,7 +98,8 @@ def test_dialog_selects_active_tab_on_init():
     assert dialog.selected_dataset_tab_id() == "t2"
 
 
-def test_report_preview_captures_title_description_order_and_immutable_entry_selections():
+@pytest.mark.parametrize("action", ["preview", "save"])
+def test_report_actions_capture_title_description_order_and_immutable_entry_selections(action):
     datasets = _make_datasets()
     dialog = AnalysisDialog(parent=None, datasets=datasets, active_tab_id="t1")
     first = create_report_entry(AnalysisCategory.PCA, datasets[0], pca_snapshot())
@@ -111,9 +112,11 @@ def test_report_preview_captures_title_description_order_and_immutable_entry_sel
     page.findChild(QLineEdit).setText("<b>Report title</b>")
     page.findChild(QPlainTextEdit).setPlainText("Purpose\nSecond line")
     requests: list[ReportDocument] = []
-    dialog.report_preview_requested.connect(requests.append)
+    signal = dialog.report_preview_requested if action == "preview" else dialog.report_save_requested
+    signal.connect(requests.append)
 
-    page._preview_button.click()
+    button = page._preview_button if action == "preview" else page._generate_button
+    button.click()
     captured = requests[0]
     draft.remove(second.entry_id)
     draft.upsert(first.with_selection(("model_summary",), "New note"))
@@ -130,8 +133,10 @@ def test_empty_report_does_not_emit_preview_request():
     dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
     requests: list[ReportDocument] = []
     dialog.report_preview_requested.connect(requests.append)
+    dialog.report_save_requested.connect(requests.append)
 
     dialog._request_report_preview()
+    dialog._request_report_save()
 
     assert requests == []
 

@@ -55,6 +55,7 @@ class ExportKind(Enum):
     DATAFILE = auto()
     PROFILE = auto()
     PROFILE_COMPARE = auto()
+    HTML_REPORT = auto()
 
 
 class ExportController:
@@ -92,6 +93,14 @@ class ExportController:
     TR_KIND_PROFILE = QT_TR_NOOP("Generate data profile report")
     TR_EXPORT_PROFILE_DIALOG_FILTER = QT_TR_NOOP("HTML files (*.html)")
     TR_EXPORT_PROFILE_STARTED_MSG = QT_TR_NOOP("Generating data profile report {title}…")
+    TR_KIND_HTML_REPORT = QT_TR_NOOP("Generate HTML report")
+    TR_HTML_REPORT_STARTED = QT_TR_NOOP("Generating HTML report…")
+    TR_REPLACE_REPORT_TITLE = QT_TR_NOOP("Replace existing report?")
+    TR_REPLACE_REPORT_TEXT = QT_TR_NOOP("The file already exists. Replace it?\n\n{path}")
+    TR_BROWSER_FAILED_TITLE = QT_TR_NOOP("Report saved")
+    TR_BROWSER_FAILED_TEXT = QT_TR_NOOP(
+        "The report was saved, but could not be opened in the default browser.\n\nSaved to:\n{path}"
+    )
 
     # Multiple tabs
     TR_EXPORT_DATA_MULTIPLE_TABS_DIALOG_TITLE = QT_TR_NOOP("Multiple datasets open")
@@ -135,6 +144,7 @@ class ExportController:
         ExportKind.DATAFILE: TR_KIND_DATAFILE,
         ExportKind.PROFILE: TR_KIND_PROFILE,
         ExportKind.PROFILE_COMPARE: TR_KIND_COMPARISON_PROFILE,
+        ExportKind.HTML_REPORT: TR_KIND_HTML_REPORT,
     }
 
     __slots__ = (
@@ -185,7 +195,7 @@ class ExportController:
             set_status: Callback to set status messages.
             file_jobs: FileJobService for scheduling export jobs.
             get_tab_title: Callback to get the current tab title.
-            open_url: Callback to open URLs.
+            open_url: Callback accepting a filesystem path to open in the default browser.
             data_io: DataIO service for export operations.
             dialogs: Optional dialog service.
             file_dialogs: Optional file dialog service.
@@ -861,6 +871,119 @@ class ExportController:
         )
 
     # ==================================================================
+    # Captured analysis HTML reports
+    # ==================================================================
+    def export_html_report(
+        self,
+        *,
+        html_factory: Callable[..., str],
+        suggested_name: str,
+        parent_widget: QWidget,
+        operation_target: QWidget,
+        stale_check: Callable[[], bool],
+        on_finished: Callable[[], None],
+    ) -> bool:
+        """Choose a report destination, then prepare and save in a worker.
+
+        Args:
+            html_factory: Frozen renderer accepting progress_cb and cancel_cb.
+            suggested_name: Report title or desired filename, sanitized for saving.
+            parent_widget: Owner of save and notification dialogs.
+            operation_target: Owner of the busy overlay.
+            stale_check: Thread-safe guard returning True for a closed owner.
+            on_finished: Worker-finished callback, including stale/error outcomes.
+
+        Returns:
+            True if scheduled. False on dialog cancellation, overwrite refusal,
+            or a stale owner. False never invokes on_finished; the caller must
+            release its own busy state. Scheduling exceptions propagate.
+        """
+        if stale_check():
+            return False
+        start_dir = self._dialog_state.get_dir("dialogs/save_report_dir", fallback=self._get_documents_dir())
+        default_path = self._file_jobs.build_safe_filename(suggested_name, ".html", Path(start_dir))
+        path, _ = self._choose_export_path(
+            self._tr(self.TR_KIND_HTML_REPORT),
+            str(start_dir),
+            default_path.name,
+            self._tr(self.TR_EXPORT_PROFILE_DIALOG_FILTER),
+            parent_widget=parent_widget,
+        )
+        if not path or stale_check():
+            return False
+        chosen = Path(path)
+        destination = chosen if chosen.suffix.lower() == ".html" else chosen.with_suffix(".html")
+        # Qt confirms the dialog path, not a different normalized destination.
+        if destination != chosen and destination.exists():
+            confirmed = self._dialogs.prompt_yes_no(
+                parent=parent_widget,
+                title=self._tr(self.TR_REPLACE_REPORT_TITLE),
+                text=self._tr_fmt(self.TR_REPLACE_REPORT_TEXT, path=str(destination)),
+                default_yes=False,
+            )
+            if not confirmed or stale_check():
+                return False
+        self._dialog_state.set_dir("dialogs/save_report_dir", destination.parent)
+        corr_id = self._new_corr()
+
+        def work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            job_id: str | None = None,
+            job_scope: str | None = None,
+            **_: object,
+        ) -> JobResult:
+            def cancelled() -> bool:
+                return stale_check() or (cancel_cb is not None and cancel_cb())
+
+            return self._data_io.export_html_report(
+                html_factory,
+                destination,
+                progress_cb=progress_cb,
+                cancel_cb=cancelled,
+                job_id=job_id,
+                job_scope=job_scope,
+                corr_id=corr_id,
+            )
+
+        def on_result(payload: object) -> None:
+            if not stale_check():
+                self._on_export_done(
+                    payload,
+                    ExportKind.HTML_REPORT,
+                    str(destination),
+                    parent_widget=parent_widget,
+                    show_success_dialog=True,
+                    stale_check=stale_check,
+                )
+
+        def on_error(error: str) -> None:
+            if not stale_check():
+                self._on_export_error(error, ExportKind.HTML_REPORT, parent_widget=parent_widget)
+
+        self._async_ops.run_target_overlay_operation(
+            target=operation_target,
+            runner="thread",
+            work=work,
+            on_result=on_result,
+            on_error=on_error,
+            on_finished=on_finished,
+            stale_check=stale_check,
+            busy_message=self._tr(self.TR_HTML_REPORT_STARTED),
+            scope="export:html-report",
+            operation_name=self._tr(self.TR_KIND_HTML_REPORT),
+            timeout_ms=0,
+            indeterminate=False,
+            cancelable=True,
+            show_status_progress=False,
+            show_started_in_status=False,
+            suppress_error_dialog=True,
+            corr_id=corr_id,
+        )
+        return True
+
+    # ==================================================================
     # PROFILING ydata (single-tab / multi-tab)
     # ==================================================================
     def profile_report(self) -> None:
@@ -1101,6 +1224,7 @@ class ExportController:
         *,
         parent_widget: QWidget | None = None,
         show_success_dialog: bool = False,
+        stale_check: Callable[[], bool] | None = None,
     ) -> None:
         """Present the export outcome to its captured dialog owner.
 
@@ -1110,6 +1234,7 @@ class ExportController:
             out_path: Output file path.
             parent_widget: Notification owner. None uses the default parent.
             show_success_dialog: Show a confirmation with the output path on success.
+            stale_check: Optional guard for delayed report notifications.
         """
         parent = self._parent if parent_widget is None else parent_widget
         # Build JobResult robustly
@@ -1174,13 +1299,26 @@ class ExportController:
 
             if kind in (ExportKind.PROFILE, ExportKind.PROFILE_COMPARE) and not self._open_url(str(out_path)):
                 self._logger.warning("ExportController: open URL failed (corr=%s, path=%s)", corr, out_path)
+            browser_failed = False
+            if kind is ExportKind.HTML_REPORT:
+                try:
+                    browser_failed = not self._open_url(str(Path(out_path).resolve()))
+                except Exception:
+                    # An injected browser launcher must not reclassify a committed save.
+                    browser_failed = True
+                    self._logger.exception("ExportController: browser launch failed (corr=%s)", corr)
             if show_success_dialog:
 
                 def show_confirmation() -> None:
-                    self._dialogs.info(
+                    if stale_check is not None and stale_check():
+                        return
+                    notify = self._dialogs.warn if browser_failed else self._dialogs.info
+                    notify(
                         parent=parent,
-                        title=self._tr(self.TR_DONE_DIALOG_TITLE),
-                        text=self._tr_fmt(self.TR_DONE_DIALOG_TEXT, path=out_path),
+                        title=self._tr(self.TR_BROWSER_FAILED_TITLE if browser_failed else self.TR_DONE_DIALOG_TITLE),
+                        text=self._tr_fmt(
+                            self.TR_BROWSER_FAILED_TEXT if browser_failed else self.TR_DONE_DIALOG_TEXT, path=out_path
+                        ),
                     )
 
                 # AsyncOperationController queues overlay cleanup after this callback.

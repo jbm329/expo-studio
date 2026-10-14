@@ -471,6 +471,8 @@ class AnalysisController:
     TR_REPORT_OPERATION = QT_TR_NOOP("prepare report preview")
     TR_REPORT_CANCELLED = QT_TR_NOOP("Report preview cancelled.")
     TR_REPORT_ERROR = QT_TR_NOOP("Could not prepare report preview.\n{error}")
+    TR_REPORT_SAVE_UNAVAILABLE = QT_TR_NOOP("HTML report saving is unavailable.")
+    TR_REPORT_SAVE_ERROR = QT_TR_NOOP("Could not save HTML report.\n{error}")
 
     @staticmethod
     def _tr(text: str) -> str:
@@ -635,7 +637,7 @@ class AnalysisController:
         dialog.exec()
 
     def _connect_report_preview(self, dialog: AnalysisDialog) -> None:
-        """Wire report snapshots to background preparation and a GUI-thread preview."""
+        """Share report snapshots and lifecycle guards between preview and HTML saving."""
         generation = 0
         closed = False
         busy = False
@@ -647,12 +649,17 @@ class AnalysisController:
         dialog.finished.connect(mark_closed)
         dialog.destroyed.connect(mark_closed)
 
-        def prepare(request: object) -> None:
+        def prepare(request: object, *, save: bool = False) -> None:
             nonlocal generation, busy
             if closed or busy:
                 return
             if not isinstance(request, ReportDocument) or not request.entries:
                 self._logger.warning("Rejected empty or invalid report preview request.")
+                return
+            exporter = self._export_controller
+            if save and exporter is None:
+                self._logger.error("Cannot save an analysis report without an export controller.")
+                dialog.report_page().set_preview_status(self._tr(self.TR_REPORT_SAVE_UNAVAILABLE))
                 return
             generation += 1
             revision = generation
@@ -665,22 +672,30 @@ class AnalysisController:
             def stale() -> bool:
                 return closed or generation != revision
 
+            def render(
+                *,
+                progress_cb: Callable[[int], None] | None = None,
+                cancel_cb: Callable[[], bool] | None = None,
+                **_: object,
+            ) -> str:
+                def cancelled() -> bool:
+                    return closed or (cancel_cb is not None and cancel_cb())
+
+                return render_report_html(
+                    request,
+                    labels=labels,
+                    progress_cb=progress_cb,
+                    cancel_cb=cancelled,
+                )
+
             def work(
                 *,
                 progress_cb: Callable[[int], None] | None = None,
                 cancel_cb: Callable[[], bool] | None = None,
                 **_: object,
             ) -> str | None:
-                def cancelled() -> bool:
-                    return closed or (cancel_cb is not None and cancel_cb())
-
                 try:
-                    return render_report_html(
-                        request,
-                        labels=labels,
-                        progress_cb=progress_cb,
-                        cancel_cb=cancelled,
-                    )
+                    return render(progress_cb=progress_cb, cancel_cb=cancel_cb)
                 except ExcelChartCancelledError:
                     self._logger.info("Report preview preparation cancelled.")
                     return None
@@ -695,7 +710,8 @@ class AnalysisController:
 
             def on_error(error: str) -> None:
                 if not stale():
-                    page.set_preview_status(self._tr(self.TR_REPORT_ERROR).format(error=error))
+                    message = self.TR_REPORT_SAVE_ERROR if save else self.TR_REPORT_ERROR
+                    page.set_preview_status(self._tr(message).format(error=error))
 
             def on_finished() -> None:
                 nonlocal busy
@@ -704,6 +720,18 @@ class AnalysisController:
                     page.set_preview_busy(False)
 
             try:
+                if save and exporter is not None:
+                    started = exporter.export_html_report(
+                        html_factory=render,
+                        suggested_name=request.title,
+                        parent_widget=dialog,
+                        operation_target=page,
+                        stale_check=stale,
+                        on_finished=on_finished,
+                    )
+                    if not started:
+                        on_finished()
+                    return
                 self._async_ops.run_target_overlay_operation(
                     target=page,
                     runner="pool",
@@ -721,11 +749,16 @@ class AnalysisController:
                     timeout_ms=self._overlay_timeout_ms(cancelable=True),
                 )
             except (RuntimeError, ValueError) as error:
-                self._logger.exception("Failed to start report preview preparation.")
+                self._logger.exception("Failed to start report operation (save=%s).", save)
                 on_error(str(error))
                 on_finished()
 
         dialog.report_preview_requested.connect(prepare)
+
+        def save_report(request: object) -> None:
+            prepare(request, save=True)
+
+        dialog.report_save_requested.connect(save_report)
 
     @staticmethod
     def _show_report_preview(dialog: AnalysisDialog, html: str) -> None:

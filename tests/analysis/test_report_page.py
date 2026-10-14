@@ -58,7 +58,7 @@ def test_report_processing_controls_are_disabled_and_explained():
         "Preview",
     }
     assert all(not button.isEnabled() for button in buttons)
-    assert "next step" in page._generate_button.toolTip()  # noqa: SLF001
+    assert not page._generate_button.toolTip()  # noqa: SLF001
 
 
 def test_report_page_lists_metadata_and_enables_entry_actions():
@@ -76,6 +76,7 @@ def test_report_page_lists_metadata_and_enables_entry_actions():
     assert page._edit_button.isEnabled()  # noqa: SLF001
     assert page._remove_button.isEnabled()  # noqa: SLF001
     assert page._preview_button.isEnabled()  # noqa: SLF001
+    assert page._generate_button.isEnabled()  # noqa: SLF001
     assert not page._empty_message.isVisible()  # noqa: SLF001
 
 
@@ -112,11 +113,28 @@ def test_report_preview_is_enabled_only_for_nonempty_idle_reports():
     page._preview_button.click()  # noqa: SLF001
     assert requests == [True]
     page.set_preview_busy(True)
+    assert not page._generate_button.isEnabled()  # noqa: SLF001
     page.set_entries((_entry("two", "Sales"),))
     assert not page._preview_button.isEnabled()  # noqa: SLF001
     page._preview_button.click()  # noqa: SLF001
     assert requests == [True]
     page.set_preview_busy(False)
+    assert page._generate_button.isEnabled()  # noqa: SLF001
     assert page._preview_button.isEnabled()  # noqa: SLF001
     page.set_entries(())
     assert not page._preview_button.isEnabled()  # noqa: SLF001
+    assert not page._generate_button.isEnabled()  # noqa: SLF001
+
+
+def test_report_generate_emits_only_when_report_is_nonempty_and_idle():
+    page = ReportPage()
+    requests: list[bool] = []
+    page.generate_requested.connect(lambda: requests.append(True))
+    page._generate_button.click()  # noqa: SLF001
+    assert requests == []
+    page.set_entries((_entry("one", "Employees"),))
+    page._generate_button.click()  # noqa: SLF001
+    assert requests == [True]
+    page.set_preview_busy(True)
+    page._generate_button.click()  # noqa: SLF001
+    assert requests == [True]

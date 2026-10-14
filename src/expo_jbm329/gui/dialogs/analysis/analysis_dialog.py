@@ -143,6 +143,7 @@ class AnalysisDialog(QDialog):
     pca_export_requested = pyqtSignal(object)  # PCAExportRequest
     time_series_export_requested = pyqtSignal(object)  # TimeSeriesExportRequest
     report_preview_requested = pyqtSignal(object)  # Captured ReportDocument
+    report_save_requested = pyqtSignal(object)  # Captured ReportDocument
 
     def __init__(
         self,
@@ -219,6 +220,7 @@ class AnalysisDialog(QDialog):
         self._report_page.remove_requested.connect(self._remove_report_entry)
         self._report_page.move_requested.connect(self._move_report_entry)
         self._report_page.preview_requested.connect(self._request_report_preview)
+        self._report_page.generate_requested.connect(self._request_report_save)
         self._workspace_stack.addWidget(self._report_page)
 
         root.addLayout(top_row)
@@ -543,15 +545,25 @@ class AnalysisDialog(QDialog):
         return self._report_document
 
     def _request_report_preview(self) -> None:
+        document = self._capture_report_document()
+        if document is not None:
+            self.report_preview_requested.emit(document)
+
+    def _request_report_save(self) -> None:
+        document = self._capture_report_document()
+        if document is not None:
+            self.report_save_requested.emit(document)
+
+    def _capture_report_document(self) -> ReportDocument | None:
         if not self._report_document.entries:
-            return
+            return None
         document = ReportDocument(
             title=self._report_page.report_title(),
             description=self._report_page.report_description(),
         )
         for entry in self._report_document.entries:
             document.upsert(entry)
-        self.report_preview_requested.emit(document)
+        return document
 
     def _current_report_candidate(self) -> ReportEntry | None:
         category = self.selected_category()

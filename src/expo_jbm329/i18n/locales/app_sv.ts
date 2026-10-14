@@ -420,6 +420,16 @@
 <context>
     <name>AnalysisController</name>
     <message>
+        <source>Could not save HTML report.
+{error}</source>
+        <translation>Kunde inte spara HTML-rapporten.
+{error}</translation>
+    </message>
+    <message>
+        <source>HTML report saving is unavailable.</source>
+        <translation>Det går inte att spara HTML-rapporter.</translation>
+    </message>
+    <message>
         <source>Preparing report preview...</source>
         <translation>Förbereder rapportförhandsvisning...</translation>
     </message>
@@ -3831,6 +3841,22 @@ Fortsätt?</translation>
 </context>
 <context>
     <name>ExportController</name>
+    <message><source>Generate HTML report</source><translation>Generera HTML-rapport</translation></message>
+    <message><source>Generating HTML report…</source><translation>Genererar HTML-rapport…</translation></message>
+    <message><source>Replace existing report?</source><translation>Ersätt befintlig rapport?</translation></message>
+    <message><source>The file already exists. Replace it?
+
+{path}</source><translation>Filen finns redan. Vill du ersätta den?
+
+{path}</translation></message>
+    <message><source>Report saved</source><translation>Rapport sparad</translation></message>
+    <message><source>The report was saved, but could not be opened in the default browser.
+
+Saved to:
+{path}</source><translation>Rapporten sparades, men kunde inte öppnas i standardwebbläsaren.
+
+Sparad till:
+{path}</translation></message>
     <message>
         <source>Export completed</source>
         <translation>Export slutförd</translation>

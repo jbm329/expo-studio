@@ -742,6 +742,82 @@ def test_report_preview_scheduling_failure_is_visible_and_allows_retry(monkeypat
     assert dialog.report_page()._preview_button.isEnabled()
 
 
+def test_report_save_routes_captured_factory_and_shares_preview_busy_guard(monkeypatch):
+    controller, dialog, document, operations, preview = _report_preview_context(monkeypatch)
+    exporter = Mock()
+    exporter.export_html_report.return_value = True
+    controller._export_controller = exporter
+    renderer = Mock(return_value="<html>Saved snapshot</html>")
+    monkeypatch.setattr(analysis_controller_module, "render_report_html", renderer)
+    dialog.report_page().set_entries(document.entries)
+
+    dialog.report_save_requested.emit(document)
+    arguments = exporter.export_html_report.call_args.kwargs
+
+    assert arguments["suggested_name"] == document.title
+    assert arguments["parent_widget"] is dialog
+    assert arguments["operation_target"] is dialog.report_page()
+    assert not arguments["stale_check"]()
+    assert not renderer.called
+    assert arguments["html_factory"]() == "<html>Saved snapshot</html>"
+    assert renderer.call_args.args == (document,)
+    assert not dialog.report_page()._generate_button.isEnabled()
+    dialog.report_preview_requested.emit(document)
+    dialog.report_save_requested.emit(document)
+    assert operations.calls == []
+    assert exporter.export_html_report.call_count == 1
+    arguments["on_finished"]()
+    assert dialog.report_page()._generate_button.isEnabled()
+    dialog.report_preview_requested.emit(document)
+    assert len(operations.calls) == 1
+    preview.assert_not_called()
+
+
+@pytest.mark.parametrize("failure", [None, RuntimeError("Cannot schedule report")])
+def test_report_save_dialog_cancel_and_start_failure_restore_controls(monkeypatch, failure):
+    controller, dialog, document, _, _ = _report_preview_context(monkeypatch)
+    exporter = Mock()
+    exporter.export_html_report.return_value = False
+    exporter.export_html_report.side_effect = failure
+    controller._export_controller = exporter
+    dialog.report_page().set_entries(document.entries)
+
+    dialog.report_save_requested.emit(document)
+
+    assert dialog.report_page()._generate_button.isEnabled()
+    if failure is not None:
+        assert "Cannot schedule report" in dialog.report_page()._preview_status.text()
+
+
+def test_report_save_requires_exporter_and_does_not_disable_preview(monkeypatch):
+    _, dialog, document, operations, _ = _report_preview_context(monkeypatch)
+    dialog.report_page().set_entries(document.entries)
+    dialog.report_save_requested.emit(document)
+
+    assert "unavailable" in dialog.report_page()._preview_status.text()
+    assert dialog.report_page()._preview_button.isEnabled()
+    assert operations.calls == []
+
+
+def test_report_save_closed_window_invalidates_factory_and_callbacks(monkeypatch):
+    controller, dialog, document, _, _ = _report_preview_context(monkeypatch)
+    exporter = Mock()
+    exporter.export_html_report.return_value = True
+    controller._export_controller = exporter
+    renderer = Mock(return_value="<html>Snapshot</html>")
+    monkeypatch.setattr(analysis_controller_module, "render_report_html", renderer)
+    dialog.report_save_requested.emit(document)
+    arguments = exporter.export_html_report.call_args.kwargs
+
+    dialog.reject()
+    assert arguments["stale_check"]()
+    arguments["html_factory"]()
+    assert renderer.call_args.kwargs["cancel_cb"]()
+    arguments["on_finished"]()
+    dialog.report_save_requested.emit(document)
+    assert exporter.export_html_report.call_count == 1
+
+
 def test_prepared_preview_window_is_parented_shown_and_closed_with_analysis_dialog(monkeypatch):
     dialog = AnalysisDialog(parent=None, datasets=[], active_tab_id=None)
     module_name = "expo_jbm329.gui.dialogs.analysis.report_preview_dialog"
@@ -805,6 +881,7 @@ class DummyAnalysisDialog:
         self.pca_export_requested = DummySignal()
         self.time_series_export_requested = DummySignal()
         self.report_preview_requested = DummySignal()
+        self.report_save_requested = DummySignal()
         self.finished = DummySignal()
         self.destroyed = DummySignal()
         self.placeholder_calls: list[str] = []

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
@@ -9,8 +9,10 @@ from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QWidget
 
 from expo_jbm329.gui.dialogs.service.dialog_service import ProfileChoice
+from expo_jbm329.services.file_job_service import FileJobService
 from expo_jbm329.services.file_writer import FileWriter
 from expo_jbm329.services.job_result import JobResult
+from expo_jbm329.workbench.controllers.document_controller import DocumentController
 from expo_jbm329.workbench.controllers.export_controller import ExportController, ExportKind
 from tests.stubs import (
     DummyAsyncOps,
@@ -68,6 +70,251 @@ def make_controller(
     )
     ctrl.reload_settings({"paths": {"documents": "C:/tmp"}})
     return ctrl, dialogs, file_dialogs, file_jobs, status_msgs, open_url_called, async_ops
+
+
+def make_html_controller(tmp_path):
+    ctrl, dialogs, file_dialogs, _, status, _, _ = make_controller()
+    ctrl._async_ops = Mock()
+    ctrl._data_io = Mock()
+    ctrl._file_jobs = object.__new__(FileJobService)
+    ctrl._dialog_state.directory = str(tmp_path)
+    ctrl._open_url = Mock(return_value=True)
+    return ctrl, dialogs, file_dialogs, status
+
+
+def request_html(ctrl, **overrides):
+    callbacks = {
+        "html_factory": Mock(return_value="captured HTML"),
+        "suggested_name": "Captured: report?.html",
+        "parent_widget": QWidget(),
+        "operation_target": QWidget(),
+        "stale_check": Mock(return_value=False),
+        "on_finished": Mock(),
+    }
+    callbacks.update(overrides)
+    started = ctrl.export_html_report(**callbacks)
+    return started, callbacks
+
+
+def test_html_dialog_cancel_has_no_worker_or_finished_callback(tmp_path):
+    ctrl, _, files, _ = make_html_controller(tmp_path)
+    files.enqueue_save_response("", "")
+    started, callbacks = request_html(ctrl)
+    assert not started
+    ctrl._async_ops.run_target_overlay_operation.assert_not_called()
+    callbacks["html_factory"].assert_not_called()
+    callbacks["on_finished"].assert_not_called()
+
+
+@pytest.mark.parametrize("stale_values", [[True], [False, True]])
+def test_html_closed_owner_does_not_schedule(tmp_path, stale_values):
+    ctrl, _, files, _ = make_html_controller(tmp_path)
+    files.enqueue_save_response(str(tmp_path / "report.html"), "HTML files (*.html)")
+    started, callbacks = request_html(ctrl, stale_check=Mock(side_effect=stale_values))
+    assert not started
+    ctrl._async_ops.run_target_overlay_operation.assert_not_called()
+    callbacks["on_finished"].assert_not_called()
+    assert not any(call[0] == "set_dir" for call in ctrl._dialog_state.calls)
+
+
+@pytest.mark.parametrize("suffix", ["", ".txt", ".htm", ".html", ".HTML"])
+def test_html_extension_remembered_directory_and_worker_context(tmp_path, suffix):
+    ctrl, _, files, _ = make_html_controller(tmp_path)
+    files.enqueue_save_response(str(tmp_path / f"selected{suffix}"), "HTML files (*.html)")
+    with patch.object(files, "get_save_filename", wraps=files.get_save_filename) as save:
+        started, callbacks = request_html(ctrl)
+    assert started
+    req = save.call_args.kwargs["req"]
+    assert Path(req.initial_path).name == "Captured report.html"
+    assert save.call_args.kwargs["parent"] is callbacks["parent_widget"]
+    assert ctrl._dialog_state.calls[-1] == ("set_dir", "dialogs/save_report_dir", tmp_path)
+    job = ctrl._async_ops.run_target_overlay_operation.call_args.kwargs
+    assert job["target"] is callbacks["operation_target"]
+    assert job["on_finished"] is callbacks["on_finished"]
+    assert job["stale_check"] is callbacks["stale_check"]
+    assert job["cancelable"] and not job["indeterminate"]
+    progress, cancel = Mock(), Mock(return_value=False)
+    job["work"](progress_cb=progress, cancel_cb=cancel, job_id="id", job_scope="scope")
+    call = ctrl._data_io.export_html_report.call_args
+    assert call.args[0] is callbacks["html_factory"]
+    assert call.args[1] == tmp_path / ("selected" + (suffix if suffix.lower() == ".html" else ".html"))
+    assert call.kwargs["progress_cb"] is progress
+    assert not call.kwargs["cancel_cb"]()
+    cancel.return_value = True
+    assert call.kwargs["cancel_cb"]()
+    cancel.return_value = False
+    callbacks["stale_check"].return_value = True
+    assert call.kwargs["cancel_cb"]()
+    assert call.kwargs["corr_id"]
+    callbacks["html_factory"].assert_not_called()
+
+
+@pytest.mark.parametrize("confirmed", [False, True])
+def test_html_normalized_existing_target_confirmed(tmp_path, confirmed):
+    ctrl, dialogs, files, _ = make_html_controller(tmp_path)
+    destination = tmp_path / "report.html"
+    destination.write_text("existing", encoding="utf-8")
+    files.enqueue_save_response(str(tmp_path / "report.txt"), "HTML files (*.html)")
+    with patch.object(dialogs, "prompt_yes_no", return_value=confirmed) as confirm:
+        started, callbacks = request_html(ctrl)
+    assert started is confirmed
+    assert str(destination) in confirm.call_args.kwargs["text"]
+    assert confirm.call_args.kwargs["parent"] is callbacks["parent_widget"]
+    assert confirm.call_args.kwargs["default_yes"] is False
+    callbacks["on_finished"].assert_not_called()
+    assert destination.read_text(encoding="utf-8") == "existing"
+
+
+def test_html_unchanged_destination_uses_native_overwrite_confirmation(tmp_path):
+    ctrl, dialogs, files, _ = make_html_controller(tmp_path)
+    path = tmp_path / "report.html"
+    path.write_bytes(b"existing")
+    files.enqueue_save_response(str(path), "HTML files (*.html)")
+    with patch.object(dialogs, "prompt_yes_no") as confirm:
+        assert request_html(ctrl)[0]
+    confirm.assert_not_called()
+
+
+@pytest.mark.parametrize("browser_result", [True, False, RuntimeError("browser unavailable")])
+def test_html_success_opens_path_and_notifies_saved_path(tmp_path, browser_result):
+    ctrl, dialogs, files, status = make_html_controller(tmp_path)
+    path = tmp_path / "report with space.html"
+    files.enqueue_save_response(str(path), "HTML files (*.html)")
+    started, callbacks = request_html(ctrl)
+    assert started
+    if isinstance(browser_result, Exception):
+        ctrl._open_url.side_effect = browser_result
+    else:
+        ctrl._open_url.return_value = browser_result
+    job = ctrl._async_ops.run_target_overlay_operation.call_args.kwargs
+    with patch("expo_jbm329.workbench.controllers.export_controller.QTimer.singleShot", side_effect=lambda _, cb: cb()):
+        job["on_result"](JobResult(ok=True, path=str(path), elapsed=0.2))
+    ctrl._open_url.assert_called_once_with(str(path.resolve()))
+    assert any("completed" in msg for msg, _ in status)
+    kind, notification, _ = dialogs.calls[-1]
+    assert kind == ("info" if browser_result is True else "warn")
+    assert str(path) in notification[1]
+    job["on_finished"]()
+    callbacks["on_finished"].assert_called_once()
+
+
+def test_html_save_opens_through_production_document_callback(tmp_path):
+    ctrl, dialogs, files, _ = make_html_controller(tmp_path)
+    path = tmp_path / "report with space and å.html"
+    path.write_text("<html>Saved report</html>", encoding="utf-8")
+    document = object.__new__(DocumentController)
+    document._logger = Mock()
+    document._set_status = Mock()
+    document._dialogs = Mock()
+    document._parent = QWidget()
+    ctrl._open_url = lambda file_path: document.open_html_file(path=file_path)
+    files.enqueue_save_response(str(path), "HTML files (*.html)")
+    assert request_html(ctrl)[0]
+    job = ctrl._async_ops.run_target_overlay_operation.call_args.kwargs
+
+    with (
+        patch("webbrowser.open", return_value=True) as browser,
+        patch("expo_jbm329.workbench.controllers.export_controller.QTimer.singleShot", side_effect=lambda _, cb: cb()),
+    ):
+        job["on_result"](JobResult(ok=True, path=str(path), elapsed=0.2))
+
+    browser.assert_called_once_with(path.resolve().as_uri())
+    document._dialogs.critical.assert_not_called()
+    assert dialogs.calls[-1][0] == "info"
+    assert path.read_text(encoding="utf-8") == "<html>Saved report</html>"
+
+
+@pytest.mark.parametrize("error", [False, True])
+def test_html_stale_completion_and_error_do_not_notify(tmp_path, error):
+    ctrl, dialogs, files, status = make_html_controller(tmp_path)
+    files.enqueue_save_response(str(tmp_path / "report.html"), "HTML files (*.html)")
+    _, callbacks = request_html(ctrl)
+    callbacks["stale_check"].return_value = True
+    job = ctrl._async_ops.run_target_overlay_operation.call_args.kwargs
+    if error:
+        job["on_error"]("worker failed")
+    else:
+        job["on_result"](JobResult(ok=True, elapsed=None))
+    job["on_finished"]()
+    assert not dialogs.calls and not status
+    ctrl._open_url.assert_not_called()
+    callbacks["on_finished"].assert_called_once()
+
+
+def test_html_delayed_success_notification_checks_closure(tmp_path):
+    ctrl, dialogs, files, _ = make_html_controller(tmp_path)
+    files.enqueue_save_response(str(tmp_path / "report.html"), "HTML files (*.html)")
+    _, callbacks = request_html(ctrl)
+    job = ctrl._async_ops.run_target_overlay_operation.call_args.kwargs
+    queued = []
+    with patch(
+        "expo_jbm329.workbench.controllers.export_controller.QTimer.singleShot",
+        side_effect=lambda _, cb: queued.append(cb),
+    ):
+        job["on_result"](JobResult(ok=True, elapsed=None))
+        callbacks["stale_check"].return_value = True
+        queued.pop(0)()
+        queued.pop(0)()
+    assert not dialogs.calls
+
+
+@pytest.mark.parametrize(
+    "result",
+    [JobResult(ok=False, elapsed=None, cancelled=True), JobResult(ok=False, elapsed=None, error="render failed")],
+)
+def test_html_unsuccessful_result_never_opens_browser(tmp_path, result):
+    ctrl, dialogs, files, _ = make_html_controller(tmp_path)
+    files.enqueue_save_response(str(tmp_path / "report.html"), "HTML files (*.html)")
+    request_html(ctrl)
+    job = ctrl._async_ops.run_target_overlay_operation.call_args.kwargs
+    job["on_result"](result)
+    ctrl._open_url.assert_not_called()
+    assert dialogs.calls[-1][0] == ("info" if result.cancelled else "warn")
+
+
+def test_html_worker_exception_owned_notification_and_finished(tmp_path):
+    ctrl, dialogs, files, _ = make_html_controller(tmp_path)
+    files.enqueue_save_response(str(tmp_path / "report.html"), "HTML files (*.html)")
+    _, callbacks = request_html(ctrl)
+    job = ctrl._async_ops.run_target_overlay_operation.call_args.kwargs
+    with patch.object(dialogs, "critical") as critical:
+        job["on_error"]("worker failed")
+    critical.assert_called_once_with(
+        parent=callbacks["parent_widget"], title=ctrl.TR_KIND_HTML_REPORT, text="worker failed"
+    )
+    job["on_finished"]()
+    callbacks["on_finished"].assert_called_once()
+    ctrl._open_url.assert_not_called()
+
+
+@pytest.mark.parametrize("close_at", ["rendered", "before_replace"])
+def test_html_closure_after_render_preserves_existing_file(tmp_path, close_at):
+    from expo_jbm329.services.data_io_service import DataIOService
+    from expo_jbm329.services.file_loader import FileLoader
+
+    ctrl, _, files, _ = make_html_controller(tmp_path)
+    ctrl._data_io = DataIOService(FileLoader(), FileWriter())
+    path = tmp_path / "report.html"
+    path.write_bytes(b"original")
+    files.enqueue_save_response(str(path), "HTML files (*.html)")
+    closed = False
+
+    def render(**_):
+        nonlocal closed
+        closed = close_at == "rendered"
+        return "new"
+
+    def progress(value):
+        nonlocal closed
+        if value == 99 and close_at == "before_replace":
+            closed = True
+
+    assert request_html(ctrl, html_factory=render, stale_check=lambda: closed)[0]
+    job = ctrl._async_ops.run_target_overlay_operation.call_args.kwargs
+    result = job["work"](progress_cb=progress)
+    assert result.cancelled and not result.ok
+    assert path.read_bytes() == b"original"
+    assert [entry for entry in tmp_path.iterdir() if entry.is_file()] == [path]
 
 
 def test_export_csv_no_df_shows_info_and_returns():

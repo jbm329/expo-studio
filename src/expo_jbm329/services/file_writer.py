@@ -202,6 +202,74 @@ class FileWriter:
             raise ValueError(msg_0)
 
     # ----------------------------------------------------------------------
+    # HTML reports
+    # ----------------------------------------------------------------------
+    def save_html(
+        self,
+        html: str,
+        dest: str | Path,
+        *,
+        progress_cb: Callable[[int], None] | None = None,
+        cancel_cb: Callable[[], bool] | None = None,
+        corr_id: str | None = None,
+    ) -> Path:
+        """Write a UTF-8 report atomically, preserving the destination on failure.
+
+        Args:
+            html: Complete, self-contained report document.
+            dest: Destination path.
+            progress_cb: Optional progress notification callback.
+            cancel_cb: Optional cancellation check.
+            corr_id: Optional logging correlation identifier.
+
+        Returns:
+            The committed destination path.
+
+        Raises:
+            ExportCancelledError: If cancelled before atomic replacement.
+            OSError: If writing or replacing the destination fails.
+        """
+        path = Path(dest)
+
+        def check_cancel() -> None:
+            if cancel_cb is not None and cancel_cb():
+                message = "HTML report export cancelled"
+                raise ExportCancelledError(message, path=str(path), corr_id=corr_id)
+
+        check_cancel()
+        if progress_cb is not None:
+            progress_cb(0)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                newline="",
+                prefix=".report-",
+                suffix=".html",
+                dir=path.parent,
+                delete=False,
+            ) as handle:
+                temporary = Path(handle.name)
+                handle.write(html)
+            if progress_cb is not None:
+                progress_cb(99)
+            check_cancel()
+            temporary.replace(path)
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
+        if progress_cb is not None:
+            try:
+                progress_cb(100)
+            except Exception:
+                # Replacement is the success boundary; notification failures cannot undo it.
+                self._logger.exception("FileWriter: progress notification failed after HTML commit (corr=%s)", corr_id)
+        self._logger.info("FileWriter: HTML report written (corr=%s, path=%s)", corr_id, fmt_path(path))
+        return path
+
+    # ----------------------------------------------------------------------
     # CSV (chunked for large datasets)
     # ----------------------------------------------------------------------
     def save_csv(

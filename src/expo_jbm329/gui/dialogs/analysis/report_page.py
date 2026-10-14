@@ -32,6 +32,7 @@ class ReportPage(QWidget):
     remove_requested = pyqtSignal(str)
     move_requested = pyqtSignal(str, int)
     preview_requested = pyqtSignal()
+    generate_requested = pyqtSignal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Build the empty report page.
@@ -95,7 +96,7 @@ class ReportPage(QWidget):
         footer.addWidget(self._preview_button)
         self._generate_button = QPushButton(self.tr("Generate HTML report"), self)
         self._generate_button.setEnabled(False)
-        self._generate_button.setToolTip(self.tr("HTML generation will be available in the next step."))
+        self._generate_button.clicked.connect(self.generate_requested)
         footer.addWidget(self._generate_button)
         layout.addLayout(footer)
         self._preview_status = QLabel(self)
@@ -114,7 +115,7 @@ class ReportPage(QWidget):
         return self._description.toPlainText()
 
     def set_preview_busy(self, busy: bool) -> None:
-        """Prevent duplicate preview requests while report content is prepared."""
+        """Prevent concurrent preview/save requests while report content is prepared."""
         self._preview_busy = busy
         self._update_controls()
 
@@ -200,3 +201,4 @@ class ReportPage(QWidget):
         self._edit_button.setEnabled(has_selection)
         self._remove_button.setEnabled(has_selection)
         self._preview_button.setEnabled(self._entries.count() > 0 and not self._preview_busy)
+        self._generate_button.setEnabled(self._entries.count() > 0 and not self._preview_busy)
