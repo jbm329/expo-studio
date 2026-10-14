@@ -48,6 +48,12 @@ def test_summary_label_shows_rows_columns_missing_and_duplicates():
     assert fmt_int(3) in text
     assert fmt_pct(result.missing_cell_fraction) in text
     assert fmt_pct(result.duplicate_row_fraction) in text
+    assert text.split("<br>") == [
+        f"Rows: <b>{fmt_int(100)}</b>",
+        f"Columns: <b>{fmt_int(10)}</b>",
+        f"Missing values: <b>{fmt_int(25)}</b> ({fmt_pct(result.missing_cell_fraction)})",
+        f"Duplicate rows: <b>{fmt_int(3)}</b> ({fmt_pct(result.duplicate_row_fraction)})",
+    ]
 
 
 def test_column_types_label_shows_every_bucket_count():

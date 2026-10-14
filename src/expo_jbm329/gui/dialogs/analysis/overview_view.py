@@ -106,10 +106,10 @@ class OverviewView(QWidget):
         r = self._result
 
         text = (
-            f"{self.tr('Rows')}: <b>{fmt_int(r.row_count)}</b> &nbsp;&nbsp; "
+            f"{self.tr('Rows')}: <b>{fmt_int(r.row_count)}</b><br>"
             f"{self.tr('Columns')}: <b>{fmt_int(r.column_count)}</b><br>"
-            f"{self.tr('Missing values')}: <b>{fmt_pct(r.missing_cell_fraction)}</b> "
-            f"({fmt_int(r.missing_cell_count)}) &nbsp;&nbsp; "
+            f"{self.tr('Missing values')}: <b>{fmt_int(r.missing_cell_count)}</b> "
+            f"({fmt_pct(r.missing_cell_fraction)})<br>"
             f"{self.tr('Duplicate rows')}: <b>{fmt_int(r.duplicate_row_count)}</b> "
             f"({fmt_pct(r.duplicate_row_fraction)})"
         )

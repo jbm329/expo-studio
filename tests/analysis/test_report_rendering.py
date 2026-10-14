@@ -439,6 +439,7 @@ def test_overview_summary_is_readable_text_with_view_facts_and_issues(with_warni
     html = render_prepared_report_html(prepared)
     assert "<table>" not in html
     assert '<dl class="overview-facts">' in html
+    assert ".overview-facts { margin: .5rem 0; display: grid; gap: .4rem; }" in html
     assert "<h3>Summary</h3>" in html
     assert "<h4>Column types</h4>" in html
     assert "<h4>Potential issues</h4>" in html

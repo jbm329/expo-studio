@@ -2156,7 +2156,7 @@ h2 { border-bottom: 1px solid #d9e0e8; padding-bottom: .4rem; }
 .metadata dd { margin: 0; }
 .report-component { margin: 1.5rem 0; break-inside: avoid; }
 .overview-summary h4 { margin: 1rem 0 .4rem; }
-.overview-facts { margin: .5rem 0; display: flex; flex-wrap: wrap; gap: .4rem 1.5rem; }
+.overview-facts { margin: .5rem 0; display: grid; gap: .4rem; }
 .overview-facts div { display: flex; gap: .4rem; }
 .overview-facts dt::after { content: ":"; }
 .overview-facts dd { margin: 0; }
