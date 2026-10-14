@@ -983,6 +983,7 @@ def _localized_report_tables(
     labels: ReportRenderOptions | None = None,
     split_overview_samples: bool = False,
     hypothesis_test_results: pd.DataFrame | None = None,
+    include_correlation_explanation: bool = True,
 ) -> dict[str, pd.DataFrame]:
     """Build localized tables, optionally using report-only raw hypothesis rows."""
     if labels is not None:
@@ -1223,14 +1224,10 @@ def _localized_report_tables(
                 frame["method"] = frame["method"].map(
                     lambda value: correlation_method_label(CorrelationMethod(str(value)), translate)
                 )
-                frame["ranking_explanation"] = translate(
-                    "AnalysisExportDialog",
-                    "Pairs are ranked by absolute coefficient. Significance is based on "
-                    "p < {alpha} after Holm adjustment for {count} tests.",
-                ).format(
-                    alpha=number_format(SIGNIFICANCE_LEVEL),
-                    count=count_format(len(snapshot.matrix.pairs)),
-                )
+                if include_correlation_explanation:
+                    frame["ranking_explanation"] = _correlation_ranking_explanation(
+                        snapshot, translate, number_format, count_format
+                    )
                 correlation_headers = {
                     "variable_1": ("CorrelationView", "Variable 1"),
                     "variable_2": ("CorrelationView", "Variable 2"),
@@ -1687,6 +1684,7 @@ def prepare_report_content(
                 number_format=number_format,
                 count_format=count_format,
                 hypothesis_test_results=_hypothesis_report_rows(entry.snapshot, table_keys),
+                include_correlation_explanation=False,
             ).items()
         )
         chart_keys = tuple(component.key for component in selected if component.kind == "chart")
@@ -1733,18 +1731,23 @@ def prepare_report_content(
                         if overview is not None and component.key == "Columns"
                         else _prepare_table(component.key, table_title, frame)
                     )
+                    paragraphs: tuple[str, ...] = ()
+                    if isinstance(entry.snapshot, HypothesisExportSnapshot) and component.key == "test_results":
+                        paragraphs = entry.snapshot.notes
+                    elif (
+                        isinstance(entry.snapshot, CorrelationExportSnapshot)
+                        and component.key == "strongest_correlations"
+                    ):
+                        paragraphs = (
+                            _correlation_ranking_explanation(entry.snapshot, translate, number_format, count_format),
+                        )
                     prepared_components.append(
                         PreparedReportComponent(
                             component.key,
                             label,
                             component.kind,
                             (prepared_table,),
-                            paragraphs=(
-                                entry.snapshot.notes
-                                if isinstance(entry.snapshot, HypothesisExportSnapshot)
-                                and component.key == "test_results"
-                                else ()
-                            ),
+                            paragraphs=paragraphs,
                         )
                     )
             else:
@@ -1882,6 +1885,23 @@ def _prepare_overview_samples(
         last_title = translate("OverviewView", "Last ({count})").format(count=count_format(len(last)))
         tables.append(_prepare_table("last_sample", last_title, last))
     return tuple(tables), notice
+
+
+def _correlation_ranking_explanation(
+    snapshot: CorrelationExportSnapshot,
+    translate: Callable[[str, str], str],
+    number_format: Callable[[float], str],
+    count_format: Callable[[int], str],
+) -> str:
+    """Describe the captured matrix's common ranking and multiplicity rules."""
+    return translate(
+        "AnalysisExportDialog",
+        "Pairs are ranked by absolute coefficient. Significance is based on "
+        "p < {alpha} after Holm adjustment for {count} tests.",
+    ).format(
+        alpha=number_format(SIGNIFICANCE_LEVEL),
+        count=count_format(len(snapshot.matrix.pairs)),
+    )
 
 
 def _prepare_table(key: str, title: str, frame: pd.DataFrame) -> PreparedReportTable:

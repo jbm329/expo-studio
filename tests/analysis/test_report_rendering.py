@@ -1056,6 +1056,49 @@ def test_correlation_report_uses_shared_configured_title_summary_and_semantic_he
     assert "<script>" not in html
 
 
+def test_correlation_ranking_explanation_is_below_table_and_exports_are_unchanged():
+    snapshot = correlation_snapshot()
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.CORRELATION, snapshot, ("strongest_correlations",)))
+    source = (
+        "Pairs are ranked by absolute coefficient. Significance is based on "
+        "p < {alpha} after Holm adjustment for {count} tests."
+    )
+
+    def translate(_context: str, text: str) -> str:
+        return f"<Explanation>\n{text}" if text == source else text
+
+    options = capture_report_labels(
+        translate,
+        number_format=lambda value: f"number:{value}",
+        count_format=lambda value: f"count:{value}",
+    )
+    exported = localized_report_tables(
+        AnalysisCategory.CORRELATION, snapshot, ("strongest_correlations",), labels=options
+    )
+    export_frame = next(iter(exported.values()))
+    explanation = export_frame["Ranking and Holm explanation"].iloc[0]
+
+    prepared = prepare_report_content(document, labels=options)
+    component = prepared.entries[0].components[0]
+    table = component.tables[0]
+    html = render_prepared_report_html(prepared)
+
+    assert "Ranking and Holm explanation" not in table.headers
+    assert len(table.rows) == len(snapshot.matrix.pairs)
+    assert component.paragraphs == (explanation,)
+    assert f"count:{len(snapshot.matrix.pairs)} tests" in explanation
+    assert export_frame["Ranking and Holm explanation"].tolist() == [explanation] * len(snapshot.matrix.pairs)
+    assert html.count("&lt;Explanation&gt;") == 1
+    assert html.index("</table>") < html.index('<div class="report-paragraphs">')
+    assert "p &lt; number:" in html
+
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.CORRELATION, snapshot, ("matrix_plot",)))
+    chart_only = prepare_report_content(document)
+    assert chart_only.entries[0].components[0].paragraphs == ()
+
+
 def test_correlation_presentation_labels_are_captured_before_report_preparation():
     entry = _entry(
         AnalysisCategory.CORRELATION,

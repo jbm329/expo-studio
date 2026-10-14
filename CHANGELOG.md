@@ -8,6 +8,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- HTML Strongest correlations tables show the common Ranking and Holm explanation once below the table
 - Advanced Analysis now stays bound to the active ready dataset for the whole modal session; report entries share that source
 - Advanced Analysis displays the source dataset name and dimensions in the window title instead of a separate dataset pane
 - HTML reports show dataset, report generation date, and Expo version once at the top, without row/column metadata
