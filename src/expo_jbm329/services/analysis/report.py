@@ -2163,7 +2163,8 @@ h2 { border-bottom: 1px solid #d9e0e8; padding-bottom: .4rem; }
 .metadata dt { font-weight: 700; }
 .metadata dd { margin: 0; }
 .report-component { margin: 1.5rem 0; break-inside: avoid; }
-.overview-summary h4 { margin: 1rem 0 .4rem; }
+.overview-summary { border: 1px solid #ccd5df; padding: .75rem 1rem; }
+.overview-summary h4 { margin: .5rem 0 .4rem; }
 .overview-summary-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
 .overview-summary-group { min-width: 0; overflow-wrap: anywhere; }
 .overview-facts { margin: .5rem 0; display: grid; gap: .4rem; }
