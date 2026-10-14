@@ -52,14 +52,15 @@ def test_sqlite_driver_reuses_engine_and_executes_df():
     mock_read.assert_called()
 
 
-def test_mysql_driver_builds_url_and_connect_args():
-    driver = SqlAlchemyMySqlDriver("pymysql")
+@pytest.mark.parametrize("driver_name", ["pymysql", "mysqlconnector"])
+def test_mysql_driver_builds_url_and_connect_args(driver_name):
+    driver = SqlAlchemyMySqlDriver(driver_name)
     driver.initialize(timeouts={"login_timeout_s": 5})
     driver.set_query_timeout(9)
     cfg = ConnectionConfig(
         name="db",
         engine="mysql",
-        protocol="pymysql",
+        protocol=driver_name,
         server="localhost",
         port=3307,
         database="sample",
@@ -73,13 +74,45 @@ def test_mysql_driver_builds_url_and_connect_args():
         patch("expo_jbm329.db.drivers.sa_mysql.create_engine", return_value=engine) as mock_create,
         patch("expo_jbm329.db.drivers.sa_mysql.pd.read_sql", return_value=pd.DataFrame({"x": [1]})),
     ):
-        driver.execute_df(cfg, "SELECT 1")
+        df = driver.execute_df(cfg, "SELECT 1")
 
-    _, kwargs = mock_create.call_args
+    assert len(df) == 1
+    call_args, kwargs = mock_create.call_args
+    url = call_args[0]
+    assert url.drivername == f"mysql+{driver_name}"
     assert kwargs["pool_pre_ping"] is True
     assert kwargs["connect_args"]["connect_timeout"] == 5
     assert kwargs["connect_args"]["read_timeout"] == 9
     assert kwargs["connect_args"]["write_timeout"] == 9
+
+
+def test_mysql_driver_mariadb_url_dialect():
+    driver = SqlAlchemyMySqlDriver("mysqlconnector")
+    cfg = ConnectionConfig(
+        name="mariadb_conn",
+        engine="mariadb",
+        protocol="mysqlconnector",
+        server="127.0.0.1",
+        port=3306,
+        database="testdb",
+    )
+    url = driver._url_for(cfg)
+    assert url.drivername == "mariadb+mysqlconnector"
+    assert url.host == "127.0.0.1"
+
+
+def test_mysql_driver_create_engine_failure_logs_and_raises():
+    driver = SqlAlchemyMySqlDriver("pymysql")
+    cfg = ConnectionConfig(
+        name="failed_db",
+        engine="mysql",
+        protocol="pymysql",
+    )
+    with (
+        patch("expo_jbm329.db.drivers.sa_mysql.create_engine", side_effect=ModuleNotFoundError("No module named 'pymysql'")),
+        pytest.raises(ModuleNotFoundError, match="No module named 'pymysql'"),
+    ):
+        driver._get_engine(cfg)
 
 
 def test_odbc_driver_cancels_and_executes_df():

@@ -82,6 +82,8 @@ hiddenimports += collect_submodules("sqlglot")
 # pyreadstat Cython extensions import narwhals in a way PyInstaller cannot see.
 hiddenimports += collect_submodules("pyreadstat")
 hiddenimports += ["narwhals.stable.v2"]
+hiddenimports += collect_submodules("pymysql")
+hiddenimports += collect_submodules("mysql.connector")
 
 try:
     import data_profiling  # noqa: F401
@@ -107,7 +109,7 @@ else:
         include_py_files=False,
     )
 
-for _pkg in ("jinja2", "pandas", "numpy"):
+for _pkg in ("jinja2", "pandas", "numpy", "pymysql", "mysql-connector-python"):
     try:
         datas += copy_metadata(_pkg)
     except Exception:

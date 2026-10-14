@@ -138,7 +138,15 @@ class SqlAlchemyMySqlDriver(DriverProtocol):
                 log.debug(
                     "SqlAlchemyMySqlDriver: creating SQLAlchemy Engine for %s (driver=%s)", cfg.name, self._driver_name
                 )
-                eng = create_engine(url, pool_pre_ping=True, connect_args=connect_args)
+                try:
+                    eng = create_engine(url, pool_pre_ping=True, connect_args=connect_args)
+                except Exception:
+                    log.exception(
+                        "SqlAlchemyMySqlDriver: failed to create SQLAlchemy Engine for %s (driver=%s)",
+                        cfg.name,
+                        self._driver_name,
+                    )
+                    raise
                 self._engines[key] = eng
             return eng
 
