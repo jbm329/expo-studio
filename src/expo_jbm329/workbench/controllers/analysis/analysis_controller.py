@@ -8,6 +8,7 @@ from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, cast
 
 from PyQt6.QtCore import QT_TR_NOOP, QT_TRANSLATE_NOOP, QTimer
+from PyQt6.QtWidgets import QMessageBox
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog, build_placeholder_label
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
@@ -169,6 +170,7 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.regression import RegressionResult
     from expo_jbm329.services.analysis.timeseries import TimeSeriesResult
     from expo_jbm329.services.excel_chart import ExcelChartImage
+    from expo_jbm329.utils.dataset_ref import DatasetRef
     from expo_jbm329.workbench.controllers.async_operation_controller import (
         AsyncOperationController,
     )
@@ -473,6 +475,8 @@ class AnalysisController:
     TR_REPORT_ERROR = QT_TR_NOOP("Could not prepare report preview.\n{error}")
     TR_REPORT_SAVE_UNAVAILABLE = QT_TR_NOOP("HTML report saving is unavailable.")
     TR_REPORT_SAVE_ERROR = QT_TR_NOOP("Could not save HTML report.\n{error}")
+    TR_READY_DATASET_REQUIRED = QT_TR_NOOP("Select a ready dataset before opening Advanced Analysis.")
+    TR_ANALYSIS_UNAVAILABLE = QT_TR_NOOP("Advanced analysis unavailable")
 
     @staticmethod
     def _tr(text: str) -> str:
@@ -553,14 +557,23 @@ class AnalysisController:
         Args:
             parent: Parent widget for the dialog.
         """
-        datasets = self._results.list_ready_datasets()
-        if not datasets:
+        active_tab_id = self._results.active_tab_id()
+        source_dataset: DatasetRef | None = next(
+            (dataset for dataset in self._results.list_ready_datasets() if dataset.tab_id == active_tab_id),
+            None,
+        )
+        if source_dataset is None:
+            self._logger.warning("Advanced Analysis was requested without a ready active dataset.")
+            QMessageBox.warning(
+                parent,
+                self._tr(self.TR_ANALYSIS_UNAVAILABLE),
+                self._tr(self.TR_READY_DATASET_REQUIRED),
+            )
             return
 
         dialog = AnalysisDialog(
             parent=parent,
-            datasets=datasets,
-            active_tab_id=self._results.active_tab_id(),
+            source_dataset=source_dataset,
         )
         self._connect_report_preview(dialog)
         if self._export_controller is not None:
@@ -616,11 +629,7 @@ class AnalysisController:
         def _handle_category_changed(_category_value: str) -> None:
             _refresh_after_interaction()
 
-        def _handle_dataset_changed(_tab_id: str) -> None:
-            _refresh_after_interaction()
-
         dialog.category_changed.connect(_handle_category_changed)
-        dialog.dataset_changed.connect(_handle_dataset_changed)
 
         # Overview is already selected by the time the dialog is constructed
         # (see AnalysisDialog), but that self-emission happens before the
@@ -1924,7 +1933,7 @@ class AnalysisController:
         of the Apply prompt, but the configuration is kept so the user can
         switch back to univariate mode.
         """
-        df = self._load_selected_dataset(dialog, AnalysisCategory.OUTLIERS)
+        df = self._load_source_dataset(dialog, AnalysisCategory.OUTLIERS)
         if df is None:
             self._show_placeholder(dialog, self._tr(self.TR_ANALYSIS_ERROR))
             return
@@ -2169,10 +2178,9 @@ class AnalysisController:
             self._show_placeholder(dialog, self._tr(self.TR_NOT_IMPLEMENTED))
             return
 
-        tab_id = dialog.selected_dataset_tab_id()
-        if tab_id is None:
-            # Defensive only: open_dialog() never opens without a dataset,
-            # so the combo box always has a selection in practice.
+        tab_id = dialog.source_tab_id()
+        if not tab_id:
+            # Defensive only: open_dialog() requires a nonempty stable tab ID.
             self._show_placeholder(dialog, self._tr(self.TR_ANALYSIS_ERROR))
             return
 
@@ -2251,15 +2259,15 @@ class AnalysisController:
             )
             return None
 
-    def _load_selected_dataset(self, dialog: AnalysisDialog, category: AnalysisCategory) -> pd.DataFrame | None:
-        """Return the dialog's selected dataset, or `None` if none is selected or it cannot be loaded.
+    def _load_source_dataset(self, dialog: AnalysisDialog, category: AnalysisCategory) -> pd.DataFrame | None:
+        """Load the dialog's fixed source dataset, or return `None` if unavailable.
 
         Args:
             dialog: Active Advanced Analysis dialog.
             category: The category needing the dataset (for logging).
         """
-        tab_id = dialog.selected_dataset_tab_id()
-        if tab_id is None:
+        tab_id = dialog.source_tab_id()
+        if not tab_id:
             return None
         return self._load_dataset(category, tab_id)
 
@@ -2296,7 +2304,7 @@ class AnalysisController:
             """Discard results once the user has moved on to something else."""
             return (
                 dialog.selected_category() != category
-                or dialog.selected_dataset_tab_id() != tab_id
+                or dialog.source_tab_id() != tab_id
                 or dialog.analysis_revision() != revision
             )
 
@@ -2403,8 +2411,8 @@ class AnalysisController:
             cancelable: Whether `compute` reports progress and honors
                 cancellation (see `_CategoryHandler.cancelable`).
         """
-        tab_id = dialog.selected_dataset_tab_id()
-        if tab_id is None:
+        tab_id = dialog.source_tab_id()
+        if not tab_id:
             return
 
         df = self._load_dataset(category, tab_id)
@@ -2421,7 +2429,7 @@ class AnalysisController:
             """Discard results once the user has moved on from this exact configuration."""
             return (
                 dialog.selected_category() != category
-                or dialog.selected_dataset_tab_id() != tab_id
+                or dialog.source_tab_id() != tab_id
                 or (
                     category in {AnalysisCategory.HYPOTHESIS_TESTS, AnalysisCategory.REGRESSION}
                     and dialog.analysis_revision() != revision

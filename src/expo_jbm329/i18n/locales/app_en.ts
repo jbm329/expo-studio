@@ -100,6 +100,11 @@
     </message>
 </context><context>
     <name>AnalysisController</name>
+    <message><source>Advanced analysis unavailable</source><translation>Advanced analysis unavailable</translation></message>
+    <message>
+        <source>Select a ready dataset before opening Advanced Analysis.</source>
+        <translation>Select a ready dataset before opening Advanced Analysis.</translation>
+    </message>
     <message>
         <source>Could not save HTML report.
 {error}</source>
@@ -160,6 +165,10 @@
     </message>
 </context><context>
     <name>AnalysisDialog</name>
+    <message><source>Advanced analysis — {dataset} ({rows} rows × {columns} columns)</source><translation>Advanced analysis — {dataset} ({rows} rows × {columns} columns)</translation></message>
+    <message><source>Name</source><translation>Name</translation></message>
+    <message><source>Rows</source><translation>Rows</translation></message>
+    <message><source>Columns</source><translation>Columns</translation></message>
     <message>
         <source>Reports(0)</source>
         <translation type="unfinished" />
@@ -183,10 +192,6 @@
     <message>
         <source>Export and Add to report are available after an analysis has been applied.</source>
         <translation>Export and Add to report are available after an analysis has been applied.</translation>
-    </message>
-    <message>
-        <source>A report can contain analyses from multiple datasets.</source>
-        <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="80" />

@@ -1,6 +1,6 @@
 """Advanced Analysis workspace dialog.
 
-Lets the user pick a dataset and an analysis category from the sidebar.
+Shows the fixed source dataset and lets the user choose an analysis category.
 Categories without a dedicated implementation yet show a placeholder
 message (see the project's step-by-step Advanced Analysis plan); the
 content panel itself is fully owned by the controller (AnalysisController),
@@ -57,6 +57,7 @@ from expo_jbm329.services.analysis.report import (
 )
 from expo_jbm329.services.analysis.statistics import StatisticsExportRequest
 from expo_jbm329.services.analysis.timeseries_export import TimeSeriesExportRequest, TimeSeriesExportSnapshot
+from expo_jbm329.utils.format_utils import fmt_int
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.overview import DatasetOverviewResult
@@ -102,7 +103,6 @@ class _ComboToolTipFilter(QObject):
             text = index.data(Qt.ItemDataRole.DisplayRole)
 
         if not tooltip and isinstance(text, str) and text:
-            # Qt detects rich text automatically; column names must remain literal.
             tooltip = f"<qt>{escape(text)}</qt>"
         if isinstance(tooltip, str) and tooltip and isinstance(watched, QWidget):
             QToolTip.showText(event.globalPos(), tooltip, watched)
@@ -131,7 +131,6 @@ def build_placeholder_label(text: str, parent: QWidget | None = None) -> QLabel:
 class AnalysisDialog(QDialog):
     """Dialog hosting the Advanced Analysis workspace."""
 
-    dataset_changed = pyqtSignal(str)  # dataset tab_id
     category_changed = pyqtSignal(str)  # AnalysisCategory value
     overview_export_requested = pyqtSignal(object)  # OverviewExportRequest
     statistics_export_requested = pyqtSignal(object)  # StatisticsExportRequest
@@ -149,21 +148,19 @@ class AnalysisDialog(QDialog):
         self,
         *,
         parent: QWidget | None,
-        datasets: list[DatasetRef],
-        active_tab_id: str | None,
+        source_dataset: DatasetRef,
     ) -> None:
         """Initialize the Advanced Analysis dialog.
 
         Args:
             parent: Parent widget.
-            datasets: Available datasets to analyze.
-            active_tab_id: Initially selected dataset tab ID.
+            source_dataset: Ready dataset fixed for this analysis session.
         """
         super().__init__(parent)
         self.setWindowFlag(Qt.WindowType.WindowMaximizeButtonHint, True)
         self.setWindowFlag(Qt.WindowType.WindowMinimizeButtonHint, False)
 
-        self._datasets = datasets
+        self._source_dataset = source_dataset
         self._report_document = ReportDocument()
         self._export_overview: DatasetOverviewResult | None = None
         self._export_tab_id: str | None = None
@@ -186,19 +183,20 @@ class AnalysisDialog(QDialog):
         self._time_series_export_tab_id: str | None = None
         self._analysis_revision = 0
 
-        self.setWindowTitle(self.tr("Advanced analysis"))
+        self.setWindowTitle(
+            self.tr("Advanced analysis — {dataset} ({rows} rows × {columns} columns)").format(  # noqa: RUF001
+                dataset=self._source_dataset.title,
+                rows=fmt_int(self._source_dataset.row_count),
+                columns=fmt_int(self._source_dataset.column_count),
+            )
+        )
         self.resize(1280, 900)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(12, 12, 12, 12)
         root.setSpacing(12)
 
-        top_row = QHBoxLayout()
-        top_row.setSpacing(12)
-        dataset_panel = self._build_dataset_panel(active_tab_id)
         analysis_panel = self._build_analysis_panel()
-        top_row.addWidget(dataset_panel)
-        top_row.addWidget(analysis_panel, 1)
 
         self._analysis_workspace = QWidget(self)
         analysis_layout = QVBoxLayout(self._analysis_workspace)
@@ -223,16 +221,12 @@ class AnalysisDialog(QDialog):
         self._report_page.generate_requested.connect(self._request_report_save)
         self._workspace_stack.addWidget(self._report_page)
 
-        root.addLayout(top_row)
+        root.addWidget(analysis_panel)
         root.addWidget(self._workspace_stack, 1)
         root.addWidget(self._build_button_box())
 
         self._connect_signals()
-        self.dataset_changed.connect(self.invalidate_overview_export)
         self.category_changed.connect(self.invalidate_overview_export)
-
-        if self._dataset_combo.currentData():
-            self.dataset_changed.emit(str(self._dataset_combo.currentData()))
 
     @override
     def hasHeightForWidth(self) -> bool:
@@ -252,24 +246,6 @@ class AnalysisDialog(QDialog):
     # ------------------------------------------------------------------
     # UI building
     # ------------------------------------------------------------------
-
-    def _build_dataset_panel(self, active_tab_id: str | None) -> QWidget:
-        """Build the top-left dataset picker."""
-        dataset_group = QGroupBox(self.tr("Dataset"), self)
-        dataset_form = QFormLayout(dataset_group)
-
-        self._dataset_combo = QComboBox(dataset_group)
-        _ComboToolTipFilter(self._dataset_combo)
-        for ds in self._datasets:
-            label = f"{ds.title} ({ds.row_count} x {ds.column_count})"
-            self._dataset_combo.addItem(label, ds.tab_id)
-
-        if active_tab_id:
-            self.select_dataset(active_tab_id)
-
-        dataset_form.addRow(QLabel(self.tr("Dataset"), dataset_group), self._dataset_combo)
-        self._dataset_panel = dataset_group
-        return dataset_group
 
     def _build_analysis_panel(self) -> QWidget:
         """Build the horizontal analysis-category selector."""
@@ -408,14 +384,14 @@ class AnalysisDialog(QDialog):
     def set_exportable_hypothesis(self, snapshot: HypothesisExportSnapshot) -> None:
         """Register only the successful applied result already displayed."""
         self._export_hypothesis = snapshot
-        self._hypothesis_export_tab_id = self.selected_dataset_tab_id()
+        self._hypothesis_export_tab_id = self.source_tab_id()
         self._update_report_action()
 
     def exportable_hypothesis(self) -> HypothesisExportSnapshot | None:
         """Return the displayed applied snapshot, independent of pending edits."""
         if (
             self.selected_category() is AnalysisCategory.HYPOTHESIS_TESTS
-            and self.selected_dataset_tab_id() == self._hypothesis_export_tab_id
+            and self.source_tab_id() == self._hypothesis_export_tab_id
         ):
             return self._export_hypothesis
         return None
@@ -423,14 +399,14 @@ class AnalysisDialog(QDialog):
     def set_exportable_correlation(self, snapshot: CorrelationExportSnapshot) -> None:
         """Register a successful matrix snapshot after its view is displayed."""
         self._export_correlation = snapshot
-        self._correlation_export_tab_id = self.selected_dataset_tab_id()
+        self._correlation_export_tab_id = self.source_tab_id()
         self._update_report_action()
 
     def exportable_correlation(self) -> CorrelationExportSnapshot | None:
         """Return the current applied matrix independent of pending configuration edits."""
         if (
             self.selected_category() is AnalysisCategory.CORRELATION
-            and self.selected_dataset_tab_id() == self._correlation_export_tab_id
+            and self.source_tab_id() == self._correlation_export_tab_id
         ):
             return self._export_correlation
         return None
@@ -438,14 +414,14 @@ class AnalysisDialog(QDialog):
     def set_exportable_regression(self, snapshot: RegressionExportSnapshot) -> None:
         """Register a successful fitted model after its view is displayed."""
         self._export_regression = snapshot
-        self._regression_export_tab_id = self.selected_dataset_tab_id()
+        self._regression_export_tab_id = self.source_tab_id()
         self._update_report_action()
 
     def exportable_regression(self) -> RegressionExportSnapshot | None:
         """Return the displayed applied model, independent of pending configuration edits."""
         if (
             self.selected_category() is AnalysisCategory.REGRESSION
-            and self.selected_dataset_tab_id() == self._regression_export_tab_id
+            and self.source_tab_id() == self._regression_export_tab_id
         ):
             return self._export_regression
         return None
@@ -453,14 +429,14 @@ class AnalysisDialog(QDialog):
     def set_exportable_outliers(self, snapshot: OutlierExportSnapshot) -> None:
         """Register a successful screening after its view is displayed or its column detail changes."""
         self._export_outliers = snapshot
-        self._outliers_export_tab_id = self.selected_dataset_tab_id()
+        self._outliers_export_tab_id = self.source_tab_id()
         self._update_report_action()
 
     def exportable_outliers(self) -> OutlierExportSnapshot | None:
         """Return the displayed applied screening, independent of pending configuration edits."""
         if (
             self.selected_category() is AnalysisCategory.OUTLIERS
-            and self.selected_dataset_tab_id() == self._outliers_export_tab_id
+            and self.source_tab_id() == self._outliers_export_tab_id
         ):
             return self._export_outliers
         return None
@@ -468,14 +444,14 @@ class AnalysisDialog(QDialog):
     def set_exportable_clustering(self, snapshot: ClusteringExportSnapshot) -> None:
         """Register a successful clustering fit after its view is displayed."""
         self._export_clustering = snapshot
-        self._clustering_export_tab_id = self.selected_dataset_tab_id()
+        self._clustering_export_tab_id = self.source_tab_id()
         self._update_report_action()
 
     def exportable_clustering(self) -> ClusteringExportSnapshot | None:
         """Return the displayed applied clustering, independent of pending configuration edits."""
         if (
             self.selected_category() is AnalysisCategory.CLUSTERING
-            and self.selected_dataset_tab_id() == self._clustering_export_tab_id
+            and self.source_tab_id() == self._clustering_export_tab_id
         ):
             return self._export_clustering
         return None
@@ -483,29 +459,26 @@ class AnalysisDialog(QDialog):
     def set_exportable_pca(self, snapshot: PCAExportSnapshot) -> None:
         """Register a successful PCA fit after its view is displayed."""
         self._export_pca = snapshot
-        self._pca_export_tab_id = self.selected_dataset_tab_id()
+        self._pca_export_tab_id = self.source_tab_id()
         self._update_report_action()
 
     def exportable_pca(self) -> PCAExportSnapshot | None:
         """Return the displayed applied PCA, independent of pending configuration edits."""
-        if (
-            self.selected_category() is AnalysisCategory.PCA
-            and self.selected_dataset_tab_id() == self._pca_export_tab_id
-        ):
+        if self.selected_category() is AnalysisCategory.PCA and self.source_tab_id() == self._pca_export_tab_id:
             return self._export_pca
         return None
 
     def set_exportable_time_series(self, snapshot: TimeSeriesExportSnapshot) -> None:
         """Register a successful time-series analysis after its view is displayed."""
         self._export_time_series = snapshot
-        self._time_series_export_tab_id = self.selected_dataset_tab_id()
+        self._time_series_export_tab_id = self.source_tab_id()
         self._update_report_action()
 
     def exportable_time_series(self) -> TimeSeriesExportSnapshot | None:
         """Return the displayed applied time series, independent of pending configuration edits."""
         if (
             self.selected_category() is AnalysisCategory.TIME_SERIES
-            and self.selected_dataset_tab_id() == self._time_series_export_tab_id
+            and self.source_tab_id() == self._time_series_export_tab_id
         ):
             return self._export_time_series
         return None
@@ -513,29 +486,26 @@ class AnalysisDialog(QDialog):
     def set_exportable_overview(self, result: DatasetOverviewResult) -> None:
         """Register the successful result currently displayed by the controller."""
         self._export_overview = result
-        self._export_tab_id = self.selected_dataset_tab_id()
+        self._export_tab_id = self.source_tab_id()
         self._update_report_action()
 
     def exportable_overview(self) -> DatasetOverviewResult | None:
         """Return only the successful snapshot for the current Overview."""
-        if (
-            self.selected_category() is AnalysisCategory.OVERVIEW
-            and self.selected_dataset_tab_id() == self._export_tab_id
-        ):
+        if self.selected_category() is AnalysisCategory.OVERVIEW and self.source_tab_id() == self._export_tab_id:
             return self._export_overview
         return None
 
     def set_exportable_statistics(self, result: DescriptiveStatisticsResult) -> None:
         """Register the successful Statistics snapshot currently displayed."""
         self._export_statistics = result
-        self._statistics_export_tab_id = self.selected_dataset_tab_id()
+        self._statistics_export_tab_id = self.source_tab_id()
         self._update_report_action()
 
     def exportable_statistics(self) -> DescriptiveStatisticsResult | None:
         """Return only the successful snapshot for the current Statistics analysis."""
         if (
             self.selected_category() is AnalysisCategory.STATISTICS
-            and self.selected_dataset_tab_id() == self._statistics_export_tab_id
+            and self.source_tab_id() == self._statistics_export_tab_id
         ):
             return self._export_statistics
         return None
@@ -567,11 +537,7 @@ class AnalysisDialog(QDialog):
 
     def _current_report_candidate(self) -> ReportEntry | None:
         category = self.selected_category()
-        dataset_id = self.selected_dataset_tab_id()
-        if category is None or dataset_id is None:
-            return None
-        dataset = next((item for item in self._datasets if item.tab_id == dataset_id), None)
-        if dataset is None:
+        if category is None:
             return None
         snapshot: ReportSnapshot | None
         match category:
@@ -595,7 +561,7 @@ class AnalysisDialog(QDialog):
                 snapshot = self.exportable_time_series()
         if snapshot is None:
             return None
-        return create_report_entry(category, dataset, snapshot)
+        return create_report_entry(category, self._source_dataset, snapshot)
 
     def _update_report_action(self) -> None:
         candidate = self._current_report_candidate()
@@ -697,18 +663,11 @@ class AnalysisDialog(QDialog):
 
     def _connect_signals(self) -> None:
         """Wire internal widget signals to this dialog's public signals."""
-        self._dataset_combo.currentIndexChanged.connect(self._on_dataset_index_changed)
         self._category_list.currentItemChanged.connect(self._on_category_item_changed)
 
     # ------------------------------------------------------------------
     # Event handlers
     # ------------------------------------------------------------------
-
-    def _on_dataset_index_changed(self, _index: int) -> None:
-        """Emit dataset_changed for the newly selected dataset."""
-        tab_id = self._dataset_combo.currentData()
-        if tab_id:
-            self.dataset_changed.emit(str(tab_id))
 
     def _on_category_item_changed(
         self,
@@ -720,10 +679,6 @@ class AnalysisDialog(QDialog):
             return
         reports_selected = current is self._report_item
         self._workspace_stack.setCurrentWidget(self._report_page if reports_selected else self._analysis_workspace)
-        self._dataset_combo.setEnabled(not reports_selected)
-        self._dataset_combo.setToolTip(
-            self.tr("A report can contain analyses from multiple datasets.") if reports_selected else ""
-        )
         if not reports_selected:
             self.category_changed.emit(str(current.data(_CATEGORY_ROLE)))
 
@@ -731,21 +686,9 @@ class AnalysisDialog(QDialog):
     # Public API
     # ------------------------------------------------------------------
 
-    def selected_dataset_tab_id(self) -> str | None:
-        """Return the currently selected dataset tab ID, if any."""
-        data = self._dataset_combo.currentData()
-        return str(data) if data else None
-
-    def select_dataset(self, tab_id: str) -> None:
-        """Select a dataset in the picker by tab ID.
-
-        Args:
-            tab_id: Stable internal tab ID to select.
-        """
-        for i in range(self._dataset_combo.count()):
-            if self._dataset_combo.itemData(i) == tab_id:
-                self._dataset_combo.setCurrentIndex(i)
-                return
+    def source_tab_id(self) -> str:
+        """Return the stable tab ID fixed for this analysis session."""
+        return self._source_dataset.tab_id
 
     def selected_category(self) -> AnalysisCategory | None:
         """Return the currently selected analysis category, if any."""

@@ -339,12 +339,19 @@ class ToolbarController:
         """Apply the data state to enable/disable export actions.
 
         Args:
-            has_data: Whether there is data in the current tab.
+            has_data: Whether any ready result dataset is available.
         """
         self._action_export_csv.setEnabled(has_data)
         self._action_export_excel.setEnabled(has_data)
         self._action_export_data.setEnabled(has_data)
-        self._action_analyze.setEnabled(has_data)
+
+    def apply_analysis_state(self, active_dataset_ready: bool) -> None:
+        """Enable analysis only when the active result tab is ready.
+
+        Args:
+            active_dataset_ready: Whether the active result tab contains data.
+        """
+        self._action_analyze.setEnabled(active_dataset_ready)
 
     def apply_has_multiple_datasets_state(self, has_multiple_datasets: bool) -> None:
         """Apply the multiple datasets state to enable/disable join/concatenate actions.

@@ -419,6 +419,11 @@
 </context>
 <context>
     <name>AnalysisController</name>
+    <message><source>Advanced analysis unavailable</source><translation>Avancerad analys är inte tillgänglig</translation></message>
+    <message>
+        <source>Select a ready dataset before opening Advanced Analysis.</source>
+        <translation>Välj en datauppsättning som är klar innan du öppnar Avancerad analys.</translation>
+    </message>
     <message>
         <source>Could not save HTML report.
 {error}</source>
@@ -480,6 +485,10 @@
 </context>
 <context>
     <name>AnalysisDialog</name>
+    <message><source>Advanced analysis — {dataset} ({rows} rows × {columns} columns)</source><translation>Avancerad analys — {dataset} ({rows} rader × {columns} kolumner)</translation></message>
+    <message><source>Name</source><translation>Namn</translation></message>
+    <message><source>Rows</source><translation>Rader</translation></message>
+    <message><source>Columns</source><translation>Kolumner</translation></message>
     <message>
         <source>Reports(0)</source>
         <translation>Rapporter(0)</translation>
@@ -503,10 +512,6 @@
     <message>
         <source>Export and Add to report are available after an analysis has been applied.</source>
         <translation>Exportera och Lägg till i rapport är tillgängliga efter att en analys har tillämpats.</translation>
-    </message>
-    <message>
-        <source>A report can contain analyses from multiple datasets.</source>
-        <translation>En rapport kan innehålla analyser från flera dataset.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="80"/>

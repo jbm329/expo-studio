@@ -77,6 +77,7 @@ from expo_jbm329.services.analysis.survival import initialize_survival_columns
 from expo_jbm329.services.analysis.timeseries import initialize_time_series
 from expo_jbm329.services.analysis.timeseries_export import TimeSeriesExportComponent, TimeSeriesExportRequest
 from expo_jbm329.utils.dataset_ref import DatasetRef
+from expo_jbm329.utils.format_utils import fmt_int
 from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_outliers_export import multivariate_snapshot as multivariate_outliers_snapshot
 from tests.analysis.test_outliers_export import univariate_snapshot
@@ -92,18 +93,22 @@ def _make_datasets() -> list[DatasetRef]:
     ]
 
 
-def test_dialog_selects_active_tab_on_init():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t2")
+def test_dialog_keeps_the_provided_source_tab_id():
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[1])
 
-    assert dialog.selected_dataset_tab_id() == "t2"
+    assert dialog.source_tab_id() == "t2"
 
 
 @pytest.mark.parametrize("action", ["preview", "save"])
 def test_report_actions_capture_title_description_order_and_immutable_entry_selections(action):
     datasets = _make_datasets()
-    dialog = AnalysisDialog(parent=None, datasets=datasets, active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=datasets[0])
     first = create_report_entry(AnalysisCategory.PCA, datasets[0], pca_snapshot())
-    second = create_report_entry(AnalysisCategory.PCA, datasets[1], pca_snapshot())
+    second = create_report_entry(
+        AnalysisCategory.STATISTICS,
+        datasets[0],
+        analyze_descriptive_statistics(pd.DataFrame({"value": [1, 2, 3]})),
+    )
     draft = dialog.report_document()
     draft.upsert(second)
     draft.upsert(first)
@@ -130,7 +135,7 @@ def test_report_actions_capture_title_description_order_and_immutable_entry_sele
 
 
 def test_empty_report_does_not_emit_preview_request():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     requests: list[ReportDocument] = []
     dialog.report_preview_requested.connect(requests.append)
     dialog.report_save_requested.connect(requests.append)
@@ -142,7 +147,7 @@ def test_empty_report_does_not_emit_preview_request():
 
 
 def test_dialog_has_maximize_and_close_buttons_but_no_minimize_button():
-    dialog = AnalysisDialog(parent=None, datasets=[], active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
 
     flags = dialog.windowFlags()
     assert flags & Qt.WindowType.WindowMaximizeButtonHint
@@ -151,7 +156,7 @@ def test_dialog_has_maximize_and_close_buttons_but_no_minimize_button():
 
 
 def test_dialog_can_be_resized_shorter_than_tall_word_wrapped_content():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     content = QWidget()
     layout = QVBoxLayout(content)
     for _ in range(40):
@@ -174,23 +179,36 @@ def test_dialog_can_be_resized_shorter_than_tall_word_wrapped_content():
         dialog.close()
 
 
-def test_dialog_defaults_to_first_dataset_when_no_active_tab():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+def test_dialog_source_is_read_only_metadata():
+    source = _make_datasets()[1]
+    dialog = AnalysisDialog(parent=None, source_dataset=source)
 
-    assert dialog.selected_dataset_tab_id() == "t1"
+    assert dialog.source_tab_id() == source.tab_id
+    assert not hasattr(dialog, "select_dataset")
+    assert not hasattr(dialog, "dataset_changed")
+    assert dialog.windowTitle() == "Advanced analysis — Sheet2 (50 rows × 3 columns)"
+    assert not hasattr(dialog, "_dataset_panel")
+
+
+@pytest.mark.parametrize("name", ["Sheet2", "<b>Dataset</b>", "Prepared customer transactions for regional reporting"])
+def test_window_title_preserves_full_dataset_name_and_formatted_dimensions(name):
+    source = DatasetRef(tab_id="source", title=name, row_count=12345, column_count=1200)
+    dialog = AnalysisDialog(parent=None, source_dataset=source)
+    expected = f"Advanced analysis — {name} ({fmt_int(12345)} rows × {fmt_int(1200)} columns)"
+    assert dialog.windowTitle() == expected
+    dialog.resize(800, 600)
+    assert dialog.windowTitle() == expected
 
 
 def test_statistics_export_snapshot_is_scoped_to_current_category_and_dataset():
     result = analyze_descriptive_statistics(pd.DataFrame({"number": [1, 2, 3]}))
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.STATISTICS)
     dialog.set_exportable_statistics(result)
 
     assert dialog.exportable_statistics() is result
-    dialog.select_dataset("t2")
-    assert dialog.exportable_statistics() is None
-    dialog.select_dataset("t1")
-    assert dialog.exportable_statistics() is None
+    assert dialog.source_tab_id() == "t1"
+    assert dialog.exportable_statistics() is result
     dialog.set_exportable_statistics(result)
     dialog.select_category(AnalysisCategory.OVERVIEW)
     assert dialog.exportable_statistics() is None
@@ -201,15 +219,13 @@ def test_correlation_export_snapshot_is_scoped_to_current_category_and_dataset()
     matrix = analyze_correlation_matrix(frame, tuple(frame.columns), CorrelationMethod.PEARSON)
     assert matrix is not None
     snapshot = CorrelationExportSnapshot(matrix, frame.copy(deep=True))
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.CORRELATION)
     dialog.set_exportable_correlation(snapshot)
 
     assert dialog.exportable_correlation() is snapshot
-    dialog.select_dataset("t2")
-    assert dialog.exportable_correlation() is None
-    dialog.select_dataset("t1")
-    assert dialog.exportable_correlation() is None
+    assert dialog.source_tab_id() == "t1"
+    assert dialog.exportable_correlation() is snapshot
     dialog.set_exportable_correlation(snapshot)
     dialog.select_category(AnalysisCategory.STATISTICS)
     assert dialog.exportable_correlation() is None
@@ -220,7 +236,7 @@ def test_correlation_export_selection_emits_only_the_current_snapshot(monkeypatc
     matrix = analyze_correlation_matrix(frame, tuple(frame.columns), CorrelationMethod.PEARSON)
     assert matrix is not None
     snapshot = CorrelationExportSnapshot(matrix, frame.copy(deep=True))
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.CORRELATION)
     dialog.set_content_widget(QWidget())
     dialog.set_exportable_correlation(snapshot)
@@ -250,7 +266,7 @@ def test_correlation_export_selection_emits_only_the_current_snapshot(monkeypatc
 
 def test_regression_export_snapshot_is_scoped_to_current_category_and_dataset():
     snapshot = linear_snapshot()
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.CORRELATION)
     dialog.set_exportable_regression(snapshot)
     assert dialog.exportable_regression() is None
@@ -261,8 +277,8 @@ def test_regression_export_snapshot_is_scoped_to_current_category_and_dataset():
     dialog.set_content_widget(QWidget())
     assert dialog.exportable_regression() is None
     dialog.set_exportable_regression(snapshot)
-    dialog.select_dataset("t2")
-    assert dialog.exportable_regression() is None
+    assert dialog.source_tab_id() == "t1"
+    assert dialog.exportable_regression() is snapshot
     dialog.set_exportable_regression(snapshot)
     dialog.select_category(AnalysisCategory.STATISTICS)
     assert dialog.exportable_regression() is None
@@ -270,7 +286,7 @@ def test_regression_export_snapshot_is_scoped_to_current_category_and_dataset():
 
 def test_regression_export_selection_emits_only_the_current_snapshot(monkeypatch):
     snapshot = linear_snapshot()
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.REGRESSION)
     dialog.set_content_widget(QWidget())
     dialog.set_exportable_regression(snapshot)
@@ -303,7 +319,7 @@ def test_regression_export_selection_emits_only_the_current_snapshot(monkeypatch
 
 def test_statistics_export_dialog_emits_selected_chart_only_request(monkeypatch):
     result = analyze_descriptive_statistics(pd.DataFrame({"number": [1, 2, 3]}))
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.STATISTICS)
     dialog.set_exportable_statistics(result)
     requests: list[StatisticsExportRequest] = []
@@ -328,18 +344,8 @@ def test_statistics_export_dialog_emits_selected_chart_only_request(monkeypatch)
     ]
 
 
-def test_dialog_emits_dataset_changed_when_selection_changes():
-    received: list[str] = []
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t2")
-    dialog.dataset_changed.connect(received.append)
-
-    dialog.select_dataset("t1")
-
-    assert received == ["t1"]
-
-
 def test_dialog_lists_every_analysis_category_once():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
 
     selector = dialog._category_list  # noqa: SLF001
     assert selector.count() == len(list(AnalysisCategory)) + 1
@@ -350,7 +356,7 @@ def test_dialog_lists_every_analysis_category_once():
 
 
 def test_report_navigation_uses_full_workspace_and_preserves_details_and_analysis():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     content, config = QWidget(), QWidget()
     dialog.set_content_widget(content)
     dialog.set_config_widget(config)
@@ -370,17 +376,14 @@ def test_report_navigation_uses_full_workspace_and_preserves_details_and_analysi
         assert page.width() == dialog._workspace_stack.width()  # noqa: SLF001
         assert not dialog._config_panel.isVisible()  # noqa: SLF001
         assert not dialog._action_bar.isVisible()  # noqa: SLF001
-        assert not dialog._dataset_combo.isEnabled()  # noqa: SLF001
-        assert "multiple datasets" in dialog._dataset_combo.toolTip()  # noqa: SLF001
-        _request_tooltip(dialog._dataset_combo)  # noqa: SLF001
-        assert "multiple datasets" in QToolTip.text()
+        assert dialog.source_tab_id() == "t1"
+        assert dialog.windowTitle() == "Advanced analysis — Sheet1 (100 rows × 5 columns)"
 
         dialog.select_category(AnalysisCategory.OVERVIEW)
         assert received == [AnalysisCategory.OVERVIEW.value]
         assert dialog._config_panel.isVisible()  # noqa: SLF001
         assert dialog._action_bar.isVisible()  # noqa: SLF001
-        assert dialog._dataset_combo.isEnabled()  # noqa: SLF001
-        assert dialog._dataset_combo.toolTip() == ""  # noqa: SLF001
+        assert dialog.windowTitle() == "Advanced analysis — Sheet1 (100 rows × 5 columns)"
         assert dialog.content_widget() is content
         assert dialog.config_widget() is config
         dialog.select_reports()
@@ -395,7 +398,7 @@ def test_report_navigation_uses_full_workspace_and_preserves_details_and_analysi
 def test_export_button_opens_selection_dialog_with_full_text_tooltips(monkeypatch, category):
     captured: list[AnalysisExportDialog] = []
     monkeypatch.setattr(AnalysisExportDialog, "exec", lambda self: captured.append(self))
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(category)
     tool = next(button for button in dialog.findChildren(QPushButton) if button.text() == "Export")
 
@@ -427,7 +430,7 @@ def test_add_to_report_captures_applied_analysis_components_and_note(monkeypatch
         "exec",
         accept_new_entry,
     )
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.PCA)
     snapshot = pca_snapshot()
     dialog.set_exportable_pca(snapshot)
@@ -518,7 +521,7 @@ def test_add_to_report_uses_current_applied_snapshot_for_each_analysis(monkeypat
         "exec",
         lambda self: (captured.append(self), QDialog.DialogCode.Accepted)[1],
     )
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(category)
     snapshot = snapshots[factory_name]
     getattr(dialog, setters[factory_name])(snapshot)
@@ -533,7 +536,7 @@ def test_add_to_report_uses_current_applied_snapshot_for_each_analysis(monkeypat
 
 
 def test_export_and_add_to_report_use_matching_push_button_sizes():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.show()
     QCoreApplication.processEvents()
     try:
@@ -548,7 +551,7 @@ def test_export_and_add_to_report_use_matching_push_button_sizes():
 
 
 def test_report_navigation_remains_reachable_when_selector_scrolls():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.resize(900, 700)
     dialog.show()
     try:
@@ -565,13 +568,12 @@ def test_report_navigation_remains_reachable_when_selector_scrolls():
 
 
 def test_dialog_places_the_horizontal_analysis_selector_above_the_workspace():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.set_config_widget(QWidget())
     dialog.show()
     QCoreApplication.processEvents()
     try:
-        assert dialog._analysis_panel.x() > dialog._dataset_panel.x()  # noqa: SLF001
-        assert dialog._analysis_panel.y() == dialog._dataset_panel.y()  # noqa: SLF001
+        assert dialog._analysis_panel.width() == dialog._workspace_stack.width()  # noqa: SLF001
         assert dialog._content_panel.y() > dialog._analysis_panel.y()  # noqa: SLF001
         assert dialog._config_panel.y() > dialog._analysis_panel.y()  # noqa: SLF001
         assert dialog._content_panel.width() > dialog._config_panel.width()  # noqa: SLF001
@@ -583,7 +585,7 @@ def test_dialog_places_the_horizontal_analysis_selector_above_the_workspace():
 
 
 def test_selecting_category_emits_category_changed_with_its_value():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     received: list[str] = []
     dialog.category_changed.connect(received.append)
 
@@ -594,7 +596,7 @@ def test_selecting_category_emits_category_changed_with_its_value():
 
 
 def test_show_placeholder_updates_content_label():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
 
     dialog.show_placeholder("Not implemented yet.")
 
@@ -612,20 +614,20 @@ def test_build_placeholder_label_centers_and_wraps_the_message():
 
 
 def test_dialog_selects_overview_category_by_default():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
 
     assert dialog.selected_category() == AnalysisCategory.OVERVIEW
 
 
 def test_dialog_starts_with_no_content_widget():
     """Populating the content panel is entirely the controller's job."""
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
 
     assert dialog.content_widget() is None
 
 
 def test_content_panel_is_a_stable_widget_across_content_changes():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     panel_before = dialog.content_panel()
 
     dialog.show_placeholder("Hello")
@@ -634,7 +636,7 @@ def test_content_panel_is_a_stable_widget_across_content_changes():
 
 
 def test_set_content_widget_replaces_the_previous_widget():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     first = QWidget()
     dialog.set_content_widget(first)
     replacement = QWidget()
@@ -647,7 +649,7 @@ def test_set_content_widget_replaces_the_previous_widget():
 
 
 def test_config_panel_starts_hidden_with_no_widget():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.show()
     try:
         assert dialog.config_widget() is None
@@ -657,7 +659,7 @@ def test_config_panel_starts_hidden_with_no_widget():
 
 
 def test_set_config_widget_shows_the_panel_and_stores_the_widget():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.show()
     try:
         widget = QWidget()
@@ -671,7 +673,7 @@ def test_set_config_widget_shows_the_panel_and_stores_the_widget():
 
 
 def test_set_config_widget_none_hides_the_panel_again():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.show()
     try:
         dialog.set_config_widget(QWidget())
@@ -688,7 +690,7 @@ def test_statistics_table_selection_uses_full_results_area_without_configuration
     from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 
     result = analyze_descriptive_statistics(pd.DataFrame({"a": [1.0, 2, 3], "b": [4.0, 5, 6]}))
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.set_config_widget(QWidget())
     view = StatisticsView(result)
     dialog.set_content_widget(view)
@@ -708,7 +710,7 @@ def test_statistics_table_selection_uses_full_results_area_without_configuration
 
 
 def test_set_config_widget_replaces_the_previous_widget():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     first = QWidget()
     dialog.set_config_widget(first)
     replacement = QWidget()
@@ -719,14 +721,52 @@ def test_set_config_widget_replaces_the_previous_widget():
     assert first.isHidden()
 
 
-def test_dialog_with_no_datasets_has_no_selection():
-    dialog = AnalysisDialog(parent=None, datasets=[], active_tab_id=None)
+def test_source_metadata_remains_in_window_title_on_reports_page():
+    source = _make_datasets()[1]
+    dialog = AnalysisDialog(parent=None, source_dataset=source)
 
-    assert dialog.selected_dataset_tab_id() is None
+    dialog.select_reports()
+
+    assert dialog.windowTitle() == "Advanced analysis — Sheet2 (50 rows × 3 columns)"
+    assert dialog.source_tab_id() == "t2"
+
+
+def test_report_candidates_across_categories_and_configurations_keep_the_fixed_source():
+    from expo_jbm329.services.analysis.overview import analyze_dataset_overview
+
+    source = _make_datasets()[1]
+    dialog = AnalysisDialog(parent=None, source_dataset=source)
+    overview = analyze_dataset_overview(pd.DataFrame({"value": [1, 2]}))
+    statistics = analyze_descriptive_statistics(pd.DataFrame({"value": [1, 2, 3]}))
+
+    dialog.set_exportable_overview(overview)
+    overview_entry = dialog._current_report_candidate()  # noqa: SLF001
+    dialog.select_category(AnalysisCategory.STATISTICS)
+    dialog.set_exportable_statistics(statistics)
+    statistics_entry = dialog._current_report_candidate()  # noqa: SLF001
+    dialog.select_category(AnalysisCategory.PCA)
+    dialog.set_exportable_pca(pca_snapshot(standardize=True))
+    first_pca_entry = dialog._current_report_candidate()  # noqa: SLF001
+    dialog.set_exportable_pca(pca_snapshot(standardize=False))
+    second_pca_entry = dialog._current_report_candidate()  # noqa: SLF001
+
+    assert overview_entry is not None
+    assert statistics_entry is not None
+    assert first_pca_entry is not None
+    assert second_pca_entry is not None
+    assert overview_entry.dataset_id == source.tab_id
+    assert overview_entry.dataset_name == source.title
+    assert statistics_entry.dataset_id == source.tab_id
+    assert statistics_entry.dataset_name == source.title
+    assert overview_entry.category is AnalysisCategory.OVERVIEW
+    assert statistics_entry.category is AnalysisCategory.STATISTICS
+    assert first_pca_entry.dataset_id == source.tab_id
+    assert second_pca_entry.dataset_id == source.tab_id
+    assert first_pca_entry.entry_id != second_pca_entry.entry_id
 
 
 def test_dialog_has_a_localized_close_button():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
 
     button_box = dialog.findChild(QDialogButtonBox)
     assert button_box is not None
@@ -742,13 +782,13 @@ def test_dialog_routes_close_button_through_the_shared_localization_helper(monke
         calls.append,
     )
 
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
 
     assert calls == [dialog.findChild(QDialogButtonBox)]
 
 
 def test_clicking_close_button_rejects_the_dialog():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     button_box = dialog.findChild(QDialogButtonBox)
     close_button = button_box.button(QDialogButtonBox.StandardButton.Close)
 
@@ -795,7 +835,7 @@ def _configuration_widgets() -> list[QWidget]:
 
 @pytest.mark.parametrize("width", [1280, 1600])
 def test_all_configurations_share_reference_width_and_adaptive_layout(width):
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.resize(width, 900)
     dialog.show()
     QCoreApplication.processEvents()
@@ -838,7 +878,7 @@ def test_hypothesis_apply_stays_at_pane_bottom_and_controls_stay_compact():
         "group": ["a", "b"] * 15,
         "segment": ["x", "y", "z"] * 10,
     })
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     config = HypothesisTestsConfigWidget(
         initialize_group_comparison(df),
         initialize_chi_square(df),
@@ -896,7 +936,7 @@ def _assert_apply_below_frame_at_pane_bottom(dialog: AnalysisDialog, config: QWi
 
 def test_correlation_apply_sits_below_the_columns_frame_at_the_pane_bottom():
     frame = pd.DataFrame({"a": range(30), "b": range(1, 31), "c": [index % 7 for index in range(30)]})
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     config = CorrelationConfigWidget(initialize_correlation(frame))
     dialog.resize(1280, 800)
     dialog.show()
@@ -910,7 +950,7 @@ def test_correlation_apply_sits_below_the_columns_frame_at_the_pane_bottom():
 
 def _show_config_in_dialog(config: QWidget) -> AnalysisDialog:
     """Show `config` in a real Configuration pane and settle its layout."""
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.resize(1280, 800)
     dialog.show()
     dialog.set_config_widget(config)
@@ -992,7 +1032,7 @@ def test_regression_apply_sits_below_the_predictors_frame_for_every_model():
         "event": [0, 1] * 15,
         "group": ["a", "b"] * 15,
     })
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     config = RegressionConfigWidget(
         initialize_regression(df),
         initialize_generalized_targets(df),
@@ -1025,7 +1065,7 @@ def test_narrow_correlation_and_time_series_keep_controls_and_full_labels_access
         "a": range(30),
         "b": range(1, 31),
     })
-    dialog = AnalysisDialog(parent=None, datasets=[], active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.resize(width, 900)
     dialog.show()
     pane_widths: list[int] = []
@@ -1116,7 +1156,7 @@ def test_narrow_time_series_checkbox_wraps_at_its_size_hint_with_a_larger_font(v
 
 
 def test_tall_configuration_can_scroll_without_expanding_the_dialog():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.show()
     QCoreApplication.processEvents()
     initial_size = dialog.size()
@@ -1142,7 +1182,7 @@ def test_bordered_configuration_forms_keep_padding_on_both_sides():
     margins = form.contentsMargins()
     assert margins.left() > 0
     assert margins.right() > 0
-    dialog = AnalysisDialog(parent=None, datasets=[], active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.set_config_widget(config)
     dialog.show()
     QCoreApplication.processEvents()
@@ -1173,7 +1213,7 @@ def _request_tooltip(widget: QWidget, position: QPoint | None = None) -> None:
 def test_full_text_tooltips_cover_dataset_and_every_analysis_dropdown(monkeypatch):
     shown: list[str] = []
     monkeypatch.setattr(QToolTip, "showText", lambda _position, text, _widget: shown.append(text))
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     try:
         for widget in _configuration_widgets():
             dialog.set_config_widget(widget)
@@ -1192,7 +1232,7 @@ def test_dropdown_tooltips_follow_selection_and_repopulation_with_blocked_signal
     hidden: list[bool] = []
     monkeypatch.setattr(QToolTip, "showText", lambda _position, text, _widget: shown.append(text))
     monkeypatch.setattr(QToolTip, "hideText", lambda: hidden.append(True))
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     config = QWidget()
     layout = QVBoxLayout(config)
     combo = QComboBox(config)
@@ -1226,7 +1266,7 @@ def test_popup_tooltips_preserve_disabled_reasons_and_ignore_separators(monkeypa
     hidden: list[bool] = []
     monkeypatch.setattr(QToolTip, "showText", lambda _position, text, _widget: shown.append(text))
     monkeypatch.setattr(QToolTip, "hideText", lambda: hidden.append(True))
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id=None)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     config = QWidget()
     layout = QVBoxLayout(config)
     combo = ColumnComboBox(config)
@@ -1265,7 +1305,7 @@ def test_popup_tooltips_preserve_disabled_reasons_and_ignore_separators(monkeypa
 
 def test_outliers_export_snapshot_is_scoped_to_current_category_and_dataset():
     snapshot = univariate_snapshot()
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.REGRESSION)
     dialog.set_exportable_outliers(snapshot)
     assert dialog.exportable_outliers() is None
@@ -1276,8 +1316,8 @@ def test_outliers_export_snapshot_is_scoped_to_current_category_and_dataset():
     dialog.set_content_widget(QWidget())
     assert dialog.exportable_outliers() is None
     dialog.set_exportable_outliers(snapshot)
-    dialog.select_dataset("t2")
-    assert dialog.exportable_outliers() is None
+    assert dialog.source_tab_id() == "t1"
+    assert dialog.exportable_outliers() is snapshot
     dialog.set_exportable_outliers(snapshot)
     dialog.select_category(AnalysisCategory.STATISTICS)
     assert dialog.exportable_outliers() is None
@@ -1285,7 +1325,7 @@ def test_outliers_export_snapshot_is_scoped_to_current_category_and_dataset():
 
 def test_outliers_export_selection_emits_only_the_current_snapshot(monkeypatch):
     snapshot = multivariate_outliers_snapshot()
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.OUTLIERS)
     dialog.set_content_widget(QWidget())
     dialog.set_exportable_outliers(snapshot)
@@ -1322,7 +1362,7 @@ def test_outliers_export_selection_emits_only_the_current_snapshot(monkeypatch):
 )
 def test_outliers_export_before_apply_follows_the_displayed_mode(monkeypatch, multivariate, first_choice):
     df = pd.DataFrame({"x": [1.0, 2.0, 3.0, 4.0], "y": [2.0, 1.0, 4.0, 3.0]})
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.OUTLIERS)
     config = (
         MultivariateOutliersConfigWidget(initialize_multivariate_outliers(df))
@@ -1346,7 +1386,7 @@ def test_outliers_export_before_apply_follows_the_displayed_mode(monkeypatch, mu
 
 def test_clustering_export_snapshot_is_scoped_to_current_category_and_dataset():
     snapshot = clustering_snapshot()
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.OUTLIERS)
     dialog.set_exportable_clustering(snapshot)
     assert dialog.exportable_clustering() is None
@@ -1357,8 +1397,8 @@ def test_clustering_export_snapshot_is_scoped_to_current_category_and_dataset():
     dialog.set_content_widget(QWidget())
     assert dialog.exportable_clustering() is None
     dialog.set_exportable_clustering(snapshot)
-    dialog.select_dataset("t2")
-    assert dialog.exportable_clustering() is None
+    assert dialog.source_tab_id() == "t1"
+    assert dialog.exportable_clustering() is snapshot
     dialog.set_exportable_clustering(snapshot)
     dialog.select_category(AnalysisCategory.STATISTICS)
     assert dialog.exportable_clustering() is None
@@ -1366,7 +1406,7 @@ def test_clustering_export_snapshot_is_scoped_to_current_category_and_dataset():
 
 def test_clustering_export_selection_emits_only_the_current_snapshot(monkeypatch):
     snapshot = clustering_snapshot()
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.CLUSTERING)
     dialog.set_content_widget(QWidget())
     dialog.set_exportable_clustering(snapshot)
@@ -1399,7 +1439,7 @@ def test_clustering_export_selection_emits_only_the_current_snapshot(monkeypatch
 
 def test_pca_export_snapshot_is_scoped_to_current_category_and_dataset():
     snapshot = pca_snapshot()
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.CLUSTERING)
     dialog.set_exportable_pca(snapshot)
     assert dialog.exportable_pca() is None
@@ -1410,8 +1450,8 @@ def test_pca_export_snapshot_is_scoped_to_current_category_and_dataset():
     dialog.set_content_widget(QWidget())
     assert dialog.exportable_pca() is None
     dialog.set_exportable_pca(snapshot)
-    dialog.select_dataset("t2")
-    assert dialog.exportable_pca() is None
+    assert dialog.source_tab_id() == "t1"
+    assert dialog.exportable_pca() is snapshot
     dialog.set_exportable_pca(snapshot)
     dialog.select_category(AnalysisCategory.STATISTICS)
     assert dialog.exportable_pca() is None
@@ -1419,7 +1459,7 @@ def test_pca_export_snapshot_is_scoped_to_current_category_and_dataset():
 
 def test_pca_export_selection_emits_only_the_current_snapshot(monkeypatch):
     snapshot = pca_snapshot()
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.PCA)
     dialog.set_content_widget(QWidget())
     dialog.set_exportable_pca(snapshot)
@@ -1453,7 +1493,7 @@ def test_pca_export_selection_emits_only_the_current_snapshot(monkeypatch):
 
 def test_time_series_export_snapshot_is_scoped_to_current_category_and_dataset():
     snapshot = time_series_snapshot()
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.PCA)
     dialog.set_exportable_time_series(snapshot)
     assert dialog.exportable_time_series() is None
@@ -1464,8 +1504,8 @@ def test_time_series_export_snapshot_is_scoped_to_current_category_and_dataset()
     dialog.set_content_widget(QWidget())
     assert dialog.exportable_time_series() is None
     dialog.set_exportable_time_series(snapshot)
-    dialog.select_dataset("t2")
-    assert dialog.exportable_time_series() is None
+    assert dialog.source_tab_id() == "t1"
+    assert dialog.exportable_time_series() is snapshot
     dialog.set_exportable_time_series(snapshot)
     dialog.select_category(AnalysisCategory.STATISTICS)
     assert dialog.exportable_time_series() is None
@@ -1473,7 +1513,7 @@ def test_time_series_export_snapshot_is_scoped_to_current_category_and_dataset()
 
 def test_time_series_export_selection_emits_only_the_current_snapshot(monkeypatch):
     snapshot = time_series_snapshot()
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
     dialog.select_category(AnalysisCategory.TIME_SERIES)
     dialog.set_content_widget(QWidget())
     dialog.set_exportable_time_series(snapshot)
@@ -1506,7 +1546,7 @@ def test_time_series_export_selection_emits_only_the_current_snapshot(monkeypatc
 
 
 def test_footer_explains_that_exports_follow_an_applied_analysis():
-    dialog = AnalysisDialog(parent=None, datasets=_make_datasets(), active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
 
     assert any(
         label.text() == "Export and Add to report are available after an analysis has been applied."

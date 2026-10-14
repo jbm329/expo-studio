@@ -38,14 +38,16 @@ The project is still in its infancy and may change significantly.
 - **Data Transformation**: Apply transformations to datasets using a visual interface.
 - **Export Capabilities**: Export query results to multiple formats including **CSV**, **feather**, **parquet**, and more.
 - **Dataset Analysis**: Integrated data profiling (via `fg-data-profiling`) for in-depth dataset statistics.
-- **Advanced Analysis**: Explore active datasets through an interactive statistical-analysis workspace.
+- **Advanced Analysis**: Explore the active ready result dataset in an interactive analysis workspace.
 - **Persistence**: Supports management of database connections, application settings, and logs.
 
 ### 📈 Advanced Analysis
 
 The **Advanced Analysis** workspace provides statistical and machine-learning
-tools for datasets in result tabs. Open it with **Analyze data**, then choose a
-dataset and analysis.
+tools for datasets in result tabs. Select a ready result tab before opening
+**Analyze data**. Each modal session stays bound to the active dataset captured
+when it opens, including its report draft; close and reopen the workspace to
+analyze another dataset. The window title shows the source name and its row/column counts.
 
 - **Overview** profiles dataset structure, missing values, duplicates, and columns, with first/last 10-row previews.
   Overview Sample exports use the actual first/last 10 rows (including overlap): separate First/Last
