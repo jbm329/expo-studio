@@ -86,9 +86,7 @@ TR_UNKNOWN_FAILURE_MSSQL = QT_TRANSLATE_NOOP("DbErrors", "Unknown database failu
 TR_UNKNOWN_FAILURE_HINT_MSSQL = QT_TRANSLATE_NOOP("DbErrors", "Show details in log (DEBUG) or try again.")
 
 # MySQL
-TR_DRIVER_MISSING_MYSQL = QT_TRANSLATE_NOOP(
-    "DbErrors", "Required database driver module is missing."
-)
+TR_DRIVER_MISSING_MYSQL = QT_TRANSLATE_NOOP("DbErrors", "Required database driver module is missing.")
 TR_DRIVER_MISSING_HINT_MYSQL = QT_TRANSLATE_NOOP(
     "DbErrors", "Install 'pymysql' or 'mysql-connector-python' or check your Python environment."
 )
@@ -126,11 +124,9 @@ TR_UNKNOWN_FAILURE_SQLITE = QT_TRANSLATE_NOOP("DbErrors", "Unknown database fail
 TR_UNKNOWN_FAILURE_HINT_SQLITE = QT_TRANSLATE_NOOP("DbErrors", "Show details in log (DEBUG) or try again.")
 
 # PostgreSQL
-TR_DRIVER_MISSING_POSTGRES = QT_TRANSLATE_NOOP(
-    "DbErrors", "Required database driver module is missing."
-)
+TR_DRIVER_MISSING_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Required database driver module is missing.")
 TR_DRIVER_MISSING_HINT_POSTGRES = QT_TRANSLATE_NOOP(
-    "DbErrors", "Install 'psycopg2' (or 'psycopg2-binary') or check your Python environment."
+    "DbErrors", "Install 'psycopg' (or 'psycopg[binary]') or check your Python environment."
 )
 TR_SQL_SYNTAX_ERROR_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "SQL syntax error.")
 TR_SQL_SYNTAX_ERROR_HINT_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Check keywords, commas and parentheses.")
@@ -338,9 +334,9 @@ def classify_mysql(exc: Exception) -> SqlError:
         return _ambiguous_column_error(code or MYSQL_AMBIGUOUS_COLUMN)
 
     # Missing driver
-    if (
-        isinstance(exc, (ModuleNotFoundError, ImportError)) or "no module named" in lo or "cannot import" in lo
-    ) and ("mysql" in lo or "pymysql" in lo):
+    if (isinstance(exc, (ModuleNotFoundError, ImportError)) or "no module named" in lo or "cannot import" in lo) and (
+        "mysql" in lo or "pymysql" in lo
+    ):
         return SqlError(
             "driver_missing",
             None,
@@ -465,10 +461,8 @@ def classify_postgresql(exc: Exception) -> SqlError:
 
     # Missing driver
     if (
-        isinstance(exc, (ModuleNotFoundError, ImportError))
-        or "no module named" in lo
-        or "cannot import" in lo
-    ) and ("psycopg" in lo or "psycopg2" in lo):
+        isinstance(exc, (ModuleNotFoundError, ImportError)) or "no module named" in lo or "cannot import" in lo
+    ) and "psycopg" in lo:
         return SqlError(
             "driver_missing",
             None,

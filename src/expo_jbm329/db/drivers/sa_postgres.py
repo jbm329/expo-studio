@@ -22,10 +22,9 @@ log = logging.getLogger("applogger.db.driver.postgres")
 
 
 class SqlAlchemyPostgresDriver(DriverProtocol):
-    """SQLAlchemy driver for PostgreSQL with pluggable DBAPI.
+    """SQLAlchemy driver for PostgreSQL using psycopg 3.
 
     Supports:
-        * protocol 'psycopg2' -> URL 'postgresql+psycopg2'
         * protocol 'psycopg' -> URL 'postgresql+psycopg'
 
     Notes:
@@ -33,11 +32,11 @@ class SqlAlchemyPostgresDriver(DriverProtocol):
         * query_timeout: statement timeout in milliseconds via PostgreSQL options.
     """
 
-    def __init__(self, driver_name: str = "psycopg2") -> None:
+    def __init__(self, driver_name: str = "psycopg") -> None:
         """Initialize the SqlAlchemyPostgresDriver.
 
         Args:
-            driver_name: The name of the DBAPI driver ('psycopg2' or 'psycopg').
+            driver_name: The name of the DBAPI driver ('psycopg').
         """
         self._driver_name = driver_name
         self._engines: dict[str, Engine] = {}

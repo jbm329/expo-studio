@@ -13,9 +13,7 @@ class PostgresDialect(DialectProtocol):
     name = "postgresql"
     limit_keyword = "LIMIT"
 
-    _LIMIT_RE = re.compile(
-        r"(?is)\b(limit\s+\d+|fetch\s+first\s+\d+\s+rows?\s+only)\b"
-    )
+    _LIMIT_RE = re.compile(r"(?is)\b(limit\s+\d+|fetch\s+first\s+\d+\s+rows?\s+only)\b")
 
     def quote_ident(self, name: str) -> str:
         """Quote an identifier (e.g., table or column name) for PostgreSQL.

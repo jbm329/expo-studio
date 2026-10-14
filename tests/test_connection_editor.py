@@ -15,33 +15,16 @@ def make_editor() -> ConnectionEditor:
 def test_postgres_selection_sets_defaults():
     editor = make_editor()
 
+    protocols = [editor.protocol_combo.itemText(i) for i in range(editor.protocol_combo.count())]
+    assert "psycopg" in protocols
+    assert "psycopg2" not in protocols
+
     ix = editor.db_type_combo.findData("postgresql")
     assert ix >= 0
     editor.db_type_combo.setCurrentIndex(ix)
 
-    assert editor.protocol_combo.currentText() == "psycopg2"
+    assert editor.protocol_combo.currentText() == "psycopg"
     assert editor.port_edit.text() == "5432"
-
-
-def test_protocol_psycopg2_field_states():
-    editor = make_editor()
-
-    ix = editor.protocol_combo.findText("psycopg2")
-    assert ix >= 0
-    editor.protocol_combo.setCurrentIndex(ix)
-
-    assert editor.server_edit.isEnabled() is True
-    assert editor.port_edit.isEnabled() is True
-    assert editor.db_edit.isEnabled() is True
-    assert editor.user_edit.isEnabled() is True
-    assert editor.password_edit.isEnabled() is True
-    assert editor.extra_edit.isEnabled() is True
-
-    assert editor.sqlite_browse_btn.isEnabled() is False
-    assert editor.driver_edit.isEnabled() is False
-    assert editor.system_drivers.isEnabled() is False
-    assert editor.btn_add_driver.isEnabled() is False
-    assert editor.trusted_checkbox.isEnabled() is False
 
 
 def test_protocol_psycopg_field_states():
@@ -80,7 +63,7 @@ def test_gather_form_and_load_postgres_connection():
 
     form_data = editor._gather_current_form()
     assert form_data["db_type"] == "postgresql"
-    assert form_data["protocol"] == "psycopg2"
+    assert form_data["protocol"] == "psycopg"
     assert form_data["server"] == "pg.example.com"
     assert form_data["port"] == 5432
     assert form_data["database"] == "mydb"
@@ -95,7 +78,7 @@ def test_selection_changed_populates_postgres_fields():
         "pg_conn": {
             "name": "pg_conn",
             "db_type": "postgresql",
-            "protocol": "psycopg2",
+            "protocol": "psycopg",
             "server": "localhost",
             "port": 5432,
             "database": "production",
@@ -109,7 +92,7 @@ def test_selection_changed_populates_postgres_fields():
     editor.list_widget.setCurrentItem(item)
 
     assert editor.db_type_combo.currentData() == "postgresql"
-    assert editor.protocol_combo.currentText() == "psycopg2"
+    assert editor.protocol_combo.currentText() == "psycopg"
     assert editor.server_edit.text() == "localhost"
     assert editor.port_edit.text() == "5432"
     assert editor.db_edit.text() == "production"

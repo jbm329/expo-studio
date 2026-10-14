@@ -3,7 +3,7 @@
 This module provides the ConnectionEditor class, which is a unified,
 protocol-aware connection workbench for Expo. It supports various database
 types (SQL Server, PostgreSQL, MySQL, Oracle, SQLite) and protocols
-(ODBC, psycopg2, psycopg, pymysql, mysqlconnector, sqlite).
+(ODBC, psycopg, pymysql, mysqlconnector, sqlite).
 """
 
 from __future__ import annotations
@@ -54,7 +54,7 @@ _DEFAULT_PORTS = {
 
 _DEFAULT_PROTOCOL = {
     "mssql": "odbc",
-    "postgresql": "psycopg2",
+    "postgresql": "psycopg",
     "mysql": "pymysql",
     "mariadb": "pymysql",
     "sqlite": "sqlite",
@@ -179,7 +179,7 @@ class ConnectionEditor(QDialog):
 
         # Protocol
         self.protocol_combo = QComboBox()
-        self.protocol_combo.addItems(["odbc", "psycopg2", "psycopg", "pymysql", "mysqlconnector", "sqlite"])
+        self.protocol_combo.addItems(["odbc", "psycopg", "pymysql", "mysqlconnector", "sqlite"])
         self.protocol_combo.currentIndexChanged.connect(self.on_protocol_changed)
 
         # ODBC drivers
@@ -368,7 +368,7 @@ class ConnectionEditor(QDialog):
         if protocol == "odbc":
             self.sqlite_browse_btn.setEnabled(False)
 
-        elif protocol in ("psycopg2", "psycopg", "pymysql", "mysqlconnector"):
+        elif protocol in ("psycopg", "pymysql", "mysqlconnector"):
             # Disable ODBC-specific
             self.driver_edit.setEnabled(False)
             self.system_drivers.setEnabled(False)

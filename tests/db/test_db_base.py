@@ -72,10 +72,33 @@ def test_build_connection_config_postgresql():
         cfg = base._build_connection_config("my_pg")
 
     assert cfg.engine == "postgresql"
-    assert cfg.protocol == "psycopg2"
+    assert cfg.protocol == "psycopg"
     assert cfg.server == "localhost"
     assert cfg.port == 5432
     assert cfg.database == "test_db"
+
+
+def test_build_connection_config_postgresql_legacy_fallback():
+    with patch("expo_jbm329.db.base.read_connections") as mock_read:
+        mock_read.return_value = {
+            "legacy_pg": {
+                "name": "legacy_pg",
+                "db_type": "postgresql",
+                "protocol": "psycopg2",
+                "server": "localhost",
+            }
+        }
+
+        cfg = base._build_connection_config("legacy_pg")
+
+    assert cfg.engine == "postgresql"
+    assert cfg.protocol == "psycopg"
+
+
+def test_driver_registry_postgresql_psycopg_only():
+    assert base._registry.create_driver("psycopg") is not None
+    with pytest.raises(KeyError):
+        base._registry.create_driver("psycopg2")
 
 
 @patch("expo_jbm329.db.base.read_connections")
