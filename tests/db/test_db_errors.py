@@ -9,6 +9,8 @@ from expo_jbm329.db.core.errors import (
     POSTGRES_AMBIGUOUS_COLUMN,
     TR_AMBIGUOUS_COLUMN,
     TR_AMBIGUOUS_COLUMN_HINT,
+    TR_DRIVER_MISSING_HINT_MYSQL,
+    TR_DRIVER_MISSING_MYSQL,
     classify_mssql,
     classify_mysql,
     classify_oracle,
@@ -60,6 +62,26 @@ def test_postgresql_classifier_reads_wrapped_sqlstate():
 
     assert error.category == "ambiguous_column"
     assert error.code == POSTGRES_AMBIGUOUS_COLUMN
+
+
+@pytest.mark.parametrize(
+    "exception",
+    [
+        ModuleNotFoundError("No module named 'mysql'"),
+        ModuleNotFoundError("No module named 'pymysql'"),
+        ModuleNotFoundError("No module named 'mysql.connector'"),
+        ImportError("cannot import name 'connector' from 'mysql'"),
+        Exception("No module named 'mysql'"),
+        Exception("No module named 'pymysql'"),
+    ],
+)
+def test_mysql_classifier_detects_missing_driver(exception):
+    error = classify_mysql(exception)
+
+    assert error.category == "driver_missing"
+    assert error.code is None
+    assert error.message == TR_DRIVER_MISSING_MYSQL
+    assert error.hint == TR_DRIVER_MISSING_HINT_MYSQL
 
 
 @pytest.mark.parametrize(
