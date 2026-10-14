@@ -363,8 +363,8 @@ Applied columns: {columns}</translation></message>
         <translation>Choose exactly one table for CSV or binary export.</translation>
     </message>
     <message>
-        <source>Export the Overview Summary, Columns metadata, or Sample (first 100 rows), not the original dataset.</source>
-        <translation>Export the Overview Summary, Columns metadata, or Sample (first 100 rows), not the original dataset.</translation>
+        <source>Export the Overview Summary, Columns metadata, or Sample (first/last 10 rows), not the original dataset.</source>
+        <translation>Export the Overview Summary, Columns metadata, or Sample (first/last 10 rows), not the original dataset.</translation>
     </message>
     <message>
         <source>Dataset metrics, column-type counts, and high-missing-value warnings. Fractions are numeric values from 0 to 1.</source>
@@ -379,8 +379,12 @@ Applied columns: {columns}</translation></message>
         <translation>Columns metadata</translation>
     </message>
     <message>
-        <source>Sample (first 100 rows)</source>
-        <translation>Sample (first 100 rows)</translation>
+        <source>Sample (first/last 10 rows)</source>
+        <translation>Sample (first/last 10 rows)</translation>
+    </message>
+    <message>
+        <source>The first/last sample is unavailable in this captured result.</source>
+        <translation>The first/last sample is unavailable in this captured result.</translation>
     </message>
     <message>
         <source>Run Overview successfully before exporting.</source>
@@ -5043,6 +5047,7 @@ Saved to:
     </message>
 </context><context>
     <name>OverviewView</name>
+    <message><source>Sample group</source><translation>Sample group</translation></message>
     <message>
         <source>Dataset statistics</source>
         <translation>Dataset statistics</translation>

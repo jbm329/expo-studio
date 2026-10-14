@@ -48,7 +48,8 @@ tools for datasets in result tabs. Open it with **Analyze data**, then choose a
 dataset and analysis.
 
 - **Overview** profiles dataset structure, missing values, duplicates, and columns, with first/last 10-row previews.
-  Overview exports retain a first-100-row sample.
+  Overview Sample exports use the actual first/last 10 rows (including overlap): separate First/Last
+  sheets in Excel, or one table with a sample-group column in CSV and binary formats.
 - **Statistics** summarizes numeric and categorical data, distributions, and normality.
 - **Hypothesis Tests** compares groups, tests categorical associations, and analyzes paired measurements.
 - **Correlation** explores Pearson, Spearman, or Kendall relationships with matrix and pairwise plots.

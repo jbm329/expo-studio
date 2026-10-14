@@ -16,6 +16,7 @@ from enum import StrEnum
 import pandas as pd
 
 from expo_jbm329.services.analysis.columns import NUMERIC_DTYPES
+from expo_jbm329.services.analysis.outliers_export import unique_headers
 from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
 
 # A column is flagged as a "high missing" warning once its share of missing
@@ -28,7 +29,7 @@ HIGH_MISSING_FRACTION_THRESHOLD = 0.2
 # encoding/parsing problems and get a feel for the values without turning
 # the overview into a second data grid.
 SAMPLE_ROW_LIMIT = 100
-# Number of rows shown at either end of the dataset in the Overview UI/report.
+# Number of rows at either end of the dataset in Overview previews and exports.
 SAMPLE_DISPLAY_ROW_LIMIT = 10
 
 
@@ -103,7 +104,7 @@ class DatasetOverviewResult:
             frames. None supports results created without an export snapshot.
         sample_last_rows: The last `SAMPLE_DISPLAY_ROW_LIMIT` raw rows.
         sample_last_frame: Owned, bounded dtype-preserving snapshot of the last
-            rows for display and reporting, captured during analysis.
+            rows for display, reporting and export, captured during analysis.
     """
 
     row_count: int
@@ -185,16 +186,21 @@ def overview_sample_frames(result: DatasetOverviewResult) -> tuple[pd.DataFrame,
 def overview_export_tables(
     result: DatasetOverviewResult,
     tables: tuple[OverviewExportTable, ...],
+    *,
+    split_samples: bool = False,
 ) -> dict[str, pd.DataFrame]:
     """Build independent export frames from structured Overview data.
 
     Missing fractions remain numeric fractions, not formatted percentages.
-    Samples contain at most the first 100 rows and never access the dataset.
+    Samples contain the captured first/last ten rows, including overlap, and
+    never access the dataset. Combined samples include a collision-safe group
+    column; split samples are separate named tables.
     Empty tables are not exportable, matching the single-frame exporters.
 
     Args:
         result: The displayed, stable analysis snapshot.
         tables: Nonempty, distinct supported table choices.
+        split_samples: Return separate first/last tables instead of one Sample.
 
     Returns:
         Ordered named frames owned by the export operation.
@@ -229,12 +235,8 @@ def overview_export_tables(
                     columns=["column", "type", "storage_type", "missing_count", "missing_fraction", "unique_count"],
                 ).astype({"column": pd.StringDtype(), "type": pd.StringDtype(), "storage_type": pd.StringDtype()})
             case OverviewExportTable.SAMPLE:
-                frame = (
-                    result.sample_frame.head(SAMPLE_ROW_LIMIT).copy(deep=True)
-                    if result.sample_frame is not None
-                    else pd.DataFrame(result.sample_rows[:SAMPLE_ROW_LIMIT], columns=list(result.sample_columns))
-                )
-                frame.columns = list(result.sample_columns)
+                frames.update(_sample_export_tables(result, split_samples=split_samples))
+                continue
             case _:
                 message = "Unsupported Overview table."
                 raise ValueError(message)
@@ -243,6 +245,31 @@ def overview_export_tables(
             raise ValueError(message)
         frames[table.value] = frame
     return frames
+
+
+def _sample_export_tables(
+    result: DatasetOverviewResult,
+    *,
+    split_samples: bool,
+) -> dict[str, pd.DataFrame]:
+    """Build owned sample exports, rejecting missing or incomplete snapshots."""
+    first, last = overview_sample_frames(result)
+    if first.empty:
+        message = "Overview table Sample is empty."
+        raise ValueError(message)
+    expected_count = min(SAMPLE_DISPLAY_ROW_LIMIT, result.row_count)
+    if last is None or len(first) != expected_count or len(last) != expected_count:
+        message = "The captured Overview first/last sample is unavailable or incomplete."
+        raise ValueError(message)
+    first.columns = list(result.sample_columns)
+    last.columns = list(result.sample_columns)
+    samples = {f"First ({len(first)})": first, f"Last ({len(last)})": last}
+    if split_samples:
+        return samples
+    group_header = unique_headers(("Sample group",), result.sample_columns)[0]
+    for title, frame in samples.items():
+        frame.insert(0, group_header, pd.Series(title, index=frame.index, dtype=pd.StringDtype()))
+    return {"Sample": pd.concat(samples.values(), ignore_index=True)}
 
 
 def _summary_export_frame(result: DatasetOverviewResult) -> pd.DataFrame:

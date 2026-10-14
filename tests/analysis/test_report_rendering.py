@@ -513,8 +513,46 @@ def test_overview_sample_report_has_accessible_first_and_last_tables() -> None:
     assert html.index("<caption>First (10)</caption>") < html.index("<caption>Last (10)</caption>")
     assert "<script" not in html
     exported = localized_report_tables(AnalysisCategory.OVERVIEW, result, ("Sample",))["Sample"]
-    assert exported.shape == (100, 2)
-    assert exported.iloc[-1, 0] == 99
+    assert exported.shape == (20, 3)
+    assert exported.iloc[-1, 1] == 119
+    assert exported.iloc[-1, 0] == "Last (10)"
+
+
+@pytest.mark.parametrize("split_samples", [False, True])
+def test_localized_overview_sample_retains_literal_headers_and_safe_localized_group(split_samples):
+    frame = pd.DataFrame({
+        "Sample group": pd.Series(range(5), dtype="Int64"),
+        "Urvalsgrupp": pd.Series(range(5), dtype="Int64"),
+        "Urvalsgrupp (2)": pd.Series(range(5), dtype="Int64"),
+        "column": pd.Series(["Column"] * 5, dtype="string"),
+        "First (5)": pd.Series(range(5), dtype="Int64"),
+    })
+    translations = {
+        "Sample": "Urval",
+        "Sample group": "Urvalsgrupp",
+        "First ({count})": "Första ({count})",
+        "Last ({count})": "Sista ({count})",
+        "Column": "Kolumn",
+    }
+    tables = localized_report_tables(
+        AnalysisCategory.OVERVIEW,
+        analyze_dataset_overview(frame),
+        ("Sample",),
+        translate=lambda _context, source: translations.get(source, source),
+        split_overview_samples=split_samples,
+    )
+    if split_samples:
+        assert list(tables) == ["Första (5)", "Sista (5)"]
+        for table in tables.values():
+            pd.testing.assert_frame_equal(table, frame)
+    else:
+        assert list(tables) == ["Urval"]
+        combined = tables["Urval"]
+        assert list(combined.columns) == ["Urvalsgrupp (3)", *frame.columns]
+        assert combined.iloc[:, 0].tolist() == ["Första (5)"] * 5 + ["Sista (5)"] * 5
+        assert combined.iloc[:, 0].dtype == pd.StringDtype()
+        pd.testing.assert_frame_equal(combined.iloc[:5, 1:], frame)
+        pd.testing.assert_frame_equal(combined.iloc[5:, 1:].reset_index(drop=True), frame)
 
 
 def test_overview_sample_report_does_not_invent_tail_for_legacy_partial_snapshot() -> None:

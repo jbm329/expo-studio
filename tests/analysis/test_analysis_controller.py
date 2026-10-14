@@ -153,11 +153,14 @@ def test_overview_export_routes_explicit_frames_and_never_reads_active_data(form
     assert kwargs["show_success_dialog"] is True
     if format_choice is OverviewExportFormat.EXCEL:
         assert set(kwargs) == {"sheets", "parent_widget", "operation_target", "show_success_dialog"}
-        assert list(kwargs["sheets"]) == ["Sample"]
-        actual = kwargs["sheets"]["Sample"]
+        assert list(kwargs["sheets"]) == ["First (2)", "Last (2)"]
+        pd.testing.assert_frame_equal(kwargs["sheets"]["Last (2)"], expected)
+        actual = kwargs["sheets"]["First (2)"]
     else:
         assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
         actual = kwargs["df"]
+        expected = pd.concat([expected, expected], ignore_index=True)
+        expected.insert(0, "Sample group", pd.array(["First (2)"] * 2 + ["Last (2)"] * 2, dtype="string"))
     pd.testing.assert_frame_equal(actual, expected)
     assert controller._results.mock_calls == []
 
@@ -173,7 +176,7 @@ def test_overview_excel_routes_all_three_named_tables_in_one_operation():
     assert len(exporter.mock_calls) == 1
     sheets = exporter.export_excel.call_args.kwargs["sheets"]
     assert exporter.export_excel.call_args.kwargs["show_success_dialog"] is True
-    assert list(sheets) == ["Columns", "Sample", "Summary"]
+    assert list(sheets) == ["Columns", "First (2)", "Last (2)", "Summary"]
     assert list(sheets["Columns"].columns) == [
         "Column",
         "Type",
@@ -183,9 +186,58 @@ def test_overview_excel_routes_all_three_named_tables_in_one_operation():
         "Unique",
     ]
     assert sheets["Columns"].iloc[0]["Missing fraction"] == 0.0
-    assert sheets["Sample"].shape == (2, 1)
-    assert list(sheets["Sample"].columns) == ["value"]
+    assert sheets["First (2)"].shape == (2, 1)
+    assert list(sheets["Last (2)"].columns) == ["value"]
     assert sheets["Summary"].iloc[0]["Metric"] == "row_count"
+
+
+@pytest.mark.parametrize("format_choice", list(OverviewExportFormat))
+def test_overview_export_routes_owned_actual_tail_with_literal_headers(format_choice, monkeypatch):
+    controller, dialog, _, exporter = _overview_export_context()
+    source = pd.DataFrame({
+        "column": pd.Series(range(120), dtype="Int64"),
+        "Urvalsgrupp": pd.Series(["literal"] * 120, dtype="string"),
+    })
+    first = source.head(10).copy(deep=True)
+    last = source.tail(10).copy(deep=True)
+    result = analyze_dataset_overview(source)
+    dialog.set_exportable_overview(result)
+    translations = {
+        "Sample group": "Urvalsgrupp",
+        "First ({count})": "Första ({count})",
+        "Last ({count})": "Sista ({count})",
+        "Column": "Kolumn",
+    }
+    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    source.iloc[-1, 0] = -1
+    controller._export_overview(
+        dialog, exporter, OverviewExportRequest(result, (OverviewExportTable.SAMPLE,), format_choice)
+    )
+    if format_choice is OverviewExportFormat.EXCEL:
+        sheets = exporter.export_excel.call_args.kwargs["sheets"]
+        assert list(sheets) == ["Första (10)", "Sista (10)"]
+        pd.testing.assert_frame_equal(sheets["Första (10)"], first)
+        pd.testing.assert_frame_equal(sheets["Sista (10)"], last)
+    else:
+        method = exporter.export_csv if format_choice is OverviewExportFormat.CSV else exporter.export_data
+        expected = pd.concat([first, last], ignore_index=True)
+        expected.insert(0, "Urvalsgrupp (2)", pd.Series(["Första (10)"] * 10 + ["Sista (10)"] * 10, dtype="string"))
+        pd.testing.assert_frame_equal(method.call_args.kwargs["df"], expected)
+    assert controller._results.mock_calls == []
+
+
+@pytest.mark.parametrize("format_choice", list(OverviewExportFormat))
+def test_overview_export_rejects_missing_tail(format_choice):
+    from dataclasses import replace
+
+    controller, dialog, _, exporter = _overview_export_context()
+    result = analyze_dataset_overview(pd.DataFrame({"value": range(120)}))
+    partial = replace(result, sample_last_frame=None, sample_last_rows=())
+    dialog.set_exportable_overview(partial)
+    controller._export_overview(
+        dialog, exporter, OverviewExportRequest(partial, (OverviewExportTable.SAMPLE,), format_choice)
+    )
+    assert exporter.mock_calls == []
 
 
 def test_overview_excel_uses_translated_names_and_headers_without_translating_values(monkeypatch):
@@ -194,6 +246,8 @@ def test_overview_excel_uses_translated_names_and_headers_without_translating_va
         "Columns": "Kolumner",
         "Summary": "Sammanfattning",
         "Sample": "Urval",
+        "First ({count})": "Första ({count})",
+        "Last ({count})": "Sista ({count})",
         "Column": "Kolumn",
         "Type": "Typ",
         "Storage type": "Lagringstyp",
@@ -215,7 +269,7 @@ def test_overview_excel_uses_translated_names_and_headers_without_translating_va
     controller._export_overview(dialog, exporter, request)
     sheets = exporter.export_excel.call_args.kwargs["sheets"]
 
-    assert list(sheets) == ["Kolumner", "Urval", "Sammanfattning"]
+    assert list(sheets) == ["Kolumner", "Första (2)", "Sista (2)", "Sammanfattning"]
     assert list(sheets["Kolumner"].columns) == [
         "Kolumn",
         "Typ",
@@ -226,8 +280,8 @@ def test_overview_excel_uses_translated_names_and_headers_without_translating_va
     ]
     assert list(sheets["Sammanfattning"].columns) == ["Avsnitt", "Mått", "Kolumn", "Antal", "Andel"]
     assert sheets["Sammanfattning"].iloc[0]["Mått"] == "row_count"
-    assert list(sheets["Urval"].columns) == ["value"]
-    assert sheets["Urval"]["value"].dtype == "int64"
+    assert list(sheets["Första (2)"].columns) == ["value"]
+    assert sheets["Sista (2)"]["value"].dtype == "int64"
 
 
 @pytest.mark.parametrize("format_choice", [OverviewExportFormat.CSV, OverviewExportFormat.BINARY])
@@ -588,7 +642,10 @@ def test_open_analysis_dialog_reuses_injected_exporter_and_connects_request(dial
     assert kwargs["parent_widget"] is dialog
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"] is True
-    pd.testing.assert_frame_equal(kwargs["df"], pd.DataFrame({"a": [1]}))
+    pd.testing.assert_frame_equal(
+        kwargs["df"],
+        pd.DataFrame({"Sample group": pd.Series(["First (1)", "Last (1)"], dtype="string"), "a": [1, 1]}),
+    )
 
 
 class DummyResults:

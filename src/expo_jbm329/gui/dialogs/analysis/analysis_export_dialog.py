@@ -52,6 +52,7 @@ from expo_jbm329.services.analysis.overview import (
     OverviewExportFormat,
     OverviewExportRequest,
     OverviewExportTable,
+    overview_export_tables,
 )
 from expo_jbm329.services.analysis.pca_export import (
     PCA_COMPONENTS,
@@ -268,7 +269,8 @@ class AnalysisExportDialog(QDialog):
         """Return the translated description of what the current mode exports."""
         if self._overview_mode:
             return self.tr(
-                "Export the Overview Summary, Columns metadata, or Sample (first 100 rows), not the original dataset."
+                "Export the Overview Summary, Columns metadata, or Sample (first/last 10 rows), "
+                "not the original dataset."
             )
         if self._statistics_mode:
             return self.tr("Export the available Statistics tables and numeric-column charts.")
@@ -305,14 +307,22 @@ class AnalysisExportDialog(QDialog):
         data_layout = QVBoxLayout(data)
         results = QGroupBox(self.tr("Results"), self)
         results_layout = QVBoxLayout(results)
+        sample_available = False
+        if result is not None:
+            try:
+                overview_export_tables(result, (OverviewExportTable.SAMPLE,))
+                sample_available = True
+            except ValueError:
+                # Partial legacy snapshots cannot supply the actual last rows.
+                sample_available = False
         availability = {
             OverviewExportTable.COLUMNS: result is not None and bool(result.columns),
-            OverviewExportTable.SAMPLE: result is not None and bool(result.sample_columns and result.sample_rows),
+            OverviewExportTable.SAMPLE: sample_available,
             OverviewExportTable.SUMMARY: result is not None,
         }
         labels = {
             OverviewExportTable.COLUMNS: self.tr("Columns metadata"),
-            OverviewExportTable.SAMPLE: self.tr("Sample (first 100 rows)"),
+            OverviewExportTable.SAMPLE: self.tr("Sample (first/last 10 rows)"),
             OverviewExportTable.SUMMARY: self.tr("Summary"),
         }
         for table, available in availability.items():
@@ -331,6 +341,8 @@ class AnalysisExportDialog(QDialog):
                 choice.setToolTip(
                     self.tr("Run Overview successfully before exporting.")
                     if result is None
+                    else self.tr("The first/last sample is unavailable in this captured result.")
+                    if table is OverviewExportTable.SAMPLE
                     else self.tr("This table is empty and cannot be exported.")
                 )
             self._table_choices[table] = choice

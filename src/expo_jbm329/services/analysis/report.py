@@ -50,6 +50,7 @@ from expo_jbm329.services.analysis.outliers_export import (
     OutlierMetric,
     UnivariateOutlierExportSnapshot,
     outlier_export_tables,
+    unique_headers,
 )
 from expo_jbm329.services.analysis.overview import (
     DatasetOverviewResult,
@@ -547,6 +548,7 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
         "Columns",
         "Columns metadata",
         "Sample",
+        "Sample group",
         "First ({count})",
         "Last ({count})",
         "Last (unavailable)",
@@ -877,6 +879,7 @@ def localized_report_tables(
     number_format: Callable[[float], str] = fmt_num,
     count_format: Callable[[int], str] = fmt_int,
     labels: ReportRenderOptions | None = None,
+    split_overview_samples: bool = False,
 ) -> dict[str, pd.DataFrame]:
     """Build the selected report tables using each analysis export's conventions.
 
@@ -893,6 +896,7 @@ def localized_report_tables(
         number_format: Locale-aware number formatter for explanatory values.
         count_format: Locale-aware integer formatter for explanatory counts.
         labels: Optional translations and locale formatters captured before worker execution.
+        split_overview_samples: Export Overview Sample as separate first/last tables.
 
     Returns:
         Localized tables keyed by their visible export titles.
@@ -926,6 +930,32 @@ def localized_report_tables(
             }
             for key in components:
                 overview_table = overview_table_keys[key]
+                if overview_table is OverviewExportTable.SAMPLE:
+                    sample_tables = overview_export_tables(
+                        snapshot, (overview_table,), split_samples=split_overview_samples
+                    )
+                    first, last = overview_sample_frames(snapshot)
+                    if last is None:
+                        message = "The captured Overview last sample is unavailable."
+                        raise ValueError(message)
+                    sample_titles = {
+                        f"First ({len(first)})": translate("OverviewView", "First ({count})").format(
+                            count=count_format(len(first))
+                        ),
+                        f"Last ({len(last)})": translate("OverviewView", "Last ({count})").format(
+                            count=count_format(len(last))
+                        ),
+                    }
+                    for title, sample in sample_tables.items():
+                        if split_overview_samples:
+                            add(sample_titles[title], sample)
+                        else:
+                            headers = list(sample.columns)
+                            headers[0] = unique_headers((translate("OverviewView", "Sample group"),), headers[1:])[0]
+                            sample.columns = headers
+                            sample.iloc[:, 0] = sample.iloc[:, 0].map(sample_titles).astype(pd.StringDtype())
+                            add(translate("OverviewView", "Sample"), sample)
+                    continue
                 frame = overview_export_tables(snapshot, (overview_table,))[overview_table.value]
                 context = "OverviewView"
                 overview_headers = {
@@ -1743,7 +1773,7 @@ def _prepare_overview_samples(
     translate: Callable[[str, str], str],
     count_format: Callable[[int], str],
 ) -> tuple[tuple[PreparedReportTable, ...], str | None]:
-    """Prepare first/last sample tables without changing the export sample."""
+    """Prepare first/last sample tables for the report presentation."""
     first, last = overview_sample_frames(result)
     if first.empty:
         message = "The selected Overview sample has no captured rows."

@@ -684,8 +684,8 @@ Tillämpade kolumner: {columns}</translation></message>
         <translation>Välj exakt en tabell för CSV eller binär export.</translation>
     </message>
     <message>
-        <source>Export the Overview Summary, Columns metadata, or Sample (first 100 rows), not the original dataset.</source>
-        <translation>Exportera översiktens sammanfattning, kolumnmetadata eller ett urval (de första 100 raderna), inte det ursprungliga datasetet.</translation>
+        <source>Export the Overview Summary, Columns metadata, or Sample (first/last 10 rows), not the original dataset.</source>
+        <translation>Exportera översiktens sammanfattning, kolumnmetadata eller ett urval (de första/sista 10 raderna), inte det ursprungliga datasetet.</translation>
     </message>
     <message>
         <source>Dataset metrics, column-type counts, and high-missing-value warnings. Fractions are numeric values from 0 to 1.</source>
@@ -700,8 +700,12 @@ Tillämpade kolumner: {columns}</translation></message>
         <translation>Kolumnmetadata</translation>
     </message>
     <message>
-        <source>Sample (first 100 rows)</source>
-        <translation>Urval (de första 100 raderna)</translation>
+        <source>Sample (first/last 10 rows)</source>
+        <translation>Urval (de första/sista 10 raderna)</translation>
+    </message>
+    <message>
+        <source>The first/last sample is unavailable in this captured result.</source>
+        <translation>Urvalet med de första/sista raderna är inte tillgängligt i det här sparade resultatet.</translation>
     </message>
     <message>
         <source>Run Overview successfully before exporting.</source>
@@ -5439,6 +5443,7 @@ Sparad till:
 </context>
 <context>
     <name>OverviewView</name>
+    <message><source>Sample group</source><translation>Urvalsgrupp</translation></message>
     <message>
         <source>Dataset statistics</source>
         <translation>Datasetstatistik</translation>

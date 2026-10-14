@@ -785,12 +785,10 @@ class AnalysisController:
                 translate=tr,
                 number_format=fmt_num,
                 count_format=fmt_int,
+                split_overview_samples=request.format is OverviewExportFormat.EXCEL,
             )
         except (TypeError, ValueError):
             self._logger.warning("Rejected unavailable Overview export selection.")
-            return
-        if len(sheets) != len(request.tables):
-            self._logger.warning("Rejected Overview export because translated sheet names are not unique.")
             return
         # Frames belong to this export only and remain stable for the async job.
         match request.format:

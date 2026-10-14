@@ -116,15 +116,71 @@ def test_export_sample_is_bounded_typed_and_independent():
         "flag": pd.Series([True, None] * 60, dtype="boolean"),
         "date": pd.date_range("2024-01-01", periods=120, tz="UTC"),
     })
-    expected = source.head(100).copy(deep=True)
+    expected = pd.concat([source.head(10), source.tail(10)], ignore_index=True)
+    expected.insert(0, "Sample group", pd.array(["First (10)"] * 10 + ["Last (10)"] * 10, dtype="string"))
     result = analyze_dataset_overview(source)
     source.loc[0, "integer"] = 999
+    source.loc[119, "integer"] = -1
     exported = overview_export_tables(result, (OverviewExportTable.SAMPLE,))["Sample"]
     pd.testing.assert_frame_equal(exported, expected)
     exported.loc[0, "integer"] = 888
+    exported.loc[19, "integer"] = -2
     second = overview_export_tables(result, (OverviewExportTable.SAMPLE,))["Sample"]
     pd.testing.assert_frame_equal(second, expected)
-    assert second.shape[0] == SAMPLE_ROW_LIMIT
+    assert second.shape[0] == 20
+
+
+@pytest.mark.parametrize("row_count", [1, 9, 15, 120])
+def test_export_sample_split_and_combined_keep_actual_counts_order_and_overlap(row_count):
+    source = pd.DataFrame({"value": pd.Series(range(row_count), dtype="Int64")})
+    result = analyze_dataset_overview(source)
+    count = min(row_count, 10)
+    split = overview_export_tables(result, (OverviewExportTable.SAMPLE,), split_samples=True)
+    assert list(split) == [f"First ({count})", f"Last ({count})"]
+    pd.testing.assert_frame_equal(split[f"First ({count})"], source.head(10))
+    pd.testing.assert_frame_equal(split[f"Last ({count})"], source.tail(10))
+    combined = overview_export_tables(result, (OverviewExportTable.SAMPLE,))["Sample"]
+    assert combined["value"].tolist() == source.head(10)["value"].tolist() + source.tail(10)["value"].tolist()
+    assert combined["Sample group"].tolist() == [f"First ({count})"] * count + [f"Last ({count})"] * count
+    assert combined["value"].dtype == pd.Int64Dtype()
+    split[f"Last ({count})"].iloc[-1, 0] = -1
+    fresh = overview_export_tables(result, (OverviewExportTable.SAMPLE,), split_samples=True)
+    pd.testing.assert_frame_equal(fresh[f"Last ({count})"], source.tail(10))
+
+
+def test_export_sample_metadata_collision_preserves_literal_dataset_headers():
+    source = pd.DataFrame({
+        "Sample group": [1, 2],
+        "Sample group (2)": [3, 4],
+        "First (2)": [5, 6],
+        "column": [7, 8],
+    })
+    combined = overview_export_tables(analyze_dataset_overview(source), (OverviewExportTable.SAMPLE,))["Sample"]
+    assert list(combined.columns) == ["Sample group (3)", *source.columns]
+    pd.testing.assert_frame_equal(combined.iloc[:2, 1:], source)
+    pd.testing.assert_frame_equal(combined.iloc[2:, 1:].reset_index(drop=True), source)
+
+
+def test_export_sample_roundtrips_excel_csv_and_binary(tmp_path):
+    source = pd.DataFrame({"value": pd.Series(range(120), dtype="Int64")})
+    result = analyze_dataset_overview(source)
+    split = overview_export_tables(result, (OverviewExportTable.SAMPLE,), split_samples=True)
+    writer = FileWriter()
+    excel_path = tmp_path / "sample.xlsx"
+    writer.save_excel_sheets(split, excel_path, index=False, streaming=False)
+    excel = pd.read_excel(excel_path, sheet_name=None)
+    assert list(excel) == ["First (10)", "Last (10)"]
+    assert excel["First (10)"]["value"].tolist() == list(range(10))
+    assert excel["Last (10)"]["value"].tolist() == list(range(110, 120))
+    combined = overview_export_tables(result, (OverviewExportTable.SAMPLE,))["Sample"]
+    csv_path = tmp_path / "sample.csv"
+    writer.save_csv(combined, csv_path)
+    csv = pd.read_csv(csv_path)
+    assert csv["Sample group"].tolist() == ["First (10)"] * 10 + ["Last (10)"] * 10
+    assert csv["value"].tolist() == list(range(10)) + list(range(110, 120))
+    binary_path = tmp_path / "sample.parquet"
+    writer.save_datafile(combined, binary_path)
+    pd.testing.assert_frame_equal(pd.read_parquet(binary_path), combined)
 
 
 def test_overview_display_samples_capture_actual_first_and_last_ten_rows_with_dtypes():
@@ -202,14 +258,34 @@ def test_overview_display_samples_only_fallback_to_a_complete_legacy_snapshot():
     assert complete_last["value"].tolist() == list(range(5))
 
 
-def test_export_sample_legacy_structured_rows_preserves_values_and_caps_rows():
+def test_export_sample_legacy_structured_rows_preserves_complete_first_and_last():
     from dataclasses import replace
 
     result = analyze_dataset_overview(pd.DataFrame({"value": [1]}))
-    result = replace(result, sample_frame=None, sample_rows=tuple((index,) for index in range(110)))
+    result = replace(
+        result,
+        row_count=9,
+        sample_frame=None,
+        sample_rows=tuple((index,) for index in range(9)),
+        sample_last_rows=(),
+        sample_last_frame=None,
+    )
     sample = overview_export_tables(result, (OverviewExportTable.SAMPLE,))["Sample"]
-    assert sample.shape == (100, 1)
-    assert sample.iloc[-1, 0] == 99
+    assert sample.shape == (18, 2)
+    assert sample["value"].tolist() == list(range(9)) * 2
+
+
+@pytest.mark.parametrize("split_samples", [False, True])
+def test_export_sample_rejects_partial_legacy_snapshots(split_samples):
+    from dataclasses import replace
+
+    result = analyze_dataset_overview(pd.DataFrame({"value": range(120)}))
+    partial = replace(result, sample_last_rows=(), sample_last_frame=None)
+    with pytest.raises(ValueError, match="unavailable or incomplete"):
+        overview_export_tables(partial, (OverviewExportTable.SAMPLE,), split_samples=split_samples)
+    incomplete_tail = replace(result, sample_last_frame=result.sample_last_frame.head(3))
+    with pytest.raises(ValueError, match="unavailable or incomplete"):
+        overview_export_tables(incomplete_tail, (OverviewExportTable.SAMPLE,), split_samples=split_samples)
 
 
 @pytest.mark.parametrize("source", [pd.DataFrame(), pd.DataFrame(index=range(3))])

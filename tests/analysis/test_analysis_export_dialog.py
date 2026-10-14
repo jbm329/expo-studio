@@ -81,7 +81,7 @@ def test_overview_formats_preserve_choices_and_disable_multi_table_single_file_e
     dialog = AnalysisExportDialog(overview=overview)
     assert [group.title() for group in dialog.findChildren(QGroupBox)] == ["Data", "Results"]
     choices = dialog.findChildren(QCheckBox)
-    assert [choice.text() for choice in choices] == ["Columns metadata", "Sample (first 100 rows)", "Summary"]
+    assert [choice.text() for choice in choices] == ["Columns metadata", "Sample (first/last 10 rows)", "Summary"]
     assert choices[2].isEnabled()
     assert not choices[2].isChecked()
     assert "high-missing-value warnings" in choices[2].toolTip()
@@ -135,10 +135,47 @@ def test_overview_empty_and_missing_results_have_explicit_disabled_tables(source
     assert len(choices) == 3
     assert not choices[1].isEnabled()
     assert bool(choices[0].isEnabled()) == (source is not None and source.shape[1] > 0)
-    assert ("empty" if source is not None else "Run Overview") in choices[1].toolTip()
+    assert ("unavailable" if source is not None else "Run Overview") in choices[1].toolTip()
     assert choices[2].isEnabled() is (source is not None)
     if source is None:
         assert "Run Overview" in choices[2].toolTip()
+
+
+def test_overview_partial_legacy_sample_is_disabled_without_changing_other_tables():
+    result = analyze_dataset_overview(pd.DataFrame({"value": range(120)}))
+    partial = replace(result, sample_last_rows=(), sample_last_frame=None)
+    dialog = AnalysisExportDialog(overview=partial)
+    choices = dialog.findChildren(QCheckBox)
+    assert choices[0].isEnabled()
+    assert not choices[1].isEnabled()
+    assert "first/last sample is unavailable" in choices[1].toolTip()
+    assert choices[2].isEnabled()
+
+
+@pytest.mark.parametrize(
+    ("locale", "sample_label", "group_label", "first_label", "last_label"),
+    [
+        ("en", "Sample (first/last 10 rows)", "Sample group", "First ({count})", "Last ({count})"),
+        ("sv", "Urval (de första/sista 10 raderna)", "Urvalsgrupp", "Första ({count})", "Sista ({count})"),
+    ],
+)
+def test_overview_sample_compiled_translations(locale, sample_label, group_label, first_label, last_label):
+    translator = QTranslator()
+    path = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{locale}.qm"
+    assert translator.load(str(path))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    dialog = None
+    try:
+        dialog = AnalysisExportDialog(overview=analyze_dataset_overview(pd.DataFrame({"value": [1]})))
+        assert dialog.findChildren(QCheckBox)[1].text() == sample_label
+        assert translator.translate("OverviewView", "Sample group") == group_label
+        assert translator.translate("OverviewView", "First ({count})") == first_label
+        assert translator.translate("OverviewView", "Last ({count})") == last_label
+    finally:
+        if dialog is not None:
+            dialog.close()
+        app.removeTranslator(translator)
 
 
 @pytest.mark.parametrize(
