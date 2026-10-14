@@ -596,6 +596,7 @@
     <message><source>Dataset</source><translation>Dataset</translation></message>
     <message><source>Columns</source><translation>Kolumner</translation></message>
     <message><source>Analysis date</source><translation>Analysdatum</translation></message>
+    <message><source>Report date</source><translation>Rapportdatum</translation></message>
     <message><source>Expo version</source><translation>Expo-version</translation></message>
     <message><source>Export computed tables and charts for the applied test, not the original dataset.</source><translation>Exportera beräknade tabeller och diagram för det tillämpade testet, inte det ursprungliga datasetet.</translation></message>
     <message><source>Apply a hypothesis test successfully before exporting.</source><translation>Tillämpa ett hypotestest med ett giltigt resultat innan du exporterar.</translation></message>

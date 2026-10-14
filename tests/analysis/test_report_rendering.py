@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import UTC, datetime
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -211,6 +212,57 @@ def test_preparation_captures_document_metadata_before_callbacks() -> None:
 
     assert prepared.title == "Title at request"
     assert prepared.description == "Description at request"
+
+
+@pytest.mark.parametrize("other_dataset", [DATASET, DatasetRef("other", "Other <dataset>", 5, 2)])
+def test_report_metadata_appears_once_in_header_without_dataset_dimensions(other_dataset) -> None:
+    document = ReportDocument(title="Report")
+    first = _entry(AnalysisCategory.PCA, pca_snapshot(), ("explained_variance",))
+    second = create_report_entry(
+        AnalysisCategory.STATISTICS,
+        other_dataset,
+        analyze_descriptive_statistics(pd.DataFrame({"value": [1, 2, 3]})),
+    )
+    second = second.with_selection(("Continuous",), "")
+    document.upsert(replace(first, analysis_date="2001-01-01"))
+    document.upsert(replace(second, analysis_date="2002-02-02"))
+    prepared = prepare_report_content(document, translate=lambda _context, source: f"translated:{source}")
+    prepared = replace(prepared, report_date="2026-10-14")
+
+    html = render_prepared_report_html(prepared)
+    header, entries = html.split("</header>", 1)
+
+    assert html.count('<dl class="metadata">') == 1
+    assert "<dt>translated:Dataset</dt>" in header
+    assert "<dt>translated:Report date</dt><dd>2026-10-14</dd>" in header
+    assert "<dt>translated:Expo version</dt>" in header
+    assert header.count(DATASET.title) == 1
+    if other_dataset is not DATASET:
+        assert "Other &lt;dataset&gt;" in header
+    assert "<dt>translated:Rows</dt>" not in html
+    assert "<dt>translated:Columns</dt>" not in html
+    assert "Analysis date" not in html
+    assert "2001-01-01" not in html
+    assert "2002-02-02" not in html
+    assert '<dl class="metadata">' not in entries
+    assert entries.count('<article class="analysis-entry">') == 2
+
+
+def test_report_date_is_captured_at_preparation_not_from_entry_or_serialization() -> None:
+    document = ReportDocument()
+    entry = _entry(AnalysisCategory.PCA, pca_snapshot(), ("explained_variance",))
+    document.upsert(replace(entry, analysis_date="2001-01-01"))
+    generated_at = datetime(2026, 10, 14, 12, 30, tzinfo=UTC).astimezone()
+
+    with patch("expo_jbm329.services.analysis.report.datetime", wraps=datetime) as clock:
+        clock.now.return_value = generated_at
+        prepared = prepare_report_content(document)
+
+    html = render_prepared_report_html(prepared)
+    assert prepared.report_date == generated_at.date().isoformat()
+    assert f"<dt>Report date</dt><dd>{prepared.report_date}</dd>" in html
+    assert "2001-01-01" not in html
+    assert "2027-10-14" not in html
 
 
 def test_correlation_charts_follow_selection_order_and_only_selected_keys(monkeypatch) -> None:
@@ -670,7 +722,7 @@ def test_html_report_is_accessible_self_contained_and_escapes_plain_text() -> No
             ),
         ),
         "N/A",
-        ("Dataset label", "Rows label", "Columns label", "Date label", "Version label"),
+        ("Dataset label", "Date label", "Version label"),
     )
 
     html = render_prepared_report_html(
@@ -739,7 +791,7 @@ def test_report_hides_only_redundant_content_titles(component_label, content_tit
             ),
         ),
         "N/A",
-        ("Dataset", "Rows", "Columns", "Date", "Version"),
+        ("Dataset", "Report date", "Version"),
     )
 
     html = render_prepared_report_html(document)
@@ -771,7 +823,7 @@ def test_render_report_html_renders_real_worker_chart_and_inline_png() -> None:
     assert progress_values[-1] == 100
 
 
-def test_report_html_keeps_mixed_dataset_entries_distinct() -> None:
+def test_report_html_lists_all_captured_datasets_in_header() -> None:
     first_dataset = DatasetRef("first-tab", "Employees", 12, 3)
     second_dataset = DatasetRef("second-tab", "Orders", 25, 5)
     document = ReportDocument(title="Mixed datasets")
@@ -787,9 +839,10 @@ def test_report_html_keeps_mixed_dataset_entries_distinct() -> None:
 
     html = render_report_html(document)
 
-    assert "Employees" in html and "Orders" in html
-    assert ">12</dd>" in html and ">25</dd>" in html
-    assert ">3</dd>" in html and ">5</dd>" in html
+    assert "<dt>Dataset</dt><dd>Employees, Orders</dd>" in html.split("</header>", 1)[0]
+    assert html.count('<article class="analysis-entry">') == 2
+    assert ">12</dd>" not in html and ">25</dd>" not in html
+    assert ">3</dd>" not in html and ">5</dd>" not in html
 
 
 def test_captured_report_labels_freeze_translation_before_worker_render() -> None:

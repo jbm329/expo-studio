@@ -10,6 +10,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 ### Changed
 - Advanced Analysis now stays bound to the active ready dataset for the whole modal session; report entries share that source
 - Advanced Analysis displays the source dataset name and dimensions in the window title instead of a separate dataset pane
+- HTML reports show dataset, report generation date, and Expo version once at the top, without row/column metadata
 
 ### Added
 - Categorical tab in Statistics with frequency counts, percentages, and separate missing-value counts

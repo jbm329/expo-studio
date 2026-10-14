@@ -501,13 +501,12 @@ class PreparedReportDocument:
     description: str
     entries: tuple[PreparedReportEntry, ...]
     missing_value_label: str
-    metadata_labels: tuple[str, str, str, str, str] = (
+    metadata_labels: tuple[str, str, str] = (
         "Dataset",
-        "Rows",
-        "Columns",
-        "Analysis date",
+        "Report date",
         "Expo version",
     )
+    report_date: str = field(default_factory=lambda: datetime.now().astimezone().date().isoformat())
 
 
 def _identity_translate(_context: str, text: str) -> str:
@@ -755,7 +754,7 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
         "N/A",
         "Dataset",
         "Columns",
-        "Analysis date",
+        "Report date",
         "Expo version",
         "Charts",
         "Least-squares line: y = ({slope}) x + ({intercept})",
@@ -1567,6 +1566,7 @@ def prepare_report_content(
         count_format = labels.count_format
     document_title = document.title
     description = document.description
+    report_date = datetime.now().astimezone().date().isoformat()
     entries = document.entries
     component_count = sum(len(entry.selected_components) for entry in entries)
     completed = 0
@@ -1686,11 +1686,10 @@ def prepare_report_content(
         translate("AnalysisExportDialog", "N/A"),
         (
             translate("AnalysisExportDialog", "Dataset"),
-            translate("AnalysisExportDialog", "Rows"),
-            translate("AnalysisExportDialog", "Columns"),
-            translate("AnalysisExportDialog", "Analysis date"),
+            translate("AnalysisExportDialog", "Report date"),
             translate("AnalysisExportDialog", "Expo version"),
         ),
+        report_date,
     )
 
 
@@ -2091,20 +2090,25 @@ def render_prepared_report_html(
     ]
     if document.description:
         parts.append(f'<p class="report-description">{_html_escape(document.description)}</p>')
+    if document.entries:
+        check_cancel()
+        dataset_label, date_label, version_label = document.metadata_labels
+        dataset_names = tuple(dict.fromkeys(entry.dataset_name for entry in document.entries))
+        app_versions = tuple(dict.fromkeys(entry.app_version for entry in document.entries))
+        parts.append('<dl class="metadata">')
+        for metadata_label, metadata_value in (
+            (dataset_label, ", ".join(dataset_names)),
+            (date_label, document.report_date),
+            (version_label, ", ".join(app_versions)),
+        ):
+            parts.append(f"<div><dt>{_html_escape(metadata_label)}</dt><dd>{_html_escape(metadata_value)}</dd></div>")
+        parts.append("</dl>")
     parts.append("</header>")
     for entry in document.entries:
         check_cancel()
-        dataset_label, rows_label, columns_label, date_label, version_label = document.metadata_labels
         parts.extend([
             '<article class="analysis-entry">',
             f"<h2>{_html_escape(entry.category)}</h2>",
-            '<dl class="metadata">',
-            f"<div><dt>{_html_escape(dataset_label)}</dt><dd>{_html_escape(entry.dataset_name)}</dd></div>",
-            f"<div><dt>{_html_escape(rows_label)}</dt><dd>{_html_escape(count_format(entry.dataset_rows))}</dd></div>",
-            f"<div><dt>{_html_escape(columns_label)}</dt><dd>{_html_escape(count_format(entry.dataset_columns))}</dd></div>",
-            f"<div><dt>{_html_escape(date_label)}</dt><dd>{_html_escape(entry.analysis_date)}</dd></div>",
-            f"<div><dt>{_html_escape(version_label)}</dt><dd>{_html_escape(entry.app_version)}</dd></div>",
-            "</dl>",
         ])
         if entry.note:
             parts.append(f'<p class="report-note">{_html_escape(entry.note)}</p>')

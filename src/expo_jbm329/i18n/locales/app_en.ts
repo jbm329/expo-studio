@@ -275,6 +275,7 @@
     <message><source>Dataset</source><translation>Dataset</translation></message>
     <message><source>Columns</source><translation>Columns</translation></message>
     <message><source>Analysis date</source><translation>Analysis date</translation></message>
+    <message><source>Report date</source><translation>Report date</translation></message>
     <message><source>Expo version</source><translation>Expo version</translation></message>
     <message><source>Export computed tables and charts for the applied test, not the original dataset.</source><translation>Export computed tables and charts for the applied test, not the original dataset.</translation></message>
     <message><source>Apply a hypothesis test successfully before exporting.</source><translation>Apply a hypothesis test successfully before exporting.</translation></message>
