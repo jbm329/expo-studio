@@ -9,6 +9,7 @@ from expo_jbm329.db.core.di import ServiceRegistry
 from expo_jbm329.db.core.models import ConnectionConfig
 from expo_jbm329.db.drivers.sa_mysql import SqlAlchemyMySqlDriver
 from expo_jbm329.db.drivers.sa_odbc import SqlAlchemyOdbcDriver
+from expo_jbm329.db.drivers.sa_postgres import SqlAlchemyPostgresDriver
 from expo_jbm329.db.drivers.sa_sqlite import SqlAlchemySqliteDriver
 
 
@@ -135,3 +136,73 @@ def test_odbc_driver_cancels_and_executes_df():
 
     assert list(df.columns) == ["id"]
     assert driver.cancel_execution("job-1") is False
+
+
+@pytest.mark.parametrize("driver_name", ["psycopg2", "psycopg"])
+def test_postgres_driver_builds_url_and_connect_args(driver_name):
+    driver = SqlAlchemyPostgresDriver(driver_name)
+    driver.initialize(timeouts={"login_timeout_s": 5})
+    driver.set_query_timeout(9)
+    cfg = ConnectionConfig(
+        name="pg_db",
+        engine="postgresql",
+        protocol=driver_name,
+        server="localhost",
+        port=5432,
+        database="sample",
+        user="user",
+        password="secret",
+    )
+    engine = MagicMock()
+    engine.connect.return_value.__enter__.return_value = object()
+
+    with (
+        patch("expo_jbm329.db.drivers.sa_postgres.create_engine", return_value=engine) as mock_create,
+        patch("expo_jbm329.db.drivers.sa_postgres.pd.read_sql", return_value=pd.DataFrame({"x": [1]})),
+    ):
+        df = driver.execute_df(cfg, "SELECT 1")
+
+    assert len(df) == 1
+    call_args, kwargs = mock_create.call_args
+    url = call_args[0]
+    assert url.drivername == f"postgresql+{driver_name}"
+    assert kwargs["pool_pre_ping"] is True
+    assert kwargs["connect_args"]["connect_timeout"] == 5
+    assert kwargs["connect_args"]["options"] == "-c statement_timeout=9000"
+
+
+def test_postgres_driver_reuses_engine_and_disposes():
+    driver = SqlAlchemyPostgresDriver("psycopg2")
+    cfg = ConnectionConfig(name="pg_db", engine="postgresql", protocol="psycopg2", database="sample")
+    engine = MagicMock()
+    engine.connect.return_value.__enter__.return_value = object()
+
+    with (
+        patch("expo_jbm329.db.drivers.sa_postgres.create_engine", return_value=engine) as mock_create,
+        patch("expo_jbm329.db.drivers.sa_postgres.pd.read_sql", return_value=pd.DataFrame({"x": [1]})),
+    ):
+        df1 = driver.execute_df(cfg, "SELECT 1")
+        df2 = driver.execute_df(cfg, "SELECT 1")
+
+    assert len(df1) == 1
+    assert df1.equals(df2)
+    mock_create.assert_called_once()
+
+    driver.dispose()
+    engine.dispose.assert_called_once()
+    assert len(driver._engines) == 0
+
+
+def test_postgres_driver_create_engine_failure_logs_and_raises():
+    driver = SqlAlchemyPostgresDriver("psycopg2")
+    cfg = ConnectionConfig(name="failed_pg", engine="postgresql", protocol="psycopg2")
+    with (
+        patch("expo_jbm329.db.drivers.sa_postgres.create_engine", side_effect=ModuleNotFoundError("No module named 'psycopg2'")),
+        pytest.raises(ModuleNotFoundError, match="No module named 'psycopg2'"),
+    ):
+        driver._get_engine(cfg)
+
+
+def test_postgres_driver_cancel_execution():
+    driver = SqlAlchemyPostgresDriver("psycopg2")
+    assert driver.cancel_execution("job-pg-1") is False

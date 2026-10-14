@@ -49,6 +49,7 @@ dependencies = [
     "scipy>=1.16.0",
     "statsmodels>=0.14.4",
     "scikit-learn>=1.6",
+    "psycopg[binary]>=3.3.6",
 ]
 
 # -------------------------------
