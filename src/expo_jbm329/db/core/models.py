@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     import pandas as pd
 
 EngineKey = Literal["mssql", "postgresql", "mysql", "mariadb", "sqlite", "oracle"]
-ProtocolKey = Literal["odbc", "psycopg2", "pymysql", "mysqlconnector", "pytds", "pymssql", "sqlite"]
+ProtocolKey = Literal["odbc", "psycopg2", "psycopg", "pymysql", "mysqlconnector", "pytds", "pymssql", "sqlite"]
 
 
 @dataclass(frozen=True)

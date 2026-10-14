@@ -34,9 +34,11 @@ from expo_jbm329.db.core.models import ConnectionConfig, EngineKey, ProtocolKey,
 from expo_jbm329.db.dialects.ansi import AnsiDialect
 from expo_jbm329.db.dialects.mssql import MssqlDialect
 from expo_jbm329.db.dialects.mysql import MySqlDialect
+from expo_jbm329.db.dialects.postgres import PostgresDialect
 from expo_jbm329.db.dialects.sqlite import SqliteDialect
 from expo_jbm329.db.drivers.sa_mysql import SqlAlchemyMySqlDriver
 from expo_jbm329.db.drivers.sa_odbc import SqlAlchemyOdbcDriver
+from expo_jbm329.db.drivers.sa_postgres import SqlAlchemyPostgresDriver
 from expo_jbm329.db.drivers.sa_sqlite import SqlAlchemySqliteDriver
 from expo_jbm329.db.service import DbService
 
@@ -57,11 +59,15 @@ _registry = ServiceRegistry()
 
 # Drivers
 _registry.register_driver("odbc", SqlAlchemyOdbcDriver)
+_registry.register_driver("psycopg2", partial(SqlAlchemyPostgresDriver, "psycopg2"))
+_registry.register_driver("psycopg", partial(SqlAlchemyPostgresDriver, "psycopg"))
 _registry.register_driver("pymysql", partial(SqlAlchemyMySqlDriver, "pymysql"))
 _registry.register_driver("mysqlconnector", partial(SqlAlchemyMySqlDriver, "mysqlconnector"))
 _registry.register_driver("sqlite", SqlAlchemySqliteDriver)
 
 # Dialects
+_registry.register_dialect("postgresql", PostgresDialect)
+_registry.register_dialect("postgres", PostgresDialect)
 _registry.register_dialect("mysql", MySqlDialect)
 _registry.register_dialect("mariadb", MySqlDialect)
 _registry.register_dialect("mssql", MssqlDialect)
@@ -170,11 +176,14 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
 
     # --- Protocol selection ---------------------------------------------------
     raw_protocol = rec.get("protocol")
-    protocol = (
-        raw_protocol.lower()
-        if isinstance(raw_protocol, str) and raw_protocol
-        else ("sqlite" if engine_key == "sqlite" else "odbc")
-    )
+    if isinstance(raw_protocol, str) and raw_protocol:
+        protocol = raw_protocol.lower()
+    elif engine_key == "sqlite":
+        protocol = "sqlite"
+    elif engine_key == "postgresql":
+        protocol = "psycopg2"
+    else:
+        protocol = "odbc"
 
     # --- Common fields --------------------------------------------------------
     raw_server = rec.get("server", "")
@@ -358,7 +367,7 @@ def get_dialect(connection_name: str) -> DialectProtocol:
     try:
         return _registry.create_dialect(engine_key)
     except KeyError:
-        # PostgreSQL/Oracle can be configured but have no engine-specific dialect yet.
+        # Oracle / unknown engines can be configured but have no engine-specific dialect yet.
         logger.debug(
             "get_dialect: no dialect registered, using ANSI fallback (conn=%s, engine=%s)",
             connection_name,

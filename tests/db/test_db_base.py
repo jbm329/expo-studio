@@ -55,6 +55,29 @@ def test_build_connection_config_mysql():
     assert cfg.server == "localhost"
 
 
+def test_build_connection_config_postgresql():
+    with patch("expo_jbm329.db.base.read_connections") as mock_read:
+        mock_read.return_value = {
+            "my_pg": {
+                "name": "my_pg",
+                "db_type": "postgresql",
+                "server": "localhost",
+                "port": "5432",
+                "database": "test_db",
+                "user": "postgres",
+                "password": "secret",
+            }
+        }
+
+        cfg = base._build_connection_config("my_pg")
+
+    assert cfg.engine == "postgresql"
+    assert cfg.protocol == "psycopg2"
+    assert cfg.server == "localhost"
+    assert cfg.port == 5432
+    assert cfg.database == "test_db"
+
+
 @patch("expo_jbm329.db.base.read_connections")
 def test_get_service_caching(mock_read_connections):
     mock_read_connections.return_value = {
@@ -138,7 +161,8 @@ def test_fetch_df_returns_none_on_failure():
         ("mysql", "mysql"),
         ("mariadb", "mysql"),
         ("sqlite", "sqlite"),
-        ("postgresql", "ansi"),
+        ("postgresql", "postgresql"),
+        ("postgres", "postgresql"),
         ("oracle", "ansi"),
     ],
 )

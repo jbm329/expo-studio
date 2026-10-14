@@ -9,8 +9,18 @@ from expo_jbm329.db.core.errors import (
     POSTGRES_AMBIGUOUS_COLUMN,
     TR_AMBIGUOUS_COLUMN,
     TR_AMBIGUOUS_COLUMN_HINT,
+    TR_CONNECTION_FAILED_POSTGRES,
     TR_DRIVER_MISSING_HINT_MYSQL,
+    TR_DRIVER_MISSING_HINT_POSTGRES,
     TR_DRIVER_MISSING_MYSQL,
+    TR_DRIVER_MISSING_POSTGRES,
+    TR_FUNCTION_NOT_EXISTS_POSTGRES,
+    TR_PERMISSION_DENIED_POSTGRES,
+    TR_SQL_SYNTAX_ERROR_POSTGRES,
+    TR_TABLE_OR_VIEW_NOT_EXISTS_POSTGRES,
+    TR_TIMEOUT_POSTGRES,
+    TR_UNKNOWN_COLUMN_POSTGRES,
+    TR_UNKNOWN_DATABASE_POSTGRES,
     classify_mssql,
     classify_mysql,
     classify_oracle,
@@ -82,6 +92,96 @@ def test_mysql_classifier_detects_missing_driver(exception):
     assert error.code is None
     assert error.message == TR_DRIVER_MISSING_MYSQL
     assert error.hint == TR_DRIVER_MISSING_HINT_MYSQL
+
+
+@pytest.mark.parametrize(
+    "exception",
+    [
+        ModuleNotFoundError("No module named 'psycopg2'"),
+        ModuleNotFoundError("No module named 'psycopg'"),
+        ImportError("cannot import name 'connect' from 'psycopg2'"),
+        Exception("No module named 'psycopg2'"),
+        Exception("No module named 'psycopg'"),
+    ],
+)
+def test_postgresql_classifier_detects_missing_driver(exception):
+    error = classify_postgresql(exception)
+
+    assert error.category == "driver_missing"
+    assert error.code is None
+    assert error.message == TR_DRIVER_MISSING_POSTGRES
+    assert error.hint == TR_DRIVER_MISSING_HINT_POSTGRES
+
+
+@pytest.mark.parametrize(
+    ("exception", "expected_category", "expected_code", "expected_message"),
+    [
+        (
+            Exception('relation "users" does not exist (SQLSTATE 42P01)'),
+            "missing_object",
+            None,
+            TR_TABLE_OR_VIEW_NOT_EXISTS_POSTGRES,
+        ),
+        (
+            Exception('column "email" does not exist (SQLSTATE 42703)'),
+            "syntax",
+            42703,
+            TR_UNKNOWN_COLUMN_POSTGRES,
+        ),
+        (
+            Exception("function my_func(integer) does not exist (SQLSTATE 42883)"),
+            "missing_proc",
+            42883,
+            TR_FUNCTION_NOT_EXISTS_POSTGRES,
+        ),
+        (
+            Exception('syntax error at or near "SELCT" (SQLSTATE 42601)'),
+            "syntax",
+            42601,
+            TR_SQL_SYNTAX_ERROR_POSTGRES,
+        ),
+        (
+            Exception('password authentication failed for user "postgres" (SQLSTATE 28P01)'),
+            "permission",
+            None,
+            TR_PERMISSION_DENIED_POSTGRES,
+        ),
+        (
+            Exception('database "unknown_db" does not exist (SQLSTATE 3D000)'),
+            "connection",
+            None,
+            TR_UNKNOWN_DATABASE_POSTGRES,
+        ),
+        (
+            Exception("canceling statement due to statement timeout (SQLSTATE 57014)"),
+            "timeout",
+            57014,
+            TR_TIMEOUT_POSTGRES,
+        ),
+        (
+            Exception("could not connect to server: Connection refused (SQLSTATE 08001)"),
+            "connection",
+            8001,
+            TR_CONNECTION_FAILED_POSTGRES,
+        ),
+    ],
+)
+def test_postgresql_classifier_maps_sqlstate_codes(exception, expected_category, expected_code, expected_message):
+    error = classify_postgresql(exception)
+
+    assert error.category == expected_category
+    assert error.code == expected_code
+    assert error.message == expected_message
+
+
+def test_postgresql_classifier_reads_wrapped_pgcode():
+    exception = Exception("statement failed")
+    exception.orig = SimpleNamespace(pgcode="42P01")
+
+    error = classify_postgresql(exception)
+
+    assert error.category == "missing_object"
+    assert error.message == TR_TABLE_OR_VIEW_NOT_EXISTS_POSTGRES
 
 
 @pytest.mark.parametrize(
