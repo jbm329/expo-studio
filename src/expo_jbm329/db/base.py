@@ -59,7 +59,6 @@ _registry = ServiceRegistry()
 
 # Drivers
 _registry.register_driver("odbc", SqlAlchemyOdbcDriver)
-_registry.register_driver("psycopg2", partial(SqlAlchemyPostgresDriver, "psycopg2"))
 _registry.register_driver("psycopg", partial(SqlAlchemyPostgresDriver, "psycopg"))
 _registry.register_driver("pymysql", partial(SqlAlchemyMySqlDriver, "pymysql"))
 _registry.register_driver("mysqlconnector", partial(SqlAlchemyMySqlDriver, "mysqlconnector"))
@@ -178,10 +177,12 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
     raw_protocol = rec.get("protocol")
     if isinstance(raw_protocol, str) and raw_protocol:
         protocol = raw_protocol.lower()
+        if protocol == "psycopg2":
+            protocol = "psycopg"
     elif engine_key == "sqlite":
         protocol = "sqlite"
     elif engine_key == "postgresql":
-        protocol = "psycopg2"
+        protocol = "psycopg"
     else:
         protocol = "odbc"
 

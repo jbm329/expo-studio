@@ -36,7 +36,7 @@ class ServiceRegistry:
         """Register a driver factory by protocol key.
 
         Args:
-            protocol (str): The protocol key, e.g., 'odbc', 'psycopg2', 'pymysql'.
+            protocol (str): The protocol key, e.g., 'odbc', 'psycopg', 'pymysql'.
             factory (Callable[[], DriverProtocol]): A factory function that returns
                 a DriverProtocol instance.
 

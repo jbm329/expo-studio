@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class DriverProtocol(Protocol):
     """Protocol defining the interface for database drivers.
 
-    Driver abstracts the transport/protocol (ODBC, psycopg2, PyMySQL, TDS, ...).
+    Driver abstracts the transport/protocol (ODBC, psycopg, PyMySQL, TDS, ...).
     The service controls error handling; drivers just execute and bubble exceptions.
     """
 

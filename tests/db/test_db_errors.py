@@ -97,10 +97,8 @@ def test_mysql_classifier_detects_missing_driver(exception):
 @pytest.mark.parametrize(
     "exception",
     [
-        ModuleNotFoundError("No module named 'psycopg2'"),
         ModuleNotFoundError("No module named 'psycopg'"),
-        ImportError("cannot import name 'connect' from 'psycopg2'"),
-        Exception("No module named 'psycopg2'"),
+        ImportError("cannot import name 'connect' from 'psycopg'"),
         Exception("No module named 'psycopg'"),
     ],
 )
