@@ -28,6 +28,8 @@ HIGH_MISSING_FRACTION_THRESHOLD = 0.2
 # encoding/parsing problems and get a feel for the values without turning
 # the overview into a second data grid.
 SAMPLE_ROW_LIMIT = 100
+# Number of rows shown at either end of the dataset in the Overview UI/report.
+SAMPLE_DISPLAY_ROW_LIMIT = 10
 
 
 class OverviewExportTable(StrEnum):
@@ -99,6 +101,9 @@ class DatasetOverviewResult:
         sample_frame: Owned, bounded dtype-preserving snapshot for export.
             Consumers must never mutate it; export helpers return independent
             frames. None supports results created without an export snapshot.
+        sample_last_rows: The last `SAMPLE_DISPLAY_ROW_LIMIT` raw rows.
+        sample_last_frame: Owned, bounded dtype-preserving snapshot of the last
+            rows for display and reporting, captured during analysis.
     """
 
     row_count: int
@@ -125,6 +130,8 @@ class DatasetOverviewResult:
     sample_truncated: bool = False
     # This owned, bounded snapshot must not be mutated after publication.
     sample_frame: pd.DataFrame | None = field(default=None, repr=False, compare=False)
+    sample_last_rows: tuple[tuple[object, ...], ...] = field(default_factory=tuple)
+    sample_last_frame: pd.DataFrame | None = field(default=None, repr=False, compare=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -134,6 +141,45 @@ class OverviewExportRequest:
     result: DatasetOverviewResult
     tables: tuple[OverviewExportTable, ...]
     format: OverviewExportFormat
+
+
+def overview_sample_frames(result: DatasetOverviewResult) -> tuple[pd.DataFrame, pd.DataFrame | None]:
+    """Return independent first/last display samples from a captured Overview.
+
+    The last sample is ``None`` when the result does not contain a trustworthy
+    tail snapshot. Older complete snapshots can still supply a tail when they
+    captured every row; partial first samples are never presented as the last
+    rows.
+
+    Args:
+        result: The stable, captured Overview result.
+
+    Returns:
+        Independent first and optional last sample frames.
+    """
+    if result.sample_frame is not None:
+        first = result.sample_frame.head(SAMPLE_DISPLAY_ROW_LIMIT).copy(deep=True)
+        complete_frame = result.sample_frame if len(result.sample_frame) == result.row_count else None
+    else:
+        first = pd.DataFrame(
+            result.sample_rows[:SAMPLE_DISPLAY_ROW_LIMIT],
+            columns=list(result.sample_columns),
+        )
+        complete_frame = (
+            pd.DataFrame(result.sample_rows, columns=list(result.sample_columns))
+            if len(result.sample_rows) == result.row_count
+            else None
+        )
+
+    if result.sample_last_frame is not None:
+        last = result.sample_last_frame.copy(deep=True)
+    elif result.sample_last_rows and len(result.sample_last_rows) == min(SAMPLE_DISPLAY_ROW_LIMIT, result.row_count):
+        last = pd.DataFrame(result.sample_last_rows, columns=list(result.sample_columns))
+    elif complete_frame is not None:
+        last = complete_frame.tail(SAMPLE_DISPLAY_ROW_LIMIT).copy(deep=True)
+    else:
+        last = None
+    return first, last
 
 
 def overview_export_tables(
@@ -351,4 +397,8 @@ def analyze_dataset_overview(df: pd.DataFrame) -> DatasetOverviewResult:
         sample_rows=_sample_rows(df),
         sample_truncated=row_count > SAMPLE_ROW_LIMIT,
         sample_frame=df.head(SAMPLE_ROW_LIMIT).copy(deep=True),
+        sample_last_rows=tuple(
+            tuple(row) for row in df.tail(SAMPLE_DISPLAY_ROW_LIMIT).itertuples(index=False, name=None)
+        ),
+        sample_last_frame=df.tail(SAMPLE_DISPLAY_ROW_LIMIT).copy(deep=True),
     )

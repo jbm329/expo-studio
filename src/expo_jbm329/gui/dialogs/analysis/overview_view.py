@@ -13,15 +13,19 @@ from PyQt6.QtWidgets import (
     QSplitter,
     QTableWidget,
     QTableWidgetItem,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
-from expo_jbm329.services.analysis.overview import SAMPLE_ROW_LIMIT
+from expo_jbm329.gui.dialogs.analysis.section_layout import ANALYSIS_TABS_STYLE
+from expo_jbm329.services.analysis.overview import overview_sample_frames
 from expo_jbm329.services.data_operations.dtypes import SemanticDType
 from expo_jbm329.utils.format_utils import fmt_cell, fmt_int, fmt_pct
 
 if TYPE_CHECKING:
+    import pandas as pd
+
     from expo_jbm329.services.analysis.overview import ColumnOverview, DatasetOverviewResult
 
 _RIGHT_ALIGNED = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
@@ -46,6 +50,8 @@ class OverviewView(QWidget):
         self._result = result
         self._columns_table: QTableWidget | None = None
         self._sample_table: QTableWidget | None = None
+        self._last_sample_table: QTableWidget | None = None
+        self._sample_tabs: QTabWidget | None = None
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -71,8 +77,16 @@ class OverviewView(QWidget):
         return self._columns_table
 
     def sample_table(self) -> QTableWidget | None:
-        """Return the sample-rows table, or `None` if there are no rows to show."""
+        """Return the first-sample table, or `None` if it has no rows to show."""
         return self._sample_table
+
+    def last_sample_table(self) -> QTableWidget | None:
+        """Return the last-sample table, or `None` when unavailable or empty."""
+        return self._last_sample_table
+
+    def sample_tabs(self) -> QTabWidget | None:
+        """Return the tabs containing the first and last sample previews."""
+        return self._sample_tabs
 
     # ------------------------------------------------------------------
     # Sections
@@ -210,31 +224,64 @@ class OverviewView(QWidget):
         ]
 
     def _build_sample_panel(self) -> QWidget:
-        """Build the raw sample-rows table with its header."""
+        """Build first/last sample tables under the Sample heading."""
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_header(self.tr("Sample")))
 
-        result = self._result
-        if result.sample_truncated:
-            header = self.tr("Sample (first {count} rows)").format(count=fmt_int(SAMPLE_ROW_LIMIT))
+        first_frame, last_frame = overview_sample_frames(self._result)
+        tabs = QTabWidget(panel)
+        tabs.setStyleSheet(ANALYSIS_TABS_STYLE)
+        first_title = self.tr("First ({count})").format(count=fmt_int(len(first_frame)))
+        first_page, self._sample_table = self._build_sample_table_tab(
+            tabs,
+            first_frame,
+            available=len(first_frame.columns) > 0,
+        )
+        tabs.addTab(first_page, first_title)
+        if last_frame is None:
+            last_title = self.tr("Last (unavailable)")
+            last_page = QWidget(tabs)
+            last_layout = QVBoxLayout(last_page)
+            last_layout.addWidget(
+                self._build_empty_label(self.tr("Last sample is unavailable in this captured result."))
+            )
+            last_layout.addStretch(1)
         else:
-            header = self.tr("Sample (all {count} rows)").format(count=fmt_int(result.row_count))
-        layout.addWidget(self._build_section_header(header))
+            last_title = self.tr("Last ({count})").format(count=fmt_int(len(last_frame)))
+            last_page, self._last_sample_table = self._build_sample_table_tab(
+                tabs,
+                last_frame,
+                available=len(last_frame.columns) > 0,
+            )
+        tabs.addTab(last_page, last_title)
+        layout.addWidget(tabs)
+        self._sample_tabs = tabs
+        return panel
 
-        if not result.sample_rows:
+    def _build_sample_table_tab(
+        self,
+        parent: QWidget,
+        frame: pd.DataFrame,
+        *,
+        available: bool,
+    ) -> tuple[QWidget, QTableWidget | None]:
+        """Build one read-only sample table or its empty-state message."""
+        page = QWidget(parent)
+        layout = QVBoxLayout(page)
+        if not available or frame.empty:
             layout.addWidget(self._build_empty_label(self.tr("This dataset has no rows to preview.")))
-            return panel
+            layout.addStretch(1)
+            return page, None
 
-        table = self._build_table(panel, list(result.sample_columns), len(result.sample_rows))
-        for row, values in enumerate(result.sample_rows):
+        table = self._build_table(page, [str(column) for column in frame.columns], len(frame))
+        for row, values in enumerate(frame.itertuples(index=False, name=None)):
             for index, value in enumerate(values):
                 table.setItem(row, index, QTableWidgetItem(fmt_cell(value)))
-
         self._finish_table(table)
         layout.addWidget(table)
-        self._sample_table = table
-        return panel
+        return page, table
 
     @staticmethod
     def _build_table(parent: QWidget, headers: list[str], row_count: int) -> QTableWidget:

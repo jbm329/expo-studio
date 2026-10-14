@@ -51,7 +51,12 @@ from expo_jbm329.services.analysis.outliers_export import (
     UnivariateOutlierExportSnapshot,
     outlier_export_tables,
 )
-from expo_jbm329.services.analysis.overview import DatasetOverviewResult, OverviewExportTable, overview_export_tables
+from expo_jbm329.services.analysis.overview import (
+    DatasetOverviewResult,
+    OverviewExportTable,
+    overview_export_tables,
+    overview_sample_frames,
+)
 from expo_jbm329.services.analysis.pca_charts import render_pca_charts
 from expo_jbm329.services.analysis.pca_export import PCAExportComponent, PCAExportSnapshot, PCAMetric, pca_export_tables
 from expo_jbm329.services.analysis.regression import SIGNIFICANCE_LEVEL as REGRESSION_SIGNIFICANCE
@@ -246,7 +251,7 @@ def available_report_components(category: AnalysisCategory, snapshot: ReportSnap
             candidates = [
                 ("Summary", "Summary", "table"),
                 ("Columns", "Columns metadata", "table"),
-                ("Sample", "Sample (first 100 rows)", "table"),
+                ("Sample", "Sample", "table"),
             ]
             component_values = tuple(item for item in candidates if _overview_component_available(snapshot, item[0]))
         case AnalysisCategory.STATISTICS if isinstance(snapshot, DescriptiveStatisticsResult):
@@ -390,10 +395,11 @@ def report_entry_identity(category: AnalysisCategory, dataset_id: str, snapshot:
 
 
 def _overview_component_available(result: DatasetOverviewResult, component: str) -> bool:
+    first_sample, _ = overview_sample_frames(result)
     return {
         "Summary": True,
         "Columns": bool(result.columns),
-        "Sample": result.sample_frame is not None and not result.sample_frame.empty,
+        "Sample": not first_sample.empty,
     }[component]
 
 
@@ -451,6 +457,7 @@ class PreparedReportComponent:
     tables: tuple[PreparedReportTable, ...] = ()
     charts: tuple[ExcelChartImage, ...] = ()
     overview_summary: PreparedOverviewSummary | None = None
+    notice: str | None = None
 
     def __post_init__(self) -> None:
         """Ensure prepared content agrees with its selected component kind."""
@@ -458,14 +465,14 @@ class PreparedReportComponent:
             message = "A prepared report component requires a key, label, and supported kind."
             raise ValueError(message)
         if self.overview_summary is not None:
-            if self.kind != "table" or self.tables or self.charts:
+            if self.kind != "table" or self.tables or self.charts or self.notice is not None:
                 message = "A prepared Overview summary must contain text content only."
                 raise ValueError(message)
             return
-        if self.kind == "table" and (len(self.tables) != 1 or self.charts):
-            message = "A prepared table component must contain exactly one table."
+        if self.kind == "table" and (not self.tables or self.charts):
+            message = "A prepared table component must contain one or more tables only."
             raise ValueError(message)
-        if self.kind == "chart" and (self.tables or not self.charts):
+        if self.kind == "chart" and (self.tables or not self.charts or self.notice is not None):
             message = "A prepared chart component must contain chart images only."
             raise ValueError(message)
 
@@ -540,7 +547,10 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
         "Columns",
         "Columns metadata",
         "Sample",
-        "Sample (first 100 rows)",
+        "First ({count})",
+        "Last ({count})",
+        "Last (unavailable)",
+        "Last sample is unavailable in this captured result.",
         "Column",
         "Type",
         "Storage type",
@@ -1556,7 +1566,7 @@ def prepare_report_content(
         table_keys = tuple(
             component.key
             for component in selected
-            if component.kind == "table" and not (overview is not None and component.key == "Summary")
+            if component.kind == "table" and not (overview is not None and component.key in {"Summary", "Sample"})
         )
         localized_tables = iter(
             localized_report_tables(
@@ -1600,15 +1610,21 @@ def prepare_report_content(
                     )
                 )
             elif component.kind == "table":
-                table_title, frame = next(localized_tables)
-                prepared_table = (
-                    _prepare_overview_columns(overview, table_title, translate, count_format)
-                    if overview is not None and component.key == "Columns"
-                    else _prepare_table(component.key, table_title, frame)
-                )
-                prepared_components.append(
-                    PreparedReportComponent(component.key, label, component.kind, (prepared_table,))
-                )
+                if overview is not None and component.key == "Sample":
+                    sample_tables, notice = _prepare_overview_samples(overview, translate, count_format)
+                    prepared_components.append(
+                        PreparedReportComponent(component.key, label, component.kind, sample_tables, notice=notice)
+                    )
+                else:
+                    table_title, frame = next(localized_tables)
+                    prepared_table = (
+                        _prepare_overview_columns(overview, table_title, translate, count_format)
+                        if overview is not None and component.key == "Columns"
+                        else _prepare_table(component.key, table_title, frame)
+                    )
+                    prepared_components.append(
+                        PreparedReportComponent(component.key, label, component.kind, (prepared_table,))
+                    )
             else:
                 images = rendered_charts.get(component.key, ())
                 if not images:
@@ -1720,6 +1736,28 @@ def _prepare_overview_columns(
         }
     )
     return _prepare_table("Columns", title, frame)
+
+
+def _prepare_overview_samples(
+    result: DatasetOverviewResult,
+    translate: Callable[[str, str], str],
+    count_format: Callable[[int], str],
+) -> tuple[tuple[PreparedReportTable, ...], str | None]:
+    """Prepare first/last sample tables without changing the export sample."""
+    first, last = overview_sample_frames(result)
+    if first.empty:
+        message = "The selected Overview sample has no captured rows."
+        raise ValueError(message)
+
+    first_title = translate("OverviewView", "First ({count})").format(count=count_format(len(first)))
+    tables = [_prepare_table("first_sample", first_title, first)]
+    notice = None
+    if last is None:
+        notice = translate("OverviewView", "Last sample is unavailable in this captured result.")
+    else:
+        last_title = translate("OverviewView", "Last ({count})").format(count=count_format(len(last)))
+        tables.append(_prepare_table("last_sample", last_title, last))
+    return tuple(tables), notice
 
 
 def _prepare_table(key: str, title: str, frame: pd.DataFrame) -> PreparedReportTable:
@@ -2080,6 +2118,8 @@ def render_prepared_report_html(
                         parts.append(f"<td>{_html_escape(cell)}</td>")
                     parts.append("</tr>")
                 parts.append("</tbody></table></div>")
+            if component.notice is not None:
+                parts.append(f'<p class="report-notice">{_html_escape(component.notice)}</p>')
             for chart in component.charts:
                 check_cancel()
                 encoded = b64encode(chart.image_data).decode("ascii")

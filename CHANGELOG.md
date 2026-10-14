@@ -10,7 +10,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 ### Added
 - Categorical tab in Statistics with frequency counts, percentages, and separate missing-value counts
 - Continuous mean/SD and median/quartile summaries with Shapiro-Wilk reporting guidance
-- Dataset Overview with dimensions, missingness, duplicates, column profiles, warnings, and a 100-row sample
+- Dataset Overview with dimensions, missingness, duplicates, column profiles, warnings, and first/last 10-row previews; exports retain a first-100-row sample
 - Shapiro-Wilk normality tests and distribution charts for numeric columns
 - Welch's t-test for two-group comparisons, with group-level normality checks
 - Student's t-test as an equal-variance alternative for two-group comparisons

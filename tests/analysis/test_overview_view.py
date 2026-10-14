@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import pandas as pd
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QFrame, QLabel, QScrollArea, QSplitter, QTableWidget
+from PyQt6.QtWidgets import QFrame, QLabel, QScrollArea, QSplitter, QTableWidget, QTabWidget
 
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
+from expo_jbm329.gui.dialogs.analysis.section_layout import ANALYSIS_TABS_STYLE
 from expo_jbm329.services.analysis.overview import (
-    SAMPLE_ROW_LIMIT,
     ColumnOverview,
     DatasetOverviewResult,
+    analyze_dataset_overview,
 )
 from expo_jbm329.services.data_operations.dtypes import SemanticDType
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_pct
@@ -54,6 +56,18 @@ def test_summary_label_shows_rows_columns_missing_and_duplicates():
         f"Missing values: <b>{fmt_int(25)}</b> ({fmt_pct(result.missing_cell_fraction)})",
         f"Duplicate rows: <b>{fmt_int(3)}</b> ({fmt_pct(result.duplicate_row_fraction)})",
     ]
+
+
+def test_sample_tabs_share_statistics_tab_styling():
+    view = OverviewView(_make_result(sample_rows=((1,),), sample_columns=("value",), row_count=1))
+    tabs = view.sample_tabs()
+
+    assert tabs is not None
+    assert tabs.styleSheet() == ANALYSIS_TABS_STYLE
+    for index in range(tabs.count()):
+        tabs.setCurrentIndex(index)
+        text_width = tabs.tabBar().fontMetrics().horizontalAdvance(tabs.tabText(index))
+        assert tabs.tabBar().tabRect(index).width() >= text_width + 12
 
 
 def test_column_types_label_shows_every_bucket_count():
@@ -169,20 +183,56 @@ def test_sample_table_shows_formatted_raw_values():
     assert table.item(1, 1).text() == ""
 
 
-def test_sample_header_reports_truncation():
+def test_sample_heading_is_simple_and_tabs_show_actual_snapshot_counts():
     truncated = OverviewView(_make_result(sample_rows=((1,),), sample_columns=("a",), sample_truncated=True))
     complete = OverviewView(
-        _make_result(sample_rows=((1,),), sample_columns=("a",), sample_truncated=False, row_count=1)
+        _make_result(
+            sample_rows=((1,), (2,), (3,)),
+            sample_columns=("a",),
+            sample_truncated=False,
+            row_count=3,
+        )
     )
 
-    assert f"first {fmt_int(SAMPLE_ROW_LIMIT)} rows" in _labels_text(truncated)
-    assert f"all {fmt_int(1)} rows" in _labels_text(complete)
+    truncated_tabs = truncated.sample_tabs()
+    assert truncated_tabs is not None
+    assert [truncated_tabs.tabText(index) for index in range(truncated_tabs.count())] == [
+        "First (1)",
+        "Last (unavailable)",
+    ]
+    assert "Sample" in _labels_text(complete)
+    assert "first 100 rows" not in _labels_text(complete)
+    complete_tabs = complete.sample_tabs()
+    assert complete_tabs is not None
+    assert [complete_tabs.tabText(index) for index in range(complete_tabs.count())] == ["First (3)", "Last (3)"]
+
+
+def test_sample_tabs_render_first_and_last_ten_rows_from_the_captured_result():
+    source = pd.DataFrame({"<literal name>": pd.Series(range(120), dtype="Int64")})
+    view = OverviewView(analyze_dataset_overview(source))
+
+    tabs = view.sample_tabs()
+    first = view.sample_table()
+    last = view.last_sample_table()
+
+    assert tabs is not None
+    assert [tabs.tabText(index) for index in range(tabs.count())] == ["First (10)", "Last (10)"]
+    assert first is not None and first.rowCount() == 10
+    assert last is not None and last.rowCount() == 10
+    assert first.horizontalHeaderItem(0).text() == "<literal name>"
+    assert first.item(0, 0).text() == "0"
+    assert last.item(0, 0).text() == "110"
+    assert last.item(9, 0).text() == "119"
 
 
 def test_sample_table_is_absent_when_there_are_no_rows():
     view = OverviewView(_make_result(sample_rows=(), row_count=0))
 
     assert view.sample_table() is None
+    assert view.last_sample_table() is None
+    tabs = view.sample_tabs()
+    assert tabs is not None
+    assert [tabs.tabText(index) for index in range(tabs.count())] == ["First (0)", "Last (0)"]
     assert "no rows to preview" in _labels_text(view)
 
 
@@ -218,3 +268,5 @@ def test_summary_panel_is_framed_and_sits_left_of_the_columns_table():
     sample_table = view.sample_table()
     assert sample_table is not None
     assert vertical[0].widget(1).isAncestorOf(sample_table)
+    assert view.sample_tabs() is not None
+    assert isinstance(view.sample_tabs(), QTabWidget)

@@ -5,10 +5,12 @@ import pytest
 
 from expo_jbm329.services.analysis.overview import (
     HIGH_MISSING_FRACTION_THRESHOLD,
+    SAMPLE_DISPLAY_ROW_LIMIT,
     SAMPLE_ROW_LIMIT,
     OverviewExportTable,
     analyze_dataset_overview,
     overview_export_tables,
+    overview_sample_frames,
 )
 from expo_jbm329.services.data_operations.dtypes import SemanticDType
 from expo_jbm329.services.file_writer import FileWriter
@@ -122,6 +124,82 @@ def test_export_sample_is_bounded_typed_and_independent():
     exported.loc[0, "integer"] = 888
     second = overview_export_tables(result, (OverviewExportTable.SAMPLE,))["Sample"]
     pd.testing.assert_frame_equal(second, expected)
+    assert second.shape[0] == SAMPLE_ROW_LIMIT
+
+
+def test_overview_display_samples_capture_actual_first_and_last_ten_rows_with_dtypes():
+    source = pd.DataFrame({
+        "<integer>": pd.Series(range(120), dtype="Int64"),
+        "text value": pd.Series([f"row-{index}" for index in range(120)], dtype="string"),
+        "category": pd.Categorical(["x", "y"] * 60, categories=["x", "y", "unused"]),
+        "date": pd.date_range("2024-01-01", periods=120, tz="UTC"),
+    })
+    expected_first = source.head(SAMPLE_DISPLAY_ROW_LIMIT).copy(deep=True)
+    expected_last = source.tail(SAMPLE_DISPLAY_ROW_LIMIT).copy(deep=True)
+    result = analyze_dataset_overview(source)
+    assert result.sample_last_frame is not source
+    source.iloc[-1, 0] = -1
+
+    first, last = overview_sample_frames(result)
+
+    pd.testing.assert_frame_equal(first, expected_first)
+    pd.testing.assert_frame_equal(last, expected_last)
+    assert list(last.columns) == ["<integer>", "text value", "category", "date"]
+    assert last["<integer>"].dtype == pd.Int64Dtype()
+    assert last["text value"].dtype == pd.StringDtype()
+    assert last["category"].dtype == expected_last["category"].dtype
+    assert str(last["date"].dtype) == "datetime64[ns, UTC]"
+    first.iloc[0, 0] = -2
+    last.iloc[0, 0] = -3
+    fresh_first, fresh_last = overview_sample_frames(result)
+    assert fresh_first.iloc[0, 0] == 0
+    assert fresh_last.iloc[0, 0] == 110
+
+
+@pytest.mark.parametrize("row_count", [0, 1, 9])
+def test_overview_display_samples_use_actual_count_and_keep_small_dataset_overlap(row_count):
+    source = pd.DataFrame({"value": range(row_count)})
+
+    first, last = overview_sample_frames(analyze_dataset_overview(source))
+
+    assert len(first) == row_count
+    assert last is not None
+    assert len(last) == row_count
+    pd.testing.assert_frame_equal(first, last)
+
+
+def test_overview_display_samples_overlap_when_dataset_has_fewer_than_twenty_rows():
+    source = pd.DataFrame({"value": range(15)})
+
+    first, last = overview_sample_frames(analyze_dataset_overview(source))
+
+    assert last is not None
+    assert first["value"].tolist() == list(range(10))
+    assert last["value"].tolist() == list(range(5, 15))
+    assert set(first["value"]).intersection(last["value"]) == set(range(5, 10))
+
+
+def test_overview_display_samples_only_fallback_to_a_complete_legacy_snapshot():
+    from dataclasses import replace
+
+    source = pd.DataFrame({"value": range(120)})
+    result = analyze_dataset_overview(source)
+    incomplete = replace(result, sample_last_rows=(), sample_last_frame=None)
+    complete = replace(
+        result,
+        row_count=5,
+        sample_rows=tuple((value,) for value in range(5)),
+        sample_frame=pd.DataFrame({"value": range(5)}),
+        sample_last_rows=(),
+        sample_last_frame=None,
+    )
+
+    _, incomplete_last = overview_sample_frames(incomplete)
+    _, complete_last = overview_sample_frames(complete)
+
+    assert incomplete_last is None
+    assert complete_last is not None
+    assert complete_last["value"].tolist() == list(range(5))
 
 
 def test_export_sample_legacy_structured_rows_preserves_values_and_caps_rows():

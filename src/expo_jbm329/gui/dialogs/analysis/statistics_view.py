@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import ANALYSIS_TABS_STYLE
 from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS
 from expo_jbm329.services.analysis.normality import SHAPIRO_LARGE_SAMPLE_THRESHOLD
 from expo_jbm329.services.analysis.statistics import (
@@ -234,10 +235,7 @@ class StatisticsView(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._build_section_title(self.tr("Descriptive statistics"), container))
         tabs = QTabWidget(container)
-        tabs.setStyleSheet(
-            "QTabBar::tab { padding: 4px 10px 6px; border: none; border-bottom: 2px solid transparent; }"
-            "QTabBar::tab:selected { border-bottom-color: palette(highlight); }"
-        )
+        tabs.setStyleSheet(ANALYSIS_TABS_STYLE)
         if result.columns:
             tabs.addTab(self._build_continuous_page(result), self.tr("Continuous"))
         if result.categorical_columns:

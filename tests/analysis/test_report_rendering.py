@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime
 
 import numpy as np
@@ -288,8 +289,11 @@ def test_prepared_report_content_rejects_malformed_table_and_components() -> Non
     table = PreparedReportTable("table", "Table", ("Column",), ())
     with pytest.raises(ValueError, match="supported kind"):
         PreparedReportComponent("", "Table", "table", (table,))
-    with pytest.raises(ValueError, match="exactly one"):
+    with pytest.raises(ValueError, match="one or more"):
         PreparedReportComponent("table", "Table", "table")
+    PreparedReportComponent("table", "Table", "table", (table, table))
+    with pytest.raises(ValueError, match="one or more"):
+        PreparedReportComponent("table", "Table", "table", (table,), (ExcelChartImage("chart", b"png", 1, 1),))
     with pytest.raises(ValueError, match="chart images only"):
         PreparedReportComponent("chart", "Chart", "chart", tables=(table,))
     with pytest.raises(ValueError, match="chart images only"):
@@ -483,8 +487,70 @@ def test_overview_unselected_summary_keeps_columns_and_sample_as_tables() -> Non
     document.upsert(_entry(AnalysisCategory.OVERVIEW, result, ("Columns", "Sample")))
     html = render_report_html(document)
 
-    assert html.count("<table>") == 2
+    assert html.count("<table>") == 3
     assert '<div class="overview-summary">' not in html
+
+
+def test_overview_sample_report_has_accessible_first_and_last_tables() -> None:
+    frame = pd.DataFrame({"<literal name>": range(120), "label": [f"row-{i}" for i in range(120)]})
+    result = analyze_dataset_overview(frame)
+    document = ReportDocument(title="Overview sample")
+    document.upsert(_entry(AnalysisCategory.OVERVIEW, result, ("Sample",)))
+
+    prepared = prepare_report_content(document)
+    component = prepared.entries[0].components[0]
+    html = render_prepared_report_html(prepared)
+
+    assert component.label == "Sample"
+    assert [table.title for table in component.tables] == ["First (10)", "Last (10)"]
+    assert component.tables[0].rows[0] == (0, "row-0")
+    assert component.tables[1].rows[-1] == (119, "row-119")
+    assert html.count("<h3>Sample</h3>") == 1
+    assert html.count("<table>") == 2
+    assert "<caption>First (10)</caption>" in html
+    assert "<caption>Last (10)</caption>" in html
+    assert '<th scope="col">&lt;literal name&gt;</th>' in html
+    assert html.index("<caption>First (10)</caption>") < html.index("<caption>Last (10)</caption>")
+    assert "<script" not in html
+    exported = localized_report_tables(AnalysisCategory.OVERVIEW, result, ("Sample",))["Sample"]
+    assert exported.shape == (100, 2)
+    assert exported.iloc[-1, 0] == 99
+
+
+def test_overview_sample_report_does_not_invent_tail_for_legacy_partial_snapshot() -> None:
+    result = analyze_dataset_overview(pd.DataFrame({"value": range(120)}))
+    legacy_result = replace(result, sample_last_rows=(), sample_last_frame=None)
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.OVERVIEW, legacy_result, ("Sample",)))
+
+    prepared = prepare_report_content(document)
+    component = prepared.entries[0].components[0]
+    html = render_prepared_report_html(prepared)
+
+    assert len(component.tables) == 1
+    assert component.tables[0].title == "First (10)"
+    assert component.notice == "Last sample is unavailable in this captured result."
+    assert "Last (10)" not in html
+    assert "Last sample is unavailable in this captured result." in html
+
+
+def test_report_sample_labels_are_captured_and_formatted_for_both_tables() -> None:
+    options = capture_report_labels(lambda _context, text: f"Captured {text}", count_format=lambda n: f"count:{n}")
+    document = ReportDocument()
+    document.upsert(
+        _entry(
+            AnalysisCategory.OVERVIEW,
+            analyze_dataset_overview(pd.DataFrame({"value": [1, 2]})),
+            ("Sample",),
+        )
+    )
+
+    prepared = prepare_report_content(document, labels=options)
+
+    assert [table.title for table in prepared.entries[0].components[0].tables] == [
+        "Captured First (count:2)",
+        "Captured Last (count:2)",
+    ]
 
 
 def test_overview_report_columns_combine_missing_count_and_two_decimal_percentage() -> None:

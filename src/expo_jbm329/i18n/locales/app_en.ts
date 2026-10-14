@@ -5048,7 +5048,10 @@ Saved to:
         <translation>Dataset statistics</translation>
     </message>
     <message><source>Columns metadata</source><translation>Columns metadata</translation></message>
-    <message><source>Sample (first 100 rows)</source><translation>Sample (first 100 rows)</translation></message>
+    <message><source>First ({count})</source><translation>First ({count})</translation></message>
+    <message><source>Last ({count})</source><translation>Last ({count})</translation></message>
+    <message><source>Last (unavailable)</source><translation>Last (unavailable)</translation></message>
+    <message><source>Last sample is unavailable in this captured result.</source><translation>Last sample is unavailable in this captured result.</translation></message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="85" />
         <source>Summary</source>
@@ -5153,16 +5156,6 @@ Saved to:
     <message>
         <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="181" />
         <source>Unique</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="215" />
-        <source>Sample (first {count} rows)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="217" />
-        <source>Sample (all {count} rows)</source>
         <translation type="unfinished" />
     </message>
     <message>

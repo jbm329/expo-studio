@@ -5444,7 +5444,13 @@ Sparad till:
         <translation>Datasetstatistik</translation>
     </message>
     <message><source>Columns metadata</source><translation>Kolumnmetadata</translation></message>
-    <message><source>Sample (first 100 rows)</source><translation>Urval (de första 100 raderna)</translation></message>
+    <message><source>First ({count})</source><translation>Första ({count})</translation></message>
+    <message><source>Last ({count})</source><translation>Sista ({count})</translation></message>
+    <message><source>Last (unavailable)</source><translation>Sista (otillgängligt)</translation></message>
+    <message>
+        <source>Last sample is unavailable in this captured result.</source>
+        <translation>Det sista urvalet är inte tillgängligt i det här sparade resultatet.</translation>
+    </message>
     <message>
         <location filename="../../gui/dialogs/analysis/overview_view.py" line="85"/>
         <source>Summary</source>
@@ -5550,16 +5556,6 @@ Sparad till:
         <location filename="../../gui/dialogs/analysis/overview_view.py" line="181"/>
         <source>Unique</source>
         <translation>Unika</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/analysis/overview_view.py" line="215"/>
-        <source>Sample (first {count} rows)</source>
-        <translation>Urval (första {count} raderna)</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/analysis/overview_view.py" line="217"/>
-        <source>Sample (all {count} rows)</source>
-        <translation>Urval (alla {count} rader)</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/analysis/overview_view.py" line="221"/>

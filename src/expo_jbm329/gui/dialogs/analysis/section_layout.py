@@ -15,6 +15,11 @@ if TYPE_CHECKING:
 _DIGIT_SUPERSCRIPT = re.compile(r"<sup>(\d+)</sup>")
 _SUPERSCRIPT_DIGITS = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 
+ANALYSIS_TABS_STYLE = (
+    "QTabBar::tab { padding: 4px 10px 6px; border: none; border-bottom: 2px solid transparent; }"
+    "QTabBar::tab:selected { border-bottom-color: palette(highlight); }"
+)
+
 
 def _plain_superscripts(text: str) -> str:
     """Keep numeric superscripts such as R² readable once markup is removed."""
