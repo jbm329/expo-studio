@@ -191,11 +191,15 @@ def test_summary_panel_is_framed_and_sits_left_of_the_columns_table():
     view.resize(900, 600)
 
     panel = view._build_summary_panel()  # noqa: SLF001
-    assert panel.frameShape() is QFrame.Shape.StyledPanel
-    assert panel.widgetResizable() is True
-    assert panel.verticalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
-    assert panel.horizontalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+    scroll = panel.findChild(QScrollArea)
+    assert scroll.frameShape() is QFrame.Shape.StyledPanel
+    assert scroll.widgetResizable() is True
+    assert scroll.verticalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
+    assert scroll.horizontalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAlwaysOff
     assert "Summary" in _labels_text(panel)
+    assert "Summary" not in _labels_text(scroll)
+    assert panel.layout().itemAt(0).widget().text() == "Summary"
+    assert panel.layout().itemAt(1).widget() is scroll
 
     splitters = view.findChildren(QSplitter)
     horizontal = [s for s in splitters if s.orientation() is Qt.Orientation.Horizontal]
@@ -204,7 +208,7 @@ def test_summary_panel_is_framed_and_sits_left_of_the_columns_table():
     assert len(vertical) == 1
 
     top_row = horizontal[0]
-    assert isinstance(top_row.widget(0), QScrollArea)
+    assert top_row.widget(0).findChild(QScrollArea) is not None
     columns_table = view.columns_table()
     assert columns_table is not None
     assert top_row.widget(1).isAncestorOf(columns_table)

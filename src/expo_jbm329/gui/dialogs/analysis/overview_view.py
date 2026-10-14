@@ -78,11 +78,14 @@ class OverviewView(QWidget):
     # Sections
     # ------------------------------------------------------------------
 
-    def _build_summary_panel(self) -> QScrollArea:
-        """Build the framed, scrollable panel holding the textual dataset facts."""
+    def _build_summary_panel(self) -> QWidget:
+        """Place the Summary header above its framed, scrollable dataset facts."""
+        panel = QWidget(self)
+        panel_layout = QVBoxLayout(panel)
+        panel_layout.setContentsMargins(0, 0, 0, 0)
+        panel_layout.addWidget(self._build_section_header(self.tr("Summary")))
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.addWidget(self._build_section_header(self.tr("Summary")))
         layout.addWidget(self._build_summary_label())
         layout.addWidget(self._build_section_header(self.tr("Column types")))
         layout.addWidget(self._build_column_types_label())
@@ -90,14 +93,15 @@ class OverviewView(QWidget):
         layout.addWidget(self._build_warnings_label())
         layout.addStretch(1)
 
-        panel = QScrollArea(self)
-        panel.setFrameShape(QFrame.Shape.StyledPanel)
-        panel.setFrameShadow(QFrame.Shadow.Sunken)
-        panel.setWidgetResizable(True)
-        panel.setWidget(content)
+        scroll = QScrollArea(panel)
+        scroll.setFrameShape(QFrame.Shape.StyledPanel)
+        scroll.setFrameShadow(QFrame.Shadow.Sunken)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(content)
         # The labels wrap, so only vertical overflow needs a scrollbar.
-        panel.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        panel.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        panel_layout.addWidget(scroll, 1)
         panel.setMinimumWidth(_SUMMARY_PANEL_MIN_WIDTH)
         return panel
 
