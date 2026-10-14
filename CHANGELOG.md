@@ -13,6 +13,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - HTML reports show dataset, report generation date, and Expo version once at the top, without row/column metadata
 - Correlation presentations share configured method/column labels across Analysis, Reports, HTML, and exports; same-method column changes and reruns require explicit review before replacing a captured report result
 - Hypothesis Tests share applied test-family, ordered variable-role, computed-test, and chart-component labels across Analysis, Reports, HTML, and exports; distinct selections coexist and identical reruns require explicit review
+- HTML hypothesis reports separate captured explanatory notes from actual test-result rows; table exports retain the existing Notes column
 
 ### Added
 - Categorical tab in Statistics with frequency counts, percentages, and separate missing-value counts

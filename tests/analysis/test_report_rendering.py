@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import UTC, datetime
 from html import escape
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import numpy as np
@@ -14,7 +15,11 @@ from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.correlation import CorrelationMethod, analyze_correlation_matrix
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportComponent, CorrelationExportSnapshot
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
-from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportSnapshot
+from expo_jbm329.services.analysis.hypothesis_export import (
+    HypothesisExportComponent,
+    HypothesisExportSnapshot,
+    hypothesis_export_tables,
+)
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.report import (
     PreparedOverviewSummary,
@@ -49,6 +54,9 @@ from tests.analysis.test_regression_export import (
     poisson_snapshot,
 )
 from tests.analysis.test_timeseries_export import irregular_snapshot, time_series_snapshot
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 DATASET = DatasetRef("report-tab", "Report sample", 40, 4)
 
@@ -166,6 +174,119 @@ def test_hypothesis_report_labels_are_captured_before_worker_preparation():
     assert prepared.entries[0].components[0].tables[0].title == "sv:Measurement summary"
 
 
+@pytest.mark.parametrize(
+    ("family", "variant"),
+    [
+        ("groups", 2),
+        ("groups", 3),
+        ("chi_square", 2),
+        ("chi_square", 3),
+        ("paired", 2),
+        ("paired", 3),
+    ],
+)
+def test_hypothesis_report_separates_notes_without_changing_export_tables(family: str, variant: int) -> None:
+    snapshot_factories: dict[str, Callable[[int], HypothesisExportSnapshot]] = {
+        "groups": group_snapshot,
+        "chi_square": chi_snapshot,
+        "paired": paired_snapshot,
+    }
+    snapshot = snapshot_factories[family](variant)
+    raw_results = hypothesis_export_tables(snapshot, (HypothesisExportComponent.TEST_RESULTS,))[
+        HypothesisExportComponent.TEST_RESULTS
+    ]
+    expected_test_names = raw_results.loc[raw_results["test"].notna(), "test"].tolist()
+    exported_before = raw_results.copy(deep=True)
+    document = ReportDocument()
+    document.upsert(
+        _entry(
+            AnalysisCategory.HYPOTHESIS_TESTS,
+            snapshot,
+            ("test_results",),
+        )
+    )
+
+    prepared_component = prepare_report_content(document).entries[0].components[0]
+    report_table = prepared_component.tables[0]
+    report_rows = dict(zip(report_table.headers, zip(*report_table.rows, strict=True), strict=True))
+    localized_export = localized_report_tables(
+        AnalysisCategory.HYPOTHESIS_TESTS,
+        snapshot,
+        ("test_results",),
+    )["Test results"]
+    exported_after = hypothesis_export_tables(snapshot, (HypothesisExportComponent.TEST_RESULTS,))[
+        HypothesisExportComponent.TEST_RESULTS
+    ]
+
+    assert prepared_component.paragraphs == snapshot.notes
+    assert "Notes" not in report_table.headers
+    assert report_rows["Test"] == tuple(expected_test_names)
+    assert len(report_table.rows) == len(expected_test_names)
+    report_frame = pd.DataFrame.from_records(report_table.rows, columns=report_table.headers)
+    if family in {"groups", "chi_square"} and variant == 2:
+        assert report_frame.isna().any().any()
+    if family == "chi_square" and variant == 2:
+        assert "Fisher's exact test" in report_rows["Test"]
+    else:
+        assert "Fisher's exact test" not in report_rows["Test"]
+    assert "Notes" in localized_export.columns
+    assert localized_export.shape == raw_results.shape
+    assert localized_export["Notes"].tolist() == list(snapshot.notes)
+    pd.testing.assert_frame_equal(exported_after, exported_before)
+
+
+def test_hypothesis_report_handles_no_notes_and_more_notes_than_tests():
+    snapshot_with_notes = replace(paired_snapshot(2), notes=("one", "two", "three"))
+    snapshot_without_notes = replace(snapshot_with_notes, notes=())
+
+    def prepare(snapshot: HypothesisExportSnapshot):
+        document = ReportDocument()
+        document.upsert(_entry(AnalysisCategory.HYPOTHESIS_TESTS, snapshot, ("test_results",)))
+        return prepare_report_content(document).entries[0].components[0]
+
+    with_notes = prepare(snapshot_with_notes)
+    without_notes = prepare(snapshot_without_notes)
+
+    assert len(with_notes.tables[0].rows) == 1
+    assert with_notes.paragraphs == ("one", "two", "three")
+    assert without_notes.tables[0].rows == with_notes.tables[0].rows
+    assert without_notes.paragraphs == ()
+
+
+def test_hypothesis_notes_render_escaped_in_order_below_test_results_only():
+    snapshot = replace(
+        group_snapshot(),
+        notes=("First <script>alert('x')</script>\ncontinued & safe", "Second note"),
+    )
+    entry = _entry(AnalysisCategory.HYPOTHESIS_TESTS, snapshot, ("test_results",)).with_selection(
+        ("test_results",),
+        "Independent entry note",
+    )
+    document = ReportDocument()
+    document.upsert(entry)
+
+    prepared = prepare_report_content(document)
+    html = render_prepared_report_html(prepared)
+    results_position = html.index("</table></div>")
+    paragraphs_position = html.index('<div class="report-paragraphs">')
+
+    assert prepared.entries[0].components[0].paragraphs == snapshot.notes
+    assert results_position < paragraphs_position
+    assert html.index("First &lt;script&gt;", paragraphs_position) < html.index("Second note", paragraphs_position)
+    assert "First <script>" not in html
+    assert "continued &amp; safe" in html
+    assert "white-space: pre-wrap" in html
+    assert '<p class="report-note">Independent entry note</p>' in html
+    assert html.index("Independent entry note") < paragraphs_position
+
+    summary_entry = _entry(AnalysisCategory.HYPOTHESIS_TESTS, snapshot, ("summary",))
+    summary_document = ReportDocument()
+    summary_document.upsert(summary_entry)
+    summary_html = render_report_html(summary_document)
+    assert snapshot.notes[0] not in summary_html
+    assert '<div class="report-paragraphs">' not in summary_html
+
+
 def test_preparation_renders_selected_categories_and_variants(monkeypatch) -> None:
     calls: dict[str, int] = {}
 
@@ -225,6 +346,9 @@ def test_preparation_renders_selected_categories_and_variants(monkeypatch) -> No
     assert prepared.entries[0].category == "AnalysisDialog: Overview"
     assert prepared.entries[0].components[0].overview_summary.facts
     assert prepared.entries[1].components[1].charts
+    hypothesis_chart = next(component for component in prepared.entries[2].components if component.key == "charts")
+    assert hypothesis_chart.paragraphs == ()
+    assert hypothesis_chart.charts[0].captions == ("caption",)
     assert [component.key for component in prepared.entries[5].components] == [
         "strongest_correlations",
         "matrix_plot",
@@ -414,6 +538,25 @@ def test_prepared_report_content_rejects_malformed_table_and_components() -> Non
         PreparedReportComponent("chart", "Chart", "chart", tables=(table,))
     with pytest.raises(ValueError, match="chart images only"):
         PreparedReportComponent("chart", "Chart", "chart")
+    with pytest.raises(ValueError, match="non-empty plain-text strings"):
+        PreparedReportComponent("table", "Table", "table", (table,), paragraphs=("",))
+    PreparedReportComponent("table", "Table", "table", (table,), paragraphs=("Explanation",))
+    with pytest.raises(ValueError, match="chart images only"):
+        PreparedReportComponent(
+            "chart",
+            "Chart",
+            "chart",
+            charts=(ExcelChartImage("chart", b"png", 1, 1),),
+            paragraphs=("Explanation",),
+        )
+    with pytest.raises(ValueError, match="text content only"):
+        PreparedReportComponent(
+            "summary",
+            "Summary",
+            "table",
+            overview_summary=PreparedOverviewSummary((), "Types", (), "Issues", ()),
+            paragraphs=("Explanation",),
+        )
 
 
 def test_localized_report_tables_reject_duplicate_translated_table_titles() -> None:

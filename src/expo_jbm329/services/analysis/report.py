@@ -505,21 +505,31 @@ class PreparedReportComponent:
     charts: tuple[ExcelChartImage, ...] = ()
     overview_summary: PreparedOverviewSummary | None = None
     notice: str | None = None
+    paragraphs: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         """Ensure prepared content agrees with its selected component kind."""
         if not self.key or not self.label or self.kind not in {"table", "chart"}:
             message = "A prepared report component requires a key, label, and supported kind."
             raise ValueError(message)
+        if not isinstance(self.paragraphs, tuple):  # pyright: ignore[reportUnnecessaryIsInstance]
+            message = "Prepared report paragraphs must be non-empty plain-text strings."
+            raise TypeError(message)
+        if any(not isinstance(paragraph, str) for paragraph in self.paragraphs):  # pyright: ignore[reportUnnecessaryIsInstance]
+            message = "Prepared report paragraphs must be non-empty plain-text strings."
+            raise TypeError(message)
+        if any(not paragraph.strip() for paragraph in self.paragraphs):
+            message = "Prepared report paragraphs must be non-empty plain-text strings."
+            raise ValueError(message)
         if self.overview_summary is not None:
-            if self.kind != "table" or self.tables or self.charts or self.notice is not None:
+            if self.kind != "table" or self.tables or self.charts or self.notice is not None or self.paragraphs:
                 message = "A prepared Overview summary must contain text content only."
                 raise ValueError(message)
             return
         if self.kind == "table" and (not self.tables or self.charts):
             message = "A prepared table component must contain one or more tables only."
             raise ValueError(message)
-        if self.kind == "chart" and (self.tables or not self.charts or self.notice is not None):
+        if self.kind == "chart" and (self.tables or not self.charts or self.notice is not None or self.paragraphs):
             message = "A prepared chart component must contain chart images only."
             raise ValueError(message)
 
@@ -950,6 +960,31 @@ def localized_report_tables(
         TypeError: If the category and snapshot do not match.
         ValueError: If a selected table is unavailable or translated titles collide.
     """
+    return _localized_report_tables(
+        category,
+        snapshot,
+        components,
+        translate=translate,
+        number_format=number_format,
+        count_format=count_format,
+        labels=labels,
+        split_overview_samples=split_overview_samples,
+    )
+
+
+def _localized_report_tables(
+    category: AnalysisCategory,
+    snapshot: ReportSnapshot,
+    components: Sequence[str],
+    *,
+    translate: Callable[[str, str], str] = _identity_translate,
+    number_format: Callable[[float], str] = fmt_num,
+    count_format: Callable[[int], str] = fmt_int,
+    labels: ReportRenderOptions | None = None,
+    split_overview_samples: bool = False,
+    hypothesis_test_results: pd.DataFrame | None = None,
+) -> dict[str, pd.DataFrame]:
+    """Build localized tables, optionally using report-only raw hypothesis rows."""
     if labels is not None:
         translate = labels.translate
         number_format = labels.number_format
@@ -1125,8 +1160,8 @@ def localized_report_tables(
                 hypothesis_table = hypothesis_table_keys.get(key)
                 if hypothesis_table is None:
                     continue
-                frame = hypothesis_export_tables(snapshot, (hypothesis_table,))[hypothesis_table]
                 if hypothesis_table is HypothesisExportComponent.SUMMARY:
+                    frame = hypothesis_export_tables(snapshot, (hypothesis_table,))[hypothesis_table]
                     title = summary_title
                     if snapshot.test is HypothesisTest.CHI_SQUARE:
                         from expo_jbm329.services.analysis.chi_square import ChiSquareResult
@@ -1147,6 +1182,11 @@ def localized_report_tables(
                         )
                 else:
                     title = results_title
+                    frame = (
+                        hypothesis_test_results
+                        if hypothesis_test_results is not None
+                        else hypothesis_export_tables(snapshot, (hypothesis_table,))[hypothesis_table]
+                    )
                     frame = frame.rename(
                         columns={
                             name: translate("AnalysisExportDialog", result_headers.get(name, "Measurement"))
@@ -1639,13 +1679,14 @@ def prepare_report_content(
             if component.kind == "table" and not (overview is not None and component.key in {"Summary", "Sample"})
         )
         localized_tables = iter(
-            localized_report_tables(
+            _localized_report_tables(
                 entry.category,
                 entry.snapshot,
                 table_keys,
                 translate=translate,
                 number_format=number_format,
                 count_format=count_format,
+                hypothesis_test_results=_hypothesis_report_rows(entry.snapshot, table_keys),
             ).items()
         )
         chart_keys = tuple(component.key for component in selected if component.kind == "chart")
@@ -1693,7 +1734,18 @@ def prepare_report_content(
                         else _prepare_table(component.key, table_title, frame)
                     )
                     prepared_components.append(
-                        PreparedReportComponent(component.key, label, component.kind, (prepared_table,))
+                        PreparedReportComponent(
+                            component.key,
+                            label,
+                            component.kind,
+                            (prepared_table,),
+                            paragraphs=(
+                                entry.snapshot.notes
+                                if isinstance(entry.snapshot, HypothesisExportSnapshot)
+                                and component.key == "test_results"
+                                else ()
+                            ),
+                        )
                     )
             else:
                 images = rendered_charts.get(component.key, ())
@@ -1840,6 +1892,22 @@ def _prepare_table(key: str, title: str, frame: pd.DataFrame) -> PreparedReportT
         tuple(str(header) for header in frame.columns),
         tuple(tuple(value for value in row) for row in frame.itertuples(index=False, name=None)),
     )
+
+
+def _hypothesis_report_rows(
+    snapshot: ReportSnapshot,
+    component_keys: Sequence[str],
+) -> pd.DataFrame | None:
+    """Separate captured notes from actual hypothesis rows before localization."""
+    if not isinstance(snapshot, HypothesisExportSnapshot) or "test_results" not in component_keys:
+        return None
+    raw_results = hypothesis_export_tables(snapshot, (HypothesisExportComponent.TEST_RESULTS,))[
+        HypothesisExportComponent.TEST_RESULTS
+    ]
+    if "test" not in raw_results.columns or "notes" not in raw_results.columns:
+        message = "Hypothesis test results must include their raw test and notes columns."
+        raise ValueError(message)
+    return raw_results.loc[raw_results["test"].notna()].drop(columns="notes").copy()
 
 
 def _component_translation_context(
@@ -2175,6 +2243,12 @@ def render_prepared_report_html(
                         parts.append(f"<td>{_html_escape(cell)}</td>")
                     parts.append("</tr>")
                 parts.append("</tbody></table></div>")
+            if component.paragraphs:
+                parts.append('<div class="report-paragraphs">')
+                parts.extend(
+                    f'<p class="report-paragraph">{_html_escape(paragraph)}</p>' for paragraph in component.paragraphs
+                )
+                parts.append("</div>")
             if component.notice is not None:
                 parts.append(f'<p class="report-notice">{_html_escape(component.notice)}</p>')
             for chart in component.charts:
@@ -2264,6 +2338,8 @@ h2 { border-bottom: 1px solid #d9e0e8; padding-bottom: .4rem; }
 .applied-configuration dt { font-weight: 700; }
 .applied-configuration dd { margin: 0; overflow-wrap: anywhere; }
 .report-component { margin: 1.5rem 0; break-inside: avoid; }
+.report-paragraphs { margin: .5rem 0 1.25rem; }
+.report-paragraph { margin: .5rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .overview-summary { border: 1px solid #ccd5df; padding: .75rem 1rem; }
 .overview-summary h4 { margin: .5rem 0 .4rem; }
 .overview-summary-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
