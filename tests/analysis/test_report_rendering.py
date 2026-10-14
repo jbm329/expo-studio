@@ -21,6 +21,7 @@ from expo_jbm329.services.analysis.hypothesis_export import (
     hypothesis_export_tables,
 )
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
+from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.report import (
     PreparedOverviewSummary,
     PreparedReportComponent,
@@ -172,6 +173,96 @@ def test_hypothesis_report_labels_are_captured_before_worker_preparation():
     assert prepared.entries[0].configuration[0].label == "sv:Measurement variables (selected order):"
     assert prepared.entries[0].components[0].label == "sv:Measurement summary"
     assert prepared.entries[0].components[0].tables[0].title == "sv:Measurement summary"
+
+
+@pytest.mark.parametrize(
+    ("factory", "model", "model_name", "chart_label"),
+    [
+        (linear_snapshot, RegressionModel.LINEAR, "Linear regression", "Linear diagnostics"),
+        (logistic_snapshot, RegressionModel.LOGISTIC, "Logistic regression", "Logistic diagnostics"),
+        (poisson_snapshot, RegressionModel.POISSON, "Poisson regression", "Count-model diagnostics"),
+        (
+            negative_binomial_snapshot,
+            RegressionModel.NEGATIVE_BINOMIAL,
+            "Negative binomial regression",
+            "Count-model diagnostics",
+        ),
+        (
+            cox_snapshot,
+            RegressionModel.COX,
+            "Cox proportional-hazards regression",
+            "Survival charts",
+        ),
+    ],
+)
+def test_regression_html_and_export_tables_share_applied_labels(factory, model, model_name, chart_label):
+    snapshot = factory()
+    selection = ("coefficients", "model_metrics")
+    entry = _entry(AnalysisCategory.REGRESSION, snapshot, selection)
+    document = ReportDocument()
+    document.upsert(entry)
+
+    def translate(context: str, source: str) -> str:
+        return f"sv:{source}" if context == "RegressionPresentation" else source
+
+    labels = capture_report_labels(translate=translate)
+    prepared = prepare_report_content(document, labels=labels)
+    html = render_prepared_report_html(prepared)
+    export_tables = localized_report_tables(
+        AnalysisCategory.REGRESSION,
+        snapshot,
+        selection,
+        labels=labels,
+    )
+    prepared_entry = prepared.entries[0]
+    table_titles = tuple(table.title for component in prepared_entry.components for table in component.tables)
+
+    assert prepared_entry.title == f"sv:sv:Regression — sv:{model_name}"
+    assert tuple(field.label for field in prepared_entry.configuration[:1]) == (
+        "sv:Outcome:" if model is not RegressionModel.COX else "sv:Duration:",
+    )
+    if model is RegressionModel.COX:
+        assert prepared_entry.configuration[1].label == "sv:Event:"
+    assert any(field.label == "sv:Predictors:" for field in prepared_entry.configuration)
+    assert tuple(component.label for component in prepared_entry.components) == ("sv:Coefficients", "sv:Model metrics")
+    assert table_titles == tuple(export_tables)
+    assert all(name.startswith("sv:") for name in export_tables)
+    assert "sv:Predictors:" in html
+    assert any(component.label == chart_label for component in entry.components)
+    assert snapshot.model is model
+
+
+def test_regression_html_escapes_long_applied_roles_reference_levels_and_terms():
+    original = linear_snapshot()
+    result = original.result
+    long_outcome = "<outcome & analysis>" + " name" * 20
+    long_predictor = "predictor <&>" + " column" * 20
+    long_reference = "<control & reference>" + " level" * 12
+    terms = (
+        result.terms[0],
+        replace(result.terms[1], column=long_predictor),
+        *result.terms[2:],
+    )
+    references = (replace(result.references[0], column=long_predictor, reference_level=long_reference),)
+    modified = replace(
+        result,
+        target=long_outcome,
+        predictors=(long_predictor,),
+        terms=terms,
+        references=references,
+    )
+    snapshot = replace(original, result=modified)
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.REGRESSION, snapshot, ("coefficients",)))
+
+    html = render_report_html(document)
+
+    assert f"<dd>{escape(long_outcome)}</dd>" in html
+    assert f"<dd>{escape(long_predictor)}</dd>" in html
+    assert escape(long_reference) in html
+    assert long_outcome not in html
+    assert long_predictor not in html
+    assert long_reference not in html
 
 
 @pytest.mark.parametrize(

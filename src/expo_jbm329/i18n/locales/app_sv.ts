@@ -9874,4 +9874,27 @@ alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
     <message><source>Association plots</source><translation>Sambandsdiagram</translation></message>
     <message><source>Paired measurement plots</source><translation>Diagram för parade mätvärden</translation></message>
 </context>
+<context>
+    <name>RegressionPresentation</name>
+    <message><source>Regression</source><translation>Regression</translation></message>
+    <message><source>{category} — {model}</source><translation>{category} — {model}</translation></message>
+    <message><source>Linear regression</source><translation>Linjär regression</translation></message>
+    <message><source>Logistic regression</source><translation>Logistisk regression</translation></message>
+    <message><source>Poisson regression</source><translation>Poissonregression</translation></message>
+    <message><source>Negative binomial regression</source><translation>Negativ binomial regression</translation></message>
+    <message><source>Cox proportional-hazards regression</source><translation>Cox-regression med proportionella risker</translation></message>
+    <message><source>Outcome:</source><translation>Utfall:</translation></message>
+    <message><source>Duration:</source><translation>Varaktighet:</translation></message>
+    <message><source>Event:</source><translation>Händelse:</translation></message>
+    <message><source>Predictors:</source><translation>Prediktorer:</translation></message>
+    <message><source>Modeled terms:</source><translation>Modelltermer:</translation></message>
+    <message><source>Reference levels:</source><translation>Referensnivåer:</translation></message>
+    <message><source>Coefficients</source><translation>Koefficienter</translation></message>
+    <message><source>Model metrics</source><translation>Modellmått</translation></message>
+    <message><source>Linear diagnostics</source><translation>Diagnostik för linjär modell</translation></message>
+    <message><source>Logistic diagnostics</source><translation>Diagnostik för logistisk modell</translation></message>
+    <message><source>Count-model diagnostics</source><translation>Diagnostik för räknemodell</translation></message>
+    <message><source>Survival charts</source><translation>Överlevnadsdiagram</translation></message>
+    <message><source>(Intercept)</source><translation>(Intercept)</translation></message>
+</context>
 </TS>

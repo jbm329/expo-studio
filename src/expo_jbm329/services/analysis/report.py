@@ -68,6 +68,8 @@ from expo_jbm329.services.analysis.presentation import (
     hypothesis_component_label,
     presentation_label_source,
     presentation_label_sources,
+    regression_component_label,
+    regression_intercept_label,
     translate_presentation_label,
 )
 from expo_jbm329.services.analysis.regression import SIGNIFICANCE_LEVEL as REGRESSION_SIGNIFICANCE
@@ -160,6 +162,10 @@ class ReportEntry:
         elif self.category is AnalysisCategory.HYPOTHESIS_TESTS:
             if not isinstance(self.snapshot, HypothesisExportSnapshot) or self.capture_id != self.snapshot.capture_id:
                 message = "A hypothesis report entry requires its applied-result capture identifier."
+                raise ValueError(message)
+        elif self.category is AnalysisCategory.REGRESSION:
+            if not isinstance(self.snapshot, RegressionExportSnapshot) or self.capture_id != self.snapshot.capture_id:
+                message = "A regression report entry requires its applied-result capture identifier."
                 raise ValueError(message)
         elif self.capture_id is not None:
             message = "Only a report entry with a stable applied-result capture can carry a capture identifier."
@@ -265,7 +271,9 @@ def create_report_entry(
         components=components,
         selected_components=tuple(component.key for component in components),
         capture_id=(
-            snapshot.capture_id if isinstance(snapshot, (CorrelationExportSnapshot, HypothesisExportSnapshot)) else None
+            snapshot.capture_id
+            if isinstance(snapshot, (CorrelationExportSnapshot, HypothesisExportSnapshot, RegressionExportSnapshot))
+            else None
         ),
     )
 
@@ -317,9 +325,36 @@ def available_report_components(category: AnalysisCategory, snapshot: ReportSnap
                 ("scatterplots", presentation_label_source(PresentationLabel.SCATTERPLOTS)[1], "chart"),
             )
         case AnalysisCategory.REGRESSION if isinstance(snapshot, RegressionExportSnapshot):
-            components = [("coefficients", "Coefficients", "table"), ("model_metrics", "Model metrics", "table")]
+            components = [
+                (
+                    RegressionExportComponent.COEFFICIENTS.value,
+                    regression_component_label(
+                        snapshot.model,
+                        RegressionExportComponent.COEFFICIENTS,
+                        _identity_translate,
+                    ),
+                    "table",
+                ),
+                (
+                    RegressionExportComponent.MODEL_METRICS.value,
+                    regression_component_label(
+                        snapshot.model,
+                        RegressionExportComponent.MODEL_METRICS,
+                        _identity_translate,
+                    ),
+                    "table",
+                ),
+            ]
             if snapshot.has_charts:
-                components.append(("charts", "Charts", "chart"))
+                components.append((
+                    RegressionExportComponent.CHARTS.value,
+                    regression_component_label(
+                        snapshot.model,
+                        RegressionExportComponent.CHARTS,
+                        _identity_translate,
+                    ),
+                    "chart",
+                ))
             component_values = tuple(components)
         case AnalysisCategory.OUTLIERS if isinstance(snapshot, OutlierExportSnapshot):
             outlier_labels: dict[OutlierExportComponent, str] = {
@@ -385,7 +420,11 @@ def report_entry_identity(category: AnalysisCategory, dataset_id: str, snapshot:
         case AnalysisCategory.REGRESSION if isinstance(snapshot, RegressionExportSnapshot):
             regression_result = snapshot.result
             terms = tuple((term.kind.value, term.column, term.level) for term in regression_result.terms)
-            config = (snapshot.model.value, snapshot.outcome_columns, snapshot.predictors, terms)
+            references = tuple(
+                (reference.column, reference.reference_level, reference.level_count)
+                for reference in regression_result.references
+            )
+            config = (snapshot.model.value, snapshot.outcome_columns, snapshot.predictors, terms, references)
         case AnalysisCategory.OUTLIERS if isinstance(snapshot, UnivariateOutlierExportSnapshot):
             config = (
                 "univariate",
@@ -856,6 +895,9 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
     "HypothesisPresentation": tuple(
         source for context, source in presentation_label_sources() if context == "HypothesisPresentation"
     ),
+    "RegressionPresentation": tuple(
+        source for context, source in presentation_label_sources() if context == "RegressionPresentation"
+    ),
     "CorrelationView": (
         "Variable 1",
         "Variable 2",
@@ -1317,7 +1359,7 @@ def _localized_report_tables(
                 frame = regression_export_tables(
                     snapshot,
                     (regression_table,),
-                    intercept_label=translate("AnalysisExportDialog", "(Intercept)"),
+                    intercept_label=regression_intercept_label(translate),
                 )[regression_table]
                 if regression_table is RegressionExportComponent.MODEL_METRICS:
                     frame["metric"] = frame["metric"].map(
@@ -1330,9 +1372,10 @@ def _localized_report_tables(
                     regression_headers = {"metric": "Metric", "value": "Value", "notes": "Notes"}
                 else:
                     regression_headers = regression_coefficient_headers
-                title = translate(
-                    "AnalysisExportDialog",
-                    "Coefficients" if regression_table is RegressionExportComponent.COEFFICIENTS else "Model metrics",
+                title = regression_component_label(
+                    snapshot.model,
+                    regression_table,
+                    translate,
                 )
                 add(
                     title,
@@ -1938,6 +1981,8 @@ def _component_translation_context(
         return "HypothesisPresentation"
     if category is AnalysisCategory.CORRELATION:
         return "CorrelationView"
+    if category is AnalysisCategory.REGRESSION:
+        return "RegressionPresentation"
     return {
         AnalysisCategory.OVERVIEW: "OverviewView",
         AnalysisCategory.STATISTICS: "StatisticsView",

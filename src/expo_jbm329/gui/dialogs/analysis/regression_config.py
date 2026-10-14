@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QFormLayout,
@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.analysis.column_combo_box import ColumnComboBox, exclusion_tooltip
+from expo_jbm329.services.analysis.presentation import regression_model_label
 from expo_jbm329.services.analysis.regression import MAX_PREDICTORS
 from expo_jbm329.services.analysis.regression_glm import GeneralizedTargetColumns, RegressionModel
 from expo_jbm329.services.analysis.survival import SurvivalColumns
@@ -84,11 +85,11 @@ class RegressionConfigWidget(QWidget):
         self._configuration_revision = 0
         self._targets_by_model: dict[RegressionModel, str] = {RegressionModel.LINEAR: result.target}
         self._model_combo = QComboBox(self)
-        self._model_combo.addItem(self.tr("Linear regression"), RegressionModel.LINEAR.value)
-        self._model_combo.addItem(self.tr("Logistic regression"), RegressionModel.LOGISTIC.value)
-        self._model_combo.addItem(self.tr("Poisson regression"), RegressionModel.POISSON.value)
-        self._model_combo.addItem(self.tr("Negative binomial regression"), RegressionModel.NEGATIVE_BINOMIAL.value)
-        self._model_combo.addItem(self.tr("Cox proportional-hazards regression"), RegressionModel.COX.value)
+        for model in RegressionModel:
+            self._model_combo.addItem(
+                regression_model_label(model, QCoreApplication.translate),
+                model.value,
+            )
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

@@ -51,6 +51,10 @@ def test_cox_view_shows_hazard_ratio_table_counts_reference_and_caveats():
     assert table.horizontalHeaderItem(2).text() == "Hazard ratio"
     assert table.rowCount() == len(result.terms)
     text = _text(view)
+    assert "Regression — Cox proportional-hazards regression" in text
+    assert "Duration: duration" in text
+    assert "Event: event" in text
+    assert "Predictors: x, group" in text
     assert "Event coding: 1 = event; 0 = censored." in text
     assert f"Events: {result.n_events}; censored: {result.n_censored}" in text
     assert "Reference for group:" in text
@@ -263,7 +267,7 @@ def test_tied_event_and_censor_marks_draw_at_post_event_survival():
 
 def test_chart_labels_name_duration_and_event_with_locale_formatters():
     labels = SurvivalRegressionView(_result()).chart_labels()
-    assert labels.heading == "Cox proportional-hazards regression: duration / event"
+    assert labels.heading == "Survival charts"
     assert labels.captions == ()
     assert labels.model.tick_format(1.234) == fmt_num(1.234, sig=2)
     assert labels.model.time_format(1.234) == fmt_num(1.234, sig=3)

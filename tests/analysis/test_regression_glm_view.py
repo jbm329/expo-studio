@@ -412,17 +412,25 @@ def test_narrow_and_large_finite_counts_render_without_warnings(fitted):
 
 
 @pytest.mark.parametrize(
-    ("model", "heading"),
+    ("model", "heading", "title"),
     [
-        (RegressionModel.LOGISTIC, "Logistic regression: binary"),
-        (RegressionModel.POISSON, "Poisson regression: count"),
-        (RegressionModel.NEGATIVE_BINOMIAL, "Negative binomial regression: count"),
+        (RegressionModel.LOGISTIC, "Logistic diagnostics", "Regression — Logistic regression"),
+        (RegressionModel.POISSON, "Count-model diagnostics", "Regression — Poisson regression"),
+        (
+            RegressionModel.NEGATIVE_BINOMIAL,
+            "Count-model diagnostics",
+            "Regression — Negative binomial regression",
+        ),
     ],
 )
-def test_chart_labels_name_the_model_and_target(model, heading):
+def test_chart_labels_and_applied_view_use_shared_model_presentation(model, heading, title):
     labels = GeneralizedRegressionView(_result(model)).chart_labels()
     assert labels.heading == heading
     assert labels.captions == ()
+    text = _text(GeneralizedRegressionView(_result(model)))
+    assert title in text
+    assert "Outcome:" in text
+    assert "Predictors: x" in text
 
 
 @pytest.mark.parametrize("model", [RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL])

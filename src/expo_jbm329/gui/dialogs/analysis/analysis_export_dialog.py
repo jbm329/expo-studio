@@ -63,6 +63,7 @@ from expo_jbm329.services.analysis.presentation import (
     PresentationLabel,
     build_analysis_presentation,
     hypothesis_component_label,
+    regression_component_label,
     translate_presentation_label,
 )
 from expo_jbm329.services.analysis.regression_export import (
@@ -478,21 +479,13 @@ class AnalysisExportDialog(QDialog):
         """List the applied model plainly and offer its result tables and charts."""
         snapshot = self._regression
         if snapshot is not None:
-            model_names = {
-                RegressionModel.LINEAR: self.tr("Linear regression"),
-                RegressionModel.LOGISTIC: self.tr("Logistic regression"),
-                RegressionModel.POISSON: self.tr("Poisson regression"),
-                RegressionModel.NEGATIVE_BINOMIAL: self.tr("Negative binomial regression"),
-                RegressionModel.COX: self.tr("Cox proportional-hazards regression"),
-            }
-            outcome_role = self.tr("Duration / event") if snapshot.model is RegressionModel.COX else self.tr("Target")
+            presentation = build_analysis_presentation(
+                AnalysisCategory.REGRESSION,
+                snapshot,
+                QCoreApplication.translate,
+            )
             identity = QLabel(
-                self.tr("Applied model: {model}\n{role}: {outcome}\nPredictors: {predictors}").format(
-                    model=model_names[snapshot.model],
-                    role=outcome_role,
-                    outcome=" / ".join(snapshot.outcome_columns),
-                    predictors=" / ".join(snapshot.predictors),
-                ),
+                "\n".join((presentation.title, *presentation.summary_lines)),
                 self,
             )
             identity.setTextFormat(Qt.TextFormat.PlainText)
@@ -503,9 +496,12 @@ class AnalysisExportDialog(QDialog):
         results = QGroupBox(self.tr("Results"), self)
         contents = QVBoxLayout(results)
         labels = {
-            RegressionExportComponent.COEFFICIENTS: self.tr("Coefficients"),
-            RegressionExportComponent.MODEL_METRICS: self.tr("Model metrics"),
-            RegressionExportComponent.CHARTS: self.tr("Charts"),
+            component: regression_component_label(
+                snapshot.model if snapshot is not None else RegressionModel.LINEAR,
+                component,
+                QCoreApplication.translate,
+            )
+            for component in RegressionExportComponent
         }
         for component, label in labels.items():
             choice = QCheckBox(label, results)

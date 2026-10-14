@@ -8,6 +8,7 @@ from expo_jbm329.services.analysis.report import ReportComponent, ReportEntry, c
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from tests.analysis.test_correlation_export import _snapshot as correlation_snapshot
 from tests.analysis.test_pca_export import pca_snapshot
+from tests.analysis.test_regression_export import linear_snapshot
 
 
 def _entry(entry_id: str, dataset: str) -> ReportEntry:
@@ -96,6 +97,24 @@ def test_correlation_report_list_shows_configured_title_and_ordered_columns():
     assert item.text().startswith("Correlation — Pearson - Employees\nColumns: ")
     assert item.text().splitlines()[1] == f"Columns: {', '.join(entry.snapshot.matrix.columns)}"
     assert item.sizeHint().height() > 24
+
+
+def test_regression_report_list_shows_applied_model_and_configuration_roles():
+    page = ReportPage()
+    entry = create_report_entry(
+        AnalysisCategory.REGRESSION,
+        DatasetRef("regression-tab", "Employees", 100, 4),
+        linear_snapshot(),
+    )
+
+    page.set_entries((entry,))
+
+    text = page.findChild(QListWidget).item(0).text()
+    assert text.startswith("Regression — Linear regression - Employees")
+    assert "Outcome: y" in text
+    assert "Predictors: x, g" in text
+    assert "Reference levels: g = b" in text
+    assert "Modeled terms: (Intercept)" in text
 
 
 def test_report_page_emits_selected_entry_actions_and_preserves_selection():

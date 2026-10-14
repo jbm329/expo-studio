@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from html import escape
 
 import pandas as pd
@@ -65,7 +66,11 @@ from expo_jbm329.services.analysis.pca import initialize_pca
 from expo_jbm329.services.analysis.pca_export import PCAExportComponent, PCAExportRequest
 from expo_jbm329.services.analysis.presentation import AnalysisPresentation, ConfigurationField
 from expo_jbm329.services.analysis.regression import initialize_regression
-from expo_jbm329.services.analysis.regression_export import RegressionExportComponent, RegressionExportRequest
+from expo_jbm329.services.analysis.regression_export import (
+    RegressionExportComponent,
+    RegressionExportRequest,
+    RegressionExportSnapshot,
+)
 from expo_jbm329.services.analysis.regression_glm import RegressionModel, initialize_generalized_targets
 from expo_jbm329.services.analysis.report import ReportDocument, create_report_entry
 from expo_jbm329.services.analysis.statistics import (
@@ -83,7 +88,12 @@ from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_outliers_export import multivariate_snapshot as multivariate_outliers_snapshot
 from tests.analysis.test_outliers_export import univariate_snapshot
 from tests.analysis.test_pca_export import pca_snapshot
-from tests.analysis.test_regression_export import linear_snapshot
+from tests.analysis.test_regression_export import (
+    cox_snapshot,
+    generalized_snapshot,
+    linear_snapshot,
+    poisson_snapshot,
+)
 from tests.analysis.test_timeseries_export import time_series_snapshot
 
 
@@ -305,7 +315,7 @@ def test_regression_export_selection_emits_only_the_current_snapshot(monkeypatch
     assert [choice.text() for choice in captured[0].findChildren(QCheckBox)] == [
         "Coefficients",
         "Model metrics",
-        "Charts",
+        "Linear diagnostics",
     ]
     assert len(received) == 1
     assert received[0].snapshot is snapshot
@@ -555,6 +565,81 @@ def test_correlation_report_slot_explicitly_updates_or_replaces_frozen_capture(m
     assert action.text() == "Remove from report"
     action.click()
     assert dialog.report_document().entries == ()
+
+
+def test_regression_configurations_coexist_and_identical_reruns_update_explicitly(monkeypatch):
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
+    dialog.select_category(AnalysisCategory.REGRESSION)
+    initial = linear_snapshot()
+    added: list[ReportNotesDialog] = []
+
+    def accept_add(report_dialog):
+        index = len(added)
+        added.append(report_dialog)
+        if index == 0:
+            report_dialog.findChild(QPlainTextEdit).setPlainText("Keep this regression note")
+            report_dialog._component_choices["charts"].setChecked(False)  # noqa: SLF001
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", accept_add)
+    candidates = [
+        initial,
+        generalized_snapshot(RegressionModel.LOGISTIC),
+        poisson_snapshot(),
+        generalized_snapshot(RegressionModel.NEGATIVE_BINOMIAL),
+        cox_snapshot(),
+    ]
+    linear_result = initial.result
+    candidates.extend((
+        RegressionExportSnapshot(replace(linear_result, target="another outcome"), initial.chart_labels),
+        RegressionExportSnapshot(
+            replace(linear_result, predictors=tuple(reversed(linear_result.predictors))),
+            initial.chart_labels,
+        ),
+    ))
+    for snapshot in candidates:
+        dialog.set_exportable_regression(snapshot)
+        assert dialog._report_action_button.text() == "Add to report"  # noqa: SLF001
+        dialog._toggle_report_entry()  # noqa: SLF001
+
+    entries_before_update = dialog.report_document().entries
+    assert len(entries_before_update) == 7
+    assert len({entry.entry_id for entry in entries_before_update}) == 7
+    original = entries_before_update[0]
+    assert original.note == "Keep this regression note"
+    assert original.selected_components == ("coefficients", "model_metrics")
+
+    rerun = linear_snapshot()
+    dialog.set_exportable_regression(rerun)
+    first_candidate = dialog._current_report_candidate()  # noqa: SLF001
+    inspected_candidate = dialog._current_report_candidate()  # noqa: SLF001
+    assert first_candidate is not None and inspected_candidate is not None
+    assert first_candidate.capture_id == inspected_candidate.capture_id == rerun.capture_id
+    assert dialog._report_action_button.text() == "Update report result"  # noqa: SLF001
+
+    def cancel_update(review_dialog):
+        assert review_dialog.notes() == "Keep this regression note"
+        assert review_dialog.selected_components() == ("coefficients", "model_metrics")
+        labels = [label.text() for label in review_dialog.findChildren(QLabel)]
+        assert any("Regression — Linear regression" in label for label in labels)
+        assert any("Outcome: y" in label for label in labels)
+        assert any("Predictors: x, g" in label for label in labels)
+        assert any(button.text() == "Update result" for button in review_dialog.findChildren(QPushButton))
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", cancel_update)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    assert dialog.report_document().entries == entries_before_update
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", lambda _dialog: QDialog.DialogCode.Accepted)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    updated = dialog.report_document().entries
+    assert updated[0].entry_id == original.entry_id
+    assert updated[0].snapshot is rerun
+    assert updated[0].capture_id == rerun.capture_id
+    assert updated[0].note == original.note
+    assert updated[0].selected_components == original.selected_components
+    assert updated[1:] == entries_before_update[1:]
 
 
 def test_hypothesis_report_slots_coexist_and_identical_reruns_require_atomic_update(monkeypatch):

@@ -57,7 +57,9 @@ analyze another dataset. The window title shows the source name and its row/colu
   families and ordered variable roles are shown consistently in Analysis, Reports, HTML, and export choices; distinct
   selections can coexist in a report, while rerunning an identical selection requires explicit review to update it.
 - **Correlation** explores Pearson, Spearman, or Kendall relationships with matrix and pairwise plots.
-- **Regression** fits linear, logistic, Poisson, Negative Binomial, and Cox models with diagnostics.
+- **Regression** fits linear, logistic, Poisson, Negative Binomial, and Cox models with diagnostics. Report entries show
+  the applied model, outcome roles, ordered predictors, categorical reference coding, and fitted terms; distinct model
+  configurations coexist, and rerunning the same configuration requires explicit review to update its result.
 - **Outliers** detects univariate and multivariate anomalies.
 - **Clustering** groups observations using K-means, DBSCAN, or agglomerative clustering.
 - **PCA** reduces numeric data to principal components and shows loadings and explained variance.
@@ -86,6 +88,10 @@ columns used. Pearson, Spearman, and Kendall results can coexist; changing
 columns within a method requires an explicit replacement, and rerunning the
 same configuration requires an explicit result update. The captured result,
 notes, and component selection remain unchanged if that review is canceled.
+Regression entries identify the applied model and show outcome roles,
+predictors, reference levels, and modeled terms separately. Different model
+families and configurations coexist; rerunning the same full model configuration
+requires explicit review before the captured result is updated.
 Use **Generate HTML report** to save a self-contained HTML file and open it
 in your default browser. Report generation runs in the background; canceled
 or failed saves preserve existing files. PDF output is not yet available.

@@ -9719,4 +9719,27 @@ all hazard ratios and intervals must be finite and positive.</translation>
     <message><source>Association plots</source><translation>Association plots</translation></message>
     <message><source>Paired measurement plots</source><translation>Paired measurement plots</translation></message>
 </context>
+<context>
+    <name>RegressionPresentation</name>
+    <message><source>Regression</source><translation>Regression</translation></message>
+    <message><source>{category} — {model}</source><translation>{category} — {model}</translation></message>
+    <message><source>Linear regression</source><translation>Linear regression</translation></message>
+    <message><source>Logistic regression</source><translation>Logistic regression</translation></message>
+    <message><source>Poisson regression</source><translation>Poisson regression</translation></message>
+    <message><source>Negative binomial regression</source><translation>Negative binomial regression</translation></message>
+    <message><source>Cox proportional-hazards regression</source><translation>Cox proportional-hazards regression</translation></message>
+    <message><source>Outcome:</source><translation>Outcome:</translation></message>
+    <message><source>Duration:</source><translation>Duration:</translation></message>
+    <message><source>Event:</source><translation>Event:</translation></message>
+    <message><source>Predictors:</source><translation>Predictors:</translation></message>
+    <message><source>Modeled terms:</source><translation>Modeled terms:</translation></message>
+    <message><source>Reference levels:</source><translation>Reference levels:</translation></message>
+    <message><source>Coefficients</source><translation>Coefficients</translation></message>
+    <message><source>Model metrics</source><translation>Model metrics</translation></message>
+    <message><source>Linear diagnostics</source><translation>Linear diagnostics</translation></message>
+    <message><source>Logistic diagnostics</source><translation>Logistic diagnostics</translation></message>
+    <message><source>Count-model diagnostics</source><translation>Count-model diagnostics</translation></message>
+    <message><source>Survival charts</source><translation>Survival charts</translation></message>
+    <message><source>(Intercept)</source><translation>(Intercept)</translation></message>
+</context>
 </TS>

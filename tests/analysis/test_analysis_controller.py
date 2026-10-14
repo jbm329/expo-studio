@@ -4562,7 +4562,10 @@ def _regression_export_context(snapshot: RegressionExportSnapshot):
 _REGRESSION_TRANSLATIONS = {
     "Coefficients": "Koefficienter",
     "Model metrics": "Modellm?tt",
-    "Charts": "Diagram",
+    "Linear diagnostics": "Linjär diagnostik",
+    "Logistic diagnostics": "Logistisk diagnostik",
+    "Count-model diagnostics": "Diagnostik för räknemodell",
+    "Survival charts": "Överlevnadsdiagram",
     "Term": "Term",
     "Estimate": "Skattning",
     "(Intercept)": "(Intercept SV)",
@@ -4592,7 +4595,7 @@ def test_regression_excel_export_routes_localized_sheets_and_worker_charts(monke
     assert kwargs["parent_widget"] is dialog
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"] is True
-    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert kwargs["chart_sheet_name"] == "Logistisk diagnostik"
     assert list(kwargs["sheets"]) == ["Koefficienter", "Modellm?tt"]
     coefficients = kwargs["sheets"]["Koefficienter"]
     assert coefficients.columns[:2].tolist() == ["Term", "Skattning"]
@@ -4698,7 +4701,7 @@ def test_regression_export_uses_compiled_swedish_labels() -> None:
         app.removeTranslator(translator)
 
     kwargs = exporter.export_excel.call_args.kwargs
-    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert kwargs["chart_sheet_name"] == "Överlevnadsdiagram"
     sheets = kwargs["sheets"]
     assert len(sheets) == 2
     coefficients, metrics = sheets.values()

@@ -76,6 +76,18 @@ if TYPE_CHECKING:
 _CATEGORY_ROLE = Qt.ItemDataRole.UserRole
 
 
+def _report_component_translation_context(category: AnalysisCategory) -> str:
+    """Return the canonical translation context for a report component label."""
+    if category is AnalysisCategory.HYPOTHESIS_TESTS:
+        return "HypothesisPresentation"
+    if category is AnalysisCategory.CORRELATION:
+        return presentation_label_source(PresentationLabel.STRONGEST_CORRELATIONS)[0]
+    if category is AnalysisCategory.REGRESSION:
+        return presentation_label_source(PresentationLabel.REGRESSION)[0]
+    message = "Only configured analysis categories have shared component labels."
+    raise ValueError(message)
+
+
 class _ComboToolTipFilter(QObject):
     """Show current dropdown text while preserving explicit item explanations."""
 
@@ -582,7 +594,8 @@ class AnalysisDialog(QDialog):
             self._report_action_button.setText(self.tr("Add to report"))
             self._report_action_button.setEnabled(True)
         elif (
-            candidate.category in {AnalysisCategory.CORRELATION, AnalysisCategory.HYPOTHESIS_TESTS}
+            candidate.category
+            in {AnalysisCategory.CORRELATION, AnalysisCategory.HYPOTHESIS_TESTS, AnalysisCategory.REGRESSION}
             and candidate.capture_id != entry.capture_id
         ):
             if candidate.category is AnalysisCategory.CORRELATION and correlation_report_configuration(
@@ -603,7 +616,8 @@ class AnalysisDialog(QDialog):
         existing = self._report_document.get(candidate.entry_id)
         if existing is not None:
             if (
-                candidate.category in {AnalysisCategory.CORRELATION, AnalysisCategory.HYPOTHESIS_TESTS}
+                candidate.category
+                in {AnalysisCategory.CORRELATION, AnalysisCategory.HYPOTHESIS_TESTS, AnalysisCategory.REGRESSION}
                 and candidate.capture_id != existing.capture_id
             ):
                 mode: Literal["replace", "update"] = (
@@ -643,12 +657,9 @@ class AnalysisDialog(QDialog):
         if existing is not None and candidate.category in {
             AnalysisCategory.CORRELATION,
             AnalysisCategory.HYPOTHESIS_TESTS,
+            AnalysisCategory.REGRESSION,
         }:
-            unavailable_context = (
-                "HypothesisPresentation"
-                if candidate.category is AnalysisCategory.HYPOTHESIS_TESTS
-                else presentation_label_source(PresentationLabel.STRONGEST_CORRELATIONS)[0]
-            )
+            unavailable_context = _report_component_translation_context(candidate.category)
             unavailable_components.extend(
                 QCoreApplication.translate(unavailable_context, component.label)
                 for component in existing.components
@@ -668,10 +679,9 @@ class AnalysisDialog(QDialog):
             )
             action_label = self.tr("Replace in report") if review_mode == "replace" else self.tr("Update result")
         component_context = (
-            "HypothesisPresentation"
-            if candidate.category is AnalysisCategory.HYPOTHESIS_TESTS
-            else presentation_label_source(PresentationLabel.STRONGEST_CORRELATIONS)[0]
-            if candidate.category is AnalysisCategory.CORRELATION
+            _report_component_translation_context(candidate.category)
+            if candidate.category
+            in {AnalysisCategory.HYPOTHESIS_TESTS, AnalysisCategory.CORRELATION, AnalysisCategory.REGRESSION}
             else None
         )
         selected_components = tuple(component.key for component in components if component.key in selected)
@@ -935,4 +945,6 @@ class AnalysisDialog(QDialog):
         """Return the translated display label for an analysis category."""
         if category is AnalysisCategory.CORRELATION:
             return translate_presentation_label(PresentationLabel.CORRELATION, QCoreApplication.translate)
+        if category is AnalysisCategory.REGRESSION:
+            return translate_presentation_label(PresentationLabel.REGRESSION, QCoreApplication.translate)
         return self.tr(analysis_category_source(category))

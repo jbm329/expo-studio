@@ -7,12 +7,16 @@ from typing import TYPE_CHECKING
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.regression_view import build_regression_presentation_header
 from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.services.analysis.presentation import regression_component_label, regression_intercept_label
 from expo_jbm329.services.analysis.regression import MAX_MODEL_TERMS, MAX_PREDICTORS, TermKind
 from expo_jbm329.services.analysis.regression_charts import CoxChartLabels, RegressionChartLabels, draw_cox_charts
+from expo_jbm329.services.analysis.regression_export import RegressionExportComponent
+from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.survival import SurvivalError, survival_term_name
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 
@@ -43,6 +47,7 @@ class SurvivalRegressionView(QWidget):
             label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(label)
             return
+        layout.addWidget(build_regression_presentation_header(result, self))
         self._table = self._build_coefficient_table()
         self._summary_label = QLabel(self._summary_text(), self)
         self._summary_label.setTextFormat(Qt.TextFormat.RichText)
@@ -51,7 +56,13 @@ class SurvivalRegressionView(QWidget):
         self._summary_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         splitter = QSplitter(Qt.Orientation.Vertical, self)
         splitter.setChildrenCollapsible(False)
-        table_panel, table_layout = self._build_section(self.tr("Model coefficients"))
+        table_panel, table_layout = self._build_section(
+            regression_component_label(
+                RegressionModel.COX,
+                RegressionExportComponent.COEFFICIENTS,
+                QCoreApplication.translate,
+            )
+        )
         table_layout.addWidget(self._table)
         summary_panel, summary_layout = self._build_section(self.tr("Model comments"))
         # Only the text scrolls, so the section title stays visible.
@@ -80,7 +91,13 @@ class SurvivalRegressionView(QWidget):
 
     def _build_chart_section(self) -> QWidget:
         """Render model effects and unadjusted survival from prepared cohort data."""
-        panel, layout = self._build_section(self.tr("Effects and survival"))
+        panel, layout = self._build_section(
+            regression_component_label(
+                RegressionModel.COX,
+                RegressionExportComponent.CHARTS,
+                QCoreApplication.translate,
+            )
+        )
         figure = Figure(constrained_layout=True)
         canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
         canvas.setMinimumHeight(300)
@@ -121,10 +138,11 @@ class SurvivalRegressionView(QWidget):
 
     def chart_labels(self) -> RegressionChartLabels:
         """Return the translated chart text shared by the displayed and exported charts."""
-        result = self._result
         return RegressionChartLabels(
-            heading=self.tr("Cox proportional-hazards regression: {duration} / {event}").format(
-                duration=result.duration, event=result.event
+            heading=regression_component_label(
+                RegressionModel.COX,
+                RegressionExportComponent.CHARTS,
+                QCoreApplication.translate,
             ),
             model=self._cox_chart_labels(),
         )
@@ -199,7 +217,11 @@ class SurvivalRegressionView(QWidget):
         if header is not None:
             header.setStretchLastSection(False)
         for row, term in enumerate(self._result.terms):
-            name = self.tr("(Intercept)") if term.kind is TermKind.INTERCEPT else survival_term_name(term)
+            name = (
+                regression_intercept_label(QCoreApplication.translate)
+                if term.kind is TermKind.INTERCEPT
+                else survival_term_name(term)
+            )
             values = (
                 name,
                 fmt_num(term.estimate),

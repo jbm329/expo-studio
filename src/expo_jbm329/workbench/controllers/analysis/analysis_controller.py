@@ -114,6 +114,7 @@ from expo_jbm329.services.analysis.presentation import (
     build_analysis_presentation,
     correlation_method_label,
     hypothesis_component_label,
+    regression_component_label,
     translate_presentation_label,
 )
 from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression, initialize_regression
@@ -1141,7 +1142,15 @@ class AnalysisController:
                 exporter.export_excel(
                     sheets=sheets,
                     chart_factory=make_images if charts else None,
-                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    chart_sheet_name=(
+                        regression_component_label(
+                            snapshot.model,
+                            RegressionExportComponent.CHARTS,
+                            tr,
+                        )
+                        if charts
+                        else None
+                    ),
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,

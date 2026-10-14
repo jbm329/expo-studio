@@ -13,6 +13,18 @@ from expo_jbm329.services.analysis.correlation_export import CorrelationExportSn
 from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportComponent, HypothesisExportSnapshot
 from expo_jbm329.services.analysis.paired_comparison import PairedComparisonMethod, PairedComparisonResult
+from expo_jbm329.services.analysis.regression import RegressionResult, TermKind, term_name
+from expo_jbm329.services.analysis.regression_export import (
+    RegressionExportComponent,
+    RegressionExportSnapshot,
+    regression_model,
+)
+from expo_jbm329.services.analysis.regression_glm import (
+    GeneralizedRegressionResult,
+    RegressionModel,
+    generalized_term_name,
+)
+from expo_jbm329.services.analysis.survival import SurvivalResult, survival_term_name
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -61,6 +73,26 @@ class PresentationLabel(StrEnum):
     ASSOCIATION_PLOTS = "association_plots"
     PAIRED_MEASUREMENT_PLOTS = "paired_measurement_plots"
     HYPOTHESIS_CONFIGURED_TITLE = "hypothesis_configured_title"
+    REGRESSION = "regression"
+    REGRESSION_CONFIGURED_TITLE = "regression_configured_title"
+    LINEAR_REGRESSION = "linear_regression"
+    LOGISTIC_REGRESSION = "logistic_regression"
+    POISSON_REGRESSION = "poisson_regression"
+    NEGATIVE_BINOMIAL_REGRESSION = "negative_binomial_regression"
+    COX_REGRESSION = "cox_regression"
+    OUTCOME = "outcome"
+    DURATION = "duration"
+    EVENT = "event"
+    PREDICTORS = "predictors"
+    MODEL_TERMS = "model_terms"
+    REFERENCE_LEVELS = "reference_levels"
+    COEFFICIENTS = "coefficients"
+    MODEL_METRICS = "model_metrics"
+    LINEAR_DIAGNOSTICS = "linear_diagnostics"
+    LOGISTIC_DIAGNOSTICS = "logistic_diagnostics"
+    COUNT_DIAGNOSTICS = "count_diagnostics"
+    SURVIVAL_CHARTS = "survival_charts"
+    INTERCEPT = "intercept"
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,6 +105,7 @@ class PresentationLabelDefinition:
 
 _CORRELATION_CONTEXT = "CorrelationView"
 _HYPOTHESIS_CONTEXT = "HypothesisPresentation"
+_REGRESSION_CONTEXT = "RegressionPresentation"
 _LABEL_DEFINITIONS: dict[PresentationLabel, PresentationLabelDefinition] = {
     PresentationLabel.CORRELATION: PresentationLabelDefinition(_CORRELATION_CONTEXT, "Correlation"),
     PresentationLabel.CONFIGURED_TITLE: PresentationLabelDefinition(_CORRELATION_CONTEXT, "{category} — {method}"),
@@ -122,6 +155,32 @@ _LABEL_DEFINITIONS: dict[PresentationLabel, PresentationLabelDefinition] = {
     PresentationLabel.HYPOTHESIS_CONFIGURED_TITLE: PresentationLabelDefinition(
         _HYPOTHESIS_CONTEXT, "{category} — {method}"
     ),
+    PresentationLabel.REGRESSION: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Regression"),
+    PresentationLabel.REGRESSION_CONFIGURED_TITLE: PresentationLabelDefinition(
+        _REGRESSION_CONTEXT, "{category} — {model}"
+    ),
+    PresentationLabel.LINEAR_REGRESSION: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Linear regression"),
+    PresentationLabel.LOGISTIC_REGRESSION: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Logistic regression"),
+    PresentationLabel.POISSON_REGRESSION: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Poisson regression"),
+    PresentationLabel.NEGATIVE_BINOMIAL_REGRESSION: PresentationLabelDefinition(
+        _REGRESSION_CONTEXT, "Negative binomial regression"
+    ),
+    PresentationLabel.COX_REGRESSION: PresentationLabelDefinition(
+        _REGRESSION_CONTEXT, "Cox proportional-hazards regression"
+    ),
+    PresentationLabel.OUTCOME: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Outcome:"),
+    PresentationLabel.DURATION: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Duration:"),
+    PresentationLabel.EVENT: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Event:"),
+    PresentationLabel.PREDICTORS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Predictors:"),
+    PresentationLabel.MODEL_TERMS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Modeled terms:"),
+    PresentationLabel.REFERENCE_LEVELS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Reference levels:"),
+    PresentationLabel.COEFFICIENTS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Coefficients"),
+    PresentationLabel.MODEL_METRICS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Model metrics"),
+    PresentationLabel.LINEAR_DIAGNOSTICS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Linear diagnostics"),
+    PresentationLabel.LOGISTIC_DIAGNOSTICS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Logistic diagnostics"),
+    PresentationLabel.COUNT_DIAGNOSTICS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Count-model diagnostics"),
+    PresentationLabel.SURVIVAL_CHARTS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Survival charts"),
+    PresentationLabel.INTERCEPT: PresentationLabelDefinition(_REGRESSION_CONTEXT, "(Intercept)"),
 }
 
 _CATEGORY_FALLBACKS: dict[AnalysisCategory, str] = {
@@ -238,7 +297,8 @@ def build_analysis_presentation(
 ) -> AnalysisPresentation:
     """Build a presentation descriptor from a captured applied result.
 
-    Correlation and Hypothesis Tests receive configured titles and ordered settings.
+    Correlation, Hypothesis Tests, and Regression receive configured titles and
+    ordered settings.
     Other categories deliberately retain their existing category-only title.
 
     Args:
@@ -266,9 +326,132 @@ def build_analysis_presentation(
             message = "Hypothesis Tests presentation requires a hypothesis result snapshot."
             raise TypeError(message)
         return build_hypothesis_presentation(snapshot, translate)
+    if category is AnalysisCategory.REGRESSION:
+        if not isinstance(snapshot, RegressionExportSnapshot):
+            message = "Regression presentation requires a regression result snapshot."
+            raise TypeError(message)
+        return build_regression_presentation(snapshot, translate)
     category_source = analysis_category_source(category)
     category_title = translate("AnalysisDialog", category_source)
     return AnalysisPresentation(category_title, category_title)
+
+
+def regression_model_label(model: RegressionModel, translate: Callable[[str, str], str]) -> str:
+    """Return the canonical translated name of a regression model family."""
+    labels = {
+        RegressionModel.LINEAR: PresentationLabel.LINEAR_REGRESSION,
+        RegressionModel.LOGISTIC: PresentationLabel.LOGISTIC_REGRESSION,
+        RegressionModel.POISSON: PresentationLabel.POISSON_REGRESSION,
+        RegressionModel.NEGATIVE_BINOMIAL: PresentationLabel.NEGATIVE_BINOMIAL_REGRESSION,
+        RegressionModel.COX: PresentationLabel.COX_REGRESSION,
+    }
+    return translate_presentation_label(labels[model], translate)
+
+
+def regression_component_label(
+    model: RegressionModel,
+    component: RegressionExportComponent,
+    translate: Callable[[str, str], str],
+) -> str:
+    """Return a truthful shared heading for a regression result component."""
+    if component is RegressionExportComponent.COEFFICIENTS:
+        label = PresentationLabel.COEFFICIENTS
+    elif component is RegressionExportComponent.MODEL_METRICS:
+        label = PresentationLabel.MODEL_METRICS
+    else:
+        labels = {
+            RegressionModel.LINEAR: PresentationLabel.LINEAR_DIAGNOSTICS,
+            RegressionModel.LOGISTIC: PresentationLabel.LOGISTIC_DIAGNOSTICS,
+            RegressionModel.POISSON: PresentationLabel.COUNT_DIAGNOSTICS,
+            RegressionModel.NEGATIVE_BINOMIAL: PresentationLabel.COUNT_DIAGNOSTICS,
+            RegressionModel.COX: PresentationLabel.SURVIVAL_CHARTS,
+        }
+        label = labels[model]
+    return translate_presentation_label(label, translate)
+
+
+def regression_intercept_label(translate: Callable[[str, str], str]) -> str:
+    """Return the canonical translated name of a regression intercept term."""
+    return translate_presentation_label(PresentationLabel.INTERCEPT, translate)
+
+
+def build_regression_presentation(
+    snapshot: RegressionExportSnapshot,
+    translate: Callable[[str, str], str],
+) -> AnalysisPresentation:
+    """Build the configured title and role-ordered settings from a fitted model."""
+    return build_regression_result_presentation(snapshot.result, translate)
+
+
+def build_regression_result_presentation(
+    result: RegressionResult | GeneralizedRegressionResult | SurvivalResult,
+    translate: Callable[[str, str], str],
+) -> AnalysisPresentation:
+    """Build the applied configuration directly from a fitted result."""
+    model_name = regression_model_label(regression_model(result), translate)
+    category = translate_presentation_label(PresentationLabel.REGRESSION, translate)
+    title = translate_presentation_label(PresentationLabel.REGRESSION_CONFIGURED_TITLE, translate).format(
+        category=category,
+        model=model_name,
+    )
+    outcome_role = (
+        (
+            (PresentationLabel.DURATION, result.duration),
+            (PresentationLabel.EVENT, result.event),
+        )
+        if isinstance(result, SurvivalResult)
+        else ((PresentationLabel.OUTCOME, result.target),)
+    )
+    configuration = [
+        ConfigurationField(translate_presentation_label(role, translate), (value,)) for role, value in outcome_role
+    ]
+    configuration.append(
+        ConfigurationField(
+            translate_presentation_label(PresentationLabel.PREDICTORS, translate),
+            result.predictors,
+        )
+    )
+    references = result.references
+    if references:
+        configuration.append(
+            ConfigurationField(
+                translate_presentation_label(PresentationLabel.REFERENCE_LEVELS, translate),
+                tuple(f"{reference.column} = {reference.reference_level}" for reference in references),
+            )
+        )
+    terms = _regression_term_names(result, translate)
+    configuration.append(
+        ConfigurationField(
+            translate_presentation_label(PresentationLabel.MODEL_TERMS, translate),
+            terms,
+        )
+    )
+    return AnalysisPresentation(category, title, tuple(configuration))
+
+
+def _regression_term_names(
+    result: RegressionResult | GeneralizedRegressionResult | SurvivalResult,
+    translate: Callable[[str, str], str],
+) -> tuple[str, ...]:
+    """Return fitted terms in model order, including dummy levels and intercept."""
+    if isinstance(result, RegressionResult):
+        return tuple(
+            translate("RegressionPresentation", "(Intercept)") if term.kind is TermKind.INTERCEPT else term_name(term)
+            for term in result.terms
+        )
+    if isinstance(result, GeneralizedRegressionResult):
+        return tuple(
+            translate("RegressionPresentation", "(Intercept)")
+            if term.kind is TermKind.INTERCEPT
+            else generalized_term_name(term)
+            for term in result.terms
+        )
+    return tuple(
+        translate("RegressionPresentation", "(Intercept)")
+        if term.kind is TermKind.INTERCEPT
+        else survival_term_name(term)
+        for term in result.terms
+    )
 
 
 def build_hypothesis_presentation(

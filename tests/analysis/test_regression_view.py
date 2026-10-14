@@ -365,7 +365,9 @@ def test_layout_places_coefficients_above_plots_and_summary_below():
     assert sections.widget(0).isAncestorOf(table)
     assert "Coefficients" in " ".join(_labels(view))
     assert len(sections.widget(1).findChildren(FigureCanvasQTAgg)) == 3
-    assert any(label.text() == "Diagnostic plots" for label in sections.widget(1).findChildren(QLabel))
+    assert any(label.text() == "Linear diagnostics" for label in sections.widget(1).findChildren(QLabel))
+    assert "Regression — Linear regression" in _labels(view)
+    assert any(label.startswith("Outcome: <y>\nPredictors: x, g") for label in _labels(view))
 
     summary = view.summary_label()
     assert summary is not None
@@ -386,9 +388,9 @@ def test_missing_plot_data_draws_no_plots():
     assert view.findChildren(FigureCanvasQTAgg) == []
 
 
-def test_chart_labels_name_the_target_and_explain_sampling_only_when_sampled():
+def test_chart_labels_use_the_shared_component_name_and_explain_sampling_only_when_sampled():
     labels = RegressionView(_fitted()).chart_labels()
-    assert labels.heading == "Linear regression: <y>"
+    assert labels.heading == "Linear diagnostics"
     assert labels.model.predicted_axis == "Predicted <y>"
     assert labels.captions == ()
     df = _frame(size=PLOT_SAMPLE_SIZE + 100)

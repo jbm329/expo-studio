@@ -14,6 +14,8 @@ from expo_jbm329.services.analysis.group_comparison import analyze_group_compari
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportSnapshot
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.paired_comparison import analyze_paired_comparison
+from expo_jbm329.services.analysis.regression_export import RegressionExportSnapshot
+from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.report import (
     ReportComponent,
     ReportDocument,
@@ -31,7 +33,13 @@ from tests.analysis.test_correlation_export import _snapshot as correlation_snap
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
 from tests.analysis.test_outliers_export import multivariate_snapshot, univariate_snapshot
 from tests.analysis.test_pca_export import pca_snapshot
-from tests.analysis.test_regression_export import linear_snapshot
+from tests.analysis.test_regression_export import (
+    cox_snapshot,
+    linear_snapshot,
+    logistic_snapshot,
+    negative_binomial_snapshot,
+    poisson_snapshot,
+)
 from tests.analysis.test_timeseries_export import irregular_snapshot, time_series_snapshot
 
 DATASET = DatasetRef("tab-1", "Employees", 100, 4)
@@ -228,6 +236,73 @@ def test_hypothesis_report_entry_requires_its_snapshot_capture_identifier():
 
     with pytest.raises(ValueError, match="hypothesis report entry requires"):
         replace(entry, capture_id=None)
+
+
+def test_regression_identity_retains_model_roles_predictor_order_terms_and_reference_coding():
+    snapshot = linear_snapshot()
+    result = snapshot.result
+    same_configuration = linear_snapshot()
+    changed_outcome = RegressionExportSnapshot(replace(result, target="other outcome"), snapshot.chart_labels)
+    changed_predictors = RegressionExportSnapshot(
+        replace(result, predictors=tuple(reversed(result.predictors))),
+        snapshot.chart_labels,
+    )
+    changed_terms = RegressionExportSnapshot(
+        replace(result, terms=(replace(result.terms[0], column="different"), *result.terms[1:])),
+        snapshot.chart_labels,
+    )
+    changed_references = RegressionExportSnapshot(
+        replace(
+            result,
+            references=(replace(result.references[0], reference_level="different"), *result.references[1:]),
+        ),
+        snapshot.chart_labels,
+    )
+
+    identity = report_entry_identity(AnalysisCategory.REGRESSION, DATASET.tab_id, snapshot)
+    assert identity == report_entry_identity(AnalysisCategory.REGRESSION, DATASET.tab_id, same_configuration)
+    for variant in (changed_outcome, changed_predictors, changed_terms, changed_references):
+        assert identity != report_entry_identity(AnalysisCategory.REGRESSION, DATASET.tab_id, variant)
+
+
+def test_regression_report_slots_coexist_for_each_model_family_and_different_outcomes():
+    snapshots = (
+        linear_snapshot(),
+        logistic_snapshot(),
+        poisson_snapshot(),
+        negative_binomial_snapshot(),
+        cox_snapshot(),
+    )
+    entries = tuple(create_report_entry(AnalysisCategory.REGRESSION, DATASET, snapshot) for snapshot in snapshots)
+    document = ReportDocument()
+
+    for entry in entries:
+        document.upsert(entry)
+
+    assert len(document.entries) == len(RegressionModel)
+    assert len({entry.entry_id for entry in document.entries}) == len(RegressionModel)
+    assert tuple(entry.snapshot.model for entry in document.entries) == tuple(RegressionModel)
+
+
+def test_regression_capture_identity_is_stable_during_inspection_and_changes_on_rerun():
+    snapshot = linear_snapshot()
+    entry = create_report_entry(AnalysisCategory.REGRESSION, DATASET, snapshot)
+    inspected_again = create_report_entry(AnalysisCategory.REGRESSION, DATASET, snapshot)
+    rerun = linear_snapshot()
+    rerun_entry = create_report_entry(AnalysisCategory.REGRESSION, DATASET, rerun)
+
+    assert entry.capture_id == snapshot.capture_id
+    assert inspected_again.capture_id == entry.capture_id
+    assert rerun_entry.entry_id == entry.entry_id
+    assert rerun_entry.capture_id == rerun.capture_id != entry.capture_id
+    assert entry.with_selection(("coefficients",), "Reviewed").capture_id == entry.capture_id
+
+
+def test_regression_report_entry_requires_its_snapshot_capture_identifier():
+    entry = create_report_entry(AnalysisCategory.REGRESSION, DATASET, linear_snapshot())
+
+    with pytest.raises(ValueError, match="regression report entry requires"):
+        replace(entry, capture_id="unrelated-capture")
 
 
 def test_correlation_report_upsert_preserves_position_note_and_valid_component_selection():

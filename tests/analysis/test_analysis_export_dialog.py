@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from PyQt6.QtCore import Qt, QTranslator
+from PyQt6.QtCore import QCoreApplication, Qt, QTranslator
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.clustering_export import (
     CLUSTERING_COMPONENTS,
@@ -37,12 +38,14 @@ from expo_jbm329.services.analysis.outliers_export import (
 )
 from expo_jbm329.services.analysis.overview import OverviewExportFormat, OverviewExportTable, analyze_dataset_overview
 from expo_jbm329.services.analysis.pca_export import PCA_COMPONENTS, PCAExportComponent, PCAExportRequest
+from expo_jbm329.services.analysis.presentation import build_analysis_presentation
 from expo_jbm329.services.analysis.regression_charts import RegressionChartLabels
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
     RegressionExportRequest,
     RegressionExportSnapshot,
 )
+from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.statistics import (
     StatisticsExportFormat,
     StatisticsExportTable,
@@ -64,6 +67,7 @@ from tests.analysis.test_regression_export import (
     linear_result,
     linear_snapshot,
     logistic_snapshot,
+    negative_binomial_snapshot,
     poisson_snapshot,
 )
 from tests.analysis.test_timeseries_export import IRREGULAR_NOTE, irregular_snapshot, time_series_snapshot
@@ -428,31 +432,31 @@ def test_long_applied_labels_and_translated_export_layout_fit_without_screen_cap
 
 
 @pytest.mark.parametrize(
-    ("factory", "identity"),
+    ("factory", "model", "chart_heading"),
     [
-        (linear_snapshot, "Applied model: Linear regression\nTarget: y\nPredictors: x / g"),
-        (logistic_snapshot, "Applied model: Logistic regression\nTarget: binary\nPredictors: x"),
-        (poisson_snapshot, "Applied model: Poisson regression\nTarget: count\nPredictors: x"),
-        (
-            cox_snapshot,
-            (
-                "Applied model: Cox proportional-hazards regression\nDuration / event: duration / event\n"
-                "Predictors: x / group"
-            ),
-        ),
+        (linear_snapshot, RegressionModel.LINEAR, "Linear diagnostics"),
+        (logistic_snapshot, RegressionModel.LOGISTIC, "Logistic diagnostics"),
+        (poisson_snapshot, RegressionModel.POISSON, "Count-model diagnostics"),
+        (negative_binomial_snapshot, RegressionModel.NEGATIVE_BINOMIAL, "Count-model diagnostics"),
+        (cox_snapshot, RegressionModel.COX, "Survival charts"),
     ],
 )
-def test_regression_dialog_names_applied_model_and_defaults_to_coefficients(factory, identity):
+def test_regression_dialog_names_applied_configuration_and_shared_components(factory, model, chart_heading):
     snapshot = factory()
     dialog = AnalysisExportDialog(regression=snapshot)
     choices = dialog.findChildren(QCheckBox)
-    assert [choice.text() for choice in choices] == ["Coefficients", "Model metrics", "Charts"]
+    assert [choice.text() for choice in choices] == ["Coefficients", "Model metrics", chart_heading]
     assert all(choice.isEnabled() for choice in choices)
     assert [choice.isChecked() for choice in choices] == [True, False, False]
-    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied model:"))
-    assert label.text() == identity
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Regression — "))
+    presentation = build_analysis_presentation(
+        AnalysisCategory.REGRESSION,
+        snapshot,
+        QCoreApplication.translate,
+    )
+    assert label.text() == "\n".join((presentation.title, *presentation.summary_lines))
     assert label.textFormat() is Qt.TextFormat.PlainText
-    assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
+    assert snapshot.model is model
     assert "model comments" in choices[1].toolTip()
     request = dialog.export_request()
     assert isinstance(request, RegressionExportRequest)
@@ -499,10 +503,10 @@ def test_regression_charts_are_disabled_when_the_model_drew_none():
 def test_regression_dialog_without_applied_model_never_enables_export():
     dialog = AnalysisExportDialog(regression_mode=True)
     choices = dialog.findChildren(QCheckBox)
-    assert [choice.text() for choice in choices] == ["Coefficients", "Model metrics", "Charts"]
+    assert [choice.text() for choice in choices] == ["Coefficients", "Model metrics", "Linear diagnostics"]
     assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
     assert all("Apply a regression model" in choice.toolTip() for choice in choices)
-    assert not any(label.text().startswith("Applied model:") for label in dialog.findChildren(QLabel))
+    assert not any(label.text().startswith("Regression — ") for label in dialog.findChildren(QLabel))
     assert dialog.export_request() is None
     assert not dialog._export_button.isEnabled()
     with pytest.raises(ValueError, match="exactly one"):

@@ -16,10 +16,20 @@ from expo_jbm329.services.analysis.presentation import (
     build_correlation_presentation,
     hypothesis_component_label,
     presentation_label_source,
+    regression_component_label,
 )
+from expo_jbm329.services.analysis.regression_export import RegressionExportComponent
+from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from tests.analysis.test_correlation_export import _snapshot as correlation_snapshot
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
 from tests.analysis.test_pca_export import pca_snapshot
+from tests.analysis.test_regression_export import (
+    cox_snapshot,
+    linear_snapshot,
+    logistic_snapshot,
+    negative_binomial_snapshot,
+    poisson_snapshot,
+)
 
 
 @pytest.mark.parametrize(
@@ -203,3 +213,105 @@ def test_correlation_presentation_requires_applied_columns():
             (),
             lambda _context, source: source,
         )
+
+
+@pytest.mark.parametrize(
+    ("factory", "model", "model_name", "outcome_fields", "predictors"),
+    [
+        (linear_snapshot, RegressionModel.LINEAR, "Linear regression", ("Outcome: y",), "Predictors: x, g"),
+        (logistic_snapshot, RegressionModel.LOGISTIC, "Logistic regression", ("Outcome: binary",), "Predictors: x"),
+        (poisson_snapshot, RegressionModel.POISSON, "Poisson regression", ("Outcome: count",), "Predictors: x"),
+        (
+            negative_binomial_snapshot,
+            RegressionModel.NEGATIVE_BINOMIAL,
+            "Negative binomial regression",
+            ("Outcome: count",),
+            "Predictors: x",
+        ),
+        (
+            cox_snapshot,
+            RegressionModel.COX,
+            "Cox proportional-hazards regression",
+            ("Duration: duration", "Event: event"),
+            "Predictors: x, group",
+        ),
+    ],
+)
+def test_regression_presentation_exposes_model_roles_predictors_terms_and_references(
+    factory,
+    model,
+    model_name,
+    outcome_fields,
+    predictors,
+):
+    calls: list[tuple[str, str]] = []
+
+    def translate(context: str, source: str) -> str:
+        calls.append((context, source))
+        return source
+
+    snapshot = factory()
+    presentation = build_analysis_presentation(AnalysisCategory.REGRESSION, snapshot, translate)
+
+    assert presentation.category == "Regression"
+    assert presentation.title == f"Regression — {model_name}"
+    assert presentation.summary_lines[: len(outcome_fields)] == outcome_fields
+    assert presentation.summary_lines[len(outcome_fields)] == predictors
+    modeled_terms = next(line for line in presentation.summary_lines if line.startswith("Modeled terms:"))
+    if model is RegressionModel.COX:
+        assert modeled_terms.startswith("Modeled terms: x")
+    else:
+        assert modeled_terms.startswith("Modeled terms: (Intercept)")
+    assert any(line.startswith("Reference levels:") for line in presentation.summary_lines) is bool(
+        snapshot.result.references
+    )
+    assert {context for context, _source in calls} == {"RegressionPresentation"}
+
+
+@pytest.mark.parametrize(
+    ("model", "chart_heading"),
+    [
+        (RegressionModel.LINEAR, "Linear diagnostics"),
+        (RegressionModel.LOGISTIC, "Logistic diagnostics"),
+        (RegressionModel.POISSON, "Count-model diagnostics"),
+        (RegressionModel.NEGATIVE_BINOMIAL, "Count-model diagnostics"),
+        (RegressionModel.COX, "Survival charts"),
+    ],
+)
+def test_regression_component_headings_are_model_specific_and_shared(model, chart_heading):
+    def translate(_context: str, source: str) -> str:
+        return source
+
+    assert regression_component_label(model, RegressionExportComponent.COEFFICIENTS, translate) == "Coefficients"
+    assert regression_component_label(model, RegressionExportComponent.MODEL_METRICS, translate) == "Model metrics"
+    assert regression_component_label(model, RegressionExportComponent.CHARTS, translate) == chart_heading
+
+
+def test_regression_semantic_labels_have_one_translation_source_context():
+    labels = (
+        PresentationLabel.REGRESSION,
+        PresentationLabel.REGRESSION_CONFIGURED_TITLE,
+        PresentationLabel.LINEAR_REGRESSION,
+        PresentationLabel.LOGISTIC_REGRESSION,
+        PresentationLabel.POISSON_REGRESSION,
+        PresentationLabel.NEGATIVE_BINOMIAL_REGRESSION,
+        PresentationLabel.COX_REGRESSION,
+        PresentationLabel.OUTCOME,
+        PresentationLabel.DURATION,
+        PresentationLabel.EVENT,
+        PresentationLabel.PREDICTORS,
+        PresentationLabel.MODEL_TERMS,
+        PresentationLabel.REFERENCE_LEVELS,
+        PresentationLabel.COEFFICIENTS,
+        PresentationLabel.MODEL_METRICS,
+        PresentationLabel.LINEAR_DIAGNOSTICS,
+        PresentationLabel.LOGISTIC_DIAGNOSTICS,
+        PresentationLabel.COUNT_DIAGNOSTICS,
+        PresentationLabel.SURVIVAL_CHARTS,
+        PresentationLabel.INTERCEPT,
+    )
+
+    for label in labels:
+        context, source = presentation_label_source(label)
+        assert context == "RegressionPresentation"
+        assert source

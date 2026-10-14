@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import (
     QFrame,
@@ -22,6 +22,11 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.services.analysis.presentation import (
+    build_regression_result_presentation,
+    regression_component_label,
+    regression_intercept_label,
+)
 from expo_jbm329.services.analysis.regression import (
     CONFIDENCE_LEVEL,
     DURBIN_WATSON_HIGH,
@@ -42,6 +47,8 @@ from expo_jbm329.services.analysis.regression_charts import (
     draw_normal_qq,
     draw_residuals_vs_fitted,
 )
+from expo_jbm329.services.analysis.regression_export import RegressionExportComponent
+from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 
 if TYPE_CHECKING:
@@ -56,6 +63,8 @@ if TYPE_CHECKING:
         RegressionTerm,
         RegressionWarning,
     )
+    from expo_jbm329.services.analysis.regression_glm import GeneralizedRegressionResult
+    from expo_jbm329.services.analysis.survival import SurvivalResult
 
 # Above this many rows, normality tests flag even negligible deviations.
 LARGE_SAMPLE_SIZE = 5_000
@@ -69,6 +78,30 @@ _TICK_FONT_SIZE = 8
 def _esc(text: str) -> str:
     """Escape `text` for use in rich text."""
     return html.escape(text)
+
+
+def build_regression_presentation_header(
+    result: RegressionResult | GeneralizedRegressionResult | SurvivalResult,
+    parent: QWidget,
+) -> QWidget:
+    """Build a plain-text title and applied configuration summary for a fit."""
+    presentation = build_regression_result_presentation(result, QCoreApplication.translate)
+    header = QWidget(parent)
+    layout = QVBoxLayout(header)
+    layout.setContentsMargins(0, 0, 0, 0)
+    title = QLabel(presentation.title, header)
+    title.setTextFormat(Qt.TextFormat.PlainText)
+    title_font = title.font()
+    title_font.setBold(True)
+    title.setFont(title_font)
+    title.setWordWrap(True)
+    layout.addWidget(title)
+    configuration = QLabel("\n".join(presentation.summary_lines), header)
+    configuration.setTextFormat(Qt.TextFormat.PlainText)
+    configuration.setWordWrap(True)
+    configuration.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+    layout.addWidget(configuration)
+    return header
 
 
 class RegressionView(QWidget):
@@ -104,6 +137,7 @@ class RegressionView(QWidget):
             layout.addWidget(label)
             return
 
+        layout.addWidget(build_regression_presentation_header(result, self))
         splitter = QSplitter(Qt.Orientation.Vertical, self)
         splitter.setChildrenCollapsible(False)
         splitter.addWidget(self._build_coefficients_panel(result))
@@ -136,7 +170,11 @@ class RegressionView(QWidget):
         result = self._result
         plot = result.plot
         return RegressionChartLabels(
-            heading=self.tr("Linear regression: {target}").format(target=result.target),
+            heading=regression_component_label(
+                RegressionModel.LINEAR,
+                RegressionExportComponent.CHARTS,
+                QCoreApplication.translate,
+            ),
             model=self._linear_chart_labels(result),
             captions=(self._sampling_caption(result, plot),) if plot is not None and plot.sampled else (),
         )
@@ -339,7 +377,12 @@ class RegressionView(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        title = QLabel(self.tr("<b>Coefficients</b>"), panel)
+        coefficient_label = regression_component_label(
+            RegressionModel.LINEAR,
+            RegressionExportComponent.COEFFICIENTS,
+            QCoreApplication.translate,
+        )
+        title = QLabel(f"<b>{_esc(coefficient_label)}</b>", panel)
         title.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(title)
 
@@ -404,7 +447,9 @@ class RegressionView(QWidget):
         """Return the formatted table cells for one term."""
         significant = not math.isnan(term.p_value) and term.p_value < SIGNIFICANCE_LEVEL
         return [
-            self.tr("(Intercept)") if term.kind is TermKind.INTERCEPT else term_name(term),
+            regression_intercept_label(QCoreApplication.translate)
+            if term.kind is TermKind.INTERCEPT
+            else term_name(term),
             fmt_num(term.estimate),
             fmt_num(term.std_error),
             fmt_num(term.t_statistic, sig=3),
@@ -452,7 +497,16 @@ class RegressionView(QWidget):
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Diagnostic plots"), panel))
+        layout.addWidget(
+            self._build_section_title(
+                regression_component_label(
+                    RegressionModel.LINEAR,
+                    RegressionExportComponent.CHARTS,
+                    QCoreApplication.translate,
+                ),
+                panel,
+            )
+        )
 
         plot = result.plot
         if plot is None:
