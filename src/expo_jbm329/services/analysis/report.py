@@ -438,6 +438,7 @@ class PreparedOverviewSummary:
     column_types: tuple[tuple[str, str], ...]
     issues_heading: str
     issues: tuple[str, ...]
+    facts_heading: str = "Dataset statistics"
 
 
 @dataclass(frozen=True, slots=True)
@@ -554,6 +555,7 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
         "Missing values",
         "Duplicate rows",
         "Column types",
+        "Dataset statistics",
         "Numeric columns",
         "Categorical columns",
         "Datetime columns",
@@ -1686,6 +1688,7 @@ def _prepare_overview_summary(
             for column, fraction in result.high_missing_columns
         )
         or (label("No issues detected."),),
+        facts_heading=label("Dataset statistics"),
     )
 
 
@@ -2046,15 +2049,20 @@ def render_prepared_report_html(
             summary = component.overview_summary
             if summary is not None:
                 parts.append('<div class="overview-summary">')
-                for heading, facts in ((None, summary.facts), (summary.types_heading, summary.column_types)):
-                    if heading is not None:
-                        parts.append(f"<h4>{_html_escape(heading)}</h4>")
+                parts.append('<div class="overview-summary-groups">')
+                for heading, facts in (
+                    (summary.facts_heading, summary.facts),
+                    (summary.types_heading, summary.column_types),
+                ):
+                    parts.append('<div class="overview-summary-group">')
+                    parts.append(f"<h4>{_html_escape(heading)}</h4>")
                     parts.append('<dl class="overview-facts">')
                     parts.extend(
                         f"<div><dt>{_html_escape(label)}</dt><dd><strong>{_html_escape(value)}</strong></dd></div>"
                         for label, value in facts
                     )
-                    parts.append("</dl>")
+                    parts.append("</dl></div>")
+                parts.append("</div>")
                 parts.append(f"<h4>{_html_escape(summary.issues_heading)}</h4>")
                 parts.extend(f'<p class="overview-issue">{_html_escape(issue)}</p>' for issue in summary.issues)
                 parts.append("</div>")
@@ -2156,6 +2164,8 @@ h2 { border-bottom: 1px solid #d9e0e8; padding-bottom: .4rem; }
 .metadata dd { margin: 0; }
 .report-component { margin: 1.5rem 0; break-inside: avoid; }
 .overview-summary h4 { margin: 1rem 0 .4rem; }
+.overview-summary-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+.overview-summary-group { min-width: 0; overflow-wrap: anywhere; }
 .overview-facts { margin: .5rem 0; display: grid; gap: .4rem; }
 .overview-facts div { display: flex; gap: .4rem; }
 .overview-facts dt::after { content: ":"; }
@@ -2172,7 +2182,11 @@ tbody tr:nth-child(even) { background: #f8fafc; }
 .report-chart img { display: block; height: auto; max-width: 100%; margin: 0 auto; }
 .report-chart figcaption { margin-top: .5rem; }
 .report-chart figcaption p { margin: .25rem 0; white-space: pre-wrap; }
-@media (max-width: 650px) { .report { padding: 1rem; } .metadata { display: grid; gap: .3rem; } }
+@media (max-width: 650px) {
+  .report { padding: 1rem; }
+  .metadata { display: grid; gap: .3rem; }
+  .overview-summary-groups { grid-template-columns: 1fr; gap: 0; }
+}
 @media print {
   :root { background: #fff; color: #000; }
   .report { max-width: none; padding: 0; }

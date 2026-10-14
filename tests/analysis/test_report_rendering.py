@@ -441,8 +441,14 @@ def test_overview_summary_is_readable_text_with_view_facts_and_issues(with_warni
     assert '<dl class="overview-facts">' in html
     assert ".overview-facts { margin: .5rem 0; display: grid; gap: .4rem; }" in html
     assert "<h3>Summary</h3>" in html
+    assert "<h4>Dataset statistics</h4>" in html
     assert "<h4>Column types</h4>" in html
     assert "<h4>Potential issues</h4>" in html
+    groups = html.split('<div class="overview-summary-groups">', 1)[1]
+    assert groups.count('<div class="overview-summary-group">') == 2
+    assert "</dl></div>\n</div>\n<h4>Potential issues</h4>" in groups
+    assert "grid-template-columns: repeat(2, minmax(0, 1fr))" in html
+    assert ".overview-summary-groups { grid-template-columns: 1fr; gap: 0; }" in html
     if with_warnings:
         assert "&lt;measure&gt;" in html
         assert "missing values." in html
@@ -461,6 +467,7 @@ def test_overview_empty_summary_localizes_text_and_preserves_export_table() -> N
     html = render_prepared_report_html(prepared)
 
     assert "Translated Column types" in html
+    assert "Translated Dataset statistics" in html
     assert "Translated No issues detected." in html
     assert "<strong>0</strong>" in html
     assert "<table>" not in html
