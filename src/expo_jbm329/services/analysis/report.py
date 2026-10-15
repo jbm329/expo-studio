@@ -1084,6 +1084,7 @@ def _localized_report_tables(
     split_overview_samples: bool = False,
     hypothesis_test_results: pd.DataFrame | None = None,
     regression_model_metrics: pd.DataFrame | None = None,
+    clustering_model_summary: pd.DataFrame | None = None,
     outlier_report_tables: Mapping[OutlierExportComponent, pd.DataFrame] | None = None,
     include_correlation_explanation: bool = True,
 ) -> dict[str, pd.DataFrame]:
@@ -1588,7 +1589,12 @@ def _localized_report_tables(
                 clustering_table = clustering_table_keys.get(key)
                 if clustering_table is None:
                     continue
-                frame = clustering_export_tables(snapshot, (clustering_table,))[clustering_table]
+                frame = (
+                    clustering_model_summary
+                    if clustering_table is ClusteringExportComponent.MODEL_SUMMARY
+                    and clustering_model_summary is not None
+                    else clustering_export_tables(snapshot, (clustering_table,))[clustering_table]
+                )
                 if clustering_table is ClusteringExportComponent.MODEL_SUMMARY:
                     frame["metric"] = frame["metric"].map(
                         lambda metric: (
@@ -1795,6 +1801,7 @@ def prepare_report_content(
                 count_format=count_format,
                 hypothesis_test_results=_hypothesis_report_rows(entry.snapshot, table_keys),
                 regression_model_metrics=_regression_report_rows(entry.snapshot, table_keys),
+                clustering_model_summary=_clustering_report_rows(entry.snapshot, table_keys),
                 outlier_report_tables=(
                     _outlier_report_rows(entry.snapshot, table_keys, translate)
                     if isinstance(entry.snapshot, OutlierExportSnapshot)
@@ -1876,6 +1883,9 @@ def prepare_report_content(
                     elif (
                         isinstance(entry.snapshot, MultivariateOutlierExportSnapshot)
                         and component.key == OutlierExportComponent.MODEL_SUMMARY.value
+                    ) or (
+                        isinstance(entry.snapshot, ClusteringExportSnapshot)
+                        and component.key == ClusteringExportComponent.MODEL_SUMMARY.value
                     ):
                         paragraphs = entry.snapshot.notes
                     prepared_components.append(
@@ -2089,6 +2099,26 @@ def _regression_report_rows(
     )[RegressionExportComponent.MODEL_METRICS]
     if "metric" not in raw_metrics.columns or "notes" not in raw_metrics.columns:
         message = "Regression model metrics must include their raw metric and notes columns."
+        raise ValueError(message)
+    return raw_metrics.loc[raw_metrics["metric"].notna()].drop(columns="notes").copy()
+
+
+def _clustering_report_rows(
+    snapshot: ReportSnapshot,
+    component_keys: Sequence[str],
+) -> pd.DataFrame | None:
+    """Separate captured clustering notes from actual metric rows before localization."""
+    if (
+        not isinstance(snapshot, ClusteringExportSnapshot)
+        or ClusteringExportComponent.MODEL_SUMMARY.value not in component_keys
+    ):
+        return None
+    raw_metrics = clustering_export_tables(
+        snapshot,
+        (ClusteringExportComponent.MODEL_SUMMARY,),
+    )[ClusteringExportComponent.MODEL_SUMMARY]
+    if "metric" not in raw_metrics.columns or "notes" not in raw_metrics.columns:
+        message = "Clustering model summaries must include their raw metric and notes columns."
         raise ValueError(message)
     return raw_metrics.loc[raw_metrics["metric"].notna()].drop(columns="notes").copy()
 

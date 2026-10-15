@@ -12,6 +12,10 @@ import pytest
 
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
+from expo_jbm329.services.analysis.clustering_export import (
+    ClusteringExportComponent,
+    clustering_export_tables,
+)
 from expo_jbm329.services.analysis.correlation import CorrelationMethod, analyze_correlation_matrix
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportComponent, CorrelationExportSnapshot
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
@@ -125,6 +129,118 @@ def test_clustering_worker_captures_shared_localized_presentation_and_escapes_ap
     assert feature not in html
     assert presentation.title in html
     assert "Clustering —" in html if locale == "en" else "Klustring —" in html
+
+
+@pytest.mark.parametrize("method", list(ClusteringMethod))
+def test_clustering_html_places_ordered_escaped_notes_below_model_summary_without_changing_exports(method):
+    notes = ("First <model> & note\ncontinued safely", "Second model note")
+    snapshot = replace(clustering_snapshot(method), notes=notes)
+    exported_before = clustering_export_tables(
+        snapshot,
+        (ClusteringExportComponent.MODEL_SUMMARY,),
+    )[ClusteringExportComponent.MODEL_SUMMARY]
+    localized_export = localized_report_tables(
+        AnalysisCategory.CLUSTERING,
+        snapshot,
+        ("model_summary",),
+    )["Model summary"]
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.CLUSTERING, snapshot, ("model_summary",)))
+
+    prepared = prepare_report_content(document)
+    component = prepared.entries[0].components[0]
+    table = component.tables[0]
+    html = render_prepared_report_html(prepared)
+    exported_after = clustering_export_tables(
+        snapshot,
+        (ClusteringExportComponent.MODEL_SUMMARY,),
+    )[ClusteringExportComponent.MODEL_SUMMARY]
+    metric_rows = exported_before.loc[exported_before["metric"].notna()]
+
+    assert table.headers == ("Metric", "Value")
+    assert len(table.rows) == len(metric_rows)
+    assert tuple(row[0] for row in table.rows) == tuple(localized_export["Metric"].iloc[: len(metric_rows)])
+    np.testing.assert_equal(
+        tuple(row[1] for row in table.rows),
+        tuple(localized_export["Value"].iloc[: len(metric_rows)]),
+    )
+    assert component.paragraphs == notes
+    assert "Notes" not in table.headers
+    assert localized_export.columns.tolist() == ["Metric", "Value", "Notes"]
+    assert localized_export["Notes"].iloc[: len(notes)].tolist() == list(notes)
+    assert localized_export["Notes"].iloc[len(notes) :].isna().all()
+    assert exported_before.columns.tolist() == ["metric", "value", "notes"]
+    assert exported_before["metric"].dtype == pd.StringDtype()
+    assert exported_before["value"].dtype == "float64"
+    assert exported_before["notes"].dtype == pd.StringDtype()
+    pd.testing.assert_frame_equal(exported_after, exported_before)
+    assert html.index("</table></div>") < html.index('<div class="report-paragraphs">')
+    assert html.index("First &lt;model&gt; &amp; note") < html.index("Second model note")
+    assert "continued safely" in html
+    assert "First <model>" not in html
+    assert "white-space: pre-wrap" in html
+
+
+@pytest.mark.parametrize("method", list(ClusteringMethod))
+@pytest.mark.parametrize("notes", [(), tuple(f"Model note {index}" for index in range(20))])
+def test_clustering_html_omits_note_only_rows_and_preserves_export_notes(method, notes):
+    snapshot = replace(clustering_snapshot(method), notes=notes)
+    raw_table = clustering_export_tables(
+        snapshot,
+        (ClusteringExportComponent.MODEL_SUMMARY,),
+    )[ClusteringExportComponent.MODEL_SUMMARY]
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.CLUSTERING, snapshot, ("model_summary",)))
+
+    component = prepare_report_content(document).entries[0].components[0]
+    localized_export = localized_report_tables(
+        AnalysisCategory.CLUSTERING,
+        snapshot,
+        ("model_summary",),
+    )["Model summary"]
+    metric_count = raw_table["metric"].notna().sum()
+
+    assert len(component.tables[0].rows) == metric_count
+    assert component.paragraphs == notes
+    assert "Notes" not in component.tables[0].headers
+    assert "Notes" in localized_export.columns
+    assert localized_export["Notes"].iloc[: len(notes)].tolist() == list(notes)
+    assert len(localized_export) == max(metric_count, len(notes))
+    assert localized_export["Metric"].iloc[metric_count:].isna().all()
+    assert localized_export["Value"].iloc[metric_count:].isna().all()
+
+
+def test_clustering_html_keeps_a_real_metric_with_a_missing_value():
+    snapshot = clustering_snapshot(
+        ClusteringMethod.DBSCAN,
+        dbscan_epsilon=100.0,
+        dbscan_min_samples=2,
+        notes=("Silhouette is undefined for this fit.",),
+    )
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.CLUSTERING, snapshot, ("model_summary",)))
+
+    component = prepare_report_content(document).entries[0].components[0]
+    metric_index = component.tables[0].headers.index("Metric")
+    value_index = component.tables[0].headers.index("Value")
+    silhouette = next(row for row in component.tables[0].rows if row[metric_index] == "Silhouette score")
+
+    assert pd.isna(silhouette[value_index])
+    assert component.paragraphs == snapshot.notes
+
+
+def test_clustering_notes_are_excluded_when_model_summary_is_not_selected():
+    snapshot = replace(clustering_snapshot(), notes=("Model-only note",))
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.CLUSTERING, snapshot, ("cluster_sizes",)))
+
+    prepared = prepare_report_content(document)
+    component = prepared.entries[0].components[0]
+    html = render_prepared_report_html(prepared)
+
+    assert component.key == "cluster_sizes"
+    assert component.paragraphs == ()
+    assert "Model-only note" not in html
 
 
 def _renderable_snapshots():

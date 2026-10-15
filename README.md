@@ -101,6 +101,9 @@ their respective tables without note-only rows. The summary Status column is
 shown when a column could not be screened; otherwise it is omitted. Univariate
 column details use the shared **Model summary** heading across Analysis,
 Reports, HTML, and exports.
+Clustering HTML reports place captured model notes below the selected
+**Model summary** table for K-Means, DBSCAN, and Agglomerative clustering;
+table exports retain their existing Notes column and rows.
 Correlation entries are titled by their applied method and show the ordered
 columns used. Pearson, Spearman, and Kendall results can coexist; changing
 columns within a method requires an explicit replacement, and rerunning the

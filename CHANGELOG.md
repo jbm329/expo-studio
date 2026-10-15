@@ -20,6 +20,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - HTML hypothesis reports separate captured explanatory notes from actual test-result rows; table exports retain the existing Notes column
 - HTML logistic, Poisson, Negative Binomial, and Cox reports show captured notes below Model metrics; table exports retain the existing Notes column
 - HTML Outliers reports show captured summary/detail/model notes below their tables, omit note-only rows, and show Status only when unscreened columns need explanations
+- HTML clustering reports show captured model notes below Model summary and omit note-only rows; table exports retain the existing Notes column
 - Univariate Outliers detail uses the shared Model summary heading across Analysis, Reports, HTML, and exports
 
 ### Added
