@@ -8,6 +8,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- Outliers configured titles use bold text with separate normal-weight applied settings, including the displayed detail column, consistently with other analyses
 - Correlation configured titles use bold text consistently with other analyses, with applied columns shown separately
 - Clustering shares configured method titles, applied feature/standardization/applicable-parameter summaries, and descriptive component labels across Analysis, Reports, HTML, and exports; distinct configurations coexist, inactive parameters do not distinguish entries, and reruns require explicit review while preserving notes, components, and order
 - PCA shares its title, applied ordered features, standardization, and content-specific component labels across Analysis, Reports, HTML, and exports; distinct configurations coexist and same-configuration reruns require explicit review while preserving notes, components, and order

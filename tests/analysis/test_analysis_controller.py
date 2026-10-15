@@ -60,7 +60,7 @@ from expo_jbm329.services.analysis.hypothesis_export import (
 )
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportRequest
 from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierError, MultivariateOutlierMethod
-from expo_jbm329.services.analysis.outliers import OutlierMethod
+from expo_jbm329.services.analysis.outliers import OutlierError, OutlierMethod
 from expo_jbm329.services.analysis.outliers_export import MULTIVARIATE_COMPONENTS as MULTIVARIATE_OUTLIER_COMPONENTS
 from expo_jbm329.services.analysis.outliers_export import UNIVARIATE_COMPONENTS as UNIVARIATE_OUTLIER_COMPONENTS
 from expo_jbm329.services.analysis.outliers_export import (
@@ -3668,11 +3668,13 @@ def test_outlier_stale_fit_cannot_replace_prompt_or_newer_result(dialog_factory,
     _simulate_success(first)
     first["on_error"]("stale failure")
     _assert_apply_prompt(ctrl, dlg)
+    assert dlg.analysis_presentation is None
     assert dlg.placeholder_calls == []
     if not repeat_apply:
         config._apply_button.click()  # noqa: SLF001
     _simulate_success(async_ops.last_call)
     assert isinstance(dlg.content_widget(), MultivariateOutliersView if multivariate else OutliersView)
+    assert dlg.analysis_presentation is not None
 
 
 def test_univariate_edit_discards_pending_column_result_and_error(dialog_factory):
@@ -3887,6 +3889,7 @@ def test_stale_outlier_column_recompute_is_discarded_when_the_column_changes_aga
     _, dlg = _open_applied_outliers(async_ops, dialog_factory)
     view = _outliers_view(dlg)
     initial_detail = view.column_detail()
+    initial_presentation = dlg.analysis_presentation
 
     view.select_column("b")
     first = async_ops.last_call
@@ -3895,9 +3898,11 @@ def test_stale_outlier_column_recompute_is_discarded_when_the_column_changes_aga
 
     _simulate_success(first)
     assert view.column_detail() is initial_detail
+    assert dlg.analysis_presentation is initial_presentation
 
     _simulate_success(second)
     assert _detail_column(view) == "a"
+    assert "Selected detail column: a" in dlg.analysis_presentation.summary_lines
 
 
 def test_a_to_b_to_a_column_selection_discards_the_first_a_job(dialog_factory):
@@ -3936,6 +3941,7 @@ def test_outlier_column_change_during_summary_recompute_is_caught_up(dialog_fact
     assert updated_view is not original_view
     assert updated_view.selected_column() == "b"
     assert _detail_column(updated_view) == "a"
+    assert "Selected detail column: a" in dlg.analysis_presentation.summary_lines
 
     caught_up_call = async_ops.last_call
     assert caught_up_call is not old_detail_call
@@ -3944,6 +3950,7 @@ def test_outlier_column_change_during_summary_recompute_is_caught_up(dialog_fact
     assert _detail_column(updated_view) == "a"
     _simulate_success(caught_up_call)
     assert _detail_column(updated_view) == "b"
+    assert "Selected detail column: b" in dlg.analysis_presentation.summary_lines
 
 
 def test_outlier_configuration_edit_disables_old_table_requests(dialog_factory):
@@ -4723,10 +4730,13 @@ def test_regression_export_uses_compiled_swedish_labels() -> None:
 # ----------------------------------------------------------------------
 
 
-def test_successful_outlier_summary_apply_registers_the_displayed_export_snapshot(dialog_factory):
+@pytest.mark.parametrize("method", list(OutlierMethod))
+def test_successful_outlier_summary_apply_registers_the_displayed_export_snapshot(dialog_factory, method):
     async_ops = DummyAsyncOps()
     ctrl, dlg = _open_outliers(async_ops, dialog_factory)
     assert dlg.exportable_outliers() is None
+    assert dlg.analysis_presentation is None
+    _select_outlier_method(_outliers_config(dlg), method)
 
     _simulate_success(_apply_outliers(async_ops, dlg))
 
@@ -4740,10 +4750,14 @@ def test_successful_outlier_summary_apply_registers_the_displayed_export_snapsho
     assert snapshot.detail_notes == view.detail_notes()
     assert snapshot.data.columns.tolist() == ["a", "b"]
     assert snapshot.data["a"].tolist() == _outliers_df()["a"].tolist()
+    assert dlg.analysis_presentation == build_analysis_presentation(
+        AnalysisCategory.OUTLIERS, snapshot, QCoreApplication.translate
+    )
 
     _outliers_config(dlg)._threshold_spin.setValue(2.5)  # noqa: SLF001
     _assert_apply_prompt(ctrl, dlg)
     assert dlg.exportable_outliers() is None
+    assert dlg.analysis_presentation is None
 
 
 def test_outlier_column_detail_apply_updates_the_registered_snapshot(dialog_factory):
@@ -4752,8 +4766,10 @@ def test_outlier_column_detail_apply_updates_the_registered_snapshot(dialog_fact
     view = _outliers_view(dlg)
     first = dlg.exportable_outliers()
     assert isinstance(first, UnivariateOutlierExportSnapshot)
+    first_presentation = dlg.analysis_presentation
 
     view.select_column("b")
+    assert dlg.analysis_presentation is first_presentation
     _simulate_success(async_ops.last_call)
 
     snapshot = dlg.exportable_outliers()
@@ -4765,6 +4781,49 @@ def test_outlier_column_detail_apply_updates_the_registered_snapshot(dialog_fact
     assert snapshot.detail is not None
     assert snapshot.detail.summary.column == "b"
     assert snapshot.detail_notes == view.detail_notes()
+    assert dlg.analysis_presentation == build_analysis_presentation(
+        AnalysisCategory.OUTLIERS, snapshot, QCoreApplication.translate
+    )
+    assert "Selected detail column: b" in dlg.analysis_presentation.summary_lines
+
+
+def test_outlier_failed_column_detail_clears_only_the_applied_detail_configuration(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    view = _outliers_view(dlg)
+    detail = view.column_detail()
+    assert detail is not None
+    view.select_column("b")
+    call = async_ops.last_call
+    failed_detail = dataclasses.replace(detail, error=OutlierError.INVALID_COLUMN)
+
+    call["on_result"](failed_detail)
+
+    snapshot = dlg.exportable_outliers()
+    assert isinstance(snapshot, UnivariateOutlierExportSnapshot)
+    assert snapshot.detail is None
+    assert dlg.analysis_presentation == build_analysis_presentation(
+        AnalysisCategory.OUTLIERS, snapshot, QCoreApplication.translate
+    )
+    assert "Selected detail column: None" in dlg.analysis_presentation.summary_lines
+
+
+def test_outlier_summary_without_detail_shows_no_applied_detail_column(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    call = _apply_outliers(async_ops, dlg)
+    outcome = call["work"]()
+
+    call["on_result"](dataclasses.replace(outcome, detail=None))
+
+    assert _outliers_view(dlg).column_detail() is None
+    snapshot = dlg.exportable_outliers()
+    assert isinstance(snapshot, UnivariateOutlierExportSnapshot)
+    assert snapshot.detail is None
+    assert dlg.analysis_presentation == build_analysis_presentation(
+        AnalysisCategory.OUTLIERS, snapshot, QCoreApplication.translate
+    )
+    assert "Selected detail column: None" in dlg.analysis_presentation.summary_lines
 
 
 def test_outlier_column_detail_for_a_replaced_summary_is_not_registered(dialog_factory):
@@ -4792,12 +4851,18 @@ def test_outlier_summary_without_screened_columns_exports_tables_but_no_charts(d
     assert snapshot.chart_columns == ()
     assert snapshot.is_available(OutlierExportComponent.COLUMN_SUMMARY)
     assert not snapshot.is_available(OutlierExportComponent.CHARTS)
+    assert dlg.analysis_presentation == build_analysis_presentation(
+        AnalysisCategory.OUTLIERS, snapshot, QCoreApplication.translate
+    )
 
 
-def test_successful_multivariate_outlier_apply_registers_the_displayed_export_snapshot(dialog_factory):
+@pytest.mark.parametrize("method", list(MultivariateOutlierMethod))
+def test_successful_multivariate_outlier_apply_registers_the_displayed_export_snapshot(dialog_factory, method):
     async_ops = DummyAsyncOps()
     _, dlg = _open_outliers(async_ops, dialog_factory)
     config = _switch_to_multivariate(dlg)
+    config._method_combo.setCurrentIndex(config._method_combo.findData(method))  # noqa: SLF001
+    config._neighbors_spin.setValue(3)  # noqa: SLF001
     config._apply_button.click()  # noqa: SLF001
     _simulate_success(async_ops.last_call)
 
@@ -4807,6 +4872,9 @@ def test_successful_multivariate_outlier_apply_registers_the_displayed_export_sn
     assert snapshot.result is view.result()
     assert snapshot.chart_labels == view.chart_labels()
     assert snapshot.notes == view.export_notes()
+    assert dlg.analysis_presentation == build_analysis_presentation(
+        AnalysisCategory.OUTLIERS, snapshot, QCoreApplication.translate
+    )
 
 
 def test_failed_multivariate_outlier_fit_never_registers_an_export_snapshot(dialog_factory):
@@ -4819,6 +4887,7 @@ def test_failed_multivariate_outlier_fit_never_registers_an_export_snapshot(dial
 
     assert _multivariate_outliers_view(dlg).result().error is not None
     assert dlg.exportable_outliers() is None
+    assert dlg.analysis_presentation is None
 
 
 def _outliers_export_context(snapshot: OutlierExportSnapshot):

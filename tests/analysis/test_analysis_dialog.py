@@ -60,13 +60,20 @@ from expo_jbm329.services.analysis.group_comparison import (
     ExcludedColumn,
     initialize_group_comparison,
 )
-from expo_jbm329.services.analysis.multivariate_outliers import initialize_multivariate_outliers
+from expo_jbm329.services.analysis.multivariate_outliers import (
+    MultivariateOutlierMethod,
+    initialize_multivariate_outliers,
+)
 from expo_jbm329.services.analysis.outliers import OutlierMethod, initialize_outlier_summary
 from expo_jbm329.services.analysis.outliers_export import OutlierExportComponent, OutlierExportRequest
 from expo_jbm329.services.analysis.paired_comparison import initialize_paired_comparison
 from expo_jbm329.services.analysis.pca import analyze_pca, initialize_pca
 from expo_jbm329.services.analysis.pca_export import PCAExportComponent, PCAExportRequest, PCAExportSnapshot
-from expo_jbm329.services.analysis.presentation import AnalysisPresentation, ConfigurationField
+from expo_jbm329.services.analysis.presentation import (
+    AnalysisPresentation,
+    ConfigurationField,
+    build_analysis_presentation,
+)
 from expo_jbm329.services.analysis.regression import initialize_regression
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
@@ -1123,6 +1130,51 @@ def test_applied_hypothesis_presentation_is_visible_and_cleared_with_replaced_co
 
     dialog.set_content_widget(QWidget())
     assert dialog._analysis_presentation_widget is None  # noqa: SLF001
+
+
+@pytest.mark.parametrize("method", [*OutlierMethod, *MultivariateOutlierMethod])
+def test_outlier_configured_header_has_separate_bold_title_and_normal_applied_settings(
+    method: OutlierMethod | MultivariateOutlierMethod,
+) -> None:
+    snapshot = (
+        univariate_snapshot(method) if isinstance(method, OutlierMethod) else multivariate_outliers_snapshot(method)
+    )
+    presentation = build_analysis_presentation(AnalysisCategory.OUTLIERS, snapshot, QCoreApplication.translate)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
+    dialog.select_category(AnalysisCategory.OUTLIERS)
+    content = QWidget()
+    dialog.set_content_widget(content)
+
+    dialog.set_analysis_presentation(presentation)
+
+    header = dialog._analysis_presentation_widget
+    assert header is not None
+    layout = dialog.content_panel().layout()
+    assert layout is not None
+    assert layout.itemAt(0).widget() is header
+    title, settings = header.findChildren(QLabel)
+    assert title.text() == presentation.title
+    assert title.font().bold()
+    assert title.textFormat() is Qt.TextFormat.PlainText
+    assert title.wordWrap()
+    assert settings.text() == "\n".join(presentation.summary_lines)
+    assert not settings.font().bold()
+    assert settings.textFormat() is Qt.TextFormat.PlainText
+    assert settings.wordWrap()
+    assert settings.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+    assert dialog.content_widget() is content
+
+    dialog.set_analysis_presentation(presentation)
+    replacement = dialog._analysis_presentation_widget
+    assert replacement is not None and replacement is not header
+    assert header.isHidden()
+    assert layout.count() == 2
+    assert layout.itemAt(0).widget() is replacement
+
+    dialog.show_placeholder("Apply the new configuration")
+    assert replacement.isHidden()
+    assert dialog._analysis_presentation_widget is None
+    assert layout.count() == 1
 
 
 def test_set_content_widget_replaces_the_previous_widget():

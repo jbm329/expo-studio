@@ -1929,16 +1929,16 @@ class AnalysisController:
             if outcome.data is not None and outcome.summary.error is None and outcome.summary.columns:
                 detail = new_view.column_detail()
                 displayed_detail = detail if detail is not None and detail.error is None else None
-                dialog.set_exportable_outliers(
-                    UnivariateOutlierExportSnapshot(
-                        summary=outcome.summary,
-                        data=outcome.data,
-                        chart_labels=new_view.histogram_labels(),
-                        summary_notes=new_view.summary_notes(),
-                        detail=displayed_detail,
-                        detail_notes=new_view.detail_notes(),
-                    )
+                snapshot = UnivariateOutlierExportSnapshot(
+                    summary=outcome.summary,
+                    data=outcome.data,
+                    chart_labels=new_view.histogram_labels(),
+                    summary_notes=new_view.summary_notes(),
+                    detail=displayed_detail,
+                    detail_notes=new_view.detail_notes(),
                 )
+                dialog.set_exportable_outliers(snapshot)
+                dialog.set_analysis_presentation(build_analysis_presentation(AnalysisCategory.OUTLIERS, snapshot, tr))
             if outcome.detail is None:
                 return
             if (
@@ -1979,7 +1979,11 @@ class AnalysisController:
             snapshot = dialog.exportable_outliers()
             if isinstance(snapshot, UnivariateOutlierExportSnapshot) and snapshot.summary is view.result():
                 displayed_detail = detail if detail.error is None else None
-                dialog.set_exportable_outliers(snapshot.with_detail(displayed_detail, view.detail_notes()))
+                updated_snapshot = snapshot.with_detail(displayed_detail, view.detail_notes())
+                dialog.set_exportable_outliers(updated_snapshot)
+                dialog.set_analysis_presentation(
+                    build_analysis_presentation(AnalysisCategory.OUTLIERS, updated_snapshot, tr)
+                )
 
         self._recompute_content(
             dialog,
@@ -2045,9 +2049,9 @@ class AnalysisController:
             view = MultivariateOutliersView(cast("MultivariateOutlierResult", result))
             dialog.set_content_widget(view)
             if view.result().error is None:
-                dialog.set_exportable_outliers(
-                    MultivariateOutlierExportSnapshot(view.result(), view.chart_labels(), view.export_notes())
-                )
+                snapshot = MultivariateOutlierExportSnapshot(view.result(), view.chart_labels(), view.export_notes())
+                dialog.set_exportable_outliers(snapshot)
+                dialog.set_analysis_presentation(build_analysis_presentation(AnalysisCategory.OUTLIERS, snapshot, tr))
 
         self._recompute_content(
             dialog,
