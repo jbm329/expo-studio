@@ -87,6 +87,8 @@ def _report_component_translation_context(category: AnalysisCategory) -> str:
         return presentation_label_source(PresentationLabel.REGRESSION)[0]
     if category is AnalysisCategory.OUTLIERS:
         return presentation_label_source(PresentationLabel.OUTLIERS)[0]
+    if category is AnalysisCategory.CLUSTERING:
+        return presentation_label_source(PresentationLabel.CLUSTERING)[0]
     message = "Only configured analysis categories have shared component labels."
     raise ValueError(message)
 
@@ -608,6 +610,7 @@ class AnalysisDialog(QDialog):
                 AnalysisCategory.HYPOTHESIS_TESTS,
                 AnalysisCategory.REGRESSION,
                 AnalysisCategory.OUTLIERS,
+                AnalysisCategory.CLUSTERING,
             }
             and candidate.capture_id != entry.capture_id
         ):
@@ -633,6 +636,7 @@ class AnalysisDialog(QDialog):
                 AnalysisCategory.HYPOTHESIS_TESTS,
                 AnalysisCategory.REGRESSION,
                 AnalysisCategory.OUTLIERS,
+                AnalysisCategory.CLUSTERING,
             } and (
                 candidate.capture_id != existing.capture_id
                 or (
@@ -681,6 +685,7 @@ class AnalysisDialog(QDialog):
             AnalysisCategory.HYPOTHESIS_TESTS,
             AnalysisCategory.REGRESSION,
             AnalysisCategory.OUTLIERS,
+            AnalysisCategory.CLUSTERING,
         }:
             unavailable_context = _report_component_translation_context(candidate.category)
             unavailable_components.extend(
@@ -709,6 +714,7 @@ class AnalysisDialog(QDialog):
                 AnalysisCategory.CORRELATION,
                 AnalysisCategory.REGRESSION,
                 AnalysisCategory.OUTLIERS,
+                AnalysisCategory.CLUSTERING,
             }
             else None
         )

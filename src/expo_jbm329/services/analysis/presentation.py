@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING
 
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.chi_square import ChiSquareResult
+from expo_jbm329.services.analysis.clustering import ClusteringMethod
+from expo_jbm329.services.analysis.clustering_export import ClusteringExportComponent, ClusteringExportSnapshot
 from expo_jbm329.services.analysis.correlation import CorrelationMethod
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportSnapshot
 from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
@@ -127,6 +129,18 @@ class PresentationLabel(StrEnum):
     COLUMN_DISTRIBUTION = "column_distribution"
     COLUMN_DISTRIBUTIONS = "column_distributions"
     OUTLIER_PROJECTION = "outlier_projection"
+    CLUSTERING = "clustering"
+    CLUSTERING_CONFIGURED_TITLE = "clustering_configured_title"
+    K_MEANS = "k_means"
+    DBSCAN = "dbscan"
+    AGGLOMERATIVE = "agglomerative"
+    CLUSTER_SIZES = "cluster_sizes"
+    CLUSTER_MODEL_SUMMARY = "cluster_model_summary"
+    CLUSTER_PROJECTION = "cluster_projection"
+    CLUSTER_PCA_TITLE = "cluster_pca_title"
+    CLUSTER_COUNT = "cluster_count"
+    DBSCAN_EPSILON = "dbscan_epsilon"
+    DBSCAN_MIN_SAMPLES = "dbscan_min_samples"
 
 
 @dataclass(frozen=True, slots=True)
@@ -141,7 +155,24 @@ _CORRELATION_CONTEXT = "CorrelationView"
 _HYPOTHESIS_CONTEXT = "HypothesisPresentation"
 _REGRESSION_CONTEXT = "RegressionPresentation"
 _OUTLIERS_CONTEXT = "OutliersPresentation"
+_CLUSTERING_CONTEXT = "ClusteringPresentation"
 _LABEL_DEFINITIONS: dict[PresentationLabel, PresentationLabelDefinition] = {
+    PresentationLabel.CLUSTERING: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Clustering"),
+    PresentationLabel.CLUSTERING_CONFIGURED_TITLE: PresentationLabelDefinition(
+        _CLUSTERING_CONTEXT, "{category} — {method}"
+    ),
+    PresentationLabel.K_MEANS: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "K-Means"),
+    PresentationLabel.DBSCAN: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "DBSCAN"),
+    PresentationLabel.AGGLOMERATIVE: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Agglomerative"),
+    PresentationLabel.CLUSTER_SIZES: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Cluster sizes"),
+    PresentationLabel.CLUSTER_MODEL_SUMMARY: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Model summary"),
+    PresentationLabel.CLUSTER_PROJECTION: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Cluster projection"),
+    PresentationLabel.CLUSTER_PCA_TITLE: PresentationLabelDefinition(
+        _CLUSTERING_CONTEXT, "Cluster projection (internal PCA)"
+    ),
+    PresentationLabel.CLUSTER_COUNT: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Number of clusters:"),
+    PresentationLabel.DBSCAN_EPSILON: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Neighborhood radius (eps):"),
+    PresentationLabel.DBSCAN_MIN_SAMPLES: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Minimum samples:"),
     PresentationLabel.CORRELATION: PresentationLabelDefinition(_CORRELATION_CONTEXT, "Correlation"),
     PresentationLabel.CONFIGURED_TITLE: PresentationLabelDefinition(_CORRELATION_CONTEXT, "{category} — {method}"),
     PresentationLabel.COLUMNS: PresentationLabelDefinition(_CORRELATION_CONTEXT, "Columns:"),
@@ -363,7 +394,7 @@ def build_analysis_presentation(
 ) -> AnalysisPresentation:
     """Build a presentation descriptor from a captured applied result.
 
-    Correlation, Hypothesis Tests, and Regression receive configured titles and
+    Correlation, Hypothesis Tests, Regression, Outliers and Clustering receive configured titles and
     ordered settings.
     Other categories deliberately retain their existing category-only title.
 
@@ -403,9 +434,72 @@ def build_analysis_presentation(
             message = "Outliers presentation requires an outlier result snapshot."
             raise TypeError(message)
         return build_outliers_presentation(snapshot, translate, number_format=number_format)
+    if category is AnalysisCategory.CLUSTERING:
+        if not isinstance(snapshot, ClusteringExportSnapshot):
+            message = "Clustering presentation requires a clustering result snapshot."
+            raise TypeError(message)
+        return build_clustering_presentation(snapshot, translate, number_format=number_format)
     category_source = analysis_category_source(category)
     category_title = translate("AnalysisDialog", category_source)
     return AnalysisPresentation(category_title, category_title)
+
+
+def clustering_method_label(method: ClusteringMethod, translate: Callable[[str, str], str]) -> str:
+    """Return the canonical translated clustering method name."""
+    labels = {
+        ClusteringMethod.K_MEANS: PresentationLabel.K_MEANS,
+        ClusteringMethod.DBSCAN: PresentationLabel.DBSCAN,
+        ClusteringMethod.AGGLOMERATIVE: PresentationLabel.AGGLOMERATIVE,
+    }
+    return translate_presentation_label(labels[method], translate)
+
+
+def clustering_component_label(component: ClusteringExportComponent, translate: Callable[[str, str], str]) -> str:
+    """Return the shared content-specific clustering component label."""
+    labels = {
+        ClusteringExportComponent.CLUSTER_SIZES: PresentationLabel.CLUSTER_SIZES,
+        ClusteringExportComponent.MODEL_SUMMARY: PresentationLabel.CLUSTER_MODEL_SUMMARY,
+        ClusteringExportComponent.CHARTS: PresentationLabel.CLUSTER_PROJECTION,
+    }
+    return translate_presentation_label(labels[component], translate)
+
+
+def build_clustering_presentation(
+    snapshot: ClusteringExportSnapshot,
+    translate: Callable[[str, str], str],
+    *,
+    number_format: Callable[[float], str] = fmt_num,
+) -> AnalysisPresentation:
+    """Describe the successful fit using only its applicable applied settings."""
+    result = snapshot.result
+    category = translate_presentation_label(PresentationLabel.CLUSTERING, translate)
+    title = translate_presentation_label(PresentationLabel.CLUSTERING_CONFIGURED_TITLE, translate).format(
+        category=category, method=clustering_method_label(result.method, translate)
+    )
+    fields = [
+        ConfigurationField(translate_presentation_label(PresentationLabel.FEATURES, translate), result.columns),
+        ConfigurationField(
+            translate_presentation_label(PresentationLabel.STANDARDIZATION, translate),
+            (
+                translate_presentation_label(
+                    PresentationLabel.STANDARDIZED if result.standardize else PresentationLabel.NOT_STANDARDIZED,
+                    translate,
+                ),
+            ),
+        ),
+    ]
+    parameters = (
+        (
+            (PresentationLabel.DBSCAN_EPSILON, number_format(result.dbscan_epsilon)),
+            (PresentationLabel.DBSCAN_MIN_SAMPLES, str(result.dbscan_min_samples)),
+        )
+        if result.method is ClusteringMethod.DBSCAN
+        else ((PresentationLabel.CLUSTER_COUNT, str(result.cluster_count)),)
+    )
+    fields.extend(
+        ConfigurationField(translate_presentation_label(label, translate), (value,)) for label, value in parameters
+    )
+    return AnalysisPresentation(category, title, tuple(fields))
 
 
 def outlier_method_label(method: OutlierMethod, translate: Callable[[str, str], str]) -> str:

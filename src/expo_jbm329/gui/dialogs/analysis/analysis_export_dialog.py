@@ -18,7 +18,6 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.services.analysis.categories import AnalysisCategory
-from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.clustering_export import (
     CLUSTERING_COMPONENTS,
     ClusteringExportComponent,
@@ -59,6 +58,7 @@ from expo_jbm329.services.analysis.pca_export import (
 from expo_jbm329.services.analysis.presentation import (
     PresentationLabel,
     build_analysis_presentation,
+    clustering_component_label,
     hypothesis_component_label,
     outlier_component_label,
     regression_component_label,
@@ -565,15 +565,11 @@ class AnalysisExportDialog(QDialog):
         """List the applied clustering plainly and offer its displayed tables and chart."""
         snapshot = self._clustering
         if snapshot is not None:
-            method_names = {
-                ClusteringMethod.K_MEANS: self.tr("K-Means"),
-                ClusteringMethod.DBSCAN: self.tr("DBSCAN"),
-                ClusteringMethod.AGGLOMERATIVE: self.tr("Agglomerative"),
-            }
+            presentation = build_analysis_presentation(
+                AnalysisCategory.CLUSTERING, snapshot, QCoreApplication.translate
+            )
             identity = QLabel(
-                self.tr("Applied method: {method}\nFeatures: {features}").format(
-                    method=method_names[snapshot.result.method], features=" / ".join(snapshot.result.columns)
-                ),
+                "\n".join((presentation.title, *presentation.summary_lines)),
                 self,
             )
             identity.setTextFormat(Qt.TextFormat.PlainText)
@@ -583,13 +579,8 @@ class AnalysisExportDialog(QDialog):
 
         results = QGroupBox(self.tr("Results"), self)
         contents = QVBoxLayout(results)
-        labels = {
-            ClusteringExportComponent.CLUSTER_SIZES: self.tr("Cluster sizes"),
-            ClusteringExportComponent.MODEL_SUMMARY: self.tr("Model summary"),
-            ClusteringExportComponent.CHARTS: self.tr("Charts"),
-        }
         for component in CLUSTERING_COMPONENTS:
-            choice = QCheckBox(labels[component], results)
+            choice = QCheckBox(clustering_component_label(component, QCoreApplication.translate), results)
             if snapshot is None:
                 choice.setEnabled(False)
                 choice.setToolTip(self.tr("Apply a clustering successfully before exporting."))

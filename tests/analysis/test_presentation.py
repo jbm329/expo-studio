@@ -5,6 +5,7 @@ from dataclasses import replace
 import pytest
 
 from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.correlation import CorrelationMethod
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportSnapshot
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportComponent
@@ -25,6 +26,7 @@ from expo_jbm329.services.analysis.presentation import (
 from expo_jbm329.services.analysis.regression_export import RegressionExportComponent
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.utils.format_utils import fmt_num, fmt_pct
+from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_correlation_export import _snapshot as correlation_snapshot
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
 from tests.analysis.test_outliers_export import multivariate_snapshot, univariate_snapshot
@@ -36,6 +38,53 @@ from tests.analysis.test_regression_export import (
     negative_binomial_snapshot,
     poisson_snapshot,
 )
+
+
+@pytest.mark.parametrize("method", list(ClusteringMethod))
+@pytest.mark.parametrize("standardize", [True, False])
+def test_clustering_presentation_uses_applied_order_and_only_active_parameters(method, standardize):
+    snapshot = clustering_snapshot(method)
+    snapshot = replace(
+        snapshot,
+        result=replace(
+            snapshot.result,
+            columns=("long<&>" * 60, "second"),
+            standardize=standardize,
+            cluster_count=7,
+            dbscan_epsilon=0.75,
+            dbscan_min_samples=12,
+        ),
+    )
+    calls = []
+
+    def translate(context, source):
+        calls.append((context, source))
+        return source
+
+    presentation = build_analysis_presentation(
+        AnalysisCategory.CLUSTERING, snapshot, translate, number_format=lambda number: f"{number:.2f}"
+    )
+    names = {
+        ClusteringMethod.K_MEANS: "K-Means",
+        ClusteringMethod.DBSCAN: "DBSCAN",
+        ClusteringMethod.AGGLOMERATIVE: "Agglomerative",
+    }
+    assert presentation.title == f"Clustering — {names[method]}"
+    assert presentation.configuration[0].items == snapshot.result.columns
+    assert presentation.summary_lines[1] == (
+        "Standardization: Standardized" if standardize else "Standardization: Not standardized"
+    )
+    assert presentation.summary_lines[2:] == (
+        ("Neighborhood radius (eps): 0.75", "Minimum samples: 12")
+        if method is ClusteringMethod.DBSCAN
+        else ("Number of clusters: 7",)
+    )
+    assert ("ClusteringPresentation", names[method]) in calls
+
+
+def test_clustering_presentation_rejects_another_category_snapshot():
+    with pytest.raises(TypeError, match="clustering result snapshot"):
+        build_analysis_presentation(AnalysisCategory.CLUSTERING, pca_snapshot(), lambda _context, source: source)
 
 
 @pytest.mark.parametrize(

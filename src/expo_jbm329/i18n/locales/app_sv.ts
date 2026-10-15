@@ -9926,4 +9926,19 @@ alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
     <message><source>Column distributions</source><translation>Kolumnfördelningar</translation></message>
     <message><source>Outlier projection</source><translation>Projektion av avvikare</translation></message>
 </context>
+<context>
+    <name>ClusteringPresentation</name>
+    <message><source>Clustering</source><translation>Klustring</translation></message>
+    <message><source>{category} — {method}</source><translation>{category} — {method}</translation></message>
+    <message><source>K-Means</source><translation>K-Means</translation></message>
+    <message><source>DBSCAN</source><translation>DBSCAN</translation></message>
+    <message><source>Agglomerative</source><translation>Agglomerativ</translation></message>
+    <message><source>Cluster sizes</source><translation>Klusterstorlekar</translation></message>
+    <message><source>Model summary</source><translation>Modellsammanfattning</translation></message>
+    <message><source>Cluster projection</source><translation>Klusterprojektion</translation></message>
+    <message><source>Cluster projection (internal PCA)</source><translation>Klusterprojektion (intern PCA)</translation></message>
+    <message><source>Number of clusters:</source><translation>Antal kluster:</translation></message>
+    <message><source>Neighborhood radius (eps):</source><translation>Grannskapsradie (eps):</translation></message>
+    <message><source>Minimum samples:</source><translation>Minsta antal observationer:</translation></message>
+</context>
 </TS>

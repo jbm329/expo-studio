@@ -32,6 +32,7 @@ from expo_jbm329.services.analysis.outliers_export import (
     outlier_model_summary_table,
 )
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
+from expo_jbm329.services.analysis.presentation import build_analysis_presentation
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
     regression_export_tables,
@@ -87,6 +88,43 @@ def _entry(category: AnalysisCategory, snapshot: object, selection: tuple[str, .
     if selection is None:
         return entry
     return entry.with_selection(selection, entry.note)
+
+
+@pytest.mark.parametrize("method", list(ClusteringMethod))
+@pytest.mark.parametrize("locale", ["en", "sv"])
+def test_clustering_worker_captures_shared_localized_presentation_and_escapes_applied_features(method, locale):
+    from pathlib import Path
+
+    from PyQt6.QtCore import QCoreApplication, QTranslator
+    from PyQt6.QtWidgets import QApplication
+
+    snapshot = clustering_snapshot(method)
+    feature = '<feature & "quoted">' + "very long name " * 30
+    snapshot = replace(snapshot, result=replace(snapshot.result, columns=(feature, "second")))
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.CLUSTERING, snapshot, ("cluster_sizes", "model_summary")))
+    translator = QTranslator()
+    catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{locale}.qm"
+    assert translator.load(str(catalog))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        presentation = build_analysis_presentation(AnalysisCategory.CLUSTERING, snapshot, QCoreApplication.translate)
+        labels = capture_report_labels(QCoreApplication.translate)
+    finally:
+        app.removeTranslator(translator)
+    prepared = prepare_report_content(document, labels=labels)
+    entry = prepared.entries[0]
+    assert entry.title == presentation.title
+    assert entry.configuration == presentation.configuration
+    expected = ("Cluster sizes", "Model summary") if locale == "en" else ("Klusterstorlekar", "Modellsammanfattning")
+    assert tuple(component.label for component in entry.components) == expected
+    assert tuple(component.tables[0].title for component in entry.components) == expected
+    html = render_prepared_report_html(prepared)
+    assert escape(feature, quote=True) in html
+    assert feature not in html
+    assert presentation.title in html
+    assert "Clustering —" in html if locale == "en" else "Klustring —" in html
 
 
 def _renderable_snapshots():

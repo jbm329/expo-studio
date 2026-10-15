@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -31,6 +31,7 @@ from expo_jbm329.services.analysis.clustering import (
     MIN_SELECTED_COLUMNS,
     ClusteringMethod,
 )
+from expo_jbm329.services.analysis.presentation import clustering_method_label
 from expo_jbm329.utils.format_utils import fmt_int
 
 if TYPE_CHECKING:
@@ -142,9 +143,8 @@ class ClusteringConfigWidget(QWidget):
     def _build_method_combo(self, method: ClusteringMethod) -> QComboBox:
         """Build the algorithm selector."""
         combo = QComboBox(self)
-        combo.addItem(self.tr("K-Means"), ClusteringMethod.K_MEANS)
-        combo.addItem(self.tr("DBSCAN"), ClusteringMethod.DBSCAN)
-        combo.addItem(self.tr("Agglomerative"), ClusteringMethod.AGGLOMERATIVE)
+        for algorithm in ClusteringMethod:
+            combo.addItem(clustering_method_label(algorithm, QCoreApplication.translate), algorithm)
         combo.setCurrentIndex(combo.findData(method))
         return combo
 

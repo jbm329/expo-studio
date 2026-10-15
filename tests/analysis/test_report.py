@@ -8,6 +8,7 @@ import pytest
 
 from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.chi_square import analyze_chi_square
+from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.correlation import CorrelationMethod, analyze_correlation_matrix
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportSnapshot
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
@@ -60,6 +61,44 @@ def test_report_components_validate_keys_and_kinds():
         ReportComponent("", "Table", "table")
     with pytest.raises(ValueError, match="supported kind"):
         ReportComponent("table", "Table", "image")
+
+
+@pytest.mark.parametrize("method", list(ClusteringMethod))
+def test_clustering_identity_normalizes_inactive_parameters_and_preserves_active_configuration(method):
+    snapshot = clustering_snapshot(method)
+    identity = report_entry_identity(AnalysisCategory.CLUSTERING, DATASET.tab_id, snapshot)
+    inactive = (
+        {"cluster_count": snapshot.result.cluster_count + 1}
+        if method is ClusteringMethod.DBSCAN
+        else {"dbscan_epsilon": 99.0, "dbscan_min_samples": 99}
+    )
+    changed = replace(snapshot, result=replace(snapshot.result, **inactive))
+    assert report_entry_identity(AnalysisCategory.CLUSTERING, DATASET.tab_id, changed) == identity
+    active_changes = [
+        {"columns": tuple(reversed(snapshot.result.columns))},
+        {"standardize": not snapshot.result.standardize},
+        {"method": ClusteringMethod.K_MEANS if method is not ClusteringMethod.K_MEANS else ClusteringMethod.DBSCAN},
+    ]
+    if method is ClusteringMethod.DBSCAN:
+        active_changes.extend(({"dbscan_epsilon": 1.5}, {"dbscan_min_samples": 99}))
+    else:
+        active_changes.append({"cluster_count": snapshot.result.cluster_count + 1})
+    for changes in active_changes:
+        configured = replace(snapshot, result=replace(snapshot.result, **changes))
+        assert report_entry_identity(AnalysisCategory.CLUSTERING, DATASET.tab_id, configured) != identity
+
+
+def test_clustering_report_entry_owns_stable_capture_provenance():
+    snapshot = clustering_snapshot()
+    entry = create_report_entry(AnalysisCategory.CLUSTERING, DATASET, snapshot)
+    inspected = create_report_entry(AnalysisCategory.CLUSTERING, DATASET, snapshot)
+    assert entry.capture_id == inspected.capture_id == snapshot.capture_id
+    assert entry.with_selection(("charts",), "Keep").capture_id == entry.capture_id
+    with pytest.raises(ValueError, match="capture identifier"):
+        replace(entry, capture_id="wrong")
+    rerun = create_report_entry(AnalysisCategory.CLUSTERING, DATASET, clustering_snapshot())
+    assert rerun.entry_id == entry.entry_id
+    assert rerun.capture_id != entry.capture_id
 
 
 def test_report_entry_requires_nonempty_unique_component_selection():

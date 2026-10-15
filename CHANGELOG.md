@@ -8,6 +8,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- Clustering shares configured method titles, applied feature/standardization/applicable-parameter summaries, and descriptive component labels across Analysis, Reports, HTML, and exports; distinct configurations coexist, inactive parameters do not distinguish entries, and reruns require explicit review while preserving notes, components, and order
 - HTML Strongest correlations tables show the common Ranking and Holm explanation once below the table
 - Advanced Analysis now stays bound to the active ready dataset for the whole modal session; report entries share that source
 - Advanced Analysis displays the source dataset name and dimensions in the window title instead of a separate dataset pane

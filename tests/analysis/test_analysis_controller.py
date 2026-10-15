@@ -5021,11 +5021,13 @@ def test_outlier_export_uses_compiled_swedish_labels() -> None:
 # ----------------------------------------------------------------------
 
 
-def test_successful_clustering_apply_registers_the_displayed_export_snapshot(dialog_factory):
+@pytest.mark.parametrize("method", list(ClusteringMethod))
+def test_successful_clustering_apply_registers_the_displayed_export_snapshot(dialog_factory, method):
     async_ops = DummyAsyncOps()
     ctrl, dlg = _open_clustering(async_ops, dialog_factory)
     assert dlg.exportable_clustering() is None
     config = _clustering_config(dlg)
+    config._method_combo.setCurrentIndex(config._method_combo.findData(method))  # noqa: SLF001
     config._apply_button.click()  # noqa: SLF001
     _simulate_success(async_ops.last_call)
 
@@ -5035,10 +5037,14 @@ def test_successful_clustering_apply_registers_the_displayed_export_snapshot(dia
     assert snapshot.result is view.result()
     assert snapshot.chart_labels == view.chart_labels()
     assert snapshot.notes == view.export_notes()
+    presentation = build_analysis_presentation(AnalysisCategory.CLUSTERING, snapshot, QCoreApplication.translate)
+    assert dlg.analysis_presentation == presentation
+    captured_id = snapshot.capture_id
 
     _set_clustering_checked(config, "z", False)
     _assert_apply_prompt(ctrl, dlg)
     assert dlg.exportable_clustering() is None
+    assert snapshot.capture_id == captured_id
 
 
 def test_failed_clustering_fit_never_registers_an_export_snapshot(dialog_factory):
@@ -5067,6 +5073,7 @@ def _clustering_export_context(snapshot: ClusteringExportSnapshot):
 
 
 _CLUSTERING_TRANSLATIONS = {
+    "Cluster projection": "Klusterprojektion",
     "Cluster sizes": "Klusterstorlekar",
     "Model summary": "Modellsammanfattning",
     "Charts": "Diagram",
@@ -5097,7 +5104,7 @@ def test_clustering_excel_export_routes_localized_sheets_and_worker_chart(monkey
     assert kwargs["parent_widget"] is dialog
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"] is True
-    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert kwargs["chart_sheet_name"] == "Klusterprojektion"
     assert list(kwargs["sheets"]) == ["Klusterstorlekar", "Modellsammanfattning"]
     sizes = kwargs["sheets"]["Klusterstorlekar"]
     assert sizes.columns.tolist() == ["Kluster", "Rader", "Andel"]
@@ -5178,8 +5185,9 @@ def test_clustering_export_rejects_stale_or_foreign_requests(change):
     assert controller._results.mock_calls == []  # noqa: SLF001
 
 
-def test_clustering_export_uses_compiled_swedish_labels() -> None:
-    snapshot = clustering_snapshot(ClusteringMethod.DBSCAN, dbscan_min_samples=3)
+@pytest.mark.parametrize("method", list(ClusteringMethod))
+def test_clustering_export_uses_compiled_swedish_labels(method: ClusteringMethod) -> None:
+    snapshot = clustering_snapshot(method, dbscan_min_samples=3)
     controller, dialog, exporter = _clustering_export_context(snapshot)
     translator = QTranslator()
     catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / "app_sv.qm"
@@ -5196,13 +5204,17 @@ def test_clustering_export_uses_compiled_swedish_labels() -> None:
         app.removeTranslator(translator)
 
     kwargs = exporter.export_excel.call_args.kwargs
-    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert kwargs["chart_sheet_name"] == "Klusterprojektion"
     sheets = kwargs["sheets"]
     assert list(sheets) == ["Klusterstorlekar", "Modellsammanfattning"]
     assert sheets["Klusterstorlekar"].columns.tolist() == ["Kluster", "Rader", "Andel"]
     summary = sheets["Modellsammanfattning"]
     assert summary.columns.tolist() == ["Mått", "Värde", "Noteringar"]
-    assert summary["Mått"].tolist()[:3] == ["Variabler", "Grannskapsradie (eps)", "Minsta antal observationer"]
+    assert summary["Mått"].tolist()[:3] == (
+        ["Variabler", "Grannskapsradie (eps)", "Minsta antal observationer"]
+        if method is ClusteringMethod.DBSCAN
+        else ["Variabler", "Antal kluster", "Totalt antal rader"]
+    )
     assert "Silhuettpoäng" in summary["Mått"].tolist()
 
 

@@ -9771,4 +9771,19 @@ all hazard ratios and intervals must be finite and positive.</translation>
     <message><source>Column distributions</source><translation>Column distributions</translation></message>
     <message><source>Outlier projection</source><translation>Outlier projection</translation></message>
 </context>
+<context>
+    <name>ClusteringPresentation</name>
+    <message><source>Clustering</source><translation>Clustering</translation></message>
+    <message><source>{category} — {method}</source><translation>{category} — {method}</translation></message>
+    <message><source>K-Means</source><translation>K-Means</translation></message>
+    <message><source>DBSCAN</source><translation>DBSCAN</translation></message>
+    <message><source>Agglomerative</source><translation>Agglomerative</translation></message>
+    <message><source>Cluster sizes</source><translation>Cluster sizes</translation></message>
+    <message><source>Model summary</source><translation>Model summary</translation></message>
+    <message><source>Cluster projection</source><translation>Cluster projection</translation></message>
+    <message><source>Cluster projection (internal PCA)</source><translation>Cluster projection (internal PCA)</translation></message>
+    <message><source>Number of clusters:</source><translation>Number of clusters:</translation></message>
+    <message><source>Neighborhood radius (eps):</source><translation>Neighborhood radius (eps):</translation></message>
+    <message><source>Minimum samples:</source><translation>Minimum samples:</translation></message>
+</context>
 </TS>

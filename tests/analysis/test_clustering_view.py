@@ -112,7 +112,7 @@ def test_layout_has_table_plot_and_comments_like_regression():
     assert [_section_title(splitter.widget(index)) for index in range(3)] == [
         "Cluster sizes",
         "Cluster projection",
-        "Model comments",
+        "Model summary",
     ]
     table_layout = splitter.widget(0).layout()
     assert table_layout.itemAt(1).widget() is view.cluster_table()

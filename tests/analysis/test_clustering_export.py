@@ -75,6 +75,14 @@ def test_snapshot_offers_every_component():
     )
 
 
+def test_clustering_capture_provenance_survives_presentation_edits_but_not_new_fits():
+    snapshot = clustering_snapshot()
+    assert dataclasses.replace(snapshot, notes=("Edited",)).capture_id == snapshot.capture_id
+    assert clustering_snapshot().capture_id != snapshot.capture_id
+    with pytest.raises(ValueError, match="capture identifier"):
+        dataclasses.replace(snapshot, capture_id="")
+
+
 def test_snapshot_requires_a_typed_result_and_labels():
     with pytest.raises(TypeError, match="clustering result"):
         ClusteringExportSnapshot(object(), PROJECTION_LABELS)  # type: ignore[arg-type]

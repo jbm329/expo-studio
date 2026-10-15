@@ -17,6 +17,7 @@ import pandas as pd
 
 from expo_jbm329.app.metadata import get_app_metadata
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
+from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.clustering_charts import render_clustering_charts
 from expo_jbm329.services.analysis.clustering_export import (
     CLUSTERING_COMPONENTS,
@@ -64,6 +65,7 @@ from expo_jbm329.services.analysis.presentation import (
     ConfigurationField,
     PresentationLabel,
     build_analysis_presentation,
+    clustering_component_label,
     correlation_method_label,
     hypothesis_component_label,
     outlier_component_label,
@@ -171,6 +173,10 @@ class ReportEntry:
         elif self.category is AnalysisCategory.OUTLIERS:
             if not isinstance(self.snapshot, OutlierExportSnapshot) or self.capture_id != self.snapshot.capture_id:
                 message = "An outlier report entry requires its applied-result capture identifier."
+                raise ValueError(message)
+        elif self.category is AnalysisCategory.CLUSTERING:
+            if not isinstance(self.snapshot, ClusteringExportSnapshot) or self.capture_id != self.snapshot.capture_id:
+                message = "A clustering report entry requires its applied-result capture identifier."
                 raise ValueError(message)
         elif self.capture_id is not None:
             message = "Only a report entry with a stable applied-result capture can carry a capture identifier."
@@ -285,6 +291,7 @@ def create_report_entry(
                     RegressionExportSnapshot,
                     UnivariateOutlierExportSnapshot,
                     MultivariateOutlierExportSnapshot,
+                    ClusteringExportSnapshot,
                 ),
             )
             else None
@@ -387,10 +394,12 @@ def available_report_components(category: AnalysisCategory, snapshot: ReportSnap
             component_values = tuple(outlier_components)
         case AnalysisCategory.CLUSTERING if isinstance(snapshot, ClusteringExportSnapshot):
             component_values = tuple(
-                (component.value, label, "chart" if component.value == "charts" else "table")
-                for component, label in zip(
-                    CLUSTERING_COMPONENTS, ("Cluster sizes", "Model summary", "Charts"), strict=True
+                (
+                    component.value,
+                    clustering_component_label(component, _identity_translate),
+                    "chart" if component is ClusteringExportComponent.CHARTS else "table",
                 )
+                for component in CLUSTERING_COMPONENTS
             )
         case AnalysisCategory.PCA if isinstance(snapshot, PCAExportSnapshot):
             component_values = (
@@ -467,9 +476,9 @@ def report_entry_identity(category: AnalysisCategory, dataset_id: str, snapshot:
                 clustering_result.method.value,
                 clustering_result.columns,
                 clustering_result.standardize,
-                clustering_result.cluster_count,
-                clustering_result.dbscan_epsilon,
-                clustering_result.dbscan_min_samples,
+                clustering_result.cluster_count if clustering_result.method is not ClusteringMethod.DBSCAN else None,
+                clustering_result.dbscan_epsilon if clustering_result.method is ClusteringMethod.DBSCAN else None,
+                clustering_result.dbscan_min_samples if clustering_result.method is ClusteringMethod.DBSCAN else None,
             )
         case AnalysisCategory.PCA if isinstance(snapshot, PCAExportSnapshot):
             config = (snapshot.result.columns, snapshot.result.standardize)
@@ -943,6 +952,9 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
     ),
     "OutliersPresentation": tuple(
         source for context, source in presentation_label_sources() if context == "OutliersPresentation"
+    ),
+    "ClusteringPresentation": tuple(
+        source for context, source in presentation_label_sources() if context == "ClusteringPresentation"
     ),
     "CorrelationView": (
         "Variable 1",
@@ -1585,10 +1597,7 @@ def _localized_report_tables(
                             else metric
                         )
                     )
-                title = translate(
-                    "AnalysisExportDialog",
-                    "Cluster sizes" if clustering_table is ClusteringExportComponent.CLUSTER_SIZES else "Model summary",
-                )
+                title = clustering_component_label(clustering_table, translate)
                 add(
                     title,
                     frame.rename(
@@ -2149,6 +2158,8 @@ def _component_translation_context(
         return "RegressionPresentation"
     if category is AnalysisCategory.OUTLIERS:
         return "OutliersPresentation"
+    if category is AnalysisCategory.CLUSTERING:
+        return "ClusteringPresentation"
     return {
         AnalysisCategory.OVERVIEW: "OverviewView",
         AnalysisCategory.STATISTICS: "StatisticsView",

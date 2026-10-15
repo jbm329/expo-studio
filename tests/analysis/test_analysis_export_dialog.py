@@ -644,12 +644,14 @@ def test_clustering_dialog_names_fit_and_defaults_to_cluster_sizes(method, name)
     snapshot = clustering_snapshot(method, dbscan_min_samples=3)
     dialog = AnalysisExportDialog(clustering=snapshot)
     choices = dialog.findChildren(QCheckBox)
-    assert [choice.text() for choice in choices] == ["Cluster sizes", "Model summary", "Charts"]
+    assert [choice.text() for choice in choices] == ["Cluster sizes", "Model summary", "Cluster projection"]
     assert all(choice.isEnabled() for choice in choices)
     assert [choice.isChecked() for choice in choices] == [True, False, False]
     assert "model comments" in choices[1].toolTip()
-    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied method:"))
-    assert label.text() == f"Applied method: {name}\nFeatures: x / y"
+    presentation = build_analysis_presentation(AnalysisCategory.CLUSTERING, snapshot, QCoreApplication.translate)
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Clustering —"))
+    assert presentation.title == f"Clustering — {name}"
+    assert label.text() == "\n".join((presentation.title, *presentation.summary_lines))
     assert label.textFormat() is Qt.TextFormat.PlainText
     assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
     request = dialog.export_request()
@@ -686,7 +688,7 @@ def test_clustering_dialog_limits_single_file_formats_to_one_table_and_keeps_cho
 def test_clustering_dialog_without_applied_fit_never_enables_export():
     dialog = AnalysisExportDialog(clustering_mode=True)
     choices = dialog.findChildren(QCheckBox)
-    assert [choice.text() for choice in choices] == ["Cluster sizes", "Model summary", "Charts"]
+    assert [choice.text() for choice in choices] == ["Cluster sizes", "Model summary", "Cluster projection"]
     assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
     assert all("Apply a clustering" in choice.toolTip() for choice in choices)
     assert "Apply a clustering" in dialog._selection_explanation.text()

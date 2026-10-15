@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import pytest
 from PyQt6.QtWidgets import QLabel, QLineEdit, QListWidget, QPlainTextEdit, QPushButton
 
 from expo_jbm329.gui.dialogs.analysis.report_page import ReportPage
 from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.clustering import ClusteringMethod
+from expo_jbm329.services.analysis.presentation import build_analysis_presentation
 from expo_jbm329.services.analysis.report import ReportComponent, ReportEntry, create_report_entry
 from expo_jbm329.utils.dataset_ref import DatasetRef
+from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_correlation_export import _snapshot as correlation_snapshot
 from tests.analysis.test_pca_export import pca_snapshot
 from tests.analysis.test_regression_export import linear_snapshot
@@ -36,6 +40,17 @@ def test_report_page_starts_with_empty_details_and_no_entries():
     assert page.report_description() == ""
     assert page.findChild(QListWidget).count() == 0
     assert any("No analyses have been added" in label.text() for label in page.findChildren(QLabel))
+
+
+@pytest.mark.parametrize("method", list(ClusteringMethod))
+def test_clustering_report_list_uses_configured_title_and_applied_settings(method):
+    snapshot = clustering_snapshot(method)
+    presentation = build_analysis_presentation(AnalysisCategory.CLUSTERING, snapshot, lambda _context, source: source)
+    entry = create_report_entry(AnalysisCategory.CLUSTERING, DatasetRef("tab", "Source", 10, 2), snapshot)
+    page = ReportPage()
+    page.set_entries((entry,))
+    item = page.findChild(QListWidget).item(0)
+    assert item.text() == "\n".join((f"{presentation.title} - Source", *presentation.summary_lines))
 
 
 def test_report_page_collects_only_plain_text_details():

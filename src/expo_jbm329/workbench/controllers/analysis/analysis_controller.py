@@ -112,6 +112,7 @@ from expo_jbm329.services.analysis.pca_export import (
 from expo_jbm329.services.analysis.presentation import (
     PresentationLabel,
     build_analysis_presentation,
+    clustering_component_label,
     correlation_method_label,
     hypothesis_component_label,
     outlier_component_label,
@@ -1282,7 +1283,9 @@ class AnalysisController:
                 exporter.export_excel(
                     sheets=sheets,
                     chart_factory=make_images if charts else None,
-                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    chart_sheet_name=clustering_component_label(ClusteringExportComponent.CHARTS, tr)
+                    if charts
+                    else None,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -2128,9 +2131,9 @@ class AnalysisController:
             view = ClusteringView(cast("ClusteringResult", result))
             dialog.set_content_widget(view)
             if view.result().error is None:
-                dialog.set_exportable_clustering(
-                    ClusteringExportSnapshot(view.result(), view.chart_labels(), view.export_notes())
-                )
+                snapshot = ClusteringExportSnapshot(view.result(), view.chart_labels(), view.export_notes())
+                dialog.set_exportable_clustering(snapshot)
+                dialog.set_analysis_presentation(build_analysis_presentation(AnalysisCategory.CLUSTERING, snapshot, tr))
 
         self._recompute_content(
             dialog,

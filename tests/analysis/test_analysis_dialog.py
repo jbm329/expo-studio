@@ -41,7 +41,7 @@ from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigW
 from expo_jbm329.gui.dialogs.service.common.localization import TR_CLOSE
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.chi_square import initialize_chi_square
-from expo_jbm329.services.analysis.clustering import initialize_clustering
+from expo_jbm329.services.analysis.clustering import ClusteringMethod, initialize_clustering
 from expo_jbm329.services.analysis.clustering_export import ClusteringExportComponent, ClusteringExportRequest
 from expo_jbm329.services.analysis.correlation import (
     CorrelationMethod,
@@ -565,6 +565,67 @@ def test_correlation_report_slot_explicitly_updates_or_replaces_frozen_capture(m
     assert action.text() == "Remove from report"
     action.click()
     assert dialog.report_document().entries == ()
+
+
+@pytest.mark.parametrize("method", list(ClusteringMethod))
+def test_clustering_configurations_coexist_and_reruns_require_explicit_review(monkeypatch, method):
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
+    dialog.select_category(AnalysisCategory.CLUSTERING)
+    initial = clustering_snapshot(method)
+
+    def accept_add(editor):
+        editor.findChild(QPlainTextEdit).setPlainText("Keep clustering note")
+        editor._component_choices["charts"].setChecked(False)  # noqa: SLF001
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", accept_add)
+    configs = [
+        initial,
+        replace(initial, result=replace(initial.result, standardize=not initial.result.standardize)),
+        replace(initial, result=replace(initial.result, columns=tuple(reversed(initial.result.columns)))),
+        replace(
+            initial,
+            result=replace(
+                initial.result,
+                **({"dbscan_epsilon": 1.5} if method is ClusteringMethod.DBSCAN else {"cluster_count": 4}),
+            ),
+        ),
+    ]
+    for snapshot in configs:
+        dialog.set_exportable_clustering(snapshot)
+        assert dialog._report_action_button.text() == "Add to report"  # noqa: SLF001
+        dialog._toggle_report_entry()  # noqa: SLF001
+    before = dialog.report_document().entries
+    assert len(before) == 4
+
+    rerun = clustering_snapshot(method)
+    inactive = {"cluster_count": 9} if method is ClusteringMethod.DBSCAN else {"dbscan_epsilon": 99.0}
+    rerun = replace(rerun, result=replace(rerun.result, **inactive))
+    dialog.set_exportable_clustering(rerun)
+    assert dialog._current_report_candidate().capture_id == rerun.capture_id  # noqa: SLF001
+    assert dialog._current_report_candidate().capture_id == rerun.capture_id  # noqa: SLF001
+    assert dialog._report_action_button.text() == "Update report result"  # noqa: SLF001
+    assert dialog.report_document().entries == before
+
+    def cancel(editor):
+        assert editor.notes() == "Keep clustering note"
+        assert editor.selected_components() == ("cluster_sizes", "model_summary")
+        assert any(button.text() == "Update result" for button in editor.findChildren(QPushButton))
+        assert any("Clustering —" in label.text() for label in editor.findChildren(QLabel))
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", cancel)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    assert dialog.report_document().entries == before
+    monkeypatch.setattr(ReportNotesDialog, "exec", lambda _editor: QDialog.DialogCode.Accepted)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    updated = dialog.report_document().entries
+    assert updated[0].snapshot is rerun
+    assert updated[0].capture_id == rerun.capture_id
+    assert updated[0].note == before[0].note
+    assert updated[0].selected_components == before[0].selected_components
+    assert updated[0].entry_id == before[0].entry_id
+    assert updated[1:] == before[1:]
 
 
 def test_regression_configurations_coexist_and_identical_reruns_update_explicitly(monkeypatch):
@@ -1768,7 +1829,7 @@ def test_clustering_export_selection_emits_only_the_current_snapshot(monkeypatch
     assert [choice.text() for choice in captured[0].findChildren(QCheckBox)] == [
         "Cluster sizes",
         "Model summary",
-        "Charts",
+        "Cluster projection",
     ]
     assert len(received) == 1
     assert received[0].snapshot is snapshot

@@ -118,6 +118,14 @@ standardization, contamination, and applicable LOF-neighbor settings define
 distinct entries. Same-configuration reruns offer an explicit result update;
 canceling review preserves the stored result, note, order, and supported
 component choices.
+Clustering uses shared **Clustering — [method]** titles and applied feature,
+standardization, and parameter summaries across Analysis, Reports, HTML, and
+exports. K-Means and Agglomerative use the number of clusters; DBSCAN uses
+neighborhood radius and minimum samples. Distinct applied configurations coexist
+as report entries, ignoring inactive parameters. Rerunning a configuration offers
+an explicit result update; canceling preserves the captured result, notes,
+components, and order. Components are **Cluster sizes**, **Model summary**, and
+**Cluster projection**; the individual chart retains its internal PCA title.
 Use **Generate HTML report** to save a self-contained HTML file and open it
 in your default browser. Report generation runs in the background; canceled
 or failed saves preserve existing files. PDF output is not yet available.
