@@ -1096,6 +1096,7 @@ def _localized_report_tables(
     hypothesis_test_results: pd.DataFrame | None = None,
     regression_model_metrics: pd.DataFrame | None = None,
     clustering_model_summary: pd.DataFrame | None = None,
+    pca_model_summary: pd.DataFrame | None = None,
     outlier_report_tables: Mapping[OutlierExportComponent, pd.DataFrame] | None = None,
     include_correlation_explanation: bool = True,
 ) -> dict[str, pd.DataFrame]:
@@ -1649,7 +1650,11 @@ def _localized_report_tables(
                 pca_table = pca_table_keys.get(key)
                 if pca_table is None:
                     continue
-                frame = pca_export_tables(snapshot, (pca_table,))[pca_table]
+                frame = (
+                    pca_model_summary
+                    if pca_table is PCAExportComponent.MODEL_SUMMARY and pca_model_summary is not None
+                    else pca_export_tables(snapshot, (pca_table,))[pca_table]
+                )
                 if pca_table is PCAExportComponent.MODEL_SUMMARY:
                     frame["metric"] = frame["metric"].map(
                         lambda metric: (
@@ -1806,6 +1811,7 @@ def prepare_report_content(
                 hypothesis_test_results=_hypothesis_report_rows(entry.snapshot, table_keys),
                 regression_model_metrics=_regression_report_rows(entry.snapshot, table_keys),
                 clustering_model_summary=_clustering_report_rows(entry.snapshot, table_keys),
+                pca_model_summary=_pca_report_rows(entry.snapshot, table_keys),
                 outlier_report_tables=(
                     _outlier_report_rows(entry.snapshot, table_keys, translate)
                     if isinstance(entry.snapshot, OutlierExportSnapshot)
@@ -1885,11 +1891,18 @@ def prepare_report_content(
                     ):
                         paragraphs = entry.snapshot.detail_notes
                     elif (
-                        isinstance(entry.snapshot, MultivariateOutlierExportSnapshot)
-                        and component.key == OutlierExportComponent.MODEL_SUMMARY.value
-                    ) or (
-                        isinstance(entry.snapshot, ClusteringExportSnapshot)
-                        and component.key == ClusteringExportComponent.MODEL_SUMMARY.value
+                        (
+                            isinstance(entry.snapshot, MultivariateOutlierExportSnapshot)
+                            and component.key == OutlierExportComponent.MODEL_SUMMARY.value
+                        )
+                        or (
+                            isinstance(entry.snapshot, ClusteringExportSnapshot)
+                            and component.key == ClusteringExportComponent.MODEL_SUMMARY.value
+                        )
+                        or (
+                            isinstance(entry.snapshot, PCAExportSnapshot)
+                            and component.key == PCAExportComponent.MODEL_SUMMARY.value
+                        )
                     ):
                         paragraphs = entry.snapshot.notes
                     prepared_components.append(
@@ -2123,6 +2136,23 @@ def _clustering_report_rows(
     )[ClusteringExportComponent.MODEL_SUMMARY]
     if "metric" not in raw_metrics.columns or "notes" not in raw_metrics.columns:
         message = "Clustering model summaries must include their raw metric and notes columns."
+        raise ValueError(message)
+    return raw_metrics.loc[raw_metrics["metric"].notna()].drop(columns="notes").copy()
+
+
+def _pca_report_rows(
+    snapshot: ReportSnapshot,
+    component_keys: Sequence[str],
+) -> pd.DataFrame | None:
+    """Separate captured PCA notes from actual metric rows before localization."""
+    if not isinstance(snapshot, PCAExportSnapshot) or PCAExportComponent.MODEL_SUMMARY.value not in component_keys:
+        return None
+    raw_metrics = pca_export_tables(
+        snapshot,
+        (PCAExportComponent.MODEL_SUMMARY,),
+    )[PCAExportComponent.MODEL_SUMMARY]
+    if "metric" not in raw_metrics.columns or "notes" not in raw_metrics.columns:
+        message = "PCA model summaries must include their raw metric and notes columns."
         raise ValueError(message)
     return raw_metrics.loc[raw_metrics["metric"].notna()].drop(columns="notes").copy()
 

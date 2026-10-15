@@ -185,6 +185,107 @@ def test_clustering_html_places_ordered_escaped_notes_below_model_summary_withou
     assert "white-space: pre-wrap" in html
 
 
+@pytest.mark.parametrize("notes", [(), tuple(f"PCA note {index}" for index in range(8))])
+def test_pca_html_separates_notes_from_model_summary_without_changing_exports(notes):
+    snapshot = replace(pca_snapshot(), notes=notes)
+    raw_before = pca_export_tables(snapshot, (PCAExportComponent.MODEL_SUMMARY,))[PCAExportComponent.MODEL_SUMMARY]
+    localized_export = localized_report_tables(
+        AnalysisCategory.PCA,
+        snapshot,
+        ("model_summary",),
+    )["Model summary"]
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.PCA, snapshot, ("model_summary",)))
+
+    prepared = prepare_report_content(document)
+    component = prepared.entries[0].components[0]
+    raw_after = pca_export_tables(snapshot, (PCAExportComponent.MODEL_SUMMARY,))[PCAExportComponent.MODEL_SUMMARY]
+    metric_rows = raw_before.loc[raw_before["metric"].notna()]
+
+    assert component.tables[0].headers == ("Metric", "Value")
+    assert len(component.tables[0].rows) == len(metric_rows)
+    assert tuple(row[0] for row in component.tables[0].rows) == tuple(
+        localized_export["Metric"].iloc[: len(metric_rows)]
+    )
+    np.testing.assert_equal(
+        tuple(row[1] for row in component.tables[0].rows),
+        tuple(localized_export["Value"].iloc[: len(metric_rows)]),
+    )
+    assert component.paragraphs == notes
+    assert localized_export.columns.tolist() == ["Metric", "Value", "Notes"]
+    assert localized_export["Notes"].iloc[: len(notes)].tolist() == list(notes)
+    assert localized_export["Notes"].iloc[len(notes) :].isna().all()
+    assert len(localized_export) == max(len(metric_rows), len(notes))
+    assert localized_export["Metric"].iloc[len(metric_rows) :].isna().all()
+    assert localized_export["Value"].iloc[len(metric_rows) :].isna().all()
+    assert localized_export["Metric"].dtype == object
+    assert localized_export["Value"].dtype == "float64"
+    assert isinstance(localized_export["Notes"].dtype, pd.StringDtype)
+    assert raw_before.columns.tolist() == ["metric", "value", "notes"]
+    assert raw_before["metric"].dtype == pd.StringDtype()
+    assert raw_before["value"].dtype == "float64"
+    assert raw_before["notes"].dtype == pd.StringDtype()
+    pd.testing.assert_frame_equal(raw_after, raw_before)
+
+
+def test_pca_html_places_ordered_escaped_notes_below_model_summary():
+    notes = ("First <model> & note\ncontinued safely", "Second model note")
+    snapshot = replace(pca_snapshot(), notes=notes)
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.PCA, snapshot, ("model_summary",)))
+
+    prepared = prepare_report_content(document)
+    component = prepared.entries[0].components[0]
+    html = render_prepared_report_html(prepared)
+
+    assert component.paragraphs == notes
+    assert "Notes" not in component.tables[0].headers
+    assert html.index("</table></div>") < html.index('<div class="report-paragraphs">')
+    assert html.index("First &lt;model&gt; &amp; note") < html.index("Second model note")
+    assert "continued safely" in html
+    assert "First <model>" not in html
+    assert "white-space: pre-wrap" in html
+
+
+def test_pca_html_keeps_real_metric_rows_with_missing_values(monkeypatch):
+    from expo_jbm329.services.analysis import report
+
+    snapshot = pca_snapshot(notes=("Captured model note",))
+    original_export_tables = report.pca_export_tables
+
+    def export_with_missing_value(snapshot_arg, components):
+        tables = original_export_tables(snapshot_arg, components)
+        tables[PCAExportComponent.MODEL_SUMMARY].loc[2, "value"] = np.nan
+        return tables
+
+    monkeypatch.setattr(report, "pca_export_tables", export_with_missing_value)
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.PCA, snapshot, ("model_summary",)))
+
+    component = prepare_report_content(document).entries[0].components[0]
+    metric_index = component.tables[0].headers.index("Metric")
+    value_index = component.tables[0].headers.index("Value")
+    rows_used = next(row for row in component.tables[0].rows if row[metric_index] == "Rows used")
+
+    assert pd.isna(rows_used[value_index])
+    assert len(component.tables[0].rows) == 4
+    assert component.paragraphs == snapshot.notes
+
+
+def test_pca_notes_follow_component_selection_without_capturing_entry_notes_or_chart_captions():
+    snapshot = replace(pca_snapshot(), notes=("Model-only note",))
+    entry = _entry(AnalysisCategory.PCA, snapshot).with_selection(("model_summary", "charts"), "Entry note")
+    document = ReportDocument()
+    document.upsert(entry)
+
+    components = prepare_report_content(document).entries[0].components
+
+    assert components[0].paragraphs == snapshot.notes
+    assert components[1].paragraphs == ()
+    assert components[1].charts[1].captions == snapshot.chart_labels.scatter_captions
+    assert entry.note == "Entry note"
+
+
 @pytest.mark.parametrize("method", list(ClusteringMethod))
 @pytest.mark.parametrize("notes", [(), tuple(f"Model note {index}" for index in range(20))])
 def test_clustering_html_omits_note_only_rows_and_preserves_export_notes(method, notes):
