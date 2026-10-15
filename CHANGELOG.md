@@ -8,6 +8,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- Correlation configured titles use bold text consistently with other analyses, with applied columns shown separately
 - Clustering shares configured method titles, applied feature/standardization/applicable-parameter summaries, and descriptive component labels across Analysis, Reports, HTML, and exports; distinct configurations coexist, inactive parameters do not distinguish entries, and reruns require explicit review while preserving notes, components, and order
 - PCA shares its title, applied ordered features, standardization, and content-specific component labels across Analysis, Reports, HTML, and exports; distinct configurations coexist and same-configuration reruns require explicit review while preserving notes, components, and order
 - Time Series shares applied time/value roles, resampling, automatic or explicit seasonal period, decomposition model, and semantic component labels across Analysis, Reports, HTML, and exports; distinct configurations coexist and identical reruns require explicit review while preserving notes, components, and order

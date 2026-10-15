@@ -121,11 +121,18 @@ class CorrelationView(QWidget):
             result.columns,
             QCoreApplication.translate,
         )
-        identity = QLabel("\n".join((presentation.title, *presentation.summary_lines)), self)
-        identity.setTextFormat(Qt.TextFormat.PlainText)
-        identity.setWordWrap(True)
-        identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        layout.addWidget(identity)
+        title = QLabel(presentation.title, self)
+        title.setTextFormat(Qt.TextFormat.PlainText)
+        title_font = title.font()
+        title_font.setBold(True)
+        title.setFont(title_font)
+        title.setWordWrap(True)
+        layout.addWidget(title)
+        configuration = QLabel("\n".join(presentation.summary_lines), self)
+        configuration.setTextFormat(Qt.TextFormat.PlainText)
+        configuration.setWordWrap(True)
+        configuration.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(configuration)
 
         charts_section = QWidget(self._pair_panel)
         charts_layout = QVBoxLayout(charts_section)

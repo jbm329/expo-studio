@@ -61,6 +61,24 @@ def _scatter_axes(view: CorrelationView):
     return [axis for axis in _canvas_axes(view.pair_panel()) if axis.get_xlabel()]
 
 
+@pytest.mark.parametrize("method", list(CorrelationMethod))
+def test_configured_title_is_bold_and_configuration_is_separate(method):
+    view = CorrelationView(_matrix(_frame(), method), None)
+    title = view.layout().itemAt(0).widget()
+    configuration = view.layout().itemAt(1).widget()
+
+    assert isinstance(title, QLabel)
+    assert title.text().startswith("Correlation — ")
+    assert title.font().bold()
+    assert title.textFormat() is Qt.TextFormat.PlainText
+    assert title.wordWrap()
+    assert isinstance(configuration, QLabel)
+    assert configuration.text() == "Columns: c0, c1, c2"
+    assert not configuration.font().bold()
+    assert configuration.textFormat() is Qt.TextFormat.PlainText
+    assert configuration.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+
+
 def test_ranking_caption_shares_the_tables_shaded_panel():
     view = CorrelationView(_matrix(_frame()), None)
     table = view.table()
