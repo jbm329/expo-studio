@@ -98,3 +98,89 @@ def test_selection_changed_populates_postgres_fields():
     assert editor.db_edit.text() == "production"
     assert editor.user_edit.text() == "admin"
     assert editor.password_edit.text() == "pass"
+
+
+def test_db_type_switching_updates_default_ports():
+    editor = make_editor()
+
+    # Switch to PostgreSQL -> 5432
+    pg_ix = editor.db_type_combo.findData("postgresql")
+    editor.db_type_combo.setCurrentIndex(pg_ix)
+    assert editor.port_edit.text() == "5432"
+
+    # Switch to MySQL -> 3306
+    mysql_ix = editor.db_type_combo.findData("mysql")
+    editor.db_type_combo.setCurrentIndex(mysql_ix)
+    assert editor.port_edit.text() == "3306"
+
+    # Switch to Oracle -> 1521
+    oracle_ix = editor.db_type_combo.findData("oracle")
+    editor.db_type_combo.setCurrentIndex(oracle_ix)
+    assert editor.port_edit.text() == "1521"
+
+    # Switch to SQL Server -> 1433
+    mssql_ix = editor.db_type_combo.findData("mssql")
+    editor.db_type_combo.setCurrentIndex(mssql_ix)
+    assert editor.port_edit.text() == "1433"
+
+
+def test_sqlite_and_other_clears_port():
+    editor = make_editor()
+
+    pg_ix = editor.db_type_combo.findData("postgresql")
+    editor.db_type_combo.setCurrentIndex(pg_ix)
+    assert editor.port_edit.text() == "5432"
+
+    # SQLite clears port
+    sqlite_ix = editor.db_type_combo.findData("sqlite")
+    editor.db_type_combo.setCurrentIndex(sqlite_ix)
+    assert editor.port_edit.text() == ""
+
+    # Oracle sets 1521
+    oracle_ix = editor.db_type_combo.findData("oracle")
+    editor.db_type_combo.setCurrentIndex(oracle_ix)
+    assert editor.port_edit.text() == "1521"
+
+    # Other clears port
+    other_ix = editor.db_type_combo.findData("other")
+    editor.db_type_combo.setCurrentIndex(other_ix)
+    assert editor.port_edit.text() == ""
+
+
+def test_saved_connection_custom_port_preserved():
+    editor = make_editor()
+    editor.data = {
+        "custom_pg": {
+            "name": "custom_pg",
+            "db_type": "postgresql",
+            "protocol": "psycopg",
+            "server": "localhost",
+            "port": 5433,
+            "database": "custom_db",
+            "user": "admin",
+            "password": "pass",
+        },
+        "custom_mssql": {
+            "name": "custom_mssql",
+            "db_type": "mssql",
+            "protocol": "odbc",
+            "server": "localhost",
+            "port": 14333,
+            "database": "custom_db",
+            "user": "sa",
+            "password": "pass",
+        },
+    }
+
+    item1 = QListWidgetItem("custom_pg")
+    item2 = QListWidgetItem("custom_mssql")
+    editor.list_widget.addItem(item1)
+    editor.list_widget.addItem(item2)
+
+    editor.list_widget.setCurrentItem(item1)
+    assert editor.db_type_combo.currentData() == "postgresql"
+    assert editor.port_edit.text() == "5433"
+
+    editor.list_widget.setCurrentItem(item2)
+    assert editor.db_type_combo.currentData() == "mssql"
+    assert editor.port_edit.text() == "14333"
