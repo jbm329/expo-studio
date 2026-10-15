@@ -63,6 +63,7 @@ from expo_jbm329.services.analysis.report import (
     ReportSnapshot,
     correlation_report_configuration,
     create_report_entry,
+    outlier_report_configuration,
 )
 from expo_jbm329.services.analysis.statistics import StatisticsExportRequest
 from expo_jbm329.services.analysis.timeseries_export import TimeSeriesExportRequest, TimeSeriesExportSnapshot
@@ -84,6 +85,8 @@ def _report_component_translation_context(category: AnalysisCategory) -> str:
         return presentation_label_source(PresentationLabel.STRONGEST_CORRELATIONS)[0]
     if category is AnalysisCategory.REGRESSION:
         return presentation_label_source(PresentationLabel.REGRESSION)[0]
+    if category is AnalysisCategory.OUTLIERS:
+        return presentation_label_source(PresentationLabel.OUTLIERS)[0]
     message = "Only configured analysis categories have shared component labels."
     raise ValueError(message)
 
@@ -593,9 +596,19 @@ class AnalysisDialog(QDialog):
         elif entry is None:
             self._report_action_button.setText(self.tr("Add to report"))
             self._report_action_button.setEnabled(True)
+        elif candidate.category is AnalysisCategory.OUTLIERS and outlier_report_configuration(
+            candidate
+        ) != outlier_report_configuration(entry):
+            self._report_action_button.setText(self.tr("Replace report result"))
+            self._report_action_button.setEnabled(True)
         elif (
             candidate.category
-            in {AnalysisCategory.CORRELATION, AnalysisCategory.HYPOTHESIS_TESTS, AnalysisCategory.REGRESSION}
+            in {
+                AnalysisCategory.CORRELATION,
+                AnalysisCategory.HYPOTHESIS_TESTS,
+                AnalysisCategory.REGRESSION,
+                AnalysisCategory.OUTLIERS,
+            }
             and candidate.capture_id != entry.capture_id
         ):
             if candidate.category is AnalysisCategory.CORRELATION and correlation_report_configuration(
@@ -615,17 +628,26 @@ class AnalysisDialog(QDialog):
             return
         existing = self._report_document.get(candidate.entry_id)
         if existing is not None:
-            if (
-                candidate.category
-                in {AnalysisCategory.CORRELATION, AnalysisCategory.HYPOTHESIS_TESTS, AnalysisCategory.REGRESSION}
-                and candidate.capture_id != existing.capture_id
-            ):
-                mode: Literal["replace", "update"] = (
-                    "replace"
-                    if candidate.category is AnalysisCategory.CORRELATION
-                    and correlation_report_configuration(candidate) != correlation_report_configuration(existing)
-                    else "update"
+            if candidate.category in {
+                AnalysisCategory.CORRELATION,
+                AnalysisCategory.HYPOTHESIS_TESTS,
+                AnalysisCategory.REGRESSION,
+                AnalysisCategory.OUTLIERS,
+            } and (
+                candidate.capture_id != existing.capture_id
+                or (
+                    candidate.category is AnalysisCategory.OUTLIERS
+                    and outlier_report_configuration(candidate) != outlier_report_configuration(existing)
                 )
+            ):
+                replace_configuration = (
+                    candidate.category is AnalysisCategory.CORRELATION
+                    and correlation_report_configuration(candidate) != correlation_report_configuration(existing)
+                ) or (
+                    candidate.category is AnalysisCategory.OUTLIERS
+                    and outlier_report_configuration(candidate) != outlier_report_configuration(existing)
+                )
+                mode: Literal["replace", "update"] = "replace" if replace_configuration else "update"
                 self._edit_report_candidate(candidate, existing=existing, review_mode=mode)
             else:
                 self._remove_report_entry(existing.entry_id)
@@ -658,6 +680,7 @@ class AnalysisDialog(QDialog):
             AnalysisCategory.CORRELATION,
             AnalysisCategory.HYPOTHESIS_TESTS,
             AnalysisCategory.REGRESSION,
+            AnalysisCategory.OUTLIERS,
         }:
             unavailable_context = _report_component_translation_context(candidate.category)
             unavailable_components.extend(
@@ -681,7 +704,12 @@ class AnalysisDialog(QDialog):
         component_context = (
             _report_component_translation_context(candidate.category)
             if candidate.category
-            in {AnalysisCategory.HYPOTHESIS_TESTS, AnalysisCategory.CORRELATION, AnalysisCategory.REGRESSION}
+            in {
+                AnalysisCategory.HYPOTHESIS_TESTS,
+                AnalysisCategory.CORRELATION,
+                AnalysisCategory.REGRESSION,
+                AnalysisCategory.OUTLIERS,
+            }
             else None
         )
         selected_components = tuple(component.key for component in components if component.key in selected)

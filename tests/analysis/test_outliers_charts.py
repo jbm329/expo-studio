@@ -148,7 +148,7 @@ def test_multivariate_render_returns_the_projection_with_its_caption():
         multivariate_snapshot(), progress_cb=progress.append, cancel_cb=lambda: False
     )
 
-    assert image.heading == "PCA projection"
+    assert image.heading == "Outlier projection"
     assert image.captions == ("Sampled",)
     assert image.image_data.startswith(_PNG_SIGNATURE)
     assert (image.width_px, image.height_px) == (960, 720)
@@ -188,13 +188,19 @@ def test_univariate_workbook_keeps_typed_tables_and_one_chart_per_column(tmp_pat
     images = render_univariate_outlier_charts(snapshot)
     path = tmp_path / "outliers.xlsx"
 
-    FileWriter().save_excel_sheets(sheets, path, chart_images=images, chart_sheet_name="Charts", streaming=streaming)
+    FileWriter().save_excel_sheets(
+        sheets,
+        path,
+        chart_images=images,
+        chart_sheet_name="Column distributions",
+        streaming=streaming,
+    )
 
     workbook = load_workbook(path)
     try:
-        assert workbook.sheetnames == [*sheets, "Charts"]
-        assert len(workbook["Charts"]._images) == len(snapshot.chart_columns)
-        assert workbook["Charts"]["A1"].value == "a"
+        assert workbook.sheetnames == [*sheets, "Column distributions"]
+        assert len(workbook["Column distributions"]._images) == len(snapshot.chart_columns)
+        assert workbook["Column distributions"]["A1"].value == "a"
         summary = workbook["column_summary"]
         assert [cell.value for cell in summary[1]] == list(frames[OutlierExportComponent.COLUMN_SUMMARY].columns)
         assert summary["A2"].value == "a"
@@ -219,15 +225,15 @@ def test_multivariate_workbook_keeps_model_summary_and_projection(tmp_path):
         sheets,
         path,
         chart_images=render_multivariate_outlier_charts(snapshot),
-        chart_sheet_name="Charts",
+        chart_sheet_name="Outlier projection",
         streaming=False,
     )
 
     workbook = load_workbook(path)
     try:
-        assert workbook.sheetnames == ["model_summary", "Charts"]
-        assert len(workbook["Charts"]._images) == 1
-        assert workbook["Charts"]["A1"].value == "PCA projection"
+        assert workbook.sheetnames == ["model_summary", "Outlier projection"]
+        assert len(workbook["Outlier projection"]._images) == 1
+        assert workbook["Outlier projection"]["A1"].value == "Outlier projection"
         assert workbook["model_summary"]["A2"].value == "features"
     finally:
         workbook.close()

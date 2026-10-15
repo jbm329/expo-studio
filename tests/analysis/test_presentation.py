@@ -8,6 +8,9 @@ from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.correlation import CorrelationMethod
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportSnapshot
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportComponent
+from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierMethod
+from expo_jbm329.services.analysis.outliers import OutlierMethod
+from expo_jbm329.services.analysis.outliers_export import OutlierExportComponent
 from expo_jbm329.services.analysis.presentation import (
     AnalysisPresentation,
     ConfigurationField,
@@ -15,13 +18,16 @@ from expo_jbm329.services.analysis.presentation import (
     build_analysis_presentation,
     build_correlation_presentation,
     hypothesis_component_label,
+    outlier_component_label,
     presentation_label_source,
     regression_component_label,
 )
 from expo_jbm329.services.analysis.regression_export import RegressionExportComponent
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
+from expo_jbm329.utils.format_utils import fmt_num, fmt_pct
 from tests.analysis.test_correlation_export import _snapshot as correlation_snapshot
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
+from tests.analysis.test_outliers_export import multivariate_snapshot, univariate_snapshot
 from tests.analysis.test_pca_export import pca_snapshot
 from tests.analysis.test_regression_export import (
     cox_snapshot,
@@ -315,3 +321,117 @@ def test_regression_semantic_labels_have_one_translation_source_context():
         context, source = presentation_label_source(label)
         assert context == "RegressionPresentation"
         assert source
+
+
+@pytest.mark.parametrize(
+    ("method", "name", "threshold_role", "threshold"),
+    [
+        (OutlierMethod.IQR, "IQR (Tukey's fences)", "IQR multiplier:", 1.5),
+        (OutlierMethod.Z_SCORE, "Z-score", "Score threshold:", 3.0),
+        (OutlierMethod.MODIFIED_Z_SCORE, "Modified Z-score", "Score threshold:", 3.5),
+    ],
+)
+def test_univariate_outlier_presentation_uses_shared_title_and_all_screening_roles(
+    method, name, threshold_role, threshold
+):
+    snapshot = univariate_snapshot(method)
+    calls: list[tuple[str, str]] = []
+
+    def translate(context: str, source: str) -> str:
+        calls.append((context, source))
+        return source
+
+    presentation = build_analysis_presentation(AnalysisCategory.OUTLIERS, snapshot, translate)
+
+    assert presentation.title == f"Outliers — {name}"
+    assert presentation.summary_lines == (
+        f"{threshold_role} {fmt_num(threshold)}",
+        "Screened columns: a, b, few, Row",
+        "Selected detail column: a",
+    )
+    assert {context for context, _source in calls} == {"OutliersPresentation"}
+    other_detail = snapshot.with_detail(univariate_snapshot(method, "b").detail, ())
+    changed = build_analysis_presentation(AnalysisCategory.OUTLIERS, other_detail, lambda _context, source: source)
+    assert changed.title == presentation.title
+    assert changed.summary_lines[-1] == "Selected detail column: b"
+
+
+def test_univariate_outlier_presentation_explicitly_labels_missing_detail_selection():
+    presentation = build_analysis_presentation(
+        AnalysisCategory.OUTLIERS,
+        univariate_snapshot(column=None),
+        lambda _context, source: source,
+    )
+
+    assert presentation.summary_lines[-1] == "Selected detail column: None"
+
+
+@pytest.mark.parametrize(
+    ("method", "expected_title", "expected_lines"),
+    [
+        (
+            MultivariateOutlierMethod.ISOLATION_FOREST,
+            "Outliers — Isolation Forest",
+            (
+                "Features: x, y",
+                "Standardization: Standardized",
+                f"Expected outlier fraction: {fmt_pct(0.2, decimals=1)}",
+            ),
+        ),
+        (
+            MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR,
+            "Outliers — Local Outlier Factor",
+            (
+                "Features: x, y",
+                "Standardization: Standardized",
+                f"Expected outlier fraction: {fmt_pct(0.2, decimals=1)}",
+                "LOF neighbors: 2",
+            ),
+        ),
+    ],
+)
+def test_multivariate_outlier_presentation_includes_only_applicable_settings(method, expected_title, expected_lines):
+    calls: list[tuple[str, str]] = []
+
+    def translate(context: str, source: str) -> str:
+        calls.append((context, source))
+        return source
+
+    presentation = build_analysis_presentation(AnalysisCategory.OUTLIERS, multivariate_snapshot(method), translate)
+
+    assert presentation.title == expected_title
+    assert presentation.summary_lines == expected_lines
+    assert {context for context, _source in calls} == {"OutliersPresentation"}
+    assert presentation_label_source(PresentationLabel.OUTLIERS_CONFIGURED_TITLE) == (
+        "OutliersPresentation",
+        "{category} — {method}",
+    )
+
+
+@pytest.mark.parametrize(
+    ("snapshot", "component", "multivariate", "expected"),
+    [
+        (univariate_snapshot(), OutlierExportComponent.COLUMN_SUMMARY, False, "Column summary"),
+        (univariate_snapshot(), OutlierExportComponent.COLUMN_DETAILS, False, "Column details"),
+        (univariate_snapshot(), OutlierExportComponent.POTENTIAL_OUTLIERS, False, "Potential outliers"),
+        (univariate_snapshot(), OutlierExportComponent.CHARTS, False, "Column distributions"),
+        (multivariate_snapshot(), OutlierExportComponent.MODEL_SUMMARY, True, "Model summary"),
+        (multivariate_snapshot(), OutlierExportComponent.CHARTS, True, "Outlier projection"),
+    ],
+)
+def test_outlier_component_labels_match_the_displayed_content(snapshot, component, multivariate, expected):
+    calls: list[tuple[str, str]] = []
+
+    def translate(context: str, source: str) -> str:
+        calls.append((context, source))
+        return source
+
+    assert (
+        outlier_component_label(
+            component,
+            translate,
+            multivariate=multivariate,
+        )
+        == expected
+    )
+    assert calls == [("OutliersPresentation", expected)]

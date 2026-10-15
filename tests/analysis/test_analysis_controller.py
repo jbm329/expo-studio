@@ -4831,6 +4831,8 @@ _OUTLIERS_TRANSLATIONS = {
     "Column details": "Kolumndetaljer",
     "Model summary": "Modellsammanfattning",
     "Potential outliers": "Potentiella avvikare",
+    "Column distributions": "Diagram",
+    "Outlier projection": "Diagram",
     "Charts": "Diagram",
     "Column": "Kolumn",
     "Status": "Status SV",
@@ -5003,7 +5005,7 @@ def test_outlier_export_uses_compiled_swedish_labels() -> None:
         app.removeTranslator(translator)
 
     kwargs = exporter.export_excel.call_args.kwargs
-    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert kwargs["chart_sheet_name"] == "Kolumnfördelningar"
     sheets = kwargs["sheets"]
     assert list(sheets) == ["Kolumnsammanfattning", "Kolumndetaljer", "Potentiella avvikare"]
     summary = sheets["Kolumnsammanfattning"]

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -29,6 +29,7 @@ from expo_jbm329.services.analysis.multivariate_outliers import (
     MIN_SELECTED_COLUMNS,
     MultivariateOutlierMethod,
 )
+from expo_jbm329.services.analysis.presentation import multivariate_outlier_method_label
 from expo_jbm329.utils.format_utils import fmt_int
 
 if TYPE_CHECKING:
@@ -63,8 +64,8 @@ class MultivariateOutliersConfigWidget(QWidget):
         form.addRow(QLabel(self.tr("Mode"), self), self._mode_combo)
 
         self._method_combo = QComboBox(self)
-        self._method_combo.addItem(self.tr("Isolation Forest"), MultivariateOutlierMethod.ISOLATION_FOREST)
-        self._method_combo.addItem(self.tr("Local Outlier Factor"), MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR)
+        for method in MultivariateOutlierMethod:
+            self._method_combo.addItem(multivariate_outlier_method_label(method, QCoreApplication.translate), method)
         self._method_combo.setCurrentIndex(self._method_combo.findData(result.method))
         form.addRow(QLabel(self.tr("Method"), self), self._method_combo)
 

@@ -15,6 +15,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Correlation presentations share configured method/column labels across Analysis, Reports, HTML, and exports; same-method column changes and reruns require explicit review before replacing a captured report result
 - Hypothesis Tests share applied test-family, ordered variable-role, computed-test, and chart-component labels across Analysis, Reports, HTML, and exports; distinct selections coexist and identical reruns require explicit review
 - Regression shares applied model, outcome-role, ordered predictor, modeled-term, reference-coding, and component labels across Analysis, Reports, HTML, and exports; distinct full configurations coexist and identical reruns require explicit result review
+- Outliers share configured method titles, applied-setting summaries, and content-specific chart labels across Analysis, Reports, HTML, and exports; univariate detail changes replace only the captured detail, while complete screening configurations coexist and identical reruns require explicit review
 - HTML hypothesis reports separate captured explanatory notes from actual test-result rows; table exports retain the existing Notes column
 - HTML logistic, Poisson, Negative Binomial, and Cox reports show captured notes below Model metrics; table exports retain the existing Notes column
 

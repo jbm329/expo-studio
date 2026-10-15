@@ -41,7 +41,7 @@ from expo_jbm329.services.analysis.statistics import StatisticsExportFormat
 
 HISTOGRAM_LABELS = OutlierHistogramLabels(inside="Inside", outliers="Flagged", count_axis="Count")
 PROJECTION_LABELS = OutlierProjectionLabels(
-    heading="PCA projection",
+    heading="Outlier projection",
     title="PCA projection (visualization only)",
     pc1_axis="PC1",
     pc2_axis="PC2",
@@ -162,8 +162,22 @@ def test_with_detail_replaces_only_the_selected_column():
     assert changed.detail_notes == ("b notes",)
     assert changed.summary is snapshot.summary
     assert changed.data is snapshot.data
+    assert changed.capture_id == snapshot.capture_id
+    assert cleared.capture_id == snapshot.capture_id
     assert cleared.detail is None
     assert snapshot.detail is not detail
+
+
+def test_outlier_capture_ids_change_on_a_new_successful_result_and_reject_empty_values():
+    univariate = univariate_snapshot()
+    multivariate = multivariate_snapshot()
+
+    assert univariate_snapshot().capture_id != univariate.capture_id
+    assert multivariate_snapshot().capture_id != multivariate.capture_id
+    with pytest.raises(ValueError, match="stable capture identifier"):
+        dataclasses.replace(univariate, capture_id="")
+    with pytest.raises(ValueError, match="stable capture identifier"):
+        dataclasses.replace(multivariate, capture_id="")
 
 
 @pytest.mark.parametrize(
