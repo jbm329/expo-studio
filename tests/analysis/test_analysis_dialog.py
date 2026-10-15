@@ -321,7 +321,7 @@ def test_regression_export_selection_emits_only_the_current_snapshot(monkeypatch
 
     assert [choice.text() for choice in captured[0].findChildren(QCheckBox)] == [
         "Coefficients",
-        "Model metrics",
+        "Model summary",
         "Linear diagnostics",
     ]
     assert len(received) == 1

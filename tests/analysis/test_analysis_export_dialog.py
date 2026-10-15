@@ -445,7 +445,7 @@ def test_regression_dialog_names_applied_configuration_and_shared_components(fac
     snapshot = factory()
     dialog = AnalysisExportDialog(regression=snapshot)
     choices = dialog.findChildren(QCheckBox)
-    assert [choice.text() for choice in choices] == ["Coefficients", "Model metrics", chart_heading]
+    assert [choice.text() for choice in choices] == ["Coefficients", "Model summary", chart_heading]
     assert all(choice.isEnabled() for choice in choices)
     assert [choice.isChecked() for choice in choices] == [True, False, False]
     label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Regression — "))
@@ -457,7 +457,7 @@ def test_regression_dialog_names_applied_configuration_and_shared_components(fac
     assert label.text() == "\n".join((presentation.title, *presentation.summary_lines))
     assert label.textFormat() is Qt.TextFormat.PlainText
     assert snapshot.model is model
-    assert "model comments" in choices[1].toolTip()
+    assert "model summary" in choices[1].toolTip()
     request = dialog.export_request()
     assert isinstance(request, RegressionExportRequest)
     assert request.snapshot is snapshot
@@ -503,7 +503,7 @@ def test_regression_charts_are_disabled_when_the_model_drew_none():
 def test_regression_dialog_without_applied_model_never_enables_export():
     dialog = AnalysisExportDialog(regression_mode=True)
     choices = dialog.findChildren(QCheckBox)
-    assert [choice.text() for choice in choices] == ["Coefficients", "Model metrics", "Linear diagnostics"]
+    assert [choice.text() for choice in choices] == ["Coefficients", "Model summary", "Linear diagnostics"]
     assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
     assert all("Apply a regression model" in choice.toolTip() for choice in choices)
     assert not any(label.text().startswith("Regression — ") for label in dialog.findChildren(QLabel))

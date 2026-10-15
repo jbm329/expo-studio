@@ -1038,8 +1038,8 @@ Prediktorer: {predictors}</translation>
         <translation>Tillämpa en regressionsmodell utan fel innan du exporterar.</translation>
     </message>
     <message>
-        <source>Fit statistics and diagnostics with the displayed model comments.</source>
-        <translation>Anpassningsmått och diagnostik med de visade modellkommentarerna.</translation>
+        <source>Fit statistics and diagnostics shown in the model summary.</source>
+        <translation>Anpassningsmått och diagnostik som visas i modellsammanfattningen.</translation>
     </message>
     <message>
         <source>Export the displayed outlier tables and charts of the applied screening, not the original dataset.</source>
@@ -9890,7 +9890,7 @@ alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
     <message><source>Modeled terms:</source><translation>Modelltermer:</translation></message>
     <message><source>Reference levels:</source><translation>Referensnivåer:</translation></message>
     <message><source>Coefficients</source><translation>Koefficienter</translation></message>
-    <message><source>Model metrics</source><translation>Modellmått</translation></message>
+    <message><source>Model summary</source><translation>Modellsammanfattning</translation></message>
     <message><source>Linear diagnostics</source><translation>Diagnostik för linjär modell</translation></message>
     <message><source>Logistic diagnostics</source><translation>Diagnostik för logistisk modell</translation></message>
     <message><source>Count-model diagnostics</source><translation>Diagnostik för räknemodell</translation></message>

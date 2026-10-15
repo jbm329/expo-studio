@@ -78,7 +78,7 @@ def _summary(view: RegressionView) -> str:
     return label.text()
 
 
-def test_model_comments_title_stays_fixed_above_the_scrollable_text():
+def test_model_summary_title_stays_fixed_above_the_scrollable_text():
     view = RegressionView(_fitted())
     panel = view.findChild(QSplitter).widget(2)
     layout = panel.layout()
@@ -86,7 +86,7 @@ def test_model_comments_title_stays_fixed_above_the_scrollable_text():
     scroll = layout.itemAt(1).widget()
 
     assert isinstance(title, QLabel)
-    assert title.text() == "Model comments"
+    assert title.text() == "Model summary"
     assert isinstance(scroll, QScrollArea)
     assert scroll.widget() is view.summary_label()
     assert title.parentWidget() is panel

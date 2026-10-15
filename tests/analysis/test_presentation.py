@@ -410,11 +410,15 @@ def test_regression_presentation_exposes_model_roles_predictors_terms_and_refere
     ],
 )
 def test_regression_component_headings_are_model_specific_and_shared(model, chart_heading):
-    def translate(_context: str, source: str) -> str:
+    def translate(context: str, source: str) -> str:
+        if context == "RegressionPresentation" and source == "Model summary":
+            return "Modellsammanfattning"
         return source
 
     assert regression_component_label(model, RegressionExportComponent.COEFFICIENTS, translate) == "Coefficients"
-    assert regression_component_label(model, RegressionExportComponent.MODEL_METRICS, translate) == "Model metrics"
+    assert (
+        regression_component_label(model, RegressionExportComponent.MODEL_METRICS, translate) == "Modellsammanfattning"
+    )
     assert regression_component_label(model, RegressionExportComponent.CHARTS, translate) == chart_heading
 
 
@@ -434,7 +438,7 @@ def test_regression_semantic_labels_have_one_translation_source_context():
         PresentationLabel.MODEL_TERMS,
         PresentationLabel.REFERENCE_LEVELS,
         PresentationLabel.COEFFICIENTS,
-        PresentationLabel.MODEL_METRICS,
+        PresentationLabel.REGRESSION_MODEL_SUMMARY,
         PresentationLabel.LINEAR_DIAGNOSTICS,
         PresentationLabel.LOGISTIC_DIAGNOSTICS,
         PresentationLabel.COUNT_DIAGNOSTICS,

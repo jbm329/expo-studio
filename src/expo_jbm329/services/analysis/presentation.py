@@ -106,7 +106,7 @@ class PresentationLabel(StrEnum):
     MODEL_TERMS = "model_terms"
     REFERENCE_LEVELS = "reference_levels"
     COEFFICIENTS = "coefficients"
-    MODEL_METRICS = "model_metrics"
+    REGRESSION_MODEL_SUMMARY = "regression_model_summary"
     LINEAR_DIAGNOSTICS = "linear_diagnostics"
     LOGISTIC_DIAGNOSTICS = "logistic_diagnostics"
     COUNT_DIAGNOSTICS = "count_diagnostics"
@@ -348,7 +348,7 @@ _LABEL_DEFINITIONS: dict[PresentationLabel, PresentationLabelDefinition] = {
     PresentationLabel.MODEL_TERMS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Modeled terms:"),
     PresentationLabel.REFERENCE_LEVELS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Reference levels:"),
     PresentationLabel.COEFFICIENTS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Coefficients"),
-    PresentationLabel.MODEL_METRICS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Model metrics"),
+    PresentationLabel.REGRESSION_MODEL_SUMMARY: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Model summary"),
     PresentationLabel.LINEAR_DIAGNOSTICS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Linear diagnostics"),
     PresentationLabel.LOGISTIC_DIAGNOSTICS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Logistic diagnostics"),
     PresentationLabel.COUNT_DIAGNOSTICS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Count-model diagnostics"),
@@ -893,7 +893,7 @@ def regression_component_label(
     if component is RegressionExportComponent.COEFFICIENTS:
         label = PresentationLabel.COEFFICIENTS
     elif component is RegressionExportComponent.MODEL_METRICS:
-        label = PresentationLabel.MODEL_METRICS
+        label = PresentationLabel.REGRESSION_MODEL_SUMMARY
     else:
         labels = {
             RegressionModel.LINEAR: PresentationLabel.LINEAR_DIAGNOSTICS,

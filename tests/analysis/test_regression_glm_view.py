@@ -41,10 +41,13 @@ def _text(view: GeneralizedRegressionView) -> str:
 @pytest.mark.parametrize(
     "model", [RegressionModel.LOGISTIC, RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL]
 )
-def test_model_comments_scroll_only_when_content_exceeds_available_space(model):
+def test_model_summary_title_and_scroll_area(model):
     view = GeneralizedRegressionView(_result(model))
     splitter = view.findChild(QSplitter)
-    scroll = splitter.widget(2).findChild(QScrollArea)
+    summary_panel = splitter.widget(2)
+    title = summary_panel.layout().itemAt(0).widget()
+    scroll = summary_panel.findChild(QScrollArea)
+    assert title.text() == "Model summary"
     assert scroll.widget() is view.summary_label()
     assert scroll.widgetResizable()
     assert scroll.verticalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded

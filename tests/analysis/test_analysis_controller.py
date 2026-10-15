@@ -4568,7 +4568,7 @@ def _regression_export_context(snapshot: RegressionExportSnapshot):
 
 _REGRESSION_TRANSLATIONS = {
     "Coefficients": "Koefficienter",
-    "Model metrics": "Modellm?tt",
+    "Model summary": "Modellsammanfattning",
     "Linear diagnostics": "Linjär diagnostik",
     "Logistic diagnostics": "Logistisk diagnostik",
     "Count-model diagnostics": "Diagnostik för räknemodell",
@@ -4603,14 +4603,14 @@ def test_regression_excel_export_routes_localized_sheets_and_worker_charts(monke
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"] is True
     assert kwargs["chart_sheet_name"] == "Logistisk diagnostik"
-    assert list(kwargs["sheets"]) == ["Koefficienter", "Modellm?tt"]
+    assert list(kwargs["sheets"]) == ["Koefficienter", "Modellsammanfattning"]
     coefficients = kwargs["sheets"]["Koefficienter"]
     assert coefficients.columns[:2].tolist() == ["Term", "Skattning"]
     assert "Oddskvot" in coefficients.columns
     assert "Oddskvot, 95 % KI nedre" in coefficients.columns
     assert coefficients["Term"].iloc[0] == "(Intercept SV)"
     assert pd.api.types.is_float_dtype(coefficients["Skattning"])
-    metrics = kwargs["sheets"]["Modellm?tt"]
+    metrics = kwargs["sheets"]["Modellsammanfattning"]
     assert metrics.columns.tolist() == ["M?tt", "V?rde", "Anteckningar"]
     assert metrics["M?tt"].iloc[0] == "Anv?nda rader"
     assert metrics["V?rde"].iloc[0] == snapshot.result.n_used
@@ -4639,12 +4639,12 @@ def test_regression_cox_tables_use_hazard_ratio_headers(monkeypatch):
     controller._export_regression(dialog, exporter, request)  # noqa: SLF001
 
     kwargs = exporter.export_excel.call_args.kwargs
-    assert list(kwargs["sheets"]) == ["Modellm?tt", "Koefficienter"]
+    assert list(kwargs["sheets"]) == ["Modellsammanfattning", "Koefficienter"]
     assert kwargs["chart_factory"] is None
     assert kwargs["chart_sheet_name"] is None
     assert "Riskkvot" in kwargs["sheets"]["Koefficienter"].columns
     assert "Riskkvot, 95 % KI nedre" in kwargs["sheets"]["Koefficienter"].columns
-    assert "H?ndelser" in kwargs["sheets"]["Modellm?tt"]["M?tt"].tolist()
+    assert "H?ndelser" in kwargs["sheets"]["Modellsammanfattning"]["M?tt"].tolist()
 
 
 @pytest.mark.parametrize(

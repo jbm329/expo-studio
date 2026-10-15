@@ -873,7 +873,7 @@ def test_regression_html_and_export_tables_share_applied_labels(factory, model, 
     if model is RegressionModel.COX:
         assert prepared_entry.configuration[1].label == "sv:Event:"
     assert any(field.label == "sv:Predictors:" for field in prepared_entry.configuration)
-    assert tuple(component.label for component in prepared_entry.components) == ("sv:Coefficients", "sv:Model metrics")
+    assert tuple(component.label for component in prepared_entry.components) == ("sv:Coefficients", "sv:Model summary")
     assert table_titles == tuple(export_tables)
     assert all(name.startswith("sv:") for name in export_tables)
     assert "sv:Predictors:" in html
@@ -892,7 +892,7 @@ def test_regression_html_separates_notes_without_changing_exports(factory):
     ]
     raw_metrics = regression_metrics_table(snapshot)
     localized_before = localized_report_tables(AnalysisCategory.REGRESSION, snapshot, ("model_metrics",))[
-        "Model metrics"
+        "Model summary"
     ]
     document = ReportDocument()
     document.upsert(_entry(AnalysisCategory.REGRESSION, snapshot, ("model_metrics",)))
@@ -905,7 +905,7 @@ def test_regression_html_separates_notes_without_changing_exports(factory):
         AnalysisCategory.REGRESSION,
         snapshot,
         ("model_metrics",),
-    )["Model metrics"]
+    )["Model summary"]
     export_after = regression_export_tables(snapshot, (RegressionExportComponent.MODEL_METRICS,))[
         RegressionExportComponent.MODEL_METRICS
     ]
@@ -920,6 +920,7 @@ def test_regression_html_separates_notes_without_changing_exports(factory):
     assert localized_export.columns.tolist() == ["Metric", "Value", "Notes"]
     assert len(localized_export) == len(snapshot.notes)
     assert localized_export["Notes"].tolist() == list(snapshot.notes)
+    assert html.index("Model note 0") > html.index("<h3>Model summary</h3>")
     assert list(export_before.columns) == ["metric", "value", "notes"]
     assert export_before["metric"].dtype == pd.StringDtype()
     assert export_before["value"].dtype == raw_metrics["value"].dtype
@@ -1042,7 +1043,7 @@ def test_linear_regression_html_places_model_notes_only_below_metrics(monkeypatc
     assert coefficients.paragraphs == charts.paragraphs == ()
     assert html.count("Linear note") == 1
     assert html.count("User entry note") == 1
-    assert html.index("Linear note") > html.index("Model metrics</h3>")
+    assert html.index("Linear note") > html.index("Model summary</h3>")
 
 
 def test_regression_html_escapes_long_applied_roles_reference_levels_and_terms():

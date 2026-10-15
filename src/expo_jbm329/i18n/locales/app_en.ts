@@ -717,8 +717,8 @@ Predictors: {predictors}</translation>
         <translation>Apply a regression model successfully before exporting.</translation>
     </message>
     <message>
-        <source>Fit statistics and diagnostics with the displayed model comments.</source>
-        <translation>Fit statistics and diagnostics with the displayed model comments.</translation>
+        <source>Fit statistics and diagnostics shown in the model summary.</source>
+        <translation>Fit statistics and diagnostics shown in the model summary.</translation>
     </message>
     <message>
         <source>Export the displayed outlier tables and charts of the applied screening, not the original dataset.</source>
@@ -9735,7 +9735,7 @@ all hazard ratios and intervals must be finite and positive.</translation>
     <message><source>Modeled terms:</source><translation>Modeled terms:</translation></message>
     <message><source>Reference levels:</source><translation>Reference levels:</translation></message>
     <message><source>Coefficients</source><translation>Coefficients</translation></message>
-    <message><source>Model metrics</source><translation>Model metrics</translation></message>
+    <message><source>Model summary</source><translation>Model summary</translation></message>
     <message><source>Linear diagnostics</source><translation>Linear diagnostics</translation></message>
     <message><source>Logistic diagnostics</source><translation>Logistic diagnostics</translation></message>
     <message><source>Count-model diagnostics</source><translation>Count-model diagnostics</translation></message>

@@ -511,7 +511,7 @@ class AnalysisExportDialog(QDialog):
                 choice.setEnabled(False)
                 choice.setToolTip(self.tr("This component is empty and cannot be exported."))
             elif component is RegressionExportComponent.MODEL_METRICS:
-                choice.setToolTip(self.tr("Fit statistics and diagnostics with the displayed model comments."))
+                choice.setToolTip(self.tr("Fit statistics and diagnostics shown in the model summary."))
             self._regression_choices[component] = choice
             choice.toggled.connect(self._update_export_enabled)
             contents.addWidget(choice)

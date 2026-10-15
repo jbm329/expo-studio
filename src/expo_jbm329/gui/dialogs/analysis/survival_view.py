@@ -64,7 +64,13 @@ class SurvivalRegressionView(QWidget):
             )
         )
         table_layout.addWidget(self._table)
-        summary_panel, summary_layout = self._build_section(self.tr("Model comments"))
+        summary_panel, summary_layout = self._build_section(
+            regression_component_label(
+                RegressionModel.COX,
+                RegressionExportComponent.MODEL_METRICS,
+                QCoreApplication.translate,
+            )
+        )
         # Only the text scrolls, so the section title stays visible.
         summary_layout.addWidget(build_section_scroll_area(self._summary_label, summary_panel), 1)
         splitter.addWidget(table_panel)

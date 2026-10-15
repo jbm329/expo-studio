@@ -51,6 +51,7 @@ def test_cox_view_shows_hazard_ratio_table_counts_reference_and_caveats():
     assert table.horizontalHeaderItem(2).text() == "Hazard ratio"
     assert table.rowCount() == len(result.terms)
     text = _text(view)
+    assert view.findChild(QSplitter).widget(2).layout().itemAt(0).widget().text() == "Model summary"
     assert "Regression — Cox proportional-hazards regression" in text
     assert "Duration: duration" in text
     assert "Event: event" in text

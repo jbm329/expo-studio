@@ -254,11 +254,20 @@ class RegressionView(QWidget):
     # ------------------------------------------------------------------
 
     def _build_summary(self, result: RegressionResult) -> QWidget:
-        """Build the "Model comments" section with a fixed title above scrollable text."""
+        """Build the model summary section with a fixed title above scrollable text."""
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Model comments"), panel))
+        layout.addWidget(
+            self._build_section_title(
+                regression_component_label(
+                    RegressionModel.LINEAR,
+                    RegressionExportComponent.MODEL_METRICS,
+                    QCoreApplication.translate,
+                ),
+                panel,
+            )
+        )
 
         label = QLabel(self._summary_text(result))
         label.setTextFormat(Qt.TextFormat.RichText)
