@@ -116,6 +116,7 @@ from expo_jbm329.services.analysis.presentation import (
     correlation_method_label,
     hypothesis_component_label,
     outlier_component_label,
+    pca_component_label,
     regression_component_label,
     translate_presentation_label,
 )
@@ -1328,6 +1329,7 @@ class AnalysisController:
         if not isinstance(request, PCAExportRequest) or request.snapshot is not dialog.exportable_pca():
             return
         snapshot = request.snapshot
+        presentation = build_analysis_presentation(AnalysisCategory.PCA, snapshot, tr)
         charts = PCAExportComponent.CHARTS in request.components
         sheets = self._localized_pca_tables(request.components, snapshot)
 
@@ -1341,7 +1343,8 @@ class AnalysisController:
                 exporter.export_excel(
                     sheets=sheets,
                     chart_factory=make_images if charts else None,
-                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    chart_sheet_name=(pca_component_label(PCAExportComponent.CHARTS, tr) if charts else None),
+                    suggested_name=presentation.title,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1349,6 +1352,7 @@ class AnalysisController:
             case StatisticsExportFormat.CSV:
                 exporter.export_csv(
                     df=next(iter(sheets.values())),
+                    suggested_name=presentation.title,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1356,6 +1360,7 @@ class AnalysisController:
             case StatisticsExportFormat.BINARY:
                 exporter.export_data(
                     df=next(iter(sheets.values())),
+                    suggested_name=presentation.title,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -2069,11 +2074,17 @@ class AnalysisController:
 
         config = PCAConfigWidget(pca_result)
         config.analysis_requested.connect(lambda: self._recompute_pca(dialog, config))
-        config.configuration_changed.connect(lambda: dialog.set_content_widget(self._apply_prompt()))
+
+        def _on_configuration_changed() -> None:
+            dialog.invalidate_pca_export()
+            dialog.set_content_widget(self._apply_prompt())
+
+        config.configuration_changed.connect(_on_configuration_changed)
         return self._apply_prompt(), config
 
     def _recompute_pca(self, dialog: AnalysisDialog, config: PCAConfigWidget) -> None:
         """Run PCA for an applied feature/scaling configuration."""
+        dialog.invalidate_pca_export()
         configuration = config.analysis_configuration()
         revision = config.configuration_revision()
         columns, standardize = configuration
@@ -2082,7 +2093,9 @@ class AnalysisController:
             view = PCAView(cast("PCAResult", result))
             dialog.set_content_widget(view)
             if view.result().error is None:
-                dialog.set_exportable_pca(PCAExportSnapshot(view.result(), view.chart_labels(), view.export_notes()))
+                snapshot = PCAExportSnapshot(view.result(), view.chart_labels(), view.export_notes())
+                dialog.set_exportable_pca(snapshot)
+                dialog.set_analysis_presentation(build_analysis_presentation(AnalysisCategory.PCA, snapshot, tr))
 
         self._recompute_content(
             dialog,

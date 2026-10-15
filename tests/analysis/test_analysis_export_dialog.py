@@ -707,14 +707,14 @@ def test_pca_dialog_names_features_and_defaults_to_feature_loadings():
         "Feature loadings",
         "Explained variance",
         "Model summary",
-        "Charts",
+        "PCA plots",
     ]
     assert all(choice.isEnabled() for choice in choices)
     assert [choice.isChecked() for choice in choices] == [True, False, False, False]
     assert "scree plot" in choices[1].toolTip()
     assert "model comments" in choices[2].toolTip()
-    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied features:"))
-    assert label.text() == "Applied features: x / y / z"
+    label = next(label for label in dialog.findChildren(QLabel) if "Features:" in label.text())
+    assert label.text().splitlines() == ["PCA", "Features: x, y, z", "Standardization: Standardized"]
     assert label.textFormat() is Qt.TextFormat.PlainText
     assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
     request = dialog.export_request()
@@ -756,12 +756,12 @@ def test_pca_dialog_without_applied_fit_never_enables_export():
         "Feature loadings",
         "Explained variance",
         "Model summary",
-        "Charts",
+        "PCA plots",
     ]
     assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
     assert all("Apply a PCA" in choice.toolTip() for choice in choices)
     assert "Apply a PCA" in dialog._selection_explanation.text()
-    assert not any(label.text().startswith("Applied features:") for label in dialog.findChildren(QLabel))
+    assert not any("Features:" in label.text() for label in dialog.findChildren(QLabel))
     assert dialog.export_request() is None
     assert not dialog._export_button.isEnabled()
     with pytest.raises(ValueError, match="exactly one"):

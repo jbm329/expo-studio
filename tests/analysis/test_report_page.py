@@ -30,6 +30,7 @@ def _entry(entry_id: str, dataset: str) -> ReportEntry:
         snapshot=snapshot,
         components=components,
         selected_components=("feature_loadings",),
+        capture_id=snapshot.capture_id,
     )
 
 
@@ -87,7 +88,11 @@ def test_report_page_lists_metadata_and_enables_entry_actions():
 
     listing = page.findChild(QListWidget)
     assert listing.count() == 2
-    assert listing.item(0).text() == "PCA - Employees"
+    assert listing.item(0).text().splitlines() == [
+        "PCA - Employees",
+        "Features: x, y, z",
+        "Standardization: Standardized",
+    ]
     assert "10 rows x 2 columns" in listing.item(0).toolTip()
     assert not page._move_up_button.isEnabled()  # noqa: SLF001
     assert page._move_down_button.isEnabled()  # noqa: SLF001

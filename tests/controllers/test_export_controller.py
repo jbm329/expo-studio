@@ -82,6 +82,18 @@ def make_html_controller(tmp_path):
     return ctrl, dialogs, file_dialogs, status
 
 
+def test_suggested_export_filename_uses_safe_unique_and_length_limited_stems(tmp_path):
+    controller, _, _, _, _, _, _ = make_controller()
+    controller._file_jobs = object.__new__(FileJobService)
+
+    assert controller._default_export_filename(".csv", tmp_path, "PCA") == "PCA.csv"
+    (tmp_path / "PCA.xlsx").touch()
+    assert controller._default_export_filename(".xlsx", tmp_path, "PCA") == "PCA(1).xlsx"
+    limited = controller._default_export_filename(".xlsx", tmp_path, "unsafe<>name" * 40)
+    assert len(limited) == 255
+    assert all(character not in limited for character in '<>:"/\\|?*')
+
+
 def request_html(ctrl, **overrides):
     callbacks = {
         "html_factory": Mock(return_value="captured HTML"),

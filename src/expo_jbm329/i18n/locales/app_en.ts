@@ -9786,4 +9786,21 @@ all hazard ratios and intervals must be finite and positive.</translation>
     <message><source>Neighborhood radius (eps):</source><translation>Neighborhood radius (eps):</translation></message>
     <message><source>Minimum samples:</source><translation>Minimum samples:</translation></message>
 </context>
+<context>
+    <name>AnalysisConfiguration</name>
+    <message><source>Features</source><translation>Features</translation></message>
+    <message><source>Standardize features</source><translation>Standardize features</translation></message>
+</context>
+<context>
+    <name>PCAPresentation</name>
+    <message><source>PCA</source><translation>PCA</translation></message>
+    <message><source>Feature loadings</source><translation>Feature loadings</translation></message>
+    <message><source>Explained variance</source><translation>Explained variance</translation></message>
+    <message><source>Model summary</source><translation>Model summary</translation></message>
+    <message><source>PCA plots</source><translation>PCA plots</translation></message>
+    <message><source>Features:</source><translation>Features:</translation></message>
+    <message><source>Standardization:</source><translation>Standardization:</translation></message>
+    <message><source>Standardized</source><translation>Standardized</translation></message>
+    <message><source>Not standardized</source><translation>Not standardized</translation></message>
+</context>
 </TS>

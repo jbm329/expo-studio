@@ -36,6 +36,10 @@ from expo_jbm329.services.analysis.outliers_export import (
     outlier_model_summary_table,
 )
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
+from expo_jbm329.services.analysis.pca_export import (
+    PCAExportComponent,
+    pca_export_tables,
+)
 from expo_jbm329.services.analysis.presentation import build_analysis_presentation
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
@@ -347,6 +351,64 @@ def test_hypothesis_report_labels_are_captured_before_worker_preparation():
     assert prepared.entries[0].configuration[0].label == "sv:Measurement variables (selected order):"
     assert prepared.entries[0].components[0].label == "sv:Measurement summary"
     assert prepared.entries[0].components[0].tables[0].title == "sv:Measurement summary"
+
+
+def test_pca_html_and_export_share_localized_title_roles_components_and_escaped_features():
+    feature = '<feature & "quoted">' + "very long name " * 30
+    base_snapshot = pca_snapshot()
+    snapshot = replace(base_snapshot, result=replace(base_snapshot.result, columns=(feature, "second", "third")))
+    selection = ("feature_loadings", "explained_variance", "model_summary")
+    entry = _entry(AnalysisCategory.PCA, snapshot, selection)
+    document = ReportDocument()
+    document.upsert(entry)
+
+    def translate(context: str, text: str) -> str:
+        return f"sv:{text}" if context == "PCAPresentation" else text
+
+    labels = capture_report_labels(translate=translate)
+    prepared = prepare_report_content(document, labels=labels)
+    prepared_entry = prepared.entries[0]
+    html = render_prepared_report_html(prepared)
+    localized_tables = localized_report_tables(AnalysisCategory.PCA, snapshot, selection, labels=labels)
+    raw_tables = pca_export_tables(
+        snapshot,
+        (
+            PCAExportComponent.FEATURE_LOADINGS,
+            PCAExportComponent.EXPLAINED_VARIANCE,
+            PCAExportComponent.MODEL_SUMMARY,
+        ),
+    )
+
+    assert prepared_entry.title == "sv:PCA"
+    assert tuple((field.label, field.items) for field in prepared_entry.configuration) == (
+        ("sv:Features:", (feature, "second", "third")),
+        ("sv:Standardization:", ("sv:Standardized",)),
+    )
+    expected_components = ("sv:Feature loadings", "sv:Explained variance", "sv:Model summary")
+    assert tuple(component.label for component in prepared_entry.components) == expected_components
+    assert (
+        tuple(table.title for component in prepared_entry.components for table in component.tables)
+        == expected_components
+    )
+    assert tuple(localized_tables) == expected_components
+    for (localized_title, localized_frame), (_, raw_frame), expected_title in zip(
+        localized_tables.items(), raw_tables.items(), expected_components, strict=True
+    ):
+        assert localized_title == expected_title
+        for column_index, raw_column in enumerate(raw_frame.columns):
+            if pd.api.types.is_numeric_dtype(raw_frame[raw_column].dtype):
+                assert localized_frame.dtypes.iloc[column_index] == raw_frame.dtypes.iloc[column_index]
+                pd.testing.assert_series_equal(
+                    localized_frame.iloc[:, column_index],
+                    raw_frame.iloc[:, column_index],
+                    check_names=False,
+                )
+    escaped_features = escape(f"{feature}, second, third")
+    assert f"<dt>sv:Features:</dt><dd>{escaped_features}</dd>" in html
+    assert "sv:Standardization:</dt><dd>sv:Standardized</dd>" in html
+    assert escape(feature, quote=True) in html
+    assert feature not in html
+    assert "sv:PCA" in html
 
 
 @pytest.mark.parametrize(

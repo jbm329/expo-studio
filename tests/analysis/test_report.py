@@ -21,6 +21,8 @@ from expo_jbm329.services.analysis.outliers_export import (
 )
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.paired_comparison import analyze_paired_comparison
+from expo_jbm329.services.analysis.pca import analyze_pca
+from expo_jbm329.services.analysis.pca_export import PCAExportSnapshot
 from expo_jbm329.services.analysis.regression_export import RegressionExportSnapshot
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.report import (
@@ -43,7 +45,7 @@ from tests.analysis.test_outliers_export import (
     multivariate_snapshot,
     univariate_snapshot,
 )
-from tests.analysis.test_pca_export import pca_snapshot
+from tests.analysis.test_pca_export import CHART_LABELS, pca_frame, pca_snapshot
 from tests.analysis.test_regression_export import (
     cox_snapshot,
     linear_snapshot,
@@ -138,6 +140,7 @@ def test_report_entry_rejects_invalid_identity_dimensions_and_components(changes
         "components": entry.components,
         "selected_components": entry.selected_components,
         "note": entry.note,
+        "capture_id": entry.capture_id,
     }
     values.update(changes)
     with pytest.raises(ValueError, match=message):
@@ -486,6 +489,32 @@ def test_report_identity_is_deterministic_for_each_analysis(category, snapshot):
 
     assert first == report_entry_identity(category, DATASET.tab_id, snapshot)
     assert first != report_entry_identity(category, "another-dataset", snapshot)
+
+
+def test_pca_report_slot_preserves_feature_order_standardization_and_capture_provenance():
+    def fit(columns: tuple[str, ...], standardize: bool) -> PCAExportSnapshot:
+        return PCAExportSnapshot(analyze_pca(pca_frame(), columns, standardize=standardize), CHART_LABELS)
+
+    initial = fit(("x", "y", "z"), True)
+    same_slot = fit(("x", "y", "z"), True)
+    reordered = fit(("z", "y", "x"), True)
+    different_features = fit(("x", "y"), True)
+    different_standardization = fit(("x", "y", "z"), False)
+    identity = report_entry_identity(AnalysisCategory.PCA, DATASET.tab_id, initial)
+    entry = create_report_entry(AnalysisCategory.PCA, DATASET, initial)
+    inspected = create_report_entry(AnalysisCategory.PCA, DATASET, initial)
+    rerun = create_report_entry(AnalysisCategory.PCA, DATASET, same_slot)
+
+    assert identity == report_entry_identity(AnalysisCategory.PCA, DATASET.tab_id, same_slot)
+    assert identity != report_entry_identity(AnalysisCategory.PCA, DATASET.tab_id, reordered)
+    assert identity != report_entry_identity(AnalysisCategory.PCA, DATASET.tab_id, different_features)
+    assert identity != report_entry_identity(AnalysisCategory.PCA, DATASET.tab_id, different_standardization)
+    assert entry.capture_id == inspected.capture_id == initial.capture_id
+    assert rerun.capture_id == same_slot.capture_id != entry.capture_id
+    assert rerun.entry_id == entry.entry_id
+    assert entry.with_selection(("feature_loadings",), "Keep note").capture_id == entry.capture_id
+    with pytest.raises(ValueError, match="PCA report entry requires its applied-result capture identifier"):
+        replace(entry, capture_id="different-capture")
 
 
 def test_time_series_report_omits_unavailable_autocorrelation():

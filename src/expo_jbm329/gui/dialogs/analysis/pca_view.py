@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
@@ -20,7 +20,8 @@ from PyQt6.QtWidgets import (
 from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
 from expo_jbm329.services.analysis.pca import MIN_OBSERVATIONS, MIN_SELECTED_COLUMNS, PCAError
 from expo_jbm329.services.analysis.pca_charts import PCAChartLabels, draw_score_plot, draw_scree_plot
-from expo_jbm329.services.analysis.pca_export import component_name
+from expo_jbm329.services.analysis.pca_export import PCAExportComponent, component_name
+from expo_jbm329.services.analysis.presentation import build_pca_result_presentation, pca_component_label
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_pct
 
 if TYPE_CHECKING:
@@ -31,7 +32,7 @@ _RIGHT_ALIGNED = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 
 
 class PCAView(QWidget):
-    """Displays feature loadings, PCA plots and model comments in resizable sections."""
+    """Display feature loadings, PCA plots, and the model summary in resizable sections."""
 
     def __init__(self, result: PCAResult, parent: QWidget | None = None) -> None:
         """Initialize the result view.
@@ -51,7 +52,9 @@ class PCAView(QWidget):
             layout.addWidget(self._build_centered_label(self.error_text(result.error)))
             return
 
-        plots_panel, plots_layout = self._build_section(self.tr("PCA plots"))
+        plots_panel, plots_layout = self._build_section(
+            pca_component_label(PCAExportComponent.CHARTS, QCoreApplication.translate)
+        )
         plots = QSplitter(Qt.Orientation.Horizontal, plots_panel)
         plots.setChildrenCollapsible(False)
         plots.addWidget(self._build_scree_plot(result))
@@ -89,7 +92,7 @@ class PCAView(QWidget):
         captions = rich_text_lines([self._sample_text(result)]) if result.sampled and result.error is None else ()
         return PCAChartLabels(
             scree_title=self.tr("Scree plot"),
-            explained=self.tr("Explained variance"),
+            explained=pca_component_label(PCAExportComponent.EXPLAINED_VARIANCE, QCoreApplication.translate),
             cumulative=self.tr("Cumulative"),
             component_axis=self.tr("Component"),
             variance_axis=self.tr("Explained variance (%)"),
@@ -100,7 +103,7 @@ class PCAView(QWidget):
         )
 
     def export_notes(self) -> tuple[str, ...]:
-        """Return the displayed model comments and applied features as plain-text lines.
+        """Return the displayed model comments and applied configuration as plain text.
 
         Returns:
             The lines, or an empty tuple when the view shows an error.
@@ -108,8 +111,8 @@ class PCAView(QWidget):
         result = self._result
         if result.error is not None:
             return ()
-        features = self.tr("Features: {columns}").format(columns=", ".join(result.columns))
-        return (*rich_text_lines([self._summary_text(result)]), features)
+        presentation = build_pca_result_presentation(result, QCoreApplication.translate)
+        return (*rich_text_lines([self._summary_text(result)]), *presentation.summary_lines)
 
     def loadings_table(self) -> QTableWidget | None:
         """Return the feature-loading table, or `None` for an error result."""
@@ -165,8 +168,10 @@ class PCAView(QWidget):
         return label
 
     def _build_comments_panel(self, result: PCAResult) -> QWidget:
-        """Build the titled model-comments section with a scrollable summary."""
-        panel, layout = self._build_section(self.tr("Model comments"))
+        """Build the titled model-summary section with a scrollable summary."""
+        panel, layout = self._build_section(
+            pca_component_label(PCAExportComponent.MODEL_SUMMARY, QCoreApplication.translate)
+        )
         layout.addWidget(build_section_scroll_area(self._build_summary(result), panel), 1)
         return panel
 
@@ -188,7 +193,9 @@ class PCAView(QWidget):
 
     def _build_loadings_panel(self, result: PCAResult) -> QWidget:
         """Build the titled feature-loadings table section."""
-        panel, layout = self._build_section(self.tr("Feature loadings"))
+        panel, layout = self._build_section(
+            pca_component_label(PCAExportComponent.FEATURE_LOADINGS, QCoreApplication.translate)
+        )
 
         headers = [self.tr("Feature"), *(component_name(index) for index in range(len(result.columns)))]
         table = QTableWidget(panel)

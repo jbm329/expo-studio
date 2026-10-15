@@ -23,6 +23,7 @@ from expo_jbm329.services.analysis.outliers_export import (
     UnivariateOutlierExportSnapshot,
 )
 from expo_jbm329.services.analysis.paired_comparison import PairedComparisonMethod, PairedComparisonResult
+from expo_jbm329.services.analysis.pca_export import PCAExportComponent, PCAExportSnapshot
 from expo_jbm329.services.analysis.regression import RegressionResult, TermKind, term_name
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
@@ -40,6 +41,7 @@ from expo_jbm329.utils.format_utils import fmt_num, fmt_pct
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from expo_jbm329.services.analysis.pca import PCAResult
     from expo_jbm329.services.analysis.report import ReportSnapshot
 
 
@@ -141,6 +143,17 @@ class PresentationLabel(StrEnum):
     CLUSTER_COUNT = "cluster_count"
     DBSCAN_EPSILON = "dbscan_epsilon"
     DBSCAN_MIN_SAMPLES = "dbscan_min_samples"
+    FEATURES_SELECTOR = "features_selector"
+    STANDARDIZE_FEATURES_SELECTOR = "standardize_features_selector"
+    PCA = "pca"
+    PCA_FEATURE_LOADINGS = "pca_feature_loadings"
+    PCA_EXPLAINED_VARIANCE = "pca_explained_variance"
+    PCA_MODEL_SUMMARY = "pca_model_summary"
+    PCA_PLOTS = "pca_plots"
+    PCA_FEATURES = "pca_features"
+    PCA_STANDARDIZATION = "pca_standardization"
+    PCA_STANDARDIZED = "pca_standardized"
+    PCA_NOT_STANDARDIZED = "pca_not_standardized"
 
 
 @dataclass(frozen=True, slots=True)
@@ -156,6 +169,8 @@ _HYPOTHESIS_CONTEXT = "HypothesisPresentation"
 _REGRESSION_CONTEXT = "RegressionPresentation"
 _OUTLIERS_CONTEXT = "OutliersPresentation"
 _CLUSTERING_CONTEXT = "ClusteringPresentation"
+_ANALYSIS_CONFIGURATION_CONTEXT = "AnalysisConfiguration"
+_PCA_CONTEXT = "PCAPresentation"
 _LABEL_DEFINITIONS: dict[PresentationLabel, PresentationLabelDefinition] = {
     PresentationLabel.CLUSTERING: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Clustering"),
     PresentationLabel.CLUSTERING_CONFIGURED_TITLE: PresentationLabelDefinition(
@@ -173,6 +188,19 @@ _LABEL_DEFINITIONS: dict[PresentationLabel, PresentationLabelDefinition] = {
     PresentationLabel.CLUSTER_COUNT: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Number of clusters:"),
     PresentationLabel.DBSCAN_EPSILON: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Neighborhood radius (eps):"),
     PresentationLabel.DBSCAN_MIN_SAMPLES: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Minimum samples:"),
+    PresentationLabel.FEATURES_SELECTOR: PresentationLabelDefinition(_ANALYSIS_CONFIGURATION_CONTEXT, "Features"),
+    PresentationLabel.STANDARDIZE_FEATURES_SELECTOR: PresentationLabelDefinition(
+        _ANALYSIS_CONFIGURATION_CONTEXT, "Standardize features"
+    ),
+    PresentationLabel.PCA: PresentationLabelDefinition(_PCA_CONTEXT, "PCA"),
+    PresentationLabel.PCA_FEATURE_LOADINGS: PresentationLabelDefinition(_PCA_CONTEXT, "Feature loadings"),
+    PresentationLabel.PCA_EXPLAINED_VARIANCE: PresentationLabelDefinition(_PCA_CONTEXT, "Explained variance"),
+    PresentationLabel.PCA_MODEL_SUMMARY: PresentationLabelDefinition(_PCA_CONTEXT, "Model summary"),
+    PresentationLabel.PCA_PLOTS: PresentationLabelDefinition(_PCA_CONTEXT, "PCA plots"),
+    PresentationLabel.PCA_FEATURES: PresentationLabelDefinition(_PCA_CONTEXT, "Features:"),
+    PresentationLabel.PCA_STANDARDIZATION: PresentationLabelDefinition(_PCA_CONTEXT, "Standardization:"),
+    PresentationLabel.PCA_STANDARDIZED: PresentationLabelDefinition(_PCA_CONTEXT, "Standardized"),
+    PresentationLabel.PCA_NOT_STANDARDIZED: PresentationLabelDefinition(_PCA_CONTEXT, "Not standardized"),
     PresentationLabel.CORRELATION: PresentationLabelDefinition(_CORRELATION_CONTEXT, "Correlation"),
     PresentationLabel.CONFIGURED_TITLE: PresentationLabelDefinition(_CORRELATION_CONTEXT, "{category} — {method}"),
     PresentationLabel.COLUMNS: PresentationLabelDefinition(_CORRELATION_CONTEXT, "Columns:"),
@@ -439,6 +467,11 @@ def build_analysis_presentation(
             message = "Clustering presentation requires a clustering result snapshot."
             raise TypeError(message)
         return build_clustering_presentation(snapshot, translate, number_format=number_format)
+    if category is AnalysisCategory.PCA:
+        if not isinstance(snapshot, PCAExportSnapshot):
+            message = "PCA presentation requires a PCA result snapshot."
+            raise TypeError(message)
+        return build_pca_presentation(snapshot, translate)
     category_source = analysis_category_source(category)
     category_title = translate("AnalysisDialog", category_source)
     return AnalysisPresentation(category_title, category_title)
@@ -452,6 +485,53 @@ def clustering_method_label(method: ClusteringMethod, translate: Callable[[str, 
         ClusteringMethod.AGGLOMERATIVE: PresentationLabel.AGGLOMERATIVE,
     }
     return translate_presentation_label(labels[method], translate)
+
+
+def pca_component_label(
+    component: PCAExportComponent,
+    translate: Callable[[str, str], str],
+) -> str:
+    """Return the shared content-specific heading for an applied PCA component."""
+    labels = {
+        PCAExportComponent.FEATURE_LOADINGS: PresentationLabel.PCA_FEATURE_LOADINGS,
+        PCAExportComponent.EXPLAINED_VARIANCE: PresentationLabel.PCA_EXPLAINED_VARIANCE,
+        PCAExportComponent.MODEL_SUMMARY: PresentationLabel.PCA_MODEL_SUMMARY,
+        PCAExportComponent.CHARTS: PresentationLabel.PCA_PLOTS,
+    }
+    return translate_presentation_label(labels[component], translate)
+
+
+def build_pca_presentation(
+    snapshot: PCAExportSnapshot,
+    translate: Callable[[str, str], str],
+) -> AnalysisPresentation:
+    """Describe a successful PCA using its applied ordered features and standardization."""
+    return build_pca_result_presentation(snapshot.result, translate)
+
+
+def build_pca_result_presentation(
+    result: PCAResult,
+    translate: Callable[[str, str], str],
+) -> AnalysisPresentation:
+    """Describe an applied PCA result without requiring export-only chart metadata."""
+    category = translate_presentation_label(PresentationLabel.PCA, translate)
+    standardization = (
+        PresentationLabel.PCA_STANDARDIZED if result.standardize else PresentationLabel.PCA_NOT_STANDARDIZED
+    )
+    return AnalysisPresentation(
+        category,
+        category,
+        (
+            ConfigurationField(
+                translate_presentation_label(PresentationLabel.PCA_FEATURES, translate),
+                result.columns,
+            ),
+            ConfigurationField(
+                translate_presentation_label(PresentationLabel.PCA_STANDARDIZATION, translate),
+                (translate_presentation_label(standardization, translate),),
+            ),
+        ),
+    )
 
 
 def clustering_component_label(component: ClusteringExportComponent, translate: Callable[[str, str], str]) -> str:

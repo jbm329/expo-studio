@@ -69,6 +69,7 @@ from expo_jbm329.services.analysis.presentation import (
     correlation_method_label,
     hypothesis_component_label,
     outlier_component_label,
+    pca_component_label,
     presentation_label_source,
     presentation_label_sources,
     regression_component_label,
@@ -177,6 +178,10 @@ class ReportEntry:
         elif self.category is AnalysisCategory.CLUSTERING:
             if not isinstance(self.snapshot, ClusteringExportSnapshot) or self.capture_id != self.snapshot.capture_id:
                 message = "A clustering report entry requires its applied-result capture identifier."
+                raise ValueError(message)
+        elif self.category is AnalysisCategory.PCA:
+            if not isinstance(self.snapshot, PCAExportSnapshot) or self.capture_id != self.snapshot.capture_id:
+                message = "A PCA report entry requires its applied-result capture identifier."
                 raise ValueError(message)
         elif self.capture_id is not None:
             message = "Only a report entry with a stable applied-result capture can carry a capture identifier."
@@ -292,6 +297,7 @@ def create_report_entry(
                     UnivariateOutlierExportSnapshot,
                     MultivariateOutlierExportSnapshot,
                     ClusteringExportSnapshot,
+                    PCAExportSnapshot,
                 ),
             )
             else None
@@ -402,11 +408,13 @@ def available_report_components(category: AnalysisCategory, snapshot: ReportSnap
                 for component in CLUSTERING_COMPONENTS
             )
         case AnalysisCategory.PCA if isinstance(snapshot, PCAExportSnapshot):
-            component_values = (
-                ("feature_loadings", "Feature loadings", "table"),
-                ("explained_variance", "Explained variance", "table"),
-                ("model_summary", "Model summary", "table"),
-                ("charts", "Charts", "chart"),
+            component_values = tuple(
+                (
+                    component.value,
+                    pca_component_label(component, _identity_translate),
+                    "chart" if component is PCAExportComponent.CHARTS else "table",
+                )
+                for component in PCAExportComponent
             )
         case AnalysisCategory.TIME_SERIES if isinstance(snapshot, TimeSeriesExportSnapshot):
             time_series_labels: dict[str, tuple[str, str]] = {
@@ -955,6 +963,9 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
     ),
     "ClusteringPresentation": tuple(
         source for context, source in presentation_label_sources() if context == "ClusteringPresentation"
+    ),
+    "PCAPresentation": tuple(
+        source for context, source in presentation_label_sources() if context == "PCAPresentation"
     ),
     "CorrelationView": (
         "Variable 1",
@@ -1647,14 +1658,7 @@ def _localized_report_tables(
                             else metric
                         )
                     )
-                title = translate(
-                    "AnalysisExportDialog",
-                    {
-                        PCAExportComponent.FEATURE_LOADINGS: "Feature loadings",
-                        PCAExportComponent.EXPLAINED_VARIANCE: "Explained variance",
-                        PCAExportComponent.MODEL_SUMMARY: "Model summary",
-                    }[pca_table],
-                )
+                title = pca_component_label(pca_table, translate)
                 add(
                     title,
                     frame.rename(
@@ -2190,6 +2194,8 @@ def _component_translation_context(
         return "OutliersPresentation"
     if category is AnalysisCategory.CLUSTERING:
         return "ClusteringPresentation"
+    if category is AnalysisCategory.PCA:
+        return "PCAPresentation"
     return {
         AnalysisCategory.OVERVIEW: "OverviewView",
         AnalysisCategory.STATISTICS: "StatisticsView",

@@ -340,6 +340,12 @@ class ExportController:
         parent = self._parent if parent_widget is None else parent_widget
         return self._file_dialogs.get_save_filename(parent=parent, req=req)
 
+    def _default_export_filename(self, suffix: str, base_dir: Path, suggested_name: str | None) -> str:
+        """Build an export filename with the standard sanitizing and collision safeguards."""
+        if suggested_name is None:
+            return self._file_jobs.build_export_filename(suffix, str(base_dir))
+        return self._file_jobs.build_safe_filename(suggested_name, suffix, base_dir).name
+
     def _run_export_job(
         self,
         *,
@@ -454,6 +460,7 @@ class ExportController:
         self,
         *,
         df: pd.DataFrame | None = None,
+        suggested_name: str | None = None,
         parent_widget: QWidget | None = None,
         operation_target: QWidget | None = None,
         show_success_dialog: bool = False,
@@ -468,6 +475,7 @@ class ExportController:
                 show the no-dataset message without falling back. The caller
                 must keep supplied data stable until the export completes;
                 this method does not copy it.
+            suggested_name: Optional filename stem; sanitized and made unique.
             parent_widget: Dialog owner override. None uses the default parent.
             operation_target: Overlay target override. None uses the default target.
             show_success_dialog: Show a confirmation with the output path on success.
@@ -485,7 +493,7 @@ class ExportController:
             fallback=self._get_documents_dir(),
         )
 
-        default_name = self._file_jobs.build_export_filename(".csv", str(start_dir))
+        default_name = self._default_export_filename(".csv", start_dir, suggested_name)
         suggested = str(Path(start_dir) / default_name)
         kind = ExportKind.CSV
         scope = "export:csv"
@@ -572,6 +580,7 @@ class ExportController:
         *,
         df: pd.DataFrame | None = None,
         sheets: Mapping[str, pd.DataFrame] | None = None,
+        suggested_name: str | None = None,
         chart_factory: Callable[
             [Callable[[int], None] | None, Callable[[], bool] | None],
             Sequence[ExcelChartImage],
@@ -594,6 +603,7 @@ class ExportController:
                 Named header-only frames are allowed; empty mappings are errors.
             chart_factory: Optional worker-safe producer for embedded images.
             chart_sheet_name: Exact worksheet name for generated images.
+            suggested_name: Optional filename stem; sanitized and made unique.
             parent_widget: Dialog owner override. None uses the default parent.
             operation_target: Overlay target override. None uses the default target.
             show_success_dialog: Show a confirmation with the output path on success.
@@ -651,7 +661,7 @@ class ExportController:
             fallback=self._get_documents_dir(),
         )
 
-        default_name = self._file_jobs.build_export_filename(".xlsx", str(start_dir))
+        default_name = self._default_export_filename(".xlsx", start_dir, suggested_name)
         suggested = str(Path(start_dir) / default_name)
         kind = ExportKind.EXCEL
         scope = "export:excel"
@@ -762,6 +772,7 @@ class ExportController:
         self,
         *,
         df: pd.DataFrame | None = None,
+        suggested_name: str | None = None,
         parent_widget: QWidget | None = None,
         operation_target: QWidget | None = None,
         show_success_dialog: bool = False,
@@ -773,6 +784,7 @@ class ExportController:
                 show the no-dataset message without falling back. The caller
                 must keep supplied data stable until the export completes;
                 this method does not copy it.
+            suggested_name: Optional filename stem; sanitized and made unique.
             parent_widget: Dialog owner override. None uses the default parent.
             operation_target: Overlay target override. None uses the default target.
             show_success_dialog: Show a confirmation with the output path on success.
@@ -790,7 +802,7 @@ class ExportController:
             fallback=self._get_documents_dir(),
         )
 
-        default_name = self._file_jobs.build_export_filename(".df", str(start_dir))
+        default_name = self._default_export_filename(".df", start_dir, suggested_name)
         suggested = str(Path(start_dir) / default_name)
         kind = ExportKind.DATAFILE
         scope = "export:data"

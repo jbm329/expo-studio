@@ -12,6 +12,8 @@ from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportComp
 from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierMethod
 from expo_jbm329.services.analysis.outliers import OutlierMethod
 from expo_jbm329.services.analysis.outliers_export import OutlierExportComponent
+from expo_jbm329.services.analysis.pca import analyze_pca
+from expo_jbm329.services.analysis.pca_export import PCAExportComponent, PCAExportSnapshot
 from expo_jbm329.services.analysis.presentation import (
     AnalysisPresentation,
     ConfigurationField,
@@ -20,7 +22,9 @@ from expo_jbm329.services.analysis.presentation import (
     build_correlation_presentation,
     hypothesis_component_label,
     outlier_component_label,
+    pca_component_label,
     presentation_label_source,
+    presentation_label_sources,
     regression_component_label,
 )
 from expo_jbm329.services.analysis.regression_export import RegressionExportComponent
@@ -30,7 +34,7 @@ from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_correlation_export import _snapshot as correlation_snapshot
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
 from tests.analysis.test_outliers_export import multivariate_snapshot, univariate_snapshot
-from tests.analysis.test_pca_export import pca_snapshot
+from tests.analysis.test_pca_export import CHART_LABELS, pca_frame, pca_snapshot
 from tests.analysis.test_regression_export import (
     cox_snapshot,
     linear_snapshot,
@@ -38,6 +42,7 @@ from tests.analysis.test_regression_export import (
     negative_binomial_snapshot,
     poisson_snapshot,
 )
+from tests.analysis.test_timeseries_export import time_series_snapshot
 
 
 @pytest.mark.parametrize("method", list(ClusteringMethod))
@@ -236,12 +241,68 @@ def test_other_category_presentation_deliberately_keeps_category_only_fallback()
         calls.append((context, source))
         return f"translated {source}"
 
-    presentation = build_analysis_presentation(AnalysisCategory.PCA, pca_snapshot(), translate)
+    presentation = build_analysis_presentation(AnalysisCategory.TIME_SERIES, time_series_snapshot(), translate)
 
-    assert presentation.category == "translated PCA"
-    assert presentation.title == "translated PCA"
+    assert presentation.category == "translated Time Series"
+    assert presentation.title == "translated Time Series"
     assert presentation.configuration == ()
-    assert calls == [("AnalysisDialog", "PCA")]
+    assert calls == [("AnalysisDialog", "Time Series")]
+
+
+@pytest.mark.parametrize("standardize", [True, False])
+def test_pca_presentation_uses_the_shared_title_and_ordered_applied_roles(standardize):
+    result = analyze_pca(pca_frame(), ("y", "x"), standardize=standardize)
+    snapshot = PCAExportSnapshot(result, CHART_LABELS)
+    calls: list[tuple[str, str]] = []
+
+    def translate(context: str, source: str) -> str:
+        calls.append((context, source))
+        return source
+
+    presentation = build_analysis_presentation(AnalysisCategory.PCA, snapshot, translate)
+
+    assert presentation.category == presentation.title == "PCA"
+    assert "PCA — PCA" not in presentation.title
+    assert presentation.summary_lines == (
+        "Features: y, x",
+        "Standardization: " + ("Standardized" if standardize else "Not standardized"),
+    )
+    assert {context for context, _source in calls} == {"PCAPresentation"}
+
+
+def test_pca_components_and_role_labels_have_canonical_translation_sources():
+    components = (
+        PCAExportComponent.FEATURE_LOADINGS,
+        PCAExportComponent.EXPLAINED_VARIANCE,
+        PCAExportComponent.MODEL_SUMMARY,
+        PCAExportComponent.CHARTS,
+    )
+    assert tuple(pca_component_label(component, lambda _context, text: text) for component in components) == (
+        "Feature loadings",
+        "Explained variance",
+        "Model summary",
+        "PCA plots",
+    )
+    assert all(
+        presentation_label_source(label)[0] == "PCAPresentation"
+        for label in (
+            PresentationLabel.PCA,
+            PresentationLabel.PCA_FEATURE_LOADINGS,
+            PresentationLabel.PCA_EXPLAINED_VARIANCE,
+            PresentationLabel.PCA_MODEL_SUMMARY,
+            PresentationLabel.PCA_PLOTS,
+            PresentationLabel.PCA_FEATURES,
+            PresentationLabel.PCA_STANDARDIZATION,
+            PresentationLabel.PCA_STANDARDIZED,
+            PresentationLabel.PCA_NOT_STANDARDIZED,
+        )
+    )
+    assert presentation_label_sources().count(("PCAPresentation", "PCA")) == 1
+    assert presentation_label_source(PresentationLabel.FEATURES_SELECTOR) == ("AnalysisConfiguration", "Features")
+    assert presentation_label_source(PresentationLabel.STANDARDIZE_FEATURES_SELECTOR) == (
+        "AnalysisConfiguration",
+        "Standardize features",
+    )
 
 
 def test_correlation_presentation_rejects_mismatched_snapshot():

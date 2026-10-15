@@ -65,6 +65,9 @@ def test_snapshot_offers_every_component():
     snapshot = pca_snapshot()
 
     assert snapshot.components == PCA_COMPONENTS
+    assert snapshot.capture_id
+    assert dataclasses.replace(snapshot).capture_id == snapshot.capture_id
+    assert pca_snapshot().capture_id != snapshot.capture_id
     assert PCA_COMPONENTS == (
         PCAExportComponent.FEATURE_LOADINGS,
         PCAExportComponent.EXPLAINED_VARIANCE,

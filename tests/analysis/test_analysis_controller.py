@@ -1047,6 +1047,9 @@ class DummyAnalysisDialog:
     def set_exportable_pca(self, snapshot):
         self._export_pca = snapshot
 
+    def invalidate_pca_export(self):
+        self._export_pca = None
+
     def exportable_pca(self):
         if self._selected_category is AnalysisCategory.PCA:
             return self._export_pca
@@ -5237,6 +5240,9 @@ def test_successful_pca_apply_registers_the_displayed_export_snapshot(dialog_fac
     assert snapshot.result is view.result()
     assert snapshot.chart_labels == view.chart_labels()
     assert snapshot.notes == view.export_notes()
+    assert dlg.analysis_presentation is not None
+    assert dlg.analysis_presentation.title == "PCA"
+    assert dlg.analysis_presentation.summary_lines == ("Features: a, b, c", "Standardization: Standardized")
 
     _set_pca_checked(config, "c", False)
     _assert_apply_prompt(ctrl, dlg)
@@ -5270,7 +5276,12 @@ _PCA_TRANSLATIONS = {
     "Feature loadings": "Variabelladdningar",
     "Explained variance": "Forklarad varians",
     "Model summary": "Modellsammanfattning",
-    "Charts": "Diagram",
+    "PCA plots": "Diagram",
+    "PCA": "PCA",
+    "Features:": "Variabler:",
+    "Standardization:": "Standardisering:",
+    "Standardized": "Standardiserade",
+    "Not standardized": "Inte standardiserade",
     "Feature": "Variabel",
     "Component": "Komponent",
     "Variance": "Varians",
@@ -5296,6 +5307,7 @@ def test_pca_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch)
     assert kwargs["parent_widget"] is dialog
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"] is True
+    assert kwargs["suggested_name"] == "PCA"
     assert kwargs["chart_sheet_name"] == "Diagram"
     assert list(kwargs["sheets"]) == ["Variabelladdningar", "Forklarad varians", "Modellsammanfattning"]
     assert kwargs["sheets"]["Variabelladdningar"].columns.tolist() == ["Variabel", "PC1", "PC2", "PC3"]
@@ -5362,7 +5374,8 @@ def test_pca_single_table_routes_to_non_excel_exporters(format_choice, method_na
     method = getattr(exporter, method_name)
     assert method.call_count == 1
     kwargs = method.call_args.kwargs
-    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog", "suggested_name"}
+    assert kwargs["suggested_name"] == "PCA"
     assert kwargs["df"].columns[0] == first_column
     assert exporter.export_excel.call_count == 0
 
@@ -5405,7 +5418,7 @@ def test_pca_export_uses_compiled_swedish_labels() -> None:
         app.removeTranslator(translator)
 
     kwargs = exporter.export_excel.call_args.kwargs
-    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert kwargs["chart_sheet_name"] == "PCA-diagram"
     sheets = kwargs["sheets"]
     assert list(sheets) == ["Variabelladdningar", "Förklarad varians", "Modellsammanfattning"]
     assert sheets["Variabelladdningar"].columns.tolist() == ["Variabel", "PC1", "PC2", "PC3"]

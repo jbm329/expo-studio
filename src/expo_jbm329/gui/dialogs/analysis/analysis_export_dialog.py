@@ -61,6 +61,7 @@ from expo_jbm329.services.analysis.presentation import (
     clustering_component_label,
     hypothesis_component_label,
     outlier_component_label,
+    pca_component_label,
     regression_component_label,
     translate_presentation_label,
 )
@@ -595,9 +596,8 @@ class AnalysisExportDialog(QDialog):
         """List the applied PCA features plainly and offer its displayed tables and charts."""
         snapshot = self._pca
         if snapshot is not None:
-            identity = QLabel(
-                self.tr("Applied features: {features}").format(features=" / ".join(snapshot.result.columns)), self
-            )
+            presentation = build_analysis_presentation(AnalysisCategory.PCA, snapshot, QCoreApplication.translate)
+            identity = QLabel("\n".join((presentation.title, *presentation.summary_lines)), self)
             identity.setTextFormat(Qt.TextFormat.PlainText)
             identity.setWordWrap(True)
             identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -605,12 +605,7 @@ class AnalysisExportDialog(QDialog):
 
         results = QGroupBox(self.tr("Results"), self)
         contents = QVBoxLayout(results)
-        labels = {
-            PCAExportComponent.FEATURE_LOADINGS: self.tr("Feature loadings"),
-            PCAExportComponent.EXPLAINED_VARIANCE: self.tr("Explained variance"),
-            PCAExportComponent.MODEL_SUMMARY: self.tr("Model summary"),
-            PCAExportComponent.CHARTS: self.tr("Charts"),
-        }
+        labels = {component: pca_component_label(component, QCoreApplication.translate) for component in PCA_COMPONENTS}
         for component in PCA_COMPONENTS:
             choice = QCheckBox(labels[component], results)
             if snapshot is None:

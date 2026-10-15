@@ -111,7 +111,7 @@ def test_layout_has_loadings_plots_and_comments_like_regression():
     assert [_section_title(sections.widget(index)) for index in range(3)] == [
         "Feature loadings",
         "PCA plots",
-        "Model comments",
+        "Model summary",
     ]
     table_layout = sections.widget(0).layout()
     assert table_layout.itemAt(1).widget() is view.loadings_table()
@@ -246,7 +246,7 @@ def test_export_notes_are_the_plain_text_comments_and_features():
     assert notes[0].startswith("3 features, standardized.")
     assert all("<" not in line for line in notes)
     assert f"The PC1-vs-PC2 plot shows a deterministic sample of {len(result.sample_pc1)} rows." in notes
-    assert notes[-1] == "Features: a, b, c"
+    assert notes[-2:] == ("Features: a, b, c", "Standardization: Standardized")
 
 
 def test_error_view_has_no_export_notes():

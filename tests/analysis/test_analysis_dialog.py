@@ -35,6 +35,7 @@ from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisT
 from expo_jbm329.gui.dialogs.analysis.outliers_config import OutliersConfigWidget
 from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_config import MultivariateOutliersConfigWidget
 from expo_jbm329.gui.dialogs.analysis.pca_config import PCAConfigWidget
+from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
 from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDialog
 from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigWidget
@@ -62,8 +63,8 @@ from expo_jbm329.services.analysis.multivariate_outliers import initialize_multi
 from expo_jbm329.services.analysis.outliers import OutlierMethod, initialize_outlier_summary
 from expo_jbm329.services.analysis.outliers_export import OutlierExportComponent, OutlierExportRequest
 from expo_jbm329.services.analysis.paired_comparison import initialize_paired_comparison
-from expo_jbm329.services.analysis.pca import initialize_pca
-from expo_jbm329.services.analysis.pca_export import PCAExportComponent, PCAExportRequest
+from expo_jbm329.services.analysis.pca import analyze_pca, initialize_pca
+from expo_jbm329.services.analysis.pca_export import PCAExportComponent, PCAExportRequest, PCAExportSnapshot
 from expo_jbm329.services.analysis.presentation import AnalysisPresentation, ConfigurationField
 from expo_jbm329.services.analysis.regression import initialize_regression
 from expo_jbm329.services.analysis.regression_export import (
@@ -87,7 +88,7 @@ from expo_jbm329.utils.format_utils import fmt_int
 from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_outliers_export import multivariate_snapshot as multivariate_outliers_snapshot
 from tests.analysis.test_outliers_export import univariate_snapshot
-from tests.analysis.test_pca_export import pca_snapshot
+from tests.analysis.test_pca_export import pca_frame, pca_snapshot
 from tests.analysis.test_regression_export import (
     cox_snapshot,
     generalized_snapshot,
@@ -461,6 +462,13 @@ def test_add_to_report_captures_applied_analysis_components_and_note(monkeypatch
     assert next(button for button in dialog.findChildren(QPushButton) if button.text() == "Remove from report")
 
     dialog.select_reports()
+    report_item = dialog.report_page().findChild(QListWidget).item(0)
+    assert report_item is not None
+    assert report_item.text().splitlines() == [
+        "PCA - Sheet1",
+        "Features: x, y, z",
+        "Standardization: Standardized",
+    ]
     edit_dialogs: list[ReportNotesDialog] = []
 
     def accept_edit(report_dialog):
@@ -478,6 +486,77 @@ def test_add_to_report_captures_applied_analysis_components_and_note(monkeypatch
     dialog.report_page()._remove_button.click()  # noqa: SLF001
     assert dialog.report_document().entries == ()
     assert dialog._category_list.item(dialog._category_list.count() - 1).text() == "Reports(0)"  # noqa: SLF001
+
+
+def test_pca_configurations_coexist_and_reruns_require_atomic_explicit_update(monkeypatch):
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
+    dialog.select_category(AnalysisCategory.PCA)
+
+    def fit(columns: tuple[str, ...], standardize: bool) -> PCAExportSnapshot:
+        result = analyze_pca(pca_frame(), columns, standardize=standardize)
+        view = PCAView(result)
+        return PCAExportSnapshot(view.result(), view.chart_labels(), view.export_notes())
+
+    configurations = (
+        (("x", "y", "z"), True),
+        (("x", "y", "z"), False),
+        (("y", "x", "z"), True),
+        (("x", "y"), True),
+    )
+
+    def accept_add(editor):
+        editor.findChild(QPlainTextEdit).setPlainText("Keep this PCA note")
+        editor._component_choices["charts"].setChecked(False)  # noqa: SLF001
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", accept_add)
+    snapshots = [fit(columns, standardize) for columns, standardize in configurations]
+    dialog.set_exportable_pca(snapshots[0])
+    dialog._toggle_report_entry()  # noqa: SLF001
+    original = dialog.report_document().entries[0]
+    for snapshot in snapshots[1:]:
+        dialog.set_exportable_pca(snapshot)
+        assert dialog._report_action_button.text() == "Add to report"  # noqa: SLF001
+        dialog._toggle_report_entry()  # noqa: SLF001
+
+    entries_before_update = dialog.report_document().entries
+    assert len(entries_before_update) == len(configurations)
+    assert len({entry.entry_id for entry in entries_before_update}) == len(configurations)
+    assert entries_before_update[0].note == "Keep this PCA note"
+    assert entries_before_update[0].selected_components == ("feature_loadings", "explained_variance", "model_summary")
+
+    rerun = fit(*configurations[0])
+    dialog.set_exportable_pca(rerun)
+    first_candidate = dialog._current_report_candidate()  # noqa: SLF001
+    inspected_candidate = dialog._current_report_candidate()  # noqa: SLF001
+    assert first_candidate is not None and inspected_candidate is not None
+    assert first_candidate.capture_id == inspected_candidate.capture_id == rerun.capture_id
+    assert dialog._report_action_button.text() == "Update report result"  # noqa: SLF001
+
+    def cancel_update(editor):
+        labels = [label.text() for label in editor.findChildren(QLabel)]
+        assert editor.notes() == "Keep this PCA note"
+        assert editor.selected_components() == original.selected_components
+        assert any(label == "PCA" for label in labels)
+        assert any("Features: x, y, z" in label for label in labels)
+        assert any("Standardization: Standardized" in label for label in labels)
+        assert any(button.text() == "Update result" for button in editor.findChildren(QPushButton))
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", cancel_update)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    assert dialog.report_document().entries == entries_before_update
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", lambda _editor: QDialog.DialogCode.Accepted)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    updated = dialog.report_document().entries
+    assert updated[0].entry_id == original.entry_id
+    assert updated[0].snapshot is rerun
+    assert updated[0].capture_id == rerun.capture_id
+    assert updated[0].note == original.note
+    assert updated[0].selected_components == original.selected_components
+    assert updated[1:] == entries_before_update[1:]
+    assert dialog._report_action_button.text() == "Remove from report"  # noqa: SLF001
 
 
 def test_correlation_report_slot_explicitly_updates_or_replaces_frozen_capture(monkeypatch):
@@ -1883,7 +1962,13 @@ def test_pca_export_selection_emits_only_the_current_snapshot(monkeypatch):
         "Feature loadings",
         "Explained variance",
         "Model summary",
-        "Charts",
+        "PCA plots",
+    ]
+    identity = next(label for label in captured[0].findChildren(QLabel) if "Features:" in label.text())
+    assert identity.text().splitlines() == [
+        "PCA",
+        "Features: x, y, z",
+        "Standardization: Standardized",
     ]
     assert len(received) == 1
     assert received[0].snapshot is snapshot

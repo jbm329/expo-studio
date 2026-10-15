@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 import pandas as pd
 
@@ -50,14 +51,19 @@ class PCAExportSnapshot:
         result: The successful fit shown in the content pane.
         chart_labels: Translated plot text captured on the GUI thread.
         notes: Plain-text lines of the displayed model comments.
+        capture_id: Stable provenance of this successful applied fit.
     """
 
     result: PCAResult
     chart_labels: PCAChartLabels
     notes: tuple[str, ...] = ()
+    capture_id: str = field(default_factory=lambda: uuid4().hex)
 
     def __post_init__(self) -> None:
         """Reject failed or unfitted results."""
+        if not self.capture_id:
+            message = "An applied PCA result requires a capture identifier."
+            raise ValueError(message)
         result = self.result
         if not isinstance(result, PCAResult):  # pyright: ignore[reportUnnecessaryIsInstance]
             message = "A typed PCA result is required."

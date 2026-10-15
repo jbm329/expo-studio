@@ -129,6 +129,13 @@ as report entries, ignoring inactive parameters. Rerunning a configuration offer
 an explicit result update; canceling preserves the captured result, notes,
 components, and order. Components are **Cluster sizes**, **Model summary**, and
 **Cluster projection**; the individual chart retains its internal PCA title.
+PCA uses a shared **PCA** title, with its applied ordered features and
+standardization shown across Analysis, Reports, HTML, and exports. Feature
+selection and standardization define distinct report entries; rerunning the same
+configuration offers an explicit result update, and canceling preserves the
+captured result, notes, component selection, and order. Shared components are
+**Feature loadings**, **Explained variance**, **Model summary**, and **PCA plots**;
+the scree and PC1-vs-PC2 chart titles remain descriptive.
 Use **Generate HTML report** to save a self-contained HTML file and open it
 in your default browser. Report generation runs in the background; canceled
 or failed saves preserve existing files. PDF output is not yet available.

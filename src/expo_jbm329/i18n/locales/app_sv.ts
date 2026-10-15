@@ -9941,4 +9941,21 @@ alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
     <message><source>Neighborhood radius (eps):</source><translation>Grannskapsradie (eps):</translation></message>
     <message><source>Minimum samples:</source><translation>Minsta antal observationer:</translation></message>
 </context>
+<context>
+    <name>AnalysisConfiguration</name>
+    <message><source>Features</source><translation>Variabler</translation></message>
+    <message><source>Standardize features</source><translation>Standardisera variabler</translation></message>
+</context>
+<context>
+    <name>PCAPresentation</name>
+    <message><source>PCA</source><translation>PCA</translation></message>
+    <message><source>Feature loadings</source><translation>Variabelladdningar</translation></message>
+    <message><source>Explained variance</source><translation>Förklarad varians</translation></message>
+    <message><source>Model summary</source><translation>Modellsammanfattning</translation></message>
+    <message><source>PCA plots</source><translation>PCA-diagram</translation></message>
+    <message><source>Features:</source><translation>Variabler:</translation></message>
+    <message><source>Standardization:</source><translation>Standardisering:</translation></message>
+    <message><source>Standardized</source><translation>Standardiserade</translation></message>
+    <message><source>Not standardized</source><translation>Inte standardiserade</translation></message>
+</context>
 </TS>
