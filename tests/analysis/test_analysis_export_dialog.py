@@ -519,7 +519,7 @@ def test_univariate_outliers_dialog_names_screening_and_defaults_to_column_summa
     choices = dialog.findChildren(QCheckBox)
     assert [choice.text() for choice in choices] == [
         "Column summary",
-        "Column details",
+        "Model summary",
         "Potential outliers",
         "Column distributions",
     ]
@@ -615,7 +615,7 @@ def test_outliers_dialog_limits_single_file_formats_to_one_table_and_keeps_choic
 @pytest.mark.parametrize(
     ("multivariate", "texts"),
     [
-        (False, ["Column summary", "Column details", "Potential outliers", "Column distributions"]),
+        (False, ["Column summary", "Model summary", "Potential outliers", "Column distributions"]),
         (True, ["Model summary", "Potential outliers", "Outlier projection"]),
     ],
 )

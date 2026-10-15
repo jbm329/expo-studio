@@ -412,7 +412,7 @@ def test_multivariate_outlier_presentation_includes_only_applicable_settings(met
     ("snapshot", "component", "multivariate", "expected"),
     [
         (univariate_snapshot(), OutlierExportComponent.COLUMN_SUMMARY, False, "Column summary"),
-        (univariate_snapshot(), OutlierExportComponent.COLUMN_DETAILS, False, "Column details"),
+        (univariate_snapshot(), OutlierExportComponent.COLUMN_DETAILS, False, "Model summary"),
         (univariate_snapshot(), OutlierExportComponent.POTENTIAL_OUTLIERS, False, "Potential outliers"),
         (univariate_snapshot(), OutlierExportComponent.CHARTS, False, "Column distributions"),
         (multivariate_snapshot(), OutlierExportComponent.MODEL_SUMMARY, True, "Model summary"),
@@ -435,3 +435,20 @@ def test_outlier_component_labels_match_the_displayed_content(snapshot, componen
         == expected
     )
     assert calls == [("OutliersPresentation", expected)]
+
+
+def test_univariate_column_details_use_the_shared_model_summary_label_source():
+    calls: list[tuple[str, str]] = []
+
+    def translate(context: str, source: str) -> str:
+        calls.append((context, source))
+        return f"translated {source}"
+
+    label = outlier_component_label(
+        OutlierExportComponent.COLUMN_DETAILS,
+        translate,
+        multivariate=False,
+    )
+
+    assert label == "translated Model summary"
+    assert calls == [presentation_label_source(PresentationLabel.MODEL_SUMMARY)]

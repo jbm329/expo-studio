@@ -20,8 +20,17 @@ from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportSnapshot,
     hypothesis_export_tables,
 )
-from expo_jbm329.services.analysis.outliers import analyze_outlier_column, analyze_outlier_summary
-from expo_jbm329.services.analysis.outliers_export import UnivariateOutlierExportSnapshot
+from expo_jbm329.services.analysis.outliers import (
+    OutlierMethod,
+    analyze_outlier_column,
+    analyze_outlier_summary,
+)
+from expo_jbm329.services.analysis.outliers_export import (
+    UnivariateOutlierExportSnapshot,
+    outlier_column_details_table,
+    outlier_column_summary_table,
+    outlier_model_summary_table,
+)
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
@@ -1349,6 +1358,195 @@ def test_univariate_outlier_html_uses_shared_title_roles_and_escaped_long_column
     assert tuple(localized_tables) == (prepared_entry.components[0].tables[0].title,)
     assert f"<dd>{escape(column)}</dd>" in html
     assert f"<dd>{column}</dd>" not in html
+
+
+def test_outlier_report_hides_empty_status_and_notes_rows_but_preserves_export_schema():
+    frame = pd.DataFrame({"screened": np.arange(10, dtype=float)})
+    summary = analyze_outlier_summary(frame)
+    notes = tuple(f"Summary note {index}" for index in range(30))
+    snapshot = UnivariateOutlierExportSnapshot(
+        summary,
+        frame.copy(deep=True),
+        HISTOGRAM_LABELS,
+        summary_notes=notes,
+    )
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.OUTLIERS, snapshot, ("column_summary",)))
+
+    prepared_component = prepare_report_content(document).entries[0].components[0]
+    html = render_prepared_report_html(prepare_report_content(document))
+    public_table = outlier_column_summary_table(snapshot)
+    localized_export = localized_report_tables(
+        AnalysisCategory.OUTLIERS,
+        snapshot,
+        ("column_summary",),
+    )["Column summary"]
+
+    assert prepared_component.tables[0].headers == (
+        "Column",
+        "Values",
+        "Missing",
+        "Outliers",
+        "Share",
+        "Low",
+        "High",
+        "Lower fence",
+        "Upper fence",
+    )
+    assert len(prepared_component.tables[0].rows) == 1
+    assert prepared_component.paragraphs == notes
+    assert "notes" in public_table.columns
+    assert "status" in public_table.columns
+    assert public_table["values"].dtype == pd.Int64Dtype()
+    assert public_table["missing"].dtype == pd.Int64Dtype()
+    assert public_table["share"].dtype == "float64"
+    assert public_table["status"].dtype == pd.StringDtype()
+    assert public_table["notes"].dtype == pd.StringDtype()
+    assert "Notes" in localized_export.columns
+    assert "Status" in localized_export.columns
+    assert len(localized_export) == len(notes)
+    assert html.index("</table></div>") < html.index("Summary note 0")
+
+
+def test_outlier_report_keeps_both_unscreened_statuses_and_actual_columns():
+    frame = pd.DataFrame({
+        "screened": np.arange(10, dtype=float),
+        "few": [1.0, 2.0, *([None] * 8)],
+        "flat": [5.0] * 10,
+    })
+    summary = analyze_outlier_summary(frame, OutlierMethod.Z_SCORE)
+    snapshot = UnivariateOutlierExportSnapshot(
+        summary,
+        frame.copy(deep=True),
+        HISTOGRAM_LABELS,
+        summary_notes=tuple(f"Screening note {index}" for index in range(10)),
+    )
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.OUTLIERS, snapshot, ("column_summary",)))
+
+    labels = capture_report_labels(
+        lambda context, source: {
+            ("OutliersView", "Too few values"): "Too few (localized)",
+            ("OutliersView", "No spread"): "No spread (localized)",
+        }.get((context, source), source)
+    )
+    table = prepare_report_content(document, labels=labels).entries[0].components[0].tables[0]
+    status_index = table.headers.index("Status")
+    column_index = table.headers.index("Column")
+    rows = {row[column_index]: row for row in table.rows}
+
+    assert len(table.rows) == 3
+    assert pd.isna(rows["screened"][status_index])
+    assert rows["few"][status_index] == "Too few (localized)"
+    assert rows["flat"][status_index] == "No spread (localized)"
+    assert "Notes" not in table.headers
+
+
+def test_outlier_report_omits_notes_without_notes_and_preserves_detail_nan_metrics():
+    base = univariate_snapshot(summary_notes=(), detail_notes=())
+    assert base.detail is not None
+    detail = replace(base.detail, q1=float("nan"))
+    notes = tuple(f"Detail note {index}" for index in range(30))
+    snapshot = replace(base, detail=detail, detail_notes=notes)
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.OUTLIERS, snapshot, ("column_details",)))
+
+    prepared_component = prepare_report_content(document).entries[0].components[0]
+    localized_export = localized_report_tables(
+        AnalysisCategory.OUTLIERS,
+        snapshot,
+        ("column_details",),
+    )["Model summary"]
+    public_table = outlier_column_details_table(snapshot)
+    metric_index = prepared_component.tables[0].headers.index("Metric")
+    value_index = prepared_component.tables[0].headers.index("Value")
+    q1 = next(row for row in prepared_component.tables[0].rows if row[metric_index] == "Q1")
+
+    assert len(prepared_component.tables[0].rows) == public_table["metric"].notna().sum()
+    assert len(prepared_component.paragraphs) == len(notes)
+    assert pd.isna(q1[value_index])
+    assert "Notes" not in prepared_component.tables[0].headers
+    assert "Notes" in localized_export.columns
+    assert "notes" in public_table.columns
+
+    no_notes = replace(base, detail_notes=())
+    no_notes_document = ReportDocument()
+    no_notes_document.upsert(_entry(AnalysisCategory.OUTLIERS, no_notes, ("column_details",)))
+    no_notes_component = prepare_report_content(no_notes_document).entries[0].components[0]
+    assert no_notes_component.paragraphs == ()
+    assert len(no_notes_component.tables[0].rows) == outlier_column_details_table(no_notes)["metric"].notna().sum()
+
+
+def test_outlier_summary_and_detail_notes_are_escaped_and_follow_their_tables():
+    snapshot = univariate_snapshot(
+        summary_notes=("<summary & note>\ncontinued", "Second summary note"),
+        detail_notes=("<detail & note>\ncontinued", "Second detail note"),
+    )
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.OUTLIERS, snapshot, ("column_summary", "column_details")))
+
+    labels = capture_report_labels(
+        lambda context, source: f"sv:{source}" if context == "OutliersPresentation" else source
+    )
+    prepared = prepare_report_content(document, labels=labels)
+    components = prepared.entries[0].components
+    html = render_prepared_report_html(prepared)
+
+    assert components[0].paragraphs == snapshot.summary_notes
+    assert components[1].label == "sv:Model summary"
+    assert components[1].paragraphs == snapshot.detail_notes
+    assert html.index("<h3>sv:Column summary</h3>") < html.index("&lt;summary &amp; note&gt;")
+    assert html.index("</table></div>", html.index("<h3>sv:Column summary</h3>")) < html.index(
+        "&lt;summary &amp; note&gt;"
+    )
+    assert html.index("<h3>sv:Model summary</h3>") < html.index("&lt;detail &amp; note&gt;")
+    assert html.index("</table></div>", html.index("<h3>sv:Model summary</h3>")) < html.index(
+        "&lt;detail &amp; note&gt;"
+    )
+    assert "Notes" not in components[0].tables[0].headers
+    assert "Notes" not in components[1].tables[0].headers
+
+
+def test_multivariate_outlier_notes_follow_model_summary_without_notes_only_rows():
+    base = multivariate_snapshot()
+    notes = tuple(f"Model note {index}" for index in range(30))
+    snapshot = replace(base, notes=notes)
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.OUTLIERS, snapshot, ("model_summary",)))
+
+    prepared_component = prepare_report_content(document).entries[0].components[0]
+    html = render_prepared_report_html(prepare_report_content(document))
+    public_table = outlier_model_summary_table(snapshot)
+
+    assert prepared_component.label == "Model summary"
+    assert prepared_component.paragraphs == notes
+    assert len(prepared_component.tables[0].rows) == public_table["metric"].notna().sum()
+    assert "Notes" not in prepared_component.tables[0].headers
+    assert "notes" in public_table.columns
+    assert html.index("</table></div>") < html.index("Model note 0")
+
+
+def test_outlier_notes_follow_component_selection_and_do_not_attach_to_other_content():
+    snapshot = univariate_snapshot(
+        summary_notes=("Summary component note",),
+        detail_notes=("Detail component note",),
+    )
+    entry = _entry(AnalysisCategory.OUTLIERS, snapshot).with_selection(
+        ("potential_outliers", "charts"),
+        "Entry note",
+    )
+    document = ReportDocument()
+    document.upsert(entry)
+
+    prepared = prepare_report_content(document)
+    components = prepared.entries[0].components
+    html = render_prepared_report_html(prepared)
+
+    assert [component.label for component in components] == ["Potential outliers", "Column distributions"]
+    assert all(component.paragraphs == () for component in components)
+    assert "Summary component note" not in html
+    assert "Detail component note" not in html
+    assert html.count("Entry note") == 1
 
 
 def test_multivariate_outlier_chart_heading_is_shared_by_report_and_export():

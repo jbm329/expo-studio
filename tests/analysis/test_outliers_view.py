@@ -64,7 +64,7 @@ def test_distribution_and_column_details_scroll_below_a_frozen_title(column, sec
             assert panel.layout().itemAt(0).widget().text() == "Column distribution"
             assert isinstance(content, FigureCanvasQTAgg)
         else:
-            assert panel.layout().itemAt(0).widget().text() == "Column details"
+            assert panel.layout().itemAt(0).widget().text() == "Model summary"
             assert isinstance(content, QLabel)
             assert "threshold" in content.text()
             assert content.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
@@ -316,7 +316,7 @@ def test_layout_has_four_vertically_resizable_sections_in_the_requested_order():
     assert detail_splitter.widget(0).isAncestorOf(extremes_table)
     assert len(detail_splitter.widget(1).findChildren(FigureCanvasQTAgg)) == 1
     assert any(label.text() == "Column distribution" for label in detail_splitter.widget(1).findChildren(QLabel))
-    assert any(label.text() == "Column details" for label in detail_splitter.widget(2).findChildren(QLabel))
+    assert any(label.text() == "Model summary" for label in detail_splitter.widget(2).findChildren(QLabel))
     assert any("threshold" in label.text() for label in detail_splitter.widget(2).findChildren(QLabel))
 
 

@@ -99,7 +99,7 @@ from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChar
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_pct
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
+    from collections.abc import Callable, Mapping, Sequence
 
     from expo_jbm329.utils.dataset_ref import DatasetRef
 
@@ -1072,6 +1072,7 @@ def _localized_report_tables(
     split_overview_samples: bool = False,
     hypothesis_test_results: pd.DataFrame | None = None,
     regression_model_metrics: pd.DataFrame | None = None,
+    outlier_report_tables: Mapping[OutlierExportComponent, pd.DataFrame] | None = None,
     include_correlation_explanation: bool = True,
 ) -> dict[str, pd.DataFrame]:
     """Build localized tables, optionally using report-only raw result rows."""
@@ -1482,26 +1483,31 @@ def _localized_report_tables(
                 outlier_table = outlier_table_keys.get(key)
                 if outlier_table is None:
                     continue
-                frame = outlier_export_tables(
-                    snapshot,
-                    (outlier_table,),
-                    row_label=translate("OutliersView", "Row"),
-                    score_label=score_label,
-                )[outlier_table]
+                frame = (
+                    outlier_report_tables[outlier_table]
+                    if outlier_report_tables is not None and outlier_table in outlier_report_tables
+                    else outlier_export_tables(
+                        snapshot,
+                        (outlier_table,),
+                        row_label=translate("OutliersView", "Row"),
+                        score_label=score_label,
+                    )[outlier_table]
+                )
                 if outlier_table is OutlierExportComponent.COLUMN_SUMMARY:
-                    frame["status"] = frame["status"].map(
-                        lambda status: (
-                            translate(
-                                "OutliersView",
-                                {
-                                    ColumnOutlierStatus.NOT_ENOUGH_OBSERVATIONS: "Too few values",
-                                    ColumnOutlierStatus.ZERO_SPREAD: "No spread",
-                                }[ColumnOutlierStatus(status)],
+                    if "status" in frame.columns:
+                        frame["status"] = frame["status"].map(
+                            lambda status: (
+                                translate(
+                                    "OutliersView",
+                                    {
+                                        ColumnOutlierStatus.NOT_ENOUGH_OBSERVATIONS: "Too few values",
+                                        ColumnOutlierStatus.ZERO_SPREAD: "No spread",
+                                    }[ColumnOutlierStatus(status)],
+                                )
+                                if isinstance(status, str)
+                                else status
                             )
-                            if isinstance(status, str)
-                            else status
                         )
-                    )
                     outlier_headers = {
                         "column": ("OutliersView", "Column"),
                         "values": ("OutliersView", "Values"),
@@ -1780,6 +1786,11 @@ def prepare_report_content(
                 count_format=count_format,
                 hypothesis_test_results=_hypothesis_report_rows(entry.snapshot, table_keys),
                 regression_model_metrics=_regression_report_rows(entry.snapshot, table_keys),
+                outlier_report_tables=(
+                    _outlier_report_rows(entry.snapshot, table_keys, translate)
+                    if isinstance(entry.snapshot, OutlierExportSnapshot)
+                    else None
+                ),
                 include_correlation_explanation=False,
             ).items()
         )
@@ -1841,6 +1852,21 @@ def prepare_report_content(
                         isinstance(entry.snapshot, RegressionExportSnapshot)
                         and entry.snapshot.model is not RegressionModel.LINEAR
                         and component.key == RegressionExportComponent.MODEL_METRICS.value
+                    ):
+                        paragraphs = entry.snapshot.notes
+                    elif (
+                        isinstance(entry.snapshot, UnivariateOutlierExportSnapshot)
+                        and component.key == OutlierExportComponent.COLUMN_SUMMARY.value
+                    ):
+                        paragraphs = entry.snapshot.summary_notes
+                    elif (
+                        isinstance(entry.snapshot, UnivariateOutlierExportSnapshot)
+                        and component.key == OutlierExportComponent.COLUMN_DETAILS.value
+                    ):
+                        paragraphs = entry.snapshot.detail_notes
+                    elif (
+                        isinstance(entry.snapshot, MultivariateOutlierExportSnapshot)
+                        and component.key == OutlierExportComponent.MODEL_SUMMARY.value
                     ):
                         paragraphs = entry.snapshot.notes
                     prepared_components.append(
@@ -2056,6 +2082,59 @@ def _regression_report_rows(
         message = "Regression model metrics must include their raw metric and notes columns."
         raise ValueError(message)
     return raw_metrics.loc[raw_metrics["metric"].notna()].drop(columns="notes").copy()
+
+
+def _outlier_report_rows(
+    snapshot: OutlierExportSnapshot,
+    component_keys: Sequence[str],
+    translate: Callable[[str, str], str],
+) -> dict[OutlierExportComponent, pd.DataFrame]:
+    """Separate captured Outlier notes from actual rows in report-only tables."""
+    components = tuple(
+        component
+        for component in OutlierExportComponent
+        if component is not OutlierExportComponent.CHARTS and component.value in component_keys
+    )
+    if not components:
+        return {}
+
+    if isinstance(snapshot, MultivariateOutlierExportSnapshot):
+        score_label = translate("MultivariateOutliersView", "Anomaly score")
+    else:
+        score_label = {
+            OutlierMethod.IQR: translate("OutliersView", "Distance past fence"),
+            OutlierMethod.Z_SCORE: translate("OutliersView", "z"),
+            OutlierMethod.MODIFIED_Z_SCORE: translate("OutliersView", "Modified z"),
+        }[snapshot.summary.method]
+
+    raw_tables = outlier_export_tables(
+        snapshot,
+        components,
+        row_label=translate("OutliersView", "Row"),
+        score_label=score_label,
+    )
+    report_tables: dict[OutlierExportComponent, pd.DataFrame] = {}
+    for component, raw_table in raw_tables.items():
+        if component is OutlierExportComponent.COLUMN_SUMMARY:
+            if not {"column", "status", "notes"}.issubset(raw_table.columns):
+                message = "Outlier column summaries must include raw column, status and notes fields."
+                raise ValueError(message)
+            frame = raw_table.loc[raw_table["column"].notna()].copy()
+            screened = frame["status"].isna()
+            has_screened_columns = bool(screened.any())
+            has_unscreened_columns = bool(frame["status"].notna().any())
+            frame = frame.drop(columns="notes")
+            if has_screened_columns and not has_unscreened_columns:
+                frame = frame.drop(columns="status")
+        elif component in (OutlierExportComponent.COLUMN_DETAILS, OutlierExportComponent.MODEL_SUMMARY):
+            if not {"metric", "notes"}.issubset(raw_table.columns):
+                message = "Outlier metric tables must include raw metric and notes fields."
+                raise ValueError(message)
+            frame = raw_table.loc[raw_table["metric"].notna()].drop(columns="notes").copy()
+        else:
+            frame = raw_table.copy()
+        report_tables[component] = frame
+    return report_tables
 
 
 def _component_translation_context(

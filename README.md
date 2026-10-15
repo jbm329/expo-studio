@@ -96,6 +96,11 @@ retain their existing Notes column.
 Logistic, Poisson, Negative Binomial, and Cox HTML reports show captured model
 notes as separate paragraphs below the selected Model metrics table; exports
 retain their existing Notes column. Linear regression reports are unchanged.
+Outliers HTML reports place captured summary, detail, and model notes below
+their respective tables without note-only rows. The summary Status column is
+shown when a column could not be screened; otherwise it is omitted. Univariate
+column details use the shared **Model summary** heading across Analysis,
+Reports, HTML, and exports.
 Correlation entries are titled by their applied method and show the ordered
 columns used. Pearson, Spearman, and Kendall results can coexist; changing
 columns within a method requires an explicit replacement, and rerunning the

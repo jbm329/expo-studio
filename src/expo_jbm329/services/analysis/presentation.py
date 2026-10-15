@@ -122,7 +122,6 @@ class PresentationLabel(StrEnum):
     EXPECTED_OUTLIER_FRACTION = "expected_outlier_fraction"
     LOF_NEIGHBORS = "lof_neighbors"
     COLUMN_SUMMARY = "column_summary"
-    COLUMN_DETAILS = "column_details"
     MODEL_SUMMARY = "model_summary"
     POTENTIAL_OUTLIERS = "potential_outliers"
     COLUMN_DISTRIBUTION = "column_distribution"
@@ -241,7 +240,6 @@ _LABEL_DEFINITIONS: dict[PresentationLabel, PresentationLabelDefinition] = {
     ),
     PresentationLabel.LOF_NEIGHBORS: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "LOF neighbors:"),
     PresentationLabel.COLUMN_SUMMARY: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Column summary"),
-    PresentationLabel.COLUMN_DETAILS: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Column details"),
     PresentationLabel.MODEL_SUMMARY: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Model summary"),
     PresentationLabel.POTENTIAL_OUTLIERS: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Potential outliers"),
     PresentationLabel.COLUMN_DISTRIBUTION: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Column distribution"),
@@ -441,7 +439,7 @@ def outlier_component_label(
     """Return the shared, content-specific label for an outlier component."""
     labels = {
         OutlierExportComponent.COLUMN_SUMMARY: PresentationLabel.COLUMN_SUMMARY,
-        OutlierExportComponent.COLUMN_DETAILS: PresentationLabel.COLUMN_DETAILS,
+        OutlierExportComponent.COLUMN_DETAILS: PresentationLabel.MODEL_SUMMARY,
         OutlierExportComponent.MODEL_SUMMARY: PresentationLabel.MODEL_SUMMARY,
         OutlierExportComponent.POTENTIAL_OUTLIERS: PresentationLabel.POTENTIAL_OUTLIERS,
     }

@@ -4828,7 +4828,6 @@ def _outliers_export_context(snapshot: OutlierExportSnapshot):
 
 _OUTLIERS_TRANSLATIONS = {
     "Column summary": "Kolumnsammanfattning",
-    "Column details": "Kolumndetaljer",
     "Model summary": "Modellsammanfattning",
     "Potential outliers": "Potentiella avvikare",
     "Column distributions": "Diagram",
@@ -4862,13 +4861,13 @@ def test_univariate_outlier_excel_export_routes_localized_sheets_and_worker_char
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"] is True
     assert kwargs["chart_sheet_name"] == "Diagram"
-    assert list(kwargs["sheets"]) == ["Kolumnsammanfattning", "Kolumndetaljer", "Potentiella avvikare"]
+    assert list(kwargs["sheets"]) == ["Kolumnsammanfattning", "Modellsammanfattning", "Potentiella avvikare"]
     summary = kwargs["sheets"]["Kolumnsammanfattning"]
     assert summary.columns[0] == "Kolumn"
     assert summary.columns[-2:].tolist() == ["Status SV", "Anteckningar"]
     assert summary.loc[summary["Kolumn"] == "few", "Status SV"].tolist() == ["F?r f? v?rden"]
     assert summary["Status SV"].isna().sum() == len(summary) - 1
-    details = kwargs["sheets"]["Kolumndetaljer"]
+    details = kwargs["sheets"]["Modellsammanfattning"]
     assert details.columns.tolist() == ["M?tt", "V?rde", "Anteckningar"]
     assert details["M?tt"].iloc[0] == "Tr?skel"
     assert details["V?rde"].iloc[0] == 1.5
@@ -5007,11 +5006,11 @@ def test_outlier_export_uses_compiled_swedish_labels() -> None:
     kwargs = exporter.export_excel.call_args.kwargs
     assert kwargs["chart_sheet_name"] == "Kolumnfördelningar"
     sheets = kwargs["sheets"]
-    assert list(sheets) == ["Kolumnsammanfattning", "Kolumndetaljer", "Potentiella avvikare"]
+    assert list(sheets) == ["Kolumnsammanfattning", "Modellsammanfattning", "Potentiella avvikare"]
     summary = sheets["Kolumnsammanfattning"]
     assert summary.columns[0] == "Kolumn"
     assert "För få värden" in summary["Status"].dropna().tolist()
-    details = sheets["Kolumndetaljer"]
+    details = sheets["Modellsammanfattning"]
     assert details.columns.tolist() == ["Mått", "Värde", "Noteringar"]
     assert details["Mått"].tolist()[:3] == ["Tröskel", "Värden", "Saknade"]
     assert sheets["Potentiella avvikare"].columns[2] == "Avstånd förbi gränsen"

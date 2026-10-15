@@ -478,7 +478,7 @@ def test_outlier_component_labels_are_shared_and_descriptive():
 
     assert [component.label for component in univariate] == [
         "Column summary",
-        "Column details",
+        "Model summary",
         "Potential outliers",
         "Column distributions",
     ]

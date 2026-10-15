@@ -18,6 +18,8 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Outliers share configured method titles, applied-setting summaries, and content-specific chart labels across Analysis, Reports, HTML, and exports; univariate detail changes replace only the captured detail, while complete screening configurations coexist and identical reruns require explicit review
 - HTML hypothesis reports separate captured explanatory notes from actual test-result rows; table exports retain the existing Notes column
 - HTML logistic, Poisson, Negative Binomial, and Cox reports show captured notes below Model metrics; table exports retain the existing Notes column
+- HTML Outliers reports show captured summary/detail/model notes below their tables, omit note-only rows, and show Status only when unscreened columns need explanations
+- Univariate Outliers detail uses the shared Model summary heading across Analysis, Reports, HTML, and exports
 
 ### Added
 - Categorical tab in Statistics with frequency counts, percentages, and separate missing-value counts

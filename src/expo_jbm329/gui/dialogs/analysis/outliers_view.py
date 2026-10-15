@@ -288,7 +288,10 @@ class OutliersView(QWidget):
             )
             self._chart_layout.addWidget(build_section_scroll_area(self._build_histogram(detail), self._chart_panel), 1)
             self._statistics_layout.addWidget(
-                self._build_section_title(self.tr("Column details"), self._statistics_panel)
+                self._build_section_title(
+                    translate_presentation_label(PresentationLabel.MODEL_SUMMARY, QCoreApplication.translate),
+                    self._statistics_panel,
+                )
             )
             self._statistics_layout.addWidget(
                 build_section_scroll_area(self._build_detail_statistics(detail), self._statistics_panel), 1
