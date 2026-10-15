@@ -98,9 +98,9 @@ at the top; dataset dimensions remain available in Overview.
 Hypothesis-test HTML reports show captured explanatory notes as separate
 paragraphs below the selected Test results table; spreadsheet and data exports
 retain their existing Notes column.
-Logistic, Poisson, Negative Binomial, and Cox HTML reports show captured model
+Linear, Logistic, Poisson, Negative Binomial, and Cox HTML reports show captured model
 notes as separate paragraphs below the selected Model metrics table; exports
-retain their existing Notes column. Linear regression reports are unchanged.
+retain their existing Notes column and note-only rows.
 Outliers HTML reports place captured summary, detail, and model notes below
 their respective tables without note-only rows. The summary Status column is
 shown when a column could not be screened; otherwise it is omitted. Univariate

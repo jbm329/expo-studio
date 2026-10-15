@@ -883,14 +883,17 @@ def test_regression_html_and_export_tables_share_applied_labels(factory, model, 
 
 @pytest.mark.parametrize(
     "factory",
-    [logistic_snapshot, poisson_snapshot, negative_binomial_snapshot, cox_snapshot],
+    [linear_snapshot, logistic_snapshot, poisson_snapshot, negative_binomial_snapshot, cox_snapshot],
 )
-def test_nonlinear_regression_html_separates_notes_without_changing_exports(factory):
+def test_regression_html_separates_notes_without_changing_exports(factory):
     snapshot = replace(factory(), notes=tuple(f"Model note {index}" for index in range(30)))
     export_before = regression_export_tables(snapshot, (RegressionExportComponent.MODEL_METRICS,))[
         RegressionExportComponent.MODEL_METRICS
     ]
     raw_metrics = regression_metrics_table(snapshot)
+    localized_before = localized_report_tables(AnalysisCategory.REGRESSION, snapshot, ("model_metrics",))[
+        "Model metrics"
+    ]
     document = ReportDocument()
     document.upsert(_entry(AnalysisCategory.REGRESSION, snapshot, ("model_metrics",)))
 
@@ -922,6 +925,7 @@ def test_nonlinear_regression_html_separates_notes_without_changing_exports(fact
     assert export_before["value"].dtype == raw_metrics["value"].dtype
     assert export_before["notes"].dtype == pd.StringDtype()
     pd.testing.assert_frame_equal(export_after, export_before)
+    pd.testing.assert_frame_equal(localized_export, localized_before)
     assert html.index("</table></div>") < html.index('<div class="report-paragraphs">')
     assert html.index("Model note 0") < html.index("Model note 1") < html.index("Model note 29")
     assert html.count("Model note 0") == 1
@@ -929,9 +933,9 @@ def test_nonlinear_regression_html_separates_notes_without_changing_exports(fact
 
 @pytest.mark.parametrize(
     "factory",
-    [logistic_snapshot, poisson_snapshot, negative_binomial_snapshot, cox_snapshot],
+    [linear_snapshot, logistic_snapshot, poisson_snapshot, negative_binomial_snapshot, cox_snapshot],
 )
-def test_nonlinear_regression_html_without_notes_has_only_metric_rows(factory):
+def test_regression_html_without_notes_has_only_metric_rows(factory):
     snapshot = replace(factory(), notes=())
     raw_metrics = regression_metrics_table(snapshot)
     document = ReportDocument()
@@ -947,9 +951,10 @@ def test_nonlinear_regression_html_without_notes_has_only_metric_rows(factory):
     assert '<div class="report-paragraphs">' not in html
 
 
-def test_nonlinear_regression_html_localizes_metrics_and_escapes_ordered_notes():
+@pytest.mark.parametrize("factory", [linear_snapshot, logistic_snapshot])
+def test_regression_html_localizes_metrics_and_escapes_ordered_notes(factory):
     notes = ("First <calibration> & observed\ncontinued safely", "Second note")
-    snapshot = replace(logistic_snapshot(), notes=notes)
+    snapshot = replace(factory(), notes=notes)
     document = ReportDocument()
     document.upsert(_entry(AnalysisCategory.REGRESSION, snapshot, ("model_metrics",)))
 
@@ -970,8 +975,9 @@ def test_nonlinear_regression_html_localizes_metrics_and_escapes_ordered_notes()
     assert "white-space: pre-wrap" in html
 
 
-def test_nonlinear_regression_html_keeps_real_metric_with_missing_value(monkeypatch):
-    snapshot = logistic_snapshot()
+@pytest.mark.parametrize("factory", [linear_snapshot, logistic_snapshot])
+def test_regression_html_keeps_real_metric_with_missing_value(monkeypatch, factory):
+    snapshot = factory()
     export_tables = regression_export_tables
 
     def with_missing_metric_value(snapshot, components, *, intercept_label="(Intercept)"):
@@ -996,39 +1002,47 @@ def test_nonlinear_regression_html_keeps_real_metric_with_missing_value(monkeypa
     assert len(prepared_component.tables[0].rows) == len(regression_metrics_table(snapshot)["metric"].dropna())
 
 
-def test_nonlinear_regression_notes_are_omitted_when_model_metrics_are_not_selected(monkeypatch):
-    snapshot = replace(logistic_snapshot(), notes=("Hidden model note",))
+@pytest.mark.parametrize("factory", [linear_snapshot, logistic_snapshot])
+@pytest.mark.parametrize("selection", [("charts",), ("coefficients",), ("coefficients", "charts")])
+def test_regression_notes_are_omitted_when_model_metrics_are_not_selected(monkeypatch, factory, selection):
+    snapshot = replace(factory(), notes=("Hidden model note",))
     document = ReportDocument()
-    document.upsert(_entry(AnalysisCategory.REGRESSION, snapshot, ("charts",)))
+    document.upsert(_entry(AnalysisCategory.REGRESSION, snapshot, selection))
     monkeypatch.setattr(
         "expo_jbm329.services.analysis.report.render_regression_charts",
         lambda *_args, **_kwargs: (ExcelChartImage("ROC", b"image", 10, 10),),
     )
 
     prepared = prepare_report_content(document)
-    prepared_component = prepared.entries[0].components[0]
     html = render_prepared_report_html(prepared)
 
-    assert prepared_component.key == "charts"
-    assert prepared_component.paragraphs == ()
+    assert tuple(component.key for component in prepared.entries[0].components) == selection
+    assert all(component.paragraphs == () for component in prepared.entries[0].components)
     assert "Hidden model note" not in html
     assert '<div class="report-paragraphs">' not in html
 
 
-def test_linear_regression_html_keeps_existing_model_metrics_notes_column():
+def test_linear_regression_html_places_model_notes_only_below_metrics(monkeypatch):
     snapshot = replace(linear_snapshot(), notes=("Linear note",))
-    raw_metrics = regression_metrics_table(snapshot)
+    entry = _entry(AnalysisCategory.REGRESSION, snapshot, ("coefficients", "model_metrics", "charts"))
+    entry = entry.with_selection(entry.selected_components, "User entry note")
     document = ReportDocument()
-    document.upsert(_entry(AnalysisCategory.REGRESSION, snapshot, ("model_metrics",)))
+    document.upsert(entry)
+    monkeypatch.setattr(
+        "expo_jbm329.services.analysis.report.render_regression_charts",
+        lambda *_args, **_kwargs: (ExcelChartImage("Diagnostics", b"image", 10, 10),),
+    )
 
     prepared = prepare_report_content(document)
-    prepared_component = prepared.entries[0].components[0]
+    coefficients, metrics, charts = prepared.entries[0].components
     html = render_prepared_report_html(prepared)
 
-    assert prepared_component.tables[0].headers == ("Metric", "Value", "Notes")
-    assert len(prepared_component.tables[0].rows) == max(len(raw_metrics), len(snapshot.notes))
-    assert prepared_component.paragraphs == ()
-    assert "Linear note" in html
+    assert metrics.tables[0].headers == ("Metric", "Value")
+    assert metrics.paragraphs == ("Linear note",)
+    assert coefficients.paragraphs == charts.paragraphs == ()
+    assert html.count("Linear note") == 1
+    assert html.count("User entry note") == 1
+    assert html.index("Linear note") > html.index("Model metrics</h3>")
 
 
 def test_regression_html_escapes_long_applied_roles_reference_levels_and_terms():

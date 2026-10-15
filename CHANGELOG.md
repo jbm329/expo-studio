@@ -20,7 +20,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Regression shares applied model, outcome-role, ordered predictor, modeled-term, reference-coding, and component labels across Analysis, Reports, HTML, and exports; distinct full configurations coexist and identical reruns require explicit result review
 - Outliers share configured method titles, applied-setting summaries, and content-specific chart labels across Analysis, Reports, HTML, and exports; univariate detail changes replace only the captured detail, while complete screening configurations coexist and identical reruns require explicit review
 - HTML hypothesis reports separate captured explanatory notes from actual test-result rows; table exports retain the existing Notes column
-- HTML logistic, Poisson, Negative Binomial, and Cox reports show captured notes below Model metrics; table exports retain the existing Notes column
+- HTML Linear, Logistic, Poisson, Negative Binomial, and Cox reports show captured notes below Model metrics and omit note-only rows; table exports retain the existing Notes column and rows
 - HTML Outliers reports show captured summary/detail/model notes below their tables, omit note-only rows, and show Status only when unscreened columns need explanations
 - HTML clustering reports show captured model notes below Model summary and omit note-only rows; table exports retain the existing Notes column
 - HTML PCA reports show captured model notes below Model summary and omit note-only rows; table exports retain the existing Notes column

@@ -1884,7 +1884,6 @@ def prepare_report_content(
                         )
                     elif (
                         isinstance(entry.snapshot, RegressionExportSnapshot)
-                        and entry.snapshot.model is not RegressionModel.LINEAR
                         and component.key == RegressionExportComponent.MODEL_METRICS.value
                     ):
                         paragraphs = entry.snapshot.notes
@@ -2115,10 +2114,9 @@ def _regression_report_rows(
     snapshot: ReportSnapshot,
     component_keys: Sequence[str],
 ) -> pd.DataFrame | None:
-    """Separate non-linear regression notes from metric rows before localization."""
+    """Separate captured regression notes from actual metric rows before localization."""
     if (
         not isinstance(snapshot, RegressionExportSnapshot)
-        or snapshot.model is RegressionModel.LINEAR
         or RegressionExportComponent.MODEL_METRICS.value not in component_keys
     ):
         return None
