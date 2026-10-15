@@ -408,9 +408,9 @@ class ConnectionEditor(QDialog):
 
         # Default port
         dport = _default_port_for(db_type)
-        if dport is not None and not self.port_edit.text().strip():
+        if dport is not None:
             self.port_edit.setText(str(dport))
-        elif db_type == "sqlite":
+        else:
             self.port_edit.clear()
 
         self.on_protocol_changed()
