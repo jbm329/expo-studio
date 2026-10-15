@@ -59,7 +59,7 @@ from expo_jbm329.services.analysis.group_comparison import (
     initialize_group_comparison,
 )
 from expo_jbm329.services.analysis.multivariate_outliers import initialize_multivariate_outliers
-from expo_jbm329.services.analysis.outliers import initialize_outlier_summary
+from expo_jbm329.services.analysis.outliers import OutlierMethod, initialize_outlier_summary
 from expo_jbm329.services.analysis.outliers_export import OutlierExportComponent, OutlierExportRequest
 from expo_jbm329.services.analysis.paired_comparison import initialize_paired_comparison
 from expo_jbm329.services.analysis.pca import initialize_pca
@@ -640,6 +640,88 @@ def test_regression_configurations_coexist_and_identical_reruns_update_explicitl
     assert updated[0].note == original.note
     assert updated[0].selected_components == original.selected_components
     assert updated[1:] == entries_before_update[1:]
+
+
+def test_univariate_outlier_detail_replacement_and_summary_rerun_preserve_report_state(monkeypatch):
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
+    dialog.select_category(AnalysisCategory.OUTLIERS)
+    initial = univariate_snapshot(column="a")
+
+    def accept_initial(report_dialog):
+        report_dialog.findChild(QPlainTextEdit).setPlainText("Keep this outlier note")
+        report_dialog._component_choices["charts"].setChecked(False)  # noqa: SLF001
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", accept_initial)
+    dialog.set_exportable_outliers(initial)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    original = dialog.report_document().entries[0]
+    other_entry = create_report_entry(AnalysisCategory.PCA, _make_datasets()[0], pca_snapshot())
+    dialog.report_document().upsert(other_entry)
+    ordered_entries = dialog.report_document().entries
+
+    changed_detail = initial.with_detail(univariate_snapshot(column="few").detail, ("Changed detail note",))
+    dialog.set_exportable_outliers(changed_detail)
+    assert dialog._report_action_button.text() == "Replace report result"  # noqa: SLF001
+    rejected: list[ReportNotesDialog] = []
+
+    def cancel_detail_replacement(review_dialog):
+        rejected.append(review_dialog)
+        labels = [label.text() for label in review_dialog.findChildren(QLabel)]
+        assert any("Stored result" in label and "Selected detail column: a" in label for label in labels)
+        assert any("Incoming result" in label and "Selected detail column: few" in label for label in labels)
+        assert any("Unavailable stored selections: Potential outliers" in label for label in labels)
+        assert review_dialog.notes() == "Keep this outlier note"
+        assert any(button.text() == "Replace in report" for button in review_dialog.findChildren(QPushButton))
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", cancel_detail_replacement)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    assert len(rejected) == 1
+    assert dialog.report_document().entries == ordered_entries
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", lambda _dialog: QDialog.DialogCode.Accepted)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    replaced = dialog.report_document().entries
+    assert tuple(entry.entry_id for entry in replaced) == tuple(entry.entry_id for entry in ordered_entries)
+    assert replaced[0].snapshot is changed_detail
+    assert replaced[0].capture_id == initial.capture_id
+    assert replaced[0].note == original.note
+    assert replaced[0].selected_components == ("column_summary", "column_details")
+
+    rerun = univariate_snapshot(column="few")
+    dialog.set_exportable_outliers(rerun)
+    assert dialog._report_action_button.text() == "Update report result"  # noqa: SLF001
+    before_cancel = dialog.report_document().entries
+    monkeypatch.setattr(
+        ReportNotesDialog,
+        "exec",
+        lambda review_dialog: (
+            pytest.fail("The cancellation test below must retain report state")
+            if review_dialog.notes() != original.note
+            else QDialog.DialogCode.Rejected
+        ),
+    )
+    dialog._toggle_report_entry()  # noqa: SLF001
+    assert dialog.report_document().entries == before_cancel
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", lambda _dialog: QDialog.DialogCode.Accepted)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    updated = dialog.report_document().entries
+    assert updated[0].snapshot is rerun
+    assert updated[0].capture_id == rerun.capture_id
+    assert updated[0].note == original.note
+    assert updated[0].selected_components == replaced[0].selected_components
+    assert updated[1] == other_entry
+
+    different_method = univariate_snapshot(OutlierMethod.Z_SCORE)
+    dialog.set_exportable_outliers(different_method)
+    assert dialog._report_action_button.text() == "Add to report"  # noqa: SLF001
+    dialog._toggle_report_entry()  # noqa: SLF001
+    assert len(dialog.report_document().entries) == 3
+    assert dialog.report_document().entries[0].entry_id == original.entry_id
+    assert dialog.report_document().entries[1].entry_id == other_entry.entry_id
+    assert dialog.report_document().entries[2].snapshot is different_method
 
 
 def test_hypothesis_report_slots_coexist_and_identical_reruns_require_atomic_update(monkeypatch):
@@ -1605,7 +1687,7 @@ def test_outliers_export_selection_emits_only_the_current_snapshot(monkeypatch):
     assert [choice.text() for choice in captured[0].findChildren(QCheckBox)] == [
         "Model summary",
         "Potential outliers",
-        "Charts",
+        "Outlier projection",
     ]
     assert len(received) == 1
     assert received[0].snapshot is snapshot

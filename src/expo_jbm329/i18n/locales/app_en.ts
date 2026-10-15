@@ -9742,4 +9742,33 @@ all hazard ratios and intervals must be finite and positive.</translation>
     <message><source>Survival charts</source><translation>Survival charts</translation></message>
     <message><source>(Intercept)</source><translation>(Intercept)</translation></message>
 </context>
+<context>
+    <name>OutliersPresentation</name>
+    <message><source>Outliers</source><translation>Outliers</translation></message>
+    <message><source>{category} — {method}</source><translation>{category} — {method}</translation></message>
+    <message><source>IQR (Tukey&apos;s fences)</source><translation>IQR (Tukey&apos;s fences)</translation></message>
+    <message><source>Z-score</source><translation>Z-score</translation></message>
+    <message><source>Modified Z-score</source><translation>Modified Z-score</translation></message>
+    <message><source>Isolation Forest</source><translation>Isolation Forest</translation></message>
+    <message><source>Local Outlier Factor</source><translation>Local Outlier Factor</translation></message>
+    <message><source>Threshold:</source><translation>Threshold:</translation></message>
+    <message><source>IQR multiplier:</source><translation>IQR multiplier:</translation></message>
+    <message><source>Score threshold:</source><translation>Score threshold:</translation></message>
+    <message><source>Screened columns:</source><translation>Screened columns:</translation></message>
+    <message><source>Selected detail column:</source><translation>Selected detail column:</translation></message>
+    <message><source>None</source><translation>None</translation></message>
+    <message><source>Features:</source><translation>Features:</translation></message>
+    <message><source>Standardization:</source><translation>Standardization:</translation></message>
+    <message><source>Standardized</source><translation>Standardized</translation></message>
+    <message><source>Not standardized</source><translation>Not standardized</translation></message>
+    <message><source>Expected outlier fraction:</source><translation>Expected outlier fraction:</translation></message>
+    <message><source>LOF neighbors:</source><translation>LOF neighbors:</translation></message>
+    <message><source>Column summary</source><translation>Column summary</translation></message>
+    <message><source>Column details</source><translation>Column details</translation></message>
+    <message><source>Model summary</source><translation>Model summary</translation></message>
+    <message><source>Potential outliers</source><translation>Potential outliers</translation></message>
+    <message><source>Column distribution</source><translation>Column distribution</translation></message>
+    <message><source>Column distributions</source><translation>Column distributions</translation></message>
+    <message><source>Outlier projection</source><translation>Outlier projection</translation></message>
+</context>
 </TS>

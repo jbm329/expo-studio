@@ -9897,4 +9897,33 @@ alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
     <message><source>Survival charts</source><translation>Överlevnadsdiagram</translation></message>
     <message><source>(Intercept)</source><translation>(Intercept)</translation></message>
 </context>
+<context>
+    <name>OutliersPresentation</name>
+    <message><source>Outliers</source><translation>Extremvärden</translation></message>
+    <message><source>{category} — {method}</source><translation>{category} — {method}</translation></message>
+    <message><source>IQR (Tukey&apos;s fences)</source><translation>IQR (Tukeys gränser)</translation></message>
+    <message><source>Z-score</source><translation>Z-poäng</translation></message>
+    <message><source>Modified Z-score</source><translation>Modifierad Z-poäng</translation></message>
+    <message><source>Isolation Forest</source><translation>Isolation Forest</translation></message>
+    <message><source>Local Outlier Factor</source><translation>Local Outlier Factor</translation></message>
+    <message><source>Threshold:</source><translation>Tröskel:</translation></message>
+    <message><source>IQR multiplier:</source><translation>IQR-multiplikator:</translation></message>
+    <message><source>Score threshold:</source><translation>Poängtröskel:</translation></message>
+    <message><source>Screened columns:</source><translation>Analyserade kolumner:</translation></message>
+    <message><source>Selected detail column:</source><translation>Vald detaljkolumn:</translation></message>
+    <message><source>None</source><translation>Ingen</translation></message>
+    <message><source>Features:</source><translation>Variabler:</translation></message>
+    <message><source>Standardization:</source><translation>Standardisering:</translation></message>
+    <message><source>Standardized</source><translation>Standardiserade</translation></message>
+    <message><source>Not standardized</source><translation>Inte standardiserade</translation></message>
+    <message><source>Expected outlier fraction:</source><translation>Förväntad andel avvikare:</translation></message>
+    <message><source>LOF neighbors:</source><translation>LOF-grannar:</translation></message>
+    <message><source>Column summary</source><translation>Kolumnsammanfattning</translation></message>
+    <message><source>Column details</source><translation>Kolumndetaljer</translation></message>
+    <message><source>Model summary</source><translation>Modellsammanfattning</translation></message>
+    <message><source>Potential outliers</source><translation>Potentiella avvikare</translation></message>
+    <message><source>Column distribution</source><translation>Kolumnfördelning</translation></message>
+    <message><source>Column distributions</source><translation>Kolumnfördelningar</translation></message>
+    <message><source>Outlier projection</source><translation>Projektion av avvikare</translation></message>
+</context>
 </TS>

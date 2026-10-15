@@ -12,6 +12,12 @@ from expo_jbm329.services.analysis.correlation import CorrelationMethod, analyze
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportSnapshot
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportSnapshot
+from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierMethod
+from expo_jbm329.services.analysis.outliers import OutlierMethod
+from expo_jbm329.services.analysis.outliers_export import (
+    MultivariateOutlierExportSnapshot,
+    UnivariateOutlierExportSnapshot,
+)
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.paired_comparison import analyze_paired_comparison
 from expo_jbm329.services.analysis.regression_export import RegressionExportSnapshot
@@ -24,6 +30,7 @@ from expo_jbm329.services.analysis.report import (
     available_report_components,
     correlation_report_configuration,
     create_report_entry,
+    outlier_report_configuration,
     report_entry_identity,
 )
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
@@ -31,7 +38,10 @@ from expo_jbm329.utils.dataset_ref import DatasetRef
 from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_correlation_export import _snapshot as correlation_snapshot
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
-from tests.analysis.test_outliers_export import multivariate_snapshot, univariate_snapshot
+from tests.analysis.test_outliers_export import (
+    multivariate_snapshot,
+    univariate_snapshot,
+)
 from tests.analysis.test_pca_export import pca_snapshot
 from tests.analysis.test_regression_export import (
     cox_snapshot,
@@ -460,6 +470,100 @@ def test_time_series_report_omits_unavailable_autocorrelation():
 )
 def test_outlier_report_offers_only_displayed_components(snapshot, expected):
     assert [component.key for component in available_report_components(AnalysisCategory.OUTLIERS, snapshot)] == expected
+
+
+def test_outlier_component_labels_are_shared_and_descriptive():
+    univariate = available_report_components(AnalysisCategory.OUTLIERS, univariate_snapshot())
+    multivariate = available_report_components(AnalysisCategory.OUTLIERS, multivariate_snapshot())
+
+    assert [component.label for component in univariate] == [
+        "Column summary",
+        "Column details",
+        "Potential outliers",
+        "Column distributions",
+    ]
+    assert [component.label for component in multivariate] == [
+        "Model summary",
+        "Potential outliers",
+        "Outlier projection",
+    ]
+
+
+def test_univariate_report_slot_uses_screened_columns_not_the_detail_selection():
+    initial = univariate_snapshot(column="a")
+    another_detail = initial.with_detail(univariate_snapshot(column="b").detail, ())
+    changed_method = univariate_snapshot(OutlierMethod.Z_SCORE)
+    changed_threshold_summary = replace(initial.summary, threshold=2.0)
+    changed_threshold = UnivariateOutlierExportSnapshot(
+        changed_threshold_summary,
+        initial.data,
+        initial.chart_labels,
+        detail=None,
+    )
+    reduced_columns = ("a", "b")
+    reduced_summary = replace(
+        initial.summary,
+        available_columns=reduced_columns,
+        columns=tuple(item for item in initial.summary.columns if item.column in reduced_columns),
+    )
+    reduced_screen = UnivariateOutlierExportSnapshot(
+        reduced_summary,
+        initial.data.loc[:, list(reduced_columns)].copy(),
+        initial.chart_labels,
+    )
+
+    identity = report_entry_identity(AnalysisCategory.OUTLIERS, DATASET.tab_id, initial)
+    assert report_entry_identity(AnalysisCategory.OUTLIERS, DATASET.tab_id, another_detail) == identity
+    assert report_entry_identity(AnalysisCategory.OUTLIERS, DATASET.tab_id, changed_method) != identity
+    assert report_entry_identity(AnalysisCategory.OUTLIERS, DATASET.tab_id, changed_threshold) != identity
+    assert report_entry_identity(AnalysisCategory.OUTLIERS, DATASET.tab_id, reduced_screen) != identity
+    assert outlier_report_configuration(create_report_entry(AnalysisCategory.OUTLIERS, DATASET, initial)) != (
+        outlier_report_configuration(create_report_entry(AnalysisCategory.OUTLIERS, DATASET, another_detail))
+    )
+
+
+@pytest.mark.parametrize(
+    ("change", "is_same_slot"),
+    [
+        ({"method": MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR}, False),
+        ({"columns": ("y", "x")}, False),
+        ({"standardize": False}, False),
+        ({"contamination": 0.1}, False),
+        ({"lof_neighbors": 5}, True),
+    ],
+)
+def test_multivariate_report_slot_tracks_applied_settings_and_ignores_inactive_lof_neighbors(change, is_same_slot):
+    initial = multivariate_snapshot()
+    result = replace(initial.result, **change)
+    candidate = MultivariateOutlierExportSnapshot(result, initial.chart_labels, initial.notes)
+
+    assert (
+        report_entry_identity(AnalysisCategory.OUTLIERS, DATASET.tab_id, candidate)
+        == report_entry_identity(AnalysisCategory.OUTLIERS, DATASET.tab_id, initial)
+    ) is is_same_slot
+
+
+def test_multivariate_lof_neighbor_setting_is_part_of_report_slot_identity():
+    initial = multivariate_snapshot(MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR)
+    changed_neighbors = MultivariateOutlierExportSnapshot(
+        replace(initial.result, lof_neighbors=3),
+        initial.chart_labels,
+        initial.notes,
+    )
+
+    assert report_entry_identity(AnalysisCategory.OUTLIERS, DATASET.tab_id, changed_neighbors) != report_entry_identity(
+        AnalysisCategory.OUTLIERS, DATASET.tab_id, initial
+    )
+
+
+def test_outlier_report_entry_uses_snapshot_capture_id_and_validates_it():
+    snapshot = univariate_snapshot()
+    entry = create_report_entry(AnalysisCategory.OUTLIERS, DATASET, snapshot)
+
+    assert entry.capture_id == snapshot.capture_id
+    assert entry.with_selection(entry.selected_components, "saved note").capture_id == snapshot.capture_id
+    with pytest.raises(ValueError, match="applied-result capture identifier"):
+        replace(entry, capture_id="different-capture")
 
 
 def test_report_component_request_rejects_category_snapshot_mismatch():

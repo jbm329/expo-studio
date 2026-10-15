@@ -12,6 +12,14 @@ from expo_jbm329.services.analysis.correlation import CorrelationMethod
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportSnapshot
 from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportComponent, HypothesisExportSnapshot
+from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierMethod
+from expo_jbm329.services.analysis.outliers import OutlierMethod
+from expo_jbm329.services.analysis.outliers_export import (
+    MultivariateOutlierExportSnapshot,
+    OutlierExportComponent,
+    OutlierExportSnapshot,
+    UnivariateOutlierExportSnapshot,
+)
 from expo_jbm329.services.analysis.paired_comparison import PairedComparisonMethod, PairedComparisonResult
 from expo_jbm329.services.analysis.regression import RegressionResult, TermKind, term_name
 from expo_jbm329.services.analysis.regression_export import (
@@ -25,6 +33,7 @@ from expo_jbm329.services.analysis.regression_glm import (
     generalized_term_name,
 )
 from expo_jbm329.services.analysis.survival import SurvivalResult, survival_term_name
+from expo_jbm329.utils.format_utils import fmt_num, fmt_pct
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -93,6 +102,32 @@ class PresentationLabel(StrEnum):
     COUNT_DIAGNOSTICS = "count_diagnostics"
     SURVIVAL_CHARTS = "survival_charts"
     INTERCEPT = "intercept"
+    OUTLIERS = "outliers"
+    OUTLIERS_CONFIGURED_TITLE = "outliers_configured_title"
+    IQR_OUTLIERS = "iqr_outliers"
+    Z_SCORE_OUTLIERS = "z_score_outliers"
+    MODIFIED_Z_SCORE_OUTLIERS = "modified_z_score_outliers"
+    ISOLATION_FOREST = "isolation_forest"
+    LOCAL_OUTLIER_FACTOR = "local_outlier_factor"
+    THRESHOLD = "threshold"
+    IQR_MULTIPLIER = "iqr_multiplier"
+    SCORE_THRESHOLD = "score_threshold"
+    SCREENED_COLUMNS = "screened_columns"
+    SELECTED_DETAIL_COLUMN = "selected_detail_column"
+    NO_COLUMN_SELECTED = "no_column_selected"
+    FEATURES = "features"
+    STANDARDIZATION = "standardization"
+    STANDARDIZED = "standardized"
+    NOT_STANDARDIZED = "not_standardized"
+    EXPECTED_OUTLIER_FRACTION = "expected_outlier_fraction"
+    LOF_NEIGHBORS = "lof_neighbors"
+    COLUMN_SUMMARY = "column_summary"
+    COLUMN_DETAILS = "column_details"
+    MODEL_SUMMARY = "model_summary"
+    POTENTIAL_OUTLIERS = "potential_outliers"
+    COLUMN_DISTRIBUTION = "column_distribution"
+    COLUMN_DISTRIBUTIONS = "column_distributions"
+    OUTLIER_PROJECTION = "outlier_projection"
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,6 +141,7 @@ class PresentationLabelDefinition:
 _CORRELATION_CONTEXT = "CorrelationView"
 _HYPOTHESIS_CONTEXT = "HypothesisPresentation"
 _REGRESSION_CONTEXT = "RegressionPresentation"
+_OUTLIERS_CONTEXT = "OutliersPresentation"
 _LABEL_DEFINITIONS: dict[PresentationLabel, PresentationLabelDefinition] = {
     PresentationLabel.CORRELATION: PresentationLabelDefinition(_CORRELATION_CONTEXT, "Correlation"),
     PresentationLabel.CONFIGURED_TITLE: PresentationLabelDefinition(_CORRELATION_CONTEXT, "{category} — {method}"),
@@ -181,6 +217,36 @@ _LABEL_DEFINITIONS: dict[PresentationLabel, PresentationLabelDefinition] = {
     PresentationLabel.COUNT_DIAGNOSTICS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Count-model diagnostics"),
     PresentationLabel.SURVIVAL_CHARTS: PresentationLabelDefinition(_REGRESSION_CONTEXT, "Survival charts"),
     PresentationLabel.INTERCEPT: PresentationLabelDefinition(_REGRESSION_CONTEXT, "(Intercept)"),
+    PresentationLabel.OUTLIERS: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Outliers"),
+    PresentationLabel.OUTLIERS_CONFIGURED_TITLE: PresentationLabelDefinition(
+        _OUTLIERS_CONTEXT, "{category} — {method}"
+    ),
+    PresentationLabel.IQR_OUTLIERS: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "IQR (Tukey's fences)"),
+    PresentationLabel.Z_SCORE_OUTLIERS: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Z-score"),
+    PresentationLabel.MODIFIED_Z_SCORE_OUTLIERS: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Modified Z-score"),
+    PresentationLabel.ISOLATION_FOREST: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Isolation Forest"),
+    PresentationLabel.LOCAL_OUTLIER_FACTOR: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Local Outlier Factor"),
+    PresentationLabel.THRESHOLD: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Threshold:"),
+    PresentationLabel.IQR_MULTIPLIER: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "IQR multiplier:"),
+    PresentationLabel.SCORE_THRESHOLD: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Score threshold:"),
+    PresentationLabel.SCREENED_COLUMNS: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Screened columns:"),
+    PresentationLabel.SELECTED_DETAIL_COLUMN: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Selected detail column:"),
+    PresentationLabel.NO_COLUMN_SELECTED: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "None"),
+    PresentationLabel.FEATURES: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Features:"),
+    PresentationLabel.STANDARDIZATION: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Standardization:"),
+    PresentationLabel.STANDARDIZED: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Standardized"),
+    PresentationLabel.NOT_STANDARDIZED: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Not standardized"),
+    PresentationLabel.EXPECTED_OUTLIER_FRACTION: PresentationLabelDefinition(
+        _OUTLIERS_CONTEXT, "Expected outlier fraction:"
+    ),
+    PresentationLabel.LOF_NEIGHBORS: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "LOF neighbors:"),
+    PresentationLabel.COLUMN_SUMMARY: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Column summary"),
+    PresentationLabel.COLUMN_DETAILS: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Column details"),
+    PresentationLabel.MODEL_SUMMARY: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Model summary"),
+    PresentationLabel.POTENTIAL_OUTLIERS: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Potential outliers"),
+    PresentationLabel.COLUMN_DISTRIBUTION: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Column distribution"),
+    PresentationLabel.COLUMN_DISTRIBUTIONS: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Column distributions"),
+    PresentationLabel.OUTLIER_PROJECTION: PresentationLabelDefinition(_OUTLIERS_CONTEXT, "Outlier projection"),
 }
 
 _CATEGORY_FALLBACKS: dict[AnalysisCategory, str] = {
@@ -189,7 +255,7 @@ _CATEGORY_FALLBACKS: dict[AnalysisCategory, str] = {
     AnalysisCategory.HYPOTHESIS_TESTS: "Hypothesis Tests",
     AnalysisCategory.CORRELATION: _LABEL_DEFINITIONS[PresentationLabel.CORRELATION].source,
     AnalysisCategory.REGRESSION: "Regression",
-    AnalysisCategory.OUTLIERS: "Outliers",
+    AnalysisCategory.OUTLIERS: _LABEL_DEFINITIONS[PresentationLabel.OUTLIERS].source,
     AnalysisCategory.CLUSTERING: "Clustering",
     AnalysisCategory.PCA: "PCA",
     AnalysisCategory.TIME_SERIES: "Time Series",
@@ -294,6 +360,8 @@ def build_analysis_presentation(
     category: AnalysisCategory,
     snapshot: ReportSnapshot,
     translate: Callable[[str, str], str],
+    *,
+    number_format: Callable[[float], str] = fmt_num,
 ) -> AnalysisPresentation:
     """Build a presentation descriptor from a captured applied result.
 
@@ -305,6 +373,7 @@ def build_analysis_presentation(
         category: Category that owns the successful applied result.
         snapshot: Captured result, never live configuration controls.
         translate: Translation callback accepting a context and source label.
+        number_format: Locale-aware formatter for displayed numeric settings.
 
     Returns:
         Category title, configured analysis title, and typed settings.
@@ -331,9 +400,132 @@ def build_analysis_presentation(
             message = "Regression presentation requires a regression result snapshot."
             raise TypeError(message)
         return build_regression_presentation(snapshot, translate)
+    if category is AnalysisCategory.OUTLIERS:
+        if not isinstance(snapshot, (UnivariateOutlierExportSnapshot, MultivariateOutlierExportSnapshot)):
+            message = "Outliers presentation requires an outlier result snapshot."
+            raise TypeError(message)
+        return build_outliers_presentation(snapshot, translate, number_format=number_format)
     category_source = analysis_category_source(category)
     category_title = translate("AnalysisDialog", category_source)
     return AnalysisPresentation(category_title, category_title)
+
+
+def outlier_method_label(method: OutlierMethod, translate: Callable[[str, str], str]) -> str:
+    """Return the canonical translated name of a univariate outlier method."""
+    labels = {
+        OutlierMethod.IQR: PresentationLabel.IQR_OUTLIERS,
+        OutlierMethod.Z_SCORE: PresentationLabel.Z_SCORE_OUTLIERS,
+        OutlierMethod.MODIFIED_Z_SCORE: PresentationLabel.MODIFIED_Z_SCORE_OUTLIERS,
+    }
+    return translate_presentation_label(labels[method], translate)
+
+
+def multivariate_outlier_method_label(
+    method: MultivariateOutlierMethod,
+    translate: Callable[[str, str], str],
+) -> str:
+    """Return the canonical translated name of a multivariate outlier method."""
+    labels = {
+        MultivariateOutlierMethod.ISOLATION_FOREST: PresentationLabel.ISOLATION_FOREST,
+        MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR: PresentationLabel.LOCAL_OUTLIER_FACTOR,
+    }
+    return translate_presentation_label(labels[method], translate)
+
+
+def outlier_component_label(
+    component: OutlierExportComponent,
+    translate: Callable[[str, str], str],
+    *,
+    multivariate: bool,
+) -> str:
+    """Return the shared, content-specific label for an outlier component."""
+    labels = {
+        OutlierExportComponent.COLUMN_SUMMARY: PresentationLabel.COLUMN_SUMMARY,
+        OutlierExportComponent.COLUMN_DETAILS: PresentationLabel.COLUMN_DETAILS,
+        OutlierExportComponent.MODEL_SUMMARY: PresentationLabel.MODEL_SUMMARY,
+        OutlierExportComponent.POTENTIAL_OUTLIERS: PresentationLabel.POTENTIAL_OUTLIERS,
+    }
+    if component is OutlierExportComponent.CHARTS:
+        if multivariate:
+            return translate_presentation_label(PresentationLabel.OUTLIER_PROJECTION, translate)
+        return translate_presentation_label(PresentationLabel.COLUMN_DISTRIBUTIONS, translate)
+    return translate_presentation_label(labels[component], translate)
+
+
+def build_outliers_presentation(
+    snapshot: OutlierExportSnapshot,
+    translate: Callable[[str, str], str],
+    *,
+    number_format: Callable[[float], str] = fmt_num,
+) -> AnalysisPresentation:
+    """Build the configured title and all semantically relevant applied settings."""
+    category = translate_presentation_label(PresentationLabel.OUTLIERS, translate)
+    if isinstance(snapshot, UnivariateOutlierExportSnapshot):
+        summary = snapshot.summary
+        method = outlier_method_label(summary.method, translate)
+        title = translate_presentation_label(PresentationLabel.OUTLIERS_CONFIGURED_TITLE, translate).format(
+            category=category, method=method
+        )
+        threshold_role = (
+            PresentationLabel.IQR_MULTIPLIER
+            if summary.method is OutlierMethod.IQR
+            else PresentationLabel.SCORE_THRESHOLD
+        )
+        detail_column = (
+            snapshot.detail.summary.column
+            if snapshot.detail is not None
+            else translate_presentation_label(PresentationLabel.NO_COLUMN_SELECTED, translate)
+        )
+        return AnalysisPresentation(
+            category,
+            title,
+            (
+                ConfigurationField(
+                    translate_presentation_label(threshold_role, translate),
+                    (number_format(summary.threshold),),
+                ),
+                ConfigurationField(
+                    translate_presentation_label(PresentationLabel.SCREENED_COLUMNS, translate),
+                    summary.available_columns,
+                ),
+                ConfigurationField(
+                    translate_presentation_label(PresentationLabel.SELECTED_DETAIL_COLUMN, translate),
+                    (detail_column,),
+                ),
+            ),
+        )
+    result = snapshot.result
+    method = multivariate_outlier_method_label(result.method, translate)
+    title = translate_presentation_label(PresentationLabel.OUTLIERS_CONFIGURED_TITLE, translate).format(
+        category=category, method=method
+    )
+    configuration = [
+        ConfigurationField(
+            translate_presentation_label(PresentationLabel.FEATURES, translate),
+            result.columns,
+        ),
+        ConfigurationField(
+            translate_presentation_label(PresentationLabel.STANDARDIZATION, translate),
+            (
+                translate_presentation_label(
+                    PresentationLabel.STANDARDIZED if result.standardize else PresentationLabel.NOT_STANDARDIZED,
+                    translate,
+                ),
+            ),
+        ),
+        ConfigurationField(
+            translate_presentation_label(PresentationLabel.EXPECTED_OUTLIER_FRACTION, translate),
+            (fmt_pct(result.contamination, decimals=1),),
+        ),
+    ]
+    if result.method is MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR:
+        configuration.append(
+            ConfigurationField(
+                translate_presentation_label(PresentationLabel.LOF_NEIGHBORS, translate),
+                (str(result.lof_neighbors),),
+            )
+        )
+    return AnalysisPresentation(category, title, tuple(configuration))
 
 
 def regression_model_label(model: RegressionModel, translate: Callable[[str, str], str]) -> str:

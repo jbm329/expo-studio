@@ -35,8 +35,6 @@ from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportRequest,
     HypothesisExportSnapshot,
 )
-from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierMethod
-from expo_jbm329.services.analysis.outliers import OutlierMethod
 from expo_jbm329.services.analysis.outliers_export import (
     MULTIVARIATE_COMPONENTS,
     UNIVARIATE_COMPONENTS,
@@ -44,7 +42,6 @@ from expo_jbm329.services.analysis.outliers_export import (
     OutlierExportComponent,
     OutlierExportRequest,
     OutlierExportSnapshot,
-    UnivariateOutlierExportSnapshot,
 )
 from expo_jbm329.services.analysis.overview import (
     DatasetOverviewResult,
@@ -63,6 +60,7 @@ from expo_jbm329.services.analysis.presentation import (
     PresentationLabel,
     build_analysis_presentation,
     hypothesis_component_label,
+    outlier_component_label,
     regression_component_label,
     translate_presentation_label,
 )
@@ -84,7 +82,6 @@ from expo_jbm329.services.analysis.timeseries_export import (
     TimeSeriesExportRequest,
     TimeSeriesExportSnapshot,
 )
-from expo_jbm329.utils.format_utils import fmt_int, fmt_num
 
 
 class AnalysisExportDialog(QDialog):
@@ -522,7 +519,12 @@ class AnalysisExportDialog(QDialog):
         """List the applied screening plainly and offer its displayed tables and charts."""
         snapshot = self._outliers
         if snapshot is not None:
-            identity = QLabel(self._outliers_identity_text(snapshot), self)
+            presentation = build_analysis_presentation(
+                AnalysisCategory.OUTLIERS,
+                snapshot,
+                QCoreApplication.translate,
+            )
+            identity = QLabel("\n".join((presentation.title, *presentation.summary_lines)), self)
             identity.setTextFormat(Qt.TextFormat.PlainText)
             identity.setWordWrap(True)
             identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -530,9 +532,22 @@ class AnalysisExportDialog(QDialog):
 
         results = QGroupBox(self.tr("Results"), self)
         contents = QVBoxLayout(results)
-        components = MULTIVARIATE_COMPONENTS if self._outliers_multivariate else UNIVARIATE_COMPONENTS
+        components = (
+            snapshot.components
+            if snapshot is not None
+            else MULTIVARIATE_COMPONENTS
+            if self._outliers_multivariate
+            else UNIVARIATE_COMPONENTS
+        )
         for component in components:
-            choice = QCheckBox(self._outliers_component_label(component), results)
+            choice = QCheckBox(
+                outlier_component_label(
+                    component,
+                    QCoreApplication.translate,
+                    multivariate=self._outliers_multivariate,
+                ),
+                results,
+            )
             if snapshot is None:
                 choice.setEnabled(False)
                 choice.setToolTip(self.tr("Apply an outlier screening successfully before exporting."))
@@ -545,47 +560,6 @@ class AnalysisExportDialog(QDialog):
             choice.toggled.connect(self._update_export_enabled)
             contents.addWidget(choice)
         layout.addWidget(results)
-
-    def _outliers_identity_text(self, snapshot: OutlierExportSnapshot) -> str:
-        """Return the plain-text description of the applied screening."""
-        if isinstance(snapshot, UnivariateOutlierExportSnapshot):
-            method_names = {
-                OutlierMethod.IQR: self.tr("IQR (Tukey's fences)"),
-                OutlierMethod.Z_SCORE: self.tr("Z-score"),
-                OutlierMethod.MODIFIED_Z_SCORE: self.tr("Modified Z-score"),
-            }
-            text = self.tr("Applied method: {method}, threshold {threshold}").format(
-                method=method_names[snapshot.summary.method], threshold=fmt_num(snapshot.summary.threshold)
-            )
-            if snapshot.detail is not None:
-                text += "\n" + self.tr("Selected column: {column}").format(column=snapshot.detail.summary.column)
-            return text
-        multivariate_names = {
-            MultivariateOutlierMethod.ISOLATION_FOREST: self.tr("Isolation Forest"),
-            MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR: self.tr("Local Outlier Factor"),
-        }
-        return self.tr("Applied method: {method}\nFeatures: {features}").format(
-            method=multivariate_names[snapshot.result.method], features=" / ".join(snapshot.result.columns)
-        )
-
-    def _outliers_component_label(self, component: OutlierExportComponent) -> str:
-        """Return the translated checkbox text of an outlier component."""
-        match component:
-            case OutlierExportComponent.COLUMN_SUMMARY:
-                return self.tr("Column summary")
-            case OutlierExportComponent.COLUMN_DETAILS:
-                return self.tr("Column details")
-            case OutlierExportComponent.MODEL_SUMMARY:
-                return self.tr("Model summary")
-            case OutlierExportComponent.POTENTIAL_OUTLIERS:
-                return self.tr("Potential outliers")
-            case OutlierExportComponent.CHARTS:
-                snapshot = self._outliers
-                if not isinstance(snapshot, UnivariateOutlierExportSnapshot):
-                    return self.tr("Charts")
-                count = len(snapshot.chart_columns)
-                label = self.tr("Charts ({count} column)") if count == 1 else self.tr("Charts ({count} columns)")
-                return label.format(count=fmt_int(count))
 
     def _build_clustering_choices(self, layout: QVBoxLayout) -> None:
         """List the applied clustering plainly and offer its displayed tables and chart."""

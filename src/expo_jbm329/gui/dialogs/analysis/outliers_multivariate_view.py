@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
@@ -27,6 +27,11 @@ from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierMethod,
 )
 from expo_jbm329.services.analysis.outliers_charts import OutlierProjectionLabels, draw_outlier_projection
+from expo_jbm329.services.analysis.presentation import (
+    PresentationLabel,
+    multivariate_outlier_method_label,
+    translate_presentation_label,
+)
 from expo_jbm329.utils.format_utils import fmt_cell, fmt_int, fmt_num, fmt_pct
 
 if TYPE_CHECKING:
@@ -97,11 +102,7 @@ class MultivariateOutliersView(QWidget):
 
     def method_name(self, method: MultivariateOutlierMethod) -> str:
         """Return the translated display name for `method`."""
-        match method:
-            case MultivariateOutlierMethod.ISOLATION_FOREST:
-                return self.tr("Isolation Forest")
-            case MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR:
-                return self.tr("Local Outlier Factor")
+        return multivariate_outlier_method_label(method, QCoreApplication.translate)
 
     def result(self) -> MultivariateOutlierResult:
         """Return the displayed multivariate fit."""
@@ -112,7 +113,7 @@ class MultivariateOutliersView(QWidget):
         result = self._result
         captions = rich_text_lines([self._sample_text(result)]) if result.sampled and result.error is None else ()
         return OutlierProjectionLabels(
-            heading=self.tr("PCA projection"),
+            heading=translate_presentation_label(PresentationLabel.OUTLIER_PROJECTION, QCoreApplication.translate),
             title=self.tr("PCA projection (visualization only)"),
             pc1_axis=self.tr("PC1"),
             pc2_axis=self.tr("PC2"),
@@ -178,7 +179,9 @@ class MultivariateOutliersView(QWidget):
 
     def _projection_panel(self, result: MultivariateOutlierResult) -> QWidget:
         """Build the titled, scrollable PCA visualization colored by flagged status."""
-        panel, layout = self._build_section(self.tr("PCA projection"))
+        panel, layout = self._build_section(
+            translate_presentation_label(PresentationLabel.OUTLIER_PROJECTION, QCoreApplication.translate)
+        )
         figure = Figure(constrained_layout=True)
         canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
         canvas.setMinimumSize(360, 240)

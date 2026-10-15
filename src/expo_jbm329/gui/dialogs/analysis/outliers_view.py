@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import (
     QFrame,
@@ -31,6 +31,11 @@ from expo_jbm329.services.analysis.outliers import (
     max_possible_z_score,
 )
 from expo_jbm329.services.analysis.outliers_charts import OutlierHistogramLabels, draw_outlier_histogram
+from expo_jbm329.services.analysis.presentation import (
+    PresentationLabel,
+    outlier_method_label,
+    translate_presentation_label,
+)
 from expo_jbm329.utils.format_utils import fmt_cell, fmt_int, fmt_num, fmt_pct
 
 if TYPE_CHECKING:
@@ -275,7 +280,12 @@ class OutliersView(QWidget):
             self._chart_panel.show()
             self._statistics_panel.show()
             self._extremes_layout.addWidget(self._build_extremes_panel(detail))
-            self._chart_layout.addWidget(self._build_section_title(self.tr("Distribution"), self._chart_panel))
+            self._chart_layout.addWidget(
+                self._build_section_title(
+                    translate_presentation_label(PresentationLabel.COLUMN_DISTRIBUTION, QCoreApplication.translate),
+                    self._chart_panel,
+                )
+            )
             self._chart_layout.addWidget(build_section_scroll_area(self._build_histogram(detail), self._chart_panel), 1)
             self._statistics_layout.addWidget(
                 self._build_section_title(self.tr("Column details"), self._statistics_panel)
@@ -300,13 +310,7 @@ class OutliersView(QWidget):
 
     def method_name(self, method: OutlierMethod) -> str:
         """Return the translated display name for `method`."""
-        match method:
-            case OutlierMethod.IQR:
-                return self.tr("IQR (Tukey's fences)")
-            case OutlierMethod.Z_SCORE:
-                return self.tr("Z-score")
-            case OutlierMethod.MODIFIED_Z_SCORE:
-                return self.tr("Modified Z-score")
+        return outlier_method_label(method, QCoreApplication.translate)
 
     def status_text(self, status: ColumnOutlierStatus) -> str:
         """Return the translated short explanation of why a column wasn't screened."""

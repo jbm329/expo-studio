@@ -66,6 +66,7 @@ from expo_jbm329.services.analysis.presentation import (
     build_analysis_presentation,
     correlation_method_label,
     hypothesis_component_label,
+    outlier_component_label,
     presentation_label_source,
     presentation_label_sources,
     regression_component_label,
@@ -166,6 +167,10 @@ class ReportEntry:
         elif self.category is AnalysisCategory.REGRESSION:
             if not isinstance(self.snapshot, RegressionExportSnapshot) or self.capture_id != self.snapshot.capture_id:
                 message = "A regression report entry requires its applied-result capture identifier."
+                raise ValueError(message)
+        elif self.category is AnalysisCategory.OUTLIERS:
+            if not isinstance(self.snapshot, OutlierExportSnapshot) or self.capture_id != self.snapshot.capture_id:
+                message = "An outlier report entry requires its applied-result capture identifier."
                 raise ValueError(message)
         elif self.capture_id is not None:
             message = "Only a report entry with a stable applied-result capture can carry a capture identifier."
@@ -272,7 +277,16 @@ def create_report_entry(
         selected_components=tuple(component.key for component in components),
         capture_id=(
             snapshot.capture_id
-            if isinstance(snapshot, (CorrelationExportSnapshot, HypothesisExportSnapshot, RegressionExportSnapshot))
+            if isinstance(
+                snapshot,
+                (
+                    CorrelationExportSnapshot,
+                    HypothesisExportSnapshot,
+                    RegressionExportSnapshot,
+                    UnivariateOutlierExportSnapshot,
+                    MultivariateOutlierExportSnapshot,
+                ),
+            )
             else None
         ),
     )
@@ -357,18 +371,19 @@ def available_report_components(category: AnalysisCategory, snapshot: ReportSnap
                 ))
             component_values = tuple(components)
         case AnalysisCategory.OUTLIERS if isinstance(snapshot, OutlierExportSnapshot):
-            outlier_labels: dict[OutlierExportComponent, str] = {
-                OutlierExportComponent.COLUMN_SUMMARY: "Column summary",
-                OutlierExportComponent.COLUMN_DETAILS: "Column details",
-                OutlierExportComponent.MODEL_SUMMARY: "Model summary",
-                OutlierExportComponent.POTENTIAL_OUTLIERS: "Potential outliers",
-                OutlierExportComponent.CHARTS: "Charts",
-            }
             outlier_components: list[tuple[str, str, str]] = []
             for component in snapshot.components:
                 if snapshot.is_available(component):
                     kind = "chart" if component is OutlierExportComponent.CHARTS else "table"
-                    outlier_components.append((component.value, outlier_labels[component], kind))
+                    outlier_components.append((
+                        component.value,
+                        outlier_component_label(
+                            component,
+                            _identity_translate,
+                            multivariate=isinstance(snapshot, MultivariateOutlierExportSnapshot),
+                        ),
+                        kind,
+                    ))
             component_values = tuple(outlier_components)
         case AnalysisCategory.CLUSTERING if isinstance(snapshot, ClusteringExportSnapshot):
             component_values = tuple(
@@ -431,7 +446,6 @@ def report_entry_identity(category: AnalysisCategory, dataset_id: str, snapshot:
                 snapshot.summary.method.value,
                 snapshot.summary.threshold,
                 snapshot.summary.available_columns,
-                None if snapshot.detail is None else snapshot.detail.summary.column,
             )
         case AnalysisCategory.OUTLIERS if isinstance(snapshot, MultivariateOutlierExportSnapshot):
             multivariate_result = snapshot.result
@@ -441,7 +455,11 @@ def report_entry_identity(category: AnalysisCategory, dataset_id: str, snapshot:
                 multivariate_result.columns,
                 multivariate_result.standardize,
                 multivariate_result.contamination,
-                multivariate_result.lof_neighbors,
+                (
+                    multivariate_result.lof_neighbors
+                    if multivariate_result.method.value == "local_outlier_factor"
+                    else None
+                ),
             )
         case AnalysisCategory.CLUSTERING if isinstance(snapshot, ClusteringExportSnapshot):
             clustering_result = snapshot.result
@@ -469,6 +487,31 @@ def report_entry_identity(category: AnalysisCategory, dataset_id: str, snapshot:
             raise TypeError(message)
     payload = [dataset_id, category.value, _json_value(config)]
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+
+
+def outlier_report_configuration(entry: ReportEntry) -> tuple[object, ...]:
+    """Return applied outlier settings plus the selected univariate detail column."""
+    if entry.category is not AnalysisCategory.OUTLIERS or not isinstance(entry.snapshot, OutlierExportSnapshot):
+        message = "Outlier configuration requires an outlier report entry."
+        raise TypeError(message)
+    snapshot = entry.snapshot
+    if isinstance(snapshot, UnivariateOutlierExportSnapshot):
+        return (
+            "univariate",
+            snapshot.summary.method.value,
+            snapshot.summary.threshold,
+            snapshot.summary.available_columns,
+            None if snapshot.detail is None else snapshot.detail.summary.column,
+        )
+    result = snapshot.result
+    return (
+        "multivariate",
+        result.method.value,
+        result.columns,
+        result.standardize,
+        result.contamination,
+        result.lof_neighbors if result.method.value == "local_outlier_factor" else None,
+    )
 
 
 def correlation_report_configuration(entry: ReportEntry) -> tuple[str, tuple[str, ...]]:
@@ -897,6 +940,9 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
     ),
     "RegressionPresentation": tuple(
         source for context, source in presentation_label_sources() if context == "RegressionPresentation"
+    ),
+    "OutliersPresentation": tuple(
+        source for context, source in presentation_label_sources() if context == "OutliersPresentation"
     ),
     "CorrelationView": (
         "Variable 1",
@@ -1484,14 +1530,10 @@ def _localized_report_tables(
                     }
                 else:
                     outlier_headers = {}
-                title = translate(
-                    "AnalysisExportDialog",
-                    {
-                        OutlierExportComponent.COLUMN_SUMMARY: "Column summary",
-                        OutlierExportComponent.COLUMN_DETAILS: "Column details",
-                        OutlierExportComponent.MODEL_SUMMARY: "Model summary",
-                        OutlierExportComponent.POTENTIAL_OUTLIERS: "Potential outliers",
-                    }[outlier_table],
+                title = outlier_component_label(
+                    outlier_table,
+                    translate,
+                    multivariate=isinstance(snapshot, MultivariateOutlierExportSnapshot),
                 )
                 add(
                     title,
@@ -1818,7 +1860,12 @@ def prepare_report_content(
                 prepared_components.append(PreparedReportComponent(component.key, label, component.kind, charts=images))
             completed += 1
             report_progress()
-        presentation = build_analysis_presentation(entry.category, entry.snapshot, translate)
+        presentation = build_analysis_presentation(
+            entry.category,
+            entry.snapshot,
+            translate,
+            number_format=number_format,
+        )
         prepared_entries.append(
             PreparedReportEntry(
                 entry.entry_id,
@@ -2021,6 +2068,8 @@ def _component_translation_context(
         return "CorrelationView"
     if category is AnalysisCategory.REGRESSION:
         return "RegressionPresentation"
+    if category is AnalysisCategory.OUTLIERS:
+        return "OutliersPresentation"
     return {
         AnalysisCategory.OVERVIEW: "OverviewView",
         AnalysisCategory.STATISTICS: "StatisticsView",

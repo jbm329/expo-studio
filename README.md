@@ -60,7 +60,12 @@ analyze another dataset. The window title shows the source name and its row/colu
 - **Regression** fits linear, logistic, Poisson, Negative Binomial, and Cox models with diagnostics. Report entries show
   the applied model, outcome roles, ordered predictors, categorical reference coding, and fitted terms; distinct model
   configurations coexist, and rerunning the same configuration requires explicit review to update its result.
-- **Outliers** detects univariate and multivariate anomalies.
+- **Outliers** detects univariate and multivariate anomalies. Univariate reports identify the method, threshold, complete
+  screened-column set, and selected detail column; different methods, thresholds, or screened inputs can coexist.
+  Changing the selected detail column replaces that entry's captured detail, while rerunning the same screening requires
+  explicit review to update its captured result. Multivariate entries identify their method, features, standardization,
+  expected outlier fraction, and LOF neighbors when applicable; different configurations coexist and identical reruns
+  require explicit review to update.
 - **Clustering** groups observations using K-means, DBSCAN, or agglomerative clustering.
 - **PCA** reduces numeric data to principal components and shows loadings and explained variance.
 - **Time Series** prepares and analyzes series with optional resampling, autocorrelation, and seasonal decomposition.
@@ -72,6 +77,11 @@ Export is available for successfully applied results. Excel workbooks can
 combine selected tables and available charts; CSV and binary exports contain
 one selected table. Charts are available in Excel only. Exports contain the
 selected analysis results, not a full dataset dump.
+
+Outlier exports include the univariate column summary, selected column details, and up to 100 displayed potential
+outlier rows. Their Excel-only Column distributions component adds a histogram for each screened column and skips
+columns that could not be screened. Multivariate exports include the model summary, displayed potential outliers, and
+the PCA outlier projection; charts are available only in Excel.
 
 Use **Add to report** to collect applied analyses, select their components, and
 add notes. The **Reports** page lets you edit and reorder entries, add a title
@@ -95,6 +105,14 @@ Regression entries identify the applied model and show outcome roles,
 predictors, reference levels, and modeled terms separately. Different model
 families and configurations coexist; rerunning the same full model configuration
 requires explicit review before the captured result is updated.
+Outlier entries use configured method titles and show applied settings in
+Analysis, Reports, HTML, and export choices. Univariate method/threshold/screened
+inputs define distinct report entries; changing only the selected detail column
+offers an explicit replacement within that entry. Multivariate method, feature,
+standardization, contamination, and applicable LOF-neighbor settings define
+distinct entries. Same-configuration reruns offer an explicit result update;
+canceling review preserves the stored result, note, order, and supported
+component choices.
 Use **Generate HTML report** to save a self-contained HTML file and open it
 in your default browser. Report generation runs in the background; canceled
 or failed saves preserve existing files. PDF output is not yet available.

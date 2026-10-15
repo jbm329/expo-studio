@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import QCoreApplication, pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QDoubleSpinBox, QFormLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from expo_jbm329.services.analysis.outliers import (
@@ -13,6 +13,7 @@ from expo_jbm329.services.analysis.outliers import (
     MIN_THRESHOLD,
     OutlierMethod,
 )
+from expo_jbm329.services.analysis.presentation import outlier_method_label
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.outliers import OutlierSummaryResult
@@ -66,9 +67,8 @@ class OutliersConfigWidget(QWidget):
         form.addRow(QLabel(self.tr("Mode"), self), self._mode_combo)
 
         self._method_combo = QComboBox(self)
-        self._method_combo.addItem(self.tr("IQR (Tukey's fences)"), OutlierMethod.IQR)
-        self._method_combo.addItem(self.tr("Z-score"), OutlierMethod.Z_SCORE)
-        self._method_combo.addItem(self.tr("Modified Z-score"), OutlierMethod.MODIFIED_Z_SCORE)
+        for method in OutlierMethod:
+            self._method_combo.addItem(outlier_method_label(method, QCoreApplication.translate), method)
         self._method_combo.setCurrentIndex(self._method_combo.findData(result.method))
         form.addRow(QLabel(self.tr("Method"), self), self._method_combo)
 

@@ -99,7 +99,7 @@ def test_layout_has_three_resizable_titled_sections_like_regression():
     assert splitter.count() == 3
     assert [_section_title(splitter.widget(index)) for index in range(3)] == [
         "Potential outliers, most anomalous first",
-        "PCA projection",
+        "Outlier projection",
         "Model comments",
     ]
     table_layout = splitter.widget(0).layout()
@@ -153,7 +153,7 @@ def test_chart_labels_are_shared_by_the_displayed_projection():
 
     assert view.result() is result
     assert labels == OutlierProjectionLabels(
-        heading="PCA projection",
+        heading="Outlier projection",
         title="PCA projection (visualization only)",
         pc1_axis="PC1",
         pc2_axis="PC2",

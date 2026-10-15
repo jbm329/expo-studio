@@ -114,6 +114,7 @@ from expo_jbm329.services.analysis.presentation import (
     build_analysis_presentation,
     correlation_method_label,
     hypothesis_component_label,
+    outlier_component_label,
     regression_component_label,
     translate_presentation_label,
 )
@@ -1217,7 +1218,15 @@ class AnalysisController:
                 exporter.export_excel(
                     sheets=sheets,
                     chart_factory=make_images if charts else None,
-                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    chart_sheet_name=(
+                        outlier_component_label(
+                            OutlierExportComponent.CHARTS,
+                            tr,
+                            multivariate=isinstance(snapshot, MultivariateOutlierExportSnapshot),
+                        )
+                        if charts
+                        else None
+                    ),
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,

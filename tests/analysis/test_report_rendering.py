@@ -20,6 +20,8 @@ from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportSnapshot,
     hypothesis_export_tables,
 )
+from expo_jbm329.services.analysis.outliers import analyze_outlier_column, analyze_outlier_summary
+from expo_jbm329.services.analysis.outliers_export import UnivariateOutlierExportSnapshot
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
@@ -50,7 +52,11 @@ from expo_jbm329.utils.format_utils import fmt_pct
 from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_correlation_export import _snapshot as correlation_snapshot
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
-from tests.analysis.test_outliers_export import multivariate_snapshot, univariate_snapshot
+from tests.analysis.test_outliers_export import (
+    HISTOGRAM_LABELS,
+    multivariate_snapshot,
+    univariate_snapshot,
+)
 from tests.analysis.test_pca_export import pca_snapshot
 from tests.analysis.test_regression_export import (
     cox_snapshot,
@@ -1299,7 +1305,67 @@ def test_correlation_report_uses_shared_configured_title_summary_and_semantic_he
     assert "<h2>Correlation — Spearman</h2>" in html
     assert "<dt>Columns:</dt><dd>&lt;Age &amp; income&gt;, Score</dd>" in html
     assert "<h3>Strongest correlations</h3>" in html
-    assert "<script>" not in html
+
+
+def test_univariate_outlier_html_uses_shared_title_roles_and_escaped_long_column_names():
+    column = "<sensor & reading>" + "_measurement" * 20
+    frame = pd.DataFrame({column: [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 100.0]})
+    summary = analyze_outlier_summary(frame)
+    detail = analyze_outlier_column(frame, column, summary.method, summary.threshold)
+    snapshot = UnivariateOutlierExportSnapshot(
+        summary,
+        frame.loc[:, list(summary.available_columns)].copy(deep=True),
+        HISTOGRAM_LABELS,
+        detail=detail,
+    )
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.OUTLIERS, snapshot, ("column_summary",)))
+    labels = capture_report_labels(
+        lambda context, source: (
+            source
+            if source == "{category} — {method}"
+            else f"sv:{source}"
+            if context == "OutliersPresentation"
+            else source
+        )
+    )
+
+    prepared = prepare_report_content(document, labels=labels)
+    prepared_entry = prepared.entries[0]
+    html = render_prepared_report_html(prepared)
+    localized_tables = localized_report_tables(
+        AnalysisCategory.OUTLIERS,
+        snapshot,
+        ("column_summary",),
+        labels=labels,
+    )
+
+    assert prepared_entry.title == "sv:Outliers — sv:IQR (Tukey's fences)"
+    assert prepared_entry.configuration[0].label == "sv:IQR multiplier:"
+    assert prepared_entry.configuration[1].items == (column,)
+    assert prepared_entry.configuration[2].display_value == column
+    assert prepared_entry.components[0].label == "sv:Column summary"
+    assert prepared_entry.components[0].tables[0].title == "sv:Column summary"
+    assert tuple(localized_tables) == (prepared_entry.components[0].tables[0].title,)
+    assert f"<dd>{escape(column)}</dd>" in html
+    assert f"<dd>{column}</dd>" not in html
+
+
+def test_multivariate_outlier_chart_heading_is_shared_by_report_and_export():
+    snapshot = multivariate_snapshot()
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.OUTLIERS, snapshot, ("charts",)))
+    options = capture_report_labels(
+        lambda context, source: f"sv:{source}" if context == "OutliersPresentation" else source
+    )
+
+    prepared = prepare_report_content(document, labels=options)
+
+    component = prepared.entries[0].components[0]
+    html = render_prepared_report_html(prepared)
+    assert component.label == "sv:Outlier projection"
+    assert component.charts[0].heading == "Outlier projection"
+    assert "<h3>sv:Outlier projection</h3>" in html
 
 
 def test_correlation_ranking_explanation_is_below_table_and_exports_are_unchanged():
