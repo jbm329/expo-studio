@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 import logging
 import threading
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from sqlalchemy import create_engine
@@ -127,7 +127,15 @@ class SqlAlchemyMySqlDriver(DriverProtocol):
         with self._lock:
             eng = self._engines.get(key)
             if eng is None:
-                connect_args = {}
+                connect_args: dict[str, Any] = {}
+                if self._driver_name == "mysqlconnector":
+                    connect_args["use_pure"] = True
+                    if cfg.extra and "use_pure" in cfg.extra:
+                        val = cfg.extra["use_pure"]
+                        if isinstance(val, str):
+                            connect_args["use_pure"] = val.strip().lower() in ("true", "1", "yes")
+                        else:
+                            connect_args["use_pure"] = bool(val)
                 if self._connect_timeout_s is not None:
                     # Standard MySQL connect timeout
                     connect_args["connect_timeout"] = self._connect_timeout_s

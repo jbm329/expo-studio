@@ -84,6 +84,10 @@ hiddenimports += collect_submodules("pyreadstat")
 hiddenimports += ["narwhals.stable.v2"]
 hiddenimports += collect_submodules("pymysql")
 hiddenimports += collect_submodules("mysql.connector")
+# psycopg 3 loads psycopg_binary dynamically at runtime, and SQLAlchemy's
+# dialect loads psycopg on demand.
+hiddenimports += collect_submodules("psycopg")
+hiddenimports += ["psycopg_binary"]
 
 try:
     import data_profiling  # noqa: F401
@@ -109,7 +113,7 @@ else:
         include_py_files=False,
     )
 
-for _pkg in ("jinja2", "pandas", "numpy", "pymysql", "mysql-connector-python"):
+for _pkg in ("jinja2", "pandas", "numpy", "pymysql", "mysql-connector-python", "psycopg", "psycopg-binary"):
     try:
         datas += copy_metadata(_pkg)
     except Exception:

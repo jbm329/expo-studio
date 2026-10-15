@@ -85,6 +85,50 @@ def test_mysql_driver_builds_url_and_connect_args(driver_name):
     assert kwargs["connect_args"]["connect_timeout"] == 5
     assert kwargs["connect_args"]["read_timeout"] == 9
     assert kwargs["connect_args"]["write_timeout"] == 9
+    if driver_name == "mysqlconnector":
+        assert kwargs["connect_args"]["use_pure"] is True
+    else:
+        assert "use_pure" not in kwargs["connect_args"]
+
+
+@pytest.mark.parametrize(
+    ("extra_val", "expected_pure"),
+    [
+        (False, False),
+        ("false", False),
+        ("0", False),
+        (True, True),
+        ("true", True),
+    ],
+)
+def test_mysql_driver_use_pure_extra_override(extra_val, expected_pure):
+    driver = SqlAlchemyMySqlDriver("mysqlconnector")
+    cfg = ConnectionConfig(
+        name="db",
+        engine="mysql",
+        protocol="mysqlconnector",
+        extra={"use_pure": extra_val},
+    )
+    engine = MagicMock()
+    with patch("expo_jbm329.db.drivers.sa_mysql.create_engine", return_value=engine) as mock_create:
+        driver._get_engine(cfg)
+    _, kwargs = mock_create.call_args
+    assert kwargs["connect_args"]["use_pure"] is expected_pure
+
+
+def test_mysql_driver_pymysql_ignores_use_pure_extra():
+    driver = SqlAlchemyMySqlDriver("pymysql")
+    cfg = ConnectionConfig(
+        name="db",
+        engine="mysql",
+        protocol="pymysql",
+        extra={"use_pure": True},
+    )
+    engine = MagicMock()
+    with patch("expo_jbm329.db.drivers.sa_mysql.create_engine", return_value=engine) as mock_create:
+        driver._get_engine(cfg)
+    _, kwargs = mock_create.call_args
+    assert "use_pure" not in kwargs["connect_args"]
 
 
 def test_mysql_driver_mariadb_url_dialect():
