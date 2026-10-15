@@ -26,6 +26,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.gui.dialogs.analysis import timeseries_config as timeseries_config_module
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog, build_placeholder_label
 from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
 from expo_jbm329.gui.dialogs.analysis.clustering_config import ClusteringConfigWidget
@@ -81,8 +82,13 @@ from expo_jbm329.services.analysis.statistics import (
     analyze_descriptive_statistics,
 )
 from expo_jbm329.services.analysis.survival import initialize_survival_columns
-from expo_jbm329.services.analysis.timeseries import initialize_time_series
-from expo_jbm329.services.analysis.timeseries_export import TimeSeriesExportComponent, TimeSeriesExportRequest
+from expo_jbm329.services.analysis.timeseries import DecompositionModel, analyze_time_series, initialize_time_series
+from expo_jbm329.services.analysis.timeseries_export import (
+    TimeSeriesAppliedConfiguration,
+    TimeSeriesExportComponent,
+    TimeSeriesExportRequest,
+    TimeSeriesExportSnapshot,
+)
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.utils.format_utils import fmt_int
 from tests.analysis.test_clustering_export import clustering_snapshot
@@ -95,7 +101,7 @@ from tests.analysis.test_regression_export import (
     linear_snapshot,
     poisson_snapshot,
 )
-from tests.analysis.test_timeseries_export import time_series_snapshot
+from tests.analysis.test_timeseries_export import CHART_LABELS, time_series_snapshot
 
 
 def _make_datasets() -> list[DatasetRef]:
@@ -1541,9 +1547,14 @@ def test_regression_apply_sits_below_the_predictors_frame_for_every_model():
 def test_narrow_correlation_and_time_series_keep_controls_and_full_labels_accessible(monkeypatch, width, translated):
     translations = {
         "Auto-detect seasonal period": "Automatically detect the seasonal period from the selected time series",
+        "Time column:": "Applied time role",
+        "Value column:": "Applied value role",
+        "Resampling:": "Applied resampling",
+        "Seasonal period:": "Applied seasonal period",
+        "Decomposition model:": "Applied decomposition model",
     }
     if translated:
-        monkeypatch.setattr(TimeSeriesConfigWidget, "tr", lambda self, text: translations.get(text, text))
+        monkeypatch.setattr(timeseries_config_module, "tr", lambda _context, text: translations.get(text, text))
     frame = pd.DataFrame({
         "when": pd.date_range("2025-01-01", periods=30),
         "a": range(30),
@@ -1578,6 +1589,15 @@ def test_narrow_correlation_and_time_series_keep_controls_and_full_labels_access
                 controls[0].click()
                 assert config.checked_columns() == ("a", "b")
             else:
+                role_labels = {label.text() for label in config.findChildren(QLabel)}
+                if translated:
+                    assert {
+                        "Applied time role",
+                        "Applied value role",
+                        "Applied resampling",
+                        "Applied seasonal period",
+                        "Applied decomposition model",
+                    }.issubset(role_labels)
                 checkbox = config._auto_period
                 label = checkbox.findChild(QLabel)
                 assert label is not None
@@ -2024,6 +2044,11 @@ def test_time_series_export_selection_emits_only_the_current_snapshot(monkeypatc
         "Model summary",
         "Charts",
     ]
+    presentation_labels = [label.text() for label in captured[0].findChildren(QLabel)]
+    identity = next(text for text in presentation_labels if text.startswith("Time Series\n"))
+    assert "Time column: day" in identity
+    assert "Value column: sales" in identity
+    assert not any(text.startswith("Applied series:") for text in presentation_labels)
     assert len(received) == 1
     assert received[0].snapshot is snapshot
     assert received[0].components == (TimeSeriesExportComponent.SERIES,)
@@ -2033,6 +2058,166 @@ def test_time_series_export_selection_emits_only_the_current_snapshot(monkeypatc
     assert len(captured) == 2
     assert all(not choice.isEnabled() for choice in captured[1].findChildren(QCheckBox))
     assert len(received) == 1
+
+
+def test_time_series_configurations_coexist_and_same_config_reruns_require_reviewed_update(monkeypatch):
+    frame = pd.DataFrame({
+        "day": pd.date_range("2025-01-01", periods=28, freq="D"),
+        "other_day": pd.date_range("2025-02-01", periods=28, freq="D"),
+        "sales": [float(index + 1) for index in range(28)],
+        "units": [float(index + 2) for index in range(28)],
+    })
+    dataset = _make_datasets()[0]
+
+    def fit(
+        time_column: str = "day",
+        value_column: str = "sales",
+        frequency: str | None = None,
+        period: int | None = None,
+        model: DecompositionModel = DecompositionModel.ADDITIVE,
+    ) -> TimeSeriesExportSnapshot:
+        result = analyze_time_series(
+            frame,
+            time_column,
+            value_column,
+            resample_frequency=frequency,
+            seasonal_period=period,
+            decomposition_model=model,
+        )
+        assert result.error is None
+        return TimeSeriesExportSnapshot(
+            result,
+            CHART_LABELS,
+            (f"Applied model: {model.value}",),
+            applied_configuration=TimeSeriesAppliedConfiguration(
+                time_column,
+                value_column,
+                frequency,
+                period,
+                model,
+            ),
+        )
+
+    configurations = (
+        fit(),
+        fit(time_column="other_day"),
+        fit(value_column="units"),
+        fit(frequency="D"),
+        fit(period=7),
+        fit(model=DecompositionModel.MULTIPLICATIVE),
+    )
+    dialog = AnalysisDialog(parent=None, source_dataset=dataset)
+    dialog.select_category(AnalysisCategory.TIME_SERIES)
+
+    def accept_initial(editor):
+        editor.findChild(QPlainTextEdit).setPlainText("Keep this Time Series note")
+        editor._component_choices["charts"].setChecked(False)  # noqa: SLF001
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", accept_initial)
+    dialog.set_exportable_time_series(configurations[0])
+    dialog._toggle_report_entry()  # noqa: SLF001
+    original = dialog.report_document().entries[0]
+    assert original.note == "Keep this Time Series note"
+    assert original.selected_components == ("series", "autocorrelation", "model_summary")
+
+    other_entry = create_report_entry(AnalysisCategory.PCA, dataset, pca_snapshot())
+    dialog.report_document().upsert(other_entry)
+    monkeypatch.setattr(ReportNotesDialog, "exec", lambda _editor: QDialog.DialogCode.Accepted)
+    for snapshot in configurations[1:]:
+        dialog.set_exportable_time_series(snapshot)
+        assert dialog._report_action_button.text() == "Add to report"  # noqa: SLF001
+        dialog._toggle_report_entry()  # noqa: SLF001
+
+    before_update = dialog.report_document().entries
+    assert len(before_update) == len(configurations) + 1
+    assert len({entry.entry_id for entry in before_update}) == len(before_update)
+    assert before_update[0].entry_id == original.entry_id
+    assert before_update[1].entry_id == other_entry.entry_id
+
+    rerun = fit()
+    dialog.set_exportable_time_series(rerun)
+    assert dialog._report_action_button.text() == "Update report result"  # noqa: SLF001
+
+    def cancel_update(editor):
+        assert editor.notes() == original.note
+        assert editor.selected_components() == original.selected_components
+        labels = [label.text() for label in editor.findChildren(QLabel)]
+        assert any("Time column: day" in text for text in labels)
+        assert any("Value column: sales" in text for text in labels)
+        assert any("Decomposition model: Additive" in text for text in labels)
+        assert any(button.text() == "Update result" for button in editor.findChildren(QPushButton))
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", cancel_update)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    assert dialog.report_document().entries == before_update
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", lambda _editor: QDialog.DialogCode.Accepted)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    updated = dialog.report_document().entries
+    assert tuple(entry.entry_id for entry in updated) == tuple(entry.entry_id for entry in before_update)
+    assert updated[0].snapshot is rerun
+    assert updated[0].capture_id == rerun.capture_id
+    assert updated[0].note == original.note
+    assert updated[0].selected_components == original.selected_components
+    assert updated[1:] == before_update[1:]
+
+
+def test_time_series_update_drops_only_components_unavailable_in_the_new_capture(monkeypatch):
+    regular_frame = pd.DataFrame({
+        "day": pd.date_range("2025-01-01", periods=28, freq="D"),
+        "sales": [float(index + 1) for index in range(28)],
+    })
+    irregular_frame = pd.DataFrame({
+        "day": pd.to_datetime(["2025-01-01", "2025-01-02", "2025-01-05", "2025-01-11"]),
+        "sales": [1.0, 2.0, 3.0, 4.0],
+    })
+
+    def fit(frame: pd.DataFrame) -> TimeSeriesExportSnapshot:
+        result = analyze_time_series(frame, "day", "sales")
+        assert result.error is None
+        return TimeSeriesExportSnapshot(
+            result,
+            CHART_LABELS,
+            applied_configuration=TimeSeriesAppliedConfiguration(
+                "day", "sales", None, None, DecompositionModel.ADDITIVE
+            ),
+        )
+
+    original_snapshot = fit(regular_frame)
+    rerun = fit(irregular_frame)
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
+    dialog.select_category(AnalysisCategory.TIME_SERIES)
+    monkeypatch.setattr(
+        ReportNotesDialog,
+        "exec",
+        lambda editor: (
+            editor._component_choices["model_summary"].setChecked(False),  # noqa: SLF001
+            editor._component_choices["charts"].setChecked(False),  # noqa: SLF001
+            QDialog.DialogCode.Accepted,
+        )[-1],
+    )
+    dialog.set_exportable_time_series(original_snapshot)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    original = dialog.report_document().entries[0]
+    assert original.selected_components == ("series", "autocorrelation")
+    dialog.set_exportable_time_series(rerun)
+    assert dialog._report_action_button.text() == "Update report result"  # noqa: SLF001
+
+    def accept_update(editor):
+        assert editor.selected_components() == ("series",)
+        assert editor.notes() == original.note
+        assert any(
+            "Unavailable stored selections: Autocorrelation" in label.text() for label in editor.findChildren(QLabel)
+        )
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(ReportNotesDialog, "exec", accept_update)
+    dialog._toggle_report_entry()  # noqa: SLF001
+    updated = dialog.report_document().entries[0]
+    assert updated.snapshot is rerun
+    assert updated.selected_components == ("series",)
 
 
 def test_footer_explains_that_exports_follow_an_applied_analysis():

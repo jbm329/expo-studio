@@ -10,6 +10,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 ### Changed
 - Clustering shares configured method titles, applied feature/standardization/applicable-parameter summaries, and descriptive component labels across Analysis, Reports, HTML, and exports; distinct configurations coexist, inactive parameters do not distinguish entries, and reruns require explicit review while preserving notes, components, and order
 - PCA shares its title, applied ordered features, standardization, and content-specific component labels across Analysis, Reports, HTML, and exports; distinct configurations coexist and same-configuration reruns require explicit review while preserving notes, components, and order
+- Time Series shares applied time/value roles, resampling, automatic or explicit seasonal period, decomposition model, and semantic component labels across Analysis, Reports, HTML, and exports; distinct configurations coexist and identical reruns require explicit review while preserving notes, components, and order
 - HTML Strongest correlations tables show the common Ranking and Holm explanation once below the table
 - Advanced Analysis now stays bound to the active ready dataset for the whole modal session; report entries share that source
 - Advanced Analysis displays the source dataset name and dimensions in the window title instead of a separate dataset pane
@@ -50,6 +51,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - K-means, DBSCAN, and agglomerative clustering with cluster summaries and PCA projections
 - PCA with optional standardization, explained variance, feature loadings, and score plots
 - Time-series preparation with optional resampling, autocorrelation, and additive or multiplicative seasonal decomposition
+- Time-series export and report presentation for applied settings, including automatic-period intent and unavailable diagnostics without implying that decomposition was calculated
 - Export for all nine analyses: applied-result tables and available charts in Excel; one table per CSV or binary export
 - Session report drafts for all nine analyses with selected components, notes, metadata, ordering, and asynchronous in-app HTML preview
 - Correlation report entries show their applied method and ordered columns; different methods coexist while column changes and rerun captures can be explicitly replaced or updated

@@ -785,8 +785,15 @@ def test_time_series_dialog_names_series_and_defaults_to_series():
     assert "averaging duplicate timestamps" in choices[0].toolTip()
     assert "model comments" in choices[2].toolTip()
     assert "decomposition" in choices[3].toolTip()
-    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied series:"))
-    assert label.text() == "Applied series: sales by day"
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Time Series\n"))
+    assert label.text().splitlines() == [
+        "Time Series",
+        "Time column: day",
+        "Value column: sales",
+        "Resampling: Original frequency",
+        "Seasonal period: 7",
+        "Decomposition model: Additive",
+    ]
     assert label.textFormat() is Qt.TextFormat.PlainText
     assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
     request = dialog.export_request()

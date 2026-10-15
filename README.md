@@ -69,6 +69,9 @@ analyze another dataset. The window title shows the source name and its row/colu
 - **Clustering** groups observations using K-means, DBSCAN, or agglomerative clustering.
 - **PCA** reduces numeric data to principal components and shows loadings and explained variance.
 - **Time Series** prepares and analyzes series with optional resampling, autocorrelation, and seasonal decomposition.
+  Analysis, Reports, HTML, and exports show the applied time/value columns, resampling, seasonal-period choice, and
+  decomposition model. Different complete configurations coexist in a report; rerunning an identical configuration
+  requires explicit review to update its captured result.
 
 Long-running analyses run in the background where needed, and exports use the
 latest successful analysis result.
@@ -77,6 +80,8 @@ Export is available for successfully applied results. Excel workbooks can
 combine selected tables and available charts; CSV and binary exports contain
 one selected table. Charts are available in Excel only. Exports contain the
 selected analysis results, not a full dataset dump.
+Time Series exports retain the applied configuration in the export choices and use the shared component/chart labels
+and analysis title for worksheet and suggested file names; exported data columns and dtypes remain unchanged.
 
 Outlier exports include the univariate column summary, selected column details, and up to 100 displayed potential
 outlier rows. Their Excel-only Column distributions component adds a histogram for each screened column and skips

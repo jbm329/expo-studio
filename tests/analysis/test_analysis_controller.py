@@ -101,6 +101,7 @@ from expo_jbm329.services.analysis.statistics import (
 from expo_jbm329.services.analysis.timeseries import DecompositionModel
 from expo_jbm329.services.analysis.timeseries_export import (
     TIME_SERIES_COMPONENTS,
+    TimeSeriesAppliedConfiguration,
     TimeSeriesExportComponent,
     TimeSeriesExportRequest,
     TimeSeriesExportSnapshot,
@@ -1049,6 +1050,9 @@ class DummyAnalysisDialog:
 
     def invalidate_pca_export(self):
         self._export_pca = None
+
+    def invalidate_time_series_export(self):
+        self._export_time_series = None
 
     def exportable_pca(self):
         if self._selected_category is AnalysisCategory.PCA:
@@ -5449,11 +5453,19 @@ def test_successful_time_series_apply_registers_the_displayed_export_snapshot(di
     view = _time_series_view(dlg)
     snapshot = dlg.exportable_time_series()
     assert isinstance(snapshot, TimeSeriesExportSnapshot)
+    assert snapshot.capture_id
     assert snapshot.result is view.result()
     assert snapshot.chart_labels == view.chart_labels()
     assert snapshot.notes == view.export_notes()
     assert snapshot.autocorrelation_note == view.autocorrelation_note()
+    assert snapshot.applied_configuration == TimeSeriesAppliedConfiguration(*config.analysis_configuration())
+    assert dlg.analysis_presentation.title == "Time Series"
+    assert dlg.analysis_presentation.summary_lines[0].startswith("Time column:")
 
+    config._apply_button.click()  # noqa: SLF001
+    assert dlg.exportable_time_series() is None
+    _simulate_success(async_ops.last_call)
+    assert dlg.exportable_time_series() is not None
     config._auto_period.toggle()  # noqa: SLF001
     _assert_apply_prompt(ctrl, dlg)
     assert dlg.exportable_time_series() is None
@@ -5465,6 +5477,25 @@ def test_failed_time_series_analysis_never_registers_an_export_snapshot(dialog_f
     _, dlg = _open_time_series(async_ops, dialog_factory, df)
     _time_series_config(dlg)._apply_button.click()  # noqa: SLF001
     _simulate_success(async_ops.last_call)
+
+    assert _time_series_view(dlg).result().error is not None
+    assert dlg.exportable_time_series() is None
+
+
+def test_failed_time_series_rerun_invalidates_the_previous_capture(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_time_series(async_ops, dialog_factory)
+    config = _time_series_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    assert dlg.exportable_time_series() is not None
+
+    config._frequency_combo.setCurrentIndex(config._frequency_combo.findData("YS"))  # noqa: SLF001
+    assert dlg.exportable_time_series() is None
+    config._apply_button.click()  # noqa: SLF001
+    failed_rerun = async_ops.last_call
+    assert dlg.exportable_time_series() is None
+    _simulate_success(failed_rerun)
 
     assert _time_series_view(dlg).result().error is not None
     assert dlg.exportable_time_series() is None
@@ -5500,6 +5531,21 @@ _TIME_SERIES_TRANSLATIONS = {
     "Duplicate rows averaged": "Dubblettrader",
     "Time points": "Tidpunkter",
     "Seasonal period": "Sasongsperiod",
+    "Time Series": "Tidsserie",
+    "Time column:": "Tidskolumn:",
+    "Value column:": "Varde kolumn:",
+    "Resampling:": "Omsampling:",
+    "Decomposition model:": "Dekomponeringsmodell:",
+    "Original frequency": "Ursprunglig frekvens",
+    "Daily": "Daglig",
+    "Weekly": "Veckovis",
+    "Monthly": "Manadsvis",
+    "Quarterly": "Kvartalsvis",
+    "Yearly": "Arsvis",
+    "Automatic (detected: {period})": "Automatiskt (identifierad: {period})",
+    "Automatic (no period detected)": "Automatiskt (ingen period identifierad)",
+    "Additive": "Additiv",
+    "Multiplicative": "Multiplikativ",
 }
 
 
@@ -5604,7 +5650,8 @@ def test_time_series_single_table_routes_to_non_excel_exporters(format_choice, m
     method = getattr(exporter, method_name)
     assert method.call_count == 1
     kwargs = method.call_args.kwargs
-    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    assert set(kwargs) == {"df", "suggested_name", "parent_widget", "operation_target", "show_success_dialog"}
+    assert kwargs["suggested_name"] == "Time Series"
     assert kwargs["df"].columns[0] == first_column
     assert exporter.export_excel.call_count == 0
 
@@ -5647,6 +5694,7 @@ def test_time_series_export_uses_compiled_swedish_labels() -> None:
         app.removeTranslator(translator)
 
     kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["suggested_name"] == "Tidsserie"
     assert kwargs["chart_sheet_name"] == "Diagram"
     sheets = kwargs["sheets"]
     assert list(sheets) == ["Serie", "Autokorrelation", "Modellsammanfattning"]

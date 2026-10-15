@@ -9803,4 +9803,36 @@ all hazard ratios and intervals must be finite and positive.</translation>
     <message><source>Standardized</source><translation>Standardized</translation></message>
     <message><source>Not standardized</source><translation>Not standardized</translation></message>
 </context>
+<context>
+    <name>TimeSeriesPresentation</name>
+    <message><source>Time column:</source><translation>Time column:</translation></message>
+    <message><source>Value column:</source><translation>Value column:</translation></message>
+    <message><source>Resampling:</source><translation>Resampling:</translation></message>
+    <message><source>Seasonal period:</source><translation>Seasonal period:</translation></message>
+    <message><source>Decomposition model:</source><translation>Decomposition model:</translation></message>
+    <message><source>Auto-detect seasonal period</source><translation>Auto-detect seasonal period</translation></message>
+    <message><source>Original frequency</source><translation>Original frequency</translation></message>
+    <message><source>Automatic</source><translation>Automatic</translation></message>
+    <message><source>Automatic (no period detected)</source><translation>Automatic (no period detected)</translation></message>
+    <message><source>Automatic (detected: {period})</source><translation>Automatic (detected: {period})</translation></message>
+    <message><source>Daily</source><translation>Daily</translation></message>
+    <message><source>Weekly</source><translation>Weekly</translation></message>
+    <message><source>Monthly</source><translation>Monthly</translation></message>
+    <message><source>Quarterly</source><translation>Quarterly</translation></message>
+    <message><source>Yearly</source><translation>Yearly</translation></message>
+    <message><source>Additive</source><translation>Additive</translation></message>
+    <message><source>Multiplicative</source><translation>Multiplicative</translation></message>
+    <message><source>Series</source><translation>Series</translation></message>
+    <message><source>Autocorrelation</source><translation>Autocorrelation</translation></message>
+    <message><source>Model summary</source><translation>Model summary</translation></message>
+    <message><source>Charts</source><translation>Charts</translation></message>
+    <message><source>Seasonal decomposition</source><translation>Seasonal decomposition</translation></message>
+    <message><source>Observed</source><translation>Observed</translation></message>
+    <message><source>Trend</source><translation>Trend</translation></message>
+    <message><source>Seasonal</source><translation>Seasonal</translation></message>
+    <message><source>Residual</source><translation>Residual</translation></message>
+    <message><source>Lag</source><translation>Lag</translation></message>
+    <message><source>Value</source><translation>Value</translation></message>
+    <message><source>Timestamp</source><translation>Timestamp</translation></message>
+</context>
 </TS>

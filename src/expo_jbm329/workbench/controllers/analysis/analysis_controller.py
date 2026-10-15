@@ -118,6 +118,7 @@ from expo_jbm329.services.analysis.presentation import (
     outlier_component_label,
     pca_component_label,
     regression_component_label,
+    time_series_component_label,
     translate_presentation_label,
 )
 from expo_jbm329.services.analysis.regression import RegressionError, analyze_regression, initialize_regression
@@ -157,6 +158,7 @@ from expo_jbm329.services.analysis.survival import (
 from expo_jbm329.services.analysis.timeseries import analyze_time_series, initialize_time_series
 from expo_jbm329.services.analysis.timeseries_charts import render_time_series_charts
 from expo_jbm329.services.analysis.timeseries_export import (
+    TimeSeriesAppliedConfiguration,
     TimeSeriesExportComponent,
     TimeSeriesExportRequest,
     TimeSeriesExportSnapshot,
@@ -1386,6 +1388,7 @@ class AnalysisController:
         if not isinstance(request, TimeSeriesExportRequest) or request.snapshot is not dialog.exportable_time_series():
             return
         snapshot = request.snapshot
+        presentation = build_analysis_presentation(AnalysisCategory.TIME_SERIES, snapshot, tr)
         charts = TimeSeriesExportComponent.CHARTS in request.components
         sheets = self._localized_time_series_tables(request.components, snapshot)
 
@@ -1399,7 +1402,10 @@ class AnalysisController:
                 exporter.export_excel(
                     sheets=sheets,
                     chart_factory=make_images if charts else None,
-                    chart_sheet_name=tr("AnalysisExportDialog", "Charts") if charts else None,
+                    chart_sheet_name=(
+                        time_series_component_label(TimeSeriesExportComponent.CHARTS, tr) if charts else None
+                    ),
+                    suggested_name=presentation.title,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1407,6 +1413,7 @@ class AnalysisController:
             case StatisticsExportFormat.CSV:
                 exporter.export_csv(
                     df=next(iter(sheets.values())),
+                    suggested_name=presentation.title,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1414,6 +1421,7 @@ class AnalysisController:
             case StatisticsExportFormat.BINARY:
                 exporter.export_data(
                     df=next(iter(sheets.values())),
+                    suggested_name=presentation.title,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -2188,6 +2196,7 @@ class AnalysisController:
 
     def _recompute_time_series(self, dialog: AnalysisDialog, config: TimeSeriesConfigWidget) -> None:
         """Analyze one applied Time Series Explorer configuration."""
+        dialog.invalidate_time_series_export()
         configuration = config.analysis_configuration()
         revision = config.configuration_revision()
         datetime_column, value_column, frequency, period, model = configuration
@@ -2198,10 +2207,22 @@ class AnalysisController:
             view = TimeSeriesView(cast("TimeSeriesResult", result))
             dialog.set_content_widget(view)
             if view.result().error is None:
-                dialog.set_exportable_time_series(
-                    TimeSeriesExportSnapshot(
-                        view.result(), view.chart_labels(), view.export_notes(), view.autocorrelation_note()
-                    )
+                snapshot = TimeSeriesExportSnapshot(
+                    view.result(),
+                    view.chart_labels(),
+                    view.export_notes(),
+                    view.autocorrelation_note(),
+                    applied_configuration=TimeSeriesAppliedConfiguration(
+                        datetime_column,
+                        value_column,
+                        frequency,
+                        period,
+                        model,
+                    ),
+                )
+                dialog.set_exportable_time_series(snapshot)
+                dialog.set_analysis_presentation(
+                    build_analysis_presentation(AnalysisCategory.TIME_SERIES, snapshot, tr)
                 )
 
         self._recompute_content(

@@ -10,6 +10,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.services.analysis.timeseries import DecompositionModel, TimeSeriesError
 from expo_jbm329.services.analysis.timeseries_charts import (
     DECOMPOSITION_PANELS,
@@ -21,6 +22,7 @@ from expo_jbm329.services.analysis.timeseries_charts import (
     has_decomposition,
 )
 from expo_jbm329.utils.format_utils import fmt_int
+from expo_jbm329.utils.i18n_utils import tr
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -68,16 +70,16 @@ class TimeSeriesView(QWidget):
     def chart_labels(self) -> TimeSeriesChartLabels:
         """Return the translated plot text used by the view and its export."""
         return TimeSeriesChartLabels(
-            series_title=self.tr("Series"),
+            series_title=translate_presentation_label(PresentationLabel.TIME_SERIES_SERIES, tr),
             value_axis=self._result.value_column,
-            acf_title=self.tr("Autocorrelation"),
-            lag_axis=self.tr("Lag"),
-            acf_axis=self.tr("Autocorrelation"),
-            decomposition_title=self.tr("Seasonal decomposition"),
-            observed=self.tr("Observed"),
-            trend=self.tr("Trend"),
-            seasonal=self.tr("Seasonal"),
-            residual=self.tr("Residual"),
+            acf_title=translate_presentation_label(PresentationLabel.TIME_SERIES_AUTOCORRELATION, tr),
+            lag_axis=translate_presentation_label(PresentationLabel.TIME_SERIES_LAG, tr),
+            acf_axis=translate_presentation_label(PresentationLabel.TIME_SERIES_AUTOCORRELATION, tr),
+            decomposition_title=translate_presentation_label(PresentationLabel.TIME_SERIES_SEASONAL_DECOMPOSITION, tr),
+            observed=translate_presentation_label(PresentationLabel.TIME_SERIES_OBSERVED, tr),
+            trend=translate_presentation_label(PresentationLabel.TIME_SERIES_TREND, tr),
+            seasonal=translate_presentation_label(PresentationLabel.TIME_SERIES_SEASONAL, tr),
+            residual=translate_presentation_label(PresentationLabel.TIME_SERIES_RESIDUAL, tr),
         )
 
     def export_notes(self) -> tuple[str, ...]:
@@ -90,12 +92,17 @@ class TimeSeriesView(QWidget):
         if result.error is not None:
             return ()
         models = {
-            DecompositionModel.ADDITIVE: self.tr("Additive"),
-            DecompositionModel.MULTIPLICATIVE: self.tr("Multiplicative"),
+            DecompositionModel.ADDITIVE: translate_presentation_label(PresentationLabel.TIME_SERIES_ADDITIVE, tr),
+            DecompositionModel.MULTIPLICATIVE: translate_presentation_label(
+                PresentationLabel.TIME_SERIES_MULTIPLICATIVE, tr
+            ),
         }
         lines = [
             *rich_text_lines([self._summary_text(result)]),
-            self.tr("Decomposition model: {model}").format(model=models[result.decomposition_model]),
+            (
+                f"{translate_presentation_label(PresentationLabel.TIME_SERIES_DECOMPOSITION_MODEL, tr)} "
+                f"{models[result.decomposition_model]}"
+            ),
         ]
         lines.extend(self.note_text(note) for note in (result.diagnostics_note, result.decomposition_note) if note)
         return tuple(lines)

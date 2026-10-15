@@ -23,6 +23,7 @@ from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.paired_comparison import analyze_paired_comparison
 from expo_jbm329.services.analysis.pca import analyze_pca
 from expo_jbm329.services.analysis.pca_export import PCAExportSnapshot
+from expo_jbm329.services.analysis.presentation import build_analysis_presentation
 from expo_jbm329.services.analysis.regression_export import RegressionExportSnapshot
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.report import (
@@ -37,6 +38,11 @@ from expo_jbm329.services.analysis.report import (
     report_entry_identity,
 )
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
+from expo_jbm329.services.analysis.timeseries import DecompositionModel, analyze_time_series
+from expo_jbm329.services.analysis.timeseries_export import (
+    TimeSeriesAppliedConfiguration,
+    TimeSeriesExportSnapshot,
+)
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_correlation_export import _snapshot as correlation_snapshot
@@ -53,7 +59,14 @@ from tests.analysis.test_regression_export import (
     negative_binomial_snapshot,
     poisson_snapshot,
 )
-from tests.analysis.test_timeseries_export import irregular_snapshot, time_series_snapshot
+from tests.analysis.test_timeseries_export import (
+    CHART_LABELS as TIME_SERIES_CHART_LABELS,
+)
+from tests.analysis.test_timeseries_export import (
+    daily_frame,
+    irregular_snapshot,
+    time_series_snapshot,
+)
 
 DATASET = DatasetRef("tab-1", "Employees", 100, 4)
 
@@ -521,6 +534,97 @@ def test_time_series_report_omits_unavailable_autocorrelation():
     components = available_report_components(AnalysisCategory.TIME_SERIES, irregular_snapshot())
 
     assert [component.key for component in components] == ["series", "model_summary", "charts"]
+
+
+def test_time_series_report_identity_distinguishes_every_applied_setting_and_auto_period_intent():
+    frame = daily_frame().dropna(subset=["day"]).copy()
+    frame["other_day"] = frame["day"] + pd.Timedelta(days=30)
+    frame["other_value"] = frame["sales"] + 2
+
+    def snapshot(
+        time_column: str = "day",
+        value_column: str = "sales",
+        frequency: str | None = None,
+        period: int | None = None,
+        model: DecompositionModel = DecompositionModel.ADDITIVE,
+    ) -> TimeSeriesExportSnapshot:
+        result = analyze_time_series(
+            frame,
+            time_column,
+            value_column,
+            resample_frequency=frequency,
+            seasonal_period=period,
+            decomposition_model=model,
+        )
+        assert result.error is None
+        return TimeSeriesExportSnapshot(
+            result,
+            TIME_SERIES_CHART_LABELS,
+            applied_configuration=TimeSeriesAppliedConfiguration(
+                time_column,
+                value_column,
+                frequency,
+                period,
+                model,
+            ),
+        )
+
+    automatic = snapshot()
+    configurations = (
+        automatic,
+        snapshot(time_column="other_day"),
+        snapshot(value_column="other_value"),
+        snapshot(frequency="D"),
+        snapshot(period=7),
+        snapshot(model=DecompositionModel.MULTIPLICATIVE),
+    )
+    identities = {
+        report_entry_identity(AnalysisCategory.TIME_SERIES, DATASET.tab_id, configured) for configured in configurations
+    }
+
+    assert len(identities) == len(configurations)
+    assert automatic.result.seasonal_period == 7
+    assert automatic.applied_configuration is not None
+    assert automatic.applied_configuration.seasonal_period is None
+    assert snapshot(period=7).result.seasonal_period == 7
+    automatic_summary = build_analysis_presentation(
+        AnalysisCategory.TIME_SERIES, automatic, lambda _context, source: source
+    )
+    assert automatic_summary.title == "Time Series"
+    assert automatic_summary.summary_lines[2] == "Resampling: Original frequency"
+    assert automatic_summary.summary_lines[3] == "Seasonal period: Automatic (detected: 7)"
+    assert (
+        build_analysis_presentation(
+            AnalysisCategory.TIME_SERIES, configurations[4], lambda _context, source: source
+        ).summary_lines[3]
+        == "Seasonal period: 7"
+    )
+    assert (
+        build_analysis_presentation(
+            AnalysisCategory.TIME_SERIES, configurations[3], lambda _context, source: source
+        ).summary_lines[2]
+        == "Resampling: Daily"
+    )
+    assert (
+        build_analysis_presentation(
+            AnalysisCategory.TIME_SERIES, configurations[5], lambda _context, source: source
+        ).summary_lines[-1]
+        == "Decomposition model: Multiplicative"
+    )
+
+
+def test_time_series_report_entry_keeps_same_slot_capture_and_validates_provenance():
+    snapshot = time_series_snapshot()
+    entry = create_report_entry(AnalysisCategory.TIME_SERIES, DATASET, snapshot)
+    inspected = create_report_entry(AnalysisCategory.TIME_SERIES, DATASET, snapshot)
+    rerun = create_report_entry(AnalysisCategory.TIME_SERIES, DATASET, time_series_snapshot())
+
+    assert entry.entry_id == rerun.entry_id
+    assert entry.capture_id == inspected.capture_id == snapshot.capture_id
+    assert rerun.capture_id != entry.capture_id
+    assert entry.with_selection(("series",), "Keep this note").capture_id == entry.capture_id
+    with pytest.raises(ValueError, match="Time Series report entry requires its applied-result capture identifier"):
+        replace(entry, capture_id="another-capture")
 
 
 @pytest.mark.parametrize(

@@ -91,6 +91,8 @@ def _report_component_translation_context(category: AnalysisCategory) -> str:
         return presentation_label_source(PresentationLabel.CLUSTERING)[0]
     if category is AnalysisCategory.PCA:
         return presentation_label_source(PresentationLabel.PCA)[0]
+    if category is AnalysisCategory.TIME_SERIES:
+        return presentation_label_source(PresentationLabel.TIME_SERIES_SERIES)[0]
     message = "Only configured analysis categories have shared component labels."
     raise ValueError(message)
 
@@ -496,6 +498,12 @@ class AnalysisDialog(QDialog):
         self._pca_export_tab_id = None
         self._update_report_action()
 
+    def invalidate_time_series_export(self) -> None:
+        """Invalidate the displayed time series until a new analysis is successfully applied."""
+        self._export_time_series = None
+        self._time_series_export_tab_id = None
+        self._update_report_action()
+
     def exportable_pca(self) -> PCAExportSnapshot | None:
         """Return the displayed applied PCA, independent of pending configuration edits."""
         if self.selected_category() is AnalysisCategory.PCA and self.source_tab_id() == self._pca_export_tab_id:
@@ -620,6 +628,7 @@ class AnalysisDialog(QDialog):
                 AnalysisCategory.OUTLIERS,
                 AnalysisCategory.CLUSTERING,
                 AnalysisCategory.PCA,
+                AnalysisCategory.TIME_SERIES,
             }
             and candidate.capture_id != entry.capture_id
         ):
@@ -647,6 +656,7 @@ class AnalysisDialog(QDialog):
                 AnalysisCategory.OUTLIERS,
                 AnalysisCategory.CLUSTERING,
                 AnalysisCategory.PCA,
+                AnalysisCategory.TIME_SERIES,
             } and (
                 candidate.capture_id != existing.capture_id
                 or (
@@ -697,6 +707,7 @@ class AnalysisDialog(QDialog):
             AnalysisCategory.OUTLIERS,
             AnalysisCategory.CLUSTERING,
             AnalysisCategory.PCA,
+            AnalysisCategory.TIME_SERIES,
         }:
             unavailable_context = _report_component_translation_context(candidate.category)
             unavailable_components.extend(

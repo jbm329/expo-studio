@@ -63,6 +63,7 @@ from expo_jbm329.services.analysis.presentation import (
     outlier_component_label,
     pca_component_label,
     regression_component_label,
+    time_series_component_label,
     translate_presentation_label,
 )
 from expo_jbm329.services.analysis.regression_export import (
@@ -624,12 +625,12 @@ class AnalysisExportDialog(QDialog):
         """List the applied series plainly and offer its prepared data, tables and charts."""
         snapshot = self._time_series
         if snapshot is not None:
-            identity = QLabel(
-                self.tr("Applied series: {value} by {time}").format(
-                    value=snapshot.result.value_column, time=snapshot.result.datetime_column
-                ),
-                self,
+            presentation = build_analysis_presentation(
+                AnalysisCategory.TIME_SERIES,
+                snapshot,
+                QCoreApplication.translate,
             )
+            identity = QLabel("\n".join((presentation.title, *presentation.summary_lines)), self)
             identity.setTextFormat(Qt.TextFormat.PlainText)
             identity.setWordWrap(True)
             identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -640,10 +641,8 @@ class AnalysisExportDialog(QDialog):
         results = QGroupBox(self.tr("Results"), self)
         results_layout = QVBoxLayout(results)
         labels = {
-            TimeSeriesExportComponent.SERIES: self.tr("Series"),
-            TimeSeriesExportComponent.AUTOCORRELATION: self.tr("Autocorrelation"),
-            TimeSeriesExportComponent.MODEL_SUMMARY: self.tr("Model summary"),
-            TimeSeriesExportComponent.CHARTS: self.tr("Charts"),
+            component: time_series_component_label(component, QCoreApplication.translate)
+            for component in TIME_SERIES_COMPONENTS
         }
         for component in TIME_SERIES_COMPONENTS:
             is_data = component is TimeSeriesExportComponent.SERIES

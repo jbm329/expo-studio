@@ -74,6 +74,7 @@ from expo_jbm329.services.analysis.presentation import (
     presentation_label_sources,
     regression_component_label,
     regression_intercept_label,
+    time_series_component_label,
     translate_presentation_label,
 )
 from expo_jbm329.services.analysis.regression import SIGNIFICANCE_LEVEL as REGRESSION_SIGNIFICANCE
@@ -182,6 +183,10 @@ class ReportEntry:
         elif self.category is AnalysisCategory.PCA:
             if not isinstance(self.snapshot, PCAExportSnapshot) or self.capture_id != self.snapshot.capture_id:
                 message = "A PCA report entry requires its applied-result capture identifier."
+                raise ValueError(message)
+        elif self.category is AnalysisCategory.TIME_SERIES:
+            if not isinstance(self.snapshot, TimeSeriesExportSnapshot) or self.capture_id != self.snapshot.capture_id:
+                message = "A Time Series report entry requires its applied-result capture identifier."
                 raise ValueError(message)
         elif self.capture_id is not None:
             message = "Only a report entry with a stable applied-result capture can carry a capture identifier."
@@ -298,6 +303,7 @@ def create_report_entry(
                     MultivariateOutlierExportSnapshot,
                     ClusteringExportSnapshot,
                     PCAExportSnapshot,
+                    TimeSeriesExportSnapshot,
                 ),
             )
             else None
@@ -417,17 +423,11 @@ def available_report_components(category: AnalysisCategory, snapshot: ReportSnap
                 for component in PCAExportComponent
             )
         case AnalysisCategory.TIME_SERIES if isinstance(snapshot, TimeSeriesExportSnapshot):
-            time_series_labels: dict[str, tuple[str, str]] = {
-                "series": ("Series", "table"),
-                "autocorrelation": ("Autocorrelation", "table"),
-                "model_summary": ("Model summary", "table"),
-                "charts": ("Charts", "chart"),
-            }
             component_values = tuple(
                 (
                     component.value,
-                    time_series_labels[component.value][0],
-                    time_series_labels[component.value][1],
+                    time_series_component_label(component, _identity_translate),
+                    "chart" if component is TimeSeriesExportComponent.CHARTS else "table",
                 )
                 for component in snapshot.components
             )
@@ -491,13 +491,16 @@ def report_entry_identity(category: AnalysisCategory, dataset_id: str, snapshot:
         case AnalysisCategory.PCA if isinstance(snapshot, PCAExportSnapshot):
             config = (snapshot.result.columns, snapshot.result.standardize)
         case AnalysisCategory.TIME_SERIES if isinstance(snapshot, TimeSeriesExportSnapshot):
-            time_series_result = snapshot.result
+            configuration = snapshot.applied_configuration
+            if configuration is None:
+                message = "A Time Series snapshot must retain its applied configuration."
+                raise ValueError(message)
             config = (
-                time_series_result.datetime_column,
-                time_series_result.value_column,
-                time_series_result.resample_frequency,
-                time_series_result.seasonal_period,
-                time_series_result.decomposition_model.value,
+                configuration.datetime_column,
+                configuration.value_column,
+                configuration.resample_frequency,
+                configuration.seasonal_period,
+                configuration.decomposition_model.value,
             )
         case _:
             message = "The analysis category and applied report snapshot do not match."
@@ -966,6 +969,9 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
     ),
     "PCAPresentation": tuple(
         source for context, source in presentation_label_sources() if context == "PCAPresentation"
+    ),
+    "TimeSeriesPresentation": tuple(
+        source for context, source in presentation_label_sources() if context == "TimeSeriesPresentation"
     ),
     "CorrelationView": (
         "Variable 1",
@@ -1679,13 +1685,13 @@ def _localized_report_tables(
                 TimeSeriesMetric.SEASONAL_PERIOD: "Seasonal period",
             }
             time_series_headers = {
-                "timestamp": "Timestamp",
-                "value": "Value",
-                "trend": "Trend",
-                "seasonal": "Seasonal",
-                "residual": "Residual",
-                "lag": "Lag",
-                "autocorrelation": "Autocorrelation",
+                "timestamp": PresentationLabel.TIME_SERIES_TIMESTAMP,
+                "value": PresentationLabel.TIME_SERIES_VALUE,
+                "trend": PresentationLabel.TIME_SERIES_TREND,
+                "seasonal": PresentationLabel.TIME_SERIES_SEASONAL,
+                "residual": PresentationLabel.TIME_SERIES_RESIDUAL,
+                "lag": PresentationLabel.TIME_SERIES_LAG,
+                "autocorrelation": PresentationLabel.TIME_SERIES_AUTOCORRELATION,
                 "metric": "Metric",
                 "notes": "Notes",
             }
@@ -1707,19 +1713,14 @@ def _localized_report_tables(
                             else metric
                         )
                     )
-                title = translate(
-                    "AnalysisExportDialog",
-                    {
-                        TimeSeriesExportComponent.SERIES: "Series",
-                        TimeSeriesExportComponent.AUTOCORRELATION: "Autocorrelation",
-                        TimeSeriesExportComponent.MODEL_SUMMARY: "Model summary",
-                    }[time_series_table],
-                )
+                title = time_series_component_label(time_series_table, translate)
                 add(
                     title,
                     frame.rename(
                         columns={
-                            name: translate("AnalysisExportDialog", label)
+                            name: translate_presentation_label(label, translate)
+                            if isinstance(label, PresentationLabel)
+                            else translate("AnalysisExportDialog", label)
                             for name, label in time_series_headers.items()
                         }
                     ),
@@ -2226,6 +2227,8 @@ def _component_translation_context(
         return "ClusteringPresentation"
     if category is AnalysisCategory.PCA:
         return "PCAPresentation"
+    if category is AnalysisCategory.TIME_SERIES:
+        return "TimeSeriesPresentation"
     return {
         AnalysisCategory.OVERVIEW: "OverviewView",
         AnalysisCategory.STATISTICS: "StatisticsView",

@@ -234,7 +234,7 @@ def test_hypothesis_component_headings_share_semantic_translation(snapshot, comp
     assert hypothesis_component_label(snapshot, component, lambda _context, text: text) == expected
 
 
-def test_other_category_presentation_deliberately_keeps_category_only_fallback():
+def test_time_series_presentation_uses_applied_roles_and_settings():
     calls: list[tuple[str, str]] = []
 
     def translate(context: str, source: str) -> str:
@@ -245,8 +245,23 @@ def test_other_category_presentation_deliberately_keeps_category_only_fallback()
 
     assert presentation.category == "translated Time Series"
     assert presentation.title == "translated Time Series"
-    assert presentation.configuration == ()
-    assert calls == [("AnalysisDialog", "Time Series")]
+    assert presentation.summary_lines == (
+        "translated Time column: day",
+        "translated Value column: sales",
+        "translated Resampling: translated Original frequency",
+        "translated Seasonal period: 7",
+        "translated Decomposition model: translated Additive",
+    )
+    assert calls == [
+        ("AnalysisDialog", "Time Series"),
+        ("TimeSeriesPresentation", "Original frequency"),
+        ("TimeSeriesPresentation", "Time column:"),
+        ("TimeSeriesPresentation", "Value column:"),
+        ("TimeSeriesPresentation", "Resampling:"),
+        ("TimeSeriesPresentation", "Seasonal period:"),
+        ("TimeSeriesPresentation", "Decomposition model:"),
+        ("TimeSeriesPresentation", "Additive"),
+    ]
 
 
 @pytest.mark.parametrize("standardize", [True, False])

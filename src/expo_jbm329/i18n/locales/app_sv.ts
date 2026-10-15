@@ -9958,4 +9958,36 @@ alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
     <message><source>Standardized</source><translation>Standardiserade</translation></message>
     <message><source>Not standardized</source><translation>Inte standardiserade</translation></message>
 </context>
+<context>
+    <name>TimeSeriesPresentation</name>
+    <message><source>Time column:</source><translation>Tidskolumn:</translation></message>
+    <message><source>Value column:</source><translation>Värdekolumn:</translation></message>
+    <message><source>Resampling:</source><translation>Omsampling:</translation></message>
+    <message><source>Seasonal period:</source><translation>Säsongsperiod:</translation></message>
+    <message><source>Decomposition model:</source><translation>Dekomponeringsmodell:</translation></message>
+    <message><source>Auto-detect seasonal period</source><translation>Identifiera säsongsperiod automatiskt</translation></message>
+    <message><source>Original frequency</source><translation>Ursprunglig frekvens</translation></message>
+    <message><source>Automatic</source><translation>Automatiskt</translation></message>
+    <message><source>Automatic (no period detected)</source><translation>Automatiskt (ingen period identifierad)</translation></message>
+    <message><source>Automatic (detected: {period})</source><translation>Automatiskt (identifierad: {period})</translation></message>
+    <message><source>Daily</source><translation>Daglig</translation></message>
+    <message><source>Weekly</source><translation>Veckovis</translation></message>
+    <message><source>Monthly</source><translation>Månadsvis</translation></message>
+    <message><source>Quarterly</source><translation>Kvartalsvis</translation></message>
+    <message><source>Yearly</source><translation>Årsvis</translation></message>
+    <message><source>Additive</source><translation>Additiv</translation></message>
+    <message><source>Multiplicative</source><translation>Multiplikativ</translation></message>
+    <message><source>Series</source><translation>Serie</translation></message>
+    <message><source>Autocorrelation</source><translation>Autokorrelation</translation></message>
+    <message><source>Model summary</source><translation>Modellsammanfattning</translation></message>
+    <message><source>Charts</source><translation>Diagram</translation></message>
+    <message><source>Seasonal decomposition</source><translation>Säsongsdekomponering</translation></message>
+    <message><source>Observed</source><translation>Observerad</translation></message>
+    <message><source>Trend</source><translation>Trend</translation></message>
+    <message><source>Seasonal</source><translation>Säsong</translation></message>
+    <message><source>Residual</source><translation>Residual</translation></message>
+    <message><source>Lag</source><translation>Fördröjning</translation></message>
+    <message><source>Value</source><translation>Värde</translation></message>
+    <message><source>Timestamp</source><translation>Tidsstämpel</translation></message>
+</context>
 </TS>

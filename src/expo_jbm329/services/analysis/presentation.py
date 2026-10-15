@@ -36,6 +36,12 @@ from expo_jbm329.services.analysis.regression_glm import (
     generalized_term_name,
 )
 from expo_jbm329.services.analysis.survival import SurvivalResult, survival_term_name
+from expo_jbm329.services.analysis.timeseries import DecompositionModel
+from expo_jbm329.services.analysis.timeseries_export import (
+    TimeSeriesAppliedConfiguration,
+    TimeSeriesExportComponent,
+    TimeSeriesExportSnapshot,
+)
 from expo_jbm329.utils.format_utils import fmt_num, fmt_pct
 
 if TYPE_CHECKING:
@@ -154,6 +160,35 @@ class PresentationLabel(StrEnum):
     PCA_STANDARDIZATION = "pca_standardization"
     PCA_STANDARDIZED = "pca_standardized"
     PCA_NOT_STANDARDIZED = "pca_not_standardized"
+    TIME_SERIES_TIME_COLUMN = "time_series_time_column"
+    TIME_SERIES_VALUE_COLUMN = "time_series_value_column"
+    TIME_SERIES_RESAMPLING = "time_series_resampling"
+    TIME_SERIES_SEASONAL_PERIOD = "time_series_seasonal_period"
+    TIME_SERIES_DECOMPOSITION_MODEL = "time_series_decomposition_model"
+    TIME_SERIES_AUTO_DETECT_PERIOD = "time_series_auto_detect_period"
+    TIME_SERIES_ORIGINAL_FREQUENCY = "time_series_original_frequency"
+    TIME_SERIES_AUTOMATIC_PERIOD = "time_series_automatic_period"
+    TIME_SERIES_NO_DETECTED_PERIOD = "time_series_no_detected_period"
+    TIME_SERIES_DETECTED_PERIOD = "time_series_detected_period"
+    TIME_SERIES_DAILY = "time_series_daily"
+    TIME_SERIES_WEEKLY = "time_series_weekly"
+    TIME_SERIES_MONTHLY = "time_series_monthly"
+    TIME_SERIES_QUARTERLY = "time_series_quarterly"
+    TIME_SERIES_YEARLY = "time_series_yearly"
+    TIME_SERIES_ADDITIVE = "time_series_additive"
+    TIME_SERIES_MULTIPLICATIVE = "time_series_multiplicative"
+    TIME_SERIES_SERIES = "time_series_series"
+    TIME_SERIES_AUTOCORRELATION = "time_series_autocorrelation"
+    TIME_SERIES_MODEL_SUMMARY = "time_series_model_summary"
+    TIME_SERIES_CHARTS = "time_series_charts"
+    TIME_SERIES_SEASONAL_DECOMPOSITION = "time_series_seasonal_decomposition"
+    TIME_SERIES_OBSERVED = "time_series_observed"
+    TIME_SERIES_TREND = "time_series_trend"
+    TIME_SERIES_SEASONAL = "time_series_seasonal"
+    TIME_SERIES_RESIDUAL = "time_series_residual"
+    TIME_SERIES_LAG = "time_series_lag"
+    TIME_SERIES_VALUE = "time_series_value"
+    TIME_SERIES_TIMESTAMP = "time_series_timestamp"
 
 
 @dataclass(frozen=True, slots=True)
@@ -171,6 +206,7 @@ _OUTLIERS_CONTEXT = "OutliersPresentation"
 _CLUSTERING_CONTEXT = "ClusteringPresentation"
 _ANALYSIS_CONFIGURATION_CONTEXT = "AnalysisConfiguration"
 _PCA_CONTEXT = "PCAPresentation"
+_TIME_SERIES_CONTEXT = "TimeSeriesPresentation"
 _LABEL_DEFINITIONS: dict[PresentationLabel, PresentationLabelDefinition] = {
     PresentationLabel.CLUSTERING: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Clustering"),
     PresentationLabel.CLUSTERING_CONFIGURED_TITLE: PresentationLabelDefinition(
@@ -201,6 +237,49 @@ _LABEL_DEFINITIONS: dict[PresentationLabel, PresentationLabelDefinition] = {
     PresentationLabel.PCA_STANDARDIZATION: PresentationLabelDefinition(_PCA_CONTEXT, "Standardization:"),
     PresentationLabel.PCA_STANDARDIZED: PresentationLabelDefinition(_PCA_CONTEXT, "Standardized"),
     PresentationLabel.PCA_NOT_STANDARDIZED: PresentationLabelDefinition(_PCA_CONTEXT, "Not standardized"),
+    PresentationLabel.TIME_SERIES_TIME_COLUMN: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Time column:"),
+    PresentationLabel.TIME_SERIES_VALUE_COLUMN: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Value column:"),
+    PresentationLabel.TIME_SERIES_RESAMPLING: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Resampling:"),
+    PresentationLabel.TIME_SERIES_SEASONAL_PERIOD: PresentationLabelDefinition(
+        _TIME_SERIES_CONTEXT, "Seasonal period:"
+    ),
+    PresentationLabel.TIME_SERIES_DECOMPOSITION_MODEL: PresentationLabelDefinition(
+        _TIME_SERIES_CONTEXT, "Decomposition model:"
+    ),
+    PresentationLabel.TIME_SERIES_AUTO_DETECT_PERIOD: PresentationLabelDefinition(
+        _TIME_SERIES_CONTEXT, "Auto-detect seasonal period"
+    ),
+    PresentationLabel.TIME_SERIES_ORIGINAL_FREQUENCY: PresentationLabelDefinition(
+        _TIME_SERIES_CONTEXT, "Original frequency"
+    ),
+    PresentationLabel.TIME_SERIES_AUTOMATIC_PERIOD: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Automatic"),
+    PresentationLabel.TIME_SERIES_NO_DETECTED_PERIOD: PresentationLabelDefinition(
+        _TIME_SERIES_CONTEXT, "Automatic (no period detected)"
+    ),
+    PresentationLabel.TIME_SERIES_DETECTED_PERIOD: PresentationLabelDefinition(
+        _TIME_SERIES_CONTEXT, "Automatic (detected: {period})"
+    ),
+    PresentationLabel.TIME_SERIES_DAILY: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Daily"),
+    PresentationLabel.TIME_SERIES_WEEKLY: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Weekly"),
+    PresentationLabel.TIME_SERIES_MONTHLY: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Monthly"),
+    PresentationLabel.TIME_SERIES_QUARTERLY: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Quarterly"),
+    PresentationLabel.TIME_SERIES_YEARLY: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Yearly"),
+    PresentationLabel.TIME_SERIES_ADDITIVE: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Additive"),
+    PresentationLabel.TIME_SERIES_MULTIPLICATIVE: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Multiplicative"),
+    PresentationLabel.TIME_SERIES_SERIES: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Series"),
+    PresentationLabel.TIME_SERIES_AUTOCORRELATION: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Autocorrelation"),
+    PresentationLabel.TIME_SERIES_MODEL_SUMMARY: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Model summary"),
+    PresentationLabel.TIME_SERIES_CHARTS: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Charts"),
+    PresentationLabel.TIME_SERIES_SEASONAL_DECOMPOSITION: PresentationLabelDefinition(
+        _TIME_SERIES_CONTEXT, "Seasonal decomposition"
+    ),
+    PresentationLabel.TIME_SERIES_OBSERVED: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Observed"),
+    PresentationLabel.TIME_SERIES_TREND: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Trend"),
+    PresentationLabel.TIME_SERIES_SEASONAL: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Seasonal"),
+    PresentationLabel.TIME_SERIES_RESIDUAL: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Residual"),
+    PresentationLabel.TIME_SERIES_LAG: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Lag"),
+    PresentationLabel.TIME_SERIES_VALUE: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Value"),
+    PresentationLabel.TIME_SERIES_TIMESTAMP: PresentationLabelDefinition(_TIME_SERIES_CONTEXT, "Timestamp"),
     PresentationLabel.CORRELATION: PresentationLabelDefinition(_CORRELATION_CONTEXT, "Correlation"),
     PresentationLabel.CONFIGURED_TITLE: PresentationLabelDefinition(_CORRELATION_CONTEXT, "{category} — {method}"),
     PresentationLabel.COLUMNS: PresentationLabelDefinition(_CORRELATION_CONTEXT, "Columns:"),
@@ -422,8 +501,8 @@ def build_analysis_presentation(
 ) -> AnalysisPresentation:
     """Build a presentation descriptor from a captured applied result.
 
-    Correlation, Hypothesis Tests, Regression, Outliers and Clustering receive configured titles and
-    ordered settings.
+    Correlation, Hypothesis Tests, Regression, Outliers, Clustering, PCA and
+    Time Series receive configured titles and ordered settings.
     Other categories deliberately retain their existing category-only title.
 
     Args:
@@ -472,6 +551,21 @@ def build_analysis_presentation(
             message = "PCA presentation requires a PCA result snapshot."
             raise TypeError(message)
         return build_pca_presentation(snapshot, translate)
+    if category is AnalysisCategory.TIME_SERIES:
+        if not isinstance(snapshot, TimeSeriesExportSnapshot):
+            message = "Time Series presentation requires a time-series result snapshot."
+            raise TypeError(message)
+        configuration = (
+            snapshot.applied_configuration
+            if snapshot.applied_configuration is not None
+            else TimeSeriesAppliedConfiguration.from_result(snapshot.result)
+        )
+        return build_time_series_presentation(
+            configuration,
+            snapshot.result.seasonal_period,
+            translate,
+            number_format=number_format,
+        )
     category_source = analysis_category_source(category)
     category_title = translate("AnalysisDialog", category_source)
     return AnalysisPresentation(category_title, category_title)
@@ -499,6 +593,84 @@ def pca_component_label(
         PCAExportComponent.CHARTS: PresentationLabel.PCA_PLOTS,
     }
     return translate_presentation_label(labels[component], translate)
+
+
+def time_series_component_label(
+    component: TimeSeriesExportComponent,
+    translate: Callable[[str, str], str],
+) -> str:
+    """Return the shared display heading for a time-series component."""
+    labels = {
+        TimeSeriesExportComponent.SERIES: PresentationLabel.TIME_SERIES_SERIES,
+        TimeSeriesExportComponent.AUTOCORRELATION: PresentationLabel.TIME_SERIES_AUTOCORRELATION,
+        TimeSeriesExportComponent.MODEL_SUMMARY: PresentationLabel.TIME_SERIES_MODEL_SUMMARY,
+        TimeSeriesExportComponent.CHARTS: PresentationLabel.TIME_SERIES_CHARTS,
+    }
+    return translate_presentation_label(labels[component], translate)
+
+
+def build_time_series_presentation(
+    configuration: TimeSeriesAppliedConfiguration,
+    detected_period: int | None,
+    translate: Callable[[str, str], str],
+    *,
+    number_format: Callable[[float], str] = fmt_num,
+) -> AnalysisPresentation:
+    """Describe the applied time-series roles and settings, not pending controls."""
+    category = translate("AnalysisDialog", "Time Series")
+    frequency_labels = {
+        "D": PresentationLabel.TIME_SERIES_DAILY,
+        "W": PresentationLabel.TIME_SERIES_WEEKLY,
+        "MS": PresentationLabel.TIME_SERIES_MONTHLY,
+        "QS": PresentationLabel.TIME_SERIES_QUARTERLY,
+        "YS": PresentationLabel.TIME_SERIES_YEARLY,
+    }
+    frequency = (
+        translate_presentation_label(PresentationLabel.TIME_SERIES_ORIGINAL_FREQUENCY, translate)
+        if configuration.resample_frequency is None
+        else translate_presentation_label(frequency_labels[configuration.resample_frequency], translate)
+        if configuration.resample_frequency in frequency_labels
+        else configuration.resample_frequency
+    )
+    if configuration.seasonal_period is not None:
+        period = number_format(float(configuration.seasonal_period))
+    elif detected_period is None:
+        period = translate_presentation_label(PresentationLabel.TIME_SERIES_NO_DETECTED_PERIOD, translate)
+    else:
+        period = translate_presentation_label(PresentationLabel.TIME_SERIES_DETECTED_PERIOD, translate).format(
+            period=number_format(float(detected_period))
+        )
+    model_label = (
+        PresentationLabel.TIME_SERIES_ADDITIVE
+        if configuration.decomposition_model is DecompositionModel.ADDITIVE
+        else PresentationLabel.TIME_SERIES_MULTIPLICATIVE
+    )
+    return AnalysisPresentation(
+        category,
+        category,
+        (
+            ConfigurationField(
+                translate_presentation_label(PresentationLabel.TIME_SERIES_TIME_COLUMN, translate),
+                (configuration.datetime_column,),
+            ),
+            ConfigurationField(
+                translate_presentation_label(PresentationLabel.TIME_SERIES_VALUE_COLUMN, translate),
+                (configuration.value_column,),
+            ),
+            ConfigurationField(
+                translate_presentation_label(PresentationLabel.TIME_SERIES_RESAMPLING, translate),
+                (frequency,),
+            ),
+            ConfigurationField(
+                translate_presentation_label(PresentationLabel.TIME_SERIES_SEASONAL_PERIOD, translate),
+                (period,),
+            ),
+            ConfigurationField(
+                translate_presentation_label(PresentationLabel.TIME_SERIES_DECOMPOSITION_MODEL, translate),
+                (translate_presentation_label(model_label, translate),),
+            ),
+        ),
+    )
 
 
 def build_pca_presentation(

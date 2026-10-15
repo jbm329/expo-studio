@@ -64,6 +64,8 @@ from expo_jbm329.services.analysis.report import (
     render_report_html,
 )
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
+from expo_jbm329.services.analysis.timeseries import DecompositionModel, analyze_time_series
+from expo_jbm329.services.analysis.timeseries_export import TimeSeriesAppliedConfiguration, TimeSeriesExportSnapshot
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.utils.format_utils import fmt_pct
@@ -83,7 +85,7 @@ from tests.analysis.test_regression_export import (
     negative_binomial_snapshot,
     poisson_snapshot,
 )
-from tests.analysis.test_timeseries_export import irregular_snapshot, time_series_snapshot
+from tests.analysis.test_timeseries_export import CHART_LABELS, irregular_snapshot, time_series_snapshot
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -510,6 +512,189 @@ def test_pca_html_and_export_share_localized_title_roles_components_and_escaped_
     assert escape(feature, quote=True) in html
     assert feature not in html
     assert "sv:PCA" in html
+
+
+def test_time_series_report_and_html_share_applied_descriptor_and_export_labels():
+    time_column = '<time & "quoted">' + "timestamp " * 12
+    value_column = "<value & metric>"
+    frame = pd.DataFrame({
+        time_column: pd.date_range("2025-01-01", periods=28, freq="D"),
+        value_column: [float(index + 1) for index in range(28)],
+    })
+    result = analyze_time_series(
+        frame,
+        time_column,
+        value_column,
+        resample_frequency="D",
+        seasonal_period=None,
+        decomposition_model=DecompositionModel.MULTIPLICATIVE,
+    )
+    assert result.error is None
+    snapshot = TimeSeriesExportSnapshot(
+        result,
+        CHART_LABELS,
+        applied_configuration=TimeSeriesAppliedConfiguration(
+            time_column,
+            value_column,
+            "D",
+            None,
+            DecompositionModel.MULTIPLICATIVE,
+        ),
+    )
+    selection = ("series", "model_summary")
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.TIME_SERIES, snapshot, selection))
+
+    def translate(context: str, source: str) -> str:
+        return f"sv:{source}" if context == "TimeSeriesPresentation" else source
+
+    labels = capture_report_labels(translate=translate)
+    presentation = build_analysis_presentation(AnalysisCategory.TIME_SERIES, snapshot, translate)
+    prepared = prepare_report_content(document, labels=labels)
+    entry = prepared.entries[0]
+    html = render_prepared_report_html(prepared)
+    export_tables = localized_report_tables(
+        AnalysisCategory.TIME_SERIES,
+        snapshot,
+        selection,
+        labels=labels,
+    )
+
+    assert presentation.title == "Time Series"
+    assert entry.title == presentation.title
+    assert tuple(field.display_value for field in entry.configuration) == (
+        time_column,
+        value_column,
+        "sv:Daily",
+        "sv:Automatic (detected: 7)",
+        "sv:Multiplicative",
+    )
+    assert tuple(field.label for field in entry.configuration) == (
+        "sv:Time column:",
+        "sv:Value column:",
+        "sv:Resampling:",
+        "sv:Seasonal period:",
+        "sv:Decomposition model:",
+    )
+    expected_titles = ("sv:Series", "sv:Model summary")
+    assert tuple(component.label for component in entry.components) == expected_titles
+    assert tuple(table.title for component in entry.components for table in component.tables) == expected_titles
+    assert tuple(export_tables) == expected_titles
+    assert "Time Series — Time Series" not in html
+    assert "Time Series</h2>" in html
+    assert f"<dt>sv:Time column:</dt><dd>{escape(time_column)}</dd>" in html
+    assert f"<dt>sv:Value column:</dt><dd>{escape(value_column)}</dd>" in html
+    assert "&lt;time &amp; &quot;quoted&quot;&gt;" in html
+    assert time_column not in html
+    assert value_column not in html
+
+    from expo_jbm329.services.analysis.timeseries_export import (
+        TimeSeriesExportComponent,
+        time_series_export_tables,
+    )
+
+    raw = time_series_export_tables(
+        snapshot,
+        (TimeSeriesExportComponent.SERIES, TimeSeriesExportComponent.MODEL_SUMMARY),
+    )
+    localized_series = export_tables["sv:Series"]
+    raw_series = raw[TimeSeriesExportComponent.SERIES]
+    assert localized_series.columns.tolist() == [
+        "sv:Timestamp",
+        "sv:Value",
+        "sv:Trend",
+        "sv:Seasonal",
+        "sv:Residual",
+    ]
+    assert localized_series.dtypes.tolist() == raw_series.dtypes.tolist()
+    for index in range(1, localized_series.shape[1]):
+        pd.testing.assert_series_equal(
+            localized_series.iloc[:, index],
+            raw_series.iloc[:, index],
+            check_dtype=True,
+            check_names=False,
+        )
+
+
+def test_time_series_html_reports_applied_model_without_claiming_partial_decomposition():
+    snapshot = irregular_snapshot()
+    snapshot = replace(
+        snapshot,
+        notes=(
+            "Decomposition model: Additive",
+            "The autocorrelation requires a regular time frequency.",
+            "Seasonal decomposition requires a regular time frequency.",
+        ),
+    )
+    entry = _entry(AnalysisCategory.TIME_SERIES, snapshot, ("model_summary", "charts"))
+    document = ReportDocument()
+    document.upsert(entry)
+
+    prepared = prepare_report_content(document)
+    prepared_entry = prepared.entries[0]
+    chart_component = next(component for component in prepared_entry.components if component.kind == "chart")
+    html = render_prepared_report_html(prepared)
+
+    assert prepared_entry.title == "Time Series"
+    assert prepared_entry.configuration[-1].display_value == "Additive"
+    assert len(chart_component.charts) == 1
+    assert chart_component.charts[0].heading == "Series"
+    assert "The autocorrelation requires a regular time frequency." in html
+    assert "Seasonal decomposition requires a regular time frequency." in html
+    assert "Seasonal decomposition (calculated)" not in html
+
+
+def test_time_series_descriptor_and_html_use_compiled_swedish_labels():
+    from pathlib import Path
+
+    from PyQt6.QtCore import QCoreApplication, QTranslator
+    from PyQt6.QtWidgets import QApplication
+
+    snapshot = time_series_snapshot()
+    assert snapshot.applied_configuration is not None
+    snapshot = replace(
+        snapshot,
+        applied_configuration=TimeSeriesAppliedConfiguration(
+            snapshot.result.datetime_column,
+            snapshot.result.value_column,
+            None,
+            None,
+            snapshot.result.decomposition_model,
+        ),
+    )
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.TIME_SERIES, snapshot, ("series", "model_summary")))
+    translator = QTranslator()
+    catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / "app_sv.qm"
+    assert translator.load(str(catalog))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    try:
+        presentation = build_analysis_presentation(AnalysisCategory.TIME_SERIES, snapshot, QCoreApplication.translate)
+        labels = capture_report_labels(QCoreApplication.translate)
+    finally:
+        app.removeTranslator(translator)
+
+    prepared = prepare_report_content(document, labels=labels)
+    entry = prepared.entries[0]
+    html = render_prepared_report_html(prepared)
+
+    assert presentation.title == "Tidsserie"
+    assert entry.title == "Tidsserie"
+    assert tuple(field.label for field in entry.configuration) == (
+        "Tidskolumn:",
+        "Värdekolumn:",
+        "Omsampling:",
+        "Säsongsperiod:",
+        "Dekomponeringsmodell:",
+    )
+    assert entry.configuration[2].display_value == "Ursprunglig frekvens"
+    assert entry.configuration[3].display_value == "Automatiskt (identifierad: 7)"
+    assert entry.configuration[4].display_value == "Additiv"
+    assert tuple(component.label for component in entry.components) == ("Serie", "Modellsammanfattning")
+    assert "Tidsserie" in html
+    assert "Tidskolumn:" in html
+    assert "Automatiskt (identifierad: 7)" in html
 
 
 @pytest.mark.parametrize(
