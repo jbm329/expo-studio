@@ -1103,6 +1103,7 @@ def _localized_report_tables(
     regression_model_metrics: pd.DataFrame | None = None,
     clustering_model_summary: pd.DataFrame | None = None,
     pca_model_summary: pd.DataFrame | None = None,
+    time_series_model_summary: pd.DataFrame | None = None,
     outlier_report_tables: Mapping[OutlierExportComponent, pd.DataFrame] | None = None,
     include_correlation_explanation: bool = True,
 ) -> dict[str, pd.DataFrame]:
@@ -1704,7 +1705,12 @@ def _localized_report_tables(
                 time_series_table = time_series_table_keys.get(key)
                 if time_series_table is None:
                     continue
-                frame = time_series_export_tables(snapshot, (time_series_table,))[time_series_table]
+                frame = (
+                    time_series_model_summary
+                    if time_series_table is TimeSeriesExportComponent.MODEL_SUMMARY
+                    and time_series_model_summary is not None
+                    else time_series_export_tables(snapshot, (time_series_table,))[time_series_table]
+                )
                 if time_series_table is TimeSeriesExportComponent.MODEL_SUMMARY:
                     frame["metric"] = frame["metric"].map(
                         lambda metric: (
@@ -1813,6 +1819,7 @@ def prepare_report_content(
                 regression_model_metrics=_regression_report_rows(entry.snapshot, table_keys),
                 clustering_model_summary=_clustering_report_rows(entry.snapshot, table_keys),
                 pca_model_summary=_pca_report_rows(entry.snapshot, table_keys),
+                time_series_model_summary=_time_series_report_rows(entry.snapshot, table_keys),
                 outlier_report_tables=(
                     _outlier_report_rows(entry.snapshot, table_keys, translate)
                     if isinstance(entry.snapshot, OutlierExportSnapshot)
@@ -1903,6 +1910,10 @@ def prepare_report_content(
                         or (
                             isinstance(entry.snapshot, PCAExportSnapshot)
                             and component.key == PCAExportComponent.MODEL_SUMMARY.value
+                        )
+                        or (
+                            isinstance(entry.snapshot, TimeSeriesExportSnapshot)
+                            and component.key == TimeSeriesExportComponent.MODEL_SUMMARY.value
                         )
                     ):
                         paragraphs = entry.snapshot.notes
@@ -2156,6 +2167,27 @@ def _pca_report_rows(
         message = "PCA model summaries must include their raw metric and notes columns."
         raise ValueError(message)
     return raw_metrics.loc[raw_metrics["metric"].notna()].drop(columns="notes").copy()
+
+
+def _time_series_report_rows(
+    snapshot: ReportSnapshot,
+    component_keys: Sequence[str],
+) -> pd.DataFrame | None:
+    """Separate captured time-series notes from metric rows before localization."""
+    if (
+        not isinstance(snapshot, TimeSeriesExportSnapshot)
+        or TimeSeriesExportComponent.MODEL_SUMMARY.value not in component_keys
+    ):
+        return None
+    raw_metrics = time_series_export_tables(
+        snapshot,
+        (TimeSeriesExportComponent.MODEL_SUMMARY,),
+    )[TimeSeriesExportComponent.MODEL_SUMMARY]
+    if "metric" not in raw_metrics.columns or "notes" not in raw_metrics.columns:
+        message = "Time-series model summaries must include their raw metric and notes columns."
+        raise ValueError(message)
+    actual_metrics = tuple(metric.value for metric in TimeSeriesMetric)
+    return raw_metrics.loc[raw_metrics["metric"].isin(actual_metrics)].drop(columns="notes").copy()
 
 
 def _outlier_report_rows(

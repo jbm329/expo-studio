@@ -65,7 +65,13 @@ from expo_jbm329.services.analysis.report import (
 )
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
 from expo_jbm329.services.analysis.timeseries import DecompositionModel, analyze_time_series
-from expo_jbm329.services.analysis.timeseries_export import TimeSeriesAppliedConfiguration, TimeSeriesExportSnapshot
+from expo_jbm329.services.analysis.timeseries_export import (
+    TimeSeriesAppliedConfiguration,
+    TimeSeriesExportComponent,
+    TimeSeriesExportSnapshot,
+    TimeSeriesMetric,
+    time_series_export_tables,
+)
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.utils.format_utils import fmt_pct
@@ -642,6 +648,127 @@ def test_time_series_html_reports_applied_model_without_claiming_partial_decompo
     assert "The autocorrelation requires a regular time frequency." in html
     assert "Seasonal decomposition requires a regular time frequency." in html
     assert "Seasonal decomposition (calculated)" not in html
+
+
+def _resampled_time_series_snapshot(notes: tuple[str, ...]) -> TimeSeriesExportSnapshot:
+    frame = pd.DataFrame({
+        "time": pd.date_range("2024-01-01", periods=28, freq="D"),
+        "value": [float(index + 1) for index in range(28)],
+    })
+    result = analyze_time_series(frame, "time", "value", resample_frequency="D", seasonal_period=7)
+    assert result.error is None
+    return TimeSeriesExportSnapshot(result, CHART_LABELS, notes)
+
+
+@pytest.mark.parametrize("variant", ["regular", "resampled", "partial"])
+@pytest.mark.parametrize(
+    "notes",
+    [
+        (),
+        (
+            "First <model> & note\ncontinued safely",
+            "Second model note",
+            "Third note",
+            "Fourth note",
+            "Fifth note",
+            "Sixth note",
+            "Seventh note",
+        ),
+    ],
+)
+def test_time_series_html_separates_model_notes_without_changing_exports(variant, notes):
+    if variant == "regular":
+        snapshot = time_series_snapshot(notes=notes)
+    elif variant == "resampled":
+        snapshot = _resampled_time_series_snapshot(notes)
+    else:
+        snapshot = replace(irregular_snapshot(), notes=notes)
+
+    component_key = TimeSeriesExportComponent.MODEL_SUMMARY
+    raw_before = time_series_export_tables(snapshot, (component_key,))[component_key]
+    localized_export = localized_report_tables(
+        AnalysisCategory.TIME_SERIES,
+        snapshot,
+        ("model_summary",),
+    )["Model summary"]
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.TIME_SERIES, snapshot, ("model_summary",)))
+
+    prepared = prepare_report_content(document)
+    component = prepared.entries[0].components[0]
+    html = render_prepared_report_html(prepared)
+    raw_after = time_series_export_tables(snapshot, (component_key,))[component_key]
+
+    expected_metrics = [
+        "Source rows",
+        "Invalid rows dropped",
+        "Duplicate rows averaged",
+        "Time points",
+        "Seasonal period",
+    ]
+    metric_index = component.tables[0].headers.index("Metric")
+    assert component.tables[0].headers == ("Metric", "Value")
+    assert len(component.tables[0].rows) == len(expected_metrics)
+    assert tuple(row[metric_index] for row in component.tables[0].rows) == tuple(expected_metrics)
+    assert component.paragraphs == notes
+    assert localized_export.columns.tolist() == ["Metric", "Value", "Notes"]
+    assert len(localized_export) == max(len(expected_metrics), len(notes))
+    assert localized_export["Notes"].iloc[: len(notes)].tolist() == list(notes)
+    assert localized_export["Notes"].iloc[len(notes) :].isna().all()
+    assert isinstance(localized_export["Notes"].dtype, pd.StringDtype)
+    assert raw_before.columns.tolist() == ["metric", "value", "notes"]
+    assert raw_before["metric"].dtype == pd.StringDtype()
+    assert raw_before["value"].dtype == "float64"
+    assert raw_before["notes"].dtype == pd.StringDtype()
+    pd.testing.assert_frame_equal(raw_after, raw_before)
+    if notes:
+        assert "Notes" not in component.tables[0].headers
+        assert html.index("</table></div>") < html.index('<div class="report-paragraphs">')
+        assert html.index("First &lt;model&gt; &amp; note") < html.index("Second model note")
+        assert "continued safely" in html
+        assert "First <model>" not in html
+        assert "white-space: pre-wrap" in html
+    else:
+        assert '<div class="report-paragraphs">' not in html
+
+
+def test_time_series_html_keeps_real_metric_rows_with_missing_values(monkeypatch):
+    from expo_jbm329.services.analysis import report
+
+    snapshot = time_series_snapshot(notes=("Captured model note",))
+    original_export_tables = report.time_series_export_tables
+
+    def export_with_missing_value(snapshot_arg, components):
+        tables = original_export_tables(snapshot_arg, components)
+        tables[TimeSeriesExportComponent.MODEL_SUMMARY].loc[0, "value"] = np.nan
+        return tables
+
+    monkeypatch.setattr(report, "time_series_export_tables", export_with_missing_value)
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.TIME_SERIES, snapshot, ("model_summary",)))
+
+    component = prepare_report_content(document).entries[0].components[0]
+    metric_index = component.tables[0].headers.index("Metric")
+    value_index = component.tables[0].headers.index("Value")
+    source_rows = next(row for row in component.tables[0].rows if row[metric_index] == "Source rows")
+
+    assert pd.isna(source_rows[value_index])
+    assert len(component.tables[0].rows) == len(TimeSeriesMetric)
+    assert component.paragraphs == snapshot.notes
+
+
+def test_time_series_notes_are_excluded_when_model_summary_is_not_selected():
+    snapshot = replace(time_series_snapshot(), notes=("Model-only note",))
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.TIME_SERIES, snapshot, ("series",)))
+
+    prepared = prepare_report_content(document)
+    component = prepared.entries[0].components[0]
+    html = render_prepared_report_html(prepared)
+
+    assert component.key == "series"
+    assert component.paragraphs == ()
+    assert "Model-only note" not in html
 
 
 def test_time_series_descriptor_and_html_use_compiled_swedish_labels():
