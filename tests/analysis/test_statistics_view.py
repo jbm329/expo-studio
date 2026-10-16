@@ -279,6 +279,7 @@ def test_normality_wrapper_survives_live_column_changes_with_translated_heading(
             assert assert_result_section(panel, "Shapiro-Wilk:") is scroll
             assert scroll.widget() is label
             assert label.text() == view._normality_text(stats)  # noqa: SLF001
+            assert "Shapiro-Wilk" not in label.text()
             assert label.wordWrap()
             assert label.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
         if language == "sv":

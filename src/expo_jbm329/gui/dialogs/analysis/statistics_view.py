@@ -565,7 +565,6 @@ class StatisticsView(QWidget):
             return self.tr("Not enough data to test for normality.")
 
         lines = [
-            self.tr("<b>Shapiro-Wilk</b>:"),
             self.tr("W = {w}, p = {p}").format(
                 w=fmt_num(stats.shapiro_statistic),
                 p=fmt_p_value(stats.shapiro_p_value),
