@@ -10,7 +10,7 @@ from matplotlib.figure import Figure
 from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
+from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection, build_section_scroll_area
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.hypothesis_charts import (
     build_hypothesis_chart_presentation,
@@ -87,11 +87,11 @@ class PairedComparisonView(QWidget):
         label = self._build_message("<br>".join(summary))
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        panel, layout = self._build_section(
-            translate_presentation_label(PresentationLabel.TEST_RESULTS, QCoreApplication.translate)
+        return AnalysisResultSection(
+            translate_presentation_label(PresentationLabel.TEST_RESULTS, QCoreApplication.translate),
+            label,
+            self,
         )
-        layout.addWidget(build_section_scroll_area(label, panel, plain_border=True), 1)
-        return panel
 
     def export_notes(self, result: PairedComparisonResult) -> tuple[str, ...]:
         """Share displayed complete-cohort, ordering and trajectory-sampling guidance."""

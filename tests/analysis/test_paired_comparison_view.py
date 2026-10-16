@@ -7,6 +7,7 @@ from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.paired_comparison_view import PairedComparisonView
+from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection
 from expo_jbm329.services.analysis.paired_comparison import (
     PairedComparisonError,
     PairedComparisonMethod,
@@ -75,11 +76,13 @@ def _result(**overrides: object) -> PairedComparisonResult:
 def test_chart_and_results_sections_scroll_below_a_frozen_title(columns, section, small_height):
     view = PairedComparisonView(_result(columns=columns))
     panel = view.findChild(QSplitter).widget(section)
+    assert panel.parentWidget() is view.findChild(QSplitter)
     try:
         content = assert_section_scrolls_below_frozen_title(panel, small_height)
         if section == 1:
             assert isinstance(content, FigureCanvasQTAgg)
         else:
+            assert isinstance(panel, AnalysisResultSection)
             assert isinstance(content, QLabel)
             assert "Wilcoxon signed-rank test" in content.text()
             assert content.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse

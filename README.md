@@ -84,6 +84,12 @@ grid: one non-wrapping label per row and a wrapping, selectable plain-text value
 Overview and Statistics retain their own presentation. Reports and exports use
 the same semantic descriptors but keep their output-specific layouts.
 
+Hypothesis Tests pilots the reusable `AnalysisResultSection` for Test results:
+the same native frame and padding as the applied configuration header surround
+a fixed bold title and borderless, background-inheriting scroll content.
+Scrollbars appear only when needed; charts, tables, and other analyses retain
+their existing layouts.
+
 Statistics chart titles, no-data labels, column identity, and export/report
 metadata come from one typed presentation builder and shared chart-pair drawer.
 When migrating another chart family, capture translated semantics and

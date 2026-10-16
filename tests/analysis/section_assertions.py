@@ -8,6 +8,8 @@ from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QLabel, QScrollArea, QWidget
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -51,6 +53,8 @@ def _overflow_height(
     )
     margins = layout.contentsMargins()
     chrome = margins.top() + margins.bottom() + 2 * scroll.frameWidth()
+    if isinstance(panel, AnalysisResultSection):
+        chrome += 2 * panel.frameWidth()
     if title is not None:
         chrome += title.height() + layout.spacing()
     return min(small_height, chrome + required // 2)
@@ -91,7 +95,8 @@ def assert_section_scrolls_below_frozen_title(
     panel.setParent(None)
     # The scroll area's default minimum size hint can exceed short font-dependent content and
     # keep the detached panel too tall to overflow; the behavior under test is the scrolling.
-    scroll.setMinimumHeight(1)
+    if not isinstance(panel, AnalysisResultSection):
+        scroll.setMinimumHeight(1)
     panel.resize(width, small_height)
     panel.show()
     try:
@@ -120,6 +125,8 @@ def assert_section_scrolls_below_frozen_title(
         horizontal = scroll.horizontalScrollBar()
         assert horizontal is not None
         assert horizontal.maximum() == 0
+        if isinstance(panel, AnalysisResultSection):
+            assert content.height() >= _required_content_height(content, content.width())
     finally:
         panel.close()
     return content

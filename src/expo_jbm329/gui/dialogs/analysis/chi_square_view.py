@@ -9,7 +9,7 @@ from matplotlib.figure import Figure
 from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
+from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection, build_section_scroll_area
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.chi_square import (
     COCHRAN_LOW_EXPECTED_COUNT,
@@ -244,24 +244,18 @@ class ChiSquareView(QWidget):
 
     def _build_results_section(self, result: ChiSquareResult) -> QWidget:
         """Build the titled test results and Cochran warning section."""
-        panel = QWidget(self)
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(
-            self._build_section_title(
-                translate_presentation_label(PresentationLabel.TEST_RESULTS, QCoreApplication.translate),
-                panel,
-            )
-        )
-        content = QWidget(panel)
+        content = QWidget()
         content_layout = QVBoxLayout(content)
         content_layout.setContentsMargins(0, 0, 0, 0)
         content_layout.addWidget(self._build_test_results_label(result))
         if result.cochran_violated:
             content_layout.addWidget(self._build_cochran_warning_label(result))
         content_layout.addStretch(1)
-        layout.addWidget(build_section_scroll_area(content, panel, plain_border=True), 1)
-        return panel
+        return AnalysisResultSection(
+            translate_presentation_label(PresentationLabel.TEST_RESULTS, QCoreApplication.translate),
+            content,
+            self,
+        )
 
     def _build_test_results_label(self, result: ChiSquareResult) -> QLabel:
         """Build the rich-text label showing the test statistics and interpretation."""

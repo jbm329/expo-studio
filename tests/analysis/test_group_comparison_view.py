@@ -6,6 +6,7 @@ from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.group_comparison_view import GroupComparisonView
+from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection
 from expo_jbm329.services.analysis.group_comparison import (
     GroupComparisonError,
     GroupComparisonResult,
@@ -44,18 +45,25 @@ def test_distribution_header_gap_stays_fixed_when_section_grows():
         view.close()
 
 
-@pytest.mark.parametrize(("section", "small_height"), [(1, 120), (2, 60)])
-def test_chart_and_results_sections_scroll_below_a_frozen_title(section, small_height):
-    view = GroupComparisonView(_make_result())
+@pytest.mark.parametrize(("section", "small_height", "with_warning"), [(1, 120, False), (2, 60, False), (2, 60, True)])
+def test_chart_and_results_sections_scroll_below_a_frozen_title(section, small_height, with_warning):
+    warnings = (GroupComparisonWarning("A", GroupWarningReason.TOO_FEW_FOR_NORMALITY),) if with_warning else ()
+    view = GroupComparisonView(_make_result(warnings=warnings))
     panel = view.findChild(QSplitter).widget(section)
+    assert panel.parentWidget() is view.findChild(QSplitter)
     try:
         content = assert_section_scrolls_below_frozen_title(panel, small_height)
         if section == 1:
             assert isinstance(content, FigureCanvasQTAgg)
         else:
+            assert isinstance(panel, AnalysisResultSection)
             labels = content.findChildren(QLabel)
             assert any("Welch" in label.text() for label in labels)
             assert all(label.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse for label in labels)
+            if with_warning:
+                warning = next(label for label in labels if "normality could not be tested" in label.text())
+                assert warning.geometry().bottom() < content.height()
+                assert warning.height() >= warning.heightForWidth(warning.width())
     finally:
         panel.deleteLater()
         view.close()

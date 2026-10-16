@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QFrame, QGridLayout, QLabel, QVBoxLayout, QWidget
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import apply_analysis_frame
+from expo_jbm329.gui.dialogs.analysis.section_layout import ANALYSIS_FRAME_MARGINS, apply_analysis_frame
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.presentation import AnalysisPresentation
@@ -26,7 +26,7 @@ class AppliedConfigurationHeader(QFrame):
         super().__init__(parent)
         apply_analysis_frame(self)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 8, 10, 8)
+        layout.setContentsMargins(*ANALYSIS_FRAME_MARGINS)
         title = QLabel(presentation.title, self)
         title.setTextFormat(Qt.TextFormat.PlainText)
         title.setWordWrap(True)
