@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -59,6 +60,21 @@ def test_group_boxes_use_full_summary_min_max_and_literal_labels():
     assert [label.get_text() for label in ax.get_xticklabels()] == [group.label for group in snapshot.result.groups]
     assert ax.lines[1].get_ydata()[1] == snapshot.result.groups[0].minimum
     assert ax.lines[2].get_ydata()[1] == snapshot.result.groups[0].maximum
+
+
+def test_group_renderer_uses_optional_axis_labels_without_changing_export_defaults() -> None:
+    snapshot = group_snapshot()
+    labels = replace(LABELS, group_axis_labels=(snapshot.columns[1], snapshot.columns[0]))
+    for chart_labels in (labels, LABELS):
+        with patch(
+            "expo_jbm329.services.analysis.hypothesis_charts.draw_group_distribution",
+            wraps=draw_group_distribution,
+        ) as draw:
+            render_hypothesis_charts(snapshot, chart_labels)
+
+        axis = draw.call_args.args[0]
+        expected = chart_labels.group_axis_labels or ("", "")
+        assert (axis.get_xlabel(), axis.get_ylabel()) == expected
 
 
 def test_residual_heatmap_orientation_color_scale_and_undefined_cells():

@@ -19,6 +19,7 @@ from expo_jbm329.services.analysis.clustering_export import (
 from expo_jbm329.services.analysis.correlation import CorrelationMethod, analyze_correlation_matrix
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportComponent, CorrelationExportSnapshot
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
+from expo_jbm329.services.analysis.hypothesis_charts import render_hypothesis_charts
 from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportComponent,
     HypothesisExportSnapshot,
@@ -1225,6 +1226,30 @@ def test_hypothesis_notes_render_escaped_in_order_below_test_results_only():
     summary_html = render_report_html(summary_document)
     assert snapshot.notes[0] not in summary_html
     assert '<div class="report-paragraphs">' not in summary_html
+
+
+@pytest.mark.parametrize("factory", [group_snapshot, chi_snapshot, paired_snapshot])
+def test_hypothesis_report_charts_hide_captions_and_preserve_accessible_names(
+    factory: Callable[[], HypothesisExportSnapshot],
+) -> None:
+    snapshot = factory()
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.HYPOTHESIS_TESTS, snapshot, ("charts",)))
+    with patch(
+        "expo_jbm329.services.analysis.report.render_hypothesis_charts",
+        wraps=render_hypothesis_charts,
+    ) as render:
+        prepared = prepare_report_content(document)
+
+    labels = render.call_args.args[1]
+    expected_axes = (
+        (snapshot.columns[1], snapshot.columns[0]) if snapshot.test is HypothesisTest.GROUP_COMPARISON else None
+    )
+    assert labels.group_axis_labels == expected_axes
+    assert not prepared.entries[0].components[0].show_chart_captions
+    html = render_prepared_report_html(prepared)
+    assert "<figcaption>" not in html
+    assert f'alt="{escape(" / ".join(snapshot.columns))}"' in html
 
 
 def test_preparation_renders_selected_categories_and_variants(monkeypatch) -> None:

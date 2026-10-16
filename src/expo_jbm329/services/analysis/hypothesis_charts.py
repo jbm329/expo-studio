@@ -39,6 +39,7 @@ class HypothesisChartLabels:
     value: str
     occasion: str
     residual_annotations: tuple[tuple[str, ...], ...] = ()
+    group_axis_labels: tuple[str, str] | None = None
 
 
 def draw_group_distribution(ax: Axes, groups: Sequence[GroupSummary], title: str) -> None:
@@ -164,7 +165,11 @@ def render_hypothesis_charts(
         result = snapshot.result
         match result:
             case GroupComparisonResult():
-                draw_group_distribution(figure.add_subplot(111), result.groups, labels.distribution)
+                axis = figure.add_subplot(111)
+                draw_group_distribution(axis, result.groups, labels.distribution)
+                if labels.group_axis_labels is not None:
+                    axis.set_xlabel(labels.group_axis_labels[0])
+                    axis.set_ylabel(labels.group_axis_labels[1])
             case ChiSquareResult():
                 draw_residual_heatmap(
                     figure,

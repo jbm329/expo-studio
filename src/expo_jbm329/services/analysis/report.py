@@ -1970,7 +1970,8 @@ def prepare_report_content(
                         label,
                         component.kind,
                         charts=images,
-                        show_chart_captions=entry.category is not AnalysisCategory.STATISTICS,
+                        show_chart_captions=entry.category
+                        not in (AnalysisCategory.STATISTICS, AnalysisCategory.HYPOTHESIS_TESTS),
                     )
                 )
             completed += 1
@@ -2387,6 +2388,9 @@ def _render_entry_charts(
             translate("PairedComparisonView", "Value"),
             translate("PairedComparisonView", "Measurement occasion"),
             residual_annotations,
+            group_axis_labels=(snapshot.columns[1], snapshot.columns[0])
+            if snapshot.test is HypothesisTest.GROUP_COMPARISON
+            else None,
         )
         images = render_hypothesis_charts(snapshot, hypothesis_labels, progress_cb=progress_cb, cancel_cb=cancel_cb)
         return {"charts": images}
