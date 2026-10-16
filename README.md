@@ -107,6 +107,13 @@ language. Outer chart headings are omitted without losing accessible image names
 or model caveats. Exports still chart every successfully screened column, while
 detail tables and asynchronous selection continue to describe the chosen column.
 
+Clustering now captures its projection title, PC1/PC2 axes, cluster/noise legend,
+accessible image name, and any deterministic-sampling note through one Qt-free
+builder. The app and worker-rendered charts use the same drawing path; Excel and
+HTML omit the redundant chart heading while retaining the sample note and HTML
+alternative text. PC axes remain mathematical labels and do not imply explained
+variance.
+
 Export is available for successfully applied results. Excel workbooks can
 combine selected tables and available charts; CSV and binary exports contain
 one selected table. Charts are available in Excel only. Exports contain the

@@ -152,6 +152,9 @@ class PresentationLabel(StrEnum):
     CLUSTER_MODEL_SUMMARY = "cluster_model_summary"
     CLUSTER_PROJECTION = "cluster_projection"
     CLUSTER_PCA_TITLE = "cluster_pca_title"
+    CLUSTER_PC1 = "cluster_pc1"
+    CLUSTER_PC2 = "cluster_pc2"
+    CLUSTER_SAMPLE_NOTE = "cluster_sample_note"
     CLUSTER_COUNT = "cluster_count"
     DBSCAN_EPSILON = "dbscan_epsilon"
     DBSCAN_MIN_SAMPLES = "dbscan_min_samples"
@@ -230,6 +233,11 @@ _LABEL_DEFINITIONS: dict[PresentationLabel, PresentationLabelDefinition] = {
     PresentationLabel.CLUSTER_PROJECTION: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Cluster projection"),
     PresentationLabel.CLUSTER_PCA_TITLE: PresentationLabelDefinition(
         _CLUSTERING_CONTEXT, "Cluster projection (internal PCA)"
+    ),
+    PresentationLabel.CLUSTER_PC1: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "PC1"),
+    PresentationLabel.CLUSTER_PC2: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "PC2"),
+    PresentationLabel.CLUSTER_SAMPLE_NOTE: PresentationLabelDefinition(
+        _CLUSTERING_CONTEXT, "The plot shows a deterministic sample of {count} rows."
     ),
     PresentationLabel.CLUSTER_COUNT: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Number of clusters:"),
     PresentationLabel.DBSCAN_EPSILON: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Neighborhood radius (eps):"),

@@ -1999,17 +1999,32 @@ Vänligen se loggfil för mer information.</translation>
         <source>Minimum samples:</source>
         <translation>Minsta antal observationer:</translation>
     </message>
+    <message>
+        <location filename="..\..\services\analysis\clustering_charts.py" line="72" />
+        <source>The plot shows a deterministic sample of {count} rows.</source>
+        <translation>Diagrammet visar ett deterministiskt urval av {count} rader.</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\clustering_charts.py" line="81" />
+        <source>PC1</source>
+        <translation>PC1</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\clustering_charts.py" line="82" />
+        <source>PC2</source>
+        <translation>PC2</translation>
+    </message>
 </context><context>
     <name>ClusteringView</name>
     <message>
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="82" />
         <source>PC1</source>
-        <translation>PC1</translation>
+        <translation type="vanished">PC1</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="83" />
         <source>PC2</source>
-        <translation>PC2</translation>
+        <translation type="vanished">PC2</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="228" />
@@ -2096,7 +2111,7 @@ Vänligen se loggfil för mer information.</translation>
     <message>
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="155" />
         <source>&lt;i&gt;The plot shows a deterministic sample of {count} rows.&lt;/i&gt;</source>
-        <translation>&lt;i&gt;Diagrammet visar ett deterministiskt urval av {count} rader.&lt;/i&gt;</translation>
+        <translation type="vanished">&lt;i&gt;Diagrammet visar ett deterministiskt urval av {count} rader.&lt;/i&gt;</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="219" />

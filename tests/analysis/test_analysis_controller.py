@@ -5210,7 +5210,8 @@ def test_clustering_excel_export_routes_localized_sheets_and_worker_chart(monkey
 
     progress: list[int] = []
     images = kwargs["chart_factory"](progress.append, lambda: False)
-    assert [image.heading for image in images] == [snapshot.chart_labels.heading]
+    assert [image.heading for image in images] == [snapshot.chart_labels.metadata.worksheet_heading]
+    assert images[0].accessible_name == snapshot.chart_labels.metadata.accessible_name
     assert progress == [100]
     assert controller._results.mock_calls == []  # noqa: SLF001
 

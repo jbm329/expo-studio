@@ -16,7 +16,11 @@ from expo_jbm329.services.analysis.clustering import (
     ClusteringError,
     ClusteringMethod,
 )
-from expo_jbm329.services.analysis.clustering_charts import ClusterProjectionLabels, draw_cluster_projection
+from expo_jbm329.services.analysis.clustering_charts import (
+    ClusterProjectionLabels,
+    build_cluster_projection_labels,
+    draw_cluster_projection,
+)
 from expo_jbm329.services.analysis.presentation import (
     PresentationLabel,
     clustering_method_label,
@@ -74,16 +78,10 @@ class ClusteringView(QWidget):
 
     def chart_labels(self) -> ClusterProjectionLabels:
         """Return the translated projection text used by the view and its export."""
-        result = self._result
-        captions = rich_text_lines([self._sample_text(result)]) if result.sampled and result.error is None else ()
-        return ClusterProjectionLabels(
-            heading=translate_presentation_label(PresentationLabel.CLUSTER_PROJECTION, QCoreApplication.translate),
-            title=translate_presentation_label(PresentationLabel.CLUSTER_PCA_TITLE, QCoreApplication.translate),
-            pc1_axis=self.tr("PC1"),
-            pc2_axis=self.tr("PC2"),
-            cluster=self.tr("Cluster {number}"),
-            noise=self.tr("Noise"),
-            captions=captions,
+        return build_cluster_projection_labels(
+            self._result,
+            QCoreApplication.translate,
+            count_format=fmt_int,
         )
 
     def export_notes(self) -> tuple[str, ...]:
@@ -152,9 +150,8 @@ class ClusteringView(QWidget):
 
     def _sample_text(self, result: ClusteringResult) -> str:
         """Return the rich-text disclosure that the plot shows a sample."""
-        return self.tr("<i>The plot shows a deterministic sample of {count} rows.</i>").format(
-            count=fmt_int(len(result.sample_labels))
-        )
+        captions = self.chart_labels().metadata.captions
+        return f"<i>{captions[0]}</i>" if captions and result.sampled else ""
 
     def _summary_label(self, result: ClusteringResult) -> QLabel:
         """Build summary of method, preprocessing, rows and silhouette."""

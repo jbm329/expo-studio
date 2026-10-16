@@ -1907,17 +1907,32 @@ Please see logs for more information.</source>
         <source>Minimum samples:</source>
         <translation>Minimum samples:</translation>
     </message>
+    <message>
+        <location filename="..\..\services\analysis\clustering_charts.py" line="72" />
+        <source>The plot shows a deterministic sample of {count} rows.</source>
+        <translation>The plot shows a deterministic sample of {count} rows.</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\clustering_charts.py" line="81" />
+        <source>PC1</source>
+        <translation>PC1</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\clustering_charts.py" line="82" />
+        <source>PC2</source>
+        <translation>PC2</translation>
+    </message>
 </context><context>
     <name>ClusteringView</name>
     <message>
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="82" />
         <source>PC1</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="83" />
         <source>PC2</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="228" />
@@ -2004,7 +2019,7 @@ Please see logs for more information.</source>
     <message>
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="155" />
         <source>&lt;i&gt;The plot shows a deterministic sample of {count} rows.&lt;/i&gt;</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="219" />

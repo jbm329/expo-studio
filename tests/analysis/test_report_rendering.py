@@ -328,6 +328,26 @@ def test_clustering_html_omits_note_only_rows_and_preserves_export_notes(method,
     assert localized_export["Value"].iloc[metric_count:].isna().all()
 
 
+def test_clustering_html_uses_accessible_chart_identity_without_repeating_title_and_keeps_sample_note():
+    snapshot = clustering_snapshot(sampled=True)
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.CLUSTERING, snapshot, ("charts",)))
+
+    prepared = prepare_report_content(document)
+    component = prepared.entries[0].components[0]
+    image = component.charts[0]
+    html = render_prepared_report_html(prepared)
+
+    assert image.heading == ""
+    assert image.accessible_name == "Cluster projection (internal PCA)"
+    assert image.captions == ("The plot shows a deterministic sample of 9 rows.",)
+    assert component.label == "Cluster projection"
+    assert "<h3>Cluster projection</h3>" in html
+    assert 'alt="Cluster projection (internal PCA)"' in html
+    assert "<figcaption>\n<p>The plot shows a deterministic sample of 9 rows.</p>\n</figcaption>" in html
+    assert "<figcaption>\n<p>Cluster projection (internal PCA)</p>" not in html
+
+
 def test_clustering_html_keeps_a_real_metric_with_a_missing_value():
     snapshot = clustering_snapshot(
         ClusteringMethod.DBSCAN,

@@ -185,19 +185,19 @@ def test_chart_labels_match_the_view_and_caption_only_a_sampled_plot(sampled):
 
     labels = view.chart_labels()
 
-    assert labels.heading == "Cluster projection"
-    assert labels.title == "Cluster projection (internal PCA)"
+    assert labels.metadata.worksheet_heading == ""
+    assert labels.metadata.accessible_name == "Cluster projection (internal PCA)"
     assert (labels.pc1_axis, labels.pc2_axis) == ("PC1", "PC2")
     assert labels.cluster_name(0) == "Cluster 1"
     assert labels.cluster_name(-1) == "Noise"
     expected = (f"The plot shows a deterministic sample of {len(result.sample_labels)} rows.",) if sampled else ()
-    assert labels.captions == expected
+    assert labels.metadata.captions == expected
 
 
 def test_error_chart_labels_have_no_caption():
     result = dataclasses.replace(analyze_clustering(pd.DataFrame({"x": [1.0]})), sampled=True)
 
-    assert ClusteringView(result).chart_labels().captions == ()
+    assert ClusteringView(result).chart_labels().metadata.captions == ()
 
 
 def test_export_notes_are_the_plain_text_comments_and_features():

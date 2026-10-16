@@ -8,10 +8,12 @@ from xml.etree import ElementTree
 import numpy as np
 import pandas as pd
 import pytest
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6.QtCore import QCoreApplication, QTranslator
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QLabel, QPushButton, QTabWidget, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+from expo_jbm329.gui.dialogs.analysis.clustering_view import ClusteringView
 from expo_jbm329.gui.dialogs.analysis.correlation_view import CorrelationView
 from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
@@ -19,6 +21,8 @@ from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDial
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.chi_square import initialize_chi_square
+from expo_jbm329.services.analysis.clustering import ClusteringMethod
+from expo_jbm329.services.analysis.clustering_export import ClusteringExportSnapshot
 from expo_jbm329.services.analysis.correlation import (
     SCATTER_SAMPLE_SIZE,
     CorrelationMethod,
@@ -45,6 +49,7 @@ from expo_jbm329.services.analysis.statistics import StatisticsExportFormat, ana
 from expo_jbm329.services.analysis.statistics_charts import build_statistics_chart_presentation
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.utils.format_utils import capture_chart_numeric_locale
+from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
 
 if TYPE_CHECKING:
@@ -286,3 +291,55 @@ def test_correlation_compiled_chart_labels_captions_and_accessibility_survive_ca
     caption_html = html.split("<figcaption>", 1)[1].split("</figcaption>", 1)[0]
     assert escape(presentation.title) not in caption_html
     assert all(escape(caption) in caption_html for caption in presentation.metadata.captions)
+
+
+@pytest.mark.parametrize("language", ["en", "sv"])
+@pytest.mark.parametrize("method", list(ClusteringMethod))
+def test_clustering_compiled_chart_presentation_matches_view_and_report(language, method):
+    translator = QTranslator()
+    assert translator.load(str(LOCALES / f"app_{language}.qm"))
+    assert QCoreApplication.installTranslator(translator)
+    sampled_snapshot = clustering_snapshot(method, sampled=True, dbscan_min_samples=3)
+    view = None
+    try:
+        view = ClusteringView(sampled_snapshot.result)
+        labels = view.chart_labels()
+        snapshot = ClusteringExportSnapshot(
+            sampled_snapshot.result,
+            labels,
+            sampled_snapshot.notes,
+            sampled_snapshot.capture_id,
+        )
+        live_axes = view.findChildren(FigureCanvasQTAgg)[0].figure.axes[0]
+        legend = live_axes.get_legend()
+        assert legend is not None
+        expected_legend = tuple(
+            labels.cluster_name(label) for label in sorted(set(sampled_snapshot.result.sample_labels))
+        )
+        assert live_axes.get_title() == labels.metadata.accessible_name
+        assert live_axes.get_xlabel() == labels.pc1_axis
+        assert live_axes.get_ylabel() == labels.pc2_axis
+        assert tuple(text.get_text() for text in legend.get_texts()) == expected_legend
+
+        document = ReportDocument()
+        entry = create_report_entry(AnalysisCategory.CLUSTERING, DatasetRef("source", "Dataset", 10, 2), snapshot)
+        document.upsert(entry.with_selection(("charts",), ""))
+        captured = capture_report_labels(QCoreApplication.translate)
+        expected_caption = labels.metadata.captions[0]
+        expected_title = labels.metadata.accessible_name
+        expected_component_label = QCoreApplication.translate("ClusteringPresentation", "Cluster projection")
+    finally:
+        QCoreApplication.removeTranslator(translator)
+        if view is not None:
+            view.close()
+
+    prepared = prepare_report_content(document, labels=captured)
+    image = prepared.entries[0].components[0].charts[0]
+    html = render_prepared_report_html(prepared)
+    assert image.heading == ""
+    assert image.accessible_name == expected_title
+    assert image.captions == (expected_caption,)
+    assert f'alt="{escape(expected_title, quote=True)}"' in html
+    assert f"<p>{escape(expected_caption)}</p>" in html
+    assert f"<h3>{expected_component_label}</h3>" in html
+    assert expected_title not in html.split("<figcaption>", 1)[1].split("</figcaption>", 1)[0]
