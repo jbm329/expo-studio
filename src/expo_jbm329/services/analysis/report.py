@@ -33,7 +33,10 @@ from expo_jbm329.services.analysis.correlation_export import (
     CorrelationExportSnapshot,
     correlation_export_table,
 )
-from expo_jbm329.services.analysis.hypothesis_charts import HypothesisChartLabels, render_hypothesis_charts
+from expo_jbm329.services.analysis.hypothesis_charts import (
+    build_hypothesis_chart_presentation,
+    render_hypothesis_charts,
+)
 from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportComponent,
     HypothesisExportSnapshot,
@@ -1970,8 +1973,7 @@ def prepare_report_content(
                         label,
                         component.kind,
                         charts=images,
-                        show_chart_captions=entry.category
-                        not in (AnalysisCategory.STATISTICS, AnalysisCategory.HYPOTHESIS_TESTS),
+                        show_chart_captions=entry.category is not AnalysisCategory.STATISTICS,
                     )
                 )
             completed += 1
@@ -2366,33 +2368,8 @@ def _render_entry_charts(
         )
         return {"Charts": images}
     if category is AnalysisCategory.HYPOTHESIS_TESTS and isinstance(snapshot, HypothesisExportSnapshot):
-        context = {
-            HypothesisTest.GROUP_COMPARISON: "GroupComparisonView",
-            HypothesisTest.CHI_SQUARE: "ChiSquareView",
-            HypothesisTest.PAIRED_COMPARISON: "PairedComparisonView",
-        }[snapshot.test]
-        distribution = (
-            "Distribution by group" if snapshot.test is HypothesisTest.GROUP_COMPARISON else "Distribution by occasion"
-        )
-        residual_annotations: tuple[tuple[str, ...], ...] = ()
-        from expo_jbm329.services.analysis.chi_square import ChiSquareResult
-
-        if isinstance(snapshot.result, ChiSquareResult):
-            residual_annotations = tuple(
-                tuple(number_format(value) for value in row) for row in snapshot.result.adjusted_residuals
-            )
-        hypothesis_labels = HypothesisChartLabels(
-            translate(context, distribution),
-            translate("ChiSquareView", "Adjusted standardized residuals"),
-            translate("PairedComparisonView", "Subject trajectories"),
-            translate("PairedComparisonView", "Value"),
-            translate("PairedComparisonView", "Measurement occasion"),
-            residual_annotations,
-            group_axis_labels=(snapshot.columns[1], snapshot.columns[0])
-            if snapshot.test is HypothesisTest.GROUP_COMPARISON
-            else None,
-        )
-        images = render_hypothesis_charts(snapshot, hypothesis_labels, progress_cb=progress_cb, cancel_cb=cancel_cb)
+        presentation = build_hypothesis_chart_presentation(snapshot.result, translate)
+        images = render_hypothesis_charts(snapshot, presentation, progress_cb=progress_cb, cancel_cb=cancel_cb)
         return {"charts": images}
     if category is AnalysisCategory.CORRELATION and isinstance(snapshot, CorrelationExportSnapshot):
         chart_keys = tuple(
@@ -2662,8 +2639,12 @@ def render_prepared_report_html(
             for chart in component.charts:
                 check_cancel()
                 encoded = b64encode(chart.image_data).decode("ascii")
-                alt = chart.heading
-                heading_class = ' class="visually-hidden"' if _same_heading(chart.heading, component.label) else ""
+                alt = chart.accessible_name or chart.heading
+                heading_class = (
+                    ' class="visually-hidden"'
+                    if chart.heading and _same_heading(chart.heading, component.label)
+                    else ""
+                )
                 parts.extend([
                     '<figure class="report-chart">',
                     (
@@ -2671,7 +2652,7 @@ def render_prepared_report_html(
                         f'width="{chart.width_px}" height="{chart.height_px}">'
                     ),
                 ])
-                if component.show_chart_captions:
+                if component.show_chart_captions and (chart.heading or chart.captions):
                     parts.append(f"<figcaption><strong{heading_class}>{_html_escape(chart.heading)}</strong>")
                     parts.extend(f"<p>{_html_escape(caption)}</p>" for caption in chart.captions)
                     parts.append("</figcaption>")

@@ -12,7 +12,10 @@ from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, Q
 
 from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
-from expo_jbm329.services.analysis.hypothesis_charts import HypothesisChartLabels, draw_paired_charts
+from expo_jbm329.services.analysis.hypothesis_charts import (
+    build_hypothesis_chart_presentation,
+    draw_hypothesis_charts,
+)
 from expo_jbm329.services.analysis.paired_comparison import PairedComparisonError, PairedComparisonMethod
 from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
@@ -168,14 +171,8 @@ class PairedComparisonView(QWidget):
         figure = Figure(constrained_layout=True)
         canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(260)
-        labels = HypothesisChartLabels(
-            distribution=self.tr("Distribution by occasion"),
-            residuals="",
-            trajectories=self.tr("Subject trajectories"),
-            value=self.tr("Value"),
-            occasion=self.tr("Measurement occasion"),
-        )
-        canvas.build_chart(lambda: draw_paired_charts(figure, result, labels))
+        presentation = build_hypothesis_chart_presentation(result, QCoreApplication.translate)
+        canvas.build_chart(lambda: draw_hypothesis_charts(figure, result, presentation))
         layout.addWidget(build_section_scroll_area(canvas, panel), 1)
         return panel
 

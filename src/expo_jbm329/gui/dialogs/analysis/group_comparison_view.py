@@ -20,13 +20,14 @@ from expo_jbm329.services.analysis.group_comparison import (
     GroupWarningReason,
     group_normality_verdict,
 )
-from expo_jbm329.services.analysis.hypothesis_charts import draw_group_distribution
+from expo_jbm329.services.analysis.hypothesis_charts import (
+    build_hypothesis_chart_presentation,
+    draw_hypothesis_charts,
+)
 from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 
 if TYPE_CHECKING:
-    from matplotlib.axes import Axes
-
     from expo_jbm329.services.analysis.group_comparison import (
         GroupSummary,
         MultiGroupComparisonResult,
@@ -200,15 +201,9 @@ class GroupComparisonView(QWidget):
         figure = Figure(constrained_layout=True)
         canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(260)
-        canvas.build_chart(lambda: self._draw_boxplot(figure.add_subplot(111), result))
-
+        presentation = build_hypothesis_chart_presentation(result, QCoreApplication.translate)
+        canvas.build_chart(lambda: draw_hypothesis_charts(figure, result, presentation))
         return canvas
-
-    def _draw_boxplot(self, ax: Axes, result: GroupComparisonResult) -> None:
-        """Draw one box per group from each group's precomputed five-number summary."""
-        draw_group_distribution(ax, result.groups, self.tr("Distribution by group"))
-        ax.set_xlabel(result.grouping_column)
-        ax.set_ylabel(result.numeric_column)
 
     def export_notes(self, result: GroupComparisonResult) -> tuple[str, ...]:
         """Capture displayed guidance and test assumptions without scraping labels."""

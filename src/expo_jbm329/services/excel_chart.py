@@ -11,16 +11,20 @@ class ExcelChartCancelledError(Exception):
 
 @dataclass(frozen=True, slots=True)
 class ExcelChartImage:
-    """A raster image with heading, display dimensions and optional below-image notes."""
+    """A raster image with optional heading, accessible identity and explanatory notes."""
 
     heading: str
     image_data: bytes
     width_px: int
     height_px: int
     captions: tuple[str, ...] = ()
+    accessible_name: str | None = None
 
     def __post_init__(self) -> None:
         """Reject payloads that cannot be embedded as visible workbook images."""
+        if self.accessible_name is not None and not self.accessible_name:
+            message = "An explicit accessible chart name must be non-empty."
+            raise ValueError(message)
         if not self.image_data:
             message = "Excel chart image data must be non-empty bytes."
             raise ValueError(message)

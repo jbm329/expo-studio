@@ -22,7 +22,8 @@ from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS, MIN_GROUP
 from expo_jbm329.services.analysis.hypothesis_charts import MAX_ANNOTATED_CELLS as MAX_ANNOTATED_CELLS  # noqa: PLC0414
 from expo_jbm329.services.analysis.hypothesis_charts import (
     RESIDUAL_SIGNIFICANCE_THRESHOLD,
-    draw_residual_heatmap,
+    build_hypothesis_chart_presentation,
+    draw_hypothesis_charts,
     heatmap_color_limit,
 )
 from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
@@ -30,7 +31,6 @@ from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pc
 
 if TYPE_CHECKING:
     import numpy as np
-    from matplotlib.axes import Axes
 
 # Standard convention for statistical significance, matching GroupComparisonView.
 _SIGNIFICANCE_LEVEL = 0.05
@@ -196,24 +196,9 @@ class ChiSquareView(QWidget):
         figure = Figure(constrained_layout=True)
         canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(260)
-        canvas.build_chart(lambda: self._draw_heatmap(figure, figure.add_subplot(111), result))
-
+        presentation = build_hypothesis_chart_presentation(result, QCoreApplication.translate)
+        canvas.build_chart(lambda: draw_hypothesis_charts(figure, result, presentation))
         return canvas
-
-    def _draw_heatmap(self, figure: Figure, ax: Axes, result: ChiSquareResult) -> None:
-        """Draw the residual heatmap with a symmetric, diverging color scale."""
-        draw_residual_heatmap(
-            figure,
-            ax,
-            result,
-            self.tr("Adjusted standardized residuals"),
-            self.chart_annotations(result),
-        )
-
-    @staticmethod
-    def chart_annotations(result: ChiSquareResult) -> tuple[tuple[str, ...], ...]:
-        """Capture locale-aware annotation text before handing chart data to workers."""
-        return tuple(tuple(fmt_num(value, sig=3) for value in row) for row in result.adjusted_residuals)
 
     @staticmethod
     def heatmap_color_limit(residuals: np.ndarray) -> float:

@@ -364,6 +364,44 @@ Services should:
 
 ---
 
+## Chart Presentation Ownership
+
+For a chart-producing analysis, the section's Qt-free chart service owns
+output-independent titles, axes, legends, annotations, ordering, accessibility
+identity, worksheet heading and explanatory captions. Build this presentation
+from the applied typed result and explicit translation/formatting callbacks.
+Capture translated strings before worker dispatch; renderers must not consult
+widgets, current selections or mutable locale state.
+
+The app view and worker renderer should use the same drawing path. For a
+migrated section, Excel and HTML are adapters: they may choose size, resolution
+and placement, but must not reconstruct chart semantics or encode caption
+visibility as an analysis-category rule. Keep the visible worksheet heading
+distinct from the HTML image's accessible name. Preserve existing metadata
+behavior for sections not yet migrated.
+
+For a section-sized migration:
+
+1. Inventory its app, Excel and report paths, typed snapshots, translation
+   capture and caption/accessibility behavior.
+2. Add a small frozen, section-specific presentation value and builder; reuse
+   existing translation contexts and numeric formatters.
+3. Route the app and worker through the same draw functions, then pass captured
+   metadata to Excel and HTML without changing calculations or layout policy.
+4. Test real Matplotlib axes and annotations, normal and streaming workbook
+   readback, HTML captions and accessible names, and unchanged numeric tables.
+
+The Hypothesis Tests pilot follows this ownership rule. Remaining chart services
+are `statistics_charts`, `correlation_charts`, `regression_charts`,
+`logistic_charts`, `outliers_charts`, `clustering_charts`, `pca_charts` and
+`timeseries_charts`; Overview currently has no chart service. Statistics is the
+next small candidate. Correlation, regression/logistic, outliers, clustering,
+PCA and Time Series should be migrated one section at a time after approval,
+starting with each section's real chart/output inventory rather than a universal
+chart framework.
+
+---
+
 ## Dialogs and Widgets
 
 Dialogs and widgets should:

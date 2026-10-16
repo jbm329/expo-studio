@@ -60,7 +60,10 @@ from expo_jbm329.services.analysis.correlation_export import (
     CorrelationExportSnapshot,
 )
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison, initialize_group_comparison
-from expo_jbm329.services.analysis.hypothesis_charts import HypothesisChartLabels, render_hypothesis_charts
+from expo_jbm329.services.analysis.hypothesis_charts import (
+    build_hypothesis_chart_presentation,
+    render_hypothesis_charts,
+)
 from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportComponent,
     HypothesisExportRequest,
@@ -1102,12 +1105,6 @@ class AnalysisController:
         snapshot = request.snapshot
         charts = HypothesisExportComponent.CHARTS in request.components
         table_choices = tuple(item for item in request.components if item is not HypothesisExportComponent.CHARTS)
-        contexts = {
-            HypothesisTest.GROUP_COMPARISON: "GroupComparisonView",
-            HypothesisTest.CHI_SQUARE: "ChiSquareView",
-            HypothesisTest.PAIRED_COMPARISON: "PairedComparisonView",
-        }
-        context = contexts[snapshot.test]
         hypothesis_keys = {
             HypothesisExportComponent.SUMMARY: "summary",
             HypothesisExportComponent.TEST_RESULTS: "test_results",
@@ -1125,32 +1122,17 @@ class AnalysisController:
             message = "Translated hypothesis sheet names must be unique."
             raise ValueError(message)
         if request.format is StatisticsExportFormat.EXCEL:
-            labels = HypothesisChartLabels(
-                distribution=translate(
-                    context,
-                    "Distribution by group"
-                    if snapshot.test is HypothesisTest.GROUP_COMPARISON
-                    else "Distribution by occasion",
-                ),
-                residuals=translate("ChiSquareView", "Adjusted standardized residuals"),
-                trajectories=translate("PairedComparisonView", "Subject trajectories"),
-                value=translate("PairedComparisonView", "Value"),
-                occasion=translate("PairedComparisonView", "Measurement occasion"),
-                residual_annotations=(
-                    ChiSquareView.chart_annotations(cast("ChiSquareResult", snapshot.result))
-                    if snapshot.test is HypothesisTest.CHI_SQUARE
-                    else ()
-                ),
-                group_axis_labels=(snapshot.columns[1], snapshot.columns[0])
-                if snapshot.test is HypothesisTest.GROUP_COMPARISON
-                else None,
-            )
+            presentation = build_hypothesis_chart_presentation(snapshot.result, translate)
 
             def make_images(
                 progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
             ) -> tuple[ExcelChartImage, ...]:
-                images = render_hypothesis_charts(snapshot, labels, progress_cb=progress_cb, cancel_cb=cancel_cb)
-                return tuple(replace(image, heading="") for image in images)
+                return render_hypothesis_charts(
+                    snapshot,
+                    presentation,
+                    progress_cb=progress_cb,
+                    cancel_cb=cancel_cb,
+                )
 
             exporter.export_excel(
                 sheets=sheets,

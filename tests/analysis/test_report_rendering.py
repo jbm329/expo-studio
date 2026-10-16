@@ -19,7 +19,11 @@ from expo_jbm329.services.analysis.clustering_export import (
 from expo_jbm329.services.analysis.correlation import CorrelationMethod, analyze_correlation_matrix
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportComponent, CorrelationExportSnapshot
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
-from expo_jbm329.services.analysis.hypothesis_charts import render_hypothesis_charts
+from expo_jbm329.services.analysis.hypothesis_charts import (
+    GroupComparisonChartPresentation,
+    PairedComparisonChartPresentation,
+    render_hypothesis_charts,
+)
 from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportComponent,
     HypothesisExportSnapshot,
@@ -1229,7 +1233,7 @@ def test_hypothesis_notes_render_escaped_in_order_below_test_results_only():
 
 
 @pytest.mark.parametrize("factory", [group_snapshot, chi_snapshot, paired_snapshot])
-def test_hypothesis_report_charts_hide_captions_and_preserve_accessible_names(
+def test_hypothesis_report_chart_metadata_hides_headings_and_preserves_accessible_names(
     factory: Callable[[], HypothesisExportSnapshot],
 ) -> None:
     snapshot = factory()
@@ -1241,15 +1245,43 @@ def test_hypothesis_report_charts_hide_captions_and_preserve_accessible_names(
     ) as render:
         prepared = prepare_report_content(document)
 
-    labels = render.call_args.args[1]
-    expected_axes = (
-        (snapshot.columns[1], snapshot.columns[0]) if snapshot.test is HypothesisTest.GROUP_COMPARISON else None
-    )
-    assert labels.group_axis_labels == expected_axes
-    assert not prepared.entries[0].components[0].show_chart_captions
+    presentation = render.call_args.args[1]
+    if snapshot.test is HypothesisTest.GROUP_COMPARISON:
+        assert isinstance(presentation, GroupComparisonChartPresentation)
+        assert presentation.x_axis_label == snapshot.columns[1]
+        assert presentation.y_axis_label == snapshot.columns[0]
+    else:
+        assert not isinstance(presentation, GroupComparisonChartPresentation)
+    assert prepared.entries[0].components[0].show_chart_captions
+    assert prepared.entries[0].components[0].charts[0].heading == ""
+    assert prepared.entries[0].components[0].charts[0].accessible_name == " / ".join(snapshot.columns)
     html = render_prepared_report_html(prepared)
     assert "<figcaption>" not in html
     assert f'alt="{escape(" / ".join(snapshot.columns))}"' in html
+
+
+def test_hypothesis_report_captures_chart_translation_before_rendering() -> None:
+    snapshot = paired_snapshot(3)
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.HYPOTHESIS_TESTS, snapshot, ("charts",)))
+
+    def translate(context: str, text: str) -> str:
+        return f"sv:{text}" if context == "PairedComparisonView" else text
+
+    labels = capture_report_labels(translate=translate)
+    with patch(
+        "expo_jbm329.services.analysis.report.render_hypothesis_charts",
+        wraps=render_hypothesis_charts,
+    ) as render:
+        prepared = prepare_report_content(document, labels=labels)
+
+    presentation = render.call_args.args[1]
+    assert isinstance(presentation, PairedComparisonChartPresentation)
+    assert presentation.distribution_title == "sv:Distribution by occasion"
+    assert presentation.trajectories_title == "sv:Subject trajectories"
+    assert presentation.value_axis_label == "sv:Value"
+    assert presentation.occasion_axis_label == "sv:Measurement occasion"
+    assert prepared.entries[0].components[0].charts[0].accessible_name == " / ".join(snapshot.columns)
 
 
 def test_preparation_renders_selected_categories_and_variants(monkeypatch) -> None:

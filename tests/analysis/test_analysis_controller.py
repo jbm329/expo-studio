@@ -55,6 +55,7 @@ from expo_jbm329.services.analysis.correlation_export import (
     CorrelationExportComponent,
     CorrelationExportRequest,
 )
+from expo_jbm329.services.analysis.hypothesis_charts import GroupComparisonChartPresentation
 from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportComponent as Component,
 )
@@ -439,11 +440,13 @@ def test_hypothesis_localized_workbooks_read_back_all_types(tmp_path, factory, l
         images = kwargs["chart_factory"](None, None)
         assert len(images) == 1
         assert images[0].heading == ""
-        labels = renderer.call_args.args[1]
-        expected_axes = (
-            (snapshot.columns[1], snapshot.columns[0]) if snapshot.test is HypothesisTest.GROUP_COMPARISON else None
-        )
-        assert labels.group_axis_labels == expected_axes
+        presentation = renderer.call_args.args[1]
+        if snapshot.test is HypothesisTest.GROUP_COMPARISON:
+            assert isinstance(presentation, GroupComparisonChartPresentation)
+            assert presentation.x_axis_label == snapshot.columns[1]
+            assert presentation.y_axis_label == snapshot.columns[0]
+        else:
+            assert not isinstance(presentation, GroupComparisonChartPresentation)
         output = tmp_path / f"{locale}.xlsx"
         FileWriter().save_excel_sheets(
             kwargs["sheets"],
@@ -457,6 +460,7 @@ def test_hypothesis_localized_workbooks_read_back_all_types(tmp_path, factory, l
             assert workbook.sheetnames == [*kwargs["sheets"], chart_name]
             assert len(workbook[chart_name]._images) == 1
             assert workbook[chart_name]["A1"].value is None
+            assert images[0].accessible_name == " / ".join(snapshot.columns)
             if not charts_only:
                 result_name = "Test results" if locale == "en" else "Testresultat"
                 frame = kwargs["sheets"][result_name]
