@@ -394,7 +394,9 @@ def test_hypothesis_exports_route_owned_numeric_frames_and_per_call_context(fact
 @pytest.mark.parametrize("factory", [group_snapshot, chi_snapshot, paired_snapshot])
 @pytest.mark.parametrize("locale", ["en", "sv"])
 @pytest.mark.parametrize("charts_only", [False, True])
-def test_hypothesis_localized_workbooks_read_back_all_types(tmp_path, factory, locale, charts_only):
+def test_hypothesis_localized_workbooks_read_back_all_types(tmp_path, factory, locale, charts_only, monkeypatch):
+    renderer = Mock(wraps=analysis_controller_module.render_hypothesis_charts)
+    monkeypatch.setattr(analysis_controller_module, "render_hypothesis_charts", renderer)
     translator = QTranslator()
     path = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{locale}.qm"
     assert translator.load(str(path))
@@ -436,6 +438,12 @@ def test_hypothesis_localized_workbooks_read_back_all_types(tmp_path, factory, l
         assert kwargs["chart_sheet_name"] == chart_name
         images = kwargs["chart_factory"](None, None)
         assert len(images) == 1
+        assert images[0].heading == ""
+        labels = renderer.call_args.args[1]
+        expected_axes = (
+            (snapshot.columns[1], snapshot.columns[0]) if snapshot.test is HypothesisTest.GROUP_COMPARISON else None
+        )
+        assert labels.group_axis_labels == expected_axes
         output = tmp_path / f"{locale}.xlsx"
         FileWriter().save_excel_sheets(
             kwargs["sheets"],
@@ -448,7 +456,7 @@ def test_hypothesis_localized_workbooks_read_back_all_types(tmp_path, factory, l
         try:
             assert workbook.sheetnames == [*kwargs["sheets"], chart_name]
             assert len(workbook[chart_name]._images) == 1
-            assert workbook[chart_name]["A1"].value == " / ".join(snapshot.columns)
+            assert workbook[chart_name]["A1"].value is None
             if not charts_only:
                 result_name = "Test results" if locale == "en" else "Testresultat"
                 frame = kwargs["sheets"][result_name]

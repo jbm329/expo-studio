@@ -1141,12 +1141,16 @@ class AnalysisController:
                     if snapshot.test is HypothesisTest.CHI_SQUARE
                     else ()
                 ),
+                group_axis_labels=(snapshot.columns[1], snapshot.columns[0])
+                if snapshot.test is HypothesisTest.GROUP_COMPARISON
+                else None,
             )
 
             def make_images(
                 progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
             ) -> tuple[ExcelChartImage, ...]:
-                return render_hypothesis_charts(snapshot, labels, progress_cb=progress_cb, cancel_cb=cancel_cb)
+                images = render_hypothesis_charts(snapshot, labels, progress_cb=progress_cb, cancel_cb=cancel_cb)
+                return tuple(replace(image, heading="") for image in images)
 
             exporter.export_excel(
                 sheets=sheets,
