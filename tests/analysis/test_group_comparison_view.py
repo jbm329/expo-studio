@@ -197,6 +197,28 @@ def test_layout_has_titled_table_chart_and_results_with_adjustable_dividers():
     assert any("Welch" in label.text() for label in splitter.widget(2).findChildren(QLabel))
 
 
+@pytest.mark.parametrize("multi_group", [False, True])
+def test_distribution_axes_use_the_applied_column_names(multi_group: bool) -> None:
+    result = _make_result(
+        numeric_column="Measured value",
+        grouping_column="Selected group",
+        groups=(_make_group("A"), _make_group("B"), _make_group("C"))
+        if multi_group
+        else (_make_group("A"), _make_group("B")),
+        pairwise=None if multi_group else _PAIRWISE,
+        multi_group=_MULTI_GROUP if multi_group else None,
+    )
+    view = GroupComparisonView(result)
+    try:
+        canvas = view.findChild(FigureCanvasQTAgg)
+        assert canvas is not None
+        axis = canvas.figure.axes[0]
+        assert axis.get_xlabel() == result.grouping_column
+        assert axis.get_ylabel() == result.numeric_column
+    finally:
+        view.close()
+
+
 def test_table_marks_a_group_as_not_normal_below_the_significance_level():
     result = _make_result(groups=(_make_group("A", shapiro_p_value=0.9), _make_group("B", shapiro_p_value=0.001)))
 

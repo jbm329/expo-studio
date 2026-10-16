@@ -62,7 +62,7 @@ class GroupComparisonView(QWidget):
         splitter = QSplitter(Qt.Orientation.Vertical, self)
         splitter.setChildrenCollapsible(False)
         splitter.addWidget(self._build_table_section(result.groups))
-        splitter.addWidget(self._build_chart_section(result.groups))
+        splitter.addWidget(self._build_chart_section(result))
         splitter.addWidget(self._build_results_section(result))
         splitter.setStretchFactor(0, 2)
         splitter.setStretchFactor(1, 3)
@@ -181,7 +181,7 @@ class GroupComparisonView(QWidget):
     # Boxplot (all groups side by side)
     # ------------------------------------------------------------------
 
-    def _build_chart_section(self, groups: tuple[GroupSummary, ...]) -> QWidget:
+    def _build_chart_section(self, result: GroupComparisonResult) -> QWidget:
         """Build the titled group-distribution chart section."""
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
@@ -192,21 +192,23 @@ class GroupComparisonView(QWidget):
                 panel,
             )
         )
-        layout.addWidget(build_section_scroll_area(self._build_boxplot(groups), panel), 1)
+        layout.addWidget(build_section_scroll_area(self._build_boxplot(result), panel), 1)
         return panel
 
-    def _build_boxplot(self, groups: tuple[GroupSummary, ...]) -> QWidget:
+    def _build_boxplot(self, result: GroupComparisonResult) -> QWidget:
         """Build a matplotlib canvas with one boxplot per group, side by side."""
         figure = Figure(constrained_layout=True)
         canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(260)
-        canvas.build_chart(lambda: self._draw_boxplot(figure.add_subplot(111), groups))
+        canvas.build_chart(lambda: self._draw_boxplot(figure.add_subplot(111), result))
 
         return canvas
 
-    def _draw_boxplot(self, ax: Axes, groups: tuple[GroupSummary, ...]) -> None:
+    def _draw_boxplot(self, ax: Axes, result: GroupComparisonResult) -> None:
         """Draw one box per group from each group's precomputed five-number summary."""
-        draw_group_distribution(ax, groups, self.tr("Distribution by group"))
+        draw_group_distribution(ax, result.groups, self.tr("Distribution by group"))
+        ax.set_xlabel(result.grouping_column)
+        ax.set_ylabel(result.numeric_column)
 
     def export_notes(self, result: GroupComparisonResult) -> tuple[str, ...]:
         """Capture displayed guidance and test assumptions without scraping labels."""
