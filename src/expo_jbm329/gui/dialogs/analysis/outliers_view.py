@@ -30,7 +30,12 @@ from expo_jbm329.services.analysis.outliers import (
     OutlierMethod,
     max_possible_z_score,
 )
-from expo_jbm329.services.analysis.outliers_charts import OutlierHistogramLabels, draw_outlier_histogram
+from expo_jbm329.services.analysis.outliers_charts import (
+    OutlierHistogramLabels,
+    build_outlier_histogram_labels,
+    build_outlier_histogram_presentation,
+    draw_outlier_histogram,
+)
 from expo_jbm329.services.analysis.presentation import (
     PresentationLabel,
     outlier_method_label,
@@ -120,6 +125,7 @@ class OutliersView(QWidget):
         super().__init__(parent)
 
         self._result = result
+        self._histogram_labels = build_outlier_histogram_labels(QCoreApplication.translate)
         self._detail: OutlierColumnDetail | None = None
         self._selected_column: str | None = None
         self._column_selection_revision = 0
@@ -188,11 +194,7 @@ class OutliersView(QWidget):
 
     def histogram_labels(self) -> OutlierHistogramLabels:
         """Return the translated histogram text used by the view and its export."""
-        return OutlierHistogramLabels(
-            inside=self.tr("Inside the fences"),
-            outliers=self.tr("Potential outliers"),
-            count_axis=self.tr("Count"),
-        )
+        return self._histogram_labels
 
     def summary_notes(self) -> tuple[str, ...]:
         """Return the displayed summary totals and screening caveat as plain-text lines."""
@@ -280,12 +282,6 @@ class OutliersView(QWidget):
             self._chart_panel.show()
             self._statistics_panel.show()
             self._extremes_layout.addWidget(self._build_extremes_panel(detail))
-            self._chart_layout.addWidget(
-                self._build_section_title(
-                    translate_presentation_label(PresentationLabel.COLUMN_DISTRIBUTION, QCoreApplication.translate),
-                    self._chart_panel,
-                )
-            )
             self._chart_layout.addWidget(build_section_scroll_area(self._build_histogram(detail), self._chart_panel), 1)
             self._statistics_layout.addWidget(
                 self._build_section_title(
@@ -477,7 +473,8 @@ class OutliersView(QWidget):
         figure = Figure(constrained_layout=True)
         canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
         canvas.setMinimumSize(240, 160)
-        draw_outlier_histogram(figure.add_subplot(111), detail, self.histogram_labels())
+        presentation = build_outlier_histogram_presentation(detail.summary.column, self.histogram_labels())
+        draw_outlier_histogram(figure.add_subplot(111), detail, presentation)
         return canvas
 
     def _build_detail_statistics(self, detail: OutlierColumnDetail) -> QLabel:

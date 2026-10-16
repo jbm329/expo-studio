@@ -6,6 +6,7 @@ import math
 import pandas as pd
 import pytest
 
+from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
 from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierError,
     MultivariateOutlierMethod,
@@ -39,15 +40,16 @@ from expo_jbm329.services.analysis.outliers_export import (
 )
 from expo_jbm329.services.analysis.statistics import StatisticsExportFormat
 
-HISTOGRAM_LABELS = OutlierHistogramLabels(inside="Inside", outliers="Flagged", count_axis="Count")
+HISTOGRAM_LABELS = OutlierHistogramLabels(
+    inside="Inside", outliers="Flagged", count_axis="Count", distribution_name="Column distribution"
+)
 PROJECTION_LABELS = OutlierProjectionLabels(
-    heading="Outlier projection",
+    metadata=ChartPresentationMetadata("", "PCA projection (visualization only)", ("Sampled",)),
     title="PCA projection (visualization only)",
     pc1_axis="PC1",
     pc2_axis="PC2",
     inliers="Inliers",
     outliers="Potential outliers",
-    captions=("Sampled",),
 )
 SUMMARY_NOTES = ("IQR, threshold 1.5: 1 of 10 rows.", "Flagged values are potential outliers.")
 DETAIL_NOTES = ("Potential outliers, most extreme first", "a - IQR, threshold 1.5")

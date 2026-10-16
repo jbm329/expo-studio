@@ -5674,7 +5674,12 @@ Sparad till:
     <message>
         <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="176" />
         <source>&lt;i&gt;The projection shows a deterministic sample of {count} rows.&lt;/i&gt;</source>
-        <translation>&lt;i&gt;Projektionen visar ett deterministiskt urval av {count} rader.&lt;/i&gt;</translation>
+        <translation type="vanished">&lt;i&gt;Projektionen visar ett deterministiskt urval av {count} rader.&lt;/i&gt;</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\outliers_charts.py" line="108" />
+        <source>The projection shows a deterministic sample of {count} rows.</source>
+        <translation>Projektionen visar ett deterministiskt urval av {count} rader.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="196" />

@@ -99,6 +99,14 @@ captions and accessible image names. Keep model-specific axis meanings (such as
 residuals, fitted counts and hazard ratios), rather than replacing every axis
 with a source-column name.
 
+Outliers shares Qt-free presentation builders for univariate histograms and the
+multivariate PCA visualization. Histogram value axes use the actual column name;
+count and PC1/PC2 axes retain their mathematical meanings. Titles, legends and
+plain sampling notes agree in the app, Excel and HTML using the captured snapshot
+language. Outer chart headings are omitted without losing accessible image names
+or model caveats. Exports still chart every successfully screened column, while
+detail tables and asynchronous selection continue to describe the chosen column.
+
 Export is available for successfully applied results. Excel workbooks can
 combine selected tables and available charts; CSV and binary exports contain
 one selected table. Charts are available in Excel only. Exports contain the

@@ -2469,7 +2469,10 @@ def test_multivariate_outlier_chart_heading_is_shared_by_report_and_export():
     component = prepared.entries[0].components[0]
     html = render_prepared_report_html(prepared)
     assert component.label == "sv:Outlier projection"
-    assert component.charts[0].heading == "Outlier projection"
+    assert component.charts[0].heading == ""
+    assert component.charts[0].accessible_name == "PCA projection (visualization only)"
+    assert 'alt="PCA projection (visualization only)"' in html
+    assert "<figcaption>\n<p>Sampled</p>\n</figcaption>" in html
     assert "<h3>sv:Outlier projection</h3>" in html
 
 

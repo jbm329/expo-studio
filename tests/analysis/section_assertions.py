@@ -30,7 +30,9 @@ def _required_content_height(content: QWidget, viewport_width: int) -> int:
     return max(content.minimumSize().height(), content.minimumSizeHint().height())
 
 
-def _overflow_height(panel: QWidget, title: QLabel, scroll: QScrollArea, content: QWidget, small_height: int) -> int:
+def _overflow_height(
+    panel: QWidget, title: QLabel | None, scroll: QScrollArea, content: QWidget, small_height: int
+) -> int:
     """Return a panel height at which the section content is guaranteed to overflow.
 
     Text content depends on the available fonts (e.g. a bare CI runner using the offscreen
@@ -48,12 +50,14 @@ def _overflow_height(panel: QWidget, title: QLabel, scroll: QScrollArea, content
         f"font={content.font().family()!r}); check that fonts are available."
     )
     margins = layout.contentsMargins()
-    chrome = margins.top() + margins.bottom() + title.height() + layout.spacing() + 2 * scroll.frameWidth()
+    chrome = margins.top() + margins.bottom() + 2 * scroll.frameWidth()
+    if title is not None:
+        chrome += title.height() + layout.spacing()
     return min(small_height, chrome + required // 2)
 
 
 def assert_section_scrolls_below_frozen_title(
-    panel: QWidget, small_height: int, large_height: int = 900, width: int = 1100
+    panel: QWidget, small_height: int, large_height: int = 900, width: int = 1100, *, titled: bool = True
 ) -> QWidget:
     """Assert `panel` is a fixed title above content that scrolls only when needed.
 
@@ -64,17 +68,20 @@ def assert_section_scrolls_below_frozen_title(
         small_height: Height at which the content must overflow.
         large_height: Height at which the content must fit.
         width: Panel width used at both heights.
+        titled: Whether a separate fixed title precedes the scroll area.
 
     Returns:
         The content widget inside the section scroll area.
     """
     layout = panel.layout()
     assert layout is not None
-    title = layout.itemAt(0).widget()
-    scroll = layout.itemAt(1).widget()
-    assert isinstance(title, QLabel)
+    title = layout.itemAt(0).widget() if titled else None
+    scroll_index = 1 if titled else 0
+    scroll = layout.itemAt(scroll_index).widget()
+    if titled:
+        assert isinstance(title, QLabel)
     assert isinstance(scroll, QScrollArea)
-    assert layout.stretch(1) == 1
+    assert layout.stretch(scroll_index) == 1
     assert scroll.widgetResizable()
     assert scroll.verticalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
     assert scroll.horizontalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
@@ -99,14 +106,16 @@ def assert_section_scrolls_below_frozen_title(
             f"Content did not overflow: panel={panel.size()}, viewport={viewport.size()}, "
             f"content={content.size()}, font={content.font().family()!r}"
         )
-        title_geometry = title.geometry()
+        title_geometry = title.geometry() if title is not None else None
         bar.setValue(bar.maximum())
         QCoreApplication.processEvents()
-        assert title.geometry() == title_geometry
+        if title is not None:
+            assert title.geometry() == title_geometry
 
         panel.resize(width, large_height)
         _wait_for(lambda: bar.maximum() == 0 and panel.height() == large_height)
-        assert title.geometry() == title_geometry
+        if title is not None:
+            assert title.geometry() == title_geometry
         assert bar.maximum() == 0
         horizontal = scroll.horizontalScrollBar()
         assert horizontal is not None

@@ -5476,7 +5476,12 @@ Saved to:
     <message>
         <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="176" />
         <source>&lt;i&gt;The projection shows a deterministic sample of {count} rows.&lt;/i&gt;</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\outliers_charts.py" line="108" />
+        <source>The projection shows a deterministic sample of {count} rows.</source>
+        <translation>The projection shows a deterministic sample of {count} rows.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="196" />

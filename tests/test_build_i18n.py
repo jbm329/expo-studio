@@ -1,4 +1,5 @@
 import subprocess
+from dataclasses import replace
 from string import Formatter
 from unittest.mock import MagicMock
 from xml.etree import ElementTree
@@ -6,8 +7,13 @@ from xml.etree import ElementTree
 import pytest
 
 from expo_jbm329.build import build_i18n
+from expo_jbm329.services.analysis.outliers_charts import (
+    build_outlier_histogram_labels,
+    build_outlier_projection_labels,
+)
 from expo_jbm329.services.analysis.presentation import presentation_label_sources
 from expo_jbm329.services.analysis.report import capture_report_labels
+from tests.analysis.test_outliers_export import multivariate_result
 
 
 @pytest.fixture
@@ -66,6 +72,27 @@ def test_shared_analysis_and_report_labels_survive_real_extraction(extracted_mes
     missing = {(context, source) for context, source in expected if (context, source, "") not in extracted_messages}
 
     assert not missing
+
+
+def test_outlier_chart_builders_survive_real_extraction_with_finished_swedish(extracted_messages):
+    sources: set[tuple[str, str, str]] = set()
+
+    def translate(context: str, source: str) -> str:
+        sources.add((context, source, ""))
+        return source
+
+    build_outlier_histogram_labels(translate)
+    build_outlier_projection_labels(replace(multivariate_result(), sampled=True), translate)
+    swedish = _catalog_messages(ElementTree.parse(build_i18n.locales_dir() / "app_sv.ts").getroot())
+    for key in sources:
+        assert key in extracted_messages
+        assert any(
+            "services/analysis/outliers_charts.py" in location.get("filename", "").replace("\\", "/")
+            for location in extracted_messages[key].findall("location")
+        )
+        translation = swedish[key].find("translation")
+        assert translation is not None and translation.text
+        assert translation.get("type") not in ("unfinished", "vanished", "obsolete")
 
 
 def test_explicit_context_analysis_calls_are_not_extracted_as_comments(extracted_messages):

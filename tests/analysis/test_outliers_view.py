@@ -59,10 +59,10 @@ def test_distribution_and_column_details_scroll_below_a_frozen_title(column, sec
     QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete.value)
     panel = getattr(view, section)
     try:
-        content = assert_section_scrolls_below_frozen_title(panel, small_height)
+        content = assert_section_scrolls_below_frozen_title(panel, small_height, titled=section != "_chart_panel")
         if section == "_chart_panel":
-            assert panel.layout().itemAt(0).widget().text() == "Column distribution"
             assert isinstance(content, FigureCanvasQTAgg)
+            assert content.figure.axes[0].get_title() == column
         else:
             assert panel.layout().itemAt(0).widget().text() == "Model summary"
             assert isinstance(content, QLabel)
@@ -315,7 +315,7 @@ def test_layout_has_four_vertically_resizable_sections_in_the_requested_order():
     assert any(label.text() == "Columns" for label in root_splitter.widget(0).findChildren(QLabel))
     assert detail_splitter.widget(0).isAncestorOf(extremes_table)
     assert len(detail_splitter.widget(1).findChildren(FigureCanvasQTAgg)) == 1
-    assert any(label.text() == "Column distribution" for label in detail_splitter.widget(1).findChildren(QLabel))
+    assert not any(label.text() == "Column distribution" for label in detail_splitter.widget(1).findChildren(QLabel))
     assert any(label.text() == "Model summary" for label in detail_splitter.widget(2).findChildren(QLabel))
     assert any("threshold" in label.text() for label in detail_splitter.widget(2).findChildren(QLabel))
 
@@ -483,9 +483,12 @@ def test_histogram_labels_are_shared_by_the_displayed_chart():
     axes = canvas.figure.axes[0]
 
     assert view.result() is result
-    assert view.histogram_labels() == OutlierHistogramLabels("Inside the fences", "Potential outliers", "Count")
+    assert view.histogram_labels() == OutlierHistogramLabels(
+        "Inside the fences", "Potential outliers", "Count", "Column distribution"
+    )
     assert [text.get_text() for text in axes.get_legend().get_texts()] == ["Inside the fences", "Potential outliers"]
     assert axes.get_ylabel() == "Count"
+    assert axes.get_xlabel() == "<a>"
 
 
 def test_summary_notes_are_the_plain_displayed_totals_and_caveat():

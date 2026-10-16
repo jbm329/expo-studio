@@ -9,6 +9,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_view import MultivariateOutliersView
+from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
 from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierError,
     MultivariateOutlierMethod,
@@ -97,11 +98,11 @@ def test_layout_has_three_resizable_titled_sections_like_regression():
 
     assert splitter.orientation() is Qt.Orientation.Vertical
     assert splitter.count() == 3
-    assert [_section_title(splitter.widget(index)) for index in range(3)] == [
+    assert [_section_title(splitter.widget(index)) for index in (0, 2)] == [
         "Potential outliers, most anomalous first",
-        "Outlier projection",
         "Model comments",
     ]
+    assert not any(label.text() == "Outlier projection" for label in splitter.widget(1).findChildren(QLabel))
     table_layout = splitter.widget(0).layout()
     assert table_layout.itemAt(1).widget() is view.extremes_table()
     assert table_layout.stretch(1) == 1
@@ -112,7 +113,7 @@ def test_projection_and_comments_scroll_below_a_frozen_title(section, small_heig
     view = MultivariateOutliersView(dataclasses.replace(_result(), sampled=True))
     panel = view.findChildren(QSplitter)[0].widget(section)
 
-    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=width)
+    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=width, titled=section != 1)
 
     if section == 1:
         assert isinstance(content, FigureCanvasQTAgg)
@@ -153,7 +154,7 @@ def test_chart_labels_are_shared_by_the_displayed_projection():
 
     assert view.result() is result
     assert labels == OutlierProjectionLabels(
-        heading="Outlier projection",
+        metadata=ChartPresentationMetadata("", "PCA projection (visualization only)"),
         title="PCA projection (visualization only)",
         pc1_axis="PC1",
         pc2_axis="PC2",
@@ -167,7 +168,7 @@ def test_chart_labels_are_shared_by_the_displayed_projection():
 def test_sampled_projection_has_a_plain_caption():
     view = MultivariateOutliersView(dataclasses.replace(_result(), sampled=True))
 
-    assert view.chart_labels().captions == ("The projection shows a deterministic sample of 7 rows.",)
+    assert view.chart_labels().metadata.captions == ("The projection shows a deterministic sample of 7 rows.",)
 
 
 def test_export_notes_are_the_plain_model_comments_and_features():
@@ -186,4 +187,4 @@ def test_export_text_of_an_error_view_has_no_notes_or_caption():
     )
 
     assert view.export_notes() == ()
-    assert view.chart_labels().captions == ()
+    assert view.chart_labels().metadata.captions == ()

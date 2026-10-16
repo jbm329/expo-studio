@@ -12,6 +12,7 @@ import numpy as np
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 
+from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
 from expo_jbm329.services.analysis.outliers import analyze_outlier_column
 from expo_jbm329.services.analysis.statistics_charts import STATISTICS_CHART_LOCK
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
@@ -40,40 +41,99 @@ class OutlierHistogramLabels:
     inside: str
     outliers: str
     count_axis: str
+    distribution_name: str
 
 
 @dataclass(frozen=True, slots=True)
 class OutlierProjectionLabels:
-    """Translated multivariate projection text captured on the GUI thread.
+    """Translated projection semantics and metadata captured before rendering."""
 
-    Attributes:
-        heading: Excel heading above the exported image.
-        title: Axes title stating that the projection is only a visualization.
-        pc1_axis: X-axis label.
-        pc2_axis: Y-axis label.
-        inliers: Legend label of the unflagged rows.
-        outliers: Legend label of the flagged rows.
-        captions: Lines written below the exported image.
-    """
-
-    heading: str
+    metadata: ChartPresentationMetadata
     title: str
     pc1_axis: str
     pc2_axis: str
     inliers: str
     outliers: str
-    captions: tuple[str, ...] = ()
 
 
-def draw_outlier_histogram(ax: Axes, detail: OutlierColumnDetail, labels: OutlierHistogramLabels) -> None:
+@dataclass(frozen=True, slots=True)
+class OutlierHistogramPresentation:
+    """Column identity, axes, legends and output metadata for one histogram."""
+
+    title: str
+    x_label: str
+    labels: OutlierHistogramLabels
+    metadata: ChartPresentationMetadata
+
+
+def build_outlier_histogram_labels(translate: Callable[[str, str], str]) -> OutlierHistogramLabels:
+    """Capture the shared histogram text before dispatching any worker."""
+    return OutlierHistogramLabels(
+        inside=translate("OutliersView", "Inside the fences"),
+        outliers=translate("OutliersView", "Potential outliers"),
+        count_axis=translate("OutliersView", "Count"),
+        distribution_name=translate("OutliersPresentation", "Column distribution"),
+    )
+
+
+def build_outlier_histogram_presentation(column: str, labels: OutlierHistogramLabels) -> OutlierHistogramPresentation:
+    """Use the actual column for the title and value axis without repeating an outer heading."""
+    return OutlierHistogramPresentation(
+        title=column,
+        x_label=column,
+        labels=labels,
+        metadata=ChartPresentationMetadata(worksheet_heading="", accessible_name=column or labels.distribution_name),
+    )
+
+
+def build_outlier_projection_labels(
+    result: MultivariateOutlierResult,
+    translate: Callable[[str, str], str],
+    *,
+    count_format: Callable[[int], str] = str,
+) -> OutlierProjectionLabels:
+    """Capture projection semantics and plain sampling notes for every output.
+
+    Args:
+        result: Applied fit with its existing PCA visualization sample.
+        translate: Explicit translation callback used only during capture.
+        count_format: Locale-aware count formatter used only during capture.
+
+    Returns:
+        Frozen projection labels requiring no Qt or formatter in a worker.
+    """
+    title = translate("MultivariateOutliersView", "PCA projection (visualization only)")
+    captions = (
+        (
+            translate(
+                "MultivariateOutliersView", "The projection shows a deterministic sample of {count} rows."
+            ).format(count=count_format(len(result.sample_outliers))),
+        )
+        if result.sampled and result.error is None
+        else ()
+    )
+    return OutlierProjectionLabels(
+        metadata=ChartPresentationMetadata(worksheet_heading="", accessible_name=title, captions=captions),
+        title=title,
+        pc1_axis=translate("MultivariateOutliersView", "PC1"),
+        pc2_axis=translate("MultivariateOutliersView", "PC2"),
+        inliers=translate("MultivariateOutliersView", "Inliers"),
+        outliers=translate("MultivariateOutliersView", "Potential outliers"),
+    )
+
+
+def draw_outlier_histogram(ax: Axes, detail: OutlierColumnDetail, presentation: OutlierHistogramPresentation) -> None:
     """Draw stacked inlier/outlier bars over shared bins, with the fences marked.
 
     Args:
         ax: Target axes.
         detail: Screened column detail with precomputed histogram bins.
-        labels: Translated legend and axis text.
+        presentation: Shared title, axes, legend and output metadata.
     """
-    ax.set_title(detail.summary.column, fontsize=10)
+    labels = presentation.labels
+    ax.set_title(presentation.title, fontsize=10)
+    ax.set_xlabel(presentation.x_label, fontsize=9)
+    ax.set_ylabel(labels.count_axis, fontsize=9)
     edges = detail.histogram_edges
     if not edges:
         return
@@ -92,7 +152,6 @@ def draw_outlier_histogram(ax: Axes, detail: OutlierColumnDetail, labels: Outlie
     for fence in (detail.summary.lower_fence, detail.summary.upper_fence):
         if math.isfinite(fence):
             ax.axvline(fence, color="tab:red", linestyle="--", linewidth=1)
-    ax.set_ylabel(labels.count_axis, fontsize=9)
     ax.tick_params(labelsize=8)
     ax.legend(fontsize=8)
 
@@ -155,13 +214,14 @@ def render_univariate_outlier_charts(
         if detail.error is not None:
             message = f"Column {column!r} could not be screened for the chart export."
             raise ValueError(message)
+        presentation = build_outlier_histogram_presentation(column, snapshot.chart_labels)
         with STATISTICS_CHART_LOCK:
             figure = Figure(figsize=_HISTOGRAM_FIGURE_SIZE, dpi=_EXPORT_DPI, constrained_layout=True)
             canvas = FigureCanvasAgg(figure)
-            draw_outlier_histogram(figure.add_subplot(111), detail, snapshot.chart_labels)
+            draw_outlier_histogram(figure.add_subplot(111), detail, presentation)
             output = BytesIO()
             canvas.print_png(output)  # type: ignore[no-untyped-call]
-        images.append(_image(column, output, _HISTOGRAM_FIGURE_SIZE))
+        images.append(_image(presentation.metadata, output, _HISTOGRAM_FIGURE_SIZE))
         if progress_cb is not None:
             progress_cb(math.ceil((index + 1) * 100 / len(columns)))
     if cancel_cb is not None and cancel_cb():
@@ -201,21 +261,21 @@ def render_multivariate_outlier_charts(
         raise ExcelChartCancelledError
     if progress_cb is not None:
         progress_cb(100)
-    return (_image(labels.heading, output, _PROJECTION_FIGURE_SIZE, labels.captions),)
+    return (_image(labels.metadata, output, _PROJECTION_FIGURE_SIZE),)
 
 
 def _image(
-    heading: str,
+    metadata: ChartPresentationMetadata,
     output: BytesIO,
     size: tuple[float, float],
-    captions: tuple[str, ...] = (),
 ) -> ExcelChartImage:
     """Wrap rendered PNG bytes with their pixel size."""
     width, height = size
     return ExcelChartImage(
-        heading,
+        metadata.worksheet_heading,
         output.getvalue(),
         round(width * _EXPORT_DPI),
         round(height * _EXPORT_DPI),
-        captions,
+        metadata.captions,
+        accessible_name=metadata.accessible_name,
     )

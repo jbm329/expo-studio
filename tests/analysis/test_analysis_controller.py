@@ -4964,7 +4964,8 @@ def test_univariate_outlier_excel_export_routes_localized_sheets_and_worker_char
 
     progress: list[int] = []
     images = kwargs["chart_factory"](progress.append, lambda: False)
-    assert [image.heading for image in images] == list(snapshot.chart_columns)
+    assert [image.accessible_name for image in images] == list(snapshot.chart_columns)
+    assert all(image.heading == "" for image in images)
     assert progress[-1] == 100
     assert controller._results.mock_calls == []  # noqa: SLF001
 
@@ -4987,7 +4988,9 @@ def test_multivariate_outlier_excel_export_uses_model_summary_and_projection_cha
     assert kwargs["sheets"]["Potentiella avvikare"].columns[:2].tolist() == ["Rad", "Avvikelsepo?ng"]
     images = kwargs["chart_factory"](None, None)
     assert len(images) == 1
-    assert images[0].heading == snapshot.chart_labels.heading
+    assert images[0].heading == snapshot.chart_labels.metadata.worksheet_heading == ""
+    assert images[0].accessible_name == snapshot.chart_labels.metadata.accessible_name
+    assert images[0].captions == snapshot.chart_labels.metadata.captions
 
 
 def test_outlier_excel_export_without_charts_has_no_chart_factory():
