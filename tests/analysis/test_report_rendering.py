@@ -1250,7 +1250,8 @@ def test_preparation_renders_selected_categories_and_variants(monkeypatch) -> No
     assert all(entry.components for entry in prepared.entries)
     assert prepared.entries[0].category == "AnalysisDialog: Overview"
     assert prepared.entries[0].components[0].overview_summary.facts
-    assert prepared.entries[1].components[1].charts
+    statistics_chart = next(component for component in prepared.entries[1].components if component.key == "Charts")
+    assert statistics_chart.charts
     hypothesis_chart = next(component for component in prepared.entries[2].components if component.key == "charts")
     assert hypothesis_chart.paragraphs == ()
     assert hypothesis_chart.charts[0].captions == ("caption",)
@@ -1964,6 +1965,22 @@ def test_render_report_html_renders_real_worker_chart_and_inline_png() -> None:
     assert "<h3>Charts</h3>" not in html
     assert progress_values == sorted(progress_values)
     assert progress_values[-1] == 100
+
+
+def test_statistics_report_components_follow_table_then_distribution_order() -> None:
+    snapshot = analyze_descriptive_statistics(pd.DataFrame({"value": [1.0, 2.0, 3.0], "group": ["a", "a", "b"]}))
+    document = ReportDocument()
+    document.upsert(create_report_entry(AnalysisCategory.STATISTICS, DATASET, snapshot))
+
+    prepared = prepare_report_content(document)
+    html = render_prepared_report_html(prepared)
+
+    assert [component.label for component in prepared.entries[0].components] == [
+        "Continuous",
+        "Categorical",
+        "Distribution",
+    ]
+    assert html.index("<h3>Continuous</h3>") < html.index("<h3>Categorical</h3>") < html.index("<h3>Distribution</h3>")
 
 
 def test_statistics_distribution_label_is_shared_and_captured() -> None:

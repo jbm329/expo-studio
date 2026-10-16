@@ -330,23 +330,22 @@ def available_report_components(category: AnalysisCategory, snapshot: ReportSnap
         case AnalysisCategory.STATISTICS if isinstance(snapshot, DescriptiveStatisticsResult):
             candidates = []
             if snapshot.columns:
-                candidates.extend([
-                    (
-                        "Continuous",
-                        statistics_component_label(StatisticsExportTable.CONTINUOUS, _identity_translate),
-                        "table",
-                    ),
-                    (
-                        "Charts",
-                        statistics_component_label(StatisticsExportTable.CHARTS, _identity_translate),
-                        "chart",
-                    ),
-                ])
+                candidates.append((
+                    "Continuous",
+                    statistics_component_label(StatisticsExportTable.CONTINUOUS, _identity_translate),
+                    "table",
+                ))
             if snapshot.categorical_columns:
                 candidates.append((
                     "Categorical",
                     statistics_component_label(StatisticsExportTable.CATEGORICAL, _identity_translate),
                     "table",
+                ))
+            if snapshot.columns:
+                candidates.append((
+                    "Charts",
+                    statistics_component_label(StatisticsExportTable.CHARTS, _identity_translate),
+                    "chart",
                 ))
             component_values = tuple(candidates)
         case AnalysisCategory.HYPOTHESIS_TESTS if isinstance(snapshot, HypothesisExportSnapshot):

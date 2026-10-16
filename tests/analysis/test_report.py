@@ -438,7 +438,8 @@ def test_statistics_report_offers_available_tables_and_charts():
 
     components = available_report_components(AnalysisCategory.STATISTICS, result)
 
-    assert [component.key for component in components] == ["Continuous", "Charts", "Categorical"]
+    assert [component.key for component in components] == ["Continuous", "Categorical", "Charts"]
+    assert [component.label for component in components] == ["Continuous", "Categorical", "Distribution"]
 
 
 @pytest.mark.parametrize(

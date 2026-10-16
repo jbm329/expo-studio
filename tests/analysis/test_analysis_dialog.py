@@ -370,7 +370,7 @@ def test_statistics_export_dialog_emits_selected_chart_only_request(monkeypatch)
 
 
 def test_statistics_add_to_report_uses_distribution_label():
-    result = analyze_descriptive_statistics(pd.DataFrame({"number": [1, 2, 3]}))
+    result = analyze_descriptive_statistics(pd.DataFrame({"number": [1, 2, 3], "group": ["a", "a", "b"]}))
     entry = create_report_entry(AnalysisCategory.STATISTICS, _make_datasets()[0], result)
     editor = ReportNotesDialog(
         "Statistics",
@@ -379,7 +379,7 @@ def test_statistics_add_to_report_uses_distribution_label():
     )
     choices = {choice.text(): choice for choice in editor.findChildren(QCheckBox)}
 
-    assert "Distribution" in choices
+    assert list(choices) == ["Continuous", "Categorical", "Distribution"]
     assert "Charts" not in choices
     assert "Charts" in editor.selected_components()
 
