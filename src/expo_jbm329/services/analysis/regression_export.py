@@ -97,7 +97,7 @@ class RegressionExportSnapshot:
 
     Attributes:
         result: The fitted model shown in the content pane.
-        chart_labels: Translated chart text captured from the displayed view.
+        chart_labels: Translated chart text and metadata captured from the displayed view.
         notes: Plain-text lines of the displayed model comments.
         capture_id: Stable identity for this successfully displayed fitted result.
     """

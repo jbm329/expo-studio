@@ -14,7 +14,12 @@ from expo_jbm329.gui.dialogs.analysis.regression_view import build_regression_pr
 from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
 from expo_jbm329.services.analysis.presentation import regression_component_label, regression_intercept_label
 from expo_jbm329.services.analysis.regression import MAX_MODEL_TERMS, MAX_PREDICTORS, TermKind
-from expo_jbm329.services.analysis.regression_charts import CoxChartLabels, RegressionChartLabels, draw_cox_charts
+from expo_jbm329.services.analysis.regression_charts import (
+    CoxChartLabels,
+    RegressionChartLabels,
+    build_regression_chart_labels,
+    draw_cox_charts,
+)
 from expo_jbm329.services.analysis.regression_export import RegressionExportComponent
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.survival import SurvivalError, survival_term_name
@@ -36,6 +41,14 @@ class SurvivalRegressionView(QWidget):
         """
         super().__init__(parent)
         self._result = result
+        self._chart_labels = build_regression_chart_labels(
+            result,
+            QCoreApplication.translate,
+            number_format=fmt_num,
+            count_format=fmt_int,
+            tick_format=lambda value: fmt_num(value, sig=2),
+            time_format=lambda value: fmt_num(value, sig=3),
+        )
         self._table: QTableWidget | None = None
         self._summary_label: QLabel | None = None
         layout = QVBoxLayout(self)
@@ -107,28 +120,14 @@ class SurvivalRegressionView(QWidget):
         figure = Figure(constrained_layout=True)
         canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
         canvas.setMinimumHeight(300)
-        draw_cox_charts(figure, self._result, self._cox_chart_labels())
+        labels = self._chart_labels.model
+        if not isinstance(labels, CoxChartLabels):
+            message = "Cox regression view received chart labels for another model."
+            raise TypeError(message)
+        draw_cox_charts(figure, self._result, labels)
         # Charts keep a readable minimum height and scroll when their section is smaller.
         layout.addWidget(build_section_scroll_area(canvas, panel), 1)
         return panel
-
-    def _cox_chart_labels(self) -> CoxChartLabels:
-        """Return the translated forest, survival and risk-table chart text."""
-        return CoxChartLabels(
-            forest_title=self.tr("Hazard ratios with 95% intervals"),
-            forest_unavailable=self.tr(
-                "Forest plot unavailable:\nall hazard ratios and intervals must be finite and positive."
-            ),
-            hazard_axis=self.tr("Hazard ratio (log scale)"),
-            survival_title=self.tr("Overall Kaplan-Meier survival (unadjusted)"),
-            survival_unavailable=self.tr("No survival chart data are available."),
-            duration_axis=self.tr("Duration: {column}").format(column=self._result.duration),
-            survival_axis=self.tr("Survival probability"),
-            risk_title=self.tr("At risk immediately before time"),
-            tick_format=lambda value: fmt_num(value, sig=2),
-            time_format=lambda value: fmt_num(value, sig=3),
-            count_format=fmt_int,
-        )
 
     def result(self) -> SurvivalResult:
         """Return the displayed Cox result."""
@@ -144,14 +143,7 @@ class SurvivalRegressionView(QWidget):
 
     def chart_labels(self) -> RegressionChartLabels:
         """Return the translated chart text shared by the displayed and exported charts."""
-        return RegressionChartLabels(
-            heading=regression_component_label(
-                RegressionModel.COX,
-                RegressionExportComponent.CHARTS,
-                QCoreApplication.translate,
-            ),
-            model=self._cox_chart_labels(),
-        )
+        return self._chart_labels
 
     def export_notes(self) -> tuple[str, ...]:
         """Return the displayed model comments as plain-text lines."""

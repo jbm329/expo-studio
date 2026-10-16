@@ -13,9 +13,14 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import FixedFormatter, FixedLocator, NullLocator
 from matplotlib.transforms import Bbox
 
+from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
 from expo_jbm329.services.analysis.logistic_charts import LogisticChartLabels, build_logistic_charts
 from expo_jbm329.services.analysis.regression import RegressionResult, TermKind
-from expo_jbm329.services.analysis.regression_glm import GeneralizedRegressionResult, RegressionModel
+from expo_jbm329.services.analysis.regression_glm import (
+    GeneralizedRegressionResult,
+    LogisticPlotError,
+    RegressionModel,
+)
 from expo_jbm329.services.analysis.statistics_charts import STATISTICS_CHART_LOCK
 from expo_jbm329.services.analysis.survival import SurvivalResult, survival_term_name
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
@@ -99,14 +104,152 @@ class RegressionChartLabels:
     """Everything needed to export the displayed charts of one fitted model.
 
     Attributes:
-        heading: Workbook heading above the chart image.
+        metadata: Output-independent chart identity and explanatory captions.
         model: Model-specific translated chart text.
-        captions: Notes shown below the image, such as sampling caveats.
     """
 
-    heading: str
+    metadata: ChartPresentationMetadata
     model: ModelChartLabels
-    captions: tuple[str, ...] = ()
+
+
+def build_regression_chart_labels(
+    result: RegressionResult | GeneralizedRegressionResult | SurvivalResult,
+    translate: Callable[[str, str], str],
+    *,
+    number_format: Callable[[float], str] = _format_number,
+    count_format: Callable[[int], str] = _format_count,
+    tick_format: Callable[[float], str] | None = None,
+    time_format: Callable[[float], str] | None = None,
+) -> RegressionChartLabels:
+    """Capture translated chart semantics and output metadata for one fitted model.
+
+    Args:
+        result: Successfully fitted regression model with its prepared chart data.
+        translate: Translation callback taking a Qt translation context and source text.
+        number_format: Locale-aware number formatter captured before worker dispatch.
+        count_format: Locale-aware count formatter captured before worker dispatch.
+        tick_format: Optional formatter for Cox hazard-ratio ticks.
+        time_format: Optional formatter for Cox risk-table times.
+
+    Returns:
+        Frozen labels shared by the displayed view and export renderers.
+    """
+    match result:
+        case RegressionResult(plot=plot):
+            linear_labels = LinearChartLabels(
+                residuals_title=translate("RegressionView", "Residuals vs fitted"),
+                fitted_axis=translate("RegressionView", "Fitted value"),
+                residual_axis=translate("RegressionView", "Residual"),
+                actual_title=translate("RegressionView", "Actual vs predicted"),
+                predicted_axis=translate("RegressionView", "Predicted {target}").format(target=result.target),
+                actual_axis=translate("RegressionView", "Actual {target}").format(target=result.target),
+                qq_title=translate("RegressionView", "Normal Q-Q plot of residuals"),
+                theoretical_axis=translate("RegressionView", "Theoretical quantile"),
+                standardized_axis=translate("RegressionView", "Standardized residual"),
+            )
+            captions = (
+                (
+                    translate(
+                        "RegressionView",
+                        "Plots show a random sample of {shown} of {total} rows. Statistics use all rows.",
+                    ).format(shown=count_format(len(plot.actual)), total=count_format(result.n_used)),
+                )
+                if plot is not None and plot.sampled
+                else ()
+            )
+            accessible_name = f"{linear_labels.residuals_title}; {linear_labels.actual_title}; {linear_labels.qq_title}"
+            labels: ModelChartLabels = linear_labels
+        case GeneralizedRegressionResult(model=RegressionModel.LOGISTIC):
+            if result.logistic_plot_error is LogisticPlotError.INVALID_PREDICTIONS:
+                unavailable = translate(
+                    "GeneralizedRegressionView",
+                    "Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.",
+                )
+            elif result.logistic_plot_error is LogisticPlotError.INVALID_OUTCOMES:
+                unavailable = translate(
+                    "GeneralizedRegressionView", "Diagnostics unavailable: outcomes must contain both binary classes."
+                )
+            else:
+                unavailable = translate("GeneralizedRegressionView", "No logistic diagnostic data are available.")
+            data = result.logistic_plot_data
+            labels = LogisticChartLabels(
+                odds_title=translate(
+                    "GeneralizedRegressionView", "Predictor odds ratios with 95% confidence intervals"
+                ),
+                odds_axis=translate("GeneralizedRegressionView", "Odds ratio (logarithmic scale; reference = 1)"),
+                no_predictors=translate("GeneralizedRegressionView", "No predictor effects: intercept-only model."),
+                unavailable_effect=translate(
+                    "GeneralizedRegressionView", "Unavailable: non-finite, non-positive or invalid odds ratio / CI"
+                ),
+                roc_title=translate("GeneralizedRegressionView", "ROC (in-sample)"),
+                false_positive_axis=translate("GeneralizedRegressionView", "False positive rate"),
+                true_positive_axis=translate("GeneralizedRegressionView", "True positive rate"),
+                auc_annotation=translate("GeneralizedRegressionView", "AUC = {value} (in-sample)").format(
+                    value=number_format(data.auc) if data is not None else ""
+                ),
+                calibration_title=translate("GeneralizedRegressionView", "Calibration (in-sample)"),
+                probability_axis=translate("GeneralizedRegressionView", "Mean fitted event probability"),
+                event_fraction_axis=translate("GeneralizedRegressionView", "Observed event fraction"),
+                unavailable_diagnostics=unavailable,
+                effect_annotations=tuple(
+                    translate("GeneralizedRegressionView", "{effect} [{low}, {high}]").format(
+                        effect=number_format(term.effect),
+                        low=number_format(term.effect_ci_low),
+                        high=number_format(term.effect_ci_high),
+                    )
+                    for term in result.terms
+                    if term.kind is not TermKind.INTERCEPT
+                ),
+            )
+            captions = ()
+            accessible_name = f"{labels.odds_title}; {labels.roc_title}; {labels.calibration_title}"
+        case GeneralizedRegressionResult():
+            labels = CountChartLabels(
+                comparison_title=translate("GeneralizedRegressionView", "Observed versus fitted counts"),
+                fitted_axis=translate("GeneralizedRegressionView", "Fitted count"),
+                observed_axis=translate("GeneralizedRegressionView", "Observed count"),
+                residuals_title=translate("GeneralizedRegressionView", "Pearson residuals versus fitted counts"),
+                pearson_axis=translate("GeneralizedRegressionView", "Pearson residual"),
+            )
+            count_data = result.plot_data
+            captions = (
+                (
+                    translate(
+                        "GeneralizedRegressionView",
+                        "Charts show a deterministic sample of {shown} of {total} fitted rows.",
+                    ).format(shown=count_format(len(count_data.observed)), total=count_format(result.n_used)),
+                )
+                if count_data is not None and count_data.sampled
+                else ()
+            )
+            accessible_name = f"{labels.comparison_title}; {labels.residuals_title}"
+        case SurvivalResult():
+            labels = CoxChartLabels(
+                forest_title=translate("SurvivalRegressionView", "Hazard ratios with 95% intervals"),
+                forest_unavailable=translate(
+                    "SurvivalRegressionView",
+                    "Forest plot unavailable:\nall hazard ratios and intervals must be finite and positive.",
+                ),
+                hazard_axis=translate("SurvivalRegressionView", "Hazard ratio (log scale)"),
+                survival_title=translate("SurvivalRegressionView", "Overall Kaplan-Meier survival (unadjusted)"),
+                survival_unavailable=translate("SurvivalRegressionView", "No survival chart data are available."),
+                duration_axis=translate("SurvivalRegressionView", "Duration: {column}").format(column=result.duration),
+                survival_axis=translate("SurvivalRegressionView", "Survival probability"),
+                risk_title=translate("SurvivalRegressionView", "At risk immediately before time"),
+                tick_format=tick_format if tick_format is not None else number_format,
+                time_format=time_format if time_format is not None else number_format,
+                count_format=count_format,
+            )
+            captions = ()
+            accessible_name = f"{labels.forest_title}; {labels.survival_title}; {labels.risk_title}"
+        case _:
+            message = "A regression chart presentation requires a supported fitted model."
+            raise TypeError(message)
+
+    return RegressionChartLabels(
+        ChartPresentationMetadata(worksheet_heading="", accessible_name=accessible_name, captions=captions),
+        labels,
+    )
 
 
 # ----------------------------------------------------------------------
@@ -356,12 +499,14 @@ def render_regression_charts(
         raise ExcelChartCancelledError
     if progress_cb is not None:
         progress_cb(100)
+    metadata = labels.metadata
     return (
         ExcelChartImage(
-            labels.heading,
+            metadata.worksheet_heading,
             output.getvalue(),
             round(width * _EXPORT_DPI),
             round(height * _EXPORT_DPI),
-            labels.captions,
+            metadata.captions,
+            metadata.accessible_name,
         ),
     )

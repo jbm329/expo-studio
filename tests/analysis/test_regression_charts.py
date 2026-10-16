@@ -2,15 +2,23 @@ from __future__ import annotations
 
 import dataclasses
 import math
+from pathlib import Path
+from unittest.mock import patch
 
 import pytest
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from openpyxl import load_workbook
+from PyQt6.QtCore import QCoreApplication, QTranslator
 
+from expo_jbm329.gui.dialogs.analysis.regression_glm_view import GeneralizedRegressionView
+from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
+from expo_jbm329.gui.dialogs.analysis.survival_view import SurvivalRegressionView
+from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.regression import RegressionResult
 from expo_jbm329.services.analysis.regression_charts import (
     COUNT_POINT_SIZE,
     CoxChartLabels,
-    RegressionChartLabels,
     draw_actual_vs_predicted,
     draw_count_charts,
     draw_cox_charts,
@@ -28,9 +36,15 @@ from expo_jbm329.services.analysis.regression_export import (
     regression_export_tables,
 )
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
+from expo_jbm329.services.analysis.report import (
+    ReportDocument,
+    create_report_entry,
+    render_report_html,
+)
 from expo_jbm329.services.analysis.survival import SurvivalResult, survival_term_name
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError
 from expo_jbm329.services.file_writer import FileWriter
+from expo_jbm329.utils.dataset_ref import DatasetRef
 from tests.analysis.test_regression_export import (
     COUNT_LABELS,
     COX_LABELS,
@@ -43,9 +57,68 @@ from tests.analysis.test_regression_export import (
     logistic_snapshot,
     negative_binomial_snapshot,
     poisson_snapshot,
+    regression_chart_labels,
 )
 
 ALL_SNAPSHOTS = [linear_snapshot, logistic_snapshot, poisson_snapshot, negative_binomial_snapshot, cox_snapshot]
+
+
+@pytest.mark.parametrize("factory", ALL_SNAPSHOTS)
+@pytest.mark.parametrize("language", ["en", "sv"])
+def test_regression_views_and_exports_share_axes_and_hide_redundant_headings(factory, language, tmp_path) -> None:
+    translator = QTranslator()
+    locales = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales"
+    assert translator.load(str(locales / f"app_{language}.qm"))
+    assert QCoreApplication.installTranslator(translator)
+    result = factory().result
+    if isinstance(result, RegressionResult):
+        view = RegressionView(result)
+    elif isinstance(result, SurvivalResult):
+        view = SurvivalRegressionView(result)
+    else:
+        view = GeneralizedRegressionView(result)
+    try:
+        labels = view.chart_labels()
+        snapshot = RegressionExportSnapshot(result, labels)
+        app_axes = [
+            (axis.get_title(), axis.get_xlabel(), axis.get_ylabel())
+            for canvas in view.findChildren(FigureCanvasQTAgg)
+            for axis in canvas.figure.axes
+        ]
+        figure = Figure()
+        with patch("expo_jbm329.services.analysis.regression_charts.Figure", return_value=figure):
+            image = render_regression_charts(snapshot)[0]
+        assert sorted(app_axes) == sorted(
+            (axis.get_title(), axis.get_xlabel(), axis.get_ylabel()) for axis in figure.axes
+        )
+        assert image.heading == ""
+        assert image.accessible_name == labels.metadata.accessible_name
+        assert image.accessible_name
+        for streaming in (False, True):
+            path = tmp_path / f"diagnostics-{streaming}.xlsx"
+            FileWriter().save_excel_sheets(
+                {}, path, chart_images=(image,), chart_sheet_name="Charts", streaming=streaming
+            )
+            workbook = load_workbook(path)
+            try:
+                assert workbook["Charts"]["A1"].value is None
+                assert len(workbook["Charts"]._images) == 1
+            finally:
+                workbook.close()
+        document = ReportDocument()
+        document.upsert(
+            create_report_entry(
+                AnalysisCategory.REGRESSION,
+                DatasetRef("source", "Dataset", 100, 3),
+                snapshot,
+            ).with_selection(("charts",), "")
+        )
+        html = render_report_html(document)
+        assert "<figcaption>" not in html
+        assert 'alt=""' not in html
+    finally:
+        view.close()
+        QCoreApplication.removeTranslator(translator)
 
 
 # ----------------------------------------------------------------------
@@ -69,7 +142,8 @@ def test_render_is_one_deterministic_png_with_progress(factory, size):
     images = render_regression_charts(snapshot, progress_cb=progress.append)
     assert len(images) == 1
     image = images[0]
-    assert image.heading == snapshot.chart_labels.heading
+    assert image.heading == snapshot.chart_labels.metadata.worksheet_heading
+    assert image.accessible_name == snapshot.chart_labels.metadata.accessible_name
     assert image.image_data.startswith(b"\x89PNG")
     assert (image.width_px, image.height_px) == size
     assert progress == [100]
@@ -79,7 +153,7 @@ def test_render_is_one_deterministic_png_with_progress(factory, size):
 def test_render_keeps_captions_below_the_image():
     result = linear_result()
     snapshot = RegressionExportSnapshot(
-        result, RegressionChartLabels("Linear: y", LINEAR_LABELS, ("Sampled 2,000 of 9,000 rows",))
+        result, regression_chart_labels("Linear: y", LINEAR_LABELS, ("Sampled 2,000 of 9,000 rows",))
     )
     assert render_regression_charts(snapshot)[0].captions == ("Sampled 2,000 of 9,000 rows",)
 
@@ -92,7 +166,7 @@ def test_logistic_export_grows_with_predictor_count():
         snapshot.chart_labels.model,  # type: ignore[type-var]
         effect_annotations=tuple("effect" for _ in range(20)),
     )
-    grown = RegressionExportSnapshot(many_terms, RegressionChartLabels("h", labels))
+    grown = RegressionExportSnapshot(many_terms, regression_chart_labels("h", labels))
     image = render_regression_charts(grown)[0]
     assert image.height_px == round((5.0 + 20 * 0.24) * 120)
 
@@ -114,7 +188,7 @@ def test_cancellation_never_reports_completed_progress(cancel_at):
 
 def test_render_rejects_models_without_chart_data():
     snapshot = RegressionExportSnapshot(
-        dataclasses.replace(linear_result(), plot=None), RegressionChartLabels("h", LINEAR_LABELS)
+        dataclasses.replace(linear_result(), plot=None), regression_chart_labels("h", LINEAR_LABELS)
     )
     with pytest.raises(ValueError, match="no chart data"):
         render_regression_charts(snapshot)
@@ -258,7 +332,7 @@ def test_cox_charts_layout_has_three_panels():
 
 def test_cox_render_without_survival_data_still_exports():
     snapshot = RegressionExportSnapshot(
-        dataclasses.replace(cox_result(), plot_data=None), RegressionChartLabels("Cox", COX_LABELS)
+        dataclasses.replace(cox_result(), plot_data=None), regression_chart_labels("Cox", COX_LABELS)
     )
     assert isinstance(snapshot.result, SurvivalResult)
     assert render_regression_charts(snapshot)[0].image_data.startswith(b"\x89PNG")
@@ -285,7 +359,7 @@ def test_real_workbooks_keep_typed_tables_and_one_chart_sheet(tmp_path, factory,
     try:
         assert workbook.sheetnames == [*sheets, "Charts"]
         assert len(workbook["Charts"]._images) == 1
-        assert workbook["Charts"]["A1"].value == snapshot.chart_labels.heading
+        assert workbook["Charts"]["A1"].value == snapshot.chart_labels.metadata.worksheet_heading
         coefficients = workbook["coefficients"]
         assert [cell.value for cell in coefficients[1]] == list(frames[RegressionExportComponent.COEFFICIENTS].columns)
         assert isinstance(coefficients["B2"].value, float)

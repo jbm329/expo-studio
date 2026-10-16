@@ -415,21 +415,21 @@ def test_narrow_and_large_finite_counts_render_without_warnings(fitted):
 
 
 @pytest.mark.parametrize(
-    ("model", "heading", "title"),
+    ("model", "title"),
     [
-        (RegressionModel.LOGISTIC, "Logistic diagnostics", "Regression — Logistic regression"),
-        (RegressionModel.POISSON, "Count-model diagnostics", "Regression — Poisson regression"),
+        (RegressionModel.LOGISTIC, "Regression — Logistic regression"),
+        (RegressionModel.POISSON, "Regression — Poisson regression"),
         (
             RegressionModel.NEGATIVE_BINOMIAL,
-            "Count-model diagnostics",
             "Regression — Negative binomial regression",
         ),
     ],
 )
-def test_chart_labels_and_applied_view_use_shared_model_presentation(model, heading, title):
+def test_chart_labels_and_applied_view_use_shared_model_presentation(model, title):
     labels = GeneralizedRegressionView(_result(model)).chart_labels()
-    assert labels.heading == heading
-    assert labels.captions == ()
+    assert labels.metadata.worksheet_heading == ""
+    assert labels.metadata.accessible_name
+    assert labels.metadata.captions == ()
     text = _text(GeneralizedRegressionView(_result(model)))
     assert title in text
     assert "Outcome:" in text
@@ -441,7 +441,7 @@ def test_sampled_count_chart_labels_carry_the_sampling_caption(model):
     result = _result(model)
     assert result.plot_data is not None
     result = dataclasses.replace(result, n_used=6000, plot_data=dataclasses.replace(result.plot_data, sampled=True))
-    captions = GeneralizedRegressionView(result).chart_labels().captions
+    captions = GeneralizedRegressionView(result).chart_labels().metadata.captions
     assert len(captions) == 1
     assert "sample of 120 of 6" in captions[0]
 

@@ -91,6 +91,14 @@ HTML image names remain available. Numeric chart formatting and translations
 are captured before background rendering. The app retains its pair statistics
 panel and asynchronous pair selection.
 
+Regression also captures its chart presentation through one Qt-free builder for
+linear, logistic, Poisson, negative-binomial and Cox models. Views and exported
+images share diagnostic titles, axis labels, annotations and sampling notes.
+Excel and HTML omit redundant outer chart headings while retaining explanatory
+captions and accessible image names. Keep model-specific axis meanings (such as
+residuals, fitted counts and hazard ratios), rather than replacing every axis
+with a source-column name.
+
 Export is available for successfully applied results. Excel workbooks can
 combine selected tables and available charts; CSV and binary exports contain
 one selected table. Charts are available in Excel only. Exports contain the

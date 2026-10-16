@@ -43,6 +43,7 @@ from expo_jbm329.services.analysis.regression import (
 from expo_jbm329.services.analysis.regression_charts import (
     LinearChartLabels,
     RegressionChartLabels,
+    build_regression_chart_labels,
     draw_actual_vs_predicted,
     draw_normal_qq,
     draw_residuals_vs_fitted,
@@ -58,7 +59,6 @@ if TYPE_CHECKING:
 
     from expo_jbm329.services.analysis.regression import (
         RegressionDiagnostics,
-        RegressionPlotData,
         RegressionResult,
         RegressionTerm,
         RegressionWarning,
@@ -123,6 +123,12 @@ class RegressionView(QWidget):
         super().__init__(parent)
 
         self._result = result
+        self._chart_labels = build_regression_chart_labels(
+            result,
+            QCoreApplication.translate,
+            number_format=fmt_num,
+            count_format=fmt_int,
+        )
         self._table: QTableWidget | None = None
         self._summary_label: QLabel | None = None
 
@@ -167,17 +173,7 @@ class RegressionView(QWidget):
 
     def chart_labels(self) -> RegressionChartLabels:
         """Return the translated chart text shared by the displayed and exported charts."""
-        result = self._result
-        plot = result.plot
-        return RegressionChartLabels(
-            heading=regression_component_label(
-                RegressionModel.LINEAR,
-                RegressionExportComponent.CHARTS,
-                QCoreApplication.translate,
-            ),
-            model=self._linear_chart_labels(result),
-            captions=(self._sampling_caption(result, plot),) if plot is not None and plot.sampled else (),
-        )
+        return self._chart_labels
 
     def export_notes(self) -> tuple[str, ...]:
         """Return the displayed model comments and reference levels as plain-text lines."""
@@ -521,7 +517,10 @@ class RegressionView(QWidget):
         if plot is None:
             return panel
 
-        labels = self._linear_chart_labels(result)
+        labels = self._chart_labels.model
+        if not isinstance(labels, LinearChartLabels):
+            message = "Linear regression view received chart labels for another model."
+            raise TypeError(message)
         splitter = QSplitter(Qt.Orientation.Horizontal, panel)
         splitter.setChildrenCollapsible(False)
         splitter.addWidget(self._build_canvas(lambda ax: draw_residuals_vs_fitted(ax, plot, labels)))
@@ -531,31 +530,11 @@ class RegressionView(QWidget):
         layout.addWidget(build_section_scroll_area(splitter, panel), 1)
 
         if plot.sampled:
-            caption = QLabel(self._sampling_caption(result, plot), panel)
+            caption = QLabel("\n".join(self._chart_labels.metadata.captions), panel)
             caption.setWordWrap(True)
             layout.addWidget(caption)
 
         return panel
-
-    def _sampling_caption(self, result: RegressionResult, plot: RegressionPlotData) -> str:
-        """Return the translated note explaining that the plots show sampled rows."""
-        return self.tr("Plots show a random sample of {shown} of {total} rows. Statistics use all rows.").format(
-            shown=fmt_int(len(plot.actual)), total=fmt_int(result.n_used)
-        )
-
-    def _linear_chart_labels(self, result: RegressionResult) -> LinearChartLabels:
-        """Return the translated titles and axis labels of the three diagnostic plots."""
-        return LinearChartLabels(
-            residuals_title=self.tr("Residuals vs fitted"),
-            fitted_axis=self.tr("Fitted value"),
-            residual_axis=self.tr("Residual"),
-            actual_title=self.tr("Actual vs predicted"),
-            predicted_axis=self.tr("Predicted {target}").format(target=result.target),
-            actual_axis=self.tr("Actual {target}").format(target=result.target),
-            qq_title=self.tr("Normal Q-Q plot of residuals"),
-            theoretical_axis=self.tr("Theoretical quantile"),
-            standardized_axis=self.tr("Standardized residual"),
-        )
 
     @staticmethod
     def _build_section_title(text: str, parent: QWidget) -> QLabel:

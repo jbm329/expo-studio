@@ -39,7 +39,6 @@ from expo_jbm329.services.analysis.outliers_export import (
 from expo_jbm329.services.analysis.overview import OverviewExportFormat, OverviewExportTable, analyze_dataset_overview
 from expo_jbm329.services.analysis.pca_export import PCA_COMPONENTS, PCAExportComponent, PCAExportRequest
 from expo_jbm329.services.analysis.presentation import build_analysis_presentation
-from expo_jbm329.services.analysis.regression_charts import RegressionChartLabels
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
     RegressionExportRequest,
@@ -69,6 +68,7 @@ from tests.analysis.test_regression_export import (
     logistic_snapshot,
     negative_binomial_snapshot,
     poisson_snapshot,
+    regression_chart_labels,
 )
 from tests.analysis.test_timeseries_export import IRREGULAR_NOTE, irregular_snapshot, time_series_snapshot
 
@@ -514,7 +514,9 @@ def test_regression_dialog_limits_single_file_formats_to_one_table_and_keeps_cho
 
 
 def test_regression_charts_are_disabled_when_the_model_drew_none():
-    snapshot = RegressionExportSnapshot(replace(linear_result(), plot=None), RegressionChartLabels("h", LINEAR_LABELS))
+    snapshot = RegressionExportSnapshot(
+        replace(linear_result(), plot=None), regression_chart_labels("h", LINEAR_LABELS)
+    )
     dialog = AnalysisExportDialog(regression=snapshot)
     choices = dialog.findChildren(QCheckBox)
     assert not choices[2].isEnabled()

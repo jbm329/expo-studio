@@ -268,8 +268,9 @@ def test_tied_event_and_censor_marks_draw_at_post_event_survival():
 
 def test_chart_labels_name_duration_and_event_with_locale_formatters():
     labels = SurvivalRegressionView(_result()).chart_labels()
-    assert labels.heading == "Survival charts"
-    assert labels.captions == ()
+    assert labels.metadata.worksheet_heading == ""
+    assert labels.metadata.accessible_name
+    assert labels.metadata.captions == ()
     assert labels.model.tick_format(1.234) == fmt_num(1.234, sig=2)
     assert labels.model.time_format(1.234) == fmt_num(1.234, sig=3)
     assert labels.model.count_format(1234) == fmt_int(1234)

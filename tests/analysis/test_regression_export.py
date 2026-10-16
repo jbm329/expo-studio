@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
 from expo_jbm329.services.analysis.logistic_charts import LogisticChartLabels
 from expo_jbm329.services.analysis.regression import (
     SIGNIFICANCE_LEVEL,
@@ -126,17 +127,17 @@ def cox_result() -> SurvivalResult:
 
 
 def linear_snapshot(notes: tuple[str, ...] = ("Linear regression", "Target: y")) -> RegressionExportSnapshot:
-    return RegressionExportSnapshot(linear_result(), RegressionChartLabels("Linear: y", LINEAR_LABELS), notes)
+    return RegressionExportSnapshot(linear_result(), regression_chart_labels("Linear: y", LINEAR_LABELS), notes)
 
 
 def generalized_snapshot(model: RegressionModel) -> RegressionExportSnapshot:
     result = generalized_result(model)
     labels = logistic_labels(result) if model is RegressionModel.LOGISTIC else COUNT_LABELS
-    return RegressionExportSnapshot(result, RegressionChartLabels(f"{model.value}: target", labels), ("Comment",))
+    return RegressionExportSnapshot(result, regression_chart_labels(f"{model.value}: target", labels), ("Comment",))
 
 
 def cox_snapshot() -> RegressionExportSnapshot:
-    return RegressionExportSnapshot(cox_result(), RegressionChartLabels("Cox", COX_LABELS), ("Cox comment",))
+    return RegressionExportSnapshot(cox_result(), regression_chart_labels("Cox", COX_LABELS), ("Cox comment",))
 
 
 def logistic_snapshot() -> RegressionExportSnapshot:
@@ -152,6 +153,15 @@ def negative_binomial_snapshot() -> RegressionExportSnapshot:
 
 
 ALL_SNAPSHOTS = [linear_snapshot, logistic_snapshot, poisson_snapshot, negative_binomial_snapshot, cox_snapshot]
+
+
+def regression_chart_labels(
+    heading: str,
+    model: LinearChartLabels | CountChartLabels | CoxChartLabels | LogisticChartLabels,
+    captions: tuple[str, ...] = (),
+) -> RegressionChartLabels:
+    """Build chart metadata for isolated export tests."""
+    return RegressionChartLabels(ChartPresentationMetadata(heading, "Regression diagnostics", captions), model)
 
 
 # ----------------------------------------------------------------------
@@ -186,26 +196,26 @@ def test_snapshot_exposes_outcome_and_predictor_columns():
 
 def test_snapshot_rejects_untyped_results():
     with pytest.raises(TypeError, match="typed regression result"):
-        RegressionExportSnapshot(object(), RegressionChartLabels("h", LINEAR_LABELS))  # type: ignore[arg-type]
+        RegressionExportSnapshot(object(), regression_chart_labels("h", LINEAR_LABELS))  # type: ignore[arg-type]
 
 
 def test_snapshot_rejects_failed_results():
     failed = dataclasses.replace(linear_result(), error=RegressionError.CONSTANT_TARGET)
     with pytest.raises(ValueError, match="failed regression"):
-        RegressionExportSnapshot(failed, RegressionChartLabels("h", LINEAR_LABELS))
+        RegressionExportSnapshot(failed, regression_chart_labels("h", LINEAR_LABELS))
 
 
 def test_snapshot_rejects_results_without_terms():
     empty = dataclasses.replace(linear_result(), terms=())
     with pytest.raises(ValueError, match="model terms"):
-        RegressionExportSnapshot(empty, RegressionChartLabels("h", LINEAR_LABELS))
+        RegressionExportSnapshot(empty, regression_chart_labels("h", LINEAR_LABELS))
 
 
 @pytest.mark.parametrize("model", [RegressionModel.LINEAR, RegressionModel.COX])
 def test_snapshot_rejects_generalized_results_claiming_other_models(model):
     result = dataclasses.replace(generalized_result(RegressionModel.POISSON), model=model)
     with pytest.raises(ValueError, match="Generalized results"):
-        RegressionExportSnapshot(result, RegressionChartLabels("h", COUNT_LABELS))
+        RegressionExportSnapshot(result, regression_chart_labels("h", COUNT_LABELS))
 
 
 @pytest.mark.parametrize(
@@ -218,25 +228,25 @@ def test_snapshot_rejects_generalized_results_claiming_other_models(model):
 )
 def test_snapshot_rejects_chart_labels_for_another_model(result_factory, labels):
     with pytest.raises(TypeError, match="Chart labels"):
-        RegressionExportSnapshot(result_factory(), RegressionChartLabels("h", labels))
+        RegressionExportSnapshot(result_factory(), regression_chart_labels("h", labels))
 
 
 def test_charts_are_unavailable_without_displayed_chart_data():
     linear = RegressionExportSnapshot(
-        dataclasses.replace(linear_result(), plot=None), RegressionChartLabels("h", LINEAR_LABELS)
+        dataclasses.replace(linear_result(), plot=None), regression_chart_labels("h", LINEAR_LABELS)
     )
     count = RegressionExportSnapshot(
         dataclasses.replace(generalized_result(RegressionModel.POISSON), plot_data=None),
-        RegressionChartLabels("h", COUNT_LABELS),
+        regression_chart_labels("h", COUNT_LABELS),
     )
     assert not linear.has_charts
     assert not count.has_charts
     logistic = generalized_result(RegressionModel.LOGISTIC)
     # Logistic odds ratios are drawn even when ROC/calibration data are unavailable.
     no_diagnostics = dataclasses.replace(logistic, logistic_plot_data=None)
-    assert RegressionExportSnapshot(no_diagnostics, RegressionChartLabels("h", logistic_labels(logistic))).has_charts
+    assert RegressionExportSnapshot(no_diagnostics, regression_chart_labels("h", logistic_labels(logistic))).has_charts
     assert RegressionExportSnapshot(
-        dataclasses.replace(cox_result(), plot_data=None), RegressionChartLabels("h", COX_LABELS)
+        dataclasses.replace(cox_result(), plot_data=None), regression_chart_labels("h", COX_LABELS)
     ).has_charts
 
 
@@ -294,7 +304,7 @@ def test_request_rejects_unknown_components_and_formats():
 
 def test_request_rejects_charts_for_a_model_without_chart_data():
     snapshot = RegressionExportSnapshot(
-        dataclasses.replace(linear_result(), plot=None), RegressionChartLabels("h", LINEAR_LABELS)
+        dataclasses.replace(linear_result(), plot=None), regression_chart_labels("h", LINEAR_LABELS)
     )
     with pytest.raises(ValueError, match="no charts"):
         RegressionExportRequest(snapshot, (RegressionExportComponent.CHARTS,), StatisticsExportFormat.EXCEL)
@@ -384,7 +394,7 @@ def test_undefined_p_values_have_missing_significance():
     result = linear_result()
     first = dataclasses.replace(result.terms[0], p_value=math.nan)
     snapshot = RegressionExportSnapshot(
-        dataclasses.replace(result, terms=(first, *result.terms[1:])), RegressionChartLabels("h", LINEAR_LABELS)
+        dataclasses.replace(result, terms=(first, *result.terms[1:])), regression_chart_labels("h", LINEAR_LABELS)
     )
     frame = regression_coefficients_table(snapshot)
     assert frame["significant"].isna().tolist()[0]
@@ -436,7 +446,7 @@ def test_linear_metrics_cover_fit_and_diagnostics():
 
 def test_linear_metrics_omit_diagnostics_when_unavailable():
     snapshot = RegressionExportSnapshot(
-        dataclasses.replace(linear_result(), diagnostics=None), RegressionChartLabels("h", LINEAR_LABELS)
+        dataclasses.replace(linear_result(), diagnostics=None), regression_chart_labels("h", LINEAR_LABELS)
     )
     assert "durbin_watson" not in _metrics(snapshot)
 
@@ -452,7 +462,7 @@ def test_logistic_metrics_include_in_sample_auc():
     assert "dispersion_ratio" not in metrics
     without_auc = RegressionExportSnapshot(
         dataclasses.replace(result, logistic_plot_data=None),
-        RegressionChartLabels("h", logistic_labels(result)),
+        regression_chart_labels("h", logistic_labels(result)),
     )
     assert "auc" not in _metrics(without_auc)
 
@@ -471,7 +481,7 @@ def test_count_metrics_include_dispersion_and_negative_binomial_alpha():
 @pytest.mark.parametrize("error", [CountPlotError.INVALID_PREDICTIONS, CountPlotError.INVALID_RESIDUALS])
 def test_count_metrics_omit_dispersion_when_displayed_as_unavailable(error):
     result = dataclasses.replace(generalized_result(RegressionModel.POISSON), plot_data=None, plot_error=error)
-    snapshot = RegressionExportSnapshot(result, RegressionChartLabels("h", COUNT_LABELS))
+    snapshot = RegressionExportSnapshot(result, regression_chart_labels("h", COUNT_LABELS))
     assert "dispersion_ratio" not in _metrics(snapshot)
 
 

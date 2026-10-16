@@ -2625,7 +2625,9 @@ def render_prepared_report_html(
                     ),
                 ])
                 if component.show_chart_captions and (chart.heading or chart.captions):
-                    parts.append(f"<figcaption><strong{heading_class}>{_html_escape(chart.heading)}</strong>")
+                    parts.append("<figcaption>")
+                    if chart.heading:
+                        parts.append(f"<strong{heading_class}>{_html_escape(chart.heading)}</strong>")
                     parts.extend(f"<p>{_html_escape(caption)}</p>" for caption in chart.captions)
                     parts.append("</figcaption>")
                 parts.append("</figure>")

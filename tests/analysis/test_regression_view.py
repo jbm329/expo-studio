@@ -390,13 +390,14 @@ def test_missing_plot_data_draws_no_plots():
 
 def test_chart_labels_use_the_shared_component_name_and_explain_sampling_only_when_sampled():
     labels = RegressionView(_fitted()).chart_labels()
-    assert labels.heading == "Linear diagnostics"
+    assert labels.metadata.worksheet_heading == ""
+    assert labels.metadata.accessible_name
     assert labels.model.predicted_axis == "Predicted <y>"
-    assert labels.captions == ()
+    assert labels.metadata.captions == ()
     df = _frame(size=PLOT_SAMPLE_SIZE + 100)
     sampled = RegressionView(analyze_regression(df, "<y>", ["x"])).chart_labels()
-    assert len(sampled.captions) == 1
-    assert "random sample" in sampled.captions[0]
+    assert len(sampled.metadata.captions) == 1
+    assert "random sample" in sampled.metadata.captions[0]
 
 
 def test_export_notes_are_plain_text_comments_and_reference_levels():

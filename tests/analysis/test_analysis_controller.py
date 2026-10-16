@@ -4636,7 +4636,7 @@ def test_regression_excel_export_routes_localized_sheets_and_worker_charts(monke
     progress: list[int] = []
     images = kwargs["chart_factory"](progress.append, lambda: False)
     assert len(images) == 1
-    assert images[0].heading == snapshot.chart_labels.heading
+    assert images[0].heading == snapshot.chart_labels.metadata.worksheet_heading
     assert progress == [100]
     assert controller._results.mock_calls == []  # noqa: SLF001
 
