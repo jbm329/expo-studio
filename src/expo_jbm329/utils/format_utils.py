@@ -13,8 +13,20 @@ import numpy as np
 import pandas as pd
 from PyQt6.QtCore import QLocale
 
+from expo_jbm329.services.analysis.chart_presentation import ChartNumericLocale
+
 BYTES_PER_KIB = 1024
 MIN_GROUPED_INT_ABS = 1000
+
+
+def capture_chart_numeric_locale() -> ChartNumericLocale:
+    """Capture the app's chart number formatting before dispatching a worker."""
+    locale = QLocale.system()
+    return ChartNumericLocale(
+        decimal_separator=locale.decimalPoint(),
+        group_separator=locale.groupSeparator() or ",",
+        group_integers=locale.toString(1000) != "1000",
+    )
 
 
 # ---------------------------------------------------------------------

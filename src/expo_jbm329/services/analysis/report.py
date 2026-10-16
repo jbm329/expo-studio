@@ -17,6 +17,7 @@ import pandas as pd
 
 from expo_jbm329.app.metadata import get_app_metadata
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
+from expo_jbm329.services.analysis.chart_presentation import DEFAULT_CHART_NUMERIC_LOCALE, ChartNumericLocale
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.clustering_charts import render_clustering_charts
 from expo_jbm329.services.analysis.clustering_export import (
@@ -26,8 +27,8 @@ from expo_jbm329.services.analysis.clustering_export import (
     ClusteringMetric,
     clustering_export_tables,
 )
-from expo_jbm329.services.analysis.correlation import MIN_OBSERVATIONS, SIGNIFICANCE_LEVEL, CorrelationMethod
-from expo_jbm329.services.analysis.correlation_charts import CorrelationChartLabels, render_correlation_charts
+from expo_jbm329.services.analysis.correlation import SIGNIFICANCE_LEVEL, CorrelationMethod
+from expo_jbm329.services.analysis.correlation_charts import build_correlation_chart_labels, render_correlation_charts
 from expo_jbm329.services.analysis.correlation_export import (
     CorrelationExportComponent,
     CorrelationExportSnapshot,
@@ -107,7 +108,7 @@ from expo_jbm329.services.analysis.timeseries_export import (
     time_series_export_tables,
 )
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
-from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_pct
+from expo_jbm329.utils.format_utils import capture_chart_numeric_locale, fmt_int, fmt_num, fmt_pct
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sequence
@@ -708,6 +709,7 @@ class ReportRenderOptions:
     translated_labels: tuple[tuple[str, str, str], ...]
     number_format: Callable[[float], str] = fmt_num
     count_format: Callable[[int], str] = fmt_int
+    correlation_numeric_locale: ChartNumericLocale = DEFAULT_CHART_NUMERIC_LOCALE
 
     def translate(self, context: str, text: str) -> str:
         """Return the captured translation for a context/source string pair."""
@@ -1066,7 +1068,7 @@ def capture_report_labels(
         for context, sources in _REPORT_LABEL_SOURCES.items()
         for source in dict.fromkeys(sources)
     )
-    return ReportRenderOptions(captured, number_format, count_format)
+    return ReportRenderOptions(captured, number_format, count_format, capture_chart_numeric_locale())
 
 
 def localized_report_tables(
@@ -1870,10 +1872,11 @@ def prepare_report_content(
                 entry.snapshot,
                 chart_keys,
                 translate=translate,
-                number_format=number_format,
-                count_format=count_format,
                 progress_cb=report_progress,
                 cancel_cb=cancel_cb,
+                correlation_numeric_locale=(
+                    labels.correlation_numeric_locale if labels is not None else DEFAULT_CHART_NUMERIC_LOCALE
+                ),
             )
             if chart_keys
             else {}
@@ -2350,10 +2353,9 @@ def _render_entry_charts(
     component_keys: tuple[str, ...],
     *,
     translate: Callable[[str, str], str],
-    number_format: Callable[[float], str],
-    count_format: Callable[[int], str],
     progress_cb: Callable[[int], None] | None,
     cancel_cb: Callable[[], bool] | None,
+    correlation_numeric_locale: ChartNumericLocale = DEFAULT_CHART_NUMERIC_LOCALE,
 ) -> dict[str, tuple[ExcelChartImage, ...]]:
     """Render only selected chart components and associate their PNGs by key."""
     if not component_keys:
@@ -2375,33 +2377,7 @@ def _render_entry_charts(
             }[key]
             for key in component_keys
         )
-        annotations = tuple(tuple(number_format(value) for value in row) for row in snapshot.matrix.coefficients)
-        correlation_labels = CorrelationChartLabels(
-            translate_presentation_label(PresentationLabel.CORRELATION_MATRIX, translate),
-            translate_presentation_label(PresentationLabel.SCATTERPLOT_TITLE, translate),
-            translate("AnalysisExportDialog", "Least-squares line: y = ({slope}) x + ({intercept})"),
-            translate(
-                "CorrelationView",
-                "The line is a linear fit shown for reference. {method} measures monotonic, "
-                "not necessarily linear, association.",
-            ).format(method=correlation_method_label(snapshot.matrix.method, translate)),
-            translate(
-                "CorrelationView",
-                "Showing a random sample of {shown} of {total} points. Statistics use all points.",
-            ),
-            translate(
-                "CorrelationView",
-                "Fewer than {minimum} rows have values in both columns, so no correlation can be computed.",
-            ).format(minimum=count_format(MIN_OBSERVATIONS)),
-            translate(
-                "CorrelationView",
-                "At least one of the columns is constant over the rows with values in both, "
-                "so no correlation can be computed.",
-            ),
-            number_format,
-            count_format,
-            annotations,
-        )
+        correlation_labels = build_correlation_chart_labels(snapshot.matrix, translate, correlation_numeric_locale)
         images = render_correlation_charts(
             snapshot,
             chart_keys,
@@ -2414,7 +2390,7 @@ def _render_entry_charts(
         matrix_selected = "matrix_plot" in component_keys
         scatter_key = "scatterplots"
         for image in images:
-            if matrix_selected and image.heading == matrix_heading:
+            if matrix_selected and (image.accessible_name or image.heading) == matrix_heading:
                 output["matrix_plot"].append(image)
             elif scatter_key in output:
                 output[scatter_key].append(image)

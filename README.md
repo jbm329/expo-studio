@@ -83,6 +83,14 @@ output-independent accessibility/caption metadata before background rendering;
 use the same drawing path in the live view and exports, and keep only sizing or
 layout decisions specific to an output in its renderer.
 
+Correlation uses the same shared-presentation ownership: matrix titles and
+annotations, actual column-name ticks and scatter axes, pair titles and useful
+fitted-line, sampling and rank-method notes agree in the app, Excel and HTML.
+Exports do not repeat plotted matrix or pair titles below the image; accessible
+HTML image names remain available. Numeric chart formatting and translations
+are captured before background rendering. The app retains its pair statistics
+panel and asynchronous pair selection.
+
 Export is available for successfully applied results. Excel workbooks can
 combine selected tables and available charts; CSV and binary exports contain
 one selected table. Charts are available in Excel only. Exports contain the

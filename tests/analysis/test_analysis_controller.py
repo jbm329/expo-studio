@@ -2394,7 +2394,8 @@ def test_correlation_excel_routes_independent_and_mixed_charts_from_owned_snapsh
         if CorrelationExportComponent.SCATTERPLOTS in components
         else []
     )
-    assert [image.heading for image in images] == expected_headings
+    assert [image.accessible_name for image in images] == expected_headings
+    assert all(image.heading == "" for image in images)
     assert progress[-1] == 100
     assert all(image.image_data.startswith(b"\x89PNG") for image in images)
     assert controller._results.mock_calls == []

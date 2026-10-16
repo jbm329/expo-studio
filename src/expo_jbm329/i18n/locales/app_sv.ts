@@ -2974,7 +2974,7 @@ Vänligen se loggfil för mer information.</translation>
     <message>
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="519" />
         <source>Least-squares line: slope {slope}, intercept {intercept}</source>
-        <translation>Minsta kvadrat-linje: lutning {slope}, intercept {intercept}</translation>
+        <translation type="vanished">Minsta kvadrat-linje: lutning {slope}, intercept {intercept}</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1211" />

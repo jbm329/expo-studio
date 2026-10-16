@@ -45,7 +45,6 @@ from expo_jbm329.services.analysis.clustering_export import (
 )
 from expo_jbm329.services.analysis.correlation import (
     MAX_SELECTED_COLUMNS,
-    MIN_OBSERVATIONS,
     MIN_SELECTED_COLUMNS,
     CorrelationMethod,
     analyze_correlation_matrix,
@@ -53,7 +52,7 @@ from expo_jbm329.services.analysis.correlation import (
     default_pair,
     initialize_correlation,
 )
-from expo_jbm329.services.analysis.correlation_charts import CorrelationChartLabels, render_correlation_charts
+from expo_jbm329.services.analysis.correlation_charts import build_correlation_chart_labels, render_correlation_charts
 from expo_jbm329.services.analysis.correlation_export import (
     CorrelationExportComponent,
     CorrelationExportRequest,
@@ -116,7 +115,6 @@ from expo_jbm329.services.analysis.presentation import (
     PresentationLabel,
     build_analysis_presentation,
     clustering_component_label,
-    correlation_method_label,
     hypothesis_component_label,
     outlier_component_label,
     pca_component_label,
@@ -171,7 +169,7 @@ from expo_jbm329.services.analysis.timeseries_export import (
     TimeSeriesExportSnapshot,
 )
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError
-from expo_jbm329.utils.format_utils import fmt_int, fmt_num
+from expo_jbm329.utils.format_utils import capture_chart_numeric_locale, fmt_int, fmt_num
 from expo_jbm329.utils.i18n_utils import tr as translate
 
 if TYPE_CHECKING:
@@ -300,6 +298,14 @@ _SHARED_PRESENTATION_TRANSLATIONS = (
     QT_TRANSLATE_NOOP("CorrelationView", "Spearman"),
     QT_TRANSLATE_NOOP("CorrelationView", "Kendall's tau-b"),
     QT_TRANSLATE_NOOP("CorrelationView", "{x} vs {y}"),
+    QT_TRANSLATE_NOOP(
+        "CorrelationView",
+        "The line is a linear fit shown for reference. {method} measures monotonic, "
+        "not necessarily linear, association.",
+    ),
+    QT_TRANSLATE_NOOP(
+        "CorrelationView", "Showing a random sample of {shown} of {total} points. Statistics use all points."
+    ),
     QT_TRANSLATE_NOOP("RegressionPresentation", "Regression"),
     QT_TRANSLATE_NOOP("RegressionPresentation", "{category} — {model}"),
     QT_TRANSLATE_NOOP("RegressionPresentation", "Linear regression"),
@@ -1191,32 +1197,7 @@ class AnalysisController:
             for component in request.components
             if component is not CorrelationExportComponent.STRONGEST_CORRELATIONS
         )
-        method_name = correlation_method_label(snapshot.matrix.method, translate)
-        labels = CorrelationChartLabels(
-            matrix_title=translate_presentation_label(PresentationLabel.CORRELATION_MATRIX, translate),
-            scatter_heading=translate_presentation_label(PresentationLabel.SCATTERPLOT_TITLE, translate),
-            line_equation=translate("AnalysisExportDialog", "Least-squares line: y = ({slope}) x + ({intercept})"),
-            descriptive_line=translate(
-                "CorrelationView",
-                "The line is a linear fit shown for reference. {method} measures monotonic, "
-                "not necessarily linear, association.",
-            ).format(method=method_name),
-            sampling=translate(
-                "CorrelationView", "Showing a random sample of {shown} of {total} points. Statistics use all points."
-            ),
-            insufficient_observations=translate(
-                "CorrelationView",
-                "Fewer than {minimum} rows have values in both columns, so no correlation can be computed.",
-            ).format(minimum=fmt_int(MIN_OBSERVATIONS)),
-            constant_input=translate(
-                "CorrelationView",
-                "At least one of the columns is constant over the rows with values in both, "
-                "so no correlation can be computed.",
-            ),
-            number_format=fmt_num,
-            count_format=fmt_int,
-            matrix_annotations=CorrelationView.chart_annotations(snapshot.matrix),
-        )
+        labels = build_correlation_chart_labels(snapshot.matrix, translate, capture_chart_numeric_locale())
 
         def make_images(
             progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None

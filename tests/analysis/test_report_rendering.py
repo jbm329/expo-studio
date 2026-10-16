@@ -1499,6 +1499,30 @@ def test_correlation_renderer_cannot_return_an_unselected_chart(monkeypatch) -> 
         prepare_report_content(document)
 
 
+def test_real_correlation_html_keeps_unavailable_pair_notes_without_repeating_chart_names():
+    snapshot = correlation_snapshot()
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.CORRELATION, snapshot, ("matrix_plot", "scatterplots")))
+    prepared = prepare_report_content(document)
+    matrix, scatters = prepared.entries[0].components
+    assert matrix.charts[0].heading == ""
+    assert matrix.charts[0].accessible_name == "Correlation matrix"
+    assert matrix.charts[0].captions == ()
+    assert len(scatters.charts) == 6
+    assert all(chart.heading == "" and chart.accessible_name for chart in scatters.charts)
+    constant = next(chart for chart in scatters.charts if chart.accessible_name == "Original X vs No variation")
+    sparse = next(chart for chart in scatters.charts if chart.accessible_name == "Original X vs Too sparse")
+    assert "constant" in constant.captions[0]
+    assert "Fewer than 3 rows" in sparse.captions[0]
+    html = render_prepared_report_html(prepared)
+    assert 'alt="Correlation matrix"' in html
+    assert "<h3>Correlation matrix</h3>" in html
+    assert html.count("<figcaption>") == 6
+    for chart in scatters.charts:
+        assert f"<figcaption>{chart.accessible_name}" not in html
+        assert chart.captions[0] in html
+
+
 def test_cancelled_report_preparation_raises_compatible_exception(monkeypatch) -> None:
     document = ReportDocument()
     document.upsert(_entry(AnalysisCategory.PCA, pca_snapshot(), ("charts",)))
@@ -1605,8 +1629,6 @@ def test_chart_preparation_returns_empty_for_no_chart_components() -> None:
             linear_snapshot(),
             (),
             translate=lambda _context, text: text,
-            number_format=lambda value: str(value),
-            count_format=str,
             progress_cb=None,
             cancel_cb=None,
         )
@@ -1621,8 +1643,6 @@ def test_chart_preparation_rejects_category_snapshot_mismatch() -> None:
             linear_snapshot(),
             ("charts",),
             translate=lambda _context, text: text,
-            number_format=lambda value: str(value),
-            count_format=str,
             progress_cb=None,
             cancel_cb=None,
         )

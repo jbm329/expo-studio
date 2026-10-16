@@ -1,21 +1,35 @@
 from __future__ import annotations
 
+from html import escape
 from pathlib import Path
 from typing import TYPE_CHECKING
 from xml.etree import ElementTree
 
+import numpy as np
 import pandas as pd
 import pytest
 from PyQt6.QtCore import QCoreApplication, QTranslator
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QLabel, QPushButton, QTabWidget, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+from expo_jbm329.gui.dialogs.analysis.correlation_view import CorrelationView
 from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
 from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDialog
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.chi_square import initialize_chi_square
+from expo_jbm329.services.analysis.correlation import (
+    SCATTER_SAMPLE_SIZE,
+    CorrelationMethod,
+    analyze_correlation_matrix,
+    analyze_correlation_pair,
+)
+from expo_jbm329.services.analysis.correlation_charts import (
+    build_correlation_chart_labels,
+    build_correlation_pair_presentation,
+)
+from expo_jbm329.services.analysis.correlation_export import CorrelationExportSnapshot
 from expo_jbm329.services.analysis.group_comparison import initialize_group_comparison
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.paired_comparison import initialize_paired_comparison
@@ -30,6 +44,7 @@ from expo_jbm329.services.analysis.report import (
 from expo_jbm329.services.analysis.statistics import StatisticsExportFormat, analyze_descriptive_statistics
 from expo_jbm329.services.analysis.statistics_charts import build_statistics_chart_presentation
 from expo_jbm329.utils.dataset_ref import DatasetRef
+from expo_jbm329.utils.format_utils import capture_chart_numeric_locale
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
 
 if TYPE_CHECKING:
@@ -216,3 +231,58 @@ def test_recent_analysis_labels_translate_in_views_dialogs_and_captured_reports(
     assert f'<th scope="col">{count_header}</th>' in html
     assert 'alt="value"' in html
     assert "<figcaption>" not in html
+
+
+@pytest.mark.parametrize("language", ["en", "sv"])
+@pytest.mark.parametrize("method", list(CorrelationMethod))
+def test_correlation_compiled_chart_labels_captions_and_accessibility_survive_capture(language, method):
+    translator = QTranslator()
+    assert translator.load(str(LOCALES / f"app_{language}.qm"))
+    assert QCoreApplication.installTranslator(translator)
+    x = np.arange(SCATTER_SAMPLE_SIZE + 1, dtype=float)
+    frame = pd.DataFrame({"x <one>": x, "y & two": x * 1.23456 + 0.56789})
+    matrix = analyze_correlation_matrix(frame, tuple(frame.columns), method)
+    assert matrix is not None and matrix.error is None
+    detail = analyze_correlation_pair(frame, *frame.columns, method)
+    document = ReportDocument()
+    document.upsert(
+        create_report_entry(
+            AnalysisCategory.CORRELATION,
+            DatasetRef("source", "Dataset", len(frame), 2),
+            CorrelationExportSnapshot(matrix, frame),
+        ).with_selection(("matrix_plot", "scatterplots"), "")
+    )
+    view = None
+    try:
+        view = CorrelationView(matrix, detail)
+        labels = build_correlation_chart_labels(matrix, QCoreApplication.translate, capture_chart_numeric_locale())
+        presentation = build_correlation_pair_presentation(detail, labels)
+        captured = capture_report_labels(QCoreApplication.translate)
+        statistics = "\n".join(label.text() for label in view.pair_panel().findChildren(QLabel))
+        assert all(escape(caption) in statistics for caption in presentation.metadata.captions)
+        expected_matrix = "Korrelationsmatris" if language == "sv" else "Correlation matrix"
+        assert labels.matrix_title == expected_matrix
+        assert presentation.metadata.captions[0].startswith(
+            "Minsta kvadratlinje:" if language == "sv" else "Least-squares line:"
+        )
+        assert len(presentation.metadata.captions) == (2 if method is CorrelationMethod.PEARSON else 3)
+    finally:
+        QCoreApplication.removeTranslator(translator)
+        if view is not None:
+            view.close()
+    prepared = prepare_report_content(document, labels=captured)
+    matrix_image = prepared.entries[0].components[0].charts[0]
+    pair_image = prepared.entries[0].components[1].charts[0]
+    assert matrix_image.heading == pair_image.heading == ""
+    assert matrix_image.accessible_name == labels.matrix_title
+    assert matrix_image.captions == ()
+    assert pair_image.accessible_name == presentation.title
+    assert pair_image.captions == presentation.metadata.captions
+    html = render_prepared_report_html(prepared)
+    assert f'alt="{escape(presentation.title, quote=True)}"' in html
+    assert f'alt="{expected_matrix}"' in html
+    assert f"<h3>{expected_matrix}</h3>" in html
+    assert html.count("<figcaption>") == 1
+    caption_html = html.split("<figcaption>", 1)[1].split("</figcaption>", 1)[0]
+    assert escape(presentation.title) not in caption_html
+    assert all(escape(caption) in caption_html for caption in presentation.metadata.captions)
