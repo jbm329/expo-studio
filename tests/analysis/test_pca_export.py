@@ -5,8 +5,9 @@ import dataclasses
 import pandas as pd
 import pytest
 
+from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
 from expo_jbm329.services.analysis.pca import PCAResult, analyze_pca
-from expo_jbm329.services.analysis.pca_charts import PCAChartLabels
+from expo_jbm329.services.analysis.pca_charts import PCAChartLabels, build_pca_chart_labels
 from expo_jbm329.services.analysis.pca_export import (
     PCA_COMPONENTS,
     PCAExportComponent,
@@ -22,15 +23,14 @@ from expo_jbm329.services.analysis.pca_export import (
 from expo_jbm329.services.analysis.statistics import StatisticsExportFormat
 
 CHART_LABELS = PCAChartLabels(
-    scree_title="Scree plot",
+    scree_metadata=ChartPresentationMetadata("", "Scree plot"),
     explained="Explained variance",
     cumulative="Cumulative",
     component_axis="Component",
     variance_axis="Explained variance (%)",
-    scatter_title="PC1 vs PC2",
+    scatter_metadata=ChartPresentationMetadata("", "PC1 vs PC2"),
     pc1_axis="PC1 (80%)",
     pc2_axis="PC2 (15%)",
-    scatter_captions=("Sampled",),
 )
 NOTES = ("3 features, standardized.", "Features: x, y, z")
 
@@ -52,8 +52,12 @@ def pca_result(**kwargs: object) -> PCAResult:
     return result
 
 
-def pca_snapshot(*, notes: tuple[str, ...] = NOTES, **kwargs: object) -> PCAExportSnapshot:
-    return PCAExportSnapshot(pca_result(**kwargs), CHART_LABELS, notes)
+def pca_snapshot(*, notes: tuple[str, ...] = NOTES, sampled: bool = False, **kwargs: object) -> PCAExportSnapshot:
+    result = dataclasses.replace(pca_result(**kwargs), sampled=sampled)
+    labels = build_pca_chart_labels(
+        result, lambda _context, text: text, percent_format=lambda value: f"{value * 100:.2f}%"
+    )
+    return PCAExportSnapshot(result, labels, notes)
 
 
 # ----------------------------------------------------------------------

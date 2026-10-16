@@ -205,17 +205,17 @@ def test_chart_labels_match_the_view_and_caption_only_a_sampled_plot(sampled):
 
     labels = view.chart_labels()
 
-    assert labels.scree_title == "Scree plot"
+    assert labels.scree_metadata.accessible_name == "Scree plot"
     assert (labels.explained, labels.cumulative) == ("Explained variance", "Cumulative")
     assert (labels.component_axis, labels.variance_axis) == ("Component", "Explained variance (%)")
-    assert labels.scatter_title == "PC1 vs PC2"
+    assert labels.scatter_metadata.accessible_name == "PC1 vs PC2"
     pc1, pc2 = result.explained_variance_ratio[:2]
     assert labels.pc1_axis == f"PC1 ({fmt_pct(pc1)})"
     assert labels.pc2_axis == f"PC2 ({fmt_pct(pc2)})"
     expected = (
         (f"The PC1-vs-PC2 plot shows a deterministic sample of {len(result.sample_pc1)} rows.",) if sampled else ()
     )
-    assert labels.scatter_captions == expected
+    assert labels.scatter_metadata.captions == expected
 
 
 def test_displayed_plots_use_the_shared_chart_labels():
@@ -224,8 +224,8 @@ def test_displayed_plots_use_the_shared_chart_labels():
 
     axes = {ax.get_title(): ax for ax in _axes(view)}
 
-    assert set(axes) == {labels.scree_title, labels.scatter_title}
-    scores = axes[labels.scatter_title]
+    assert set(axes) == {labels.scree_metadata.accessible_name, labels.scatter_metadata.accessible_name}
+    scores = axes[labels.scatter_metadata.accessible_name]
     assert (scores.get_xlabel(), scores.get_ylabel()) == (labels.pc1_axis, labels.pc2_axis)
 
 
@@ -234,7 +234,7 @@ def test_error_chart_labels_have_no_caption_or_variance():
 
     labels = PCAView(result).chart_labels()
 
-    assert labels.scatter_captions == ()
+    assert labels.scatter_metadata.captions == ()
     assert (labels.pc1_axis, labels.pc2_axis) == ("PC1", "PC2")
 
 

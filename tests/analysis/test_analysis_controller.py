@@ -5415,8 +5415,12 @@ def test_pca_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch)
     progress: list[int] = []
     images = kwargs["chart_factory"](progress.append, lambda: False)
     assert [image.heading for image in images] == [
-        snapshot.chart_labels.scree_title,
-        snapshot.chart_labels.scatter_title,
+        snapshot.chart_labels.scree_metadata.worksheet_heading,
+        snapshot.chart_labels.scatter_metadata.worksheet_heading,
+    ]
+    assert [image.accessible_name for image in images] == [
+        snapshot.chart_labels.scree_metadata.accessible_name,
+        snapshot.chart_labels.scatter_metadata.accessible_name,
     ]
     assert progress == [50, 100]
     assert controller._results.mock_calls == []  # noqa: SLF001

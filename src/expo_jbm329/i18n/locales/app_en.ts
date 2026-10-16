@@ -6207,37 +6207,44 @@ Saved to:
 </context><context>
     <name>PCAView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="88" />
+        <location filename="..\..\services\analysis\pca_charts.py" line="94" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="44" />
         <source>PC1 ({variance})</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="90" />
+        <location filename="..\..\services\analysis\pca_charts.py" line="97" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="45" />
         <source>PC2 ({variance})</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="94" />
+        <location filename="..\..\services\analysis\pca_charts.py" line="84" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="39" />
         <source>Scree plot</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="96" />
+        <location filename="..\..\services\analysis\pca_charts.py" line="87" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="40" />
         <source>Cumulative</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="97" />
+        <location filename="..\..\services\analysis\pca_charts.py" line="88" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="41" />
         <source>Component</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="98" />
+        <location filename="..\..\services\analysis\pca_charts.py" line="89" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="42" />
         <source>Explained variance (%)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="99" />
+        <location filename="..\..\services\analysis\pca_charts.py" line="91" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="43" />
         <source>PC1 vs PC2</source>
         <translation type="unfinished" />
     </message>
@@ -6282,9 +6289,14 @@ Saved to:
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="157" />
+        <location filename="..\..\services\analysis\pca_charts.py" line="75" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="46" />
+        <source>The PC1-vs-PC2 plot shows a deterministic sample of {count} rows.</source>
+        <translation>The PC1-vs-PC2 plot shows a deterministic sample of {count} rows.</translation>
+    </message>
+    <message>
         <source>&lt;i&gt;The PC1-vs-PC2 plot shows a deterministic sample of {count} rows.&lt;/i&gt;</source>
-        <translation type="unfinished" />
+        <translation type="vanished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="200" />

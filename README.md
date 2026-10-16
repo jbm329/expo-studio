@@ -114,6 +114,14 @@ HTML omit the redundant chart heading while retaining the sample note and HTML
 alternative text. PC axes remain mathematical labels and do not imply explained
 variance.
 
+PCA captures both chart presentations in a Qt-free builder: scree component and
+variance axes, explained/cumulative legends, PC1/PC2 axes with explained-variance
+percentages, accessible image names, and the deterministic-sampling note.
+The app and export workers draw the same captured labels and data. Excel and
+HTML omit redundant outer chart titles while retaining the **PCA plots**
+component heading, plotted titles, and sampling captions only for sampled scores.
+Translations and numeric formatting are captured before background rendering.
+
 Export is available for successfully applied results. Excel workbooks can
 combine selected tables and available charts; CSV and binary exports contain
 one selected table. Charts are available in Excel only. Exports contain the

@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from html import escape
 from typing import TYPE_CHECKING
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import QT_TRANSLATE_NOOP, QCoreApplication, Qt
 from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
@@ -19,7 +20,12 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
 from expo_jbm329.services.analysis.pca import MIN_OBSERVATIONS, MIN_SELECTED_COLUMNS, PCAError
-from expo_jbm329.services.analysis.pca_charts import PCAChartLabels, draw_score_plot, draw_scree_plot
+from expo_jbm329.services.analysis.pca_charts import (
+    PCAChartLabels,
+    build_pca_chart_labels,
+    draw_score_plot,
+    draw_scree_plot,
+)
 from expo_jbm329.services.analysis.pca_export import PCAExportComponent, component_name
 from expo_jbm329.services.analysis.presentation import build_pca_result_presentation, pca_component_label
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_pct
@@ -29,6 +35,16 @@ if TYPE_CHECKING:
 
 
 _RIGHT_ALIGNED = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+_CHART_TRANSLATION_MARKERS = (
+    QT_TRANSLATE_NOOP("PCAView", "Scree plot"),
+    QT_TRANSLATE_NOOP("PCAView", "Cumulative"),
+    QT_TRANSLATE_NOOP("PCAView", "Component"),
+    QT_TRANSLATE_NOOP("PCAView", "Explained variance (%)"),
+    QT_TRANSLATE_NOOP("PCAView", "PC1 vs PC2"),
+    QT_TRANSLATE_NOOP("PCAView", "PC1 ({variance})"),
+    QT_TRANSLATE_NOOP("PCAView", "PC2 ({variance})"),
+    QT_TRANSLATE_NOOP("PCAView", "The PC1-vs-PC2 plot shows a deterministic sample of {count} rows."),
+)
 
 
 class PCAView(QWidget):
@@ -43,6 +59,9 @@ class PCAView(QWidget):
         """
         super().__init__(parent)
         self._result = result
+        self._chart_labels = build_pca_chart_labels(
+            result, QCoreApplication.translate, percent_format=fmt_pct, count_format=fmt_int
+        )
         self._loadings_table: QTableWidget | None = None
 
         layout = QVBoxLayout(self)
@@ -82,25 +101,7 @@ class PCAView(QWidget):
 
     def chart_labels(self) -> PCAChartLabels:
         """Return the translated plot text used by the view and its export."""
-        result = self._result
-        ratios = result.explained_variance_ratio
-        # Error results have no fitted ratios; their labels are never drawn or exported.
-        pc1_axis = self.tr("PC1 ({variance})").format(variance=fmt_pct(ratios[0])) if ratios else component_name(0)
-        pc2_axis = (
-            self.tr("PC2 ({variance})").format(variance=fmt_pct(ratios[1])) if len(ratios) > 1 else component_name(1)
-        )
-        captions = rich_text_lines([self._sample_text(result)]) if result.sampled and result.error is None else ()
-        return PCAChartLabels(
-            scree_title=self.tr("Scree plot"),
-            explained=pca_component_label(PCAExportComponent.EXPLAINED_VARIANCE, QCoreApplication.translate),
-            cumulative=self.tr("Cumulative"),
-            component_axis=self.tr("Component"),
-            variance_axis=self.tr("Explained variance (%)"),
-            scatter_title=self.tr("PC1 vs PC2"),
-            pc1_axis=pc1_axis,
-            pc2_axis=pc2_axis,
-            scatter_captions=captions,
-        )
+        return self._chart_labels
 
     def export_notes(self) -> tuple[str, ...]:
         """Return the displayed model comments and applied configuration as plain text.
@@ -148,15 +149,9 @@ class PCAView(QWidget):
             total=fmt_int(result.total_rows),
             dropped=fmt_int(result.rows_dropped),
         )
-        if result.sampled:
-            text += "<br>" + self._sample_text(result)
+        for caption in self._chart_labels.scatter_metadata.captions:
+            text += "<br><i>" + escape(caption) + "</i>"
         return text
-
-    def _sample_text(self, result: PCAResult) -> str:
-        """Return the rich-text disclosure that the score plot shows a sample."""
-        return self.tr("<i>The PC1-vs-PC2 plot shows a deterministic sample of {count} rows.</i>").format(
-            count=fmt_int(len(result.sample_pc1))
-        )
 
     def _build_summary(self, result: PCAResult) -> QLabel:
         """Build the fit summary and complete-case warning."""

@@ -295,7 +295,7 @@ def test_pca_notes_follow_component_selection_without_capturing_entry_notes_or_c
 
     assert components[0].paragraphs == snapshot.notes
     assert components[1].paragraphs == ()
-    assert components[1].charts[1].captions == snapshot.chart_labels.scatter_captions
+    assert components[1].charts[1].captions == snapshot.chart_labels.scatter_metadata.captions
     assert entry.note == "Entry note"
 
 
