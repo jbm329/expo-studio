@@ -54,6 +54,7 @@ _FIRST_NUMERIC_TABLE_COLUMN = 2
 _SIGNIFICANCE_LEVEL = 0.05
 _CHART_RETRY_INTERVAL_MS = 25
 _EXPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("StatisticsView", "Count (% non-missing)"),
     QT_TRANSLATE_NOOP("StatisticsView", "Continuous"),
     QT_TRANSLATE_NOOP("StatisticsView", "Categorical"),
     QT_TRANSLATE_NOOP("StatisticsView", "Distribution"),

@@ -2001,6 +2001,57 @@ def test_statistics_continuous_cells_do_not_wrap_but_headers_and_other_tables_ca
     assert "<td>long category name</td>" in html
 
 
+def test_statistics_html_combines_counts_and_percentages_without_changing_exports() -> None:
+    snapshot = analyze_descriptive_statistics(
+        pd.DataFrame({"value": [1.0, None, 3.0, 4.0], "group": ["a", "a", "b", None]})
+    )
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.STATISTICS, snapshot, ("Continuous", "Categorical")))
+    options = capture_report_labels(
+        lambda _context, text: f"Localized {text}",
+        count_format=lambda count: f"count:{count}",
+    )
+
+    prepared = prepare_report_content(document, labels=options)
+    continuous, categorical = (component.tables[0] for component in prepared.entries[0].components)
+    continuous_row = dict(zip(continuous.headers, continuous.rows[0], strict=True))
+    category_row = next(row for row in categorical.rows if row[:2] == ("group", "a"))
+    categorical_row = dict(zip(categorical.headers, category_row, strict=True))
+
+    assert "Localized Missing fraction" not in continuous.headers
+    assert "Localized Missing fraction" not in categorical.headers
+    assert "Localized Fraction (non-missing)" not in categorical.headers
+    assert continuous_row["Localized Missing count"] == f"count:1 ({fmt_pct(1 / 4, decimals=2)})"
+    assert categorical_row["Localized Missing count"] == f"count:1 ({fmt_pct(1 / 4, decimals=2)})"
+    assert categorical_row["Localized Count (% non-missing)"] == f"count:2 ({fmt_pct(2 / 3, decimals=2)})"
+    assert continuous_row["Localized Count"] == 3
+    assert categorical_row["Localized Valid count"] == 3
+    exports = localized_report_tables(AnalysisCategory.STATISTICS, snapshot, ("Continuous", "Categorical"))
+    assert exports["Continuous"].iloc[0]["Missing count"] == 1
+    assert exports["Continuous"].iloc[0]["Missing fraction"] == 1 / 4
+    exported_category = (
+        exports["Categorical"]
+        .loc[(exports["Categorical"]["Column"] == "group") & (exports["Categorical"]["Category"] == "a")]
+        .iloc[0]
+    )
+    assert exported_category["Count"] == 2
+    assert exported_category["Fraction (non-missing)"] == 2 / 3
+
+
+def test_statistics_html_omits_undefined_percentage_for_all_missing_category() -> None:
+    snapshot = analyze_descriptive_statistics(pd.DataFrame({"group": pd.Series([None, None], dtype="string")}))
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.STATISTICS, snapshot, ("Categorical",)))
+
+    prepared = prepare_report_content(document)
+    table = prepared.entries[0].components[0].tables[0]
+    row = dict(zip(table.headers, table.rows[0], strict=True))
+
+    assert row["Count (% non-missing)"] == "0"
+    assert row["Missing count"] == f"2 ({fmt_pct(1.0, decimals=2)})"
+    assert "nan%" not in render_prepared_report_html(prepared)
+
+
 def test_statistics_distribution_label_is_shared_and_captured() -> None:
     snapshot = analyze_descriptive_statistics(pd.DataFrame({"value": [1.0, 2.0, 3.0, 4.0]}))
     document = ReportDocument()

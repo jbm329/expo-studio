@@ -99,286 +99,1324 @@
         <translation type="unfinished" />
     </message>
 </context><context>
+    <name>AnalysisConfiguration</name>
+    <message>
+        <source>Features</source>
+        <translation type="vanished">Features</translation>
+    </message>
+    <message>
+        <source>Standardize features</source>
+        <translation type="vanished">Standardize features</translation>
+    </message>
+</context><context>
     <name>AnalysisController</name>
-    <message><source>Advanced analysis unavailable</source><translation>Advanced analysis unavailable</translation></message>
     <message>
-        <source>Select a ready dataset before opening Advanced Analysis.</source>
-        <translation>Select a ready dataset before opening Advanced Analysis.</translation>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="508" />
+        <source>This analysis is not implemented yet.</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Could not save HTML report.
-{error}</source>
-        <translation>Could not save HTML report.
-{error}</translation>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="509" />
+        <source>An error occurred while generating this analysis.</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>HTML report saving is unavailable.</source>
-        <translation>HTML report saving is unavailable.</translation>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="510" />
+        <source>Running analysis…</source>
+        <translation type="unfinished" />
     </message>
     <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="511" />
+        <source>generate analysis</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="512" />
+        <source>Analysis cancelled.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="513" />
+        <source>Choose settings and click Apply.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="514" />
         <source>Preparing report preview...</source>
         <translation>Preparing report preview...</translation>
     </message>
     <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="515" />
         <source>prepare report preview</source>
         <translation>prepare report preview</translation>
     </message>
     <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="516" />
         <source>Report preview cancelled.</source>
         <translation>Report preview cancelled.</translation>
     </message>
     <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="517" />
         <source>Could not prepare report preview.
 {error}</source>
         <translation>Could not prepare report preview.
 {error}</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="217" />
-        <source>This analysis is not implemented yet.</source>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="518" />
+        <source>HTML report saving is unavailable.</source>
+        <translation>HTML report saving is unavailable.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="519" />
+        <source>Could not save HTML report.
+{error}</source>
+        <translation>Could not save HTML report.
+{error}</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="520" />
+        <source>Select a ready dataset before opening Advanced Analysis.</source>
+        <translation>Select a ready dataset before opening Advanced Analysis.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="521" />
+        <source>Advanced analysis unavailable</source>
+        <translation>Advanced analysis unavailable</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="912" />
+        <source>StatisticsView</source>
+        <comment>Histogram</comment>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="218" />
-        <source>An error occurred while generating this analysis.</source>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="913" />
+        <source>StatisticsView</source>
+        <comment>Boxplot</comment>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="219" />
-        <source>Running analysis…</source>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="914" />
+        <source>StatisticsView</source>
+        <comment>No data</comment>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="220" />
-        <source>generate analysis</source>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="990" />
+        <source>ChiSquareView</source>
+        <comment>Adjusted standardized residuals</comment>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="221" />
-        <source>Analysis cancelled.</source>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="991" />
+        <source>PairedComparisonView</source>
+        <comment>Subject trajectories</comment>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="222" />
-        <source>Choose settings and click Apply.</source>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="992" />
+        <source>PairedComparisonView</source>
+        <comment>Value</comment>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="993" />
+        <source>PairedComparisonView</source>
+        <comment>Measurement occasion</comment>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1063" />
+        <source>AnalysisExportDialog</source>
+        <comment>Least-squares line: y = ({slope}) x + ({intercept})</comment>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1064" />
+        <source>CorrelationView</source>
+        <comment>The line is a linear fit shown for reference. {method} measures monotonic, not necessarily linear, association.</comment>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1069" />
+        <source>CorrelationView</source>
+        <comment>Showing a random sample of {shown} of {total} points. Statistics use all points.</comment>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1072" />
+        <source>CorrelationView</source>
+        <comment>Fewer than {minimum} rows have values in both columns, so no correlation can be computed.</comment>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1076" />
+        <source>CorrelationView</source>
+        <comment>At least one of the columns is constant over the rows with values in both, so no correlation can be computed.</comment>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1183" />
+        <source>MultivariateOutliersView</source>
+        <comment>Anomaly score</comment>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1185" />
+        <source>OutliersView</source>
+        <comment>Distance past fence</comment>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1186" />
+        <source>OutliersView</source>
+        <comment>z</comment>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1187" />
+        <source>OutliersView</source>
+        <comment>Modified z</comment>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>AnalysisDialog</name>
-    <message><source>Advanced analysis — {dataset} ({rows} rows × {columns} columns)</source><translation>Advanced analysis — {dataset} ({rows} rows × {columns} columns)</translation></message>
-    <message><source>Name</source><translation>Name</translation></message>
-    <message><source>Rows</source><translation>Rows</translation></message>
-    <message><source>Columns</source><translation>Columns</translation></message>
     <message>
-        <source>Reports(0)</source>
-        <translation type="unfinished" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="217" />
+        <source>Advanced analysis — {dataset} ({rows} rows × {columns} columns)</source>
+        <translation>Advanced analysis — {dataset} ({rows} rows × {columns} columns)</translation>
     </message>
     <message>
-        <source>Export</source>
-        <translation>Export</translation>
-    </message>
-    <message>
-        <source>Export analysis data</source>
-        <translation type="vanished" />
-    </message>
-    <message>
-        <source>Export results</source>
-        <translation type="vanished" />
-    </message>
-    <message>
-        <source>Add to report</source>
-        <translation type="unfinished" />
-    </message>
-    <message><source>Replace report result</source><translation>Replace report result</translation></message>
-    <message><source>Update report result</source><translation>Update report result</translation></message>
-    <message><source>Replace in report</source><translation>Replace in report</translation></message>
-    <message><source>Update result</source><translation>Update result</translation></message>
-    <message>
-        <source>Export and Add to report are available after an analysis has been applied.</source>
-        <translation>Export and Add to report are available after an analysis has been applied.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="80" />
-        <source>Advanced analysis</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="127" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="116" />
-        <source>Dataset</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="133" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="281" />
         <source>Analysis</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="156" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="294" />
+        <source>Reports(0)</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="793" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="590" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="587" />
+        <source>Add to report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="613" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="595" />
+        <source>Replace report result</source>
+        <translation>Replace report result</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="615" />
+        <source>Update report result</source>
+        <translation>Update report result</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="618" />
+        <source>Remove from report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="705" />
+        <source>Replace in report</source>
+        <translation>Replace in report</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="705" />
+        <source>Update result</source>
+        <translation>Update result</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="754" />
+        <source>Reports({count})</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="759" />
         <source>Result</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="169" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="773" />
         <source>Configuration</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="321" />
-        <source>Overview</source>
-        <translation type="unfinished" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="790" />
+        <source>Export</source>
+        <translation>Export</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="322" />
-        <source>Statistics</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="323" />
-        <source>Hypothesis Tests</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="324" />
-        <source>Correlation</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="325" />
-        <source>Regression</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="326" />
-        <source>Outliers</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="327" />
-        <source>Clustering</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="328" />
-        <source>PCA</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="329" />
+        <location filename="..\..\services\analysis\presentation.py" line="642" />
         <source>Time Series</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Reports({count})</source>
-        <translation type="unfinished" />
+        <source>Name</source>
+        <translation type="vanished">Name</translation>
+    </message>
+    <message>
+        <source>Rows</source>
+        <translation type="vanished">Rows</translation>
+    </message>
+    <message>
+        <source>Columns</source>
+        <translation type="vanished">Columns</translation>
+    </message>
+    <message>
+        <source>Export and Add to report are available after an analysis has been applied.</source>
+        <translation type="vanished">Export and Add to report are available after an analysis has been applied.</translation>
     </message>
 </context><context>
     <name>AnalysisExportDialog</name>
-    <message><source>Total</source><translation>Total</translation></message>
-    <message><source>N/A</source><translation>N/A</translation></message>
-    <message><source>Dataset</source><translation>Dataset</translation></message>
-    <message><source>Columns</source><translation>Columns</translation></message>
-    <message><source>Analysis date</source><translation>Analysis date</translation></message>
-    <message><source>Report date</source><translation>Report date</translation></message>
-    <message><source>Expo version</source><translation>Expo version</translation></message>
-    <message><source>Export computed tables and charts for the applied test, not the original dataset.</source><translation>Export computed tables and charts for the applied test, not the original dataset.</translation></message>
-    <message><source>Apply a hypothesis test successfully before exporting.</source><translation>Apply a hypothesis test successfully before exporting.</translation></message>
-    <message><source>Applied test: {test}
-{roles}: {columns}</source><translation>Applied test: {test}
-{roles}: {columns}</translation></message>
-    <message><source>Numeric column / grouping column</source><translation>Numeric column / grouping column</translation></message>
-    <message><source>Row column / column column</source><translation>Row column / column column</translation></message>
-    <message><source>Measurement columns (occasion order)</source><translation>Measurement columns (occasion order)</translation></message>
-    <message><source>Group comparison</source><translation>Group comparison</translation></message>
-    <message><source>Chi-square independence</source><translation>Chi-square independence</translation></message>
-    <message><source>Paired comparison</source><translation>Paired comparison</translation></message>
-    <message><source>Group summary</source><translation>Group summary</translation></message>
-    <message><source>Contingency table</source><translation>Contingency table</translation></message>
-    <message><source>Measurement summary</source><translation>Measurement summary</translation></message>
-    <message><source>Test results</source><translation>Test results</translation></message>
-    <message><source>Test</source><translation>Test</translation></message>
-    <message><source>Test statistic</source><translation>Test statistic</translation></message>
-    <message><source>p-value</source><translation>p-value</translation></message>
-    <message><source>Degrees of freedom</source><translation>Degrees of freedom</translation></message>
-    <message><source>Mean difference</source><translation>Mean difference</translation></message>
-    <message><source>95% CI lower</source><translation>95% CI lower</translation></message>
-    <message><source>95% CI upper</source><translation>95% CI upper</translation></message>
-    <message><source>Effect size</source><translation>Effect size</translation></message>
-    <message><source>Effect value</source><translation>Effect value</translation></message>
-    <message><source>Numeric column</source><translation>Numeric column</translation></message>
-    <message><source>Grouping column</source><translation>Grouping column</translation></message>
-    <message><source>Row column</source><translation>Row column</translation></message>
-    <message><source>Column column</source><translation>Column column</translation></message>
-    <message><source>Sample count</source><translation>Sample count</translation></message>
-    <message><source>Yates' continuity correction</source><translation>Yates' continuity correction</translation></message>
-    <message><source>Cochran's rule violated</source><translation>Cochran's rule violated</translation></message>
-    <message><source>Fraction of expected counts below 5</source><translation>Fraction of expected counts below 5</translation></message>
-    <message><source>Minimum expected count</source><translation>Minimum expected count</translation></message>
-    <message><source>Odds ratio</source><translation>Odds ratio</translation></message>
-    <message><source>Total subjects</source><translation>Total subjects</translation></message>
-    <message><source>Excluded subjects</source><translation>Excluded subjects</translation></message>
-    <message><source>Notes</source><translation>Notes</translation></message>
-    <message><source>Measurement</source><translation>Measurement</translation></message>
-    <message><source>Welch's t-test</source><translation>Welch's t-test</translation></message>
-    <message><source>Student's t-test</source><translation>Student's t-test</translation></message>
-    <message><source>Mann-Whitney U</source><translation>Mann-Whitney U</translation></message>
-    <message><source>One-way ANOVA</source><translation>One-way ANOVA</translation></message>
-    <message><source>Kruskal-Wallis</source><translation>Kruskal-Wallis</translation></message>
-    <message><source>Pearson's chi-square test</source><translation>Pearson's chi-square test</translation></message>
-    <message><source>Fisher's exact test</source><translation>Fisher's exact test</translation></message>
-    <message><source>Wilcoxon signed-rank test</source><translation>Wilcoxon signed-rank test</translation></message>
-    <message><source>Friedman test</source><translation>Friedman test</translation></message>
-    <message><source>Cohen's d</source><translation>Cohen's d</translation></message>
-    <message><source>Rank-biserial correlation</source><translation>Rank-biserial correlation</translation></message>
-    <message><source>Eta²</source><translation>Eta²</translation></message>
-    <message><source>Epsilon²</source><translation>Epsilon²</translation></message>
-    <message><source>Cramér's V</source><translation>Cramér's V</translation></message>
-    <message><source>Kendall's W</source><translation>Kendall's W</translation></message>
-    <message><source>Export the strongest-correlations table for the applied matrix.</source><translation>Export the strongest-correlations table for the applied matrix.</translation></message>
-    <message><source>Apply a correlation matrix successfully before exporting.</source><translation>Apply a correlation matrix successfully before exporting.</translation></message>
-    <message><source>Applied method: {method}
-Applied columns: {columns}</source><translation>Applied method: {method}
-Applied columns: {columns}</translation></message>
-    <message><source>Correlation method</source><translation>Correlation method</translation></message>
-    <message><source>Coefficient</source><translation>Coefficient</translation></message>
-    <message><source>Significant after Holm</source><translation>Significant after Holm</translation></message>
-    <message><source>Least-squares line: y = ({slope}) x + ({intercept})</source><translation>Least-squares line: y = ({slope}) x + ({intercept})</translation></message>
-    <message><source>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</source><translation>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</translation></message>
-    <message><source>Ranking and Holm explanation</source><translation>Ranking and Holm explanation</translation></message>
-    <message><source>Strongest correlations</source><translation>Strongest correlations</translation></message>
-    <message><source>Matrix plot</source><translation>Matrix plot</translation></message>
-    <message><source>Planned for a later milestone; no chart will be exported yet.</source><translation>Planned for a later milestone; no chart will be exported yet.</translation></message>
-    <message><source>Scatterplots ({count} pair)</source><translation>Scatterplots ({count} pair)</translation></message>
-    <message><source>Scatterplots ({count} pairs)</source><translation>Scatterplots ({count} pairs)</translation></message>
-    <message><source>Excel exports the selected correlation table as a worksheet.</source><translation>Excel exports the selected correlation table as a worksheet.</translation></message>
-    <message><source>CSV and binary exports contain exactly one correlation table.</source><translation>CSV and binary exports contain exactly one correlation table.</translation></message>
     <message>
-        <source>Data</source>
-        <translation>Data</translation>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="231" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="146" />
+        <source>Export</source>
+        <translation>Export</translation>
     </message>
     <message>
-        <source>Results</source>
-        <translation>Results</translation>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="220" />
+        <source>Excel workbook (.xlsx)</source>
+        <translation>Excel workbook (.xlsx)</translation>
     </message>
     <message>
-        <source>Summary</source>
-        <translation>Summary</translation>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="221" />
+        <source>Binary data file (Parquet / Feather / Pickle)</source>
+        <translation>Binary data file (Parquet / Feather / Pickle)</translation>
     </message>
     <message>
-        <source>Select at least one available table to export.</source>
-        <translation>Select at least one available table to export.</translation>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="224" />
+        <source>Format</source>
+        <translation>Format</translation>
     </message>
     <message>
-        <source>Choose exactly one table for CSV or binary export.</source>
-        <translation>Choose exactly one table for CSV or binary export.</translation>
-    </message>
-    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="277" />
         <source>Export the Overview Summary, Columns metadata, or Sample (first/last 10 rows), not the original dataset.</source>
         <translation>Export the Overview Summary, Columns metadata, or Sample (first/last 10 rows), not the original dataset.</translation>
     </message>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="282" />
+        <source>Export the available Statistics tables and numeric-column charts.</source>
+        <translation>Export the available Statistics tables and numeric-column charts.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="284" />
+        <source>Export computed tables and charts for the applied test, not the original dataset.</source>
+        <translation>Export computed tables and charts for the applied test, not the original dataset.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="286" />
+        <source>Export the strongest-correlations table for the applied matrix.</source>
+        <translation>Export the strongest-correlations table for the applied matrix.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="288" />
+        <source>Export the coefficients, model metrics and charts of the applied model, not the original dataset.</source>
+        <translation>Export the coefficients, model metrics and charts of the applied model, not the original dataset.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="292" />
+        <source>Export the displayed outlier tables and charts of the applied screening, not the original dataset.</source>
+        <translation>Export the displayed outlier tables and charts of the applied screening, not the original dataset.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="296" />
+        <source>Export the cluster sizes, model summary and chart of the applied clustering, not the original dataset.</source>
+        <translation>Export the cluster sizes, model summary and chart of the applied clustering, not the original dataset.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="300" />
+        <source>Export the feature loadings, explained variance, model summary and charts of the applied PCA, not the original dataset.</source>
+        <translation>Export the feature loadings, explained variance, model summary and charts of the applied PCA, not the original dataset.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="304" />
+        <source>Export the prepared series, autocorrelation, model summary and charts of the applied time series, not the original dataset.</source>
+        <translation>Export the prepared series, autocorrelation, model summary and charts of the applied time series, not the original dataset.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="637" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="408" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="365" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="312" />
+        <source>Data</source>
+        <translation>Data</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="639" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="605" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="580" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="533" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="493" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="450" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="409" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="367" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="314" />
+        <source>Results</source>
+        <translation>Results</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="333" />
+        <source>Sample (first/last 10 rows)</source>
+        <translation>Sample (first/last 10 rows)</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="334" />
+        <source>Summary</source>
+        <translation>Summary</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="343" />
         <source>Dataset metrics, column-type counts, and high-missing-value warnings. Fractions are numeric values from 0 to 1.</source>
         <translation>Dataset metrics, column-type counts, and high-missing-value warnings. Fractions are numeric values from 0 to 1.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="836" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="350" />
+        <source>Run Overview successfully before exporting.</source>
+        <translation>Run Overview successfully before exporting.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="352" />
+        <source>The first/last sample is unavailable in this captured result.</source>
+        <translation>The first/last sample is unavailable in this captured result.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="838" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="354" />
+        <source>This table is empty and cannot be exported.</source>
+        <translation>This table is empty and cannot be exported.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="380" />
+        <source>Counts are numeric, and fractions range from 0 to 1.</source>
+        <translation>Counts are numeric, and fractions range from 0 to 1.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="931" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="383" />
+        <source>Run Statistics successfully before exporting.</source>
+        <translation>Run Statistics successfully before exporting.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="933" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="556" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="510" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="385" />
+        <source>This component is empty and cannot be exported.</source>
+        <translation>This component is empty and cannot be exported.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="417" />
+        <source>Summary / statistics tables</source>
+        <translation>Summary / statistics tables</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="917" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="426" />
+        <source>Apply a hypothesis test successfully before exporting.</source>
+        <translation>Apply a hypothesis test successfully before exporting.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="919" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="469" />
+        <source>Apply a correlation matrix successfully before exporting.</source>
+        <translation>Apply a correlation matrix successfully before exporting.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="921" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="507" />
+        <source>Apply a regression model successfully before exporting.</source>
+        <translation>Apply a regression model successfully before exporting.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="512" />
+        <source>Fit statistics and diagnostics shown in the model summary.</source>
+        <translation>Fit statistics and diagnostics shown in the model summary.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="923" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="553" />
+        <source>Apply an outlier screening successfully before exporting.</source>
+        <translation>Apply an outlier screening successfully before exporting.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="558" />
+        <source>The displayed rows, at most 100, most extreme first.</source>
+        <translation>The displayed rows, at most 100, most extreme first.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="925" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="586" />
+        <source>Apply a clustering successfully before exporting.</source>
+        <translation>Apply a clustering successfully before exporting.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="588" />
+        <source>Settings, row counts and silhouette with the displayed model comments.</source>
+        <translation>Settings, row counts and silhouette with the displayed model comments.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="927" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="612" />
+        <source>Apply a PCA successfully before exporting.</source>
+        <translation>Apply a PCA successfully before exporting.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="614" />
+        <source>Variance, share and cumulative share per component, as in the scree plot.</source>
+        <translation>Variance, share and cumulative share per component, as in the scree plot.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="616" />
+        <source>Feature and row counts with the displayed model comments.</source>
+        <translation>Feature and row counts with the displayed model comments.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="929" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="650" />
+        <source>Apply a time series successfully before exporting.</source>
+        <translation>Apply a time series successfully before exporting.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="656" />
+        <source>One row per time point after averaging duplicate timestamps and any resampling, with the decomposition when available.</source>
+        <translation>One row per time point after averaging duplicate timestamps and any resampling, with the decomposition when available.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="662" />
+        <source>Row diagnostics and seasonal period with the displayed model comments.</source>
+        <translation>Row diagnostics and seasonal period with the displayed model comments.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="664" />
+        <source>The series and, when available, the autocorrelation and decomposition.</source>
+        <translation>The series and, when available, the autocorrelation and decomposition.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="827" />
+        <source>Excel exports selected tables as separate sheets in one workbook.</source>
+        <translation>Excel exports selected tables as separate sheets in one workbook.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="829" />
+        <source>Choose exactly one table for CSV or binary export. For binary files, choose Parquet, Feather or Pickle in the save dialog.</source>
+        <translation>Choose exactly one table for CSV or binary export. For binary files, choose Parquet, Feather or Pickle in the save dialog.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="840" />
+        <source>Select at least one available table to export.</source>
+        <translation>Select at least one available table to export.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="945" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="842" />
+        <source>Choose exactly one table for CSV or binary export.</source>
+        <translation>Choose exactly one table for CSV or binary export.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="853" />
+        <source>Excel exports selected tables as separate sheets and charts on one Charts sheet.</source>
+        <translation>Excel exports selected tables as separate sheets and charts on one Charts sheet.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="855" />
+        <source>Choose exactly one table for CSV or binary export. Charts are available only in Excel; uncheck Charts to continue.</source>
+        <translation>Choose exactly one table for CSV or binary export. Charts are available only in Excel; uncheck Charts to continue.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="863" />
+        <source>Excel exports selected tables as separate sheets and charts on one {component} sheet.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="867" />
+        <source>Choose exactly one table for CSV or binary export. {component} is available only in Excel; uncheck {component} to continue.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="935" />
+        <source>Select at least one available component to export.</source>
+        <translation>Select at least one available component to export.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="938" />
+        <source>{component} is available only in Excel. Uncheck {component} to continue.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="942" />
+        <source>Charts are available only in Excel. Uncheck Charts to continue.</source>
+        <translation>Charts are available only in Excel. Uncheck Charts to continue.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="201" />
+        <location filename="..\..\services\analysis\report.py" line="1347" />
+        <source>Test</source>
+        <translation>Test</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="208" />
+        <location filename="..\..\services\analysis\report.py" line="1348" />
+        <source>Effect size</source>
+        <translation>Effect size</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="219" />
+        <location filename="..\..\services\analysis\report.py" line="1404" />
+        <source>Odds ratio</source>
+        <translation>Odds ratio</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="283" />
+        <location filename="..\..\services\analysis\report.py" line="1406" />
+        <location filename="..\..\services\analysis\report.py" line="1405" />
+        <source>Rate ratio</source>
+        <translation>Rate ratio</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="284" />
+        <location filename="..\..\services\analysis\report.py" line="1409" />
+        <source>Hazard ratio</source>
+        <translation>Hazard ratio</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="285" />
+        <location filename="..\..\services\analysis\report.py" line="1410" />
+        <source>{name}, 95% CI lower</source>
+        <translation>{name}, 95% CI lower</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="286" />
+        <location filename="..\..\services\analysis\report.py" line="1411" />
+        <source>{name}, 95% CI upper</source>
+        <translation>{name}, 95% CI upper</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="293" />
+        <location filename="..\..\services\analysis\report.py" line="1428" />
+        <source>Significant at p &lt; {alpha}</source>
+        <translation>Significant at p &lt; {alpha}</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="1992" />
+        <source>N/A</source>
+        <translation>N/A</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="1994" />
+        <source>Dataset</source>
+        <translation>Dataset</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="1995" />
+        <source>Report date</source>
+        <translation>Report date</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="1996" />
+        <source>Expo version</source>
+        <translation>Expo version</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="276" />
+        <location filename="..\..\services\analysis\report.py" line="2129" />
+        <source>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</source>
+        <translation>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="271" />
+        <location filename="..\..\services\analysis\report.py" line="2401" />
+        <source>Least-squares line: y = ({slope}) x + ({intercept})</source>
+        <translation>Least-squares line: y = ({slope}) x + ({intercept})</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="200" />
+        <source>Test results</source>
+        <translation>Test results</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="202" />
+        <source>Test statistic</source>
+        <translation>Test statistic</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="203" />
+        <source>p-value</source>
+        <translation>p-value</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="204" />
+        <source>Degrees of freedom</source>
+        <translation>Degrees of freedom</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="205" />
+        <source>Mean difference</source>
+        <translation>Mean difference</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="206" />
+        <source>95% CI lower</source>
+        <translation>95% CI lower</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="207" />
+        <source>95% CI upper</source>
+        <translation>95% CI upper</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="209" />
+        <source>Effect value</source>
+        <translation>Effect value</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="210" />
+        <source>Numeric column</source>
+        <translation>Numeric column</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="211" />
+        <source>Grouping column</source>
+        <translation>Grouping column</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="212" />
+        <source>Row column</source>
+        <translation>Row column</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="213" />
+        <source>Column column</source>
+        <translation>Column column</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="214" />
+        <source>Sample count</source>
+        <translation>Sample count</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="215" />
+        <source>Yates' continuity correction</source>
+        <translation>Yates' continuity correction</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="216" />
+        <source>Cochran's rule violated</source>
+        <translation>Cochran's rule violated</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="217" />
+        <source>Fraction of expected counts below 5</source>
+        <translation>Fraction of expected counts below 5</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="218" />
+        <source>Minimum expected count</source>
+        <translation>Minimum expected count</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="220" />
+        <source>Total subjects</source>
+        <translation>Total subjects</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="221" />
+        <source>Excluded subjects</source>
+        <translation>Excluded subjects</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="222" />
+        <source>Notes</source>
+        <translation>Notes</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="223" />
+        <source>Measurement</source>
+        <translation>Measurement</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="224" />
+        <source>Welch's t-test</source>
+        <translation>Welch's t-test</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="225" />
+        <source>Student's t-test</source>
+        <translation>Student's t-test</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="226" />
+        <source>Mann-Whitney U</source>
+        <translation>Mann-Whitney U</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="227" />
+        <source>One-way ANOVA</source>
+        <translation>One-way ANOVA</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="228" />
+        <source>Kruskal-Wallis</source>
+        <translation>Kruskal-Wallis</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="229" />
+        <source>Pearson's chi-square test</source>
+        <translation>Pearson's chi-square test</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="230" />
+        <source>Fisher's exact test</source>
+        <translation>Fisher's exact test</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="231" />
+        <source>Wilcoxon signed-rank test</source>
+        <translation>Wilcoxon signed-rank test</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="232" />
+        <source>Friedman test</source>
+        <translation>Friedman test</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="233" />
+        <source>Cohen's d</source>
+        <translation>Cohen's d</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="234" />
+        <source>Rank-biserial correlation</source>
+        <translation>Rank-biserial correlation</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="235" />
+        <source>Eta²</source>
+        <translation>Eta²</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="236" />
+        <source>Epsilon²</source>
+        <translation>Epsilon²</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="237" />
+        <source>Cramér's V</source>
+        <translation>Cramér's V</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="238" />
+        <source>Kendall's W</source>
+        <translation>Kendall's W</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="272" />
+        <source>Correlation method</source>
+        <translation>Correlation method</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="273" />
+        <source>Coefficient</source>
+        <translation>Coefficient</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="274" />
+        <source>Significant after Holm</source>
+        <translation>Significant after Holm</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="275" />
+        <source>Ranking and Holm explanation</source>
+        <translation>Ranking and Holm explanation</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="287" />
+        <source>Term</source>
+        <translation>Term</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="288" />
+        <source>Estimate</source>
+        <translation>Estimate</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="289" />
+        <source>Std. error</source>
+        <translation>Std. error</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="290" />
+        <source>t statistic</source>
+        <translation>t statistic</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="291" />
+        <source>z statistic</source>
+        <translation>z statistic</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="292" />
+        <source>VIF</source>
+        <translation>VIF</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="294" />
+        <source>(Intercept)</source>
+        <translation>(Intercept)</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="295" />
+        <source>Metric</source>
+        <translation>Metric</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="296" />
+        <source>Value</source>
+        <translation>Value</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="297" />
+        <source>Rows used</source>
+        <translation>Rows used</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="298" />
+        <source>Rows dropped because of missing values</source>
+        <translation>Rows dropped because of missing values</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="299" />
+        <source>R²</source>
+        <translation>R²</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="300" />
+        <source>Adjusted R²</source>
+        <translation>Adjusted R²</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="301" />
+        <source>F statistic</source>
+        <translation>F statistic</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="302" />
+        <source>F-test p-value</source>
+        <translation>F-test p-value</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="303" />
+        <source>Model degrees of freedom</source>
+        <translation>Model degrees of freedom</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="304" />
+        <source>Residual degrees of freedom</source>
+        <translation>Residual degrees of freedom</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="305" />
+        <source>RMSE</source>
+        <translation>RMSE</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="306" />
+        <source>AIC</source>
+        <translation>AIC</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="307" />
+        <source>Breusch-Pagan LM</source>
+        <translation>Breusch-Pagan LM</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="308" />
+        <source>Breusch-Pagan p-value</source>
+        <translation>Breusch-Pagan p-value</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="309" />
+        <source>Jarque-Bera JB</source>
+        <translation>Jarque-Bera JB</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="310" />
+        <source>Jarque-Bera p-value</source>
+        <translation>Jarque-Bera p-value</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="311" />
+        <source>Durbin-Watson</source>
+        <translation>Durbin-Watson</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="312" />
+        <source>Largest VIF</source>
+        <translation>Largest VIF</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="313" />
+        <source>Log-likelihood</source>
+        <translation>Log-likelihood</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="314" />
+        <source>Null-model log-likelihood</source>
+        <translation>Null-model log-likelihood</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="315" />
+        <source>McFadden pseudo R²</source>
+        <translation>McFadden pseudo R²</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="316" />
+        <source>AUC (in-sample)</source>
+        <translation>AUC (in-sample)</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="317" />
+        <source>Pearson dispersion</source>
+        <translation>Pearson dispersion</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="318" />
+        <source>NB2 alpha</source>
+        <translation>NB2 alpha</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="319" />
+        <source>Events</source>
+        <translation>Events</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="320" />
+        <source>Censored</source>
+        <translation>Censored</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="323" />
+        <source>Threshold</source>
+        <translation>Threshold</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="324" />
+        <source>Values</source>
+        <translation>Values</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="325" />
+        <source>Missing</source>
+        <translation>Missing</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="326" />
+        <source>Potential outliers</source>
+        <translation>Potential outliers</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="327" />
+        <source>Potential outlier share</source>
+        <translation>Potential outlier share</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="328" />
+        <source>Low potential outliers</source>
+        <translation>Low potential outliers</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="329" />
+        <source>High potential outliers</source>
+        <translation>High potential outliers</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="330" />
+        <source>Lower fence</source>
+        <translation>Lower fence</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="331" />
+        <source>Upper fence</source>
+        <translation>Upper fence</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="332" />
+        <source>Q1</source>
+        <translation>Q1</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="333" />
+        <source>Q3</source>
+        <translation>Q3</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="334" />
+        <source>IQR</source>
+        <translation>IQR</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="335" />
+        <source>Mean</source>
+        <translation>Mean</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="336" />
+        <source>Standard deviation</source>
+        <translation>Standard deviation</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="337" />
+        <source>Median</source>
+        <translation>Median</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="338" />
+        <source>MAD</source>
+        <translation>MAD</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="339" />
+        <source>Features</source>
+        <translation>Features</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="340" />
+        <source>Expected outlier fraction</source>
+        <translation>Expected outlier fraction</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="341" />
+        <source>LOF neighbors</source>
+        <translation>LOF neighbors</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="342" />
+        <source>Total rows</source>
+        <translation>Total rows</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="343" />
+        <source>Rows dropped because of missing or infinite values</source>
+        <translation>Rows dropped because of missing or infinite values</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="344" />
+        <source>Inliers</source>
+        <translation>Inliers</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="345" />
+        <source>Status</source>
+        <translation>Status</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="348" />
+        <source>Number of clusters</source>
+        <translation>Number of clusters</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="349" />
+        <source>Neighborhood radius (eps)</source>
+        <translation>Neighborhood radius (eps)</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="350" />
+        <source>Minimum samples</source>
+        <translation>Minimum samples</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="351" />
+        <source>Clusters found</source>
+        <translation>Clusters found</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="352" />
+        <source>Noise rows</source>
+        <translation>Noise rows</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="353" />
+        <source>Silhouette score</source>
+        <translation>Silhouette score</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="354" />
+        <source>Cluster</source>
+        <translation>Cluster</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="355" />
+        <source>Rows</source>
+        <translation>Rows</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="356" />
+        <source>Share</source>
+        <translation>Share</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="359" />
+        <source>Feature</source>
+        <translation>Feature</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="360" />
+        <source>Component</source>
+        <translation>Component</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="361" />
+        <source>Variance</source>
+        <translation>Variance</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="362" />
+        <source>Cumulative share</source>
+        <translation>Cumulative share</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="365" />
+        <source>Source rows</source>
+        <translation>Source rows</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="366" />
+        <source>Invalid rows dropped</source>
+        <translation>Invalid rows dropped</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="367" />
+        <source>Duplicate rows averaged</source>
+        <translation>Duplicate rows averaged</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="368" />
+        <source>Time points</source>
+        <translation>Time points</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="369" />
+        <source>Seasonal period</source>
+        <translation>Seasonal period</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="370" />
+        <source>Timestamp</source>
+        <translation>Timestamp</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="371" />
+        <source>Trend</source>
+        <translation>Trend</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="372" />
+        <source>Seasonal</source>
+        <translation>Seasonal</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="373" />
+        <source>Residual</source>
+        <translation>Residual</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="374" />
+        <source>Lag</source>
+        <translation>Lag</translation>
+    </message>
+    <message>
+        <source>Total</source>
+        <translation type="vanished">Total</translation>
+    </message>
+    <message>
+        <source>Columns</source>
+        <translation type="vanished">Columns</translation>
+    </message>
+    <message>
+        <source>Analysis date</source>
+        <translation type="vanished">Analysis date</translation>
+    </message>
+    <message>
+        <source>Applied test: {test}
+{roles}: {columns}</source>
+        <translation type="vanished">Applied test: {test}
+{roles}: {columns}</translation>
+    </message>
+    <message>
+        <source>Numeric column / grouping column</source>
+        <translation type="vanished">Numeric column / grouping column</translation>
+    </message>
+    <message>
+        <source>Row column / column column</source>
+        <translation type="vanished">Row column / column column</translation>
+    </message>
+    <message>
+        <source>Measurement columns (occasion order)</source>
+        <translation type="vanished">Measurement columns (occasion order)</translation>
+    </message>
+    <message>
+        <source>Group comparison</source>
+        <translation type="vanished">Group comparison</translation>
+    </message>
+    <message>
+        <source>Chi-square independence</source>
+        <translation type="vanished">Chi-square independence</translation>
+    </message>
+    <message>
+        <source>Paired comparison</source>
+        <translation type="vanished">Paired comparison</translation>
+    </message>
+    <message>
+        <source>Group summary</source>
+        <translation type="vanished">Group summary</translation>
+    </message>
+    <message>
+        <source>Contingency table</source>
+        <translation type="vanished">Contingency table</translation>
+    </message>
+    <message>
+        <source>Measurement summary</source>
+        <translation type="vanished">Measurement summary</translation>
+    </message>
+    <message>
+        <source>Applied method: {method}
+Applied columns: {columns}</source>
+        <translation type="vanished">Applied method: {method}
+Applied columns: {columns}</translation>
+    </message>
+    <message>
+        <source>Strongest correlations</source>
+        <translation type="vanished">Strongest correlations</translation>
+    </message>
+    <message>
+        <source>Matrix plot</source>
+        <translation type="vanished">Matrix plot</translation>
+    </message>
+    <message>
+        <source>Planned for a later milestone; no chart will be exported yet.</source>
+        <translation type="vanished">Planned for a later milestone; no chart will be exported yet.</translation>
+    </message>
+    <message>
+        <source>Scatterplots ({count} pair)</source>
+        <translation type="vanished">Scatterplots ({count} pair)</translation>
+    </message>
+    <message>
+        <source>Scatterplots ({count} pairs)</source>
+        <translation type="vanished">Scatterplots ({count} pairs)</translation>
+    </message>
+    <message>
+        <source>Excel exports the selected correlation table as a worksheet.</source>
+        <translation type="vanished">Excel exports the selected correlation table as a worksheet.</translation>
+    </message>
+    <message>
+        <source>CSV and binary exports contain exactly one correlation table.</source>
+        <translation type="vanished">CSV and binary exports contain exactly one correlation table.</translation>
     </message>
     <message>
         <source>Export contents</source>
@@ -386,926 +1424,157 @@ Applied columns: {columns}</translation></message>
     </message>
     <message>
         <source>Columns metadata</source>
-        <translation>Columns metadata</translation>
-    </message>
-    <message>
-        <source>Sample (first/last 10 rows)</source>
-        <translation>Sample (first/last 10 rows)</translation>
-    </message>
-    <message>
-        <source>The first/last sample is unavailable in this captured result.</source>
-        <translation>The first/last sample is unavailable in this captured result.</translation>
-    </message>
-    <message>
-        <source>Run Overview successfully before exporting.</source>
-        <translation>Run Overview successfully before exporting.</translation>
-    </message>
-    <message>
-        <source>This table is empty and cannot be exported.</source>
-        <translation>This table is empty and cannot be exported.</translation>
-    </message>
-    <message>
-        <source>Binary data file (Parquet / Feather / Pickle)</source>
-        <translation>Binary data file (Parquet / Feather / Pickle)</translation>
-    </message>
-    <message>
-        <source>Format</source>
-        <translation>Format</translation>
-    </message>
-    <message>
-        <source>Excel exports selected tables as separate sheets in one workbook.</source>
-        <translation>Excel exports selected tables as separate sheets in one workbook.</translation>
-    </message>
-    <message>
-        <source>Choose exactly one table for CSV or binary export. For binary files, choose Parquet, Feather or Pickle in the save dialog.</source>
-        <translation>Choose exactly one table for CSV or binary export. For binary files, choose Parquet, Feather or Pickle in the save dialog.</translation>
-    </message>
-    <message>
-        <source>Export the available Statistics tables and numeric-column charts.</source>
-        <translation>Export the available Statistics tables and numeric-column charts.</translation>
+        <translation type="vanished">Columns metadata</translation>
     </message>
     <message>
         <source>Continuous</source>
-        <translation>Continuous</translation>
+        <translation type="vanished">Continuous</translation>
     </message>
     <message>
         <source>Categorical</source>
-        <translation>Categorical</translation>
-    </message>
-    <message>
-        <source>Run Statistics successfully before exporting.</source>
-        <translation>Run Statistics successfully before exporting.</translation>
-    </message>
-    <message>
-        <source>This component is empty and cannot be exported.</source>
-        <translation>This component is empty and cannot be exported.</translation>
-    </message>
-    <message>
-        <source>Excel exports selected tables as separate sheets and charts on one Charts sheet.</source>
-        <translation>Excel exports selected tables as separate sheets and charts on one Charts sheet.</translation>
-    </message>
-    <message>
-        <source>Choose exactly one table for CSV or binary export. Charts are available only in Excel; uncheck Charts to continue.</source>
-        <translation>Choose exactly one table for CSV or binary export. Charts are available only in Excel; uncheck Charts to continue.</translation>
-    </message>
-    <message>
-        <source>Select at least one available component to export.</source>
-        <translation>Select at least one available component to export.</translation>
-    </message>
-    <message>
-        <source>Charts are available only in Excel. Uncheck Charts to continue.</source>
-        <translation>Charts are available only in Excel. Uncheck Charts to continue.</translation>
-    </message>
-    <message>
-        <source>Counts are numeric, and fractions range from 0 to 1.</source>
-        <translation>Counts are numeric, and fractions range from 0 to 1.</translation>
-    </message>
-    <message>
-        <source>Export analysis data</source>
-        <translation type="vanished" />
-    </message>
-    <message>
-        <source>Export results</source>
-        <translation type="vanished" />
-    </message>
-    <message>
-        <source>Planned export contents</source>
-        <translation type="vanished" />
-    </message>
-    <message>
-        <source>Summary / statistics tables</source>
-        <translation>Summary / statistics tables</translation>
+        <translation type="vanished">Categorical</translation>
     </message>
     <message>
         <source>Coefficients</source>
-        <translation>Coefficients</translation>
+        <translation type="vanished">Coefficients</translation>
     </message>
     <message>
         <source>Model metrics</source>
-        <translation>Model metrics</translation>
+        <translation type="vanished">Model metrics</translation>
     </message>
     <message>
         <source>Charts</source>
-        <translation>Charts</translation>
-    </message>
-    <message>
-        <source>Preview choice only. Availability will depend on the computed analysis.</source>
-        <translation type="vanished" />
-    </message>
-    <message>
-        <source>These are planned choices, not available outputs. Unsupported items will explain why they are unavailable.</source>
-        <translation type="vanished" />
-    </message>
-    <message>
-        <source>Excel workbook (.xlsx)</source>
-        <translation>Excel workbook (.xlsx)</translation>
-    </message>
-    <message>
-        <source>Planned format</source>
-        <translation type="vanished" />
-    </message>
-    <message>
-        <source>Standalone chart format</source>
-        <translation type="vanished" />
-    </message>
-    <message>
-        <source>Excel will contain tables and static chart images. Standalone charts can also be saved as PNG or SVG. The planned export includes all supported chart variants, not only the displayed chart.</source>
-        <translation type="vanished" />
-    </message>
-    <message>
-        <source>The analysis dataset will contain the rows used by the analysis. Predictions and residuals will be offered only where supported.</source>
-        <translation type="vanished" />
-    </message>
-    <message>
-        <source>Export</source>
-        <translation>Export</translation>
-    </message>
-    <message>
-        <source>Rate ratio</source>
-        <translation>Rate ratio</translation>
-    </message>
-    <message>
-        <source>Hazard ratio</source>
-        <translation>Hazard ratio</translation>
-    </message>
-    <message>
-        <source>{name}, 95% CI lower</source>
-        <translation>{name}, 95% CI lower</translation>
-    </message>
-    <message>
-        <source>{name}, 95% CI upper</source>
-        <translation>{name}, 95% CI upper</translation>
-    </message>
-    <message>
-        <source>Term</source>
-        <translation>Term</translation>
-    </message>
-    <message>
-        <source>Estimate</source>
-        <translation>Estimate</translation>
-    </message>
-    <message>
-        <source>Std. error</source>
-        <translation>Std. error</translation>
-    </message>
-    <message>
-        <source>t statistic</source>
-        <translation>t statistic</translation>
-    </message>
-    <message>
-        <source>z statistic</source>
-        <translation>z statistic</translation>
-    </message>
-    <message>
-        <source>VIF</source>
-        <translation>VIF</translation>
-    </message>
-    <message>
-        <source>Significant at p &lt; {alpha}</source>
-        <translation>Significant at p &lt; {alpha}</translation>
-    </message>
-    <message>
-        <source>(Intercept)</source>
-        <translation>(Intercept)</translation>
-    </message>
-    <message>
-        <source>Metric</source>
-        <translation>Metric</translation>
-    </message>
-    <message>
-        <source>Value</source>
-        <translation>Value</translation>
-    </message>
-    <message>
-        <source>Rows used</source>
-        <translation>Rows used</translation>
-    </message>
-    <message>
-        <source>Rows dropped because of missing values</source>
-        <translation>Rows dropped because of missing values</translation>
-    </message>
-    <message>
-        <source>R²</source>
-        <translation>R²</translation>
-    </message>
-    <message>
-        <source>Adjusted R²</source>
-        <translation>Adjusted R²</translation>
-    </message>
-    <message>
-        <source>F statistic</source>
-        <translation>F statistic</translation>
-    </message>
-    <message>
-        <source>F-test p-value</source>
-        <translation>F-test p-value</translation>
-    </message>
-    <message>
-        <source>Model degrees of freedom</source>
-        <translation>Model degrees of freedom</translation>
-    </message>
-    <message>
-        <source>Residual degrees of freedom</source>
-        <translation>Residual degrees of freedom</translation>
-    </message>
-    <message>
-        <source>RMSE</source>
-        <translation>RMSE</translation>
-    </message>
-    <message>
-        <source>AIC</source>
-        <translation>AIC</translation>
-    </message>
-    <message>
-        <source>Breusch-Pagan LM</source>
-        <translation>Breusch-Pagan LM</translation>
-    </message>
-    <message>
-        <source>Breusch-Pagan p-value</source>
-        <translation>Breusch-Pagan p-value</translation>
-    </message>
-    <message>
-        <source>Jarque-Bera JB</source>
-        <translation>Jarque-Bera JB</translation>
-    </message>
-    <message>
-        <source>Jarque-Bera p-value</source>
-        <translation>Jarque-Bera p-value</translation>
-    </message>
-    <message>
-        <source>Durbin-Watson</source>
-        <translation>Durbin-Watson</translation>
-    </message>
-    <message>
-        <source>Largest VIF</source>
-        <translation>Largest VIF</translation>
-    </message>
-    <message>
-        <source>Log-likelihood</source>
-        <translation>Log-likelihood</translation>
-    </message>
-    <message>
-        <source>Null-model log-likelihood</source>
-        <translation>Null-model log-likelihood</translation>
-    </message>
-    <message>
-        <source>McFadden pseudo R²</source>
-        <translation>McFadden pseudo R²</translation>
-    </message>
-    <message>
-        <source>AUC (in-sample)</source>
-        <translation>AUC (in-sample)</translation>
-    </message>
-    <message>
-        <source>Pearson dispersion</source>
-        <translation>Pearson dispersion</translation>
-    </message>
-    <message>
-        <source>NB2 alpha</source>
-        <translation>NB2 alpha</translation>
-    </message>
-    <message>
-        <source>Events</source>
-        <translation>Events</translation>
-    </message>
-    <message>
-        <source>Censored</source>
-        <translation>Censored</translation>
-    </message>
-    <message>
-        <source>Export the coefficients, model metrics and charts of the applied model, not the original dataset.</source>
-        <translation>Export the coefficients, model metrics and charts of the applied model, not the original dataset.</translation>
+        <translation type="vanished">Charts</translation>
     </message>
     <message>
         <source>Applied model: {model}
 {role}: {outcome}
 Predictors: {predictors}</source>
-        <translation>Applied model: {model}
+        <translation type="vanished">Applied model: {model}
 {role}: {outcome}
 Predictors: {predictors}</translation>
     </message>
     <message>
         <source>Duration / event</source>
-        <translation>Duration / event</translation>
+        <translation type="vanished">Duration / event</translation>
     </message>
     <message>
         <source>Target</source>
-        <translation>Target</translation>
+        <translation type="vanished">Target</translation>
     </message>
     <message>
         <source>Linear regression</source>
-        <translation>Linear regression</translation>
+        <translation type="vanished">Linear regression</translation>
     </message>
     <message>
         <source>Logistic regression</source>
-        <translation>Logistic regression</translation>
+        <translation type="vanished">Logistic regression</translation>
     </message>
     <message>
         <source>Poisson regression</source>
-        <translation>Poisson regression</translation>
+        <translation type="vanished">Poisson regression</translation>
     </message>
     <message>
         <source>Negative binomial regression</source>
-        <translation>Negative binomial regression</translation>
+        <translation type="vanished">Negative binomial regression</translation>
     </message>
     <message>
         <source>Cox proportional-hazards regression</source>
-        <translation>Cox proportional-hazards regression</translation>
-    </message>
-    <message>
-        <source>Apply a regression model successfully before exporting.</source>
-        <translation>Apply a regression model successfully before exporting.</translation>
-    </message>
-    <message>
-        <source>Fit statistics and diagnostics shown in the model summary.</source>
-        <translation>Fit statistics and diagnostics shown in the model summary.</translation>
-    </message>
-    <message>
-        <source>Export the displayed outlier tables and charts of the applied screening, not the original dataset.</source>
-        <translation>Export the displayed outlier tables and charts of the applied screening, not the original dataset.</translation>
-    </message>
-    <message>
-        <source>Apply an outlier screening successfully before exporting.</source>
-        <translation>Apply an outlier screening successfully before exporting.</translation>
-    </message>
-    <message>
-        <source>The displayed rows, at most 100, most extreme first.</source>
-        <translation>The displayed rows, at most 100, most extreme first.</translation>
+        <translation type="vanished">Cox proportional-hazards regression</translation>
     </message>
     <message>
         <source>Applied method: {method}, threshold {threshold}</source>
-        <translation>Applied method: {method}, threshold {threshold}</translation>
+        <translation type="vanished">Applied method: {method}, threshold {threshold}</translation>
     </message>
     <message>
         <source>Selected column: {column}</source>
-        <translation>Selected column: {column}</translation>
+        <translation type="vanished">Selected column: {column}</translation>
     </message>
     <message>
         <source>Applied method: {method}
 Features: {features}</source>
-        <translation>Applied method: {method}
+        <translation type="vanished">Applied method: {method}
 Features: {features}</translation>
     </message>
     <message>
         <source>Column summary</source>
-        <translation>Column summary</translation>
+        <translation type="vanished">Column summary</translation>
     </message>
     <message>
         <source>Column details</source>
-        <translation>Column details</translation>
+        <translation type="vanished">Column details</translation>
     </message>
     <message>
         <source>Model summary</source>
-        <translation>Model summary</translation>
-    </message>
-    <message>
-        <source>Potential outliers</source>
-        <translation>Potential outliers</translation>
+        <translation type="vanished">Model summary</translation>
     </message>
     <message>
         <source>Charts ({count} column)</source>
-        <translation>Charts ({count} column)</translation>
+        <translation type="vanished">Charts ({count} column)</translation>
     </message>
     <message>
         <source>Charts ({count} columns)</source>
-        <translation>Charts ({count} columns)</translation>
+        <translation type="vanished">Charts ({count} columns)</translation>
     </message>
     <message>
-        <source>IQR (Tukey&apos;s fences)</source>
-        <translation>IQR (Tukey&apos;s fences)</translation>
+        <source>IQR (Tukey's fences)</source>
+        <translation type="vanished">IQR (Tukey's fences)</translation>
     </message>
     <message>
         <source>Z-score</source>
-        <translation>Z-score</translation>
+        <translation type="vanished">Z-score</translation>
     </message>
     <message>
         <source>Modified Z-score</source>
-        <translation>Modified Z-score</translation>
+        <translation type="vanished">Modified Z-score</translation>
     </message>
     <message>
         <source>Isolation Forest</source>
-        <translation>Isolation Forest</translation>
+        <translation type="vanished">Isolation Forest</translation>
     </message>
     <message>
         <source>Local Outlier Factor</source>
-        <translation>Local Outlier Factor</translation>
-    </message>
-    <message>
-        <source>Threshold</source>
-        <translation>Threshold</translation>
-    </message>
-    <message>
-        <source>Values</source>
-        <translation>Values</translation>
-    </message>
-    <message>
-        <source>Missing</source>
-        <translation>Missing</translation>
-    </message>
-    <message>
-        <source>Potential outlier share</source>
-        <translation>Potential outlier share</translation>
-    </message>
-    <message>
-        <source>Low potential outliers</source>
-        <translation>Low potential outliers</translation>
-    </message>
-    <message>
-        <source>High potential outliers</source>
-        <translation>High potential outliers</translation>
-    </message>
-    <message>
-        <source>Lower fence</source>
-        <translation>Lower fence</translation>
-    </message>
-    <message>
-        <source>Upper fence</source>
-        <translation>Upper fence</translation>
-    </message>
-    <message>
-        <source>Q1</source>
-        <translation>Q1</translation>
-    </message>
-    <message>
-        <source>Q3</source>
-        <translation>Q3</translation>
-    </message>
-    <message>
-        <source>IQR</source>
-        <translation>IQR</translation>
-    </message>
-    <message>
-        <source>Mean</source>
-        <translation>Mean</translation>
-    </message>
-    <message>
-        <source>Standard deviation</source>
-        <translation>Standard deviation</translation>
-    </message>
-    <message>
-        <source>Median</source>
-        <translation>Median</translation>
-    </message>
-    <message>
-        <source>MAD</source>
-        <translation>MAD</translation>
-    </message>
-    <message>
-        <source>Features</source>
-        <translation>Features</translation>
-    </message>
-    <message>
-        <source>Expected outlier fraction</source>
-        <translation>Expected outlier fraction</translation>
-    </message>
-    <message>
-        <source>LOF neighbors</source>
-        <translation>LOF neighbors</translation>
-    </message>
-    <message>
-        <source>Total rows</source>
-        <translation>Total rows</translation>
-    </message>
-    <message>
-        <source>Rows dropped because of missing or infinite values</source>
-        <translation>Rows dropped because of missing or infinite values</translation>
-    </message>
-    <message>
-        <source>Inliers</source>
-        <translation>Inliers</translation>
-    </message>
-    <message>
-        <source>Status</source>
-        <translation>Status</translation>
-    </message>
-    <message>
-        <source>Export the cluster sizes, model summary and chart of the applied clustering, not the original dataset.</source>
-        <translation>Export the cluster sizes, model summary and chart of the applied clustering, not the original dataset.</translation>
-    </message>
-    <message>
-        <source>Apply a clustering successfully before exporting.</source>
-        <translation>Apply a clustering successfully before exporting.</translation>
-    </message>
-    <message>
-        <source>Settings, row counts and silhouette with the displayed model comments.</source>
-        <translation>Settings, row counts and silhouette with the displayed model comments.</translation>
+        <translation type="vanished">Local Outlier Factor</translation>
     </message>
     <message>
         <source>K-Means</source>
-        <translation>K-Means</translation>
+        <translation type="vanished">K-Means</translation>
     </message>
     <message>
         <source>DBSCAN</source>
-        <translation>DBSCAN</translation>
+        <translation type="vanished">DBSCAN</translation>
     </message>
     <message>
         <source>Agglomerative</source>
-        <translation>Agglomerative</translation>
+        <translation type="vanished">Agglomerative</translation>
     </message>
     <message>
         <source>Cluster sizes</source>
-        <translation>Cluster sizes</translation>
-    </message>
-    <message>
-        <source>Number of clusters</source>
-        <translation>Number of clusters</translation>
-    </message>
-    <message>
-        <source>Neighborhood radius (eps)</source>
-        <translation>Neighborhood radius (eps)</translation>
-    </message>
-    <message>
-        <source>Minimum samples</source>
-        <translation>Minimum samples</translation>
-    </message>
-    <message>
-        <source>Clusters found</source>
-        <translation>Clusters found</translation>
-    </message>
-    <message>
-        <source>Noise rows</source>
-        <translation>Noise rows</translation>
-    </message>
-    <message>
-        <source>Silhouette score</source>
-        <translation>Silhouette score</translation>
-    </message>
-    <message>
-        <source>Cluster</source>
-        <translation>Cluster</translation>
-    </message>
-    <message>
-        <source>Rows</source>
-        <translation>Rows</translation>
-    </message>
-    <message>
-        <source>Share</source>
-        <translation>Share</translation>
+        <translation type="vanished">Cluster sizes</translation>
     </message>
     <message>
         <source>Applied features: {features}</source>
-        <translation>Applied features: {features}</translation>
+        <translation type="vanished">Applied features: {features}</translation>
     </message>
     <message>
         <source>Feature loadings</source>
-        <translation>Feature loadings</translation>
+        <translation type="vanished">Feature loadings</translation>
     </message>
     <message>
         <source>Explained variance</source>
-        <translation>Explained variance</translation>
-    </message>
-    <message>
-        <source>Apply a PCA successfully before exporting.</source>
-        <translation>Apply a PCA successfully before exporting.</translation>
-    </message>
-    <message>
-        <source>Variance, share and cumulative share per component, as in the scree plot.</source>
-        <translation>Variance, share and cumulative share per component, as in the scree plot.</translation>
-    </message>
-    <message>
-        <source>Feature and row counts with the displayed model comments.</source>
-        <translation>Feature and row counts with the displayed model comments.</translation>
-    </message>
-    <message>
-        <source>Export the feature loadings, explained variance, model summary and charts of the applied PCA, not the original dataset.</source>
-        <translation>Export the feature loadings, explained variance, model summary and charts of the applied PCA, not the original dataset.</translation>
-    </message>
-    <message>
-        <source>Feature</source>
-        <translation>Feature</translation>
-    </message>
-    <message>
-        <source>Component</source>
-        <translation>Component</translation>
-    </message>
-    <message>
-        <source>Variance</source>
-        <translation>Variance</translation>
-    </message>
-    <message>
-        <source>Cumulative share</source>
-        <translation>Cumulative share</translation>
+        <translation type="vanished">Explained variance</translation>
     </message>
     <message>
         <source>Applied series: {value} by {time}</source>
-        <translation>Applied series: {value} by {time}</translation>
+        <translation type="vanished">Applied series: {value} by {time}</translation>
     </message>
     <message>
         <source>Series</source>
-        <translation>Series</translation>
+        <translation type="vanished">Series</translation>
     </message>
     <message>
         <source>Autocorrelation</source>
-        <translation>Autocorrelation</translation>
-    </message>
-    <message>
-        <source>Apply a time series successfully before exporting.</source>
-        <translation>Apply a time series successfully before exporting.</translation>
-    </message>
-    <message>
-        <source>Source rows</source>
-        <translation>Source rows</translation>
-    </message>
-    <message>
-        <source>Invalid rows dropped</source>
-        <translation>Invalid rows dropped</translation>
-    </message>
-    <message>
-        <source>Duplicate rows averaged</source>
-        <translation>Duplicate rows averaged</translation>
-    </message>
-    <message>
-        <source>Time points</source>
-        <translation>Time points</translation>
-    </message>
-    <message>
-        <source>Seasonal period</source>
-        <translation>Seasonal period</translation>
-    </message>
-    <message>
-        <source>Timestamp</source>
-        <translation>Timestamp</translation>
-    </message>
-    <message>
-        <source>Trend</source>
-        <translation>Trend</translation>
-    </message>
-    <message>
-        <source>Seasonal</source>
-        <translation>Seasonal</translation>
-    </message>
-    <message>
-        <source>Residual</source>
-        <translation>Residual</translation>
-    </message>
-    <message>
-        <source>Lag</source>
-        <translation>Lag</translation>
-    </message>
-    <message>
-        <source>One row per time point after averaging duplicate timestamps and any resampling, with the decomposition when available.</source>
-        <translation>One row per time point after averaging duplicate timestamps and any resampling, with the decomposition when available.</translation>
-    </message>
-    <message>
-        <source>Row diagnostics and seasonal period with the displayed model comments.</source>
-        <translation>Row diagnostics and seasonal period with the displayed model comments.</translation>
-    </message>
-    <message>
-        <source>The series and, when available, the autocorrelation and decomposition.</source>
-        <translation>The series and, when available, the autocorrelation and decomposition.</translation>
-    </message>
-    <message>
-        <source>Export the prepared series, autocorrelation, model summary and charts of the applied time series, not the original dataset.</source>
-        <translation>Export the prepared series, autocorrelation, model summary and charts of the applied time series, not the original dataset.</translation>
-    </message>
-</context><context>
-    <name>ReportPage</name>
-    <message>
-        <source>Preview</source>
-        <translation>Preview</translation>
-    </message>
-    <message>
-        <source>Report details</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Enter a report title</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Describe the purpose of this report</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Title</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Description</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Selected analyses</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Move up</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Move down</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Generate HTML report</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>No analyses have been added to this report.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Edit entry</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Edit report entry</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Save changes</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Remove from report</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Include in report</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Add analyses, arrange the report, then generate an HTML file.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>HTML generation will be available in the next step.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>{rows} rows x {columns} columns - {date}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Overview</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Statistics</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Hypothesis Tests</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Correlation</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Regression</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Outliers</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Clustering</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>PCA</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Time Series</source>
-        <translation type="unfinished" />
-    </message>
-</context><context>
-    <name>ReportNotesDialog</name>
-    <message>
-        <source>Add to report</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Optional notes about this analysis</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Notes</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Edit report entry</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Save changes</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Remove from report</source>
-        <translation type="unfinished" />
-    </message>
-    <message><source>Review report result</source><translation>Review report result</translation></message>
-    <message><source>Stored and incoming configuration</source><translation>Stored and incoming configuration</translation></message>
-    <message><source>Stored result</source><translation>Stored result</translation></message>
-    <message><source>Incoming result</source><translation>Incoming result</translation></message>
-    <message><source>Unavailable stored selections: {components}</source><translation>Unavailable stored selections: {components}</translation></message>
-    <message>
-        <source>Include in report</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Summary</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Columns metadata</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Sample (first 100 rows)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Continuous</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Categorical</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Charts</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Group summary</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Contingency table</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Measurement summary</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Test results</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Strongest correlations</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Matrix plot</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Scatterplots</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Coefficients</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Model metrics</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Column summary</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Column details</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Potential outliers</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Cluster sizes</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Feature loadings</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Explained variance</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Model summary</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Series</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Autocorrelation</source>
-        <translation type="unfinished" />
+        <translation type="vanished">Autocorrelation</translation>
     </message>
 </context><context>
     <name>AsyncOperationController</name>
@@ -1452,349 +1721,342 @@ Please see logs for more information.</source>
     </message>
 </context><context>
     <name>ChiSquareView</name>
-    <message><source>Row</source><translation>Row</translation></message>
-    <message><source>Column</source><translation>Column</translation></message>
-    <message><source>Group</source><translation>Group</translation></message>
-    <message><source>Contingency table</source><translation>Contingency table</translation></message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="88" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="87" />
         <source>A chi-square test needs two categorical columns, each with between {minimum} and {maximum} distinct values.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="92" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="91" />
         <source>Select two different columns to test for independence.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="93" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="92" />
         <source>Each selected column needs at least {minimum} categories with valid data.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="96" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="95" />
         <source>A selected column has more than {maximum} categories. Choose a column with fewer categories.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="111" />
-        <source>Observed counts</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="119" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="123" />
         <source>Observed counts: {rows} (rows) by {columns} (columns)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="132" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="136" />
         <source>Total</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="181" />
-        <source>Adjusted residuals</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="215" />
+        <location filename="..\..\services\analysis\report.py" line="2381" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="209" />
         <source>Adjusted standardized residuals</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="249" />
-        <source>Test results</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="273" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="300" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="236" />
         <source>&lt;b&gt;Pearson's chi-square test&lt;/b&gt; (with Yates' continuity correction):</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="275" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="302" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="238" />
         <source>&lt;b&gt;Pearson's chi-square test&lt;/b&gt;:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="279" />
-        <source>χ² = {chi2}, df = {df}, p = {p}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="284" />
-        <source>Cramér's V: {v}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="285" />
-        <source>N = {n}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="291" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="318" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="247" />
         <source>&lt;b&gt;Fisher's exact test&lt;/b&gt; (exact; useful when expected counts are small):</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="292" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="306" />
+        <source>χ² = {chi2}, df = {df}, p = {p}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="311" />
+        <source>Cramér's V: {v}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="312" />
+        <source>N = {n}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="319" />
         <source>Odds ratio = {odds_ratio}, p = {p}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="304" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="331" />
         <source>→ p &lt; 0.05: the two variables appear to be associated (not independent).</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="305" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="332" />
         <source>→ p ≥ 0.05: no significant association between the two variables was found.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="309" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="336" />
         <source>Cells with an adjusted residual beyond ±{threshold} deviate significantly from independence: red cells occur more often than expected, blue cells less often.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="334" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="362" />
         <source>⚠ {fraction} of expected counts are below {low} and the smallest expected count is {minimum} (the chi-square approximation needs at most {max_fraction} below {low} and none below {floor}). The chi-square p-value may be unreliable.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="346" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="374" />
         <source>Prefer Fisher's exact test above.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="347" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="375" />
         <source>Consider merging sparse categories.</source>
         <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="239" />
+        <source>Contingency table</source>
+        <translation>Contingency table</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation type="vanished">Row</translation>
+    </message>
+    <message>
+        <source>Column</source>
+        <translation type="vanished">Column</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation type="vanished">Group</translation>
     </message>
 </context><context>
     <name>ClusteringConfigWidget</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="60" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="71" />
         <source>Method</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="61" />
-        <source>Standardize features</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="64" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="78" />
         <source>Scale each selected feature to zero mean and unit variance before clustering.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="86" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="100" />
         <source>Parameters</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="88" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="102" />
         <source>Number of clusters</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="89" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="103" />
         <source>Neighborhood radius (eps)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="90" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="104" />
         <source>Minimum samples</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="94" />
-        <source>Features</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="106" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="123" />
         <source>Select all</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="107" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="124" />
         <source>Clear</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="115" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="134" />
         <source>Apply</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="129" />
-        <source>K-Means</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="130" />
-        <source>DBSCAN</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="131" />
-        <source>Agglomerative</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="188" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="221" />
         <source>{count} selected.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="191" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="224" />
         <source>{count} selected - select at least {minimum}.</source>
         <translation type="unfinished" />
     </message>
 </context><context>
+    <name>ClusteringPresentation</name>
+    <message>
+        <source>Clustering</source>
+        <translation type="vanished">Clustering</translation>
+    </message>
+    <message>
+        <source>{category} — {method}</source>
+        <translation type="vanished">{category} — {method}</translation>
+    </message>
+    <message>
+        <source>K-Means</source>
+        <translation type="vanished">K-Means</translation>
+    </message>
+    <message>
+        <source>DBSCAN</source>
+        <translation type="vanished">DBSCAN</translation>
+    </message>
+    <message>
+        <source>Agglomerative</source>
+        <translation type="vanished">Agglomerative</translation>
+    </message>
+    <message>
+        <source>Cluster sizes</source>
+        <translation type="vanished">Cluster sizes</translation>
+    </message>
+    <message>
+        <source>Model summary</source>
+        <translation type="vanished">Model summary</translation>
+    </message>
+    <message>
+        <source>Cluster projection</source>
+        <translation type="vanished">Cluster projection</translation>
+    </message>
+    <message>
+        <source>Cluster projection (internal PCA)</source>
+        <translation type="vanished">Cluster projection (internal PCA)</translation>
+    </message>
+    <message>
+        <source>Number of clusters:</source>
+        <translation type="vanished">Number of clusters:</translation>
+    </message>
+    <message>
+        <source>Neighborhood radius (eps):</source>
+        <translation type="vanished">Neighborhood radius (eps):</translation>
+    </message>
+    <message>
+        <source>Minimum samples:</source>
+        <translation type="vanished">Minimum samples:</translation>
+    </message>
+</context><context>
     <name>ClusteringView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="74" />
-        <source>A clustering analysis needs at least {minimum} numeric columns.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="77" />
-        <source>Select at least {minimum} features.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="80" />
-        <source>Choose two or more different numeric columns.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="81" />
-        <source>At least {minimum} complete rows are needed for clustering.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="84" />
-        <source>The selected features have no variation across the complete rows.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="85" />
-        <source>Choose a number of clusters that is valid for the complete rows.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="88" />
-        <source>Choose a valid DBSCAN neighborhood radius.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="89" />
-        <source>Choose a valid DBSCAN minimum sample count.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="97" />
-        <source>K-Means</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="99" />
-        <source>DBSCAN</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="101" />
-        <source>Agglomerative</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="105" />
-        <source>standardized</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="105" />
-        <source>not standardized</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="106" />
-        <source>&lt;b&gt;{method}&lt;/b&gt; on {features} features ({scaling}). Used {used} of {total} rows ({dropped} dropped because a selected value was missing or infinite).</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="118" />
-        <source>Silhouette score: not available for this clustering.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="120" />
-        <source>Silhouette score: {score}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="122" />
-        <source>&lt;i&gt;The plot shows a deterministic sample of {count} rows.&lt;/i&gt;</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="135" />
-        <source>Model comments</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="144" />
-        <source>Cluster projection</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="153" />
-        <source>Cluster sizes</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="203" />
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="172" />
-        <source>Noise</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="197" />
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="172" />
-        <source>Cluster {number}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="177" />
-        <source>Cluster projection (internal PCA)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="178" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="82" />
         <source>PC1</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="179" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="83" />
         <source>PC2</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="188" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="228" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="84" />
+        <source>Cluster {number}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="234" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="85" />
+        <source>Noise</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="98" />
+        <source>Features: {columns}</source>
+        <translation>Features: {columns}</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="108" />
+        <source>A clustering analysis needs at least {minimum} numeric columns.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="111" />
+        <source>Select at least {minimum} features.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="114" />
+        <source>Choose two or more different numeric columns.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="115" />
+        <source>At least {minimum} complete rows are needed for clustering.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="118" />
+        <source>The selected features have no variation across the complete rows.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="119" />
+        <source>Choose a number of clusters that is valid for the complete rows.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="122" />
+        <source>Choose a valid DBSCAN neighborhood radius.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="123" />
+        <source>Choose a valid DBSCAN minimum sample count.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="133" />
+        <source>standardized</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="133" />
+        <source>not standardized</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="134" />
+        <source>&lt;b&gt;{method}&lt;/b&gt; on {features} features ({scaling}). Used {used} of {total} rows ({dropped} dropped because a selected value was missing or infinite).</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="146" />
+        <source>Silhouette score: not available for this clustering.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="148" />
+        <source>Silhouette score: {score}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="155" />
+        <source>&lt;i&gt;The plot shows a deterministic sample of {count} rows.&lt;/i&gt;</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="219" />
         <source>Cluster</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="188" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="219" />
         <source>Rows</source>
         <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Features: {columns}</source>
-        <translation>Features: {columns}</translation>
     </message>
 </context><context>
     <name>ColumnComboBox</name>
@@ -2431,255 +2693,238 @@ Please see logs for more information.</source>
 </context><context>
     <name>CorrelationConfigWidget</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="84" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="75" />
         <source>Method</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="110" />
-        <source>Pearson</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="111" />
-        <source>Spearman</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="112" />
-        <source>Kendall's tau-b</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="118" />
-        <source>Columns in matrix</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="132" />
-        <source>Select all</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="133" />
-        <source>Clear</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="142" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="80" />
         <source>Apply</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="216" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="109" />
+        <source>Columns in matrix</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="123" />
+        <source>Select all</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="124" />
+        <source>Clear</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="184" />
         <source>{count} selected - select at least {minimum}.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="220" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="188" />
         <source>{count} selected - select at most {maximum}.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="223" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_config.py" line="191" />
         <source>{count} selected (at most {maximum}).</source>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>CorrelationView</name>
-    <message><source>Correlation</source><translation>Correlation</translation></message>
-    <message><source>{category} — {method}</source><translation>{category} — {method}</translation></message>
-    <message><source>Columns:</source><translation>Columns:</translation></message>
-    <message><source>Correlation matrix</source><translation>Correlation matrix</translation></message>
-    <message><source>{x} vs {y}</source><translation>{x} vs {y}</translation></message>
-    <message><source>Strongest correlations</source><translation>Strongest correlations</translation></message>
-    <message><source>Matrix plot</source><translation>Matrix plot</translation></message>
-    <message><source>Scatterplots</source><translation>Scatterplots</translation></message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="115" />
-        <source>Correlation plots</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="126" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="159" />
         <source>Pair details</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="193" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="256" />
         <source>A correlation analysis needs at least {minimum} numeric columns.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="196" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="259" />
         <source>Select at least {minimum} columns.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="199" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="262" />
         <source>Select at most {maximum} columns.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="202" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="265" />
         <source>Choose two or more different numeric columns.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="203" />
+        <location filename="..\..\services\analysis\report.py" line="2411" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="266" />
         <source>Fewer than {minimum} rows have values in both columns, so no correlation can be computed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="206" />
+        <location filename="..\..\services\analysis\report.py" line="2415" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="269" />
         <source>At least one of the columns is constant over the rows with values in both, so no correlation can be computed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="217" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="280" />
         <source>r</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="219" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="282" />
         <source>rho</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="221" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="284" />
         <source>tau</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="227" />
-        <source>Pearson</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="229" />
-        <source>Spearman</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="231" />
-        <source>Kendall's tau-b</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="379" />
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="237" />
+        <location filename="..\..\services\analysis\report.py" line="1371" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="439" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="294" />
         <source>N/A</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="239" />
+        <location filename="..\..\services\analysis\report.py" line="1365" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="296" />
         <source>Negligible</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="241" />
+        <location filename="..\..\services\analysis\report.py" line="1366" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="298" />
         <source>Weak</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="243" />
+        <location filename="..\..\services\analysis\report.py" line="1367" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="300" />
         <source>Moderate</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="245" />
+        <location filename="..\..\services\analysis\report.py" line="1368" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="302" />
         <source>Strong</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="273" />
-        <source>{method} correlation</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="298" />
-        <source>&lt;b&gt;Strongest correlations&lt;/b&gt;</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="306" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="364" />
         <source>Pairs are ranked by absolute coefficient. * marks pairs that are significant (p &lt; {alpha}) after Holm adjustment for {count} tests.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="321" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="381" />
         <source>Variable 1</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="322" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="382" />
         <source>Variable 2</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="324" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="384" />
         <source>{confidence}% CI</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="325" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="385" />
         <source>p</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="326" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="386" />
         <source>Holm p</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="327" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="387" />
         <source>n</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="328" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="388" />
         <source>Strength</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="380" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="440" />
         <source>{low} to {high}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="450" />
-        <source>&lt;b&gt;{x}&lt;/b&gt; vs &lt;b&gt;{y}&lt;/b&gt; ({method})</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="453" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="509" />
         <source>{symbol} = {value} ({strength})</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="458" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="514" />
         <source>{confidence}% CI: {interval}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="461" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="517" />
         <source>p = {p}, n = {n}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="463" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="519" />
         <source>Least-squares line: slope {slope}, intercept {intercept}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="470" />
+        <location filename="..\..\services\analysis\report.py" line="2402" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="526" />
         <source>The line is a linear fit shown for reference. {method} measures monotonic, not necessarily linear, association.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="478" />
+        <location filename="..\..\services\analysis\report.py" line="2407" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="534" />
         <source>Showing a random sample of {shown} of {total} points. Statistics use all points.</source>
         <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Correlation</source>
+        <translation type="vanished">Correlation</translation>
+    </message>
+    <message>
+        <source>{category} — {method}</source>
+        <translation type="vanished">{category} — {method}</translation>
+    </message>
+    <message>
+        <source>Columns:</source>
+        <translation type="vanished">Columns:</translation>
+    </message>
+    <message>
+        <source>Correlation matrix</source>
+        <translation type="vanished">Correlation matrix</translation>
+    </message>
+    <message>
+        <source>{x} vs {y}</source>
+        <translation type="vanished">{x} vs {y}</translation>
+    </message>
+    <message>
+        <source>Strongest correlations</source>
+        <translation type="vanished">Strongest correlations</translation>
+    </message>
+    <message>
+        <source>Matrix plot</source>
+        <translation type="vanished">Matrix plot</translation>
+    </message>
+    <message>
+        <source>Scatterplots</source>
+        <translation type="vanished">Scatterplots</translation>
     </message>
 </context><context>
     <name>DateTimeConversion</name>
@@ -3447,82 +3692,229 @@ Continue?</source>
 </context><context>
     <name>ExpoStudio</name>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="510" />
+        <location filename="..\..\app\expo_studio.py" line="512" />
         <location filename="..\..\app\expo_studio.py" line="115" />
         <source>Expo studio</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="513" />
+        <location filename="..\..\app\expo_studio.py" line="515" />
         <location filename="..\..\app\expo_studio.py" line="172" />
         <source>Database connections</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="514" />
+        <location filename="..\..\app\expo_studio.py" line="516" />
         <location filename="..\..\app\expo_studio.py" line="195" />
         <source>Files</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="515" />
+        <location filename="..\..\app\expo_studio.py" line="517" />
         <location filename="..\..\app\expo_studio.py" line="215" />
         <source>REST connections</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="442" />
+        <location filename="..\..\app\expo_studio.py" line="444" />
         <source>Logg settings reloaded.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="455" />
+        <location filename="..\..\app\expo_studio.py" line="457" />
         <source>Settings reloaded.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="555" />
+        <location filename="..\..\app\expo_studio.py" line="557" />
         <source>No active jobs to cancel.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="571" />
+        <location filename="..\..\app\expo_studio.py" line="573" />
         <source>Cancelling active jobs…</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="604" />
+        <location filename="..\..\app\expo_studio.py" line="606" />
         <source>Confirm exit</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\app\expo_studio.py" line="605" />
+        <location filename="..\..\app\expo_studio.py" line="607" />
         <source>Do you want to quit the application?</source>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>ExportController</name>
-    <message><source>Generate HTML report</source><translation>Generate HTML report</translation></message>
-    <message><source>Generating HTML report…</source><translation>Generating HTML report…</translation></message>
-    <message><source>Replace existing report?</source><translation>Replace existing report?</translation></message>
-    <message><source>The file already exists. Replace it?
-
-{path}</source><translation>The file already exists. Replace it?
-
-{path}</translation></message>
-    <message><source>Report saved</source><translation>Report saved</translation></message>
-    <message><source>The report was saved, but could not be opened in the default browser.
-
-Saved to:
-{path}</source><translation>The report was saved, but could not be opened in the default browser.
-
-Saved to:
-{path}</translation></message>
     <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="72" />
+        <source>No dataset</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="73" />
+        <source>There is no dataset to export.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="74" />
+        <source>There is no dataset to profile.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="77" />
+        <source>Export data to CSV</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="78" />
+        <source>CSV files (*.csv)</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="81" />
+        <source>Export data to Excel</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="82" />
+        <source>Excel files (*.xlsx)</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="83" />
+        <source>Supply either a DataFrame or named sheets, not both.</source>
+        <translation>Supply either a DataFrame or named sheets, not both.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="84" />
+        <source>Invalid Excel workbook: {reason}</source>
+        <translation>Invalid Excel workbook: {reason}</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="87" />
+        <source>Export data to binary data file</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="88" />
+        <source>All data files (*.df *.feather *.ft *.parquet);;Pickle (*.df);;Feather (*.feather *.ft);;Parquet (*.parquet)</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="93" />
+        <source>Generate data profile report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="114" />
+        <location filename="..\..\workbench\controllers\export_controller.py" line="94" />
+        <source>HTML files (*.html)</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="95" />
+        <source>Generating data profile report {title}…</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="96" />
+        <source>Generate HTML report</source>
+        <translation>Generate HTML report</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="97" />
+        <source>Generating HTML report…</source>
+        <translation>Generating HTML report…</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="98" />
+        <source>Replace existing report?</source>
+        <translation>Replace existing report?</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="99" />
+        <source>The file already exists. Replace it?
+
+{path}</source>
+        <translation>The file already exists. Replace it?
+
+{path}</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="100" />
+        <source>Report saved</source>
+        <translation>Report saved</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="101" />
+        <source>The report was saved, but could not be opened in the default browser.
+
+Saved to:
+{path}</source>
+        <translation>The report was saved, but could not be opened in the default browser.
+
+Saved to:
+{path}</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="106" />
+        <source>Multiple datasets open</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="107" />
+        <source>Multiple datasets are open. What do you want to profile?</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="108" />
+        <source>Active tab: {profile_kind}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="109" />
+        <source>All tabs: {comparison_kind}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="112" />
+        <source>Generate data profile comparison report</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="113" />
+        <source>_comparison.html</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="115" />
+        <source>Generating data profile comparison report with {datasets_cnt} datasets…</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="120" />
+        <source>Exporting data to {file_name}…</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="121" />
+        <source>{kind_label} completed: {file_name}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="122" />
+        <source>{kind_label} completed: {time_str}: {file_name}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="123" />
         <source>Export completed</source>
         <translation>Export completed</translation>
     </message>
     <message>
+        <location filename="..\..\workbench\controllers\export_controller.py" line="124" />
         <source>Export completed successfully.
 
 Saved to:
@@ -3533,146 +3925,27 @@ Saved to:
 {path}</translation>
     </message>
     <message>
-        <source>Supply either a DataFrame or named sheets, not both.</source>
-        <translation>Supply either a DataFrame or named sheets, not both.</translation>
-    </message>
-    <message>
-        <source>Invalid Excel workbook: {reason}</source>
-        <translation>Invalid Excel workbook: {reason}</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="69" />
-        <source>No dataset</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="70" />
-        <source>There is no dataset to export.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="71" />
-        <source>There is no dataset to profile.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="74" />
-        <source>Export data to CSV</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="75" />
-        <source>CSV files (*.csv)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="78" />
-        <source>Export data to Excel</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="79" />
-        <source>Excel files (*.xlsx)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="82" />
-        <source>Export data to binary data file</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="83" />
-        <source>All data files (*.df *.feather *.ft *.parquet);;Pickle (*.df);;Feather (*.feather *.ft);;Parquet (*.parquet)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="88" />
-        <source>Generate data profile report</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="101" />
-        <location filename="..\..\workbench\controllers\export_controller.py" line="89" />
-        <source>HTML files (*.html)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="90" />
-        <source>Generating data profile report {title}…</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="93" />
-        <source>Multiple datasets open</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="94" />
-        <source>Multiple datasets are open. What do you want to profile?</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="95" />
-        <source>Active tab: {profile_kind}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="96" />
-        <source>All tabs: {comparison_kind}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="99" />
-        <source>Generate data profile comparison report</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="100" />
-        <source>_comparison.html</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="102" />
-        <source>Generating data profile comparison report with {datasets_cnt} datasets…</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="107" />
-        <source>Exporting data to {file_name}…</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="108" />
-        <source>{kind_label} completed: {file_name}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="109" />
-        <source>{kind_label} completed: {time_str}: {file_name}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="112" />
+        <location filename="..\..\workbench\controllers\export_controller.py" line="127" />
         <source>Unknown job result</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="113" />
+        <location filename="..\..\workbench\controllers\export_controller.py" line="128" />
         <source>Unknown error</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="114" />
+        <location filename="..\..\workbench\controllers\export_controller.py" line="129" />
         <source>{kind_label} failed</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="115" />
+        <location filename="..\..\workbench\controllers\export_controller.py" line="130" />
         <source>{kind_label} cancelled</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\export_controller.py" line="116" />
+        <location filename="..\..\workbench\controllers\export_controller.py" line="131" />
         <source>Operation was cancelled.</source>
         <translation type="unfinished" />
     </message>
@@ -3897,6 +4170,353 @@ Saved to:
         <translation type="unfinished" />
     </message>
 </context><context>
+    <name>GeneralizedRegressionView</name>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="138" />
+        <source>Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.</source>
+        <translation>Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="140" />
+        <source>Diagnostics unavailable: outcomes must contain both binary classes.</source>
+        <translation>Diagnostics unavailable: outcomes must contain both binary classes.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="142" />
+        <source>No logistic diagnostic data are available.</source>
+        <translation>No logistic diagnostic data are available.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="145" />
+        <source>Predictor odds ratios with 95% confidence intervals</source>
+        <translation>Predictor odds ratios with 95% confidence intervals</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="146" />
+        <source>Odds ratio (logarithmic scale; reference = 1)</source>
+        <translation>Odds ratio (logarithmic scale; reference = 1)</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="147" />
+        <source>No predictor effects: intercept-only model.</source>
+        <translation>No predictor effects: intercept-only model.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="148" />
+        <source>Unavailable: non-finite, non-positive or invalid odds ratio / CI</source>
+        <translation>Unavailable: non-finite, non-positive or invalid odds ratio / CI</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="149" />
+        <source>ROC (in-sample)</source>
+        <translation>ROC (in-sample)</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="150" />
+        <source>False positive rate</source>
+        <translation>False positive rate</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="151" />
+        <source>True positive rate</source>
+        <translation>True positive rate</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="152" />
+        <source>AUC = {value} (in-sample)</source>
+        <translation>AUC = {value} (in-sample)</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="155" />
+        <source>Calibration (in-sample)</source>
+        <translation>Calibration (in-sample)</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="156" />
+        <source>Mean fitted event probability</source>
+        <translation>Mean fitted event probability</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="157" />
+        <source>Observed event fraction</source>
+        <translation>Observed event fraction</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="160" />
+        <source>{effect} [{low}, {high}]</source>
+        <translation>{effect} [{low}, {high}]</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="193" />
+        <source>Charts unavailable: fitted counts are not finite and strictly positive.</source>
+        <translation>Charts unavailable: fitted counts are not finite and strictly positive.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="195" />
+        <source>Charts unavailable: Pearson residuals are not finite.</source>
+        <translation>Charts unavailable: Pearson residuals are not finite.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="197" />
+        <source>Charts unavailable: the fitted Negative Binomial variance is invalid.</source>
+        <translation>Charts unavailable: the fitted Negative Binomial variance is invalid.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="199" />
+        <source>No count-model chart data are available.</source>
+        <translation>No count-model chart data are available.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="216" />
+        <source>Observed versus fitted counts</source>
+        <translation>Observed versus fitted counts</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="217" />
+        <source>Fitted count</source>
+        <translation>Fitted count</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="218" />
+        <source>Observed count</source>
+        <translation>Observed count</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="219" />
+        <source>Pearson residuals versus fitted counts</source>
+        <translation>Pearson residuals versus fitted counts</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="220" />
+        <source>Pearson residual</source>
+        <translation>Pearson residual</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="261" />
+        <source>Charts show a deterministic sample of {shown} of {total} fitted rows.</source>
+        <translation>Charts show a deterministic sample of {shown} of {total} fitted rows.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="271" />
+        <source>Select an outcome column for this regression model.</source>
+        <translation>Select an outcome column for this regression model.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="273" />
+        <source>The selected outcome is invalid. Logistic regression needs two outcome levels; count regression needs non-negative integer values.</source>
+        <translation>The selected outcome is invalid. Logistic regression needs two outcome levels; count regression needs non-negative integer values.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="278" />
+        <source>Select one or more predictors and click Apply.</source>
+        <translation>Select one or more predictors and click Apply.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="280" />
+        <source>Select at most {maximum} predictors.</source>
+        <translation>Select at most {maximum} predictors.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="282" />
+        <source>Choose a valid outcome and one or more other columns as predictors.</source>
+        <translation>Choose a valid outcome and one or more other columns as predictors.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="284" />
+        <source>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</source>
+        <translation>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="289" />
+        <source>Only {count} complete rows are available, which is too few to fit this model.</source>
+        <translation>Only {count} complete rows are available, which is too few to fit this model.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="293" />
+        <source>The outcome {column} has only one value in the complete rows.</source>
+        <translation>The outcome {column} has only one value in the complete rows.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="295" />
+        <source>The predictor {column} has the same value in every complete row.</source>
+        <translation>The predictor {column} has the same value in every complete row.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="297" />
+        <source>Some predictors are exact linear combinations of others, so the model cannot be estimated.</source>
+        <translation>Some predictors are exact linear combinations of others, so the model cannot be estimated.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="301" />
+        <source>The model could not be fitted. Check for sparse outcomes, separation, or redundant predictors.</source>
+        <translation>The model could not be fitted. Check for sparse outcomes, separation, or redundant predictors.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="310" />
+        <source>Odds ratio</source>
+        <translation>Odds ratio</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="312" />
+        <source>Rate ratio</source>
+        <translation>Rate ratio</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="315" />
+        <source>Term</source>
+        <translation>Term</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="316" />
+        <source>Coefficient</source>
+        <translation>Coefficient</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="318" />
+        <source>95% effect CI</source>
+        <translation>95% effect CI</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="319" />
+        <source>p-value</source>
+        <translation>p-value</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="350" />
+        <source>Outcome coding: {zero} = 0; {one} = 1.</source>
+        <translation>Outcome coding: {zero} = 0; {one} = 1.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="357" />
+        <source>&lt;b&gt;{model}&lt;/b&gt;</source>
+        <translation>&lt;b&gt;{model}&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="358" />
+        <source>Target: &lt;b&gt;{target}&lt;/b&gt;</source>
+        <translation>Target: &lt;b&gt;{target}&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="359" />
+        <source>Rows used: {used} ({dropped} dropped because of missing values)</source>
+        <translation>Rows used: {used} ({dropped} dropped because of missing values)</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="367" />
+        <source>Log-likelihood = {value}; McFadden pseudo R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</source>
+        <translation>Log-likelihood = {value}; McFadden pseudo R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="371" />
+        <source>AIC = {aic}</source>
+        <translation>AIC = {aic}</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="375" />
+        <source>Unknown</source>
+        <translation>Unknown</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="376" />
+        <source>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins; identical probabilities stay together.</source>
+        <translation>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins; identical probabilities stay together.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="383" />
+        <source>Diagnostic interpretation</source>
+        <translation>Diagnostic interpretation</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="389" />
+        <source>Calibration bin counts: {counts}.</source>
+        <translation>Calibration bin counts: {counts}.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="397" />
+        <source>Dispersion diagnostic unavailable because fitted counts or residuals are invalid.</source>
+        <translation>Dispersion diagnostic unavailable because fitted counts or residuals are invalid.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="401" />
+        <source>Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial.</source>
+        <translation>Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="405" />
+        <source>Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion.</source>
+        <translation>Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="414" />
+        <source>This diagnostic is advisory; the selected model was not changed.</source>
+        <translation>This diagnostic is advisory; the selected model was not changed.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="417" />
+        <source>Fitted NB2 alpha = {alpha}; this is distinct from the advisory Pearson dispersion.</source>
+        <translation>Fitted NB2 alpha = {alpha}; this is distinct from the advisory Pearson dispersion.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="426" />
+        <source>Charts describe the fitted rows (in-sample), not out-of-sample predictive performance.</source>
+        <translation>Charts describe the fitted rows (in-sample), not out-of-sample predictive performance.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="429" />
+        <source>Poisson Pearson residuals use variance equal to the fitted count.</source>
+        <translation>Poisson Pearson residuals use variance equal to the fitted count.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="432" />
+        <source>Negative Binomial Pearson residuals use NB2 variance: fitted count + alpha * fitted count squared.</source>
+        <translation>Negative Binomial Pearson residuals use NB2 variance: fitted count + alpha * fitted count squared.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="439" />
+        <source>Coefficient estimates and dispersion diagnostics use all fitted rows.</source>
+        <translation>Coefficient estimates and dispersion diagnostics use all fitted rows.</translation>
+    </message>
+    <message>
+        <source>Logistic-model diagnostics</source>
+        <translation type="vanished">Logistic-model diagnostics</translation>
+    </message>
+    <message>
+        <source>Model coefficients</source>
+        <translation type="vanished">Model coefficients</translation>
+    </message>
+    <message>
+        <source>Model comments</source>
+        <translation type="vanished">Model comments</translation>
+    </message>
+    <message>
+        <source>Count-model diagnostics</source>
+        <translation type="vanished">Count-model diagnostics</translation>
+    </message>
+    <message>
+        <source>Linear regression</source>
+        <translation type="vanished">Linear regression</translation>
+    </message>
+    <message>
+        <source>Logistic regression</source>
+        <translation type="vanished">Logistic regression</translation>
+    </message>
+    <message>
+        <source>Poisson regression</source>
+        <translation type="vanished">Poisson regression</translation>
+    </message>
+    <message>
+        <source>Negative binomial regression</source>
+        <translation type="vanished">Negative binomial regression</translation>
+    </message>
+    <message>
+        <source>(Intercept)</source>
+        <translation type="vanished">(Intercept)</translation>
+    </message>
+    <message>
+        <source>{model}: {target}</source>
+        <translation type="vanished">{model}: {target}</translation>
+    </message>
+</context><context>
     <name>GroupComparisonConfigWidget</name>
     <message>
         <location filename="..\..\gui\dialogs\analysis\group_comparison_config.py" line="54" />
@@ -3931,201 +4551,328 @@ Saved to:
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="111" />
-        <source>Group summary</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="118" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="123" />
         <source>Group</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="119" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="124" />
         <source>Count</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="120" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="125" />
         <source>Mean</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="121" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="126" />
         <source>Median</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="122" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="127" />
         <source>Std Dev</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="123" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="128" />
         <source>Shapiro W</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="124" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="129" />
         <source>Shapiro p</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="125" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="130" />
         <source>Normal?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="169" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="175" />
         <source>N/A</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="171" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="177" />
         <source>No</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="172" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="178" />
         <source>Yes</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="183" />
-        <source>Distribution</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="213" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="209" />
         <source>Distribution by group</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="224" />
-        <source>Test results</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="246" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="273" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="215" />
         <source>&lt;b&gt;Welch's t-test&lt;/b&gt; (does not assume equal variances):</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="260" />
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="247" />
-        <source>t = {t}, df = {df}, p = {p}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="265" />
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="252" />
-        <source>Mean difference: {diff} (95% CI: {low} to {high})</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="257" />
-        <source>Cohen's d: {d}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="259" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="286" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="216" />
         <source>&lt;b&gt;Student's t-test&lt;/b&gt; (assumes equal variances):</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="271" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="298" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="217" />
         <source>&lt;b&gt;Mann-Whitney U&lt;/b&gt;:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="272" />
-        <source>U = {u}, p = {p}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="276" />
-        <source>Rank-biserial correlation: {r}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="285" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="312" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="221" />
         <source>&lt;b&gt;One-way ANOVA&lt;/b&gt; (assumes equal variances across groups):</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="286" />
-        <source>F = {f}, p = {p}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="290" />
-        <source>Eta²: {eta}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="292" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="319" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="222" />
         <source>&lt;b&gt;Kruskal-Wallis&lt;/b&gt; (does not assume equal variances):</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="293" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="287" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="274" />
+        <source>t = {t}, df = {df}, p = {p}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="292" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="279" />
+        <source>Mean difference: {diff} (95% CI: {low} to {high})</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="284" />
+        <source>Cohen's d: {d}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="299" />
+        <source>U = {u}, p = {p}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="303" />
+        <source>Rank-biserial correlation: {r}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="313" />
+        <source>F = {f}, p = {p}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="317" />
+        <source>Eta²: {eta}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="320" />
         <source>H = {h}, p = {p}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="297" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="324" />
         <source>Epsilon²: {eps}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="306" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="333" />
         <source>⚠ At least one group's data does not appear normally distributed (or normality could not be tested) → the non-parametric result above is likely more reliable.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="311" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="338" />
         <source>→ Every group is consistent with a normal distribution → both results should agree. The parametric result above is typically more powerful.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="335" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="363" />
         <source>⚠ Group '{label}' has fewer than 2 observations: its standard deviation and any statistic derived from it could not be computed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="339" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="367" />
         <source>⚠ Group '{label}' has fewer than 3 observations: its normality could not be tested.</source>
         <translation type="unfinished" />
     </message>
 </context><context>
+    <name>HypothesisPresentation</name>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="242" />
+        <source>Hypothesis Tests</source>
+        <translation>Hypothesis Tests</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="243" />
+        <source>{category} — {method}</source>
+        <translation>{category} — {method}</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="244" />
+        <source>Group comparison</source>
+        <translation>Group comparison</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="245" />
+        <source>Categorical association</source>
+        <translation>Categorical association</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="246" />
+        <source>Wilcoxon signed-rank</source>
+        <translation>Wilcoxon signed-rank</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="247" />
+        <source>Friedman</source>
+        <translation>Friedman</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="248" />
+        <source>Numeric variable:</source>
+        <translation>Numeric variable:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="249" />
+        <source>Grouping variable:</source>
+        <translation>Grouping variable:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="250" />
+        <source>Row variable:</source>
+        <translation>Row variable:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="251" />
+        <source>Column variable:</source>
+        <translation>Column variable:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="252" />
+        <source>Measurement variables (selected order):</source>
+        <translation>Measurement variables (selected order):</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="253" />
+        <source>Tests computed:</source>
+        <translation>Tests computed:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="254" />
+        <source>Tests available:</source>
+        <translation>Tests available:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="255" />
+        <source>Welch's t-test</source>
+        <translation>Welch's t-test</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="256" />
+        <source>Student's t-test</source>
+        <translation>Student's t-test</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="257" />
+        <source>Mann-Whitney U</source>
+        <translation>Mann-Whitney U</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="258" />
+        <source>One-way ANOVA</source>
+        <translation>One-way ANOVA</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="259" />
+        <source>Kruskal-Wallis</source>
+        <translation>Kruskal-Wallis</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="260" />
+        <source>Pearson's chi-square test</source>
+        <translation>Pearson's chi-square test</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="261" />
+        <source>Fisher's exact test</source>
+        <translation>Fisher's exact test</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="262" />
+        <source>Group summary</source>
+        <translation>Group summary</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="263" />
+        <source>Contingency table</source>
+        <translation>Contingency table</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="264" />
+        <source>Measurement summary</source>
+        <translation>Measurement summary</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="265" />
+        <source>Test results</source>
+        <translation>Test results</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="266" />
+        <source>Group distributions</source>
+        <translation>Group distributions</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="267" />
+        <source>Association plots</source>
+        <translation>Association plots</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="268" />
+        <source>Paired measurement plots</source>
+        <translation>Paired measurement plots</translation>
+    </message>
+</context><context>
     <name>HypothesisTestsConfigWidget</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="128" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="191" />
         <source>Group comparison</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="129" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="192" />
         <source>Chi-square independence</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="130" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="193" />
         <source>Paired comparison</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="133" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="196" />
         <source>Test</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="163" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="228" />
         <source>Apply</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="177" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="241" />
         <source>This test is not available for the selected dataset.</source>
         <translation type="unfinished" />
     </message>
@@ -4572,1016 +5319,1116 @@ Saved to:
 </context><context>
     <name>MultivariateOutliersConfigWidget</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="54" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="61" />
         <source>Univariate (by column)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="55" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="62" />
         <source>Multivariate (by row)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="57" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="64" />
         <source>Mode</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="60" />
-        <source>Isolation Forest</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="61" />
-        <source>Local Outlier Factor</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="63" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="70" />
         <source>Method</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="65" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="72" />
         <source>Standardize features</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="71" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="78" />
         <source>%</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="76" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="83" />
         <source>Expected outliers</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="82" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="89" />
         <source>LOF neighbors</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="86" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="93" />
         <source>Features</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="98" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="105" />
         <source>Select all</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="99" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="106" />
         <source>Clear</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="105" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="114" />
         <source>Apply</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="168" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="192" />
         <source>{count} selected.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="171" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="195" />
         <source>{count} selected - select at least {minimum}.</source>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>MultivariateOutliersView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="73" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="81" />
         <source>Multivariate screening needs at least {minimum} numeric columns.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="76" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="84" />
         <source>Select at least {minimum} features.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="79" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="87" />
         <source>Choose two or more different numeric columns.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="80" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="88" />
         <source>At least {minimum} complete rows are needed for multivariate screening.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="83" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="91" />
         <source>The selected features have no variation across the complete rows.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="86" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="94" />
         <source>Choose an expected outlier fraction between {minimum} and {maximum}.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="89" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="97" />
         <source>Choose at least {minimum} LOF neighbors and fewer than the complete rows.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="99" />
-        <source>Isolation Forest</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="101" />
-        <source>Local Outlier Factor</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="105" />
-        <source>standardized</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="105" />
-        <source>not standardized</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="106" />
-        <source>&lt;b&gt;{method}&lt;/b&gt; on {features} features ({scaling}): {outliers} of {used} complete rows ({percent}) are potential outliers. {dropped} rows were dropped for missing or infinite values.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="119" />
-        <source>&lt;i&gt;The projection shows a deterministic sample of {count} rows.&lt;/i&gt;</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="122" />
-        <source>&lt;i&gt;Scores rank observations within this fit. Potential outliers are not necessarily errors.&lt;/i&gt;</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="143" />
-        <source>Inliers</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="144" />
-        <source>Potential outliers</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="147" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="117" />
         <source>PCA projection (visualization only)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="148" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="118" />
         <source>PC1</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="149" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="119" />
         <source>PC2</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="158" />
-        <source>No potential outliers</source>
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="120" />
+        <source>Inliers</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="161" />
-        <source>Potential outliers, most anomalous first</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="60" />
-        <source>PCA projection</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="60" />
-        <source>Model comments</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="164" />
-        <source>Row</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="164" />
-        <source>Anomaly score</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Features: {columns}</source>
-        <translation>Features: {columns}</translation>
-    </message>
-</context><context>
-    <name>OutliersConfigWidget</name>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="75" />
-        <source>Univariate (by column)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="76" />
-        <source>Multivariate (by row)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="77" />
-        <source>Mode</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="80" />
-        <source>IQR (Tukey's fences)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="81" />
-        <source>Z-score</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="82" />
-        <source>Modified Z-score</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="84" />
-        <source>Method</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="96" />
-        <source>Apply</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="143" />
-        <source>IQR multiplier</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="145" />
-        <source>Values more than this many IQRs below Q1 or above Q3 are flagged.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="148" />
-        <source>Score threshold</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="149" />
-        <source>Values whose absolute score exceeds this are flagged.</source>
-        <translation type="unfinished" />
-    </message>
-</context><context>
-    <name>OutliersView</name>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="218" />
-        <source>Distribution</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="221" />
-        <source>Column details</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="231" />
-        <source>An outlier analysis needs at least one numeric column.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="233" />
-        <source>Choose a numeric column.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="235" />
-        <source>Choose a threshold between {minimum} and {maximum}.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="243" />
-        <source>IQR (Tukey's fences)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="245" />
-        <source>Z-score</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="247" />
-        <source>Modified Z-score</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="253" />
-        <source>Too few values</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="255" />
-        <source>No spread</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="261" />
-        <source>Distance past fence</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="263" />
-        <source>z</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="265" />
-        <source>Modified z</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="276" />
-        <source>Columns</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="287" />
-        <source>Flagged values are potential outliers, not necessarily errors - check them before excluding anything. Click a row to show the column below.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="308" />
-        <source>&lt;b&gt;{method}&lt;/b&gt;, threshold {threshold}: {flagged} of {rows} rows ({percent}) have a potential outlier in at least one of {columns} numeric columns.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="323" />
-        <source>Column</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="324" />
-        <source>Values</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="325" />
-        <source>Missing</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="326" />
-        <source>Outliers</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="327" />
-        <source>Share</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="328" />
-        <source>Low</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="329" />
-        <source>High</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="330" />
-        <source>Lower fence</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="331" />
-        <source>Upper fence</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="410" />
-        <source>Inside the fences</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="418" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="195" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="121" />
         <source>Potential outliers</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="423" />
-        <source>Count</source>
-        <translation type="unfinished" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="134" />
+        <source>Features: {columns}</source>
+        <translation>Features: {columns}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="439" />
-        <source>&lt;b&gt;{column}&lt;/b&gt; - {method}, threshold {threshold}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="451" />
-        <source>Fences: {lower} to {upper}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="454" />
-        <source>{count} potential outliers ({percent}): {low} low, {high} high</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="468" />
-        <source>At least {minimum} values are needed to screen a column.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="472" />
-        <source>All values are identical, so no value can stand out.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="479" />
-        <source>Q1 = {q1}, Q3 = {q3}, IQR = {iqr}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="485" />
-        <source>Mean = {mean}, standard deviation = {std}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="488" />
-        <source>&lt;i&gt;Extreme values inflate the mean and standard deviation themselves. The modified Z-score is more robust.&lt;/i&gt;</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="496" />
-        <source>&lt;i&gt;With {count} values no |z| can exceed {bound}, so this threshold can't flag anything.&lt;/i&gt;</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="504" />
-        <source>Median = {median}, MAD = {mad}</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="510" />
-        <source>&lt;i&gt;The MAD is zero (more than half the values are identical), so the scaled mean absolute deviation is used instead.&lt;/i&gt;</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="525" />
-        <source>&lt;b&gt;No potential outliers&lt;/b&gt;</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="527" />
-        <source>&lt;b&gt;The {shown} most extreme of {total} potential outliers&lt;/b&gt;</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="531" />
-        <source>&lt;b&gt;Potential outliers, most extreme first&lt;/b&gt;</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="549" />
-        <source>Row</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Flagged values are potential outliers, not necessarily errors - check them before excluding anything.</source>
-        <translation>Flagged values are potential outliers, not necessarily errors - check them before excluding anything.</translation>
-    </message>
-</context><context>
-    <name>OverviewView</name>
-    <message><source>Sample group</source><translation>Sample group</translation></message>
-    <message>
-        <source>Dataset statistics</source>
-        <translation>Dataset statistics</translation>
-    </message>
-    <message><source>Columns metadata</source><translation>Columns metadata</translation></message>
-    <message><source>First ({count})</source><translation>First ({count})</translation></message>
-    <message><source>Last ({count})</source><translation>Last ({count})</translation></message>
-    <message><source>Last (unavailable)</source><translation>Last (unavailable)</translation></message>
-    <message><source>Last sample is unavailable in this captured result.</source><translation>Last sample is unavailable in this captured result.</translation></message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="85" />
-        <source>Summary</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="87" />
-        <source>Column types</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="89" />
-        <source>Potential issues</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="109" />
-        <source>Rows</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="169" />
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="110" />
-        <source>Columns</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="111" />
-        <source>Missing values</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="113" />
-        <source>Duplicate rows</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="126" />
-        <source>Numeric columns</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="127" />
-        <source>Categorical columns</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="128" />
-        <source>Datetime columns</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="129" />
-        <source>Boolean columns</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="130" />
-        <source>Other columns</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="140" />
-        <source>No issues detected.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="145" />
-        <source>⚠ {column} has {pct} missing values.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="172" />
-        <source>This dataset has no columns.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="176" />
-        <source>Column</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="177" />
-        <source>Type</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="178" />
-        <source>Storage type</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="179" />
-        <source>Missing</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="180" />
-        <source>Missing %</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="181" />
-        <source>Unique</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="221" />
-        <source>This dataset has no rows to preview.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="267" />
-        <source>Integer</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="268" />
-        <source>Float</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="269" />
-        <source>Boolean</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="270" />
-        <source>Datetime</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="271" />
-        <source>Text</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="272" />
-        <source>Category</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="273" />
-        <source>Other</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Sample</source>
-        <translation>Sample</translation>
-    </message>
-    <message>
-        <source>Missing fraction</source>
-        <translation>Missing fraction</translation>
-    </message>
-    <message>
-        <source>Section</source>
-        <translation>Section</translation>
-    </message>
-    <message>
-        <source>Metric</source>
-        <translation>Metric</translation>
-    </message>
-    <message>
-        <source>Count</source>
-        <translation>Count</translation>
-    </message>
-    <message>
-        <source>Fraction</source>
-        <translation>Fraction</translation>
-    </message>
-</context><context>
-    <name>PCAConfigWidget</name>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_config.py" line="53" />
-        <source>Standardize features</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_config.py" line="56" />
-        <source>Scale each selected feature to zero mean and unit variance before fitting PCA.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_config.py" line="60" />
-        <source>Features</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_config.py" line="72" />
-        <source>Select all</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_config.py" line="73" />
-        <source>Clear</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_config.py" line="82" />
-        <source>Apply</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_config.py" line="125" />
-        <source>{count} selected.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_config.py" line="128" />
-        <source>{count} selected - select at least {minimum}.</source>
-        <translation type="unfinished" />
-    </message>
-</context><context>
-    <name>PCAView</name>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="57" />
-        <source>PCA plots</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="87" />
-        <source>A principal component analysis needs at least {minimum} numeric columns.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="90" />
-        <source>Select at least {minimum} features.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="93" />
-        <source>Choose two or more different numeric columns.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="94" />
-        <source>At least {minimum} complete rows are needed for principal component analysis.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="97" />
-        <source>The selected features have no variation across the complete rows.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="103" />
-        <source>standardized</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="103" />
-        <source>not standardized</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="104" />
-        <source>&lt;b&gt;{features} features&lt;/b&gt;, {scaling}. PCA used {used} of {total} rows ({dropped} dropped because a selected value was missing or infinite).</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="115" />
-        <source>&lt;i&gt;The PC1-vs-PC2 plot shows a deterministic sample of {count} rows.&lt;/i&gt;</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="128" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="139" />
         <source>Model comments</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="145" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="154" />
+        <source>standardized</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="154" />
+        <source>not standardized</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="155" />
+        <source>&lt;b&gt;{method}&lt;/b&gt; on {features} features ({scaling}): {outliers} of {used} complete rows ({percent}) are potential outliers. {dropped} rows were dropped for missing or infinite values.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="169" />
+        <source>&lt;i&gt;Scores rank observations within this fit. Potential outliers are not necessarily errors.&lt;/i&gt;</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="176" />
+        <source>&lt;i&gt;The projection shows a deterministic sample of {count} rows.&lt;/i&gt;</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="196" />
+        <source>No potential outliers</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="204" />
+        <source>Potential outliers, most anomalous first</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="205" />
+        <source>Row</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2258" />
+        <location filename="..\..\services\analysis\report.py" line="1531" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="205" />
+        <source>Anomaly score</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>OutliersConfigWidget</name>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="65" />
+        <source>Univariate (by column)</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="66" />
+        <source>Multivariate (by row)</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="67" />
+        <source>Mode</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="73" />
+        <source>Method</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="87" />
+        <source>Apply</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="131" />
+        <source>IQR multiplier</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="133" />
+        <source>Values more than this many IQRs below Q1 or above Q3 are flagged.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="136" />
+        <source>Score threshold</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="137" />
+        <source>Values whose absolute score exceeds this are flagged.</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>OutliersPresentation</name>
+    <message>
+        <source>Outliers</source>
+        <translation type="vanished">Outliers</translation>
+    </message>
+    <message>
+        <source>{category} — {method}</source>
+        <translation type="vanished">{category} — {method}</translation>
+    </message>
+    <message>
+        <source>IQR (Tukey's fences)</source>
+        <translation type="vanished">IQR (Tukey's fences)</translation>
+    </message>
+    <message>
+        <source>Z-score</source>
+        <translation type="vanished">Z-score</translation>
+    </message>
+    <message>
+        <source>Modified Z-score</source>
+        <translation type="vanished">Modified Z-score</translation>
+    </message>
+    <message>
+        <source>Isolation Forest</source>
+        <translation type="vanished">Isolation Forest</translation>
+    </message>
+    <message>
+        <source>Local Outlier Factor</source>
+        <translation type="vanished">Local Outlier Factor</translation>
+    </message>
+    <message>
+        <source>Threshold:</source>
+        <translation type="vanished">Threshold:</translation>
+    </message>
+    <message>
+        <source>IQR multiplier:</source>
+        <translation type="vanished">IQR multiplier:</translation>
+    </message>
+    <message>
+        <source>Score threshold:</source>
+        <translation type="vanished">Score threshold:</translation>
+    </message>
+    <message>
+        <source>Screened columns:</source>
+        <translation type="vanished">Screened columns:</translation>
+    </message>
+    <message>
+        <source>Selected detail column:</source>
+        <translation type="vanished">Selected detail column:</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="vanished">None</translation>
+    </message>
+    <message>
+        <source>Features:</source>
+        <translation type="vanished">Features:</translation>
+    </message>
+    <message>
+        <source>Standardization:</source>
+        <translation type="vanished">Standardization:</translation>
+    </message>
+    <message>
+        <source>Standardized</source>
+        <translation type="vanished">Standardized</translation>
+    </message>
+    <message>
+        <source>Not standardized</source>
+        <translation type="vanished">Not standardized</translation>
+    </message>
+    <message>
+        <source>Expected outlier fraction:</source>
+        <translation type="vanished">Expected outlier fraction:</translation>
+    </message>
+    <message>
+        <source>LOF neighbors:</source>
+        <translation type="vanished">LOF neighbors:</translation>
+    </message>
+    <message>
+        <source>Column summary</source>
+        <translation type="vanished">Column summary</translation>
+    </message>
+    <message>
+        <source>Column details</source>
+        <translation type="vanished">Column details</translation>
+    </message>
+    <message>
+        <source>Model summary</source>
+        <translation type="vanished">Model summary</translation>
+    </message>
+    <message>
+        <source>Potential outliers</source>
+        <translation type="vanished">Potential outliers</translation>
+    </message>
+    <message>
+        <source>Column distribution</source>
+        <translation type="vanished">Column distribution</translation>
+    </message>
+    <message>
+        <source>Column distributions</source>
+        <translation type="vanished">Column distributions</translation>
+    </message>
+    <message>
+        <source>Outlier projection</source>
+        <translation type="vanished">Outlier projection</translation>
+    </message>
+</context><context>
+    <name>OutliersView</name>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="192" />
+        <source>Inside the fences</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="193" />
+        <source>Potential outliers</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="194" />
+        <source>Count</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="201" />
+        <source>Flagged values are potential outliers, not necessarily errors - check them before excluding anything.</source>
+        <translation>Flagged values are potential outliers, not necessarily errors - check them before excluding anything.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="306" />
+        <source>An outlier analysis needs at least one numeric column.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="308" />
+        <source>Choose a numeric column.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="310" />
+        <source>Choose a threshold between {minimum} and {maximum}.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="322" />
+        <source>Too few values</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="324" />
+        <source>No spread</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2261" />
+        <location filename="..\..\services\analysis\report.py" line="1534" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="330" />
+        <source>Distance past fence</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2262" />
+        <location filename="..\..\services\analysis\report.py" line="1535" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="332" />
+        <source>z</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2263" />
+        <location filename="..\..\services\analysis\report.py" line="1536" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="334" />
+        <source>Modified z</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="345" />
+        <source>Columns</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="362" />
+        <source>Flagged values are potential outliers, not necessarily errors - check them before excluding anything. Click a row to show the column below.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="385" />
+        <source>&lt;b&gt;{method}&lt;/b&gt;, threshold {threshold}: {flagged} of {rows} rows ({percent}) have a potential outlier in at least one of {columns} numeric columns.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="400" />
+        <source>Column</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="401" />
+        <source>Values</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="402" />
+        <source>Missing</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="403" />
+        <source>Outliers</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="404" />
+        <source>Share</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="405" />
+        <source>Low</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="406" />
+        <source>High</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="407" />
+        <source>Lower fence</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="408" />
+        <source>Upper fence</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="496" />
+        <source>&lt;b&gt;{column}&lt;/b&gt; - {method}, threshold {threshold}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="508" />
+        <source>Fences: {lower} to {upper}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="511" />
+        <source>{count} potential outliers ({percent}): {low} low, {high} high</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="525" />
+        <source>At least {minimum} values are needed to screen a column.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="529" />
+        <source>All values are identical, so no value can stand out.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="536" />
+        <source>Q1 = {q1}, Q3 = {q3}, IQR = {iqr}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="542" />
+        <source>Mean = {mean}, standard deviation = {std}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="545" />
+        <source>&lt;i&gt;Extreme values inflate the mean and standard deviation themselves. The modified Z-score is more robust.&lt;/i&gt;</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="553" />
+        <source>&lt;i&gt;With {count} values no |z| can exceed {bound}, so this threshold can't flag anything.&lt;/i&gt;</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="561" />
+        <source>Median = {median}, MAD = {mad}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="567" />
+        <source>&lt;i&gt;The MAD is zero (more than half the values are identical), so the scaled mean absolute deviation is used instead.&lt;/i&gt;</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="597" />
+        <source>&lt;b&gt;No potential outliers&lt;/b&gt;</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="599" />
+        <source>&lt;b&gt;The {shown} most extreme of {total} potential outliers&lt;/b&gt;</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="602" />
+        <source>&lt;b&gt;Potential outliers, most extreme first&lt;/b&gt;</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2269" />
+        <location filename="..\..\services\analysis\report.py" line="1551" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="609" />
+        <source>Row</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>OverviewView</name>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="37" />
+        <source>Columns metadata</source>
+        <translation>Columns metadata</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="102" />
+        <source>Summary</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="105" />
+        <source>Dataset statistics</source>
+        <translation>Dataset statistics</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="107" />
+        <source>Column types</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="109" />
+        <source>Potential issues</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="130" />
+        <source>Rows</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="131" />
+        <source>Columns</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="132" />
+        <source>Missing values</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="134" />
+        <source>Duplicate rows</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="147" />
+        <source>Numeric columns</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="148" />
+        <source>Categorical columns</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="149" />
+        <source>Datetime columns</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="150" />
+        <source>Boolean columns</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="151" />
+        <source>Other columns</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="161" />
+        <source>No issues detected.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="166" />
+        <source>⚠ {column} has {pct} missing values.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="197" />
+        <source>This dataset has no columns.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="201" />
+        <source>Column</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="202" />
+        <source>Type</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="203" />
+        <source>Storage type</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="204" />
+        <source>Missing</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="205" />
+        <source>Missing %</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="206" />
+        <source>Unique</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="1181" />
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="237" />
+        <source>Sample</source>
+        <translation>Sample</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2111" />
+        <location filename="..\..\services\analysis\report.py" line="1166" />
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="242" />
+        <source>First ({count})</source>
+        <translation>First ({count})</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="250" />
+        <source>Last (unavailable)</source>
+        <translation>Last (unavailable)</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2115" />
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="254" />
+        <source>Last sample is unavailable in this captured result.</source>
+        <translation>Last sample is unavailable in this captured result.</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2117" />
+        <location filename="..\..\services\analysis\report.py" line="1169" />
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="258" />
+        <source>Last ({count})</source>
+        <translation>Last ({count})</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="280" />
+        <source>This dataset has no rows to preview.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="325" />
+        <source>Integer</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="326" />
+        <source>Float</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="327" />
+        <source>Boolean</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="328" />
+        <source>Datetime</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="329" />
+        <source>Text</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="330" />
+        <source>Category</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="331" />
+        <source>Other</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="1178" />
+        <source>Sample group</source>
+        <translation>Sample group</translation>
+    </message>
+    <message>
+        <source>Missing fraction</source>
+        <translation type="vanished">Missing fraction</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation type="vanished">Section</translation>
+    </message>
+    <message>
+        <source>Metric</source>
+        <translation type="vanished">Metric</translation>
+    </message>
+    <message>
+        <source>Count</source>
+        <translation type="vanished">Count</translation>
+    </message>
+    <message>
+        <source>Fraction</source>
+        <translation type="vanished">Fraction</translation>
+    </message>
+</context><context>
+    <name>PCAConfigWidget</name>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_config.py" line="64" />
+        <source>Scale each selected feature to zero mean and unit variance before fitting PCA.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_config.py" line="83" />
+        <source>Select all</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_config.py" line="84" />
+        <source>Clear</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_config.py" line="95" />
+        <source>Apply</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_config.py" line="149" />
+        <source>{count} selected.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_config.py" line="152" />
+        <source>{count} selected - select at least {minimum}.</source>
+        <translation type="unfinished" />
+    </message>
+</context><context>
+    <name>PCAPresentation</name>
+    <message>
+        <source>PCA</source>
+        <translation type="vanished">PCA</translation>
+    </message>
+    <message>
+        <source>Feature loadings</source>
+        <translation type="vanished">Feature loadings</translation>
+    </message>
+    <message>
         <source>Explained variance</source>
-        <translation type="unfinished" />
+        <translation type="vanished">Explained variance</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="146" />
-        <source>Cumulative</source>
-        <translation type="unfinished" />
+        <source>Model summary</source>
+        <translation type="vanished">Model summary</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="147" />
-        <source>Scree plot</source>
-        <translation type="unfinished" />
+        <source>PCA plots</source>
+        <translation type="vanished">PCA plots</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="148" />
-        <source>Component</source>
-        <translation type="unfinished" />
+        <source>Features:</source>
+        <translation type="vanished">Features:</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="149" />
-        <source>Explained variance (%)</source>
-        <translation type="unfinished" />
+        <source>Standardization:</source>
+        <translation type="vanished">Standardization:</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="168" />
-        <source>PC1 vs PC2</source>
-        <translation type="unfinished" />
+        <source>Standardized</source>
+        <translation type="vanished">Standardized</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="169" />
+        <source>Not standardized</source>
+        <translation type="vanished">Not standardized</translation>
+    </message>
+</context><context>
+    <name>PCAView</name>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="88" />
         <source>PC1 ({variance})</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="170" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="90" />
         <source>PC2 ({variance})</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="177" />
-        <source>Feature loadings</source>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="94" />
+        <source>Scree plot</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="181" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="96" />
+        <source>Cumulative</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="97" />
+        <source>Component</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="98" />
+        <source>Explained variance (%)</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="99" />
+        <source>PC1 vs PC2</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="124" />
+        <source>A principal component analysis needs at least {minimum} numeric columns.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="127" />
+        <source>Select at least {minimum} features.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="130" />
+        <source>Choose two or more different numeric columns.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="131" />
+        <source>At least {minimum} complete rows are needed for principal component analysis.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="134" />
+        <source>The selected features have no variation across the complete rows.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="140" />
+        <source>standardized</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="140" />
+        <source>not standardized</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="141" />
+        <source>&lt;b&gt;{features} features&lt;/b&gt;, {scaling}. PCA used {used} of {total} rows ({dropped} dropped because a selected value was missing or infinite).</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="157" />
+        <source>&lt;i&gt;The PC1-vs-PC2 plot shows a deterministic sample of {count} rows.&lt;/i&gt;</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="200" />
         <source>Feature</source>
         <translation type="unfinished" />
     </message>
     <message>
         <source>Features: {columns}</source>
-        <translation>Features: {columns}</translation>
+        <translation type="vanished">Features: {columns}</translation>
     </message>
 </context><context>
     <name>PairedComparisonConfigWidget</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="53" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="57" />
         <source>Measurement columns</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="74" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="60" />
+        <source>Select at least two numeric columns. They are used in the order shown; each row is one subject.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="76" />
         <source>Select all</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="75" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="77" />
         <source>Clear</source>
         <translation type="unfinished" />
     </message>
-            <message>
-                <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="146" />
-                <source>None selected - select at least {minimum}.</source>
-                <translation type="unfinished" />
-            </message>
-            <message>
-                <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="148" />
-                <source>{count} selected - select at least {minimum}.</source>
-                <translation type="unfinished" />
-            </message>
-            <message>
-                <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="153" />
-                <source>{count} selected - Wilcoxon signed-rank test.</source>
-                <translation type="unfinished" />
-            </message>
-            <message>
-                <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="154" />
-                <source>{count} selected - Friedman test.</source>
-                <translation type="unfinished" />
-            </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="56" />
-        <source>Select at least two numeric columns. They are used in the order shown; each row is one subject.</source>
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="129" />
+        <source>None selected - select at least {minimum}.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="131" />
+        <source>{count} selected - select at least {minimum}.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="136" />
+        <source>{count} selected - Wilcoxon signed-rank test.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="137" />
+        <source>{count} selected - Friedman test.</source>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>PairedComparisonView</name>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="42" />
         <source>Select measurement columns and click Apply to run the paired test.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Measurement summary</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Measurement</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Count</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Mean</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Median</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Std Dev</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Q1</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Q3</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Paired measurements</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Distribution by occasion</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Subject trajectories</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Value</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Measurement occasion</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Test results</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Occasions follow the selected column order; chronological order is not inferred.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Boxplots use all complete subjects; whiskers show the minimum and maximum.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Trajectories show a deterministic sample of {shown} of {total} complete subjects.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <source>Tables, boxplots and tests use all complete subjects.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="38" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="62" />
         <source>Wilcoxon signed-rank test</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="40" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="64" />
         <source>Friedman test</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="45" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="69" />
         <source>&lt;b&gt;{test}&lt;/b&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="46" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="70" />
         <source>Measurement columns: {columns}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="47" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="71" />
         <source>Test statistic = {statistic}, p = {p}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="51" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="75" />
         <source>Complete subjects: {complete} of {total}; excluded for missing values: {excluded}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="58" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="82" />
         <source>Kendall's W: {effect}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="59" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="96" />
         <source>Rows are treated as paired subjects across the selected measurement columns.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="74" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="97" />
+        <source>Occasions follow the selected column order; chronological order is not inferred.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="98" />
+        <source>Boxplots use all complete subjects; whiskers show the minimum and maximum.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="102" />
+        <source>Trajectories show a deterministic sample of {shown} of {total} complete subjects.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="107" />
+        <source>Tables, boxplots and tests use all complete subjects.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="130" />
+        <source>Measurement</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="131" />
+        <source>Count</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="132" />
+        <source>Mean</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="133" />
+        <source>Median</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="134" />
+        <source>Std Dev</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="135" />
+        <source>Q1</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="136" />
+        <source>Q3</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="172" />
+        <source>Distribution by occasion</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2382" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="174" />
+        <source>Subject trajectories</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2383" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="175" />
+        <source>Value</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2384" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="176" />
+        <source>Measurement occasion</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="193" />
         <source>Select at least two numeric measurement columns.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="75" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="194" />
         <source>The selected measurement columns are not valid numeric columns.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="76" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="197" />
         <source>There are not enough subjects with complete measurements for this paired test.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="79" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="200" />
         <source>The two measurements are identical for every complete subject; the Wilcoxon test is undefined.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="82" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="203" />
         <source>The selected measurements do not vary across occasions, so the Friedman test is undefined.</source>
         <translation type="unfinished" />
     </message>
@@ -5899,722 +6746,637 @@ Hint: {error_hint}</source>
 </context><context>
     <name>RegressionConfigWidget</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="80" />
-        <source>Linear regression</source>
-        <translation>Linear regression</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="81" />
-        <source>Logistic regression</source>
-        <translation>Logistic regression</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="82" />
-        <source>Poisson regression</source>
-        <translation>Poisson regression</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="83" />
-        <source>Negative binomial regression</source>
-        <translation>Negative binomial regression</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="89" />
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="98" />
         <source>Model</source>
-        <translation>Model</translation>
+        <translation type="unfinished">Model</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="227" />
-        <source>No eligible target columns are available for this model.</source>
-        <translation>No eligible target columns are available for this model.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="72" />
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="101" />
         <source>Target</source>
-        <translation type="unfinished" />
+        <translation type="unfinished">Target</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="94" />
-        <source>Predictors</source>
-        <translation type="unfinished" />
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="109" />
+        <source>Duration</source>
+        <translation>Duration</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="114" />
-        <source>Select all</source>
-        <translation type="unfinished" />
+        <source>Event</source>
+        <translation>Event</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="115" />
-        <source>Clear</source>
-        <translation type="unfinished" />
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="116" />
+        <source>1 = event, 0 = censored</source>
+        <translation>1 = event, 0 = censored</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="124" />
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="126" />
         <source>Apply</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="131" />
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="151" />
+        <source>Predictors</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="171" />
+        <source>Select all</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="172" />
+        <source>Clear</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="185" />
         <source>{column} (categorical)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="163" />
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="304" />
+        <source>Cox regression needs distinct numeric duration and binary event columns.</source>
+        <translation>Cox regression needs distinct numeric duration and binary event columns.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="311" />
+        <source>No eligible target columns are available for this model.</source>
+        <translation type="unfinished">No eligible target columns are available for this model.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="321" />
+        <source>This column is an outcome and cannot be a predictor.</source>
+        <translation>This column is an outcome and cannot be a predictor.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="323" />
         <source>This column is the target.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="218" />
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="411" />
         <source>None selected - select at least one.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="220" />
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="413" />
         <source>{count} selected - select at most {maximum}.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="223" />
+        <location filename="..\..\gui\dialogs\analysis\regression_config.py" line="416" />
         <source>{count} selected (at most {maximum}).</source>
         <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Cox proportional-hazards regression</source>
+        <translation type="vanished">Cox proportional-hazards regression</translation>
+    </message>
+</context><context>
+    <name>RegressionPresentation</name>
+    <message>
+        <location filename="..\..\services\analysis\presentation.py" line="1008" />
+        <location filename="..\..\services\analysis\presentation.py" line="1002" />
+        <location filename="..\..\services\analysis\presentation.py" line="997" />
+        <source>(Intercept)</source>
+        <translation>(Intercept)</translation>
+    </message>
+    <message>
+        <source>Regression</source>
+        <translation type="vanished">Regression</translation>
+    </message>
+    <message>
+        <source>{category} — {model}</source>
+        <translation type="vanished">{category} — {model}</translation>
+    </message>
+    <message>
+        <source>Linear regression</source>
+        <translation type="vanished">Linear regression</translation>
+    </message>
+    <message>
+        <source>Logistic regression</source>
+        <translation type="vanished">Logistic regression</translation>
+    </message>
+    <message>
+        <source>Poisson regression</source>
+        <translation type="vanished">Poisson regression</translation>
+    </message>
+    <message>
+        <source>Negative binomial regression</source>
+        <translation type="vanished">Negative binomial regression</translation>
+    </message>
+    <message>
+        <source>Cox proportional-hazards regression</source>
+        <translation type="vanished">Cox proportional-hazards regression</translation>
+    </message>
+    <message>
+        <source>Outcome:</source>
+        <translation type="vanished">Outcome:</translation>
+    </message>
+    <message>
+        <source>Duration:</source>
+        <translation type="vanished">Duration:</translation>
+    </message>
+    <message>
+        <source>Event:</source>
+        <translation type="vanished">Event:</translation>
+    </message>
+    <message>
+        <source>Predictors:</source>
+        <translation type="vanished">Predictors:</translation>
+    </message>
+    <message>
+        <source>Modeled terms:</source>
+        <translation type="vanished">Modeled terms:</translation>
+    </message>
+    <message>
+        <source>Reference levels:</source>
+        <translation type="vanished">Reference levels:</translation>
+    </message>
+    <message>
+        <source>Coefficients</source>
+        <translation type="vanished">Coefficients</translation>
+    </message>
+    <message>
+        <source>Model summary</source>
+        <translation type="vanished">Model summary</translation>
+    </message>
+    <message>
+        <source>Linear diagnostics</source>
+        <translation type="vanished">Linear diagnostics</translation>
+    </message>
+    <message>
+        <source>Logistic diagnostics</source>
+        <translation type="vanished">Logistic diagnostics</translation>
+    </message>
+    <message>
+        <source>Count-model diagnostics</source>
+        <translation type="vanished">Count-model diagnostics</translation>
+    </message>
+    <message>
+        <source>Survival charts</source>
+        <translation type="vanished">Survival charts</translation>
     </message>
 </context><context>
     <name>RegressionView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="136" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="198" />
         <source>A linear regression needs at least one numeric column to use as the target.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="138" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="200" />
         <source>Select one or more predictors and click Apply.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="140" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="202" />
         <source>Select at most {maximum} predictors.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="142" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="204" />
         <source>Choose a numeric target and one or more other columns as predictors.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="144" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="206" />
         <source>The model would have more than {maximum} terms once the categorical predictors are dummy-coded. Remove predictors, or use categorical predictors with fewer levels.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="149" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="211" />
         <source>Only {count} rows have values in the target and every predictor, which is too few to fit this model.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="154" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="216" />
         <source>The target {column} has the same value in every row used, so there is nothing to explain.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="158" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="220" />
         <source>The predictor {column} has the same value in every row used, so its effect can't be estimated.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="162" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="224" />
         <source>Some predictors are exact linear combinations of others (perfect multicollinearity), so the coefficients can't be estimated. Remove the redundant predictors.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="173" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="235" />
         <source>High multicollinearity (VIF above {threshold}) for: {terms}. Their coefficients and p-values are unstable.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="178" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="240" />
         <source>The residual variance is not constant (heteroscedasticity), so standard errors and p-values may be unreliable.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="183" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="245" />
         <source>The residuals are not normally distributed. With few rows, p-values and confidence intervals may be unreliable.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="188" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="250" />
         <source>The residuals appear autocorrelated in row order, so standard errors may be too small.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="212" />
-        <source>Model comments</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="212" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="288" />
         <source>Linear regression</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="213" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="289" />
         <source>Target: &lt;b&gt;{target}&lt;/b&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="214" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="290" />
         <source>Rows used: {used} ({dropped} dropped because of missing values)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="217" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="293" />
         <source>R&lt;sup&gt;2&lt;/sup&gt; = {r2}, adjusted R&lt;sup&gt;2&lt;/sup&gt; = {adjusted}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="220" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="296" />
         <source>F({df_model}, {df_residual}) = {f}, p {p}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="226" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="302" />
         <source>RMSE = {rmse}, AIC = {aic}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="230" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="306" />
         <source>&lt;b&gt;Diagnostics&lt;/b&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="235" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="311" />
         <source>⚠ {warning}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="239" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="315" />
         <source>&lt;b&gt;Warnings&lt;/b&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="249" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="325" />
         <source>Breusch-Pagan: LM = {statistic}, p {p} - {verdict}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="252" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="328" />
         <source>non-constant residual variance</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="254" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="330" />
         <source>no evidence of non-constant residual variance</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="256" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="332" />
         <source>Jarque-Bera: JB = {statistic}, p {p} - {verdict}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="259" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="335" />
         <source>residuals not normally distributed</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="261" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="337" />
         <source>residuals consistent with a normal distribution</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="266" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="342" />
         <source>&lt;i&gt;With many rows even negligible deviations from normality are significant. Judge by the Q-Q plot instead.&lt;/i&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="273" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="349" />
         <source>Durbin-Watson = {statistic} - {verdict}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="277" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="353" />
         <source>&lt;i&gt;Durbin-Watson is only meaningful when the row order is meaningful (e.g. rows sorted by time).&lt;/i&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="280" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="356" />
         <source>Largest VIF = {vif} - {verdict}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="282" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="358" />
         <source>high multicollinearity</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="284" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="360" />
         <source>no problematic multicollinearity</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="292" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="368" />
         <source>positive autocorrelation</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="294" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="370" />
         <source>negative autocorrelation</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="295" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="371" />
         <source>no evidence of autocorrelation</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="313" />
-        <source>&lt;b&gt;Coefficients&lt;/b&gt;</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="330" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="418" />
         <source>Term</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="331" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="419" />
         <source>Estimate</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="332" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="420" />
         <source>Std. error</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="333" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="421" />
         <source>t</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="334" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="422" />
         <source>p</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="335" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="423" />
         <source>{confidence}% CI</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="336" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="424" />
         <source>VIF</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="371" />
-        <source>(Intercept)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="383" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="473" />
         <source>N/A</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="384" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="474" />
         <source>{low} to {high}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="389" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="479" />
         <source>* marks coefficients significant at p &amp;lt; {alpha}.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="393" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="489" />
         <source>Each categorical level is compared with its column's reference level (the most frequent level):</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="398" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="491" />
         <source>{column}: reference level &lt;b&gt;{level}&lt;/b&gt; ({count} levels)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="416" />
-        <source>Diagnostic plots</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="431" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="542" />
         <source>Plots show a random sample of {shown} of {total} rows. Statistics use all rows.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="466" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="549" />
         <source>Residuals vs fitted</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="467" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="550" />
         <source>Fitted value</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="468" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="551" />
         <source>Residual</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="476" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="552" />
         <source>Actual vs predicted</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="477" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="553" />
         <source>Predicted {target}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="478" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="554" />
         <source>Actual {target}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="486" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="555" />
         <source>Normal Q-Q plot of residuals</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="487" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="556" />
         <source>Theoretical quantile</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="488" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="557" />
         <source>Standardized residual</source>
         <translation type="unfinished" />
     </message>
     <message>
         <source>Linear regression: {target}</source>
-        <translation>Linear regression: {target}</translation>
+        <translation type="vanished">Linear regression: {target}</translation>
     </message>
 </context><context>
-    <name>GeneralizedRegressionView</name>
+    <name>ReportNotesDialog</name>
     <message>
-        <source>Diagnostic interpretation</source>
-        <translation>Diagnostic interpretation</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_notes_dialog.py" line="61" />
+        <source>Edit report entry</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Logistic-model diagnostics</source>
-        <translation>Logistic-model diagnostics</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_notes_dialog.py" line="129" />
+        <location filename="..\..\gui\dialogs\analysis\report_notes_dialog.py" line="61" />
+        <source>Add to report</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.</source>
-        <translation>Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_notes_dialog.py" line="63" />
+        <source>Review report result</source>
+        <translation>Review report result</translation>
     </message>
     <message>
-        <source>Diagnostics unavailable: outcomes must contain both binary classes.</source>
-        <translation>Diagnostics unavailable: outcomes must contain both binary classes.</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_notes_dialog.py" line="77" />
+        <source>Stored and incoming configuration</source>
+        <translation>Stored and incoming configuration</translation>
     </message>
     <message>
-        <source>No logistic diagnostic data are available.</source>
-        <translation>No logistic diagnostic data are available.</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_notes_dialog.py" line="80" />
+        <source>Stored result</source>
+        <translation>Stored result</translation>
     </message>
     <message>
-        <source>Predictor odds ratios with 95% confidence intervals</source>
-        <translation>Predictor odds ratios with 95% confidence intervals</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_notes_dialog.py" line="80" />
+        <source>Incoming result</source>
+        <translation>Incoming result</translation>
     </message>
     <message>
-        <source>Odds ratio (logarithmic scale; reference = 1)</source>
-        <translation>Odds ratio (logarithmic scale; reference = 1)</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_notes_dialog.py" line="92" />
+        <source>Unavailable stored selections: {components}</source>
+        <translation>Unavailable stored selections: {components}</translation>
     </message>
     <message>
-        <source>No predictor effects: intercept-only model.</source>
-        <translation>No predictor effects: intercept-only model.</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_notes_dialog.py" line="102" />
+        <source>Include in report</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Unavailable: non-finite, non-positive or invalid odds ratio / CI</source>
-        <translation>Unavailable: non-finite, non-positive or invalid odds ratio / CI</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_notes_dialog.py" line="122" />
+        <source>Optional notes about this analysis</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>ROC (in-sample)</source>
-        <translation>ROC (in-sample)</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_notes_dialog.py" line="124" />
+        <source>Notes</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>False positive rate</source>
-        <translation>False positive rate</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_notes_dialog.py" line="129" />
+        <source>Save changes</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>True positive rate</source>
-        <translation>True positive rate</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_notes_dialog.py" line="136" />
+        <source>Remove from report</source>
+        <translation type="unfinished" />
     </message>
+</context><context>
+    <name>ReportPage</name>
     <message>
-        <source>AUC = {value} (in-sample)</source>
-        <translation>AUC = {value} (in-sample)</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="149" />
+        <source>{rows} rows x {columns} columns - {date}</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Calibration (in-sample)</source>
-        <translation>Calibration (in-sample)</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="50" />
+        <source>Report details</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Mean fitted event probability</source>
-        <translation>Mean fitted event probability</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="53" />
+        <source>Enter a report title</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Observed event fraction</source>
-        <translation>Observed event fraction</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="55" />
+        <source>Describe the purpose of this report</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>{effect} [{low}, {high}]</source>
-        <translation>{effect} [{low}, {high}]</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="57" />
+        <source>Title</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Unknown</source>
-        <translation>Unknown</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="59" />
+        <source>Description</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins; identical probabilities stay together.</source>
-        <translation>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins; identical probabilities stay together.</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="72" />
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="65" />
+        <source>Selected analyses</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Calibration bin counts: {counts}.</source>
-        <translation>Calibration bin counts: {counts}.</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="67" />
+        <source>No analyses have been added to this report.</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Charts unavailable: the fitted Negative Binomial variance is invalid.</source>
-        <translation>Charts unavailable: the fitted Negative Binomial variance is invalid.</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="77" />
+        <source>Move up</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Fitted NB2 alpha = {alpha}; this is distinct from the advisory Pearson dispersion.</source>
-        <translation>Fitted NB2 alpha = {alpha}; this is distinct from the advisory Pearson dispersion.</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="78" />
+        <source>Move down</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Negative Binomial Pearson residuals use NB2 variance: fitted count + alpha * fitted count squared.</source>
-        <translation>Negative Binomial Pearson residuals use NB2 variance: fitted count + alpha * fitted count squared.</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="79" />
+        <source>Edit entry</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Dispersion diagnostic unavailable because fitted counts or residuals are invalid.</source>
-        <translation>Dispersion diagnostic unavailable because fitted counts or residuals are invalid.</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="80" />
+        <source>Remove</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Model coefficients</source>
-        <translation>Model coefficients</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="92" />
+        <source>Add analyses, arrange the report, then generate an HTML file.</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <source>Model comments</source>
-        <translation>Model comments</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="95" />
+        <source>Preview</source>
+        <translation>Preview</translation>
     </message>
     <message>
-        <source>Count-model diagnostics</source>
-        <translation>Count-model diagnostics</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_page.py" line="99" />
+        <source>Generate HTML report</source>
+        <translation type="unfinished" />
     </message>
+</context><context>
+    <name>ReportPreviewDialog</name>
     <message>
-        <source>Charts unavailable: fitted counts are not finite and strictly positive.</source>
-        <translation>Charts unavailable: fitted counts are not finite and strictly positive.</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_preview_dialog.py" line="82" />
+        <source>Report preview</source>
+        <translation>Report preview</translation>
     </message>
     <message>
-        <source>Charts unavailable: Pearson residuals are not finite.</source>
-        <translation>Charts unavailable: Pearson residuals are not finite.</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_preview_dialog.py" line="124" />
+        <source>Close</source>
+        <translation>Close</translation>
     </message>
     <message>
-        <source>No count-model chart data are available.</source>
-        <translation>No count-model chart data are available.</translation>
-    </message>
-    <message>
-        <source>Observed versus fitted counts</source>
-        <translation>Observed versus fitted counts</translation>
-    </message>
-    <message>
-        <source>Fitted count</source>
-        <translation>Fitted count</translation>
-    </message>
-    <message>
-        <source>Observed count</source>
-        <translation>Observed count</translation>
-    </message>
-    <message>
-        <source>Pearson residuals versus fitted counts</source>
-        <translation>Pearson residuals versus fitted counts</translation>
-    </message>
-    <message>
-        <source>Pearson residual</source>
-        <translation>Pearson residual</translation>
-    </message>
-    <message>
-        <source>Charts describe the fitted rows (in-sample), not out-of-sample predictive performance.</source>
-        <translation>Charts describe the fitted rows (in-sample), not out-of-sample predictive performance.</translation>
-    </message>
-    <message>
-        <source>Poisson Pearson residuals use variance equal to the fitted count.</source>
-        <translation>Poisson Pearson residuals use variance equal to the fitted count.</translation>
-    </message>
-    <message>
-        <source>Charts show a deterministic sample of {shown} of {total} fitted rows.</source>
-        <translation>Charts show a deterministic sample of {shown} of {total} fitted rows.</translation>
-    </message>
-    <message>
-        <source>Coefficient estimates and dispersion diagnostics use all fitted rows.</source>
-        <translation>Coefficient estimates and dispersion diagnostics use all fitted rows.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="75" />
-        <source>Select an outcome column for this regression model.</source>
-        <translation>Select an outcome column for this regression model.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="77" />
-        <source>The selected outcome is invalid. Logistic regression needs two outcome levels; count regression needs non-negative integer values.</source>
-        <translation>The selected outcome is invalid. Logistic regression needs two outcome levels; count regression needs non-negative integer values.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="82" />
-        <source>Select one or more predictors and click Apply.</source>
-        <translation>Select one or more predictors and click Apply.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="84" />
-        <source>Select at most {maximum} predictors.</source>
-        <translation>Select at most {maximum} predictors.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="86" />
-        <source>Choose a valid outcome and one or more other columns as predictors.</source>
-        <translation>Choose a valid outcome and one or more other columns as predictors.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="88" />
-        <source>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</source>
-        <translation>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="93" />
-        <source>Only {count} complete rows are available, which is too few to fit this model.</source>
-        <translation>Only {count} complete rows are available, which is too few to fit this model.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="97" />
-        <source>The outcome {column} has only one value in the complete rows.</source>
-        <translation>The outcome {column} has only one value in the complete rows.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="99" />
-        <source>The predictor {column} has the same value in every complete row.</source>
-        <translation>The predictor {column} has the same value in every complete row.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="101" />
-        <source>Some predictors are exact linear combinations of others, so the model cannot be estimated.</source>
-        <translation>Some predictors are exact linear combinations of others, so the model cannot be estimated.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="105" />
-        <source>The model could not be fitted. Check for sparse outcomes, separation, or redundant predictors.</source>
-        <translation>The model could not be fitted. Check for sparse outcomes, separation, or redundant predictors.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="149" />
-        <source>Linear regression</source>
-        <translation>Linear regression</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="150" />
-        <source>Logistic regression</source>
-        <translation>Logistic regression</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="155" />
-        <source>Poisson regression</source>
-        <translation>Poisson regression</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="158" />
-        <source>Negative binomial regression</source>
-        <translation>Negative binomial regression</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="161" />
-        <source>&lt;b&gt;{model}&lt;/b&gt;</source>
-        <translation>&lt;b&gt;{model}&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="162" />
-        <source>Target: &lt;b&gt;{target}&lt;/b&gt;</source>
-        <translation>Target: &lt;b&gt;{target}&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="163" />
-        <source>Rows used: {used} ({dropped} dropped because of missing values)</source>
-        <translation>Rows used: {used} ({dropped} dropped because of missing values)</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="114" />
-        <source>Odds ratio</source>
-        <translation>Odds ratio</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="116" />
-        <source>Rate ratio</source>
-        <translation>Rate ratio</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="119" />
-        <source>Term</source>
-        <translation>Term</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="120" />
-        <source>Coefficient</source>
-        <translation>Coefficient</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="122" />
-        <source>95% effect CI</source>
-        <translation>95% effect CI</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="123" />
-        <source>p-value</source>
-        <translation>p-value</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="132" />
-        <source>(Intercept)</source>
-        <translation>(Intercept)</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="149" />
-        <source>Outcome coding: {zero} = 0; {one} = 1.</source>
-        <translation>Outcome coding: {zero} = 0; {one} = 1.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="171" />
-        <source>Log-likelihood = {value}; McFadden pseudo R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</source>
-        <translation>Log-likelihood = {value}; McFadden pseudo R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="175" />
-        <source>AIC = {aic}</source>
-        <translation>AIC = {aic}</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="179" />
-        <source>Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial.</source>
-        <translation>Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="183" />
-        <source>Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion.</source>
-        <translation>Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="192" />
-        <source>This diagnostic is advisory; the selected model was not changed.</source>
-        <translation>This diagnostic is advisory; the selected model was not changed.</translation>
-    </message>
-    <message>
-        <source>{model}: {target}</source>
-        <translation>{model}: {target}</translation>
+        <location filename="..\..\gui\dialogs\analysis\report_preview_dialog.py" line="166" />
+        <source>The report preview could not be loaded.</source>
+        <translation>The report preview could not be loaded.</translation>
     </message>
 </context><context>
     <name>RestAuthWidget</name>
@@ -8966,241 +9728,272 @@ Time: {sec:.2f}s{sample}</source>
     </message>
 </context><context>
     <name>StatisticsView</name>
-    <message><source>Histogram and boxplot</source><translation>Histogram and boxplot</translation></message>
     <message>
-        <source>Charts</source>
-        <translation>Charts</translation>
-    </message>
-    <message>
-        <source>Fraction (non-missing)</source>
-        <translation>Fraction (non-missing)</translation>
-    </message>
-    <message>
-        <source>Missing fraction</source>
-        <translation>Missing fraction</translation>
-    </message>
-    <message>
-        <source>Valid count</source>
-        <translation>Valid count</translation>
-    </message>
-    <message>
-        <source>Shapiro-Wilk W</source>
-        <translation>Shapiro-Wilk W</translation>
-    </message>
-    <message>
-        <source>Shapiro-Wilk p-value</source>
-        <translation>Shapiro-Wilk p-value</translation>
-    </message>
-    <message>
-        <source>Recommended summary</source>
-        <translation>Recommended summary</translation>
-    </message>
-    <message>
-        <source>Mean ± SD</source>
-        <translation>Mean ± SD</translation>
-    </message>
-    <message>
-        <source>Median (Q1 to Q3)</source>
-        <translation>Median (Q1 to Q3)</translation>
-    </message>
-    <message>
-        <source>* marks the summary suggested by Shapiro-Wilk. No star means no recommendation is available.</source>
-        <translation>* marks the summary suggested by Shapiro-Wilk. No star means no recommendation is available.</translation>
-    </message>
-    <message>
-        <source>{column}: Shapiro-Wilk could not provide a recommendation; neither summary is starred.</source>
-        <translation>{column}: Shapiro-Wilk could not provide a recommendation; neither summary is starred.</translation>
-    </message>
-    <message>
-        <source>{column}: Shapiro-Wilk suggests {summary} as a starting point. This is a guide, not proof of normality.</source>
-        <translation>{column}: Shapiro-Wilk suggests {summary} as a starting point. This is a guide, not proof of normality.</translation>
-    </message>
-    <message>
-        <source>Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</source>
-        <translation>Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="97" />
-        <source>No numeric columns or eligible categorical columns in this dataset.</source>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="57" />
+        <source>Count (% non-missing)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="107" />
-        <source>Descriptive statistics</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="114" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="58" />
         <source>Continuous</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="116" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="59" />
         <source>Categorical</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="207" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="123" />
-        <source>Column</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="209" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="124" />
-        <source>Count</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="125" />
-        <source>Missing</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="126" />
-        <source>Mean</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="127" />
-        <source>Median</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="128" />
-        <source>Std Dev</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="129" />
-        <source>Variance</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="130" />
-        <source>Min</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="131" />
-        <source>Max</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="132" />
-        <source>Range</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="133" />
-        <source>Q1</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="134" />
-        <source>Q3</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="135" />
-        <source>IQR</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="136" />
-        <source>Skewness</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="137" />
-        <source>Kurtosis</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="194" />
-        <source>Columns with more than {maximum} distinct values are omitted.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="208" />
-        <source>Category</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="210" />
-        <source>Percent (non-missing)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="211" />
-        <source>Missing count</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="216" />
-        <source>No non-missing values</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="297" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="60" />
         <source>Distribution</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="307" />
-        <source>No numeric columns are available for distributions.</source>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="61" />
+        <source>Fraction (non-missing)</source>
+        <translation>Fraction (non-missing)</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="62" />
+        <source>Missing fraction</source>
+        <translation>Missing fraction</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="63" />
+        <source>Valid count</source>
+        <translation>Valid count</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="64" />
+        <source>Shapiro-Wilk W</source>
+        <translation>Shapiro-Wilk W</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="65" />
+        <source>Shapiro-Wilk p-value</source>
+        <translation>Shapiro-Wilk p-value</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="66" />
+        <source>Recommended summary</source>
+        <translation>Recommended summary</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="231" />
+        <source>No numeric columns or eligible categorical columns in this dataset.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="327" />
-        <source>Normality testing applies to continuous variables.</source>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="241" />
+        <source>Descriptive statistics</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="264" />
+        <source>* marks the summary suggested by Shapiro-Wilk. No star means no recommendation is available.</source>
+        <translation>* marks the summary suggested by Shapiro-Wilk. No star means no recommendation is available.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="366" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="279" />
+        <source>Column</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="368" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="280" />
+        <source>Count</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="281" />
+        <source>Missing</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="282" />
+        <source>Mean</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="283" />
+        <source>Median</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="284" />
+        <source>Std Dev</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="285" />
+        <source>Variance</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="286" />
+        <source>Min</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="287" />
+        <source>Max</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="288" />
+        <source>Range</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="289" />
+        <source>Q1</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="290" />
+        <source>Q3</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="291" />
+        <source>IQR</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="292" />
+        <source>Skewness</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="293" />
+        <source>Kurtosis</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="437" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="294" />
+        <source>Mean ± SD</source>
+        <translation>Mean ± SD</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="437" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="295" />
+        <source>Median (Q1 to Q3)</source>
+        <translation>Median (Q1 to Q3)</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="353" />
+        <source>Columns with more than {maximum} distinct values are omitted.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="367" />
+        <source>Category</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="369" />
-        <source>Not enough data to test for normality.</source>
+        <source>Percent (non-missing)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="372" />
-        <source>&lt;b&gt;Shapiro-Wilk&lt;/b&gt;:</source>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="370" />
+        <source>Missing count</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="373" />
-        <source>W = {w}, p = {p}</source>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="375" />
+        <source>No non-missing values</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="380" />
-        <source>→ Significant evidence against normality (α = 0.05).</source>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="431" />
+        <source>{column}: Shapiro-Wilk could not provide a recommendation; neither summary is starred.</source>
+        <translation>{column}: Shapiro-Wilk could not provide a recommendation; neither summary is starred.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="438" />
+        <source>{column}: Shapiro-Wilk suggests {summary} as a starting point. This is a guide, not proof of normality.</source>
+        <translation>{column}: Shapiro-Wilk suggests {summary} as a starting point. This is a guide, not proof of normality.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="442" />
+        <source>Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</source>
+        <translation>Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="481" />
+        <source>No numeric columns are available for distributions.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="382" />
-        <source>→ No significant evidence against normality (α = 0.05).</source>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="503" />
+        <source>Normality testing applies to continuous variables.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="386" />
-        <source>⚠ Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="410" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="396" />
-        <source>No data</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="404" />
+        <location filename="..\..\services\analysis\report.py" line="2344" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="607" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="599" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="553" />
         <source>Histogram</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="428" />
+        <location filename="..\..\services\analysis\report.py" line="2345" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="607" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="599" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="554" />
         <source>Boxplot</source>
         <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2346" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="607" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="599" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="555" />
+        <source>No data</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="570" />
+        <source>Not enough data to test for normality.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="573" />
+        <source>&lt;b&gt;Shapiro-Wilk&lt;/b&gt;:</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="574" />
+        <source>W = {w}, p = {p}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="581" />
+        <source>→ Significant evidence against normality (α = 0.05).</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="583" />
+        <source>→ No significant evidence against normality (α = 0.05).</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="587" />
+        <source>⚠ Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2358" />
+        <source>Histogram and boxplot</source>
+        <translation>Histogram and boxplot</translation>
+    </message>
+    <message>
+        <source>Charts</source>
+        <translation type="vanished">Charts</translation>
     </message>
 </context><context>
     <name>StatusBarController</name>
@@ -9220,6 +10013,220 @@ Time: {sec:.2f}s{sample}</source>
         <translation type="unfinished" />
     </message>
 </context><context>
+    <name>SurvivalRegressionView</name>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="118" />
+        <source>Hazard ratios with 95% intervals</source>
+        <translation>Hazard ratios with 95% intervals</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="119" />
+        <source>Forest plot unavailable:
+all hazard ratios and intervals must be finite and positive.</source>
+        <translation>Forest plot unavailable:
+all hazard ratios and intervals must be finite and positive.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="122" />
+        <source>Hazard ratio (log scale)</source>
+        <translation>Hazard ratio (log scale)</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="123" />
+        <source>Overall Kaplan-Meier survival (unadjusted)</source>
+        <translation>Overall Kaplan-Meier survival (unadjusted)</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="124" />
+        <source>No survival chart data are available.</source>
+        <translation>No survival chart data are available.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="125" />
+        <source>Duration: {column}</source>
+        <translation>Duration: {column}</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="126" />
+        <source>Survival probability</source>
+        <translation>Survival probability</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="127" />
+        <source>At risk immediately before time</source>
+        <translation>At risk immediately before time</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="167" />
+        <source>Select a duration column for Cox regression.</source>
+        <translation>Select a duration column for Cox regression.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="169" />
+        <source>Select a binary event column for Cox regression.</source>
+        <translation>Select a binary event column for Cox regression.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="171" />
+        <source>Select one or more predictors and click Apply.</source>
+        <translation>Select one or more predictors and click Apply.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="173" />
+        <source>Select at most {maximum} predictors.</source>
+        <translation>Select at most {maximum} predictors.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="175" />
+        <source>Choose valid, distinct duration and event columns and other columns as predictors.</source>
+        <translation>Choose valid, distinct duration and event columns and other columns as predictors.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="177" />
+        <source>Duration {column} contains a non-missing value that is not finite and strictly positive.</source>
+        <translation>Duration {column} contains a non-missing value that is not finite and strictly positive.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="181" />
+        <source>Event {column} must contain only 0 and 1 or boolean values; 1 means event and 0 means censored.</source>
+        <translation>Event {column} must contain only 0 and 1 or boolean values; 1 means event and 0 means censored.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="185" />
+        <source>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</source>
+        <translation>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="190" />
+        <source>Only {count} complete rows are available, which is too few to fit this model.</source>
+        <translation>Only {count} complete rows are available, which is too few to fit this model.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="194" />
+        <source>There are too few events relative to the model terms to estimate this model.</source>
+        <translation>There are too few events relative to the model terms, or no censored rows, to estimate this model.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="196" />
+        <source>The predictor {column} has the same value in every complete row.</source>
+        <translation>The predictor {column} has the same value in every complete row.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="198" />
+        <source>Some predictors are exact linear combinations of others, so the model cannot be estimated.</source>
+        <translation>Some predictors are exact linear combinations of others, so the model cannot be estimated.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="202" />
+        <source>The model could not be fitted reliably. Check for sparse events, separation, redundant predictors, or numerical problems.</source>
+        <translation>The model could not be fitted reliably. Check for sparse events, separation, redundant predictors, or numerical problems.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="213" />
+        <source>Term</source>
+        <translation>Term</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="214" />
+        <source>Coefficient</source>
+        <translation>Coefficient</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="215" />
+        <source>Hazard ratio</source>
+        <translation>Hazard ratio</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="216" />
+        <source>95% hazard-ratio CI</source>
+        <translation>95% hazard-ratio CI</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="217" />
+        <source>p-value</source>
+        <translation>p-value</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="247" />
+        <source>&lt;b&gt;Cox proportional-hazards regression&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Cox proportional-hazards regression&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="248" />
+        <source>Duration: &lt;b&gt;{duration}&lt;/b&gt;; event: &lt;b&gt;{event}&lt;/b&gt;</source>
+        <translation>Duration: &lt;b&gt;{duration}&lt;/b&gt;; event: &lt;b&gt;{event}&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="252" />
+        <source>Event coding: 1 = event; 0 = censored.</source>
+        <translation>Event coding: 1 = event; 0 = censored.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="253" />
+        <source>Rows used: {used} ({dropped} excluded by listwise missing-value handling)</source>
+        <translation>Rows used: {used} ({dropped} excluded by listwise missing-value handling)</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="257" />
+        <source>Events: {events}; censored: {censored}</source>
+        <translation>Events: {events}; censored: {censored}</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="263" />
+        <source>Reference for {column}: {level}</source>
+        <translation>Reference for {column}: {level}</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="270" />
+        <source>Efron method was used to handle tied event times.</source>
+        <translation>Efron method was used to handle tied event times.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="271" />
+        <source>The proportional-hazards assumption was not assessed.</source>
+        <translation>The proportional-hazards assumption was not assessed.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="275" />
+        <source>Kaplan-Meier uses the same complete-case subjects as the Cox fit, without covariate adjustment.</source>
+        <translation>Kaplan-Meier uses the same complete-case subjects as the Cox fit, without covariate adjustment.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="278" />
+        <source>The survival curve is not a Cox prediction or a proportional-hazards diagnostic.</source>
+        <translation>The survival curve is not a Cox prediction or a proportional-hazards diagnostic.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="279" />
+        <source>Plus signs mark censoring times; tied censor marks may overlap.</source>
+        <translation>Plus signs mark censoring times; tied censor marks may overlap.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="280" />
+        <source>All complete subjects are used; no survival sampling or confidence bands are applied.</source>
+        <translation>All complete subjects are used; no survival sampling or confidence bands are applied.</translation>
+    </message>
+    <message>
+        <source>Model coefficients</source>
+        <translation type="vanished">Model coefficients</translation>
+    </message>
+    <message>
+        <source>Model comments</source>
+        <translation type="vanished">Model comments</translation>
+    </message>
+    <message>
+        <source>Effects and survival</source>
+        <translation type="vanished">Effects and survival</translation>
+    </message>
+    <message>
+        <source>(Intercept)</source>
+        <translation type="vanished">(Intercept)</translation>
+    </message>
+    <message>
+        <source>Cox proportional-hazards regression: {duration} / {event}</source>
+        <translation type="vanished">Cox proportional-hazards regression: {duration} / {event}</translation>
+    </message>
+</context><context>
     <name>TextMatchFilter</name>
     <message>
         <location filename="..\..\gui\dialogs\service\prompts\filter_match.py" line="55" />
@@ -9229,227 +10236,240 @@ Time: {sec:.2f}s{sample}</source>
 </context><context>
     <name>TimeSeriesConfigWidget</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="33" />
-        <source>Time column</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="37" />
-        <source>Value column</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="40" />
-        <source>Original frequency</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="41" />
-        <source>Daily</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="41" />
-        <source>Weekly</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="41" />
-        <source>Monthly</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="41" />
-        <source>Quarterly</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="41" />
-        <source>Yearly</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="44" />
-        <source>Resample to</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="46" />
-        <source>Auto-detect seasonal period</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="54" />
-        <source>Seasonal period</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="57" />
-        <source>Additive</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="58" />
-        <source>Multiplicative</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="60" />
-        <source>Decomposition</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="63" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="155" />
         <source>Duplicate timestamps are averaged. Gaps are preserved and are not interpolated.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="66" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_config.py" line="160" />
         <source>Apply</source>
         <translation type="unfinished" />
     </message>
 </context><context>
-    <name>TimeSeriesView</name>
+    <name>TimeSeriesPresentation</name>
     <message>
-        <source>Summary</source>
-        <translation>Summary</translation>
+        <source>Time column:</source>
+        <translation type="vanished">Time column:</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="61" />
-        <source>A time series needs at least one datetime column.</source>
-        <translation type="unfinished" />
+        <source>Value column:</source>
+        <translation type="vanished">Value column:</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="62" />
-        <source>A time series needs at least one numeric value column.</source>
-        <translation type="unfinished" />
+        <source>Resampling:</source>
+        <translation type="vanished">Resampling:</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="63" />
-        <source>Choose a datetime column.</source>
-        <translation type="unfinished" />
+        <source>Seasonal period:</source>
+        <translation type="vanished">Seasonal period:</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="64" />
-        <source>Choose a numeric value column.</source>
-        <translation type="unfinished" />
+        <source>Decomposition model:</source>
+        <translation type="vanished">Decomposition model:</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="65" />
-        <source>Choose a valid resampling frequency.</source>
-        <translation type="unfinished" />
+        <source>Auto-detect seasonal period</source>
+        <translation type="vanished">Auto-detect seasonal period</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="66" />
-        <source>Choose a seasonal period of at least 2.</source>
-        <translation type="unfinished" />
+        <source>Original frequency</source>
+        <translation type="vanished">Original frequency</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="67" />
-        <source>At least 3 valid time observations are needed.</source>
-        <translation type="unfinished" />
+        <source>Automatic</source>
+        <translation type="vanished">Automatic</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="70" />
-        <source>Charts</source>
-        <translation type="unfinished" />
+        <source>Automatic (no period detected)</source>
+        <translation type="vanished">Automatic (no period detected)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="82" />
-        <source>Model comments</source>
-        <translation type="unfinished" />
+        <source>Automatic (detected: {period})</source>
+        <translation type="vanished">Automatic (detected: {period})</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="73" />
-        <source>irregular</source>
-        <translation type="unfinished" />
+        <source>Daily</source>
+        <translation type="vanished">Daily</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="74" />
-        <source>&lt;b&gt;{value}&lt;/b&gt; by &lt;b&gt;{time}&lt;/b&gt;: {points} time points, frequency {frequency}. {invalid} invalid rows dropped. {duplicates} duplicate rows averaged.</source>
-        <translation type="unfinished" />
+        <source>Weekly</source>
+        <translation type="vanished">Weekly</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="101" />
-        <source>Series</source>
-        <translation type="unfinished" />
+        <source>Monthly</source>
+        <translation type="vanished">Monthly</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="114" />
-        <source>Lag</source>
-        <translation type="unfinished" />
+        <source>Quarterly</source>
+        <translation type="vanished">Quarterly</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="119" />
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="115" />
-        <source>Autocorrelation</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="140" />
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="127" />
-        <source>Seasonal decomposition</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="134" />
-        <source>Observed</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="134" />
-        <source>Trend</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="134" />
-        <source>Seasonal</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="134" />
-        <source>Residual</source>
-        <translation type="unfinished" />
+        <source>Yearly</source>
+        <translation type="vanished">Yearly</translation>
     </message>
     <message>
         <source>Additive</source>
-        <translation>Additive</translation>
+        <translation type="vanished">Additive</translation>
     </message>
     <message>
         <source>Multiplicative</source>
-        <translation>Multiplicative</translation>
+        <translation type="vanished">Multiplicative</translation>
     </message>
     <message>
-        <source>Decomposition model: {model}</source>
-        <translation>Decomposition model: {model}</translation>
+        <source>Series</source>
+        <translation type="vanished">Series</translation>
     </message>
     <message>
+        <source>Autocorrelation</source>
+        <translation type="vanished">Autocorrelation</translation>
+    </message>
+    <message>
+        <source>Model summary</source>
+        <translation type="vanished">Model summary</translation>
+    </message>
+    <message>
+        <source>Charts</source>
+        <translation type="vanished">Charts</translation>
+    </message>
+    <message>
+        <source>Seasonal decomposition</source>
+        <translation type="vanished">Seasonal decomposition</translation>
+    </message>
+    <message>
+        <source>Observed</source>
+        <translation type="vanished">Observed</translation>
+    </message>
+    <message>
+        <source>Trend</source>
+        <translation type="vanished">Trend</translation>
+    </message>
+    <message>
+        <source>Seasonal</source>
+        <translation type="vanished">Seasonal</translation>
+    </message>
+    <message>
+        <source>Residual</source>
+        <translation type="vanished">Residual</translation>
+    </message>
+    <message>
+        <source>Lag</source>
+        <translation type="vanished">Lag</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation type="vanished">Value</translation>
+    </message>
+    <message>
+        <source>Timestamp</source>
+        <translation type="vanished">Timestamp</translation>
+    </message>
+</context><context>
+    <name>TimeSeriesView</name>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="125" />
         <source>The autocorrelation requires a regular time frequency.</source>
         <translation>The autocorrelation requires a regular time frequency.</translation>
     </message>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="128" />
         <source>The autocorrelation is unavailable while the series has gaps.</source>
         <translation>The autocorrelation is unavailable while the series has gaps.</translation>
     </message>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="131" />
         <source>Seasonal decomposition requires a regular time frequency.</source>
         <translation>Seasonal decomposition requires a regular time frequency.</translation>
     </message>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="134" />
         <source>Seasonal decomposition is unavailable while the series has gaps.</source>
         <translation>Seasonal decomposition is unavailable while the series has gaps.</translation>
     </message>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="137" />
         <source>No seasonal period could be detected; choose one to decompose the series.</source>
         <translation>No seasonal period could be detected; choose one to decompose the series.</translation>
     </message>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="140" />
         <source>Seasonal decomposition needs at least two complete seasonal cycles.</source>
         <translation>Seasonal decomposition needs at least two complete seasonal cycles.</translation>
     </message>
     <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="143" />
         <source>Multiplicative decomposition requires all values to be greater than zero.</source>
         <translation>Multiplicative decomposition requires all values to be greater than zero.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="152" />
+        <source>A time series needs at least one datetime column.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="153" />
+        <source>A time series needs at least one numeric value column.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="154" />
+        <source>Choose a datetime column.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="155" />
+        <source>Choose a numeric value column.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="156" />
+        <source>Choose a valid resampling frequency.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="157" />
+        <source>Choose a seasonal period of at least 2.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="158" />
+        <source>At least 3 valid time observations are needed.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="164" />
+        <source>Charts</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="176" />
+        <source>Model comments</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="195" />
+        <source>irregular</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="196" />
+        <source>&lt;b&gt;{value}&lt;/b&gt; by &lt;b&gt;{time}&lt;/b&gt;: {points} time points, frequency {frequency}. {invalid} invalid rows dropped. {duplicates} duplicate rows averaged.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Summary</source>
+        <translation type="vanished">Summary</translation>
+    </message>
+    <message>
+        <source>Additive</source>
+        <translation type="vanished">Additive</translation>
+    </message>
+    <message>
+        <source>Multiplicative</source>
+        <translation type="vanished">Multiplicative</translation>
+    </message>
+    <message>
+        <source>Decomposition model: {model}</source>
+        <translation type="vanished">Decomposition model: {model}</translation>
     </message>
 </context><context>
     <name>ToolbarController</name>
@@ -9568,271 +10588,4 @@ Shortcut: Ctrl+Z</source>
         <source>Analyze data</source>
         <translation type="unfinished" />
     </message>
-</context>
-<context>
-    <name>RegressionConfigWidget</name>
-    <message><source>Cox proportional-hazards regression</source><translation>Cox proportional-hazards regression</translation></message>
-    <message><source>Duration</source><translation>Duration</translation></message>
-    <message><source>Event</source><translation>Event</translation></message>
-    <message><source>1 = event, 0 = censored</source><translation>1 = event, 0 = censored</translation></message>
-    <message><source>This column is an outcome and cannot be a predictor.</source><translation>This column is an outcome and cannot be a predictor.</translation></message>
-    <message><source>Cox regression needs distinct numeric duration and binary event columns.</source><translation>Cox regression needs distinct numeric duration and binary event columns.</translation></message>
-</context>
-<context>
-    <name>SurvivalRegressionView</name>
-    <message>
-        <source>Model coefficients</source>
-        <translation>Model coefficients</translation>
-    </message>
-    <message>
-        <source>Model comments</source>
-        <translation>Model comments</translation>
-    </message>
-    <message>
-        <source>Effects and survival</source>
-        <translation>Effects and survival</translation>
-    </message>
-    <message>
-        <source>Hazard ratios with 95% intervals</source>
-        <translation>Hazard ratios with 95% intervals</translation>
-    </message>
-    <message>
-        <source>Forest plot unavailable:
-all hazard ratios and intervals must be finite and positive.</source>
-        <translation>Forest plot unavailable:
-all hazard ratios and intervals must be finite and positive.</translation>
-    </message>
-    <message>
-        <source>Hazard ratio (log scale)</source>
-        <translation>Hazard ratio (log scale)</translation>
-    </message>
-    <message>
-        <source>Overall Kaplan-Meier survival (unadjusted)</source>
-        <translation>Overall Kaplan-Meier survival (unadjusted)</translation>
-    </message>
-    <message>
-        <source>No survival chart data are available.</source>
-        <translation>No survival chart data are available.</translation>
-    </message>
-    <message>
-        <source>Duration: {column}</source>
-        <translation>Duration: {column}</translation>
-    </message>
-    <message>
-        <source>Survival probability</source>
-        <translation>Survival probability</translation>
-    </message>
-    <message>
-        <source>At risk immediately before time</source>
-        <translation>At risk immediately before time</translation>
-    </message>
-    <message>
-        <source>Kaplan-Meier uses the same complete-case subjects as the Cox fit, without covariate adjustment.</source>
-        <translation>Kaplan-Meier uses the same complete-case subjects as the Cox fit, without covariate adjustment.</translation>
-    </message>
-    <message>
-        <source>The survival curve is not a Cox prediction or a proportional-hazards diagnostic.</source>
-        <translation>The survival curve is not a Cox prediction or a proportional-hazards diagnostic.</translation>
-    </message>
-    <message>
-        <source>Plus signs mark censoring times; tied censor marks may overlap.</source>
-        <translation>Plus signs mark censoring times; tied censor marks may overlap.</translation>
-    </message>
-    <message>
-        <source>All complete subjects are used; no survival sampling or confidence bands are applied.</source>
-        <translation>All complete subjects are used; no survival sampling or confidence bands are applied.</translation>
-    </message>
-    <message><source>Select a duration column for Cox regression.</source><translation>Select a duration column for Cox regression.</translation></message>
-    <message><source>Select a binary event column for Cox regression.</source><translation>Select a binary event column for Cox regression.</translation></message>
-    <message><source>Select one or more predictors and click Apply.</source><translation>Select one or more predictors and click Apply.</translation></message>
-    <message><source>Select at most {maximum} predictors.</source><translation>Select at most {maximum} predictors.</translation></message>
-    <message><source>Choose valid, distinct duration and event columns and other columns as predictors.</source><translation>Choose valid, distinct duration and event columns and other columns as predictors.</translation></message>
-    <message><source>Duration {column} contains a non-missing value that is not finite and strictly positive.</source><translation>Duration {column} contains a non-missing value that is not finite and strictly positive.</translation></message>
-    <message><source>Event {column} must contain only 0 and 1 or boolean values; 1 means event and 0 means censored.</source><translation>Event {column} must contain only 0 and 1 or boolean values; 1 means event and 0 means censored.</translation></message>
-    <message><source>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</source><translation>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</translation></message>
-    <message><source>Only {count} complete rows are available, which is too few to fit this model.</source><translation>Only {count} complete rows are available, which is too few to fit this model.</translation></message>
-    <message>    <source>There are too few events relative to the model terms to estimate this model.</source><translation>There are too few events relative to the model terms, or no censored rows, to estimate this model.</translation></message>
-    <message><source>The predictor {column} has the same value in every complete row.</source><translation>The predictor {column} has the same value in every complete row.</translation></message>
-    <message><source>Some predictors are exact linear combinations of others, so the model cannot be estimated.</source><translation>Some predictors are exact linear combinations of others, so the model cannot be estimated.</translation></message>
-    <message><source>The model could not be fitted reliably. Check for sparse events, separation, redundant predictors, or numerical problems.</source><translation>The model could not be fitted reliably. Check for sparse events, separation, redundant predictors, or numerical problems.</translation></message>
-    <message><source>Term</source><translation>Term</translation></message>
-    <message><source>Coefficient</source><translation>Coefficient</translation></message>
-    <message><source>Hazard ratio</source><translation>Hazard ratio</translation></message>
-    <message><source>95% hazard-ratio CI</source><translation>95% hazard-ratio CI</translation></message>
-    <message><source>p-value</source><translation>p-value</translation></message>
-    <message><source>(Intercept)</source><translation>(Intercept)</translation></message>
-    <message><source>&lt;b&gt;Cox proportional-hazards regression&lt;/b&gt;</source><translation>&lt;b&gt;Cox proportional-hazards regression&lt;/b&gt;</translation></message>
-    <message><source>Duration: &lt;b&gt;{duration}&lt;/b&gt;; event: &lt;b&gt;{event}&lt;/b&gt;</source><translation>Duration: &lt;b&gt;{duration}&lt;/b&gt;; event: &lt;b&gt;{event}&lt;/b&gt;</translation></message>
-    <message><source>Event coding: 1 = event; 0 = censored.</source><translation>Event coding: 1 = event; 0 = censored.</translation></message>
-    <message><source>Rows used: {used} ({dropped} excluded by listwise missing-value handling)</source><translation>Rows used: {used} ({dropped} excluded by listwise missing-value handling)</translation></message>
-    <message><source>Events: {events}; censored: {censored}</source><translation>Events: {events}; censored: {censored}</translation></message>
-    <message><source>Reference for {column}: {level}</source><translation>Reference for {column}: {level}</translation></message>
-    <message><source>Efron method was used to handle tied event times.</source><translation>Efron method was used to handle tied event times.</translation></message>
-    <message><source>The proportional-hazards assumption was not assessed.</source><translation>The proportional-hazards assumption was not assessed.</translation></message>
-    <message>
-        <source>Cox proportional-hazards regression: {duration} / {event}</source>
-        <translation>Cox proportional-hazards regression: {duration} / {event}</translation>
-    </message>
-</context>
-<context>
-    <name>ReportPreviewDialog</name>
-    <message>
-        <source>Report preview</source>
-        <translation>Report preview</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation>Close</translation>
-    </message>
-    <message>
-        <source>The report preview could not be loaded.</source>
-        <translation>The report preview could not be loaded.</translation>
-    </message>
-</context>
-<context>
-    <name>HypothesisPresentation</name>
-    <message><source>Hypothesis Tests</source><translation>Hypothesis Tests</translation></message>
-    <message><source>{category} — {method}</source><translation>{category} — {method}</translation></message>
-    <message><source>Group comparison</source><translation>Group comparison</translation></message>
-    <message><source>Categorical association</source><translation>Categorical association</translation></message>
-    <message><source>Wilcoxon signed-rank</source><translation>Wilcoxon signed-rank</translation></message>
-    <message><source>Friedman</source><translation>Friedman</translation></message>
-    <message><source>Numeric variable:</source><translation>Numeric variable:</translation></message>
-    <message><source>Grouping variable:</source><translation>Grouping variable:</translation></message>
-    <message><source>Row variable:</source><translation>Row variable:</translation></message>
-    <message><source>Column variable:</source><translation>Column variable:</translation></message>
-    <message><source>Measurement variables (selected order):</source><translation>Measurement variables (selected order):</translation></message>
-    <message><source>Tests computed:</source><translation>Tests computed:</translation></message>
-    <message><source>Tests available:</source><translation>Tests available:</translation></message>
-    <message><source>Welch's t-test</source><translation>Welch's t-test</translation></message>
-    <message><source>Student's t-test</source><translation>Student's t-test</translation></message>
-    <message><source>Mann-Whitney U</source><translation>Mann-Whitney U</translation></message>
-    <message><source>One-way ANOVA</source><translation>One-way ANOVA</translation></message>
-    <message><source>Kruskal-Wallis</source><translation>Kruskal-Wallis</translation></message>
-    <message><source>Pearson's chi-square test</source><translation>Pearson's chi-square test</translation></message>
-    <message><source>Fisher's exact test</source><translation>Fisher's exact test</translation></message>
-    <message><source>Group summary</source><translation>Group summary</translation></message>
-    <message><source>Contingency table</source><translation>Contingency table</translation></message>
-    <message><source>Measurement summary</source><translation>Measurement summary</translation></message>
-    <message><source>Test results</source><translation>Test results</translation></message>
-    <message><source>Group distributions</source><translation>Group distributions</translation></message>
-    <message><source>Association plots</source><translation>Association plots</translation></message>
-    <message><source>Paired measurement plots</source><translation>Paired measurement plots</translation></message>
-</context>
-<context>
-    <name>RegressionPresentation</name>
-    <message><source>Regression</source><translation>Regression</translation></message>
-    <message><source>{category} — {model}</source><translation>{category} — {model}</translation></message>
-    <message><source>Linear regression</source><translation>Linear regression</translation></message>
-    <message><source>Logistic regression</source><translation>Logistic regression</translation></message>
-    <message><source>Poisson regression</source><translation>Poisson regression</translation></message>
-    <message><source>Negative binomial regression</source><translation>Negative binomial regression</translation></message>
-    <message><source>Cox proportional-hazards regression</source><translation>Cox proportional-hazards regression</translation></message>
-    <message><source>Outcome:</source><translation>Outcome:</translation></message>
-    <message><source>Duration:</source><translation>Duration:</translation></message>
-    <message><source>Event:</source><translation>Event:</translation></message>
-    <message><source>Predictors:</source><translation>Predictors:</translation></message>
-    <message><source>Modeled terms:</source><translation>Modeled terms:</translation></message>
-    <message><source>Reference levels:</source><translation>Reference levels:</translation></message>
-    <message><source>Coefficients</source><translation>Coefficients</translation></message>
-    <message><source>Model summary</source><translation>Model summary</translation></message>
-    <message><source>Linear diagnostics</source><translation>Linear diagnostics</translation></message>
-    <message><source>Logistic diagnostics</source><translation>Logistic diagnostics</translation></message>
-    <message><source>Count-model diagnostics</source><translation>Count-model diagnostics</translation></message>
-    <message><source>Survival charts</source><translation>Survival charts</translation></message>
-    <message><source>(Intercept)</source><translation>(Intercept)</translation></message>
-</context>
-<context>
-    <name>OutliersPresentation</name>
-    <message><source>Outliers</source><translation>Outliers</translation></message>
-    <message><source>{category} — {method}</source><translation>{category} — {method}</translation></message>
-    <message><source>IQR (Tukey&apos;s fences)</source><translation>IQR (Tukey&apos;s fences)</translation></message>
-    <message><source>Z-score</source><translation>Z-score</translation></message>
-    <message><source>Modified Z-score</source><translation>Modified Z-score</translation></message>
-    <message><source>Isolation Forest</source><translation>Isolation Forest</translation></message>
-    <message><source>Local Outlier Factor</source><translation>Local Outlier Factor</translation></message>
-    <message><source>Threshold:</source><translation>Threshold:</translation></message>
-    <message><source>IQR multiplier:</source><translation>IQR multiplier:</translation></message>
-    <message><source>Score threshold:</source><translation>Score threshold:</translation></message>
-    <message><source>Screened columns:</source><translation>Screened columns:</translation></message>
-    <message><source>Selected detail column:</source><translation>Selected detail column:</translation></message>
-    <message><source>None</source><translation>None</translation></message>
-    <message><source>Features:</source><translation>Features:</translation></message>
-    <message><source>Standardization:</source><translation>Standardization:</translation></message>
-    <message><source>Standardized</source><translation>Standardized</translation></message>
-    <message><source>Not standardized</source><translation>Not standardized</translation></message>
-    <message><source>Expected outlier fraction:</source><translation>Expected outlier fraction:</translation></message>
-    <message><source>LOF neighbors:</source><translation>LOF neighbors:</translation></message>
-    <message><source>Column summary</source><translation>Column summary</translation></message>
-    <message><source>Column details</source><translation>Column details</translation></message>
-    <message><source>Model summary</source><translation>Model summary</translation></message>
-    <message><source>Potential outliers</source><translation>Potential outliers</translation></message>
-    <message><source>Column distribution</source><translation>Column distribution</translation></message>
-    <message><source>Column distributions</source><translation>Column distributions</translation></message>
-    <message><source>Outlier projection</source><translation>Outlier projection</translation></message>
-</context>
-<context>
-    <name>ClusteringPresentation</name>
-    <message><source>Clustering</source><translation>Clustering</translation></message>
-    <message><source>{category} — {method}</source><translation>{category} — {method}</translation></message>
-    <message><source>K-Means</source><translation>K-Means</translation></message>
-    <message><source>DBSCAN</source><translation>DBSCAN</translation></message>
-    <message><source>Agglomerative</source><translation>Agglomerative</translation></message>
-    <message><source>Cluster sizes</source><translation>Cluster sizes</translation></message>
-    <message><source>Model summary</source><translation>Model summary</translation></message>
-    <message><source>Cluster projection</source><translation>Cluster projection</translation></message>
-    <message><source>Cluster projection (internal PCA)</source><translation>Cluster projection (internal PCA)</translation></message>
-    <message><source>Number of clusters:</source><translation>Number of clusters:</translation></message>
-    <message><source>Neighborhood radius (eps):</source><translation>Neighborhood radius (eps):</translation></message>
-    <message><source>Minimum samples:</source><translation>Minimum samples:</translation></message>
-</context>
-<context>
-    <name>AnalysisConfiguration</name>
-    <message><source>Features</source><translation>Features</translation></message>
-    <message><source>Standardize features</source><translation>Standardize features</translation></message>
-</context>
-<context>
-    <name>PCAPresentation</name>
-    <message><source>PCA</source><translation>PCA</translation></message>
-    <message><source>Feature loadings</source><translation>Feature loadings</translation></message>
-    <message><source>Explained variance</source><translation>Explained variance</translation></message>
-    <message><source>Model summary</source><translation>Model summary</translation></message>
-    <message><source>PCA plots</source><translation>PCA plots</translation></message>
-    <message><source>Features:</source><translation>Features:</translation></message>
-    <message><source>Standardization:</source><translation>Standardization:</translation></message>
-    <message><source>Standardized</source><translation>Standardized</translation></message>
-    <message><source>Not standardized</source><translation>Not standardized</translation></message>
-</context>
-<context>
-    <name>TimeSeriesPresentation</name>
-    <message><source>Time column:</source><translation>Time column:</translation></message>
-    <message><source>Value column:</source><translation>Value column:</translation></message>
-    <message><source>Resampling:</source><translation>Resampling:</translation></message>
-    <message><source>Seasonal period:</source><translation>Seasonal period:</translation></message>
-    <message><source>Decomposition model:</source><translation>Decomposition model:</translation></message>
-    <message><source>Auto-detect seasonal period</source><translation>Auto-detect seasonal period</translation></message>
-    <message><source>Original frequency</source><translation>Original frequency</translation></message>
-    <message><source>Automatic</source><translation>Automatic</translation></message>
-    <message><source>Automatic (no period detected)</source><translation>Automatic (no period detected)</translation></message>
-    <message><source>Automatic (detected: {period})</source><translation>Automatic (detected: {period})</translation></message>
-    <message><source>Daily</source><translation>Daily</translation></message>
-    <message><source>Weekly</source><translation>Weekly</translation></message>
-    <message><source>Monthly</source><translation>Monthly</translation></message>
-    <message><source>Quarterly</source><translation>Quarterly</translation></message>
-    <message><source>Yearly</source><translation>Yearly</translation></message>
-    <message><source>Additive</source><translation>Additive</translation></message>
-    <message><source>Multiplicative</source><translation>Multiplicative</translation></message>
-    <message><source>Series</source><translation>Series</translation></message>
-    <message><source>Autocorrelation</source><translation>Autocorrelation</translation></message>
-    <message><source>Model summary</source><translation>Model summary</translation></message>
-    <message><source>Charts</source><translation>Charts</translation></message>
-    <message><source>Seasonal decomposition</source><translation>Seasonal decomposition</translation></message>
-    <message><source>Observed</source><translation>Observed</translation></message>
-    <message><source>Trend</source><translation>Trend</translation></message>
-    <message><source>Seasonal</source><translation>Seasonal</translation></message>
-    <message><source>Residual</source><translation>Residual</translation></message>
-    <message><source>Lag</source><translation>Lag</translation></message>
-    <message><source>Value</source><translation>Value</translation></message>
-    <message><source>Timestamp</source><translation>Timestamp</translation></message>
-</context>
-</TS>
+</context></TS>

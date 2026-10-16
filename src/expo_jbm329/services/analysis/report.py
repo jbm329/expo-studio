@@ -757,6 +757,7 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
     "StatisticsView": (
         "Continuous",
         "Categorical",
+        "Count (% non-missing)",
         *(source for context, source in presentation_label_sources() if context == "StatisticsView"),
         "Column",
         "Count",
@@ -1125,6 +1126,7 @@ def _localized_report_tables(
     time_series_model_summary: pd.DataFrame | None = None,
     outlier_report_tables: Mapping[OutlierExportComponent, pd.DataFrame] | None = None,
     include_correlation_explanation: bool = True,
+    combine_statistics_percentages: bool = False,
 ) -> dict[str, pd.DataFrame]:
     """Build localized tables, optionally using report-only raw result rows."""
     if labels is not None:
@@ -1231,7 +1233,7 @@ def _localized_report_tables(
             statistics_categorical_headers = {
                 "column": "Column",
                 "value": "Category",
-                "count": "Count",
+                "count": "Count (% non-missing)" if combine_statistics_percentages else "Count",
                 "fraction": "Fraction (non-missing)",
                 "valid_count": "Valid count",
                 "missing_count": "Missing count",
@@ -1242,6 +1244,8 @@ def _localized_report_tables(
                 if statistics_table is None:
                     continue
                 frame = statistics_export_tables(snapshot, (statistics_table,))[statistics_table.value]
+                if combine_statistics_percentages:
+                    frame = _combine_statistics_percentages(frame, statistics_table, count_format)
                 statistics_headers = (
                     statistics_continuous_headers
                     if statistics_table is StatisticsExportTable.CONTINUOUS
@@ -1849,6 +1853,7 @@ def prepare_report_content(
                     else None
                 ),
                 include_correlation_explanation=False,
+                combine_statistics_percentages=True,
             ).items()
         )
         chart_keys = tuple(component.key for component in selected if component.kind == "chart")
@@ -2036,6 +2041,30 @@ def _prepare_overview_summary(
         or (label("No issues detected."),),
         facts_heading=label("Dataset statistics"),
     )
+
+
+def _combine_statistics_percentages(
+    frame: pd.DataFrame,
+    table: StatisticsExportTable,
+    count_format: Callable[[int], str],
+) -> pd.DataFrame:
+    """Combine counts and percentages in owned Statistics frames for HTML only."""
+    pairs = [("missing_count", "missing_fraction")]
+    if table is StatisticsExportTable.CATEGORICAL:
+        pairs.append(("count", "fraction"))
+    for count_column, fraction_column in pairs:
+        frame[count_column] = pd.Series(
+            [
+                (
+                    f"{count_format(int(count))} ({fmt_pct(float(fraction), decimals=2)})"
+                    if pd.notna(fraction)
+                    else count_format(int(count))
+                )
+                for count, fraction in zip(frame[count_column], frame[fraction_column], strict=True)
+            ],
+            dtype=pd.StringDtype(),
+        )
+    return frame.drop(columns=[fraction_column for _, fraction_column in pairs])
 
 
 def _prepare_overview_columns(
