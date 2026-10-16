@@ -76,6 +76,13 @@ analyze another dataset. The window title shows the source name and its row/colu
 Long-running analyses run in the background where needed, and exports use the
 latest successful analysis result.
 
+Statistics chart titles, no-data labels, column identity, and export/report
+metadata come from one typed presentation builder and shared chart-pair drawer.
+When migrating another chart family, capture translated semantics and
+output-independent accessibility/caption metadata before background rendering;
+use the same drawing path in the live view and exports, and keep only sizing or
+layout decisions specific to an output in its renderer.
+
 Export is available for successfully applied results. Excel workbooks can
 combine selected tables and available charts; CSV and binary exports contain
 one selected table. Charts are available in Excel only. Exports contain the

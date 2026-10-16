@@ -152,7 +152,10 @@ from expo_jbm329.services.analysis.statistics import (
     StatisticsExportTable,
     analyze_descriptive_statistics,
 )
-from expo_jbm329.services.analysis.statistics_charts import StatisticsChartLabels, render_statistics_charts
+from expo_jbm329.services.analysis.statistics_charts import (
+    build_statistics_chart_presentations,
+    render_statistics_charts,
+)
 from expo_jbm329.services.analysis.survival import (
     SurvivalColumns,
     SurvivalResult,
@@ -409,6 +412,9 @@ _REPORT_TRANSLATIONS = (
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Model summary"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Series"),
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Total"),
+    QT_TRANSLATE_NOOP("StatisticsView", "Histogram"),
+    QT_TRANSLATE_NOOP("StatisticsView", "Boxplot"),
+    QT_TRANSLATE_NOOP("StatisticsView", "No data"),
     QT_TRANSLATE_NOOP("ChiSquareView", "Column"),
     QT_TRANSLATE_NOOP("ChiSquareView", "Group"),
     QT_TRANSLATE_NOOP("ChiSquareView", "Row"),
@@ -1056,11 +1062,7 @@ class AnalysisController:
                     | None
                 ) = None
                 if charts_selected:
-                    labels = StatisticsChartLabels(
-                        histogram=translate("StatisticsView", "Histogram"),
-                        boxplot=translate("StatisticsView", "Boxplot"),
-                        no_data=translate("StatisticsView", "No data"),
-                    )
+                    presentations = build_statistics_chart_presentations(request.result.columns, translate)
 
                     def make_chart_images(
                         progress_cb: Callable[[int], None] | None,
@@ -1068,7 +1070,7 @@ class AnalysisController:
                     ) -> tuple[ExcelChartImage, ...]:
                         return render_statistics_charts(
                             request.result.columns,
-                            labels,
+                            presentations,
                             progress_cb=progress_cb,
                             cancel_cb=cancel_cb,
                         )

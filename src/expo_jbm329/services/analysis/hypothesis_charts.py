@@ -11,6 +11,7 @@ import numpy as np
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 
+from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
 from expo_jbm329.services.analysis.chi_square import ChiSquareResult
 from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
 from expo_jbm329.services.analysis.paired_comparison import PairedComparisonResult
@@ -36,28 +37,13 @@ def _format_residual_annotation(value: float) -> str:
 
 
 @dataclass(frozen=True, slots=True)
-class HypothesisChartMetadata:
-    """Output-independent worksheet, accessibility and caption metadata."""
-
-    worksheet_heading: str
-    accessible_name: str
-    captions: tuple[str, ...] = ()
-
-    def __post_init__(self) -> None:
-        """Require a stable accessible identity while allowing a hidden worksheet heading."""
-        if not self.accessible_name:
-            message = "A hypothesis chart presentation requires an accessible name."
-            raise ValueError(message)
-
-
-@dataclass(frozen=True, slots=True)
 class GroupComparisonChartPresentation:
     """Titles and named axes for a group-comparison chart."""
 
     title: str
     x_axis_label: str
     y_axis_label: str
-    metadata: HypothesisChartMetadata
+    metadata: ChartPresentationMetadata
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,7 +52,7 @@ class ChiSquareChartPresentation:
 
     title: str
     annotations: tuple[tuple[str, ...], ...]
-    metadata: HypothesisChartMetadata
+    metadata: ChartPresentationMetadata
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,7 +63,7 @@ class PairedComparisonChartPresentation:
     trajectories_title: str
     value_axis_label: str
     occasion_axis_label: str
-    metadata: HypothesisChartMetadata
+    metadata: ChartPresentationMetadata
 
 
 HypothesisChartPresentation = (
@@ -108,7 +94,7 @@ def build_hypothesis_chart_presentation(
                 title=translate("GroupComparisonView", "Distribution by group"),
                 x_axis_label=result.grouping_column,
                 y_axis_label=result.numeric_column,
-                metadata=HypothesisChartMetadata(
+                metadata=ChartPresentationMetadata(
                     worksheet_heading="",
                     accessible_name=f"{result.numeric_column} / {result.grouping_column}",
                 ),
@@ -117,7 +103,7 @@ def build_hypothesis_chart_presentation(
             return ChiSquareChartPresentation(
                 title=translate("ChiSquareView", "Adjusted standardized residuals"),
                 annotations=tuple(tuple(number_format(value) for value in row) for row in result.adjusted_residuals),
-                metadata=HypothesisChartMetadata(
+                metadata=ChartPresentationMetadata(
                     worksheet_heading="",
                     accessible_name=f"{result.row_column} / {result.column_column}",
                 ),
@@ -128,7 +114,7 @@ def build_hypothesis_chart_presentation(
                 trajectories_title=translate("PairedComparisonView", "Subject trajectories"),
                 value_axis_label=translate("PairedComparisonView", "Value"),
                 occasion_axis_label=translate("PairedComparisonView", "Measurement occasion"),
-                metadata=HypothesisChartMetadata(
+                metadata=ChartPresentationMetadata(
                     worksheet_heading="",
                     accessible_name=" / ".join(result.columns),
                 ),

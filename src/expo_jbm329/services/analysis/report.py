@@ -95,7 +95,10 @@ from expo_jbm329.services.analysis.statistics import (
     StatisticsExportTable,
     statistics_export_tables,
 )
-from expo_jbm329.services.analysis.statistics_charts import StatisticsChartLabels, render_statistics_charts
+from expo_jbm329.services.analysis.statistics_charts import (
+    build_statistics_chart_presentations,
+    render_statistics_charts,
+)
 from expo_jbm329.services.analysis.timeseries_charts import render_time_series_charts
 from expo_jbm329.services.analysis.timeseries_export import (
     TimeSeriesExportComponent,
@@ -1973,7 +1976,6 @@ def prepare_report_content(
                         label,
                         component.kind,
                         charts=images,
-                        show_chart_captions=entry.category is not AnalysisCategory.STATISTICS,
                     )
                 )
             completed += 1
@@ -2358,14 +2360,8 @@ def _render_entry_charts(
         return {}
     images: tuple[ExcelChartImage, ...]
     if category is AnalysisCategory.STATISTICS and isinstance(snapshot, DescriptiveStatisticsResult):
-        statistics_labels = StatisticsChartLabels(
-            translate("StatisticsView", "Histogram"),
-            translate("StatisticsView", "Boxplot"),
-            translate("StatisticsView", "No data"),
-        )
-        images = render_statistics_charts(
-            snapshot.columns, statistics_labels, progress_cb=progress_cb, cancel_cb=cancel_cb
-        )
+        presentations = build_statistics_chart_presentations(snapshot.columns, translate)
+        images = render_statistics_charts(snapshot.columns, presentations, progress_cb=progress_cb, cancel_cb=cancel_cb)
         return {"Charts": images}
     if category is AnalysisCategory.HYPOTHESIS_TESTS and isinstance(snapshot, HypothesisExportSnapshot):
         presentation = build_hypothesis_chart_presentation(snapshot.result, translate)

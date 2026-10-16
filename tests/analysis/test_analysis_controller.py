@@ -532,7 +532,8 @@ def test_statistics_excel_exports_localized_tables_and_every_column_chart(monkey
     ]
     assert kwargs["chart_sheet_name"] == "Diagram"
     images = kwargs["chart_factory"](None, None)
-    assert [image.heading for image in images] == ["First numeric", "Second numeric"]
+    assert [image.heading for image in images] == ["", ""]
+    assert [image.accessible_name for image in images] == ["First numeric", "Second numeric"]
     assert kwargs["parent_widget"] is dialog
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"] is True

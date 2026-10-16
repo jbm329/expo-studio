@@ -33,16 +33,14 @@ from expo_jbm329.services.analysis.statistics import (
 )
 from expo_jbm329.services.analysis.statistics_charts import (
     STATISTICS_CHART_LOCK,
-    StatisticsChartLabels,
-    draw_boxplot,
-    draw_histogram,
+    build_statistics_chart_presentation,
+    draw_statistics_charts,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
+from expo_jbm329.utils.i18n_utils import tr
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from matplotlib.axes import Axes
 
     from expo_jbm329.services.analysis.statistics import (
         CategoricalColumnStatistics,
@@ -547,16 +545,8 @@ class StatisticsView(QWidget):
                 self._canvas = _StatisticsCanvas(self._figure)
                 self._distribution_layout.addWidget(self._canvas, 1)
             self._figure.clear()
-            ax_hist = self._figure.add_subplot(121)
-            ax_box = self._figure.add_subplot(122)
-            labels = StatisticsChartLabels(
-                histogram=self.tr("Histogram"),
-                boxplot=self.tr("Boxplot"),
-                no_data=self.tr("No data"),
-            )
-            draw_histogram(ax_hist, stats, labels)
-            draw_boxplot(ax_box, stats, labels)
-            self._figure.suptitle(stats.column)
+            presentation = build_statistics_chart_presentation(stats, tr)
+            draw_statistics_charts(self._figure, stats, presentation)
             self._pending_distribution = None
             self._distribution_timer.stop()
         finally:
@@ -590,19 +580,3 @@ class StatisticsView(QWidget):
             )
 
         return "<br>".join(lines)
-
-    def _draw_histogram(self, ax: Axes, stats: ColumnDescriptiveStatistics) -> None:
-        """Draw a histogram from pre-computed bin edges/counts."""
-        draw_histogram(
-            ax,
-            stats,
-            StatisticsChartLabels(self.tr("Histogram"), self.tr("Boxplot"), self.tr("No data")),
-        )
-
-    def _draw_boxplot(self, ax: Axes, stats: ColumnDescriptiveStatistics) -> None:
-        """Draw a min/max-whisker boxplot from the existing five-number summary."""
-        draw_boxplot(
-            ax,
-            stats,
-            StatisticsChartLabels(self.tr("Histogram"), self.tr("Boxplot"), self.tr("No data")),
-        )

@@ -8,7 +8,10 @@ import pytest
 from openpyxl import load_workbook
 
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
-from expo_jbm329.services.analysis.statistics_charts import StatisticsChartLabels, render_statistics_charts
+from expo_jbm329.services.analysis.statistics_charts import (
+    build_statistics_chart_presentations,
+    render_statistics_charts,
+)
 from expo_jbm329.services.data_io_service import DataIOService
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError
 from expo_jbm329.services.file_loader import FileLoader
@@ -353,7 +356,7 @@ def test_chart_only_excel_export_prepares_images_and_commits_progress(
     def make_charts(chart_progress, cancel_cb):
         return render_statistics_charts(
             result.columns,
-            StatisticsChartLabels("Histogram", "Boxplot", "No data"),
+            build_statistics_chart_presentations(result.columns, lambda _context, text: text),
             progress_cb=chart_progress,
             cancel_cb=cancel_cb,
         )
@@ -395,7 +398,7 @@ def test_chart_export_cancellation_after_preparation_preserves_destination(
     def make_charts(_progress_cb, _cancel_cb):
         return render_statistics_charts(
             result.columns,
-            StatisticsChartLabels("Histogram", "Boxplot", "No data"),
+            build_statistics_chart_presentations(result.columns, lambda _context, text: text),
         )
 
     exported = io_service.export_dfs_excel(

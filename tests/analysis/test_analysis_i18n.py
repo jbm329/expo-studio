@@ -28,6 +28,7 @@ from expo_jbm329.services.analysis.report import (
     render_prepared_report_html,
 )
 from expo_jbm329.services.analysis.statistics import StatisticsExportFormat, analyze_descriptive_statistics
+from expo_jbm329.services.analysis.statistics_charts import build_statistics_chart_presentation
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
 
@@ -138,15 +139,21 @@ def test_recent_analysis_labels_translate_in_views_dialogs_and_captured_reports(
     continuous = "Kontinuerliga" if swedish else "Continuous"
     categorical = "Kategoriska" if swedish else "Categorical"
     distribution = "Fördelning" if swedish else "Distribution"
+    histogram = "Histogram"
+    boxplot = "Boxplot"
     count_header = "Antal (% icke-saknade)" if swedish else "Count (% non-missing)"
-    frame = pd.DataFrame({"value": [1.0, None, 3.0], "group": ["a", "a", "b"]})
+    frame = pd.DataFrame({
+        "value": [1.0, None, 3.0],
+        "empty": pd.Series([None, None, None], dtype="float64"),
+        "group": ["a", "a", "b"],
+    })
     source = DatasetRef("source", "Dataset", 3, 2)
     overview = analyze_dataset_overview(frame)
     statistics = analyze_descriptive_statistics(frame)
     document = ReportDocument()
     document.upsert(create_report_entry(AnalysisCategory.OVERVIEW, source, overview).with_selection(("Columns",), ""))
     statistics_entry = create_report_entry(AnalysisCategory.STATISTICS, source, statistics)
-    document.upsert(statistics_entry.with_selection(("Continuous", "Categorical"), ""))
+    document.upsert(statistics_entry.with_selection(("Continuous", "Categorical", "Charts"), ""))
     widgets = []
     try:
         overview_view = OverviewView(overview)
@@ -158,6 +165,14 @@ def test_recent_analysis_labels_translate_in_views_dialogs_and_captured_reports(
             component_translation_context="StatisticsView",
         )
         widgets.extend((overview_view, statistics_view, export, notes))
+        assert [axis.get_title() for axis in statistics_view._figure.axes] == [histogram, boxplot]  # noqa: SLF001
+        empty_presentation = build_statistics_chart_presentation(statistics.columns[1], QCoreApplication.translate)
+        assert empty_presentation.no_data_label == ("Ingen data" if swedish else "No data")
+        statistics_view.show_distribution_for("empty")
+        assert [text.get_text() for axis in statistics_view._figure.axes for text in axis.texts] == [
+            empty_presentation.no_data_label,
+            empty_presentation.no_data_label,
+        ]  # noqa: SLF001
         assert metadata in [label.text() for label in overview_view.findChildren(QLabel)]
         assert distribution in [label.text() for label in statistics_view.findChildren(QLabel)]
         tabs = statistics_view.findChild(QTabWidget)
@@ -189,7 +204,15 @@ def test_recent_analysis_labels_translate_in_views_dialogs_and_captured_reports(
 
     prepared = prepare_report_content(document, labels=captured)
     html = render_prepared_report_html(prepared)
+    charts = next(component for component in prepared.entries[1].components if component.key == "Charts")
+    assert charts.show_chart_captions
+    assert charts.charts[0].heading == ""
+    assert charts.charts[0].captions == ()
+    assert charts.charts[0].accessible_name == "value"
     assert f"<h3>{metadata}</h3>" in html
     assert f"<h3>{continuous}</h3>" in html
     assert f"<h3>{categorical}</h3>" in html
+    assert f"<h3>{distribution}</h3>" in html
     assert f'<th scope="col">{count_header}</th>' in html
+    assert 'alt="value"' in html
+    assert "<figcaption>" not in html

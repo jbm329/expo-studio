@@ -168,6 +168,7 @@ def test_shows_first_columns_distribution_by_default():
     view = StatisticsView(result)
 
     assert len(view._figure.axes) == 2  # noqa: SLF001
+    assert [axis.get_title() for axis in view._figure.axes] == ["Histogram", "Boxplot"]  # noqa: SLF001
 
 
 def test_show_distribution_for_switches_to_a_different_column():
@@ -276,6 +277,7 @@ def test_selecting_a_statistics_row_displays_that_column(signal_name):
     assert table.currentRow() == 1
     assert view._figure._suptitle is not None  # noqa: SLF001
     assert view._figure._suptitle.get_text() == "b"  # noqa: SLF001
+    assert [axis.get_title() for axis in view._figure.axes] == ["Histogram", "Boxplot"]  # noqa: SLF001
 
 
 def test_show_distribution_for_unknown_column_is_a_no_op():

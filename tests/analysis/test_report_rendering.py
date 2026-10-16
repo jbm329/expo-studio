@@ -1344,6 +1344,7 @@ def test_preparation_renders_selected_categories_and_variants(monkeypatch) -> No
     assert prepared.entries[0].components[0].overview_summary.facts
     statistics_chart = next(component for component in prepared.entries[1].components if component.key == "Charts")
     assert statistics_chart.charts
+    assert statistics_chart.show_chart_captions
     hypothesis_chart = next(component for component in prepared.entries[2].components if component.key == "charts")
     assert hypothesis_chart.paragraphs == ()
     assert hypothesis_chart.charts[0].captions == ("caption",)
@@ -2048,8 +2049,14 @@ def test_render_report_html_renders_real_worker_chart_and_inline_png() -> None:
     document.upsert(_entry(AnalysisCategory.STATISTICS, snapshot, ("Charts",)))
     progress_values: list[int] = []
 
-    html = render_report_html(document, progress_cb=progress_values.append)
+    prepared = prepare_report_content(document)
+    chart_component = prepared.entries[0].components[0]
+    html = render_prepared_report_html(prepared, progress_cb=progress_values.append)
 
+    assert chart_component.show_chart_captions
+    assert chart_component.charts[0].heading == ""
+    assert chart_component.charts[0].captions == ()
+    assert chart_component.charts[0].accessible_name == "value"
     assert '<img src="data:image/png;base64,' in html
     assert 'alt="value"' in html
     assert "Histogram and boxplot" not in html
