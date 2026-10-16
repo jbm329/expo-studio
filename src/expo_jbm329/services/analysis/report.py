@@ -592,6 +592,7 @@ class PreparedReportTable:
     title: str
     headers: tuple[str, ...]
     rows: tuple[tuple[object, ...], ...]
+    nowrap_values: bool = False
 
     def __post_init__(self) -> None:
         """Keep each prepared row aligned with its accessible table headers."""
@@ -1898,7 +1899,12 @@ def prepare_report_content(
                     prepared_table = (
                         _prepare_overview_columns(overview, table_title, translate, count_format)
                         if overview is not None and component.key == "Columns"
-                        else _prepare_table(component.key, table_title, frame)
+                        else _prepare_table(
+                            component.key,
+                            table_title,
+                            frame,
+                            nowrap_values=entry.category is AnalysisCategory.HYPOTHESIS_TESTS,
+                        )
                     )
                     paragraphs: tuple[str, ...] = ()
                     if isinstance(entry.snapshot, HypothesisExportSnapshot) and component.key == "test_results":
@@ -2144,13 +2150,14 @@ def _correlation_ranking_explanation(
     )
 
 
-def _prepare_table(key: str, title: str, frame: pd.DataFrame) -> PreparedReportTable:
+def _prepare_table(key: str, title: str, frame: pd.DataFrame, *, nowrap_values: bool = False) -> PreparedReportTable:
     """Convert one fresh localized export DataFrame to immutable table values."""
     return PreparedReportTable(
         key,
         title,
         tuple(str(header) for header in frame.columns),
         tuple(tuple(value for value in row) for row in frame.itertuples(index=False, name=None)),
+        nowrap_values=nowrap_values,
     )
 
 
@@ -2625,6 +2632,8 @@ def render_prepared_report_html(
                 table_class = (
                     ' class="continuous-statistics"' if table.key == StatisticsExportTable.CONTINUOUS.value else ""
                 )
+                if table.nowrap_values:
+                    table_class = ' class="nowrap-values"'
                 parts.append(
                     f"<table{table_class}><caption{caption_class}>{_html_escape(table.title)}</caption><thead><tr>"
                 )
@@ -2752,6 +2761,7 @@ caption { text-align: left; font-weight: 700; padding: .5rem 0; }
 th, td { border: 1px solid #ccd5df; padding: .4rem .55rem; text-align: left; vertical-align: top; }
 td { white-space: pre-wrap; }
 .continuous-statistics td { white-space: nowrap; }
+.nowrap-values td { white-space: nowrap; }
 th { background: #edf2f7; }
 tbody tr:nth-child(even) { background: #f8fafc; }
 .report-chart { margin: 1rem auto 1.5rem; text-align: center; break-inside: avoid; }

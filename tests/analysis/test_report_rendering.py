@@ -1092,6 +1092,39 @@ def test_regression_html_escapes_long_applied_roles_reference_levels_and_terms()
         ("paired", 3),
     ],
 )
+def test_hypothesis_report_table_values_do_not_wrap(family: str, variant: int) -> None:
+    snapshot_factories: dict[str, Callable[[int], HypothesisExportSnapshot]] = {
+        "groups": group_snapshot,
+        "chi_square": chi_snapshot,
+        "paired": paired_snapshot,
+    }
+    document = ReportDocument()
+    document.upsert(
+        _entry(AnalysisCategory.HYPOTHESIS_TESTS, snapshot_factories[family](variant), ("summary", "test_results"))
+    )
+
+    prepared = prepare_report_content(document)
+    tables = [table for component in prepared.entries[0].components for table in component.tables]
+    html = render_prepared_report_html(prepared)
+
+    assert len(tables) == 2
+    assert all(table.nowrap_values for table in tables)
+    assert html.count('<table class="nowrap-values">') == len(tables)
+    assert ".nowrap-values td { white-space: nowrap; }" in html
+    assert ".nowrap-values th" not in html
+
+
+@pytest.mark.parametrize(
+    ("family", "variant"),
+    [
+        ("groups", 2),
+        ("groups", 3),
+        ("chi_square", 2),
+        ("chi_square", 3),
+        ("paired", 2),
+        ("paired", 3),
+    ],
+)
 def test_hypothesis_report_separates_notes_without_changing_export_tables(family: str, variant: int) -> None:
     snapshot_factories: dict[str, Callable[[int], HypothesisExportSnapshot]] = {
         "groups": group_snapshot,
