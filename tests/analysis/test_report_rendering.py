@@ -1655,6 +1655,35 @@ def test_overview_unselected_summary_keeps_columns_and_sample_as_tables() -> Non
     assert '<div class="overview-summary">' not in html
 
 
+@pytest.mark.parametrize("localized", [False, True])
+def test_overview_columns_metadata_has_one_visible_heading(localized: bool) -> None:
+    result = analyze_dataset_overview(pd.DataFrame({"value": [1, 2]}))
+    document = ReportDocument()
+    entry = _entry(AnalysisCategory.OVERVIEW, result, ("Columns",))
+    document.upsert(entry)
+    label = "Localized metadata" if localized else "Columns metadata"
+    calls: list[tuple[str, str]] = []
+
+    def translate(context: str, text: str) -> str:
+        calls.append((context, text))
+        return label if (context, text) == ("OverviewView", "Columns metadata") else text
+
+    options = capture_report_labels(translate)
+    prepared = prepare_report_content(document, labels=options)
+    component = prepared.entries[0].components[0]
+    html = render_prepared_report_html(prepared)
+
+    assert ("OverviewView", "Columns metadata") in calls
+    assert entry.components[1].label == "Columns metadata"
+    assert component.key == "Columns"
+    assert component.label == component.tables[0].title == label
+    assert html.count(f"<h3>{label}</h3>") == 1
+    assert f'<caption class="visually-hidden">{label}</caption>' in html
+    assert "<caption>Columns</caption>" not in html
+    assert "<h3>Columns</h3>" not in html
+    assert '<th scope="col">Column</th>' in html
+
+
 def test_overview_sample_report_has_accessible_first_and_last_tables() -> None:
     frame = pd.DataFrame({"<literal name>": range(120), "label": [f"row-{i}" for i in range(120)]})
     result = analyze_dataset_overview(frame)
@@ -1776,7 +1805,7 @@ def test_overview_report_columns_combine_missing_count_and_two_decimal_percentag
     )
     assert table.rows[0][3] == f"count:2 ({fmt_pct(2 / 3, decimals=2)})"
     assert table.rows[1][3] == f"count:0 ({fmt_pct(0, decimals=2)})"
-    exported = localized_report_tables(AnalysisCategory.OVERVIEW, result, ("Columns",))["Columns"]
+    exported = localized_report_tables(AnalysisCategory.OVERVIEW, result, ("Columns",))["Columns metadata"]
     assert exported["Missing"].tolist() == [2, 0]
     assert exported["Missing fraction"].tolist() == [2 / 3, 0]
 

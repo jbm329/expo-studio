@@ -57,6 +57,7 @@ class PresentationLabel(StrEnum):
     CORRELATION = "correlation"
     CONFIGURED_TITLE = "configured_title"
     COLUMNS = "columns"
+    OVERVIEW_COLUMNS_METADATA = "overview_columns_metadata"
     STRONGEST_CORRELATIONS = "strongest_correlations"
     CORRELATION_PLOTS = "correlation_plots"
     CORRELATION_MATRIX = "correlation_matrix"
@@ -208,6 +209,7 @@ _ANALYSIS_CONFIGURATION_CONTEXT = "AnalysisConfiguration"
 _PCA_CONTEXT = "PCAPresentation"
 _TIME_SERIES_CONTEXT = "TimeSeriesPresentation"
 _LABEL_DEFINITIONS: dict[PresentationLabel, PresentationLabelDefinition] = {
+    PresentationLabel.OVERVIEW_COLUMNS_METADATA: PresentationLabelDefinition("OverviewView", "Columns metadata"),
     PresentationLabel.CLUSTERING: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Clustering"),
     PresentationLabel.CLUSTERING_CONFIGURED_TITLE: PresentationLabelDefinition(
         _CLUSTERING_CONTEXT, "{category} — {method}"

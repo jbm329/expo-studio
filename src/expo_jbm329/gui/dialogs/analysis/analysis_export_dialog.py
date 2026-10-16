@@ -326,7 +326,9 @@ class AnalysisExportDialog(QDialog):
             OverviewExportTable.SUMMARY: result is not None,
         }
         labels = {
-            OverviewExportTable.COLUMNS: self.tr("Columns metadata"),
+            OverviewExportTable.COLUMNS: translate_presentation_label(
+                PresentationLabel.OVERVIEW_COLUMNS_METADATA, QCoreApplication.translate
+            ),
             OverviewExportTable.SAMPLE: self.tr("Sample (first/last 10 rows)"),
             OverviewExportTable.SUMMARY: self.tr("Summary"),
         }

@@ -175,8 +175,8 @@ def test_overview_excel_routes_all_three_named_tables_in_one_operation():
     assert len(exporter.mock_calls) == 1
     sheets = exporter.export_excel.call_args.kwargs["sheets"]
     assert exporter.export_excel.call_args.kwargs["show_success_dialog"] is True
-    assert list(sheets) == ["Columns", "First (2)", "Last (2)", "Summary"]
-    assert list(sheets["Columns"].columns) == [
+    assert list(sheets) == ["Columns metadata", "First (2)", "Last (2)", "Summary"]
+    assert list(sheets["Columns metadata"].columns) == [
         "Column",
         "Type",
         "Storage type",
@@ -184,7 +184,7 @@ def test_overview_excel_routes_all_three_named_tables_in_one_operation():
         "Missing fraction",
         "Unique",
     ]
-    assert sheets["Columns"].iloc[0]["Missing fraction"] == 0.0
+    assert sheets["Columns metadata"].iloc[0]["Missing fraction"] == 0.0
     assert sheets["First (2)"].shape == (2, 1)
     assert list(sheets["Last (2)"].columns) == ["value"]
     assert sheets["Summary"].iloc[0]["Metric"] == "row_count"
@@ -242,7 +242,7 @@ def test_overview_export_rejects_missing_tail(format_choice):
 def test_overview_excel_uses_translated_names_and_headers_without_translating_values(monkeypatch):
     controller, dialog, _, exporter = _overview_export_context()
     translations = {
-        "Columns": "Kolumner",
+        "Columns metadata": "Kolumner",
         "Summary": "Sammanfattning",
         "Sample": "Urval",
         "First ({count})": "Första ({count})",

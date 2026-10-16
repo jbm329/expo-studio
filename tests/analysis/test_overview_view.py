@@ -11,6 +11,7 @@ from expo_jbm329.services.analysis.overview import (
     DatasetOverviewResult,
     analyze_dataset_overview,
 )
+from expo_jbm329.services.analysis.presentation import PresentationLabel, presentation_label_source
 from expo_jbm329.services.data_operations.dtypes import SemanticDType
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_pct
 
@@ -36,6 +37,26 @@ def _make_result(**overrides: object) -> DatasetOverviewResult:
     }
     defaults.update(overrides)
     return DatasetOverviewResult(**defaults)  # type: ignore[arg-type]
+
+
+def test_columns_metadata_header_uses_shared_label(monkeypatch):
+    context, source = presentation_label_source(PresentationLabel.OVERVIEW_COLUMNS_METADATA)
+    calls: list[tuple[str, str]] = []
+
+    def translate(label_context: str, text: str) -> str:
+        calls.append((label_context, text))
+        return f"Localized {text}"
+
+    monkeypatch.setattr(
+        "expo_jbm329.gui.dialogs.analysis.overview_view.QCoreApplication.translate",
+        translate,
+    )
+    view = OverviewView(_make_result())
+    labels = [label.text() for label in view.findChildren(QLabel)]
+
+    assert (context, source) in calls
+    assert "Localized Columns metadata" in labels
+    assert "Columns" not in labels
 
 
 def test_summary_label_shows_rows_columns_missing_and_duplicates():

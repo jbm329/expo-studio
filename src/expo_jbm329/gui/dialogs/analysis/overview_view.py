@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QT_TRANSLATE_NOOP, QCoreApplication, Qt
 from PyQt6.QtWidgets import (
     QFrame,
     QHeaderView,
@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.gui.dialogs.analysis.section_layout import ANALYSIS_TABS_STYLE
 from expo_jbm329.services.analysis.overview import overview_sample_frames
+from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.services.data_operations.dtypes import SemanticDType
 from expo_jbm329.utils.format_utils import fmt_cell, fmt_int, fmt_pct
 
@@ -33,6 +34,7 @@ _RIGHT_ALIGNED = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 _FIRST_NUMERIC_COLUMN = 3
 # Keeps the summary text readable before the user drags the splitter.
 _SUMMARY_PANEL_MIN_WIDTH = 320
+_COLUMNS_METADATA_LABEL = QT_TRANSLATE_NOOP("OverviewView", "Columns metadata")
 
 
 class OverviewView(QWidget):
@@ -185,7 +187,11 @@ class OverviewView(QWidget):
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_header(self.tr("Columns")))
+        layout.addWidget(
+            self._build_section_header(
+                translate_presentation_label(PresentationLabel.OVERVIEW_COLUMNS_METADATA, QCoreApplication.translate)
+            )
+        )
 
         if not self._result.columns:
             layout.addWidget(self._build_empty_label(self.tr("This dataset has no columns.")))

@@ -318,7 +318,11 @@ def available_report_components(category: AnalysisCategory, snapshot: ReportSnap
         case AnalysisCategory.OVERVIEW if isinstance(snapshot, DatasetOverviewResult):
             candidates = [
                 ("Summary", "Summary", "table"),
-                ("Columns", "Columns metadata", "table"),
+                (
+                    "Columns",
+                    translate_presentation_label(PresentationLabel.OVERVIEW_COLUMNS_METADATA, _identity_translate),
+                    "table",
+                ),
                 ("Sample", "Sample", "table"),
             ]
             component_values = tuple(item for item in candidates if _overview_component_available(snapshot, item[0]))
@@ -704,7 +708,7 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
     "OverviewView": (
         "Summary",
         "Columns",
-        "Columns metadata",
+        *(source for context, source in presentation_label_sources() if context == "OverviewView"),
         "Sample",
         "Sample group",
         "First ({count})",
@@ -1174,7 +1178,11 @@ def _localized_report_tables(
                     "fraction": "Fraction",
                 }
                 add(
-                    translate(context, overview_table.value),
+                    (
+                        translate_presentation_label(PresentationLabel.OVERVIEW_COLUMNS_METADATA, translate)
+                        if overview_table is OverviewExportTable.COLUMNS
+                        else translate(context, overview_table.value)
+                    ),
                     frame.rename(columns={name: translate(context, label) for name, label in overview_headers.items()}),
                 )
         case AnalysisCategory.STATISTICS if isinstance(snapshot, DescriptiveStatisticsResult):
