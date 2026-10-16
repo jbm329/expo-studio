@@ -53,9 +53,9 @@ def test_cox_view_shows_hazard_ratio_table_counts_reference_and_caveats():
     text = _text(view)
     assert view.findChild(QSplitter).widget(2).layout().itemAt(0).widget().text() == "Model summary"
     assert "Regression — Cox proportional-hazards regression" in text
-    assert "Duration: duration" in text
-    assert "Event: event" in text
-    assert "Predictors: x, group" in text
+    assert "Duration:\nduration" in text
+    assert "Event:\nevent" in text
+    assert "Predictors:\nx, group" in text
     assert "Event coding: 1 = event; 0 = censored." in text
     assert f"Events: {result.n_events}; censored: {result.n_censored}" in text
     assert "Reference for group:" in text

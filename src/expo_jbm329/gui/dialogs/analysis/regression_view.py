@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.gui.dialogs.analysis.applied_configuration_header import AppliedConfigurationHeader
 from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
 from expo_jbm329.services.analysis.presentation import (
     build_regression_result_presentation,
@@ -83,25 +84,10 @@ def _esc(text: str) -> str:
 def build_regression_presentation_header(
     result: RegressionResult | GeneralizedRegressionResult | SurvivalResult,
     parent: QWidget,
-) -> QWidget:
-    """Build a plain-text title and applied configuration summary for a fit."""
+) -> AppliedConfigurationHeader:
+    """Adapt a fitted regression result to the shared applied header."""
     presentation = build_regression_result_presentation(result, QCoreApplication.translate)
-    header = QWidget(parent)
-    layout = QVBoxLayout(header)
-    layout.setContentsMargins(0, 0, 0, 0)
-    title = QLabel(presentation.title, header)
-    title.setTextFormat(Qt.TextFormat.PlainText)
-    title_font = title.font()
-    title_font.setBold(True)
-    title.setFont(title_font)
-    title.setWordWrap(True)
-    layout.addWidget(title)
-    configuration = QLabel("\n".join(presentation.summary_lines), header)
-    configuration.setTextFormat(Qt.TextFormat.PlainText)
-    configuration.setWordWrap(True)
-    configuration.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-    layout.addWidget(configuration)
-    return header
+    return AppliedConfigurationHeader(presentation, parent)
 
 
 class RegressionView(QWidget):

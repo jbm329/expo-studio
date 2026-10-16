@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.gui.dialogs.analysis.applied_configuration_header import AppliedConfigurationHeader
 from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis import correlation_charts
@@ -127,18 +128,7 @@ class CorrelationView(QWidget):
             result.columns,
             QCoreApplication.translate,
         )
-        title = QLabel(presentation.title, self)
-        title.setTextFormat(Qt.TextFormat.PlainText)
-        title_font = title.font()
-        title_font.setBold(True)
-        title.setFont(title_font)
-        title.setWordWrap(True)
-        layout.addWidget(title)
-        configuration = QLabel("\n".join(presentation.summary_lines), self)
-        configuration.setTextFormat(Qt.TextFormat.PlainText)
-        configuration.setWordWrap(True)
-        configuration.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        layout.addWidget(configuration)
+        layout.addWidget(AppliedConfigurationHeader(presentation, self))
 
         charts_section = QWidget(self._pair_panel)
         charts_layout = QVBoxLayout(charts_section)

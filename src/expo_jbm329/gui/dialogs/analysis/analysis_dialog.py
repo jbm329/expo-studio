@@ -898,29 +898,9 @@ class AnalysisDialog(QDialog):
             self._analysis_presentation_widget.hide()
             self._content_layout.removeWidget(self._analysis_presentation_widget)
             self._analysis_presentation_widget.deleteLater()
-        summary = "\n".join(presentation.summary_lines)
-        if self.selected_category() is AnalysisCategory.HYPOTHESIS_TESTS:
-            header = AppliedConfigurationHeader(presentation, self._content_panel)
-            self._content_layout.insertWidget(0, header)
-            self._analysis_presentation_widget = header
-            return
-        container = QWidget(self._content_panel)
-        layout = QVBoxLayout(container)
-        layout.setContentsMargins(0, 0, 0, 0)
-        title = QLabel(presentation.title, container)
-        title.setTextFormat(Qt.TextFormat.PlainText)
-        title.setWordWrap(True)
-        font = title.font()
-        font.setBold(True)
-        title.setFont(font)
-        layout.addWidget(title)
-        details = QLabel(summary, container)
-        details.setTextFormat(Qt.TextFormat.PlainText)
-        details.setWordWrap(True)
-        details.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        layout.addWidget(details)
-        self._content_layout.insertWidget(0, container)
-        self._analysis_presentation_widget = container
+        header = AppliedConfigurationHeader(presentation, self._content_panel)
+        self._content_layout.insertWidget(0, header)
+        self._analysis_presentation_widget = header
 
     def content_widget(self) -> QWidget | None:
         """Return the widget currently displayed in the content panel."""

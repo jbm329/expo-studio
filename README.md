@@ -76,6 +76,14 @@ analyze another dataset. The window title shows the source name and its row/colu
 Long-running analyses run in the background where needed, and exports use the
 latest successful analysis result.
 
+Applied configuration headers in analysis pages share `AppliedConfigurationHeader`,
+using the typed `AnalysisPresentation` captured from the applied result, never
+pending controls. Hypothesis Tests, Correlation, Regression, Outliers, PCA,
+Clustering, and Time Series use the same framed bold title and two-column settings
+grid: one non-wrapping label per row and a wrapping, selectable plain-text value.
+Overview and Statistics retain their own presentation. Reports and exports use
+the same semantic descriptors but keep their output-specific layouts.
+
 Statistics chart titles, no-data labels, column identity, and export/report
 metadata come from one typed presentation builder and shared chart-pair drawer.
 When migrating another chart family, capture translated semantics and

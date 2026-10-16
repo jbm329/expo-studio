@@ -433,7 +433,7 @@ def test_chart_labels_and_applied_view_use_shared_model_presentation(model, titl
     text = _text(GeneralizedRegressionView(_result(model)))
     assert title in text
     assert "Outcome:" in text
-    assert "Predictors: x" in text
+    assert "Predictors:\nx" in text
 
 
 @pytest.mark.parametrize("model", [RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL])

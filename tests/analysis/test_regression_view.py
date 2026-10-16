@@ -367,7 +367,7 @@ def test_layout_places_coefficients_above_plots_and_summary_below():
     assert len(sections.widget(1).findChildren(FigureCanvasQTAgg)) == 3
     assert any(label.text() == "Linear diagnostics" for label in sections.widget(1).findChildren(QLabel))
     assert "Regression — Linear regression" in _labels(view)
-    assert any(label.startswith("Outcome: <y>\nPredictors: x, g") for label in _labels(view))
+    assert all(label in _labels(view) for label in ("Outcome:", "<y>", "Predictors:", "x, g"))
 
     summary = view.summary_label()
     assert summary is not None

@@ -1142,7 +1142,8 @@ def test_applied_hypothesis_presentation_is_visible_and_cleared_with_replaced_co
     dialog.set_analysis_presentation(presentation)
     labels = dialog.content_panel().findChildren(QLabel)
     assert any(label.text() == presentation.title for label in labels)
-    assert any(label.text() == "Numeric variable: value" for label in labels)
+    assert any(label.text() == "Numeric variable:" for label in labels)
+    assert any(label.text() == "value" for label in labels)
     assert all(label.textFormat() is Qt.TextFormat.PlainText for label in labels[-2:])
 
     dialog.set_content_widget(QWidget())
@@ -1237,16 +1238,19 @@ def test_outlier_configured_header_has_separate_bold_title_and_normal_applied_se
     layout = dialog.content_panel().layout()
     assert layout is not None
     assert layout.itemAt(0).widget() is header
-    title, settings = header.findChildren(QLabel)
+    title, *settings = header.findChildren(QLabel)
     assert title.text() == presentation.title
     assert title.font().bold()
     assert title.textFormat() is Qt.TextFormat.PlainText
     assert title.wordWrap()
-    assert settings.text() == "\n".join(presentation.summary_lines)
-    assert not settings.font().bold()
-    assert settings.textFormat() is Qt.TextFormat.PlainText
-    assert settings.wordWrap()
-    assert settings.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+    assert [label.text() for label in settings] == [
+        text for field in presentation.configuration for text in (field.label, field.display_value)
+    ]
+    assert all(not label.font().bold() for label in settings)
+    assert all(label.textFormat() is Qt.TextFormat.PlainText for label in settings)
+    assert all(not label.wordWrap() for label in settings[::2])
+    assert all(label.wordWrap() for label in settings[1::2])
+    assert all(label.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse for label in settings)
     assert dialog.content_widget() is content
 
     dialog.set_analysis_presentation(presentation)

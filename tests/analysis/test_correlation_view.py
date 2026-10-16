@@ -9,6 +9,7 @@ from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QScrollArea, QSplitter
 
+from expo_jbm329.gui.dialogs.analysis.applied_configuration_header import AppliedConfigurationHeader
 from expo_jbm329.gui.dialogs.analysis.correlation_view import MAX_ANNOTATED_COLUMNS, CorrelationView
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis import correlation_charts
@@ -69,8 +70,9 @@ def _scatter_axes(view: CorrelationView):
 @pytest.mark.parametrize("method", list(CorrelationMethod))
 def test_configured_title_is_bold_and_configuration_is_separate(method):
     view = CorrelationView(_matrix(_frame(), method), None)
-    title = view.layout().itemAt(0).widget()
-    configuration = view.layout().itemAt(1).widget()
+    header = view.layout().itemAt(0).widget()
+    assert isinstance(header, AppliedConfigurationHeader)
+    title, label, configuration = header.findChildren(QLabel)
 
     assert isinstance(title, QLabel)
     assert title.text().startswith("Correlation — ")
@@ -78,7 +80,8 @@ def test_configured_title_is_bold_and_configuration_is_separate(method):
     assert title.textFormat() is Qt.TextFormat.PlainText
     assert title.wordWrap()
     assert isinstance(configuration, QLabel)
-    assert configuration.text() == "Columns: c0, c1, c2"
+    assert label.text() == "Columns:"
+    assert configuration.text() == "c0, c1, c2"
     assert not configuration.font().bold()
     assert configuration.textFormat() is Qt.TextFormat.PlainText
     assert configuration.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
