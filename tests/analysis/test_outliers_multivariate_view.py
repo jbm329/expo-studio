@@ -113,7 +113,9 @@ def test_projection_and_comments_scroll_below_a_frozen_title(section, small_heig
     view = MultivariateOutliersView(dataclasses.replace(_result(), sampled=True))
     panel = view.findChildren(QSplitter)[0].widget(section)
 
-    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=width, titled=section != 1)
+    content = assert_section_scrolls_below_frozen_title(
+        panel, small_height, width=width, titled=section != 1, result_section=section == 2
+    )
 
     if section == 1:
         assert isinstance(content, FigureCanvasQTAgg)

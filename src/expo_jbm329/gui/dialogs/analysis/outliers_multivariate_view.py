@@ -17,7 +17,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.gui.dialogs.analysis.section_layout import (
+    AnalysisResultSection,
+    build_section_scroll_area,
+    rich_text_lines,
+)
 from expo_jbm329.services.analysis.multivariate_outliers import (
     MAX_CONTAMINATION,
     MIN_CONTAMINATION,
@@ -127,9 +131,7 @@ class MultivariateOutliersView(QWidget):
 
     def _comments_panel(self, result: MultivariateOutlierResult) -> QWidget:
         """Build the titled model-comments section with a scrollable fit summary."""
-        panel, layout = self._build_section(self.tr("Model comments"))
-        layout.addWidget(build_section_scroll_area(self._summary_label(result), panel), 1)
-        return panel
+        return AnalysisResultSection(self.tr("Model comments"), self._summary_label(result), self)
 
     def _summary_label(self, result: MultivariateOutlierResult) -> QLabel:
         """Build an explanatory fit summary."""

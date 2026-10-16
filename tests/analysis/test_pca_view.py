@@ -52,7 +52,7 @@ def test_plots_and_comments_scroll_below_a_frozen_title(section, small_height, w
     view = PCAView(dataclasses.replace(_result(), sampled=True))
     panel = _sections(view).widget(section)
 
-    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=width)
+    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=width, result_section=section == 2)
 
     if section == 1:
         assert isinstance(content, QSplitter)

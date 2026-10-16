@@ -130,7 +130,9 @@ def test_cox_comments_header_gap_stays_fixed_when_section_grows():
 def test_cox_chart_and_comment_sections_scroll_only_when_content_exceeds_space(section_index, small_height):
     view = SurvivalRegressionView(_result())
     panel = view.findChild(QSplitter).widget(section_index)
-    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=1100)
+    content = assert_section_scrolls_below_frozen_title(
+        panel, small_height, width=1100, result_section=section_index == 2
+    )
     if section_index == 1:
         assert isinstance(content, FigureCanvasQTAgg)
     else:

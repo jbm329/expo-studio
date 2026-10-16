@@ -84,11 +84,17 @@ grid: one non-wrapping label per row and a wrapping, selectable plain-text value
 Overview and Statistics retain their own presentation. Reports and exports use
 the same semantic descriptors but keep their output-specific layouts.
 
-Hypothesis Tests pilots the reusable `AnalysisResultSection` for Test results:
+Analysis text results use the reusable `AnalysisResultSection` across Hypothesis
+Tests, Statistics (normality), Correlation, Regression (including GLM and Cox),
+Outliers (univariate and multivariate), PCA, Clustering, and Time Series:
 the same native frame and padding as the applied configuration header surround
 a fixed bold title and borderless, background-inheriting scroll content.
-Scrollbars appear only when needed; charts, tables, and other analyses retain
-their existing layouts.
+Scrollbars appear only when needed. Dynamic column and pair details retain this
+configuration when updated, including unavailable-result messages. Charts,
+tables, and Overview retain their existing layouts; exports and reports keep
+their existing content and formatting.
+Statistics normality text prefers its wrapped content height, leaving spare
+space to the charts, and scrolls below its fixed title when space is limited.
 
 Statistics chart titles, no-data labels, column identity, and export/report
 metadata come from one typed presentation builder and shared chart-pair drawer.

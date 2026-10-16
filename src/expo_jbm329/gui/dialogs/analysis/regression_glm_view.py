@@ -11,7 +11,11 @@ from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.regression_view import build_regression_presentation_header
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.gui.dialogs.analysis.section_layout import (
+    AnalysisResultSection,
+    build_section_scroll_area,
+    rich_text_lines,
+)
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.logistic_charts import LogisticChartLabels, build_logistic_charts
 from expo_jbm329.services.analysis.presentation import (
@@ -91,14 +95,15 @@ class GeneralizedRegressionView(QWidget):
                 )
             )
             table_layout.addWidget(self._table)
-            summary_panel, summary_layout = self._build_section(
+            summary_panel = AnalysisResultSection(
                 regression_component_label(
                     result.model,
                     RegressionExportComponent.MODEL_METRICS,
                     QCoreApplication.translate,
-                )
+                ),
+                self._summary_label,
+                self,
             )
-            summary_layout.addWidget(build_section_scroll_area(self._summary_label, summary_panel), 1)
             splitter.addWidget(table_panel)
             splitter.addWidget(
                 self._build_logistic_chart_section()
@@ -113,7 +118,16 @@ class GeneralizedRegressionView(QWidget):
             layout.addWidget(splitter, 1)
         else:
             layout.addWidget(self._table, 2)
-            layout.addWidget(self._summary_label, 1)
+            layout.addWidget(
+                AnalysisResultSection(
+                    regression_component_label(
+                        result.model, RegressionExportComponent.MODEL_METRICS, QCoreApplication.translate
+                    ),
+                    self._summary_label,
+                    self,
+                ),
+                1,
+            )
 
     def _build_logistic_chart_section(self) -> QWidget:
         """Present worker-prepared logistic diagnostics without blocking rendering."""

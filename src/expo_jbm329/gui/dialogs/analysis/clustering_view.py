@@ -9,7 +9,11 @@ from matplotlib.figure import Figure
 from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.gui.dialogs.analysis.section_layout import (
+    AnalysisResultSection,
+    build_section_scroll_area,
+    rich_text_lines,
+)
 from expo_jbm329.services.analysis.clustering import (
     MIN_OBSERVATIONS,
     MIN_SELECTED_COLUMNS,
@@ -164,11 +168,11 @@ class ClusteringView(QWidget):
 
     def _build_comments_section(self, result: ClusteringResult) -> QWidget:
         """Build the titled model-comments section with a scrollable summary."""
-        panel, layout = self._build_section(
-            translate_presentation_label(PresentationLabel.CLUSTER_MODEL_SUMMARY, QCoreApplication.translate)
+        return AnalysisResultSection(
+            translate_presentation_label(PresentationLabel.CLUSTER_MODEL_SUMMARY, QCoreApplication.translate),
+            self._summary_label(result),
+            self,
         )
-        layout.addWidget(build_section_scroll_area(self._summary_label(result), panel), 1)
-        return panel
 
     def _build_plot_section(self, result: ClusteringResult) -> QWidget:
         """Build the titled, scrollable cluster projection section."""

@@ -9,7 +9,11 @@ from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QVBoxLayout, QWidget
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.gui.dialogs.analysis.section_layout import (
+    AnalysisResultSection,
+    build_section_scroll_area,
+    rich_text_lines,
+)
 from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.services.analysis.timeseries import DecompositionModel, TimeSeriesError
 from expo_jbm329.services.analysis.timeseries_charts import (
@@ -164,9 +168,7 @@ class TimeSeriesView(QWidget):
 
     def _build_comments_section(self, result: TimeSeriesResult) -> QWidget:
         """Build the titled model-comments section with a scrollable summary."""
-        panel, layout = self._build_section(self.tr("Model comments"))
-        layout.addWidget(build_section_scroll_area(self._summary_label(result), panel), 1)
-        return panel
+        return AnalysisResultSection(self.tr("Model comments"), self._summary_label(result), self)
 
     def _build_section(self, title: str) -> tuple[QWidget, QVBoxLayout]:
         """Build a titled section matching the Regression layout."""

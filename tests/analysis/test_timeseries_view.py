@@ -102,7 +102,9 @@ def test_charts_and_comments_scroll_below_a_frozen_title(section, small_height, 
     view = TimeSeriesView(_result())
     panel = view.findChild(QSplitter).widget(section)
 
-    content = assert_section_scrolls_below_frozen_title(panel, small_height, large_height=1200, width=width)
+    content = assert_section_scrolls_below_frozen_title(
+        panel, small_height, large_height=1200, width=width, result_section=section == 1
+    )
 
     if section == 0:
         assert len(content.findChildren(FigureCanvasQTAgg)) == 3

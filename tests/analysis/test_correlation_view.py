@@ -5,12 +5,14 @@ from html import escape
 import numpy as np
 import pandas as pd
 import pytest
+from PyQt6 import sip
 from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QScrollArea, QSplitter
 
 from expo_jbm329.gui.dialogs.analysis.applied_configuration_header import AppliedConfigurationHeader
 from expo_jbm329.gui.dialogs.analysis.correlation_view import MAX_ANNOTATED_COLUMNS, CorrelationView
+from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis import correlation_charts
 from expo_jbm329.services.analysis.correlation import (
@@ -24,7 +26,7 @@ from expo_jbm329.services.analysis.correlation import (
 )
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportComponent, CorrelationExportSnapshot
 from expo_jbm329.utils.format_utils import capture_chart_numeric_locale
-from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
+from tests.analysis.section_assertions import assert_result_section, assert_section_scrolls_below_frozen_title
 from tests.analysis.test_statistics_view import _worker_holds_chart_lock
 
 
@@ -128,6 +130,7 @@ def test_pair_details_scroll_below_a_frozen_title_with_text_at_the_top(with_erro
     detail = analyze_correlation_pair(df, "c0", "c1")
     view = CorrelationView(_matrix(df), detail)
     panel = view.pair_panel().findChild(QSplitter).widget(1)
+    assert_result_section(panel, "Pair details")
     try:
         if with_error:
             # A one-line error always fits, so only the shared structure is checked.
@@ -136,7 +139,7 @@ def test_pair_details_scroll_below_a_frozen_title_with_text_at_the_top(with_erro
             assert panel.layout().stretch(1) == 1
             content = scroll.widget()
         else:
-            content = assert_section_scrolls_below_frozen_title(panel, 40)
+            content = assert_section_scrolls_below_frozen_title(panel, 40, result_section=True)
         assert content is view._statistics_panel  # noqa: SLF001
         label = content.findChild(QLabel)
         assert label.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
@@ -158,6 +161,39 @@ def test_new_pair_detail_stays_inside_the_scrollable_pair_details():
     assert scroll.widget() is view._statistics_panel  # noqa: SLF001
     assert "<b>c1 vs c2</b>" not in _labels_text(scroll.widget())
     assert _scatter_axes(view)[0].get_title() == "c1 vs c2"
+
+
+@pytest.mark.parametrize("method", list(CorrelationMethod))
+def test_pair_statistics_keep_one_framed_section_through_success_error_and_recovery(method):
+    df = _frame()
+    view = CorrelationView(_matrix(df, method), analyze_correlation_pair(df, "c0", "c1", method))
+    panel = view.pair_panel().findChild(QSplitter).widget(1)
+    scroll = assert_result_section(panel, "Pair details")
+    content = scroll.widget()
+    heading = panel.layout().itemAt(0).widget()
+    try:
+        for detail in (
+            analyze_correlation_pair(df, "c0", "missing", method),
+            analyze_correlation_pair(df, "c1", "c2", method),
+        ):
+            old_label = content.findChild(QLabel)
+            view.set_pair_detail(detail)
+            _flush_deletes()
+            assert sip.isdeleted(old_label)
+            assert assert_result_section(panel, "Pair details") is scroll
+            assert scroll.widget() is content
+            assert panel.layout().itemAt(0).widget() is heading
+            assert view.findChildren(AnalysisResultSection) == [panel]
+            labels = content.findChildren(QLabel)
+            assert len(labels) == 1
+            if detail.error is not None:
+                assert labels[0].text() == view.error_text(detail.error)
+            else:
+                assert labels[0].text() == view._pair_statistics_text(detail)  # noqa: SLF001
+        assert_section_scrolls_below_frozen_title(panel, 40, result_section=True)
+    finally:
+        view.close()
+        view.deleteLater()
 
 
 def test_correlation_canvases_defer_matrix_and_scatter_mutations_without_blocking():

@@ -19,7 +19,7 @@ from expo_jbm329.services.analysis.regression_glm import (
     RegressionModel,
     analyze_generalized_regression,
 )
-from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
+from tests.analysis.section_assertions import assert_result_section, assert_section_scrolls_below_frozen_title
 
 
 def _result(model: RegressionModel = RegressionModel.LOGISTIC):
@@ -46,15 +46,15 @@ def test_model_summary_title_and_scroll_area(model):
     splitter = view.findChild(QSplitter)
     summary_panel = splitter.widget(2)
     title = summary_panel.layout().itemAt(0).widget()
-    scroll = summary_panel.findChild(QScrollArea)
+    scroll = assert_result_section(summary_panel, "Model summary")
     assert title.text() == "Model summary"
     assert scroll.widget() is view.summary_label()
     assert scroll.widgetResizable()
     assert scroll.verticalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
     assert scroll.horizontalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
-    scroll.setParent(None)
-    scroll.resize(500, 100)
-    scroll.show()
+    assert_section_scrolls_below_frozen_title(summary_panel, 100, result_section=True)
+    summary_panel.resize(500, 100)
+    summary_panel.show()
     try:
         QCoreApplication.processEvents()
         assert scroll.verticalScrollBar().maximum() > 0
@@ -63,8 +63,8 @@ def test_model_summary_title_and_scroll_area(model):
         assert scroll.verticalScrollBar().maximum() == 0
         assert scroll.horizontalScrollBar().maximum() == 0
     finally:
-        scroll.close()
-        scroll.deleteLater()
+        summary_panel.close()
+        summary_panel.deleteLater()
         view.close()
 
 

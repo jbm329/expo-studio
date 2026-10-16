@@ -6,12 +6,50 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtTest import QTest
-from PyQt6.QtWidgets import QLabel, QScrollArea, QWidget
+from PyQt6.QtWidgets import QFrame, QLabel, QScrollArea, QWidget
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection
+from expo_jbm329.gui.dialogs.analysis.section_layout import ANALYSIS_FRAME_MARGINS, AnalysisResultSection
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+
+def assert_result_section(panel: QWidget, title: str | None = None) -> QScrollArea:
+    """Assert the actual outer frame and transparent inner scroll contract."""
+    assert isinstance(panel, AnalysisResultSection)
+    assert type(panel) is AnalysisResultSection
+    assert panel.frameShape() is QFrame.Shape.StyledPanel
+    assert panel.frameShadow() is QFrame.Shadow.Plain
+    assert panel.lineWidth() == 1
+    layout = panel.layout()
+    assert layout is not None
+    margins = layout.contentsMargins()
+    assert (margins.left(), margins.top(), margins.right(), margins.bottom()) == ANALYSIS_FRAME_MARGINS
+    heading = layout.itemAt(0).widget()
+    assert isinstance(heading, QLabel)
+    assert heading.parentWidget() is panel
+    assert heading.font().bold()
+    assert heading.wordWrap()
+    assert heading.textFormat() is Qt.TextFormat.PlainText
+    if title is not None:
+        assert heading.text() == title
+    scroll = layout.itemAt(1).widget()
+    assert isinstance(scroll, QScrollArea)
+    assert scroll.parentWidget() is panel
+    assert scroll.frameShape() is QFrame.Shape.NoFrame
+    assert scroll.frameWidth() == 0
+    viewport = scroll.viewport()
+    content = scroll.widget()
+    assert viewport is not None
+    assert content is not None
+    assert content.parentWidget() is viewport
+    assert not viewport.autoFillBackground()
+    assert not content.autoFillBackground()
+    assert viewport.palette() == panel.palette()
+    assert content.palette() == panel.palette()
+    assert not panel.styleSheet()
+    assert not scroll.styleSheet()
+    return scroll
 
 
 def _wait_for(predicate: Callable[[], bool], timeout_ms: int = 2000) -> None:
@@ -61,7 +99,13 @@ def _overflow_height(
 
 
 def assert_section_scrolls_below_frozen_title(
-    panel: QWidget, small_height: int, large_height: int = 900, width: int = 1100, *, titled: bool = True
+    panel: QWidget,
+    small_height: int,
+    large_height: int = 900,
+    width: int = 1100,
+    *,
+    titled: bool = True,
+    result_section: bool = False,
 ) -> QWidget:
     """Assert `panel` is a fixed title above content that scrolls only when needed.
 
@@ -73,6 +117,7 @@ def assert_section_scrolls_below_frozen_title(
         large_height: Height at which the content must fit.
         width: Panel width used at both heights.
         titled: Whether a separate fixed title precedes the scroll area.
+        result_section: Whether the panel must use the reusable result frame.
 
     Returns:
         The content widget inside the section scroll area.
@@ -91,6 +136,8 @@ def assert_section_scrolls_below_frozen_title(
     assert scroll.horizontalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
     content = scroll.widget()
     assert content is not None
+    if result_section or isinstance(panel, AnalysisResultSection):
+        assert_result_section(panel)
 
     panel.setParent(None)
     # The scroll area's default minimum size hint can exceed short font-dependent content and
@@ -118,10 +165,14 @@ def assert_section_scrolls_below_frozen_title(
             assert title.geometry() == title_geometry
 
         panel.resize(width, large_height)
-        _wait_for(lambda: bar.maximum() == 0 and panel.height() == large_height)
+        _wait_for(lambda: bar.maximum() == 0 and not bar.isVisible() and panel.height() == large_height)
         if title is not None:
             assert title.geometry() == title_geometry
-        assert bar.maximum() == 0
+        assert bar.maximum() == 0, (
+            f"Content still overflows: panel={panel.size()}, viewport={viewport.size()}, "
+            f"content={content.size()}, required={_required_content_height(content, viewport.width())}"
+        )
+        assert not bar.isVisible()
         horizontal = scroll.horizontalScrollBar()
         assert horizontal is not None
         assert horizontal.maximum() == 0

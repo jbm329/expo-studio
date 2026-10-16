@@ -18,7 +18,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.gui.dialogs.analysis.section_layout import (
+    AnalysisResultSection,
+    build_section_scroll_area,
+    rich_text_lines,
+)
 from expo_jbm329.services.analysis.pca import MIN_OBSERVATIONS, MIN_SELECTED_COLUMNS, PCAError
 from expo_jbm329.services.analysis.pca_charts import (
     PCAChartLabels,
@@ -164,11 +168,11 @@ class PCAView(QWidget):
 
     def _build_comments_panel(self, result: PCAResult) -> QWidget:
         """Build the titled model-summary section with a scrollable summary."""
-        panel, layout = self._build_section(
-            pca_component_label(PCAExportComponent.MODEL_SUMMARY, QCoreApplication.translate)
+        return AnalysisResultSection(
+            pca_component_label(PCAExportComponent.MODEL_SUMMARY, QCoreApplication.translate),
+            self._build_summary(result),
+            self,
         )
-        layout.addWidget(build_section_scroll_area(self._build_summary(result), panel), 1)
-        return panel
 
     def _build_scree_plot(self, result: PCAResult) -> QWidget:
         """Build a scree plot of component and cumulative explained variance."""

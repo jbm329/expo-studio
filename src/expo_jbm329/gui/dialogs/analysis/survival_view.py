@@ -11,7 +11,11 @@ from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.regression_view import build_regression_presentation_header
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.gui.dialogs.analysis.section_layout import (
+    AnalysisResultSection,
+    build_section_scroll_area,
+    rich_text_lines,
+)
 from expo_jbm329.services.analysis.presentation import regression_component_label, regression_intercept_label
 from expo_jbm329.services.analysis.regression import MAX_MODEL_TERMS, MAX_PREDICTORS, TermKind
 from expo_jbm329.services.analysis.regression_charts import (
@@ -77,15 +81,15 @@ class SurvivalRegressionView(QWidget):
             )
         )
         table_layout.addWidget(self._table)
-        summary_panel, summary_layout = self._build_section(
+        summary_panel = AnalysisResultSection(
             regression_component_label(
                 RegressionModel.COX,
                 RegressionExportComponent.MODEL_METRICS,
                 QCoreApplication.translate,
-            )
+            ),
+            self._summary_label,
+            self,
         )
-        # Only the text scrolls, so the section title stays visible.
-        summary_layout.addWidget(build_section_scroll_area(self._summary_label, summary_panel), 1)
         splitter.addWidget(table_panel)
         splitter.addWidget(self._build_chart_section())
         splitter.addWidget(summary_panel)

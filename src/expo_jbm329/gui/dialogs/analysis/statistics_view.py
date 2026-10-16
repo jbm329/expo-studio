@@ -12,7 +12,6 @@ from PyQt6.QtGui import QPaintEvent, QResizeEvent
 from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
-    QSizePolicy,
     QSplitter,
     QTableWidget,
     QTableWidgetItem,
@@ -21,7 +20,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import ANALYSIS_TABS_STYLE
+from expo_jbm329.gui.dialogs.analysis.section_layout import (
+    ANALYSIS_TABS_STYLE,
+    AnalysisResultSection,
+    rich_text_lines,
+)
 from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS
 from expo_jbm329.services.analysis.normality import SHAPIRO_LARGE_SAMPLE_THRESHOLD
 from expo_jbm329.services.analysis.presentation import statistics_component_label
@@ -483,25 +486,26 @@ class StatisticsView(QWidget):
 
     def _build_normality_section(self) -> QWidget:
         """Build the Shapiro-Wilk normality text section."""
-        container = QWidget(self)
-        container.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-        layout = QVBoxLayout(container)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        self._normality_label = QLabel(container)
+        self._normality_label = QLabel(self)
         self._normality_label.setTextFormat(Qt.TextFormat.RichText)
         self._normality_label.setWordWrap(True)
         self._normality_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-        layout.addWidget(self._normality_label)
-
-        return container
+        self._normality_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self._normality_section = AnalysisResultSection(
+            rich_text_lines((self.tr("<b>Shapiro-Wilk</b>:"),))[0],
+            self._normality_label,
+            self,
+            content_sized=True,
+        )
+        return self._normality_section
 
     def _build_no_normality_section(self) -> QWidget:
         """Build a placeholder when normality testing is not applicable."""
         label = QLabel(self.tr("Normality testing applies to continuous variables."), self)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setWordWrap(True)
-        return label
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        return AnalysisResultSection(rich_text_lines((self.tr("<b>Shapiro-Wilk</b>:"),))[0], label, self)
 
     @staticmethod
     def _build_section_title(text: str, parent: QWidget) -> QLabel:
@@ -526,6 +530,7 @@ class StatisticsView(QWidget):
         table.selectRow(row)
 
         self._normality_label.setText(self._normality_text(stats))
+        self._normality_section.refresh_content_size()
         self._recommendation_label.setText(self._recommendation_text(stats))
         self._pending_distribution = stats
         self._update_distribution()

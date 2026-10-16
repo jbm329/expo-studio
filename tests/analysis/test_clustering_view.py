@@ -46,7 +46,7 @@ def test_projection_and_comments_scroll_below_a_frozen_title(method, section, sm
     view = ClusteringView(dataclasses.replace(_result(method), sampled=True))
     panel = view.findChild(QSplitter).widget(section)
 
-    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=width)
+    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=width, result_section=section == 2)
 
     if section == 1:
         assert isinstance(content, FigureCanvasQTAgg)

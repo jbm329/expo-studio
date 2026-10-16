@@ -19,7 +19,7 @@ from expo_jbm329.services.analysis.regression import (
     RegressionWarningReason,
     analyze_regression,
 )
-from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
+from tests.analysis.section_assertions import assert_result_section, assert_section_scrolls_below_frozen_title
 
 
 def _frame(size: int = 60, seed: int = 3) -> pd.DataFrame:
@@ -81,6 +81,7 @@ def _summary(view: RegressionView) -> str:
 def test_model_summary_title_stays_fixed_above_the_scrollable_text():
     view = RegressionView(_fitted())
     panel = view.findChild(QSplitter).widget(2)
+    assert_result_section(panel, "Model summary")
     layout = panel.layout()
     title = layout.itemAt(0).widget()
     scroll = layout.itemAt(1).widget()
@@ -106,6 +107,7 @@ def test_model_summary_title_stays_fixed_above_the_scrollable_text():
         QCoreApplication.processEvents()
         assert title.isVisible()
         assert title.mapTo(panel, title.rect().topLeft()).y() == title_y
+        assert_section_scrolls_below_frozen_title(panel, 120, result_section=True)
     finally:
         panel.close()
         panel.deleteLater()

@@ -22,7 +22,11 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.analysis.applied_configuration_header import AppliedConfigurationHeader
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.gui.dialogs.analysis.section_layout import (
+    AnalysisResultSection,
+    build_section_scroll_area,
+    rich_text_lines,
+)
 from expo_jbm329.services.analysis.presentation import (
     build_regression_result_presentation,
     regression_component_label,
@@ -237,20 +241,6 @@ class RegressionView(QWidget):
 
     def _build_summary(self, result: RegressionResult) -> QWidget:
         """Build the model summary section with a fixed title above scrollable text."""
-        panel = QWidget(self)
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(
-            self._build_section_title(
-                regression_component_label(
-                    RegressionModel.LINEAR,
-                    RegressionExportComponent.MODEL_METRICS,
-                    QCoreApplication.translate,
-                ),
-                panel,
-            )
-        )
-
         label = QLabel(self._summary_text(result))
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setWordWrap(True)
@@ -258,10 +248,16 @@ class RegressionView(QWidget):
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self._summary_label = label
 
-        # Only the text scrolls, so the section title stays visible.
-        scroll = build_section_scroll_area(label, panel)
-        scroll.setMinimumWidth(260)
-        layout.addWidget(scroll, 1)
+        panel = AnalysisResultSection(
+            regression_component_label(
+                RegressionModel.LINEAR,
+                RegressionExportComponent.MODEL_METRICS,
+                QCoreApplication.translate,
+            ),
+            label,
+            self,
+        )
+        panel.setMinimumWidth(260)
         return panel
 
     def _summary_text(self, result: RegressionResult) -> str:

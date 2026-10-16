@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.analysis.applied_configuration_header import AppliedConfigurationHeader
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
+from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection, build_section_scroll_area
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis import correlation_charts
 from expo_jbm329.services.analysis.correlation import (
@@ -149,11 +149,7 @@ class CorrelationView(QWidget):
         charts_splitter.addWidget(self._scatter_panel)
         charts_layout.addWidget(build_section_scroll_area(charts_splitter, charts_section), 1)
 
-        statistics_section = QWidget(self._pair_panel)
-        statistics_layout = QVBoxLayout(statistics_section)
-        statistics_layout.setContentsMargins(0, 0, 0, 0)
-        statistics_layout.addWidget(self._build_section_title(self.tr("Pair details"), statistics_section))
-        statistics_layout.addWidget(build_section_scroll_area(self._statistics_panel, statistics_section), 1)
+        statistics_section = AnalysisResultSection(self.tr("Pair details"), self._statistics_panel, self._pair_panel)
 
         detail_splitter = QSplitter(Qt.Orientation.Vertical, self._pair_panel)
         detail_splitter.setChildrenCollapsible(False)
@@ -246,6 +242,7 @@ class CorrelationView(QWidget):
                 message = self.error_text(detail.error)
             label = self._build_centered_label(message, self._statistics_panel)
             label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+            label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             self._statistics_layout.addWidget(label)
         else:
             self._statistics_layout.addWidget(self._build_pair_statistics(detail))

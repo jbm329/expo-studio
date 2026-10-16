@@ -6,11 +6,13 @@ import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from PyQt6 import sip
 from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QSplitter, QTableWidget
 
 from expo_jbm329.gui.dialogs.analysis.outliers_view import OutliersView
+from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection
 from expo_jbm329.services.analysis.outliers import (
     ColumnOutlierStatus,
     OutlierColumnDetail,
@@ -22,7 +24,7 @@ from expo_jbm329.services.analysis.outliers import (
 )
 from expo_jbm329.services.analysis.outliers_charts import OutlierHistogramLabels
 from expo_jbm329.utils.format_utils import fmt_num
-from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
+from tests.analysis.section_assertions import assert_result_section, assert_section_scrolls_below_frozen_title
 
 _VALUES = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 100.0]
 
@@ -58,8 +60,12 @@ def test_distribution_and_column_details_scroll_below_a_frozen_title(column, sec
     view.set_column_detail(_detail(column))
     QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete.value)
     panel = getattr(view, section)
+    if section == "_statistics_panel":
+        panel = panel.layout().itemAt(0).widget()
     try:
-        content = assert_section_scrolls_below_frozen_title(panel, small_height, titled=section != "_chart_panel")
+        content = assert_section_scrolls_below_frozen_title(
+            panel, small_height, titled=section != "_chart_panel", result_section=section == "_statistics_panel"
+        )
         if section == "_chart_panel":
             assert isinstance(content, FigureCanvasQTAgg)
             assert content.figure.axes[0].get_title() == column
@@ -77,24 +83,56 @@ def test_distribution_and_column_details_scroll_below_a_frozen_title(column, sec
 def test_column_detail_error_stays_at_the_top_of_its_section():
     view, _ = _view()
     view.set_column_detail(dataclasses.replace(_detail("b"), error=OutlierError.INVALID_COLUMN))
-    panel = view._statistics_panel  # noqa: SLF001
+    panel = view._statistics_panel.layout().itemAt(0).widget()  # noqa: SLF001
+    assert_result_section(panel, "Model summary")
     panel.setParent(None)
     panel.resize(1100, 500)
     panel.show()
     try:
         QApplication.processEvents()
         layout = panel.layout()
-        label = layout.itemAt(0).widget()
-        geometry = (label.y(), label.height())
-        assert label.y() == layout.contentsMargins().top()
+        scroll = layout.itemAt(1).widget()
+        label = scroll.widget()
+        title = layout.itemAt(0).widget()
+        geometry = title.geometry()
+        assert label.y() == 0
+        assert label.text() == view.error_text(OutlierError.INVALID_COLUMN)
         assert label.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
         panel.resize(1100, 800)
         QApplication.processEvents()
-        assert (label.y(), label.height()) == geometry
+        assert title.geometry() == geometry
+        assert label.y() == 0
     finally:
         panel.close()
         panel.deleteLater()
         view.close()
+
+
+@pytest.mark.parametrize("method", list(OutlierMethod))
+def test_detail_statistics_replace_owned_frame_without_stale_panels_on_error_and_recovery(method):
+    view, _ = _view(method)
+    host = view._statistics_panel  # noqa: SLF001
+    try:
+        for detail in (_detail("t", method), _detail("b", method), _detail("<a>", method)):
+            old_panel = host.layout().itemAt(0).widget()
+            old_content = assert_result_section(old_panel, "Model summary").widget()
+            view.set_column_detail(detail)
+            _flush_deletes()
+            assert sip.isdeleted(old_panel)
+            assert sip.isdeleted(old_content)
+            panel = host.layout().itemAt(0).widget()
+            scroll = assert_result_section(panel, "Model summary")
+            assert host.layout().count() == 1
+            assert view.findChildren(AnalysisResultSection) == [panel]
+            if detail.error is not None:
+                assert scroll.widget().text() == view.error_text(detail.error)
+            else:
+                assert scroll.widget().text() == view._detail_statistics_text(detail)  # noqa: SLF001
+                assert view.detail_notes()
+        assert_section_scrolls_below_frozen_title(panel, 60, result_section=True)
+    finally:
+        view.close()
+        view.deleteLater()
 
 
 def test_summary_caption_shares_the_tables_borderless_shaded_panel():
