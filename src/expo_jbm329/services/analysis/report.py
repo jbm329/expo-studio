@@ -74,6 +74,7 @@ from expo_jbm329.services.analysis.presentation import (
     presentation_label_sources,
     regression_component_label,
     regression_intercept_label,
+    statistics_component_label,
     time_series_component_label,
     translate_presentation_label,
 )
@@ -329,9 +330,24 @@ def available_report_components(category: AnalysisCategory, snapshot: ReportSnap
         case AnalysisCategory.STATISTICS if isinstance(snapshot, DescriptiveStatisticsResult):
             candidates = []
             if snapshot.columns:
-                candidates.extend([("Continuous", "Continuous", "table"), ("Charts", "Charts", "chart")])
+                candidates.extend([
+                    (
+                        "Continuous",
+                        statistics_component_label(StatisticsExportTable.CONTINUOUS, _identity_translate),
+                        "table",
+                    ),
+                    (
+                        "Charts",
+                        statistics_component_label(StatisticsExportTable.CHARTS, _identity_translate),
+                        "chart",
+                    ),
+                ])
             if snapshot.categorical_columns:
-                candidates.append(("Categorical", "Categorical", "table"))
+                candidates.append((
+                    "Categorical",
+                    statistics_component_label(StatisticsExportTable.CATEGORICAL, _identity_translate),
+                    "table",
+                ))
             component_values = tuple(candidates)
         case AnalysisCategory.HYPOTHESIS_TESTS if isinstance(snapshot, HypothesisExportSnapshot):
             component_values = (
@@ -742,7 +758,7 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
     "StatisticsView": (
         "Continuous",
         "Categorical",
-        "Charts",
+        *(source for context, source in presentation_label_sources() if context == "StatisticsView"),
         "Column",
         "Count",
         "Missing count",
@@ -1233,7 +1249,7 @@ def _localized_report_tables(
                     else statistics_categorical_headers
                 )
                 add(
-                    translate("StatisticsView", statistics_table.value),
+                    statistics_component_label(statistics_table, translate),
                     frame.rename(
                         columns={name: translate("StatisticsView", label) for name, label in statistics_headers.items()}
                     ),

@@ -35,6 +35,7 @@ from expo_jbm329.services.analysis.regression_glm import (
     RegressionModel,
     generalized_term_name,
 )
+from expo_jbm329.services.analysis.statistics import StatisticsExportTable
 from expo_jbm329.services.analysis.survival import SurvivalResult, survival_term_name
 from expo_jbm329.services.analysis.timeseries import DecompositionModel
 from expo_jbm329.services.analysis.timeseries_export import (
@@ -58,6 +59,9 @@ class PresentationLabel(StrEnum):
     CONFIGURED_TITLE = "configured_title"
     COLUMNS = "columns"
     OVERVIEW_COLUMNS_METADATA = "overview_columns_metadata"
+    STATISTICS_DISTRIBUTION = "statistics_distribution"
+    STATISTICS_CONTINUOUS = "statistics_continuous"
+    STATISTICS_CATEGORICAL = "statistics_categorical"
     STRONGEST_CORRELATIONS = "strongest_correlations"
     CORRELATION_PLOTS = "correlation_plots"
     CORRELATION_MATRIX = "correlation_matrix"
@@ -210,6 +214,9 @@ _PCA_CONTEXT = "PCAPresentation"
 _TIME_SERIES_CONTEXT = "TimeSeriesPresentation"
 _LABEL_DEFINITIONS: dict[PresentationLabel, PresentationLabelDefinition] = {
     PresentationLabel.OVERVIEW_COLUMNS_METADATA: PresentationLabelDefinition("OverviewView", "Columns metadata"),
+    PresentationLabel.STATISTICS_DISTRIBUTION: PresentationLabelDefinition("StatisticsView", "Distribution"),
+    PresentationLabel.STATISTICS_CONTINUOUS: PresentationLabelDefinition("StatisticsView", "Continuous"),
+    PresentationLabel.STATISTICS_CATEGORICAL: PresentationLabelDefinition("StatisticsView", "Categorical"),
     PresentationLabel.CLUSTERING: PresentationLabelDefinition(_CLUSTERING_CONTEXT, "Clustering"),
     PresentationLabel.CLUSTERING_CONFIGURED_TITLE: PresentationLabelDefinition(
         _CLUSTERING_CONTEXT, "{category} — {method}"
@@ -479,6 +486,19 @@ def translate_presentation_label(
     """Resolve one shared semantic label using the supplied translation source."""
     context, source = presentation_label_source(label)
     return translate(context, source)
+
+
+def statistics_component_label(
+    component: StatisticsExportTable,
+    translate: Callable[[str, str], str],
+) -> str:
+    """Return the shared Statistics component label across presentation surfaces."""
+    labels = {
+        StatisticsExportTable.CONTINUOUS: PresentationLabel.STATISTICS_CONTINUOUS,
+        StatisticsExportTable.CATEGORICAL: PresentationLabel.STATISTICS_CATEGORICAL,
+        StatisticsExportTable.CHARTS: PresentationLabel.STATISTICS_DISTRIBUTION,
+    }
+    return translate_presentation_label(labels[component], translate)
 
 
 def correlation_method_label(

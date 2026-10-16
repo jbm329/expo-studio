@@ -210,10 +210,10 @@ def test_statistics_format_switching_preserves_tables_and_charts_selection():
     export = next(button for button in dialog.findChildren(QPushButton) if button.text() == "Export")
 
     assert formats.currentData() is StatisticsExportFormat.EXCEL
-    assert set(by_text) == {"Continuous", "Categorical", "Charts"}
+    assert set(by_text) == {"Continuous", "Categorical", "Distribution"}
     assert by_text["Continuous"].isChecked()
     by_text["Categorical"].setChecked(True)
-    by_text["Charts"].setChecked(True)
+    by_text["Distribution"].setChecked(True)
     request = dialog.export_request()
     assert request.tables == (
         StatisticsExportTable.CONTINUOUS,
@@ -224,11 +224,13 @@ def test_statistics_format_switching_preserves_tables_and_charts_selection():
 
     formats.setCurrentIndex(formats.findData(StatisticsExportFormat.CSV))
     assert not export.isEnabled()
-    assert by_text["Charts"].isChecked()
+    assert by_text["Distribution"].isChecked()
     assert "only in Excel" in export.toolTip()
+    assert "Uncheck Distribution" in export.toolTip()
+    assert "Charts" not in export.toolTip()
     assert dialog.export_request() is None
 
-    by_text["Charts"].setChecked(False)
+    by_text["Distribution"].setChecked(False)
     assert not export.isEnabled()
     assert "exactly one table" in export.toolTip()
     by_text["Categorical"].setChecked(False)
@@ -241,6 +243,26 @@ def test_statistics_format_switching_preserves_tables_and_charts_selection():
     assert dialog.export_request().tables == (StatisticsExportTable.CONTINUOUS,)
 
 
+def test_statistics_export_component_labels_use_shared_translation_context(monkeypatch):
+    result = analyze_descriptive_statistics(pd.DataFrame({"number": [1, 2, 3], "group": ["A", "B", "A"]}))
+
+    def translate(context: str, text: str) -> str:
+        return f"Localized {text}" if context == "StatisticsView" else text
+
+    monkeypatch.setattr(
+        "expo_jbm329.gui.dialogs.analysis.analysis_export_dialog.QCoreApplication.translate",
+        translate,
+    )
+    dialog = AnalysisExportDialog(statistics=result)
+
+    assert {choice.text() for choice in dialog.findChildren(QCheckBox)} == {
+        "Localized Continuous",
+        "Localized Categorical",
+        "Localized Distribution",
+    }
+    assert any("Localized Distribution sheet" in label.text() for label in dialog.findChildren(QLabel))
+
+
 def test_statistics_charts_are_disabled_without_numeric_columns():
     result = analyze_descriptive_statistics(pd.DataFrame({"group": ["A", "B", "A"]}))
     dialog = AnalysisExportDialog(statistics=result)
@@ -248,7 +270,7 @@ def test_statistics_charts_are_disabled_without_numeric_columns():
 
     assert by_text["Categorical"].isEnabled()
     assert not by_text["Continuous"].isEnabled()
-    assert not by_text["Charts"].isEnabled()
+    assert not by_text["Distribution"].isEnabled()
     by_text["Categorical"].setChecked(True)
     assert dialog.export_request().tables == (StatisticsExportTable.CATEGORICAL,)
 

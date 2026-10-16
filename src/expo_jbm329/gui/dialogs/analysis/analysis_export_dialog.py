@@ -63,6 +63,7 @@ from expo_jbm329.services.analysis.presentation import (
     outlier_component_label,
     pca_component_label,
     regression_component_label,
+    statistics_component_label,
     time_series_component_label,
     translate_presentation_label,
 )
@@ -370,15 +371,10 @@ class AnalysisExportDialog(QDialog):
             StatisticsExportTable.CATEGORICAL: result is not None and bool(result.categorical_columns),
             StatisticsExportTable.CHARTS: result is not None and bool(result.columns),
         }
-        labels = {
-            StatisticsExportTable.CONTINUOUS: self.tr("Continuous"),
-            StatisticsExportTable.CATEGORICAL: self.tr("Categorical"),
-            StatisticsExportTable.CHARTS: self.tr("Charts"),
-        }
         for component, available in availability.items():
             is_chart = component is StatisticsExportTable.CHARTS
             parent = results if is_chart else data
-            choice = QCheckBox(labels[component], parent)
+            choice = QCheckBox(statistics_component_label(component, QCoreApplication.translate), parent)
             choice.setEnabled(available)
             if component is StatisticsExportTable.CATEGORICAL and available:
                 choice.setToolTip(self.tr("Counts are numeric, and fractions range from 0 to 1."))
@@ -861,6 +857,18 @@ class AnalysisExportDialog(QDialog):
                 "Charts are available only in Excel; uncheck Charts to continue."
             )
         )
+        if self._statistics_mode:
+            distribution = statistics_component_label(StatisticsExportTable.CHARTS, QCoreApplication.translate)
+            format_explanation = (
+                self.tr("Excel exports selected tables as separate sheets and charts on one {component} sheet.").format(
+                    component=distribution
+                )
+                if excel
+                else self.tr(
+                    "Choose exactly one table for CSV or binary export. "
+                    "{component} is available only in Excel; uncheck {component} to continue."
+                ).format(component=distribution)
+            )
         request = self.export_request()
         choices = (
             self._hypothesis_choices
@@ -926,7 +934,13 @@ class AnalysisExportDialog(QDialog):
         elif not selected:
             reason = self.tr("Select at least one available component to export.")
         elif not excel and chart_selected:
-            reason = self.tr("Charts are available only in Excel. Uncheck Charts to continue.")
+            reason = (
+                self.tr("{component} is available only in Excel. Uncheck {component} to continue.").format(
+                    component=statistics_component_label(StatisticsExportTable.CHARTS, QCoreApplication.translate)
+                )
+                if self._statistics_mode
+                else self.tr("Charts are available only in Excel. Uncheck Charts to continue.")
+            )
         elif request is None:
             reason = self.tr("Choose exactly one table for CSV or binary export.")
         else:

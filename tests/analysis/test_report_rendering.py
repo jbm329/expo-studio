@@ -1960,8 +1960,35 @@ def test_render_report_html_renders_real_worker_chart_and_inline_png() -> None:
     assert '<img src="data:image/png;base64,' in html
     assert 'alt="value"' in html
     assert "Histogram and boxplot" in html
+    assert "<h3>Distribution</h3>" in html
+    assert "<h3>Charts</h3>" not in html
     assert progress_values == sorted(progress_values)
     assert progress_values[-1] == 100
+
+
+def test_statistics_distribution_label_is_shared_and_captured() -> None:
+    snapshot = analyze_descriptive_statistics(pd.DataFrame({"value": [1.0, 2.0, 3.0, 4.0]}))
+    document = ReportDocument()
+    entry = _entry(AnalysisCategory.STATISTICS, snapshot, ("Charts",))
+    document.upsert(entry)
+    calls: list[tuple[str, str]] = []
+
+    def translate(context: str, text: str) -> str:
+        calls.append((context, text))
+        return "Localized distribution" if (context, text) == ("StatisticsView", "Distribution") else text
+
+    options = capture_report_labels(translate)
+    prepared = prepare_report_content(document, labels=options)
+    component = prepared.entries[0].components[0]
+    html = render_prepared_report_html(prepared)
+
+    assert ("StatisticsView", "Distribution") in calls
+    assert next(item.label for item in entry.components if item.key == "Charts") == "Distribution"
+    assert component.key == "Charts"
+    assert component.label == "Localized distribution"
+    assert component.charts
+    assert "<h3>Localized distribution</h3>" in html
+    assert "<h3>Charts</h3>" not in html
 
 
 def test_correlation_report_uses_shared_configured_title_summary_and_semantic_heading():

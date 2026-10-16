@@ -353,7 +353,7 @@ def test_statistics_export_dialog_emits_selected_chart_only_request(monkeypatch)
     def accept_chart_only(export_dialog):
         choices = {choice.text(): choice for choice in export_dialog.findChildren(QCheckBox)}
         choices["Continuous"].setChecked(False)
-        choices["Charts"].setChecked(True)
+        choices["Distribution"].setChecked(True)
         assert export_dialog.export_request().tables == (StatisticsExportTable.CHARTS,)
         return QDialog.DialogCode.Accepted
 
@@ -367,6 +367,21 @@ def test_statistics_export_dialog_emits_selected_chart_only_request(monkeypatch)
             StatisticsExportFormat.EXCEL,
         )
     ]
+
+
+def test_statistics_add_to_report_uses_distribution_label():
+    result = analyze_descriptive_statistics(pd.DataFrame({"number": [1, 2, 3]}))
+    entry = create_report_entry(AnalysisCategory.STATISTICS, _make_datasets()[0], result)
+    editor = ReportNotesDialog(
+        "Statistics",
+        components=entry.components,
+        component_translation_context="StatisticsView",
+    )
+    choices = {choice.text(): choice for choice in editor.findChildren(QCheckBox)}
+
+    assert "Distribution" in choices
+    assert "Charts" not in choices
+    assert "Charts" in editor.selected_components()
 
 
 def test_dialog_lists_every_analysis_category_once():

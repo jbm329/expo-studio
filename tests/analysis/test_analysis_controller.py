@@ -491,7 +491,7 @@ def test_statistics_excel_exports_localized_tables_and_every_column_chart(monkey
     translations = {
         "Continuous": "Kontinuerliga",
         "Categorical": "Kategoriska",
-        "Charts": "Diagram",
+        "Distribution": "Diagram",
         "Column": "Kolumn",
         "Count": "Antal",
         "Category": "Kategori",

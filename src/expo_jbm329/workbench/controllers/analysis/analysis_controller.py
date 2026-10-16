@@ -118,6 +118,7 @@ from expo_jbm329.services.analysis.presentation import (
     outlier_component_label,
     pca_component_label,
     regression_component_label,
+    statistics_component_label,
     time_series_component_label,
     translate_presentation_label,
 )
@@ -898,7 +899,7 @@ class AnalysisController:
 
         match request.format:
             case StatisticsExportFormat.EXCEL:
-                chart_sheet_name = tr("StatisticsView", StatisticsExportTable.CHARTS.value)
+                chart_sheet_name = statistics_component_label(StatisticsExportTable.CHARTS, tr)
                 chart_factory: (
                     Callable[
                         [Callable[[int], None] | None, Callable[[], bool] | None],

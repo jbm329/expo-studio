@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from PyQt6.QtCore import QT_TRANSLATE_NOOP, Qt, QTimer
+from PyQt6.QtCore import QT_TRANSLATE_NOOP, QCoreApplication, Qt, QTimer
 from PyQt6.QtGui import QPaintEvent, QResizeEvent
 from PyQt6.QtWidgets import (
     QHeaderView,
@@ -24,8 +24,10 @@ from PyQt6.QtWidgets import (
 from expo_jbm329.gui.dialogs.analysis.section_layout import ANALYSIS_TABS_STYLE
 from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS
 from expo_jbm329.services.analysis.normality import SHAPIRO_LARGE_SAMPLE_THRESHOLD
+from expo_jbm329.services.analysis.presentation import statistics_component_label
 from expo_jbm329.services.analysis.statistics import (
     DescriptiveSummaryMethod,
+    StatisticsExportTable,
     has_summary_recommendation,
     recommended_summary_method,
 )
@@ -52,7 +54,9 @@ _FIRST_NUMERIC_TABLE_COLUMN = 2
 _SIGNIFICANCE_LEVEL = 0.05
 _CHART_RETRY_INTERVAL_MS = 25
 _EXPORT_TRANSLATIONS = (
-    QT_TRANSLATE_NOOP("StatisticsView", "Charts"),
+    QT_TRANSLATE_NOOP("StatisticsView", "Continuous"),
+    QT_TRANSLATE_NOOP("StatisticsView", "Categorical"),
+    QT_TRANSLATE_NOOP("StatisticsView", "Distribution"),
     QT_TRANSLATE_NOOP("StatisticsView", "Fraction (non-missing)"),
     QT_TRANSLATE_NOOP("StatisticsView", "Missing fraction"),
     QT_TRANSLATE_NOOP("StatisticsView", "Valid count"),
@@ -237,9 +241,15 @@ class StatisticsView(QWidget):
         tabs = QTabWidget(container)
         tabs.setStyleSheet(ANALYSIS_TABS_STYLE)
         if result.columns:
-            tabs.addTab(self._build_continuous_page(result), self.tr("Continuous"))
+            tabs.addTab(
+                self._build_continuous_page(result),
+                statistics_component_label(StatisticsExportTable.CONTINUOUS, QCoreApplication.translate),
+            )
         if result.categorical_columns:
-            tabs.addTab(self._build_categorical_page(result.categorical_columns), self.tr("Categorical"))
+            tabs.addTab(
+                self._build_categorical_page(result.categorical_columns),
+                statistics_component_label(StatisticsExportTable.CATEGORICAL, QCoreApplication.translate),
+            )
         layout.addWidget(tabs)
         return container
 
@@ -454,7 +464,12 @@ class StatisticsView(QWidget):
         container = QWidget(self)
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Distribution"), container))
+        layout.addWidget(
+            self._build_section_title(
+                statistics_component_label(StatisticsExportTable.CHARTS, QCoreApplication.translate),
+                container,
+            )
+        )
 
         self._distribution_layout = layout
 
