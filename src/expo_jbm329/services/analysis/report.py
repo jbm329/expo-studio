@@ -627,6 +627,7 @@ class PreparedReportComponent:
     overview_summary: PreparedOverviewSummary | None = None
     notice: str | None = None
     paragraphs: tuple[str, ...] = ()
+    show_chart_captions: bool = True
 
     def __post_init__(self) -> None:
         """Ensure prepared content agrees with its selected component kind."""
@@ -786,7 +787,6 @@ _REPORT_LABEL_SOURCES: dict[str, tuple[str, ...]] = {
         "Histogram",
         "Boxplot",
         "No data",
-        "Histogram and boxplot",
     ),
     "AnalysisExportDialog": (
         "Group summary",
@@ -1958,7 +1958,15 @@ def prepare_report_content(
                 if not images:
                     message = f"The selected report chart component {component.key!r} produced no images."
                     raise ValueError(message)
-                prepared_components.append(PreparedReportComponent(component.key, label, component.kind, charts=images))
+                prepared_components.append(
+                    PreparedReportComponent(
+                        component.key,
+                        label,
+                        component.kind,
+                        charts=images,
+                        show_chart_captions=entry.category is not AnalysisCategory.STATISTICS,
+                    )
+                )
             completed += 1
             report_progress()
         presentation = build_analysis_presentation(
@@ -2348,18 +2356,7 @@ def _render_entry_charts(
         images = render_statistics_charts(
             snapshot.columns, statistics_labels, progress_cb=progress_cb, cancel_cb=cancel_cb
         )
-        return {
-            "Charts": tuple(
-                ExcelChartImage(
-                    image.heading,
-                    image.image_data,
-                    image.width_px,
-                    image.height_px,
-                    (*image.captions, translate("StatisticsView", "Histogram and boxplot")),
-                )
-                for image in images
-            )
-        }
+        return {"Charts": images}
     if category is AnalysisCategory.HYPOTHESIS_TESTS and isinstance(snapshot, HypothesisExportSnapshot):
         context = {
             HypothesisTest.GROUP_COMPARISON: "GroupComparisonView",
@@ -2660,10 +2657,12 @@ def render_prepared_report_html(
                         f'<img src="data:image/png;base64,{encoded}" alt="{_html_escape(alt)}" '
                         f'width="{chart.width_px}" height="{chart.height_px}">'
                     ),
-                    f"<figcaption><strong{heading_class}>{_html_escape(chart.heading)}</strong>",
                 ])
-                parts.extend(f"<p>{_html_escape(caption)}</p>" for caption in chart.captions)
-                parts.extend(["</figcaption>", "</figure>"])
+                if component.show_chart_captions:
+                    parts.append(f"<figcaption><strong{heading_class}>{_html_escape(chart.heading)}</strong>")
+                    parts.extend(f"<p>{_html_escape(caption)}</p>" for caption in chart.captions)
+                    parts.append("</figcaption>")
+                parts.append("</figure>")
             parts.append("</section>")
             completed_components += 1
             report_progress()
