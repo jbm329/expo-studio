@@ -6,6 +6,7 @@ import math
 import pandas as pd
 import pytest
 
+from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
 from expo_jbm329.services.analysis.statistics import StatisticsExportFormat
 from expo_jbm329.services.analysis.timeseries import TimeSeriesResult, analyze_time_series
 from expo_jbm329.services.analysis.timeseries_charts import TimeSeriesChartLabels
@@ -22,12 +23,12 @@ from expo_jbm329.services.analysis.timeseries_export import (
 )
 
 CHART_LABELS = TimeSeriesChartLabels(
-    series_title="Series",
+    series_metadata=ChartPresentationMetadata(worksheet_heading="", accessible_name="Series"),
     value_axis="sales",
-    acf_title="Autocorrelation",
+    acf_metadata=ChartPresentationMetadata(worksheet_heading="", accessible_name="Autocorrelation"),
     lag_axis="Lag",
     acf_axis="Autocorrelation",
-    decomposition_title="Seasonal decomposition",
+    decomposition_metadata=ChartPresentationMetadata(worksheet_heading="", accessible_name="Seasonal decomposition"),
     observed="Observed",
     trend="Trend",
     seasonal="Seasonal",

@@ -5670,10 +5670,11 @@ def test_time_series_excel_export_routes_localized_sheets_and_worker_charts(monk
 
     progress: list[int] = []
     images = kwargs["chart_factory"](progress.append, lambda: False)
-    assert [image.heading for image in images] == [
-        snapshot.chart_labels.series_title,
-        snapshot.chart_labels.acf_title,
-        snapshot.chart_labels.decomposition_title,
+    assert [image.heading for image in images] == ["", "", ""]
+    assert [image.accessible_name for image in images] == [
+        snapshot.chart_labels.series_metadata.accessible_name,
+        snapshot.chart_labels.acf_metadata.accessible_name,
+        snapshot.chart_labels.decomposition_metadata.accessible_name,
     ]
     assert progress == [33, 66, 100]
     assert controller._results.mock_calls == []  # noqa: SLF001
@@ -5694,7 +5695,8 @@ def test_time_series_excel_charts_skip_unavailable_diagnostics():
     assert list(kwargs["sheets"]) == ["Series"]
     assert kwargs["sheets"]["Series"].columns.tolist() == ["Timestamp", "Value"]
     images = kwargs["chart_factory"](None, None)
-    assert [image.heading for image in images] == [snapshot.chart_labels.series_title]
+    assert [image.heading for image in images] == [""]
+    assert [image.accessible_name for image in images] == [snapshot.chart_labels.series_metadata.accessible_name]
 
 
 def test_time_series_excel_export_without_charts_has_no_chart_factory():

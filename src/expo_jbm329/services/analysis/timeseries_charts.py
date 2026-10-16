@@ -10,6 +10,7 @@ import numpy as np
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 
+from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
 from expo_jbm329.services.analysis.statistics_charts import STATISTICS_CHART_LOCK
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
 
@@ -32,28 +33,61 @@ class TimeSeriesChartLabels:
     """Translated time-series plot text captured on the GUI thread.
 
     Attributes:
-        series_title: Series plot title, also its Excel heading.
+        series_metadata: Series title, accessibility, and output metadata.
         value_axis: Series y-axis label, the analyzed value column.
-        acf_title: Autocorrelation plot title, also its Excel heading.
+        acf_metadata: Autocorrelation title, accessibility, and output metadata.
         lag_axis: Autocorrelation x-axis label.
         acf_axis: Autocorrelation y-axis label.
-        decomposition_title: Decomposition title, also its Excel heading.
+        decomposition_metadata: Decomposition title, accessibility, and output metadata.
         observed: Y-axis label of the observed panel.
         trend: Y-axis label of the trend panel.
         seasonal: Y-axis label of the seasonal panel.
         residual: Y-axis label of the residual panel.
     """
 
-    series_title: str
+    series_metadata: ChartPresentationMetadata
     value_axis: str
-    acf_title: str
+    acf_metadata: ChartPresentationMetadata
     lag_axis: str
     acf_axis: str
-    decomposition_title: str
+    decomposition_metadata: ChartPresentationMetadata
     observed: str
     trend: str
     seasonal: str
     residual: str
+
+
+def build_time_series_chart_labels(
+    result: TimeSeriesResult,
+    translate: Callable[[str, str], str],
+) -> TimeSeriesChartLabels:
+    """Capture shared chart semantics without retaining the translator.
+
+    Args:
+        result: Applied analysis with its selected value column.
+        translate: Translation callback used only during capture.
+
+    Returns:
+        Frozen labels for the app and background Excel/HTML renderers.
+    """
+    return TimeSeriesChartLabels(
+        series_metadata=ChartPresentationMetadata(
+            worksheet_heading="", accessible_name=translate("TimeSeriesPresentation", "Series")
+        ),
+        value_axis=result.value_column,
+        acf_metadata=ChartPresentationMetadata(
+            worksheet_heading="", accessible_name=translate("TimeSeriesPresentation", "Autocorrelation")
+        ),
+        lag_axis=translate("TimeSeriesPresentation", "Lag"),
+        acf_axis=translate("TimeSeriesPresentation", "Autocorrelation"),
+        decomposition_metadata=ChartPresentationMetadata(
+            worksheet_heading="", accessible_name=translate("TimeSeriesPresentation", "Seasonal decomposition")
+        ),
+        observed=translate("TimeSeriesPresentation", "Observed"),
+        trend=translate("TimeSeriesPresentation", "Trend"),
+        seasonal=translate("TimeSeriesPresentation", "Seasonal"),
+        residual=translate("TimeSeriesPresentation", "Residual"),
+    )
 
 
 def has_autocorrelation(result: TimeSeriesResult) -> bool:
@@ -75,7 +109,7 @@ def draw_series_plot(ax: Axes, result: TimeSeriesResult, labels: TimeSeriesChart
         labels: Translated title and axis text.
     """
     ax.plot(result.timestamps, result.values, marker="o", markersize=3)  # type: ignore[arg-type]
-    ax.set_title(labels.series_title)
+    ax.set_title(labels.series_metadata.accessible_name)
     ax.set_ylabel(labels.value_axis)
     ax.tick_params(axis="x", rotation=30)
 
@@ -94,7 +128,7 @@ def draw_acf_plot(ax: Axes, result: TimeSeriesResult, labels: TimeSeriesChartLab
     ax.axhline(0, color="0.5", linewidth=0.8)
     ax.set_xlabel(labels.lag_axis)
     ax.set_ylabel(labels.acf_axis)
-    ax.set_title(labels.acf_title)
+    ax.set_title(labels.acf_metadata.accessible_name)
 
 
 def draw_decomposition(axes: Sequence[Axes], result: TimeSeriesResult, labels: TimeSeriesChartLabels) -> None:
@@ -120,7 +154,7 @@ def draw_decomposition(axes: Sequence[Axes], result: TimeSeriesResult, labels: T
     for ax, (label, values) in zip(axes, panels, strict=True):
         ax.plot(result.timestamps, values)  # type: ignore[arg-type]
         ax.set_ylabel(label)
-    axes[0].set_title(labels.decomposition_title)
+    axes[0].set_title(labels.decomposition_metadata.accessible_name)
     axes[-1].tick_params(axis="x", rotation=30)
 
 
@@ -159,15 +193,21 @@ def render_time_series_charts(
     """
     result = snapshot.result
     labels = snapshot.chart_labels
-    plots: list[tuple[str, Callable[[Figure, TimeSeriesResult, TimeSeriesChartLabels], None], tuple[float, float]]]
-    plots = [(labels.series_title, _draw_series_figure, _PLOT_FIGURE_SIZE)]
+    plots: list[
+        tuple[
+            ChartPresentationMetadata,
+            Callable[[Figure, TimeSeriesResult, TimeSeriesChartLabels], None],
+            tuple[float, float],
+        ]
+    ]
+    plots = [(labels.series_metadata, _draw_series_figure, _PLOT_FIGURE_SIZE)]
     if has_autocorrelation(result):
-        plots.append((labels.acf_title, _draw_acf_figure, _PLOT_FIGURE_SIZE))
+        plots.append((labels.acf_metadata, _draw_acf_figure, _PLOT_FIGURE_SIZE))
     if has_decomposition(result):
-        plots.append((labels.decomposition_title, _draw_decomposition_figure, _DECOMPOSITION_FIGURE_SIZE))
+        plots.append((labels.decomposition_metadata, _draw_decomposition_figure, _DECOMPOSITION_FIGURE_SIZE))
 
     images: list[ExcelChartImage] = []
-    for index, (heading, draw, size) in enumerate(plots):
+    for index, (metadata, draw, size) in enumerate(plots):
         if cancel_cb is not None and cancel_cb():
             raise ExcelChartCancelledError
         with STATISTICS_CHART_LOCK:
@@ -178,7 +218,14 @@ def render_time_series_charts(
             canvas.print_png(output)  # type: ignore[no-untyped-call]
         width, height = size
         images.append(
-            ExcelChartImage(heading, output.getvalue(), round(width * _EXPORT_DPI), round(height * _EXPORT_DPI))
+            ExcelChartImage(
+                metadata.worksheet_heading,
+                output.getvalue(),
+                round(width * _EXPORT_DPI),
+                round(height * _EXPORT_DPI),
+                metadata.captions,
+                accessible_name=metadata.accessible_name,
+            )
         )
         if progress_cb is not None:
             progress_cb((index + 1) * 100 // len(plots))

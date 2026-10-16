@@ -15,6 +15,7 @@ from expo_jbm329.services.analysis.timeseries import DecompositionModel, TimeSer
 from expo_jbm329.services.analysis.timeseries_charts import (
     DECOMPOSITION_PANELS,
     TimeSeriesChartLabels,
+    build_time_series_chart_labels,
     draw_acf_plot,
     draw_decomposition,
     draw_series_plot,
@@ -37,6 +38,7 @@ class TimeSeriesView(QWidget):
         """Initialize a view from one complete time-series result."""
         super().__init__(parent)
         self._result = result
+        self._chart_labels = build_time_series_chart_labels(result, tr)
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         if result.error is not None:
@@ -69,18 +71,7 @@ class TimeSeriesView(QWidget):
 
     def chart_labels(self) -> TimeSeriesChartLabels:
         """Return the translated plot text used by the view and its export."""
-        return TimeSeriesChartLabels(
-            series_title=translate_presentation_label(PresentationLabel.TIME_SERIES_SERIES, tr),
-            value_axis=self._result.value_column,
-            acf_title=translate_presentation_label(PresentationLabel.TIME_SERIES_AUTOCORRELATION, tr),
-            lag_axis=translate_presentation_label(PresentationLabel.TIME_SERIES_LAG, tr),
-            acf_axis=translate_presentation_label(PresentationLabel.TIME_SERIES_AUTOCORRELATION, tr),
-            decomposition_title=translate_presentation_label(PresentationLabel.TIME_SERIES_SEASONAL_DECOMPOSITION, tr),
-            observed=translate_presentation_label(PresentationLabel.TIME_SERIES_OBSERVED, tr),
-            trend=translate_presentation_label(PresentationLabel.TIME_SERIES_TREND, tr),
-            seasonal=translate_presentation_label(PresentationLabel.TIME_SERIES_SEASONAL, tr),
-            residual=translate_presentation_label(PresentationLabel.TIME_SERIES_RESIDUAL, tr),
-        )
+        return self._chart_labels
 
     def export_notes(self) -> tuple[str, ...]:
         """Return the displayed comments, decomposition model and unavailability reasons.
@@ -234,7 +225,7 @@ class TimeSeriesView(QWidget):
         if has_autocorrelation(result):
             draw_acf_plot(axis, result, labels)
         else:
-            self._draw_unavailable(axis, labels.acf_title, result.diagnostics_note)
+            self._draw_unavailable(axis, labels.acf_metadata.accessible_name, result.diagnostics_note)
         return canvas
 
     def _decomposition_plot(self, result: TimeSeriesResult) -> QWidget:
@@ -242,7 +233,7 @@ class TimeSeriesView(QWidget):
         labels = self.chart_labels()
         if not has_decomposition(result):
             canvas, axis = self._canvas()
-            self._draw_unavailable(axis, labels.decomposition_title, result.decomposition_note)
+            self._draw_unavailable(axis, labels.decomposition_metadata.accessible_name, result.decomposition_note)
             return canvas
 
         figure = Figure(constrained_layout=True)

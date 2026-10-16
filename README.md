@@ -122,6 +122,14 @@ HTML omit redundant outer chart titles while retaining the **PCA plots**
 component heading, plotted titles, and sampling captions only for sampled scores.
 Translations and numeric formatting are captured before background rendering.
 
+Time Series captures per-chart titles, axes, decomposition panel labels, and
+accessibility/output metadata in one Qt-free builder. The app, Excel, and HTML
+draw the same captured semantics without repeating plotted titles in worksheet
+cells or below report images (including Autocorrelation below its Lag axis).
+Plotted titles and accessible image names remain; unavailable diagnostics still
+show explanations in the app and are skipped in exports with captured model notes.
+Series values, time axes, and decomposition calculations are unchanged.
+
 Export is available for successfully applied results. Excel workbooks can
 combine selected tables and available charts; CSV and binary exports contain
 one selected table. Charts are available in Excel only. Exports contain the

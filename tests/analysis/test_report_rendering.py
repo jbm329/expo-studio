@@ -671,7 +671,8 @@ def test_time_series_html_reports_applied_model_without_claiming_partial_decompo
     assert prepared_entry.title == "Time Series"
     assert prepared_entry.configuration[-1].display_value == "Additive"
     assert len(chart_component.charts) == 1
-    assert chart_component.charts[0].heading == "Series"
+    assert chart_component.charts[0].heading == ""
+    assert chart_component.charts[0].accessible_name == "Series"
     assert "The autocorrelation requires a regular time frequency." in html
     assert "Seasonal decomposition requires a regular time frequency." in html
     assert "Seasonal decomposition (calculated)" not in html

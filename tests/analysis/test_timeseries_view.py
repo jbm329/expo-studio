@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QLabel, QSplitter
 
 from expo_jbm329.gui.dialogs.analysis import timeseries_view as timeseries_view_module
 from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
+from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
 from expo_jbm329.services.analysis.timeseries import DecompositionModel, TimeSeriesError, analyze_time_series
 from expo_jbm329.services.analysis.timeseries_charts import TimeSeriesChartLabels
 from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
@@ -133,12 +134,14 @@ def test_chart_labels_use_value_column_and_translated_titles():
     labels = TimeSeriesView(_result()).chart_labels()
 
     assert labels == TimeSeriesChartLabels(
-        series_title="Series",
+        series_metadata=ChartPresentationMetadata(worksheet_heading="", accessible_name="Series"),
         value_axis="value",
-        acf_title="Autocorrelation",
+        acf_metadata=ChartPresentationMetadata(worksheet_heading="", accessible_name="Autocorrelation"),
         lag_axis="Lag",
         acf_axis="Autocorrelation",
-        decomposition_title="Seasonal decomposition",
+        decomposition_metadata=ChartPresentationMetadata(
+            worksheet_heading="", accessible_name="Seasonal decomposition"
+        ),
         observed="Observed",
         trend="Trend",
         seasonal="Seasonal",
@@ -156,12 +159,14 @@ def test_chart_labels_use_the_shared_presentation_translation_context(monkeypatc
     labels = TimeSeriesView(_result()).chart_labels()
 
     assert labels == TimeSeriesChartLabels(
-        series_title="sv:Series",
+        series_metadata=ChartPresentationMetadata(worksheet_heading="", accessible_name="sv:Series"),
         value_axis="value",
-        acf_title="sv:Autocorrelation",
+        acf_metadata=ChartPresentationMetadata(worksheet_heading="", accessible_name="sv:Autocorrelation"),
         lag_axis="sv:Lag",
         acf_axis="sv:Autocorrelation",
-        decomposition_title="sv:Seasonal decomposition",
+        decomposition_metadata=ChartPresentationMetadata(
+            worksheet_heading="", accessible_name="sv:Seasonal decomposition"
+        ),
         observed="sv:Observed",
         trend="sv:Trend",
         seasonal="sv:Seasonal",
