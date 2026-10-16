@@ -1960,7 +1960,9 @@ def test_render_report_html_renders_real_worker_chart_and_inline_png() -> None:
 
     assert '<img src="data:image/png;base64,' in html
     assert 'alt="value"' in html
-    assert "Histogram and boxplot" in html
+    assert "Histogram and boxplot" not in html
+    assert "<figcaption>" not in html
+    assert "<strong>value</strong>" not in html
     assert "<h3>Distribution</h3>" in html
     assert "<h3>Charts</h3>" not in html
     assert progress_values == sorted(progress_values)

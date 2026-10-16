@@ -641,35 +641,35 @@
         <translation>Significant at p &lt; {alpha}</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1992" />
+        <location filename="..\..\services\analysis\report.py" line="2000" />
         <source>N/A</source>
         <translation>N/A</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1994" />
+        <location filename="..\..\services\analysis\report.py" line="2002" />
         <source>Dataset</source>
         <translation>Dataset</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1995" />
+        <location filename="..\..\services\analysis\report.py" line="2003" />
         <source>Report date</source>
         <translation>Report date</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1996" />
+        <location filename="..\..\services\analysis\report.py" line="2004" />
         <source>Expo version</source>
         <translation>Expo version</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="420" />
-        <location filename="..\..\services\analysis\report.py" line="2129" />
+        <location filename="..\..\services\analysis\report.py" line="2137" />
         <source>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</source>
         <translation>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1209" />
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="415" />
-        <location filename="..\..\services\analysis\report.py" line="2401" />
+        <location filename="..\..\services\analysis\report.py" line="2398" />
         <source>Least-squares line: y = ({slope}) x + ({intercept})</source>
         <translation>Least-squares line: y = ({slope}) x + ({intercept})</translation>
     </message>
@@ -1695,7 +1695,7 @@ Please see logs for more information.</source>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1134" />
-        <location filename="..\..\services\analysis\report.py" line="2381" />
+        <location filename="..\..\services\analysis\report.py" line="2378" />
         <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="209" />
         <source>Adjusted standardized residuals</source>
         <translation type="unfinished" />
@@ -2719,14 +2719,14 @@ Please see logs for more information.</source>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1218" />
-        <location filename="..\..\services\analysis\report.py" line="2411" />
+        <location filename="..\..\services\analysis\report.py" line="2408" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="266" />
         <source>Fewer than {minimum} rows have values in both columns, so no correlation can be computed.</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1222" />
-        <location filename="..\..\services\analysis\report.py" line="2415" />
+        <location filename="..\..\services\analysis\report.py" line="2412" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="269" />
         <source>At least one of the columns is constant over the rows with values in both, so no correlation can be computed.</source>
         <translation type="unfinished" />
@@ -2844,14 +2844,14 @@ Please see logs for more information.</source>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1210" />
-        <location filename="..\..\services\analysis\report.py" line="2402" />
+        <location filename="..\..\services\analysis\report.py" line="2399" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="526" />
         <source>The line is a linear fit shown for reference. {method} measures monotonic, not necessarily linear, association.</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1215" />
-        <location filename="..\..\services\analysis\report.py" line="2407" />
+        <location filename="..\..\services\analysis\report.py" line="2404" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="534" />
         <source>Showing a random sample of {shown} of {total} points. Statistics use all points.</source>
         <translation type="unfinished" />
@@ -5497,7 +5497,7 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1329" />
-        <location filename="..\..\services\analysis\report.py" line="2258" />
+        <location filename="..\..\services\analysis\report.py" line="2266" />
         <location filename="..\..\services\analysis\report.py" line="1531" />
         <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="205" />
         <source>Anomaly score</source>
@@ -5730,7 +5730,7 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1331" />
-        <location filename="..\..\services\analysis\report.py" line="2261" />
+        <location filename="..\..\services\analysis\report.py" line="2269" />
         <location filename="..\..\services\analysis\report.py" line="1534" />
         <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="330" />
         <source>Distance past fence</source>
@@ -5738,7 +5738,7 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1332" />
-        <location filename="..\..\services\analysis\report.py" line="2262" />
+        <location filename="..\..\services\analysis\report.py" line="2270" />
         <location filename="..\..\services\analysis\report.py" line="1535" />
         <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="332" />
         <source>z</source>
@@ -5746,7 +5746,7 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1333" />
-        <location filename="..\..\services\analysis\report.py" line="2263" />
+        <location filename="..\..\services\analysis\report.py" line="2271" />
         <location filename="..\..\services\analysis\report.py" line="1536" />
         <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="334" />
         <source>Modified z</source>
@@ -5883,7 +5883,7 @@ Saved to:
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2269" />
+        <location filename="..\..\services\analysis\report.py" line="2277" />
         <location filename="..\..\services\analysis\report.py" line="1551" />
         <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="609" />
         <source>Row</source>
@@ -6013,7 +6013,7 @@ Saved to:
         <translation>Sample</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2111" />
+        <location filename="..\..\services\analysis\report.py" line="2119" />
         <location filename="..\..\services\analysis\report.py" line="1166" />
         <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="242" />
         <source>First ({count})</source>
@@ -6025,13 +6025,13 @@ Saved to:
         <translation>Last (unavailable)</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2115" />
+        <location filename="..\..\services\analysis\report.py" line="2123" />
         <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="254" />
         <source>Last sample is unavailable in this captured result.</source>
         <translation>Last sample is unavailable in this captured result.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2117" />
+        <location filename="..\..\services\analysis\report.py" line="2125" />
         <location filename="..\..\services\analysis\report.py" line="1169" />
         <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="258" />
         <source>Last ({count})</source>
@@ -6428,21 +6428,21 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1135" />
-        <location filename="..\..\services\analysis\report.py" line="2382" />
+        <location filename="..\..\services\analysis\report.py" line="2379" />
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="174" />
         <source>Subject trajectories</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1136" />
-        <location filename="..\..\services\analysis\report.py" line="2383" />
+        <location filename="..\..\services\analysis\report.py" line="2380" />
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="175" />
         <source>Value</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1137" />
-        <location filename="..\..\services\analysis\report.py" line="2384" />
+        <location filename="..\..\services\analysis\report.py" line="2381" />
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="176" />
         <source>Measurement occasion</source>
         <translation type="unfinished" />
@@ -9998,7 +9998,7 @@ Time: {sec:.2f}s{sample}</source>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1056" />
-        <location filename="..\..\services\analysis\report.py" line="2344" />
+        <location filename="..\..\services\analysis\report.py" line="2352" />
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="607" />
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="599" />
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="553" />
@@ -10007,7 +10007,7 @@ Time: {sec:.2f}s{sample}</source>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1057" />
-        <location filename="..\..\services\analysis\report.py" line="2345" />
+        <location filename="..\..\services\analysis\report.py" line="2353" />
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="607" />
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="599" />
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="554" />
@@ -10016,7 +10016,7 @@ Time: {sec:.2f}s{sample}</source>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1058" />
-        <location filename="..\..\services\analysis\report.py" line="2346" />
+        <location filename="..\..\services\analysis\report.py" line="2354" />
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="607" />
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="599" />
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="555" />
@@ -10054,9 +10054,8 @@ Time: {sec:.2f}s{sample}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2358" />
         <source>Histogram and boxplot</source>
-        <translation>Histogram and boxplot</translation>
+        <translation type="vanished">Histogram and boxplot</translation>
     </message>
 </context><context>
     <name>StatusBarController</name>
