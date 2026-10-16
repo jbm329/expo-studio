@@ -207,7 +207,7 @@ def test_overview_export_routes_owned_actual_tail_with_literal_headers(format_ch
         "Last ({count})": "Sista ({count})",
         "Column": "Kolumn",
     }
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    monkeypatch.setattr(analysis_controller_module, "translate", lambda _context, text: translations.get(text, text))
     source.iloc[-1, 0] = -1
     controller._export_overview(
         dialog, exporter, OverviewExportRequest(result, (OverviewExportTable.SAMPLE,), format_choice)
@@ -258,7 +258,7 @@ def test_overview_excel_uses_translated_names_and_headers_without_translating_va
         "Count": "Antal",
         "Fraction": "Andel",
     }
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    monkeypatch.setattr(analysis_controller_module, "translate", lambda _context, text: translations.get(text, text))
     request = OverviewExportRequest(
         dialog.exportable_overview(),
         (OverviewExportTable.COLUMNS, OverviewExportTable.SAMPLE, OverviewExportTable.SUMMARY),
@@ -293,7 +293,7 @@ def test_overview_summary_routes_translated_headers_for_csv_and_binary(format_ch
         "Count": "Antal",
         "Fraction": "Andel",
     }
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    monkeypatch.setattr(analysis_controller_module, "translate", lambda _context, text: translations.get(text, text))
     request = OverviewExportRequest(result, (OverviewExportTable.SUMMARY,), format_choice)
     controller._export_overview(dialog, exporter, request)
 
@@ -500,7 +500,7 @@ def test_statistics_excel_exports_localized_tables_and_every_column_chart(monkey
         "Boxplot": "Lådagram",
         "No data": "Ingen data",
     }
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    monkeypatch.setattr(analysis_controller_module, "translate", lambda _context, text: translations.get(text, text))
     request = StatisticsExportRequest(
         result,
         (
@@ -540,7 +540,7 @@ def test_statistics_excel_exports_localized_tables_and_every_column_chart(monkey
 )
 def test_statistics_single_table_routes_to_non_excel_exporters(format_choice, method_name, monkeypatch):
     controller, dialog, result, exporter = _statistics_export_context()
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: text)
+    monkeypatch.setattr(analysis_controller_module, "translate", lambda _context, text: text)
     request = StatisticsExportRequest(result, (StatisticsExportTable.CATEGORICAL,), format_choice)
 
     controller._export_statistics(dialog, exporter, request)
@@ -719,7 +719,7 @@ def test_report_preview_runs_in_background_without_reading_active_datasets(monke
 def test_report_preview_captures_translations_before_worker_execution(monkeypatch):
     _, dialog, document, operations, _ = _report_preview_context(monkeypatch)
     translate = Mock(side_effect=lambda _context, text: f"Captured: {text}")
-    monkeypatch.setattr(analysis_controller_module, "tr", translate)
+    monkeypatch.setattr(analysis_controller_module, "translate", translate)
     renderer = Mock(return_value="<html>Localized</html>")
     monkeypatch.setattr(analysis_controller_module, "render_report_html", renderer)
 
@@ -2216,7 +2216,7 @@ def test_correlation_export_routes_only_localized_ranked_table(
         "Strong": "Stark",
         "N/A": "Ej tillämpligt",
     }
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    monkeypatch.setattr(analysis_controller_module, "translate", lambda _context, text: translations.get(text, text))
     request = CorrelationExportRequest(
         snapshot,
         (CorrelationExportComponent.STRONGEST_CORRELATIONS,),
@@ -4598,7 +4598,7 @@ def test_regression_excel_export_routes_localized_sheets_and_worker_charts(monke
     snapshot = logistic_snapshot()
     controller, dialog, exporter = _regression_export_context(snapshot)
     monkeypatch.setattr(
-        analysis_controller_module, "tr", lambda _context, text: _REGRESSION_TRANSLATIONS.get(text, text)
+        analysis_controller_module, "translate", lambda _context, text: _REGRESSION_TRANSLATIONS.get(text, text)
     )
     request = RegressionExportRequest(snapshot, tuple(RegressionExportComponent), StatisticsExportFormat.EXCEL)
 
@@ -4635,7 +4635,7 @@ def test_regression_cox_tables_use_hazard_ratio_headers(monkeypatch):
     snapshot = cox_snapshot()
     controller, dialog, exporter = _regression_export_context(snapshot)
     monkeypatch.setattr(
-        analysis_controller_module, "tr", lambda _context, text: _REGRESSION_TRANSLATIONS.get(text, text)
+        analysis_controller_module, "translate", lambda _context, text: _REGRESSION_TRANSLATIONS.get(text, text)
     )
     request = RegressionExportRequest(
         snapshot,
@@ -4926,7 +4926,9 @@ _OUTLIERS_TRANSLATIONS = {
 def test_univariate_outlier_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch):
     snapshot = univariate_snapshot()
     controller, dialog, exporter = _outliers_export_context(snapshot)
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: _OUTLIERS_TRANSLATIONS.get(text, text))
+    monkeypatch.setattr(
+        analysis_controller_module, "translate", lambda _context, text: _OUTLIERS_TRANSLATIONS.get(text, text)
+    )
     request = OutlierExportRequest(snapshot, UNIVARIATE_OUTLIER_COMPONENTS, StatisticsExportFormat.EXCEL)
 
     controller._export_outliers(dialog, exporter, request)  # noqa: SLF001
@@ -4960,7 +4962,9 @@ def test_univariate_outlier_excel_export_routes_localized_sheets_and_worker_char
 def test_multivariate_outlier_excel_export_uses_model_summary_and_projection_chart(monkeypatch):
     snapshot = multivariate_outliers_snapshot()
     controller, dialog, exporter = _outliers_export_context(snapshot)
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: _OUTLIERS_TRANSLATIONS.get(text, text))
+    monkeypatch.setattr(
+        analysis_controller_module, "translate", lambda _context, text: _OUTLIERS_TRANSLATIONS.get(text, text)
+    )
     request = OutlierExportRequest(snapshot, MULTIVARIATE_OUTLIER_COMPONENTS, StatisticsExportFormat.EXCEL)
 
     controller._export_outliers(dialog, exporter, request)  # noqa: SLF001
@@ -5169,7 +5173,7 @@ def test_clustering_excel_export_routes_localized_sheets_and_worker_chart(monkey
     snapshot = clustering_snapshot(ClusteringMethod.DBSCAN, dbscan_min_samples=3)
     controller, dialog, exporter = _clustering_export_context(snapshot)
     monkeypatch.setattr(
-        analysis_controller_module, "tr", lambda _context, text: _CLUSTERING_TRANSLATIONS.get(text, text)
+        analysis_controller_module, "translate", lambda _context, text: _CLUSTERING_TRANSLATIONS.get(text, text)
     )
     request = ClusteringExportRequest(snapshot, CLUSTERING_COMPONENTS, StatisticsExportFormat.EXCEL)
 
@@ -5370,7 +5374,9 @@ _PCA_TRANSLATIONS = {
 def test_pca_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch):
     snapshot = pca_snapshot()
     controller, dialog, exporter = _pca_export_context(snapshot)
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: _PCA_TRANSLATIONS.get(text, text))
+    monkeypatch.setattr(
+        analysis_controller_module, "translate", lambda _context, text: _PCA_TRANSLATIONS.get(text, text)
+    )
     request = PCAExportRequest(snapshot, PCA_COMPONENTS, StatisticsExportFormat.EXCEL)
 
     controller._export_pca(dialog, exporter, request)  # noqa: SLF001
@@ -5622,7 +5628,7 @@ def test_time_series_excel_export_routes_localized_sheets_and_worker_charts(monk
     snapshot = time_series_snapshot()
     controller, dialog, exporter = _time_series_export_context(snapshot)
     monkeypatch.setattr(
-        analysis_controller_module, "tr", lambda _context, text: _TIME_SERIES_TRANSLATIONS.get(text, text)
+        analysis_controller_module, "translate", lambda _context, text: _TIME_SERIES_TRANSLATIONS.get(text, text)
     )
     request = TimeSeriesExportRequest(snapshot, TIME_SERIES_COMPONENTS, StatisticsExportFormat.EXCEL)
 

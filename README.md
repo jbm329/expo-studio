@@ -413,6 +413,27 @@ This runs the same extraction with `pylupdate6 --no-obsolete`. It deletes transl
 #### 2️⃣ Edit translations
 The extracted strings are then manually edited in the `src/expo_jbm329/i18n/locales` directory using Qt Linguist (e.g. `app_sv.ts`).
 
+All user-facing strings must support English and Swedish. After adding or changing
+strings, run `uv run build-i18n`, review and finish the Swedish translations in
+`app_sv.ts`, then run `uv run build-locales`. Preserve named placeholders such as
+`{component}` exactly and verify the compiled translations in the affected UI or
+report.
+
+For explicit contexts, use `QCoreApplication.translate(context, text)` or import
+the shared wrapper as `from expo_jbm329.utils.i18n_utils import tr as translate`.
+Do not call that two-argument wrapper by the name `tr` in new extraction-sensitive
+code: `pylupdate6` interprets `tr(context, text)` as Qt's `tr(source, comment)`,
+creating incorrect source strings and disambiguation comments in Linguist.
+Widget calls such as `self.tr("Text")` are unaffected and remain appropriate.
+
+Shared labels resolved dynamically need literal `QT_TRANSLATE_NOOP` extraction
+markers in their canonical context. Advanced Analysis keeps these alongside its
+views and controller; extraction tests compare them with the shared presentation
+and report label registries. Repeated source text in different contexts is valid,
+while vanished entries are retained translation history, not active duplicates.
+Remove obsolete entries only after checking their runtime replacements; avoid a
+global clean when performing a targeted translation cleanup.
+
 
 #### 3️⃣ Compile translations
 `build-locales` compiles all `app_*.ts` files in the locales directory into `.qm` binaries alongside their source files. It uses `pyside6-lrelease` from the `dev` extra:
