@@ -1983,6 +1983,24 @@ def test_statistics_report_components_follow_table_then_distribution_order() -> 
     assert html.index("<h3>Continuous</h3>") < html.index("<h3>Categorical</h3>") < html.index("<h3>Distribution</h3>")
 
 
+def test_statistics_continuous_cells_do_not_wrap_but_headers_and_other_tables_can() -> None:
+    snapshot = analyze_descriptive_statistics(
+        pd.DataFrame({"long variable name": [1.0, 2.0, 3.0], "group": ["long category name", "a", "b"]})
+    )
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.STATISTICS, snapshot, ("Continuous", "Categorical")))
+
+    html = render_report_html(document)
+
+    assert html.count('<table class="continuous-statistics">') == 1
+    assert '<table><caption class="visually-hidden">Categorical</caption>' in html
+    assert ".continuous-statistics td { white-space: nowrap; }" in html
+    assert ".continuous-statistics th" not in html
+    assert "td { white-space: pre-wrap; }" in html
+    assert "<td>long variable name</td>" in html
+    assert "<td>long category name</td>" in html
+
+
 def test_statistics_distribution_label_is_shared_and_captured() -> None:
     snapshot = analyze_descriptive_statistics(pd.DataFrame({"value": [1.0, 2.0, 3.0, 4.0]}))
     document = ReportDocument()

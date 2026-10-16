@@ -2596,7 +2596,12 @@ def render_prepared_report_html(
             for table in component.tables:
                 parts.append('<div class="table-scroll">')
                 caption_class = ' class="visually-hidden"' if _same_heading(table.title, component.label) else ""
-                parts.append(f"<table><caption{caption_class}>{_html_escape(table.title)}</caption><thead><tr>")
+                table_class = (
+                    ' class="continuous-statistics"' if table.key == StatisticsExportTable.CONTINUOUS.value else ""
+                )
+                parts.append(
+                    f"<table{table_class}><caption{caption_class}>{_html_escape(table.title)}</caption><thead><tr>"
+                )
                 parts.extend(f'<th scope="col">{_html_escape(header)}</th>' for header in table.headers)
                 parts.append("</tr></thead><tbody>")
                 for row in table.rows:
@@ -2718,6 +2723,7 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 caption { text-align: left; font-weight: 700; padding: .5rem 0; }
 th, td { border: 1px solid #ccd5df; padding: .4rem .55rem; text-align: left; vertical-align: top; }
 td { white-space: pre-wrap; }
+.continuous-statistics td { white-space: nowrap; }
 th { background: #edf2f7; }
 tbody tr:nth-child(even) { background: #f8fafc; }
 .report-chart { margin: 1rem auto 1.5rem; text-align: center; break-inside: avoid; }
