@@ -174,7 +174,7 @@ def test_correlation_semantic_labels_have_one_translation_source_context():
             (
                 "Row variable: Row",
                 "Column variable: Column",
-                "Tests available: Pearson's chi-square test, Fisher's exact test",
+                "Tests computed: Pearson's chi-square test, Fisher's exact test",
             ),
         ),
         (
@@ -183,18 +183,24 @@ def test_correlation_semantic_labels_have_one_translation_source_context():
             (
                 "Row variable: Row",
                 "Column variable: Column",
-                "Tests available: Pearson's chi-square test",
+                "Tests computed: Pearson's chi-square test",
             ),
         ),
         (
             paired_snapshot,
-            "Hypothesis Tests — Wilcoxon signed-rank",
-            ("Measurement variables (selected order): Time 1, Time 0",),
+            "Hypothesis Tests — Paired comparison",
+            (
+                "Measurement variables (selected order): Time 1, Time 0",
+                "Tests computed: Wilcoxon signed-rank test",
+            ),
         ),
         (
             lambda: paired_snapshot(3),
-            "Hypothesis Tests — Friedman",
-            ("Measurement variables (selected order): Time 2, Time 1, Time 0",),
+            "Hypothesis Tests — Paired comparison",
+            (
+                "Measurement variables (selected order): Time 2, Time 1, Time 0",
+                "Tests computed: Friedman test",
+            ),
         ),
     ],
 )

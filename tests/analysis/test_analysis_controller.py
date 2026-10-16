@@ -417,12 +417,8 @@ def test_hypothesis_localized_workbooks_read_back_all_types(tmp_path, factory, l
                 "Hypotesprövningar — Kategoriskt samband",
             ),
             HypothesisTest.PAIRED_COMPARISON: (
-                "Hypothesis Tests — Wilcoxon signed-rank"
-                if len(snapshot.columns) == 2
-                else "Hypothesis Tests — Friedman",
-                "Hypotesprövningar — Wilcoxons teckenrang"
-                if len(snapshot.columns) == 2
-                else "Hypotesprövningar — Friedman",
+                "Hypothesis Tests — Paired comparison",
+                "Hypotesprövningar — Parad jämförelse",
             ),
         }
         assert presentation.title == expected_titles[snapshot.test][0 if locale == "en" else 1]

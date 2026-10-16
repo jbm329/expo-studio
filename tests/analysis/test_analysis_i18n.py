@@ -1,20 +1,25 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from xml.etree import ElementTree
 
 import pandas as pd
 import pytest
 from PyQt6.QtCore import QCoreApplication, QTranslator
-from PyQt6.QtWidgets import QCheckBox, QComboBox, QLabel, QPushButton, QTabWidget
+from PyQt6.QtWidgets import QCheckBox, QComboBox, QLabel, QPushButton, QTabWidget, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
 from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDialog
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.chi_square import initialize_chi_square
+from expo_jbm329.services.analysis.group_comparison import initialize_group_comparison
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
-from expo_jbm329.services.analysis.presentation import presentation_label_sources
+from expo_jbm329.services.analysis.paired_comparison import initialize_paired_comparison
+from expo_jbm329.services.analysis.presentation import build_analysis_presentation, presentation_label_sources
 from expo_jbm329.services.analysis.report import (
     ReportDocument,
     capture_report_labels,
@@ -24,8 +29,82 @@ from expo_jbm329.services.analysis.report import (
 )
 from expo_jbm329.services.analysis.statistics import StatisticsExportFormat, analyze_descriptive_statistics
 from expo_jbm329.utils.dataset_ref import DatasetRef
+from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportSnapshot
 
 LOCALES = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales"
+
+
+@pytest.mark.parametrize("language", ["en", "sv"])
+@pytest.mark.parametrize(
+    "factory",
+    [
+        group_snapshot,
+        lambda: group_snapshot(3),
+        chi_snapshot,
+        lambda: chi_snapshot(3),
+        paired_snapshot,
+        lambda: paired_snapshot(3),
+    ],
+)
+def test_hypothesis_family_identity_matches_configuration_dialogs_and_report(
+    language: str, factory: Callable[[], HypothesisExportSnapshot]
+) -> None:
+    translator = QTranslator()
+    assert translator.load(str(LOCALES / f"app_{language}.qm"))
+    assert QCoreApplication.installTranslator(translator)
+    frame = pd.DataFrame({"value": [1.0, 2.0, 3.0], "other": [2.0, 4.0, 5.0], "group": ["a", "a", "b"]})
+    snapshot = factory()
+    widgets: list[QWidget] = []
+    try:
+        config = HypothesisTestsConfigWidget(
+            initialize_group_comparison(frame),
+            initialize_chi_square(frame),
+            initialize_paired_comparison(frame),
+        )
+        presentation = build_analysis_presentation(
+            AnalysisCategory.HYPOTHESIS_TESTS, snapshot, QCoreApplication.translate
+        )
+        selector = config.findChild(QComboBox)
+        assert selector is not None
+        family = selector.itemText(selector.findData(snapshot.test.value))
+        assert presentation.title == f"{presentation.category} — {family}"
+        computed_label = QCoreApplication.translate("HypothesisPresentation", "Tests computed:")
+        assert presentation.configuration[-1].label == computed_label
+        assert presentation.configuration[-1].items
+        entry = create_report_entry(AnalysisCategory.HYPOTHESIS_TESTS, DatasetRef("source", "Dataset", 3, 3), snapshot)
+        export = AnalysisExportDialog(hypothesis=snapshot)
+        notes = ReportNotesDialog(
+            presentation.title,
+            components=entry.components,
+            configuration=presentation.summary_lines,
+            component_translation_context="HypothesisPresentation",
+        )
+        widgets.extend((config, export, notes))
+        identity = "\n".join((presentation.title, *presentation.summary_lines))
+        assert identity in [label.text() for label in export.findChildren(QLabel)]
+        assert presentation.title in [label.text() for label in notes.findChildren(QLabel)]
+        assert "\n".join(presentation.summary_lines) in [label.text() for label in notes.findChildren(QLabel)]
+        assert [choice.text() for choice in export.findChildren(QCheckBox)] == [
+            choice.text() for choice in notes.findChildren(QCheckBox)
+        ]
+        document = ReportDocument()
+        document.upsert(entry.with_selection(("test_results",), ""))
+        captured = capture_report_labels(QCoreApplication.translate)
+    finally:
+        QCoreApplication.removeTranslator(translator)
+        for widget in widgets:
+            widget.close()
+    prepared = prepare_report_content(document, labels=captured)
+    assert prepared.entries[0].title == presentation.title
+    assert prepared.entries[0].configuration == presentation.configuration
+    html = render_prepared_report_html(prepared)
+    assert f"<h2>{presentation.title}</h2>" in html
+    assert f"<dt>{computed_label}</dt>" in html
 
 
 def test_compiled_swedish_shared_labels_match_finished_catalog() -> None:

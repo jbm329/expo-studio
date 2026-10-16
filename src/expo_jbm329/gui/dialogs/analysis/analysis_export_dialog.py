@@ -413,11 +413,9 @@ class AnalysisExportDialog(QDialog):
             for component in components:
                 label = (
                     hypothesis_component_label(snapshot, component, QCoreApplication.translate)
-                    if component is HypothesisExportComponent.SUMMARY and snapshot is not None
+                    if snapshot is not None
                     else self.tr("Summary / statistics tables")
                     if component is HypothesisExportComponent.SUMMARY
-                    else hypothesis_component_label(snapshot, component, QCoreApplication.translate)
-                    if component is HypothesisExportComponent.CHARTS and snapshot is not None
                     else self.tr(component.value)
                 )
                 choice = QCheckBox(label, group)

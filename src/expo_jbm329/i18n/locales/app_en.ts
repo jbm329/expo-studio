@@ -101,88 +101,88 @@
 </context><context>
     <name>AnalysisConfiguration</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="271" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="272" />
         <source>Features</source>
         <translation>Features</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="272" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="273" />
         <source>Standardize features</source>
         <translation>Standardize features</translation>
     </message>
 </context><context>
     <name>AnalysisController</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="652" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="653" />
         <source>This analysis is not implemented yet.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="653" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="654" />
         <source>An error occurred while generating this analysis.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="654" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="655" />
         <source>Running analysis…</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="655" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="656" />
         <source>generate analysis</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="656" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="657" />
         <source>Analysis cancelled.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="657" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="658" />
         <source>Choose settings and click Apply.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="658" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="659" />
         <source>Preparing report preview...</source>
         <translation>Preparing report preview...</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="659" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="660" />
         <source>prepare report preview</source>
         <translation>prepare report preview</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="660" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="661" />
         <source>Report preview cancelled.</source>
         <translation>Report preview cancelled.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="661" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="662" />
         <source>Could not prepare report preview.
 {error}</source>
         <translation>Could not prepare report preview.
 {error}</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="662" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="663" />
         <source>HTML report saving is unavailable.</source>
         <translation>HTML report saving is unavailable.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="663" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="664" />
         <source>Could not save HTML report.
 {error}</source>
         <translation>Could not save HTML report.
 {error}</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="664" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="665" />
         <source>Select a ready dataset before opening Advanced Analysis.</source>
         <translation>Select a ready dataset before opening Advanced Analysis.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="665" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="666" />
         <source>Advanced analysis unavailable</source>
         <translation>Advanced analysis unavailable</translation>
     </message>
@@ -257,42 +257,42 @@
         <translation>Export</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\presentation.py" line="642" />
+        <location filename="..\..\services\analysis\presentation.py" line="644" />
         <source>Time Series</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="380" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="381" />
         <source>Overview</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="381" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="382" />
         <source>Statistics</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="382" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="383" />
         <source>Hypothesis Tests</source>
         <translation type="unfinished">Hypothesis Tests</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="383" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="384" />
         <source>Regression</source>
         <translation type="unfinished">Regression</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="384" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="385" />
         <source>Outliers</source>
         <translation type="unfinished">Outliers</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="385" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="386" />
         <source>Clustering</source>
         <translation type="unfinished">Clustering</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="386" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="387" />
         <source>PCA</source>
         <translation type="unfinished">PCA</translation>
     </message>
@@ -377,7 +377,7 @@
         <translation>Export the prepared series, autocorrelation, model summary and charts of the applied time series, not the original dataset.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="637" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="635" />
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="408" />
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="365" />
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="312" />
@@ -385,12 +385,12 @@
         <translation>Data</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="639" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="605" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="580" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="533" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="493" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="450" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="637" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="603" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="578" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="531" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="491" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="448" />
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="409" />
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="367" />
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="314" />
@@ -413,7 +413,7 @@
         <translation>Dataset metrics, column-type counts, and high-missing-value warnings. Fractions are numeric values from 0 to 1.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="836" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="834" />
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="350" />
         <source>Run Overview successfully before exporting.</source>
         <translation>Run Overview successfully before exporting.</translation>
@@ -424,7 +424,7 @@
         <translation>The first/last sample is unavailable in this captured result.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="838" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="836" />
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="354" />
         <source>This table is empty and cannot be exported.</source>
         <translation>This table is empty and cannot be exported.</translation>
@@ -435,15 +435,15 @@
         <translation>Counts are numeric, and fractions range from 0 to 1.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="931" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="929" />
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="383" />
         <source>Run Statistics successfully before exporting.</source>
         <translation>Run Statistics successfully before exporting.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="933" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="556" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="510" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="931" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="554" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="508" />
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="385" />
         <source>This component is empty and cannot be exported.</source>
         <translation>This component is empty and cannot be exported.</translation>
@@ -454,140 +454,140 @@
         <translation>Summary / statistics tables</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="917" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="426" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="915" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="424" />
         <source>Apply a hypothesis test successfully before exporting.</source>
         <translation>Apply a hypothesis test successfully before exporting.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="919" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="469" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="917" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="467" />
         <source>Apply a correlation matrix successfully before exporting.</source>
         <translation>Apply a correlation matrix successfully before exporting.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="921" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="507" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="919" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="505" />
         <source>Apply a regression model successfully before exporting.</source>
         <translation>Apply a regression model successfully before exporting.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="512" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="510" />
         <source>Fit statistics and diagnostics shown in the model summary.</source>
         <translation>Fit statistics and diagnostics shown in the model summary.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="923" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="553" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="921" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="551" />
         <source>Apply an outlier screening successfully before exporting.</source>
         <translation>Apply an outlier screening successfully before exporting.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="558" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="556" />
         <source>The displayed rows, at most 100, most extreme first.</source>
         <translation>The displayed rows, at most 100, most extreme first.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="925" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="586" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="923" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="584" />
         <source>Apply a clustering successfully before exporting.</source>
         <translation>Apply a clustering successfully before exporting.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="588" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="586" />
         <source>Settings, row counts and silhouette with the displayed model comments.</source>
         <translation>Settings, row counts and silhouette with the displayed model comments.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="927" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="612" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="925" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="610" />
         <source>Apply a PCA successfully before exporting.</source>
         <translation>Apply a PCA successfully before exporting.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="614" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="612" />
         <source>Variance, share and cumulative share per component, as in the scree plot.</source>
         <translation>Variance, share and cumulative share per component, as in the scree plot.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="616" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="614" />
         <source>Feature and row counts with the displayed model comments.</source>
         <translation>Feature and row counts with the displayed model comments.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="929" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="650" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="927" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="648" />
         <source>Apply a time series successfully before exporting.</source>
         <translation>Apply a time series successfully before exporting.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="656" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="654" />
         <source>One row per time point after averaging duplicate timestamps and any resampling, with the decomposition when available.</source>
         <translation>One row per time point after averaging duplicate timestamps and any resampling, with the decomposition when available.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="662" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="660" />
         <source>Row diagnostics and seasonal period with the displayed model comments.</source>
         <translation>Row diagnostics and seasonal period with the displayed model comments.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="664" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="662" />
         <source>The series and, when available, the autocorrelation and decomposition.</source>
         <translation>The series and, when available, the autocorrelation and decomposition.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="827" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="825" />
         <source>Excel exports selected tables as separate sheets in one workbook.</source>
         <translation>Excel exports selected tables as separate sheets in one workbook.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="829" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="827" />
         <source>Choose exactly one table for CSV or binary export. For binary files, choose Parquet, Feather or Pickle in the save dialog.</source>
         <translation>Choose exactly one table for CSV or binary export. For binary files, choose Parquet, Feather or Pickle in the save dialog.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="840" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="838" />
         <source>Select at least one available table to export.</source>
         <translation>Select at least one available table to export.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="945" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="842" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="943" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="840" />
         <source>Choose exactly one table for CSV or binary export.</source>
         <translation>Choose exactly one table for CSV or binary export.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="853" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="851" />
         <source>Excel exports selected tables as separate sheets and charts on one Charts sheet.</source>
         <translation>Excel exports selected tables as separate sheets and charts on one Charts sheet.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="855" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="853" />
         <source>Choose exactly one table for CSV or binary export. Charts are available only in Excel; uncheck Charts to continue.</source>
         <translation>Choose exactly one table for CSV or binary export. Charts are available only in Excel; uncheck Charts to continue.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="863" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="861" />
         <source>Excel exports selected tables as separate sheets and charts on one {component} sheet.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="867" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="865" />
         <source>Choose exactly one table for CSV or binary export. {component} is available only in Excel; uncheck {component} to continue.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="935" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="933" />
         <source>Select at least one available component to export.</source>
         <translation>Select at least one available component to export.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="938" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="936" />
         <source>{component} is available only in Excel. Uncheck {component} to continue.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="942" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="940" />
         <source>Charts are available only in Excel. Uncheck Charts to continue.</source>
         <translation>Charts are available only in Excel. Uncheck Charts to continue.</translation>
     </message>
@@ -610,32 +610,32 @@
         <translation>Odds ratio</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="427" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="428" />
         <location filename="..\..\services\analysis\report.py" line="1406" />
         <location filename="..\..\services\analysis\report.py" line="1405" />
         <source>Rate ratio</source>
         <translation>Rate ratio</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="428" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="429" />
         <location filename="..\..\services\analysis\report.py" line="1409" />
         <source>Hazard ratio</source>
         <translation>Hazard ratio</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="429" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="430" />
         <location filename="..\..\services\analysis\report.py" line="1410" />
         <source>{name}, 95% CI lower</source>
         <translation>{name}, 95% CI lower</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="430" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="431" />
         <location filename="..\..\services\analysis\report.py" line="1411" />
         <source>{name}, 95% CI upper</source>
         <translation>{name}, 95% CI upper</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="437" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="438" />
         <location filename="..\..\services\analysis\report.py" line="1428" />
         <source>Significant at p &lt; {alpha}</source>
         <translation>Significant at p &lt; {alpha}</translation>
@@ -661,14 +661,14 @@
         <translation>Expo version</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="420" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="421" />
         <location filename="..\..\services\analysis\report.py" line="2137" />
         <source>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</source>
         <translation>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1209" />
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="415" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1210" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="416" />
         <location filename="..\..\services\analysis\report.py" line="2398" />
         <source>Least-squares line: y = ({slope}) x + ({intercept})</source>
         <translation>Least-squares line: y = ({slope}) x + ({intercept})</translation>
@@ -854,497 +854,497 @@
         <translation>Kendall's W</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="392" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="393" />
         <source>Autocorrelation</source>
         <translation>Autocorrelation</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="393" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="394" />
         <source>Charts</source>
         <translation>Charts</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="394" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="395" />
         <source>Cluster sizes</source>
         <translation>Cluster sizes</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="395" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="396" />
         <source>Coefficients</source>
         <translation>Coefficients</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="396" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="397" />
         <source>Column details</source>
         <translation>Column details</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="397" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="398" />
         <source>Column summary</source>
         <translation>Column summary</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="398" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="399" />
         <source>Columns</source>
         <translation>Columns</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="399" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="400" />
         <source>Contingency table</source>
         <translation>Contingency table</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="400" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="401" />
         <source>Explained variance</source>
         <translation>Explained variance</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="401" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="402" />
         <source>Feature loadings</source>
         <translation>Feature loadings</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="402" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="403" />
         <source>Group summary</source>
         <translation>Group summary</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="403" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="404" />
         <source>Measurement summary</source>
         <translation>Measurement summary</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="404" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="405" />
         <source>Model metrics</source>
         <translation>Model metrics</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="405" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="406" />
         <source>Model summary</source>
         <translation>Model summary</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="406" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="407" />
         <source>Series</source>
         <translation>Series</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="407" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="408" />
         <source>Total</source>
         <translation>Total</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="416" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="417" />
         <source>Correlation method</source>
         <translation>Correlation method</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="417" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="418" />
         <source>Coefficient</source>
         <translation>Coefficient</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="418" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="419" />
         <source>Significant after Holm</source>
         <translation>Significant after Holm</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="419" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="420" />
         <source>Ranking and Holm explanation</source>
         <translation>Ranking and Holm explanation</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="431" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="432" />
         <source>Term</source>
         <translation>Term</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="432" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="433" />
         <source>Estimate</source>
         <translation>Estimate</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="433" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="434" />
         <source>Std. error</source>
         <translation>Std. error</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="434" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="435" />
         <source>t statistic</source>
         <translation>t statistic</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="435" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="436" />
         <source>z statistic</source>
         <translation>z statistic</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="436" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="437" />
         <source>VIF</source>
         <translation>VIF</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="438" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="439" />
         <source>(Intercept)</source>
         <translation>(Intercept)</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="439" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="440" />
         <source>Metric</source>
         <translation>Metric</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="440" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="441" />
         <source>Value</source>
         <translation>Value</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="441" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="442" />
         <source>Rows used</source>
         <translation>Rows used</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="442" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="443" />
         <source>Rows dropped because of missing values</source>
         <translation>Rows dropped because of missing values</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="443" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="444" />
         <source>R²</source>
         <translation>R²</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="444" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="445" />
         <source>Adjusted R²</source>
         <translation>Adjusted R²</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="445" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="446" />
         <source>F statistic</source>
         <translation>F statistic</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="446" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="447" />
         <source>F-test p-value</source>
         <translation>F-test p-value</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="447" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="448" />
         <source>Model degrees of freedom</source>
         <translation>Model degrees of freedom</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="448" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="449" />
         <source>Residual degrees of freedom</source>
         <translation>Residual degrees of freedom</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="449" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="450" />
         <source>RMSE</source>
         <translation>RMSE</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="450" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="451" />
         <source>AIC</source>
         <translation>AIC</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="451" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="452" />
         <source>Breusch-Pagan LM</source>
         <translation>Breusch-Pagan LM</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="452" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="453" />
         <source>Breusch-Pagan p-value</source>
         <translation>Breusch-Pagan p-value</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="453" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="454" />
         <source>Jarque-Bera JB</source>
         <translation>Jarque-Bera JB</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="454" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="455" />
         <source>Jarque-Bera p-value</source>
         <translation>Jarque-Bera p-value</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="455" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="456" />
         <source>Durbin-Watson</source>
         <translation>Durbin-Watson</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="456" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="457" />
         <source>Largest VIF</source>
         <translation>Largest VIF</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="457" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="458" />
         <source>Log-likelihood</source>
         <translation>Log-likelihood</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="458" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="459" />
         <source>Null-model log-likelihood</source>
         <translation>Null-model log-likelihood</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="459" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="460" />
         <source>McFadden pseudo R²</source>
         <translation>McFadden pseudo R²</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="460" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="461" />
         <source>AUC (in-sample)</source>
         <translation>AUC (in-sample)</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="461" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="462" />
         <source>Pearson dispersion</source>
         <translation>Pearson dispersion</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="462" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="463" />
         <source>NB2 alpha</source>
         <translation>NB2 alpha</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="463" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="464" />
         <source>Events</source>
         <translation>Events</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="464" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="465" />
         <source>Censored</source>
         <translation>Censored</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="467" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="468" />
         <source>Threshold</source>
         <translation>Threshold</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="468" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="469" />
         <source>Values</source>
         <translation>Values</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="469" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="470" />
         <source>Missing</source>
         <translation>Missing</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="470" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="471" />
         <source>Potential outliers</source>
         <translation>Potential outliers</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="471" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="472" />
         <source>Potential outlier share</source>
         <translation>Potential outlier share</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="472" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="473" />
         <source>Low potential outliers</source>
         <translation>Low potential outliers</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="473" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="474" />
         <source>High potential outliers</source>
         <translation>High potential outliers</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="474" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="475" />
         <source>Lower fence</source>
         <translation>Lower fence</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="475" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="476" />
         <source>Upper fence</source>
         <translation>Upper fence</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="476" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="477" />
         <source>Q1</source>
         <translation>Q1</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="477" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="478" />
         <source>Q3</source>
         <translation>Q3</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="478" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="479" />
         <source>IQR</source>
         <translation>IQR</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="479" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="480" />
         <source>Mean</source>
         <translation>Mean</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="480" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="481" />
         <source>Standard deviation</source>
         <translation>Standard deviation</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="481" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="482" />
         <source>Median</source>
         <translation>Median</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="482" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="483" />
         <source>MAD</source>
         <translation>MAD</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="483" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="484" />
         <source>Features</source>
         <translation>Features</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="484" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="485" />
         <source>Expected outlier fraction</source>
         <translation>Expected outlier fraction</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="485" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="486" />
         <source>LOF neighbors</source>
         <translation>LOF neighbors</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="486" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="487" />
         <source>Total rows</source>
         <translation>Total rows</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="487" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="488" />
         <source>Rows dropped because of missing or infinite values</source>
         <translation>Rows dropped because of missing or infinite values</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="488" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="489" />
         <source>Inliers</source>
         <translation>Inliers</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="489" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="490" />
         <source>Status</source>
         <translation>Status</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="492" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="493" />
         <source>Number of clusters</source>
         <translation>Number of clusters</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="493" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="494" />
         <source>Neighborhood radius (eps)</source>
         <translation>Neighborhood radius (eps)</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="494" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="495" />
         <source>Minimum samples</source>
         <translation>Minimum samples</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="495" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="496" />
         <source>Clusters found</source>
         <translation>Clusters found</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="496" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="497" />
         <source>Noise rows</source>
         <translation>Noise rows</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="497" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="498" />
         <source>Silhouette score</source>
         <translation>Silhouette score</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="498" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="499" />
         <source>Cluster</source>
         <translation>Cluster</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="499" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="500" />
         <source>Rows</source>
         <translation>Rows</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="500" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="501" />
         <source>Share</source>
         <translation>Share</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="503" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="504" />
         <source>Feature</source>
         <translation>Feature</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="504" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="505" />
         <source>Component</source>
         <translation>Component</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="505" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="506" />
         <source>Variance</source>
         <translation>Variance</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="506" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="507" />
         <source>Cumulative share</source>
         <translation>Cumulative share</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="509" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="510" />
         <source>Source rows</source>
         <translation>Source rows</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="510" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="511" />
         <source>Invalid rows dropped</source>
         <translation>Invalid rows dropped</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="511" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="512" />
         <source>Duplicate rows averaged</source>
         <translation>Duplicate rows averaged</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="512" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="513" />
         <source>Time points</source>
         <translation>Time points</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="513" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="514" />
         <source>Seasonal period</source>
         <translation>Seasonal period</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="514" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="515" />
         <source>Timestamp</source>
         <translation>Timestamp</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="515" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="516" />
         <source>Trend</source>
         <translation>Trend</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="516" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="517" />
         <source>Seasonal</source>
         <translation>Seasonal</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="517" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="518" />
         <source>Residual</source>
         <translation>Residual</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="518" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="519" />
         <source>Lag</source>
         <translation>Lag</translation>
     </message>
@@ -1694,7 +1694,7 @@ Please see logs for more information.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1134" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1135" />
         <location filename="..\..\services\analysis\report.py" line="2378" />
         <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="209" />
         <source>Adjusted standardized residuals</source>
@@ -1774,17 +1774,17 @@ Please see logs for more information.</source>
         <translation>Contingency table</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="408" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="409" />
         <source>Column</source>
         <translation>Column</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="409" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="410" />
         <source>Group</source>
         <translation>Group</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="410" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="411" />
         <source>Row</source>
         <translation>Row</translation>
     </message>
@@ -1848,62 +1848,62 @@ Please see logs for more information.</source>
 </context><context>
     <name>ClusteringPresentation</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="273" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="274" />
         <source>Clustering</source>
         <translation>Clustering</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="274" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="275" />
         <source>{category} — {method}</source>
         <translation>{category} — {method}</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="275" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="276" />
         <source>K-Means</source>
         <translation>K-Means</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="276" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="277" />
         <source>DBSCAN</source>
         <translation>DBSCAN</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="277" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="278" />
         <source>Agglomerative</source>
         <translation>Agglomerative</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="278" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="279" />
         <source>Cluster sizes</source>
         <translation>Cluster sizes</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="279" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="280" />
         <source>Model summary</source>
         <translation>Model summary</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="280" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="281" />
         <source>Cluster projection</source>
         <translation>Cluster projection</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="281" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="282" />
         <source>Cluster projection (internal PCA)</source>
         <translation>Cluster projection (internal PCA)</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="282" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="283" />
         <source>Number of clusters:</source>
         <translation>Number of clusters:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="283" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="284" />
         <source>Neighborhood radius (eps):</source>
         <translation>Neighborhood radius (eps):</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="284" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="285" />
         <source>Minimum samples:</source>
         <translation>Minimum samples:</translation>
     </message>
@@ -2718,14 +2718,14 @@ Please see logs for more information.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1218" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1219" />
         <location filename="..\..\services\analysis\report.py" line="2408" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="266" />
         <source>Fewer than {minimum} rows have values in both columns, so no correlation can be computed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1222" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1223" />
         <location filename="..\..\services\analysis\report.py" line="2412" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="269" />
         <source>At least one of the columns is constant over the rows with values in both, so no correlation can be computed.</source>
@@ -2843,71 +2843,71 @@ Please see logs for more information.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1210" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1211" />
         <location filename="..\..\services\analysis\report.py" line="2399" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="526" />
         <source>The line is a linear fit shown for reference. {method} measures monotonic, not necessarily linear, association.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1215" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1216" />
         <location filename="..\..\services\analysis\report.py" line="2404" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="534" />
         <source>Showing a random sample of {shown} of {total} points. Statistics use all points.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="285" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="286" />
         <source>Correlation</source>
         <translation>Correlation</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="286" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="287" />
         <source>{category} — {method}</source>
         <translation>{category} — {method}</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="287" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="288" />
         <source>Columns:</source>
         <translation>Columns:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="288" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="289" />
         <source>Strongest correlations</source>
         <translation>Strongest correlations</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="289" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="290" />
         <source>Correlation plots</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="290" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="291" />
         <source>Correlation matrix</source>
         <translation>Correlation matrix</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="291" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="292" />
         <source>Scatterplots</source>
         <translation>Scatterplots</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="292" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="293" />
         <source>Pearson</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="293" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="294" />
         <source>Spearman</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="294" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="295" />
         <source>Kendall's tau-b</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="295" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="296" />
         <source>{x} vs {y}</source>
         <translation>{x} vs {y}</translation>
     </message>
@@ -4697,7 +4697,7 @@ Saved to:
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="411" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="412" />
         <source>Group summary</source>
         <translation type="unfinished">Group summary</translation>
     </message>
@@ -4725,136 +4725,134 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="246" />
-        <source>Wilcoxon signed-rank</source>
-        <translation>Wilcoxon signed-rank</translation>
+        <source>Paired comparison</source>
+        <translation type="unfinished">Paired comparison</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="247" />
-        <source>Friedman</source>
-        <translation>Friedman</translation>
+        <source>Wilcoxon signed-rank test</source>
+        <translation type="unfinished">Wilcoxon signed-rank test</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="248" />
+        <source>Friedman test</source>
+        <translation type="unfinished">Friedman test</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="249" />
         <source>Numeric variable:</source>
         <translation>Numeric variable:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="249" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="250" />
         <source>Grouping variable:</source>
         <translation>Grouping variable:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="250" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="251" />
         <source>Row variable:</source>
         <translation>Row variable:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="251" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="252" />
         <source>Column variable:</source>
         <translation>Column variable:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="252" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="253" />
         <source>Measurement variables (selected order):</source>
         <translation>Measurement variables (selected order):</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="253" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="254" />
         <source>Tests computed:</source>
         <translation>Tests computed:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="254" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="255" />
         <source>Tests available:</source>
         <translation>Tests available:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="255" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="256" />
         <source>Welch's t-test</source>
         <translation>Welch's t-test</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="256" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="257" />
         <source>Student's t-test</source>
         <translation>Student's t-test</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="257" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="258" />
         <source>Mann-Whitney U</source>
         <translation>Mann-Whitney U</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="258" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="259" />
         <source>One-way ANOVA</source>
         <translation>One-way ANOVA</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="259" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="260" />
         <source>Kruskal-Wallis</source>
         <translation>Kruskal-Wallis</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="260" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="261" />
         <source>Pearson's chi-square test</source>
         <translation>Pearson's chi-square test</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="261" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="262" />
         <source>Fisher's exact test</source>
         <translation>Fisher's exact test</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="262" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="263" />
         <source>Group summary</source>
         <translation>Group summary</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="263" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="264" />
         <source>Contingency table</source>
         <translation>Contingency table</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="264" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="265" />
         <source>Measurement summary</source>
         <translation>Measurement summary</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="265" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="266" />
         <source>Test results</source>
         <translation>Test results</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="266" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="267" />
         <source>Group distributions</source>
         <translation>Group distributions</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="267" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="268" />
         <source>Association plots</source>
         <translation>Association plots</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="268" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="269" />
         <source>Paired measurement plots</source>
         <translation>Paired measurement plots</translation>
     </message>
+    <message>
+        <source>Wilcoxon signed-rank</source>
+        <translation type="vanished">Wilcoxon signed-rank</translation>
+    </message>
+    <message>
+        <source>Friedman</source>
+        <translation type="vanished">Friedman</translation>
+    </message>
 </context><context>
     <name>HypothesisTestsConfigWidget</name>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="191" />
-        <source>Group comparison</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="192" />
-        <source>Chi-square independence</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="193" />
-        <source>Paired comparison</source>
-        <translation type="unfinished" />
-    </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="196" />
         <source>Test</source>
@@ -5496,7 +5494,7 @@ Saved to:
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1329" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1330" />
         <location filename="..\..\services\analysis\report.py" line="2266" />
         <location filename="..\..\services\analysis\report.py" line="1531" />
         <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="205" />
@@ -5553,127 +5551,127 @@ Saved to:
 </context><context>
     <name>OutliersPresentation</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="315" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="316" />
         <source>Outliers</source>
         <translation>Outliers</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="316" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="317" />
         <source>{category} — {method}</source>
         <translation>{category} — {method}</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="317" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="318" />
         <source>IQR (Tukey's fences)</source>
         <translation>IQR (Tukey's fences)</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="318" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="319" />
         <source>Z-score</source>
         <translation>Z-score</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="319" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="320" />
         <source>Modified Z-score</source>
         <translation>Modified Z-score</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="320" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="321" />
         <source>Isolation Forest</source>
         <translation>Isolation Forest</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="321" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="322" />
         <source>Local Outlier Factor</source>
         <translation>Local Outlier Factor</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="322" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="323" />
         <source>Threshold:</source>
         <translation>Threshold:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="323" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="324" />
         <source>IQR multiplier:</source>
         <translation>IQR multiplier:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="324" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="325" />
         <source>Score threshold:</source>
         <translation>Score threshold:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="325" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="326" />
         <source>Screened columns:</source>
         <translation>Screened columns:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="326" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="327" />
         <source>Selected detail column:</source>
         <translation>Selected detail column:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="327" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="328" />
         <source>None</source>
         <translation>None</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="328" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="329" />
         <source>Features:</source>
         <translation>Features:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="329" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="330" />
         <source>Standardization:</source>
         <translation>Standardization:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="330" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="331" />
         <source>Standardized</source>
         <translation>Standardized</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="331" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="332" />
         <source>Not standardized</source>
         <translation>Not standardized</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="332" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="333" />
         <source>Expected outlier fraction:</source>
         <translation>Expected outlier fraction:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="333" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="334" />
         <source>LOF neighbors:</source>
         <translation>LOF neighbors:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="334" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="335" />
         <source>Column summary</source>
         <translation>Column summary</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="335" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="336" />
         <source>Model summary</source>
         <translation>Model summary</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="336" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="337" />
         <source>Potential outliers</source>
         <translation>Potential outliers</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="337" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="338" />
         <source>Column distribution</source>
         <translation>Column distribution</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="338" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="339" />
         <source>Column distributions</source>
         <translation>Column distributions</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="339" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="340" />
         <source>Outlier projection</source>
         <translation>Outlier projection</translation>
     </message>
@@ -5729,7 +5727,7 @@ Saved to:
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1331" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1332" />
         <location filename="..\..\services\analysis\report.py" line="2269" />
         <location filename="..\..\services\analysis\report.py" line="1534" />
         <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="330" />
@@ -5737,7 +5735,7 @@ Saved to:
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1332" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1333" />
         <location filename="..\..\services\analysis\report.py" line="2270" />
         <location filename="..\..\services\analysis\report.py" line="1535" />
         <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="332" />
@@ -5745,7 +5743,7 @@ Saved to:
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1333" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1334" />
         <location filename="..\..\services\analysis\report.py" line="2271" />
         <location filename="..\..\services\analysis\report.py" line="1536" />
         <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="334" />
@@ -6083,27 +6081,27 @@ Saved to:
         <translation>Sample group</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="387" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="388" />
         <source>Count</source>
         <translation>Count</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="388" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="389" />
         <source>Fraction</source>
         <translation>Fraction</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="389" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="390" />
         <source>Metric</source>
         <translation>Metric</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="390" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="391" />
         <source>Missing fraction</source>
         <translation>Missing fraction</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="391" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="392" />
         <source>Section</source>
         <translation>Section</translation>
     </message>
@@ -6142,47 +6140,47 @@ Saved to:
 </context><context>
     <name>PCAPresentation</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="340" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="341" />
         <source>PCA</source>
         <translation>PCA</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="341" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="342" />
         <source>Feature loadings</source>
         <translation>Feature loadings</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="342" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="343" />
         <source>Explained variance</source>
         <translation>Explained variance</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="343" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="344" />
         <source>Model summary</source>
         <translation>Model summary</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="344" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="345" />
         <source>PCA plots</source>
         <translation>PCA plots</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="345" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="346" />
         <source>Features:</source>
         <translation>Features:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="346" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="347" />
         <source>Standardization:</source>
         <translation>Standardization:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="347" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="348" />
         <source>Standardized</source>
         <translation>Standardized</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="348" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="349" />
         <source>Not standardized</source>
         <translation>Not standardized</translation>
     </message>
@@ -6280,42 +6278,42 @@ Saved to:
 </context><context>
     <name>PairedComparisonConfigWidget</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="57" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="58" />
         <source>Measurement columns</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="60" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="61" />
         <source>Select at least two numeric columns. They are used in the order shown; each row is one subject.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="76" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="77" />
         <source>Select all</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="77" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="78" />
         <source>Clear</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="129" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="130" />
         <source>None selected - select at least {minimum}.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="131" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="132" />
         <source>{count} selected - select at least {minimum}.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="136" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="137" />
         <source>{count} selected - Wilcoxon signed-rank test.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="137" />
+        <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="138" />
         <source>{count} selected - Friedman test.</source>
         <translation type="unfinished" />
     </message>
@@ -6427,21 +6425,21 @@ Saved to:
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1135" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1136" />
         <location filename="..\..\services\analysis\report.py" line="2379" />
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="174" />
         <source>Subject trajectories</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1136" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1137" />
         <location filename="..\..\services\analysis\report.py" line="2380" />
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="175" />
         <source>Value</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1137" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1138" />
         <location filename="..\..\services\analysis\report.py" line="2381" />
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="176" />
         <source>Measurement occasion</source>
@@ -6473,7 +6471,7 @@ Saved to:
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="412" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="413" />
         <source>Measurement summary</source>
         <translation type="unfinished">Measurement summary</translation>
     </message>
@@ -6882,104 +6880,104 @@ Hint: {error_hint}</source>
 </context><context>
     <name>RegressionPresentation</name>
     <message>
-        <location filename="..\..\services\analysis\presentation.py" line="1008" />
-        <location filename="..\..\services\analysis\presentation.py" line="1002" />
-        <location filename="..\..\services\analysis\presentation.py" line="997" />
+        <location filename="..\..\services\analysis\presentation.py" line="1010" />
+        <location filename="..\..\services\analysis\presentation.py" line="1004" />
+        <location filename="..\..\services\analysis\presentation.py" line="999" />
         <source>(Intercept)</source>
         <translation>(Intercept)</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="296" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="297" />
         <source>Regression</source>
         <translation>Regression</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="297" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="298" />
         <source>{category} — {model}</source>
         <translation>{category} — {model}</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="298" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="299" />
         <source>Linear regression</source>
         <translation>Linear regression</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="299" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="300" />
         <source>Logistic regression</source>
         <translation>Logistic regression</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="300" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="301" />
         <source>Poisson regression</source>
         <translation>Poisson regression</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="301" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="302" />
         <source>Negative binomial regression</source>
         <translation>Negative binomial regression</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="302" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="303" />
         <source>Cox proportional-hazards regression</source>
         <translation>Cox proportional-hazards regression</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="303" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="304" />
         <source>Outcome:</source>
         <translation>Outcome:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="304" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="305" />
         <source>Duration:</source>
         <translation>Duration:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="305" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="306" />
         <source>Event:</source>
         <translation>Event:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="306" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="307" />
         <source>Predictors:</source>
         <translation>Predictors:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="307" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="308" />
         <source>Modeled terms:</source>
         <translation>Modeled terms:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="308" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="309" />
         <source>Reference levels:</source>
         <translation>Reference levels:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="309" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="310" />
         <source>Coefficients</source>
         <translation>Coefficients</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="310" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="311" />
         <source>Model summary</source>
         <translation>Model summary</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="311" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="312" />
         <source>Linear diagnostics</source>
         <translation>Linear diagnostics</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="312" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="313" />
         <source>Logistic diagnostics</source>
         <translation>Logistic diagnostics</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="313" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="314" />
         <source>Count-model diagnostics</source>
         <translation>Count-model diagnostics</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="314" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="315" />
         <source>Survival charts</source>
         <translation>Survival charts</translation>
     </message>
@@ -9997,7 +9995,7 @@ Time: {sec:.2f}s{sample}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1056" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1057" />
         <location filename="..\..\services\analysis\report.py" line="2352" />
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="607" />
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="599" />
@@ -10006,7 +10004,7 @@ Time: {sec:.2f}s{sample}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1057" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1058" />
         <location filename="..\..\services\analysis\report.py" line="2353" />
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="607" />
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="599" />
@@ -10015,7 +10013,7 @@ Time: {sec:.2f}s{sample}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1058" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1059" />
         <location filename="..\..\services\analysis\report.py" line="2354" />
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="607" />
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="599" />
@@ -10310,147 +10308,147 @@ all hazard ratios and intervals must be finite and positive.</translation>
 </context><context>
     <name>TimeSeriesPresentation</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="349" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="350" />
         <source>Time column:</source>
         <translation>Time column:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="350" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="351" />
         <source>Value column:</source>
         <translation>Value column:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="351" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="352" />
         <source>Resampling:</source>
         <translation>Resampling:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="352" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="353" />
         <source>Seasonal period:</source>
         <translation>Seasonal period:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="353" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="354" />
         <source>Decomposition model:</source>
         <translation>Decomposition model:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="354" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="355" />
         <source>Auto-detect seasonal period</source>
         <translation>Auto-detect seasonal period</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="355" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="356" />
         <source>Original frequency</source>
         <translation>Original frequency</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="356" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="357" />
         <source>Automatic</source>
         <translation>Automatic</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="357" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="358" />
         <source>Automatic (no period detected)</source>
         <translation>Automatic (no period detected)</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="358" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="359" />
         <source>Automatic (detected: {period})</source>
         <translation>Automatic (detected: {period})</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="359" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="360" />
         <source>Daily</source>
         <translation>Daily</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="360" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="361" />
         <source>Weekly</source>
         <translation>Weekly</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="361" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="362" />
         <source>Monthly</source>
         <translation>Monthly</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="362" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="363" />
         <source>Quarterly</source>
         <translation>Quarterly</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="363" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="364" />
         <source>Yearly</source>
         <translation>Yearly</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="364" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="365" />
         <source>Additive</source>
         <translation>Additive</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="365" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="366" />
         <source>Multiplicative</source>
         <translation>Multiplicative</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="366" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="367" />
         <source>Series</source>
         <translation>Series</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="367" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="368" />
         <source>Autocorrelation</source>
         <translation>Autocorrelation</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="368" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="369" />
         <source>Model summary</source>
         <translation>Model summary</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="369" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="370" />
         <source>Charts</source>
         <translation>Charts</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="370" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="371" />
         <source>Seasonal decomposition</source>
         <translation>Seasonal decomposition</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="371" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="372" />
         <source>Observed</source>
         <translation>Observed</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="372" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="373" />
         <source>Trend</source>
         <translation>Trend</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="373" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="374" />
         <source>Seasonal</source>
         <translation>Seasonal</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="374" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="375" />
         <source>Residual</source>
         <translation>Residual</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="375" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="376" />
         <source>Lag</source>
         <translation>Lag</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="376" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="377" />
         <source>Value</source>
         <translation>Value</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="377" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="378" />
         <source>Timestamp</source>
         <translation>Timestamp</translation>
     </message>

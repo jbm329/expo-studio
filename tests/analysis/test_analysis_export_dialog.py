@@ -293,13 +293,16 @@ def test_statistics_charts_are_disabled_without_numeric_columns():
             (
                 "Row variable: Row",
                 "Column variable: Column",
-                "Tests available: Pearson's chi-square test, Fisher's exact test",
+                "Tests computed: Pearson's chi-square test, Fisher's exact test",
             ),
         ),
         (
             paired_snapshot,
             "Measurement summary",
-            ("Measurement variables (selected order): Time 1, Time 0",),
+            (
+                "Measurement variables (selected order): Time 1, Time 0",
+                "Tests computed: Wilcoxon signed-rank test",
+            ),
         ),
     ],
 )

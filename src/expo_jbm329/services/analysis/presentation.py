@@ -73,6 +73,7 @@ class PresentationLabel(StrEnum):
     HYPOTHESIS_TESTS = "hypothesis_tests"
     GROUP_COMPARISON = "group_comparison"
     CATEGORICAL_ASSOCIATION = "categorical_association"
+    PAIRED_COMPARISON = "paired_comparison"
     WILCOXON_SIGNED_RANK = "wilcoxon_signed_rank"
     FRIEDMAN = "friedman"
     NUMERIC_VARIABLE = "numeric_variable"
@@ -307,8 +308,11 @@ _LABEL_DEFINITIONS: dict[PresentationLabel, PresentationLabelDefinition] = {
     PresentationLabel.CATEGORICAL_ASSOCIATION: PresentationLabelDefinition(
         _HYPOTHESIS_CONTEXT, "Categorical association"
     ),
-    PresentationLabel.WILCOXON_SIGNED_RANK: PresentationLabelDefinition(_HYPOTHESIS_CONTEXT, "Wilcoxon signed-rank"),
-    PresentationLabel.FRIEDMAN: PresentationLabelDefinition(_HYPOTHESIS_CONTEXT, "Friedman"),
+    PresentationLabel.PAIRED_COMPARISON: PresentationLabelDefinition(_HYPOTHESIS_CONTEXT, "Paired comparison"),
+    PresentationLabel.WILCOXON_SIGNED_RANK: PresentationLabelDefinition(
+        _HYPOTHESIS_CONTEXT, "Wilcoxon signed-rank test"
+    ),
+    PresentationLabel.FRIEDMAN: PresentationLabelDefinition(_HYPOTHESIS_CONTEXT, "Friedman test"),
     PresentationLabel.NUMERIC_VARIABLE: PresentationLabelDefinition(_HYPOTHESIS_CONTEXT, "Numeric variable:"),
     PresentationLabel.GROUPING_VARIABLE: PresentationLabelDefinition(_HYPOTHESIS_CONTEXT, "Grouping variable:"),
     PresentationLabel.ROW_VARIABLE: PresentationLabelDefinition(_HYPOTHESIS_CONTEXT, "Row variable:"),
@@ -1012,12 +1016,26 @@ def _regression_term_names(
     )
 
 
+def hypothesis_family_label(
+    test: HypothesisTest,
+    translate: Callable[[str, str], str],
+) -> str:
+    """Return the stable analysis-family name used by configuration and results."""
+    labels = {
+        HypothesisTest.GROUP_COMPARISON: PresentationLabel.GROUP_COMPARISON,
+        HypothesisTest.CHI_SQUARE: PresentationLabel.CATEGORICAL_ASSOCIATION,
+        HypothesisTest.PAIRED_COMPARISON: PresentationLabel.PAIRED_COMPARISON,
+    }
+    return translate_presentation_label(labels[test], translate)
+
+
 def build_hypothesis_presentation(
     snapshot: HypothesisExportSnapshot,
     translate: Callable[[str, str], str],
 ) -> AnalysisPresentation:
     """Build the configured title and role-ordered settings from a fitted result."""
     category_title = translate_presentation_label(PresentationLabel.HYPOTHESIS_TESTS, translate)
+    method = hypothesis_family_label(snapshot.test, translate)
     result = snapshot.result
     configuration: tuple[ConfigurationField, ...]
     match result:
@@ -1027,7 +1045,6 @@ def build_hypothesis_presentation(
                 if result.pairwise is not None
                 else (PresentationLabel.ONE_WAY_ANOVA, PresentationLabel.KRUSKAL_WALLIS)
             )
-            method = translate_presentation_label(PresentationLabel.GROUP_COMPARISON, translate)
             configuration = (
                 ConfigurationField(
                     translate_presentation_label(PresentationLabel.NUMERIC_VARIABLE, translate),
@@ -1043,10 +1060,9 @@ def build_hypothesis_presentation(
                 ),
             )
         case ChiSquareResult():
-            method = translate_presentation_label(PresentationLabel.CATEGORICAL_ASSOCIATION, translate)
-            tests_available = [translate_presentation_label(PresentationLabel.PEARSON_CHI_SQUARE, translate)]
+            tests_computed = [translate_presentation_label(PresentationLabel.PEARSON_CHI_SQUARE, translate)]
             if result.fisher_p_value is not None and result.fisher_odds_ratio is not None:
-                tests_available.append(translate_presentation_label(PresentationLabel.FISHER_EXACT, translate))
+                tests_computed.append(translate_presentation_label(PresentationLabel.FISHER_EXACT, translate))
             configuration = (
                 ConfigurationField(
                     translate_presentation_label(PresentationLabel.ROW_VARIABLE, translate),
@@ -1057,8 +1073,8 @@ def build_hypothesis_presentation(
                     (result.column_column,),
                 ),
                 ConfigurationField(
-                    translate_presentation_label(PresentationLabel.TESTS_AVAILABLE, translate),
-                    tuple(tests_available),
+                    translate_presentation_label(PresentationLabel.TESTS_COMPUTED, translate),
+                    tuple(tests_computed),
                 ),
             )
         case PairedComparisonResult():
@@ -1067,11 +1083,14 @@ def build_hypothesis_presentation(
                 if result.method is PairedComparisonMethod.WILCOXON
                 else PresentationLabel.FRIEDMAN
             )
-            method = translate_presentation_label(method_label, translate)
             configuration = (
                 ConfigurationField(
                     translate_presentation_label(PresentationLabel.MEASUREMENT_VARIABLES, translate),
                     result.columns,
+                ),
+                ConfigurationField(
+                    translate_presentation_label(PresentationLabel.TESTS_COMPUTED, translate),
+                    (translate_presentation_label(method_label, translate),),
                 ),
             )
         case _:

@@ -456,8 +456,10 @@ def test_hypothesis_report_labels_are_captured_before_worker_preparation():
 
     prepared = prepare_report_content(document, labels=labels)
 
-    assert prepared.entries[0].title == "sv:Hypothesis Tests — sv:Friedman"
+    assert prepared.entries[0].title == "sv:Hypothesis Tests — sv:Paired comparison"
     assert prepared.entries[0].configuration[0].label == "sv:Measurement variables (selected order):"
+    assert prepared.entries[0].configuration[1].label == "sv:Tests computed:"
+    assert prepared.entries[0].configuration[1].items == ("sv:Friedman test",)
     assert prepared.entries[0].components[0].label == "sv:Measurement summary"
     assert prepared.entries[0].components[0].tables[0].title == "sv:Measurement summary"
 
