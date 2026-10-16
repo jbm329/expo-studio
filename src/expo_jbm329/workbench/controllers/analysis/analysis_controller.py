@@ -166,7 +166,7 @@ from expo_jbm329.services.analysis.timeseries_export import (
 )
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num
-from expo_jbm329.utils.i18n_utils import tr
+from expo_jbm329.utils.i18n_utils import tr as translate
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -266,6 +266,150 @@ _HYPOTHESIS_PRESENTATION_TRANSLATIONS = (
     QT_TRANSLATE_NOOP("HypothesisPresentation", "Group distributions"),
     QT_TRANSLATE_NOOP("HypothesisPresentation", "Association plots"),
     QT_TRANSLATE_NOOP("HypothesisPresentation", "Paired measurement plots"),
+)
+_SHARED_PRESENTATION_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisConfiguration", "Features"),
+    QT_TRANSLATE_NOOP("AnalysisConfiguration", "Standardize features"),
+    QT_TRANSLATE_NOOP("ClusteringPresentation", "Clustering"),
+    QT_TRANSLATE_NOOP("ClusteringPresentation", "{category} — {method}"),
+    QT_TRANSLATE_NOOP("ClusteringPresentation", "K-Means"),
+    QT_TRANSLATE_NOOP("ClusteringPresentation", "DBSCAN"),
+    QT_TRANSLATE_NOOP("ClusteringPresentation", "Agglomerative"),
+    QT_TRANSLATE_NOOP("ClusteringPresentation", "Cluster sizes"),
+    QT_TRANSLATE_NOOP("ClusteringPresentation", "Model summary"),
+    QT_TRANSLATE_NOOP("ClusteringPresentation", "Cluster projection"),
+    QT_TRANSLATE_NOOP("ClusteringPresentation", "Cluster projection (internal PCA)"),
+    QT_TRANSLATE_NOOP("ClusteringPresentation", "Number of clusters:"),
+    QT_TRANSLATE_NOOP("ClusteringPresentation", "Neighborhood radius (eps):"),
+    QT_TRANSLATE_NOOP("ClusteringPresentation", "Minimum samples:"),
+    QT_TRANSLATE_NOOP("CorrelationView", "Correlation"),
+    QT_TRANSLATE_NOOP("CorrelationView", "{category} — {method}"),
+    QT_TRANSLATE_NOOP("CorrelationView", "Columns:"),
+    QT_TRANSLATE_NOOP("CorrelationView", "Strongest correlations"),
+    QT_TRANSLATE_NOOP("CorrelationView", "Correlation plots"),
+    QT_TRANSLATE_NOOP("CorrelationView", "Correlation matrix"),
+    QT_TRANSLATE_NOOP("CorrelationView", "Scatterplots"),
+    QT_TRANSLATE_NOOP("CorrelationView", "Pearson"),
+    QT_TRANSLATE_NOOP("CorrelationView", "Spearman"),
+    QT_TRANSLATE_NOOP("CorrelationView", "Kendall's tau-b"),
+    QT_TRANSLATE_NOOP("CorrelationView", "{x} vs {y}"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Regression"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "{category} — {model}"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Linear regression"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Logistic regression"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Poisson regression"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Negative binomial regression"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Cox proportional-hazards regression"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Outcome:"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Duration:"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Event:"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Predictors:"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Modeled terms:"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Reference levels:"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Coefficients"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Model summary"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Linear diagnostics"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Logistic diagnostics"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Count-model diagnostics"),
+    QT_TRANSLATE_NOOP("RegressionPresentation", "Survival charts"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Outliers"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "{category} — {method}"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "IQR (Tukey's fences)"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Z-score"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Modified Z-score"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Isolation Forest"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Local Outlier Factor"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Threshold:"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "IQR multiplier:"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Score threshold:"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Screened columns:"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Selected detail column:"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "None"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Features:"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Standardization:"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Standardized"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Not standardized"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Expected outlier fraction:"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "LOF neighbors:"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Column summary"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Model summary"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Potential outliers"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Column distribution"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Column distributions"),
+    QT_TRANSLATE_NOOP("OutliersPresentation", "Outlier projection"),
+    QT_TRANSLATE_NOOP("PCAPresentation", "PCA"),
+    QT_TRANSLATE_NOOP("PCAPresentation", "Feature loadings"),
+    QT_TRANSLATE_NOOP("PCAPresentation", "Explained variance"),
+    QT_TRANSLATE_NOOP("PCAPresentation", "Model summary"),
+    QT_TRANSLATE_NOOP("PCAPresentation", "PCA plots"),
+    QT_TRANSLATE_NOOP("PCAPresentation", "Features:"),
+    QT_TRANSLATE_NOOP("PCAPresentation", "Standardization:"),
+    QT_TRANSLATE_NOOP("PCAPresentation", "Standardized"),
+    QT_TRANSLATE_NOOP("PCAPresentation", "Not standardized"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Time column:"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Value column:"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Resampling:"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Seasonal period:"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Decomposition model:"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Auto-detect seasonal period"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Original frequency"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Automatic"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Automatic (no period detected)"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Automatic (detected: {period})"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Daily"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Weekly"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Monthly"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Quarterly"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Yearly"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Additive"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Multiplicative"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Series"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Autocorrelation"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Model summary"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Charts"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Seasonal decomposition"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Observed"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Trend"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Seasonal"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Residual"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Lag"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Value"),
+    QT_TRANSLATE_NOOP("TimeSeriesPresentation", "Timestamp"),
+)
+_REPORT_TRANSLATIONS = (
+    QT_TRANSLATE_NOOP("AnalysisDialog", "Overview"),
+    QT_TRANSLATE_NOOP("AnalysisDialog", "Statistics"),
+    QT_TRANSLATE_NOOP("AnalysisDialog", "Hypothesis Tests"),
+    QT_TRANSLATE_NOOP("AnalysisDialog", "Regression"),
+    QT_TRANSLATE_NOOP("AnalysisDialog", "Outliers"),
+    QT_TRANSLATE_NOOP("AnalysisDialog", "Clustering"),
+    QT_TRANSLATE_NOOP("AnalysisDialog", "PCA"),
+    QT_TRANSLATE_NOOP("OverviewView", "Count"),
+    QT_TRANSLATE_NOOP("OverviewView", "Fraction"),
+    QT_TRANSLATE_NOOP("OverviewView", "Metric"),
+    QT_TRANSLATE_NOOP("OverviewView", "Missing fraction"),
+    QT_TRANSLATE_NOOP("OverviewView", "Section"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Autocorrelation"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Charts"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Cluster sizes"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Coefficients"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Column details"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Column summary"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Columns"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Contingency table"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Explained variance"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Feature loadings"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Group summary"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Measurement summary"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Model metrics"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Model summary"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Series"),
+    QT_TRANSLATE_NOOP("AnalysisExportDialog", "Total"),
+    QT_TRANSLATE_NOOP("ChiSquareView", "Column"),
+    QT_TRANSLATE_NOOP("ChiSquareView", "Group"),
+    QT_TRANSLATE_NOOP("ChiSquareView", "Row"),
+    QT_TRANSLATE_NOOP("GroupComparisonView", "Group summary"),
+    QT_TRANSLATE_NOOP("PairedComparisonView", "Measurement summary"),
 )
 _CORRELATION_EXPORT_TRANSLATIONS = (
     QT_TRANSLATE_NOOP("AnalysisExportDialog", "Least-squares line: y = ({slope}) x + ({intercept})"),
@@ -523,7 +667,7 @@ class AnalysisController:
     @staticmethod
     def _tr(text: str) -> str:
         """Translate a UI string for this controller."""
-        return tr("AnalysisController", text)
+        return translate("AnalysisController", text)
 
     def __init__(
         self,
@@ -718,7 +862,7 @@ class AnalysisController:
             page = dialog.report_page()
             page.set_preview_status("")
             page.set_preview_busy(True)
-            labels = capture_report_labels(tr, fmt_num, fmt_int)
+            labels = capture_report_labels(translate, fmt_num, fmt_int)
 
             def stale() -> bool:
                 return closed or generation != revision
@@ -833,7 +977,7 @@ class AnalysisController:
                 AnalysisCategory.OVERVIEW,
                 request.result,
                 tuple(table.value for table in request.tables),
-                translate=tr,
+                translate=translate,
                 number_format=fmt_num,
                 count_format=fmt_int,
                 split_overview_samples=request.format is OverviewExportFormat.EXCEL,
@@ -885,7 +1029,7 @@ class AnalysisController:
                 AnalysisCategory.STATISTICS,
                 request.result,
                 tuple(table.value for table in table_choices),
-                translate=tr,
+                translate=translate,
                 number_format=fmt_num,
                 count_format=fmt_int,
             )
@@ -899,7 +1043,7 @@ class AnalysisController:
 
         match request.format:
             case StatisticsExportFormat.EXCEL:
-                chart_sheet_name = statistics_component_label(StatisticsExportTable.CHARTS, tr)
+                chart_sheet_name = statistics_component_label(StatisticsExportTable.CHARTS, translate)
                 chart_factory: (
                     Callable[
                         [Callable[[int], None] | None, Callable[[], bool] | None],
@@ -909,9 +1053,9 @@ class AnalysisController:
                 ) = None
                 if charts_selected:
                     labels = StatisticsChartLabels(
-                        histogram=tr("StatisticsView", "Histogram"),
-                        boxplot=tr("StatisticsView", "Boxplot"),
-                        no_data=tr("StatisticsView", "No data"),
+                        histogram=translate("StatisticsView", "Histogram"),
+                        boxplot=translate("StatisticsView", "Boxplot"),
+                        no_data=translate("StatisticsView", "No data"),
                     )
 
                     def make_chart_images(
@@ -971,7 +1115,7 @@ class AnalysisController:
             AnalysisCategory.HYPOTHESIS_TESTS,
             snapshot,
             tuple(hypothesis_keys[item] for item in table_choices),
-            translate=tr,
+            translate=translate,
             number_format=fmt_num,
             count_format=fmt_int,
         )
@@ -981,16 +1125,16 @@ class AnalysisController:
             raise ValueError(message)
         if request.format is StatisticsExportFormat.EXCEL:
             labels = HypothesisChartLabels(
-                distribution=tr(
+                distribution=translate(
                     context,
                     "Distribution by group"
                     if snapshot.test is HypothesisTest.GROUP_COMPARISON
                     else "Distribution by occasion",
                 ),
-                residuals=tr("ChiSquareView", "Adjusted standardized residuals"),
-                trajectories=tr("PairedComparisonView", "Subject trajectories"),
-                value=tr("PairedComparisonView", "Value"),
-                occasion=tr("PairedComparisonView", "Measurement occasion"),
+                residuals=translate("ChiSquareView", "Adjusted standardized residuals"),
+                trajectories=translate("PairedComparisonView", "Subject trajectories"),
+                value=translate("PairedComparisonView", "Value"),
+                occasion=translate("PairedComparisonView", "Measurement occasion"),
                 residual_annotations=(
                     ChiSquareView.chart_annotations(cast("ChiSquareResult", snapshot.result))
                     if snapshot.test is HypothesisTest.CHI_SQUARE
@@ -1007,7 +1151,9 @@ class AnalysisController:
                 sheets=sheets,
                 chart_factory=make_images if charts else None,
                 chart_sheet_name=(
-                    hypothesis_component_label(snapshot, HypothesisExportComponent.CHARTS, tr) if charts else None
+                    hypothesis_component_label(snapshot, HypothesisExportComponent.CHARTS, translate)
+                    if charts
+                    else None
                 ),
                 parent_widget=dialog,
                 operation_target=dialog.content_panel(),
@@ -1034,7 +1180,7 @@ class AnalysisController:
             AnalysisCategory.CORRELATION,
             snapshot,
             (CorrelationExportComponent.STRONGEST_CORRELATIONS.value,),
-            translate=tr,
+            translate=translate,
             number_format=fmt_num,
             count_format=fmt_int,
         )
@@ -1045,7 +1191,7 @@ class AnalysisController:
         if not isinstance(request, CorrelationExportRequest) or request.snapshot is not dialog.exportable_correlation():
             return
         snapshot = request.snapshot
-        sheet_name = translate_presentation_label(PresentationLabel.STRONGEST_CORRELATIONS, tr)
+        sheet_name = translate_presentation_label(PresentationLabel.STRONGEST_CORRELATIONS, translate)
         sheets = (
             {sheet_name: self._localized_correlation_table(snapshot)}
             if CorrelationExportComponent.STRONGEST_CORRELATIONS in request.components
@@ -1056,24 +1202,24 @@ class AnalysisController:
             for component in request.components
             if component is not CorrelationExportComponent.STRONGEST_CORRELATIONS
         )
-        method_name = correlation_method_label(snapshot.matrix.method, tr)
+        method_name = correlation_method_label(snapshot.matrix.method, translate)
         labels = CorrelationChartLabels(
-            matrix_title=translate_presentation_label(PresentationLabel.CORRELATION_MATRIX, tr),
-            scatter_heading=translate_presentation_label(PresentationLabel.SCATTERPLOT_TITLE, tr),
-            line_equation=tr("AnalysisExportDialog", "Least-squares line: y = ({slope}) x + ({intercept})"),
-            descriptive_line=tr(
+            matrix_title=translate_presentation_label(PresentationLabel.CORRELATION_MATRIX, translate),
+            scatter_heading=translate_presentation_label(PresentationLabel.SCATTERPLOT_TITLE, translate),
+            line_equation=translate("AnalysisExportDialog", "Least-squares line: y = ({slope}) x + ({intercept})"),
+            descriptive_line=translate(
                 "CorrelationView",
                 "The line is a linear fit shown for reference. {method} measures monotonic, "
                 "not necessarily linear, association.",
             ).format(method=method_name),
-            sampling=tr(
+            sampling=translate(
                 "CorrelationView", "Showing a random sample of {shown} of {total} points. Statistics use all points."
             ),
-            insufficient_observations=tr(
+            insufficient_observations=translate(
                 "CorrelationView",
                 "Fewer than {minimum} rows have values in both columns, so no correlation can be computed.",
             ).format(minimum=fmt_int(MIN_OBSERVATIONS)),
-            constant_input=tr(
+            constant_input=translate(
                 "CorrelationView",
                 "At least one of the columns is constant over the rows with values in both, "
                 "so no correlation can be computed.",
@@ -1094,7 +1240,7 @@ class AnalysisController:
                     sheets=sheets,
                     chart_factory=make_images if charts else None,
                     chart_sheet_name=(
-                        translate_presentation_label(PresentationLabel.CORRELATION_PLOTS, tr) if charts else None
+                        translate_presentation_label(PresentationLabel.CORRELATION_PLOTS, translate) if charts else None
                     ),
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
@@ -1125,7 +1271,7 @@ class AnalysisController:
             AnalysisCategory.REGRESSION,
             snapshot,
             tuple(component.value for component in components),
-            translate=tr,
+            translate=translate,
             number_format=fmt_num,
             count_format=fmt_int,
         )
@@ -1152,7 +1298,7 @@ class AnalysisController:
                         regression_component_label(
                             snapshot.model,
                             RegressionExportComponent.CHARTS,
-                            tr,
+                            translate,
                         )
                         if charts
                         else None
@@ -1180,11 +1326,11 @@ class AnalysisController:
     def _outlier_score_label(snapshot: OutlierExportSnapshot) -> str:
         """Return the displayed score header of the snapshot's potential outliers."""
         if isinstance(snapshot, MultivariateOutlierExportSnapshot):
-            return tr("MultivariateOutliersView", "Anomaly score")
+            return translate("MultivariateOutliersView", "Anomaly score")
         score_headers = {
-            OutlierMethod.IQR: tr("OutliersView", "Distance past fence"),
-            OutlierMethod.Z_SCORE: tr("OutliersView", "z"),
-            OutlierMethod.MODIFIED_Z_SCORE: tr("OutliersView", "Modified z"),
+            OutlierMethod.IQR: translate("OutliersView", "Distance past fence"),
+            OutlierMethod.Z_SCORE: translate("OutliersView", "z"),
+            OutlierMethod.MODIFIED_Z_SCORE: translate("OutliersView", "Modified z"),
         }
         return score_headers[snapshot.summary.method]
 
@@ -1198,7 +1344,7 @@ class AnalysisController:
             AnalysisCategory.OUTLIERS,
             snapshot,
             tuple(component.value for component in components),
-            translate=tr,
+            translate=translate,
             number_format=fmt_num,
             count_format=fmt_int,
         )
@@ -1226,7 +1372,7 @@ class AnalysisController:
                     chart_sheet_name=(
                         outlier_component_label(
                             OutlierExportComponent.CHARTS,
-                            tr,
+                            translate,
                             multivariate=isinstance(snapshot, MultivariateOutlierExportSnapshot),
                         )
                         if charts
@@ -1264,7 +1410,7 @@ class AnalysisController:
             AnalysisCategory.CLUSTERING,
             snapshot,
             tuple(component.value for component in components),
-            translate=tr,
+            translate=translate,
             number_format=fmt_num,
             count_format=fmt_int,
         )
@@ -1287,7 +1433,7 @@ class AnalysisController:
                 exporter.export_excel(
                     sheets=sheets,
                     chart_factory=make_images if charts else None,
-                    chart_sheet_name=clustering_component_label(ClusteringExportComponent.CHARTS, tr)
+                    chart_sheet_name=clustering_component_label(ClusteringExportComponent.CHARTS, translate)
                     if charts
                     else None,
                     parent_widget=dialog,
@@ -1322,7 +1468,7 @@ class AnalysisController:
             AnalysisCategory.PCA,
             snapshot,
             tuple(component.value for component in components),
-            translate=tr,
+            translate=translate,
             number_format=fmt_num,
             count_format=fmt_int,
         )
@@ -1332,7 +1478,7 @@ class AnalysisController:
         if not isinstance(request, PCAExportRequest) or request.snapshot is not dialog.exportable_pca():
             return
         snapshot = request.snapshot
-        presentation = build_analysis_presentation(AnalysisCategory.PCA, snapshot, tr)
+        presentation = build_analysis_presentation(AnalysisCategory.PCA, snapshot, translate)
         charts = PCAExportComponent.CHARTS in request.components
         sheets = self._localized_pca_tables(request.components, snapshot)
 
@@ -1346,7 +1492,7 @@ class AnalysisController:
                 exporter.export_excel(
                     sheets=sheets,
                     chart_factory=make_images if charts else None,
-                    chart_sheet_name=(pca_component_label(PCAExportComponent.CHARTS, tr) if charts else None),
+                    chart_sheet_name=(pca_component_label(PCAExportComponent.CHARTS, translate) if charts else None),
                     suggested_name=presentation.title,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
@@ -1379,7 +1525,7 @@ class AnalysisController:
             AnalysisCategory.TIME_SERIES,
             snapshot,
             tuple(component.value for component in components),
-            translate=tr,
+            translate=translate,
             number_format=fmt_num,
             count_format=fmt_int,
         )
@@ -1389,7 +1535,7 @@ class AnalysisController:
         if not isinstance(request, TimeSeriesExportRequest) or request.snapshot is not dialog.exportable_time_series():
             return
         snapshot = request.snapshot
-        presentation = build_analysis_presentation(AnalysisCategory.TIME_SERIES, snapshot, tr)
+        presentation = build_analysis_presentation(AnalysisCategory.TIME_SERIES, snapshot, translate)
         charts = TimeSeriesExportComponent.CHARTS in request.components
         sheets = self._localized_time_series_tables(request.components, snapshot)
 
@@ -1404,7 +1550,7 @@ class AnalysisController:
                     sheets=sheets,
                     chart_factory=make_images if charts else None,
                     chart_sheet_name=(
-                        time_series_component_label(TimeSeriesExportComponent.CHARTS, tr) if charts else None
+                        time_series_component_label(TimeSeriesExportComponent.CHARTS, translate) if charts else None
                     ),
                     suggested_name=presentation.title,
                     parent_widget=dialog,
@@ -1512,7 +1658,7 @@ class AnalysisController:
                 )
                 dialog.set_exportable_hypothesis(snapshot)
                 dialog.set_analysis_presentation(
-                    build_analysis_presentation(AnalysisCategory.HYPOTHESIS_TESTS, snapshot, tr)
+                    build_analysis_presentation(AnalysisCategory.HYPOTHESIS_TESTS, snapshot, translate)
                 )
 
             self._recompute_content(
@@ -1939,7 +2085,9 @@ class AnalysisController:
                     detail_notes=new_view.detail_notes(),
                 )
                 dialog.set_exportable_outliers(snapshot)
-                dialog.set_analysis_presentation(build_analysis_presentation(AnalysisCategory.OUTLIERS, snapshot, tr))
+                dialog.set_analysis_presentation(
+                    build_analysis_presentation(AnalysisCategory.OUTLIERS, snapshot, translate)
+                )
             if outcome.detail is None:
                 return
             if (
@@ -1983,7 +2131,7 @@ class AnalysisController:
                 updated_snapshot = snapshot.with_detail(displayed_detail, view.detail_notes())
                 dialog.set_exportable_outliers(updated_snapshot)
                 dialog.set_analysis_presentation(
-                    build_analysis_presentation(AnalysisCategory.OUTLIERS, updated_snapshot, tr)
+                    build_analysis_presentation(AnalysisCategory.OUTLIERS, updated_snapshot, translate)
                 )
 
         self._recompute_content(
@@ -2052,7 +2200,9 @@ class AnalysisController:
             if view.result().error is None:
                 snapshot = MultivariateOutlierExportSnapshot(view.result(), view.chart_labels(), view.export_notes())
                 dialog.set_exportable_outliers(snapshot)
-                dialog.set_analysis_presentation(build_analysis_presentation(AnalysisCategory.OUTLIERS, snapshot, tr))
+                dialog.set_analysis_presentation(
+                    build_analysis_presentation(AnalysisCategory.OUTLIERS, snapshot, translate)
+                )
 
         self._recompute_content(
             dialog,
@@ -2108,7 +2258,7 @@ class AnalysisController:
             if view.result().error is None:
                 snapshot = PCAExportSnapshot(view.result(), view.chart_labels(), view.export_notes())
                 dialog.set_exportable_pca(snapshot)
-                dialog.set_analysis_presentation(build_analysis_presentation(AnalysisCategory.PCA, snapshot, tr))
+                dialog.set_analysis_presentation(build_analysis_presentation(AnalysisCategory.PCA, snapshot, translate))
 
         self._recompute_content(
             dialog,
@@ -2159,7 +2309,9 @@ class AnalysisController:
             if view.result().error is None:
                 snapshot = ClusteringExportSnapshot(view.result(), view.chart_labels(), view.export_notes())
                 dialog.set_exportable_clustering(snapshot)
-                dialog.set_analysis_presentation(build_analysis_presentation(AnalysisCategory.CLUSTERING, snapshot, tr))
+                dialog.set_analysis_presentation(
+                    build_analysis_presentation(AnalysisCategory.CLUSTERING, snapshot, translate)
+                )
 
         self._recompute_content(
             dialog,
@@ -2227,7 +2379,7 @@ class AnalysisController:
                 )
                 dialog.set_exportable_time_series(snapshot)
                 dialog.set_analysis_presentation(
-                    build_analysis_presentation(AnalysisCategory.TIME_SERIES, snapshot, tr)
+                    build_analysis_presentation(AnalysisCategory.TIME_SERIES, snapshot, translate)
                 )
 
         self._recompute_content(

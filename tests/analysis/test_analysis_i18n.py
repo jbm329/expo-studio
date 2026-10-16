@@ -1,0 +1,116 @@
+from __future__ import annotations
+
+from pathlib import Path
+from xml.etree import ElementTree
+
+import pandas as pd
+import pytest
+from PyQt6.QtCore import QCoreApplication, QTranslator
+from PyQt6.QtWidgets import QCheckBox, QComboBox, QLabel, QPushButton, QTabWidget
+
+from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+from expo_jbm329.gui.dialogs.analysis.overview_view import OverviewView
+from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDialog
+from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
+from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.overview import analyze_dataset_overview
+from expo_jbm329.services.analysis.presentation import presentation_label_sources
+from expo_jbm329.services.analysis.report import (
+    ReportDocument,
+    capture_report_labels,
+    create_report_entry,
+    prepare_report_content,
+    render_prepared_report_html,
+)
+from expo_jbm329.services.analysis.statistics import StatisticsExportFormat, analyze_descriptive_statistics
+from expo_jbm329.utils.dataset_ref import DatasetRef
+
+LOCALES = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales"
+
+
+def test_compiled_swedish_shared_labels_match_finished_catalog() -> None:
+    translator = QTranslator()
+    assert translator.load(str(LOCALES / "app_sv.qm"))
+    catalog = ElementTree.parse(LOCALES / "app_sv.ts").getroot()
+    translations = {
+        (context.findtext("name"), message.findtext("source")): message.findtext("translation")
+        for context in catalog.findall("context")
+        for message in context.findall("message")
+        if message.find("translation") is not None
+        and message.find("translation").get("type") not in ("unfinished", "obsolete", "vanished")
+    }
+
+    assert QCoreApplication.installTranslator(translator)
+    try:
+        for context, source in presentation_label_sources():
+            assert translations[context, source]
+            assert QCoreApplication.translate(context, source) == translations[context, source]
+    finally:
+        QCoreApplication.removeTranslator(translator)
+
+
+@pytest.mark.parametrize("language", ["en", "sv"])
+def test_recent_analysis_labels_translate_in_views_dialogs_and_captured_reports(language: str) -> None:
+    translator = QTranslator()
+    assert translator.load(str(LOCALES / f"app_{language}.qm"))
+    assert QCoreApplication.installTranslator(translator)
+    swedish = language == "sv"
+    metadata = "Kolumnmetadata" if swedish else "Columns metadata"
+    continuous = "Kontinuerliga" if swedish else "Continuous"
+    categorical = "Kategoriska" if swedish else "Categorical"
+    distribution = "Fördelning" if swedish else "Distribution"
+    count_header = "Antal (% icke-saknade)" if swedish else "Count (% non-missing)"
+    frame = pd.DataFrame({"value": [1.0, None, 3.0], "group": ["a", "a", "b"]})
+    source = DatasetRef("source", "Dataset", 3, 2)
+    overview = analyze_dataset_overview(frame)
+    statistics = analyze_descriptive_statistics(frame)
+    document = ReportDocument()
+    document.upsert(create_report_entry(AnalysisCategory.OVERVIEW, source, overview).with_selection(("Columns",), ""))
+    statistics_entry = create_report_entry(AnalysisCategory.STATISTICS, source, statistics)
+    document.upsert(statistics_entry.with_selection(("Continuous", "Categorical"), ""))
+    widgets = []
+    try:
+        overview_view = OverviewView(overview)
+        statistics_view = StatisticsView(statistics)
+        export = AnalysisExportDialog(statistics=statistics)
+        notes = ReportNotesDialog(
+            "Statistics",
+            components=statistics_entry.components,
+            component_translation_context="StatisticsView",
+        )
+        widgets.extend((overview_view, statistics_view, export, notes))
+        assert metadata in [label.text() for label in overview_view.findChildren(QLabel)]
+        assert distribution in [label.text() for label in statistics_view.findChildren(QLabel)]
+        tabs = statistics_view.findChild(QTabWidget)
+        assert tabs is not None
+        assert [tabs.tabText(index) for index in range(tabs.count())] == [continuous, categorical]
+        assert [choice.text() for choice in notes.findChildren(QCheckBox)] == [continuous, categorical, distribution]
+        choices = {choice.text(): choice for choice in export.findChildren(QCheckBox)}
+        assert set(choices) == {continuous, categorical, distribution}
+        choices[distribution].setChecked(True)
+        formats = export.findChild(QComboBox)
+        assert formats is not None
+        formats.setCurrentIndex(formats.findData(StatisticsExportFormat.CSV))
+        export_button = next(
+            button
+            for button in export.findChildren(QPushButton)
+            if button.text() == ("Exportera" if swedish else "Export")
+        )
+        expected_reason = (
+            "Fördelning är endast tillgänglig i Excel. Avmarkera Fördelning för att fortsätta."
+            if swedish
+            else "Distribution is available only in Excel. Uncheck Distribution to continue."
+        )
+        assert export_button.toolTip() == expected_reason
+        captured = capture_report_labels(QCoreApplication.translate)
+    finally:
+        QCoreApplication.removeTranslator(translator)
+        for widget in widgets:
+            widget.close()
+
+    prepared = prepare_report_content(document, labels=captured)
+    html = render_prepared_report_html(prepared)
+    assert f"<h3>{metadata}</h3>" in html
+    assert f"<h3>{continuous}</h3>" in html
+    assert f"<h3>{categorical}</h3>" in html
+    assert f'<th scope="col">{count_header}</th>' in html
