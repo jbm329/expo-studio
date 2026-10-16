@@ -400,14 +400,16 @@ def test_report_navigation_uses_full_workspace_and_preserves_details_and_analysi
         assert page.isVisible()
         assert page.width() == dialog._workspace_stack.width()  # noqa: SLF001
         assert not dialog._config_panel.isVisible()  # noqa: SLF001
-        assert not dialog._action_bar.isVisible()  # noqa: SLF001
+        assert not dialog._export_button.isVisible()  # noqa: SLF001
+        assert not dialog._report_action_button.isVisible()  # noqa: SLF001
         assert dialog.source_tab_id() == "t1"
         assert dialog.windowTitle() == "Advanced analysis — Sheet1 (100 rows × 5 columns)"
 
         dialog.select_category(AnalysisCategory.OVERVIEW)
         assert received == [AnalysisCategory.OVERVIEW.value]
         assert dialog._config_panel.isVisible()  # noqa: SLF001
-        assert dialog._action_bar.isVisible()  # noqa: SLF001
+        assert dialog._export_button.isVisible()  # noqa: SLF001
+        assert dialog._report_action_button.isVisible()  # noqa: SLF001
         assert dialog.windowTitle() == "Advanced analysis — Sheet1 (100 rows × 5 columns)"
         assert dialog.content_widget() is content
         assert dialog.config_widget() is config
@@ -1019,9 +1021,8 @@ def test_export_and_add_to_report_use_matching_push_button_sizes():
     dialog.show()
     QCoreApplication.processEvents()
     try:
-        buttons = dialog._action_bar.findChildren(QPushButton)  # noqa: SLF001
-        assert len(buttons) == 2
-        export, add = buttons
+        export = dialog._export_button  # noqa: SLF001
+        add = dialog._report_action_button  # noqa: SLF001
         assert export.menu() is None
         assert add.menu() is None
         assert export.size() == add.size()
@@ -1053,8 +1054,9 @@ def test_dialog_places_the_horizontal_analysis_selector_above_the_workspace():
     QCoreApplication.processEvents()
     try:
         assert dialog._analysis_panel.width() == dialog._workspace_stack.width()  # noqa: SLF001
-        assert dialog._content_panel.y() > dialog._analysis_panel.y()  # noqa: SLF001
-        assert dialog._config_panel.y() > dialog._analysis_panel.y()  # noqa: SLF001
+        selector_bottom = dialog._analysis_panel.geometry().bottom()  # noqa: SLF001
+        assert dialog._content_panel.mapTo(dialog, QPoint(0, 0)).y() > selector_bottom  # noqa: SLF001
+        assert dialog._config_panel.mapTo(dialog, QPoint(0, 0)).y() > selector_bottom  # noqa: SLF001
         assert dialog._content_panel.width() > dialog._config_panel.width()  # noqa: SLF001
         assert dialog._category_list.flow().name == "LeftToRight"  # noqa: SLF001
         assert dialog._category_list.isWrapping() is False  # noqa: SLF001
@@ -2272,10 +2274,34 @@ def test_time_series_update_drops_only_components_unavailable_in_the_new_capture
     assert updated.selected_components == ("series",)
 
 
-def test_footer_explains_that_exports_follow_an_applied_analysis():
+def test_footer_has_no_export_explanation():
     dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
 
-    assert any(
+    assert not any(
         label.text() == "Export and Add to report are available after an analysis has been applied."
         for label in dialog.findChildren(QLabel)
     )
+
+
+@pytest.mark.parametrize("category", list(AnalysisCategory))
+def test_analysis_actions_share_a_compact_right_aligned_footer(category):
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
+    buttons = dialog.findChild(QDialogButtonBox)
+    assert buttons is not None
+    close = buttons.button(QDialogButtonBox.StandardButton.Close)
+    assert close is not None
+    export = dialog._export_button  # noqa: SLF001
+    add = dialog._report_action_button  # noqa: SLF001
+    dialog.select_category(category)
+    dialog.show()
+    QCoreApplication.processEvents()
+    try:
+        assert export.parentWidget() is buttons
+        assert add.parentWidget() is buttons
+        assert export.isVisible()
+        assert add.isVisible()
+        assert 0 < add.x() - (export.x() + export.width()) <= 12
+        assert 0 < close.x() - (add.x() + add.width()) <= 12
+        assert buttons.width() - (close.x() + close.width()) <= 12
+    finally:
+        dialog.close()

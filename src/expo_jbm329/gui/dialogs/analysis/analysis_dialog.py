@@ -232,7 +232,6 @@ class AnalysisDialog(QDialog):
         analysis_layout = QVBoxLayout(self._analysis_workspace)
         analysis_layout.setContentsMargins(0, 0, 0, 0)
         analysis_layout.setSpacing(12)
-        analysis_layout.addWidget(self._build_action_bar())
         workspace = QHBoxLayout()
         workspace.setSpacing(12)
         content_panel = self._build_content_panel()
@@ -301,30 +300,6 @@ class AnalysisDialog(QDialog):
         category_layout.addWidget(self._category_list)
         self._analysis_panel = category_group
         return category_group
-
-    def _build_action_bar(self) -> QWidget:
-        """Build shared actions for exporting results and collecting report entries."""
-        bar = QWidget(self._analysis_workspace)
-        actions = QHBoxLayout(bar)
-        actions.setContentsMargins(0, 0, 0, 0)
-        export_button = QPushButton(self.tr("Export"), bar)
-        export_button.clicked.connect(self._show_export_selection)
-        actions.addWidget(export_button)
-        add_button = QPushButton(self.tr("Add to report"), bar)
-        add_button.clicked.connect(self._toggle_report_entry)
-        button_width = max(export_button.sizeHint().width(), add_button.sizeHint().width())
-        export_button.setMinimumWidth(button_width)
-        add_button.setMinimumWidth(button_width)
-        actions.addWidget(add_button)
-        explanation = QLabel(
-            self.tr("Export and Add to report are available after an analysis has been applied."),
-            bar,
-        )
-        explanation.setWordWrap(True)
-        actions.addWidget(explanation, 1)
-        self._action_bar = bar
-        self._report_action_button = add_button
-        return bar
 
     def _show_export_selection(self) -> None:
         """Open grouped export choices for the currently displayed analysis."""
@@ -810,8 +785,17 @@ class AnalysisDialog(QDialog):
         return panel
 
     def _build_button_box(self) -> QDialogButtonBox:
-        """Build the bottom button box with a Close action."""
+        """Build shared analysis actions beside Close in the bottom button box."""
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close, self)
+        self._export_button = QPushButton(self.tr("Export"), buttons)
+        buttons.addButton(self._export_button, QDialogButtonBox.ButtonRole.ActionRole)
+        self._export_button.clicked.connect(self._show_export_selection)
+        self._report_action_button = QPushButton(self.tr("Add to report"), buttons)
+        buttons.addButton(self._report_action_button, QDialogButtonBox.ButtonRole.ActionRole)
+        self._report_action_button.clicked.connect(self._toggle_report_entry)
+        button_width = max(self._export_button.sizeHint().width(), self._report_action_button.sizeHint().width())
+        self._export_button.setMinimumWidth(button_width)
+        self._report_action_button.setMinimumWidth(button_width)
         buttons.rejected.connect(self.reject)
         localize_dialog_buttons(buttons)
         return buttons
@@ -834,6 +818,8 @@ class AnalysisDialog(QDialog):
             return
         reports_selected = current is self._report_item
         self._workspace_stack.setCurrentWidget(self._report_page if reports_selected else self._analysis_workspace)
+        self._export_button.setVisible(not reports_selected)
+        self._report_action_button.setVisible(not reports_selected)
         if not reports_selected:
             self.category_changed.emit(str(current.data(_CATEGORY_ROLE)))
 
