@@ -37,6 +37,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+from expo_jbm329.gui.dialogs.analysis.applied_configuration_header import AppliedConfigurationHeader
 from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_config import MultivariateOutliersConfigWidget
 from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDialog
 from expo_jbm329.gui.dialogs.analysis.report_page import ReportPage
@@ -898,6 +899,11 @@ class AnalysisDialog(QDialog):
             self._content_layout.removeWidget(self._analysis_presentation_widget)
             self._analysis_presentation_widget.deleteLater()
         summary = "\n".join(presentation.summary_lines)
+        if self.selected_category() is AnalysisCategory.HYPOTHESIS_TESTS:
+            header = AppliedConfigurationHeader(presentation, self._content_panel)
+            self._content_layout.insertWidget(0, header)
+            self._analysis_presentation_widget = header
+            return
         container = QWidget(self._content_panel)
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)

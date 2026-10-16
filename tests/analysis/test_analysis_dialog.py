@@ -1149,6 +1149,74 @@ def test_applied_hypothesis_presentation_is_visible_and_cleared_with_replaced_co
     assert dialog._analysis_presentation_widget is None  # noqa: SLF001
 
 
+def test_hypothesis_header_shows_structured_applied_fields_without_changing_content() -> None:
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
+    dialog.select_category(AnalysisCategory.HYPOTHESIS_TESTS)
+    content = QWidget()
+    dialog.set_content_widget(content)
+    presentation = AnalysisPresentation(
+        "Hypothesis Tests",
+        "Hypothesis Tests — Group comparison",
+        (
+            ConfigurationField("Numeric variable:", ("Revenue <net>",)),
+            ConfigurationField("Grouping variable:", ("Region",)),
+            ConfigurationField("Tests computed:", ("One-way ANOVA", "Kruskal-Wallis")),
+        ),
+    )
+    dialog.set_analysis_presentation(presentation)
+    header = dialog._analysis_presentation_widget  # noqa: SLF001
+    assert header is not None
+    labels = header.findChildren(QLabel)
+    assert [label.text() for label in labels] == [
+        presentation.title,
+        "Numeric variable:",
+        "Revenue <net>",
+        "Grouping variable:",
+        "Region",
+        "Tests computed:",
+        "One-way ANOVA, Kruskal-Wallis",
+    ]
+    assert labels[0].font().bold()
+    assert all(label.textFormat() is Qt.TextFormat.PlainText for label in labels)
+    assert labels[0].wordWrap()
+    assert all(not label.wordWrap() for label in labels[1::2])
+    assert all(label.wordWrap() for label in labels[2::2])
+    assert all(label.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse for label in labels[1:])
+    assert dialog.content_widget() is content
+    dialog.show_placeholder("Apply the new configuration")
+    assert header.isHidden()
+    assert dialog._analysis_presentation_widget is None  # noqa: SLF001
+
+
+def test_hypothesis_header_keeps_long_labels_on_one_line_and_each_field_on_its_own_row() -> None:
+    dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
+    dialog.select_category(AnalysisCategory.HYPOTHESIS_TESTS)
+    presentation = AnalysisPresentation(
+        "Hypothesis Tests",
+        "Hypothesis Tests — Paired comparison",
+        (
+            ConfigurationField("Measurement variables (selected order):", ("Before", "After")),
+            ConfigurationField("Tests computed:", ("Wilcoxon signed-rank test",)),
+        ),
+    )
+    dialog.set_analysis_presentation(presentation)
+    header = dialog._analysis_presentation_widget  # noqa: SLF001
+    assert header is not None
+    header.resize(700, header.sizeHint().height())
+    header.show()
+    QCoreApplication.processEvents()
+    try:
+        _, measurements_label, measurements_value, tests_label, tests_value = header.findChildren(QLabel)
+        assert not measurements_label.wordWrap()
+        assert measurements_label.width() >= measurements_label.sizeHint().width()
+        assert measurements_value.x() >= measurements_label.geometry().right() + 1
+        assert measurements_value.x() == tests_value.x()
+        assert tests_label.y() > measurements_label.geometry().bottom()
+        assert tests_value.y() > measurements_value.geometry().bottom()
+    finally:
+        dialog.close()
+
+
 @pytest.mark.parametrize("method", [*OutlierMethod, *MultivariateOutlierMethod])
 def test_outlier_configured_header_has_separate_bold_title_and_normal_applied_settings(
     method: OutlierMethod | MultivariateOutlierMethod,

@@ -90,7 +90,7 @@ class PairedComparisonView(QWidget):
         panel, layout = self._build_section(
             translate_presentation_label(PresentationLabel.TEST_RESULTS, QCoreApplication.translate)
         )
-        layout.addWidget(build_section_scroll_area(label, panel), 1)
+        layout.addWidget(build_section_scroll_area(label, panel, plain_border=True), 1)
         return panel
 
     def export_notes(self, result: PairedComparisonResult) -> tuple[str, ...]:
