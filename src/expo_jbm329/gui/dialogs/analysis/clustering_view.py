@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
@@ -14,6 +12,8 @@ from expo_jbm329.gui.dialogs.analysis.section_layout import (
     build_section_scroll_area,
     rich_text_lines,
 )
+from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.clustering import (
     MIN_OBSERVATIONS,
     MIN_SELECTED_COLUMNS,
@@ -206,9 +206,9 @@ class ClusteringView(QWidget):
     def _build_plot(self, result: ClusteringResult) -> QWidget:
         """Build the internal PCA projection colored by cluster label."""
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumSize(420, 260)
-        draw_cluster_projection(figure.add_subplot(111), result, self.chart_labels())
+        canvas.build_chart(lambda: draw_cluster_projection(figure.add_subplot(111), result, self.chart_labels()))
         return canvas
 
     def _build_cluster_table(self, result: ClusteringResult) -> QTableWidget:

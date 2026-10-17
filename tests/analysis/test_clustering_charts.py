@@ -4,12 +4,12 @@ import dataclasses
 
 import numpy as np
 import pytest
-from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from openpyxl import load_workbook
 
 from expo_jbm329.gui.dialogs.analysis.clustering_view import ClusteringView
+from expo_jbm329.services.analysis import clustering_charts as chart_module
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.clustering_charts import draw_cluster_projection, render_clustering_charts
 from expo_jbm329.services.analysis.clustering_export import (
@@ -62,13 +62,13 @@ def test_live_projection_and_worker_use_the_same_title_axes_and_legend(method, s
 
     expected = semantics(live_axes)
     rendered: list[tuple[str, str, str, tuple[str, ...]]] = []
-    original_print_png = FigureCanvasAgg.print_png
+    original_render = chart_module.render_chart_png
 
-    def inspect_png(canvas, output, *args, **kwargs):
-        rendered.append(semantics(canvas.figure.axes[0]))
-        original_print_png(canvas, output, *args, **kwargs)
+    def inspect_png(figure, *args, **kwargs):
+        rendered.append(semantics(figure.axes[0]))
+        return original_render(figure, *args, **kwargs)
 
-    monkeypatch.setattr(FigureCanvasAgg, "print_png", inspect_png)
+    monkeypatch.setattr(chart_module, "render_chart_png", inspect_png)
     worker_snapshot = ClusteringExportSnapshot(result, view.chart_labels())
     (image,) = render_clustering_charts(worker_snapshot)
 

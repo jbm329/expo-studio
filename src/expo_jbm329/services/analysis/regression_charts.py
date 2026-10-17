@@ -4,16 +4,28 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from io import BytesIO
 from itertools import chain
 from typing import TYPE_CHECKING
 
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.figure import Figure
 from matplotlib.ticker import FixedFormatter, FixedLocator, NullLocator
 from matplotlib.transforms import Bbox
 
-from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
+from expo_jbm329.services.analysis.chart_export import render_chart_png
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.chart_presentation import (
+    DEFAULT_WORKSHEET_HEADING,
+    ChartPresentationMetadata,
+)
+from expo_jbm329.services.analysis.chart_profiles import (
+    COX_SURVIVAL_PREFERRED_ROTATION,
+    REGRESSION_COUNT_PROFILE,
+    REGRESSION_COX_TABLE_FONT_SIZE,
+    REGRESSION_COX_TITLE_FONT_SIZE,
+    REGRESSION_LINEAR_PROFILE,
+    REGRESSION_SURVIVAL_PROFILE,
+    ChartProfile,
+    regression_logistic_profile,
+)
 from expo_jbm329.services.analysis.logistic_charts import LogisticChartLabels, build_logistic_charts
 from expo_jbm329.services.analysis.regression import RegressionResult, TermKind
 from expo_jbm329.services.analysis.regression_glm import (
@@ -40,7 +52,6 @@ SCATTER_ALPHA = 0.4
 COUNT_POINT_SIZE = 12
 COUNT_ALPHA = 0.35
 _FOREST_TICK_COUNT = 5
-_EXPORT_DPI = 120
 
 
 def _format_number(value: float) -> str:
@@ -247,7 +258,11 @@ def build_regression_chart_labels(
             raise TypeError(message)
 
     return RegressionChartLabels(
-        ChartPresentationMetadata(worksheet_heading="", accessible_name=accessible_name, captions=captions),
+        ChartPresentationMetadata(
+            worksheet_heading=DEFAULT_WORKSHEET_HEADING,
+            accessible_name=accessible_name,
+            captions=captions,
+        ),
         labels,
     )
 
@@ -395,7 +410,7 @@ def draw_cox_survival(ax: Axes, data: SurvivalPlotData | None, labels: CoxChartL
     ax.set_xlabel(labels.duration_axis)
     ax.set_ylabel(labels.survival_axis)
     ax.set_xticks(data.risk_times)
-    ax.tick_params(axis="x", labelrotation=30)
+    ax.tick_params(axis="x", labelrotation=COX_SURVIVAL_PREFERRED_ROTATION)
 
 
 def draw_cox_risk_counts(ax: Axes, data: SurvivalPlotData | None, labels: CoxChartLabels) -> None:
@@ -403,7 +418,7 @@ def draw_cox_risk_counts(ax: Axes, data: SurvivalPlotData | None, labels: CoxCha
     ax.set_axis_off()
     if data is None:
         return
-    ax.set_title(labels.risk_title, fontsize=9)
+    ax.set_title(labels.risk_title, fontsize=REGRESSION_COX_TITLE_FONT_SIZE)
     table = ax.table(
         cellText=[[labels.count_format(count) for count in data.risk_counts]],
         colLabels=[labels.time_format(time) for time in data.risk_times],
@@ -411,7 +426,7 @@ def draw_cox_risk_counts(ax: Axes, data: SurvivalPlotData | None, labels: CoxCha
         bbox=Bbox.from_bounds(0, 0, 1, 1),
     )
     table.auto_set_font_size(False)
-    table.set_fontsize(8)
+    table.set_fontsize(REGRESSION_COX_TABLE_FONT_SIZE)
 
 
 def draw_cox_charts(figure: Figure, result: SurvivalResult, labels: CoxChartLabels) -> None:
@@ -427,18 +442,18 @@ def draw_cox_charts(figure: Figure, result: SurvivalResult, labels: CoxChartLabe
 # ----------------------------------------------------------------------
 
 
-def _figure_size(result: RegressionResult | GeneralizedRegressionResult | SurvivalResult) -> tuple[float, float]:
-    """Return a readable export size in inches for the model's chart layout."""
+def _figure_profile(result: RegressionResult | GeneralizedRegressionResult | SurvivalResult) -> ChartProfile:
+    """Return the preserved export geometry for the model's chart layout."""
     match result:
         case RegressionResult():
-            return 13.5, 4.5
+            return REGRESSION_LINEAR_PROFILE
         case SurvivalResult():
-            return 12.0, 6.0
+            return REGRESSION_SURVIVAL_PROFILE
         case GeneralizedRegressionResult() if result.model is RegressionModel.LOGISTIC:
             predictor_count = sum(term.kind is not TermKind.INTERCEPT for term in result.terms)
-            return 10.0, max(7.5, 5.0 + predictor_count * 0.24)
+            return regression_logistic_profile(predictor_count)
         case GeneralizedRegressionResult():
-            return 11.0, 4.75
+            return REGRESSION_COUNT_PROFILE
 
 
 def _draw_model_charts(
@@ -488,13 +503,16 @@ def render_regression_charts(
     if cancel_cb is not None and cancel_cb():
         raise ExcelChartCancelledError
     labels = snapshot.chart_labels
-    width, height = _figure_size(snapshot.result)
+    profile = _figure_profile(snapshot.result)
+    geometry = profile.geometry
     with STATISTICS_CHART_LOCK:
-        figure = Figure(figsize=(width, height), dpi=_EXPORT_DPI, constrained_layout=True)
-        canvas = FigureCanvasAgg(figure)
+        figure = Figure(
+            figsize=geometry.figsize,
+            dpi=geometry.dpi,
+            constrained_layout=geometry.constrained_layout,
+        )
         _draw_model_charts(figure, snapshot.result, labels.model)
-        output = BytesIO()
-        canvas.print_png(output)  # type: ignore[no-untyped-call]
+        raster = render_chart_png(figure)
     if cancel_cb is not None and cancel_cb():
         raise ExcelChartCancelledError
     if progress_cb is not None:
@@ -503,9 +521,9 @@ def render_regression_charts(
     return (
         ExcelChartImage(
             metadata.worksheet_heading,
-            output.getvalue(),
-            round(width * _EXPORT_DPI),
-            round(height * _EXPORT_DPI),
+            raster.image_data,
+            raster.width_px,
+            raster.height_px,
             metadata.captions,
             metadata.accessible_name,
         ),

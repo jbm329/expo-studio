@@ -4,15 +4,26 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from io import BytesIO
 from itertools import pairwise
 from typing import TYPE_CHECKING
 
 import numpy as np
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.figure import Figure
 
-from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
+from expo_jbm329.services.analysis.chart_export import ChartRaster, render_chart_png
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.chart_presentation import (
+    DEFAULT_WORKSHEET_HEADING,
+    ChartPresentationMetadata,
+)
+from expo_jbm329.services.analysis.chart_profiles import (
+    OUTLIER_HISTOGRAM_AXIS_FONT_SIZE,
+    OUTLIER_HISTOGRAM_LEGEND_FONT_SIZE,
+    OUTLIER_HISTOGRAM_PROFILE,
+    OUTLIER_HISTOGRAM_TICK_FONT_SIZE,
+    OUTLIER_HISTOGRAM_TITLE_FONT_SIZE,
+    OUTLIER_PROJECTION_LEGEND_FONT_SIZE,
+    OUTLIER_PROJECTION_PROFILE,
+)
 from expo_jbm329.services.analysis.outliers import analyze_outlier_column
 from expo_jbm329.services.analysis.statistics_charts import STATISTICS_CHART_LOCK
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
@@ -28,10 +39,6 @@ if TYPE_CHECKING:
         MultivariateOutlierExportSnapshot,
         UnivariateOutlierExportSnapshot,
     )
-
-_EXPORT_DPI = 120
-_HISTOGRAM_FIGURE_SIZE = (8.0, 3.75)
-_PROJECTION_FIGURE_SIZE = (8.0, 6.0)
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,7 +89,9 @@ def build_outlier_histogram_presentation(column: str, labels: OutlierHistogramLa
         title=column,
         x_label=column,
         labels=labels,
-        metadata=ChartPresentationMetadata(worksheet_heading="", accessible_name=column or labels.distribution_name),
+        metadata=ChartPresentationMetadata(
+            worksheet_heading=DEFAULT_WORKSHEET_HEADING, accessible_name=column or labels.distribution_name
+        ),
     )
 
 
@@ -113,7 +122,9 @@ def build_outlier_projection_labels(
         else ()
     )
     return OutlierProjectionLabels(
-        metadata=ChartPresentationMetadata(worksheet_heading="", accessible_name=title, captions=captions),
+        metadata=ChartPresentationMetadata(
+            worksheet_heading=DEFAULT_WORKSHEET_HEADING, accessible_name=title, captions=captions
+        ),
         title=title,
         pc1_axis=translate("MultivariateOutliersView", "PC1"),
         pc2_axis=translate("MultivariateOutliersView", "PC2"),
@@ -131,9 +142,9 @@ def draw_outlier_histogram(ax: Axes, detail: OutlierColumnDetail, presentation: 
         presentation: Shared title, axes, legend and output metadata.
     """
     labels = presentation.labels
-    ax.set_title(presentation.title, fontsize=10)
-    ax.set_xlabel(presentation.x_label, fontsize=9)
-    ax.set_ylabel(labels.count_axis, fontsize=9)
+    ax.set_title(presentation.title, fontsize=OUTLIER_HISTOGRAM_TITLE_FONT_SIZE)
+    ax.set_xlabel(presentation.x_label, fontsize=OUTLIER_HISTOGRAM_AXIS_FONT_SIZE)
+    ax.set_ylabel(labels.count_axis, fontsize=OUTLIER_HISTOGRAM_AXIS_FONT_SIZE)
     edges = detail.histogram_edges
     if not edges:
         return
@@ -152,8 +163,8 @@ def draw_outlier_histogram(ax: Axes, detail: OutlierColumnDetail, presentation: 
     for fence in (detail.summary.lower_fence, detail.summary.upper_fence):
         if math.isfinite(fence):
             ax.axvline(fence, color="tab:red", linestyle="--", linewidth=1)
-    ax.tick_params(labelsize=8)
-    ax.legend(fontsize=8)
+    ax.tick_params(labelsize=OUTLIER_HISTOGRAM_TICK_FONT_SIZE)
+    ax.legend(fontsize=OUTLIER_HISTOGRAM_LEGEND_FONT_SIZE)
 
 
 def draw_outlier_projection(ax: Axes, result: MultivariateOutlierResult, labels: OutlierProjectionLabels) -> None:
@@ -174,7 +185,7 @@ def draw_outlier_projection(ax: Axes, result: MultivariateOutlierResult, labels:
     ax.set_title(labels.title)
     ax.set_xlabel(labels.pc1_axis)
     ax.set_ylabel(labels.pc2_axis)
-    ax.legend(fontsize=8)
+    ax.legend(fontsize=OUTLIER_PROJECTION_LEGEND_FONT_SIZE)
 
 
 def render_univariate_outlier_charts(
@@ -216,12 +227,15 @@ def render_univariate_outlier_charts(
             raise ValueError(message)
         presentation = build_outlier_histogram_presentation(column, snapshot.chart_labels)
         with STATISTICS_CHART_LOCK:
-            figure = Figure(figsize=_HISTOGRAM_FIGURE_SIZE, dpi=_EXPORT_DPI, constrained_layout=True)
-            canvas = FigureCanvasAgg(figure)
+            geometry = OUTLIER_HISTOGRAM_PROFILE.geometry
+            figure = Figure(
+                figsize=geometry.figsize,
+                dpi=geometry.dpi,
+                constrained_layout=geometry.constrained_layout,
+            )
             draw_outlier_histogram(figure.add_subplot(111), detail, presentation)
-            output = BytesIO()
-            canvas.print_png(output)  # type: ignore[no-untyped-call]
-        images.append(_image(presentation.metadata, output, _HISTOGRAM_FIGURE_SIZE))
+            raster = render_chart_png(figure)
+        images.append(_image(presentation.metadata, raster))
         if progress_cb is not None:
             progress_cb(math.ceil((index + 1) * 100 / len(columns)))
     if cancel_cb is not None and cancel_cb():
@@ -252,30 +266,31 @@ def render_multivariate_outlier_charts(
         raise ExcelChartCancelledError
     labels = snapshot.chart_labels
     with STATISTICS_CHART_LOCK:
-        figure = Figure(figsize=_PROJECTION_FIGURE_SIZE, dpi=_EXPORT_DPI, constrained_layout=True)
-        canvas = FigureCanvasAgg(figure)
+        geometry = OUTLIER_PROJECTION_PROFILE.geometry
+        figure = Figure(
+            figsize=geometry.figsize,
+            dpi=geometry.dpi,
+            constrained_layout=geometry.constrained_layout,
+        )
         draw_outlier_projection(figure.add_subplot(111), snapshot.result, labels)
-        output = BytesIO()
-        canvas.print_png(output)  # type: ignore[no-untyped-call]
+        raster = render_chart_png(figure)
     if cancel_cb is not None and cancel_cb():
         raise ExcelChartCancelledError
     if progress_cb is not None:
         progress_cb(100)
-    return (_image(labels.metadata, output, _PROJECTION_FIGURE_SIZE),)
+    return (_image(labels.metadata, raster),)
 
 
 def _image(
     metadata: ChartPresentationMetadata,
-    output: BytesIO,
-    size: tuple[float, float],
+    raster: ChartRaster,
 ) -> ExcelChartImage:
     """Wrap rendered PNG bytes with their pixel size."""
-    width, height = size
     return ExcelChartImage(
         metadata.worksheet_heading,
-        output.getvalue(),
-        round(width * _EXPORT_DPI),
-        round(height * _EXPORT_DPI),
+        raster.image_data,
+        raster.width_px,
+        raster.height_px,
         metadata.captions,
         accessible_name=metadata.accessible_name,
     )

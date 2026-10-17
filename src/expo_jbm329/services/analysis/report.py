@@ -2723,8 +2723,8 @@ td { white-space: pre-wrap; }
 .nowrap-values td { white-space: nowrap; }
 th { background: #edf2f7; }
 tbody tr:nth-child(even) { background: #f8fafc; }
-.report-chart { margin: 1rem auto 1.5rem; text-align: center; break-inside: avoid; }
-.report-chart img { display: block; height: auto; max-width: 100%; margin: 0 auto; }
+.report-chart { margin: 1rem auto 1.5rem; text-align: center; break-inside: avoid; overflow-x: auto; }
+.report-chart img { display: block; height: auto; max-width: none; margin: 0 auto; }
 .report-chart figcaption { margin-top: .5rem; }
 .report-chart figcaption p { margin: .25rem 0; white-space: pre-wrap; }
 @media (max-width: 650px) {
@@ -2733,6 +2733,8 @@ tbody tr:nth-child(even) { background: #f8fafc; }
   .overview-summary-groups { grid-template-columns: 1fr; gap: 0; }
 }
 @media print {
+  .report-chart { overflow: visible; }
+  .report-chart img { max-width: 100%; }
   :root { background: #fff; color: #000; }
   .report { max-width: none; padding: 0; }
   .table-scroll { overflow: visible; }

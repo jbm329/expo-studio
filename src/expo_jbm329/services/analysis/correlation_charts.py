@@ -4,18 +4,24 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from io import BytesIO
 from itertools import combinations
 from typing import TYPE_CHECKING
 
 import numpy as np
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.figure import Figure
 
+from expo_jbm329.services.analysis.chart_config import AxisPolicy, AxisRole, RotationMode
+from expo_jbm329.services.analysis.chart_export import render_chart_png
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.chart_presentation import (
     DEFAULT_CHART_NUMERIC_LOCALE,
+    DEFAULT_WORKSHEET_HEADING,
     ChartNumericLocale,
     ChartPresentationMetadata,
+)
+from expo_jbm329.services.analysis.chart_profiles import (
+    CORRELATION_ANNOTATION_FONT_SIZE,
+    CORRELATION_CHART_PROFILE,
+    CORRELATION_MATRIX_PREFERRED_ROTATION,
 )
 from expo_jbm329.services.analysis.correlation import (
     MIN_OBSERVATIONS,
@@ -139,7 +145,7 @@ def build_correlation_matrix_presentation(labels: CorrelationChartLabels) -> Cor
     return CorrelationMatrixPresentation(
         labels.matrix_title,
         labels.matrix_annotations,
-        ChartPresentationMetadata(worksheet_heading="", accessible_name=labels.matrix_title),
+        ChartPresentationMetadata(worksheet_heading=DEFAULT_WORKSHEET_HEADING, accessible_name=labels.matrix_title),
     )
 
 
@@ -154,7 +160,9 @@ def build_correlation_pair_presentation(
         detail.pair.x_column,
         detail.pair.y_column,
         captions[0] if detail.error is not None else None,
-        ChartPresentationMetadata(worksheet_heading="", accessible_name=title, captions=captions),
+        ChartPresentationMetadata(
+            worksheet_heading=DEFAULT_WORKSHEET_HEADING, accessible_name=title, captions=captions
+        ),
     )
 
 
@@ -169,7 +177,9 @@ def draw_correlation_matrix(
     image = ax.imshow(coefficients, cmap="RdBu_r", vmin=-1.0, vmax=1.0)
     figure.colorbar(image, ax=ax)
     labels = list(result.columns)
-    ax.set_xticks(range(len(labels)), labels=labels, rotation=90)
+    ax.set_xticks(range(len(labels)), labels=labels, rotation=CORRELATION_MATRIX_PREFERRED_ROTATION)
+    if isinstance(figure, Figure):
+        figure.configure_axis(ax, AxisPolicy(role=AxisRole.CATEGORICAL, rotation_mode=RotationMode.VERTICAL))
     ax.set_yticks(range(len(labels)), labels=labels)
     ax.set_title(presentation.title)
     if len(labels) <= MAX_ANNOTATED_COLUMNS:
@@ -181,7 +191,7 @@ def draw_correlation_matrix(
                     presentation.annotations[row][column] if presentation.annotations else format(float(value), ".2g"),
                     ha="center",
                     va="center",
-                    fontsize=7,
+                    fontsize=CORRELATION_ANNOTATION_FONT_SIZE,
                     color="white" if abs(value) > _LIGHT_TEXT_THRESHOLD else "black",
                 )
 
@@ -281,19 +291,26 @@ def render_correlation_charts(
         check_cancel()
         with STATISTICS_CHART_LOCK:
             check_cancel()
-            figure = Figure(figsize=(9, 6), dpi=120, constrained_layout=True)
+            geometry = CORRELATION_CHART_PROFILE.geometry
+            figure = Figure(
+                figsize=geometry.figsize,
+                dpi=geometry.dpi,
+                constrained_layout=geometry.constrained_layout,
+            )
             try:
-                canvas = FigureCanvasAgg(figure)
                 builder(figure)
-                output = BytesIO()
-                canvas.print_png(output)  # type: ignore[no-untyped-call]
-                image_data = output.getvalue()
+                raster = render_chart_png(figure, check_cancelled=check_cancel)
             finally:
                 figure.clear()
         check_cancel()
         images.append(
             ExcelChartImage(
-                metadata.worksheet_heading, image_data, 1080, 720, metadata.captions, metadata.accessible_name
+                metadata.worksheet_heading,
+                raster.image_data,
+                raster.width_px,
+                raster.height_px,
+                metadata.captions,
+                metadata.accessible_name,
             )
         )
         if progress_cb is not None:

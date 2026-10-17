@@ -6,7 +6,6 @@ import html
 import math
 from typing import TYPE_CHECKING
 
-from matplotlib.figure import Figure
 from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import (
@@ -22,8 +21,9 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.gui.dialogs.analysis.applied_configuration_header import AppliedConfigurationHeader
 from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection, build_section_scroll_area
-from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
+from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis import correlation_charts
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.correlation import (
     CONFIDENCE_LEVEL,
     MAX_SELECTED_COLUMNS,

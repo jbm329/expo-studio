@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import (
     QHeaderView,
@@ -22,6 +20,8 @@ from expo_jbm329.gui.dialogs.analysis.section_layout import (
     build_section_scroll_area,
     rich_text_lines,
 )
+from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.multivariate_outliers import (
     MAX_CONTAMINATION,
     MIN_CONTAMINATION,
@@ -174,9 +174,9 @@ class MultivariateOutliersView(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumSize(360, 240)
-        draw_outlier_projection(figure.add_subplot(111), result, self.chart_labels())
+        canvas.build_chart(lambda: draw_outlier_projection(figure.add_subplot(111), result, self.chart_labels()))
         layout.addWidget(build_section_scroll_area(canvas, panel), 1)
         if self._chart_labels.metadata.captions:
             caption = QLabel("\n".join(self._chart_labels.metadata.captions), panel)

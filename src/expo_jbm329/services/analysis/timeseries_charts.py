@@ -3,14 +3,22 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from io import BytesIO
 from typing import TYPE_CHECKING
 
 import numpy as np
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.figure import Figure
 
-from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
+from expo_jbm329.services.analysis.chart_export import render_chart_png
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.chart_presentation import (
+    DEFAULT_WORKSHEET_HEADING,
+    ChartPresentationMetadata,
+)
+from expo_jbm329.services.analysis.chart_profiles import (
+    TIME_SERIES_CHART_PROFILE,
+    TIME_SERIES_DECOMPOSITION_PROFILE,
+    TIME_SERIES_PREFERRED_ROTATION,
+    ChartProfile,
+)
 from expo_jbm329.services.analysis.statistics_charts import STATISTICS_CHART_LOCK
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
 
@@ -22,9 +30,6 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.timeseries import TimeSeriesResult
     from expo_jbm329.services.analysis.timeseries_export import TimeSeriesExportSnapshot
 
-_EXPORT_DPI = 120
-_PLOT_FIGURE_SIZE = (8.0, 4.0)
-_DECOMPOSITION_FIGURE_SIZE = (8.0, 8.0)
 DECOMPOSITION_PANELS = 4
 
 
@@ -72,16 +77,19 @@ def build_time_series_chart_labels(
     """
     return TimeSeriesChartLabels(
         series_metadata=ChartPresentationMetadata(
-            worksheet_heading="", accessible_name=translate("TimeSeriesPresentation", "Series")
+            worksheet_heading=DEFAULT_WORKSHEET_HEADING,
+            accessible_name=translate("TimeSeriesPresentation", "Series"),
         ),
         value_axis=result.value_column,
         acf_metadata=ChartPresentationMetadata(
-            worksheet_heading="", accessible_name=translate("TimeSeriesPresentation", "Autocorrelation")
+            worksheet_heading=DEFAULT_WORKSHEET_HEADING,
+            accessible_name=translate("TimeSeriesPresentation", "Autocorrelation"),
         ),
         lag_axis=translate("TimeSeriesPresentation", "Lag"),
         acf_axis=translate("TimeSeriesPresentation", "Autocorrelation"),
         decomposition_metadata=ChartPresentationMetadata(
-            worksheet_heading="", accessible_name=translate("TimeSeriesPresentation", "Seasonal decomposition")
+            worksheet_heading=DEFAULT_WORKSHEET_HEADING,
+            accessible_name=translate("TimeSeriesPresentation", "Seasonal decomposition"),
         ),
         observed=translate("TimeSeriesPresentation", "Observed"),
         trend=translate("TimeSeriesPresentation", "Trend"),
@@ -111,7 +119,7 @@ def draw_series_plot(ax: Axes, result: TimeSeriesResult, labels: TimeSeriesChart
     ax.plot(result.timestamps, result.values, marker="o", markersize=3)  # type: ignore[arg-type]
     ax.set_title(labels.series_metadata.accessible_name)
     ax.set_ylabel(labels.value_axis)
-    ax.tick_params(axis="x", rotation=30)
+    ax.tick_params(axis="x", rotation=TIME_SERIES_PREFERRED_ROTATION)
 
 
 def draw_acf_plot(ax: Axes, result: TimeSeriesResult, labels: TimeSeriesChartLabels) -> None:
@@ -155,7 +163,7 @@ def draw_decomposition(axes: Sequence[Axes], result: TimeSeriesResult, labels: T
         ax.plot(result.timestamps, values)  # type: ignore[arg-type]
         ax.set_ylabel(label)
     axes[0].set_title(labels.decomposition_metadata.accessible_name)
-    axes[-1].tick_params(axis="x", rotation=30)
+    axes[-1].tick_params(axis="x", rotation=TIME_SERIES_PREFERRED_ROTATION)
 
 
 def _draw_series_figure(figure: Figure, result: TimeSeriesResult, labels: TimeSeriesChartLabels) -> None:
@@ -197,32 +205,34 @@ def render_time_series_charts(
         tuple[
             ChartPresentationMetadata,
             Callable[[Figure, TimeSeriesResult, TimeSeriesChartLabels], None],
-            tuple[float, float],
+            ChartProfile,
         ]
     ]
-    plots = [(labels.series_metadata, _draw_series_figure, _PLOT_FIGURE_SIZE)]
+    plots = [(labels.series_metadata, _draw_series_figure, TIME_SERIES_CHART_PROFILE)]
     if has_autocorrelation(result):
-        plots.append((labels.acf_metadata, _draw_acf_figure, _PLOT_FIGURE_SIZE))
+        plots.append((labels.acf_metadata, _draw_acf_figure, TIME_SERIES_CHART_PROFILE))
     if has_decomposition(result):
-        plots.append((labels.decomposition_metadata, _draw_decomposition_figure, _DECOMPOSITION_FIGURE_SIZE))
+        plots.append((labels.decomposition_metadata, _draw_decomposition_figure, TIME_SERIES_DECOMPOSITION_PROFILE))
 
     images: list[ExcelChartImage] = []
-    for index, (metadata, draw, size) in enumerate(plots):
+    for index, (metadata, draw, profile) in enumerate(plots):
         if cancel_cb is not None and cancel_cb():
             raise ExcelChartCancelledError
         with STATISTICS_CHART_LOCK:
-            figure = Figure(figsize=size, dpi=_EXPORT_DPI, constrained_layout=True)
-            canvas = FigureCanvasAgg(figure)
+            geometry = profile.geometry
+            figure = Figure(
+                figsize=geometry.figsize,
+                dpi=geometry.dpi,
+                constrained_layout=geometry.constrained_layout,
+            )
             draw(figure, result, labels)
-            output = BytesIO()
-            canvas.print_png(output)  # type: ignore[no-untyped-call]
-        width, height = size
+            raster = render_chart_png(figure)
         images.append(
             ExcelChartImage(
                 metadata.worksheet_heading,
-                output.getvalue(),
-                round(width * _EXPORT_DPI),
-                round(height * _EXPORT_DPI),
+                raster.image_data,
+                raster.width_px,
+                raster.height_px,
                 metadata.captions,
                 accessible_name=metadata.accessible_name,
             )

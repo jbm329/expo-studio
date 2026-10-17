@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from openpyxl import load_workbook
@@ -11,6 +10,7 @@ from PyQt6.QtCore import QCoreApplication, QTranslator
 from PyQt6.QtWidgets import QApplication
 
 from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
+from expo_jbm329.services.analysis import pca_charts as chart_module
 from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.pca_charts import draw_score_plot, draw_scree_plot, render_pca_charts
 from expo_jbm329.services.analysis.pca_export import PCAExportComponent, PCAExportSnapshot, pca_export_tables
@@ -78,13 +78,13 @@ def test_live_worker_and_html_share_captured_localized_semantics(locale, sampled
     }
     expected = [semantics(live_axes[title]) for title in expected_titles]
     rendered = []
-    original_print_png = FigureCanvasAgg.print_png
+    original_render = chart_module.render_chart_png
 
-    def inspect_png(canvas, output, *args, **kwargs):
-        rendered.append(semantics(canvas.figure.axes[0]))
-        original_print_png(canvas, output, *args, **kwargs)
+    def inspect_png(figure, *args, **kwargs):
+        rendered.append(semantics(figure.axes[0]))
+        return original_render(figure, *args, **kwargs)
 
-    monkeypatch.setattr(FigureCanvasAgg, "print_png", inspect_png)
+    monkeypatch.setattr(chart_module, "render_chart_png", inspect_png)
     snapshot = PCAExportSnapshot(result, view.chart_labels())
     assert snapshot.chart_labels is labels
     document = ReportDocument()

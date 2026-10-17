@@ -5,10 +5,7 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 from PyQt6.QtCore import QT_TRANSLATE_NOOP, QCoreApplication, Qt, QTimer
-from PyQt6.QtGui import QPaintEvent, QResizeEvent
 from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
@@ -23,8 +20,11 @@ from PyQt6.QtWidgets import (
 from expo_jbm329.gui.dialogs.analysis.section_layout import (
     ANALYSIS_TABS_STYLE,
     AnalysisResultSection,
+    build_section_scroll_area,
     rich_text_lines,
 )
+from expo_jbm329.gui.widgets.analysis_chart_canvas import CHART_RETRY_INTERVAL_MS, SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS
 from expo_jbm329.services.analysis.normality import SHAPIRO_LARGE_SAMPLE_THRESHOLD
 from expo_jbm329.services.analysis.presentation import statistics_component_label
@@ -43,8 +43,6 @@ from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pc
 from expo_jbm329.utils.i18n_utils import tr
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from expo_jbm329.services.analysis.statistics import (
         CategoricalColumnStatistics,
         ColumnDescriptiveStatistics,
@@ -53,7 +51,7 @@ if TYPE_CHECKING:
 
 _FIRST_NUMERIC_TABLE_COLUMN = 2
 _SIGNIFICANCE_LEVEL = 0.05
-_CHART_RETRY_INTERVAL_MS = 25
+_CHART_RETRY_INTERVAL_MS = CHART_RETRY_INTERVAL_MS
 _EXPORT_TRANSLATIONS = (
     QT_TRANSLATE_NOOP("StatisticsView", "Count (% non-missing)"),
     QT_TRANSLATE_NOOP("StatisticsView", "Continuous"),
@@ -66,104 +64,6 @@ _EXPORT_TRANSLATIONS = (
     QT_TRANSLATE_NOOP("StatisticsView", "Shapiro-Wilk p-value"),
     QT_TRANSLATE_NOOP("StatisticsView", "Recommended summary"),
 )
-
-
-class SerializedAnalysisCanvas(FigureCanvasQTAgg):
-    """Serialize actual Qt rendering without waiting for an export worker."""
-
-    def __init__(self, figure: Figure) -> None:
-        """Initialize an object-owned retry timer for rendering and resizing."""
-        super().__init__(figure)  # type: ignore[no-untyped-call]
-        self._resize_pending = False
-        self._draw_pending = False
-        self._pixel_ratio_pending = False
-        self._chart_builder: Callable[[], None] | None = None
-        self._retry_timer = QTimer(self)
-        self._retry_timer.setSingleShot(True)
-        self._retry_timer.setInterval(_CHART_RETRY_INTERVAL_MS)
-        self._retry_timer.timeout.connect(self._retry_render)
-
-    def build_chart(self, builder: Callable[[], None]) -> None:
-        """Build a chart when rendering is available, without blocking Qt."""
-        self._chart_builder = builder
-        self._build_pending_chart()
-
-    def _build_pending_chart(self) -> None:
-        """Serialize figure mutations with worker and live canvas drawing."""
-        if self._chart_builder is None:
-            return
-        if not STATISTICS_CHART_LOCK.acquire(blocking=False):
-            self._defer_render()
-            return
-        try:
-            builder = self._chart_builder
-            self._chart_builder = None
-            builder()
-            self.draw_idle()  # type: ignore[no-untyped-call]
-        finally:
-            STATISTICS_CHART_LOCK.release()
-
-    def _defer_render(self) -> None:
-        """Coalesce retries; QObject ownership cancels them on destruction."""
-        if not self._retry_timer.isActive():
-            self._retry_timer.start()
-
-    def draw(self) -> None:
-        """Protect the actual Agg draw, including draws scheduled by Qt."""
-        if not STATISTICS_CHART_LOCK.acquire(blocking=False):
-            self._draw_pending = True
-            self._defer_render()
-            return
-        try:
-            self._draw_pending = False
-            super().draw()  # type: ignore[no-untyped-call]
-        finally:
-            STATISTICS_CHART_LOCK.release()
-
-    def resizeEvent(self, event: QResizeEvent) -> None:  # noqa: N802
-        """Defer Qt's figure-size mutation while a worker owns Matplotlib."""
-        if not STATISTICS_CHART_LOCK.acquire(blocking=False):
-            self._resize_pending = True
-            self._defer_render()
-            return
-        try:
-            self._resize_pending = False
-            super().resizeEvent(event)  # type: ignore[no-untyped-call]
-        finally:
-            STATISTICS_CHART_LOCK.release()
-
-    def paintEvent(self, event: QPaintEvent) -> None:  # noqa: N802
-        """Protect deferred drawing and renderer-buffer access during painting."""
-        if not STATISTICS_CHART_LOCK.acquire(blocking=False):
-            self._defer_render()
-            return
-        try:
-            super().paintEvent(event)  # type: ignore[no-untyped-call]
-        finally:
-            STATISTICS_CHART_LOCK.release()
-
-    def _update_pixel_ratio(self) -> None:
-        """Protect figure DPI changes on show and screen-change events."""
-        if not STATISTICS_CHART_LOCK.acquire(blocking=False):
-            self._pixel_ratio_pending = True
-            self._defer_render()
-            return
-        try:
-            self._pixel_ratio_pending = False
-            super()._update_pixel_ratio()
-        finally:
-            STATISTICS_CHART_LOCK.release()
-
-    def _retry_render(self) -> None:
-        """Replay the latest resize and draw, then request another Qt paint."""
-        self._build_pending_chart()
-        if self._pixel_ratio_pending:
-            self._update_pixel_ratio()
-        if self._resize_pending:
-            self.resizeEvent(QResizeEvent(self.size(), self.size()))
-        if self._draw_pending:
-            self.draw()
-        self.update()
 
 
 _StatisticsCanvas = SerializedAnalysisCanvas
@@ -548,7 +448,11 @@ class StatisticsView(QWidget):
             if self._figure is None:
                 self._figure = Figure(constrained_layout=True)
                 self._canvas = _StatisticsCanvas(self._figure)
-                self._distribution_layout.addWidget(self._canvas, 1)
+                container = self._distribution_layout.parentWidget()
+                if container is None:
+                    message = "The distribution chart requires an owning widget."
+                    raise RuntimeError(message)
+                self._distribution_layout.addWidget(build_section_scroll_area(self._canvas, container), 1)
             self._figure.clear()
             presentation = build_statistics_chart_presentation(stats, tr)
             draw_statistics_charts(self._figure, stats, presentation)

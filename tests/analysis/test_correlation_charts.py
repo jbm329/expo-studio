@@ -7,11 +7,15 @@ from unittest.mock import Mock
 import numpy as np
 import pandas as pd
 import pytest
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 from openpyxl import load_workbook
 from PyQt6.QtCore import QLocale
 
 from expo_jbm329.services.analysis import correlation_charts as charts
+from expo_jbm329.services.analysis.chart_config import AxisPolicy, ChartConfig, RotationMode
+from expo_jbm329.services.analysis.chart_export import ChartRaster
+from expo_jbm329.services.analysis.chart_layout import ChartFigure
 from expo_jbm329.services.analysis.chart_presentation import ChartNumericLocale
 from expo_jbm329.services.analysis.correlation import (
     SCATTER_SAMPLE_SIZE,
@@ -56,6 +60,21 @@ def snapshot(method=CorrelationMethod.PEARSON, df=None):
     matrix = analyze_correlation_matrix(df, tuple(df.columns), method)
     assert matrix is not None and matrix.error is None
     return CorrelationExportSnapshot(matrix, df)
+
+
+def test_matrix_keeps_vertical_labels_under_global_horizontal_policy() -> None:
+    result = snapshot().matrix
+    figure = ChartFigure(
+        figsize=(9, 6),
+        config=ChartConfig(default_axis_policy=AxisPolicy(rotation_mode=RotationMode.HORIZONTAL)),
+    )
+    canvas = FigureCanvasAgg(figure)
+    ax = figure.add_subplot()
+    draw_correlation_matrix(figure, ax, result, build_correlation_matrix_presentation(LABELS))
+
+    canvas.draw()
+
+    assert all(label.get_rotation() == 90 for label in ax.get_xticklabels())
 
 
 @pytest.mark.parametrize("method", list(CorrelationMethod))
@@ -175,7 +194,7 @@ def test_render_releases_worker_figure_on_success_or_render_failure(monkeypatch,
 
     monkeypatch.setattr(charts.Figure, "clear", clear)
     if fail:
-        monkeypatch.setattr(charts.FigureCanvasAgg, "print_png", Mock(side_effect=OSError("PNG error")))
+        monkeypatch.setattr(charts, "render_chart_png", Mock(side_effect=OSError("PNG error")))
         with pytest.raises(OSError, match="PNG error"):
             render_correlation_charts(snapshot(), (Component.MATRIX_PLOT,), LABELS)
     else:
@@ -234,7 +253,7 @@ def test_maximum_matrix_has_all_435_unique_ordered_pairs_without_rendering(monke
         return original(df, x, y, method, statistics=statistics)
 
     monkeypatch.setattr(charts, "analyze_correlation_pair", record)
-    monkeypatch.setattr(charts.FigureCanvasAgg, "print_png", lambda _self, stream: stream.write(b"PNG"))
+    monkeypatch.setattr(charts, "render_chart_png", lambda *_args, **_kwargs: ChartRaster(b"PNG", 1080, 720))
     render_correlation_charts(result, (Component.SCATTERPLOTS,), LABELS)
     assert seen == list(combinations(result.matrix.columns, 2))
     assert len(seen) == len(set(map(frozenset, seen))) == 435

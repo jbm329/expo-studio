@@ -5,12 +5,12 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from matplotlib.figure import Figure
 from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection, build_section_scroll_area
-from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
+from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.chi_square import (
     COCHRAN_LOW_EXPECTED_COUNT,
     COCHRAN_MAX_LOW_EXPECTED_FRACTION,

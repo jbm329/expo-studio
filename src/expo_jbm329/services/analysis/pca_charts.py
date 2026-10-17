@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from io import BytesIO
 from typing import TYPE_CHECKING
 
 import numpy as np
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.figure import Figure
 
-from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
+from expo_jbm329.services.analysis.chart_export import render_chart_png
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.chart_presentation import (
+    DEFAULT_WORKSHEET_HEADING,
+    ChartPresentationMetadata,
+)
+from expo_jbm329.services.analysis.chart_profiles import PCA_CHART_PROFILE, PCA_LEGEND_FONT_SIZE
 from expo_jbm329.services.analysis.statistics_charts import STATISTICS_CHART_LOCK
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
 
@@ -21,9 +24,6 @@ if TYPE_CHECKING:
 
     from expo_jbm329.services.analysis.pca import PCAResult
     from expo_jbm329.services.analysis.pca_export import PCAExportSnapshot
-
-_EXPORT_DPI = 120
-_FIGURE_SIZE = (8.0, 5.0)
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,14 +81,16 @@ def build_pca_chart_labels(
     )
     return PCAChartLabels(
         scree_metadata=ChartPresentationMetadata(
-            worksheet_heading="", accessible_name=translate("PCAView", "Scree plot")
+            worksheet_heading=DEFAULT_WORKSHEET_HEADING, accessible_name=translate("PCAView", "Scree plot")
         ),
         explained=translate("PCAPresentation", "Explained variance"),
         cumulative=translate("PCAView", "Cumulative"),
         component_axis=translate("PCAView", "Component"),
         variance_axis=translate("PCAView", "Explained variance (%)"),
         scatter_metadata=ChartPresentationMetadata(
-            worksheet_heading="", accessible_name=translate("PCAView", "PC1 vs PC2"), captions=captions
+            worksheet_heading=DEFAULT_WORKSHEET_HEADING,
+            accessible_name=translate("PCAView", "PC1 vs PC2"),
+            captions=captions,
         ),
         pc1_axis=(
             translate("PCAView", "PC1 ({variance})").format(variance=percent_format(ratios[0])) if ratios else "PC1"
@@ -119,7 +121,7 @@ def draw_scree_plot(ax: Axes, result: PCAResult, labels: PCAChartLabels) -> None
     ax.set_ylabel(labels.variance_axis)
     ax.set_xticks(positions)
     ax.set_ylim(0, 105)
-    ax.legend(fontsize=8)
+    ax.legend(fontsize=PCA_LEGEND_FONT_SIZE)
 
 
 def draw_score_plot(ax: Axes, result: PCAResult, labels: PCAChartLabels) -> None:
@@ -167,18 +169,20 @@ def render_pca_charts(
         if cancel_cb is not None and cancel_cb():
             raise ExcelChartCancelledError
         with STATISTICS_CHART_LOCK:
-            figure = Figure(figsize=_FIGURE_SIZE, dpi=_EXPORT_DPI, constrained_layout=True)
-            canvas = FigureCanvasAgg(figure)
+            geometry = PCA_CHART_PROFILE.geometry
+            figure = Figure(
+                figsize=geometry.figsize,
+                dpi=geometry.dpi,
+                constrained_layout=geometry.constrained_layout,
+            )
             draw(figure.add_subplot(111), snapshot.result, labels)
-            output = BytesIO()
-            canvas.print_png(output)  # type: ignore[no-untyped-call]
-        width, height = _FIGURE_SIZE
+            raster = render_chart_png(figure)
         images.append(
             ExcelChartImage(
                 metadata.worksheet_heading,
-                output.getvalue(),
-                round(width * _EXPORT_DPI),
-                round(height * _EXPORT_DPI),
+                raster.image_data,
+                raster.width_px,
+                raster.height_px,
                 metadata.captions,
                 accessible_name=metadata.accessible_name,
             )

@@ -4,14 +4,20 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from io import BytesIO
 from typing import TYPE_CHECKING
 
 import numpy as np
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.figure import Figure
 
-from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
+from expo_jbm329.services.analysis.chart_export import render_chart_png
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.chart_presentation import (
+    DEFAULT_WORKSHEET_HEADING,
+    ChartPresentationMetadata,
+)
+from expo_jbm329.services.analysis.chart_profiles import (
+    HYPOTHESIS_CHART_PROFILE,
+    PAIRED_COMPARISON_PREFERRED_ROTATION,
+)
 from expo_jbm329.services.analysis.chi_square import ChiSquareResult
 from expo_jbm329.services.analysis.group_comparison import GroupComparisonResult
 from expo_jbm329.services.analysis.paired_comparison import PairedComparisonResult
@@ -95,7 +101,7 @@ def build_hypothesis_chart_presentation(
                 x_axis_label=result.grouping_column,
                 y_axis_label=result.numeric_column,
                 metadata=ChartPresentationMetadata(
-                    worksheet_heading="",
+                    worksheet_heading=DEFAULT_WORKSHEET_HEADING,
                     accessible_name=f"{result.numeric_column} / {result.grouping_column}",
                 ),
             )
@@ -104,7 +110,7 @@ def build_hypothesis_chart_presentation(
                 title=translate("ChiSquareView", "Adjusted standardized residuals"),
                 annotations=tuple(tuple(number_format(value) for value in row) for row in result.adjusted_residuals),
                 metadata=ChartPresentationMetadata(
-                    worksheet_heading="",
+                    worksheet_heading=DEFAULT_WORKSHEET_HEADING,
                     accessible_name=f"{result.row_column} / {result.column_column}",
                 ),
             )
@@ -115,7 +121,7 @@ def build_hypothesis_chart_presentation(
                 value_axis_label=translate("PairedComparisonView", "Value"),
                 occasion_axis_label=translate("PairedComparisonView", "Measurement occasion"),
                 metadata=ChartPresentationMetadata(
-                    worksheet_heading="",
+                    worksheet_heading=DEFAULT_WORKSHEET_HEADING,
                     accessible_name=" / ".join(result.columns),
                 ),
             )
@@ -218,7 +224,7 @@ def draw_paired_charts(
     trajectories.set_ylabel(presentation.value_axis_label)
     for axis in (distribution, trajectories):
         axis.set_xlabel(presentation.occasion_axis_label)
-        axis.tick_params(axis="x", labelrotation=30)
+        axis.tick_params(axis="x", labelrotation=PAIRED_COMPARISON_PREFERRED_ROTATION)
 
 
 def draw_hypothesis_charts(figure: Figure, result: HypothesisResult, presentation: HypothesisChartPresentation) -> None:
@@ -262,11 +268,14 @@ def render_hypothesis_charts(
     if cancel_cb is not None and cancel_cb():
         raise ExcelChartCancelledError
     with STATISTICS_CHART_LOCK:
-        figure = Figure(figsize=(9, 3.5), dpi=120, constrained_layout=True)
-        canvas = FigureCanvasAgg(figure)
+        geometry = HYPOTHESIS_CHART_PROFILE.geometry
+        figure = Figure(
+            figsize=geometry.figsize,
+            dpi=geometry.dpi,
+            constrained_layout=geometry.constrained_layout,
+        )
         draw_hypothesis_charts(figure, snapshot.result, presentation)
-        output = BytesIO()
-        canvas.print_png(output)  # type: ignore[no-untyped-call]
+        raster = render_chart_png(figure)
     if cancel_cb is not None and cancel_cb():
         raise ExcelChartCancelledError
     if progress_cb is not None:
@@ -274,9 +283,9 @@ def render_hypothesis_charts(
     return (
         ExcelChartImage(
             presentation.metadata.worksheet_heading,
-            output.getvalue(),
-            1080,
-            420,
+            raster.image_data,
+            raster.width_px,
+            raster.height_px,
             presentation.metadata.captions,
             presentation.metadata.accessible_name,
         ),

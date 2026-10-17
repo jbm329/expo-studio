@@ -103,6 +103,52 @@ output-independent accessibility/caption metadata before background rendering;
 use the same drawing path in the live view and exports, and keep only sizing or
 layout decisions specific to an output in its renderer.
 
+#### Chart configuration
+
+Charts share internal defaults in
+`src\expo_jbm329\services\analysis\chart_config.py` and existing size/style profiles
+in `chart_profiles.py`. These are developer settings, not application preferences.
+`ChartFigure` in `chart_layout.py` applies the same renderer-aware x-axis label
+layout to live charts, column-properties plots and exported PNGs used by Excel
+and HTML. Crowded labels rotate to 90 degrees; labels that fit keep their preferred
+orientation. Resizing can restore that orientation. Different output widths can
+therefore legitimately produce different rotations.
+
+Use an explicit axis override for exceptions rather than changing Matplotlib's
+global `rcParams`. `DEFAULT_CHART_CONFIG` supplies the defaults; a figure's
+`config=ChartConfig(...)` overrides them, and `figure.configure_axis(axis,
+AxisPolicy(...))` supplies an axis-specific exception. `RotationMode` supports
+`AUTO`, `HORIZONTAL`, `VERTICAL` and `FIXED` (with `fixed_rotation_degrees`).
+For example, setting the default axis policy's mode to `VERTICAL` makes eligible
+labels vertical across charts; explicit chart exceptions still take precedence.
+Keep fixed, logarithmic and date tick locators intact; label
+layout must not change categories, analysis parameters or plotted data. Existing
+export sizes and styles remain separate profiles, including predictor-dependent
+regression sizes.
+
+Export profile sizes are starting sizes rather than clipping boundaries.
+`chart_export.py` measures the rendered content after rotation and grows the
+PNG when labels or other decorations need more space, preserving a minimum
+data-plot area. Excel placement and HTML image attributes use the actual encoded
+image dimensions. `ChartConfig.content_layout` controls minimum plot space,
+padding, iteration limits and maximum raster dimensions/pixel count. If a chart
+cannot fit within those limits, export fails explicitly instead of silently
+clipping text, dropping ticks or shrinking fonts.
+Wide HTML charts scroll horizontally at their intrinsic image size instead of
+reducing label text to fit the page; printing still scales charts to page width.
+
+Live canvases use the same measurements to request additional minimum space
+after drawing. Chart sections scroll when that content exceeds the available
+section size. Size requests are deferred outside the render call and rendering
+remains serialized with background exports.
+
+Repeated worksheet headings use the shared `DEFAULT_WORKSHEET_HEADING` policy in
+`chart_presentation.py`. Section-specific presentation builders still own chart
+titles, axis text, meaningful explanatory captions and accessible image names.
+Do not suppress all captions to remove a duplicate title, or derive an accessible
+name from a potentially hidden worksheet heading. Excel and HTML consume the
+captured metadata without reconstructing chart semantics.
+
 Correlation uses the same shared-presentation ownership: matrix titles and
 annotations, actual column-name ticks and scatter axes, pair titles and useful
 fitted-line, sampling and rank-method notes agree in the app, Excel and HTML.

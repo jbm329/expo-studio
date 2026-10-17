@@ -7,7 +7,6 @@ from unittest.mock import patch
 
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 from openpyxl import load_workbook
 from PyQt6.QtCore import QCoreApplication, QTranslator
 
@@ -15,6 +14,14 @@ from expo_jbm329.gui.dialogs.analysis.regression_glm_view import GeneralizedRegr
 from expo_jbm329.gui.dialogs.analysis.regression_view import RegressionView
 from expo_jbm329.gui.dialogs.analysis.survival_view import SurvivalRegressionView
 from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.chart_profiles import (
+    REGRESSION_COUNT_PROFILE,
+    REGRESSION_LINEAR_PROFILE,
+    REGRESSION_SURVIVAL_PROFILE,
+    ChartGeometry,
+    regression_logistic_profile,
+)
 from expo_jbm329.services.analysis.regression import RegressionResult
 from expo_jbm329.services.analysis.regression_charts import (
     COUNT_POINT_SIZE,
@@ -61,6 +68,49 @@ from tests.analysis.test_regression_export import (
 )
 
 ALL_SNAPSHOTS = [linear_snapshot, logistic_snapshot, poisson_snapshot, negative_binomial_snapshot, cox_snapshot]
+
+
+@pytest.mark.parametrize("value", [0.0, -1.0, math.inf, -math.inf, math.nan])
+@pytest.mark.parametrize("dimension", [0, 1])
+def test_chart_geometry_rejects_invalid_dimensions(value: float, dimension: int) -> None:
+    size = (value, 4.0) if dimension == 0 else (8.0, value)
+    with pytest.raises(ValueError, match="dimensions must be finite and positive"):
+        ChartGeometry(size)
+
+
+@pytest.mark.parametrize("dpi", [0.0, -1.0, math.inf, -math.inf, math.nan])
+def test_chart_geometry_rejects_invalid_dpi(dpi: float) -> None:
+    with pytest.raises(ValueError, match="DPI must be finite and positive"):
+        ChartGeometry((8.0, 4.0), dpi=dpi)
+
+
+def test_regression_profile_pixel_sizes_preserve_export_contract() -> None:
+    assert REGRESSION_LINEAR_PROFILE.geometry.pixel_size == (1620, 540)
+    assert REGRESSION_SURVIVAL_PROFILE.geometry.pixel_size == (1440, 720)
+    assert REGRESSION_COUNT_PROFILE.geometry.pixel_size == (1320, 570)
+
+
+@pytest.mark.parametrize(
+    ("predictor_count", "size", "pixels"),
+    [
+        (0, (10.0, 7.5), (1200, 900)),
+        (10, (10.0, 7.5), (1200, 900)),
+        (11, (10.0, 7.64), (1200, 917)),
+        (20, (10.0, 9.8), (1200, 1176)),
+    ],
+)
+def test_logistic_profile_preserves_predictor_dependent_geometry(
+    predictor_count: int, size: tuple[float, float], pixels: tuple[int, int]
+) -> None:
+    geometry = regression_logistic_profile(predictor_count).geometry
+    assert geometry.figsize == size
+    assert geometry.dpi == 120
+    assert geometry.pixel_size == pixels
+
+
+def test_logistic_profile_rejects_negative_predictor_count() -> None:
+    with pytest.raises(ValueError, match="negative predictor count"):
+        regression_logistic_profile(-1)
 
 
 @pytest.mark.parametrize("factory", ALL_SNAPSHOTS)

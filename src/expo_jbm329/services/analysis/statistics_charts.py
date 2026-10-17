@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from io import BytesIO
 from math import ceil, isfinite
 from threading import RLock
 from typing import TYPE_CHECKING
 
 import numpy as np
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.figure import Figure
 
-from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
+from expo_jbm329.services.analysis.chart_export import render_chart_png
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.chart_presentation import (
+    DEFAULT_WORKSHEET_HEADING,
+    ChartPresentationMetadata,
+)
+from expo_jbm329.services.analysis.chart_profiles import STATISTICS_CHART_PROFILE
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
 
 if TYPE_CHECKING:
@@ -23,8 +26,6 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.statistics import ColumnDescriptiveStatistics
 
 STATISTICS_CHART_LOCK = RLock()
-_IMAGE_DPI = 120
-_FIGURE_SIZE = (9.0, 3.5)
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,7 +56,7 @@ def build_statistics_chart_presentation(
         boxplot_title=translate("StatisticsView", "Boxplot"),
         no_data_label=translate("StatisticsView", "No data"),
         metadata=ChartPresentationMetadata(
-            worksheet_heading="",
+            worksheet_heading=DEFAULT_WORKSHEET_HEADING,
             accessible_name=stats.column or translate("StatisticsView", "Distribution"),
         ),
     )
@@ -143,9 +144,8 @@ def render_statistics_charts(
     """Render a histogram/boxplot image for every numeric column.
 
     Figures use the Agg canvas and remain local to the calling worker. The
-    shared lock serializes rendering against StatisticsView's figure mutations
-    and actual Qt canvas drawing. Hypothesis charts share this rendering lock
-    and serialized Qt canvas; unrelated Matplotlib views do not use it.
+    shared lock serializes all application and export chart rendering against
+    figure mutations and Qt canvas drawing through SerializedAnalysisCanvas.
 
     Args:
         columns: Computed numeric-column summaries in display order.
@@ -173,19 +173,20 @@ def render_statistics_charts(
             message = "A Statistics chart presentation does not match its column."
             raise ValueError(message)
         with STATISTICS_CHART_LOCK:
-            figure = Figure(figsize=_FIGURE_SIZE, dpi=_IMAGE_DPI, constrained_layout=True)
-            canvas = FigureCanvasAgg(figure)
+            geometry = STATISTICS_CHART_PROFILE.geometry
+            figure = Figure(
+                figsize=geometry.figsize,
+                dpi=geometry.dpi,
+                constrained_layout=geometry.constrained_layout,
+            )
             draw_statistics_charts(figure, stats, presentation)
-            output = BytesIO()
-            canvas.print_png(output)  # type: ignore[no-untyped-call]
-            image_data = output.getvalue()
-        width_px, height_px = (round(_FIGURE_SIZE[0] * _IMAGE_DPI), round(_FIGURE_SIZE[1] * _IMAGE_DPI))
+            raster = render_chart_png(figure)
         images.append(
             ExcelChartImage(
                 presentation.metadata.worksheet_heading,
-                image_data,
-                width_px,
-                height_px,
+                raster.image_data,
+                raster.width_px,
+                raster.height_px,
                 presentation.metadata.captions,
                 presentation.metadata.accessible_name,
             )

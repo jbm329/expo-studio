@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from io import BytesIO
+
 import pandas as pd
 import pytest
 from matplotlib.figure import Figure
+from PIL import Image
 
 from expo_jbm329.services.analysis.statistics import (
     StatisticsExportTable,
@@ -108,6 +111,20 @@ def test_statistics_chart_renderer_honors_cancellation_between_column_pairs() ->
             build_statistics_chart_presentations(result.columns, lambda _context, text: text),
             cancel_cb=cancel,
         )
+
+
+def test_long_column_heading_uses_actual_grown_png_dimensions_and_preserves_metadata() -> None:
+    column = "Actual dataset column " * 16
+    result = analyze_descriptive_statistics(pd.DataFrame({column: [1, 2, 3, 4]}))
+    presentations = build_statistics_chart_presentations(result.columns, lambda _context, text: text)
+    (image,) = render_statistics_charts(result.columns, presentations)
+
+    assert image.width_px > 1080
+    with Image.open(BytesIO(image.image_data)) as decoded:
+        assert decoded.size == (image.width_px, image.height_px)
+    assert image.heading == ""
+    assert image.accessible_name == column
+    assert image.captions == ()
 
 
 def test_empty_numeric_column_has_explicit_no_data_messages_in_both_axes() -> None:

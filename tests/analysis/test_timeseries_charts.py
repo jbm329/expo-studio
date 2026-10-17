@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from openpyxl import load_workbook
@@ -13,6 +12,7 @@ from PyQt6.QtCore import QCoreApplication, QTranslator
 from PyQt6.QtWidgets import QApplication
 
 from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
+from expo_jbm329.services.analysis import timeseries_charts as chart_module
 from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.report import (
     ReportDocument,
@@ -142,13 +142,13 @@ def test_live_worker_and_html_share_captured_localized_semantics(locale, plot_co
             ("", "", labels.residual),
         ]
     rendered = []
-    original_print_png = FigureCanvasAgg.print_png
+    original_render = chart_module.render_chart_png
 
-    def inspect_png(canvas, output, *args, **kwargs):
-        rendered.append(semantics(canvas.figure))
-        original_print_png(canvas, output, *args, **kwargs)
+    def inspect_png(figure, *args, **kwargs):
+        rendered.append(semantics(figure))
+        return original_render(figure, *args, **kwargs)
 
-    monkeypatch.setattr(FigureCanvasAgg, "print_png", inspect_png)
+    monkeypatch.setattr(chart_module, "render_chart_png", inspect_png)
     document = ReportDocument()
     entry = create_report_entry(
         AnalysisCategory.TIME_SERIES, DatasetRef("series", "Sales dataset", result.source_rows, 2), snapshot

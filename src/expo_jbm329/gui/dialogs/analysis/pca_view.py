@@ -5,8 +5,6 @@ from __future__ import annotations
 from html import escape
 from typing import TYPE_CHECKING
 
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 from PyQt6.QtCore import QT_TRANSLATE_NOOP, QCoreApplication, Qt
 from PyQt6.QtWidgets import (
     QHeaderView,
@@ -23,6 +21,8 @@ from expo_jbm329.gui.dialogs.analysis.section_layout import (
     build_section_scroll_area,
     rich_text_lines,
 )
+from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.pca import MIN_OBSERVATIONS, MIN_SELECTED_COLUMNS, PCAError
 from expo_jbm329.services.analysis.pca_charts import (
     PCAChartLabels,
@@ -177,17 +177,17 @@ class PCAView(QWidget):
     def _build_scree_plot(self, result: PCAResult) -> QWidget:
         """Build a scree plot of component and cumulative explained variance."""
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumSize(280, 220)
-        draw_scree_plot(figure.add_subplot(111), result, self.chart_labels())
+        canvas.build_chart(lambda: draw_scree_plot(figure.add_subplot(111), result, self.chart_labels()))
         return canvas
 
     def _build_scatter_plot(self, result: PCAResult) -> QWidget:
         """Build the PC1-vs-PC2 score scatterplot."""
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumSize(280, 220)
-        draw_score_plot(figure.add_subplot(111), result, self.chart_labels())
+        canvas.build_chart(lambda: draw_score_plot(figure.add_subplot(111), result, self.chart_labels()))
         return canvas
 
     def _build_loadings_panel(self, result: PCAResult) -> QWidget:

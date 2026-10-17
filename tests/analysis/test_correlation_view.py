@@ -532,13 +532,13 @@ def test_live_and_worker_axes_annotations_and_captions_match(method, monkeypatch
 
     expected = [semantics(axis) for axis in sorted(_canvas_axes(view), key=lambda axis: not bool(axis.images))]
     rendered = []
-    original = correlation_charts.FigureCanvasAgg.print_png
+    original = correlation_charts.render_chart_png
 
-    def capture(canvas, output):
-        rendered.append(semantics(canvas.figure.axes[0]))
-        return original(canvas, output)
+    def capture(figure, **kwargs):
+        rendered.append(semantics(figure.axes[0]))
+        return original(figure, **kwargs)
 
-    monkeypatch.setattr(correlation_charts.FigureCanvasAgg, "print_png", capture)
+    monkeypatch.setattr(correlation_charts, "render_chart_png", capture)
     images = correlation_charts.render_correlation_charts(
         CorrelationExportSnapshot(matrix, df),
         (CorrelationExportComponent.MATRIX_PLOT, CorrelationExportComponent.SCATTERPLOTS),

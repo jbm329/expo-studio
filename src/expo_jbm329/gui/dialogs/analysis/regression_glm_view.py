@@ -5,8 +5,6 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
@@ -16,7 +14,8 @@ from expo_jbm329.gui.dialogs.analysis.section_layout import (
     build_section_scroll_area,
     rich_text_lines,
 )
-from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
+from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.logistic_charts import LogisticChartLabels, build_logistic_charts
 from expo_jbm329.services.analysis.presentation import (
     regression_component_label,
@@ -196,13 +195,13 @@ class GeneralizedRegressionView(QWidget):
             layout.addWidget(label)
             return panel
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(260)
         labels = self._chart_labels.model
         if not isinstance(labels, CountChartLabels):
             message = "Count regression view received chart labels for another model."
             raise TypeError(message)
-        draw_count_charts(figure, data, labels)
+        canvas.build_chart(lambda: draw_count_charts(figure, data, labels))
         # Charts keep a readable minimum height and scroll when their section is smaller.
         layout.addWidget(build_section_scroll_area(canvas, panel), 1)
         return panel

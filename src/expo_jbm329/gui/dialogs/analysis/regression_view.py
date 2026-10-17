@@ -6,8 +6,6 @@ import html
 import math
 from typing import TYPE_CHECKING
 
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import (
@@ -26,6 +24,17 @@ from expo_jbm329.gui.dialogs.analysis.section_layout import (
     AnalysisResultSection,
     build_section_scroll_area,
     rich_text_lines,
+)
+from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.chart_profiles import (
+    REGRESSION_GUI_AXIS_LABEL_FONT_SIZE as _LABEL_FONT_SIZE,
+)
+from expo_jbm329.services.analysis.chart_profiles import (
+    REGRESSION_GUI_TICK_FONT_SIZE as _TICK_FONT_SIZE,
+)
+from expo_jbm329.services.analysis.chart_profiles import (
+    REGRESSION_GUI_TITLE_FONT_SIZE as _TITLE_FONT_SIZE,
 )
 from expo_jbm329.services.analysis.presentation import (
     build_regression_result_presentation,
@@ -75,9 +84,6 @@ if TYPE_CHECKING:
 LARGE_SAMPLE_SIZE = 5_000
 
 _TERM_COLUMN = 0
-_TITLE_FONT_SIZE = 10
-_LABEL_FONT_SIZE = 9
-_TICK_FONT_SIZE = 8
 
 
 def _esc(text: str) -> str:
@@ -529,12 +535,16 @@ class RegressionView(QWidget):
     def _build_canvas(draw: Callable[[Axes], None]) -> QWidget:
         """Build a matplotlib canvas with one axes drawn by `draw`."""
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumSize(200, 180)
-        ax = figure.add_subplot(111)
-        draw(ax)
-        ax.title.set_fontsize(_TITLE_FONT_SIZE)
-        ax.xaxis.label.set_fontsize(_LABEL_FONT_SIZE)
-        ax.yaxis.label.set_fontsize(_LABEL_FONT_SIZE)
-        ax.tick_params(labelsize=_TICK_FONT_SIZE)
+
+        def build_chart() -> None:
+            ax = figure.add_subplot(111)
+            draw(ax)
+            ax.title.set_fontsize(_TITLE_FONT_SIZE)
+            ax.xaxis.label.set_fontsize(_LABEL_FONT_SIZE)
+            ax.yaxis.label.set_fontsize(_LABEL_FONT_SIZE)
+            ax.tick_params(labelsize=_TICK_FONT_SIZE)
+
+        canvas.build_chart(build_chart)
         return canvas

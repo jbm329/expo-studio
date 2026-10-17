@@ -5,8 +5,6 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import (
@@ -25,6 +23,8 @@ from expo_jbm329.gui.dialogs.analysis.section_layout import (
     build_section_scroll_area,
     rich_text_lines,
 )
+from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.outliers import (
     MAX_THRESHOLD,
     MIN_OBSERVATIONS,
@@ -475,10 +475,10 @@ class OutliersView(QWidget):
     def _build_histogram(self, detail: OutlierColumnDetail) -> QWidget:
         """Build a matplotlib canvas with the column's inlier/outlier histogram."""
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumSize(240, 160)
         presentation = build_outlier_histogram_presentation(detail.summary.column, self.histogram_labels())
-        draw_outlier_histogram(figure.add_subplot(111), detail, presentation)
+        canvas.build_chart(lambda: draw_outlier_histogram(figure.add_subplot(111), detail, presentation))
         return canvas
 
     def _build_detail_statistics(self, detail: OutlierColumnDetail) -> QLabel:

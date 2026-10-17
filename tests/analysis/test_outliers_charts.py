@@ -9,7 +9,6 @@ from unittest.mock import patch
 
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 from openpyxl import load_workbook
 from PyQt6.QtCore import QCoreApplication, QEvent, QTranslator
 from PyQt6.QtWidgets import QLabel
@@ -17,6 +16,7 @@ from PyQt6.QtWidgets import QLabel
 from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_view import MultivariateOutliersView
 from expo_jbm329.gui.dialogs.analysis.outliers_view import OutliersView
 from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierMethod
 from expo_jbm329.services.analysis.outliers import OutlierMethod, analyze_outlier_column, analyze_outlier_summary
 from expo_jbm329.services.analysis.outliers_charts import (
