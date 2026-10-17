@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtGui import QPalette
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QFrame, QLabel, QScrollArea, QWidget
 
@@ -12,6 +13,22 @@ from expo_jbm329.gui.dialogs.analysis.section_layout import ANALYSIS_FRAME_MARGI
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+# Native styles (e.g. Fusion) always repolish a QScrollArea's content widget to their own
+# hardcoded BrightText/Shadow/Accent defaults, independent of the desktop's live palette.
+# None of these roles paint this section's background, so ignore them when comparing
+# rendered palettes.
+_STYLE_POLISH_ROLES = (QPalette.ColorRole.BrightText, QPalette.ColorRole.Shadow, QPalette.ColorRole.Accent)
+# NColorRoles is a sentinel count, not a real role; querying it crashes QPalette.color().
+_COMPARABLE_ROLES = tuple(
+    role for role in QPalette.ColorRole if role != QPalette.ColorRole.NColorRoles and role not in _STYLE_POLISH_ROLES
+)
+_PALETTE_GROUPS = (QPalette.ColorGroup.Active, QPalette.ColorGroup.Inactive, QPalette.ColorGroup.Disabled)
+
+
+def _renders_like(a: QPalette, b: QPalette) -> bool:
+    """Compare palettes for equivalent rendering, ignoring style-only polish noise."""
+    return all(a.color(group, role) == b.color(group, role) for group in _PALETTE_GROUPS for role in _COMPARABLE_ROLES)
 
 
 def assert_result_section(panel: QWidget, title: str | None = None) -> QScrollArea:
@@ -46,7 +63,7 @@ def assert_result_section(panel: QWidget, title: str | None = None) -> QScrollAr
     assert not viewport.autoFillBackground()
     assert not content.autoFillBackground()
     assert viewport.palette() == panel.palette()
-    assert content.palette() == panel.palette()
+    assert _renders_like(content.palette(), panel.palette())
     assert not panel.styleSheet()
     assert not scroll.styleSheet()
     return scroll

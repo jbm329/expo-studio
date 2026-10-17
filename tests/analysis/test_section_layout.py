@@ -148,14 +148,21 @@ def test_result_section_renders_header_background_instead_of_viewport_base(dark:
         image = parent.grab().toImage()
         scale = image.devicePixelRatio()
         expected = image.pixelColor(round(250 * scale), round(80 * scale))
-        assert expected in (palette.color(QPalette.ColorRole.Window), palette.color(QPalette.ColorRole.Base))
-        assert image.pixelColor(round(250 * scale), round(340 * scale)) == expected
+        # Compare 8-bit RGB values: a grabbed pixel and a palette color derived via
+        # darker()/lighter() can carry different internal precision despite being
+        # visually identical.
+        expected_rgb = expected.rgb()
+        assert expected_rgb in (
+            palette.color(QPalette.ColorRole.Window).rgb(),
+            palette.color(QPalette.ColorRole.Base).rgb(),
+        )
+        assert image.pixelColor(round(250 * scale), round(340 * scale)).rgb() == expected_rgb
         scroll = panel.findChild(QScrollArea)
         assert scroll is not None
         viewport = scroll.viewport()
         assert viewport is not None
         point = viewport.mapTo(parent, viewport.rect().bottomLeft())
-        assert image.pixelColor(round((point.x() + 20) * scale), round((point.y() - 20) * scale)) == expected
+        assert image.pixelColor(round((point.x() + 20) * scale), round((point.y() - 20) * scale)).rgb() == expected_rgb
     finally:
         parent.close()
         parent.deleteLater()
