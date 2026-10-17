@@ -101,232 +101,200 @@
 </context><context>
     <name>AnalysisConfiguration</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="272" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="276" />
         <source>Features</source>
         <translation>Variabler</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="273" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="277" />
         <source>Standardize features</source>
         <translation>Standardisera variabler</translation>
     </message>
 </context><context>
     <name>AnalysisController</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="653" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="668" />
         <source>This analysis is not implemented yet.</source>
         <translation>Denna analys är inte implementerad än.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="654" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="669" />
         <source>An error occurred while generating this analysis.</source>
         <translation>Ett fel inträffade när den här analysen skulle köras.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="655" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="670" />
         <source>Running analysis…</source>
         <translation>Kör analys…</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="656" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="671" />
         <source>generate analysis</source>
         <translation>generera analys</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="657" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="672" />
         <source>Analysis cancelled.</source>
         <translation>Analys avbruten.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="658" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="673" />
         <source>Choose settings and click Apply.</source>
         <translation>Välj inställningar och klicka på Tillämpa</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="659" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="674" />
         <source>Preparing report preview...</source>
         <translation>Förbereder rapportförhandsvisning...</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="660" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="675" />
         <source>prepare report preview</source>
         <translation>förbereda rapportförhandsvisning</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="661" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="676" />
         <source>Report preview cancelled.</source>
         <translation>Rapportförhandsvisningen avbröts.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="662" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="677" />
         <source>Could not prepare report preview.
 {error}</source>
         <translation>Kunde inte förbereda rapportförhandsvisningen.
 {error}</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="663" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="678" />
         <source>HTML report saving is unavailable.</source>
         <translation>Det går inte att spara HTML-rapporter.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="664" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="679" />
         <source>Could not save HTML report.
 {error}</source>
         <translation>Kunde inte spara HTML-rapporten.
 {error}</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="665" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="680" />
         <source>Select a ready dataset before opening Advanced Analysis.</source>
         <translation>Välj en datauppsättning som är klar innan du öppnar Avancerad analys.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="666" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="681" />
         <source>Advanced analysis unavailable</source>
         <translation>Avancerad analys är inte tillgänglig</translation>
     </message>
 </context><context>
     <name>AnalysisDialog</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="217" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="218" />
         <source>Advanced analysis — {dataset} ({rows} rows × {columns} columns)</source>
         <translation>Avancerad analys — {dataset} ({rows} rader × {columns} kolumner)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="281" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="282" />
         <source>Analysis</source>
         <translation>Analys</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="294" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="295" />
         <source>Reports(0)</source>
         <translation>Rapporter(0)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="793" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="590" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="587" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="794" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="591" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="588" />
         <source>Add to report</source>
         <translation>Lägg till i rapport</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="613" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="595" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="614" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="596" />
         <source>Replace report result</source>
         <translation>Ersätt rapportresultat</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="615" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="616" />
         <source>Update report result</source>
         <translation>Uppdatera rapportresultat</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="618" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="619" />
         <source>Remove from report</source>
         <translation>Ta bort från rapporten</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="705" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="706" />
         <source>Replace in report</source>
         <translation>Ersätt i rapporten</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="705" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="706" />
         <source>Update result</source>
         <translation>Uppdatera resultat</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="754" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="755" />
         <source>Reports({count})</source>
         <translation>Rapporter({count})</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="759" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="760" />
         <source>Result</source>
         <translation>Resultat</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="773" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="774" />
         <source>Configuration</source>
         <translation>Konfiguration</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="790" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="791" />
         <source>Export</source>
         <translation>Exportera</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\presentation.py" line="644" />
+        <location filename="..\..\services\analysis\presentation.py" line="654" />
         <source>Time Series</source>
         <translation>Tidsserie</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="381" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="393" />
         <source>Overview</source>
         <translation>Översikt</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="382" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="394" />
         <source>Statistics</source>
         <translation>Statistik</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="383" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="395" />
         <source>Hypothesis Tests</source>
         <translation>Hypotestester</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="384" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="396" />
         <source>Regression</source>
         <translation>Regression</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="385" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="397" />
         <source>Outliers</source>
         <translation>Extremvärden</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="386" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="398" />
         <source>Clustering</source>
         <translation>Klustring</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="387" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="399" />
         <source>PCA</source>
         <translation>PCA</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation type="vanished">Namn</translation>
-    </message>
-    <message>
-        <source>Rows</source>
-        <translation type="vanished">Rader</translation>
-    </message>
-    <message>
-        <source>Columns</source>
-        <translation type="vanished">Kolumner</translation>
-    </message>
-    <message>
-        <source>Export analysis data</source>
-        <translation type="vanished">Exportera analysdata</translation>
-    </message>
-    <message>
-        <source>Export results</source>
-        <translation type="vanished">Exportera resultat</translation>
-    </message>
-    <message>
-        <source>Advanced analysis</source>
-        <translation type="vanished">Avancerad analys</translation>
-    </message>
-    <message>
-        <source>Dataset</source>
-        <translation type="vanished">Dataset</translation>
-    </message>
-    <message>
-        <source>Correlation</source>
-        <translation type="vanished">Korrelation</translation>
     </message>
 </context><context>
     <name>AnalysisExportDialog</name>
@@ -612,967 +580,760 @@
         <translation>Diagram är endast tillgängliga i Excel. Avmarkera Diagram för att fortsätta.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="201" />
-        <location filename="..\..\services\analysis\report.py" line="1347" />
-        <source>Test</source>
-        <translation>Test</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="208" />
-        <location filename="..\..\services\analysis\report.py" line="1348" />
-        <source>Effect size</source>
-        <translation>Effektstorlek</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="219" />
-        <location filename="..\..\services\analysis\report.py" line="1404" />
-        <source>Odds ratio</source>
-        <translation>Oddskvot</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="428" />
-        <location filename="..\..\services\analysis\report.py" line="1406" />
-        <location filename="..\..\services\analysis\report.py" line="1405" />
-        <source>Rate ratio</source>
-        <translation>Incidenskvot</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="429" />
-        <location filename="..\..\services\analysis\report.py" line="1409" />
-        <source>Hazard ratio</source>
-        <translation>Hazardkvot</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="430" />
-        <location filename="..\..\services\analysis\report.py" line="1410" />
-        <source>{name}, 95% CI lower</source>
-        <translation>{name}, 95 % KI nedre</translation>
-    </message>
-    <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="431" />
-        <location filename="..\..\services\analysis\report.py" line="1411" />
-        <source>{name}, 95% CI upper</source>
-        <translation>{name}, 95 % KI övre</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="438" />
-        <location filename="..\..\services\analysis\report.py" line="1428" />
-        <source>Significant at p &lt; {alpha}</source>
-        <translation>Signifikant vid p &lt; {alpha}</translation>
-    </message>
-    <message>
-        <location filename="..\..\services\analysis\report.py" line="2000" />
-        <source>N/A</source>
-        <translation>Ej tillgängligt</translation>
-    </message>
-    <message>
-        <location filename="..\..\services\analysis\report.py" line="2002" />
-        <source>Dataset</source>
-        <translation>Dataset</translation>
-    </message>
-    <message>
-        <location filename="..\..\services\analysis\report.py" line="2003" />
-        <source>Report date</source>
-        <translation>Rapportdatum</translation>
-    </message>
-    <message>
-        <location filename="..\..\services\analysis\report.py" line="2004" />
-        <source>Expo version</source>
-        <translation>Expo-version</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="421" />
-        <location filename="..\..\services\analysis\report.py" line="2137" />
-        <source>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</source>
-        <translation>Paren rangordnas efter absolutvärdet av koefficienten. Signifikans baseras på p &lt; {alpha} efter Holm-korrigering för {count} tester.</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1210" />
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="416" />
-        <location filename="..\..\services\analysis\report.py" line="2398" />
+        <location filename="..\..\services\analysis\correlation_charts.py" line="111" />
         <source>Least-squares line: y = ({slope}) x + ({intercept})</source>
         <translation>Minsta kvadratlinje: y = ({slope}) x + ({intercept})</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="200" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="205" />
+        <location filename="..\..\services\analysis\report.py" line="1356" />
+        <source>Test</source>
+        <translation>Test</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="212" />
+        <location filename="..\..\services\analysis\report.py" line="1357" />
+        <source>Effect size</source>
+        <translation>Effektstorlek</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="223" />
+        <location filename="..\..\services\analysis\report.py" line="1413" />
+        <source>Odds ratio</source>
+        <translation>Oddskvot</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="443" />
+        <location filename="..\..\services\analysis\report.py" line="1415" />
+        <location filename="..\..\services\analysis\report.py" line="1414" />
+        <source>Rate ratio</source>
+        <translation>Incidenskvot</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="444" />
+        <location filename="..\..\services\analysis\report.py" line="1418" />
+        <source>Hazard ratio</source>
+        <translation>Hazardkvot</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="445" />
+        <location filename="..\..\services\analysis\report.py" line="1419" />
+        <source>{name}, 95% CI lower</source>
+        <translation>{name}, 95 % KI nedre</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="446" />
+        <location filename="..\..\services\analysis\report.py" line="1420" />
+        <source>{name}, 95% CI upper</source>
+        <translation>{name}, 95 % KI övre</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="453" />
+        <location filename="..\..\services\analysis\report.py" line="1437" />
+        <source>Significant at p &lt; {alpha}</source>
+        <translation>Signifikant vid p &lt; {alpha}</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2014" />
+        <source>N/A</source>
+        <translation>Ej tillgängligt</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2016" />
+        <source>Dataset</source>
+        <translation>Dataset</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2017" />
+        <source>Report date</source>
+        <translation>Rapportdatum</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\report.py" line="2018" />
+        <source>Expo version</source>
+        <translation>Expo-version</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="436" />
+        <location filename="..\..\services\analysis\report.py" line="2151" />
+        <source>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</source>
+        <translation>Paren rangordnas efter absolutvärdet av koefficienten. Signifikans baseras på p &lt; {alpha} efter Holm-korrigering för {count} tester.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="204" />
         <source>Test results</source>
         <translation>Testresultat</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="202" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="206" />
         <source>Test statistic</source>
         <translation>Teststatistik</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="203" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="207" />
         <source>p-value</source>
         <translation>p-värde</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="204" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="208" />
         <source>Degrees of freedom</source>
         <translation>Frihetsgrader</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="205" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="209" />
         <source>Mean difference</source>
         <translation>Medelvärdesskillnad</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="206" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="210" />
         <source>95% CI lower</source>
         <translation>95 % KI nedre</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="207" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="211" />
         <source>95% CI upper</source>
         <translation>95 % KI övre</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="209" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="213" />
         <source>Effect value</source>
         <translation>Effektvärde</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="210" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="214" />
         <source>Numeric column</source>
         <translation>Numerisk kolumn</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="211" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="215" />
         <source>Grouping column</source>
         <translation>Gruppkolumn</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="212" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="216" />
         <source>Row column</source>
         <translation>Radkolumn</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="213" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="217" />
         <source>Column column</source>
         <translation>Kolumnkolumn</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="214" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="218" />
         <source>Sample count</source>
         <translation>Antal observationer</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="215" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="219" />
         <source>Yates' continuity correction</source>
         <translation>Yates kontinuitetskorrektion</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="216" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="220" />
         <source>Cochran's rule violated</source>
         <translation>Cochrans regel uppfylls inte</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="217" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="221" />
         <source>Fraction of expected counts below 5</source>
         <translation>Andel förväntade frekvenser under 5</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="218" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="222" />
         <source>Minimum expected count</source>
         <translation>Minsta förväntade frekvens</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="220" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="224" />
         <source>Total subjects</source>
         <translation>Totalt antal individer</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="221" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="225" />
         <source>Excluded subjects</source>
         <translation>Uteslutna individer</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="222" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="226" />
         <source>Notes</source>
         <translation>Noteringar</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="223" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="227" />
         <source>Measurement</source>
         <translation>Mätning</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="224" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="228" />
         <source>Welch's t-test</source>
         <translation>Welchs t-test</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="225" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="229" />
         <source>Student's t-test</source>
         <translation>Students t-test</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="226" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="230" />
         <source>Mann-Whitney U</source>
         <translation>Mann-Whitney U</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="227" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="231" />
         <source>One-way ANOVA</source>
         <translation>Envägs-ANOVA</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="228" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="232" />
         <source>Kruskal-Wallis</source>
         <translation>Kruskal-Wallis</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="229" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="233" />
         <source>Pearson's chi-square test</source>
         <translation>Pearsons chi-två-test</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="230" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="234" />
         <source>Fisher's exact test</source>
         <translation>Fishers exakta test</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="231" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="235" />
         <source>Wilcoxon signed-rank test</source>
         <translation>Wilcoxons teckenrangtest</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="232" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="236" />
         <source>Friedman test</source>
         <translation>Friedmans test</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="233" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="237" />
         <source>Cohen's d</source>
         <translation>Cohens d</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="234" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="238" />
         <source>Rank-biserial correlation</source>
         <translation>Rangbiserial korrelation</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="235" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="239" />
         <source>Eta²</source>
         <translation>Eta²</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="236" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="240" />
         <source>Epsilon²</source>
         <translation>Epsilon²</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="237" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="241" />
         <source>Cramér's V</source>
         <translation>Cramérs V</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="238" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="242" />
         <source>Kendall's W</source>
         <translation>Kendalls W</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="393" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="405" />
         <source>Autocorrelation</source>
         <translation>Autokorrelation</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="394" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="406" />
         <source>Charts</source>
         <translation>Diagram</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="395" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="407" />
         <source>Cluster sizes</source>
         <translation>Klusterstorlekar</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="396" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="408" />
         <source>Coefficients</source>
         <translation>Koefficienter</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="397" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="409" />
         <source>Column details</source>
         <translation>Kolumndetaljer</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="398" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="410" />
         <source>Column summary</source>
         <translation>Kolumnsammanfattning</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="399" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="411" />
         <source>Columns</source>
         <translation>Kolumner</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="400" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="412" />
         <source>Contingency table</source>
         <translation>Korstabell</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="401" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="413" />
         <source>Explained variance</source>
         <translation>Förklarad varians</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="402" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="414" />
         <source>Feature loadings</source>
         <translation>Variabelladdningar</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="403" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="415" />
         <source>Group summary</source>
         <translation>Gruppsammanfattning</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="404" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="416" />
         <source>Measurement summary</source>
         <translation>Mätsammanfattning</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="405" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="417" />
         <source>Model metrics</source>
         <translation>Modellmått</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="406" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="418" />
         <source>Model summary</source>
         <translation>Modellsammanfattning</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="407" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="419" />
         <source>Series</source>
         <translation>Serie</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="408" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="420" />
         <source>Total</source>
         <translation>Totalt</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="417" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="432" />
         <source>Correlation method</source>
         <translation>Korrelationsmetod</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="418" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="433" />
         <source>Coefficient</source>
         <translation>Koefficient</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="419" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="434" />
         <source>Significant after Holm</source>
         <translation>Signifikant efter Holm</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="420" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="435" />
         <source>Ranking and Holm explanation</source>
         <translation>Förklaring av rangordning och Holm-korrigering</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="432" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="447" />
         <source>Term</source>
         <translation>Term</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="433" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="448" />
         <source>Estimate</source>
         <translation>Skattning</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="434" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="449" />
         <source>Std. error</source>
         <translation>Standardfel</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="435" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="450" />
         <source>t statistic</source>
         <translation>t-statistika</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="436" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="451" />
         <source>z statistic</source>
         <translation>z-statistika</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="437" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="452" />
         <source>VIF</source>
         <translation>VIF</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="439" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="454" />
         <source>(Intercept)</source>
         <translation>(Intercept)</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="440" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="455" />
         <source>Metric</source>
         <translation>Mått</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="441" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="456" />
         <source>Value</source>
         <translation>Värde</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="442" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="457" />
         <source>Rows used</source>
         <translation>Använda rader</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="443" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="458" />
         <source>Rows dropped because of missing values</source>
         <translation>Rader borttagna på grund av saknade värden</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="444" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="459" />
         <source>R²</source>
         <translation>R²</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="445" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="460" />
         <source>Adjusted R²</source>
         <translation>Justerat R²</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="446" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="461" />
         <source>F statistic</source>
         <translation>F-statistika</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="447" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="462" />
         <source>F-test p-value</source>
         <translation>p-värde för F-test</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="448" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="463" />
         <source>Model degrees of freedom</source>
         <translation>Frihetsgrader för modellen</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="449" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="464" />
         <source>Residual degrees of freedom</source>
         <translation>Frihetsgrader för residualer</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="450" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="465" />
         <source>RMSE</source>
         <translation>RMSE</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="451" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="466" />
         <source>AIC</source>
         <translation>AIC</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="452" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="467" />
         <source>Breusch-Pagan LM</source>
         <translation>Breusch-Pagan LM</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="453" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="468" />
         <source>Breusch-Pagan p-value</source>
         <translation>Breusch-Pagan p-värde</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="454" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="469" />
         <source>Jarque-Bera JB</source>
         <translation>Jarque-Bera JB</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="455" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="470" />
         <source>Jarque-Bera p-value</source>
         <translation>Jarque-Bera p-värde</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="456" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="471" />
         <source>Durbin-Watson</source>
         <translation>Durbin-Watson</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="457" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="472" />
         <source>Largest VIF</source>
         <translation>Största VIF</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="458" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="473" />
         <source>Log-likelihood</source>
         <translation>Log-likelihood</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="459" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="474" />
         <source>Null-model log-likelihood</source>
         <translation>Log-likelihood för nollmodellen</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="460" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="475" />
         <source>McFadden pseudo R²</source>
         <translation>McFaddens pseudo-R²</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="461" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="476" />
         <source>AUC (in-sample)</source>
         <translation>AUC (anpassningsdata)</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="462" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="477" />
         <source>Pearson dispersion</source>
         <translation>Pearsondispersion</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="463" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="478" />
         <source>NB2 alpha</source>
         <translation>NB2-alfa</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="464" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="479" />
         <source>Events</source>
         <translation>Händelser</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="465" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="480" />
         <source>Censored</source>
         <translation>Censurerade</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="468" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="483" />
         <source>Threshold</source>
         <translation>Tröskel</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="469" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="484" />
         <source>Values</source>
         <translation>Värden</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="470" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="485" />
         <source>Missing</source>
         <translation>Saknade</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="471" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="486" />
         <source>Potential outliers</source>
         <translation>Potentiella avvikare</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="472" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="487" />
         <source>Potential outlier share</source>
         <translation>Andel potentiella avvikare</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="473" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="488" />
         <source>Low potential outliers</source>
         <translation>Låga potentiella avvikare</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="474" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="489" />
         <source>High potential outliers</source>
         <translation>Höga potentiella avvikare</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="475" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="490" />
         <source>Lower fence</source>
         <translation>Nedre gräns</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="476" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="491" />
         <source>Upper fence</source>
         <translation>Övre gräns</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="477" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="492" />
         <source>Q1</source>
         <translation>Q1</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="478" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="493" />
         <source>Q3</source>
         <translation>Q3</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="479" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="494" />
         <source>IQR</source>
         <translation>IQR</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="480" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="495" />
         <source>Mean</source>
         <translation>Medelvärde</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="481" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="496" />
         <source>Standard deviation</source>
         <translation>Standardavvikelse</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="482" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="497" />
         <source>Median</source>
         <translation>Median</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="483" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="498" />
         <source>MAD</source>
         <translation>MAD</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="484" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="499" />
         <source>Features</source>
         <translation>Variabler</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="485" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="500" />
         <source>Expected outlier fraction</source>
         <translation>Förväntad andel avvikande observationer</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="486" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="501" />
         <source>LOF neighbors</source>
         <translation>LOF-grannar</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="487" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="502" />
         <source>Total rows</source>
         <translation>Totalt antal rader</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="488" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="503" />
         <source>Rows dropped because of missing or infinite values</source>
         <translation>Rader borttagna på grund av saknade eller oändliga värden</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="489" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="504" />
         <source>Inliers</source>
         <translation>Inomliggande observationer</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="490" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="505" />
         <source>Status</source>
         <translation>Status</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="493" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="508" />
         <source>Number of clusters</source>
         <translation>Antal kluster</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="494" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="509" />
         <source>Neighborhood radius (eps)</source>
         <translation>Grannskapsradie (eps)</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="495" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="510" />
         <source>Minimum samples</source>
         <translation>Minsta antal observationer</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="496" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="511" />
         <source>Clusters found</source>
         <translation>Hittade kluster</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="497" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="512" />
         <source>Noise rows</source>
         <translation>Brusrader</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="498" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="513" />
         <source>Silhouette score</source>
         <translation>Silhuettpoäng</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="499" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="514" />
         <source>Cluster</source>
         <translation>Kluster</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="500" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="515" />
         <source>Rows</source>
         <translation>Rader</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="501" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="516" />
         <source>Share</source>
         <translation>Andel</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="504" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="519" />
         <source>Feature</source>
         <translation>Variabel</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="505" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="520" />
         <source>Component</source>
         <translation>Komponent</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="506" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="521" />
         <source>Variance</source>
         <translation>Varians</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="507" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="522" />
         <source>Cumulative share</source>
         <translation>Kumulativ andel</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="510" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="525" />
         <source>Source rows</source>
         <translation>Källrader</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="511" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="526" />
         <source>Invalid rows dropped</source>
         <translation>Ogiltiga rader borttagna</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="512" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="527" />
         <source>Duplicate rows averaged</source>
         <translation>Dubblettrader medelvärdesbildade</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="513" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="528" />
         <source>Time points</source>
         <translation>Tidpunkter</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="514" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="529" />
         <source>Seasonal period</source>
         <translation>Säsongsperiod</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="515" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="530" />
         <source>Timestamp</source>
         <translation>Tidsstämpel</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="516" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="531" />
         <source>Trend</source>
         <translation>Trend</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="517" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="532" />
         <source>Seasonal</source>
         <translation>Säsong</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="518" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="533" />
         <source>Residual</source>
         <translation>Residual</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="519" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="534" />
         <source>Lag</source>
         <translation>Fördröjning</translation>
-    </message>
-    <message>
-        <source>Analysis date</source>
-        <translation type="vanished">Analysdatum</translation>
-    </message>
-    <message>
-        <source>Applied test: {test}
-{roles}: {columns}</source>
-        <translation type="vanished">Tillämpat test: {test}
-{roles}: {columns}</translation>
-    </message>
-    <message>
-        <source>Numeric column / grouping column</source>
-        <translation type="vanished">Numerisk kolumn / gruppkolumn</translation>
-    </message>
-    <message>
-        <source>Row column / column column</source>
-        <translation type="vanished">Radkolumn / kolumnkolumn</translation>
-    </message>
-    <message>
-        <source>Measurement columns (occasion order)</source>
-        <translation type="vanished">Mätkolumner (ordning för mättillfällen)</translation>
-    </message>
-    <message>
-        <source>Group comparison</source>
-        <translation type="vanished">Gruppjämförelse</translation>
-    </message>
-    <message>
-        <source>Chi-square independence</source>
-        <translation type="vanished">Chi-två-test för oberoende</translation>
-    </message>
-    <message>
-        <source>Paired comparison</source>
-        <translation type="vanished">Parad jämförelse</translation>
-    </message>
-    <message>
-        <source>Applied method: {method}
-Applied columns: {columns}</source>
-        <translation type="vanished">Tillämpad metod: {method}
-Tillämpade kolumner: {columns}</translation>
-    </message>
-    <message>
-        <source>Strongest correlations</source>
-        <translation type="vanished">Starkaste korrelationerna</translation>
-    </message>
-    <message>
-        <source>Matrix plot</source>
-        <translation type="vanished">Matrisdiagram</translation>
-    </message>
-    <message>
-        <source>Planned for a later milestone; no chart will be exported yet.</source>
-        <translation type="vanished">Planerat till en senare milstolpe; inga diagram exporteras ännu.</translation>
-    </message>
-    <message>
-        <source>Scatterplots ({count} pair)</source>
-        <translation type="vanished">Spridningsdiagram ({count} par)</translation>
-    </message>
-    <message>
-        <source>Scatterplots ({count} pairs)</source>
-        <translation type="vanished">Spridningsdiagram ({count} par)</translation>
-    </message>
-    <message>
-        <source>Excel exports the selected correlation table as a worksheet.</source>
-        <translation type="vanished">Excel exporterar den valda korrelationstabellen som ett kalkylblad.</translation>
-    </message>
-    <message>
-        <source>CSV and binary exports contain exactly one correlation table.</source>
-        <translation type="vanished">CSV- och binärfiler innehåller exakt en korrelationstabell.</translation>
-    </message>
-    <message>
-        <source>Export contents</source>
-        <translation type="vanished">Exportinnehåll</translation>
-    </message>
-    <message>
-        <source>Export analysis data</source>
-        <translation type="vanished">Exportera analysdata</translation>
-    </message>
-    <message>
-        <source>Export results</source>
-        <translation type="vanished">Exportera resultat</translation>
-    </message>
-    <message>
-        <source>Planned export contents</source>
-        <translation type="vanished">Planerat exportinnehåll</translation>
-    </message>
-    <message>
-        <source>Preview choice only. Availability will depend on the computed analysis.</source>
-        <translation type="vanished">Endast förhandsvisning av val. Tillgängligheten kommer att bero på den beräknade analysen.</translation>
-    </message>
-    <message>
-        <source>These are planned choices, not available outputs. Unsupported items will explain why they are unavailable.</source>
-        <translation type="vanished">Detta är planerade val, inte tillgängliga resultat. Val som inte stöds kommer att förklara varför de inte är tillgängliga.</translation>
-    </message>
-    <message>
-        <source>Planned format</source>
-        <translation type="vanished">Planerat format</translation>
-    </message>
-    <message>
-        <source>Standalone chart format</source>
-        <translation type="vanished">Format för separata diagram</translation>
-    </message>
-    <message>
-        <source>Excel will contain tables and static chart images. Standalone charts can also be saved as PNG or SVG. The planned export includes all supported chart variants, not only the displayed chart.</source>
-        <translation type="vanished">Excel kommer att innehålla tabeller och statiska diagrambilder. Separata diagram kan även sparas som PNG eller SVG. Den planerade exporten omfattar alla diagramvarianter som stöds, inte bara det visade diagrammet.</translation>
-    </message>
-    <message>
-        <source>The analysis dataset will contain the rows used by the analysis. Predictions and residuals will be offered only where supported.</source>
-        <translation type="vanished">Analysdatasetet kommer att innehålla de rader som används av analysen. Prediktioner och residualer kommer endast att erbjudas där de stöds.</translation>
-    </message>
-    <message>
-        <source>Applied model: {model}
-{role}: {outcome}
-Predictors: {predictors}</source>
-        <translation type="vanished">Tillämpad modell: {model}
-{role}: {outcome}
-Prediktorer: {predictors}</translation>
-    </message>
-    <message>
-        <source>Duration / event</source>
-        <translation type="vanished">Duration / händelse</translation>
-    </message>
-    <message>
-        <source>Target</source>
-        <translation type="vanished">Målvariabel</translation>
-    </message>
-    <message>
-        <source>Linear regression</source>
-        <translation type="vanished">Linjär regression</translation>
-    </message>
-    <message>
-        <source>Logistic regression</source>
-        <translation type="vanished">Logistisk regression</translation>
-    </message>
-    <message>
-        <source>Poisson regression</source>
-        <translation type="vanished">Poissonregression</translation>
-    </message>
-    <message>
-        <source>Negative binomial regression</source>
-        <translation type="vanished">Negativ binomial regression</translation>
-    </message>
-    <message>
-        <source>Cox proportional-hazards regression</source>
-        <translation type="vanished">Cox-regression med proportionella hazarder</translation>
-    </message>
-    <message>
-        <source>Applied method: {method}, threshold {threshold}</source>
-        <translation type="vanished">Tillämpad metod: {method}, tröskel {threshold}</translation>
-    </message>
-    <message>
-        <source>Selected column: {column}</source>
-        <translation type="vanished">Vald kolumn: {column}</translation>
-    </message>
-    <message>
-        <source>Applied method: {method}
-Features: {features}</source>
-        <translation type="vanished">Tillämpad metod: {method}
-Variabler: {features}</translation>
-    </message>
-    <message>
-        <source>Charts ({count} column)</source>
-        <translation type="vanished">Diagram ({count} kolumn)</translation>
-    </message>
-    <message>
-        <source>Charts ({count} columns)</source>
-        <translation type="vanished">Diagram ({count} kolumner)</translation>
-    </message>
-    <message>
-        <source>IQR (Tukey's fences)</source>
-        <translation type="vanished">IQR (Tukeys gränser)</translation>
-    </message>
-    <message>
-        <source>Z-score</source>
-        <translation type="vanished">Z-poäng</translation>
-    </message>
-    <message>
-        <source>Modified Z-score</source>
-        <translation type="vanished">Modifierad Z-poäng</translation>
-    </message>
-    <message>
-        <source>Isolation Forest</source>
-        <translation type="vanished">Isolation Forest</translation>
-    </message>
-    <message>
-        <source>Local Outlier Factor</source>
-        <translation type="vanished">Local Outlier Factor</translation>
-    </message>
-    <message>
-        <source>K-Means</source>
-        <translation type="vanished">K-Means</translation>
-    </message>
-    <message>
-        <source>DBSCAN</source>
-        <translation type="vanished">DBSCAN</translation>
-    </message>
-    <message>
-        <source>Agglomerative</source>
-        <translation type="vanished">Agglomerativ</translation>
-    </message>
-    <message>
-        <source>Applied features: {features}</source>
-        <translation type="vanished">Tillämpade variabler: {features}</translation>
-    </message>
-    <message>
-        <source>Applied series: {value} by {time}</source>
-        <translation type="vanished">Tillämpad serie: {value} per {time}</translation>
     </message>
 </context><context>
     <name>AsyncOperationController</name>
@@ -1754,111 +1515,97 @@ Vänligen se loggfil för mer information.</translation>
         <translation>Totalt</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1135" />
-        <location filename="..\..\services\analysis\report.py" line="2378" />
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="209" />
-        <source>Adjusted standardized residuals</source>
-        <translation>Justerade standardiserade residualer</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="300" />
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="236" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="279" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="221" />
         <source>&lt;b&gt;Pearson's chi-square test&lt;/b&gt; (with Yates' continuity correction):</source>
         <translation>&lt;b&gt;Pearsons chi-två-test&lt;/b&gt; (med Yates kontinuitetskorrigering):</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="302" />
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="238" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="281" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="223" />
         <source>&lt;b&gt;Pearson's chi-square test&lt;/b&gt;:</source>
         <translation>&lt;b&gt;Pearsons chi-två-test&lt;/b&gt;:</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="318" />
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="247" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="297" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="232" />
         <source>&lt;b&gt;Fisher's exact test&lt;/b&gt; (exact; useful when expected counts are small):</source>
         <translation>&lt;b&gt;Fishers exakta test&lt;/b&gt; (exakt; användbart när förväntade frekvenser är låga):</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="306" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="285" />
         <source>χ² = {chi2}, df = {df}, p = {p}</source>
         <translation>χ² = {chi2}, df = {df}, p = {p}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="311" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="290" />
         <source>Cramér's V: {v}</source>
         <translation>Cramérs V: {v}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="312" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="291" />
         <source>N = {n}</source>
         <translation>N = {n}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="319" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="298" />
         <source>Odds ratio = {odds_ratio}, p = {p}</source>
         <translation>Odds-kvot = {odds_ratio}, p = {p}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="331" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="310" />
         <source>→ p &lt; 0.05: the two variables appear to be associated (not independent).</source>
         <translation>→ p &lt; 0.05: de två variablerna verkar vara associerade (inte oberoende).</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="332" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="311" />
         <source>→ p ≥ 0.05: no significant association between the two variables was found.</source>
         <translation>→ p ≥ 0.05: ingen signifikant association mellan variablerna påvisades.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="336" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="315" />
         <source>Cells with an adjusted residual beyond ±{threshold} deviate significantly from independence: red cells occur more often than expected, blue cells less often.</source>
         <translation>Celler med en justerad residual utanför ±{threshold} avviker signifikant från oberoende: röda celler förekommer oftare än förväntat, blå celler mer sällan.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="362" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="341" />
         <source>⚠ {fraction} of expected counts are below {low} and the smallest expected count is {minimum} (the chi-square approximation needs at most {max_fraction} below {low} and none below {floor}). The chi-square p-value may be unreliable.</source>
         <translation>⚠ {fraction} av de förväntade frekvenserna ligger under {low} och den minsta förväntade frekvensen är {minimum} (chi-två-approximationen tillåter högst {max_fraction} under {low} och ingen under {floor}). Chi-två p-värde kan vara opålitligt.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="374" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="353" />
         <source>Prefer Fisher's exact test above.</source>
         <translation>Använd hellre Fishers exakta test ovan.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="375" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="354" />
         <source>Consider merging sparse categories.</source>
         <translation>Överväg att slå samman glesa kategorier.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="239" />
+        <location filename="..\..\services\analysis\hypothesis_charts.py" line="104" />
+        <source>Adjusted standardized residuals</source>
+        <translation>Justerade standardiserade residualer</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="243" />
         <source>Contingency table</source>
         <translation>Korstabell</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="409" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="424" />
         <source>Column</source>
         <translation>Kolumn</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="410" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="425" />
         <source>Group</source>
         <translation>Grupp</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="411" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="426" />
         <source>Row</source>
         <translation>Rad</translation>
-    </message>
-    <message>
-        <source>Observed counts</source>
-        <translation type="vanished">Observerade frekvenser</translation>
-    </message>
-    <message>
-        <source>Adjusted residuals</source>
-        <translation type="vanished">Justerade residualer</translation>
-    </message>
-    <message>
-        <source>Test results</source>
-        <translation type="vanished">Testresultat</translation>
     </message>
 </context><context>
     <name>ClusteringConfigWidget</name>
@@ -1917,87 +1664,13 @@ Vänligen se loggfil för mer information.</translation>
         <source>{count} selected - select at least {minimum}.</source>
         <translation>{count} markerade – markera minst {minimum}.</translation>
     </message>
-    <message>
-        <source>Standardize features</source>
-        <translation type="vanished">Standardisera variabler</translation>
-    </message>
-    <message>
-        <source>Features</source>
-        <translation type="vanished">Variabler</translation>
-    </message>
-    <message>
-        <source>K-Means</source>
-        <translation type="vanished">K-Means</translation>
-    </message>
-    <message>
-        <source>DBSCAN</source>
-        <translation type="vanished">DBSCAN</translation>
-    </message>
-    <message>
-        <source>Agglomerative</source>
-        <translation type="vanished">Agglomerativ</translation>
-    </message>
 </context><context>
     <name>ClusteringPresentation</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="274" />
-        <source>Clustering</source>
-        <translation>Klustring</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="275" />
-        <source>{category} — {method}</source>
-        <translation>{category} — {method}</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="276" />
-        <source>K-Means</source>
-        <translation>K-Means</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="277" />
-        <source>DBSCAN</source>
-        <translation>DBSCAN</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="278" />
-        <source>Agglomerative</source>
-        <translation>Agglomerativ</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="279" />
-        <source>Cluster sizes</source>
-        <translation>Klusterstorlekar</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="280" />
-        <source>Model summary</source>
-        <translation>Modellsammanfattning</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="281" />
-        <source>Cluster projection</source>
-        <translation>Klusterprojektion</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="282" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="286" />
+        <location filename="..\..\services\analysis\clustering_charts.py" line="69" />
         <source>Cluster projection (internal PCA)</source>
         <translation>Klusterprojektion (intern PCA)</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="283" />
-        <source>Number of clusters:</source>
-        <translation>Antal kluster:</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="284" />
-        <source>Neighborhood radius (eps):</source>
-        <translation>Grannskapsradie (eps):</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="285" />
-        <source>Minimum samples:</source>
-        <translation>Minsta antal observationer:</translation>
     </message>
     <message>
         <location filename="..\..\services\analysis\clustering_charts.py" line="72" />
@@ -2014,142 +1687,154 @@ Vänligen se loggfil för mer information.</translation>
         <source>PC2</source>
         <translation>PC2</translation>
     </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="278" />
+        <source>Clustering</source>
+        <translation>Klustring</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="279" />
+        <source>{category} — {method}</source>
+        <translation>{category} — {method}</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="280" />
+        <source>K-Means</source>
+        <translation>K-Means</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="281" />
+        <source>DBSCAN</source>
+        <translation>DBSCAN</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="282" />
+        <source>Agglomerative</source>
+        <translation>Agglomerativ</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="283" />
+        <source>Cluster sizes</source>
+        <translation>Klusterstorlekar</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="284" />
+        <source>Model summary</source>
+        <translation>Modellsammanfattning</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="285" />
+        <source>Cluster projection</source>
+        <translation>Klusterprojektion</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="287" />
+        <source>Number of clusters:</source>
+        <translation>Antal kluster:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="288" />
+        <source>Neighborhood radius (eps):</source>
+        <translation>Grannskapsradie (eps):</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="289" />
+        <source>Minimum samples:</source>
+        <translation>Minsta antal observationer:</translation>
+    </message>
 </context><context>
     <name>ClusteringView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="82" />
-        <source>PC1</source>
-        <translation type="vanished">PC1</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="83" />
-        <source>PC2</source>
-        <translation type="vanished">PC2</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="228" />
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="84" />
-        <source>Cluster {number}</source>
-        <translation>Kluster {number}</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="234" />
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="85" />
-        <source>Noise</source>
-        <translation>Brus</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="98" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="100" />
         <source>Features: {columns}</source>
         <translation>Variabler: {columns}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="108" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="110" />
         <source>A clustering analysis needs at least {minimum} numeric columns.</source>
         <translation>En klusteranalys kräver minst {minimum} numeriska kolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="111" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="113" />
         <source>Select at least {minimum} features.</source>
         <translation>Markera minst {minimum} variabler.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="114" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="116" />
         <source>Choose two or more different numeric columns.</source>
         <translation>Välj två eller fler olika numeriska kolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="115" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="117" />
         <source>At least {minimum} complete rows are needed for clustering.</source>
         <translation>Minst {minimum} fullständiga rader krävs för klustring.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="118" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="120" />
         <source>The selected features have no variation across the complete rows.</source>
         <translation>De valda variablerna har ingen variation över de fullständiga raderna.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="119" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="121" />
         <source>Choose a number of clusters that is valid for the complete rows.</source>
         <translation>Välj ett antal kluster som är giltigt för de fullständiga raderna.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="122" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="124" />
         <source>Choose a valid DBSCAN neighborhood radius.</source>
         <translation>Välj en giltig DBSCAN-grannskapsradie.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="123" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="125" />
         <source>Choose a valid DBSCAN minimum sample count.</source>
         <translation>Välj ett giltigt minsta antal observationer för DBSCAN.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="133" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="135" />
         <source>standardized</source>
         <translation>standardiserade</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="133" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="135" />
         <source>not standardized</source>
         <translation>inte standardiserade</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="134" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="136" />
         <source>&lt;b&gt;{method}&lt;/b&gt; on {features} features ({scaling}). Used {used} of {total} rows ({dropped} dropped because a selected value was missing or infinite).</source>
         <translation>&lt;b&gt;{method}&lt;/b&gt; på {features} variabler ({scaling}). Använde {used} av {total} rader ({dropped} borttagna eftersom ett valt värde saknades eller var oändligt).</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="146" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="148" />
         <source>Silhouette score: not available for this clustering.</source>
         <translation>Silhuettpoäng: inte tillgänglig för denna klustring.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="148" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="150" />
         <source>Silhouette score: {score}</source>
         <translation>Silhuettpoäng: {score}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="155" />
-        <source>&lt;i&gt;The plot shows a deterministic sample of {count} rows.&lt;/i&gt;</source>
-        <translation type="vanished">&lt;i&gt;Diagrammet visar ett deterministiskt urval av {count} rader.&lt;/i&gt;</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="219" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="220" />
         <source>Cluster</source>
         <translation>Kluster</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="219" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="220" />
         <source>Rows</source>
         <translation>Rader</translation>
     </message>
     <message>
-        <source>K-Means</source>
-        <translation type="vanished">K-Means</translation>
+        <location filename="..\..\services\analysis\clustering_charts.py" line="83" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="229" />
+        <source>Cluster {number}</source>
+        <translation>Kluster {number}</translation>
     </message>
     <message>
-        <source>DBSCAN</source>
-        <translation type="vanished">DBSCAN</translation>
-    </message>
-    <message>
-        <source>Agglomerative</source>
-        <translation type="vanished">Agglomerativ</translation>
-    </message>
-    <message>
-        <source>Model comments</source>
-        <translation type="vanished">Modellkommentarer</translation>
-    </message>
-    <message>
-        <source>Cluster projection</source>
-        <translation type="vanished">Klusterprojektion</translation>
-    </message>
-    <message>
-        <source>Cluster sizes</source>
-        <translation type="vanished">Klusterstorlekar</translation>
-    </message>
-    <message>
-        <source>Cluster projection (internal PCA)</source>
-        <translation type="vanished">Klusterprojektion (intern PCA)</translation>
+        <location filename="..\..\services\analysis\clustering_charts.py" line="84" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="235" />
+        <source>Noise</source>
+        <translation>Brus</translation>
     </message>
 </context><context>
     <name>ColumnComboBox</name>
@@ -2827,254 +2512,217 @@ Vänligen se loggfil för mer information.</translation>
         <source>{count} selected (at most {maximum}).</source>
         <translation>{count} markerade (högst {maximum}).</translation>
     </message>
-    <message>
-        <source>Pearson</source>
-        <translation type="vanished">Pearson</translation>
-    </message>
-    <message>
-        <source>Spearman</source>
-        <translation type="vanished">Spearman</translation>
-    </message>
-    <message>
-        <source>Kendall's tau-b</source>
-        <translation type="vanished">Kendalls tau-b</translation>
-    </message>
 </context><context>
     <name>CorrelationView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="159" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="152" />
         <source>Pair details</source>
         <translation>Parinformation</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="256" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="255" />
         <source>A correlation analysis needs at least {minimum} numeric columns.</source>
         <translation>En korrelationsanalys kräver minst {minimum} numeriska kolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="259" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="258" />
         <source>Select at least {minimum} columns.</source>
         <translation>Markera minst {minimum} kolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="262" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="261" />
         <source>Select at most {maximum} columns.</source>
         <translation>Markera högst {maximum} kolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="265" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="264" />
         <source>Choose two or more different numeric columns.</source>
         <translation>Välj två eller fler olika numeriska kolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1219" />
-        <location filename="..\..\services\analysis\report.py" line="2408" />
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="266" />
+        <location filename="..\..\services\analysis\correlation_charts.py" line="120" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="265" />
         <source>Fewer than {minimum} rows have values in both columns, so no correlation can be computed.</source>
         <translation>Färre än {minimum} rader har värden i båda kolumnerna, så ingen korrelation kan beräknas.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1223" />
-        <location filename="..\..\services\analysis\report.py" line="2412" />
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="269" />
+        <location filename="..\..\services\analysis\correlation_charts.py" line="124" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="268" />
         <source>At least one of the columns is constant over the rows with values in both, so no correlation can be computed.</source>
         <translation>Minst en av kolumnerna är konstant bland raderna med värden i båda kolumnerna, så ingen korrelation kan beräknas.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="280" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="279" />
         <source>r</source>
         <translation>r</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="282" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="281" />
         <source>rho</source>
         <translation>rho</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="284" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="283" />
         <source>tau</source>
         <translation>tau</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1371" />
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="439" />
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="294" />
+        <location filename="..\..\services\analysis\report.py" line="1380" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="429" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="293" />
         <source>N/A</source>
         <translation>Ej tillämpligt</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1365" />
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="296" />
+        <location filename="..\..\services\analysis\report.py" line="1374" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="295" />
         <source>Negligible</source>
         <translation>Försumbar</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1366" />
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="298" />
+        <location filename="..\..\services\analysis\report.py" line="1375" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="297" />
         <source>Weak</source>
         <translation>Svag</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1367" />
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="300" />
+        <location filename="..\..\services\analysis\report.py" line="1376" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="299" />
         <source>Moderate</source>
         <translation>Måttlig</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1368" />
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="302" />
+        <location filename="..\..\services\analysis\report.py" line="1377" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="301" />
         <source>Strong</source>
         <translation>Stark</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="364" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="354" />
         <source>Pairs are ranked by absolute coefficient. * marks pairs that are significant (p &lt; {alpha}) after Holm adjustment for {count} tests.</source>
         <translation>Paren rangordnas efter absolutvärdet av koefficienten. * markerar par som är signifikanta (p &lt; {alpha}) efter Holm-korrigering för {count} tester.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="381" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="371" />
         <source>Variable 1</source>
         <translation>Variabel 1</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="382" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="372" />
         <source>Variable 2</source>
         <translation>Variabel 2</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="384" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="374" />
         <source>{confidence}% CI</source>
         <translation>{confidence} % KI</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="385" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="375" />
         <source>p</source>
         <translation>p</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="386" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="376" />
         <source>Holm p</source>
         <translation>Holm p</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="387" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="377" />
         <source>n</source>
         <translation>n</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="388" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="378" />
         <source>Strength</source>
         <translation>Styrka</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="440" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="430" />
         <source>{low} to {high}</source>
         <translation>{low} till {high}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="509" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="494" />
         <source>{symbol} = {value} ({strength})</source>
         <translation>{symbol} = {value} ({strength})</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="514" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="499" />
         <source>{confidence}% CI: {interval}</source>
         <translation>{confidence} % KI: {interval}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="517" />
+        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="502" />
         <source>p = {p}, n = {n}</source>
         <translation>p = {p}, n = {n}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="519" />
-        <source>Least-squares line: slope {slope}, intercept {intercept}</source>
-        <translation type="vanished">Minsta kvadrat-linje: lutning {slope}, intercept {intercept}</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1211" />
-        <location filename="..\..\services\analysis\report.py" line="2399" />
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="526" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="301" />
+        <location filename="..\..\services\analysis\correlation_charts.py" line="112" />
         <source>The line is a linear fit shown for reference. {method} measures monotonic, not necessarily linear, association.</source>
         <translation>Linjen är en linjär anpassning som visas som referens. {method} mäter monotona, men inte nödvändigtvis linjära, samband.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1216" />
-        <location filename="..\..\services\analysis\report.py" line="2404" />
-        <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="534" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="306" />
+        <location filename="..\..\services\analysis\correlation_charts.py" line="117" />
         <source>Showing a random sample of {shown} of {total} points. Statistics use all points.</source>
         <translation>Visar ett slumpmässigt urval av {shown} av {total} punkter. Statistiken baseras på samtliga punkter.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="286" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="290" />
         <source>Correlation</source>
         <translation>Korrelation</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="287" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="291" />
         <source>{category} — {method}</source>
         <translation>{category} — {method}</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="288" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="292" />
         <source>Columns:</source>
         <translation>Kolumner:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="289" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="293" />
         <source>Strongest correlations</source>
         <translation>Starkaste korrelationer</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="290" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="294" />
         <source>Correlation plots</source>
         <translation>Korrelationsdiagram</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="291" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="295" />
         <source>Correlation matrix</source>
         <translation>Korrelationsmatris</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="292" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="296" />
         <source>Scatterplots</source>
         <translation>Spridningsdiagram</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="293" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="297" />
         <source>Pearson</source>
         <translation>Pearson</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="294" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="298" />
         <source>Spearman</source>
         <translation>Spearman</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="295" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="299" />
         <source>Kendall's tau-b</source>
         <translation>Kendall's tau-b</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="296" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="300" />
         <source>{x} vs {y}</source>
         <translation>{x} mot {y}</translation>
-    </message>
-    <message>
-        <source>Matrix plot</source>
-        <translation type="vanished">Matrisdiagram</translation>
-    </message>
-    <message>
-        <source>{method} correlation</source>
-        <translation type="vanished">{method}-korrelation</translation>
-    </message>
-    <message>
-        <source>&lt;b&gt;Strongest correlations&lt;/b&gt;</source>
-        <translation type="vanished">&lt;b&gt;Starkaste korrelationerna&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <source>&lt;b&gt;{x}&lt;/b&gt; vs &lt;b&gt;{y}&lt;/b&gt; ({method})</source>
-        <translation type="vanished">&lt;b&gt;{x}&lt;/b&gt; mot &lt;b&gt;{y}&lt;/b&gt; ({method})</translation>
     </message>
 </context><context>
     <name>DateTimeConversion</name>
@@ -4344,349 +3992,309 @@ Sparad till:
 </context><context>
     <name>GeneralizedRegressionView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="138" />
-        <source>Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.</source>
-        <translation>Diagnostiken är inte tillgänglig: anpassade sannolikheter måste vara ändliga och mellan 0 och 1.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="140" />
-        <source>Diagnostics unavailable: outcomes must contain both binary classes.</source>
-        <translation>Diagnostiken är inte tillgänglig: utfallen måste innehålla båda binära klasserna.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="142" />
-        <source>No logistic diagnostic data are available.</source>
-        <translation>Inga diagnostikdata för logistisk regression är tillgängliga.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="145" />
-        <source>Predictor odds ratios with 95% confidence intervals</source>
-        <translation>Prediktorernas oddskvoter med 95 % konfidensintervall</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="146" />
-        <source>Odds ratio (logarithmic scale; reference = 1)</source>
-        <translation>Oddskvot (logaritmisk skala; referens = 1)</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="147" />
-        <source>No predictor effects: intercept-only model.</source>
-        <translation>Inga prediktoreffekter: modellen har endast intercept.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="148" />
-        <source>Unavailable: non-finite, non-positive or invalid odds ratio / CI</source>
-        <translation>Ej tillgänglig: icke-ändlig, icke-positiv eller ogiltig oddskvot / konfidensintervall</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="149" />
-        <source>ROC (in-sample)</source>
-        <translation>ROC (anpassningsdata)</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="150" />
-        <source>False positive rate</source>
-        <translation>Andel falskt positiva</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="151" />
-        <source>True positive rate</source>
-        <translation>Andel sant positiva</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="152" />
-        <source>AUC = {value} (in-sample)</source>
-        <translation>AUC = {value} (anpassningsdata)</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="155" />
-        <source>Calibration (in-sample)</source>
-        <translation>Kalibrering (anpassningsdata)</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="156" />
-        <source>Mean fitted event probability</source>
-        <translation>Genomsnittlig anpassad händelsesannolikhet</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="157" />
-        <source>Observed event fraction</source>
-        <translation>Observerad händelseandel</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="160" />
-        <source>{effect} [{low}, {high}]</source>
-        <translation>{effect} [{low}, {high}]</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="193" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="186" />
         <source>Charts unavailable: fitted counts are not finite and strictly positive.</source>
         <translation>Diagrammen är inte tillgängliga: de anpassade antalen är inte ändliga och strikt positiva.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="195" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="188" />
         <source>Charts unavailable: Pearson residuals are not finite.</source>
         <translation>Diagrammen är inte tillgängliga: Pearsonresidualerna är inte ändliga.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="197" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="190" />
         <source>Charts unavailable: the fitted Negative Binomial variance is invalid.</source>
         <translation>Diagrammen är inte tillgängliga: den anpassade negativa binomialvariansen är ogiltig.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="199" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="192" />
         <source>No count-model chart data are available.</source>
         <translation>Inga diagramdata för räknemodellen är tillgängliga.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="216" />
-        <source>Observed versus fitted counts</source>
-        <translation>Observerade mot anpassade antal</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="217" />
-        <source>Fitted count</source>
-        <translation>Anpassat antal</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="218" />
-        <source>Observed count</source>
-        <translation>Observerat antal</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="219" />
-        <source>Pearson residuals versus fitted counts</source>
-        <translation>Pearsonresidualer mot anpassade antal</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="220" />
-        <source>Pearson residual</source>
-        <translation>Pearsonresidual</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="261" />
-        <source>Charts show a deterministic sample of {shown} of {total} fitted rows.</source>
-        <translation>Diagrammen visar ett deterministiskt urval av {shown} av {total} rader som modellen anpassats till.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="271" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="241" />
         <source>Select an outcome column for this regression model.</source>
         <translation>Välj en utfallskolumn för den här regressionsmodellen.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="273" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="243" />
         <source>The selected outcome is invalid. Logistic regression needs two outcome levels; count regression needs non-negative integer values.</source>
         <translation>Det valda utfallet är ogiltigt. Logistisk regression kräver två utfallsnivåer; regression för räknevariabler kräver icke-negativa heltalsvärden.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="278" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="248" />
         <source>Select one or more predictors and click Apply.</source>
         <translation>Markera en eller flera prediktorer och klicka på Tillämpa.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="280" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="250" />
         <source>Select at most {maximum} predictors.</source>
         <translation>Markera högst {maximum} prediktorer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="282" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="252" />
         <source>Choose a valid outcome and one or more other columns as predictors.</source>
         <translation>Välj ett giltigt utfall och en eller flera andra kolumner som prediktorer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="284" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="254" />
         <source>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</source>
         <translation>Modellen skulle ha fler än {maximum} termer efter att kategoriska prediktorer dummy-kodats. Ta bort prediktorer eller använd kolumner med färre nivåer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="289" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="259" />
         <source>Only {count} complete rows are available, which is too few to fit this model.</source>
         <translation>Endast {count} kompletta rader är tillgängliga, vilket är för få för att anpassa modellen.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="293" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="263" />
         <source>The outcome {column} has only one value in the complete rows.</source>
         <translation>Utfallet {column} har bara ett värde bland de kompletta raderna.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="295" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="265" />
         <source>The predictor {column} has the same value in every complete row.</source>
         <translation>Prediktorn {column} har samma värde i alla kompletta rader.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="297" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="267" />
         <source>Some predictors are exact linear combinations of others, so the model cannot be estimated.</source>
         <translation>Vissa prediktorer är exakta linjära kombinationer av andra, så modellen kan inte skattas.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="301" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="271" />
         <source>The model could not be fitted. Check for sparse outcomes, separation, or redundant predictors.</source>
         <translation>Modellen kunde inte anpassas. Kontrollera om utfallet är glest, om separation förekommer eller om prediktorer är redundanta.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="310" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="280" />
         <source>Odds ratio</source>
         <translation>Oddskvot</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="312" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="282" />
         <source>Rate ratio</source>
         <translation>Incidenskvot</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="315" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="285" />
         <source>Term</source>
         <translation>Term</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="316" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="286" />
         <source>Coefficient</source>
         <translation>Koefficient</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="318" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="288" />
         <source>95% effect CI</source>
         <translation>95 % KI för effekt</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="319" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="289" />
         <source>p-value</source>
         <translation>p-värde</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="350" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="320" />
         <source>Outcome coding: {zero} = 0; {one} = 1.</source>
         <translation>Utfallskodning: {zero} = 0; {one} = 1.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="357" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="327" />
         <source>&lt;b&gt;{model}&lt;/b&gt;</source>
         <translation>&lt;b&gt;{model}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="358" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="328" />
         <source>Target: &lt;b&gt;{target}&lt;/b&gt;</source>
         <translation>Målvariabel: &lt;b&gt;{target}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="359" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="329" />
         <source>Rows used: {used} ({dropped} dropped because of missing values)</source>
         <translation>Använda rader: {used} ({dropped} borttagna på grund av saknade värden)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="367" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="337" />
         <source>Log-likelihood = {value}; McFadden pseudo R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</source>
         <translation>Log-likelihood = {value}; McFaddens pseudo-R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="371" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="341" />
         <source>AIC = {aic}</source>
         <translation>AIC = {aic}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="375" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="345" />
         <source>Unknown</source>
         <translation>Okänd</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="376" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="346" />
         <source>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins; identical probabilities stay together.</source>
         <translation>Positiv händelse: {event} (kodad 1). ROC/AUC och kalibrering är diagnostik på anpassningsdata, inte prestanda på separat testdata. Alla {count} fullständiga rader som modellen anpassades till används. Kalibreringen använder upp till 10 kvantilgrupper; identiska sannolikheter hålls samman.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="383" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="353" />
         <source>Diagnostic interpretation</source>
         <translation>Tolkning av diagnostik</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="389" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="359" />
         <source>Calibration bin counts: {counts}.</source>
         <translation>Antal rader per kalibreringsgrupp: {counts}.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="397" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="367" />
         <source>Dispersion diagnostic unavailable because fitted counts or residuals are invalid.</source>
         <translation>Dispersionsdiagnostiken är inte tillgänglig eftersom de anpassade antalen eller residualerna är ogiltiga.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="401" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="371" />
         <source>Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial.</source>
         <translation>Pearson-dispersion = {value}, över riktvärdet {threshold}; överväg negativ binomial regression.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="405" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="375" />
         <source>Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion.</source>
         <translation>Pearson-dispersion = {value}; den överskrider inte riktvärdet {threshold} för överdispersion.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="414" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="384" />
         <source>This diagnostic is advisory; the selected model was not changed.</source>
         <translation>Diagnostiken är vägledande; den valda modellen ändrades inte.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="417" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="387" />
         <source>Fitted NB2 alpha = {alpha}; this is distinct from the advisory Pearson dispersion.</source>
         <translation>Skattat NB2-alfa = {alpha}; detta skiljer sig från den vägledande Pearsondispersionen.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="426" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="396" />
         <source>Charts describe the fitted rows (in-sample), not out-of-sample predictive performance.</source>
         <translation>Diagrammen beskriver de rader som modellen anpassats till, inte prediktionsförmågan för nya observationer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="429" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="399" />
         <source>Poisson Pearson residuals use variance equal to the fitted count.</source>
         <translation>Pearsonresidualerna för Poisson använder en varians som är lika med det anpassade antalet.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="432" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="402" />
         <source>Negative Binomial Pearson residuals use NB2 variance: fitted count + alpha * fitted count squared.</source>
         <translation>Pearsonresidualerna för negativ binomialregression använder NB2-varians: anpassat antal + alfa * anpassat antal i kvadrat.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="439" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="409" />
         <source>Coefficient estimates and dispersion diagnostics use all fitted rows.</source>
         <translation>Koefficientskattningar och dispersionsdiagnostik använder alla rader som modellen anpassats till.</translation>
     </message>
     <message>
-        <source>Logistic-model diagnostics</source>
-        <translation type="vanished">Diagnostik för logistisk regression</translation>
+        <location filename="..\..\services\analysis\regression_charts.py" line="164" />
+        <source>Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.</source>
+        <translation>Diagnostiken är inte tillgänglig: anpassade sannolikheter måste vara ändliga och mellan 0 och 1.</translation>
     </message>
     <message>
-        <source>Model coefficients</source>
-        <translation type="vanished">Modellkoefficienter</translation>
+        <location filename="..\..\services\analysis\regression_charts.py" line="169" />
+        <source>Diagnostics unavailable: outcomes must contain both binary classes.</source>
+        <translation>Diagnostiken är inte tillgänglig: utfallen måste innehålla båda binära klasserna.</translation>
     </message>
     <message>
-        <source>Model comments</source>
-        <translation type="vanished">Modellkommentarer</translation>
+        <location filename="..\..\services\analysis\regression_charts.py" line="173" />
+        <source>No logistic diagnostic data are available.</source>
+        <translation>Inga diagnostikdata för logistisk regression är tillgängliga.</translation>
     </message>
     <message>
-        <source>Count-model diagnostics</source>
-        <translation type="vanished">Diagnostik för räknemodellen</translation>
+        <location filename="..\..\services\analysis\regression_charts.py" line="176" />
+        <source>Predictor odds ratios with 95% confidence intervals</source>
+        <translation>Prediktorernas oddskvoter med 95 % konfidensintervall</translation>
     </message>
     <message>
-        <source>Linear regression</source>
-        <translation type="vanished">Linjär regression</translation>
+        <location filename="..\..\services\analysis\regression_charts.py" line="179" />
+        <source>Odds ratio (logarithmic scale; reference = 1)</source>
+        <translation>Oddskvot (logaritmisk skala; referens = 1)</translation>
     </message>
     <message>
-        <source>Logistic regression</source>
-        <translation type="vanished">Logistisk regression</translation>
+        <location filename="..\..\services\analysis\regression_charts.py" line="180" />
+        <source>No predictor effects: intercept-only model.</source>
+        <translation>Inga prediktoreffekter: modellen har endast intercept.</translation>
     </message>
     <message>
-        <source>Poisson regression</source>
-        <translation type="vanished">Poissonregression</translation>
+        <location filename="..\..\services\analysis\regression_charts.py" line="181" />
+        <source>Unavailable: non-finite, non-positive or invalid odds ratio / CI</source>
+        <translation>Ej tillgänglig: icke-ändlig, icke-positiv eller ogiltig oddskvot / konfidensintervall</translation>
     </message>
     <message>
-        <source>Negative binomial regression</source>
-        <translation type="vanished">Negativ binomial regression</translation>
+        <location filename="..\..\services\analysis\regression_charts.py" line="184" />
+        <source>ROC (in-sample)</source>
+        <translation>ROC (anpassningsdata)</translation>
     </message>
     <message>
-        <source>(Intercept)</source>
-        <translation type="vanished">(Intercept)</translation>
+        <location filename="..\..\services\analysis\regression_charts.py" line="185" />
+        <source>False positive rate</source>
+        <translation>Andel falskt positiva</translation>
     </message>
     <message>
-        <source>{model}: {target}</source>
-        <translation type="vanished">{model}: {target}</translation>
+        <location filename="..\..\services\analysis\regression_charts.py" line="186" />
+        <source>True positive rate</source>
+        <translation>Andel sant positiva</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\regression_charts.py" line="187" />
+        <source>AUC = {value} (in-sample)</source>
+        <translation>AUC = {value} (anpassningsdata)</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\regression_charts.py" line="190" />
+        <source>Calibration (in-sample)</source>
+        <translation>Kalibrering (anpassningsdata)</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\regression_charts.py" line="191" />
+        <source>Mean fitted event probability</source>
+        <translation>Genomsnittlig anpassad händelsesannolikhet</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\regression_charts.py" line="192" />
+        <source>Observed event fraction</source>
+        <translation>Observerad händelseandel</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\regression_charts.py" line="195" />
+        <source>{effect} [{low}, {high}]</source>
+        <translation>{effect} [{low}, {high}]</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\regression_charts.py" line="208" />
+        <source>Observed versus fitted counts</source>
+        <translation>Observerade mot anpassade antal</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\regression_charts.py" line="209" />
+        <source>Fitted count</source>
+        <translation>Anpassat antal</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\regression_charts.py" line="210" />
+        <source>Observed count</source>
+        <translation>Observerat antal</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\regression_charts.py" line="211" />
+        <source>Pearson residuals versus fitted counts</source>
+        <translation>Pearsonresidualer mot anpassade antal</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\regression_charts.py" line="212" />
+        <source>Pearson residual</source>
+        <translation>Pearsonresidual</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\regression_charts.py" line="217" />
+        <source>Charts show a deterministic sample of {shown} of {total} fitted rows.</source>
+        <translation>Diagrammen visar ett deterministiskt urval av {shown} av {total} rader som modellen anpassats till.</translation>
     </message>
 </context><context>
     <name>GroupComparisonConfigWidget</name>
@@ -4703,344 +4311,328 @@ Sparad till:
 </context><context>
     <name>GroupComparisonView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="87" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="88" />
         <source>This dataset has no numeric column to compare.</source>
         <translation>Detta dataset har ingen numerisk kolumn att jämföra.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="88" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="89" />
         <source>No suitable grouping column was found. A grouping column needs between {minimum} and {maximum} distinct values.</source>
         <translation>Ingen lämplig grupperingskolumn hittades. En grupperingskolumn måste ha mellan {minimum} och {maximum} distinkta värden.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="92" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="93" />
         <source>The selected grouping column has fewer than {minimum} groups with valid data.</source>
         <translation>Den valda grupperingskolumnen har färre än {minimum} grupper med giltiga data.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="95" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="96" />
         <source>The selected grouping column has more than {maximum} distinct values. Choose a column with fewer groups.</source>
         <translation>Den valda grupperingskolumnen har fler än {maximum} unika värden. Välj en kolumn med färre grupper.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="123" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="124" />
         <source>Group</source>
         <translation>Grupp</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="124" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="125" />
         <source>Count</source>
         <translation>Antal</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="125" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="126" />
         <source>Mean</source>
         <translation>Medelvärde</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="126" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="127" />
         <source>Median</source>
         <translation>Median</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="127" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="128" />
         <source>Std Dev</source>
         <translation>Standardavvikelse</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="128" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="129" />
         <source>Shapiro W</source>
         <translation>Shapiro W</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="129" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="130" />
         <source>Shapiro p</source>
         <translation>Shapiro p</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="130" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="131" />
         <source>Normal?</source>
         <translation>Normal?</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="175" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="176" />
         <source>N/A</source>
         <translation>Ej tillämpligt</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="177" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="178" />
         <source>No</source>
         <translation>Nej</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="178" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="179" />
         <source>Yes</source>
         <translation>Ja</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="209" />
-        <source>Distribution by group</source>
-        <translation>Fördelning per grupp</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="273" />
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="215" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="264" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="212" />
         <source>&lt;b&gt;Welch's t-test&lt;/b&gt; (does not assume equal variances):</source>
         <translation>&lt;b&gt;Welchs t-test&lt;/b&gt; (antar inte lika varianser):</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="286" />
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="216" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="277" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="213" />
         <source>&lt;b&gt;Student's t-test&lt;/b&gt; (assumes equal variances):</source>
         <translation>&lt;b&gt;Students t-test&lt;/b&gt; (antar lika varianser):</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="298" />
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="217" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="289" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="214" />
         <source>&lt;b&gt;Mann-Whitney U&lt;/b&gt;:</source>
         <translation>&lt;b&gt;Mann-Whitneys U-test&lt;/b&gt;:</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="312" />
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="221" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="303" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="218" />
         <source>&lt;b&gt;One-way ANOVA&lt;/b&gt; (assumes equal variances across groups):</source>
         <translation>&lt;b&gt;Envägs-ANOVA&lt;/b&gt; (antar lika varianser mellan grupper):</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="319" />
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="222" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="310" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="219" />
         <source>&lt;b&gt;Kruskal-Wallis&lt;/b&gt; (does not assume equal variances):</source>
         <translation>&lt;b&gt;Kruskal-Wallis&lt;/b&gt; (antar inte lika varianser):</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="287" />
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="274" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="278" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="265" />
         <source>t = {t}, df = {df}, p = {p}</source>
         <translation>t = {t}, df = {df}, p = {p}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="292" />
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="279" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="283" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="270" />
         <source>Mean difference: {diff} (95% CI: {low} to {high})</source>
         <translation>Skillnad i medelvärden: {diff} (95 % KI: {low} till {high})</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="284" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="275" />
         <source>Cohen's d: {d}</source>
         <translation>Cohens d: {d}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="299" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="290" />
         <source>U = {u}, p = {p}</source>
         <translation>U = {u}, p = {p}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="303" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="294" />
         <source>Rank-biserial correlation: {r}</source>
         <translation>Rank-biserial korrelation: {r}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="313" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="304" />
         <source>F = {f}, p = {p}</source>
         <translation>F = {f}, p = {p}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="317" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="308" />
         <source>Eta²: {eta}</source>
         <translation>Eta²: {eta}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="320" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="311" />
         <source>H = {h}, p = {p}</source>
         <translation>H = {h}, p = {p}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="324" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="315" />
         <source>Epsilon²: {eps}</source>
         <translation>Epsilon²: {eps}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="333" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="324" />
         <source>⚠ At least one group's data does not appear normally distributed (or normality could not be tested) → the non-parametric result above is likely more reliable.</source>
         <translation>⚠ Data för minst en grupp verkar inte vara normalfördelade (eller så kunde normalitet inte testas) → det icke-parametriska resultatet ovan är sannolikt mer tillförlitligt.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="338" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="329" />
         <source>→ Every group is consistent with a normal distribution → both results should agree. The parametric result above is typically more powerful.</source>
         <translation>→ Alla grupper är förenliga med en normalfördelning → båda resultaten bör ge samma slutsats. Det parametriska testet ovan har vanligtvis högre statistisk styrka.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="363" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="354" />
         <source>⚠ Group '{label}' has fewer than 2 observations: its standard deviation and any statistic derived from it could not be computed.</source>
         <translation>⚠ Grupp '{label}' har färre än 2 observationer: dess standardavvikelse och all statistik som bygger på den kunde inte beräknas.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="367" />
+        <location filename="..\..\gui\dialogs\analysis\group_comparison_view.py" line="358" />
         <source>⚠ Group '{label}' has fewer than 3 observations: its normality could not be tested.</source>
         <translation>⚠ Grupp '{label}' har färre än 3 observationer: dess normalitet kunde inte testas.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="412" />
+        <location filename="..\..\services\analysis\hypothesis_charts.py" line="94" />
+        <source>Distribution by group</source>
+        <translation>Fördelning per grupp</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="427" />
         <source>Group summary</source>
         <translation>Gruppsammanfattning</translation>
-    </message>
-    <message>
-        <source>Distribution</source>
-        <translation type="vanished">Fördelning</translation>
-    </message>
-    <message>
-        <source>Test results</source>
-        <translation type="vanished">Testresultat</translation>
     </message>
 </context><context>
     <name>HypothesisPresentation</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="242" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="246" />
         <source>Hypothesis Tests</source>
         <translation>Hypotesprövningar</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="243" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="247" />
         <source>{category} — {method}</source>
         <translation>{category} — {method}</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="244" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="248" />
         <source>Group comparison</source>
         <translation>Gruppjämförelse</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="245" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="249" />
         <source>Categorical association</source>
         <translation>Kategoriskt samband</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="246" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="250" />
         <source>Paired comparison</source>
         <translation>Parad jämförelse</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="247" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="251" />
         <source>Wilcoxon signed-rank test</source>
         <translation>Wilcoxons teckenrangtest</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="248" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="252" />
         <source>Friedman test</source>
         <translation>Friedmans test</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="249" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="253" />
         <source>Numeric variable:</source>
         <translation>Numerisk variabel:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="250" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="254" />
         <source>Grouping variable:</source>
         <translation>Grupperingsvariabel:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="251" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="255" />
         <source>Row variable:</source>
         <translation>Radvariabel:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="252" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="256" />
         <source>Column variable:</source>
         <translation>Kolumnvariabel:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="253" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="257" />
         <source>Measurement variables (selected order):</source>
         <translation>Mätvariabler (vald ordning):</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="254" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="258" />
         <source>Tests computed:</source>
         <translation>Genomförda test:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="255" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="259" />
         <source>Tests available:</source>
         <translation>Tillgängliga test:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="256" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="260" />
         <source>Welch's t-test</source>
         <translation>Welch's t-test</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="257" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="261" />
         <source>Student's t-test</source>
         <translation>Student's t-test</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="258" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="262" />
         <source>Mann-Whitney U</source>
         <translation>Mann-Whitney U</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="259" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="263" />
         <source>One-way ANOVA</source>
         <translation>Envägs-ANOVA</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="260" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="264" />
         <source>Kruskal-Wallis</source>
         <translation>Kruskal-Wallis</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="261" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="265" />
         <source>Pearson's chi-square test</source>
         <translation>Pearsons chi-två-test</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="262" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="266" />
         <source>Fisher's exact test</source>
         <translation>Fishers exakta test</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="263" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="267" />
         <source>Group summary</source>
         <translation>Gruppsammanfattning</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="264" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="268" />
         <source>Contingency table</source>
         <translation>Kontingenstabell</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="265" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="269" />
         <source>Measurement summary</source>
         <translation>Mätvärdessammanfattning</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="266" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="270" />
         <source>Test results</source>
         <translation>Testresultat</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="267" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="271" />
         <source>Group distributions</source>
         <translation>Gruppfördelningar</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="268" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="272" />
         <source>Association plots</source>
         <translation>Sambandsdiagram</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="269" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="273" />
         <source>Paired measurement plots</source>
         <translation>Diagram för parade mätvärden</translation>
-    </message>
-    <message>
-        <source>Wilcoxon signed-rank</source>
-        <translation type="vanished">Wilcoxons teckenrang</translation>
-    </message>
-    <message>
-        <source>Friedman</source>
-        <translation type="vanished">Friedman</translation>
     </message>
 </context><context>
     <name>HypothesisTestsConfigWidget</name>
@@ -5058,18 +4650,6 @@ Sparad till:
         <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="241" />
         <source>This test is not available for the selected dataset.</source>
         <translation>Detta test är inte tillgängligt för det valda datasetet.</translation>
-    </message>
-    <message>
-        <source>Group comparison</source>
-        <translation type="vanished">Jämförelse mellan grupper</translation>
-    </message>
-    <message>
-        <source>Chi-square independence</source>
-        <translation type="vanished">Chi-två-oberoende</translation>
-    </message>
-    <message>
-        <source>Paired comparison</source>
-        <translation type="vanished">Parat test</translation>
     </message>
 </context><context>
     <name>JoinAnalysisWidget</name>
@@ -5585,111 +5165,106 @@ Sparad till:
         <source>{count} selected - select at least {minimum}.</source>
         <translation>{count} markerade – markera minst {minimum}.</translation>
     </message>
-    <message>
-        <source>Isolation Forest</source>
-        <translation type="vanished">Isolation Forest</translation>
-    </message>
-    <message>
-        <source>Local Outlier Factor</source>
-        <translation type="vanished">Local Outlier Factor</translation>
-    </message>
 </context><context>
     <name>MultivariateOutliersView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="81" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="86" />
         <source>Multivariate screening needs at least {minimum} numeric columns.</source>
         <translation>Multivariat screening kräver minst {minimum} numeriska kolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="84" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="89" />
         <source>Select at least {minimum} features.</source>
         <translation>Markera minst {minimum} variabler.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="87" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="92" />
         <source>Choose two or more different numeric columns.</source>
         <translation>Välj två eller fler olika numeriska kolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="88" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="93" />
         <source>At least {minimum} complete rows are needed for multivariate screening.</source>
         <translation>Minst {minimum} fullständiga rader krävs för multivariat screening.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="91" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="96" />
         <source>The selected features have no variation across the complete rows.</source>
         <translation>De valda variablerna har ingen variation över de fullständiga raderna.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="94" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="99" />
         <source>Choose an expected outlier fraction between {minimum} and {maximum}.</source>
         <translation>Välj en förväntad andel avvikande observationer mellan {minimum} och {maximum}.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="97" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="102" />
         <source>Choose at least {minimum} LOF neighbors and fewer than the complete rows.</source>
         <translation>Välj minst {minimum} LOF-grannar och färre än antalet fullständiga rader.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="117" />
-        <source>PCA projection (visualization only)</source>
-        <translation>PCA-projektion (endast visualisering)</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="118" />
-        <source>PC1</source>
-        <translation>PC1</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="119" />
-        <source>PC2</source>
-        <translation>PC2</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="120" />
-        <source>Inliers</source>
-        <translation>Inomliggande observationer</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="195" />
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="121" />
-        <source>Potential outliers</source>
-        <translation>Potentiella avvikare</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="134" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="129" />
         <source>Features: {columns}</source>
         <translation>Variabler: {columns}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="139" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="134" />
         <source>Model comments</source>
         <translation>Modellkommentarer</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="154" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="147" />
         <source>standardized</source>
         <translation>standardiserade</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="154" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="147" />
         <source>not standardized</source>
         <translation>inte standardiserade</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="155" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="148" />
         <source>&lt;b&gt;{method}&lt;/b&gt; on {features} features ({scaling}): {outliers} of {used} complete rows ({percent}) are potential outliers. {dropped} rows were dropped for missing or infinite values.</source>
         <translation>&lt;b&gt;{method}&lt;/b&gt; på {features} variabler ({scaling}): {outliers} av {used} fullständiga rader ({percent}) är potentiella avvikare. {dropped} rader togs bort på grund av saknade eller oändliga värden.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="169" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="162" />
         <source>&lt;i&gt;Scores rank observations within this fit. Potential outliers are not necessarily errors.&lt;/i&gt;</source>
         <translation>&lt;i&gt;Poängen rangordnar observationerna inom denna modellanpassning. Potentiella avvikare är inte nödvändigtvis felaktiga värden.&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="176" />
-        <source>&lt;i&gt;The projection shows a deterministic sample of {count} rows.&lt;/i&gt;</source>
-        <translation type="vanished">&lt;i&gt;Projektionen visar ett deterministiskt urval av {count} rader.&lt;/i&gt;</translation>
+        <location filename="..\..\services\analysis\outliers_charts.py" line="121" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="191" />
+        <source>Potential outliers</source>
+        <translation>Potentiella avvikare</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="192" />
+        <source>No potential outliers</source>
+        <translation>Inga potentiella avvikare</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="200" />
+        <source>Potential outliers, most anomalous first</source>
+        <translation>Potentiella avvikare, mest avvikande först</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="201" />
+        <source>Row</source>
+        <translation>Rad</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1299" />
+        <location filename="..\..\services\analysis\report.py" line="2281" />
+        <location filename="..\..\services\analysis\report.py" line="1540" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="201" />
+        <source>Anomaly score</source>
+        <translation>Avvikelsepoäng</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\outliers_charts.py" line="105" />
+        <source>PCA projection (visualization only)</source>
+        <translation>PCA-projektion (endast visualisering)</translation>
     </message>
     <message>
         <location filename="..\..\services\analysis\outliers_charts.py" line="108" />
@@ -5697,39 +5272,19 @@ Sparad till:
         <translation>Projektionen visar ett deterministiskt urval av {count} rader.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="196" />
-        <source>No potential outliers</source>
-        <translation>Inga potentiella avvikare</translation>
+        <location filename="..\..\services\analysis\outliers_charts.py" line="118" />
+        <source>PC1</source>
+        <translation>PC1</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="204" />
-        <source>Potential outliers, most anomalous first</source>
-        <translation>Potentiella avvikare, mest avvikande först</translation>
+        <location filename="..\..\services\analysis\outliers_charts.py" line="119" />
+        <source>PC2</source>
+        <translation>PC2</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="205" />
-        <source>Row</source>
-        <translation>Rad</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1330" />
-        <location filename="..\..\services\analysis\report.py" line="2266" />
-        <location filename="..\..\services\analysis\report.py" line="1531" />
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="205" />
-        <source>Anomaly score</source>
-        <translation>Avvikelsepoäng</translation>
-    </message>
-    <message>
-        <source>Isolation Forest</source>
-        <translation type="vanished">Isolation Forest</translation>
-    </message>
-    <message>
-        <source>Local Outlier Factor</source>
-        <translation type="vanished">Local Outlier Factor</translation>
-    </message>
-    <message>
-        <source>PCA projection</source>
-        <translation type="vanished">PCA-projektion</translation>
+        <location filename="..\..\services\analysis\outliers_charts.py" line="120" />
+        <source>Inliers</source>
+        <translation>Inomliggande observationer</translation>
     </message>
 </context><context>
     <name>OutliersConfigWidget</name>
@@ -5778,168 +5333,138 @@ Sparad till:
         <source>Values whose absolute score exceeds this are flagged.</source>
         <translation>Värden vars absoluta poäng överstiger detta värde flaggas.</translation>
     </message>
-    <message>
-        <source>IQR (Tukey's fences)</source>
-        <translation type="vanished">IQR (Tukeys gränser)</translation>
-    </message>
-    <message>
-        <source>Z-score</source>
-        <translation type="vanished">Z-poäng</translation>
-    </message>
-    <message>
-        <source>Modified Z-score</source>
-        <translation type="vanished">Modifierad Z-poäng</translation>
-    </message>
 </context><context>
     <name>OutliersPresentation</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="316" />
-        <source>Outliers</source>
-        <translation>Extremvärden</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="317" />
-        <source>{category} — {method}</source>
-        <translation>{category} — {method}</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="318" />
-        <source>IQR (Tukey's fences)</source>
-        <translation>IQR (Tukeys gränser)</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="319" />
-        <source>Z-score</source>
-        <translation>Z-poäng</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="320" />
-        <source>Modified Z-score</source>
-        <translation>Modifierad Z-poäng</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="321" />
-        <source>Isolation Forest</source>
-        <translation>Isolation Forest</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="322" />
-        <source>Local Outlier Factor</source>
-        <translation>Local Outlier Factor</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="323" />
-        <source>Threshold:</source>
-        <translation>Tröskel:</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="324" />
-        <source>IQR multiplier:</source>
-        <translation>IQR-multiplikator:</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="325" />
-        <source>Score threshold:</source>
-        <translation>Poängtröskel:</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="326" />
-        <source>Screened columns:</source>
-        <translation>Analyserade kolumner:</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="327" />
-        <source>Selected detail column:</source>
-        <translation>Vald detaljkolumn:</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="328" />
-        <source>None</source>
-        <translation>Ingen</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="329" />
-        <source>Features:</source>
-        <translation>Variabler:</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="330" />
-        <source>Standardization:</source>
-        <translation>Standardisering:</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="331" />
-        <source>Standardized</source>
-        <translation>Standardiserade</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="332" />
-        <source>Not standardized</source>
-        <translation>Inte standardiserade</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="333" />
-        <source>Expected outlier fraction:</source>
-        <translation>Förväntad andel avvikare:</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="334" />
-        <source>LOF neighbors:</source>
-        <translation>LOF-grannar:</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="335" />
-        <source>Column summary</source>
-        <translation>Kolumnsammanfattning</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="336" />
-        <source>Model summary</source>
-        <translation>Modellsammanfattning</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="337" />
-        <source>Potential outliers</source>
-        <translation>Potentiella avvikare</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="338" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="350" />
+        <location filename="..\..\services\analysis\outliers_charts.py" line="75" />
         <source>Column distribution</source>
         <translation>Kolumnfördelning</translation>
     </message>
     <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="328" />
+        <source>Outliers</source>
+        <translation>Extremvärden</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="329" />
+        <source>{category} — {method}</source>
+        <translation>{category} — {method}</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="330" />
+        <source>IQR (Tukey's fences)</source>
+        <translation>IQR (Tukeys gränser)</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="331" />
+        <source>Z-score</source>
+        <translation>Z-poäng</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="332" />
+        <source>Modified Z-score</source>
+        <translation>Modifierad Z-poäng</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="333" />
+        <source>Isolation Forest</source>
+        <translation>Isolation Forest</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="334" />
+        <source>Local Outlier Factor</source>
+        <translation>Local Outlier Factor</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="335" />
+        <source>Threshold:</source>
+        <translation>Tröskel:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="336" />
+        <source>IQR multiplier:</source>
+        <translation>IQR-multiplikator:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="337" />
+        <source>Score threshold:</source>
+        <translation>Poängtröskel:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="338" />
+        <source>Screened columns:</source>
+        <translation>Analyserade kolumner:</translation>
+    </message>
+    <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="339" />
-        <source>Column distributions</source>
-        <translation>Kolumnfördelningar</translation>
+        <source>Selected detail column:</source>
+        <translation>Vald detaljkolumn:</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="340" />
-        <source>Outlier projection</source>
-        <translation>Projektion av avvikare</translation>
+        <source>None</source>
+        <translation>Ingen</translation>
     </message>
     <message>
-        <source>Column details</source>
-        <translation type="vanished">Kolumndetaljer</translation>
-    </message>
-</context><context>
-    <name>OutliersView</name>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="192" />
-        <source>Inside the fences</source>
-        <translation>Inom gränserna</translation>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="341" />
+        <source>Features:</source>
+        <translation>Variabler:</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="193" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="342" />
+        <source>Standardization:</source>
+        <translation>Standardisering:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="343" />
+        <source>Standardized</source>
+        <translation>Standardiserade</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="344" />
+        <source>Not standardized</source>
+        <translation>Inte standardiserade</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="345" />
+        <source>Expected outlier fraction:</source>
+        <translation>Förväntad andel avvikare:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="346" />
+        <source>LOF neighbors:</source>
+        <translation>LOF-grannar:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="347" />
+        <source>Column summary</source>
+        <translation>Kolumnsammanfattning</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="348" />
+        <source>Model summary</source>
+        <translation>Modellsammanfattning</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="349" />
         <source>Potential outliers</source>
         <translation>Potentiella avvikare</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="194" />
-        <source>Count</source>
-        <translation>Antal</translation>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="351" />
+        <source>Column distributions</source>
+        <translation>Kolumnfördelningar</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="201" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="352" />
+        <source>Outlier projection</source>
+        <translation>Projektion av avvikare</translation>
+    </message>
+</context><context>
+    <name>OutliersView</name>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="207" />
         <source>Flagged values are potential outliers, not necessarily errors - check them before excluding anything.</source>
         <translation>Flaggade värden är potentiella avvikare, inte nödvändigtvis felaktiga värden – kontrollera dem innan något exkluderas.</translation>
     </message>
@@ -5969,25 +5494,25 @@ Sparad till:
         <translation>Ingen spridning</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1332" />
-        <location filename="..\..\services\analysis\report.py" line="2269" />
-        <location filename="..\..\services\analysis\report.py" line="1534" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1301" />
+        <location filename="..\..\services\analysis\report.py" line="2284" />
+        <location filename="..\..\services\analysis\report.py" line="1543" />
         <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="330" />
         <source>Distance past fence</source>
         <translation>Avstånd förbi gränsen</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1333" />
-        <location filename="..\..\services\analysis\report.py" line="2270" />
-        <location filename="..\..\services\analysis\report.py" line="1535" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1302" />
+        <location filename="..\..\services\analysis\report.py" line="2285" />
+        <location filename="..\..\services\analysis\report.py" line="1544" />
         <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="332" />
         <source>z</source>
         <translation>z</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1334" />
-        <location filename="..\..\services\analysis\report.py" line="2271" />
-        <location filename="..\..\services\analysis\report.py" line="1536" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1303" />
+        <location filename="..\..\services\analysis\report.py" line="2286" />
+        <location filename="..\..\services\analysis\report.py" line="1545" />
         <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="334" />
         <source>Modified z</source>
         <translation>Modifierad z</translation>
@@ -6053,101 +5578,96 @@ Sparad till:
         <translation>Övre gräns</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="496" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="497" />
         <source>&lt;b&gt;{column}&lt;/b&gt; - {method}, threshold {threshold}</source>
         <translation>&lt;b&gt;{column}&lt;/b&gt; – {method}, tröskel {threshold}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="508" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="509" />
         <source>Fences: {lower} to {upper}</source>
         <translation>Gränser: {lower} till {upper}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="511" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="512" />
         <source>{count} potential outliers ({percent}): {low} low, {high} high</source>
         <translation>{count} potentiella avvikare ({percent}): {low} låga, {high} höga</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="525" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="526" />
         <source>At least {minimum} values are needed to screen a column.</source>
         <translation>Minst {minimum} värden krävs för att screena en kolumn.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="529" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="530" />
         <source>All values are identical, so no value can stand out.</source>
         <translation>Alla värden är identiska, så inget värde kan sticka ut.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="536" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="537" />
         <source>Q1 = {q1}, Q3 = {q3}, IQR = {iqr}</source>
         <translation>Q1 = {q1}, Q3 = {q3}, IQR = {iqr}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="542" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="543" />
         <source>Mean = {mean}, standard deviation = {std}</source>
         <translation>Medelvärde = {mean}, standardavvikelse = {std}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="545" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="546" />
         <source>&lt;i&gt;Extreme values inflate the mean and standard deviation themselves. The modified Z-score is more robust.&lt;/i&gt;</source>
         <translation>&lt;i&gt;Extrema värden påverkar själva medelvärdet och standardavvikelsen. Det modifierade Z-värdet är mer robust.&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="553" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="554" />
         <source>&lt;i&gt;With {count} values no |z| can exceed {bound}, so this threshold can't flag anything.&lt;/i&gt;</source>
         <translation>&lt;i&gt;Med {count} värden kan inget |z|-värde överstiga {bound}, så denna tröskel kan inte identifiera några avvikare.&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="561" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="562" />
         <source>Median = {median}, MAD = {mad}</source>
         <translation>Median = {median}, MAD = {mad}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="567" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="568" />
         <source>&lt;i&gt;The MAD is zero (more than half the values are identical), so the scaled mean absolute deviation is used instead.&lt;/i&gt;</source>
         <translation>&lt;i&gt;MAD är noll (mer än hälften av värdena är identiska), så den skalade genomsnittliga absoluta avvikelsen används i stället.&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="597" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="598" />
         <source>&lt;b&gt;No potential outliers&lt;/b&gt;</source>
         <translation>&lt;b&gt;Inga potentiella avvikare&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="599" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="600" />
         <source>&lt;b&gt;The {shown} most extreme of {total} potential outliers&lt;/b&gt;</source>
         <translation>&lt;b&gt;De {shown} mest extrema av {total} potentiella avvikare&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="602" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="603" />
         <source>&lt;b&gt;Potential outliers, most extreme first&lt;/b&gt;</source>
         <translation>&lt;b&gt;Potentiella avvikare, mest extrema först&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2277" />
-        <location filename="..\..\services\analysis\report.py" line="1551" />
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="609" />
+        <location filename="..\..\services\analysis\report.py" line="2292" />
+        <location filename="..\..\services\analysis\report.py" line="1560" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="610" />
         <source>Row</source>
         <translation>Rad</translation>
     </message>
     <message>
-        <source>Distribution</source>
-        <translation type="vanished">Fördelning</translation>
+        <location filename="..\..\services\analysis\outliers_charts.py" line="72" />
+        <source>Inside the fences</source>
+        <translation>Inom gränserna</translation>
     </message>
     <message>
-        <source>Column details</source>
-        <translation type="vanished">Kolumndetaljer</translation>
+        <location filename="..\..\services\analysis\outliers_charts.py" line="73" />
+        <source>Potential outliers</source>
+        <translation>Potentiella avvikare</translation>
     </message>
     <message>
-        <source>IQR (Tukey's fences)</source>
-        <translation type="vanished">IQR (Tukeys gränser)</translation>
-    </message>
-    <message>
-        <source>Z-score</source>
-        <translation type="vanished">Z-poäng</translation>
-    </message>
-    <message>
-        <source>Modified Z-score</source>
-        <translation type="vanished">Modifierad Z-poäng</translation>
+        <location filename="..\..\services\analysis\outliers_charts.py" line="74" />
+        <source>Count</source>
+        <translation>Antal</translation>
     </message>
 </context><context>
     <name>OverviewView</name>
@@ -6267,14 +5787,14 @@ Sparad till:
         <translation>Unika</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1181" />
+        <location filename="..\..\services\analysis\report.py" line="1190" />
         <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="237" />
         <source>Sample</source>
         <translation>Urval</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2119" />
-        <location filename="..\..\services\analysis\report.py" line="1166" />
+        <location filename="..\..\services\analysis\report.py" line="2133" />
+        <location filename="..\..\services\analysis\report.py" line="1175" />
         <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="242" />
         <source>First ({count})</source>
         <translation>Första ({count})</translation>
@@ -6285,14 +5805,14 @@ Sparad till:
         <translation>Sista (otillgängligt)</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2123" />
+        <location filename="..\..\services\analysis\report.py" line="2137" />
         <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="254" />
         <source>Last sample is unavailable in this captured result.</source>
         <translation>Det sista urvalet är inte tillgängligt i det här sparade resultatet.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2125" />
-        <location filename="..\..\services\analysis\report.py" line="1169" />
+        <location filename="..\..\services\analysis\report.py" line="2139" />
+        <location filename="..\..\services\analysis\report.py" line="1178" />
         <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="258" />
         <source>Last ({count})</source>
         <translation>Sista ({count})</translation>
@@ -6338,32 +5858,32 @@ Sparad till:
         <translation>Annan</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1178" />
+        <location filename="..\..\services\analysis\report.py" line="1187" />
         <source>Sample group</source>
         <translation>Urvalsgrupp</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="388" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="400" />
         <source>Count</source>
         <translation>Antal</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="389" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="401" />
         <source>Fraction</source>
         <translation>Andel</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="390" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="402" />
         <source>Metric</source>
         <translation>Mått</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="391" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="403" />
         <source>Missing fraction</source>
         <translation>Andel saknade värden</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="392" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="404" />
         <source>Section</source>
         <translation>Avsnitt</translation>
     </message>
@@ -6399,179 +5919,148 @@ Sparad till:
         <source>{count} selected - select at least {minimum}.</source>
         <translation>{count} markerade – markera minst {minimum}.</translation>
     </message>
-    <message>
-        <source>Standardize features</source>
-        <translation type="vanished">Standardisera variabler</translation>
-    </message>
-    <message>
-        <source>Features</source>
-        <translation type="vanished">Variabler</translation>
-    </message>
 </context><context>
     <name>PCAPresentation</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="341" />
-        <source>PCA</source>
-        <translation>PCA</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="342" />
-        <source>Feature loadings</source>
-        <translation>Variabelladdningar</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="343" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="355" />
+        <location filename="..\..\services\analysis\pca_charts.py" line="86" />
         <source>Explained variance</source>
         <translation>Förklarad varians</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="344" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="353" />
+        <source>PCA</source>
+        <translation>PCA</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="354" />
+        <source>Feature loadings</source>
+        <translation>Variabelladdningar</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="356" />
         <source>Model summary</source>
         <translation>Modellsammanfattning</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="345" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="357" />
         <source>PCA plots</source>
         <translation>PCA-diagram</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="346" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="358" />
         <source>Features:</source>
         <translation>Variabler:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="347" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="359" />
         <source>Standardization:</source>
         <translation>Standardisering:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="348" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="360" />
         <source>Standardized</source>
         <translation>Standardiserade</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="349" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="361" />
         <source>Not standardized</source>
         <translation>Inte standardiserade</translation>
     </message>
 </context><context>
     <name>PCAView</name>
     <message>
-        <location filename="..\..\services\analysis\pca_charts.py" line="94" />
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="44" />
-        <source>PC1 ({variance})</source>
-        <translation>PC1 ({variance})</translation>
-    </message>
-    <message>
-        <location filename="..\..\services\analysis\pca_charts.py" line="97" />
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="45" />
-        <source>PC2 ({variance})</source>
-        <translation>PC2 ({variance})</translation>
-    </message>
-    <message>
         <location filename="..\..\services\analysis\pca_charts.py" line="84" />
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="39" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="43" />
         <source>Scree plot</source>
         <translation>Scree-diagram</translation>
     </message>
     <message>
         <location filename="..\..\services\analysis\pca_charts.py" line="87" />
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="40" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="44" />
         <source>Cumulative</source>
         <translation>Kumulativ</translation>
     </message>
     <message>
         <location filename="..\..\services\analysis\pca_charts.py" line="88" />
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="41" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="45" />
         <source>Component</source>
         <translation>Komponent</translation>
     </message>
     <message>
         <location filename="..\..\services\analysis\pca_charts.py" line="89" />
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="42" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="46" />
         <source>Explained variance (%)</source>
         <translation>Förklarad varians (%)</translation>
     </message>
     <message>
         <location filename="..\..\services\analysis\pca_charts.py" line="91" />
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="43" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="47" />
         <source>PC1 vs PC2</source>
         <translation>PC1 mot PC2</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="124" />
-        <source>A principal component analysis needs at least {minimum} numeric columns.</source>
-        <translation>En principalkomponentanalys kräver minst {minimum} numeriska kolumner.</translation>
+        <location filename="..\..\services\analysis\pca_charts.py" line="94" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="48" />
+        <source>PC1 ({variance})</source>
+        <translation>PC1 ({variance})</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="127" />
-        <source>Select at least {minimum} features.</source>
-        <translation>Markera minst {minimum} variabler.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="130" />
-        <source>Choose two or more different numeric columns.</source>
-        <translation>Välj två eller fler olika numeriska kolumner.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="131" />
-        <source>At least {minimum} complete rows are needed for principal component analysis.</source>
-        <translation>Minst {minimum} fullständiga rader krävs för principalkomponentanalys.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="134" />
-        <source>The selected features have no variation across the complete rows.</source>
-        <translation>De valda variablerna har ingen variation över de fullständiga raderna.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="140" />
-        <source>standardized</source>
-        <translation>standardiserade</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="140" />
-        <source>not standardized</source>
-        <translation>inte standardiserade</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="141" />
-        <source>&lt;b&gt;{features} features&lt;/b&gt;, {scaling}. PCA used {used} of {total} rows ({dropped} dropped because a selected value was missing or infinite).</source>
-        <translation>&lt;b&gt;{features} variabler&lt;/b&gt;, {scaling}. PCA använde {used} av {total} rader ({dropped} borttagna eftersom ett valt värde saknades eller var oändligt).</translation>
+        <location filename="..\..\services\analysis\pca_charts.py" line="97" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="49" />
+        <source>PC2 ({variance})</source>
+        <translation>PC2 ({variance})</translation>
     </message>
     <message>
         <location filename="..\..\services\analysis\pca_charts.py" line="75" />
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="46" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="50" />
         <source>The PC1-vs-PC2 plot shows a deterministic sample of {count} rows.</source>
         <translation>PC1-mot-PC2-diagrammet visar ett deterministiskt urval av {count} rader.</translation>
     </message>
     <message>
-        <source>&lt;i&gt;The PC1-vs-PC2 plot shows a deterministic sample of {count} rows.&lt;/i&gt;</source>
-        <translation type="vanished">&lt;i&gt;PC1-mot-PC2-diagrammet visar ett deterministiskt urval av {count} rader.&lt;/i&gt;</translation>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="129" />
+        <source>A principal component analysis needs at least {minimum} numeric columns.</source>
+        <translation>En principalkomponentanalys kräver minst {minimum} numeriska kolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="200" />
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="132" />
+        <source>Select at least {minimum} features.</source>
+        <translation>Markera minst {minimum} variabler.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="135" />
+        <source>Choose two or more different numeric columns.</source>
+        <translation>Välj två eller fler olika numeriska kolumner.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="136" />
+        <source>At least {minimum} complete rows are needed for principal component analysis.</source>
+        <translation>Minst {minimum} fullständiga rader krävs för principalkomponentanalys.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="139" />
+        <source>The selected features have no variation across the complete rows.</source>
+        <translation>De valda variablerna har ingen variation över de fullständiga raderna.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="145" />
+        <source>standardized</source>
+        <translation>standardiserade</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="145" />
+        <source>not standardized</source>
+        <translation>inte standardiserade</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="146" />
+        <source>&lt;b&gt;{features} features&lt;/b&gt;, {scaling}. PCA used {used} of {total} rows ({dropped} dropped because a selected value was missing or infinite).</source>
+        <translation>&lt;b&gt;{features} variabler&lt;/b&gt;, {scaling}. PCA använde {used} av {total} rader ({dropped} borttagna eftersom ett valt värde saknades eller var oändligt).</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="199" />
         <source>Feature</source>
         <translation>Variabel</translation>
-    </message>
-    <message>
-        <source>PCA plots</source>
-        <translation type="vanished">PCA-diagram</translation>
-    </message>
-    <message>
-        <source>Model comments</source>
-        <translation type="vanished">Modellkommentarer</translation>
-    </message>
-    <message>
-        <source>Explained variance</source>
-        <translation type="vanished">Förklarad varians</translation>
-    </message>
-    <message>
-        <source>Feature loadings</source>
-        <translation type="vanished">Variabelladdningar</translation>
-    </message>
-    <message>
-        <source>Features: {columns}</source>
-        <translation type="vanished">Variabler: {columns}</translation>
     </message>
 </context><context>
     <name>PairedComparisonConfigWidget</name>
@@ -6618,168 +6107,154 @@ Sparad till:
 </context><context>
     <name>PairedComparisonView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="42" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="45" />
         <source>Select measurement columns and click Apply to run the paired test.</source>
         <translation>Välj mätkolumner och klicka på Verkställ för att köra det parade testet.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="62" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="65" />
         <source>Wilcoxon signed-rank test</source>
         <translation>Wilcoxons teckenrangtest</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="64" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="67" />
         <source>Friedman test</source>
         <translation>Friedmans test</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="69" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="72" />
         <source>&lt;b&gt;{test}&lt;/b&gt;</source>
         <translation>&lt;b&gt;{test}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="70" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="73" />
         <source>Measurement columns: {columns}</source>
         <translation>Mätkolumner: {columns}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="71" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="74" />
         <source>Test statistic = {statistic}, p = {p}</source>
         <translation>Teststatistik = {statistic}, p = {p}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="75" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="78" />
         <source>Complete subjects: {complete} of {total}; excluded for missing values: {excluded}</source>
         <translation>Kompletta individer: {complete} av {total}; exkluderade på grund av saknade värden: {excluded}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="82" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="85" />
         <source>Kendall's W: {effect}</source>
         <translation>Kendalls W: {effect}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="96" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="99" />
         <source>Rows are treated as paired subjects across the selected measurement columns.</source>
         <translation>Raderna behandlas som parade individer mellan de valda mätkolumnerna.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="97" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="100" />
         <source>Occasions follow the selected column order; chronological order is not inferred.</source>
         <translation>Mättillfällena följer den valda kolumnordningen; kronologisk ordning härleds inte.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="98" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="101" />
         <source>Boxplots use all complete subjects; whiskers show the minimum and maximum.</source>
         <translation>Lådagrammen använder alla individer med kompletta mätningar; spröten visar minimum och maximum.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="102" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="105" />
         <source>Trajectories show a deterministic sample of {shown} of {total} complete subjects.</source>
         <translation>Mätförloppen visar ett deterministiskt urval av {shown} av {total} individer med kompletta mätningar.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="107" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="110" />
         <source>Tables, boxplots and tests use all complete subjects.</source>
         <translation>Tabeller, lådagram och tester använder alla individer med kompletta mätningar.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="130" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="133" />
         <source>Measurement</source>
         <translation>Mätning</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="131" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="134" />
         <source>Count</source>
         <translation>Antal</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="132" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="135" />
         <source>Mean</source>
         <translation>Medelvärde</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="133" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="136" />
         <source>Median</source>
         <translation>Median</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="134" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="137" />
         <source>Std Dev</source>
         <translation>Standardavvikelse</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="135" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="138" />
         <source>Q1</source>
         <translation>Q1</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="136" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="139" />
         <source>Q3</source>
         <translation>Q3</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="172" />
-        <source>Distribution by occasion</source>
-        <translation>Fördelning per mättillfälle</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1136" />
-        <location filename="..\..\services\analysis\report.py" line="2379" />
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="174" />
-        <source>Subject trajectories</source>
-        <translation>Individuella mätförlopp</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1137" />
-        <location filename="..\..\services\analysis\report.py" line="2380" />
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="175" />
-        <source>Value</source>
-        <translation>Värde</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1138" />
-        <location filename="..\..\services\analysis\report.py" line="2381" />
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="176" />
-        <source>Measurement occasion</source>
-        <translation>Mättillfälle</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="193" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="190" />
         <source>Select at least two numeric measurement columns.</source>
         <translation>Välj minst två numeriska mätkolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="194" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="191" />
         <source>The selected measurement columns are not valid numeric columns.</source>
         <translation>De valda mätkolumnerna är inte giltiga numeriska kolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="197" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="194" />
         <source>There are not enough subjects with complete measurements for this paired test.</source>
         <translation>Det finns inte tillräckligt många individer med kompletta mätningar för det parade testet.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="200" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="197" />
         <source>The two measurements are identical for every complete subject; the Wilcoxon test is undefined.</source>
         <translation>De två mätningarna är identiska för alla individer med kompletta värden; Wilcoxontestet är odefinierat.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="203" />
+        <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="200" />
         <source>The selected measurements do not vary across occasions, so the Friedman test is undefined.</source>
         <translation>De valda mätningarna varierar inte mellan tillfällena, så Friedmans test är odefinierat.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="413" />
+        <location filename="..\..\services\analysis\hypothesis_charts.py" line="113" />
+        <source>Distribution by occasion</source>
+        <translation>Fördelning per mättillfälle</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\hypothesis_charts.py" line="114" />
+        <source>Subject trajectories</source>
+        <translation>Individuella mätförlopp</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\hypothesis_charts.py" line="115" />
+        <source>Value</source>
+        <translation>Värde</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\hypothesis_charts.py" line="116" />
+        <source>Measurement occasion</source>
+        <translation>Mättillfälle</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="428" />
         <source>Measurement summary</source>
         <translation>Mätsammanfattning</translation>
-    </message>
-    <message>
-        <source>Paired measurements</source>
-        <translation type="vanished">Parade mätningar</translation>
-    </message>
-    <message>
-        <source>Test results</source>
-        <translation type="vanished">Testresultat</translation>
     </message>
 </context><context>
     <name>QtDialogService</name>
@@ -7185,430 +6660,406 @@ Tips: {error_hint}</translation>
         <source>{count} selected (at most {maximum}).</source>
         <translation>{count} markerade (högst {maximum}).</translation>
     </message>
-    <message>
-        <source>Cox proportional-hazards regression</source>
-        <translation type="vanished">Cox-regression med proportionella hazarder</translation>
-    </message>
 </context><context>
     <name>RegressionPresentation</name>
     <message>
-        <location filename="..\..\services\analysis\presentation.py" line="1010" />
-        <location filename="..\..\services\analysis\presentation.py" line="1004" />
-        <location filename="..\..\services\analysis\presentation.py" line="999" />
+        <location filename="..\..\services\analysis\presentation.py" line="1020" />
+        <location filename="..\..\services\analysis\presentation.py" line="1014" />
+        <location filename="..\..\services\analysis\presentation.py" line="1009" />
         <source>(Intercept)</source>
         <translation>(Intercept)</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="297" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="309" />
         <source>Regression</source>
         <translation>Regression</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="298" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="310" />
         <source>{category} — {model}</source>
         <translation>{category} — {model}</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="299" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="311" />
         <source>Linear regression</source>
         <translation>Linjär regression</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="300" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="312" />
         <source>Logistic regression</source>
         <translation>Logistisk regression</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="301" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="313" />
         <source>Poisson regression</source>
         <translation>Poissonregression</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="302" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="314" />
         <source>Negative binomial regression</source>
         <translation>Negativ binomial regression</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="303" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="315" />
         <source>Cox proportional-hazards regression</source>
         <translation>Cox-regression med proportionella risker</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="304" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="316" />
         <source>Outcome:</source>
         <translation>Utfall:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="305" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="317" />
         <source>Duration:</source>
         <translation>Varaktighet:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="306" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="318" />
         <source>Event:</source>
         <translation>Händelse:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="307" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="319" />
         <source>Predictors:</source>
         <translation>Prediktorer:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="308" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="320" />
         <source>Modeled terms:</source>
         <translation>Modelltermer:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="309" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="321" />
         <source>Reference levels:</source>
         <translation>Referensnivåer:</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="310" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="322" />
         <source>Coefficients</source>
         <translation>Koefficienter</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="311" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="323" />
         <source>Model summary</source>
         <translation>Modellsammanfattning</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="312" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="324" />
         <source>Linear diagnostics</source>
         <translation>Diagnostik för linjär modell</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="313" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="325" />
         <source>Logistic diagnostics</source>
         <translation>Diagnostik för logistisk modell</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="314" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="326" />
         <source>Count-model diagnostics</source>
         <translation>Diagnostik för räknemodell</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="315" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="327" />
         <source>Survival charts</source>
         <translation>Överlevnadsdiagram</translation>
     </message>
 </context><context>
     <name>RegressionView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="198" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="184" />
         <source>A linear regression needs at least one numeric column to use as the target.</source>
         <translation>En linjär regression kräver minst en numerisk kolumn som målvariabel.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="200" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="186" />
         <source>Select one or more predictors and click Apply.</source>
         <translation>Markera en eller flera prediktorer och klicka på Tillämpa.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="202" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="188" />
         <source>Select at most {maximum} predictors.</source>
         <translation>Markera högst {maximum} prediktorer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="204" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="190" />
         <source>Choose a numeric target and one or more other columns as predictors.</source>
         <translation>Välj en numerisk målvariabel och en eller flera andra kolumner som prediktorer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="206" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="192" />
         <source>The model would have more than {maximum} terms once the categorical predictors are dummy-coded. Remove predictors, or use categorical predictors with fewer levels.</source>
         <translation>Modellen skulle ha fler än {maximum} termer när de kategoriska prediktorerna dummy-kodas. Ta bort prediktorer eller använd kategoriska prediktorer med färre nivåer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="211" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="197" />
         <source>Only {count} rows have values in the target and every predictor, which is too few to fit this model.</source>
         <translation>Endast {count} rader har värden för målvariabeln och alla prediktorer, vilket är för få för att anpassa denna modell.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="216" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="202" />
         <source>The target {column} has the same value in every row used, so there is nothing to explain.</source>
         <translation>Målvariabeln {column} har samma värde i varje använd rad, så det finns inget att förklara.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="220" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="206" />
         <source>The predictor {column} has the same value in every row used, so its effect can't be estimated.</source>
         <translation>Prediktorn {column} har samma värde i varje använd rad, så dess effekt kan inte skattas.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="224" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="210" />
         <source>Some predictors are exact linear combinations of others (perfect multicollinearity), so the coefficients can't be estimated. Remove the redundant predictors.</source>
         <translation>Vissa prediktorer är exakta linjära kombinationer av andra (perfekt multikollinearitet), så koefficienterna kan inte skattas. Ta bort de redundanta prediktorerna.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="235" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="221" />
         <source>High multicollinearity (VIF above {threshold}) for: {terms}. Their coefficients and p-values are unstable.</source>
         <translation>Hög multikollinearitet (VIF över {threshold}) för: {terms}. Deras koefficienter och p-värden är instabila.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="240" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="226" />
         <source>The residual variance is not constant (heteroscedasticity), so standard errors and p-values may be unreliable.</source>
         <translation>Residualvariansen är inte konstant (heteroskedasticitet), så standardfel och p-värden kan vara otillförlitliga.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="245" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="231" />
         <source>The residuals are not normally distributed. With few rows, p-values and confidence intervals may be unreliable.</source>
         <translation>Residualerna är inte normalfördelade. Med få rader kan p-värden och konfidensintervall vara otillförlitliga.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="250" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="236" />
         <source>The residuals appear autocorrelated in row order, so standard errors may be too small.</source>
         <translation>Residualerna verkar vara autokorrelerade i radordningen, så standardfelen kan vara för små.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="288" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="266" />
         <source>Linear regression</source>
         <translation>Linjär regression</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="289" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="267" />
         <source>Target: &lt;b&gt;{target}&lt;/b&gt;</source>
         <translation>Målvariabel: &lt;b&gt;{target}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="290" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="268" />
         <source>Rows used: {used} ({dropped} dropped because of missing values)</source>
         <translation>Använda rader: {used} ({dropped} borttagna på grund av saknade värden)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="293" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="271" />
         <source>R&lt;sup&gt;2&lt;/sup&gt; = {r2}, adjusted R&lt;sup&gt;2&lt;/sup&gt; = {adjusted}</source>
         <translation>R&lt;sup&gt;2&lt;/sup&gt; = {r2}, justerat R&lt;sup&gt;2&lt;/sup&gt; = {adjusted}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="296" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="274" />
         <source>F({df_model}, {df_residual}) = {f}, p {p}</source>
         <translation>F({df_model}, {df_residual}) = {f}, p {p}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="302" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="280" />
         <source>RMSE = {rmse}, AIC = {aic}</source>
         <translation>RMSE = {rmse}, AIC = {aic}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="306" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="284" />
         <source>&lt;b&gt;Diagnostics&lt;/b&gt;</source>
         <translation>&lt;b&gt;Diagnostik&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="311" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="289" />
         <source>⚠ {warning}</source>
         <translation>⚠ {warning}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="315" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="293" />
         <source>&lt;b&gt;Warnings&lt;/b&gt;</source>
         <translation>&lt;b&gt;Varningar&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="325" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="303" />
         <source>Breusch-Pagan: LM = {statistic}, p {p} - {verdict}</source>
         <translation>Breusch-Pagan: LM = {statistic}, p {p} – {verdict}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="328" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="306" />
         <source>non-constant residual variance</source>
         <translation>icke-konstant residualvarians</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="330" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="308" />
         <source>no evidence of non-constant residual variance</source>
         <translation>inga belägg för icke-konstant residualvarians</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="332" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="310" />
         <source>Jarque-Bera: JB = {statistic}, p {p} - {verdict}</source>
         <translation>Jarque-Bera: JB = {statistic}, p = {p} – {verdict}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="335" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="313" />
         <source>residuals not normally distributed</source>
         <translation>residualerna är inte normalfördelade</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="337" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="315" />
         <source>residuals consistent with a normal distribution</source>
         <translation>residualerna är förenliga med en normalfördelning</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="342" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="320" />
         <source>&lt;i&gt;With many rows even negligible deviations from normality are significant. Judge by the Q-Q plot instead.&lt;/i&gt;</source>
         <translation>&lt;i&gt;Vid många observationer blir även mycket små avvikelser från normalfördelning statistiskt signifikanta. Bedöm därför normaliteten utifrån Q-Q-diagrammet i stället.&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="349" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="327" />
         <source>Durbin-Watson = {statistic} - {verdict}</source>
         <translation>Durbin-Watson = {statistic} – {verdict}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="353" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="331" />
         <source>&lt;i&gt;Durbin-Watson is only meaningful when the row order is meaningful (e.g. rows sorted by time).&lt;/i&gt;</source>
         <translation>&lt;i&gt;Durbin-Watson är endast meningsfullt när radordningen är meningsfull (t.ex. när raderna är sorterade efter tid).&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="356" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="334" />
         <source>Largest VIF = {vif} - {verdict}</source>
         <translation>Största VIF = {vif} – {verdict}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="358" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="336" />
         <source>high multicollinearity</source>
         <translation>hög multikollinearitet</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="360" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="338" />
         <source>no problematic multicollinearity</source>
         <translation>ingen problematisk multikollinearitet</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="368" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="346" />
         <source>positive autocorrelation</source>
         <translation>positiv autokorrelation</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="370" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="348" />
         <source>negative autocorrelation</source>
         <translation>negativ autokorrelation</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="371" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="349" />
         <source>no evidence of autocorrelation</source>
         <translation>inga belägg för autokorrelation</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="418" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="396" />
         <source>Term</source>
         <translation>Term</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="419" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="397" />
         <source>Estimate</source>
         <translation>Skattning</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="420" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="398" />
         <source>Std. error</source>
         <translation>Std.fel</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="421" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="399" />
         <source>t</source>
         <translation>t</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="422" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="400" />
         <source>p</source>
         <translation>p</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="423" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="401" />
         <source>{confidence}% CI</source>
         <translation>{confidence} % KI</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="424" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="402" />
         <source>VIF</source>
         <translation>VIF</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="473" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="451" />
         <source>N/A</source>
         <translation>Ej tillämpligt</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="474" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="452" />
         <source>{low} to {high}</source>
         <translation>{low} till {high}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="479" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="457" />
         <source>* marks coefficients significant at p &amp;lt; {alpha}.</source>
         <translation>* markerar koefficienter som är statistiskt signifikanta vid p &amp;lt; {alpha}.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="489" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="467" />
         <source>Each categorical level is compared with its column's reference level (the most frequent level):</source>
         <translation>Varje kategorinivå jämförs med kolumnens referensnivå (den vanligaste nivån):</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="491" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="469" />
         <source>{column}: reference level &lt;b&gt;{level}&lt;/b&gt; ({count} levels)</source>
         <translation>{column}: referensnivå &lt;b&gt;{level}&lt;/b&gt; ({count} nivåer)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="542" />
-        <source>Plots show a random sample of {shown} of {total} rows. Statistics use all rows.</source>
-        <translation>Visar ett slumpmässigt urval av {shown} av {total} rader i diagrammen. Statistiken baseras på samtliga rader.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="549" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="140" />
         <source>Residuals vs fitted</source>
         <translation>Residualer mot skattade värden</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="550" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="141" />
         <source>Fitted value</source>
         <translation>Skattat värde</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="551" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="142" />
         <source>Residual</source>
         <translation>Residual</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="552" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="143" />
         <source>Actual vs predicted</source>
         <translation>Faktiskt mot predicerat</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="553" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="144" />
         <source>Predicted {target}</source>
         <translation>Predicerat {target}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="554" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="145" />
         <source>Actual {target}</source>
         <translation>Faktiskt {target}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="555" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="146" />
         <source>Normal Q-Q plot of residuals</source>
         <translation>Normal Q-Q-diagram för residualer</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="556" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="147" />
         <source>Theoretical quantile</source>
         <translation>Teoretisk kvantil</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="557" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="148" />
         <source>Standardized residual</source>
         <translation>Standardiserad residual</translation>
     </message>
     <message>
-        <source>Model comments</source>
-        <translation type="vanished">Modellkommentarer</translation>
-    </message>
-    <message>
-        <source>&lt;b&gt;Coefficients&lt;/b&gt;</source>
-        <translation type="vanished">&lt;b&gt;Koefficienter&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <source>(Intercept)</source>
-        <translation type="vanished">(Intercept)</translation>
-    </message>
-    <message>
-        <source>Diagnostic plots</source>
-        <translation type="vanished">Diagnostiska diagram</translation>
-    </message>
-    <message>
-        <source>Linear regression: {target}</source>
-        <translation type="vanished">Linjär regression: {target}</translation>
+        <location filename="..\..\services\analysis\regression_charts.py" line="152" />
+        <source>Plots show a random sample of {shown} of {total} rows. Statistics use all rows.</source>
+        <translation>Visar ett slumpmässigt urval av {shown} av {total} rader i diagrammen. Statistiken baseras på samtliga rader.</translation>
     </message>
 </context><context>
     <name>ReportNotesDialog</name>
@@ -7672,86 +7123,6 @@ Tips: {error_hint}</translation>
         <location filename="..\..\gui\dialogs\analysis\report_notes_dialog.py" line="136" />
         <source>Remove from report</source>
         <translation>Ta bort från rapporten</translation>
-    </message>
-    <message>
-        <source>Summary</source>
-        <translation type="vanished">Sammanfattning</translation>
-    </message>
-    <message>
-        <source>Sample (first 100 rows)</source>
-        <translation type="vanished">Urval (första 100 raderna)</translation>
-    </message>
-    <message>
-        <source>Group summary</source>
-        <translation type="vanished">Gruppsammanfattning</translation>
-    </message>
-    <message>
-        <source>Contingency table</source>
-        <translation type="vanished">Kontingenstabell</translation>
-    </message>
-    <message>
-        <source>Measurement summary</source>
-        <translation type="vanished">Mätningssammanfattning</translation>
-    </message>
-    <message>
-        <source>Test results</source>
-        <translation type="vanished">Testresultat</translation>
-    </message>
-    <message>
-        <source>Strongest correlations</source>
-        <translation type="vanished">Starkaste korrelationer</translation>
-    </message>
-    <message>
-        <source>Matrix plot</source>
-        <translation type="vanished">Matrisdiagram</translation>
-    </message>
-    <message>
-        <source>Scatterplots</source>
-        <translation type="vanished">Spridningsdiagram</translation>
-    </message>
-    <message>
-        <source>Coefficients</source>
-        <translation type="vanished">Koefficienter</translation>
-    </message>
-    <message>
-        <source>Model metrics</source>
-        <translation type="vanished">Modellmått</translation>
-    </message>
-    <message>
-        <source>Column summary</source>
-        <translation type="vanished">Kolumnsammanfattning</translation>
-    </message>
-    <message>
-        <source>Column details</source>
-        <translation type="vanished">Kolumndetaljer</translation>
-    </message>
-    <message>
-        <source>Potential outliers</source>
-        <translation type="vanished">Möjliga avvikare</translation>
-    </message>
-    <message>
-        <source>Cluster sizes</source>
-        <translation type="vanished">Klusterstorlekar</translation>
-    </message>
-    <message>
-        <source>Feature loadings</source>
-        <translation type="vanished">Variabelladdningar</translation>
-    </message>
-    <message>
-        <source>Explained variance</source>
-        <translation type="vanished">Förklarad varians</translation>
-    </message>
-    <message>
-        <source>Model summary</source>
-        <translation type="vanished">Modellsammanfattning</translation>
-    </message>
-    <message>
-        <source>Series</source>
-        <translation type="vanished">Serie</translation>
-    </message>
-    <message>
-        <source>Autocorrelation</source>
-        <translation type="vanished">Autokorrelation</translation>
     </message>
 </context><context>
     <name>ReportPage</name>
@@ -7830,62 +7201,6 @@ Tips: {error_hint}</translation>
         <location filename="..\..\gui\dialogs\analysis\report_page.py" line="99" />
         <source>Generate HTML report</source>
         <translation>Skapa HTML-rapport</translation>
-    </message>
-    <message>
-        <source>Edit report entry</source>
-        <translation type="vanished">Redigera rapportanalys</translation>
-    </message>
-    <message>
-        <source>Save changes</source>
-        <translation type="vanished">Spara ändringar</translation>
-    </message>
-    <message>
-        <source>Remove from report</source>
-        <translation type="vanished">Ta bort från rapporten</translation>
-    </message>
-    <message>
-        <source>Include in report</source>
-        <translation type="vanished">Ta med i rapporten</translation>
-    </message>
-    <message>
-        <source>HTML generation will be available in the next step.</source>
-        <translation type="vanished">HTML-generering blir tillgänglig i nästa steg.</translation>
-    </message>
-    <message>
-        <source>Overview</source>
-        <translation type="vanished">Översikt</translation>
-    </message>
-    <message>
-        <source>Statistics</source>
-        <translation type="vanished">Statistik</translation>
-    </message>
-    <message>
-        <source>Hypothesis Tests</source>
-        <translation type="vanished">Hypotestester</translation>
-    </message>
-    <message>
-        <source>Correlation</source>
-        <translation type="vanished">Korrelation</translation>
-    </message>
-    <message>
-        <source>Regression</source>
-        <translation type="vanished">Regression</translation>
-    </message>
-    <message>
-        <source>Outliers</source>
-        <translation type="vanished">Avvikare</translation>
-    </message>
-    <message>
-        <source>Clustering</source>
-        <translation type="vanished">Klustring</translation>
-    </message>
-    <message>
-        <source>PCA</source>
-        <translation type="vanished">PCA</translation>
-    </message>
-    <message>
-        <source>Time Series</source>
-        <translation type="vanished">Tidsserie</translation>
     </message>
 </context><context>
     <name>ReportPreviewDialog</name>
@@ -10278,273 +9593,258 @@ Tid: {sec:.2f}s{sample}</translation>
 </context><context>
     <name>StatisticsView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="57" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="58" />
         <source>Count (% non-missing)</source>
         <translation>Antal (% icke-saknade)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="58" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="59" />
         <source>Continuous</source>
         <translation>Kontinuerliga</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="59" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="60" />
         <source>Categorical</source>
         <translation>Kategoriska</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="60" />
+        <location filename="..\..\services\analysis\statistics_charts.py" line="59" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="61" />
         <source>Distribution</source>
         <translation>Fördelning</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="61" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="62" />
         <source>Fraction (non-missing)</source>
         <translation>Andel (icke-saknade)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="62" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="63" />
         <source>Missing fraction</source>
         <translation>Andel saknade värden</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="63" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="64" />
         <source>Valid count</source>
         <translation>Antal giltiga</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="64" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="65" />
         <source>Shapiro-Wilk W</source>
         <translation>Shapiro-Wilk W</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="65" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="66" />
         <source>Shapiro-Wilk p-value</source>
         <translation>Shapiro-Wilk p-värde</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="66" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="67" />
         <source>Recommended summary</source>
         <translation>Rekommenderad sammanfattning</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="231" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="232" />
         <source>No numeric columns or eligible categorical columns in this dataset.</source>
         <translation>Datasetet innehåller inga numeriska kolumner eller lämpliga kategorikolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="241" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="242" />
         <source>Descriptive statistics</source>
         <translation>Deskriptiv statistik</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="264" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="265" />
         <source>* marks the summary suggested by Shapiro-Wilk. No star means no recommendation is available.</source>
         <translation>* markerar sammanfattningen som Shapiro-Wilk föreslår. Ingen stjärna betyder att ingen rekommendation är tillgänglig.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="366" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="279" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="367" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="280" />
         <source>Column</source>
         <translation>Kolumn</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="368" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="280" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="369" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="281" />
         <source>Count</source>
         <translation>Antal</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="281" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="282" />
         <source>Missing</source>
         <translation>Saknade</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="282" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="283" />
         <source>Mean</source>
         <translation>Medelvärde</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="283" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="284" />
         <source>Median</source>
         <translation>Median</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="284" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="285" />
         <source>Std Dev</source>
         <translation>Standardavvikelse</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="285" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="286" />
         <source>Variance</source>
         <translation>Varians</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="286" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="287" />
         <source>Min</source>
         <translation>Min</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="287" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="288" />
         <source>Max</source>
         <translation>Max</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="288" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="289" />
         <source>Range</source>
         <translation>Spann</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="289" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="290" />
         <source>Q1</source>
         <translation>Q1</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="290" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="291" />
         <source>Q3</source>
         <translation>Q3</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="291" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="292" />
         <source>IQR</source>
         <translation>IQR</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="292" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="293" />
         <source>Skewness</source>
         <translation>Skevhet</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="293" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="294" />
         <source>Kurtosis</source>
         <translation>Kurtosis</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="437" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="294" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="438" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="295" />
         <source>Mean ± SD</source>
         <translation>Medelvärde ± standardavvikelse</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="437" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="295" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="438" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="296" />
         <source>Median (Q1 to Q3)</source>
         <translation>Median (Q1 till Q3)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="353" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="354" />
         <source>Columns with more than {maximum} distinct values are omitted.</source>
         <translation>Kolumner med fler än {maximum} unika värden visas inte.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="367" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="368" />
         <source>Category</source>
         <translation>Kategori</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="369" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="370" />
         <source>Percent (non-missing)</source>
         <translation>Procent (icke-saknade)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="370" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="371" />
         <source>Missing count</source>
         <translation>Antal saknade</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="375" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="376" />
         <source>No non-missing values</source>
         <translation>Inga icke-saknade värden</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="431" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="432" />
         <source>{column}: Shapiro-Wilk could not provide a recommendation; neither summary is starred.</source>
         <translation>{column}: Shapiro-Wilk kunde inte ge någon rekommendation; ingen av sammanfattningarna är markerad med en stjärna.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="438" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="439" />
         <source>{column}: Shapiro-Wilk suggests {summary} as a starting point. This is a guide, not proof of normality.</source>
         <translation>{column}: Shapiro-Wilk föreslår {summary} som utgångspunkt. Detta är vägledning, inte ett bevis på normalfördelning.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="442" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="443" />
         <source>Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</source>
         <translation>Stickprovsstorleken överstiger {threshold}. P-värdet kan vara osäkert för mycket stora stickprov.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="481" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="482" />
         <source>No numeric columns are available for distributions.</source>
         <translation>Inga numeriska kolumner är tillgängliga för fördelningsdiagram.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="503" />
-        <source>Normality testing applies to continuous variables.</source>
-        <translation>Normalitetstestning gäller kontinuerliga variabler.</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1057" />
-        <location filename="..\..\services\analysis\report.py" line="2352" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="607" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="599" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="553" />
-        <source>Histogram</source>
-        <translation>Histogram</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1058" />
-        <location filename="..\..\services\analysis\report.py" line="2353" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="607" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="599" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="554" />
-        <source>Boxplot</source>
-        <translation>Boxplot</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1059" />
-        <location filename="..\..\services\analysis\report.py" line="2354" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="607" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="599" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="555" />
-        <source>No data</source>
-        <translation>Ingen data</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="570" />
-        <source>Not enough data to test for normality.</source>
-        <translation>Inte tillräckligt med data för att testa normalfördelning.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="573" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="508" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="495" />
         <source>&lt;b&gt;Shapiro-Wilk&lt;/b&gt;:</source>
         <translation>&lt;b&gt;Shapiro-Wilk&lt;/b&gt;:</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="574" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="504" />
+        <source>Normality testing applies to continuous variables.</source>
+        <translation>Normalitetstestning gäller kontinuerliga variabler.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="565" />
+        <source>Not enough data to test for normality.</source>
+        <translation>Inte tillräckligt med data för att testa normalfördelning.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="568" />
         <source>W = {w}, p = {p}</source>
         <translation>W = {w}, p = {p}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="581" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="575" />
         <source>→ Significant evidence against normality (α = 0.05).</source>
         <translation>→ Statistiskt signifikanta belägg mot normalfördelning (α = 0,05).</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="583" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="577" />
         <source>→ No significant evidence against normality (α = 0.05).</source>
         <translation>→ Inga statistiskt signifikanta belägg mot normalfördelning (α = 0,05).</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="587" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="581" />
         <source>⚠ Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</source>
         <translation>⚠ Antalet observationer överstiger {threshold}. P-värdet kan vara mindre tillförlitligt för mycket stora stickprov.</translation>
     </message>
     <message>
-        <source>Histogram and boxplot</source>
-        <translation type="vanished">Histogram och lådagram</translation>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="421" />
+        <location filename="..\..\services\analysis\statistics_charts.py" line="54" />
+        <source>Histogram</source>
+        <translation>Histogram</translation>
     </message>
     <message>
-        <source>No numeric columns in this dataset.</source>
-        <translation type="vanished">Inga numeriska kolumner i detta dataset.</translation>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="422" />
+        <location filename="..\..\services\analysis\statistics_charts.py" line="55" />
+        <source>Boxplot</source>
+        <translation>Boxplot</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="423" />
+        <location filename="..\..\services\analysis\statistics_charts.py" line="56" />
+        <source>No data</source>
+        <translation>Ingen data</translation>
     </message>
 </context><context>
     <name>StatusBarController</name>
@@ -10566,216 +9866,196 @@ Tid: {sec:.2f}s{sample}</translation>
 </context><context>
     <name>SurvivalRegressionView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="118" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="163" />
+        <source>Select a duration column for Cox regression.</source>
+        <translation>Välj en durationkolumn för Cox-regression.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="165" />
+        <source>Select a binary event column for Cox regression.</source>
+        <translation>Välj en binär händelsekolumn för Cox-regression.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="167" />
+        <source>Select one or more predictors and click Apply.</source>
+        <translation>Välj en eller flera prediktorer och klicka på Tillämpa.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="169" />
+        <source>Select at most {maximum} predictors.</source>
+        <translation>Välj högst {maximum} prediktorer.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="171" />
+        <source>Choose valid, distinct duration and event columns and other columns as predictors.</source>
+        <translation>Välj giltiga, olika duration- och händelsekolumner samt andra kolumner som prediktorer.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="173" />
+        <source>Duration {column} contains a non-missing value that is not finite and strictly positive.</source>
+        <translation>Duration {column} innehåller ett värde som inte saknas men som inte är ändligt och strikt positivt.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="177" />
+        <source>Event {column} must contain only 0 and 1 or boolean values; 1 means event and 0 means censored.</source>
+        <translation>Händelsen {column} får endast innehålla 0 och 1 eller booleska värden; 1 betyder händelse och 0 betyder censurerad.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="181" />
+        <source>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</source>
+        <translation>Modellen skulle ha fler än {maximum} termer efter dummy-kodning av kategoriska prediktorer. Ta bort prediktorer eller använd kolumner med färre nivåer.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="186" />
+        <source>Only {count} complete rows are available, which is too few to fit this model.</source>
+        <translation>Endast {count} kompletta rader är tillgängliga, vilket är för få för att anpassa modellen.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="190" />
+        <source>There are too few events relative to the model terms to estimate this model.</source>
+        <translation>Det finns för få händelser i förhållande till modellens termer för att skatta modellen.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="192" />
+        <source>The predictor {column} has the same value in every complete row.</source>
+        <translation>Prediktorn {column} har samma värde i varje komplett rad.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="194" />
+        <source>Some predictors are exact linear combinations of others, so the model cannot be estimated.</source>
+        <translation>Vissa prediktorer är exakta linjära kombinationer av andra, så modellen kan inte skattas.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="198" />
+        <source>The model could not be fitted reliably. Check for sparse events, separation, redundant predictors, or numerical problems.</source>
+        <translation>Modellen kunde inte anpassas tillförlitligt. Kontrollera om händelserna är glesa, om separation eller redundanta prediktorer förekommer eller om det finns numeriska problem.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="209" />
+        <source>Term</source>
+        <translation>Term</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="210" />
+        <source>Coefficient</source>
+        <translation>Koefficient</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="211" />
+        <source>Hazard ratio</source>
+        <translation>Hazardkvot</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="212" />
+        <source>95% hazard-ratio CI</source>
+        <translation>95 % KI för hazardkvot</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="213" />
+        <source>p-value</source>
+        <translation>p-värde</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="243" />
+        <source>&lt;b&gt;Cox proportional-hazards regression&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Cox-regression med proportionella hazarder&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="244" />
+        <source>Duration: &lt;b&gt;{duration}&lt;/b&gt;; event: &lt;b&gt;{event}&lt;/b&gt;</source>
+        <translation>Duration: &lt;b&gt;{duration}&lt;/b&gt;; händelse: &lt;b&gt;{event}&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="248" />
+        <source>Event coding: 1 = event; 0 = censored.</source>
+        <translation>Händelsekodning: 1 = händelse; 0 = censurerad.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="249" />
+        <source>Rows used: {used} ({dropped} excluded by listwise missing-value handling)</source>
+        <translation>Använda rader: {used} ({dropped} exkluderade genom komplettfallsanalys av saknade värden)</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="253" />
+        <source>Events: {events}; censored: {censored}</source>
+        <translation>Händelser: {events}; censurerade: {censored}</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="259" />
+        <source>Reference for {column}: {level}</source>
+        <translation>Referens för {column}: {level}</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="266" />
+        <source>Efron method was used to handle tied event times.</source>
+        <translation>Efrons metod användes för att hantera bundna händelsetider.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="267" />
+        <source>The proportional-hazards assumption was not assessed.</source>
+        <translation>Antagandet om proportionella hazarder har inte utvärderats.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="271" />
+        <source>Kaplan-Meier uses the same complete-case subjects as the Cox fit, without covariate adjustment.</source>
+        <translation>Kaplan-Meier använder samma individer med kompletta värden som Cox-modellen, utan justering för kovariater.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="274" />
+        <source>The survival curve is not a Cox prediction or a proportional-hazards diagnostic.</source>
+        <translation>Överlevnadskurvan är inte en Cox-prediktion eller en diagnostik av antagandet om proportionella hazarder.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="275" />
+        <source>Plus signs mark censoring times; tied censor marks may overlap.</source>
+        <translation>Plustecken markerar censureringstidpunkter; markeringar vid samma tidpunkt kan överlappa.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="276" />
+        <source>All complete subjects are used; no survival sampling or confidence bands are applied.</source>
+        <translation>Alla individer med kompletta värden används; inget urval eller konfidensband för överlevnad används.</translation>
+    </message>
+    <message>
+        <location filename="..\..\services\analysis\regression_charts.py" line="228" />
         <source>Hazard ratios with 95% intervals</source>
         <translation>Hazardkvoter med 95 % intervall</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="119" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="229" />
         <source>Forest plot unavailable:
 all hazard ratios and intervals must be finite and positive.</source>
         <translation>Forestdiagrammet är inte tillgängligt:
 alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="122" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="233" />
         <source>Hazard ratio (log scale)</source>
         <translation>Hazardkvot (logaritmisk skala)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="123" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="234" />
         <source>Overall Kaplan-Meier survival (unadjusted)</source>
         <translation>Övergripande Kaplan-Meier-överlevnad (ojusterad)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="124" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="235" />
         <source>No survival chart data are available.</source>
         <translation>Inga diagramdata för överlevnad är tillgängliga.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="125" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="236" />
         <source>Duration: {column}</source>
         <translation>Tid: {column}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="126" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="237" />
         <source>Survival probability</source>
         <translation>Överlevnadssannolikhet</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="127" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="238" />
         <source>At risk immediately before time</source>
         <translation>Antal i riskpopulationen omedelbart före tidpunkten</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="167" />
-        <source>Select a duration column for Cox regression.</source>
-        <translation>Välj en durationkolumn för Cox-regression.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="169" />
-        <source>Select a binary event column for Cox regression.</source>
-        <translation>Välj en binär händelsekolumn för Cox-regression.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="171" />
-        <source>Select one or more predictors and click Apply.</source>
-        <translation>Välj en eller flera prediktorer och klicka på Tillämpa.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="173" />
-        <source>Select at most {maximum} predictors.</source>
-        <translation>Välj högst {maximum} prediktorer.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="175" />
-        <source>Choose valid, distinct duration and event columns and other columns as predictors.</source>
-        <translation>Välj giltiga, olika duration- och händelsekolumner samt andra kolumner som prediktorer.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="177" />
-        <source>Duration {column} contains a non-missing value that is not finite and strictly positive.</source>
-        <translation>Duration {column} innehåller ett värde som inte saknas men som inte är ändligt och strikt positivt.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="181" />
-        <source>Event {column} must contain only 0 and 1 or boolean values; 1 means event and 0 means censored.</source>
-        <translation>Händelsen {column} får endast innehålla 0 och 1 eller booleska värden; 1 betyder händelse och 0 betyder censurerad.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="185" />
-        <source>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</source>
-        <translation>Modellen skulle ha fler än {maximum} termer efter dummy-kodning av kategoriska prediktorer. Ta bort prediktorer eller använd kolumner med färre nivåer.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="190" />
-        <source>Only {count} complete rows are available, which is too few to fit this model.</source>
-        <translation>Endast {count} kompletta rader är tillgängliga, vilket är för få för att anpassa modellen.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="194" />
-        <source>There are too few events relative to the model terms to estimate this model.</source>
-        <translation>Det finns för få händelser i förhållande till modellens termer för att skatta modellen.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="196" />
-        <source>The predictor {column} has the same value in every complete row.</source>
-        <translation>Prediktorn {column} har samma värde i varje komplett rad.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="198" />
-        <source>Some predictors are exact linear combinations of others, so the model cannot be estimated.</source>
-        <translation>Vissa prediktorer är exakta linjära kombinationer av andra, så modellen kan inte skattas.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="202" />
-        <source>The model could not be fitted reliably. Check for sparse events, separation, redundant predictors, or numerical problems.</source>
-        <translation>Modellen kunde inte anpassas tillförlitligt. Kontrollera om händelserna är glesa, om separation eller redundanta prediktorer förekommer eller om det finns numeriska problem.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="213" />
-        <source>Term</source>
-        <translation>Term</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="214" />
-        <source>Coefficient</source>
-        <translation>Koefficient</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="215" />
-        <source>Hazard ratio</source>
-        <translation>Hazardkvot</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="216" />
-        <source>95% hazard-ratio CI</source>
-        <translation>95 % KI för hazardkvot</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="217" />
-        <source>p-value</source>
-        <translation>p-värde</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="247" />
-        <source>&lt;b&gt;Cox proportional-hazards regression&lt;/b&gt;</source>
-        <translation>&lt;b&gt;Cox-regression med proportionella hazarder&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="248" />
-        <source>Duration: &lt;b&gt;{duration}&lt;/b&gt;; event: &lt;b&gt;{event}&lt;/b&gt;</source>
-        <translation>Duration: &lt;b&gt;{duration}&lt;/b&gt;; händelse: &lt;b&gt;{event}&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="252" />
-        <source>Event coding: 1 = event; 0 = censored.</source>
-        <translation>Händelsekodning: 1 = händelse; 0 = censurerad.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="253" />
-        <source>Rows used: {used} ({dropped} excluded by listwise missing-value handling)</source>
-        <translation>Använda rader: {used} ({dropped} exkluderade genom komplettfallsanalys av saknade värden)</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="257" />
-        <source>Events: {events}; censored: {censored}</source>
-        <translation>Händelser: {events}; censurerade: {censored}</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="263" />
-        <source>Reference for {column}: {level}</source>
-        <translation>Referens för {column}: {level}</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="270" />
-        <source>Efron method was used to handle tied event times.</source>
-        <translation>Efrons metod användes för att hantera bundna händelsetider.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="271" />
-        <source>The proportional-hazards assumption was not assessed.</source>
-        <translation>Antagandet om proportionella hazarder har inte utvärderats.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="275" />
-        <source>Kaplan-Meier uses the same complete-case subjects as the Cox fit, without covariate adjustment.</source>
-        <translation>Kaplan-Meier använder samma individer med kompletta värden som Cox-modellen, utan justering för kovariater.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="278" />
-        <source>The survival curve is not a Cox prediction or a proportional-hazards diagnostic.</source>
-        <translation>Överlevnadskurvan är inte en Cox-prediktion eller en diagnostik av antagandet om proportionella hazarder.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="279" />
-        <source>Plus signs mark censoring times; tied censor marks may overlap.</source>
-        <translation>Plustecken markerar censureringstidpunkter; markeringar vid samma tidpunkt kan överlappa.</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="280" />
-        <source>All complete subjects are used; no survival sampling or confidence bands are applied.</source>
-        <translation>Alla individer med kompletta värden används; inget urval eller konfidensband för överlevnad används.</translation>
-    </message>
-    <message>
-        <source>Model coefficients</source>
-        <translation type="vanished">Modellkoefficienter</translation>
-    </message>
-    <message>
-        <source>Model comments</source>
-        <translation type="vanished">Modellkommentarer</translation>
-    </message>
-    <message>
-        <source>Effects and survival</source>
-        <translation type="vanished">Effekter och överlevnad</translation>
-    </message>
-    <message>
-        <source>(Intercept)</source>
-        <translation type="vanished">(Intercept)</translation>
-    </message>
-    <message>
-        <source>Cox proportional-hazards regression: {duration} / {event}</source>
-        <translation type="vanished">Cox-regression med proportionella hazarder: {duration} / {event}</translation>
     </message>
 </context><context>
     <name>TextMatchFilter</name>
@@ -10796,348 +10076,253 @@ alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
         <source>Apply</source>
         <translation>Tillämpa</translation>
     </message>
-    <message>
-        <source>Time column</source>
-        <translation type="vanished">Tidskolumn</translation>
-    </message>
-    <message>
-        <source>Value column</source>
-        <translation type="vanished">Värdekolumn</translation>
-    </message>
-    <message>
-        <source>Original frequency</source>
-        <translation type="vanished">Ursprunglig frekvens</translation>
-    </message>
-    <message>
-        <source>Daily</source>
-        <translation type="vanished">Daglig</translation>
-    </message>
-    <message>
-        <source>Weekly</source>
-        <translation type="vanished">Veckovis</translation>
-    </message>
-    <message>
-        <source>Monthly</source>
-        <translation type="vanished">Månadsvis</translation>
-    </message>
-    <message>
-        <source>Quarterly</source>
-        <translation type="vanished">Kvartalsvis</translation>
-    </message>
-    <message>
-        <source>Yearly</source>
-        <translation type="vanished">Årsvis</translation>
-    </message>
-    <message>
-        <source>Resample to</source>
-        <translation type="vanished">Omsampla till</translation>
-    </message>
-    <message>
-        <source>Auto-detect seasonal period</source>
-        <translation type="vanished">Identifiera säsongsperiod automatiskt</translation>
-    </message>
-    <message>
-        <source>Seasonal period</source>
-        <translation type="vanished">Säsongsperiod</translation>
-    </message>
-    <message>
-        <source>Additive</source>
-        <translation type="vanished">Additiv</translation>
-    </message>
-    <message>
-        <source>Multiplicative</source>
-        <translation type="vanished">Multiplikativ</translation>
-    </message>
-    <message>
-        <source>Decomposition</source>
-        <translation type="vanished">Dekomponering</translation>
-    </message>
 </context><context>
     <name>TimeSeriesPresentation</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="350" />
-        <source>Time column:</source>
-        <translation>Tidskolumn:</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="351" />
-        <source>Value column:</source>
-        <translation>Värdekolumn:</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="352" />
-        <source>Resampling:</source>
-        <translation>Omsampling:</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="353" />
-        <source>Seasonal period:</source>
-        <translation>Säsongsperiod:</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="354" />
-        <source>Decomposition model:</source>
-        <translation>Dekomponeringsmodell:</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="355" />
-        <source>Auto-detect seasonal period</source>
-        <translation>Identifiera säsongsperiod automatiskt</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="356" />
-        <source>Original frequency</source>
-        <translation>Ursprunglig frekvens</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="357" />
-        <source>Automatic</source>
-        <translation>Automatiskt</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="358" />
-        <source>Automatic (no period detected)</source>
-        <translation>Automatiskt (ingen period identifierad)</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="359" />
-        <source>Automatic (detected: {period})</source>
-        <translation>Automatiskt (identifierad: {period})</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="360" />
-        <source>Daily</source>
-        <translation>Daglig</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="361" />
-        <source>Weekly</source>
-        <translation>Veckovis</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="362" />
-        <source>Monthly</source>
-        <translation>Månadsvis</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="363" />
-        <source>Quarterly</source>
-        <translation>Kvartalsvis</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="364" />
-        <source>Yearly</source>
-        <translation>Årsvis</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="365" />
-        <source>Additive</source>
-        <translation>Additiv</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="366" />
-        <source>Multiplicative</source>
-        <translation>Multiplikativ</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="367" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="379" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="75" />
         <source>Series</source>
         <translation>Serie</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="368" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="380" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="82" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="79" />
         <source>Autocorrelation</source>
         <translation>Autokorrelation</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="369" />
-        <source>Model summary</source>
-        <translation>Modellsammanfattning</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="370" />
-        <source>Charts</source>
-        <translation>Diagram</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="371" />
-        <source>Seasonal decomposition</source>
-        <translation>Säsongsdekomponering</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="372" />
-        <source>Observed</source>
-        <translation>Observerad</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="373" />
-        <source>Trend</source>
-        <translation>Trend</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="374" />
-        <source>Seasonal</source>
-        <translation>Säsong</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="375" />
-        <source>Residual</source>
-        <translation>Residual</translation>
-    </message>
-    <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="376" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="388" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="81" />
         <source>Lag</source>
         <translation>Fördröjning</translation>
     </message>
     <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="383" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="84" />
+        <source>Seasonal decomposition</source>
+        <translation>Säsongsdekomponering</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="384" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="86" />
+        <source>Observed</source>
+        <translation>Observerad</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="385" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="87" />
+        <source>Trend</source>
+        <translation>Trend</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="386" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="88" />
+        <source>Seasonal</source>
+        <translation>Säsong</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="387" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="89" />
+        <source>Residual</source>
+        <translation>Residual</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="362" />
+        <source>Time column:</source>
+        <translation>Tidskolumn:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="363" />
+        <source>Value column:</source>
+        <translation>Värdekolumn:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="364" />
+        <source>Resampling:</source>
+        <translation>Omsampling:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="365" />
+        <source>Seasonal period:</source>
+        <translation>Säsongsperiod:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="366" />
+        <source>Decomposition model:</source>
+        <translation>Dekomponeringsmodell:</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="367" />
+        <source>Auto-detect seasonal period</source>
+        <translation>Identifiera säsongsperiod automatiskt</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="368" />
+        <source>Original frequency</source>
+        <translation>Ursprunglig frekvens</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="369" />
+        <source>Automatic</source>
+        <translation>Automatiskt</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="370" />
+        <source>Automatic (no period detected)</source>
+        <translation>Automatiskt (ingen period identifierad)</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="371" />
+        <source>Automatic (detected: {period})</source>
+        <translation>Automatiskt (identifierad: {period})</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="372" />
+        <source>Daily</source>
+        <translation>Daglig</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="373" />
+        <source>Weekly</source>
+        <translation>Veckovis</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="374" />
+        <source>Monthly</source>
+        <translation>Månadsvis</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="375" />
+        <source>Quarterly</source>
+        <translation>Kvartalsvis</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="376" />
+        <source>Yearly</source>
+        <translation>Årsvis</translation>
+    </message>
+    <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="377" />
+        <source>Additive</source>
+        <translation>Additiv</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="378" />
+        <source>Multiplicative</source>
+        <translation>Multiplikativ</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="381" />
+        <source>Model summary</source>
+        <translation>Modellsammanfattning</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="382" />
+        <source>Charts</source>
+        <translation>Diagram</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="389" />
         <source>Value</source>
         <translation>Värde</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="378" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="390" />
         <source>Timestamp</source>
         <translation>Tidsstämpel</translation>
     </message>
 </context><context>
     <name>TimeSeriesView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="125" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="120" />
         <source>The autocorrelation requires a regular time frequency.</source>
         <translation>Autokorrelationen kräver en regelbunden tidsfrekvens.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="128" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="123" />
         <source>The autocorrelation is unavailable while the series has gaps.</source>
         <translation>Autokorrelationen är inte tillgänglig när serien har luckor.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="131" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="126" />
         <source>Seasonal decomposition requires a regular time frequency.</source>
         <translation>Säsongsdekomponering kräver en regelbunden tidsfrekvens.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="134" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="129" />
         <source>Seasonal decomposition is unavailable while the series has gaps.</source>
         <translation>Säsongsdekomponering är inte tillgänglig när serien har luckor.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="137" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="132" />
         <source>No seasonal period could be detected; choose one to decompose the series.</source>
         <translation>Ingen säsongsperiod kunde identifieras; välj en för att dekomponera serien.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="140" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="135" />
         <source>Seasonal decomposition needs at least two complete seasonal cycles.</source>
         <translation>Säsongsdekomponering kräver minst två fullständiga säsongscykler.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="143" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="138" />
         <source>Multiplicative decomposition requires all values to be greater than zero.</source>
         <translation>Multiplikativ dekomponering kräver att alla värden är större än noll.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="152" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="147" />
         <source>A time series needs at least one datetime column.</source>
         <translation>En tidsserie kräver minst en kolumn med datum/tid.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="153" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="148" />
         <source>A time series needs at least one numeric value column.</source>
         <translation>En tidsserie kräver minst en numerisk värdekolumn.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="154" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="149" />
         <source>Choose a datetime column.</source>
         <translation>Välj en kolumn med datum/tid.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="155" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="150" />
         <source>Choose a numeric value column.</source>
         <translation>Välj en numerisk värdekolumn.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="156" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="151" />
         <source>Choose a valid resampling frequency.</source>
         <translation>Välj en giltig omsamplingsfrekvens.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="157" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="152" />
         <source>Choose a seasonal period of at least 2.</source>
         <translation>Välj en säsongsperiod på minst 2.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="158" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="153" />
         <source>At least 3 valid time observations are needed.</source>
         <translation>Minst 3 giltiga tidsobservationer krävs.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="164" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="159" />
         <source>Charts</source>
         <translation>Diagram</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="176" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="171" />
         <source>Model comments</source>
         <translation>Modellkommentarer</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="195" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="188" />
         <source>irregular</source>
         <translation>oregelbunden</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="196" />
+        <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="189" />
         <source>&lt;b&gt;{value}&lt;/b&gt; by &lt;b&gt;{time}&lt;/b&gt;: {points} time points, frequency {frequency}. {invalid} invalid rows dropped. {duplicates} duplicate rows averaged.</source>
         <translation>&lt;b&gt;{value}&lt;/b&gt; över &lt;b&gt;{time}&lt;/b&gt;: {points} tidpunkter, frekvens {frequency}. {invalid} ogiltiga rader exkluderades. {duplicates} dubbletter slogs samman genom medelvärdesberäkning.</translation>
-    </message>
-    <message>
-        <source>Summary</source>
-        <translation type="vanished">Sammanfattning</translation>
-    </message>
-    <message>
-        <source>Series</source>
-        <translation type="vanished">Serie</translation>
-    </message>
-    <message>
-        <source>Lag</source>
-        <translation type="vanished">Fördröjning</translation>
-    </message>
-    <message>
-        <source>Autocorrelation</source>
-        <translation type="vanished">Autokorrelation</translation>
-    </message>
-    <message>
-        <source>Seasonal decomposition</source>
-        <translation type="vanished">Säsongsdekomponering</translation>
-    </message>
-    <message>
-        <source>Observed</source>
-        <translation type="vanished">Observerad</translation>
-    </message>
-    <message>
-        <source>Trend</source>
-        <translation type="vanished">Trend</translation>
-    </message>
-    <message>
-        <source>Seasonal</source>
-        <translation type="vanished">Säsong</translation>
-    </message>
-    <message>
-        <source>Residual</source>
-        <translation type="vanished">Residual</translation>
-    </message>
-    <message>
-        <source>Additive</source>
-        <translation type="vanished">Additiv</translation>
-    </message>
-    <message>
-        <source>Multiplicative</source>
-        <translation type="vanished">Multiplikativ</translation>
-    </message>
-    <message>
-        <source>Decomposition model: {model}</source>
-        <translation type="vanished">Dekomponeringsmodell: {model}</translation>
     </message>
 </context><context>
     <name>ToolbarController</name>
