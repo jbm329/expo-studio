@@ -8,26 +8,9 @@ and this project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
-- Outliers configured titles use bold text with separate normal-weight applied settings, including the displayed detail column, consistently with other analyses
-- Correlation configured titles use bold text consistently with other analyses, with applied columns shown separately
-- Clustering shares configured method titles, applied feature/standardization/applicable-parameter summaries, and descriptive component labels across Analysis, Reports, HTML, and exports; distinct configurations coexist, inactive parameters do not distinguish entries, and reruns require explicit review while preserving notes, components, and order
-- PCA shares its title, applied ordered features, standardization, and content-specific component labels across Analysis, Reports, HTML, and exports; distinct configurations coexist and same-configuration reruns require explicit review while preserving notes, components, and order
-- Time Series shares applied time/value roles, resampling, automatic or explicit seasonal period, decomposition model, and semantic component labels across Analysis, Reports, HTML, and exports; distinct configurations coexist and identical reruns require explicit review while preserving notes, components, and order
-- HTML Strongest correlations tables show the common Ranking and Holm explanation once below the table
-- Advanced Analysis now stays bound to the active ready dataset for the whole modal session; report entries share that source
-- Advanced Analysis displays the source dataset name and dimensions in the window title instead of a separate dataset pane
-- HTML reports show dataset, report generation date, and Expo version once at the top, without row/column metadata
-- Correlation presentations share configured method/column labels across Analysis, Reports, HTML, and exports; same-method column changes and reruns require explicit review before replacing a captured report result
-- Hypothesis Tests share applied test-family, ordered variable-role, computed-test, and chart-component labels across Analysis, Reports, HTML, and exports; distinct selections coexist and identical reruns require explicit review
-- Regression shares applied model, outcome-role, ordered predictor, modeled-term, reference-coding, and component labels across Analysis, Reports, HTML, and exports; distinct full configurations coexist and identical reruns require explicit result review
-- Outliers share configured method titles, applied-setting summaries, and content-specific chart labels across Analysis, Reports, HTML, and exports; univariate detail changes replace only the captured detail, while complete screening configurations coexist and identical reruns require explicit review
-- HTML hypothesis reports separate captured explanatory notes from actual test-result rows; table exports retain the existing Notes column
-- Linear, Logistic, Poisson, Negative Binomial, and Cox share the Model summary heading across Analysis, report selection, HTML, and exports; HTML reports show captured notes below the summary table and omit note-only rows, while table exports retain the existing Notes column and rows
-- HTML Outliers reports show captured summary/detail/model notes below their tables, omit note-only rows, and show Status only when unscreened columns need explanations
-- HTML clustering reports show captured model notes below Model summary and omit note-only rows; table exports retain the existing Notes column
-- HTML PCA reports show captured model notes below Model summary and omit note-only rows; table exports retain the existing Notes column
-- HTML Time Series reports show captured model notes below Model summary and omit note-only rows; table exports retain the existing Notes column
-- Univariate Outliers detail uses the shared Model summary heading across Analysis, Reports, HTML, and exports
+- Improved Advanced Analysis layouts with consistent settings summaries, result sections, and scrolling
+- Charts adapt to long labels, keeping text readable in the app, Excel exports, and HTML reports
+- Advanced Analysis stays bound to the selected dataset, with its name and dimensions shown in the window title
 
 ### Added
 - Categorical tab in Statistics with frequency counts, percentages, and separate missing-value counts

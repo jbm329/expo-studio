@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import isfinite
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, cast
 
 from matplotlib.figure import Figure
 
@@ -78,7 +78,7 @@ class ChartFigure(Figure):
             config: Immutable chart layout defaults; defaults to internal policy.
             **kwargs: Standard Matplotlib Figure artist properties.
         """
-        if config is not None and not isinstance(config, ChartConfig):
+        if config is not None and not isinstance(config, ChartConfig):  # pyright: ignore[reportUnnecessaryIsInstance]
             message = "Chart figure config must be a ChartConfig value."
             raise TypeError(message)
         self._config = config if config is not None else DEFAULT_CHART_CONFIG
@@ -280,7 +280,8 @@ class ChartFigure(Figure):
         gap_points = (
             policy.overlap_gap_points if policy.overlap_gap_points is not None else self.config.overlap_gap_points
         )
-        gap_pixels = renderer.points_to_pixels(gap_points)
+        # Matplotlib returns a scalar for scalar input; its stub also includes arrays.
+        gap_pixels = cast("float", renderer.points_to_pixels(gap_points))
         extents = sorted((label.get_window_extent(renderer) for label in labels), key=lambda box: box.x0)
         for index, previous in enumerate(extents):
             for current in extents[index + 1 :]:

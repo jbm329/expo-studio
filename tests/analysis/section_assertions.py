@@ -123,6 +123,7 @@ def assert_section_scrolls_below_frozen_title(
     *,
     titled: bool = True,
     result_section: bool = False,
+    content_sized: bool = False,
 ) -> QWidget:
     """Assert `panel` is a fixed title above content that scrolls only when needed.
 
@@ -135,6 +136,7 @@ def assert_section_scrolls_below_frozen_title(
         width: Panel width used at both heights.
         titled: Whether a separate fixed title precedes the scroll area.
         result_section: Whether the panel must use the reusable result frame.
+        content_sized: Whether the fitting height must follow adaptive content minimums.
 
     Returns:
         The content widget inside the section scroll area.
@@ -182,7 +184,18 @@ def assert_section_scrolls_below_frozen_title(
             assert title.geometry() == title_geometry
 
         panel.resize(width, large_height)
-        _wait_for(lambda: bar.maximum() == 0 and not bar.isVisible() and panel.height() == large_height)
+
+        def fits_large_panel() -> bool:
+            fitting_height = large_height
+            if content_sized:
+                chrome = panel.height() - viewport.height()
+                fitting_height = max(fitting_height, _required_content_height(content, viewport.width()) + chrome)
+                if panel.height() != fitting_height:
+                    panel.resize(width, fitting_height)
+                    return False
+            return bar.maximum() == 0 and not bar.isVisible() and panel.height() == fitting_height
+
+        _wait_for(fits_large_panel)
         if title is not None:
             assert title.geometry() == title_geometry
         assert bar.maximum() == 0, (

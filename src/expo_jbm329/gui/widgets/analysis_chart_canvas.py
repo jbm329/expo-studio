@@ -7,8 +7,9 @@ from math import ceil
 from typing import TYPE_CHECKING
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import QSize, QTimer
+from PyQt6.QtCore import QEvent, QObject, QSize, QTimer
 from PyQt6.QtGui import QPaintEvent, QResizeEvent
+from PyQt6.QtWidgets import QAbstractScrollArea
 
 from expo_jbm329.services.analysis.chart_export import measure_chart_growth
 from expo_jbm329.services.analysis.chart_layout import ChartFigure
@@ -44,6 +45,8 @@ class SerializedAnalysisCanvas(FigureCanvasQTAgg):
         self._content_resize_passes = 0
         self._content_axes: tuple[object, ...] = ()
         self._original_minimum: QSize | None = None
+        self._applying_content_minimum = False
+        self._content_scroll_area: QAbstractScrollArea | None = None
 
     def build_chart(self, builder: Callable[[], None]) -> None:
         """Build a chart when rendering is available, without blocking Qt."""
@@ -61,6 +64,7 @@ class SerializedAnalysisCanvas(FigureCanvasQTAgg):
             builder = self._chart_builder
             self._chart_builder = None
             builder()
+            self._reset_content_layout()
             self.draw_idle()  # type: ignore[no-untyped-call]
         finally:
             STATISTICS_CHART_LOCK.release()
@@ -88,17 +92,15 @@ class SerializedAnalysisCanvas(FigureCanvasQTAgg):
         figure = self.figure
         if not isinstance(figure, ChartFigure) or figure.stale:
             return
+        self._watch_content_width()
         axes = tuple(figure.axes)
         if axes != self._content_axes:
             self._content_axes = axes
-            self._content_limit_reported = False
-            self._content_resize_passes = 0
             if self._original_minimum is None:
                 self._original_minimum = self.minimumSize()
-            elif self.minimumSize() != self._original_minimum:
-                self._content_minimum = QSize(self._original_minimum)
-                self._content_size_timer.start(0)
-                return
+            self._reset_content_layout()
+        if self._content_minimum is not None and self._content_minimum == self._original_minimum:
+            return
         renderer = self.get_renderer()  # type: ignore[no-untyped-call]
         extra_width, extra_height = measure_chart_growth(figure, renderer)
         config = figure.config.content_layout
@@ -148,16 +150,64 @@ class SerializedAnalysisCanvas(FigureCanvasQTAgg):
             self._content_resize_passes += 1
         self._content_size_timer.start(0)
 
+    def _reset_content_layout(self) -> None:
+        """Remeasure changed content or width from the view-authored minimum."""
+        self._content_size_timer.stop()
+        self._content_minimum = None
+        self._content_limit_reported = False
+        self._content_resize_passes = 0
+        if self._original_minimum is not None and self.minimumSize() != self._original_minimum:
+            self._content_minimum = QSize(self._original_minimum)
+            self._content_size_timer.start(0)
+
+    def _watch_content_width(self) -> None:
+        """Observe the outer scroll width, not scrollbar-driven viewport changes."""
+        parent = self.parentWidget()
+        while parent is not None and not isinstance(parent, QAbstractScrollArea):
+            parent = parent.parentWidget()
+        if parent is self._content_scroll_area:
+            return
+        if self._content_scroll_area is not None:
+            self._content_scroll_area.removeEventFilter(self)
+        self._content_scroll_area = parent
+        if parent is not None:
+            parent.installEventFilter(self)
+
+    def eventFilter(self, source: QObject, event: QEvent) -> bool:  # noqa: N802
+        """Invalidate content minima when the available section width changes."""
+        if (
+            source is self._content_scroll_area
+            and isinstance(event, QResizeEvent)
+            and event.size().width() != event.oldSize().width()
+        ):
+            self._reset_content_layout()
+            self.draw_idle()  # type: ignore[no-untyped-call]
+        return bool(super().eventFilter(source, event))  # type: ignore[no-untyped-call]
+
     def _apply_content_minimum(self) -> None:
         """Let the owning scroll area accommodate a content-sized canvas."""
         if self._content_minimum is None:
             return
-        self.setMinimumSize(self._content_minimum)
+        minimum = self._content_minimum
         self._content_minimum = None
-        self.updateGeometry()
+        self._applying_content_minimum = True
+        try:
+            self.setMinimumSize(minimum)
+            self.updateGeometry()
+        finally:
+            self._applying_content_minimum = False
+        # Releasing a minimum need not resize the widget (e.g. a top-level canvas).
+        self.draw_idle()  # type: ignore[no-untyped-call]
 
     def resizeEvent(self, event: QResizeEvent) -> None:  # noqa: N802
         """Defer Qt's figure-size mutation while a worker owns Matplotlib."""
+        if (
+            self._content_scroll_area is None
+            and not self._applying_content_minimum
+            and event.size().width() != event.oldSize().width()
+            and event.size().width() != self.minimumWidth()
+        ):
+            self._reset_content_layout()
         if not STATISTICS_CHART_LOCK.acquire(blocking=False):
             self._resize_pending = True
             self._defer_render()
@@ -186,7 +236,10 @@ class SerializedAnalysisCanvas(FigureCanvasQTAgg):
             return
         try:
             self._pixel_ratio_pending = False
+            previous_ratio = self.device_pixel_ratio
             super()._update_pixel_ratio()
+            if self.device_pixel_ratio != previous_ratio:
+                self._reset_content_layout()
         finally:
             STATISTICS_CHART_LOCK.release()
 

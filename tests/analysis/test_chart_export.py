@@ -54,6 +54,18 @@ def test_normal_dimensions_and_frozen_actual_png_size():
     assert_inside(figure)
 
 
+def test_png_preserves_verified_renderer_rgba_pixels() -> None:
+    figure = ChartFigure(figsize=(4, 3), dpi=100, constrained_layout=True)
+    figure.patch.set_alpha(0)
+    axis = figure.add_subplot()
+    axis.plot([0, 1], [1, 0], color="red", linewidth=4)
+    raster = render_chart_png(figure)
+    expected = np.asarray(figure.canvas.buffer_rgba()).copy()
+    with Image.open(BytesIO(raster.image_data)) as image:
+        assert image.mode == "RGBA"
+        np.testing.assert_array_equal(np.asarray(image), expected)
+
+
 @pytest.mark.parametrize("count,length", [(12, 90), (100, 25), (12, 250), (12, 600)])
 def test_crowded_categories_keep_every_label_and_font_size(count, length):
     figure = ChartFigure(figsize=(9, 3.5), dpi=120, constrained_layout=True)

@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from PyQt6 import sip
-from PyQt6.QtWidgets import QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QApplication, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.pca_view import PCAView
 from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
@@ -261,5 +261,120 @@ def test_new_fitting_draw_cancels_an_obsolete_queued_growth_request(monkeypatch)
         canvas.draw()
         assert not canvas._content_size_timer.isActive()
         assert canvas.minimumHeight() == 100
+    finally:
+        sip.delete(canvas)
+
+
+def _settle_canvas(canvas: SerializedAnalysisCanvas, qt_app: QApplication) -> None:
+    """Drain deferred layout work and assert it reaches a stable minimum."""
+    for _ in range(12):
+        qt_app.processEvents()
+        canvas.draw()
+        qt_app.processEvents()
+    minimum = canvas.minimumSize()
+    for _ in range(3):
+        canvas.draw()
+        qt_app.processEvents()
+        assert canvas.minimumSize() == minimum
+    assert not canvas._content_size_timer.isActive()
+
+
+def test_updating_labels_on_existing_axes_releases_content_minimum(qt_app: QApplication) -> None:
+    figure = ChartFigure(
+        figsize=(5, 3),
+        dpi=100,
+        constrained_layout=True,
+        config=ChartConfig(default_axis_policy=AxisPolicy(rotation_mode=RotationMode.VERTICAL)),
+    )
+    axis = figure.add_subplot()
+    axis.bar([0, 1], [1, 2])
+    axis.set_xticks([0, 1], ["Measurement category " * 4, "Second category " * 4])
+    canvas = SerializedAnalysisCanvas(figure)
+    canvas.setMinimumSize(100, 100)
+    canvas.show()
+    try:
+        _settle_canvas(canvas, qt_app)
+        assert canvas.minimumHeight() > 300
+        canvas.build_chart(lambda: axis.set_xticks([0, 1], ["A", "B"]))
+        _settle_canvas(canvas, qt_app)
+        assert canvas.minimumWidth() == canvas.minimumHeight() == 100
+        assert figure.axes == [axis]
+    finally:
+        sip.delete(canvas)
+
+
+def test_widening_releases_rotated_label_height_and_repeated_resizes_settle(qt_app: QApplication) -> None:
+    figure = ChartFigure(figsize=(4, 3), dpi=100, constrained_layout=True)
+    axis = figure.add_subplot()
+    names = [f"Measurement category {index}" for index in range(5)]
+    axis.bar(names, range(5))
+    canvas = SerializedAnalysisCanvas(figure)
+    canvas.setMinimumSize(100, 100)
+    parent = QWidget()
+    layout = QVBoxLayout(parent)
+    scroll = build_section_scroll_area(canvas, parent)
+    layout.addWidget(scroll)
+    parent.resize(350, 260)
+    parent.show()
+    try:
+        for _ in range(2):
+            _settle_canvas(canvas, qt_app)
+            assert canvas.minimumHeight() > 260
+            assert scroll.verticalScrollBar().maximum() > 0
+            assert all(label.get_rotation() == 90 for label in axis.get_xticklabels())
+            with _worker_holds_chart_lock():
+                parent.resize(1600, 400)
+                qt_app.processEvents()
+                canvas.draw()
+                assert canvas._draw_pending
+                assert canvas._retry_timer.isActive()
+            _settle_canvas(canvas, qt_app)
+            assert canvas.minimumWidth() == canvas.minimumHeight() == 100
+            assert scroll.verticalScrollBar().maximum() == 0
+            assert all(label.get_rotation() == 0 for label in axis.get_xticklabels())
+            parent.resize(350, 260)
+    finally:
+        sip.delete(parent)
+
+
+@pytest.mark.parametrize("ratio", [1, 2])
+def test_content_minimum_converts_renderer_growth_to_logical_pixels(
+    monkeypatch: pytest.MonkeyPatch, ratio: int
+) -> None:
+    figure = ChartFigure(figsize=(5, 3), dpi=100, constrained_layout=True)
+    figure.add_subplot().plot([0, 1], [0, 1])
+    canvas = SerializedAnalysisCanvas(figure)
+    canvas._set_device_pixel_ratio(ratio)
+    canvas.setMinimumSize(100, 100)
+    monkeypatch.setattr(analysis_chart_canvas, "measure_chart_growth", lambda *_args: (0.0, 100.0 * ratio))
+    try:
+        canvas.draw()
+        canvas._content_size_timer.timeout.emit()
+        assert canvas.minimumWidth() == 100
+        assert canvas.minimumHeight() == pytest.approx(400, abs=4)
+    finally:
+        sip.delete(canvas)
+
+
+def test_live_content_iteration_limit_remains_bounded(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    figure = ChartFigure(
+        figsize=(5, 3),
+        dpi=100,
+        constrained_layout=True,
+        config=ChartConfig(content_layout=ChartContentLayoutConfig(max_passes=2)),
+    )
+    figure.add_subplot().plot([0, 1], [0, 1])
+    canvas = SerializedAnalysisCanvas(figure)
+    monkeypatch.setattr(analysis_chart_canvas, "measure_chart_growth", lambda *_args: (0.0, 100.0))
+    try:
+        for _ in range(6):
+            canvas.draw()
+            canvas._content_size_timer.stop()
+            canvas._apply_content_minimum()
+        assert canvas._content_resize_passes == 2
+        assert not canvas._content_size_timer.isActive()
+        assert caplog.text.count("Chart content did not fit within the live canvas layout iteration limit") == 1
     finally:
         sip.delete(canvas)

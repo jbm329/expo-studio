@@ -9,6 +9,7 @@ from io import BytesIO
 from itertools import pairwise
 from typing import TYPE_CHECKING, cast
 
+import numpy as np
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from PIL import Image
 
@@ -248,7 +249,7 @@ def render_chart_png(
             output = BytesIO()
             # Encode the verified renderer directly: print_png would draw again.
             pixels = canvas.buffer_rgba()  # type: ignore[no-untyped-call]
-            Image.frombuffer("RGBA", (width, height), pixels, "raw", "RGBA", 0, 1).save(output, "PNG")
+            Image.fromarray(np.asarray(pixels)).save(output, "PNG")
             data = output.getvalue()
             return ChartRaster(data, int.from_bytes(data[16:20]), int.from_bytes(data[20:24]))
         if figure.get_layout_engine() is None:

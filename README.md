@@ -45,230 +45,31 @@ The project is still in its infancy and may change significantly.
 
 The **Advanced Analysis** workspace provides statistical and machine-learning
 tools for datasets in result tabs. Select a ready result tab before opening
-**Analyze data**. Each modal session stays bound to the active dataset captured
-when it opens, including its report draft; close and reopen the workspace to
-analyze another dataset. The window title shows the source name and its row/column counts.
+**Analyze data**. Each analysis window stays bound to the dataset it opened with;
+close and reopen it to analyze another dataset.
 
-- **Overview** profiles dataset structure, missing values, duplicates, and columns, with first/last 10-row previews.
-  Overview Sample exports use the actual first/last 10 rows (including overlap): separate First/Last
-  sheets in Excel, or one table with a sample-group column in CSV and binary formats.
+- **Overview** profiles dataset structure, missing values, duplicates, and columns, with sample-row previews.
 - **Statistics** summarizes numeric and categorical data, distributions, and normality.
-- **Hypothesis Tests** compares groups, tests categorical associations, and analyzes paired measurements. Applied test
-  families and ordered variable roles are shown consistently in Analysis, Reports, HTML, and export choices; distinct
-  selections can coexist in a report, while rerunning an identical selection requires explicit review to update it.
+- **Hypothesis Tests** compares groups, tests categorical associations, and analyzes paired measurements.
 - **Correlation** explores Pearson, Spearman, or Kendall relationships with matrix and pairwise plots.
-- **Regression** fits linear, logistic, Poisson, Negative Binomial, and Cox models with diagnostics. Report entries show
-  the applied model, outcome roles, ordered predictors, categorical reference coding, and fitted terms; distinct model
-  configurations coexist, and rerunning the same configuration requires explicit review to update its result.
-- **Outliers** detects univariate and multivariate anomalies. Univariate reports identify the method, threshold, complete
-  screened-column set, and selected detail column; different methods, thresholds, or screened inputs can coexist.
-  Changing the selected detail column replaces that entry's captured detail, while rerunning the same screening requires
-  explicit review to update its captured result. Multivariate entries identify their method, features, standardization,
-  expected outlier fraction, and LOF neighbors when applicable; different configurations coexist and identical reruns
-  require explicit review to update.
+- **Regression** fits linear, logistic, Poisson, Negative Binomial, and Cox models with diagnostics.
+- **Outliers** detects univariate and multivariate anomalies.
 - **Clustering** groups observations using K-means, DBSCAN, or agglomerative clustering.
 - **PCA** reduces numeric data to principal components and shows loadings and explained variance.
 - **Time Series** prepares and analyzes series with optional resampling, autocorrelation, and seasonal decomposition.
-  Analysis, Reports, HTML, and exports show the applied time/value columns, resampling, seasonal-period choice, and
-  decomposition model. Different complete configurations coexist in a report; rerunning an identical configuration
-  requires explicit review to update its captured result.
 
-Long-running analyses run in the background where needed, and exports use the
-latest successful analysis result.
+Analysis pages show applied settings alongside results and explanatory notes.
+Charts adapt to long labels, with scrolling when more space is needed.
+Long-running analyses run in the background where needed.
 
-Applied configuration headers in analysis pages share `AppliedConfigurationHeader`,
-using the typed `AnalysisPresentation` captured from the applied result, never
-pending controls. Hypothesis Tests, Correlation, Regression, Outliers, PCA,
-Clustering, and Time Series use the same framed bold title and two-column settings
-grid: one non-wrapping label per row and a wrapping, selectable plain-text value.
-Overview and Statistics retain their own presentation. Reports and exports use
-the same semantic descriptors but keep their output-specific layouts.
+**Export** selected analysis results to Excel, CSV, or supported binary formats.
+Excel workbooks can combine tables and charts; CSV and binary exports contain
+one selected table. Exports use the latest successful analysis result.
 
-Analysis text results use the reusable `AnalysisResultSection` across Hypothesis
-Tests, Statistics (normality), Correlation, Regression (including GLM and Cox),
-Outliers (univariate and multivariate), PCA, Clustering, and Time Series:
-the same native frame and padding as the applied configuration header surround
-a fixed bold title and borderless, background-inheriting scroll content.
-Scrollbars appear only when needed. Dynamic column and pair details retain this
-configuration when updated, including unavailable-result messages. Charts,
-tables, and Overview retain their existing layouts; exports and reports keep
-their existing content and formatting.
-Statistics normality text prefers its wrapped content height, leaving spare
-space to the charts, and scrolls below its fixed title when space is limited.
-
-Statistics chart titles, no-data labels, column identity, and export/report
-metadata come from one typed presentation builder and shared chart-pair drawer.
-When migrating another chart family, capture translated semantics and
-output-independent accessibility/caption metadata before background rendering;
-use the same drawing path in the live view and exports, and keep only sizing or
-layout decisions specific to an output in its renderer.
-
-#### Chart configuration
-
-Charts share internal defaults in
-`src\expo_jbm329\services\analysis\chart_config.py` and existing size/style profiles
-in `chart_profiles.py`. These are developer settings, not application preferences.
-`ChartFigure` in `chart_layout.py` applies the same renderer-aware x-axis label
-layout to live charts, column-properties plots and exported PNGs used by Excel
-and HTML. Crowded labels rotate to 90 degrees; labels that fit keep their preferred
-orientation. Resizing can restore that orientation. Different output widths can
-therefore legitimately produce different rotations.
-
-Use an explicit axis override for exceptions rather than changing Matplotlib's
-global `rcParams`. `DEFAULT_CHART_CONFIG` supplies the defaults; a figure's
-`config=ChartConfig(...)` overrides them, and `figure.configure_axis(axis,
-AxisPolicy(...))` supplies an axis-specific exception. `RotationMode` supports
-`AUTO`, `HORIZONTAL`, `VERTICAL` and `FIXED` (with `fixed_rotation_degrees`).
-For example, setting the default axis policy's mode to `VERTICAL` makes eligible
-labels vertical across charts; explicit chart exceptions still take precedence.
-Keep fixed, logarithmic and date tick locators intact; label
-layout must not change categories, analysis parameters or plotted data. Existing
-export sizes and styles remain separate profiles, including predictor-dependent
-regression sizes.
-
-Export profile sizes are starting sizes rather than clipping boundaries.
-`chart_export.py` measures the rendered content after rotation and grows the
-PNG when labels or other decorations need more space, preserving a minimum
-data-plot area. Excel placement and HTML image attributes use the actual encoded
-image dimensions. `ChartConfig.content_layout` controls minimum plot space,
-padding, iteration limits and maximum raster dimensions/pixel count. If a chart
-cannot fit within those limits, export fails explicitly instead of silently
-clipping text, dropping ticks or shrinking fonts.
-Wide HTML charts scroll horizontally at their intrinsic image size instead of
-reducing label text to fit the page; printing still scales charts to page width.
-
-Live canvases use the same measurements to request additional minimum space
-after drawing. Chart sections scroll when that content exceeds the available
-section size. Size requests are deferred outside the render call and rendering
-remains serialized with background exports.
-
-Repeated worksheet headings use the shared `DEFAULT_WORKSHEET_HEADING` policy in
-`chart_presentation.py`. Section-specific presentation builders still own chart
-titles, axis text, meaningful explanatory captions and accessible image names.
-Do not suppress all captions to remove a duplicate title, or derive an accessible
-name from a potentially hidden worksheet heading. Excel and HTML consume the
-captured metadata without reconstructing chart semantics.
-
-Correlation uses the same shared-presentation ownership: matrix titles and
-annotations, actual column-name ticks and scatter axes, pair titles and useful
-fitted-line, sampling and rank-method notes agree in the app, Excel and HTML.
-Exports do not repeat plotted matrix or pair titles below the image; accessible
-HTML image names remain available. Numeric chart formatting and translations
-are captured before background rendering. The app retains its pair statistics
-panel and asynchronous pair selection.
-
-Regression also captures its chart presentation through one Qt-free builder for
-linear, logistic, Poisson, negative-binomial and Cox models. Views and exported
-images share diagnostic titles, axis labels, annotations and sampling notes.
-Excel and HTML omit redundant outer chart headings while retaining explanatory
-captions and accessible image names. Keep model-specific axis meanings (such as
-residuals, fitted counts and hazard ratios), rather than replacing every axis
-with a source-column name.
-
-Outliers shares Qt-free presentation builders for univariate histograms and the
-multivariate PCA visualization. Histogram value axes use the actual column name;
-count and PC1/PC2 axes retain their mathematical meanings. Titles, legends and
-plain sampling notes agree in the app, Excel and HTML using the captured snapshot
-language. Outer chart headings are omitted without losing accessible image names
-or model caveats. Exports still chart every successfully screened column, while
-detail tables and asynchronous selection continue to describe the chosen column.
-
-Clustering now captures its projection title, PC1/PC2 axes, cluster/noise legend,
-accessible image name, and any deterministic-sampling note through one Qt-free
-builder. The app and worker-rendered charts use the same drawing path; Excel and
-HTML omit the redundant chart heading while retaining the sample note and HTML
-alternative text. PC axes remain mathematical labels and do not imply explained
-variance.
-
-PCA captures both chart presentations in a Qt-free builder: scree component and
-variance axes, explained/cumulative legends, PC1/PC2 axes with explained-variance
-percentages, accessible image names, and the deterministic-sampling note.
-The app and export workers draw the same captured labels and data. Excel and
-HTML omit redundant outer chart titles while retaining the **PCA plots**
-component heading, plotted titles, and sampling captions only for sampled scores.
-Translations and numeric formatting are captured before background rendering.
-
-Time Series captures per-chart titles, axes, decomposition panel labels, and
-accessibility/output metadata in one Qt-free builder. The app, Excel, and HTML
-draw the same captured semantics without repeating plotted titles in worksheet
-cells or below report images (including Autocorrelation below its Lag axis).
-Plotted titles and accessible image names remain; unavailable diagnostics still
-show explanations in the app and are skipped in exports with captured model notes.
-Series values, time axes, and decomposition calculations are unchanged.
-
-Export is available for successfully applied results. Excel workbooks can
-combine selected tables and available charts; CSV and binary exports contain
-one selected table. Charts are available in Excel only. Exports contain the
-selected analysis results, not a full dataset dump.
-Time Series exports retain the applied configuration in the export choices and use the shared component/chart labels
-and analysis title for worksheet and suggested file names; exported data columns and dtypes remain unchanged.
-
-Outlier exports include the univariate column summary, selected column details, and up to 100 displayed potential
-outlier rows. Their Excel-only Column distributions component adds a histogram for each screened column and skips
-columns that could not be screened. Multivariate exports include the model summary, displayed potential outliers, and
-the PCA outlier projection; charts are available only in Excel.
-
-Use **Add to report** to collect applied analyses, select their components, and
+Use **Add to report** to collect applied analyses, choose their components, and
 add notes. The **Reports** page lets you edit and reorder entries, add a title
-and description, and **Preview** the report in an in-app HTML window. Preview
-preparation runs in the background; each preview captures the report at the
-time you click. Drafts last for the Advanced Analysis window's lifetime.
-HTML reports show the dataset, report generation date, and Expo version once
-at the top; dataset dimensions remain available in Overview.
-Hypothesis-test HTML reports show captured explanatory notes as separate
-paragraphs below the selected Test results table; spreadsheet and data exports
-retain their existing Notes column.
-Linear, Logistic, Poisson, Negative Binomial, and Cox analyses and reports use the
-shared **Model summary** heading. HTML reports show captured model notes as
-separate paragraphs below the selected summary table; exports retain their
-existing Notes column and note-only rows.
-Outliers HTML reports place captured summary, detail, and model notes below
-their respective tables without note-only rows. The summary Status column is
-shown when a column could not be screened; otherwise it is omitted. Univariate
-column details use the shared **Model summary** heading across Analysis,
-Reports, HTML, and exports.
-Clustering HTML reports place captured model notes below the selected
-**Model summary** table for K-Means, DBSCAN, and Agglomerative clustering;
-table exports retain their existing Notes column and rows.
-PCA HTML reports place captured model notes below the selected **Model summary**
-table; table exports retain their existing Notes column and rows.
-Time Series HTML reports place captured model notes below the selected
-**Model summary** table; table exports retain their existing Notes column and rows.
-Correlation entries are titled by their applied method and show the ordered
-columns used. Pearson, Spearman, and Kendall results can coexist; changing
-columns within a method requires an explicit replacement, and rerunning the
-same configuration requires an explicit result update. The captured result,
-notes, and component selection remain unchanged if that review is canceled.
-Regression entries identify the applied model and show outcome roles,
-predictors, reference levels, and modeled terms separately. Different model
-families and configurations coexist; rerunning the same full model configuration
-requires explicit review before the captured result is updated.
-Outlier entries use configured method titles and show applied settings in
-Analysis, Reports, HTML, and export choices. Univariate method/threshold/screened
-inputs define distinct report entries; changing only the selected detail column
-offers an explicit replacement within that entry. Multivariate method, feature,
-standardization, contamination, and applicable LOF-neighbor settings define
-distinct entries. Same-configuration reruns offer an explicit result update;
-canceling review preserves the stored result, note, order, and supported
-component choices.
-Clustering uses shared **Clustering — [method]** titles and applied feature,
-standardization, and parameter summaries across Analysis, Reports, HTML, and
-exports. K-Means and Agglomerative use the number of clusters; DBSCAN uses
-neighborhood radius and minimum samples. Distinct applied configurations coexist
-as report entries, ignoring inactive parameters. Rerunning a configuration offers
-an explicit result update; canceling preserves the captured result, notes,
-components, and order. Components are **Cluster sizes**, **Model summary**, and
-**Cluster projection**; the individual chart retains its internal PCA title.
-PCA uses a shared **PCA** title, with its applied ordered features and
-standardization shown across Analysis, Reports, HTML, and exports. Feature
-selection and standardization define distinct report entries; rerunning the same
-configuration offers an explicit result update, and canceling preserves the
-captured result, notes, component selection, and order. Shared components are
-**Feature loadings**, **Explained variance**, **Model summary**, and **PCA plots**;
-the scree and PC1-vs-PC2 chart titles remain descriptive.
-Use **Generate HTML report** to save a self-contained HTML file and open it
-in your default browser. Report generation runs in the background; canceled
-or failed saves preserve existing files. PDF output is not yet available.
+and description, and preview the report before saving a self-contained HTML file.
+Updating or replacing an existing report result requires confirmation.
 
 ### 📂 Supported Data File Formats
 

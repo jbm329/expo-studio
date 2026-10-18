@@ -103,7 +103,7 @@ def test_charts_and_comments_scroll_below_a_frozen_title(section, small_height, 
     panel = view.findChild(QSplitter).widget(section)
 
     content = assert_section_scrolls_below_frozen_title(
-        panel, small_height, large_height=1200, width=width, result_section=section == 1
+        panel, small_height, large_height=1200, width=width, result_section=section == 1, content_sized=section == 0
     )
 
     if section == 0:

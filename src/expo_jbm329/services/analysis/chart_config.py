@@ -37,10 +37,10 @@ class AxisPolicy:
 
     def __post_init__(self) -> None:
         """Validate explicitly configured rotation and measurement tolerance."""
-        if not isinstance(self.role, AxisRole):
+        if not isinstance(self.role, AxisRole):  # pyright: ignore[reportUnnecessaryIsInstance]
             message = "Axis role must be an AxisRole value."
             raise TypeError(message)
-        if not isinstance(self.rotation_mode, RotationMode):
+        if not isinstance(self.rotation_mode, RotationMode):  # pyright: ignore[reportUnnecessaryIsInstance]
             message = "Axis rotation mode must be a RotationMode value."
             raise TypeError(message)
         if not isfinite(self.fixed_rotation_degrees):
@@ -73,7 +73,11 @@ class ChartContentLayoutConfig:
     def __post_init__(self) -> None:
         """Reject unbounded or invalid export limits."""
         for value in (self.max_passes, self.max_width_px, self.max_height_px, self.max_pixels):
-            if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+            if (
+                not isinstance(value, int)  # pyright: ignore[reportUnnecessaryIsInstance]
+                or isinstance(value, bool)
+                or value <= 0
+            ):
                 message = "Chart content layout limits must be positive integers."
                 raise ValueError(message)
         for measurement in (
@@ -97,10 +101,10 @@ class ChartConfig:
 
     def __post_init__(self) -> None:
         """Validate the renderer measurement tolerance."""
-        if not isinstance(self.default_axis_policy, AxisPolicy):
+        if not isinstance(self.default_axis_policy, AxisPolicy):  # pyright: ignore[reportUnnecessaryIsInstance]
             message = "Default axis policy must be an AxisPolicy value."
             raise TypeError(message)
-        if not isinstance(self.content_layout, ChartContentLayoutConfig):
+        if not isinstance(self.content_layout, ChartContentLayoutConfig):  # pyright: ignore[reportUnnecessaryIsInstance]
             message = "Chart content layout must be a ChartContentLayoutConfig value."
             raise TypeError(message)
         if not isfinite(self.overlap_gap_points) or self.overlap_gap_points < 0:

@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure as MatplotlibFigure
 
     from expo_jbm329.services.analysis.correlation import CorrelationMatrixResult, CorrelationPairDetail
     from expo_jbm329.services.analysis.correlation_export import CorrelationExportSnapshot
@@ -167,7 +168,7 @@ def build_correlation_pair_presentation(
 
 
 def draw_correlation_matrix(
-    figure: Figure,
+    figure: MatplotlibFigure,
     ax: Axes,
     result: CorrelationMatrixResult,
     presentation: CorrelationMatrixPresentation,
