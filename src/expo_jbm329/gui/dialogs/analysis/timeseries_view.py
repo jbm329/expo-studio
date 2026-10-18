@@ -4,16 +4,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QVBoxLayout, QWidget
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.gui.dialogs.analysis.section_layout import (
+    AnalysisResultSection,
+    build_section_scroll_area,
+    rich_text_lines,
+)
+from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.services.analysis.timeseries import DecompositionModel, TimeSeriesError
 from expo_jbm329.services.analysis.timeseries_charts import (
     DECOMPOSITION_PANELS,
     TimeSeriesChartLabels,
+    build_time_series_chart_labels,
     draw_acf_plot,
     draw_decomposition,
     draw_series_plot,
@@ -21,6 +27,7 @@ from expo_jbm329.services.analysis.timeseries_charts import (
     has_decomposition,
 )
 from expo_jbm329.utils.format_utils import fmt_int
+from expo_jbm329.utils.i18n_utils import tr
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -35,6 +42,7 @@ class TimeSeriesView(QWidget):
         """Initialize a view from one complete time-series result."""
         super().__init__(parent)
         self._result = result
+        self._chart_labels = build_time_series_chart_labels(result, tr)
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         if result.error is not None:
@@ -67,18 +75,7 @@ class TimeSeriesView(QWidget):
 
     def chart_labels(self) -> TimeSeriesChartLabels:
         """Return the translated plot text used by the view and its export."""
-        return TimeSeriesChartLabels(
-            series_title=self.tr("Series"),
-            value_axis=self._result.value_column,
-            acf_title=self.tr("Autocorrelation"),
-            lag_axis=self.tr("Lag"),
-            acf_axis=self.tr("Autocorrelation"),
-            decomposition_title=self.tr("Seasonal decomposition"),
-            observed=self.tr("Observed"),
-            trend=self.tr("Trend"),
-            seasonal=self.tr("Seasonal"),
-            residual=self.tr("Residual"),
-        )
+        return self._chart_labels
 
     def export_notes(self) -> tuple[str, ...]:
         """Return the displayed comments, decomposition model and unavailability reasons.
@@ -90,12 +87,17 @@ class TimeSeriesView(QWidget):
         if result.error is not None:
             return ()
         models = {
-            DecompositionModel.ADDITIVE: self.tr("Additive"),
-            DecompositionModel.MULTIPLICATIVE: self.tr("Multiplicative"),
+            DecompositionModel.ADDITIVE: translate_presentation_label(PresentationLabel.TIME_SERIES_ADDITIVE, tr),
+            DecompositionModel.MULTIPLICATIVE: translate_presentation_label(
+                PresentationLabel.TIME_SERIES_MULTIPLICATIVE, tr
+            ),
         }
         lines = [
             *rich_text_lines([self._summary_text(result)]),
-            self.tr("Decomposition model: {model}").format(model=models[result.decomposition_model]),
+            (
+                f"{translate_presentation_label(PresentationLabel.TIME_SERIES_DECOMPOSITION_MODEL, tr)} "
+                f"{models[result.decomposition_model]}"
+            ),
         ]
         lines.extend(self.note_text(note) for note in (result.diagnostics_note, result.decomposition_note) if note)
         return tuple(lines)
@@ -166,9 +168,7 @@ class TimeSeriesView(QWidget):
 
     def _build_comments_section(self, result: TimeSeriesResult) -> QWidget:
         """Build the titled model-comments section with a scrollable summary."""
-        panel, layout = self._build_section(self.tr("Model comments"))
-        layout.addWidget(build_section_scroll_area(self._summary_label(result), panel), 1)
-        return panel
+        return AnalysisResultSection(self.tr("Model comments"), self._summary_label(result), self)
 
     def _build_section(self, title: str) -> tuple[QWidget, QVBoxLayout]:
         """Build a titled section matching the Regression layout."""
@@ -207,41 +207,51 @@ class TimeSeriesView(QWidget):
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         return label
 
-    def _canvas(self, height: int = 220) -> tuple[FigureCanvasQTAgg, Axes]:
-        """Build a constrained matplotlib canvas and one subplot."""
+    def _canvas(self, height: int = 220) -> tuple[SerializedAnalysisCanvas, Figure]:
+        """Build a constrained canvas whose chart construction can be deferred."""
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(height)
-        return canvas, figure.add_subplot(111)
+        return canvas, figure
 
     def _series_plot(self, result: TimeSeriesResult) -> QWidget:
         """Build the original or resampled series chart."""
-        canvas, axis = self._canvas()
-        draw_series_plot(axis, result, self.chart_labels())
+        canvas, figure = self._canvas()
+        canvas.build_chart(lambda: draw_series_plot(figure.add_subplot(111), result, self.chart_labels()))
         return canvas
 
     def _acf_plot(self, result: TimeSeriesResult) -> QWidget:
         """Build ACF stems or an explanation when the metric is unavailable."""
-        canvas, axis = self._canvas()
+        canvas, figure = self._canvas()
         labels = self.chart_labels()
         if has_autocorrelation(result):
-            draw_acf_plot(axis, result, labels)
+            canvas.build_chart(lambda: draw_acf_plot(figure.add_subplot(111), result, labels))
         else:
-            self._draw_unavailable(axis, labels.acf_title, result.diagnostics_note)
+            canvas.build_chart(
+                lambda: self._draw_unavailable(
+                    figure.add_subplot(111), labels.acf_metadata.accessible_name, result.diagnostics_note
+                )
+            )
         return canvas
 
     def _decomposition_plot(self, result: TimeSeriesResult) -> QWidget:
         """Build seasonal components or show why decomposition is unavailable."""
         labels = self.chart_labels()
         if not has_decomposition(result):
-            canvas, axis = self._canvas()
-            self._draw_unavailable(axis, labels.decomposition_title, result.decomposition_note)
+            canvas, figure = self._canvas()
+            canvas.build_chart(
+                lambda: self._draw_unavailable(
+                    figure.add_subplot(111), labels.decomposition_metadata.accessible_name, result.decomposition_note
+                )
+            )
             return canvas
 
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(400)
-        draw_decomposition(list(figure.subplots(DECOMPOSITION_PANELS, 1, sharex=True)), result, labels)
+        canvas.build_chart(
+            lambda: draw_decomposition(list(figure.subplots(DECOMPOSITION_PANELS, 1, sharex=True)), result, labels)
+        )
         return canvas
 
     def _draw_unavailable(self, axis: Axes, title: str, note: str | None) -> None:

@@ -4,20 +4,37 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from io import BytesIO
 from itertools import combinations
 from typing import TYPE_CHECKING
 
 import numpy as np
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.figure import Figure
 
+from expo_jbm329.services.analysis.chart_config import AxisPolicy, AxisRole, RotationMode
+from expo_jbm329.services.analysis.chart_export import render_chart_png
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.chart_presentation import (
+    DEFAULT_CHART_NUMERIC_LOCALE,
+    DEFAULT_WORKSHEET_HEADING,
+    ChartNumericLocale,
+    ChartPresentationMetadata,
+)
+from expo_jbm329.services.analysis.chart_profiles import (
+    CORRELATION_ANNOTATION_FONT_SIZE,
+    CORRELATION_CHART_PROFILE,
+    CORRELATION_MATRIX_PREFERRED_ROTATION,
+)
 from expo_jbm329.services.analysis.correlation import (
+    MIN_OBSERVATIONS,
     CorrelationError,
     CorrelationMethod,
     analyze_correlation_pair,
 )
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportComponent
+from expo_jbm329.services.analysis.presentation import (
+    PresentationLabel,
+    correlation_method_label,
+    translate_presentation_label,
+)
 from expo_jbm329.services.analysis.statistics_charts import STATISTICS_CHART_LOCK
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
 
@@ -25,6 +42,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure as MatplotlibFigure
 
     from expo_jbm329.services.analysis.correlation import CorrelationMatrixResult, CorrelationPairDetail
     from expo_jbm329.services.analysis.correlation_export import CorrelationExportSnapshot
@@ -59,37 +77,138 @@ class CorrelationChartLabels:
     matrix_annotations: tuple[tuple[str, ...], ...] = ()
 
 
+@dataclass(frozen=True, slots=True)
+class CorrelationMatrixPresentation:
+    """Shared matrix title, cell annotations and output metadata."""
+
+    title: str
+    annotations: tuple[tuple[str, ...], ...]
+    metadata: ChartPresentationMetadata
+
+
+@dataclass(frozen=True, slots=True)
+class CorrelationPairPresentation:
+    """Shared pair title, actual column axes, unavailable state and captions."""
+
+    title: str
+    x_label: str
+    y_label: str
+    unavailable_message: str | None
+    metadata: ChartPresentationMetadata
+
+
+def build_correlation_chart_labels(
+    result: CorrelationMatrixResult,
+    translate: Callable[[str, str], str],
+    numeric_locale: ChartNumericLocale = DEFAULT_CHART_NUMERIC_LOCALE,
+) -> CorrelationChartLabels:
+    """Capture translated templates and canonical app precision for later rendering.
+
+    Args:
+        result: Applied matrix whose ordered cells will be annotated.
+        translate: Translation callback, called only while building these labels.
+        numeric_locale: Numeric separators captured before worker dispatch.
+
+    Returns:
+        Frozen labels with Qt-free formatters for pair details computed later.
+    """
+    return CorrelationChartLabels(
+        matrix_title=translate_presentation_label(PresentationLabel.CORRELATION_MATRIX, translate),
+        scatter_heading=translate_presentation_label(PresentationLabel.SCATTERPLOT_TITLE, translate),
+        line_equation=translate("AnalysisExportDialog", "Least-squares line: y = ({slope}) x + ({intercept})"),
+        descriptive_line=translate(
+            "CorrelationView",
+            "The line is a linear fit shown for reference. {method} measures monotonic, "
+            "not necessarily linear, association.",
+        ).format(method=correlation_method_label(result.method, translate)),
+        sampling=translate(
+            "CorrelationView", "Showing a random sample of {shown} of {total} points. Statistics use all points."
+        ),
+        insufficient_observations=translate(
+            "CorrelationView",
+            "Fewer than {minimum} rows have values in both columns, so no correlation can be computed.",
+        ).format(minimum=numeric_locale.count(MIN_OBSERVATIONS)),
+        constant_input=translate(
+            "CorrelationView",
+            "At least one of the columns is constant over the rows with values in both, "
+            "so no correlation can be computed.",
+        ),
+        number_format=numeric_locale.number,
+        count_format=numeric_locale.count,
+        matrix_annotations=tuple(
+            tuple(numeric_locale.number(value, precision=2) for value in row) for row in result.coefficients
+        ),
+    )
+
+
+def build_correlation_matrix_presentation(labels: CorrelationChartLabels) -> CorrelationMatrixPresentation:
+    """Build matrix semantics without repeating the plotted title outside the image."""
+    return CorrelationMatrixPresentation(
+        labels.matrix_title,
+        labels.matrix_annotations,
+        ChartPresentationMetadata(worksheet_heading=DEFAULT_WORKSHEET_HEADING, accessible_name=labels.matrix_title),
+    )
+
+
+def build_correlation_pair_presentation(
+    detail: CorrelationPairDetail, labels: CorrelationChartLabels
+) -> CorrelationPairPresentation:
+    """Build pair semantics, retaining explanatory notes but no repeated pair heading."""
+    title = labels.scatter_heading.format(x=detail.pair.x_column, y=detail.pair.y_column)
+    captions = scatter_captions(detail, labels)
+    return CorrelationPairPresentation(
+        title,
+        detail.pair.x_column,
+        detail.pair.y_column,
+        captions[0] if detail.error is not None else None,
+        ChartPresentationMetadata(
+            worksheet_heading=DEFAULT_WORKSHEET_HEADING, accessible_name=title, captions=captions
+        ),
+    )
+
+
 def draw_correlation_matrix(
-    figure: Figure,
+    figure: MatplotlibFigure,
     ax: Axes,
     result: CorrelationMatrixResult,
-    title: str,
-    annotations: tuple[tuple[str, ...], ...] = (),
+    presentation: CorrelationMatrixPresentation,
 ) -> None:
     """Draw the applied matrix with the GUI's fixed scale and annotation rules."""
     coefficients = np.asarray(result.coefficients, dtype=float)
     image = ax.imshow(coefficients, cmap="RdBu_r", vmin=-1.0, vmax=1.0)
     figure.colorbar(image, ax=ax)
     labels = list(result.columns)
-    ax.set_xticks(range(len(labels)), labels=labels, rotation=90)
+    ax.set_xticks(range(len(labels)), labels=labels, rotation=CORRELATION_MATRIX_PREFERRED_ROTATION)
+    if isinstance(figure, Figure):
+        figure.configure_axis(ax, AxisPolicy(role=AxisRole.CATEGORICAL, rotation_mode=RotationMode.VERTICAL))
     ax.set_yticks(range(len(labels)), labels=labels)
-    ax.set_title(title)
+    ax.set_title(presentation.title)
     if len(labels) <= MAX_ANNOTATED_COLUMNS:
         for (row, column), value in np.ndenumerate(coefficients):
             if math.isfinite(value):
                 ax.text(
                     column,
                     row,
-                    annotations[row][column] if annotations else format(float(value), ".2g"),
+                    presentation.annotations[row][column] if presentation.annotations else format(float(value), ".2g"),
                     ha="center",
                     va="center",
-                    fontsize=7,
+                    fontsize=CORRELATION_ANNOTATION_FONT_SIZE,
                     color="white" if abs(value) > _LIGHT_TEXT_THRESHOLD else "black",
                 )
 
 
-def draw_correlation_scatter(ax: Axes, detail: CorrelationPairDetail) -> None:
-    """Draw the deterministic sample and full-cohort least-squares line."""
+def draw_correlation_scatter(
+    ax: Axes, detail: CorrelationPairDetail, presentation: CorrelationPairPresentation
+) -> None:
+    """Draw the pair title, deterministic sample and full-cohort line or explicit error."""
+    ax.set_title(presentation.title)
+    ax.set_xlabel(presentation.x_label)
+    ax.set_ylabel(presentation.y_label)
+    if presentation.unavailable_message is not None:
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.text(0.5, 0.5, presentation.unavailable_message, ha="center", va="center", wrap=True, transform=ax.transAxes)
+        return
     if detail.error is not None or not detail.sample_x:
         message = "A scatterplot requires a defined pair with prepared sample data."
         raise ValueError(message)
@@ -100,8 +219,6 @@ def draw_correlation_scatter(ax: Axes, detail: CorrelationPairDetail) -> None:
         [detail.slope * x_min + detail.intercept, detail.slope * x_max + detail.intercept],
         color="tab:red",
     )
-    ax.set_xlabel(detail.pair.x_column)
-    ax.set_ylabel(detail.pair.y_column)
 
 
 def scatter_captions(detail: CorrelationPairDetail, labels: CorrelationChartLabels) -> tuple[str, ...]:
@@ -171,30 +288,40 @@ def render_correlation_charts(
         if cancel_cb is not None and cancel_cb():
             raise ExcelChartCancelledError
 
-    def render(heading: str, builder: Callable[[Figure], None], captions: tuple[str, ...] = ()) -> None:
+    def render(metadata: ChartPresentationMetadata, builder: Callable[[Figure], None]) -> None:
         check_cancel()
         with STATISTICS_CHART_LOCK:
             check_cancel()
-            figure = Figure(figsize=(9, 6), dpi=120, constrained_layout=True)
+            geometry = CORRELATION_CHART_PROFILE.geometry
+            figure = Figure(
+                figsize=geometry.figsize,
+                dpi=geometry.dpi,
+                constrained_layout=geometry.constrained_layout,
+            )
             try:
-                canvas = FigureCanvasAgg(figure)
                 builder(figure)
-                output = BytesIO()
-                canvas.print_png(output)  # type: ignore[no-untyped-call]
-                image_data = output.getvalue()
+                raster = render_chart_png(figure, check_cancelled=check_cancel)
             finally:
                 figure.clear()
         check_cancel()
-        images.append(ExcelChartImage(heading, image_data, 1080, 720, captions))
+        images.append(
+            ExcelChartImage(
+                metadata.worksheet_heading,
+                raster.image_data,
+                raster.width_px,
+                raster.height_px,
+                metadata.captions,
+                metadata.accessible_name,
+            )
+        )
         if progress_cb is not None:
             progress_cb(len(images) * 100 // total)
 
     if include_matrix:
+        matrix_presentation = build_correlation_matrix_presentation(labels)
         render(
-            labels.matrix_title,
-            lambda figure: draw_correlation_matrix(
-                figure, figure.add_subplot(111), matrix, labels.matrix_title, labels.matrix_annotations
-            ),
+            matrix_presentation.metadata,
+            lambda figure: draw_correlation_matrix(figure, figure.add_subplot(111), matrix, matrix_presentation),
         )
     for x_column, y_column in pairs:
         check_cancel()
@@ -205,18 +332,15 @@ def render_correlation_charts(
             matrix.method,
             statistics=pair_statistics[x_column, y_column],
         )
-        captions = scatter_captions(detail, labels)
-        heading = labels.scatter_heading.format(x=x_column, y=y_column)
+        presentation = build_correlation_pair_presentation(detail, labels)
 
         def build_scatter(
-            figure: Figure, detail: CorrelationPairDetail = detail, captions: tuple[str, ...] = captions
+            figure: Figure,
+            detail: CorrelationPairDetail = detail,
+            presentation: CorrelationPairPresentation = presentation,
         ) -> None:
             ax = figure.add_subplot(111)
-            if detail.error is None:
-                draw_correlation_scatter(ax, detail)
-            else:
-                ax.set_axis_off()
-                ax.text(0.5, 0.5, captions[0], ha="center", va="center", wrap=True, transform=ax.transAxes)
+            draw_correlation_scatter(ax, detail, presentation)
 
-        render(heading, build_scatter, captions)
+        render(presentation.metadata, build_scatter)
     return tuple(images)

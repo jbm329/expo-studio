@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from PyQt6.QtCore import Qt, QTranslator
+from PyQt6.QtCore import QCoreApplication, Qt, QTranslator
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
+from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.clustering_export import (
     CLUSTERING_COMPONENTS,
@@ -37,12 +38,13 @@ from expo_jbm329.services.analysis.outliers_export import (
 )
 from expo_jbm329.services.analysis.overview import OverviewExportFormat, OverviewExportTable, analyze_dataset_overview
 from expo_jbm329.services.analysis.pca_export import PCA_COMPONENTS, PCAExportComponent, PCAExportRequest
-from expo_jbm329.services.analysis.regression_charts import RegressionChartLabels
+from expo_jbm329.services.analysis.presentation import build_analysis_presentation
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
     RegressionExportRequest,
     RegressionExportSnapshot,
 )
+from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.statistics import (
     StatisticsExportFormat,
     StatisticsExportTable,
@@ -53,7 +55,7 @@ from expo_jbm329.services.analysis.timeseries_export import (
     TimeSeriesExportComponent,
     TimeSeriesExportRequest,
 )
-from expo_jbm329.utils.format_utils import fmt_num
+from expo_jbm329.utils.format_utils import fmt_num, fmt_pct
 from tests.analysis.test_clustering_export import clustering_snapshot
 from tests.analysis.test_hypothesis_export import chi_snapshot, group_snapshot, paired_snapshot
 from tests.analysis.test_outliers_export import HISTOGRAM_LABELS, multivariate_snapshot, univariate_snapshot
@@ -64,7 +66,9 @@ from tests.analysis.test_regression_export import (
     linear_result,
     linear_snapshot,
     logistic_snapshot,
+    negative_binomial_snapshot,
     poisson_snapshot,
+    regression_chart_labels,
 )
 from tests.analysis.test_timeseries_export import IRREGULAR_NOTE, irregular_snapshot, time_series_snapshot
 
@@ -81,7 +85,7 @@ def test_overview_formats_preserve_choices_and_disable_multi_table_single_file_e
     dialog = AnalysisExportDialog(overview=overview)
     assert [group.title() for group in dialog.findChildren(QGroupBox)] == ["Data", "Results"]
     choices = dialog.findChildren(QCheckBox)
-    assert [choice.text() for choice in choices] == ["Columns metadata", "Sample (first 100 rows)", "Summary"]
+    assert [choice.text() for choice in choices] == ["Columns metadata", "Sample (first/last 10 rows)", "Summary"]
     assert choices[2].isEnabled()
     assert not choices[2].isChecked()
     assert "high-missing-value warnings" in choices[2].toolTip()
@@ -135,10 +139,47 @@ def test_overview_empty_and_missing_results_have_explicit_disabled_tables(source
     assert len(choices) == 3
     assert not choices[1].isEnabled()
     assert bool(choices[0].isEnabled()) == (source is not None and source.shape[1] > 0)
-    assert ("empty" if source is not None else "Run Overview") in choices[1].toolTip()
+    assert ("unavailable" if source is not None else "Run Overview") in choices[1].toolTip()
     assert choices[2].isEnabled() is (source is not None)
     if source is None:
         assert "Run Overview" in choices[2].toolTip()
+
+
+def test_overview_partial_legacy_sample_is_disabled_without_changing_other_tables():
+    result = analyze_dataset_overview(pd.DataFrame({"value": range(120)}))
+    partial = replace(result, sample_last_rows=(), sample_last_frame=None)
+    dialog = AnalysisExportDialog(overview=partial)
+    choices = dialog.findChildren(QCheckBox)
+    assert choices[0].isEnabled()
+    assert not choices[1].isEnabled()
+    assert "first/last sample is unavailable" in choices[1].toolTip()
+    assert choices[2].isEnabled()
+
+
+@pytest.mark.parametrize(
+    ("locale", "sample_label", "group_label", "first_label", "last_label"),
+    [
+        ("en", "Sample (first/last 10 rows)", "Sample group", "First ({count})", "Last ({count})"),
+        ("sv", "Urval (de första/sista 10 raderna)", "Urvalsgrupp", "Första ({count})", "Sista ({count})"),
+    ],
+)
+def test_overview_sample_compiled_translations(locale, sample_label, group_label, first_label, last_label):
+    translator = QTranslator()
+    path = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{locale}.qm"
+    assert translator.load(str(path))
+    app = QApplication.instance()
+    app.installTranslator(translator)
+    dialog = None
+    try:
+        dialog = AnalysisExportDialog(overview=analyze_dataset_overview(pd.DataFrame({"value": [1]})))
+        assert dialog.findChildren(QCheckBox)[1].text() == sample_label
+        assert translator.translate("OverviewView", "Sample group") == group_label
+        assert translator.translate("OverviewView", "First ({count})") == first_label
+        assert translator.translate("OverviewView", "Last ({count})") == last_label
+    finally:
+        if dialog is not None:
+            dialog.close()
+        app.removeTranslator(translator)
 
 
 @pytest.mark.parametrize(
@@ -169,10 +210,10 @@ def test_statistics_format_switching_preserves_tables_and_charts_selection():
     export = next(button for button in dialog.findChildren(QPushButton) if button.text() == "Export")
 
     assert formats.currentData() is StatisticsExportFormat.EXCEL
-    assert set(by_text) == {"Continuous", "Categorical", "Charts"}
+    assert set(by_text) == {"Continuous", "Categorical", "Distribution"}
     assert by_text["Continuous"].isChecked()
     by_text["Categorical"].setChecked(True)
-    by_text["Charts"].setChecked(True)
+    by_text["Distribution"].setChecked(True)
     request = dialog.export_request()
     assert request.tables == (
         StatisticsExportTable.CONTINUOUS,
@@ -183,11 +224,13 @@ def test_statistics_format_switching_preserves_tables_and_charts_selection():
 
     formats.setCurrentIndex(formats.findData(StatisticsExportFormat.CSV))
     assert not export.isEnabled()
-    assert by_text["Charts"].isChecked()
+    assert by_text["Distribution"].isChecked()
     assert "only in Excel" in export.toolTip()
+    assert "Uncheck Distribution" in export.toolTip()
+    assert "Charts" not in export.toolTip()
     assert dialog.export_request() is None
 
-    by_text["Charts"].setChecked(False)
+    by_text["Distribution"].setChecked(False)
     assert not export.isEnabled()
     assert "exactly one table" in export.toolTip()
     by_text["Categorical"].setChecked(False)
@@ -200,6 +243,26 @@ def test_statistics_format_switching_preserves_tables_and_charts_selection():
     assert dialog.export_request().tables == (StatisticsExportTable.CONTINUOUS,)
 
 
+def test_statistics_export_component_labels_use_shared_translation_context(monkeypatch):
+    result = analyze_descriptive_statistics(pd.DataFrame({"number": [1, 2, 3], "group": ["A", "B", "A"]}))
+
+    def translate(context: str, text: str) -> str:
+        return f"Localized {text}" if context == "StatisticsView" else text
+
+    monkeypatch.setattr(
+        "expo_jbm329.gui.dialogs.analysis.analysis_export_dialog.QCoreApplication.translate",
+        translate,
+    )
+    dialog = AnalysisExportDialog(statistics=result)
+
+    assert {choice.text() for choice in dialog.findChildren(QCheckBox)} == {
+        "Localized Continuous",
+        "Localized Categorical",
+        "Localized Distribution",
+    }
+    assert any("Localized Distribution sheet" in label.text() for label in dialog.findChildren(QLabel))
+
+
 def test_statistics_charts_are_disabled_without_numeric_columns():
     result = analyze_descriptive_statistics(pd.DataFrame({"group": ["A", "B", "A"]}))
     dialog = AnalysisExportDialog(statistics=result)
@@ -207,27 +270,55 @@ def test_statistics_charts_are_disabled_without_numeric_columns():
 
     assert by_text["Categorical"].isEnabled()
     assert not by_text["Continuous"].isEnabled()
-    assert not by_text["Charts"].isEnabled()
+    assert not by_text["Distribution"].isEnabled()
     by_text["Categorical"].setChecked(True)
     assert dialog.export_request().tables == (StatisticsExportTable.CATEGORICAL,)
 
 
 @pytest.mark.parametrize(
-    "factory,title",
+    "factory,title,summary",
     [
-        (group_snapshot, "Group summary"),
-        (chi_snapshot, "Contingency table"),
-        (paired_snapshot, "Measurement summary"),
+        (
+            group_snapshot,
+            "Group summary",
+            (
+                "Numeric variable: Value",
+                "Grouping variable: Group",
+                "Tests computed: Welch's t-test, Student's t-test, Mann-Whitney U",
+            ),
+        ),
+        (
+            chi_snapshot,
+            "Contingency table",
+            (
+                "Row variable: Row",
+                "Column variable: Column",
+                "Tests computed: Pearson's chi-square test, Fisher's exact test",
+            ),
+        ),
+        (
+            paired_snapshot,
+            "Measurement summary",
+            (
+                "Measurement variables (selected order): Time 1, Time 0",
+                "Tests computed: Wilcoxon signed-rank test",
+            ),
+        ),
     ],
 )
-def test_hypothesis_dialog_names_applied_test_columns_and_preserves_choices(factory, title):
+def test_hypothesis_dialog_uses_applied_presentation_and_preserves_choices(factory, title, summary):
     snapshot = factory()
     dialog = AnalysisExportDialog(hypothesis=snapshot)
     choices = dialog.findChildren(QCheckBox)
-    assert [choice.text() for choice in choices] == [title, "Test results", "Charts"]
-    identity = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied test:"))
+    chart_title = {
+        "Group summary": "Group distributions",
+        "Contingency table": "Association plots",
+        "Measurement summary": "Paired measurement plots",
+    }[title]
+    assert [choice.text() for choice in choices] == [title, "Test results", chart_title]
+    identity = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Hypothesis Tests —"))
     assert identity.textFormat() is Qt.TextFormat.PlainText
-    assert " / ".join(snapshot.columns) in identity.text()
+    assert all(line in identity.text() for line in summary)
     assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
     formats = dialog.findChild(QComboBox)
     assert formats.currentData() is StatisticsExportFormat.EXCEL
@@ -271,16 +362,15 @@ def test_correlation_dialog_names_applied_matrix_and_enables_all_components():
 
     assert [choice.text() for choice in choices] == [
         "Strongest correlations",
-        "Matrix plot",
-        "Scatterplots (1 pair)",
+        "Correlation matrix",
+        "Scatterplots",
     ]
     assert choices[0].isEnabled() and choices[0].isChecked()
     assert choices[1].isEnabled() and choices[2].isEnabled()
     assert formats.currentData() is StatisticsExportFormat.EXCEL
-    identity = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied method:"))
+    identity = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Correlation — Spearman"))
     assert identity.textFormat() is Qt.TextFormat.PlainText
-    assert "Spearman" in identity.text()
-    assert "first column / second column" in identity.text()
+    assert "Columns: first column, second column" in identity.text()
 
     for format_choice in StatisticsExportFormat:
         formats.setCurrentIndex(formats.findData(format_choice))
@@ -296,8 +386,8 @@ def test_correlation_dialog_without_successful_matrix_shows_disabled_choices():
     choices = dialog.findChildren(QCheckBox)
     assert [choice.text() for choice in choices] == [
         "Strongest correlations",
-        "Matrix plot",
-        "Scatterplots (0 pairs)",
+        "Correlation matrix",
+        "Scatterplots",
     ]
     assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
     assert dialog.export_request() is None
@@ -367,32 +457,32 @@ def test_long_applied_labels_and_translated_export_layout_fit_without_screen_cap
 
 
 @pytest.mark.parametrize(
-    ("factory", "identity"),
+    ("factory", "model", "chart_heading"),
     [
-        (linear_snapshot, "Applied model: Linear regression\nTarget: y\nPredictors: x / g"),
-        (logistic_snapshot, "Applied model: Logistic regression\nTarget: binary\nPredictors: x"),
-        (poisson_snapshot, "Applied model: Poisson regression\nTarget: count\nPredictors: x"),
-        (
-            cox_snapshot,
-            (
-                "Applied model: Cox proportional-hazards regression\nDuration / event: duration / event\n"
-                "Predictors: x / group"
-            ),
-        ),
+        (linear_snapshot, RegressionModel.LINEAR, "Linear diagnostics"),
+        (logistic_snapshot, RegressionModel.LOGISTIC, "Logistic diagnostics"),
+        (poisson_snapshot, RegressionModel.POISSON, "Count-model diagnostics"),
+        (negative_binomial_snapshot, RegressionModel.NEGATIVE_BINOMIAL, "Count-model diagnostics"),
+        (cox_snapshot, RegressionModel.COX, "Survival charts"),
     ],
 )
-def test_regression_dialog_names_applied_model_and_defaults_to_coefficients(factory, identity):
+def test_regression_dialog_names_applied_configuration_and_shared_components(factory, model, chart_heading):
     snapshot = factory()
     dialog = AnalysisExportDialog(regression=snapshot)
     choices = dialog.findChildren(QCheckBox)
-    assert [choice.text() for choice in choices] == ["Coefficients", "Model metrics", "Charts"]
+    assert [choice.text() for choice in choices] == ["Coefficients", "Model summary", chart_heading]
     assert all(choice.isEnabled() for choice in choices)
     assert [choice.isChecked() for choice in choices] == [True, False, False]
-    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied model:"))
-    assert label.text() == identity
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Regression — "))
+    presentation = build_analysis_presentation(
+        AnalysisCategory.REGRESSION,
+        snapshot,
+        QCoreApplication.translate,
+    )
+    assert label.text() == "\n".join((presentation.title, *presentation.summary_lines))
     assert label.textFormat() is Qt.TextFormat.PlainText
-    assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
-    assert "model comments" in choices[1].toolTip()
+    assert snapshot.model is model
+    assert "model summary" in choices[1].toolTip()
     request = dialog.export_request()
     assert isinstance(request, RegressionExportRequest)
     assert request.snapshot is snapshot
@@ -424,7 +514,9 @@ def test_regression_dialog_limits_single_file_formats_to_one_table_and_keeps_cho
 
 
 def test_regression_charts_are_disabled_when_the_model_drew_none():
-    snapshot = RegressionExportSnapshot(replace(linear_result(), plot=None), RegressionChartLabels("h", LINEAR_LABELS))
+    snapshot = RegressionExportSnapshot(
+        replace(linear_result(), plot=None), regression_chart_labels("h", LINEAR_LABELS)
+    )
     dialog = AnalysisExportDialog(regression=snapshot)
     choices = dialog.findChildren(QCheckBox)
     assert not choices[2].isEnabled()
@@ -438,10 +530,10 @@ def test_regression_charts_are_disabled_when_the_model_drew_none():
 def test_regression_dialog_without_applied_model_never_enables_export():
     dialog = AnalysisExportDialog(regression_mode=True)
     choices = dialog.findChildren(QCheckBox)
-    assert [choice.text() for choice in choices] == ["Coefficients", "Model metrics", "Charts"]
+    assert [choice.text() for choice in choices] == ["Coefficients", "Model summary", "Linear diagnostics"]
     assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
     assert all("Apply a regression model" in choice.toolTip() for choice in choices)
-    assert not any(label.text().startswith("Applied model:") for label in dialog.findChildren(QLabel))
+    assert not any(label.text().startswith("Regression — ") for label in dialog.findChildren(QLabel))
     assert dialog.export_request() is None
     assert not dialog._export_button.isEnabled()
     with pytest.raises(ValueError, match="exactly one"):
@@ -454,15 +546,18 @@ def test_univariate_outliers_dialog_names_screening_and_defaults_to_column_summa
     choices = dialog.findChildren(QCheckBox)
     assert [choice.text() for choice in choices] == [
         "Column summary",
-        "Column details",
+        "Model summary",
         "Potential outliers",
-        "Charts (3 columns)",
+        "Column distributions",
     ]
     assert all(choice.isEnabled() for choice in choices)
     assert [choice.isChecked() for choice in choices] == [True, False, False, False]
     assert "at most 100" in choices[2].toolTip()
-    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied method:"))
-    assert label.text() == f"Applied method: IQR (Tukey's fences), threshold {fmt_num(1.5)}\nSelected column: a"
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Outliers —"))
+    assert label.text() == (
+        f"Outliers — IQR (Tukey's fences)\nIQR multiplier: {fmt_num(1.5)}\n"
+        "Screened columns: a, b, few, Row\nSelected detail column: a"
+    )
     assert label.textFormat() is Qt.TextFormat.PlainText
     assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
     request = dialog.export_request()
@@ -477,15 +572,15 @@ def test_univariate_outliers_dialog_disables_empty_components():
     choices = dialog.findChildren(QCheckBox)
     assert [choice.isEnabled() for choice in choices] == [True, False, False, True]
     assert all("empty" in choice.toolTip() for choice in choices[1:3])
-    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied method:"))
-    assert "Selected column" not in label.text()
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Outliers —"))
+    assert label.text().endswith("Selected detail column: None")
 
 
-def test_single_charted_column_uses_singular_label():
+def test_single_charted_column_uses_distribution_heading():
     df = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 50.0]})
     summary = analyze_outlier_summary(df)
     dialog = AnalysisExportDialog(outliers=UnivariateOutlierExportSnapshot(summary, df.copy(), HISTOGRAM_LABELS))
-    assert dialog.findChildren(QCheckBox)[-1].text() == "Charts (1 column)"
+    assert dialog.findChildren(QCheckBox)[-1].text() == "Column distributions"
 
 
 @pytest.mark.parametrize(
@@ -499,19 +594,24 @@ def test_multivariate_outliers_dialog_names_fit_and_offers_its_components(method
     snapshot = multivariate_snapshot(method)
     dialog = AnalysisExportDialog(outliers=snapshot, outliers_multivariate=False)
     choices = dialog.findChildren(QCheckBox)
-    assert [choice.text() for choice in choices] == ["Model summary", "Potential outliers", "Charts"]
+    assert [choice.text() for choice in choices] == ["Model summary", "Potential outliers", "Outlier projection"]
     assert [choice.isChecked() for choice in choices] == [True, False, False]
-    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied method:"))
-    assert label.text() == f"Applied method: {name}\nFeatures: x / y"
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Outliers —"))
+    expected_settings = (
+        f"Standardization: Standardized\nExpected outlier fraction: {fmt_pct(0.2, decimals=1)}"
+        if method is MultivariateOutlierMethod.ISOLATION_FOREST
+        else (f"Standardization: Standardized\nExpected outlier fraction: {fmt_pct(0.2, decimals=1)}\nLOF neighbors: 2")
+    )
+    assert label.text() == f"Outliers — {name}\nFeatures: x, y\n{expected_settings}"
     assert dialog.export_request().components == (OutlierExportComponent.MODEL_SUMMARY,)
 
 
 @pytest.mark.parametrize("method", [OutlierMethod.Z_SCORE, OutlierMethod.MODIFIED_Z_SCORE])
 def test_outliers_dialog_names_every_univariate_method(method):
     dialog = AnalysisExportDialog(outliers=univariate_snapshot(method))
-    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied method:"))
-    assert ("Modified Z-score" in label.text()) is (method is OutlierMethod.MODIFIED_Z_SCORE)
-    assert "Z-score" in label.text()
+    title = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Outliers —")).text()
+    assert ("Modified Z-score" in title) is (method is OutlierMethod.MODIFIED_Z_SCORE)
+    assert title.startswith("Outliers — Z-score\n") is (method is OutlierMethod.Z_SCORE)
 
 
 def test_outliers_dialog_limits_single_file_formats_to_one_table_and_keeps_choices():
@@ -542,8 +642,8 @@ def test_outliers_dialog_limits_single_file_formats_to_one_table_and_keeps_choic
 @pytest.mark.parametrize(
     ("multivariate", "texts"),
     [
-        (False, ["Column summary", "Column details", "Potential outliers", "Charts"]),
-        (True, ["Model summary", "Potential outliers", "Charts"]),
+        (False, ["Column summary", "Model summary", "Potential outliers", "Column distributions"]),
+        (True, ["Model summary", "Potential outliers", "Outlier projection"]),
     ],
 )
 def test_outliers_dialog_without_applied_screening_never_enables_export(multivariate, texts):
@@ -571,12 +671,14 @@ def test_clustering_dialog_names_fit_and_defaults_to_cluster_sizes(method, name)
     snapshot = clustering_snapshot(method, dbscan_min_samples=3)
     dialog = AnalysisExportDialog(clustering=snapshot)
     choices = dialog.findChildren(QCheckBox)
-    assert [choice.text() for choice in choices] == ["Cluster sizes", "Model summary", "Charts"]
+    assert [choice.text() for choice in choices] == ["Cluster sizes", "Model summary", "Cluster projection"]
     assert all(choice.isEnabled() for choice in choices)
     assert [choice.isChecked() for choice in choices] == [True, False, False]
     assert "model comments" in choices[1].toolTip()
-    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied method:"))
-    assert label.text() == f"Applied method: {name}\nFeatures: x / y"
+    presentation = build_analysis_presentation(AnalysisCategory.CLUSTERING, snapshot, QCoreApplication.translate)
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Clustering —"))
+    assert presentation.title == f"Clustering — {name}"
+    assert label.text() == "\n".join((presentation.title, *presentation.summary_lines))
     assert label.textFormat() is Qt.TextFormat.PlainText
     assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
     request = dialog.export_request()
@@ -613,11 +715,11 @@ def test_clustering_dialog_limits_single_file_formats_to_one_table_and_keeps_cho
 def test_clustering_dialog_without_applied_fit_never_enables_export():
     dialog = AnalysisExportDialog(clustering_mode=True)
     choices = dialog.findChildren(QCheckBox)
-    assert [choice.text() for choice in choices] == ["Cluster sizes", "Model summary", "Charts"]
+    assert [choice.text() for choice in choices] == ["Cluster sizes", "Model summary", "Cluster projection"]
     assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
     assert all("Apply a clustering" in choice.toolTip() for choice in choices)
     assert "Apply a clustering" in dialog._selection_explanation.text()
-    assert not any(label.text().startswith("Applied method:") for label in dialog.findChildren(QLabel))
+    assert not any(label.text().startswith("Outliers —") for label in dialog.findChildren(QLabel))
     assert dialog.export_request() is None
     assert not dialog._export_button.isEnabled()
     with pytest.raises(ValueError, match="exactly one"):
@@ -632,14 +734,14 @@ def test_pca_dialog_names_features_and_defaults_to_feature_loadings():
         "Feature loadings",
         "Explained variance",
         "Model summary",
-        "Charts",
+        "PCA plots",
     ]
     assert all(choice.isEnabled() for choice in choices)
     assert [choice.isChecked() for choice in choices] == [True, False, False, False]
     assert "scree plot" in choices[1].toolTip()
     assert "model comments" in choices[2].toolTip()
-    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied features:"))
-    assert label.text() == "Applied features: x / y / z"
+    label = next(label for label in dialog.findChildren(QLabel) if "Features:" in label.text())
+    assert label.text().splitlines() == ["PCA", "Features: x, y, z", "Standardization: Standardized"]
     assert label.textFormat() is Qt.TextFormat.PlainText
     assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
     request = dialog.export_request()
@@ -681,12 +783,12 @@ def test_pca_dialog_without_applied_fit_never_enables_export():
         "Feature loadings",
         "Explained variance",
         "Model summary",
-        "Charts",
+        "PCA plots",
     ]
     assert all(not choice.isEnabled() and not choice.isChecked() for choice in choices)
     assert all("Apply a PCA" in choice.toolTip() for choice in choices)
     assert "Apply a PCA" in dialog._selection_explanation.text()
-    assert not any(label.text().startswith("Applied features:") for label in dialog.findChildren(QLabel))
+    assert not any("Features:" in label.text() for label in dialog.findChildren(QLabel))
     assert dialog.export_request() is None
     assert not dialog._export_button.isEnabled()
     with pytest.raises(ValueError, match="exactly one"):
@@ -710,8 +812,15 @@ def test_time_series_dialog_names_series_and_defaults_to_series():
     assert "averaging duplicate timestamps" in choices[0].toolTip()
     assert "model comments" in choices[2].toolTip()
     assert "decomposition" in choices[3].toolTip()
-    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Applied series:"))
-    assert label.text() == "Applied series: sales by day"
+    label = next(label for label in dialog.findChildren(QLabel) if label.text().startswith("Time Series\n"))
+    assert label.text().splitlines() == [
+        "Time Series",
+        "Time column: day",
+        "Value column: sales",
+        "Resampling: Original frequency",
+        "Seasonal period: 7",
+        "Decomposition model: Additive",
+    ]
     assert label.textFormat() is Qt.TextFormat.PlainText
     assert "not the original dataset" in dialog.findChildren(QLabel)[0].text()
     request = dialog.export_request()

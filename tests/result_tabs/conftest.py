@@ -159,6 +159,9 @@ class StubView:
     def setItemDelegate(self, d):
         pass
 
+    def itemDelegate(self):
+        return None
+
     def viewport(self):
         return SimpleNamespace(installEventFilter=lambda f: None)
 

@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
@@ -17,7 +15,13 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.gui.dialogs.analysis.section_layout import (
+    AnalysisResultSection,
+    build_section_scroll_area,
+    rich_text_lines,
+)
+from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.multivariate_outliers import (
     MAX_CONTAMINATION,
     MIN_CONTAMINATION,
@@ -26,7 +30,12 @@ from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierError,
     MultivariateOutlierMethod,
 )
-from expo_jbm329.services.analysis.outliers_charts import OutlierProjectionLabels, draw_outlier_projection
+from expo_jbm329.services.analysis.outliers_charts import (
+    OutlierProjectionLabels,
+    build_outlier_projection_labels,
+    draw_outlier_projection,
+)
+from expo_jbm329.services.analysis.presentation import multivariate_outlier_method_label
 from expo_jbm329.utils.format_utils import fmt_cell, fmt_int, fmt_num, fmt_pct
 
 if TYPE_CHECKING:
@@ -43,6 +52,7 @@ class MultivariateOutliersView(QWidget):
         """Initialize the view from a multivariate anomaly fit."""
         super().__init__(parent)
         self._result = result
+        self._chart_labels = build_outlier_projection_labels(result, QCoreApplication.translate, count_format=fmt_int)
         self._extremes_table: QTableWidget | None = None
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -97,11 +107,7 @@ class MultivariateOutliersView(QWidget):
 
     def method_name(self, method: MultivariateOutlierMethod) -> str:
         """Return the translated display name for `method`."""
-        match method:
-            case MultivariateOutlierMethod.ISOLATION_FOREST:
-                return self.tr("Isolation Forest")
-            case MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR:
-                return self.tr("Local Outlier Factor")
+        return multivariate_outlier_method_label(method, QCoreApplication.translate)
 
     def result(self) -> MultivariateOutlierResult:
         """Return the displayed multivariate fit."""
@@ -109,17 +115,7 @@ class MultivariateOutliersView(QWidget):
 
     def chart_labels(self) -> OutlierProjectionLabels:
         """Return the translated projection text used by the view and its export."""
-        result = self._result
-        captions = rich_text_lines([self._sample_text(result)]) if result.sampled and result.error is None else ()
-        return OutlierProjectionLabels(
-            heading=self.tr("PCA projection"),
-            title=self.tr("PCA projection (visualization only)"),
-            pc1_axis=self.tr("PC1"),
-            pc2_axis=self.tr("PC2"),
-            inliers=self.tr("Inliers"),
-            outliers=self.tr("Potential outliers"),
-            captions=captions,
-        )
+        return self._chart_labels
 
     def export_notes(self) -> tuple[str, ...]:
         """Return the displayed model comments and applied features as plain-text lines.
@@ -135,9 +131,7 @@ class MultivariateOutliersView(QWidget):
 
     def _comments_panel(self, result: MultivariateOutlierResult) -> QWidget:
         """Build the titled model-comments section with a scrollable fit summary."""
-        panel, layout = self._build_section(self.tr("Model comments"))
-        layout.addWidget(build_section_scroll_area(self._summary_label(result), panel), 1)
-        return panel
+        return AnalysisResultSection(self.tr("Model comments"), self._summary_label(result), self)
 
     def _summary_label(self, result: MultivariateOutlierResult) -> QLabel:
         """Build an explanatory fit summary."""
@@ -164,26 +158,31 @@ class MultivariateOutliersView(QWidget):
             dropped=fmt_int(result.rows_dropped),
         )
         if result.sampled:
-            text += "<br>" + self._sample_text(result)
+            text += "<br>" + self._sample_text()
         text += "<br>" + self.tr(
             "<i>Scores rank observations within this fit. Potential outliers are not necessarily errors.</i>"
         )
         return text
 
-    def _sample_text(self, result: MultivariateOutlierResult) -> str:
+    def _sample_text(self) -> str:
         """Return the rich-text note that the projection shows a sample."""
-        return self.tr("<i>The projection shows a deterministic sample of {count} rows.</i>").format(
-            count=fmt_int(len(result.sample_outliers))
-        )
+        return "<i>" + " ".join(self._chart_labels.metadata.captions) + "</i>"
 
     def _projection_panel(self, result: MultivariateOutlierResult) -> QWidget:
-        """Build the titled, scrollable PCA visualization colored by flagged status."""
-        panel, layout = self._build_section(self.tr("PCA projection"))
+        """Build the scrollable PCA visualization colored by flagged status."""
+        panel = QWidget(self)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumSize(360, 240)
-        draw_outlier_projection(figure.add_subplot(111), result, self.chart_labels())
+        canvas.build_chart(lambda: draw_outlier_projection(figure.add_subplot(111), result, self.chart_labels()))
         layout.addWidget(build_section_scroll_area(canvas, panel), 1)
+        if self._chart_labels.metadata.captions:
+            caption = QLabel("\n".join(self._chart_labels.metadata.captions), panel)
+            caption.setTextFormat(Qt.TextFormat.PlainText)
+            caption.setWordWrap(True)
+            layout.addWidget(caption)
         return panel
 
     def _extremes_panel(self, result: MultivariateOutlierResult) -> QWidget:

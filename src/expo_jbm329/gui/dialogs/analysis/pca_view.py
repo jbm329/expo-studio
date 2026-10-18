@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+from html import escape
 from typing import TYPE_CHECKING
 
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QT_TRANSLATE_NOOP, QCoreApplication, Qt
 from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
@@ -17,10 +16,22 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.gui.dialogs.analysis.section_layout import (
+    AnalysisResultSection,
+    build_section_scroll_area,
+    rich_text_lines,
+)
+from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.pca import MIN_OBSERVATIONS, MIN_SELECTED_COLUMNS, PCAError
-from expo_jbm329.services.analysis.pca_charts import PCAChartLabels, draw_score_plot, draw_scree_plot
-from expo_jbm329.services.analysis.pca_export import component_name
+from expo_jbm329.services.analysis.pca_charts import (
+    PCAChartLabels,
+    build_pca_chart_labels,
+    draw_score_plot,
+    draw_scree_plot,
+)
+from expo_jbm329.services.analysis.pca_export import PCAExportComponent, component_name
+from expo_jbm329.services.analysis.presentation import build_pca_result_presentation, pca_component_label
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_pct
 
 if TYPE_CHECKING:
@@ -28,10 +39,20 @@ if TYPE_CHECKING:
 
 
 _RIGHT_ALIGNED = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+_CHART_TRANSLATION_MARKERS = (
+    QT_TRANSLATE_NOOP("PCAView", "Scree plot"),
+    QT_TRANSLATE_NOOP("PCAView", "Cumulative"),
+    QT_TRANSLATE_NOOP("PCAView", "Component"),
+    QT_TRANSLATE_NOOP("PCAView", "Explained variance (%)"),
+    QT_TRANSLATE_NOOP("PCAView", "PC1 vs PC2"),
+    QT_TRANSLATE_NOOP("PCAView", "PC1 ({variance})"),
+    QT_TRANSLATE_NOOP("PCAView", "PC2 ({variance})"),
+    QT_TRANSLATE_NOOP("PCAView", "The PC1-vs-PC2 plot shows a deterministic sample of {count} rows."),
+)
 
 
 class PCAView(QWidget):
-    """Displays feature loadings, PCA plots and model comments in resizable sections."""
+    """Display feature loadings, PCA plots, and the model summary in resizable sections."""
 
     def __init__(self, result: PCAResult, parent: QWidget | None = None) -> None:
         """Initialize the result view.
@@ -42,6 +63,9 @@ class PCAView(QWidget):
         """
         super().__init__(parent)
         self._result = result
+        self._chart_labels = build_pca_chart_labels(
+            result, QCoreApplication.translate, percent_format=fmt_pct, count_format=fmt_int
+        )
         self._loadings_table: QTableWidget | None = None
 
         layout = QVBoxLayout(self)
@@ -51,7 +75,9 @@ class PCAView(QWidget):
             layout.addWidget(self._build_centered_label(self.error_text(result.error)))
             return
 
-        plots_panel, plots_layout = self._build_section(self.tr("PCA plots"))
+        plots_panel, plots_layout = self._build_section(
+            pca_component_label(PCAExportComponent.CHARTS, QCoreApplication.translate)
+        )
         plots = QSplitter(Qt.Orientation.Horizontal, plots_panel)
         plots.setChildrenCollapsible(False)
         plots.addWidget(self._build_scree_plot(result))
@@ -79,28 +105,10 @@ class PCAView(QWidget):
 
     def chart_labels(self) -> PCAChartLabels:
         """Return the translated plot text used by the view and its export."""
-        result = self._result
-        ratios = result.explained_variance_ratio
-        # Error results have no fitted ratios; their labels are never drawn or exported.
-        pc1_axis = self.tr("PC1 ({variance})").format(variance=fmt_pct(ratios[0])) if ratios else component_name(0)
-        pc2_axis = (
-            self.tr("PC2 ({variance})").format(variance=fmt_pct(ratios[1])) if len(ratios) > 1 else component_name(1)
-        )
-        captions = rich_text_lines([self._sample_text(result)]) if result.sampled and result.error is None else ()
-        return PCAChartLabels(
-            scree_title=self.tr("Scree plot"),
-            explained=self.tr("Explained variance"),
-            cumulative=self.tr("Cumulative"),
-            component_axis=self.tr("Component"),
-            variance_axis=self.tr("Explained variance (%)"),
-            scatter_title=self.tr("PC1 vs PC2"),
-            pc1_axis=pc1_axis,
-            pc2_axis=pc2_axis,
-            scatter_captions=captions,
-        )
+        return self._chart_labels
 
     def export_notes(self) -> tuple[str, ...]:
-        """Return the displayed model comments and applied features as plain-text lines.
+        """Return the displayed model comments and applied configuration as plain text.
 
         Returns:
             The lines, or an empty tuple when the view shows an error.
@@ -108,8 +116,8 @@ class PCAView(QWidget):
         result = self._result
         if result.error is not None:
             return ()
-        features = self.tr("Features: {columns}").format(columns=", ".join(result.columns))
-        return (*rich_text_lines([self._summary_text(result)]), features)
+        presentation = build_pca_result_presentation(result, QCoreApplication.translate)
+        return (*rich_text_lines([self._summary_text(result)]), *presentation.summary_lines)
 
     def loadings_table(self) -> QTableWidget | None:
         """Return the feature-loading table, or `None` for an error result."""
@@ -145,15 +153,9 @@ class PCAView(QWidget):
             total=fmt_int(result.total_rows),
             dropped=fmt_int(result.rows_dropped),
         )
-        if result.sampled:
-            text += "<br>" + self._sample_text(result)
+        for caption in self._chart_labels.scatter_metadata.captions:
+            text += "<br><i>" + escape(caption) + "</i>"
         return text
-
-    def _sample_text(self, result: PCAResult) -> str:
-        """Return the rich-text disclosure that the score plot shows a sample."""
-        return self.tr("<i>The PC1-vs-PC2 plot shows a deterministic sample of {count} rows.</i>").format(
-            count=fmt_int(len(result.sample_pc1))
-        )
 
     def _build_summary(self, result: PCAResult) -> QLabel:
         """Build the fit summary and complete-case warning."""
@@ -165,30 +167,34 @@ class PCAView(QWidget):
         return label
 
     def _build_comments_panel(self, result: PCAResult) -> QWidget:
-        """Build the titled model-comments section with a scrollable summary."""
-        panel, layout = self._build_section(self.tr("Model comments"))
-        layout.addWidget(build_section_scroll_area(self._build_summary(result), panel), 1)
-        return panel
+        """Build the titled model-summary section with a scrollable summary."""
+        return AnalysisResultSection(
+            pca_component_label(PCAExportComponent.MODEL_SUMMARY, QCoreApplication.translate),
+            self._build_summary(result),
+            self,
+        )
 
     def _build_scree_plot(self, result: PCAResult) -> QWidget:
         """Build a scree plot of component and cumulative explained variance."""
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumSize(280, 220)
-        draw_scree_plot(figure.add_subplot(111), result, self.chart_labels())
+        canvas.build_chart(lambda: draw_scree_plot(figure.add_subplot(111), result, self.chart_labels()))
         return canvas
 
     def _build_scatter_plot(self, result: PCAResult) -> QWidget:
         """Build the PC1-vs-PC2 score scatterplot."""
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumSize(280, 220)
-        draw_score_plot(figure.add_subplot(111), result, self.chart_labels())
+        canvas.build_chart(lambda: draw_score_plot(figure.add_subplot(111), result, self.chart_labels()))
         return canvas
 
     def _build_loadings_panel(self, result: PCAResult) -> QWidget:
         """Build the titled feature-loadings table section."""
-        panel, layout = self._build_section(self.tr("Feature loadings"))
+        panel, layout = self._build_section(
+            pca_component_label(PCAExportComponent.FEATURE_LOADINGS, QCoreApplication.translate)
+        )
 
         headers = [self.tr("Feature"), *(component_name(index) for index in range(len(result.columns)))]
         table = QTableWidget(panel)

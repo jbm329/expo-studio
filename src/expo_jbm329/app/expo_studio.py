@@ -385,8 +385,10 @@ class ExpoStudio(QMainWindow):
         self._toolbar = self.toolbar_controller.build(self)
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, self._toolbar)
         toolbar_controller.apply_has_data_state(False)
+        toolbar_controller.apply_analysis_state(False)
         toolbar_controller.apply_connection_state(False)
         workbench.results.apply_toolbar_data_state(toolbar_controller.apply_has_data_state)
+        workbench.results.apply_toolbar_analysis_state(toolbar_controller.apply_analysis_state)
         workbench.results.apply_toolbar_multiple_dataset_state(toolbar_controller.apply_has_multiple_datasets_state)
         workbench.icon_service.icons_updated.connect(toolbar_controller.apply_icons)
 

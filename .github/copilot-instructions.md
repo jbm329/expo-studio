@@ -364,6 +364,52 @@ Services should:
 
 ---
 
+## Chart Presentation Ownership
+
+For a chart-producing analysis, the section's Qt-free chart service owns
+output-independent titles, axes, legends, annotations, ordering, accessibility
+identity, worksheet heading and explanatory captions. Build this presentation
+from the applied typed result and explicit translation/formatting callbacks.
+Capture translated strings before worker dispatch; renderers must not consult
+widgets, current selections or mutable locale state.
+
+The app view and worker renderer should use the same drawing path. For a
+migrated section, Excel and HTML are adapters: they may choose size, resolution
+and placement, but must not reconstruct chart semantics or encode caption
+visibility as an analysis-category rule. Keep the visible worksheet heading
+distinct from the HTML image's accessible name. Preserve existing metadata
+behavior for sections not yet migrated.
+
+For a section-sized migration:
+
+1. Inventory its app, Excel and report paths, typed snapshots, translation
+   capture and caption/accessibility behavior.
+2. Add a small frozen, section-specific presentation value and builder; reuse
+   existing translation contexts and numeric formatters.
+3. Route the app and worker through the same draw functions, then pass captured
+   metadata to Excel and HTML without changing calculations or layout policy.
+4. Test real Matplotlib axes and annotations, normal and streaming workbook
+   readback, HTML captions and accessible names, and unchanged numeric tables.
+
+Hypothesis Tests, Statistics and Correlation follow this ownership rule.
+Correlation owns matrix cell formatting, actual column-name ticks and scatter
+axes, plotted titles, fitted-line/sampling/descriptive captions and unavailable
+pair states. Capture its numeric locale alongside translations before dispatch;
+do not call the view or Qt formatters from export workers. Matrix and pair
+images have no repeated worksheet heading, but retain accessible names and
+useful explanatory captions. The app's substantial pair statistics panel is
+separate from image metadata.
+
+Remaining chart services are `regression_charts`,
+`logistic_charts`, `outliers_charts`, `clustering_charts`, `pca_charts` and
+`timeseries_charts`; Overview currently has no chart service.
+Regression/logistic, outliers, clustering,
+PCA and Time Series should be migrated one section at a time after approval,
+starting with each section's real chart/output inventory rather than a universal
+chart framework.
+
+---
+
 ## Dialogs and Widgets
 
 Dialogs and widgets should:

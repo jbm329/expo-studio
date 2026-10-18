@@ -5,12 +5,12 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
-from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
+from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection, build_section_scroll_area
+from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.chi_square import (
     COCHRAN_LOW_EXPECTED_COUNT,
     COCHRAN_MAX_LOW_EXPECTED_FRACTION,
@@ -22,14 +22,15 @@ from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS, MIN_GROUP
 from expo_jbm329.services.analysis.hypothesis_charts import MAX_ANNOTATED_CELLS as MAX_ANNOTATED_CELLS  # noqa: PLC0414
 from expo_jbm329.services.analysis.hypothesis_charts import (
     RESIDUAL_SIGNIFICANCE_THRESHOLD,
-    draw_residual_heatmap,
+    build_hypothesis_chart_presentation,
+    draw_hypothesis_charts,
     heatmap_color_limit,
 )
+from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
 
 if TYPE_CHECKING:
     import numpy as np
-    from matplotlib.axes import Axes
 
 # Standard convention for statistical significance, matching GroupComparisonView.
 _SIGNIFICANCE_LEVEL = 0.05
@@ -106,7 +107,12 @@ class ChiSquareView(QWidget):
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Observed counts"), panel))
+        layout.addWidget(
+            self._build_section_title(
+                translate_presentation_label(PresentationLabel.CONTINGENCY_TABLE, QCoreApplication.translate),
+                panel,
+            )
+        )
         layout.addWidget(self._build_caption_label(result))
         layout.addWidget(self._build_table(result))
         return panel
@@ -176,7 +182,12 @@ class ChiSquareView(QWidget):
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Adjusted residuals"), panel))
+        layout.addWidget(
+            self._build_section_title(
+                translate_presentation_label(PresentationLabel.ASSOCIATION_PLOTS, QCoreApplication.translate),
+                panel,
+            )
+        )
         layout.addWidget(build_section_scroll_area(self._build_heatmap(result), panel), 1)
         return panel
 
@@ -185,24 +196,9 @@ class ChiSquareView(QWidget):
         figure = Figure(constrained_layout=True)
         canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(260)
-        canvas.build_chart(lambda: self._draw_heatmap(figure, figure.add_subplot(111), result))
-
+        presentation = build_hypothesis_chart_presentation(result, QCoreApplication.translate)
+        canvas.build_chart(lambda: draw_hypothesis_charts(figure, result, presentation))
         return canvas
-
-    def _draw_heatmap(self, figure: Figure, ax: Axes, result: ChiSquareResult) -> None:
-        """Draw the residual heatmap with a symmetric, diverging color scale."""
-        draw_residual_heatmap(
-            figure,
-            ax,
-            result,
-            self.tr("Adjusted standardized residuals"),
-            self.chart_annotations(result),
-        )
-
-    @staticmethod
-    def chart_annotations(result: ChiSquareResult) -> tuple[tuple[str, ...], ...]:
-        """Capture locale-aware annotation text before handing chart data to workers."""
-        return tuple(tuple(fmt_num(value, sig=3) for value in row) for row in result.adjusted_residuals)
 
     @staticmethod
     def heatmap_color_limit(residuals: np.ndarray) -> float:
@@ -248,19 +244,18 @@ class ChiSquareView(QWidget):
 
     def _build_results_section(self, result: ChiSquareResult) -> QWidget:
         """Build the titled test results and Cochran warning section."""
-        panel = QWidget(self)
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Test results"), panel))
-        content = QWidget(panel)
+        content = QWidget()
         content_layout = QVBoxLayout(content)
         content_layout.setContentsMargins(0, 0, 0, 0)
         content_layout.addWidget(self._build_test_results_label(result))
         if result.cochran_violated:
             content_layout.addWidget(self._build_cochran_warning_label(result))
         content_layout.addStretch(1)
-        layout.addWidget(build_section_scroll_area(content, panel), 1)
-        return panel
+        return AnalysisResultSection(
+            translate_presentation_label(PresentationLabel.TEST_RESULTS, QCoreApplication.translate),
+            content,
+            self,
+        )
 
     def _build_test_results_label(self, result: ChiSquareResult) -> QLabel:
         """Build the rich-text label showing the test statistics and interpretation."""

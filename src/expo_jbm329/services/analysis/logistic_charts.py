@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from matplotlib.ticker import NullLocator
 
+from expo_jbm329.services.analysis.chart_profiles import LOGISTIC_EFFECT_ANNOTATION_FONT_SIZE
 from expo_jbm329.services.analysis.regression import TermKind
 from expo_jbm329.services.analysis.regression_glm import generalized_term_name
 
@@ -73,7 +74,14 @@ def build_logistic_charts(
             odds.plot([effect], [row], color="tab:blue", marker="o")
             limits.extend((low, high))
         annotation = labels.effect_annotations[row] if valid else labels.unavailable_effect
-        odds.text(1.01, row, annotation, transform=odds.get_yaxis_transform(), va="center", fontsize="small")
+        odds.text(
+            1.01,
+            row,
+            annotation,
+            transform=odds.get_yaxis_transform(),
+            va="center",
+            fontsize=LOGISTIC_EFFECT_ANNOTATION_FONT_SIZE,
+        )
     if not terms:
         odds.text(0.5, 0.5, labels.no_predictors, transform=odds.transAxes, ha="center", va="center")
     low_limit = max(min(limits) / 1.2, float(np.nextafter(0.0, 1.0)))

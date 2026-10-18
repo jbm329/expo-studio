@@ -46,7 +46,7 @@ def test_projection_and_comments_scroll_below_a_frozen_title(method, section, sm
     view = ClusteringView(dataclasses.replace(_result(method), sampled=True))
     panel = view.findChild(QSplitter).widget(section)
 
-    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=width)
+    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=width, result_section=section == 2)
 
     if section == 1:
         assert isinstance(content, FigureCanvasQTAgg)
@@ -112,7 +112,7 @@ def test_layout_has_table_plot_and_comments_like_regression():
     assert [_section_title(splitter.widget(index)) for index in range(3)] == [
         "Cluster sizes",
         "Cluster projection",
-        "Model comments",
+        "Model summary",
     ]
     table_layout = splitter.widget(0).layout()
     assert table_layout.itemAt(1).widget() is view.cluster_table()
@@ -185,19 +185,19 @@ def test_chart_labels_match_the_view_and_caption_only_a_sampled_plot(sampled):
 
     labels = view.chart_labels()
 
-    assert labels.heading == "Cluster projection"
-    assert labels.title == "Cluster projection (internal PCA)"
+    assert labels.metadata.worksheet_heading == ""
+    assert labels.metadata.accessible_name == "Cluster projection (internal PCA)"
     assert (labels.pc1_axis, labels.pc2_axis) == ("PC1", "PC2")
     assert labels.cluster_name(0) == "Cluster 1"
     assert labels.cluster_name(-1) == "Noise"
     expected = (f"The plot shows a deterministic sample of {len(result.sample_labels)} rows.",) if sampled else ()
-    assert labels.captions == expected
+    assert labels.metadata.captions == expected
 
 
 def test_error_chart_labels_have_no_caption():
     result = dataclasses.replace(analyze_clustering(pd.DataFrame({"x": [1.0]})), sampled=True)
 
-    assert ClusteringView(result).chart_labels().captions == ()
+    assert ClusteringView(result).chart_labels().metadata.captions == ()
 
 
 def test_export_notes_are_the_plain_text_comments_and_features():

@@ -29,6 +29,7 @@ classifiers = [
 
 dependencies = [
     "pyqt6>=6.10.2",
+    "pyqt6-webengine>=6.10.0",
     "sqlalchemy>=2.0.46,<2.0.54",
     "chardet",
     "pyodbc",
@@ -274,5 +275,3 @@ reportUnknownMemberType = false
 reportUnknownArgumentType = false
 
 pythonVersion = "3.13"
-
-

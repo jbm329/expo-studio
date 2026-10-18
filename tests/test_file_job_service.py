@@ -23,6 +23,15 @@ class DummySignal:
             slot(*args, **kwargs)
 
 
+@pytest.mark.parametrize(
+    "name, expected",
+    [("CON", "_CON"), ("nul.txt", "_nul.txt"), ("LPT9", "_LPT9"), ("Å report\x00\x1f. ", "Å report")],
+)
+def test_sanitize_filename_handles_windows_device_names_and_controls(name, expected):
+    service = object.__new__(FileJobService)
+    assert service.sanitize_filename(name) == expected
+
+
 class DummyWorker:
     def __init__(self, job_id="job-1"):
         self._job_id = job_id

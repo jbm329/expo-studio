@@ -8,7 +8,9 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter
 
+from expo_jbm329.gui.dialogs.analysis import timeseries_view as timeseries_view_module
 from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
+from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
 from expo_jbm329.services.analysis.timeseries import DecompositionModel, TimeSeriesError, analyze_time_series
 from expo_jbm329.services.analysis.timeseries_charts import TimeSeriesChartLabels
 from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
@@ -100,7 +102,9 @@ def test_charts_and_comments_scroll_below_a_frozen_title(section, small_height, 
     view = TimeSeriesView(_result())
     panel = view.findChild(QSplitter).widget(section)
 
-    content = assert_section_scrolls_below_frozen_title(panel, small_height, large_height=1200, width=width)
+    content = assert_section_scrolls_below_frozen_title(
+        panel, small_height, large_height=1200, width=width, result_section=section == 1, content_sized=section == 0
+    )
 
     if section == 0:
         assert len(content.findChildren(FigureCanvasQTAgg)) == 3
@@ -132,16 +136,43 @@ def test_chart_labels_use_value_column_and_translated_titles():
     labels = TimeSeriesView(_result()).chart_labels()
 
     assert labels == TimeSeriesChartLabels(
-        series_title="Series",
+        series_metadata=ChartPresentationMetadata(worksheet_heading="", accessible_name="Series"),
         value_axis="value",
-        acf_title="Autocorrelation",
+        acf_metadata=ChartPresentationMetadata(worksheet_heading="", accessible_name="Autocorrelation"),
         lag_axis="Lag",
         acf_axis="Autocorrelation",
-        decomposition_title="Seasonal decomposition",
+        decomposition_metadata=ChartPresentationMetadata(
+            worksheet_heading="", accessible_name="Seasonal decomposition"
+        ),
         observed="Observed",
         trend="Trend",
         seasonal="Seasonal",
         residual="Residual",
+    )
+
+
+def test_chart_labels_use_the_shared_presentation_translation_context(monkeypatch):
+    monkeypatch.setattr(
+        timeseries_view_module,
+        "tr",
+        lambda context, text: f"sv:{text}" if context == "TimeSeriesPresentation" else text,
+    )
+
+    labels = TimeSeriesView(_result()).chart_labels()
+
+    assert labels == TimeSeriesChartLabels(
+        series_metadata=ChartPresentationMetadata(worksheet_heading="", accessible_name="sv:Series"),
+        value_axis="value",
+        acf_metadata=ChartPresentationMetadata(worksheet_heading="", accessible_name="sv:Autocorrelation"),
+        lag_axis="sv:Lag",
+        acf_axis="sv:Autocorrelation",
+        decomposition_metadata=ChartPresentationMetadata(
+            worksheet_heading="", accessible_name="sv:Seasonal decomposition"
+        ),
+        observed="sv:Observed",
+        trend="sv:Trend",
+        seasonal="sv:Seasonal",
+        residual="sv:Residual",
     )
 
 

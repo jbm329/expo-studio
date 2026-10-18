@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from io import BytesIO
 from math import ceil, isfinite
 from threading import RLock
 from typing import TYPE_CHECKING
 
 import numpy as np
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.figure import Figure
 
+from expo_jbm329.services.analysis.chart_export import render_chart_png
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.chart_presentation import (
+    DEFAULT_WORKSHEET_HEADING,
+    ChartPresentationMetadata,
+)
+from expo_jbm329.services.analysis.chart_profiles import STATISTICS_CHART_PROFILE
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
 
 if TYPE_CHECKING:
@@ -22,36 +26,83 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.statistics import ColumnDescriptiveStatistics
 
 STATISTICS_CHART_LOCK = RLock()
-_IMAGE_DPI = 120
-_FIGURE_SIZE = (9.0, 3.5)
 
 
 @dataclass(frozen=True, slots=True)
-class StatisticsChartLabels:
-    """Translated text used within one statistics chart pair."""
+class StatisticsChartPresentation:
+    """Translated chart semantics and output metadata for one numeric column."""
 
-    histogram: str
-    boxplot: str
-    no_data: str
+    histogram_title: str
+    boxplot_title: str
+    no_data_label: str
+    metadata: ChartPresentationMetadata
 
 
-def draw_histogram(ax: Axes, stats: ColumnDescriptiveStatistics, labels: StatisticsChartLabels) -> None:
+def build_statistics_chart_presentation(
+    stats: ColumnDescriptiveStatistics,
+    translate: Callable[[str, str], str],
+) -> StatisticsChartPresentation:
+    """Build all translated chart labels and metadata for one numeric column.
+
+    Args:
+        stats: Computed statistics for the column represented by this chart pair.
+        translate: Translation callback accepting a context and source label.
+
+    Returns:
+        A frozen presentation shared by the live view and worker renderer.
+    """
+    return StatisticsChartPresentation(
+        histogram_title=translate("StatisticsView", "Histogram"),
+        boxplot_title=translate("StatisticsView", "Boxplot"),
+        no_data_label=translate("StatisticsView", "No data"),
+        metadata=ChartPresentationMetadata(
+            worksheet_heading=DEFAULT_WORKSHEET_HEADING,
+            accessible_name=stats.column or translate("StatisticsView", "Distribution"),
+        ),
+    )
+
+
+def build_statistics_chart_presentations(
+    columns: Sequence[ColumnDescriptiveStatistics],
+    translate: Callable[[str, str], str],
+) -> tuple[StatisticsChartPresentation, ...]:
+    """Build chart presentations in the same order as the supplied columns.
+
+    Args:
+        columns: Computed numeric-column summaries in display order.
+        translate: Translation callback accepting a context and source label.
+
+    Returns:
+        One presentation for each column, preserving the supplied order.
+    """
+    return tuple(build_statistics_chart_presentation(stats, translate) for stats in columns)
+
+
+def draw_histogram(
+    ax: Axes,
+    stats: ColumnDescriptiveStatistics,
+    presentation: StatisticsChartPresentation,
+) -> None:
     """Draw the precomputed histogram values for one numeric column."""
     if not stats.histogram_bins or not stats.histogram_counts:
-        _draw_no_data(ax, labels.no_data)
+        _draw_no_data(ax, presentation.no_data_label)
         return
 
     bins = np.asarray(stats.histogram_bins)
     counts = np.asarray(stats.histogram_counts)
     ax.bar(bins[:-1], counts, width=np.diff(bins), align="edge", edgecolor="#333")
-    ax.set_title(labels.histogram)
+    ax.set_title(presentation.histogram_title)
 
 
-def draw_boxplot(ax: Axes, stats: ColumnDescriptiveStatistics, labels: StatisticsChartLabels) -> None:
+def draw_boxplot(
+    ax: Axes,
+    stats: ColumnDescriptiveStatistics,
+    presentation: StatisticsChartPresentation,
+) -> None:
     """Draw the precomputed five-number boxplot for one numeric column."""
     values = (stats.minimum, stats.q1, stats.median, stats.q3, stats.maximum)
     if any(not isfinite(value) for value in values):
-        _draw_no_data(ax, labels.no_data)
+        _draw_no_data(ax, presentation.no_data_label)
         return
 
     ax.bxp(
@@ -67,12 +118,25 @@ def draw_boxplot(ax: Axes, stats: ColumnDescriptiveStatistics, labels: Statistic
         ],
         showfliers=False,
     )
-    ax.set_title(labels.boxplot)
+    ax.set_title(presentation.boxplot_title)
+
+
+def draw_statistics_charts(
+    figure: Figure,
+    stats: ColumnDescriptiveStatistics,
+    presentation: StatisticsChartPresentation,
+) -> None:
+    """Draw one histogram/boxplot pair with the captured chart presentation."""
+    histogram = figure.add_subplot(121)
+    boxplot = figure.add_subplot(122)
+    draw_histogram(histogram, stats, presentation)
+    draw_boxplot(boxplot, stats, presentation)
+    figure.suptitle(stats.column)
 
 
 def render_statistics_charts(
     columns: Sequence[ColumnDescriptiveStatistics],
-    labels: StatisticsChartLabels,
+    presentations: Sequence[StatisticsChartPresentation],
     *,
     progress_cb: Callable[[int], None] | None = None,
     cancel_cb: Callable[[], bool] | None = None,
@@ -80,28 +144,53 @@ def render_statistics_charts(
     """Render a histogram/boxplot image for every numeric column.
 
     Figures use the Agg canvas and remain local to the calling worker. The
-    shared lock serializes rendering against StatisticsView's figure mutations
-    and actual Qt canvas drawing. Hypothesis charts share this rendering lock
-    and serialized Qt canvas; unrelated Matplotlib views do not use it.
+    shared lock serializes all application and export chart rendering against
+    figure mutations and Qt canvas drawing through SerializedAnalysisCanvas.
+
+    Args:
+        columns: Computed numeric-column summaries in display order.
+        presentations: Matching translated presentations, also in display order.
+        progress_cb: Optional callback receiving percentage completion.
+        cancel_cb: Optional cooperative cancellation callback.
+
+    Returns:
+        Worker-owned PNG images in column order.
+
+    Raises:
+        ValueError: If a presentation is missing or belongs to another column.
+        ExcelChartCancelledError: If cancellation is requested between charts.
     """
+    if len(columns) != len(presentations):
+        message = "Each Statistics column requires exactly one chart presentation."
+        raise ValueError(message)
+
     images: list[ExcelChartImage] = []
     total = len(columns)
-    for index, stats in enumerate(columns):
+    for index, (stats, presentation) in enumerate(zip(columns, presentations, strict=True)):
         if cancel_cb is not None and cancel_cb():
             raise ExcelChartCancelledError
+        if presentation.metadata.accessible_name != stats.column:
+            message = "A Statistics chart presentation does not match its column."
+            raise ValueError(message)
         with STATISTICS_CHART_LOCK:
-            figure = Figure(figsize=_FIGURE_SIZE, dpi=_IMAGE_DPI, constrained_layout=True)
-            canvas = FigureCanvasAgg(figure)
-            histogram = figure.add_subplot(121)
-            boxplot = figure.add_subplot(122)
-            draw_histogram(histogram, stats, labels)
-            draw_boxplot(boxplot, stats, labels)
-            figure.suptitle(stats.column)
-            output = BytesIO()
-            canvas.print_png(output)  # type: ignore[no-untyped-call]
-            image_data = output.getvalue()
-        width_px, height_px = (round(_FIGURE_SIZE[0] * _IMAGE_DPI), round(_FIGURE_SIZE[1] * _IMAGE_DPI))
-        images.append(ExcelChartImage(stats.column, image_data, width_px, height_px))
+            geometry = STATISTICS_CHART_PROFILE.geometry
+            figure = Figure(
+                figsize=geometry.figsize,
+                dpi=geometry.dpi,
+                constrained_layout=geometry.constrained_layout,
+            )
+            draw_statistics_charts(figure, stats, presentation)
+            raster = render_chart_png(figure)
+        images.append(
+            ExcelChartImage(
+                presentation.metadata.worksheet_heading,
+                raster.image_data,
+                raster.width_px,
+                raster.height_px,
+                presentation.metadata.captions,
+                presentation.metadata.accessible_name,
+            )
+        )
         if progress_cb is not None:
             progress_cb(ceil((index + 1) * 100 / total))
     return tuple(images)

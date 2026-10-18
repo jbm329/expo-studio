@@ -5,14 +5,27 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area, rich_text_lines
+from expo_jbm329.gui.dialogs.analysis.regression_view import build_regression_presentation_header
+from expo_jbm329.gui.dialogs.analysis.section_layout import (
+    AnalysisResultSection,
+    build_section_scroll_area,
+    rich_text_lines,
+)
+from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.presentation import regression_component_label, regression_intercept_label
 from expo_jbm329.services.analysis.regression import MAX_MODEL_TERMS, MAX_PREDICTORS, TermKind
-from expo_jbm329.services.analysis.regression_charts import CoxChartLabels, RegressionChartLabels, draw_cox_charts
+from expo_jbm329.services.analysis.regression_charts import (
+    CoxChartLabels,
+    RegressionChartLabels,
+    build_regression_chart_labels,
+    draw_cox_charts,
+)
+from expo_jbm329.services.analysis.regression_export import RegressionExportComponent
+from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.survival import SurvivalError, survival_term_name
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 
@@ -32,6 +45,14 @@ class SurvivalRegressionView(QWidget):
         """
         super().__init__(parent)
         self._result = result
+        self._chart_labels = build_regression_chart_labels(
+            result,
+            QCoreApplication.translate,
+            number_format=fmt_num,
+            count_format=fmt_int,
+            tick_format=lambda value: fmt_num(value, sig=2),
+            time_format=lambda value: fmt_num(value, sig=3),
+        )
         self._table: QTableWidget | None = None
         self._summary_label: QLabel | None = None
         layout = QVBoxLayout(self)
@@ -43,6 +64,7 @@ class SurvivalRegressionView(QWidget):
             label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(label)
             return
+        layout.addWidget(build_regression_presentation_header(result, self))
         self._table = self._build_coefficient_table()
         self._summary_label = QLabel(self._summary_text(), self)
         self._summary_label.setTextFormat(Qt.TextFormat.RichText)
@@ -51,11 +73,23 @@ class SurvivalRegressionView(QWidget):
         self._summary_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         splitter = QSplitter(Qt.Orientation.Vertical, self)
         splitter.setChildrenCollapsible(False)
-        table_panel, table_layout = self._build_section(self.tr("Model coefficients"))
+        table_panel, table_layout = self._build_section(
+            regression_component_label(
+                RegressionModel.COX,
+                RegressionExportComponent.COEFFICIENTS,
+                QCoreApplication.translate,
+            )
+        )
         table_layout.addWidget(self._table)
-        summary_panel, summary_layout = self._build_section(self.tr("Model comments"))
-        # Only the text scrolls, so the section title stays visible.
-        summary_layout.addWidget(build_section_scroll_area(self._summary_label, summary_panel), 1)
+        summary_panel = AnalysisResultSection(
+            regression_component_label(
+                RegressionModel.COX,
+                RegressionExportComponent.MODEL_METRICS,
+                QCoreApplication.translate,
+            ),
+            self._summary_label,
+            self,
+        )
         splitter.addWidget(table_panel)
         splitter.addWidget(self._build_chart_section())
         splitter.addWidget(summary_panel)
@@ -80,32 +114,24 @@ class SurvivalRegressionView(QWidget):
 
     def _build_chart_section(self) -> QWidget:
         """Render model effects and unadjusted survival from prepared cohort data."""
-        panel, layout = self._build_section(self.tr("Effects and survival"))
+        panel, layout = self._build_section(
+            regression_component_label(
+                RegressionModel.COX,
+                RegressionExportComponent.CHARTS,
+                QCoreApplication.translate,
+            )
+        )
         figure = Figure(constrained_layout=True)
-        canvas = FigureCanvasQTAgg(figure)  # type: ignore[no-untyped-call]
+        canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(300)
-        draw_cox_charts(figure, self._result, self._cox_chart_labels())
+        labels = self._chart_labels.model
+        if not isinstance(labels, CoxChartLabels):
+            message = "Cox regression view received chart labels for another model."
+            raise TypeError(message)
+        canvas.build_chart(lambda: draw_cox_charts(figure, self._result, labels))
         # Charts keep a readable minimum height and scroll when their section is smaller.
         layout.addWidget(build_section_scroll_area(canvas, panel), 1)
         return panel
-
-    def _cox_chart_labels(self) -> CoxChartLabels:
-        """Return the translated forest, survival and risk-table chart text."""
-        return CoxChartLabels(
-            forest_title=self.tr("Hazard ratios with 95% intervals"),
-            forest_unavailable=self.tr(
-                "Forest plot unavailable:\nall hazard ratios and intervals must be finite and positive."
-            ),
-            hazard_axis=self.tr("Hazard ratio (log scale)"),
-            survival_title=self.tr("Overall Kaplan-Meier survival (unadjusted)"),
-            survival_unavailable=self.tr("No survival chart data are available."),
-            duration_axis=self.tr("Duration: {column}").format(column=self._result.duration),
-            survival_axis=self.tr("Survival probability"),
-            risk_title=self.tr("At risk immediately before time"),
-            tick_format=lambda value: fmt_num(value, sig=2),
-            time_format=lambda value: fmt_num(value, sig=3),
-            count_format=fmt_int,
-        )
 
     def result(self) -> SurvivalResult:
         """Return the displayed Cox result."""
@@ -121,13 +147,7 @@ class SurvivalRegressionView(QWidget):
 
     def chart_labels(self) -> RegressionChartLabels:
         """Return the translated chart text shared by the displayed and exported charts."""
-        result = self._result
-        return RegressionChartLabels(
-            heading=self.tr("Cox proportional-hazards regression: {duration} / {event}").format(
-                duration=result.duration, event=result.event
-            ),
-            model=self._cox_chart_labels(),
-        )
+        return self._chart_labels
 
     def export_notes(self) -> tuple[str, ...]:
         """Return the displayed model comments as plain-text lines."""
@@ -199,7 +219,11 @@ class SurvivalRegressionView(QWidget):
         if header is not None:
             header.setStretchLastSection(False)
         for row, term in enumerate(self._result.terms):
-            name = self.tr("(Intercept)") if term.kind is TermKind.INTERCEPT else survival_term_name(term)
+            name = (
+                regression_intercept_label(QCoreApplication.translate)
+                if term.kind is TermKind.INTERCEPT
+                else survival_term_name(term)
+            )
             values = (
                 name,
                 fmt_num(term.estimate),

@@ -12,7 +12,10 @@ from expo_jbm329.services.analysis.statistics import (
     analyze_descriptive_statistics,
     statistics_export_tables,
 )
-from expo_jbm329.services.analysis.statistics_charts import StatisticsChartLabels, render_statistics_charts
+from expo_jbm329.services.analysis.statistics_charts import (
+    build_statistics_chart_presentations,
+    render_statistics_charts,
+)
 from expo_jbm329.services.excel_chart import ExcelChartImage
 from expo_jbm329.services.file_writer import EXCEL_MAX_ROWS, ExportCancelledError, FileWriter
 
@@ -23,7 +26,8 @@ if TYPE_CHECKING:
 @pytest.fixture
 def chart_images() -> tuple[ExcelChartImage, ...]:
     result = analyze_descriptive_statistics(pd.DataFrame({"First": [1.0, 2.0, 3.0], "Second": [4.0, 5.0, 6.0]}))
-    return render_statistics_charts(result.columns, StatisticsChartLabels("Histogram", "Boxplot", "No data"))
+    presentations = build_statistics_chart_presentations(result.columns, lambda _context, text: text)
+    return render_statistics_charts(result.columns, presentations)
 
 
 @pytest.mark.parametrize("streaming", [True, False])
@@ -56,7 +60,10 @@ def test_named_excel_embeds_one_image_per_numeric_column_in_single_charts_sheet(
     try:
         assert workbook.sheetnames == (["Continuous", "Charts"] if tables_selected else ["Charts"])
         chart_sheet = workbook["Charts"]
-        assert [chart_sheet.cell(row, 1).value for row in (1, 24)] == ["First", "Second"]
+        assert [chart.heading for chart in chart_images] == ["", ""]
+        assert [chart.captions for chart in chart_images] == [(), ()]
+        assert [chart.accessible_name for chart in chart_images] == ["First", "Second"]
+        assert [chart_sheet.cell(row, 1).value for row in (1, 24)] == [None, None]
         assert len(chart_sheet._images) == 2
         assert [image.anchor._from.row for image in chart_sheet._images] == [1, 24]
         if tables_selected:
@@ -170,7 +177,7 @@ def test_image_captions_are_literal_wrapped_and_do_not_overlap_following_image(
         assert sheet["A23"].alignment.wrap_text
         assert sheet.row_dimensions[24].height == 300
         assert sheet.row_dimensions[25].height <= 300
-        assert sheet["A27"].value == chart_images[1].heading
+        assert sheet["A27"].value == (chart_images[1].heading or None)
         assert sheet._images[1].anchor._from.row == 27
         assert sheet.column_dimensions["A"].width == 150
     finally:

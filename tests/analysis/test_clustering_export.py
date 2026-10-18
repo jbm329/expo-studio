@@ -6,8 +6,12 @@ import math
 import pandas as pd
 import pytest
 
+from expo_jbm329.services.analysis.chart_presentation import ChartPresentationMetadata
 from expo_jbm329.services.analysis.clustering import ClusteringMethod, ClusteringResult, analyze_clustering
-from expo_jbm329.services.analysis.clustering_charts import ClusterProjectionLabels
+from expo_jbm329.services.analysis.clustering_charts import (
+    ClusterProjectionLabels,
+    build_cluster_projection_labels,
+)
 from expo_jbm329.services.analysis.clustering_export import (
     CLUSTERING_COMPONENTS,
     ClusteringExportComponent,
@@ -21,13 +25,14 @@ from expo_jbm329.services.analysis.clustering_export import (
 from expo_jbm329.services.analysis.statistics import StatisticsExportFormat
 
 PROJECTION_LABELS = ClusterProjectionLabels(
-    heading="Cluster projection",
-    title="Cluster projection (internal PCA)",
+    metadata=ChartPresentationMetadata(
+        worksheet_heading="",
+        accessible_name="Cluster projection (internal PCA)",
+    ),
     pc1_axis="PC1",
     pc2_axis="PC2",
     cluster="Cluster {number}",
     noise="Noise",
-    captions=("Sampled",),
 )
 NOTES = ("K-Means on 2 features.", "Silhouette score: 0.9", "Features: x, y")
 
@@ -54,9 +59,14 @@ def clustering_snapshot(
     method: ClusteringMethod = ClusteringMethod.K_MEANS,
     *,
     notes: tuple[str, ...] = NOTES,
+    sampled: bool = False,
     **kwargs: object,
 ) -> ClusteringExportSnapshot:
-    return ClusteringExportSnapshot(clustering_result(method, **kwargs), PROJECTION_LABELS, notes)
+    result = clustering_result(method, **kwargs)
+    if sampled:
+        result = dataclasses.replace(result, sampled=True)
+    labels = build_cluster_projection_labels(result, lambda _context, text: text)
+    return ClusteringExportSnapshot(result, labels, notes)
 
 
 # ----------------------------------------------------------------------
@@ -73,6 +83,14 @@ def test_snapshot_offers_every_component():
         ClusteringExportComponent.MODEL_SUMMARY,
         ClusteringExportComponent.CHARTS,
     )
+
+
+def test_clustering_capture_provenance_survives_presentation_edits_but_not_new_fits():
+    snapshot = clustering_snapshot()
+    assert dataclasses.replace(snapshot, notes=("Edited",)).capture_id == snapshot.capture_id
+    assert clustering_snapshot().capture_id != snapshot.capture_id
+    with pytest.raises(ValueError, match="capture identifier"):
+        dataclasses.replace(snapshot, capture_id="")
 
 
 def test_snapshot_requires_a_typed_result_and_labels():

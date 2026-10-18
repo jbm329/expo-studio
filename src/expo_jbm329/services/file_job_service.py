@@ -539,7 +539,15 @@ class FileJobService:
         """
         forbidden = '<>:"/\\|?*'
         cleaned = name.translate(str.maketrans("", "", forbidden))
-        cleaned = cleaned.replace("*", "").replace("?", "").strip().rstrip(".")
+        control_char_limit = 32
+        cleaned = (
+            "".join(character for character in cleaned if ord(character) >= control_char_limit).strip().rstrip(". ")
+        )
+        # Windows device names remain reserved even with an extension.
+        reserved = {"CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$"}
+        reserved.update(f"{prefix}{number}" for prefix in ("COM", "LPT") for number in range(1, 10))
+        if cleaned.split(".", 1)[0].upper() in reserved:
+            cleaned = f"_{cleaned}"
         return cleaned or "export"
 
     # noinspection PyMethodMayBeStatic

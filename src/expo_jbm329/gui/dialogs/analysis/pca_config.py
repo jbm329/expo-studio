@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QGroupBox,
@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.services.analysis.pca import MIN_SELECTED_COLUMNS
+from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.utils.format_utils import fmt_int
 
 if TYPE_CHECKING:
@@ -54,14 +55,20 @@ class PCAConfigWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        self._standardize_checkbox = QCheckBox(self.tr("Standardize features"), self)
+        self._standardize_checkbox = QCheckBox(
+            translate_presentation_label(PresentationLabel.STANDARDIZE_FEATURES_SELECTOR, QCoreApplication.translate),
+            self,
+        )
         self._standardize_checkbox.setChecked(result.standardize)
         self._standardize_checkbox.setToolTip(
             self.tr("Scale each selected feature to zero mean and unit variance before fitting PCA.")
         )
         layout.addWidget(self._standardize_checkbox)
 
-        group = QGroupBox(self.tr("Features"), self)
+        group = QGroupBox(
+            translate_presentation_label(PresentationLabel.FEATURES_SELECTOR, QCoreApplication.translate),
+            self,
+        )
         group_layout = QVBoxLayout(group)
         self._column_list = QListWidget(group)
         applied = set(result.columns)

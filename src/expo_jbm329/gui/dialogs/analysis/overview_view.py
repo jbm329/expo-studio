@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QT_TRANSLATE_NOOP, QCoreApplication, Qt
 from PyQt6.QtWidgets import (
     QFrame,
     QHeaderView,
@@ -13,15 +13,20 @@ from PyQt6.QtWidgets import (
     QSplitter,
     QTableWidget,
     QTableWidgetItem,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
-from expo_jbm329.services.analysis.overview import SAMPLE_ROW_LIMIT
+from expo_jbm329.gui.dialogs.analysis.section_layout import ANALYSIS_TABS_STYLE
+from expo_jbm329.services.analysis.overview import overview_sample_frames
+from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.services.data_operations.dtypes import SemanticDType
 from expo_jbm329.utils.format_utils import fmt_cell, fmt_int, fmt_pct
 
 if TYPE_CHECKING:
+    import pandas as pd
+
     from expo_jbm329.services.analysis.overview import ColumnOverview, DatasetOverviewResult
 
 _RIGHT_ALIGNED = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
@@ -29,6 +34,7 @@ _RIGHT_ALIGNED = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 _FIRST_NUMERIC_COLUMN = 3
 # Keeps the summary text readable before the user drags the splitter.
 _SUMMARY_PANEL_MIN_WIDTH = 320
+_COLUMNS_METADATA_LABEL = QT_TRANSLATE_NOOP("OverviewView", "Columns metadata")
 
 
 class OverviewView(QWidget):
@@ -46,6 +52,8 @@ class OverviewView(QWidget):
         self._result = result
         self._columns_table: QTableWidget | None = None
         self._sample_table: QTableWidget | None = None
+        self._last_sample_table: QTableWidget | None = None
+        self._sample_tabs: QTabWidget | None = None
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -71,18 +79,30 @@ class OverviewView(QWidget):
         return self._columns_table
 
     def sample_table(self) -> QTableWidget | None:
-        """Return the sample-rows table, or `None` if there are no rows to show."""
+        """Return the first-sample table, or `None` if it has no rows to show."""
         return self._sample_table
+
+    def last_sample_table(self) -> QTableWidget | None:
+        """Return the last-sample table, or `None` when unavailable or empty."""
+        return self._last_sample_table
+
+    def sample_tabs(self) -> QTabWidget | None:
+        """Return the tabs containing the first and last sample previews."""
+        return self._sample_tabs
 
     # ------------------------------------------------------------------
     # Sections
     # ------------------------------------------------------------------
 
-    def _build_summary_panel(self) -> QScrollArea:
-        """Build the framed, scrollable panel holding the textual dataset facts."""
+    def _build_summary_panel(self) -> QWidget:
+        """Place the Summary header above its framed, scrollable dataset facts."""
+        panel = QWidget(self)
+        panel_layout = QVBoxLayout(panel)
+        panel_layout.setContentsMargins(0, 0, 0, 0)
+        panel_layout.addWidget(self._build_section_header(self.tr("Summary")))
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.addWidget(self._build_section_header(self.tr("Summary")))
+        layout.addWidget(self._build_section_header(self.tr("Dataset statistics")))
         layout.addWidget(self._build_summary_label())
         layout.addWidget(self._build_section_header(self.tr("Column types")))
         layout.addWidget(self._build_column_types_label())
@@ -90,14 +110,15 @@ class OverviewView(QWidget):
         layout.addWidget(self._build_warnings_label())
         layout.addStretch(1)
 
-        panel = QScrollArea(self)
-        panel.setFrameShape(QFrame.Shape.StyledPanel)
-        panel.setFrameShadow(QFrame.Shadow.Sunken)
-        panel.setWidgetResizable(True)
-        panel.setWidget(content)
+        scroll = QScrollArea(panel)
+        scroll.setFrameShape(QFrame.Shape.StyledPanel)
+        scroll.setFrameShadow(QFrame.Shadow.Sunken)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(content)
         # The labels wrap, so only vertical overflow needs a scrollbar.
-        panel.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        panel.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        panel_layout.addWidget(scroll, 1)
         panel.setMinimumWidth(_SUMMARY_PANEL_MIN_WIDTH)
         return panel
 
@@ -106,10 +127,10 @@ class OverviewView(QWidget):
         r = self._result
 
         text = (
-            f"{self.tr('Rows')}: <b>{fmt_int(r.row_count)}</b> &nbsp;&nbsp; "
+            f"{self.tr('Rows')}: <b>{fmt_int(r.row_count)}</b><br>"
             f"{self.tr('Columns')}: <b>{fmt_int(r.column_count)}</b><br>"
-            f"{self.tr('Missing values')}: <b>{fmt_pct(r.missing_cell_fraction)}</b> "
-            f"({fmt_int(r.missing_cell_count)}) &nbsp;&nbsp; "
+            f"{self.tr('Missing values')}: <b>{fmt_int(r.missing_cell_count)}</b> "
+            f"({fmt_pct(r.missing_cell_fraction)})<br>"
             f"{self.tr('Duplicate rows')}: <b>{fmt_int(r.duplicate_row_count)}</b> "
             f"({fmt_pct(r.duplicate_row_fraction)})"
         )
@@ -166,7 +187,11 @@ class OverviewView(QWidget):
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_header(self.tr("Columns")))
+        layout.addWidget(
+            self._build_section_header(
+                translate_presentation_label(PresentationLabel.OVERVIEW_COLUMNS_METADATA, QCoreApplication.translate)
+            )
+        )
 
         if not self._result.columns:
             layout.addWidget(self._build_empty_label(self.tr("This dataset has no columns.")))
@@ -205,31 +230,64 @@ class OverviewView(QWidget):
         ]
 
     def _build_sample_panel(self) -> QWidget:
-        """Build the raw sample-rows table with its header."""
+        """Build first/last sample tables under the Sample heading."""
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._build_section_header(self.tr("Sample")))
 
-        result = self._result
-        if result.sample_truncated:
-            header = self.tr("Sample (first {count} rows)").format(count=fmt_int(SAMPLE_ROW_LIMIT))
+        first_frame, last_frame = overview_sample_frames(self._result)
+        tabs = QTabWidget(panel)
+        tabs.setStyleSheet(ANALYSIS_TABS_STYLE)
+        first_title = self.tr("First ({count})").format(count=fmt_int(len(first_frame)))
+        first_page, self._sample_table = self._build_sample_table_tab(
+            tabs,
+            first_frame,
+            available=len(first_frame.columns) > 0,
+        )
+        tabs.addTab(first_page, first_title)
+        if last_frame is None:
+            last_title = self.tr("Last (unavailable)")
+            last_page = QWidget(tabs)
+            last_layout = QVBoxLayout(last_page)
+            last_layout.addWidget(
+                self._build_empty_label(self.tr("Last sample is unavailable in this captured result."))
+            )
+            last_layout.addStretch(1)
         else:
-            header = self.tr("Sample (all {count} rows)").format(count=fmt_int(result.row_count))
-        layout.addWidget(self._build_section_header(header))
+            last_title = self.tr("Last ({count})").format(count=fmt_int(len(last_frame)))
+            last_page, self._last_sample_table = self._build_sample_table_tab(
+                tabs,
+                last_frame,
+                available=len(last_frame.columns) > 0,
+            )
+        tabs.addTab(last_page, last_title)
+        layout.addWidget(tabs)
+        self._sample_tabs = tabs
+        return panel
 
-        if not result.sample_rows:
+    def _build_sample_table_tab(
+        self,
+        parent: QWidget,
+        frame: pd.DataFrame,
+        *,
+        available: bool,
+    ) -> tuple[QWidget, QTableWidget | None]:
+        """Build one read-only sample table or its empty-state message."""
+        page = QWidget(parent)
+        layout = QVBoxLayout(page)
+        if not available or frame.empty:
             layout.addWidget(self._build_empty_label(self.tr("This dataset has no rows to preview.")))
-            return panel
+            layout.addStretch(1)
+            return page, None
 
-        table = self._build_table(panel, list(result.sample_columns), len(result.sample_rows))
-        for row, values in enumerate(result.sample_rows):
+        table = self._build_table(page, [str(column) for column in frame.columns], len(frame))
+        for row, values in enumerate(frame.itertuples(index=False, name=None)):
             for index, value in enumerate(values):
                 table.setItem(row, index, QTableWidgetItem(fmt_cell(value)))
-
         self._finish_table(table)
         layout.addWidget(table)
-        self._sample_table = table
-        return panel
+        return page, table
 
     @staticmethod
     def _build_table(parent: QWidget, headers: list[str], row_count: int) -> QTableWidget:

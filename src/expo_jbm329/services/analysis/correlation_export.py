@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from itertools import combinations
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 import pandas as pd
 
@@ -36,11 +37,15 @@ class CorrelationExportSnapshot:
 
     matrix: CorrelationMatrixResult
     matrix_data: pd.DataFrame
+    capture_id: str = field(default_factory=lambda: uuid4().hex)
 
     def __post_init__(self) -> None:
         """Reject failed, incomplete or mismatched matrix snapshots."""
         matrix = self.matrix
         data = self.matrix_data
+        if not self.capture_id:
+            message = "A correlation snapshot requires a stable capture identifier."
+            raise ValueError(message)
         if not isinstance(matrix, CorrelationMatrixResult):  # pyright: ignore[reportUnnecessaryIsInstance]
             message = "A typed correlation matrix is required."
             raise TypeError(message)

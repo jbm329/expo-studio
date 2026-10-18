@@ -6,8 +6,7 @@ import html
 import math
 from typing import TYPE_CHECKING
 
-from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import (
     QFrame,
@@ -20,9 +19,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
-from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
+from expo_jbm329.gui.dialogs.analysis.applied_configuration_header import AppliedConfigurationHeader
+from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection, build_section_scroll_area
+from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis import correlation_charts
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.correlation import (
     CONFIDENCE_LEVEL,
     MAX_SELECTED_COLUMNS,
@@ -35,10 +36,19 @@ from expo_jbm329.services.analysis.correlation import (
     correlation_strength,
 )
 from expo_jbm329.services.analysis.correlation_charts import (
+    build_correlation_chart_labels,
+    build_correlation_matrix_presentation,
+    build_correlation_pair_presentation,
     draw_correlation_matrix,
     draw_correlation_scatter,
 )
-from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
+from expo_jbm329.services.analysis.presentation import (
+    PresentationLabel,
+    build_correlation_presentation,
+    correlation_method_label,
+    translate_presentation_label,
+)
+from expo_jbm329.utils.format_utils import capture_chart_numeric_locale, fmt_int, fmt_num, fmt_p_value
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -85,6 +95,9 @@ class CorrelationView(QWidget):
         super().__init__(parent)
 
         self._result = result
+        self._chart_labels = build_correlation_chart_labels(
+            result, QCoreApplication.translate, capture_chart_numeric_locale()
+        )
         self._pair_detail: CorrelationPairDetail | None = None
         self._selected_pair: tuple[str, str] | None = None
         self._pair_selection_revision = 0
@@ -110,10 +123,25 @@ class CorrelationView(QWidget):
             layout.addWidget(self._build_centered_label(self.error_text(result.error)))
             return
 
+        presentation = build_correlation_presentation(
+            result.method,
+            result.columns,
+            QCoreApplication.translate,
+        )
+        layout.addWidget(AppliedConfigurationHeader(presentation, self))
+
         charts_section = QWidget(self._pair_panel)
         charts_layout = QVBoxLayout(charts_section)
         charts_layout.setContentsMargins(0, 0, 0, 0)
-        charts_layout.addWidget(self._build_section_title(self.tr("Correlation plots"), charts_section))
+        charts_layout.addWidget(
+            self._build_section_title(
+                translate_presentation_label(
+                    PresentationLabel.CORRELATION_PLOTS,
+                    QCoreApplication.translate,
+                ),
+                charts_section,
+            )
+        )
 
         charts_splitter = QSplitter(Qt.Orientation.Horizontal, charts_section)
         charts_splitter.setChildrenCollapsible(False)
@@ -121,11 +149,7 @@ class CorrelationView(QWidget):
         charts_splitter.addWidget(self._scatter_panel)
         charts_layout.addWidget(build_section_scroll_area(charts_splitter, charts_section), 1)
 
-        statistics_section = QWidget(self._pair_panel)
-        statistics_layout = QVBoxLayout(statistics_section)
-        statistics_layout.setContentsMargins(0, 0, 0, 0)
-        statistics_layout.addWidget(self._build_section_title(self.tr("Pair details"), statistics_section))
-        statistics_layout.addWidget(build_section_scroll_area(self._statistics_panel, statistics_section), 1)
+        statistics_section = AnalysisResultSection(self.tr("Pair details"), self._statistics_panel, self._pair_panel)
 
         detail_splitter = QSplitter(Qt.Orientation.Vertical, self._pair_panel)
         detail_splitter.setChildrenCollapsible(False)
@@ -208,12 +232,19 @@ class CorrelationView(QWidget):
         self._clear_layout(self._scatter_layout)
         self._clear_layout(self._statistics_layout)
 
+        presentation = None
+        if detail.error in (None, CorrelationError.CONSTANT_INPUT, CorrelationError.NOT_ENOUGH_OBSERVATIONS):
+            presentation = build_correlation_pair_presentation(detail, self._chart_labels)
+            self._scatter_layout.addWidget(self._build_scatterplot(detail))
         if detail.error is not None:
-            label = self._build_centered_label(self.error_text(detail.error), self._statistics_panel)
+            message = presentation.unavailable_message if presentation is not None else None
+            if message is None:
+                message = self.error_text(detail.error)
+            label = self._build_centered_label(message, self._statistics_panel)
             label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+            label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             self._statistics_layout.addWidget(label)
         else:
-            self._scatter_layout.addWidget(self._build_scatterplot(detail))
             self._statistics_layout.addWidget(self._build_pair_statistics(detail))
 
         self._select_table_row(detail.pair.x_column, detail.pair.y_column)
@@ -253,13 +284,7 @@ class CorrelationView(QWidget):
 
     def method_name(self, method: CorrelationMethod) -> str:
         """Return the translated display name for `method`."""
-        match method:
-            case CorrelationMethod.PEARSON:
-                return self.tr("Pearson")
-            case CorrelationMethod.SPEARMAN:
-                return self.tr("Spearman")
-            case CorrelationMethod.KENDALL:
-                return self.tr("Kendall's tau-b")
+        return correlation_method_label(method, QCoreApplication.translate)
 
     def strength_text(self, strength: CorrelationStrength | None) -> str:
         """Return the translated strength label, or "N/A" when undefined."""
@@ -295,14 +320,8 @@ class CorrelationView(QWidget):
             figure,
             ax,
             result,
-            self.tr("{method} correlation").format(method=self.method_name(result.method)),
-            self.chart_annotations(result),
+            build_correlation_matrix_presentation(self._chart_labels),
         )
-
-    @staticmethod
-    def chart_annotations(result: CorrelationMatrixResult) -> tuple[tuple[str, ...], ...]:
-        """Capture locale-aware matrix text for both live and exported charts."""
-        return tuple(tuple(fmt_num(value, sig=2) for value in row) for row in result.coefficients)
 
     # ------------------------------------------------------------------
     # Ranked pairs table
@@ -314,7 +333,11 @@ class CorrelationView(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        title = QLabel(self.tr("<b>Strongest correlations</b>"), panel)
+        heading = translate_presentation_label(
+            PresentationLabel.STRONGEST_CORRELATIONS,
+            QCoreApplication.translate,
+        )
+        title = QLabel(f"<b>{html.escape(heading)}</b>", panel)
         title.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(title)
 
@@ -453,7 +476,7 @@ class CorrelationView(QWidget):
 
     def _draw_scatterplot(self, ax: Axes, detail: CorrelationPairDetail) -> None:
         """Draw the (possibly sampled) points and the least-squares line over all rows."""
-        draw_correlation_scatter(ax, detail)
+        draw_correlation_scatter(ax, detail, build_correlation_pair_presentation(detail, self._chart_labels))
 
     def _build_pair_statistics(self, detail: CorrelationPairDetail) -> QLabel:
         """Build the rich-text label describing the pair's statistics."""
@@ -468,9 +491,6 @@ class CorrelationView(QWidget):
         """Build the pair statistics text, including line and sampling notes."""
         pair = detail.pair
         lines = [
-            self.tr("<b>{x}</b> vs <b>{y}</b> ({method})").format(
-                x=html.escape(pair.x_column), y=html.escape(pair.y_column), method=self.method_name(detail.method)
-            ),
             self.tr("{symbol} = {value} ({strength})").format(
                 symbol=self.coefficient_symbol(detail.method),
                 value=fmt_num(pair.coefficient, sig=3),
@@ -481,26 +501,9 @@ class CorrelationView(QWidget):
             ),
             self.tr("p = {p}, n = {n}").format(p=html.escape(fmt_p_value(pair.p_value)), n=fmt_int(pair.n)),
             "",
-            self.tr("Least-squares line: slope {slope}, intercept {intercept}").format(
-                slope=fmt_num(detail.slope), intercept=fmt_num(detail.intercept)
-            ),
         ]
-
-        if detail.method is not CorrelationMethod.PEARSON:
-            lines.append(
-                self.tr(
-                    "The line is a linear fit shown for reference. {method} measures monotonic, "
-                    "not necessarily linear, association."
-                ).format(method=self.method_name(detail.method))
-            )
-
-        if detail.sampled:
-            lines.append(
-                self.tr("Showing a random sample of {shown} of {total} points. Statistics use all points.").format(
-                    shown=fmt_int(len(detail.sample_x)), total=fmt_int(pair.n)
-                )
-            )
-
+        presentation = build_correlation_pair_presentation(detail, self._chart_labels)
+        lines.extend(html.escape(caption) for caption in presentation.metadata.captions)
         return "<br>".join(lines)
 
     # ------------------------------------------------------------------

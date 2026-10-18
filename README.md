@@ -38,16 +38,17 @@ The project is still in its infancy and may change significantly.
 - **Data Transformation**: Apply transformations to datasets using a visual interface.
 - **Export Capabilities**: Export query results to multiple formats including **CSV**, **feather**, **parquet**, and more.
 - **Dataset Analysis**: Integrated data profiling (via `fg-data-profiling`) for in-depth dataset statistics.
-- **Advanced Analysis**: Explore active datasets through an interactive statistical-analysis workspace.
+- **Advanced Analysis**: Explore the active ready result dataset in an interactive analysis workspace.
 - **Persistence**: Supports management of database connections, application settings, and logs.
 
 ### 📈 Advanced Analysis
 
 The **Advanced Analysis** workspace provides statistical and machine-learning
-tools for datasets in result tabs. Open it with **Analyze data**, then choose a
-dataset and analysis.
+tools for datasets in result tabs. Select a ready result tab before opening
+**Analyze data**. Each analysis window stays bound to the dataset it opened with;
+close and reopen it to analyze another dataset.
 
-- **Overview** profiles dataset structure, missing values, duplicates, and columns.
+- **Overview** profiles dataset structure, missing values, duplicates, and columns, with sample-row previews.
 - **Statistics** summarizes numeric and categorical data, distributions, and normality.
 - **Hypothesis Tests** compares groups, tests categorical associations, and analyzes paired measurements.
 - **Correlation** explores Pearson, Spearman, or Kendall relationships with matrix and pairwise plots.
@@ -57,13 +58,18 @@ dataset and analysis.
 - **PCA** reduces numeric data to principal components and shows loadings and explained variance.
 - **Time Series** prepares and analyzes series with optional resampling, autocorrelation, and seasonal decomposition.
 
-Long-running analyses run in the background where needed, and exports use the
-latest successful analysis result.
+Analysis pages show applied settings alongside results and explanatory notes.
+Charts adapt to long labels, with scrolling when more space is needed.
+Long-running analyses run in the background where needed.
 
-Export is available for successfully applied results. Excel workbooks can
-combine selected tables and available charts; CSV and binary exports contain
-one selected table. Charts are available in Excel only. Exports contain the
-selected analysis results, not a full dataset dump.
+**Export** selected analysis results to Excel, CSV, or supported binary formats.
+Excel workbooks can combine tables and charts; CSV and binary exports contain
+one selected table. Exports use the latest successful analysis result.
+
+Use **Add to report** to collect applied analyses, choose their components, and
+add notes. The **Reports** page lets you edit and reorder entries, add a title
+and description, and preview the report before saving a self-contained HTML file.
+Updating or replacing an existing report result requires confirmation.
 
 ### 📂 Supported Data File Formats
 
@@ -327,6 +333,27 @@ This runs the same extraction with `pylupdate6 --no-obsolete`. It deletes transl
 
 #### 2️⃣ Edit translations
 The extracted strings are then manually edited in the `src/expo_jbm329/i18n/locales` directory using Qt Linguist (e.g. `app_sv.ts`).
+
+All user-facing strings must support English and Swedish. After adding or changing
+strings, run `uv run build-i18n`, review and finish the Swedish translations in
+`app_sv.ts`, then run `uv run build-locales`. Preserve named placeholders such as
+`{component}` exactly and verify the compiled translations in the affected UI or
+report.
+
+For explicit contexts, use `QCoreApplication.translate(context, text)` or import
+the shared wrapper as `from expo_jbm329.utils.i18n_utils import tr as translate`.
+Do not call that two-argument wrapper by the name `tr` in new extraction-sensitive
+code: `pylupdate6` interprets `tr(context, text)` as Qt's `tr(source, comment)`,
+creating incorrect source strings and disambiguation comments in Linguist.
+Widget calls such as `self.tr("Text")` are unaffected and remain appropriate.
+
+Shared labels resolved dynamically need literal `QT_TRANSLATE_NOOP` extraction
+markers in their canonical context. Advanced Analysis keeps these alongside its
+views and controller; extraction tests compare them with the shared presentation
+and report label registries. Repeated source text in different contexts is valid,
+while vanished entries are retained translation history, not active duplicates.
+Remove obsolete entries only after checking their runtime replacements; avoid a
+global clean when performing a targeted translation cleanup.
 
 
 #### 3️⃣ Compile translations

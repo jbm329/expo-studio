@@ -17,6 +17,110 @@ def writer() -> FileWriter:
     return FileWriter()
 
 
+def test_save_html_utf8_atomic_success(tmp_path: Path, writer: FileWriter) -> None:
+    path = tmp_path / "rapport.html"
+    path.write_text("old", encoding="utf-8")
+    html = '<html>Åäö 日本語 😀\r\n<img src="data:image/png;base64,YWJj"></html>'
+    progress: list[int] = []
+    assert writer.save_html(html, path, progress_cb=progress.append) == path
+    assert path.read_bytes() == html.encode("utf-8")
+    assert progress == [0, 99, 100]
+    assert [entry for entry in tmp_path.iterdir() if entry.is_file()] == [path]
+
+
+@pytest.mark.parametrize("cancel_at", [1, 2])
+def test_save_html_cancel_preserves_destination(tmp_path: Path, writer: FileWriter, cancel_at: int) -> None:
+    path = tmp_path / "report.html"
+    path.write_bytes(b"original")
+    calls = 0
+
+    def cancel() -> bool:
+        nonlocal calls
+        calls += 1
+        return calls == cancel_at
+
+    with pytest.raises(ExportCancelledError) as exc:
+        writer.save_html("new", path, cancel_cb=cancel, corr_id="html-cancel")
+    assert exc.value.path == str(path)
+    assert exc.value.corr_id == "html-cancel"
+    assert path.read_bytes() == b"original"
+    assert [entry for entry in tmp_path.iterdir() if entry.is_file()] == [path]
+
+
+def test_save_html_replace_failure_cleans_sibling(tmp_path: Path, writer: FileWriter, monkeypatch) -> None:
+    path = tmp_path / "report.html"
+    path.write_bytes(b"original")
+
+    def fail_replace(self, target):
+        assert self.parent == path.parent
+        assert self != target
+        message = "locked destination"
+        raise PermissionError(message)
+
+    monkeypatch.setattr(type(path), "replace", fail_replace)
+    with pytest.raises(PermissionError, match="locked"):
+        writer.save_html("new", path)
+    assert path.read_bytes() == b"original"
+    assert [entry for entry in tmp_path.iterdir() if entry.is_file()] == [path]
+
+
+def test_save_html_write_failure_cleans_sibling(tmp_path: Path, writer: FileWriter) -> None:
+    path = tmp_path / "report.html"
+    path.write_bytes(b"original")
+    with pytest.raises(UnicodeEncodeError):
+        writer.save_html("\ud800", path)
+    assert path.read_bytes() == b"original"
+    assert [entry for entry in tmp_path.iterdir() if entry.is_file()] == [path]
+
+
+def test_save_html_postcommit_cancel_and_progress_failure_are_success(tmp_path: Path, writer: FileWriter) -> None:
+    path = tmp_path / "report.html"
+    cancelled = False
+
+    def progress(value: int) -> None:
+        nonlocal cancelled
+        if value == 100:
+            cancelled = True
+            message = "notification failed"
+            raise RuntimeError(message)
+
+    assert writer.save_html("saved", path, progress_cb=progress, cancel_cb=lambda: cancelled) == path
+    assert path.read_bytes() == b"saved"
+
+
+def test_save_html_precommit_progress_failure_preserves_destination(tmp_path: Path, writer: FileWriter) -> None:
+    path = tmp_path / "report.html"
+    path.write_bytes(b"original")
+
+    def progress(value: int) -> None:
+        if value == 99:
+            message = "notification failed"
+            raise RuntimeError(message)
+
+    with pytest.raises(RuntimeError, match="notification failed"):
+        writer.save_html("new", path, progress_cb=progress)
+    assert path.read_bytes() == b"original"
+    assert [entry for entry in tmp_path.iterdir() if entry.is_file()] == [path]
+
+
+def test_save_html_uses_unique_siblings(tmp_path: Path, writer: FileWriter, monkeypatch) -> None:
+    path = tmp_path / "report.html"
+    replace = type(path).replace
+    siblings = []
+
+    def capture_replace(self, target):
+        siblings.append(self)
+        return replace(self, target)
+
+    monkeypatch.setattr(type(path), "replace", capture_replace)
+    writer.save_html("first", path)
+    writer.save_html("second", path)
+    assert len(set(siblings)) == 2
+    assert all(sibling.parent == path.parent for sibling in siblings)
+    assert path.read_bytes() == b"second"
+    assert [entry for entry in tmp_path.iterdir() if entry.is_file()] == [path]
+
+
 def test_validate_excel_sheet_name_rejects_invalid_names(writer: FileWriter) -> None:
     with pytest.raises(ValueError):
         writer._validate_excel_sheet_name("")

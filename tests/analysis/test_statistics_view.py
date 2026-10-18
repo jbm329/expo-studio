@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from pathlib import Path
 from threading import Event, Thread
 
 import pandas as pd
@@ -8,10 +9,11 @@ import pytest
 from matplotlib.backends.backend_qt import FigureCanvasQT
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6 import sip
-from PyQt6.QtCore import QCoreApplication, QSize, Qt
+from PyQt6.QtCore import QCoreApplication, QSize, Qt, QTranslator
 from PyQt6.QtGui import QPaintEvent, QResizeEvent
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTabWidget
 
+from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.services.analysis.normality import SHAPIRO_LARGE_SAMPLE_THRESHOLD
 from expo_jbm329.services.analysis.statistics import (
@@ -23,6 +25,7 @@ from expo_jbm329.services.analysis.statistics import (
 )
 from expo_jbm329.services.analysis.statistics_charts import STATISTICS_CHART_LOCK
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
+from tests.analysis.section_assertions import assert_result_section, assert_section_scrolls_below_frozen_title
 
 
 def _make_column_stats(**overrides: object) -> ColumnDescriptiveStatistics:
@@ -168,6 +171,7 @@ def test_shows_first_columns_distribution_by_default():
     view = StatisticsView(result)
 
     assert len(view._figure.axes) == 2  # noqa: SLF001
+    assert [axis.get_title() for axis in view._figure.axes] == ["Histogram", "Boxplot"]  # noqa: SLF001
 
 
 def test_show_distribution_for_switches_to_a_different_column():
@@ -189,19 +193,24 @@ def test_normality_text_is_top_aligned_when_section_grows():
     try:
         QCoreApplication.processEvents()
         label = view._normality_label  # noqa: SLF001
+        scroll = assert_result_section(panel, "Shapiro-Wilk:")
+        heading = panel.layout().itemAt(0).widget()
+        title_geometry = heading.geometry()
         assert label.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
-        assert label.y() == panel.layout().contentsMargins().top()
+        assert scroll.widget() is label
+        assert label.y() == 0
         panel.resize(1100, 400)
         QCoreApplication.processEvents()
         assert label.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
-        assert label.y() == panel.layout().contentsMargins().top()
+        assert label.y() == 0
+        assert heading.geometry() == title_geometry
     finally:
         panel.close()
         panel.deleteLater()
         view.close()
 
 
-def test_normality_section_fits_wrapped_content_and_leaves_growth_to_charts():
+def test_normality_section_scrolls_wrapped_content_and_leaves_growth_to_charts():
     result = DescriptiveStatisticsResult(
         columns=(
             _make_column_stats(column="short"),
@@ -215,6 +224,7 @@ def test_normality_section_fits_wrapped_content_and_leaves_growth_to_charts():
         QCoreApplication.processEvents()
         panel = view.layout().itemAt(1).widget()
         charts = view.findChild(QSplitter).widget(1)
+        scroll = assert_result_section(panel, "Shapiro-Wilk:")
         assert panel.height() == panel.heightForWidth(panel.width())
         text_height = panel.height()
         chart_height = charts.height()
@@ -226,15 +236,85 @@ def test_normality_section_fits_wrapped_content_and_leaves_growth_to_charts():
         view.show_distribution_for("long")
         view.resize(400, 1100)
         QCoreApplication.processEvents()
+        label = view._normality_label  # noqa: SLF001
+        assert scroll.widget() is label
         assert panel.height() == panel.heightForWidth(panel.width())
         assert panel.height() > text_height
+        assert label.height() >= label.heightForWidth(label.width())
+        assert "Sample size exceeds" in label.text()
 
         view.show_distribution_for("short")
         view.resize(1100, 1100)
         QCoreApplication.processEvents()
+        assert scroll.widget() is label
         assert panel.height() == text_height
+        assert "Sample size exceeds" not in label.text()
+        assert_section_scrolls_below_frozen_title(panel, 70, width=400)
     finally:
         view.close()
+
+
+@pytest.mark.parametrize("language", ["en", "sv"])
+def test_normality_wrapper_survives_live_column_changes_with_translated_heading(qt_app, language):
+    import expo_jbm329
+
+    translator = QTranslator()
+    path = Path(expo_jbm329.__file__).parent / "i18n" / "locales" / f"app_{language}.qm"
+    assert translator.load(str(path))
+    assert qt_app.installTranslator(translator)
+    columns = (
+        _make_column_stats(column="normal"),
+        _make_column_stats(column="rejected", shapiro_p_value=0.001),
+        _make_column_stats(column="unavailable", shapiro_p_value=float("nan")),
+        _make_column_stats(column="large", count=SHAPIRO_LARGE_SAMPLE_THRESHOLD + 1),
+    )
+    view = StatisticsView(DescriptiveStatisticsResult(columns=columns))
+    try:
+        panel = view.layout().itemAt(1).widget()
+        scroll = assert_result_section(panel, "Shapiro-Wilk:")
+        label = view._normality_label  # noqa: SLF001
+        for stats in (*columns, columns[0]):
+            view.show_distribution_for(stats.column)
+            assert view.findChildren(AnalysisResultSection) == [panel]
+            assert assert_result_section(panel, "Shapiro-Wilk:") is scroll
+            assert scroll.widget() is label
+            assert label.text() == view._normality_text(stats)  # noqa: SLF001
+            assert "Shapiro-Wilk" not in label.text()
+            assert label.wordWrap()
+            assert label.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+        if language == "sv":
+            assert "Inga statistiskt signifikanta" in label.text()
+        else:
+            assert "No significant evidence" in label.text()
+        assert_section_scrolls_below_frozen_title(panel, 60, result_section=True)
+        label.setText("<br>".join([label.text()] * 10))
+        panel.refresh_content_size()
+        assert_section_scrolls_below_frozen_title(panel, 100, result_section=True)
+    finally:
+        view.close()
+        view.deleteLater()
+        qt_app.removeTranslator(translator)
+
+
+def test_only_categorical_statistics_frame_unavailable_normality_without_wrapping_chart_placeholder():
+    result = analyze_descriptive_statistics(pd.DataFrame({"group": ["a", "b", "a"]}))
+    view = StatisticsView(result)
+    try:
+        splitter = view.findChild(QSplitter)
+        assert splitter.count() == 3
+        placeholder = splitter.widget(1)
+        assert isinstance(placeholder, QLabel)
+        assert placeholder.text() == "No numeric columns are available for distributions."
+        panel = splitter.widget(2)
+        scroll = assert_result_section(panel, "Shapiro-Wilk:")
+        label = scroll.widget()
+        assert isinstance(label, QLabel)
+        assert label.text() == "Normality testing applies to continuous variables."
+        assert view.findChildren(AnalysisResultSection) == [panel]
+        assert_section_scrolls_below_frozen_title(panel, 60, width=250, result_section=True)
+    finally:
+        view.close()
+        view.deleteLater()
 
 
 def test_distribution_header_gap_stays_fixed_when_section_grows():
@@ -276,6 +356,7 @@ def test_selecting_a_statistics_row_displays_that_column(signal_name):
     assert table.currentRow() == 1
     assert view._figure._suptitle is not None  # noqa: SLF001
     assert view._figure._suptitle.get_text() == "b"  # noqa: SLF001
+    assert [axis.get_title() for axis in view._figure.axes] == ["Histogram", "Boxplot"]  # noqa: SLF001
 
 
 def test_show_distribution_for_unknown_column_is_a_no_op():

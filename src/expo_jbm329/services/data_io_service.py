@@ -213,6 +213,78 @@ class DataIOService:
             )
 
     # ------------------------------------------------------------------
+    # HTML report export
+    # ------------------------------------------------------------------
+    def export_html_report(
+        self,
+        html_factory: Callable[..., str],
+        dest: str | Path,
+        *,
+        progress_cb: Callable[[int], None] | None = None,
+        cancel_cb: Callable[[], bool] | None = None,
+        job_id: str | None = None,
+        job_scope: str | None = None,
+        corr_id: str | None = None,
+    ) -> JobResult:
+        """Prepare a captured report and save it without accessing live datasets.
+
+        Args:
+            html_factory: Captured renderer accepting progress_cb and cancel_cb.
+            dest: Destination path.
+            progress_cb: Optional progress callback.
+            cancel_cb: Optional cancellation check.
+            job_id: Optional job identifier.
+            job_scope: Optional job scope.
+            corr_id: Optional correlation identifier.
+
+        Returns:
+            The committed save, cancellation, or preparation/write failure.
+        """
+        _ = job_id, job_scope
+        started = time.perf_counter()
+
+        def preparation_progress(value: int) -> None:
+            if progress_cb is not None:
+                progress_cb(max(0, min(value, 100)) * 9 // 10)
+
+        def write_progress(value: int) -> None:
+            if progress_cb is not None:
+                progress_cb(90 + max(0, min(value, 100)) // 10)
+
+        def check_cancel() -> None:
+            if cancel_cb is not None and cancel_cb():
+                message = "HTML report preparation cancelled"
+                raise ExportCancelledError(message, path=str(dest), corr_id=corr_id)
+
+        try:
+            check_cancel()
+            html = html_factory(progress_cb=preparation_progress, cancel_cb=cancel_cb)
+            path = self._writer.save_html(html, dest, progress_cb=write_progress, cancel_cb=cancel_cb, corr_id=corr_id)
+        except (ExcelChartCancelledError, ExportCancelledError):
+            return JobResult(ok=False, cancelled=True, path=str(dest), elapsed=None, corr_id=corr_id)
+        except (
+            AttributeError,
+            ConnectionError,
+            FileNotFoundError,
+            IndexError,
+            KeyError,
+            LookupError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as error:
+            self._logger.exception("DataIOService: HTML report export failed (corr=%s)", corr_id)
+            return JobResult(
+                ok=False,
+                path=str(dest),
+                elapsed=time.perf_counter() - started,
+                error=str(error),
+                corr_id=corr_id,
+            )
+        return JobResult(ok=True, path=str(path), elapsed=time.perf_counter() - started, corr_id=corr_id)
+
+    # ------------------------------------------------------------------
     # Export CSV
     # ------------------------------------------------------------------
     def export_df_csv(

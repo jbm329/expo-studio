@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import dataclasses
+import sys
+from itertools import combinations
 from pathlib import Path
+from types import ModuleType
 from unittest.mock import Mock
 
 import numpy as np
@@ -9,7 +12,7 @@ import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from openpyxl import load_workbook
-from PyQt6.QtCore import Qt, QTranslator
+from PyQt6.QtCore import QCoreApplication, Qt, QTranslator
 from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QLabel, QTableWidget, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
@@ -52,12 +55,13 @@ from expo_jbm329.services.analysis.correlation_export import (
     CorrelationExportComponent,
     CorrelationExportRequest,
 )
+from expo_jbm329.services.analysis.hypothesis_charts import GroupComparisonChartPresentation
 from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportComponent as Component,
 )
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportRequest
 from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierError, MultivariateOutlierMethod
-from expo_jbm329.services.analysis.outliers import OutlierMethod
+from expo_jbm329.services.analysis.outliers import OutlierError, OutlierMethod
 from expo_jbm329.services.analysis.outliers_export import MULTIVARIATE_COMPONENTS as MULTIVARIATE_OUTLIER_COMPONENTS
 from expo_jbm329.services.analysis.outliers_export import UNIVARIATE_COMPONENTS as UNIVARIATE_OUTLIER_COMPONENTS
 from expo_jbm329.services.analysis.outliers_export import (
@@ -80,6 +84,7 @@ from expo_jbm329.services.analysis.pca_export import (
     PCAExportRequest,
     PCAExportSnapshot,
 )
+from expo_jbm329.services.analysis.presentation import AnalysisPresentation, build_analysis_presentation
 from expo_jbm329.services.analysis.regression import RegressionError
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
@@ -87,6 +92,7 @@ from expo_jbm329.services.analysis.regression_export import (
     RegressionExportSnapshot,
 )
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
+from expo_jbm329.services.analysis.report import ReportDocument, create_report_entry
 from expo_jbm329.services.analysis.statistics import (
     StatisticsExportFormat,
     StatisticsExportRequest,
@@ -96,10 +102,12 @@ from expo_jbm329.services.analysis.statistics import (
 from expo_jbm329.services.analysis.timeseries import DecompositionModel
 from expo_jbm329.services.analysis.timeseries_export import (
     TIME_SERIES_COMPONENTS,
+    TimeSeriesAppliedConfiguration,
     TimeSeriesExportComponent,
     TimeSeriesExportRequest,
     TimeSeriesExportSnapshot,
 )
+from expo_jbm329.services.excel_chart import ExcelChartCancelledError
 from expo_jbm329.services.file_writer import FileWriter
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis import analysis_controller as analysis_controller_module
@@ -117,11 +125,7 @@ _CONTROLLER_MODULE = "expo_jbm329.workbench.controllers.analysis.analysis_contro
 
 def _overview_export_context():
     result = analyze_dataset_overview(pd.DataFrame({"value": [1, 2]}))
-    dialog = AnalysisDialog(
-        parent=None,
-        datasets=[DatasetRef("chosen", "Chosen", 2, 1), DatasetRef("other", "Other", 2, 1)],
-        active_tab_id="chosen",
-    )
+    dialog = AnalysisDialog(parent=None, source_dataset=DatasetRef("chosen", "Chosen", 2, 1))
     dialog.set_content_widget(OverviewView(result))
     dialog.set_exportable_overview(result)
     results = Mock()
@@ -149,11 +153,14 @@ def test_overview_export_routes_explicit_frames_and_never_reads_active_data(form
     assert kwargs["show_success_dialog"] is True
     if format_choice is OverviewExportFormat.EXCEL:
         assert set(kwargs) == {"sheets", "parent_widget", "operation_target", "show_success_dialog"}
-        assert list(kwargs["sheets"]) == ["Sample"]
-        actual = kwargs["sheets"]["Sample"]
+        assert list(kwargs["sheets"]) == ["First (2)", "Last (2)"]
+        pd.testing.assert_frame_equal(kwargs["sheets"]["Last (2)"], expected)
+        actual = kwargs["sheets"]["First (2)"]
     else:
         assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
         actual = kwargs["df"]
+        expected = pd.concat([expected, expected], ignore_index=True)
+        expected.insert(0, "Sample group", pd.array(["First (2)"] * 2 + ["Last (2)"] * 2, dtype="string"))
     pd.testing.assert_frame_equal(actual, expected)
     assert controller._results.mock_calls == []
 
@@ -169,8 +176,8 @@ def test_overview_excel_routes_all_three_named_tables_in_one_operation():
     assert len(exporter.mock_calls) == 1
     sheets = exporter.export_excel.call_args.kwargs["sheets"]
     assert exporter.export_excel.call_args.kwargs["show_success_dialog"] is True
-    assert list(sheets) == ["Columns", "Sample", "Summary"]
-    assert list(sheets["Columns"].columns) == [
+    assert list(sheets) == ["Columns metadata", "First (2)", "Last (2)", "Summary"]
+    assert list(sheets["Columns metadata"].columns) == [
         "Column",
         "Type",
         "Storage type",
@@ -178,18 +185,69 @@ def test_overview_excel_routes_all_three_named_tables_in_one_operation():
         "Missing fraction",
         "Unique",
     ]
-    assert sheets["Columns"].iloc[0]["Missing fraction"] == 0.0
-    assert sheets["Sample"].shape == (2, 1)
-    assert list(sheets["Sample"].columns) == ["value"]
+    assert sheets["Columns metadata"].iloc[0]["Missing fraction"] == 0.0
+    assert sheets["First (2)"].shape == (2, 1)
+    assert list(sheets["Last (2)"].columns) == ["value"]
     assert sheets["Summary"].iloc[0]["Metric"] == "row_count"
+
+
+@pytest.mark.parametrize("format_choice", list(OverviewExportFormat))
+def test_overview_export_routes_owned_actual_tail_with_literal_headers(format_choice, monkeypatch):
+    controller, dialog, _, exporter = _overview_export_context()
+    source = pd.DataFrame({
+        "column": pd.Series(range(120), dtype="Int64"),
+        "Urvalsgrupp": pd.Series(["literal"] * 120, dtype="string"),
+    })
+    first = source.head(10).copy(deep=True)
+    last = source.tail(10).copy(deep=True)
+    result = analyze_dataset_overview(source)
+    dialog.set_exportable_overview(result)
+    translations = {
+        "Sample group": "Urvalsgrupp",
+        "First ({count})": "Första ({count})",
+        "Last ({count})": "Sista ({count})",
+        "Column": "Kolumn",
+    }
+    monkeypatch.setattr(analysis_controller_module, "translate", lambda _context, text: translations.get(text, text))
+    source.iloc[-1, 0] = -1
+    controller._export_overview(
+        dialog, exporter, OverviewExportRequest(result, (OverviewExportTable.SAMPLE,), format_choice)
+    )
+    if format_choice is OverviewExportFormat.EXCEL:
+        sheets = exporter.export_excel.call_args.kwargs["sheets"]
+        assert list(sheets) == ["Första (10)", "Sista (10)"]
+        pd.testing.assert_frame_equal(sheets["Första (10)"], first)
+        pd.testing.assert_frame_equal(sheets["Sista (10)"], last)
+    else:
+        method = exporter.export_csv if format_choice is OverviewExportFormat.CSV else exporter.export_data
+        expected = pd.concat([first, last], ignore_index=True)
+        expected.insert(0, "Urvalsgrupp (2)", pd.Series(["Första (10)"] * 10 + ["Sista (10)"] * 10, dtype="string"))
+        pd.testing.assert_frame_equal(method.call_args.kwargs["df"], expected)
+    assert controller._results.mock_calls == []
+
+
+@pytest.mark.parametrize("format_choice", list(OverviewExportFormat))
+def test_overview_export_rejects_missing_tail(format_choice):
+    from dataclasses import replace
+
+    controller, dialog, _, exporter = _overview_export_context()
+    result = analyze_dataset_overview(pd.DataFrame({"value": range(120)}))
+    partial = replace(result, sample_last_frame=None, sample_last_rows=())
+    dialog.set_exportable_overview(partial)
+    controller._export_overview(
+        dialog, exporter, OverviewExportRequest(partial, (OverviewExportTable.SAMPLE,), format_choice)
+    )
+    assert exporter.mock_calls == []
 
 
 def test_overview_excel_uses_translated_names_and_headers_without_translating_values(monkeypatch):
     controller, dialog, _, exporter = _overview_export_context()
     translations = {
-        "Columns": "Kolumner",
+        "Columns metadata": "Kolumner",
         "Summary": "Sammanfattning",
         "Sample": "Urval",
+        "First ({count})": "Första ({count})",
+        "Last ({count})": "Sista ({count})",
         "Column": "Kolumn",
         "Type": "Typ",
         "Storage type": "Lagringstyp",
@@ -201,7 +259,7 @@ def test_overview_excel_uses_translated_names_and_headers_without_translating_va
         "Count": "Antal",
         "Fraction": "Andel",
     }
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    monkeypatch.setattr(analysis_controller_module, "translate", lambda _context, text: translations.get(text, text))
     request = OverviewExportRequest(
         dialog.exportable_overview(),
         (OverviewExportTable.COLUMNS, OverviewExportTable.SAMPLE, OverviewExportTable.SUMMARY),
@@ -211,7 +269,7 @@ def test_overview_excel_uses_translated_names_and_headers_without_translating_va
     controller._export_overview(dialog, exporter, request)
     sheets = exporter.export_excel.call_args.kwargs["sheets"]
 
-    assert list(sheets) == ["Kolumner", "Urval", "Sammanfattning"]
+    assert list(sheets) == ["Kolumner", "Första (2)", "Sista (2)", "Sammanfattning"]
     assert list(sheets["Kolumner"].columns) == [
         "Kolumn",
         "Typ",
@@ -222,8 +280,8 @@ def test_overview_excel_uses_translated_names_and_headers_without_translating_va
     ]
     assert list(sheets["Sammanfattning"].columns) == ["Avsnitt", "Mått", "Kolumn", "Antal", "Andel"]
     assert sheets["Sammanfattning"].iloc[0]["Mått"] == "row_count"
-    assert list(sheets["Urval"].columns) == ["value"]
-    assert sheets["Urval"]["value"].dtype == "int64"
+    assert list(sheets["Första (2)"].columns) == ["value"]
+    assert sheets["Sista (2)"]["value"].dtype == "int64"
 
 
 @pytest.mark.parametrize("format_choice", [OverviewExportFormat.CSV, OverviewExportFormat.BINARY])
@@ -236,7 +294,7 @@ def test_overview_summary_routes_translated_headers_for_csv_and_binary(format_ch
         "Count": "Antal",
         "Fraction": "Andel",
     }
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    monkeypatch.setattr(analysis_controller_module, "translate", lambda _context, text: translations.get(text, text))
     request = OverviewExportRequest(result, (OverviewExportTable.SUMMARY,), format_choice)
     controller._export_overview(dialog, exporter, request)
 
@@ -257,15 +315,13 @@ def test_overview_multi_table_single_file_request_is_rejected(format_choice):
     assert exporter.mock_calls == []
 
 
-@pytest.mark.parametrize("invalidate", ["category", "dataset", "placeholder", "replacement", "identity"])
+@pytest.mark.parametrize("invalidate", ["category", "placeholder", "replacement", "identity"])
 def test_overview_export_rejects_stale_or_unrelated_snapshot(invalidate):
     controller, dialog, result, exporter = _overview_export_context()
     request = OverviewExportRequest(result, (OverviewExportTable.SAMPLE,), OverviewExportFormat.CSV)
     match invalidate:
         case "category":
             dialog.select_category(AnalysisCategory.STATISTICS)
-        case "dataset":
-            dialog.select_dataset("other")
         case "placeholder":
             dialog.show_placeholder("Analysis failed")
         case "replacement":
@@ -284,11 +340,7 @@ def _statistics_export_context():
             "Group": ["A", "A", "B", "B", None],
         })
     )
-    dialog = AnalysisDialog(
-        parent=None,
-        datasets=[DatasetRef("chosen", "Chosen", 5, 3), DatasetRef("other", "Other", 5, 3)],
-        active_tab_id="chosen",
-    )
+    dialog = AnalysisDialog(parent=None, source_dataset=DatasetRef("chosen", "Chosen", 5, 3))
     dialog.select_category(AnalysisCategory.STATISTICS)
     dialog.set_content_widget(StatisticsView(result))
     dialog.set_exportable_statistics(result)
@@ -300,11 +352,7 @@ def _statistics_export_context():
 
 
 def _hypothesis_export_context(snapshot):
-    dialog = AnalysisDialog(
-        parent=None,
-        datasets=[DatasetRef("chosen", "Chosen", 20, 4), DatasetRef("other", "Other", 20, 4)],
-        active_tab_id="chosen",
-    )
+    dialog = AnalysisDialog(parent=None, source_dataset=DatasetRef("chosen", "Chosen", 20, 4))
     dialog.select_category(AnalysisCategory.HYPOTHESIS_TESTS)
     content = AnalysisController._render_hypothesis_test_content(snapshot.test, snapshot.result)
     dialog.set_content_widget(content)
@@ -347,7 +395,9 @@ def test_hypothesis_exports_route_owned_numeric_frames_and_per_call_context(fact
 @pytest.mark.parametrize("factory", [group_snapshot, chi_snapshot, paired_snapshot])
 @pytest.mark.parametrize("locale", ["en", "sv"])
 @pytest.mark.parametrize("charts_only", [False, True])
-def test_hypothesis_localized_workbooks_read_back_all_types(tmp_path, factory, locale, charts_only):
+def test_hypothesis_localized_workbooks_read_back_all_types(tmp_path, factory, locale, charts_only, monkeypatch):
+    renderer = Mock(wraps=analysis_controller_module.render_hypothesis_charts)
+    monkeypatch.setattr(analysis_controller_module, "render_hypothesis_charts", renderer)
     translator = QTranslator()
     path = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{locale}.qm"
     assert translator.load(str(path))
@@ -355,14 +405,48 @@ def test_hypothesis_localized_workbooks_read_back_all_types(tmp_path, factory, l
     app.installTranslator(translator)
     try:
         controller, dialog, snapshot, exporter = _hypothesis_export_context(factory())
+        presentation = build_analysis_presentation(
+            AnalysisCategory.HYPOTHESIS_TESTS,
+            snapshot,
+            QCoreApplication.translate,
+        )
+        expected_titles = {
+            HypothesisTest.GROUP_COMPARISON: (
+                "Hypothesis Tests — Group comparison",
+                "Hypotesprövningar — Gruppjämförelse",
+            ),
+            HypothesisTest.CHI_SQUARE: (
+                "Hypothesis Tests — Categorical association",
+                "Hypotesprövningar — Kategoriskt samband",
+            ),
+            HypothesisTest.PAIRED_COMPARISON: (
+                "Hypothesis Tests — Paired comparison",
+                "Hypotesprövningar — Parad jämförelse",
+            ),
+        }
+        assert presentation.title == expected_titles[snapshot.test][0 if locale == "en" else 1]
+        assert presentation.summary_lines
         components = (Component.CHARTS,) if charts_only else tuple(Component)
         request = HypothesisExportRequest(snapshot, components, StatisticsExportFormat.EXCEL)
         controller._export_hypothesis(dialog, exporter, request)
         kwargs = exporter.export_excel.call_args.kwargs
-        chart_name = "Charts" if locale == "en" else "Diagram"
+        chart_names = {
+            HypothesisTest.GROUP_COMPARISON: ("Group distributions", "Gruppfördelningar"),
+            HypothesisTest.CHI_SQUARE: ("Association plots", "Sambandsdiagram"),
+            HypothesisTest.PAIRED_COMPARISON: ("Paired measurement plots", "Diagram för parade mätvärden"),
+        }
+        chart_name = chart_names[snapshot.test][0 if locale == "en" else 1]
         assert kwargs["chart_sheet_name"] == chart_name
         images = kwargs["chart_factory"](None, None)
         assert len(images) == 1
+        assert images[0].heading == ""
+        presentation = renderer.call_args.args[1]
+        if snapshot.test is HypothesisTest.GROUP_COMPARISON:
+            assert isinstance(presentation, GroupComparisonChartPresentation)
+            assert presentation.x_axis_label == snapshot.columns[1]
+            assert presentation.y_axis_label == snapshot.columns[0]
+        else:
+            assert not isinstance(presentation, GroupComparisonChartPresentation)
         output = tmp_path / f"{locale}.xlsx"
         FileWriter().save_excel_sheets(
             kwargs["sheets"],
@@ -375,7 +459,8 @@ def test_hypothesis_localized_workbooks_read_back_all_types(tmp_path, factory, l
         try:
             assert workbook.sheetnames == [*kwargs["sheets"], chart_name]
             assert len(workbook[chart_name]._images) == 1
-            assert workbook[chart_name]["A1"].value == " / ".join(snapshot.columns)
+            assert workbook[chart_name]["A1"].value is None
+            assert images[0].accessible_name == " / ".join(snapshot.columns)
             if not charts_only:
                 result_name = "Test results" if locale == "en" else "Testresultat"
                 frame = kwargs["sheets"][result_name]
@@ -391,15 +476,13 @@ def test_hypothesis_localized_workbooks_read_back_all_types(tmp_path, factory, l
         app.removeTranslator(translator)
 
 
-@pytest.mark.parametrize("change", ["identity", "dataset", "category", "placeholder", "replacement"])
+@pytest.mark.parametrize("change", ["identity", "category", "placeholder", "replacement"])
 def test_hypothesis_export_rejects_stale_dialog_requests(change):
     controller, dialog, snapshot, exporter = _hypothesis_export_context(group_snapshot())
     request = HypothesisExportRequest(snapshot, (Component.SUMMARY,), StatisticsExportFormat.EXCEL)
     match change:
         case "identity":
             dialog.set_exportable_hypothesis(group_snapshot())
-        case "dataset":
-            dialog._dataset_combo.setCurrentIndex(1)
         case "category":
             dialog.select_category(AnalysisCategory.STATISTICS)
         case "placeholder":
@@ -416,7 +499,7 @@ def test_statistics_excel_exports_localized_tables_and_every_column_chart(monkey
     translations = {
         "Continuous": "Kontinuerliga",
         "Categorical": "Kategoriska",
-        "Charts": "Diagram",
+        "Distribution": "Diagram",
         "Column": "Kolumn",
         "Count": "Antal",
         "Category": "Kategori",
@@ -425,7 +508,7 @@ def test_statistics_excel_exports_localized_tables_and_every_column_chart(monkey
         "Boxplot": "Lådagram",
         "No data": "Ingen data",
     }
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    monkeypatch.setattr(analysis_controller_module, "translate", lambda _context, text: translations.get(text, text))
     request = StatisticsExportRequest(
         result,
         (
@@ -449,7 +532,8 @@ def test_statistics_excel_exports_localized_tables_and_every_column_chart(monkey
     ]
     assert kwargs["chart_sheet_name"] == "Diagram"
     images = kwargs["chart_factory"](None, None)
-    assert [image.heading for image in images] == ["First numeric", "Second numeric"]
+    assert [image.heading for image in images] == ["", ""]
+    assert [image.accessible_name for image in images] == ["First numeric", "Second numeric"]
     assert kwargs["parent_widget"] is dialog
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"] is True
@@ -465,7 +549,7 @@ def test_statistics_excel_exports_localized_tables_and_every_column_chart(monkey
 )
 def test_statistics_single_table_routes_to_non_excel_exporters(format_choice, method_name, monkeypatch):
     controller, dialog, result, exporter = _statistics_export_context()
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: text)
+    monkeypatch.setattr(analysis_controller_module, "translate", lambda _context, text: text)
     request = StatisticsExportRequest(result, (StatisticsExportTable.CATEGORICAL,), format_choice)
 
     controller._export_statistics(dialog, exporter, request)
@@ -508,7 +592,7 @@ def test_overview_export_dialog_acceptance_emits_typed_snapshot_request(monkeypa
     assert requests == [OverviewExportRequest(result, (OverviewExportTable.COLUMNS,), OverviewExportFormat.EXCEL)]
 
 
-@pytest.mark.parametrize("invalidate", ["category", "dataset", "placeholder", "identity"])
+@pytest.mark.parametrize("invalidate", ["category", "placeholder", "identity"])
 def test_export_selection_rejects_snapshot_changed_while_open(monkeypatch, invalidate):
     from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
 
@@ -520,8 +604,6 @@ def test_export_selection_rejects_snapshot_changed_while_open(monkeypatch, inval
         match invalidate:
             case "category":
                 dialog.select_category(AnalysisCategory.REGRESSION)
-            case "dataset":
-                dialog.select_dataset("other")
             case "placeholder":
                 dialog.show_placeholder("Analysis failed")
             case "identity":
@@ -584,7 +666,10 @@ def test_open_analysis_dialog_reuses_injected_exporter_and_connects_request(dial
     assert kwargs["parent_widget"] is dialog
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"] is True
-    pd.testing.assert_frame_equal(kwargs["df"], pd.DataFrame({"a": [1]}))
+    pd.testing.assert_frame_equal(
+        kwargs["df"],
+        pd.DataFrame({"Sample group": pd.Series(["First (1)", "Last (1)"], dtype="string"), "a": [1, 1]}),
+    )
 
 
 class DummyResults:
@@ -601,6 +686,229 @@ class DummyResults:
 
     def get_df_by_tab_id(self, tab_id):
         return self._dfs[tab_id]
+
+
+def _report_preview_context(monkeypatch):
+    dialog = AnalysisDialog(parent=None, source_dataset=DatasetRef("chosen", "Chosen", 2, 1))
+    document = ReportDocument(title="Captured report", description="Purpose")
+    document.upsert(create_report_entry(AnalysisCategory.PCA, DatasetRef("chosen", "Chosen", 2, 1), pca_snapshot()))
+    operations = DummyAsyncOps()
+    controller = AnalysisController(results=Mock(), async_ops=operations)
+    preview = Mock()
+    monkeypatch.setattr(controller, "_show_report_preview", preview)
+    controller._connect_report_preview(dialog)
+    return controller, dialog, document, operations, preview
+
+
+def test_report_preview_runs_in_background_without_reading_active_datasets(monkeypatch):
+    controller, dialog, document, operations, preview = _report_preview_context(monkeypatch)
+    renderer = Mock(return_value="<html>Report</html>")
+    monkeypatch.setattr(analysis_controller_module, "render_report_html", renderer)
+
+    dialog.report_preview_requested.emit(document)
+
+    assert renderer.call_count == 0
+    assert not dialog.report_page()._preview_button.isEnabled()
+    call = operations.last_call
+    assert call["runner"] == "pool"
+    assert call["target"] is dialog.report_page()
+    assert call["cancelable"]
+    assert not call["indeterminate"]
+    progress = Mock()
+    html = call["work"](progress_cb=progress)
+    assert renderer.call_args.args == (document,)
+    assert renderer.call_args.kwargs["progress_cb"] is progress
+    assert not renderer.call_args.kwargs["cancel_cb"]()
+    call["on_result"](html)
+    preview.assert_called_once_with(dialog, "<html>Report</html>")
+    call["on_finished"]()
+    assert controller._results.mock_calls == []
+
+
+def test_report_preview_captures_translations_before_worker_execution(monkeypatch):
+    _, dialog, document, operations, _ = _report_preview_context(monkeypatch)
+    translate = Mock(side_effect=lambda _context, text: f"Captured: {text}")
+    monkeypatch.setattr(analysis_controller_module, "translate", translate)
+    renderer = Mock(return_value="<html>Localized</html>")
+    monkeypatch.setattr(analysis_controller_module, "render_report_html", renderer)
+
+    dialog.report_preview_requested.emit(document)
+    assert translate.call_count > 0
+    translate.reset_mock()
+    operations.last_call["work"]()
+
+    translate.assert_not_called()
+    assert renderer.call_args.kwargs["labels"] is not None
+
+
+def test_report_preview_rejects_invalid_empty_and_duplicate_requests(monkeypatch):
+    _, dialog, document, operations, _ = _report_preview_context(monkeypatch)
+    dialog.report_preview_requested.emit(None)
+    dialog.report_preview_requested.emit(ReportDocument())
+    assert operations.calls == []
+    dialog.report_preview_requested.emit(document)
+    dialog.report_preview_requested.emit(document)
+    assert len(operations.calls) == 1
+    operations.last_call["on_finished"]()
+    dialog.report_preview_requested.emit(document)
+    assert len(operations.calls) == 2
+
+
+def test_report_preview_reports_errors_and_cancellation_and_restores_button(monkeypatch):
+    _, dialog, document, operations, preview = _report_preview_context(monkeypatch)
+    dialog.report_page().set_entries(document.entries)
+    renderer = Mock(side_effect=ExcelChartCancelledError)
+    monkeypatch.setattr(analysis_controller_module, "render_report_html", renderer)
+    dialog.report_preview_requested.emit(document)
+    call = operations.last_call
+
+    assert call["work"](cancel_cb=lambda: True) is None
+    call["on_result"](None)
+    assert dialog.report_page()._preview_status.text() == "Report preview cancelled."
+    call["on_error"]("Rendering failed")
+    assert "Rendering failed" in dialog.report_page()._preview_status.text()
+    call["on_finished"]()
+    assert dialog.report_page()._preview_button.isEnabled()
+    preview.assert_not_called()
+
+
+@pytest.mark.parametrize("close_signal", ["finished", "destroyed"])
+def test_report_preview_ignores_callbacks_after_analysis_window_closes(monkeypatch, close_signal):
+    _, dialog, document, operations, preview = _report_preview_context(monkeypatch)
+    dialog.report_preview_requested.emit(document)
+    call = operations.last_call
+
+    if close_signal == "finished":
+        dialog.reject()
+    else:
+        dialog.destroyed.emit(dialog)
+    assert call["stale_check"]()
+    call["on_result"]("<html>Late result</html>")
+    call["on_error"]("Late error")
+    call["on_finished"]()
+    dialog.report_preview_requested.emit(document)
+    assert len(operations.calls) == 1
+    preview.assert_not_called()
+    assert not dialog.report_page()._preview_status.text()
+
+
+def test_report_preview_old_callbacks_do_not_replace_new_preview(monkeypatch):
+    _, dialog, document, operations, preview = _report_preview_context(monkeypatch)
+    dialog.report_preview_requested.emit(document)
+    previous = operations.last_call
+    previous["on_finished"]()
+    dialog.report_preview_requested.emit(document)
+
+    assert previous["stale_check"]()
+    previous["on_result"]("<html>Old report</html>")
+    previous["on_error"]("Old error")
+    previous["on_finished"]()
+    preview.assert_not_called()
+    assert not dialog.report_page()._preview_status.text()
+    assert not dialog.report_page()._preview_button.isEnabled()
+
+
+def test_report_preview_scheduling_failure_is_visible_and_allows_retry(monkeypatch):
+    _, dialog, document, operations, _ = _report_preview_context(monkeypatch)
+    dialog.report_page().set_entries(document.entries)
+    operations.run_target_overlay_operation = Mock(side_effect=RuntimeError("Worker unavailable"))
+
+    dialog.report_preview_requested.emit(document)
+
+    assert "Worker unavailable" in dialog.report_page()._preview_status.text()
+    assert dialog.report_page()._preview_button.isEnabled()
+
+
+def test_report_save_routes_captured_factory_and_shares_preview_busy_guard(monkeypatch):
+    controller, dialog, document, operations, preview = _report_preview_context(monkeypatch)
+    exporter = Mock()
+    exporter.export_html_report.return_value = True
+    controller._export_controller = exporter
+    renderer = Mock(return_value="<html>Saved snapshot</html>")
+    monkeypatch.setattr(analysis_controller_module, "render_report_html", renderer)
+    dialog.report_page().set_entries(document.entries)
+
+    dialog.report_save_requested.emit(document)
+    arguments = exporter.export_html_report.call_args.kwargs
+
+    assert arguments["suggested_name"] == document.title
+    assert arguments["parent_widget"] is dialog
+    assert arguments["operation_target"] is dialog.report_page()
+    assert not arguments["stale_check"]()
+    assert not renderer.called
+    assert arguments["html_factory"]() == "<html>Saved snapshot</html>"
+    assert renderer.call_args.args == (document,)
+    assert not dialog.report_page()._generate_button.isEnabled()
+    dialog.report_preview_requested.emit(document)
+    dialog.report_save_requested.emit(document)
+    assert operations.calls == []
+    assert exporter.export_html_report.call_count == 1
+    arguments["on_finished"]()
+    assert dialog.report_page()._generate_button.isEnabled()
+    dialog.report_preview_requested.emit(document)
+    assert len(operations.calls) == 1
+    preview.assert_not_called()
+
+
+@pytest.mark.parametrize("failure", [None, RuntimeError("Cannot schedule report")])
+def test_report_save_dialog_cancel_and_start_failure_restore_controls(monkeypatch, failure):
+    controller, dialog, document, _, _ = _report_preview_context(monkeypatch)
+    exporter = Mock()
+    exporter.export_html_report.return_value = False
+    exporter.export_html_report.side_effect = failure
+    controller._export_controller = exporter
+    dialog.report_page().set_entries(document.entries)
+
+    dialog.report_save_requested.emit(document)
+
+    assert dialog.report_page()._generate_button.isEnabled()
+    if failure is not None:
+        assert "Cannot schedule report" in dialog.report_page()._preview_status.text()
+
+
+def test_report_save_requires_exporter_and_does_not_disable_preview(monkeypatch):
+    _, dialog, document, operations, _ = _report_preview_context(monkeypatch)
+    dialog.report_page().set_entries(document.entries)
+    dialog.report_save_requested.emit(document)
+
+    assert "unavailable" in dialog.report_page()._preview_status.text()
+    assert dialog.report_page()._preview_button.isEnabled()
+    assert operations.calls == []
+
+
+def test_report_save_closed_window_invalidates_factory_and_callbacks(monkeypatch):
+    controller, dialog, document, _, _ = _report_preview_context(monkeypatch)
+    exporter = Mock()
+    exporter.export_html_report.return_value = True
+    controller._export_controller = exporter
+    renderer = Mock(return_value="<html>Snapshot</html>")
+    monkeypatch.setattr(analysis_controller_module, "render_report_html", renderer)
+    dialog.report_save_requested.emit(document)
+    arguments = exporter.export_html_report.call_args.kwargs
+
+    dialog.reject()
+    assert arguments["stale_check"]()
+    arguments["html_factory"]()
+    assert renderer.call_args.kwargs["cancel_cb"]()
+    arguments["on_finished"]()
+    dialog.report_save_requested.emit(document)
+    assert exporter.export_html_report.call_count == 1
+
+
+def test_prepared_preview_window_is_parented_shown_and_closed_with_analysis_dialog(monkeypatch):
+    dialog = AnalysisDialog(parent=None, source_dataset=DatasetRef("dialog-source", "Dialog source", 1, 1))
+    module_name = "expo_jbm329.gui.dialogs.analysis.report_preview_dialog"
+    module = ModuleType(module_name)
+    factory = Mock()
+    module.ReportPreviewDialog = factory
+    monkeypatch.setitem(sys.modules, module_name, module)
+
+    AnalysisController._show_report_preview(dialog, "<html>Prepared</html>")
+
+    factory.assert_called_once_with("<html>Prepared</html>", parent=dialog)
+    factory.return_value.show.assert_called_once_with()
+    dialog.reject()
+    factory.return_value.close.assert_called_once()
 
 
 class DummyAsyncOps:
@@ -639,7 +947,6 @@ class DummyAnalysisDialog:
     def __init__(self, **kwargs):
         self.kwargs = kwargs
         self.category_changed = DummySignal()
-        self.dataset_changed = DummySignal()
         self.overview_export_requested = DummySignal()
         self.statistics_export_requested = DummySignal()
         self.hypothesis_export_requested = DummySignal()
@@ -649,15 +956,20 @@ class DummyAnalysisDialog:
         self.clustering_export_requested = DummySignal()
         self.pca_export_requested = DummySignal()
         self.time_series_export_requested = DummySignal()
+        self.report_preview_requested = DummySignal()
+        self.report_save_requested = DummySignal()
+        self.finished = DummySignal()
+        self.destroyed = DummySignal()
         self.placeholder_calls: list[str] = []
         self.content_widgets: list[QWidget] = []
         self.config_widgets: list[QWidget | None] = []
         self.exec_called = False
         self._panel = QWidget()
         self._selected_category: AnalysisCategory | None = None
-        self._selected_dataset_tab_id: str | None = None
+        self._source_tab_id: str | None = kwargs["source_dataset"].tab_id
         self._current_content: QWidget | None = None
         self._current_config: QWidget | None = None
+        self.analysis_presentation: AnalysisPresentation | None = None
         self._export_overview = None
         self._export_statistics = None
         self._export_hypothesis = None
@@ -745,6 +1057,12 @@ class DummyAnalysisDialog:
     def set_exportable_pca(self, snapshot):
         self._export_pca = snapshot
 
+    def invalidate_pca_export(self):
+        self._export_pca = None
+
+    def invalidate_time_series_export(self):
+        self._export_time_series = None
+
     def exportable_pca(self):
         if self._selected_category is AnalysisCategory.PCA:
             return self._export_pca
@@ -767,6 +1085,10 @@ class DummyAnalysisDialog:
         self.invalidate_overview_export()
         self.content_widgets.append(widget)
         self._current_content = widget
+        self.analysis_presentation = None
+
+    def set_analysis_presentation(self, presentation: AnalysisPresentation) -> None:
+        self.analysis_presentation = presentation
 
     def content_widget(self):
         return self._current_content
@@ -781,8 +1103,8 @@ class DummyAnalysisDialog:
     def selected_category(self):
         return self._selected_category
 
-    def selected_dataset_tab_id(self):
-        return self._selected_dataset_tab_id
+    def source_tab_id(self):
+        return self._source_tab_id
 
     def content_panel(self):
         return self._panel
@@ -836,11 +1158,46 @@ def _assert_apply_prompt(ctrl: AnalysisController, dlg: DummyAnalysisDialog) -> 
     assert content.text() == ctrl._tr(ctrl.TR_APPLY_PROMPT)  # noqa: SLF001
 
 
-def test_open_dialog_does_nothing_when_there_are_no_datasets(dialog_factory):
+def test_open_dialog_explains_when_no_ready_active_dataset_is_available(dialog_factory, monkeypatch):
+    warning = Mock()
+    monkeypatch.setattr(analysis_controller_module.QMessageBox, "warning", warning)
     ctrl = AnalysisController(results=DummyResults(datasets=[]), async_ops=DummyAsyncOps())
     _open_and_flush(ctrl, QWidget())
 
     assert dialog_factory == []
+    assert warning.call_args.args[1:] == (
+        ctrl._tr(ctrl.TR_ANALYSIS_UNAVAILABLE),
+        ctrl._tr(ctrl.TR_READY_DATASET_REQUIRED),
+    )
+
+
+@pytest.mark.parametrize("active_tab_id", [None, "not-ready"])
+def test_open_dialog_never_falls_back_to_another_ready_dataset(dialog_factory, monkeypatch, active_tab_id):
+    warning = Mock()
+    monkeypatch.setattr(analysis_controller_module.QMessageBox, "warning", warning)
+    ready_source = DatasetRef("ready", "Ready", 2, 1)
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[ready_source], active_tab_id=active_tab_id),
+        async_ops=DummyAsyncOps(),
+    )
+
+    _open_and_flush(ctrl, QWidget())
+
+    assert dialog_factory == []
+    warning.assert_called_once()
+
+
+def test_open_dialog_binds_active_ready_source_even_when_not_first(dialog_factory):
+    first = DatasetRef("first", "First", 2, 1)
+    active = DatasetRef("active", "Active", 5, 3)
+    ctrl = AnalysisController(
+        results=DummyResults(datasets=[first, active], active_tab_id="active"),
+        async_ops=DummyAsyncOps(),
+    )
+
+    _open_and_flush(ctrl, QWidget())
+
+    assert dialog_factory[0].kwargs["source_dataset"] == active
 
 
 def test_reports_selected_before_initial_refresh_do_not_launch_analysis(monkeypatch):
@@ -864,9 +1221,7 @@ def test_reports_selected_before_initial_refresh_do_not_launch_analysis(monkeypa
     dialog = dialogs[0]
     assert dialog.selected_category() is None
     assert async_ops.calls == []
-    # Even a programmatic dataset change must not launch a report-page analysis.
-    dialog.dataset_changed.emit("t1")
-    assert async_ops.calls == []
+    assert dialog.source_tab_id() == "t1"
     assert dialog.content_widget() is None
 
 
@@ -877,7 +1232,7 @@ def test_report_navigation_discards_pending_results_and_errors(recompute):
     results = DummyResults(datasets=[dataset], active_tab_id="t1", dfs={"t1": frame})
     async_ops = DummyAsyncOps()
     ctrl = AnalysisController(results=results, async_ops=async_ops)
-    dialog = AnalysisDialog(parent=None, datasets=[dataset], active_tab_id="t1")
+    dialog = AnalysisDialog(parent=None, source_dataset=dataset)
     content = QLabel("Existing result")
     dialog.set_content_widget(content)
     if recompute:
@@ -944,7 +1299,7 @@ def test_returning_from_reports_preserves_automatic_and_apply_first_behavior(mon
         assert len(async_ops.calls) == 1
 
 
-def test_open_dialog_builds_dialog_with_datasets_and_active_tab(dialog_factory):
+def test_open_dialog_builds_dialog_with_the_active_source(dialog_factory):
     dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=10, column_count=3)
 
     ctrl = AnalysisController(
@@ -955,8 +1310,7 @@ def test_open_dialog_builds_dialog_with_datasets_and_active_tab(dialog_factory):
 
     assert len(dialog_factory) == 1
     dlg = dialog_factory[0]
-    assert dlg.kwargs["datasets"] == [dataset]
-    assert dlg.kwargs["active_tab_id"] == "t1"
+    assert dlg.kwargs["source_dataset"] == dataset
     assert dlg.exec_called
 
 
@@ -983,7 +1337,7 @@ def test_deferred_initial_refresh_is_skipped_after_category_interaction(monkeypa
         def exec(self):
             self.exec_called = True
             self._selected_category = AnalysisCategory.STATISTICS
-            self._selected_dataset_tab_id = "t1"
+            self._source_tab_id = "t1"
             self.category_changed.emit(AnalysisCategory.STATISTICS.value)
             return QDialog.DialogCode.Accepted
 
@@ -1016,7 +1370,7 @@ def test_initial_refresh_shows_overview_content_when_overview_is_preselected(mon
     def _factory(**kwargs):
         dlg = DummyAnalysisDialog(**kwargs)
         dlg._selected_category = AnalysisCategory.OVERVIEW
-        dlg._selected_dataset_tab_id = "t1"
+        dlg._source_tab_id = "t1"
         dialogs.append(dlg)
         return dlg
 
@@ -1049,7 +1403,7 @@ def test_category_without_a_registered_handler_shows_not_implemented_placeholder
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.TIME_SERIES
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.TIME_SERIES.value)
 
     assert dlg.placeholder_calls == [ctrl._tr(ctrl.TR_NOT_IMPLEMENTED)]  # noqa: SLF001
@@ -1069,7 +1423,7 @@ def test_overview_category_runs_as_a_background_job_with_a_busy_overlay(dialog_f
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.OVERVIEW
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.OVERVIEW.value)
 
     assert len(async_ops.calls) == 1
@@ -1099,7 +1453,7 @@ def test_statistics_category_runs_as_a_background_job_with_a_busy_overlay(dialog
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.STATISTICS
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
 
     assert len(async_ops.calls) == 1
@@ -1128,7 +1482,7 @@ def test_statistics_category_has_no_configuration_widget(dialog_factory):
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.STATISTICS
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
     _simulate_success(async_ops.last_call)
 
@@ -1148,7 +1502,7 @@ def test_statistics_category_shows_categorical_summaries_without_numeric_config(
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.STATISTICS
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
     _simulate_success(async_ops.last_call)
 
@@ -1173,7 +1527,7 @@ def test_selecting_a_statistics_table_row_updates_the_content_view_directly(dial
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.STATISTICS
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
     _simulate_success(async_ops.last_call)
 
@@ -1202,7 +1556,7 @@ def test_clicking_a_statistics_table_row_needs_no_config_or_new_job(dialog_facto
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.STATISTICS
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.STATISTICS.value)
     _simulate_success(async_ops.last_call)
 
@@ -1232,7 +1586,7 @@ def test_switching_to_a_category_hides_a_stale_config_widget_while_loading(dialo
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.REGRESSION
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.REGRESSION.value)
     assert dlg.config_widgets[-1] is not None
 
@@ -1243,7 +1597,7 @@ def test_switching_to_a_category_hides_a_stale_config_widget_while_loading(dialo
     assert dlg.config_widgets[-1] is None
 
 
-def test_overview_result_is_discarded_when_the_dataset_changes_before_it_completes(dialog_factory):
+def test_overview_job_keeps_its_source_when_the_active_tab_changes(dialog_factory):
     df1 = pd.DataFrame({"a": [1, 2, 3]})
     df2 = pd.DataFrame({"a": [1, 2, 3, 4, 5]})
     datasets = [
@@ -1251,31 +1605,19 @@ def test_overview_result_is_discarded_when_the_dataset_changes_before_it_complet
         DatasetRef(tab_id="t2", title="Sheet2", row_count=5, column_count=1),
     ]
     async_ops = DummyAsyncOps()
-    ctrl = AnalysisController(
-        results=DummyResults(datasets=datasets, active_tab_id="t1", dfs={"t1": df1, "t2": df2}),
-        async_ops=async_ops,
-    )
-    _open_and_flush(ctrl, QWidget())
-
+    results = DummyResults(datasets=datasets, active_tab_id="t1", dfs={"t1": df1, "t2": df2})
+    ctrl = AnalysisController(results=results, async_ops=async_ops)
+    ctrl.open_dialog(QWidget())
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.OVERVIEW
-    dlg._selected_dataset_tab_id = "t1"
-    dlg.category_changed.emit(AnalysisCategory.OVERVIEW.value)
-    first_call = async_ops.last_call
+    results._active_tab_id = "t2"
+    QApplication.processEvents()
 
-    # User switches dataset before the first job "completes".
-    dlg._selected_dataset_tab_id = "t2"
-    dlg.dataset_changed.emit("t2")
-    second_call = async_ops.last_call
-
-    # The stale (first) job finally completes: its result must be dropped.
-    _simulate_success(first_call)
-    assert dlg.content_widgets == []
-
-    # The fresh (second) job completes normally.
-    _simulate_success(second_call)
+    assert dlg.source_tab_id() == "t1"
+    assert len(async_ops.calls) == 1
+    _simulate_success(async_ops.last_call)
     assert len(dlg.content_widgets) == 1
-    assert dlg.content_widgets[0]._result.row_count == 5  # noqa: SLF001
+    assert dlg.content_widgets[0]._result.row_count == 3  # noqa: SLF001
 
 
 def test_overview_category_shows_error_placeholder_when_dataset_lookup_fails(dialog_factory):
@@ -1289,7 +1631,7 @@ def test_overview_category_shows_error_placeholder_when_dataset_lookup_fails(dia
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.OVERVIEW
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.OVERVIEW.value)
 
     assert async_ops.calls == []  # dataset lookup fails before any job starts
@@ -1309,7 +1651,7 @@ def test_overview_category_shows_error_placeholder_when_the_job_itself_fails(dia
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.OVERVIEW
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.OVERVIEW.value)
 
     async_ops.last_call["on_error"]("boom")
@@ -1330,7 +1672,7 @@ def test_job_error_is_ignored_once_stale(dialog_factory):
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.OVERVIEW
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.OVERVIEW.value)
     call = async_ops.last_call
 
@@ -1358,7 +1700,7 @@ def test_cancelled_work_returns_none_and_is_ignored(dialog_factory):
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.OVERVIEW
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.OVERVIEW.value)
     call = async_ops.last_call
 
@@ -1379,8 +1721,6 @@ def test_no_category_selected_does_not_touch_the_dialog(dialog_factory):
     _open_and_flush(ctrl, QWidget())
 
     dlg = dialog_factory[0]
-    dlg.dataset_changed.emit("t1")
-
     assert dlg.placeholder_calls == []
     assert dlg.content_widgets == []
     assert async_ops.calls == []
@@ -1424,7 +1764,7 @@ def _open_hypothesis_tests(async_ops: DummyAsyncOps, dialog_factory, df: pd.Data
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.HYPOTHESIS_TESTS
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.HYPOTHESIS_TESTS.value)
     return ctrl, dlg
 
@@ -1464,6 +1804,7 @@ def test_hypothesis_column_edits_show_apply_prompt_and_clear_export_until_new_ap
     assert config.current_configuration() != config.applied_configuration()
     _assert_apply_prompt(ctrl, dialog)
     assert dialog.exportable_hypothesis() is None
+    assert dialog.analysis_presentation is None
     assert len(async_ops.calls) == jobs_before
     second = _apply_hypothesis_test(async_ops, dialog)
     _simulate_success(second)
@@ -1471,7 +1812,7 @@ def test_hypothesis_column_edits_show_apply_prompt_and_clear_export_until_new_ap
 
 
 @pytest.mark.parametrize(
-    "change", ["test-return", "column-edit", "column-return", "dataset", "category-return", "prompt", "error", "apply"]
+    "change", ["test-return", "column-edit", "column-return", "category-return", "prompt", "error", "apply"]
 )
 def test_hypothesis_late_callbacks_cannot_restore_invalidated_exports(dialog_factory, change):
     async_ops = DummyAsyncOps()
@@ -1488,8 +1829,6 @@ def test_hypothesis_late_callbacks_cannot_restore_invalidated_exports(dialog_fac
         case "column-return":
             _gc_numeric_combo(config).setCurrentIndex(1)
             _gc_numeric_combo(config).setCurrentIndex(0)
-        case "dataset":
-            dialog._selected_dataset_tab_id = "changed"
         case "category-return":
             dialog.invalidate_overview_export()
         case "prompt":
@@ -1571,6 +1910,13 @@ def test_applying_a_hypothesis_test_runs_a_background_job_and_keeps_the_config(d
     _simulate_success(call)
 
     assert isinstance(dlg.content_widget(), GroupComparisonView)
+    assert dlg.analysis_presentation is not None
+    assert dlg.analysis_presentation.title == "Hypothesis Tests — Group comparison"
+    assert dlg.analysis_presentation.summary_lines == (
+        "Numeric variable: other",
+        "Grouping variable: grp",
+        "Tests computed: Welch's t-test, Student's t-test, Mann-Whitney U",
+    )
     assert len(dlg.config_widgets) == config_widgets_before
 
 
@@ -1841,11 +2187,7 @@ def _correlation_export_context():
         columns=("a", "b", "c", "constant"),
     )
     assert outcome is not None and outcome.export_snapshot is not None
-    dialog = AnalysisDialog(
-        parent=None,
-        datasets=[DatasetRef("chosen", "Chosen", len(frame), len(frame.columns))],
-        active_tab_id="chosen",
-    )
+    dialog = AnalysisDialog(parent=None, source_dataset=DatasetRef("chosen", "Chosen", len(frame), len(frame.columns)))
     dialog.select_category(AnalysisCategory.CORRELATION)
     dialog.set_content_widget(CorrelationView(outcome.matrix, outcome.pair_detail))
     dialog.set_exportable_correlation(outcome.export_snapshot)
@@ -1883,7 +2225,7 @@ def test_correlation_export_routes_only_localized_ranked_table(
         "Strong": "Stark",
         "N/A": "Ej tillämpligt",
     }
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: translations.get(text, text))
+    monkeypatch.setattr(analysis_controller_module, "translate", lambda _context, text: translations.get(text, text))
     request = CorrelationExportRequest(
         snapshot,
         (CorrelationExportComponent.STRONGEST_CORRELATIONS,),
@@ -1968,8 +2310,8 @@ def test_correlation_export_uses_compiled_swedish_labels() -> None:
         app.removeTranslator(translator)
 
     sheets = exporter.export_excel.call_args.kwargs["sheets"]
-    assert list(sheets) == ["Starkaste korrelationerna"]
-    frame = sheets["Starkaste korrelationerna"]
+    assert list(sheets) == ["Starkaste korrelationer"]
+    frame = sheets["Starkaste korrelationer"]
     assert frame.columns.tolist() == [
         "Variabel 1",
         "Variabel 2",
@@ -2040,13 +2382,20 @@ def test_correlation_excel_routes_independent_and_mixed_charts_from_owned_snapsh
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"]
     assert bool(kwargs["sheets"]) is (CorrelationExportComponent.STRONGEST_CORRELATIONS in components)
-    assert kwargs["chart_sheet_name"] == "Charts"
+    assert kwargs["chart_sheet_name"] == "Correlation plots"
     progress = []
     images = kwargs["chart_factory"](progress.append, None)
     expected = int(CorrelationExportComponent.MATRIX_PLOT in components)
     if CorrelationExportComponent.SCATTERPLOTS in components:
         expected += len(snapshot.matrix.pairs)
     assert len(images) == expected
+    expected_headings = (["Correlation matrix"] if CorrelationExportComponent.MATRIX_PLOT in components else []) + (
+        [f"{x_column} vs {y_column}" for x_column, y_column in combinations(snapshot.matrix.columns, 2)]
+        if CorrelationExportComponent.SCATTERPLOTS in components
+        else []
+    )
+    assert [image.accessible_name for image in images] == expected_headings
+    assert all(image.heading == "" for image in images)
     assert progress[-1] == 100
     assert all(image.image_data.startswith(b"\x89PNG") for image in images)
     assert controller._results.mock_calls == []
@@ -2078,7 +2427,7 @@ def _open_correlation(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.CORRELATION
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.CORRELATION.value)
     return ctrl, dlg
 
@@ -2634,7 +2983,7 @@ def test_recompute_shows_error_placeholder_when_the_dataset_cannot_be_reloaded(d
 def test_recompute_without_a_selected_dataset_does_nothing(dialog_factory):
     async_ops = DummyAsyncOps()
     _, dlg = _open_correlation(async_ops, dialog_factory)
-    dlg._selected_dataset_tab_id = None
+    dlg._source_tab_id = None
 
     _correlation_config(dlg)._apply_button.click()  # noqa: SLF001
 
@@ -2697,7 +3046,7 @@ def _open_regression(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame 
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.REGRESSION
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.REGRESSION.value)
     async_ops.calls.clear()
     return ctrl, dlg
@@ -2891,17 +3240,17 @@ def test_model_edits_after_fitted_result_show_prompt_without_refitting(dialog_fa
     _assert_apply_prompt(ctrl, dlg)
 
 
-def test_regression_job_is_stale_after_dataset_round_trip_without_config_edit(dialog_factory):
+def test_regression_job_is_stale_after_category_round_trip_without_config_edit(dialog_factory):
     async_ops = DummyAsyncOps()
     ctrl, dlg = _open_regression(async_ops, dialog_factory)
     config = _regression_config(dlg)
     _check_predictors(config, "x")
     config._apply_button.click()  # noqa: SLF001
     call = async_ops.last_call
+    dlg._selected_category = AnalysisCategory.STATISTICS
     dlg.invalidate_overview_export()
-    dlg._selected_dataset_tab_id = "other"
+    dlg._selected_category = AnalysisCategory.REGRESSION
     dlg.invalidate_overview_export()
-    dlg._selected_dataset_tab_id = "t1"
     _simulate_success(call)
     call["on_error"]("late error")
     _assert_apply_prompt(ctrl, dlg)
@@ -3145,7 +3494,7 @@ def _open_outliers(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame | 
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.OUTLIERS
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.OUTLIERS.value)
     return ctrl, dlg
 
@@ -3329,11 +3678,13 @@ def test_outlier_stale_fit_cannot_replace_prompt_or_newer_result(dialog_factory,
     _simulate_success(first)
     first["on_error"]("stale failure")
     _assert_apply_prompt(ctrl, dlg)
+    assert dlg.analysis_presentation is None
     assert dlg.placeholder_calls == []
     if not repeat_apply:
         config._apply_button.click()  # noqa: SLF001
     _simulate_success(async_ops.last_call)
     assert isinstance(dlg.content_widget(), MultivariateOutliersView if multivariate else OutliersView)
+    assert dlg.analysis_presentation is not None
 
 
 def test_univariate_edit_discards_pending_column_result_and_error(dialog_factory):
@@ -3548,6 +3899,7 @@ def test_stale_outlier_column_recompute_is_discarded_when_the_column_changes_aga
     _, dlg = _open_applied_outliers(async_ops, dialog_factory)
     view = _outliers_view(dlg)
     initial_detail = view.column_detail()
+    initial_presentation = dlg.analysis_presentation
 
     view.select_column("b")
     first = async_ops.last_call
@@ -3556,9 +3908,11 @@ def test_stale_outlier_column_recompute_is_discarded_when_the_column_changes_aga
 
     _simulate_success(first)
     assert view.column_detail() is initial_detail
+    assert dlg.analysis_presentation is initial_presentation
 
     _simulate_success(second)
     assert _detail_column(view) == "a"
+    assert "Selected detail column: a" in dlg.analysis_presentation.summary_lines
 
 
 def test_a_to_b_to_a_column_selection_discards_the_first_a_job(dialog_factory):
@@ -3597,6 +3951,7 @@ def test_outlier_column_change_during_summary_recompute_is_caught_up(dialog_fact
     assert updated_view is not original_view
     assert updated_view.selected_column() == "b"
     assert _detail_column(updated_view) == "a"
+    assert "Selected detail column: a" in dlg.analysis_presentation.summary_lines
 
     caught_up_call = async_ops.last_call
     assert caught_up_call is not old_detail_call
@@ -3605,6 +3960,7 @@ def test_outlier_column_change_during_summary_recompute_is_caught_up(dialog_fact
     assert _detail_column(updated_view) == "a"
     _simulate_success(caught_up_call)
     assert _detail_column(updated_view) == "b"
+    assert "Selected detail column: b" in dlg.analysis_presentation.summary_lines
 
 
 def test_outlier_configuration_edit_disables_old_table_requests(dialog_factory):
@@ -3650,7 +4006,7 @@ def _open_pca(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame | None 
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.PCA
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.PCA.value)
     return ctrl, dlg
 
@@ -3833,7 +4189,7 @@ def _open_clustering(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame 
 
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.CLUSTERING
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.CLUSTERING.value)
     return ctrl, dlg
 
@@ -4023,7 +4379,7 @@ def _open_time_series(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame
     _open_and_flush(ctrl, QWidget())
     dlg = dialog_factory[0]
     dlg._selected_category = AnalysisCategory.TIME_SERIES
-    dlg._selected_dataset_tab_id = "t1"
+    dlg._source_tab_id = "t1"
     dlg.category_changed.emit(AnalysisCategory.TIME_SERIES.value)
     return ctrl, dlg
 
@@ -4216,7 +4572,7 @@ def test_failed_regression_fit_never_registers_an_export_snapshot(dialog_factory
 
 
 def _regression_export_context(snapshot: RegressionExportSnapshot):
-    dialog = AnalysisDialog(parent=None, datasets=[DatasetRef("chosen", "Chosen", 10, 3)], active_tab_id="chosen")
+    dialog = AnalysisDialog(parent=None, source_dataset=DatasetRef("chosen", "Chosen", 10, 3))
     dialog.select_category(AnalysisCategory.REGRESSION)
     dialog.set_content_widget(QWidget())
     dialog.set_exportable_regression(snapshot)
@@ -4229,8 +4585,11 @@ def _regression_export_context(snapshot: RegressionExportSnapshot):
 
 _REGRESSION_TRANSLATIONS = {
     "Coefficients": "Koefficienter",
-    "Model metrics": "Modellm?tt",
-    "Charts": "Diagram",
+    "Model summary": "Modellsammanfattning",
+    "Linear diagnostics": "Linjär diagnostik",
+    "Logistic diagnostics": "Logistisk diagnostik",
+    "Count-model diagnostics": "Diagnostik för räknemodell",
+    "Survival charts": "Överlevnadsdiagram",
     "Term": "Term",
     "Estimate": "Skattning",
     "(Intercept)": "(Intercept SV)",
@@ -4249,7 +4608,7 @@ def test_regression_excel_export_routes_localized_sheets_and_worker_charts(monke
     snapshot = logistic_snapshot()
     controller, dialog, exporter = _regression_export_context(snapshot)
     monkeypatch.setattr(
-        analysis_controller_module, "tr", lambda _context, text: _REGRESSION_TRANSLATIONS.get(text, text)
+        analysis_controller_module, "translate", lambda _context, text: _REGRESSION_TRANSLATIONS.get(text, text)
     )
     request = RegressionExportRequest(snapshot, tuple(RegressionExportComponent), StatisticsExportFormat.EXCEL)
 
@@ -4260,15 +4619,15 @@ def test_regression_excel_export_routes_localized_sheets_and_worker_charts(monke
     assert kwargs["parent_widget"] is dialog
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"] is True
-    assert kwargs["chart_sheet_name"] == "Diagram"
-    assert list(kwargs["sheets"]) == ["Koefficienter", "Modellm?tt"]
+    assert kwargs["chart_sheet_name"] == "Logistisk diagnostik"
+    assert list(kwargs["sheets"]) == ["Koefficienter", "Modellsammanfattning"]
     coefficients = kwargs["sheets"]["Koefficienter"]
     assert coefficients.columns[:2].tolist() == ["Term", "Skattning"]
     assert "Oddskvot" in coefficients.columns
     assert "Oddskvot, 95 % KI nedre" in coefficients.columns
     assert coefficients["Term"].iloc[0] == "(Intercept SV)"
     assert pd.api.types.is_float_dtype(coefficients["Skattning"])
-    metrics = kwargs["sheets"]["Modellm?tt"]
+    metrics = kwargs["sheets"]["Modellsammanfattning"]
     assert metrics.columns.tolist() == ["M?tt", "V?rde", "Anteckningar"]
     assert metrics["M?tt"].iloc[0] == "Anv?nda rader"
     assert metrics["V?rde"].iloc[0] == snapshot.result.n_used
@@ -4277,7 +4636,7 @@ def test_regression_excel_export_routes_localized_sheets_and_worker_charts(monke
     progress: list[int] = []
     images = kwargs["chart_factory"](progress.append, lambda: False)
     assert len(images) == 1
-    assert images[0].heading == snapshot.chart_labels.heading
+    assert images[0].heading == snapshot.chart_labels.metadata.worksheet_heading
     assert progress == [100]
     assert controller._results.mock_calls == []  # noqa: SLF001
 
@@ -4286,7 +4645,7 @@ def test_regression_cox_tables_use_hazard_ratio_headers(monkeypatch):
     snapshot = cox_snapshot()
     controller, dialog, exporter = _regression_export_context(snapshot)
     monkeypatch.setattr(
-        analysis_controller_module, "tr", lambda _context, text: _REGRESSION_TRANSLATIONS.get(text, text)
+        analysis_controller_module, "translate", lambda _context, text: _REGRESSION_TRANSLATIONS.get(text, text)
     )
     request = RegressionExportRequest(
         snapshot,
@@ -4297,12 +4656,12 @@ def test_regression_cox_tables_use_hazard_ratio_headers(monkeypatch):
     controller._export_regression(dialog, exporter, request)  # noqa: SLF001
 
     kwargs = exporter.export_excel.call_args.kwargs
-    assert list(kwargs["sheets"]) == ["Modellm?tt", "Koefficienter"]
+    assert list(kwargs["sheets"]) == ["Modellsammanfattning", "Koefficienter"]
     assert kwargs["chart_factory"] is None
     assert kwargs["chart_sheet_name"] is None
     assert "Riskkvot" in kwargs["sheets"]["Koefficienter"].columns
     assert "Riskkvot, 95 % KI nedre" in kwargs["sheets"]["Koefficienter"].columns
-    assert "H?ndelser" in kwargs["sheets"]["Modellm?tt"]["M?tt"].tolist()
+    assert "H?ndelser" in kwargs["sheets"]["Modellsammanfattning"]["M?tt"].tolist()
 
 
 @pytest.mark.parametrize(
@@ -4366,7 +4725,7 @@ def test_regression_export_uses_compiled_swedish_labels() -> None:
         app.removeTranslator(translator)
 
     kwargs = exporter.export_excel.call_args.kwargs
-    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert kwargs["chart_sheet_name"] == "Överlevnadsdiagram"
     sheets = kwargs["sheets"]
     assert len(sheets) == 2
     coefficients, metrics = sheets.values()
@@ -4381,10 +4740,13 @@ def test_regression_export_uses_compiled_swedish_labels() -> None:
 # ----------------------------------------------------------------------
 
 
-def test_successful_outlier_summary_apply_registers_the_displayed_export_snapshot(dialog_factory):
+@pytest.mark.parametrize("method", list(OutlierMethod))
+def test_successful_outlier_summary_apply_registers_the_displayed_export_snapshot(dialog_factory, method):
     async_ops = DummyAsyncOps()
     ctrl, dlg = _open_outliers(async_ops, dialog_factory)
     assert dlg.exportable_outliers() is None
+    assert dlg.analysis_presentation is None
+    _select_outlier_method(_outliers_config(dlg), method)
 
     _simulate_success(_apply_outliers(async_ops, dlg))
 
@@ -4398,10 +4760,14 @@ def test_successful_outlier_summary_apply_registers_the_displayed_export_snapsho
     assert snapshot.detail_notes == view.detail_notes()
     assert snapshot.data.columns.tolist() == ["a", "b"]
     assert snapshot.data["a"].tolist() == _outliers_df()["a"].tolist()
+    assert dlg.analysis_presentation == build_analysis_presentation(
+        AnalysisCategory.OUTLIERS, snapshot, QCoreApplication.translate
+    )
 
     _outliers_config(dlg)._threshold_spin.setValue(2.5)  # noqa: SLF001
     _assert_apply_prompt(ctrl, dlg)
     assert dlg.exportable_outliers() is None
+    assert dlg.analysis_presentation is None
 
 
 def test_outlier_column_detail_apply_updates_the_registered_snapshot(dialog_factory):
@@ -4410,8 +4776,10 @@ def test_outlier_column_detail_apply_updates_the_registered_snapshot(dialog_fact
     view = _outliers_view(dlg)
     first = dlg.exportable_outliers()
     assert isinstance(first, UnivariateOutlierExportSnapshot)
+    first_presentation = dlg.analysis_presentation
 
     view.select_column("b")
+    assert dlg.analysis_presentation is first_presentation
     _simulate_success(async_ops.last_call)
 
     snapshot = dlg.exportable_outliers()
@@ -4423,6 +4791,49 @@ def test_outlier_column_detail_apply_updates_the_registered_snapshot(dialog_fact
     assert snapshot.detail is not None
     assert snapshot.detail.summary.column == "b"
     assert snapshot.detail_notes == view.detail_notes()
+    assert dlg.analysis_presentation == build_analysis_presentation(
+        AnalysisCategory.OUTLIERS, snapshot, QCoreApplication.translate
+    )
+    assert "Selected detail column: b" in dlg.analysis_presentation.summary_lines
+
+
+def test_outlier_failed_column_detail_clears_only_the_applied_detail_configuration(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_applied_outliers(async_ops, dialog_factory)
+    view = _outliers_view(dlg)
+    detail = view.column_detail()
+    assert detail is not None
+    view.select_column("b")
+    call = async_ops.last_call
+    failed_detail = dataclasses.replace(detail, error=OutlierError.INVALID_COLUMN)
+
+    call["on_result"](failed_detail)
+
+    snapshot = dlg.exportable_outliers()
+    assert isinstance(snapshot, UnivariateOutlierExportSnapshot)
+    assert snapshot.detail is None
+    assert dlg.analysis_presentation == build_analysis_presentation(
+        AnalysisCategory.OUTLIERS, snapshot, QCoreApplication.translate
+    )
+    assert "Selected detail column: None" in dlg.analysis_presentation.summary_lines
+
+
+def test_outlier_summary_without_detail_shows_no_applied_detail_column(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_outliers(async_ops, dialog_factory)
+    call = _apply_outliers(async_ops, dlg)
+    outcome = call["work"]()
+
+    call["on_result"](dataclasses.replace(outcome, detail=None))
+
+    assert _outliers_view(dlg).column_detail() is None
+    snapshot = dlg.exportable_outliers()
+    assert isinstance(snapshot, UnivariateOutlierExportSnapshot)
+    assert snapshot.detail is None
+    assert dlg.analysis_presentation == build_analysis_presentation(
+        AnalysisCategory.OUTLIERS, snapshot, QCoreApplication.translate
+    )
+    assert "Selected detail column: None" in dlg.analysis_presentation.summary_lines
 
 
 def test_outlier_column_detail_for_a_replaced_summary_is_not_registered(dialog_factory):
@@ -4450,12 +4861,18 @@ def test_outlier_summary_without_screened_columns_exports_tables_but_no_charts(d
     assert snapshot.chart_columns == ()
     assert snapshot.is_available(OutlierExportComponent.COLUMN_SUMMARY)
     assert not snapshot.is_available(OutlierExportComponent.CHARTS)
+    assert dlg.analysis_presentation == build_analysis_presentation(
+        AnalysisCategory.OUTLIERS, snapshot, QCoreApplication.translate
+    )
 
 
-def test_successful_multivariate_outlier_apply_registers_the_displayed_export_snapshot(dialog_factory):
+@pytest.mark.parametrize("method", list(MultivariateOutlierMethod))
+def test_successful_multivariate_outlier_apply_registers_the_displayed_export_snapshot(dialog_factory, method):
     async_ops = DummyAsyncOps()
     _, dlg = _open_outliers(async_ops, dialog_factory)
     config = _switch_to_multivariate(dlg)
+    config._method_combo.setCurrentIndex(config._method_combo.findData(method))  # noqa: SLF001
+    config._neighbors_spin.setValue(3)  # noqa: SLF001
     config._apply_button.click()  # noqa: SLF001
     _simulate_success(async_ops.last_call)
 
@@ -4465,6 +4882,9 @@ def test_successful_multivariate_outlier_apply_registers_the_displayed_export_sn
     assert snapshot.result is view.result()
     assert snapshot.chart_labels == view.chart_labels()
     assert snapshot.notes == view.export_notes()
+    assert dlg.analysis_presentation == build_analysis_presentation(
+        AnalysisCategory.OUTLIERS, snapshot, QCoreApplication.translate
+    )
 
 
 def test_failed_multivariate_outlier_fit_never_registers_an_export_snapshot(dialog_factory):
@@ -4477,10 +4897,11 @@ def test_failed_multivariate_outlier_fit_never_registers_an_export_snapshot(dial
 
     assert _multivariate_outliers_view(dlg).result().error is not None
     assert dlg.exportable_outliers() is None
+    assert dlg.analysis_presentation is None
 
 
 def _outliers_export_context(snapshot: OutlierExportSnapshot):
-    dialog = AnalysisDialog(parent=None, datasets=[DatasetRef("chosen", "Chosen", 10, 3)], active_tab_id="chosen")
+    dialog = AnalysisDialog(parent=None, source_dataset=DatasetRef("chosen", "Chosen", 10, 3))
     dialog.select_category(AnalysisCategory.OUTLIERS)
     dialog.set_content_widget(QWidget())
     dialog.set_exportable_outliers(snapshot)
@@ -4493,9 +4914,10 @@ def _outliers_export_context(snapshot: OutlierExportSnapshot):
 
 _OUTLIERS_TRANSLATIONS = {
     "Column summary": "Kolumnsammanfattning",
-    "Column details": "Kolumndetaljer",
     "Model summary": "Modellsammanfattning",
     "Potential outliers": "Potentiella avvikare",
+    "Column distributions": "Diagram",
+    "Outlier projection": "Diagram",
     "Charts": "Diagram",
     "Column": "Kolumn",
     "Status": "Status SV",
@@ -4514,7 +4936,9 @@ _OUTLIERS_TRANSLATIONS = {
 def test_univariate_outlier_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch):
     snapshot = univariate_snapshot()
     controller, dialog, exporter = _outliers_export_context(snapshot)
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: _OUTLIERS_TRANSLATIONS.get(text, text))
+    monkeypatch.setattr(
+        analysis_controller_module, "translate", lambda _context, text: _OUTLIERS_TRANSLATIONS.get(text, text)
+    )
     request = OutlierExportRequest(snapshot, UNIVARIATE_OUTLIER_COMPONENTS, StatisticsExportFormat.EXCEL)
 
     controller._export_outliers(dialog, exporter, request)  # noqa: SLF001
@@ -4525,13 +4949,13 @@ def test_univariate_outlier_excel_export_routes_localized_sheets_and_worker_char
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"] is True
     assert kwargs["chart_sheet_name"] == "Diagram"
-    assert list(kwargs["sheets"]) == ["Kolumnsammanfattning", "Kolumndetaljer", "Potentiella avvikare"]
+    assert list(kwargs["sheets"]) == ["Kolumnsammanfattning", "Modellsammanfattning", "Potentiella avvikare"]
     summary = kwargs["sheets"]["Kolumnsammanfattning"]
     assert summary.columns[0] == "Kolumn"
     assert summary.columns[-2:].tolist() == ["Status SV", "Anteckningar"]
     assert summary.loc[summary["Kolumn"] == "few", "Status SV"].tolist() == ["F?r f? v?rden"]
     assert summary["Status SV"].isna().sum() == len(summary) - 1
-    details = kwargs["sheets"]["Kolumndetaljer"]
+    details = kwargs["sheets"]["Modellsammanfattning"]
     assert details.columns.tolist() == ["M?tt", "V?rde", "Anteckningar"]
     assert details["M?tt"].iloc[0] == "Tr?skel"
     assert details["V?rde"].iloc[0] == 1.5
@@ -4540,7 +4964,8 @@ def test_univariate_outlier_excel_export_routes_localized_sheets_and_worker_char
 
     progress: list[int] = []
     images = kwargs["chart_factory"](progress.append, lambda: False)
-    assert [image.heading for image in images] == list(snapshot.chart_columns)
+    assert [image.accessible_name for image in images] == list(snapshot.chart_columns)
+    assert all(image.heading == "" for image in images)
     assert progress[-1] == 100
     assert controller._results.mock_calls == []  # noqa: SLF001
 
@@ -4548,7 +4973,9 @@ def test_univariate_outlier_excel_export_routes_localized_sheets_and_worker_char
 def test_multivariate_outlier_excel_export_uses_model_summary_and_projection_chart(monkeypatch):
     snapshot = multivariate_outliers_snapshot()
     controller, dialog, exporter = _outliers_export_context(snapshot)
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: _OUTLIERS_TRANSLATIONS.get(text, text))
+    monkeypatch.setattr(
+        analysis_controller_module, "translate", lambda _context, text: _OUTLIERS_TRANSLATIONS.get(text, text)
+    )
     request = OutlierExportRequest(snapshot, MULTIVARIATE_OUTLIER_COMPONENTS, StatisticsExportFormat.EXCEL)
 
     controller._export_outliers(dialog, exporter, request)  # noqa: SLF001
@@ -4561,7 +4988,9 @@ def test_multivariate_outlier_excel_export_uses_model_summary_and_projection_cha
     assert kwargs["sheets"]["Potentiella avvikare"].columns[:2].tolist() == ["Rad", "Avvikelsepo?ng"]
     images = kwargs["chart_factory"](None, None)
     assert len(images) == 1
-    assert images[0].heading == snapshot.chart_labels.heading
+    assert images[0].heading == snapshot.chart_labels.metadata.worksheet_heading == ""
+    assert images[0].accessible_name == snapshot.chart_labels.metadata.accessible_name
+    assert images[0].captions == snapshot.chart_labels.metadata.captions
 
 
 def test_outlier_excel_export_without_charts_has_no_chart_factory():
@@ -4668,13 +5097,13 @@ def test_outlier_export_uses_compiled_swedish_labels() -> None:
         app.removeTranslator(translator)
 
     kwargs = exporter.export_excel.call_args.kwargs
-    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert kwargs["chart_sheet_name"] == "Kolumnfördelningar"
     sheets = kwargs["sheets"]
-    assert list(sheets) == ["Kolumnsammanfattning", "Kolumndetaljer", "Potentiella avvikare"]
+    assert list(sheets) == ["Kolumnsammanfattning", "Modellsammanfattning", "Potentiella avvikare"]
     summary = sheets["Kolumnsammanfattning"]
     assert summary.columns[0] == "Kolumn"
     assert "För få värden" in summary["Status"].dropna().tolist()
-    details = sheets["Kolumndetaljer"]
+    details = sheets["Modellsammanfattning"]
     assert details.columns.tolist() == ["Mått", "Värde", "Noteringar"]
     assert details["Mått"].tolist()[:3] == ["Tröskel", "Värden", "Saknade"]
     assert sheets["Potentiella avvikare"].columns[2] == "Avstånd förbi gränsen"
@@ -4685,11 +5114,13 @@ def test_outlier_export_uses_compiled_swedish_labels() -> None:
 # ----------------------------------------------------------------------
 
 
-def test_successful_clustering_apply_registers_the_displayed_export_snapshot(dialog_factory):
+@pytest.mark.parametrize("method", list(ClusteringMethod))
+def test_successful_clustering_apply_registers_the_displayed_export_snapshot(dialog_factory, method):
     async_ops = DummyAsyncOps()
     ctrl, dlg = _open_clustering(async_ops, dialog_factory)
     assert dlg.exportable_clustering() is None
     config = _clustering_config(dlg)
+    config._method_combo.setCurrentIndex(config._method_combo.findData(method))  # noqa: SLF001
     config._apply_button.click()  # noqa: SLF001
     _simulate_success(async_ops.last_call)
 
@@ -4699,10 +5130,14 @@ def test_successful_clustering_apply_registers_the_displayed_export_snapshot(dia
     assert snapshot.result is view.result()
     assert snapshot.chart_labels == view.chart_labels()
     assert snapshot.notes == view.export_notes()
+    presentation = build_analysis_presentation(AnalysisCategory.CLUSTERING, snapshot, QCoreApplication.translate)
+    assert dlg.analysis_presentation == presentation
+    captured_id = snapshot.capture_id
 
     _set_clustering_checked(config, "z", False)
     _assert_apply_prompt(ctrl, dlg)
     assert dlg.exportable_clustering() is None
+    assert snapshot.capture_id == captured_id
 
 
 def test_failed_clustering_fit_never_registers_an_export_snapshot(dialog_factory):
@@ -4719,7 +5154,7 @@ def test_failed_clustering_fit_never_registers_an_export_snapshot(dialog_factory
 
 
 def _clustering_export_context(snapshot: ClusteringExportSnapshot):
-    dialog = AnalysisDialog(parent=None, datasets=[DatasetRef("chosen", "Chosen", 10, 3)], active_tab_id="chosen")
+    dialog = AnalysisDialog(parent=None, source_dataset=DatasetRef("chosen", "Chosen", 10, 3))
     dialog.select_category(AnalysisCategory.CLUSTERING)
     dialog.set_content_widget(QWidget())
     dialog.set_exportable_clustering(snapshot)
@@ -4731,6 +5166,7 @@ def _clustering_export_context(snapshot: ClusteringExportSnapshot):
 
 
 _CLUSTERING_TRANSLATIONS = {
+    "Cluster projection": "Klusterprojektion",
     "Cluster sizes": "Klusterstorlekar",
     "Model summary": "Modellsammanfattning",
     "Charts": "Diagram",
@@ -4750,7 +5186,7 @@ def test_clustering_excel_export_routes_localized_sheets_and_worker_chart(monkey
     snapshot = clustering_snapshot(ClusteringMethod.DBSCAN, dbscan_min_samples=3)
     controller, dialog, exporter = _clustering_export_context(snapshot)
     monkeypatch.setattr(
-        analysis_controller_module, "tr", lambda _context, text: _CLUSTERING_TRANSLATIONS.get(text, text)
+        analysis_controller_module, "translate", lambda _context, text: _CLUSTERING_TRANSLATIONS.get(text, text)
     )
     request = ClusteringExportRequest(snapshot, CLUSTERING_COMPONENTS, StatisticsExportFormat.EXCEL)
 
@@ -4761,7 +5197,7 @@ def test_clustering_excel_export_routes_localized_sheets_and_worker_chart(monkey
     assert kwargs["parent_widget"] is dialog
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"] is True
-    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert kwargs["chart_sheet_name"] == "Klusterprojektion"
     assert list(kwargs["sheets"]) == ["Klusterstorlekar", "Modellsammanfattning"]
     sizes = kwargs["sheets"]["Klusterstorlekar"]
     assert sizes.columns.tolist() == ["Kluster", "Rader", "Andel"]
@@ -4774,7 +5210,8 @@ def test_clustering_excel_export_routes_localized_sheets_and_worker_chart(monkey
 
     progress: list[int] = []
     images = kwargs["chart_factory"](progress.append, lambda: False)
-    assert [image.heading for image in images] == [snapshot.chart_labels.heading]
+    assert [image.heading for image in images] == [snapshot.chart_labels.metadata.worksheet_heading]
+    assert images[0].accessible_name == snapshot.chart_labels.metadata.accessible_name
     assert progress == [100]
     assert controller._results.mock_calls == []  # noqa: SLF001
 
@@ -4842,8 +5279,9 @@ def test_clustering_export_rejects_stale_or_foreign_requests(change):
     assert controller._results.mock_calls == []  # noqa: SLF001
 
 
-def test_clustering_export_uses_compiled_swedish_labels() -> None:
-    snapshot = clustering_snapshot(ClusteringMethod.DBSCAN, dbscan_min_samples=3)
+@pytest.mark.parametrize("method", list(ClusteringMethod))
+def test_clustering_export_uses_compiled_swedish_labels(method: ClusteringMethod) -> None:
+    snapshot = clustering_snapshot(method, dbscan_min_samples=3)
     controller, dialog, exporter = _clustering_export_context(snapshot)
     translator = QTranslator()
     catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / "app_sv.qm"
@@ -4860,13 +5298,17 @@ def test_clustering_export_uses_compiled_swedish_labels() -> None:
         app.removeTranslator(translator)
 
     kwargs = exporter.export_excel.call_args.kwargs
-    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert kwargs["chart_sheet_name"] == "Klusterprojektion"
     sheets = kwargs["sheets"]
     assert list(sheets) == ["Klusterstorlekar", "Modellsammanfattning"]
     assert sheets["Klusterstorlekar"].columns.tolist() == ["Kluster", "Rader", "Andel"]
     summary = sheets["Modellsammanfattning"]
     assert summary.columns.tolist() == ["Mått", "Värde", "Noteringar"]
-    assert summary["Mått"].tolist()[:3] == ["Variabler", "Grannskapsradie (eps)", "Minsta antal observationer"]
+    assert summary["Mått"].tolist()[:3] == (
+        ["Variabler", "Grannskapsradie (eps)", "Minsta antal observationer"]
+        if method is ClusteringMethod.DBSCAN
+        else ["Variabler", "Antal kluster", "Totalt antal rader"]
+    )
     assert "Silhuettpoäng" in summary["Mått"].tolist()
 
 
@@ -4889,6 +5331,9 @@ def test_successful_pca_apply_registers_the_displayed_export_snapshot(dialog_fac
     assert snapshot.result is view.result()
     assert snapshot.chart_labels == view.chart_labels()
     assert snapshot.notes == view.export_notes()
+    assert dlg.analysis_presentation is not None
+    assert dlg.analysis_presentation.title == "PCA"
+    assert dlg.analysis_presentation.summary_lines == ("Features: a, b, c", "Standardization: Standardized")
 
     _set_pca_checked(config, "c", False)
     _assert_apply_prompt(ctrl, dlg)
@@ -4907,7 +5352,7 @@ def test_failed_pca_fit_never_registers_an_export_snapshot(dialog_factory):
 
 
 def _pca_export_context(snapshot: PCAExportSnapshot):
-    dialog = AnalysisDialog(parent=None, datasets=[DatasetRef("chosen", "Chosen", 10, 3)], active_tab_id="chosen")
+    dialog = AnalysisDialog(parent=None, source_dataset=DatasetRef("chosen", "Chosen", 10, 3))
     dialog.select_category(AnalysisCategory.PCA)
     dialog.set_content_widget(QWidget())
     dialog.set_exportable_pca(snapshot)
@@ -4922,7 +5367,12 @@ _PCA_TRANSLATIONS = {
     "Feature loadings": "Variabelladdningar",
     "Explained variance": "Forklarad varians",
     "Model summary": "Modellsammanfattning",
-    "Charts": "Diagram",
+    "PCA plots": "Diagram",
+    "PCA": "PCA",
+    "Features:": "Variabler:",
+    "Standardization:": "Standardisering:",
+    "Standardized": "Standardiserade",
+    "Not standardized": "Inte standardiserade",
     "Feature": "Variabel",
     "Component": "Komponent",
     "Variance": "Varians",
@@ -4938,7 +5388,9 @@ _PCA_TRANSLATIONS = {
 def test_pca_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch):
     snapshot = pca_snapshot()
     controller, dialog, exporter = _pca_export_context(snapshot)
-    monkeypatch.setattr(analysis_controller_module, "tr", lambda _context, text: _PCA_TRANSLATIONS.get(text, text))
+    monkeypatch.setattr(
+        analysis_controller_module, "translate", lambda _context, text: _PCA_TRANSLATIONS.get(text, text)
+    )
     request = PCAExportRequest(snapshot, PCA_COMPONENTS, StatisticsExportFormat.EXCEL)
 
     controller._export_pca(dialog, exporter, request)  # noqa: SLF001
@@ -4948,6 +5400,7 @@ def test_pca_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch)
     assert kwargs["parent_widget"] is dialog
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"] is True
+    assert kwargs["suggested_name"] == "PCA"
     assert kwargs["chart_sheet_name"] == "Diagram"
     assert list(kwargs["sheets"]) == ["Variabelladdningar", "Forklarad varians", "Modellsammanfattning"]
     assert kwargs["sheets"]["Variabelladdningar"].columns.tolist() == ["Variabel", "PC1", "PC2", "PC3"]
@@ -4962,8 +5415,12 @@ def test_pca_excel_export_routes_localized_sheets_and_worker_charts(monkeypatch)
     progress: list[int] = []
     images = kwargs["chart_factory"](progress.append, lambda: False)
     assert [image.heading for image in images] == [
-        snapshot.chart_labels.scree_title,
-        snapshot.chart_labels.scatter_title,
+        snapshot.chart_labels.scree_metadata.worksheet_heading,
+        snapshot.chart_labels.scatter_metadata.worksheet_heading,
+    ]
+    assert [image.accessible_name for image in images] == [
+        snapshot.chart_labels.scree_metadata.accessible_name,
+        snapshot.chart_labels.scatter_metadata.accessible_name,
     ]
     assert progress == [50, 100]
     assert controller._results.mock_calls == []  # noqa: SLF001
@@ -5014,7 +5471,8 @@ def test_pca_single_table_routes_to_non_excel_exporters(format_choice, method_na
     method = getattr(exporter, method_name)
     assert method.call_count == 1
     kwargs = method.call_args.kwargs
-    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog", "suggested_name"}
+    assert kwargs["suggested_name"] == "PCA"
     assert kwargs["df"].columns[0] == first_column
     assert exporter.export_excel.call_count == 0
 
@@ -5057,7 +5515,7 @@ def test_pca_export_uses_compiled_swedish_labels() -> None:
         app.removeTranslator(translator)
 
     kwargs = exporter.export_excel.call_args.kwargs
-    assert kwargs["chart_sheet_name"] == "Diagram"
+    assert kwargs["chart_sheet_name"] == "PCA-diagram"
     sheets = kwargs["sheets"]
     assert list(sheets) == ["Variabelladdningar", "Förklarad varians", "Modellsammanfattning"]
     assert sheets["Variabelladdningar"].columns.tolist() == ["Variabel", "PC1", "PC2", "PC3"]
@@ -5088,11 +5546,19 @@ def test_successful_time_series_apply_registers_the_displayed_export_snapshot(di
     view = _time_series_view(dlg)
     snapshot = dlg.exportable_time_series()
     assert isinstance(snapshot, TimeSeriesExportSnapshot)
+    assert snapshot.capture_id
     assert snapshot.result is view.result()
     assert snapshot.chart_labels == view.chart_labels()
     assert snapshot.notes == view.export_notes()
     assert snapshot.autocorrelation_note == view.autocorrelation_note()
+    assert snapshot.applied_configuration == TimeSeriesAppliedConfiguration(*config.analysis_configuration())
+    assert dlg.analysis_presentation.title == "Time Series"
+    assert dlg.analysis_presentation.summary_lines[0].startswith("Time column:")
 
+    config._apply_button.click()  # noqa: SLF001
+    assert dlg.exportable_time_series() is None
+    _simulate_success(async_ops.last_call)
+    assert dlg.exportable_time_series() is not None
     config._auto_period.toggle()  # noqa: SLF001
     _assert_apply_prompt(ctrl, dlg)
     assert dlg.exportable_time_series() is None
@@ -5109,8 +5575,27 @@ def test_failed_time_series_analysis_never_registers_an_export_snapshot(dialog_f
     assert dlg.exportable_time_series() is None
 
 
+def test_failed_time_series_rerun_invalidates_the_previous_capture(dialog_factory):
+    async_ops = DummyAsyncOps()
+    _, dlg = _open_time_series(async_ops, dialog_factory)
+    config = _time_series_config(dlg)
+    config._apply_button.click()  # noqa: SLF001
+    _simulate_success(async_ops.last_call)
+    assert dlg.exportable_time_series() is not None
+
+    config._frequency_combo.setCurrentIndex(config._frequency_combo.findData("YS"))  # noqa: SLF001
+    assert dlg.exportable_time_series() is None
+    config._apply_button.click()  # noqa: SLF001
+    failed_rerun = async_ops.last_call
+    assert dlg.exportable_time_series() is None
+    _simulate_success(failed_rerun)
+
+    assert _time_series_view(dlg).result().error is not None
+    assert dlg.exportable_time_series() is None
+
+
 def _time_series_export_context(snapshot: TimeSeriesExportSnapshot):
-    dialog = AnalysisDialog(parent=None, datasets=[DatasetRef("chosen", "Chosen", 10, 3)], active_tab_id="chosen")
+    dialog = AnalysisDialog(parent=None, source_dataset=DatasetRef("chosen", "Chosen", 10, 3))
     dialog.select_category(AnalysisCategory.TIME_SERIES)
     dialog.set_content_widget(QWidget())
     dialog.set_exportable_time_series(snapshot)
@@ -5139,6 +5624,21 @@ _TIME_SERIES_TRANSLATIONS = {
     "Duplicate rows averaged": "Dubblettrader",
     "Time points": "Tidpunkter",
     "Seasonal period": "Sasongsperiod",
+    "Time Series": "Tidsserie",
+    "Time column:": "Tidskolumn:",
+    "Value column:": "Varde kolumn:",
+    "Resampling:": "Omsampling:",
+    "Decomposition model:": "Dekomponeringsmodell:",
+    "Original frequency": "Ursprunglig frekvens",
+    "Daily": "Daglig",
+    "Weekly": "Veckovis",
+    "Monthly": "Manadsvis",
+    "Quarterly": "Kvartalsvis",
+    "Yearly": "Arsvis",
+    "Automatic (detected: {period})": "Automatiskt (identifierad: {period})",
+    "Automatic (no period detected)": "Automatiskt (ingen period identifierad)",
+    "Additive": "Additiv",
+    "Multiplicative": "Multiplikativ",
 }
 
 
@@ -5146,7 +5646,7 @@ def test_time_series_excel_export_routes_localized_sheets_and_worker_charts(monk
     snapshot = time_series_snapshot()
     controller, dialog, exporter = _time_series_export_context(snapshot)
     monkeypatch.setattr(
-        analysis_controller_module, "tr", lambda _context, text: _TIME_SERIES_TRANSLATIONS.get(text, text)
+        analysis_controller_module, "translate", lambda _context, text: _TIME_SERIES_TRANSLATIONS.get(text, text)
     )
     request = TimeSeriesExportRequest(snapshot, TIME_SERIES_COMPONENTS, StatisticsExportFormat.EXCEL)
 
@@ -5170,10 +5670,11 @@ def test_time_series_excel_export_routes_localized_sheets_and_worker_charts(monk
 
     progress: list[int] = []
     images = kwargs["chart_factory"](progress.append, lambda: False)
-    assert [image.heading for image in images] == [
-        snapshot.chart_labels.series_title,
-        snapshot.chart_labels.acf_title,
-        snapshot.chart_labels.decomposition_title,
+    assert [image.heading for image in images] == ["", "", ""]
+    assert [image.accessible_name for image in images] == [
+        snapshot.chart_labels.series_metadata.accessible_name,
+        snapshot.chart_labels.acf_metadata.accessible_name,
+        snapshot.chart_labels.decomposition_metadata.accessible_name,
     ]
     assert progress == [33, 66, 100]
     assert controller._results.mock_calls == []  # noqa: SLF001
@@ -5194,7 +5695,8 @@ def test_time_series_excel_charts_skip_unavailable_diagnostics():
     assert list(kwargs["sheets"]) == ["Series"]
     assert kwargs["sheets"]["Series"].columns.tolist() == ["Timestamp", "Value"]
     images = kwargs["chart_factory"](None, None)
-    assert [image.heading for image in images] == [snapshot.chart_labels.series_title]
+    assert [image.heading for image in images] == [""]
+    assert [image.accessible_name for image in images] == [snapshot.chart_labels.series_metadata.accessible_name]
 
 
 def test_time_series_excel_export_without_charts_has_no_chart_factory():
@@ -5243,7 +5745,8 @@ def test_time_series_single_table_routes_to_non_excel_exporters(format_choice, m
     method = getattr(exporter, method_name)
     assert method.call_count == 1
     kwargs = method.call_args.kwargs
-    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    assert set(kwargs) == {"df", "suggested_name", "parent_widget", "operation_target", "show_success_dialog"}
+    assert kwargs["suggested_name"] == "Time Series"
     assert kwargs["df"].columns[0] == first_column
     assert exporter.export_excel.call_count == 0
 
@@ -5286,6 +5789,7 @@ def test_time_series_export_uses_compiled_swedish_labels() -> None:
         app.removeTranslator(translator)
 
     kwargs = exporter.export_excel.call_args.kwargs
+    assert kwargs["suggested_name"] == "Tidsserie"
     assert kwargs["chart_sheet_name"] == "Diagram"
     sheets = kwargs["sheets"]
     assert list(sheets) == ["Serie", "Autokorrelation", "Modellsammanfattning"]

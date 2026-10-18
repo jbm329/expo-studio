@@ -1,14 +1,20 @@
 from __future__ import annotations
 
+from html import escape
+
 import numpy as np
 import pandas as pd
 import pytest
+from PyQt6 import sip
 from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QScrollArea, QSplitter
 
+from expo_jbm329.gui.dialogs.analysis.applied_configuration_header import AppliedConfigurationHeader
 from expo_jbm329.gui.dialogs.analysis.correlation_view import MAX_ANNOTATED_COLUMNS, CorrelationView
+from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection
 from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis import correlation_charts
 from expo_jbm329.services.analysis.correlation import (
     SCATTER_SAMPLE_SIZE,
     CorrelationError,
@@ -18,7 +24,9 @@ from expo_jbm329.services.analysis.correlation import (
     analyze_correlation_matrix,
     analyze_correlation_pair,
 )
-from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
+from expo_jbm329.services.analysis.correlation_export import CorrelationExportComponent, CorrelationExportSnapshot
+from expo_jbm329.utils.format_utils import capture_chart_numeric_locale
+from tests.analysis.section_assertions import assert_result_section, assert_section_scrolls_below_frozen_title
 from tests.analysis.test_statistics_view import _worker_holds_chart_lock
 
 
@@ -59,6 +67,26 @@ def _canvas_axes(widget):
 
 def _scatter_axes(view: CorrelationView):
     return [axis for axis in _canvas_axes(view.pair_panel()) if axis.get_xlabel()]
+
+
+@pytest.mark.parametrize("method", list(CorrelationMethod))
+def test_configured_title_is_bold_and_configuration_is_separate(method):
+    view = CorrelationView(_matrix(_frame(), method), None)
+    header = view.layout().itemAt(0).widget()
+    assert isinstance(header, AppliedConfigurationHeader)
+    title, label, configuration = header.findChildren(QLabel)
+
+    assert isinstance(title, QLabel)
+    assert title.text().startswith("Correlation — ")
+    assert title.font().bold()
+    assert title.textFormat() is Qt.TextFormat.PlainText
+    assert title.wordWrap()
+    assert isinstance(configuration, QLabel)
+    assert label.text() == "Columns:"
+    assert configuration.text() == "c0, c1, c2"
+    assert not configuration.font().bold()
+    assert configuration.textFormat() is Qt.TextFormat.PlainText
+    assert configuration.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
 
 
 def test_ranking_caption_shares_the_tables_shaded_panel():
@@ -102,6 +130,7 @@ def test_pair_details_scroll_below_a_frozen_title_with_text_at_the_top(with_erro
     detail = analyze_correlation_pair(df, "c0", "c1")
     view = CorrelationView(_matrix(df), detail)
     panel = view.pair_panel().findChild(QSplitter).widget(1)
+    assert_result_section(panel, "Pair details")
     try:
         if with_error:
             # A one-line error always fits, so only the shared structure is checked.
@@ -110,7 +139,7 @@ def test_pair_details_scroll_below_a_frozen_title_with_text_at_the_top(with_erro
             assert panel.layout().stretch(1) == 1
             content = scroll.widget()
         else:
-            content = assert_section_scrolls_below_frozen_title(panel, 40)
+            content = assert_section_scrolls_below_frozen_title(panel, 40, result_section=True)
         assert content is view._statistics_panel  # noqa: SLF001
         label = content.findChild(QLabel)
         assert label.alignment() == Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
@@ -130,7 +159,41 @@ def test_new_pair_detail_stays_inside_the_scrollable_pair_details():
     _flush_deletes()
 
     assert scroll.widget() is view._statistics_panel  # noqa: SLF001
-    assert "<b>c1</b> vs <b>c2</b>" in _labels_text(scroll.widget())
+    assert "<b>c1 vs c2</b>" not in _labels_text(scroll.widget())
+    assert _scatter_axes(view)[0].get_title() == "c1 vs c2"
+
+
+@pytest.mark.parametrize("method", list(CorrelationMethod))
+def test_pair_statistics_keep_one_framed_section_through_success_error_and_recovery(method):
+    df = _frame()
+    view = CorrelationView(_matrix(df, method), analyze_correlation_pair(df, "c0", "c1", method))
+    panel = view.pair_panel().findChild(QSplitter).widget(1)
+    scroll = assert_result_section(panel, "Pair details")
+    content = scroll.widget()
+    heading = panel.layout().itemAt(0).widget()
+    try:
+        for detail in (
+            analyze_correlation_pair(df, "c0", "missing", method),
+            analyze_correlation_pair(df, "c1", "c2", method),
+        ):
+            old_label = content.findChild(QLabel)
+            view.set_pair_detail(detail)
+            _flush_deletes()
+            assert sip.isdeleted(old_label)
+            assert assert_result_section(panel, "Pair details") is scroll
+            assert scroll.widget() is content
+            assert panel.layout().itemAt(0).widget() is heading
+            assert view.findChildren(AnalysisResultSection) == [panel]
+            labels = content.findChildren(QLabel)
+            assert len(labels) == 1
+            if detail.error is not None:
+                assert labels[0].text() == view.error_text(detail.error)
+            else:
+                assert labels[0].text() == view._pair_statistics_text(detail)  # noqa: SLF001
+        assert_section_scrolls_below_frozen_title(panel, 40, result_section=True)
+    finally:
+        view.close()
+        view.deleteLater()
 
 
 def test_correlation_canvases_defer_matrix_and_scatter_mutations_without_blocking():
@@ -192,7 +255,8 @@ def test_heatmap_is_annotated_for_small_matrices():
     (heatmap,) = _canvas_axes(view)
 
     assert len(heatmap.texts) == 9
-    assert "Pearson" in heatmap.get_title()
+    assert heatmap.get_title() == "Correlation matrix"
+    assert "Correlation — Pearson" in _labels_text(view)
 
 
 def test_heatmap_is_not_annotated_for_large_matrices():
@@ -425,11 +489,15 @@ def test_unsampled_pair_has_no_sampling_caption():
     assert "random sample" not in _labels_text(view.pair_panel())
 
 
-def test_column_names_are_html_escaped_in_the_statistics():
+def test_column_names_are_literal_axis_labels_not_repeated_rich_text():
     df = _frame().rename(columns={"c0": "<b>x</b>"})
     view = CorrelationView(_matrix(df), analyze_correlation_pair(df, "<b>x</b>", "c1"))
 
-    assert "&lt;b&gt;x&lt;/b&gt;" in _labels_text(view.pair_panel())
+    axis = _scatter_axes(view)[0]
+    assert axis.get_title() == "<b>x</b> vs c1"
+    assert axis.get_xlabel() == "<b>x</b>"
+    assert "<b>x</b>" not in _labels_text(view.pair_panel())
+    assert "&lt;b&gt;x&lt;/b&gt;" not in _labels_text(view.pair_panel())
 
 
 def test_small_p_value_is_html_escaped_in_the_statistics():
@@ -439,3 +507,48 @@ def test_small_p_value_is_html_escaped_in_the_statistics():
     text = _labels_text(view.pair_panel())
     assert "p = &lt; " in text
     assert "p = < " not in text
+
+
+@pytest.mark.parametrize("method", list(CorrelationMethod))
+def test_live_and_worker_axes_annotations_and_captions_match(method, monkeypatch):
+    df = _frame(columns=2)
+    matrix = _matrix(df, method)
+    detail = analyze_correlation_pair(df, "c0", "c1", method)
+    view = CorrelationView(matrix, detail)
+    labels = correlation_charts.build_correlation_chart_labels(
+        matrix, lambda _context, source: source, capture_chart_numeric_locale()
+    )
+
+    def semantics(axis):
+        return (
+            axis.get_title(),
+            axis.get_xlabel(),
+            axis.get_ylabel(),
+            tuple(tick.get_text() for tick in axis.get_xticklabels()) if axis.images else (),
+            tuple(tick.get_text() for tick in axis.get_yticklabels()) if axis.images else (),
+            tuple((text.get_text(), text.get_color()) for text in axis.texts),
+            tuple(image.get_clim() for image in axis.images),
+        )
+
+    expected = [semantics(axis) for axis in sorted(_canvas_axes(view), key=lambda axis: not bool(axis.images))]
+    rendered = []
+    original = correlation_charts.render_chart_png
+
+    def capture(figure, **kwargs):
+        rendered.append(semantics(figure.axes[0]))
+        return original(figure, **kwargs)
+
+    monkeypatch.setattr(correlation_charts, "render_chart_png", capture)
+    images = correlation_charts.render_correlation_charts(
+        CorrelationExportSnapshot(matrix, df),
+        (CorrelationExportComponent.MATRIX_PLOT, CorrelationExportComponent.SCATTERPLOTS),
+        labels,
+    )
+    assert rendered == expected
+    assert expected[0][1:3] == ("", "")
+    assert expected[1][1:3] == ("c0", "c1")
+    assert images[1].captions
+    statistics = _labels_text(view.pair_panel())
+    assert all(escape(caption) in statistics for caption in images[1].captions)
+    assert f"<b>{images[1].accessible_name}</b>" not in statistics
+    view.close()

@@ -19,7 +19,7 @@ from expo_jbm329.services.analysis.regression_glm import (
     RegressionModel,
     analyze_generalized_regression,
 )
-from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
+from tests.analysis.section_assertions import assert_result_section, assert_section_scrolls_below_frozen_title
 
 
 def _result(model: RegressionModel = RegressionModel.LOGISTIC):
@@ -41,17 +41,20 @@ def _text(view: GeneralizedRegressionView) -> str:
 @pytest.mark.parametrize(
     "model", [RegressionModel.LOGISTIC, RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL]
 )
-def test_model_comments_scroll_only_when_content_exceeds_available_space(model):
+def test_model_summary_title_and_scroll_area(model):
     view = GeneralizedRegressionView(_result(model))
     splitter = view.findChild(QSplitter)
-    scroll = splitter.widget(2).findChild(QScrollArea)
+    summary_panel = splitter.widget(2)
+    title = summary_panel.layout().itemAt(0).widget()
+    scroll = assert_result_section(summary_panel, "Model summary")
+    assert title.text() == "Model summary"
     assert scroll.widget() is view.summary_label()
     assert scroll.widgetResizable()
     assert scroll.verticalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
     assert scroll.horizontalScrollBarPolicy() is Qt.ScrollBarPolicy.ScrollBarAsNeeded
-    scroll.setParent(None)
-    scroll.resize(500, 100)
-    scroll.show()
+    assert_section_scrolls_below_frozen_title(summary_panel, 100, result_section=True)
+    summary_panel.resize(500, 100)
+    summary_panel.show()
     try:
         QCoreApplication.processEvents()
         assert scroll.verticalScrollBar().maximum() > 0
@@ -60,8 +63,8 @@ def test_model_comments_scroll_only_when_content_exceeds_available_space(model):
         assert scroll.verticalScrollBar().maximum() == 0
         assert scroll.horizontalScrollBar().maximum() == 0
     finally:
-        scroll.close()
-        scroll.deleteLater()
+        summary_panel.close()
+        summary_panel.deleteLater()
         view.close()
 
 
@@ -412,17 +415,25 @@ def test_narrow_and_large_finite_counts_render_without_warnings(fitted):
 
 
 @pytest.mark.parametrize(
-    ("model", "heading"),
+    ("model", "title"),
     [
-        (RegressionModel.LOGISTIC, "Logistic regression: binary"),
-        (RegressionModel.POISSON, "Poisson regression: count"),
-        (RegressionModel.NEGATIVE_BINOMIAL, "Negative binomial regression: count"),
+        (RegressionModel.LOGISTIC, "Regression — Logistic regression"),
+        (RegressionModel.POISSON, "Regression — Poisson regression"),
+        (
+            RegressionModel.NEGATIVE_BINOMIAL,
+            "Regression — Negative binomial regression",
+        ),
     ],
 )
-def test_chart_labels_name_the_model_and_target(model, heading):
+def test_chart_labels_and_applied_view_use_shared_model_presentation(model, title):
     labels = GeneralizedRegressionView(_result(model)).chart_labels()
-    assert labels.heading == heading
-    assert labels.captions == ()
+    assert labels.metadata.worksheet_heading == ""
+    assert labels.metadata.accessible_name
+    assert labels.metadata.captions == ()
+    text = _text(GeneralizedRegressionView(_result(model)))
+    assert title in text
+    assert "Outcome:" in text
+    assert "Predictors:\nx" in text
 
 
 @pytest.mark.parametrize("model", [RegressionModel.POISSON, RegressionModel.NEGATIVE_BINOMIAL])
@@ -430,7 +441,7 @@ def test_sampled_count_chart_labels_carry_the_sampling_caption(model):
     result = _result(model)
     assert result.plot_data is not None
     result = dataclasses.replace(result, n_used=6000, plot_data=dataclasses.replace(result.plot_data, sampled=True))
-    captions = GeneralizedRegressionView(result).chart_labels().captions
+    captions = GeneralizedRegressionView(result).chart_labels().metadata.captions
     assert len(captions) == 1
     assert "sample of 120 of 6" in captions[0]
 

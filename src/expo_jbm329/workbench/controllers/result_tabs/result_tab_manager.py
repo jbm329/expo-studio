@@ -239,6 +239,7 @@ class ResultTabManager:
         "_last_df",
         "_logger",
         "_na_rep",
+        "_notify_analysis_ready_cbs",
         "_notify_has_data_cbs",
         "_notify_toolbar_multi_dataset_cb",
         "_parent",
@@ -293,6 +294,7 @@ class ResultTabManager:
         self._na_rep = ""
         self._tabs_by_id: dict[str, ResultTabRecord] = {}
         self._notify_has_data_cbs: list[Callable[[bool], None]] = []
+        self._notify_analysis_ready_cbs: list[Callable[[bool], None]] = []
         self._result_counter = 1
         self._last_df: pd.DataFrame | None = None
         self._closing_tabs: bool = False
@@ -1010,6 +1012,12 @@ class ResultTabManager:
         if callable(cb):
             self._notify_has_data_cbs.append(cb)
 
+    def apply_toolbar_analysis_state(self, cb: Callable[[bool], None]) -> None:
+        """Register a callback for readiness of the active dataset."""
+        if callable(cb):
+            self._notify_analysis_ready_cbs.append(cb)
+            self._emit_toolbar_analysis_state()
+
     def apply_toolbar_multiple_dataset_state(self, cb: Callable[[bool], None]) -> None:
         """Register callback for enabling/disabling multi dataset operations (join/concat)."""
         if callable(cb):
@@ -1023,6 +1031,24 @@ class ResultTabManager:
                 continue
             with contextlib.suppress(Exception):
                 cb(self._has_any_data())
+        self._emit_toolbar_analysis_state()
+
+    def _emit_toolbar_analysis_state(self) -> None:
+        """Emit whether the active result tab contains a ready dataset."""
+        is_ready = self._active_dataset_is_ready()
+        for cb in self._notify_analysis_ready_cbs:
+            if not callable(cb):
+                continue
+            with contextlib.suppress(Exception):
+                cb(is_ready)
+
+    def _active_dataset_is_ready(self) -> bool:
+        """Return whether the active tab is in READY state and owns a DataFrame."""
+        tab_id = self.active_tab_id()
+        if tab_id is None:
+            return False
+        record = self._tabs_by_id.get(tab_id)
+        return record is not None and record.is_ready and record.df is not None
 
     def _emit_toolbar_multi_dataset_state(self) -> None:
         """Notify toolbar about whether multiple ready datasets are present.

@@ -273,53 +273,61 @@ class ColumnPropertiesDialog(QDialog):
             self._layout.addWidget(lbl)
             return
 
-        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-        from matplotlib.figure import Figure
+        from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
+        from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
+        from expo_jbm329.services.analysis.chart_layout import ChartFigure
+        from expo_jbm329.services.analysis.chart_profiles import (
+            COLUMN_PROPERTIES_FIGURE_SIZE,
+            COLUMN_PROPERTIES_GRID,
+            PREFERRED_CATEGORICAL_ROTATION,
+        )
 
         plot = self._profile.plot
         if not plot or not plot.kind:
             return
 
-        fig = Figure(figsize=(5, 2.6), tight_layout=True)
-        ax = fig.add_subplot(111)
+        fig = ChartFigure(figsize=COLUMN_PROPERTIES_FIGURE_SIZE, tight_layout=True)
+        canvas = SerializedAnalysisCanvas(fig)
 
-        if plot.kind == "hist" and plot.bins and plot.counts:
-            import numpy as np
+        def build_chart() -> None:
+            ax = fig.add_subplot(111)
+            if plot.kind == "hist" and plot.bins and plot.counts:
+                import numpy as np
 
-            ax.bar(plot.bins[:-1], plot.counts, width=np.diff(plot.bins), align="edge", edgecolor="#333")
-            ax.set_title(self.tr("Histogram"))
+                ax.bar(plot.bins[:-1], plot.counts, width=np.diff(plot.bins), align="edge", edgecolor="#333")
+                ax.set_title(self.tr("Histogram"))
 
-        elif plot.kind == "bar_topn" and plot.labels and plot.counts:
-            ax.bar(range(len(plot.labels)), plot.counts)
-            ax.set_xticks(range(len(plot.labels)))
-            ax.set_xticklabels(
-                [
-                    str(x)[:MAX_TOP_VALUE_LABEL_LENGTH] + ("…" if len(str(x)) > MAX_TOP_VALUE_LABEL_LENGTH else "")
-                    for x in plot.labels
-                ],
-                rotation=30,
-                ha="right",
-            )
-            ax.set_title(self.tr("Top values"))
+            elif plot.kind == "bar_topn" and plot.labels and plot.counts:
+                ax.bar(range(len(plot.labels)), plot.counts)
+                ax.set_xticks(range(len(plot.labels)))
+                ax.set_xticklabels(
+                    [
+                        str(x)[:MAX_TOP_VALUE_LABEL_LENGTH] + ("…" if len(str(x)) > MAX_TOP_VALUE_LABEL_LENGTH else "")
+                        for x in plot.labels
+                    ],
+                    rotation=PREFERRED_CATEGORICAL_ROTATION,
+                    ha="right",
+                )
+                ax.set_title(self.tr("Top values"))
 
-        elif plot.kind == "bar_weekday" and plot.labels and plot.counts:
-            ax.bar(range(len(plot.labels)), plot.counts)
-            ax.set_xticks(range(len(plot.labels)))
+            elif plot.kind == "bar_weekday" and plot.labels and plot.counts:
+                ax.bar(range(len(plot.labels)), plot.counts)
+                ax.set_xticks(range(len(plot.labels)))
 
-            ax.set_xticklabels([self._tr_plot_label(k) for k in plot.labels])
+                ax.set_xticklabels([self._tr_plot_label(k) for k in plot.labels])
 
-            ax.set_title(self.tr("Weekday distribution"))
+                ax.set_title(self.tr("Weekday distribution"))
 
-        elif plot.kind == "bar_bool" and plot.labels and plot.counts:
-            ax.bar(range(len(plot.labels)), plot.counts)
-            ax.set_xticks(range(len(plot.labels)))
+            elif plot.kind == "bar_bool" and plot.labels and plot.counts:
+                ax.bar(range(len(plot.labels)), plot.counts)
+                ax.set_xticks(range(len(plot.labels)))
+                ax.set_xticklabels([self._tr_plot_label(k) for k in plot.labels])
+                ax.set_title(self.tr("Distribution"))
 
-            ax.set_xticklabels([self._tr_plot_label(k) for k in plot.labels])
+            ax.grid(True, axis=COLUMN_PROPERTIES_GRID.axis, alpha=COLUMN_PROPERTIES_GRID.alpha)
 
-            ax.set_title(self.tr("Distribution"))
-
-        ax.grid(True, axis="y", alpha=0.25)
-        self._layout.addWidget(FigureCanvasQTAgg(fig))  # type: ignore[no-untyped-call]
+        canvas.build_chart(build_chart)
+        self._layout.addWidget(build_section_scroll_area(canvas, self), 1)
 
     # ------------------------------------------------------------------
     # Buttons

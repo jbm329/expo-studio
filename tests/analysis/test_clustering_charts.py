@@ -1,13 +1,22 @@
 from __future__ import annotations
 
+import dataclasses
+
 import numpy as np
 import pytest
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from openpyxl import load_workbook
 
+from expo_jbm329.gui.dialogs.analysis.clustering_view import ClusteringView
+from expo_jbm329.services.analysis import clustering_charts as chart_module
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
 from expo_jbm329.services.analysis.clustering_charts import draw_cluster_projection, render_clustering_charts
-from expo_jbm329.services.analysis.clustering_export import ClusteringExportComponent, clustering_export_tables
+from expo_jbm329.services.analysis.clustering_export import (
+    ClusteringExportComponent,
+    ClusteringExportSnapshot,
+    clustering_export_tables,
+)
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError
 from expo_jbm329.services.file_writer import FileWriter
 from tests.analysis.test_clustering_export import PROJECTION_LABELS, clustering_snapshot
@@ -32,13 +41,53 @@ def test_projection_draws_one_series_per_cluster_with_gray_noise_last():
     assert [text.get_text() for text in ax.get_legend().get_texts()] == ["Noise", "Cluster 1", "Cluster 2"]
 
 
+@pytest.mark.parametrize("method", list(ClusteringMethod))
+@pytest.mark.parametrize("sampled", [False, True])
+def test_live_projection_and_worker_use_the_same_title_axes_and_legend(method, sampled, monkeypatch):
+    snapshot = clustering_snapshot(method, dbscan_min_samples=3)
+    result = dataclasses.replace(snapshot.result, sampled=sampled)
+    view = ClusteringView(result)
+    live_canvas = view.findChildren(FigureCanvasQTAgg)[0]
+    live_axes = live_canvas.figure.axes[0]
+
+    def semantics(ax):
+        legend = ax.get_legend()
+        assert legend is not None
+        return (
+            ax.get_title(),
+            ax.get_xlabel(),
+            ax.get_ylabel(),
+            tuple(text.get_text() for text in legend.get_texts()),
+        )
+
+    expected = semantics(live_axes)
+    rendered: list[tuple[str, str, str, tuple[str, ...]]] = []
+    original_render = chart_module.render_chart_png
+
+    def inspect_png(figure, *args, **kwargs):
+        rendered.append(semantics(figure.axes[0]))
+        return original_render(figure, *args, **kwargs)
+
+    monkeypatch.setattr(chart_module, "render_chart_png", inspect_png)
+    worker_snapshot = ClusteringExportSnapshot(result, view.chart_labels())
+    (image,) = render_clustering_charts(worker_snapshot)
+
+    assert rendered == [expected]
+    assert image.heading == ""
+    assert image.accessible_name == view.chart_labels().metadata.accessible_name
+    assert image.captions == view.chart_labels().metadata.captions
+    view.close()
+
+
 def test_render_returns_the_projection_with_its_caption_and_progress():
     progress: list[int] = []
 
-    (image,) = render_clustering_charts(clustering_snapshot(), progress_cb=progress.append, cancel_cb=lambda: False)
+    snapshot = clustering_snapshot(sampled=True)
+    (image,) = render_clustering_charts(snapshot, progress_cb=progress.append, cancel_cb=lambda: False)
 
-    assert image.heading == "Cluster projection"
-    assert image.captions == ("Sampled",)
+    assert image.heading == ""
+    assert image.accessible_name == "Cluster projection (internal PCA)"
+    assert image.captions == ("The plot shows a deterministic sample of 9 rows.",)
     assert image.image_data.startswith(_PNG_SIGNATURE)
     assert (image.width_px, image.height_px) == (960, 720)
     assert progress == [100]
@@ -59,7 +108,7 @@ def test_render_honors_cancellation_before_and_after_drawing(cancel_after):
 
 @pytest.mark.parametrize("streaming", [False, True])
 def test_workbook_keeps_typed_tables_and_the_projection(tmp_path, streaming):
-    snapshot = clustering_snapshot()
+    snapshot = clustering_snapshot(sampled=True)
     frames = clustering_export_tables(
         snapshot, (ClusteringExportComponent.CLUSTER_SIZES, ClusteringExportComponent.MODEL_SUMMARY)
     )
@@ -78,7 +127,12 @@ def test_workbook_keeps_typed_tables_and_the_projection(tmp_path, streaming):
     try:
         assert workbook.sheetnames == ["cluster_sizes", "model_summary", "Charts"]
         assert len(workbook["Charts"]._images) == 1
-        assert workbook["Charts"]["A1"].value == "Cluster projection"
+        assert workbook["Charts"]["A1"].value is None
+        assert any(
+            cell.value == "The plot shows a deterministic sample of 9 rows."
+            for row in workbook["Charts"].iter_rows()
+            for cell in row
+        )
         sizes = workbook["cluster_sizes"]
         assert [cell.value for cell in sizes[1]] == ["cluster", "rows", "share"]
         assert sizes["A2"].value == "Cluster 1"

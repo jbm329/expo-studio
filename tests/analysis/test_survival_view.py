@@ -51,6 +51,11 @@ def test_cox_view_shows_hazard_ratio_table_counts_reference_and_caveats():
     assert table.horizontalHeaderItem(2).text() == "Hazard ratio"
     assert table.rowCount() == len(result.terms)
     text = _text(view)
+    assert view.findChild(QSplitter).widget(2).layout().itemAt(0).widget().text() == "Model summary"
+    assert "Regression — Cox proportional-hazards regression" in text
+    assert "Duration:\nduration" in text
+    assert "Event:\nevent" in text
+    assert "Predictors:\nx, group" in text
     assert "Event coding: 1 = event; 0 = censored." in text
     assert f"Events: {result.n_events}; censored: {result.n_censored}" in text
     assert "Reference for group:" in text
@@ -125,7 +130,9 @@ def test_cox_comments_header_gap_stays_fixed_when_section_grows():
 def test_cox_chart_and_comment_sections_scroll_only_when_content_exceeds_space(section_index, small_height):
     view = SurvivalRegressionView(_result())
     panel = view.findChild(QSplitter).widget(section_index)
-    content = assert_section_scrolls_below_frozen_title(panel, small_height, width=1100)
+    content = assert_section_scrolls_below_frozen_title(
+        panel, small_height, width=1100, result_section=section_index == 2
+    )
     if section_index == 1:
         assert isinstance(content, FigureCanvasQTAgg)
     else:
@@ -263,8 +270,9 @@ def test_tied_event_and_censor_marks_draw_at_post_event_survival():
 
 def test_chart_labels_name_duration_and_event_with_locale_formatters():
     labels = SurvivalRegressionView(_result()).chart_labels()
-    assert labels.heading == "Cox proportional-hazards regression: duration / event"
-    assert labels.captions == ()
+    assert labels.metadata.worksheet_heading == ""
+    assert labels.metadata.accessible_name
+    assert labels.metadata.captions == ()
     assert labels.model.tick_format(1.234) == fmt_num(1.234, sig=2)
     assert labels.model.time_format(1.234) == fmt_num(1.234, sig=3)
     assert labels.model.count_format(1234) == fmt_int(1234)

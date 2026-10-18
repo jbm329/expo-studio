@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 import pandas as pd
 
@@ -50,14 +51,19 @@ class ClusteringExportSnapshot:
         result: The successful fit shown in the content pane.
         chart_labels: Translated projection text captured on the GUI thread.
         notes: Plain-text lines of the displayed model comments.
+        capture_id: Stable provenance of this successful applied fit.
     """
 
     result: ClusteringResult
     chart_labels: ClusterProjectionLabels
     notes: tuple[str, ...] = ()
+    capture_id: str = field(default_factory=lambda: uuid4().hex)
 
     def __post_init__(self) -> None:
         """Reject failed or unfitted results."""
+        if not self.capture_id:
+            message = "An applied clustering result requires a capture identifier."
+            raise ValueError(message)
         result = self.result
         if not isinstance(result, ClusteringResult):  # pyright: ignore[reportUnnecessaryIsInstance]
             message = "A typed clustering result is required."

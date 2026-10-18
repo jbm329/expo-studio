@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 import pandas as pd
 
 from expo_jbm329.services.analysis.statistics import StatisticsExportFormat
-from expo_jbm329.services.analysis.timeseries import TimeSeriesResult
+from expo_jbm329.services.analysis.timeseries import MIN_SEASONAL_PERIOD, DecompositionModel, TimeSeriesResult
 from expo_jbm329.services.analysis.timeseries_charts import (
     TimeSeriesChartLabels,
     has_autocorrelation,
@@ -43,6 +44,47 @@ TIME_SERIES_COMPONENTS = tuple(TimeSeriesExportComponent)
 
 
 @dataclass(frozen=True, slots=True)
+class TimeSeriesAppliedConfiguration:
+    """User-applied settings, separate from values inferred during analysis."""
+
+    datetime_column: str
+    value_column: str
+    resample_frequency: str | None
+    seasonal_period: int | None
+    decomposition_model: DecompositionModel
+
+    def __post_init__(self) -> None:
+        """Validate the setting values retained for presentation and identity."""
+        if not self.datetime_column or not self.value_column:
+            message = "An applied time-series configuration requires both selected columns."
+            raise ValueError(message)
+        if self.resample_frequency is not None and not self.resample_frequency:
+            message = "A resampling frequency must be non-empty when specified."
+            raise ValueError(message)
+        if self.seasonal_period is not None and (
+            not isinstance(self.seasonal_period, int)  # pyright: ignore[reportUnnecessaryIsInstance]
+            or isinstance(self.seasonal_period, bool)
+            or self.seasonal_period < MIN_SEASONAL_PERIOD
+        ):
+            message = "An applied seasonal period must be an integer of at least 2."
+            raise ValueError(message)
+        if not isinstance(self.decomposition_model, DecompositionModel):  # pyright: ignore[reportUnnecessaryIsInstance]
+            message = "An applied time-series configuration requires a decomposition model."
+            raise TypeError(message)
+
+    @classmethod
+    def from_result(cls, result: TimeSeriesResult) -> TimeSeriesAppliedConfiguration:
+        """Build a compatible configuration from a result without separate provenance."""
+        return cls(
+            result.datetime_column,
+            result.value_column,
+            result.resample_frequency,
+            result.seasonal_period,
+            result.decomposition_model,
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class TimeSeriesExportSnapshot:
     """Own the displayed time-series analysis, its comments and chart text.
 
@@ -51,12 +93,16 @@ class TimeSeriesExportSnapshot:
         chart_labels: Translated plot text captured on the GUI thread.
         notes: Plain-text lines of the displayed model comments and unavailability reasons.
         autocorrelation_note: Translated reason shown when autocorrelation is unavailable.
+        applied_configuration: The user-applied settings, including automatic-period intent.
+        capture_id: Stable provenance of this successful application.
     """
 
     result: TimeSeriesResult
     chart_labels: TimeSeriesChartLabels
     notes: tuple[str, ...] = ()
     autocorrelation_note: str = ""
+    applied_configuration: TimeSeriesAppliedConfiguration | None = None
+    capture_id: str = field(default_factory=lambda: uuid4().hex)
 
     def __post_init__(self) -> None:
         """Reject failed or unanalyzed results."""
@@ -73,6 +119,25 @@ class TimeSeriesExportSnapshot:
         if not isinstance(self.chart_labels, TimeSeriesChartLabels):  # pyright: ignore[reportUnnecessaryIsInstance]
             message = "Time-series chart labels are required."
             raise TypeError(message)
+        if not isinstance(self.capture_id, str) or not self.capture_id:  # pyright: ignore[reportUnnecessaryIsInstance]
+            message = "A time-series snapshot requires a stable capture identifier."
+            raise ValueError(message)
+        configuration = self.applied_configuration
+        if configuration is None:
+            object.__setattr__(self, "applied_configuration", TimeSeriesAppliedConfiguration.from_result(result))
+            return
+        if not isinstance(configuration, TimeSeriesAppliedConfiguration):  # pyright: ignore[reportUnnecessaryIsInstance]
+            message = "A typed applied time-series configuration is required."
+            raise TypeError(message)
+        if (
+            configuration.datetime_column != result.datetime_column
+            or configuration.value_column != result.value_column
+            or configuration.resample_frequency != result.resample_frequency
+            or configuration.decomposition_model is not result.decomposition_model
+            or (configuration.seasonal_period is not None and configuration.seasonal_period != result.seasonal_period)
+        ):
+            message = "The applied time-series configuration does not match its analyzed result."
+            raise ValueError(message)
 
     @property
     def components(self) -> tuple[TimeSeriesExportComponent, ...]:

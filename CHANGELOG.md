@@ -7,10 +7,15 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Improved Advanced Analysis layouts with consistent settings summaries, result sections, and scrolling
+- Charts adapt to long labels, keeping text readable in the app, Excel exports, and HTML reports
+- Advanced Analysis stays bound to the selected dataset, with its name and dimensions shown in the window title
+
 ### Added
 - Categorical tab in Statistics with frequency counts, percentages, and separate missing-value counts
 - Continuous mean/SD and median/quartile summaries with Shapiro-Wilk reporting guidance
-- Dataset Overview with dimensions, missingness, duplicates, column profiles, warnings, and a 100-row sample
+- Dataset Overview with dimensions, missingness, duplicates, column profiles, warnings, and first/last 10-row previews and exports (separate Excel sheets or grouped CSV/binary rows, retaining overlap)
 - Shapiro-Wilk normality tests and distribution charts for numeric columns
 - Welch's t-test for two-group comparisons, with group-level normality checks
 - Student's t-test as an equal-variance alternative for two-group comparisons
@@ -32,7 +37,11 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - K-means, DBSCAN, and agglomerative clustering with cluster summaries and PCA projections
 - PCA with optional standardization, explained variance, feature loadings, and score plots
 - Time-series preparation with optional resampling, autocorrelation, and additive or multiplicative seasonal decomposition
+- Time-series export and report presentation for applied settings, including automatic-period intent and unavailable diagnostics without implying that decomposition was calculated
 - Export for all nine analyses: applied-result tables and available charts in Excel; one table per CSV or binary export
+- Session report drafts for all nine analyses with selected components, notes, metadata, ordering, and asynchronous in-app HTML preview
+- Correlation report entries show their applied method and ordered columns; different methods coexist while column changes and rerun captures can be explicitly replaced or updated
+- Self-contained HTML report saving with background generation, safe replacement, and automatic opening in the default browser
 - Consistent Analysis configuration pane widths, adaptive layouts, and scrolling
 
 ## [1.0.0] - 2026-10-06

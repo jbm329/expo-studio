@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QFormLayout,
@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
 from expo_jbm329.gui.dialogs.analysis.chi_square_config import ChiSquareConfigWidget
 from expo_jbm329.gui.dialogs.analysis.group_comparison_config import GroupComparisonConfigWidget
 from expo_jbm329.services.analysis.categories import HypothesisTest
+from expo_jbm329.services.analysis.presentation import hypothesis_family_label
 from expo_jbm329.utils.format_utils import fmt_int
 
 if TYPE_CHECKING:
@@ -188,9 +189,8 @@ class HypothesisTestsConfigWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self._test_combo = QComboBox(self)
-        self._test_combo.addItem(self.tr("Group comparison"), HypothesisTest.GROUP_COMPARISON.value)
-        self._test_combo.addItem(self.tr("Chi-square independence"), HypothesisTest.CHI_SQUARE.value)
-        self._test_combo.addItem(self.tr("Paired comparison"), HypothesisTest.PAIRED_COMPARISON.value)
+        for test in HypothesisTest:
+            self._test_combo.addItem(hypothesis_family_label(test, QCoreApplication.translate), test.value)
 
         form = QFormLayout()
         form.addRow(QLabel(self.tr("Test"), self), self._test_combo)

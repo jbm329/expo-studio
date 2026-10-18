@@ -5,12 +5,12 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
-from expo_jbm329.gui.dialogs.analysis.section_layout import build_section_scroll_area
-from expo_jbm329.gui.dialogs.analysis.statistics_view import SerializedAnalysisCanvas
+from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection, build_section_scroll_area
+from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.group_comparison import (
     MAX_GROUPS,
     MIN_GROUPS,
@@ -20,12 +20,14 @@ from expo_jbm329.services.analysis.group_comparison import (
     GroupWarningReason,
     group_normality_verdict,
 )
-from expo_jbm329.services.analysis.hypothesis_charts import draw_group_distribution
+from expo_jbm329.services.analysis.hypothesis_charts import (
+    build_hypothesis_chart_presentation,
+    draw_hypothesis_charts,
+)
+from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 
 if TYPE_CHECKING:
-    from matplotlib.axes import Axes
-
     from expo_jbm329.services.analysis.group_comparison import (
         GroupSummary,
         MultiGroupComparisonResult,
@@ -61,7 +63,7 @@ class GroupComparisonView(QWidget):
         splitter = QSplitter(Qt.Orientation.Vertical, self)
         splitter.setChildrenCollapsible(False)
         splitter.addWidget(self._build_table_section(result.groups))
-        splitter.addWidget(self._build_chart_section(result.groups))
+        splitter.addWidget(self._build_chart_section(result))
         splitter.addWidget(self._build_results_section(result))
         splitter.setStretchFactor(0, 2)
         splitter.setStretchFactor(1, 3)
@@ -107,7 +109,12 @@ class GroupComparisonView(QWidget):
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Group summary"), panel))
+        layout.addWidget(
+            self._build_section_title(
+                translate_presentation_label(PresentationLabel.GROUP_SUMMARY, QCoreApplication.translate),
+                panel,
+            )
+        )
         layout.addWidget(self._build_table(groups))
         return panel
 
@@ -175,27 +182,28 @@ class GroupComparisonView(QWidget):
     # Boxplot (all groups side by side)
     # ------------------------------------------------------------------
 
-    def _build_chart_section(self, groups: tuple[GroupSummary, ...]) -> QWidget:
+    def _build_chart_section(self, result: GroupComparisonResult) -> QWidget:
         """Build the titled group-distribution chart section."""
         panel = QWidget(self)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Distribution"), panel))
-        layout.addWidget(build_section_scroll_area(self._build_boxplot(groups), panel), 1)
+        layout.addWidget(
+            self._build_section_title(
+                translate_presentation_label(PresentationLabel.GROUP_DISTRIBUTIONS, QCoreApplication.translate),
+                panel,
+            )
+        )
+        layout.addWidget(build_section_scroll_area(self._build_boxplot(result), panel), 1)
         return panel
 
-    def _build_boxplot(self, groups: tuple[GroupSummary, ...]) -> QWidget:
+    def _build_boxplot(self, result: GroupComparisonResult) -> QWidget:
         """Build a matplotlib canvas with one boxplot per group, side by side."""
         figure = Figure(constrained_layout=True)
         canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(260)
-        canvas.build_chart(lambda: self._draw_boxplot(figure.add_subplot(111), groups))
-
+        presentation = build_hypothesis_chart_presentation(result, QCoreApplication.translate)
+        canvas.build_chart(lambda: draw_hypothesis_charts(figure, result, presentation))
         return canvas
-
-    def _draw_boxplot(self, ax: Axes, groups: tuple[GroupSummary, ...]) -> None:
-        """Draw one box per group from each group's precomputed five-number summary."""
-        draw_group_distribution(ax, groups, self.tr("Distribution by group"))
 
     def export_notes(self, result: GroupComparisonResult) -> tuple[str, ...]:
         """Capture displayed guidance and test assumptions without scraping labels."""
@@ -223,19 +231,18 @@ class GroupComparisonView(QWidget):
 
     def _build_results_section(self, result: GroupComparisonResult) -> QWidget:
         """Build the titled statistical test results and warnings section."""
-        panel = QWidget(self)
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._build_section_title(self.tr("Test results"), panel))
-        content = QWidget(panel)
+        content = QWidget()
         content_layout = QVBoxLayout(content)
         content_layout.setContentsMargins(0, 0, 0, 0)
         content_layout.addWidget(self._build_test_results_label(result))
         if result.warnings:
             content_layout.addWidget(self._build_warnings_label(result.warnings))
         content_layout.addStretch(1)
-        layout.addWidget(build_section_scroll_area(content, panel), 1)
-        return panel
+        return AnalysisResultSection(
+            translate_presentation_label(PresentationLabel.TEST_RESULTS, QCoreApplication.translate),
+            content,
+            self,
+        )
 
     def _build_test_results_label(self, result: GroupComparisonResult) -> QLabel:
         """Build the rich-text label showing the test statistics and guidance."""

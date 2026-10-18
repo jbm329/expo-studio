@@ -8,8 +8,12 @@ import pytest
 from openpyxl import load_workbook
 
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
-from expo_jbm329.services.analysis.statistics_charts import StatisticsChartLabels, render_statistics_charts
+from expo_jbm329.services.analysis.statistics_charts import (
+    build_statistics_chart_presentations,
+    render_statistics_charts,
+)
 from expo_jbm329.services.data_io_service import DataIOService
+from expo_jbm329.services.excel_chart import ExcelChartCancelledError
 from expo_jbm329.services.file_loader import FileLoader
 from expo_jbm329.services.file_writer import ExportCancelledError, FileWriter
 
@@ -37,6 +41,100 @@ def writer() -> FileWriter:
 @pytest.fixture
 def io_service(loader: FileLoader, writer: FileWriter) -> DataIOService:
     return DataIOService(loader, writer)
+
+
+def test_export_html_report_renders_snapshot_and_forwards_callbacks(io_service: DataIOService, tmp_path: Path) -> None:
+    progress: list[int] = []
+
+    def cancel() -> bool:
+        return False
+
+    factory = MagicMock()
+
+    def render(*, progress_cb, cancel_cb):
+        assert cancel_cb is cancel
+        progress_cb(0)
+        progress_cb(100)
+        return "<html>Åäö</html>"
+
+    factory.side_effect = render
+    path = tmp_path / "report.html"
+    result = io_service.export_html_report(
+        factory, path, progress_cb=progress.append, cancel_cb=cancel, corr_id="report"
+    )
+    assert result.ok and not result.cancelled
+    assert result.path == str(path)
+    assert result.corr_id == "report"
+    factory.assert_called_once()
+    assert path.read_bytes() == "<html>Åäö</html>".encode()
+    assert progress == sorted(progress)
+    assert progress[-1] == 100
+
+
+@pytest.mark.parametrize("error", [ExcelChartCancelledError(), ExportCancelledError("cancel", path="report.html")])
+def test_export_html_report_renderer_cancellation(io_service: DataIOService, tmp_path: Path, error: Exception) -> None:
+    path = tmp_path / "report.html"
+    factory = MagicMock(side_effect=error)
+    result = io_service.export_html_report(factory, path)
+    assert result.cancelled and not result.ok and result.error is None
+    assert not path.exists()
+
+
+def test_export_html_report_initial_cancel_skips_factory(io_service: DataIOService, tmp_path: Path) -> None:
+    factory = MagicMock()
+    result = io_service.export_html_report(factory, tmp_path / "report.html", cancel_cb=lambda: True)
+    assert result.cancelled
+    factory.assert_not_called()
+
+
+@pytest.mark.parametrize("error", [ValueError("render failed"), OSError("write failed")])
+def test_export_html_report_errors_preserve_output(io_service: DataIOService, tmp_path: Path, error: Exception) -> None:
+    path = tmp_path / "report.html"
+    path.write_bytes(b"original")
+    factory = MagicMock(side_effect=error)
+    result = io_service.export_html_report(factory, path)
+    assert not result.ok and not result.cancelled and result.error == str(error)
+    assert path.read_bytes() == b"original"
+
+
+def test_export_html_report_writer_failure(io_service: DataIOService, tmp_path: Path) -> None:
+    path = tmp_path / "report.html"
+    path.write_bytes(b"original")
+    with patch.object(FileWriter, "save_html", side_effect=PermissionError("locked")):
+        result = io_service.export_html_report(lambda **_: "new", path, corr_id="failed-save")
+    assert not result.ok and not result.cancelled
+    assert result.error == "locked"
+    assert result.corr_id == "failed-save"
+    assert path.read_bytes() == b"original"
+
+
+def test_export_html_report_cancel_after_render_preserves_output(io_service: DataIOService, tmp_path: Path) -> None:
+    path = tmp_path / "report.html"
+    path.write_bytes(b"original")
+    cancelled = False
+
+    def render(**_):
+        nonlocal cancelled
+        cancelled = True
+        return "new"
+
+    result = io_service.export_html_report(render, path, cancel_cb=lambda: cancelled)
+    assert result.cancelled
+    assert path.read_bytes() == b"original"
+
+
+def test_export_html_report_postcommit_progress_error_remains_success(
+    io_service: DataIOService, tmp_path: Path
+) -> None:
+    def progress(value: int) -> None:
+        if value == 100:
+            message = "notification failed"
+            raise RuntimeError(message)
+
+    path = tmp_path / "report.html"
+    result = io_service.export_html_report(lambda **_: "saved", path, progress_cb=progress)
+    assert result.ok
+    assert path.read_bytes() == b"saved"
 
 
 def test_file_loader_load_csv(loader: FileLoader, tmp_csv: Path) -> None:
@@ -258,7 +356,7 @@ def test_chart_only_excel_export_prepares_images_and_commits_progress(
     def make_charts(chart_progress, cancel_cb):
         return render_statistics_charts(
             result.columns,
-            StatisticsChartLabels("Histogram", "Boxplot", "No data"),
+            build_statistics_chart_presentations(result.columns, lambda _context, text: text),
             progress_cb=chart_progress,
             cancel_cb=cancel_cb,
         )
@@ -300,7 +398,7 @@ def test_chart_export_cancellation_after_preparation_preserves_destination(
     def make_charts(_progress_cb, _cancel_cb):
         return render_statistics_charts(
             result.columns,
-            StatisticsChartLabels("Histogram", "Boxplot", "No data"),
+            build_statistics_chart_presentations(result.columns, lambda _context, text: text),
         )
 
     exported = io_service.export_dfs_excel(

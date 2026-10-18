@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -17,15 +17,13 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
-from expo_jbm329.services.analysis.categories import HypothesisTest
-from expo_jbm329.services.analysis.clustering import ClusteringMethod
+from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.clustering_export import (
     CLUSTERING_COMPONENTS,
     ClusteringExportComponent,
     ClusteringExportRequest,
     ClusteringExportSnapshot,
 )
-from expo_jbm329.services.analysis.correlation import CorrelationMethod
 from expo_jbm329.services.analysis.correlation_export import (
     CorrelationExportComponent,
     CorrelationExportRequest,
@@ -36,8 +34,6 @@ from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportRequest,
     HypothesisExportSnapshot,
 )
-from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierMethod
-from expo_jbm329.services.analysis.outliers import OutlierMethod
 from expo_jbm329.services.analysis.outliers_export import (
     MULTIVARIATE_COMPONENTS,
     UNIVARIATE_COMPONENTS,
@@ -45,19 +41,31 @@ from expo_jbm329.services.analysis.outliers_export import (
     OutlierExportComponent,
     OutlierExportRequest,
     OutlierExportSnapshot,
-    UnivariateOutlierExportSnapshot,
 )
 from expo_jbm329.services.analysis.overview import (
     DatasetOverviewResult,
     OverviewExportFormat,
     OverviewExportRequest,
     OverviewExportTable,
+    overview_export_tables,
 )
 from expo_jbm329.services.analysis.pca_export import (
     PCA_COMPONENTS,
     PCAExportComponent,
     PCAExportRequest,
     PCAExportSnapshot,
+)
+from expo_jbm329.services.analysis.presentation import (
+    PresentationLabel,
+    build_analysis_presentation,
+    clustering_component_label,
+    hypothesis_component_label,
+    outlier_component_label,
+    pca_component_label,
+    regression_component_label,
+    statistics_component_label,
+    time_series_component_label,
+    translate_presentation_label,
 )
 from expo_jbm329.services.analysis.regression_export import (
     RegressionExportComponent,
@@ -77,7 +85,6 @@ from expo_jbm329.services.analysis.timeseries_export import (
     TimeSeriesExportRequest,
     TimeSeriesExportSnapshot,
 )
-from expo_jbm329.utils.format_utils import fmt_int, fmt_num
 
 
 class AnalysisExportDialog(QDialog):
@@ -268,7 +275,8 @@ class AnalysisExportDialog(QDialog):
         """Return the translated description of what the current mode exports."""
         if self._overview_mode:
             return self.tr(
-                "Export the Overview Summary, Columns metadata, or Sample (first 100 rows), not the original dataset."
+                "Export the Overview Summary, Columns metadata, or Sample (first/last 10 rows), "
+                "not the original dataset."
             )
         if self._statistics_mode:
             return self.tr("Export the available Statistics tables and numeric-column charts.")
@@ -305,14 +313,24 @@ class AnalysisExportDialog(QDialog):
         data_layout = QVBoxLayout(data)
         results = QGroupBox(self.tr("Results"), self)
         results_layout = QVBoxLayout(results)
+        sample_available = False
+        if result is not None:
+            try:
+                overview_export_tables(result, (OverviewExportTable.SAMPLE,))
+                sample_available = True
+            except ValueError:
+                # Partial legacy snapshots cannot supply the actual last rows.
+                sample_available = False
         availability = {
             OverviewExportTable.COLUMNS: result is not None and bool(result.columns),
-            OverviewExportTable.SAMPLE: result is not None and bool(result.sample_columns and result.sample_rows),
+            OverviewExportTable.SAMPLE: sample_available,
             OverviewExportTable.SUMMARY: result is not None,
         }
         labels = {
-            OverviewExportTable.COLUMNS: self.tr("Columns metadata"),
-            OverviewExportTable.SAMPLE: self.tr("Sample (first 100 rows)"),
+            OverviewExportTable.COLUMNS: translate_presentation_label(
+                PresentationLabel.OVERVIEW_COLUMNS_METADATA, QCoreApplication.translate
+            ),
+            OverviewExportTable.SAMPLE: self.tr("Sample (first/last 10 rows)"),
             OverviewExportTable.SUMMARY: self.tr("Summary"),
         }
         for table, available in availability.items():
@@ -331,6 +349,8 @@ class AnalysisExportDialog(QDialog):
                 choice.setToolTip(
                     self.tr("Run Overview successfully before exporting.")
                     if result is None
+                    else self.tr("The first/last sample is unavailable in this captured result.")
+                    if table is OverviewExportTable.SAMPLE
                     else self.tr("This table is empty and cannot be exported.")
                 )
             self._table_choices[table] = choice
@@ -351,15 +371,10 @@ class AnalysisExportDialog(QDialog):
             StatisticsExportTable.CATEGORICAL: result is not None and bool(result.categorical_columns),
             StatisticsExportTable.CHARTS: result is not None and bool(result.columns),
         }
-        labels = {
-            StatisticsExportTable.CONTINUOUS: self.tr("Continuous"),
-            StatisticsExportTable.CATEGORICAL: self.tr("Categorical"),
-            StatisticsExportTable.CHARTS: self.tr("Charts"),
-        }
         for component, available in availability.items():
             is_chart = component is StatisticsExportTable.CHARTS
             parent = results if is_chart else data
-            choice = QCheckBox(labels[component], parent)
+            choice = QCheckBox(statistics_component_label(component, QCoreApplication.translate), parent)
             choice.setEnabled(available)
             if component is StatisticsExportTable.CATEGORICAL and available:
                 choice.setToolTip(self.tr("Counts are numeric, and fractions range from 0 to 1."))
@@ -379,31 +394,16 @@ class AnalysisExportDialog(QDialog):
         """List applied identity plainly, independently of pending configuration edits."""
         snapshot = self._hypothesis
         if snapshot is not None:
-            names = {
-                HypothesisTest.GROUP_COMPARISON: self.tr("Group comparison"),
-                HypothesisTest.CHI_SQUARE: self.tr("Chi-square independence"),
-                HypothesisTest.PAIRED_COMPARISON: self.tr("Paired comparison"),
-            }
-            roles = {
-                HypothesisTest.GROUP_COMPARISON: self.tr("Numeric column / grouping column"),
-                HypothesisTest.CHI_SQUARE: self.tr("Row column / column column"),
-                HypothesisTest.PAIRED_COMPARISON: self.tr("Measurement columns (occasion order)"),
-            }
-            identity = QLabel(
-                self.tr("Applied test: {test}\n{roles}: {columns}").format(
-                    test=names[snapshot.test], roles=roles[snapshot.test], columns=" / ".join(snapshot.columns)
-                ),
-                self,
+            presentation = build_analysis_presentation(
+                AnalysisCategory.HYPOTHESIS_TESTS,
+                snapshot,
+                QCoreApplication.translate,
             )
+            identity = QLabel("\n".join((presentation.title, *presentation.summary_lines)), self)
             identity.setTextFormat(Qt.TextFormat.PlainText)
             identity.setWordWrap(True)
             identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             layout.addWidget(identity)
-        summaries = {
-            HypothesisTest.GROUP_COMPARISON: self.tr("Group summary"),
-            HypothesisTest.CHI_SQUARE: self.tr("Contingency table"),
-            HypothesisTest.PAIRED_COMPARISON: self.tr("Measurement summary"),
-        }
         for title, components in (
             (self.tr("Data"), (HypothesisExportComponent.SUMMARY,)),
             (self.tr("Results"), (HypothesisExportComponent.TEST_RESULTS, HypothesisExportComponent.CHARTS)),
@@ -412,8 +412,8 @@ class AnalysisExportDialog(QDialog):
             contents = QVBoxLayout(group)
             for component in components:
                 label = (
-                    summaries[snapshot.test]
-                    if component is HypothesisExportComponent.SUMMARY and snapshot is not None
+                    hypothesis_component_label(snapshot, component, QCoreApplication.translate)
+                    if snapshot is not None
                     else self.tr("Summary / statistics tables")
                     if component is HypothesisExportComponent.SUMMARY
                     else self.tr(component.value)
@@ -431,16 +431,13 @@ class AnalysisExportDialog(QDialog):
         """Offer applied tables and independent Excel chart components."""
         snapshot = self._correlation
         if snapshot is not None:
-            method_names = {
-                CorrelationMethod.PEARSON: self.tr("Pearson"),
-                CorrelationMethod.SPEARMAN: self.tr("Spearman"),
-                CorrelationMethod.KENDALL: self.tr("Kendall's tau-b"),
-            }
+            presentation = build_analysis_presentation(
+                AnalysisCategory.CORRELATION,
+                snapshot,
+                QCoreApplication.translate,
+            )
             identity = QLabel(
-                self.tr("Applied method: {method}\nApplied columns: {columns}").format(
-                    method=method_names[snapshot.matrix.method],
-                    columns=" / ".join(snapshot.matrix.columns),
-                ),
+                "\n".join((presentation.title, *presentation.summary_lines)),
                 self,
             )
             identity.setTextFormat(Qt.TextFormat.PlainText)
@@ -450,14 +447,18 @@ class AnalysisExportDialog(QDialog):
 
         results = QGroupBox(self.tr("Results"), self)
         contents = QVBoxLayout(results)
-        pair_count = 0 if snapshot is None else len(snapshot.matrix.columns) * (len(snapshot.matrix.columns) - 1) // 2
-        scatter_label = (
-            self.tr("Scatterplots ({count} pair)") if pair_count == 1 else self.tr("Scatterplots ({count} pairs)")
+        scatter_label = translate_presentation_label(
+            PresentationLabel.SCATTERPLOTS,
+            QCoreApplication.translate,
         )
         labels = {
-            CorrelationExportComponent.STRONGEST_CORRELATIONS: self.tr("Strongest correlations"),
-            CorrelationExportComponent.MATRIX_PLOT: self.tr("Matrix plot"),
-            CorrelationExportComponent.SCATTERPLOTS: scatter_label.format(count=pair_count),
+            CorrelationExportComponent.STRONGEST_CORRELATIONS: translate_presentation_label(
+                PresentationLabel.STRONGEST_CORRELATIONS, QCoreApplication.translate
+            ),
+            CorrelationExportComponent.MATRIX_PLOT: translate_presentation_label(
+                PresentationLabel.CORRELATION_MATRIX, QCoreApplication.translate
+            ),
+            CorrelationExportComponent.SCATTERPLOTS: scatter_label,
         }
         for component, label in labels.items():
             choice = QCheckBox(label, results)
@@ -473,21 +474,13 @@ class AnalysisExportDialog(QDialog):
         """List the applied model plainly and offer its result tables and charts."""
         snapshot = self._regression
         if snapshot is not None:
-            model_names = {
-                RegressionModel.LINEAR: self.tr("Linear regression"),
-                RegressionModel.LOGISTIC: self.tr("Logistic regression"),
-                RegressionModel.POISSON: self.tr("Poisson regression"),
-                RegressionModel.NEGATIVE_BINOMIAL: self.tr("Negative binomial regression"),
-                RegressionModel.COX: self.tr("Cox proportional-hazards regression"),
-            }
-            outcome_role = self.tr("Duration / event") if snapshot.model is RegressionModel.COX else self.tr("Target")
+            presentation = build_analysis_presentation(
+                AnalysisCategory.REGRESSION,
+                snapshot,
+                QCoreApplication.translate,
+            )
             identity = QLabel(
-                self.tr("Applied model: {model}\n{role}: {outcome}\nPredictors: {predictors}").format(
-                    model=model_names[snapshot.model],
-                    role=outcome_role,
-                    outcome=" / ".join(snapshot.outcome_columns),
-                    predictors=" / ".join(snapshot.predictors),
-                ),
+                "\n".join((presentation.title, *presentation.summary_lines)),
                 self,
             )
             identity.setTextFormat(Qt.TextFormat.PlainText)
@@ -498,9 +491,12 @@ class AnalysisExportDialog(QDialog):
         results = QGroupBox(self.tr("Results"), self)
         contents = QVBoxLayout(results)
         labels = {
-            RegressionExportComponent.COEFFICIENTS: self.tr("Coefficients"),
-            RegressionExportComponent.MODEL_METRICS: self.tr("Model metrics"),
-            RegressionExportComponent.CHARTS: self.tr("Charts"),
+            component: regression_component_label(
+                snapshot.model if snapshot is not None else RegressionModel.LINEAR,
+                component,
+                QCoreApplication.translate,
+            )
+            for component in RegressionExportComponent
         }
         for component, label in labels.items():
             choice = QCheckBox(label, results)
@@ -511,7 +507,7 @@ class AnalysisExportDialog(QDialog):
                 choice.setEnabled(False)
                 choice.setToolTip(self.tr("This component is empty and cannot be exported."))
             elif component is RegressionExportComponent.MODEL_METRICS:
-                choice.setToolTip(self.tr("Fit statistics and diagnostics with the displayed model comments."))
+                choice.setToolTip(self.tr("Fit statistics and diagnostics shown in the model summary."))
             self._regression_choices[component] = choice
             choice.toggled.connect(self._update_export_enabled)
             contents.addWidget(choice)
@@ -521,7 +517,12 @@ class AnalysisExportDialog(QDialog):
         """List the applied screening plainly and offer its displayed tables and charts."""
         snapshot = self._outliers
         if snapshot is not None:
-            identity = QLabel(self._outliers_identity_text(snapshot), self)
+            presentation = build_analysis_presentation(
+                AnalysisCategory.OUTLIERS,
+                snapshot,
+                QCoreApplication.translate,
+            )
+            identity = QLabel("\n".join((presentation.title, *presentation.summary_lines)), self)
             identity.setTextFormat(Qt.TextFormat.PlainText)
             identity.setWordWrap(True)
             identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -529,9 +530,22 @@ class AnalysisExportDialog(QDialog):
 
         results = QGroupBox(self.tr("Results"), self)
         contents = QVBoxLayout(results)
-        components = MULTIVARIATE_COMPONENTS if self._outliers_multivariate else UNIVARIATE_COMPONENTS
+        components = (
+            snapshot.components
+            if snapshot is not None
+            else MULTIVARIATE_COMPONENTS
+            if self._outliers_multivariate
+            else UNIVARIATE_COMPONENTS
+        )
         for component in components:
-            choice = QCheckBox(self._outliers_component_label(component), results)
+            choice = QCheckBox(
+                outlier_component_label(
+                    component,
+                    QCoreApplication.translate,
+                    multivariate=self._outliers_multivariate,
+                ),
+                results,
+            )
             if snapshot is None:
                 choice.setEnabled(False)
                 choice.setToolTip(self.tr("Apply an outlier screening successfully before exporting."))
@@ -545,60 +559,15 @@ class AnalysisExportDialog(QDialog):
             contents.addWidget(choice)
         layout.addWidget(results)
 
-    def _outliers_identity_text(self, snapshot: OutlierExportSnapshot) -> str:
-        """Return the plain-text description of the applied screening."""
-        if isinstance(snapshot, UnivariateOutlierExportSnapshot):
-            method_names = {
-                OutlierMethod.IQR: self.tr("IQR (Tukey's fences)"),
-                OutlierMethod.Z_SCORE: self.tr("Z-score"),
-                OutlierMethod.MODIFIED_Z_SCORE: self.tr("Modified Z-score"),
-            }
-            text = self.tr("Applied method: {method}, threshold {threshold}").format(
-                method=method_names[snapshot.summary.method], threshold=fmt_num(snapshot.summary.threshold)
-            )
-            if snapshot.detail is not None:
-                text += "\n" + self.tr("Selected column: {column}").format(column=snapshot.detail.summary.column)
-            return text
-        multivariate_names = {
-            MultivariateOutlierMethod.ISOLATION_FOREST: self.tr("Isolation Forest"),
-            MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR: self.tr("Local Outlier Factor"),
-        }
-        return self.tr("Applied method: {method}\nFeatures: {features}").format(
-            method=multivariate_names[snapshot.result.method], features=" / ".join(snapshot.result.columns)
-        )
-
-    def _outliers_component_label(self, component: OutlierExportComponent) -> str:
-        """Return the translated checkbox text of an outlier component."""
-        match component:
-            case OutlierExportComponent.COLUMN_SUMMARY:
-                return self.tr("Column summary")
-            case OutlierExportComponent.COLUMN_DETAILS:
-                return self.tr("Column details")
-            case OutlierExportComponent.MODEL_SUMMARY:
-                return self.tr("Model summary")
-            case OutlierExportComponent.POTENTIAL_OUTLIERS:
-                return self.tr("Potential outliers")
-            case OutlierExportComponent.CHARTS:
-                snapshot = self._outliers
-                if not isinstance(snapshot, UnivariateOutlierExportSnapshot):
-                    return self.tr("Charts")
-                count = len(snapshot.chart_columns)
-                label = self.tr("Charts ({count} column)") if count == 1 else self.tr("Charts ({count} columns)")
-                return label.format(count=fmt_int(count))
-
     def _build_clustering_choices(self, layout: QVBoxLayout) -> None:
         """List the applied clustering plainly and offer its displayed tables and chart."""
         snapshot = self._clustering
         if snapshot is not None:
-            method_names = {
-                ClusteringMethod.K_MEANS: self.tr("K-Means"),
-                ClusteringMethod.DBSCAN: self.tr("DBSCAN"),
-                ClusteringMethod.AGGLOMERATIVE: self.tr("Agglomerative"),
-            }
+            presentation = build_analysis_presentation(
+                AnalysisCategory.CLUSTERING, snapshot, QCoreApplication.translate
+            )
             identity = QLabel(
-                self.tr("Applied method: {method}\nFeatures: {features}").format(
-                    method=method_names[snapshot.result.method], features=" / ".join(snapshot.result.columns)
-                ),
+                "\n".join((presentation.title, *presentation.summary_lines)),
                 self,
             )
             identity.setTextFormat(Qt.TextFormat.PlainText)
@@ -608,13 +577,8 @@ class AnalysisExportDialog(QDialog):
 
         results = QGroupBox(self.tr("Results"), self)
         contents = QVBoxLayout(results)
-        labels = {
-            ClusteringExportComponent.CLUSTER_SIZES: self.tr("Cluster sizes"),
-            ClusteringExportComponent.MODEL_SUMMARY: self.tr("Model summary"),
-            ClusteringExportComponent.CHARTS: self.tr("Charts"),
-        }
         for component in CLUSTERING_COMPONENTS:
-            choice = QCheckBox(labels[component], results)
+            choice = QCheckBox(clustering_component_label(component, QCoreApplication.translate), results)
             if snapshot is None:
                 choice.setEnabled(False)
                 choice.setToolTip(self.tr("Apply a clustering successfully before exporting."))
@@ -629,9 +593,8 @@ class AnalysisExportDialog(QDialog):
         """List the applied PCA features plainly and offer its displayed tables and charts."""
         snapshot = self._pca
         if snapshot is not None:
-            identity = QLabel(
-                self.tr("Applied features: {features}").format(features=" / ".join(snapshot.result.columns)), self
-            )
+            presentation = build_analysis_presentation(AnalysisCategory.PCA, snapshot, QCoreApplication.translate)
+            identity = QLabel("\n".join((presentation.title, *presentation.summary_lines)), self)
             identity.setTextFormat(Qt.TextFormat.PlainText)
             identity.setWordWrap(True)
             identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -639,12 +602,7 @@ class AnalysisExportDialog(QDialog):
 
         results = QGroupBox(self.tr("Results"), self)
         contents = QVBoxLayout(results)
-        labels = {
-            PCAExportComponent.FEATURE_LOADINGS: self.tr("Feature loadings"),
-            PCAExportComponent.EXPLAINED_VARIANCE: self.tr("Explained variance"),
-            PCAExportComponent.MODEL_SUMMARY: self.tr("Model summary"),
-            PCAExportComponent.CHARTS: self.tr("Charts"),
-        }
+        labels = {component: pca_component_label(component, QCoreApplication.translate) for component in PCA_COMPONENTS}
         for component in PCA_COMPONENTS:
             choice = QCheckBox(labels[component], results)
             if snapshot is None:
@@ -663,12 +621,12 @@ class AnalysisExportDialog(QDialog):
         """List the applied series plainly and offer its prepared data, tables and charts."""
         snapshot = self._time_series
         if snapshot is not None:
-            identity = QLabel(
-                self.tr("Applied series: {value} by {time}").format(
-                    value=snapshot.result.value_column, time=snapshot.result.datetime_column
-                ),
-                self,
+            presentation = build_analysis_presentation(
+                AnalysisCategory.TIME_SERIES,
+                snapshot,
+                QCoreApplication.translate,
             )
+            identity = QLabel("\n".join((presentation.title, *presentation.summary_lines)), self)
             identity.setTextFormat(Qt.TextFormat.PlainText)
             identity.setWordWrap(True)
             identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -679,10 +637,8 @@ class AnalysisExportDialog(QDialog):
         results = QGroupBox(self.tr("Results"), self)
         results_layout = QVBoxLayout(results)
         labels = {
-            TimeSeriesExportComponent.SERIES: self.tr("Series"),
-            TimeSeriesExportComponent.AUTOCORRELATION: self.tr("Autocorrelation"),
-            TimeSeriesExportComponent.MODEL_SUMMARY: self.tr("Model summary"),
-            TimeSeriesExportComponent.CHARTS: self.tr("Charts"),
+            component: time_series_component_label(component, QCoreApplication.translate)
+            for component in TIME_SERIES_COMPONENTS
         }
         for component in TIME_SERIES_COMPONENTS:
             is_data = component is TimeSeriesExportComponent.SERIES
@@ -899,6 +855,18 @@ class AnalysisExportDialog(QDialog):
                 "Charts are available only in Excel; uncheck Charts to continue."
             )
         )
+        if self._statistics_mode:
+            distribution = statistics_component_label(StatisticsExportTable.CHARTS, QCoreApplication.translate)
+            format_explanation = (
+                self.tr("Excel exports selected tables as separate sheets and charts on one {component} sheet.").format(
+                    component=distribution
+                )
+                if excel
+                else self.tr(
+                    "Choose exactly one table for CSV or binary export. "
+                    "{component} is available only in Excel; uncheck {component} to continue."
+                ).format(component=distribution)
+            )
         request = self.export_request()
         choices = (
             self._hypothesis_choices
@@ -964,7 +932,13 @@ class AnalysisExportDialog(QDialog):
         elif not selected:
             reason = self.tr("Select at least one available component to export.")
         elif not excel and chart_selected:
-            reason = self.tr("Charts are available only in Excel. Uncheck Charts to continue.")
+            reason = (
+                self.tr("{component} is available only in Excel. Uncheck {component} to continue.").format(
+                    component=statistics_component_label(StatisticsExportTable.CHARTS, QCoreApplication.translate)
+                )
+                if self._statistics_mode
+                else self.tr("Charts are available only in Excel. Uncheck Charts to continue.")
+            )
         elif request is None:
             reason = self.tr("Choose exactly one table for CSV or binary export.")
         else:

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 import pandas as pd
 
@@ -96,10 +97,14 @@ class UnivariateOutlierExportSnapshot:
     summary_notes: tuple[str, ...] = ()
     detail: OutlierColumnDetail | None = None
     detail_notes: tuple[str, ...] = ()
+    capture_id: str = field(default_factory=lambda: uuid4().hex)
 
     def __post_init__(self) -> None:
         """Reject failed summaries, mismatched data and details of another screening."""
         summary = self.summary
+        if not self.capture_id:
+            message = "An outlier snapshot requires a stable capture identifier."
+            raise ValueError(message)
         if not isinstance(summary, OutlierSummaryResult):  # pyright: ignore[reportUnnecessaryIsInstance]
             message = "A typed outlier summary is required."
             raise TypeError(message)
@@ -176,10 +181,14 @@ class MultivariateOutlierExportSnapshot:
     result: MultivariateOutlierResult
     chart_labels: OutlierProjectionLabels
     notes: tuple[str, ...] = ()
+    capture_id: str = field(default_factory=lambda: uuid4().hex)
 
     def __post_init__(self) -> None:
         """Reject failed or unfitted results."""
         result = self.result
+        if not self.capture_id:
+            message = "A multivariate outlier snapshot requires a stable capture identifier."
+            raise ValueError(message)
         if not isinstance(result, MultivariateOutlierResult):  # pyright: ignore[reportUnnecessaryIsInstance]
             message = "A typed multivariate outlier result is required."
             raise TypeError(message)

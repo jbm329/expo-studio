@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from io import BytesIO
 from typing import TYPE_CHECKING
 
 import numpy as np
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.figure import Figure
 
+from expo_jbm329.services.analysis.chart_export import render_chart_png
+from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.chart_presentation import (
+    DEFAULT_WORKSHEET_HEADING,
+    ChartPresentationMetadata,
+)
+from expo_jbm329.services.analysis.chart_profiles import PCA_CHART_PROFILE, PCA_LEGEND_FONT_SIZE
 from expo_jbm329.services.analysis.statistics_charts import STATISTICS_CHART_LOCK
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChartImage
 
@@ -21,35 +25,82 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.pca import PCAResult
     from expo_jbm329.services.analysis.pca_export import PCAExportSnapshot
 
-_EXPORT_DPI = 120
-_FIGURE_SIZE = (8.0, 5.0)
-
 
 @dataclass(frozen=True, slots=True)
 class PCAChartLabels:
     """Translated PCA plot text captured on the GUI thread.
 
     Attributes:
-        scree_title: Scree plot title, also its Excel heading.
+        scree_metadata: Scree title, accessibility, and output metadata.
         explained: Legend label of the per-component bars.
         cumulative: Legend label of the cumulative line.
         component_axis: Scree x-axis label.
         variance_axis: Scree y-axis label.
-        scatter_title: Score plot title, also its Excel heading.
+        scatter_metadata: Score title, accessibility, and sampling caption metadata.
         pc1_axis: Score plot x-axis label, including PC1's explained share.
         pc2_axis: Score plot y-axis label, including PC2's explained share.
-        scatter_captions: Lines written below the exported score plot.
     """
 
-    scree_title: str
+    scree_metadata: ChartPresentationMetadata
     explained: str
     cumulative: str
     component_axis: str
     variance_axis: str
-    scatter_title: str
+    scatter_metadata: ChartPresentationMetadata
     pc1_axis: str
     pc2_axis: str
-    scatter_captions: tuple[str, ...] = ()
+
+
+def build_pca_chart_labels(
+    result: PCAResult,
+    translate: Callable[[str, str], str],
+    *,
+    percent_format: Callable[[float], str],
+    count_format: Callable[[int], str] = str,
+) -> PCAChartLabels:
+    """Capture shared PCA semantics without retaining translators or formatters.
+
+    Args:
+        result: Applied fit with its existing ordered components and score sample.
+        translate: Explicit translation callback used only during capture.
+        percent_format: Percentage formatter used only during capture.
+        count_format: Count formatter used only during capture.
+
+    Returns:
+        Frozen labels safe to draw in the app or a background renderer.
+    """
+    ratios = result.explained_variance_ratio
+    captions = (
+        (
+            translate("PCAView", "The PC1-vs-PC2 plot shows a deterministic sample of {count} rows.").format(
+                count=count_format(len(result.sample_pc1))
+            ),
+        )
+        if result.sampled and result.error is None
+        else ()
+    )
+    return PCAChartLabels(
+        scree_metadata=ChartPresentationMetadata(
+            worksheet_heading=DEFAULT_WORKSHEET_HEADING, accessible_name=translate("PCAView", "Scree plot")
+        ),
+        explained=translate("PCAPresentation", "Explained variance"),
+        cumulative=translate("PCAView", "Cumulative"),
+        component_axis=translate("PCAView", "Component"),
+        variance_axis=translate("PCAView", "Explained variance (%)"),
+        scatter_metadata=ChartPresentationMetadata(
+            worksheet_heading=DEFAULT_WORKSHEET_HEADING,
+            accessible_name=translate("PCAView", "PC1 vs PC2"),
+            captions=captions,
+        ),
+        pc1_axis=(
+            translate("PCAView", "PC1 ({variance})").format(variance=percent_format(ratios[0])) if ratios else "PC1"
+        ),
+        pc2_axis=(
+            translate("PCAView", "PC2 ({variance})").format(variance=percent_format(ratios[1]))
+            if len(ratios) > 1
+            else "PC2"
+        ),
+    )
 
 
 def draw_scree_plot(ax: Axes, result: PCAResult, labels: PCAChartLabels) -> None:
@@ -65,12 +116,12 @@ def draw_scree_plot(ax: Axes, result: PCAResult, labels: PCAChartLabels) -> None
     cumulative = np.asarray(result.cumulative_variance_ratio) * 100
     ax.bar(positions, percentages, label=labels.explained)
     ax.plot(positions, cumulative, color="tab:red", marker="o", label=labels.cumulative)
-    ax.set_title(labels.scree_title)
+    ax.set_title(labels.scree_metadata.accessible_name)
     ax.set_xlabel(labels.component_axis)
     ax.set_ylabel(labels.variance_axis)
     ax.set_xticks(positions)
     ax.set_ylim(0, 105)
-    ax.legend(fontsize=8)
+    ax.legend(fontsize=PCA_LEGEND_FONT_SIZE)
 
 
 def draw_score_plot(ax: Axes, result: PCAResult, labels: PCAChartLabels) -> None:
@@ -84,7 +135,7 @@ def draw_score_plot(ax: Axes, result: PCAResult, labels: PCAChartLabels) -> None
     ax.scatter(result.sample_pc1, result.sample_pc2, s=6, alpha=0.4)
     ax.axhline(0, color="0.7", linewidth=0.8)
     ax.axvline(0, color="0.7", linewidth=0.8)
-    ax.set_title(labels.scatter_title)
+    ax.set_title(labels.scatter_metadata.accessible_name)
     ax.set_xlabel(labels.pc1_axis)
     ax.set_ylabel(labels.pc2_axis)
 
@@ -109,28 +160,31 @@ def render_pca_charts(
         ExcelChartCancelledError: If cancellation is requested.
     """
     labels = snapshot.chart_labels
-    plots: tuple[tuple[str, Callable[[Axes, PCAResult, PCAChartLabels], None], tuple[str, ...]], ...] = (
-        (labels.scree_title, draw_scree_plot, ()),
-        (labels.scatter_title, draw_score_plot, labels.scatter_captions),
+    plots: tuple[tuple[ChartPresentationMetadata, Callable[[Axes, PCAResult, PCAChartLabels], None]], ...] = (
+        (labels.scree_metadata, draw_scree_plot),
+        (labels.scatter_metadata, draw_score_plot),
     )
     images: list[ExcelChartImage] = []
-    for index, (heading, draw, captions) in enumerate(plots):
+    for index, (metadata, draw) in enumerate(plots):
         if cancel_cb is not None and cancel_cb():
             raise ExcelChartCancelledError
         with STATISTICS_CHART_LOCK:
-            figure = Figure(figsize=_FIGURE_SIZE, dpi=_EXPORT_DPI, constrained_layout=True)
-            canvas = FigureCanvasAgg(figure)
+            geometry = PCA_CHART_PROFILE.geometry
+            figure = Figure(
+                figsize=geometry.figsize,
+                dpi=geometry.dpi,
+                constrained_layout=geometry.constrained_layout,
+            )
             draw(figure.add_subplot(111), snapshot.result, labels)
-            output = BytesIO()
-            canvas.print_png(output)  # type: ignore[no-untyped-call]
-        width, height = _FIGURE_SIZE
+            raster = render_chart_png(figure)
         images.append(
             ExcelChartImage(
-                heading,
-                output.getvalue(),
-                round(width * _EXPORT_DPI),
-                round(height * _EXPORT_DPI),
-                captions,
+                metadata.worksheet_heading,
+                raster.image_data,
+                raster.width_px,
+                raster.height_px,
+                metadata.captions,
+                accessible_name=metadata.accessible_name,
             )
         )
         if progress_cb is not None:

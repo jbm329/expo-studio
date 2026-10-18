@@ -19,7 +19,7 @@ from expo_jbm329.services.analysis.regression import (
     RegressionWarningReason,
     analyze_regression,
 )
-from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
+from tests.analysis.section_assertions import assert_result_section, assert_section_scrolls_below_frozen_title
 
 
 def _frame(size: int = 60, seed: int = 3) -> pd.DataFrame:
@@ -78,15 +78,16 @@ def _summary(view: RegressionView) -> str:
     return label.text()
 
 
-def test_model_comments_title_stays_fixed_above_the_scrollable_text():
+def test_model_summary_title_stays_fixed_above_the_scrollable_text():
     view = RegressionView(_fitted())
     panel = view.findChild(QSplitter).widget(2)
+    assert_result_section(panel, "Model summary")
     layout = panel.layout()
     title = layout.itemAt(0).widget()
     scroll = layout.itemAt(1).widget()
 
     assert isinstance(title, QLabel)
-    assert title.text() == "Model comments"
+    assert title.text() == "Model summary"
     assert isinstance(scroll, QScrollArea)
     assert scroll.widget() is view.summary_label()
     assert title.parentWidget() is panel
@@ -106,6 +107,7 @@ def test_model_comments_title_stays_fixed_above_the_scrollable_text():
         QCoreApplication.processEvents()
         assert title.isVisible()
         assert title.mapTo(panel, title.rect().topLeft()).y() == title_y
+        assert_section_scrolls_below_frozen_title(panel, 120, result_section=True)
     finally:
         panel.close()
         panel.deleteLater()
@@ -365,7 +367,9 @@ def test_layout_places_coefficients_above_plots_and_summary_below():
     assert sections.widget(0).isAncestorOf(table)
     assert "Coefficients" in " ".join(_labels(view))
     assert len(sections.widget(1).findChildren(FigureCanvasQTAgg)) == 3
-    assert any(label.text() == "Diagnostic plots" for label in sections.widget(1).findChildren(QLabel))
+    assert any(label.text() == "Linear diagnostics" for label in sections.widget(1).findChildren(QLabel))
+    assert "Regression — Linear regression" in _labels(view)
+    assert all(label in _labels(view) for label in ("Outcome:", "<y>", "Predictors:", "x, g"))
 
     summary = view.summary_label()
     assert summary is not None
@@ -386,15 +390,16 @@ def test_missing_plot_data_draws_no_plots():
     assert view.findChildren(FigureCanvasQTAgg) == []
 
 
-def test_chart_labels_name_the_target_and_explain_sampling_only_when_sampled():
+def test_chart_labels_use_the_shared_component_name_and_explain_sampling_only_when_sampled():
     labels = RegressionView(_fitted()).chart_labels()
-    assert labels.heading == "Linear regression: <y>"
+    assert labels.metadata.worksheet_heading == ""
+    assert labels.metadata.accessible_name
     assert labels.model.predicted_axis == "Predicted <y>"
-    assert labels.captions == ()
+    assert labels.metadata.captions == ()
     df = _frame(size=PLOT_SAMPLE_SIZE + 100)
     sampled = RegressionView(analyze_regression(df, "<y>", ["x"])).chart_labels()
-    assert len(sampled.captions) == 1
-    assert "random sample" in sampled.captions[0]
+    assert len(sampled.metadata.captions) == 1
+    assert "random sample" in sampled.metadata.captions[0]
 
 
 def test_export_notes_are_plain_text_comments_and_reference_levels():

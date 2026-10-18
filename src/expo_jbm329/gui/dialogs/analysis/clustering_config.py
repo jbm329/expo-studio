@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -30,6 +30,11 @@ from expo_jbm329.services.analysis.clustering import (
     MIN_DBSCAN_MIN_SAMPLES,
     MIN_SELECTED_COLUMNS,
     ClusteringMethod,
+)
+from expo_jbm329.services.analysis.presentation import (
+    PresentationLabel,
+    clustering_method_label,
+    translate_presentation_label,
 )
 from expo_jbm329.utils.format_utils import fmt_int
 
@@ -64,7 +69,10 @@ class ClusteringConfigWidget(QWidget):
         form = QFormLayout()
         self._method_combo = self._build_method_combo(result.method)
         form.addRow(QLabel(self.tr("Method"), self), self._method_combo)
-        self._standardize_checkbox = QCheckBox(self.tr("Standardize features"), self)
+        self._standardize_checkbox = QCheckBox(
+            translate_presentation_label(PresentationLabel.STANDARDIZE_FEATURES_SELECTOR, QCoreApplication.translate),
+            self,
+        )
         self._standardize_checkbox.setChecked(result.standardize)
         self._standardize_checkbox.setToolTip(
             self.tr("Scale each selected feature to zero mean and unit variance before clustering.")
@@ -97,7 +105,10 @@ class ClusteringConfigWidget(QWidget):
         layout.addWidget(parameters)
         self._update_parameter_visibility()
 
-        features = QGroupBox(self.tr("Features"), self)
+        features = QGroupBox(
+            translate_presentation_label(PresentationLabel.FEATURES_SELECTOR, QCoreApplication.translate),
+            self,
+        )
         features_layout = QVBoxLayout(features)
         self._column_list = QListWidget(features)
         applied = set(result.columns)
@@ -142,9 +153,8 @@ class ClusteringConfigWidget(QWidget):
     def _build_method_combo(self, method: ClusteringMethod) -> QComboBox:
         """Build the algorithm selector."""
         combo = QComboBox(self)
-        combo.addItem(self.tr("K-Means"), ClusteringMethod.K_MEANS)
-        combo.addItem(self.tr("DBSCAN"), ClusteringMethod.DBSCAN)
-        combo.addItem(self.tr("Agglomerative"), ClusteringMethod.AGGLOMERATIVE)
+        for algorithm in ClusteringMethod:
+            combo.addItem(clustering_method_label(algorithm, QCoreApplication.translate), algorithm)
         combo.setCurrentIndex(combo.findData(method))
         return combo
 

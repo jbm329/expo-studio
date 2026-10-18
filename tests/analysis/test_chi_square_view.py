@@ -14,6 +14,7 @@ from expo_jbm329.gui.dialogs.analysis.chi_square_view import (
     RESIDUAL_SIGNIFICANCE_THRESHOLD,
     ChiSquareView,
 )
+from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection
 from expo_jbm329.services.analysis.chi_square import ChiSquareError, ChiSquareResult, analyze_chi_square
 from tests.analysis.section_assertions import assert_section_scrolls_below_frozen_title
 
@@ -75,14 +76,19 @@ def _two_by_three_result() -> ChiSquareResult:
 def test_heatmap_and_results_sections_scroll_below_a_frozen_title(factory, section, small_height):
     view = ChiSquareView(factory())
     panel = view.findChild(QSplitter).widget(section)
+    assert panel.parentWidget() is view.findChild(QSplitter)
     try:
         content = assert_section_scrolls_below_frozen_title(panel, small_height)
         if section == 1:
             assert isinstance(content, FigureCanvasQTAgg)
         else:
+            assert isinstance(panel, AnalysisResultSection)
             labels = content.findChildren(QLabel)
             assert any("Pearson" in label.text() for label in labels)
             assert all(label.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse for label in labels)
+            for label in labels:
+                assert label.geometry().bottom() < content.height()
+                assert label.height() >= label.heightForWidth(label.width())
     finally:
         panel.deleteLater()
         view.close()
@@ -146,9 +152,9 @@ def test_layout_has_titled_table_heatmap_and_results_with_adjustable_dividers():
     table = view.findChild(QTableWidget)
     assert table is not None
     assert splitter.widget(0).isAncestorOf(table)
-    assert any(label.text() == "Observed counts" for label in splitter.widget(0).findChildren(QLabel))
+    assert any(label.text() == "Contingency table" for label in splitter.widget(0).findChildren(QLabel))
     assert len(splitter.widget(1).findChildren(FigureCanvasQTAgg)) == 1
-    assert any(label.text() == "Adjusted residuals" for label in splitter.widget(1).findChildren(QLabel))
+    assert any(label.text() == "Association plots" for label in splitter.widget(1).findChildren(QLabel))
     assert any(label.text() == "Test results" for label in splitter.widget(2).findChildren(QLabel))
     assert any("Pearson" in label.text() for label in splitter.widget(2).findChildren(QLabel))
 
