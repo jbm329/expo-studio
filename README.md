@@ -108,24 +108,34 @@ This functionality is still evolving and will be extended as new use cases emerg
 
 ### 🗄️ Database Support
 
-Expo Studio has been developed and tested on both Windows and Linux. The tested database combinations are:
+Database support has been tested on Windows and Linux (Fedora 44). The tested
+platform and database combinations are:
 
 - **Windows**: Microsoft SQL Server (MSSQL) and SQLite
-- **Linux (Fedora 44)**: MariaDB and SQLite
+- **Linux (Fedora 44)**: MariaDB/MySQL, PostgreSQL, and SQLite
 
-Support for other databases is experimental and largely unverified. They may work partially or require additional configuration.
+On Linux, MariaDB and MySQL connections are supported through the bundled
+PyMySQL and MySQL Connector/Python drivers. PostgreSQL connections are supported
+through the bundled `psycopg` driver. Users of the packaged application do not
+need to install these drivers separately.
+
+Windows is expected to support MariaDB/MySQL and PostgreSQL through the same
+drivers, but those combinations have not yet been tested. Support for other
+databases is experimental and may require additional configuration.
 
 - **Microsoft SQL Server (MSSQL)**
 - **MySQL**
 - **MariaDB**
+- **PostgreSQL**
 - **SQLite**
 
-Database drivers are provided via SQLAlchemy and standard DBAPI backends.
+Database connections use SQLAlchemy with standard DBAPI drivers.
 
 Recommended drivers:
 - MSSQL: pyodbc (ODBC Driver 17 or 18 required)
 - SQLite: sqlite3 (built-in)
-- MySQL / MariaDB: mysqlclient (preferred) or PyMySQL
+- MySQL / MariaDB: PyMySQL or MySQL Connector/Python (bundled)
+- PostgreSQL: psycopg (bundled)
 
 ### 🌐 REST API Support
 
