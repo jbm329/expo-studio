@@ -196,18 +196,12 @@ class ChartFigure(Figure):
             if not labels:
                 continue
             current_rotations = [label.get_rotation() for label in labels]
-            if (
-                state.last_applied_rotation is not None
-                and any(
-                    abs(rotation - state.last_applied_rotation) > _ROTATION_EPSILON
-                    for rotation in current_rotations
-                )
+            if state.last_applied_rotation is not None and any(
+                abs(rotation - state.last_applied_rotation) > _ROTATION_EPSILON for rotation in current_rotations
             ):
                 state.preferred_rotation = current_rotations[0]
             forced_rotation = self._rotation_for_policy(state)
-            self._set_rotation(
-                labels, state.preferred_rotation if forced_rotation is None else forced_rotation
-            )
+            self._set_rotation(labels, state.preferred_rotation if forced_rotation is None else forced_rotation)
 
     def _apply_measured_rotations(self, renderer: RendererBase, *, promote_only: bool = False) -> bool:
         """Measure visible major x-labels and apply final rotation decisions."""
@@ -265,9 +259,7 @@ class ChartFigure(Figure):
         lower, upper = sorted(axis.get_xlim())
         return [
             label
-            for location, tick in zip(
-                axis.xaxis.get_majorticklocs(), axis.xaxis.get_major_ticks(), strict=True
-            )
+            for location, tick in zip(axis.xaxis.get_majorticklocs(), axis.xaxis.get_major_ticks(), strict=True)
             if lower <= location <= upper
             for label in (tick.label1, tick.label2)
             if label.get_visible() and label.get_text().strip()
@@ -286,9 +278,7 @@ class ChartFigure(Figure):
             return False
 
         gap_points = (
-            policy.overlap_gap_points
-            if policy.overlap_gap_points is not None
-            else self.config.overlap_gap_points
+            policy.overlap_gap_points if policy.overlap_gap_points is not None else self.config.overlap_gap_points
         )
         gap_pixels = renderer.points_to_pixels(gap_points)
         extents = sorted((label.get_window_extent(renderer) for label in labels), key=lambda box: box.x0)
