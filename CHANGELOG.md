@@ -13,6 +13,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Advanced Analysis stays bound to the selected dataset, with its name and dimensions shown in the window title
 
 ### Added
+- MySQL/MariaDB support via bundled PyMySQL and MySQL Connector/Python drivers, and PostgreSQL support via bundled psycopg, in addition to ODBC connectivity; tested on Linux (Fedora 44), with Windows support not yet tested
 - Categorical tab in Statistics with frequency counts, percentages, and separate missing-value counts
 - Continuous mean/SD and median/quartile summaries with Shapiro-Wilk reporting guidance
 - Dataset Overview with dimensions, missingness, duplicates, column profiles, warnings, and first/last 10-row previews and exports (separate Excel sheets or grouped CSV/binary rows, retaining overlap)

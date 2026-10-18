@@ -3,6 +3,7 @@ import pytest
 from expo_jbm329.db.dialects.ansi import AnsiDialect
 from expo_jbm329.db.dialects.mssql import MssqlDialect
 from expo_jbm329.db.dialects.mysql import MySqlDialect
+from expo_jbm329.db.dialects.postgres import PostgresDialect
 from expo_jbm329.db.dialects.sqlite import SqliteDialect
 
 
@@ -68,11 +69,61 @@ def test_sqlite_dialect():
     assert "type='table'" in dialect.sql_list_tables().lower()
 
 
+def test_postgres_dialect():
+    dialect = PostgresDialect()
+    assert dialect.name == "postgresql"
+
+    # Limit
+    sql = "SELECT * FROM t"
+    limited = dialect.apply_limit(sql, 10)
+    assert limited == "SELECT * FROM t LIMIT 10"
+
+    # Limit with already limited
+    assert dialect.apply_limit("SELECT * FROM t LIMIT 5", 10) == "SELECT * FROM t LIMIT 5"
+    assert dialect.apply_limit("UPDATE t SET x = 1", 10) == "UPDATE t SET x = 1"
+    assert dialect.apply_limit("SELECT * FROM t", 0) == "SELECT * FROM t"
+
+    # Quoting
+    assert dialect.quote_ident("table") == '"table"'
+    assert dialect.quote_ident('tab"le') == '"tab""le"'
+
+    # Qualify
+    assert dialect.qualify("public", "table") == '"public"."table"'
+    assert dialect.qualify("", "table") == '"table"'
+
+    # Metadata SQL
+    tables_sql = dialect.sql_list_tables().lower()
+    assert "information_schema.tables" in tables_sql
+    assert "pg_catalog" in tables_sql
+    assert "information_schema" in tables_sql
+
+    views_sql = dialect.sql_list_views().lower()
+    assert "information_schema.views" in views_sql
+    assert "pg_catalog" in views_sql
+
+    cols_sql = dialect.sql_list_columns("public", "my_table")
+    assert "information_schema.columns" in cols_sql.lower()
+    assert "'public'" in cols_sql
+    assert "'my_table'" in cols_sql
+    assert 'COLUMN_NAME AS "COLUMN_NAME"' in cols_sql
+    assert 'DATA_TYPE AS "DATA_TYPE"' in cols_sql
+    assert 'IS_NULLABLE AS "IS_NULLABLE"' in cols_sql
+
+    all_cols_sql = dialect.sql_all_columns()
+    assert all_cols_sql is not None
+    assert "information_schema.columns" in all_cols_sql.lower()
+    assert "pg_catalog" in all_cols_sql.lower()
+    assert 'TABLE_SCHEMA AS "TABLE_SCHEMA"' in all_cols_sql
+    assert 'TABLE_NAME AS "TABLE_NAME"' in all_cols_sql
+    assert 'COLUMN_NAME AS "COLUMN_NAME"' in all_cols_sql
+
+
 @pytest.mark.parametrize(
     ("dialect", "expected_keyword"),
     [
         (MssqlDialect(), "TOP"),
         (MySqlDialect(), "LIMIT"),
+        (PostgresDialect(), "LIMIT"),
         (SqliteDialect(), "LIMIT"),
         (AnsiDialect(), "FETCH FIRST"),
     ],
@@ -86,6 +137,7 @@ def test_limit_keyword(dialect, expected_keyword):
     [
         (MssqlDialect(), "a]b", "[a]]b]"),
         (MySqlDialect(), "a`b", "`a``b`"),
+        (PostgresDialect(), 'a"b', '"a""b"'),
         (SqliteDialect(), 'a"b', '"a""b"'),
         (AnsiDialect(), 'a"b', '"a""b"'),
     ],
@@ -99,6 +151,8 @@ def test_quote_ident_escapes_closing_quote(dialect, raw, expected):
     [
         (MssqlDialect(), "dbo", "[dbo].[T].[C]"),
         (MySqlDialect(), "db", "`db`.`T`.`C`"),
+        (PostgresDialect(), "public", '"public"."T"."C"'),
+        (PostgresDialect(), "", '"T"."C"'),
         (SqliteDialect(), "main", '"main"."T"."C"'),
         (SqliteDialect(), "aux", '"aux"."T"."C"'),
         (AnsiDialect(), "public", '"public"."T"."C"'),

@@ -22,7 +22,10 @@ class BulkColumnListingNotSupportedError(AttributeError):
 
 
 _CODE_RE = re.compile(r"\((\d{3,6})(?:\)|,)")
-_POSTGRES_SQLSTATE_RE = re.compile(r"\b(?:sqlstate[=:\s]*)?(\d{5})\b", re.IGNORECASE)
+_POSTGRES_SQLSTATE_RE = re.compile(
+    r"(?:\bsqlstate[=:\s]*|\bpgcode[=:\s]*|[\[\(])([0-9A-Za-z]{5})(?:[\]\)]|\b)",
+    re.IGNORECASE,
+)
 _ORACLE_CODE_RE = re.compile(r"\bORA-(\d{5})\b", re.IGNORECASE)
 _last_err_ts: dict[str, float] = {}
 
@@ -43,6 +46,14 @@ MYSQL_LOCK_WAIT_TIMEOUT = 1205
 MYSQL_AMBIGUOUS_COLUMN = 1052
 
 POSTGRES_AMBIGUOUS_COLUMN = 42702
+POSTGRES_UNDEFINED_TABLE = "42P01"
+POSTGRES_UNDEFINED_COLUMN = 42703
+POSTGRES_SYNTAX_ERROR = 42601
+POSTGRES_UNDEFINED_FUNCTION = 42883
+POSTGRES_INVALID_PASSWORD = "28P01"  # noqa: S105 - standard PostgreSQL SQLSTATE code for invalid password
+POSTGRES_INVALID_AUTH = 28000
+POSTGRES_INVALID_CATALOG = "3D000"
+POSTGRES_QUERY_CANCELED = 57014
 ORACLE_AMBIGUOUS_COLUMN = 918
 
 # --- i18n markers (pylupdate6-visible) -----------------------------
@@ -75,6 +86,10 @@ TR_UNKNOWN_FAILURE_MSSQL = QT_TRANSLATE_NOOP("DbErrors", "Unknown database failu
 TR_UNKNOWN_FAILURE_HINT_MSSQL = QT_TRANSLATE_NOOP("DbErrors", "Show details in log (DEBUG) or try again.")
 
 # MySQL
+TR_DRIVER_MISSING_MYSQL = QT_TRANSLATE_NOOP("DbErrors", "Required database driver module is missing.")
+TR_DRIVER_MISSING_HINT_MYSQL = QT_TRANSLATE_NOOP(
+    "DbErrors", "Install 'pymysql' or 'mysql-connector-python' or check your Python environment."
+)
 TR_SQL_SYNTAX_ERROR_MYSQL = QT_TRANSLATE_NOOP("DbErrors", "SQL syntax error.")
 TR_SQL_SYNTAX_ERROR_HINT_MYSQL = QT_TRANSLATE_NOOP("DbErrors", "Check keywords, commas and parentheses.")
 TR_TABLE_OR_VIEW_NOT_EXISTS_MYSQL = QT_TRANSLATE_NOOP("DbErrors", "The table or view does not exist.")
@@ -107,6 +122,30 @@ TR_UNKNOWN_DATABASE_SQLITE = QT_TRANSLATE_NOOP("DbErrors", "Could not open datab
 TR_UNKNOWN_DATABASE_HINT_SQLITE = QT_TRANSLATE_NOOP("DbErrors", "Check database file path and permissions.")
 TR_UNKNOWN_FAILURE_SQLITE = QT_TRANSLATE_NOOP("DbErrors", "Unknown database failure.")
 TR_UNKNOWN_FAILURE_HINT_SQLITE = QT_TRANSLATE_NOOP("DbErrors", "Show details in log (DEBUG) or try again.")
+
+# PostgreSQL
+TR_DRIVER_MISSING_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Required database driver module is missing.")
+TR_DRIVER_MISSING_HINT_POSTGRES = QT_TRANSLATE_NOOP(
+    "DbErrors", "Install 'psycopg' (or 'psycopg[binary]') or check your Python environment."
+)
+TR_SQL_SYNTAX_ERROR_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "SQL syntax error.")
+TR_SQL_SYNTAX_ERROR_HINT_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Check keywords, commas and parentheses.")
+TR_TABLE_OR_VIEW_NOT_EXISTS_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "The table or view does not exist.")
+TR_TABLE_OR_VIEW_NOT_EXISTS_HINT_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Check schema and table name.")
+TR_UNKNOWN_COLUMN_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Unknown column.")
+TR_UNKNOWN_COLUMN_HINT_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Check spelling/alias or qualify the column.")
+TR_FUNCTION_NOT_EXISTS_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "The function does not exist.")
+TR_FUNCTION_NOT_EXISTS_HINT_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Check function name and parameter types.")
+TR_PERMISSION_DENIED_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Permission denied.")
+TR_PERMISSION_DENIED_HINT_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Check user/password and permissions.")
+TR_UNKNOWN_DATABASE_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Unknown database.")
+TR_UNKNOWN_DATABASE_HINT_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Check connection 'database' and permissions.")
+TR_TIMEOUT_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Timeout exceeded.")
+TR_TIMEOUT_HINT_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Try reducing the result set (LIMIT) or adding filters.")
+TR_CONNECTION_FAILED_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Connection failed.")
+TR_CONNECTION_FAILED_HINT_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Check network, host/port and firewall settings.")
+TR_UNKNOWN_DATABASE_FAIL_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Unknown database failure.")
+TR_UNKNOWN_DATABASE_FAIL_HINT_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Show details in log (DEBUG) or try again.")
 
 # Generic / Internal
 TR_SQL_EMPTY = QT_TRANSLATE_NOOP("DbErrors", "SQL statement is empty.")
@@ -191,8 +230,8 @@ def _ambiguous_column_error(code: int | None) -> SqlError:
     )
 
 
-def _postgres_error_code(exc: Exception, raw: str) -> int | None:
-    """Extract a PostgreSQL SQLSTATE from driver or wrapped exceptions."""
+def _postgres_sqlstate(exc: Exception, raw: str) -> str | None:
+    """Extract a PostgreSQL SQLSTATE string from driver or wrapped exceptions."""
     current: object | None = exc
     seen: set[int] = set()
 
@@ -200,12 +239,20 @@ def _postgres_error_code(exc: Exception, raw: str) -> int | None:
         seen.add(id(current))
         for attribute in ("sqlstate", "pgcode"):
             value = getattr(current, attribute, None)
-            if value is not None and str(value).isdigit():
-                return int(str(value))
+            if value is not None and str(value).strip():
+                return str(value).strip().upper()
         current = getattr(current, "orig", None)
 
     match = _POSTGRES_SQLSTATE_RE.search(raw)
-    return int(match.group(1)) if match is not None else None
+    return match.group(1).upper() if match is not None else None
+
+
+def _postgres_error_code(exc: Exception, raw: str) -> int | None:
+    """Extract a numeric PostgreSQL error code if the SQLSTATE is digits."""
+    sqlstate = _postgres_sqlstate(exc, raw)
+    if sqlstate is not None and sqlstate.isdigit():
+        return int(sqlstate)
+    return extract_code(raw)
 
 
 def classify_mssql(exc: Exception) -> SqlError:
@@ -285,6 +332,17 @@ def classify_mysql(exc: Exception) -> SqlError:
 
     if ("column" in lo and "ambiguous" in lo) or code == MYSQL_AMBIGUOUS_COLUMN:
         return _ambiguous_column_error(code or MYSQL_AMBIGUOUS_COLUMN)
+
+    # Missing driver
+    if (isinstance(exc, (ModuleNotFoundError, ImportError)) or "no module named" in lo or "cannot import" in lo) and (
+        "mysql" in lo or "pymysql" in lo
+    ):
+        return SqlError(
+            "driver_missing",
+            None,
+            TR_DRIVER_MISSING_MYSQL,
+            TR_DRIVER_MISSING_HINT_MYSQL,
+        )
 
     # Parse error / syntax
     if "you have an error in your sql syntax" in lo or code == MYSQL_SYNTAX_ERROR:
@@ -388,12 +446,129 @@ def classify_sqlite(exc: Exception) -> SqlError:
 
 
 def classify_postgresql(exc: Exception) -> SqlError:
-    """Map PostgreSQL ambiguous-column errors to the common error model."""
+    """Map common PostgreSQL errors to categorized messages.
+
+    Args:
+        exc: The original exception from the database driver.
+
+    Returns:
+        A `SqlError` object containing the classification and English messages.
+    """
     raw = str(exc) or ""
+    lo = raw.lower()
+    sqlstate = _postgres_sqlstate(exc, raw)
     code = _postgres_error_code(exc, raw)
-    if ("column reference" in raw.lower() and "ambiguous" in raw.lower()) or code == POSTGRES_AMBIGUOUS_COLUMN:
+
+    # Missing driver
+    if (
+        isinstance(exc, (ModuleNotFoundError, ImportError)) or "no module named" in lo or "cannot import" in lo
+    ) and "psycopg" in lo:
+        return SqlError(
+            "driver_missing",
+            None,
+            TR_DRIVER_MISSING_POSTGRES,
+            TR_DRIVER_MISSING_HINT_POSTGRES,
+        )
+
+    # Ambiguous column (42702)
+    if sqlstate == "42702" or ("column reference" in lo and "ambiguous" in lo) or code == POSTGRES_AMBIGUOUS_COLUMN:
         return _ambiguous_column_error(code or POSTGRES_AMBIGUOUS_COLUMN)
-    return SqlError("unknown", code, TR_UNKNOWN_DATABASE_FAIL, TR_UNKNOWN_DATABASE_FAIL_HINT)
+
+    # Missing table / view / relation (42P01)
+    if (
+        sqlstate == "42P01"
+        or ("relation" in lo and "does not exist" in lo)
+        or ("table" in lo and "does not exist" in lo)
+    ):
+        return SqlError(
+            "missing_object",
+            code,
+            TR_TABLE_OR_VIEW_NOT_EXISTS_POSTGRES,
+            TR_TABLE_OR_VIEW_NOT_EXISTS_HINT_POSTGRES,
+        )
+
+    # Missing column (42703)
+    if sqlstate == "42703" or ("column" in lo and "does not exist" in lo):
+        return SqlError(
+            "syntax",
+            code or 42703,
+            TR_UNKNOWN_COLUMN_POSTGRES,
+            TR_UNKNOWN_COLUMN_HINT_POSTGRES,
+        )
+
+    # Missing function / procedure (42883)
+    if sqlstate == "42883" or ("function" in lo and "does not exist" in lo):
+        return SqlError(
+            "missing_proc",
+            code or 42883,
+            TR_FUNCTION_NOT_EXISTS_POSTGRES,
+            TR_FUNCTION_NOT_EXISTS_HINT_POSTGRES,
+        )
+
+    # Syntax error (42601)
+    if sqlstate == "42601" or "syntax error" in lo:
+        return SqlError(
+            "syntax",
+            code or 42601,
+            TR_SQL_SYNTAX_ERROR_POSTGRES,
+            TR_SQL_SYNTAX_ERROR_HINT_POSTGRES,
+        )
+
+    # Permission / authentication failed (28P01, 28000, 42501)
+    if (
+        sqlstate in ("28P01", "28000", "42501")
+        or "password authentication failed" in lo
+        or "permission denied" in lo
+        or "access denied" in lo
+    ):
+        return SqlError(
+            "permission",
+            code or (28000 if sqlstate == "28000" else None),
+            TR_PERMISSION_DENIED_POSTGRES,
+            TR_PERMISSION_DENIED_HINT_POSTGRES,
+        )
+
+    # Unknown / missing database (3D000)
+    if sqlstate == "3D000" or ("database" in lo and "does not exist" in lo):
+        return SqlError(
+            "connection",
+            code,
+            TR_UNKNOWN_DATABASE_POSTGRES,
+            TR_UNKNOWN_DATABASE_HINT_POSTGRES,
+        )
+
+    # Query timeout / cancelled (57014)
+    if (
+        sqlstate == "57014"
+        or "statement timeout" in lo
+        or "canceling statement" in lo
+        or "cancelling statement" in lo
+        or "query_canceled" in lo
+        or "query cancelled" in lo
+    ):
+        return SqlError(
+            "timeout",
+            code or 57014,
+            TR_TIMEOUT_POSTGRES,
+            TR_TIMEOUT_HINT_POSTGRES,
+        )
+
+    # Connection failure (08xxx)
+    if (
+        (sqlstate and sqlstate.startswith("08"))
+        or "could not connect" in lo
+        or "connection refused" in lo
+        or "connection to server" in lo
+        or "could not translate host name" in lo
+    ):
+        return SqlError(
+            "connection",
+            code,
+            TR_CONNECTION_FAILED_POSTGRES,
+            TR_CONNECTION_FAILED_HINT_POSTGRES,
+        )
+
+    return SqlError("unknown", code, TR_UNKNOWN_DATABASE_FAIL_POSTGRES, TR_UNKNOWN_DATABASE_FAIL_HINT_POSTGRES)
 
 
 def classify_oracle(exc: Exception) -> SqlError:

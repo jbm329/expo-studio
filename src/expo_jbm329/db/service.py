@@ -440,11 +440,22 @@ class DbService:
         if res.data is None or res.data.empty:
             return []
         df = res.data
+        col_lookup = {str(c).upper(): c for c in df.columns}
+        col_name_key = col_lookup.get("COLUMN_NAME") or col_lookup.get("COLUMN")
+        data_type_key = col_lookup.get("DATA_TYPE") or col_lookup.get("TYPE")
+        is_nullable_key = col_lookup.get("IS_NULLABLE") or col_lookup.get("NULLABLE")
+
         return [
             {
-                "COLUMN_NAME": str(r["COLUMN_NAME"]),
-                "DATA_TYPE": str(r["DATA_TYPE"]),
-                "IS_NULLABLE": str(r["IS_NULLABLE"]),
+                "COLUMN_NAME": str(r[col_name_key]) if col_name_key and col_name_key in r else "",
+                "DATA_TYPE": (
+                    str(r[data_type_key]) if data_type_key and data_type_key in r and pd.notna(r[data_type_key]) else ""
+                ),
+                "IS_NULLABLE": (
+                    str(r[is_nullable_key])
+                    if is_nullable_key and is_nullable_key in r and pd.notna(r[is_nullable_key])
+                    else ""
+                ),
             }
             for _, r in df.iterrows()
         ]
@@ -620,13 +631,12 @@ class DbService:
 
         df = res.data
         # Flexible column matching across engines
-        schema_col = "TABLE_SCHEMA" if "TABLE_SCHEMA" in df.columns else ("schema" if "schema" in df.columns else None)
-        table_col = "TABLE_NAME" if "TABLE_NAME" in df.columns else ("table" if "table" in df.columns else None)
-        col_col = "COLUMN_NAME" if "COLUMN_NAME" in df.columns else ("column" if "column" in df.columns else None)
-        dt_col = "DATA_TYPE" if "DATA_TYPE" in df.columns else ("data_type" if "data_type" in df.columns else None)
-        null_col = (
-            "IS_NULLABLE" if "IS_NULLABLE" in df.columns else ("is_nullable" if "is_nullable" in df.columns else None)
-        )
+        col_lookup = {str(c).upper(): c for c in df.columns}
+        schema_col = col_lookup.get("TABLE_SCHEMA") or col_lookup.get("SCHEMA")
+        table_col = col_lookup.get("TABLE_NAME") or col_lookup.get("TABLE")
+        col_col = col_lookup.get("COLUMN_NAME") or col_lookup.get("COLUMN")
+        dt_col = col_lookup.get("DATA_TYPE") or col_lookup.get("TYPE")
+        null_col = col_lookup.get("IS_NULLABLE") or col_lookup.get("NULLABLE")
 
         if not (schema_col and table_col and col_col):
             return result
