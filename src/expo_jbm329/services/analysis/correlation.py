@@ -697,7 +697,6 @@ def analyze_correlation_pair(
         "success" if result.error is None else "unavailable",
         reason=result.error.value if result.error is not None else None,
         rows_used=result.pair.n if result.error is None else None,
-        item_count=result.pair.n,
         sampled=result.sampled,
     )
     return result

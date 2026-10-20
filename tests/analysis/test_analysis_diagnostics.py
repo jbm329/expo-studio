@@ -144,6 +144,19 @@ def test_computation_logs_one_convention_line_without_none_fields(caplog):
     assert "none" not in messages[0].lower()
 
 
+def test_correlation_pair_logs_rows_used_without_duplicate_item_count(caplog):
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+    frame = pd.DataFrame({"x": [1.0, 2.0, 3.0], "y": [2.0, 4.0, 6.0]})
+
+    result = analyze_correlation_pair(frame, "x", "y", corr_id="pair-count")
+
+    assert result.error is None
+    messages = [record.getMessage() for record in caplog.records if record.name == "applogger.service"]
+    assert len(messages) == 1
+    assert "rows_used=3" in messages[0]
+    assert "items=" not in messages[0]
+
+
 @pytest.mark.parametrize(
     ("operation", "section"),
     [
