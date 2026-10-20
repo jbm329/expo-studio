@@ -5,6 +5,12 @@ from PyQt6.QtCore import Qt
 
 from expo_jbm329.gui.dialogs.analysis.clustering_config import ClusteringConfigWidget
 from expo_jbm329.services.analysis.clustering import ClusteringMethod, ClusteringResult
+from expo_jbm329.services.analysis.limits import (
+    CLUSTERING_MAX_CLUSTER_COUNT,
+    CLUSTERING_MAX_DBSCAN_EPSILON,
+    CLUSTERING_MAX_DBSCAN_MIN_SAMPLES,
+    CLUSTERING_MIN_DBSCAN_EPSILON,
+)
 
 
 def _result(
@@ -39,6 +45,15 @@ def _set_checked(widget: ClusteringConfigWidget, column: str, checked: bool) -> 
     items = widget._column_list.findItems(column, Qt.MatchFlag.MatchExactly)  # noqa: SLF001
     assert len(items) == 1
     items[0].setCheckState(Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked)
+
+
+def test_parameter_controls_use_central_product_bounds():
+    widget = ClusteringConfigWidget(_result())
+
+    assert widget._cluster_count_spin.maximum() == CLUSTERING_MAX_CLUSTER_COUNT  # noqa: SLF001
+    assert widget._epsilon_spin.minimum() == CLUSTERING_MIN_DBSCAN_EPSILON  # noqa: SLF001
+    assert widget._epsilon_spin.maximum() == CLUSTERING_MAX_DBSCAN_EPSILON  # noqa: SLF001
+    assert widget._min_samples_spin.maximum() == CLUSTERING_MAX_DBSCAN_MIN_SAMPLES  # noqa: SLF001
 
 
 def _record(signal) -> list:

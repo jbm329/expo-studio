@@ -62,6 +62,21 @@ Analysis pages show applied settings alongside results and explanatory notes.
 Charts adapt to long labels, with scrolling when more space is needed.
 Long-running analyses run in the background where needed.
 
+Developer-maintained limits and parameter defaults are documented beside their
+definitions in `src/expo_jbm329/services/analysis/limits.py`. Each entry explains
+its effect, consumers and rationale (or an explicitly identified possible reason).
+These are code defaults, not runtime user settings. The module also identifies
+separate owners for chart-renderer safeguards, shared profiling and statistical
+requirements. Equal values do not necessarily represent a shared setting.
+
+`CATEGORICAL_MAX_DISTINCT_VALUES` is the shared categorical-analysis eligibility
+maximum: Statistics uses it for frequency summaries, hypothesis tests for
+grouping, and regression for categorical predictors. It does not infer a
+categorical dtype. Overview counts string/category columns regardless of their
+number of distinct values and counts booleans separately. Shared profiling
+previews and the UI's category-conversion suggestion have separate policies,
+documented in their owners and referenced by the limits module.
+
 **Export** selected analysis results to Excel, CSV, or supported binary formats.
 Excel workbooks can combine tables and charts; CSV and binary exports contain
 one selected table. Exports use the latest successful analysis result.

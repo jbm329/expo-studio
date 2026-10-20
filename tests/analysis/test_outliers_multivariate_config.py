@@ -4,6 +4,11 @@ import pytest
 from PyQt6.QtCore import Qt
 
 from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_config import MultivariateOutliersConfigWidget
+from expo_jbm329.services.analysis.limits import (
+    MULTIVARIATE_OUTLIERS_MAX_CONTAMINATION,
+    MULTIVARIATE_OUTLIERS_MAX_LOF_NEIGHBORS,
+    MULTIVARIATE_OUTLIERS_MIN_CONTAMINATION,
+)
 from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierMethod,
     MultivariateOutlierResult,
@@ -45,6 +50,14 @@ def _record(signal) -> list:
     received: list = []
     signal.connect(lambda *args: received.append(args))
     return received
+
+
+def test_parameter_controls_convert_central_contamination_bounds_to_percent():
+    widget = MultivariateOutliersConfigWidget(_result())
+
+    assert widget._contamination_spin.minimum() == MULTIVARIATE_OUTLIERS_MIN_CONTAMINATION * 100  # noqa: SLF001
+    assert widget._contamination_spin.maximum() == MULTIVARIATE_OUTLIERS_MAX_CONTAMINATION * 100  # noqa: SLF001
+    assert widget._neighbors_spin.maximum() == MULTIVARIATE_OUTLIERS_MAX_LOF_NEIGHBORS  # noqa: SLF001
 
 
 @pytest.mark.parametrize(

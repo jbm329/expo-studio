@@ -8,7 +8,8 @@ from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtGui import QStandardItemModel
 from PyQt6.QtWidgets import QComboBox, QWidget
 
-from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS, MIN_GROUPS, ColumnExclusionReason
+from expo_jbm329.services.analysis.group_comparison import MIN_GROUPS, ColumnExclusionReason
+from expo_jbm329.services.analysis.limits import CATEGORICAL_MAX_DISTINCT_VALUES as MAX_GROUPS
 from expo_jbm329.utils.format_utils import fmt_int
 
 if TYPE_CHECKING:

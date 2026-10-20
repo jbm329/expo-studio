@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 from statsmodels.duration.hazard_regression import PHReg
 
+from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.regression import PredictorKind, build_regression_design
 from expo_jbm329.services.analysis.survival import (
     SurvivalError,
@@ -50,6 +51,23 @@ def test_initializer_offers_numeric_durations_and_strict_binary_event_columns():
 
     assert columns.durations == ("duration", "event", "not_binary")
     assert columns.events == ("event", "boolean")
+
+
+def test_cox_fit_receives_documented_iteration_budget(monkeypatch):
+    original_fit = PHReg.fit
+    received: list[int] = []
+
+    def record_fit(self, *args, **kwargs):
+        received.append(kwargs["maxiter"])
+        return original_fit(self, *args, **kwargs)
+
+    monkeypatch.setattr(PHReg, "fit", record_fit)
+
+    result = analyze_cox_regression(_frame(), "duration", "event", ["x"])
+
+    assert result.error is None
+    assert limits.COX_MAX_ITERATIONS == 200
+    assert received == [limits.COX_MAX_ITERATIONS]
 
 
 def test_cox_fit_reports_hazard_ratios_counts_ties_method_design_and_references():

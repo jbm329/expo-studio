@@ -3,6 +3,13 @@
 This module provides robust and UI-independent profiling logic for
 computing descriptive statistics and simple visualization specs
 (histograms, top-N bars, weekday bars, boolean bars).
+
+Shared presentation policies remain here, not in Advanced Analysis limits:
+numeric histograms use sqrt(n) bins bounded to 5..30; text/category profiles
+show the three most frequent values; example values keep up to three distinct
+non-null values in source order. These bound presentation detail, not dtype or
+categorical-analysis eligibility. Possible reason: compact Column Properties
+previews; Advanced Analysis Statistics builds its own frequency summaries.
 """
 
 from __future__ import annotations
@@ -126,6 +133,10 @@ def _safe_memory_usage(series: pd.Series) -> int:
 def _topn_text(series: pd.Series, n: int = 3) -> list[tuple[str, int]]:
     """Compute top-N most common text values (absolute counts only).
 
+    The text/category profile requests three entries to keep its preview
+    compact. Counts use the full non-null series; omitted levels are not a
+    categorical eligibility exclusion.
+
     Returns:
         List of (value_as_string, count)
     """
@@ -146,6 +157,8 @@ def _format_samples(series: pd.Series) -> list[object]:
     - convert values to strings
 
     Presentation is handled in the UI layer.
+    Three examples keep the preview compact without changing classification
+    or limiting the observations used for statistics.
     """
     try:
         non_null = series.dropna()
@@ -312,7 +325,9 @@ def _numeric_profile(s: pd.Series) -> tuple[dict[str, object], PlotSpec]:
     # Histogram plot spec
     with contextlib.suppress(Exception):
         arr = x.to_numpy(copy=False)
-        # Freedman Diaconis or sqrt rule; we use sqrt(m) bounded to [5, 30]
+        # Shared by Column Properties and Advanced Analysis Statistics:
+        # sqrt(m) bins bounded to [5, 30], using all observations.
+        # Possible reason: readable histograms for small and large columns.
         bins_count = min(30, max(5, int(np.sqrt(m))))
         counts, bins = np.histogram(arr, bins=bins_count)
         plot.kind = "hist"

@@ -14,6 +14,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+# infer_series_capabilities offers category conversion for text-like columns
+# only when distinct/non-null values is strictly below this ratio.
+# Possible reason: avoid suggesting categorical storage for mostly unique text.
+# This gates a UI action; it neither infers dtype nor limits analysis categories.
 CATEGORY_CARDINALITY_RATIO_LIMIT = 0.5
 
 if TYPE_CHECKING:

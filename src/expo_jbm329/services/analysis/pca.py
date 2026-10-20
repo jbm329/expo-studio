@@ -16,6 +16,7 @@ import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
+from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
 
 if TYPE_CHECKING:
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
 
 MIN_SELECTED_COLUMNS = 2
 MIN_OBSERVATIONS = 2
-SCATTER_SAMPLE_SIZE = 5_000
+SCATTER_SAMPLE_SIZE = limits.PCA_SCATTER_SAMPLE_SIZE
 _SCATTER_SEED = 0
 
 

@@ -50,6 +50,11 @@ def classify_series_dtype(s: pd.Series) -> SemanticDType:
     The classification is intended for UI logic and profiling,
     not for low-level pandas internals.
 
+    Category classification follows the pandas categorical dtype, not a
+    distinct-value limit. For object columns, boolean recognition checks only
+    the first 500 non-null values; later values do not affect that check.
+    Possible reason for that sample: bound classification work for UI callers.
+
     Args:
         s: The pandas Series to classify.
 
@@ -83,7 +88,7 @@ def classify_series_dtype(s: pd.Series) -> SemanticDType:
     if pdt.is_datetime64_any_dtype(s):
         return SemanticDType.DATETIME
 
-    # Maybe bool
+    # This bounded object-value probe is independent of category eligibility.
     if pdt.is_object_dtype(s):
         sample = s.dropna().head(500)
         if not sample.empty and sample.map(lambda v: isinstance(v, bool)).all():

@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import f_oneway, kruskal, mannwhitneyu, ttest_ind
 
+from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns as find_numeric_columns
 from expo_jbm329.services.analysis.normality import shapiro_normality
 
@@ -42,10 +43,7 @@ _MIN_OBSERVATIONS_FOR_NORMALITY = 3
 # otherwise there is nothing to compare against.
 MIN_GROUPS = 2
 
-# A grouping column with more distinct values than this is rejected: with
-# too many groups, the comparison stops being meaningful (e.g. an ID-like
-# column) and the underlying computation would be needlessly expensive.
-MAX_GROUPS = 20
+MAX_GROUPS = limits.CATEGORICAL_MAX_DISTINCT_VALUES
 
 
 class GroupComparisonError(StrEnum):

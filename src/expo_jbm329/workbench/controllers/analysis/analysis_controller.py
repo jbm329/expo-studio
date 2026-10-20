@@ -44,7 +44,6 @@ from expo_jbm329.services.analysis.clustering_export import (
     ClusteringExportSnapshot,
 )
 from expo_jbm329.services.analysis.correlation import (
-    MAX_SELECTED_COLUMNS,
     MIN_SELECTED_COLUMNS,
     CorrelationMethod,
     analyze_correlation_matrix,
@@ -69,6 +68,7 @@ from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportSnapshot,
     HypothesisResult,
 )
+from expo_jbm329.services.analysis.limits import CORRELATION_MAX_SELECTED_COLUMNS as MAX_SELECTED_COLUMNS
 from expo_jbm329.services.analysis.multivariate_outliers import (
     MultivariateOutlierMethod,
     analyze_multivariate_outliers,

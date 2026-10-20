@@ -13,11 +13,16 @@ from pandas.api.types import is_bool_dtype, is_numeric_dtype
 from statsmodels.duration.hazard_regression import PHReg
 from statsmodels.tools.sm_exceptions import ConvergenceWarning
 
+from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
+from expo_jbm329.services.analysis.limits import (
+    REGRESSION_MAX_MODEL_TERMS as MAX_MODEL_TERMS,
+)
+from expo_jbm329.services.analysis.limits import (
+    REGRESSION_MAX_PREDICTORS as MAX_PREDICTORS,
+)
 from expo_jbm329.services.analysis.regression import (
     CONFIDENCE_LEVEL,
-    MAX_MODEL_TERMS,
-    MAX_PREDICTORS,
     CategoricalReference,
     PredictorColumns,
     PredictorKind,
@@ -314,7 +319,7 @@ def analyze_cox_regression(
                 status=data[event].to_numpy(dtype=np.int64),
                 ties="efron",
                 missing="raise",
-            ).fit(disp=False, maxiter=200)
+            ).fit(disp=False, maxiter=limits.COX_MAX_ITERATIONS)
             params = np.asarray(fit.params, dtype=np.float64)
             std_errors = np.asarray(fit.bse, dtype=np.float64)
             z_values = np.asarray(fit.tvalues, dtype=np.float64)

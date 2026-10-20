@@ -36,6 +36,12 @@ from expo_jbm329.services.analysis.chart_profiles import (
 from expo_jbm329.services.analysis.chart_profiles import (
     REGRESSION_GUI_TITLE_FONT_SIZE as _TITLE_FONT_SIZE,
 )
+from expo_jbm329.services.analysis.limits import (
+    REGRESSION_MAX_MODEL_TERMS as MAX_MODEL_TERMS,
+)
+from expo_jbm329.services.analysis.limits import (
+    REGRESSION_MAX_PREDICTORS as MAX_PREDICTORS,
+)
 from expo_jbm329.services.analysis.presentation import (
     build_regression_result_presentation,
     regression_component_label,
@@ -46,8 +52,6 @@ from expo_jbm329.services.analysis.regression import (
     DURBIN_WATSON_HIGH,
     DURBIN_WATSON_LOW,
     HIGH_VIF_THRESHOLD,
-    MAX_MODEL_TERMS,
-    MAX_PREDICTORS,
     SIGNIFICANCE_LEVEL,
     RegressionError,
     RegressionWarningReason,

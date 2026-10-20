@@ -25,7 +25,7 @@ from expo_jbm329.gui.dialogs.analysis.section_layout import (
 )
 from expo_jbm329.gui.widgets.analysis_chart_canvas import CHART_RETRY_INTERVAL_MS, SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
-from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS
+from expo_jbm329.services.analysis.limits import CATEGORICAL_MAX_DISTINCT_VALUES as MAX_GROUPS
 from expo_jbm329.services.analysis.normality import SHAPIRO_LARGE_SAMPLE_THRESHOLD
 from expo_jbm329.services.analysis.presentation import statistics_component_label
 from expo_jbm329.services.analysis.statistics import (

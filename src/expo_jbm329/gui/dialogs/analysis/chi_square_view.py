@@ -18,13 +18,16 @@ from expo_jbm329.services.analysis.chi_square import (
     ChiSquareError,
     ChiSquareResult,
 )
-from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS, MIN_GROUPS
+from expo_jbm329.services.analysis.group_comparison import MIN_GROUPS
 from expo_jbm329.services.analysis.hypothesis_charts import MAX_ANNOTATED_CELLS as MAX_ANNOTATED_CELLS  # noqa: PLC0414
 from expo_jbm329.services.analysis.hypothesis_charts import (
     RESIDUAL_SIGNIFICANCE_THRESHOLD,
     build_hypothesis_chart_presentation,
     draw_hypothesis_charts,
     heatmap_color_limit,
+)
+from expo_jbm329.services.analysis.limits import (
+    CATEGORICAL_MAX_DISTINCT_VALUES as MAX_GROUPS,
 )
 from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct

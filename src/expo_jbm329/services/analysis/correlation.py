@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import kendalltau, norm, pearsonr, rankdata
 
+from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
 
 if TYPE_CHECKING:
@@ -31,8 +32,8 @@ if TYPE_CHECKING:
 _NAN = float("nan")
 
 MIN_SELECTED_COLUMNS = 2
-MAX_SELECTED_COLUMNS = 30
-DEFAULT_SELECTED_COLUMNS = 20
+MAX_SELECTED_COLUMNS = limits.CORRELATION_MAX_SELECTED_COLUMNS
+DEFAULT_SELECTED_COLUMNS = limits.CORRELATION_DEFAULT_SELECTED_COLUMNS
 
 # Fewer observations than this make a correlation coefficient meaningless
 # (two points always lie on a perfect line).
@@ -41,7 +42,7 @@ MIN_OBSERVATIONS = 3
 CONFIDENCE_LEVEL = 0.95
 SIGNIFICANCE_LEVEL = 0.05
 
-SCATTER_SAMPLE_SIZE = 5_000
+SCATTER_SAMPLE_SIZE = limits.CORRELATION_SCATTER_SAMPLE_SIZE
 # A fixed seed keeps the plotted sample identical across runs.
 _SCATTER_SEED = 0
 

@@ -19,8 +19,8 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.analysis.column_combo_box import ColumnComboBox, exclusion_tooltip
+from expo_jbm329.services.analysis.limits import REGRESSION_MAX_PREDICTORS as MAX_PREDICTORS
 from expo_jbm329.services.analysis.presentation import regression_model_label
-from expo_jbm329.services.analysis.regression import MAX_PREDICTORS
 from expo_jbm329.services.analysis.regression_glm import GeneralizedTargetColumns, RegressionModel
 from expo_jbm329.services.analysis.survival import SurvivalColumns
 from expo_jbm329.utils.format_utils import fmt_int
