@@ -27,6 +27,7 @@ from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportComponent,
     hypothesis_export_tables,
 )
+from expo_jbm329.services.analysis.paired_comparison import MAX_PAIRED_TRAJECTORIES
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError
 from expo_jbm329.services.file_writer import FileWriter
 from expo_jbm329.utils.format_utils import fmt_num
@@ -140,7 +141,7 @@ def test_large_heatmap_omits_annotations() -> None:
 
 
 def test_paired_charts_preserve_selected_order_full_boxes_and_deterministic_sample() -> None:
-    snapshot = paired_snapshot(3, 250)
+    snapshot = paired_snapshot(3, MAX_PAIRED_TRAJECTORIES + 50)
     result = snapshot.result
     assert result.plot_data.sampled
     figure = Figure()
@@ -149,7 +150,7 @@ def test_paired_charts_preserve_selected_order_full_boxes_and_deterministic_samp
     boxes, trajectories = figure.axes
     assert [label.get_text() for label in boxes.get_xticklabels()] == list(snapshot.columns)
     assert [label.get_text() for label in trajectories.get_xticklabels()] == list(snapshot.columns)
-    assert len(trajectories.lines) == 200
+    assert len(trajectories.lines) == MAX_PAIRED_TRAJECTORIES
     assert list(trajectories.lines[0].get_ydata()) == list(result.plot_data.trajectories[0])
     assert boxes.lines[1].get_ydata()[1] == result.summaries[0].minimum
     assert boxes.lines[2].get_ydata()[1] == result.summaries[0].maximum

@@ -7,18 +7,19 @@ from PyQt6.QtCore import Qt
 
 from expo_jbm329.gui.dialogs.analysis.column_combo_box import exclusion_tooltip
 from expo_jbm329.gui.dialogs.analysis.regression_config import RegressionConfigWidget
+from expo_jbm329.services.analysis.limits import CATEGORICAL_MAX_DISTINCT_VALUES
 from expo_jbm329.services.analysis.regression import MAX_PREDICTORS, RegressionResult, analyze_regression
 from expo_jbm329.services.analysis.regression_glm import GeneralizedTargetColumns, RegressionModel
 from expo_jbm329.services.analysis.survival import SurvivalColumns
 
 
 def _frame() -> pd.DataFrame:
-    size = 30
+    size = (CATEGORICAL_MAX_DISTINCT_VALUES // 3 + 1) * 3
     return pd.DataFrame({
         "y": np.arange(size, dtype=float),
         "x": np.arange(size, dtype=float) % 7,
         "z": np.arange(size, dtype=float) % 5,
-        "g": ["a", "b", "c"] * 10,
+        "g": ["a", "b", "c"] * (size // 3),
         "id": [str(i) for i in range(size)],
         "when": pd.date_range("2024-01-01", periods=size),
     })

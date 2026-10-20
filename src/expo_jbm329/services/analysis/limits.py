@@ -36,7 +36,7 @@ from typing import Final
 # text/category/bool predictors; numeric predictors remain numeric.
 # Overview does NOT use this limit: it counts string/category dtypes regardless
 # of cardinality and counts booleans separately. This does not infer a dtype.
-# Reason: screen ID-like columns and bound cost/detail; 20 is product policy,
+# Reason: screen ID-like columns and bound cost/detail; this is product policy,
 # not a universal statistical maximum. MIN_GROUPS remains in group_comparison.
 CATEGORICAL_MAX_DISTINCT_VALUES: Final[int] = 50
 

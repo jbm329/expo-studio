@@ -13,15 +13,17 @@ from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import (
 from expo_jbm329.services.analysis.categories import HypothesisTest
 from expo_jbm329.services.analysis.chi_square import analyze_chi_square
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
+from expo_jbm329.services.analysis.limits import CATEGORICAL_MAX_DISTINCT_VALUES
 from expo_jbm329.services.analysis.paired_comparison import initialize_paired_comparison
 
 
 def _df() -> pd.DataFrame:
+    size = (CATEGORICAL_MAX_DISTINCT_VALUES // 6 + 1) * 6
     return pd.DataFrame({
-        "value": [float(i) for i in range(24)],
-        "other": [float(i) * 10 for i in range(24)],
-        "grp": ["A", "B"] * 12,
-        "color": ["r", "g", "b"] * 8,
+        "value": [float(i) for i in range(size)],
+        "other": [float(i) * 10 for i in range(size)],
+        "grp": ["A", "B"] * (size // 2),
+        "color": ["r", "g", "b"] * (size // 3),
     })
 
 
@@ -189,7 +191,7 @@ def test_unavailable_tests_get_a_notice_page_and_no_selection():
 
 def test_only_one_test_may_be_unavailable():
     # Numeric column + a single categorical column: Group Comparison works, chi-square doesn't.
-    widget = _widget(pd.DataFrame({"value": [float(i) for i in range(24)], "grp": ["A", "B"] * 12}))
+    widget = _widget(_df()[["value", "grp"]])
     stack = widget._stack  # noqa: SLF001
 
     assert isinstance(stack.widget(0), GroupComparisonConfigWidget)

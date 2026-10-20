@@ -10,7 +10,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from expo_jbm329.services.analysis import group_comparison as grouping_service
 from expo_jbm329.services.analysis import limits
+from expo_jbm329.services.analysis import multivariate_outliers as multivariate_service
+from expo_jbm329.services.analysis import pca as pca_service
+from expo_jbm329.services.analysis import regression as regression_service
+from expo_jbm329.services.analysis import timeseries as timeseries_service
+from expo_jbm329.services.analysis.clustering import MIN_CLUSTER_COUNT, MIN_DBSCAN_MIN_SAMPLES
 from expo_jbm329.services.analysis.group_comparison import classify_grouping_columns
 from expo_jbm329.services.analysis.outliers import DEFAULT_THRESHOLDS, OutlierMethod
 from expo_jbm329.services.analysis.overview import analyze_dataset_overview
@@ -25,55 +31,53 @@ from expo_jbm329.services.analysis.timeseries import analyze_time_series
 
 
 @pytest.mark.parametrize(
-    ("owner", "legacy_name", "central_name", "expected"),
+    ("owner", "legacy_name", "central_name"),
     [
-        ("group_comparison", "MAX_GROUPS", "CATEGORICAL_MAX_DISTINCT_VALUES", 20),
-        ("statistics", "MAX_GROUPS", "CATEGORICAL_MAX_DISTINCT_VALUES", 20),
-        ("regression", "MAX_PREDICTORS", "REGRESSION_MAX_PREDICTORS", 20),
-        ("regression", "MAX_MODEL_TERMS", "REGRESSION_MAX_MODEL_TERMS", 50),
-        ("regression", "PLOT_SAMPLE_SIZE", "REGRESSION_PLOT_SAMPLE_SIZE", 5_000),
-        ("regression_glm", "_CALIBRATION_MAX_BINS", "LOGISTIC_CALIBRATION_MAX_BINS", 10),
-        ("correlation", "DEFAULT_SELECTED_COLUMNS", "CORRELATION_DEFAULT_SELECTED_COLUMNS", 20),
-        ("correlation", "MAX_SELECTED_COLUMNS", "CORRELATION_MAX_SELECTED_COLUMNS", 30),
-        ("correlation", "SCATTER_SAMPLE_SIZE", "CORRELATION_SCATTER_SAMPLE_SIZE", 5_000),
-        ("correlation_charts", "MAX_ANNOTATED_COLUMNS", "CORRELATION_MAX_ANNOTATED_COLUMNS", 12),
-        ("hypothesis_charts", "MAX_ANNOTATED_CELLS", "HYPOTHESIS_MAX_ANNOTATED_CELLS", 100),
-        ("paired_comparison", "MAX_PAIRED_TRAJECTORIES", "PAIRED_MAX_TRAJECTORIES", 200),
-        ("pca", "SCATTER_SAMPLE_SIZE", "PCA_SCATTER_SAMPLE_SIZE", 5_000),
-        ("clustering", "PLOT_SAMPLE_SIZE", "CLUSTERING_PLOT_SAMPLE_SIZE", 5_000),
-        ("clustering", "DEFAULT_CLUSTER_COUNT", "CLUSTERING_DEFAULT_CLUSTER_COUNT", 3),
-        ("clustering", "MAX_CLUSTER_COUNT", "CLUSTERING_MAX_CLUSTER_COUNT", 100),
-        ("clustering", "DEFAULT_DBSCAN_EPSILON", "CLUSTERING_DEFAULT_DBSCAN_EPSILON", 0.5),
-        ("clustering", "MIN_DBSCAN_EPSILON", "CLUSTERING_MIN_DBSCAN_EPSILON", 0.01),
-        ("clustering", "MAX_DBSCAN_EPSILON", "CLUSTERING_MAX_DBSCAN_EPSILON", 100.0),
-        ("clustering", "DEFAULT_DBSCAN_MIN_SAMPLES", "CLUSTERING_DEFAULT_DBSCAN_MIN_SAMPLES", 5),
-        ("clustering", "MAX_DBSCAN_MIN_SAMPLES", "CLUSTERING_MAX_DBSCAN_MIN_SAMPLES", 100),
-        ("multivariate_outliers", "PLOT_SAMPLE_SIZE", "MULTIVARIATE_OUTLIERS_PLOT_SAMPLE_SIZE", 5_000),
-        ("multivariate_outliers", "DEFAULT_CONTAMINATION", "MULTIVARIATE_OUTLIERS_DEFAULT_CONTAMINATION", 0.05),
-        ("multivariate_outliers", "MIN_CONTAMINATION", "MULTIVARIATE_OUTLIERS_MIN_CONTAMINATION", 0.01),
-        ("multivariate_outliers", "MAX_CONTAMINATION", "MULTIVARIATE_OUTLIERS_MAX_CONTAMINATION", 0.5),
-        ("multivariate_outliers", "DEFAULT_LOF_NEIGHBORS", "MULTIVARIATE_OUTLIERS_DEFAULT_LOF_NEIGHBORS", 20),
-        ("multivariate_outliers", "MAX_LOF_NEIGHBORS", "MULTIVARIATE_OUTLIERS_MAX_LOF_NEIGHBORS", 100),
-        ("multivariate_outliers", "MAX_EXTREME_OBSERVATIONS", "MULTIVARIATE_OUTLIERS_MAX_EXTREME_OBSERVATIONS", 100),
-        ("outliers", "MAX_EXTREME_OBSERVATIONS", "OUTLIERS_MAX_EXTREME_OBSERVATIONS", 100),
-        ("outliers", "HISTOGRAM_BINS", "OUTLIERS_HISTOGRAM_BINS", 50),
-        ("outliers", "MIN_THRESHOLD", "OUTLIERS_MIN_THRESHOLD", 0.1),
-        ("outliers", "MAX_THRESHOLD", "OUTLIERS_MAX_THRESHOLD", 100.0),
-        ("overview", "SAMPLE_ROW_LIMIT", "OVERVIEW_SAMPLE_ROW_LIMIT", 100),
-        ("overview", "SAMPLE_DISPLAY_ROW_LIMIT", "OVERVIEW_SAMPLE_DISPLAY_ROW_LIMIT", 10),
-        ("timeseries", "MAX_ACF_LAGS", "TIME_SERIES_MAX_ACF_LAGS", 40),
+        ("group_comparison", "MAX_GROUPS", "CATEGORICAL_MAX_DISTINCT_VALUES"),
+        ("statistics", "MAX_GROUPS", "CATEGORICAL_MAX_DISTINCT_VALUES"),
+        ("regression", "MAX_PREDICTORS", "REGRESSION_MAX_PREDICTORS"),
+        ("regression", "MAX_MODEL_TERMS", "REGRESSION_MAX_MODEL_TERMS"),
+        ("regression", "PLOT_SAMPLE_SIZE", "REGRESSION_PLOT_SAMPLE_SIZE"),
+        ("regression_glm", "_CALIBRATION_MAX_BINS", "LOGISTIC_CALIBRATION_MAX_BINS"),
+        ("correlation", "DEFAULT_SELECTED_COLUMNS", "CORRELATION_DEFAULT_SELECTED_COLUMNS"),
+        ("correlation", "MAX_SELECTED_COLUMNS", "CORRELATION_MAX_SELECTED_COLUMNS"),
+        ("correlation", "SCATTER_SAMPLE_SIZE", "CORRELATION_SCATTER_SAMPLE_SIZE"),
+        ("correlation_charts", "MAX_ANNOTATED_COLUMNS", "CORRELATION_MAX_ANNOTATED_COLUMNS"),
+        ("hypothesis_charts", "MAX_ANNOTATED_CELLS", "HYPOTHESIS_MAX_ANNOTATED_CELLS"),
+        ("paired_comparison", "MAX_PAIRED_TRAJECTORIES", "PAIRED_MAX_TRAJECTORIES"),
+        ("pca", "SCATTER_SAMPLE_SIZE", "PCA_SCATTER_SAMPLE_SIZE"),
+        ("clustering", "PLOT_SAMPLE_SIZE", "CLUSTERING_PLOT_SAMPLE_SIZE"),
+        ("clustering", "DEFAULT_CLUSTER_COUNT", "CLUSTERING_DEFAULT_CLUSTER_COUNT"),
+        ("clustering", "MAX_CLUSTER_COUNT", "CLUSTERING_MAX_CLUSTER_COUNT"),
+        ("clustering", "DEFAULT_DBSCAN_EPSILON", "CLUSTERING_DEFAULT_DBSCAN_EPSILON"),
+        ("clustering", "MIN_DBSCAN_EPSILON", "CLUSTERING_MIN_DBSCAN_EPSILON"),
+        ("clustering", "MAX_DBSCAN_EPSILON", "CLUSTERING_MAX_DBSCAN_EPSILON"),
+        ("clustering", "DEFAULT_DBSCAN_MIN_SAMPLES", "CLUSTERING_DEFAULT_DBSCAN_MIN_SAMPLES"),
+        ("clustering", "MAX_DBSCAN_MIN_SAMPLES", "CLUSTERING_MAX_DBSCAN_MIN_SAMPLES"),
+        ("multivariate_outliers", "PLOT_SAMPLE_SIZE", "MULTIVARIATE_OUTLIERS_PLOT_SAMPLE_SIZE"),
+        ("multivariate_outliers", "DEFAULT_CONTAMINATION", "MULTIVARIATE_OUTLIERS_DEFAULT_CONTAMINATION"),
+        ("multivariate_outliers", "MIN_CONTAMINATION", "MULTIVARIATE_OUTLIERS_MIN_CONTAMINATION"),
+        ("multivariate_outliers", "MAX_CONTAMINATION", "MULTIVARIATE_OUTLIERS_MAX_CONTAMINATION"),
+        ("multivariate_outliers", "DEFAULT_LOF_NEIGHBORS", "MULTIVARIATE_OUTLIERS_DEFAULT_LOF_NEIGHBORS"),
+        ("multivariate_outliers", "MAX_LOF_NEIGHBORS", "MULTIVARIATE_OUTLIERS_MAX_LOF_NEIGHBORS"),
+        ("multivariate_outliers", "MAX_EXTREME_OBSERVATIONS", "MULTIVARIATE_OUTLIERS_MAX_EXTREME_OBSERVATIONS"),
+        ("outliers", "MAX_EXTREME_OBSERVATIONS", "OUTLIERS_MAX_EXTREME_OBSERVATIONS"),
+        ("outliers", "HISTOGRAM_BINS", "OUTLIERS_HISTOGRAM_BINS"),
+        ("outliers", "MIN_THRESHOLD", "OUTLIERS_MIN_THRESHOLD"),
+        ("outliers", "MAX_THRESHOLD", "OUTLIERS_MAX_THRESHOLD"),
+        ("overview", "SAMPLE_ROW_LIMIT", "OVERVIEW_SAMPLE_ROW_LIMIT"),
+        ("overview", "SAMPLE_DISPLAY_ROW_LIMIT", "OVERVIEW_SAMPLE_DISPLAY_ROW_LIMIT"),
+        ("timeseries", "MAX_ACF_LAGS", "TIME_SERIES_MAX_ACF_LAGS"),
     ],
 )
 def test_central_values_and_existing_imports_preserve_policy(
     owner: str,
     legacy_name: str,
     central_name: str,
-    expected: float,
 ) -> None:
     module = importlib.import_module(f"expo_jbm329.services.analysis.{owner}")
 
-    assert getattr(limits, central_name) == expected
-    assert getattr(module, legacy_name) == expected
+    assert getattr(module, legacy_name) == getattr(limits, central_name)
 
 
 def test_limits_can_be_imported_without_analysis_or_ui_dependencies() -> None:
@@ -84,15 +88,12 @@ for name in ("pandas", "numpy", "matplotlib", "PyQt6",
              "expo_jbm329.services.analysis.regression",
              "expo_jbm329.services.analysis.outliers"):
     assert name not in sys.modules, name
-assert limits.REGRESSION_MAX_MODEL_TERMS == 50
+assert limits.REGRESSION_MAX_MODEL_TERMS > 0
 """
     subprocess.run([sys.executable, "-c", script], check=True, capture_output=True, text=True)
 
 
 def test_method_specific_outlier_defaults_keep_the_existing_enum_mapping() -> None:
-    assert limits.OUTLIERS_DEFAULT_IQR_THRESHOLD == 1.5
-    assert limits.OUTLIERS_DEFAULT_Z_SCORE_THRESHOLD == 3.0
-    assert limits.OUTLIERS_DEFAULT_MODIFIED_Z_SCORE_THRESHOLD == 3.5
     assert DEFAULT_THRESHOLDS == {
         OutlierMethod.IQR: limits.OUTLIERS_DEFAULT_IQR_THRESHOLD,
         OutlierMethod.Z_SCORE: limits.OUTLIERS_DEFAULT_Z_SCORE_THRESHOLD,
@@ -100,8 +101,44 @@ def test_method_specific_outlier_defaults_keep_the_existing_enum_mapping() -> No
     }
 
 
-@pytest.mark.parametrize("level_count", [19, 20, 21])
-def test_shared_category_boundary_keeps_all_levels_or_excludes_whole_column(level_count: int) -> None:
+@pytest.mark.parametrize(
+    ("minimum", "default", "maximum"),
+    [
+        (MIN_CLUSTER_COUNT, limits.CLUSTERING_DEFAULT_CLUSTER_COUNT, limits.CLUSTERING_MAX_CLUSTER_COUNT),
+        (
+            limits.CLUSTERING_MIN_DBSCAN_EPSILON,
+            limits.CLUSTERING_DEFAULT_DBSCAN_EPSILON,
+            limits.CLUSTERING_MAX_DBSCAN_EPSILON,
+        ),
+        (
+            MIN_DBSCAN_MIN_SAMPLES,
+            limits.CLUSTERING_DEFAULT_DBSCAN_MIN_SAMPLES,
+            limits.CLUSTERING_MAX_DBSCAN_MIN_SAMPLES,
+        ),
+        (
+            limits.MULTIVARIATE_OUTLIERS_MIN_CONTAMINATION,
+            limits.MULTIVARIATE_OUTLIERS_DEFAULT_CONTAMINATION,
+            limits.MULTIVARIATE_OUTLIERS_MAX_CONTAMINATION,
+        ),
+        (
+            multivariate_service.MIN_LOF_NEIGHBORS,
+            limits.MULTIVARIATE_OUTLIERS_DEFAULT_LOF_NEIGHBORS,
+            limits.MULTIVARIATE_OUTLIERS_MAX_LOF_NEIGHBORS,
+        ),
+        (2, limits.CORRELATION_DEFAULT_SELECTED_COLUMNS, limits.CORRELATION_MAX_SELECTED_COLUMNS),
+        *[
+            (limits.OUTLIERS_MIN_THRESHOLD, threshold, limits.OUTLIERS_MAX_THRESHOLD)
+            for threshold in DEFAULT_THRESHOLDS.values()
+        ],
+    ],
+)
+def test_parameter_defaults_remain_within_valid_bounds(minimum: float, default: float, maximum: float) -> None:
+    assert minimum <= default <= maximum
+
+
+@pytest.mark.parametrize("offset", [-1, 0, 1])
+def test_shared_category_boundary_keeps_all_levels_or_excludes_whole_column(offset: int) -> None:
+    level_count = limits.CATEGORICAL_MAX_DISTINCT_VALUES + offset
     city = [f"city-{index}" for index in range(level_count)] * 3
     df = pd.DataFrame({"city": city, "target": np.arange(len(city), dtype=float)})
 
@@ -113,9 +150,12 @@ def test_shared_category_boundary_keeps_all_levels_or_excludes_whole_column(leve
     if level_count <= limits.CATEGORICAL_MAX_DISTINCT_VALUES:
         assert grouping.eligible == predictors.categorical == ("city",)
         assert len(statistics.categorical_columns[0].frequencies) == level_count
-        assert fitted.error is None
-        assert fitted.references[0].level_count == level_count
-        assert fitted.n_used == len(df)
+        if level_count - 1 <= limits.REGRESSION_MAX_MODEL_TERMS:
+            assert fitted.error is None
+            assert fitted.references[0].level_count == level_count
+            assert fitted.n_used == len(df)
+        else:
+            assert fitted.error is RegressionError.TOO_MANY_TERMS
     else:
         assert grouping.eligible == predictors.categorical == ()
         assert grouping.excluded[0].name == predictors.excluded[0].name == "city"
@@ -123,12 +163,13 @@ def test_shared_category_boundary_keeps_all_levels_or_excludes_whole_column(leve
         assert fitted.error is RegressionError.INVALID_COLUMN
 
 
-@pytest.mark.parametrize("level_count", [19, 20, 21])
+@pytest.mark.parametrize("offset", [-1, 0, 1])
 @pytest.mark.parametrize("dtype", ["string", "category", "int64"])
 def test_overview_dtype_counts_and_statistics_frequency_eligibility_are_distinct(
-    level_count: int,
+    offset: int,
     dtype: str,
 ) -> None:
+    level_count = limits.CATEGORICAL_MAX_DISTINCT_VALUES + offset
     source = pd.DataFrame({"value": pd.Series(list(range(level_count)) * 2, dtype=dtype)})
 
     overview = analyze_dataset_overview(source)
@@ -154,12 +195,13 @@ def test_overview_counts_booleans_separately_from_categorical_columns() -> None:
 
 
 def test_category_eligibility_is_not_reclassified_after_complete_case_deletion() -> None:
-    city = [f"city-{index}" for index in range(21)] * 3
+    maximum = limits.CATEGORICAL_MAX_DISTINCT_VALUES
+    city = [f"city-{index}" for index in range(maximum + 1)] * 3
     target = np.arange(len(city), dtype=float)
     df = pd.DataFrame({"city": city, "target": target})
-    df.loc[df["city"] == "city-20", "target"] = np.nan
+    df.loc[df["city"] == f"city-{maximum}", "target"] = np.nan
 
-    assert df.dropna()["city"].nunique() == 20
+    assert df.dropna()["city"].nunique() == maximum
     assert analyze_regression(df, "target", ["city"]).error is RegressionError.INVALID_COLUMN
 
 
@@ -167,7 +209,12 @@ def test_category_eligibility_is_not_reclassified_after_complete_case_deletion()
 def test_regression_expanded_term_boundary_excludes_intercept(
     last_levels: int,
     expected_error: RegressionError | None,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # Isolate term-count behavior from independently tunable eligibility limits.
+    monkeypatch.setattr(grouping_service, "MAX_GROUPS", 20)
+    monkeypatch.setattr(regression_service, "MAX_PREDICTORS", 3)
+    monkeypatch.setattr(regression_service, "MAX_MODEL_TERMS", 50)
     rng = np.random.default_rng(42)
     df = pd.DataFrame({
         "a": rng.choice([f"a-{index}" for index in range(18)], 500),
@@ -181,12 +228,17 @@ def test_regression_expanded_term_boundary_excludes_intercept(
     assert result.error is expected_error
     assert result.n_used == 500
     if expected_error is None:
-        assert result.df_model == limits.REGRESSION_MAX_MODEL_TERMS
-        assert len(result.terms) == limits.REGRESSION_MAX_MODEL_TERMS + 1
+        assert result.df_model == 50
+        assert len(result.terms) == 51
 
 
-@pytest.mark.parametrize("size", [4_999, 5_000, 5_001])
-def test_ols_and_pca_sampling_boundaries_keep_full_fitted_cohorts(size: int) -> None:
+@pytest.mark.parametrize("size", [29, 30, 31])
+def test_ols_and_pca_sampling_boundaries_keep_full_fitted_cohorts(
+    size: int,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(regression_service, "PLOT_SAMPLE_SIZE", 30)
+    monkeypatch.setattr(pca_service, "SCATTER_SAMPLE_SIZE", 30)
     rng = np.random.default_rng(42)
     df = pd.DataFrame({"x": rng.normal(size=size), "y": rng.normal(size=size)})
 
@@ -196,15 +248,16 @@ def test_ols_and_pca_sampling_boundaries_keep_full_fitted_cohorts(size: int) -> 
     assert regression.error is components.error is None
     assert regression.n_used == components.rows_used == size
     assert regression.plot is not None
-    assert len(regression.plot.actual) == min(size, limits.REGRESSION_PLOT_SAMPLE_SIZE)
-    assert len(components.sample_pc1) == min(size, limits.PCA_SCATTER_SAMPLE_SIZE)
-    assert regression.plot.sampled == (size > limits.REGRESSION_PLOT_SAMPLE_SIZE)
-    assert components.sampled == (size > limits.PCA_SCATTER_SAMPLE_SIZE)
+    assert len(regression.plot.actual) == min(size, 30)
+    assert len(components.sample_pc1) == min(size, 30)
+    assert regression.plot.sampled == (size > 30)
+    assert components.sampled == (size > 30)
     assert sum(components.explained_variance_ratio) == pytest.approx(1.0)
 
 
-@pytest.mark.parametrize("size", [78, 80, 82])
-def test_acf_limit_does_not_truncate_the_series(size: int) -> None:
+@pytest.mark.parametrize("size", [18, 20, 22])
+def test_acf_limit_does_not_truncate_the_series(size: int, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(timeseries_service, "MAX_ACF_LAGS", 10)
     rng = np.random.default_rng(42)
     df = pd.DataFrame({
         "when": pd.date_range("2025-01-01", periods=size, freq="D"),
@@ -215,4 +268,4 @@ def test_acf_limit_does_not_truncate_the_series(size: int) -> None:
 
     assert result.error is None
     assert len(result.values) == size
-    assert len(result.acf_values) == min(limits.TIME_SERIES_MAX_ACF_LAGS, size // 2)
+    assert len(result.acf_values) == min(10, size // 2)

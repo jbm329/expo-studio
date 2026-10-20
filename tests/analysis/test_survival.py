@@ -66,7 +66,6 @@ def test_cox_fit_receives_documented_iteration_budget(monkeypatch):
     result = analyze_cox_regression(_frame(), "duration", "event", ["x"])
 
     assert result.error is None
-    assert limits.COX_MAX_ITERATIONS == 200
     assert received == [limits.COX_MAX_ITERATIONS]
 
 

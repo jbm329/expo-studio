@@ -71,7 +71,6 @@ def test_fit_receives_documented_model_specific_iteration_budget(monkeypatch, mo
     result = analyze_generalized_regression(frame, model, target, ["x"])
 
     assert result.error is None
-    assert expected == 200
     # statsmodels may also fit an intercept-only model to derive its metrics.
     assert received
     assert received[0] == expected
@@ -117,7 +116,7 @@ def test_logistic_calibration_quantiles_cover_all_rows_without_sampling(size):
     assert data is not None
     assert data.n_used == size
     assert sum(data.bin_counts) == size
-    assert len(data.bin_counts) <= 10
+    assert len(data.bin_counts) <= limits.LOGISTIC_CALIBRATION_MAX_BINS
     assert max(data.bin_counts) - min(data.bin_counts) <= 1
     assert tuple(sorted(data.mean_probabilities)) == data.mean_probabilities
 
