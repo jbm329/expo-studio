@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
@@ -41,6 +42,47 @@ def writer() -> FileWriter:
 @pytest.fixture
 def io_service(loader: FileLoader, writer: FileWriter) -> DataIOService:
     return DataIOService(loader, writer)
+
+
+def test_named_excel_start_omits_shape_until_validation(io_service, tmp_path, caplog):
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+
+    result = io_service.export_dfs_excel(
+        {"Data": pd.DataFrame({"A": [1, 2]})}, tmp_path / "named.xlsx", corr_id="named-shape"
+    )
+
+    assert result.ok
+    messages = [record.getMessage() for record in caplog.records]
+    start = next(message for message in messages if message.startswith("DataIOService: export excel start"))
+    assert "rows=" not in start
+    assert "cols=" not in start
+    assert "corr=named-shape" in start
+    assert any(
+        message.startswith("DataIOService: named Excel workbook") and "rows=2, sheets=1" in message
+        for message in messages
+    )
+
+
+@pytest.mark.parametrize(
+    ("method", "suffix", "event"),
+    [
+        ("export_df_csv", ".csv", "export CSV start"),
+        ("export_df_datafile", ".df", "export data file start"),
+        ("export_df_excel", ".xlsx", "export excel start"),
+    ],
+)
+def test_single_dataframe_export_start_retains_shape(io_service, tmp_path, caplog, method, suffix, event):
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+
+    result = getattr(io_service, method)(pd.DataFrame({"A": [1, 2]}), tmp_path / f"single{suffix}")
+
+    assert result.ok
+    start = next(
+        record.getMessage()
+        for record in caplog.records
+        if record.getMessage().startswith(f"DataIOService: {event}")
+    )
+    assert "rows=2, cols=1" in start
 
 
 def test_export_html_report_renders_snapshot_and_forwards_callbacks(io_service: DataIOService, tmp_path: Path) -> None:
