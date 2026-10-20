@@ -57,6 +57,7 @@ from expo_jbm329.services.analysis.correlation_export import (
     CorrelationExportRequest,
     CorrelationExportSnapshot,
 )
+from expo_jbm329.services.analysis.diagnostics import analysis_job_scope, analysis_log_component
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison, initialize_group_comparison
 from expo_jbm329.services.analysis.hypothesis_charts import (
     build_hypothesis_chart_presentation,
@@ -2566,6 +2567,7 @@ class AnalysisController:
     ) -> None:
         """Run a category's computation in the background with a busy overlay."""
         corr_id = uuid.uuid4().hex
+        scope = f"analysis:{category.value}"
         dialog.invalidate_overview_export()
         revision = dialog.analysis_revision()
 
@@ -2591,7 +2593,8 @@ class AnalysisController:
         ) -> object:
             if cancel_cb is not None and cancel_cb():
                 return None
-            return handler.compute(df, _JobCallbacks(progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id))
+            with analysis_job_scope(scope):
+                return handler.compute(df, _JobCallbacks(progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id))
 
         def _on_result(result: object) -> None:
             if _is_stale():
@@ -2613,6 +2616,14 @@ class AnalysisController:
                 return
             self._show_placeholder(dialog, self._tr(self.TR_ANALYSIS_ERROR))
 
+        self._logger.debug(
+            "%s: computation requested (corr=%s, scope=%s, rows=%d, cols=%d)",
+            analysis_log_component(category),
+            corr_id,
+            scope,
+            len(df),
+            df.shape[1],
+        )
         self._async_ops.run_target_overlay_operation(
             target=dialog.content_panel(),
             runner="pool",
@@ -2620,7 +2631,7 @@ class AnalysisController:
             on_result=_on_result,
             on_error=_on_error,
             busy_message=self._tr(self.TR_RUNNING_ANALYSIS),
-            scope=f"analysis:{category.value}",
+            scope=scope,
             operation_name=self._tr(self.TR_ANALYSIS_OPERATION),
             stale_check=_is_stale,
             corr_id=corr_id,
@@ -2696,6 +2707,7 @@ class AnalysisController:
             return
 
         corr_id = uuid.uuid4().hex
+        scope = f"analysis:{category.value}:{scope_suffix}"
         if category is AnalysisCategory.HYPOTHESIS_TESTS:
             dialog.invalidate_overview_export()
         revision = dialog.analysis_revision()
@@ -2720,7 +2732,8 @@ class AnalysisController:
         ) -> object:
             if cancel_cb is not None and cancel_cb():
                 return None
-            return compute(df, _JobCallbacks(progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id))
+            with analysis_job_scope(scope):
+                return compute(df, _JobCallbacks(progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id))
 
         def _on_result(result: object) -> None:
             if _combined_is_stale():
@@ -2736,6 +2749,14 @@ class AnalysisController:
                 return
             dialog.show_placeholder(self._tr(self.TR_ANALYSIS_ERROR))
 
+        self._logger.debug(
+            "%s: computation requested (corr=%s, scope=%s, rows=%d, cols=%d)",
+            analysis_log_component(category),
+            corr_id,
+            scope,
+            len(df),
+            df.shape[1],
+        )
         self._async_ops.run_target_overlay_operation(
             target=target if target is not None else dialog.content_panel(),
             runner="pool",
@@ -2743,7 +2764,7 @@ class AnalysisController:
             on_result=_on_result,
             on_error=_on_error,
             busy_message=self._tr(self.TR_RUNNING_ANALYSIS),
-            scope=f"analysis:{category.value}:{scope_suffix}",
+            scope=scope,
             operation_name=self._tr(self.TR_ANALYSIS_OPERATION),
             stale_check=_combined_is_stale,
             corr_id=corr_id,

@@ -14,12 +14,14 @@ import statsmodels.api as sm
 from statsmodels.duration.hazard_regression import PHReg
 
 from expo_jbm329.services.analysis import overview, statistics
+from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.chi_square import analyze_chi_square
 from expo_jbm329.services.analysis.clustering import analyze_clustering
 from expo_jbm329.services.analysis.correlation import (
     analyze_correlation_matrix,
     analyze_correlation_pair,
 )
+from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic, analysis_job_scope, analysis_log_component
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison
 from expo_jbm329.services.analysis.multivariate_outliers import analyze_multivariate_outliers
 from expo_jbm329.services.analysis.outliers import analyze_outlier_column, analyze_outlier_summary
@@ -136,10 +138,88 @@ def test_computation_logs_one_convention_line_without_none_fields(caplog):
     messages = [record.getMessage() for record in caplog.records if record.name == "applogger.service"]
     assert len(messages) == 1
     assert messages[0].startswith(
-        "AnalysisService: computation finished (corr=single-line, operation=overview, outcome=success,"
+        "Advanced analysis (Overview): computation finished (corr=single-line, operation=overview, outcome=success,"
     )
     assert messages[0].endswith(")")
     assert "none" not in messages[0].lower()
+
+
+@pytest.mark.parametrize(
+    ("operation", "section"),
+    [
+        ("overview", "Overview"),
+        ("statistics", "Statistics"),
+        ("group_comparison", "Hypothesis Tests"),
+        ("chi_square", "Hypothesis Tests"),
+        ("paired_comparison", "Hypothesis Tests"),
+        ("correlation_matrix", "Correlation"),
+        ("correlation_pair", "Correlation"),
+        ("regression", "Regression"),
+        ("regression_glm", "Regression"),
+        ("survival_cox", "Regression"),
+        ("outlier_summary", "Outliers"),
+        ("outlier_column", "Outliers"),
+        ("multivariate_outliers", "Outliers"),
+        ("clustering", "Clustering"),
+        ("pca", "PCA"),
+        ("timeseries", "Time Series"),
+    ],
+)
+@pytest.mark.parametrize("outcome", ["success", "unavailable", "cancelled"])
+def test_completion_prefix_covers_every_analysis_operation(caplog, operation, section, outcome):
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+
+    AnalysisDiagnostic(operation, "section-operation", row_count=3, column_count=2).finish(outcome)
+
+    messages = [record.getMessage() for record in caplog.records if record.name == "applogger.service"]
+    assert len(messages) == 1
+    assert messages[0].startswith(
+        f"Advanced analysis ({section}): computation finished (corr=section-operation, operation={operation},"
+    )
+    assert f"outcome={outcome}" in messages[0]
+
+
+@pytest.mark.parametrize("category", list(AnalysisCategory))
+def test_section_prefix_is_stable_english(category):
+    section = "PCA" if category is AnalysisCategory.PCA else category.value.replace("_", " ").title()
+    assert analysis_log_component(category) == f"Advanced analysis ({section})"
+
+
+def test_job_scope_is_restored_after_nested_failure(caplog):
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+    with analysis_job_scope("analysis:regression:fit:linear"):
+        with pytest.raises(ValueError, match="test failure"):
+            with analysis_job_scope("analysis:regression:fit:logistic"):
+                raise ValueError("test failure")
+        diagnostic = AnalysisDiagnostic("regression", "outer", row_count=3, column_count=2, method="ols")
+    diagnostic.finish("success")
+    AnalysisDiagnostic("overview", "standalone", row_count=3, column_count=2).finish("success")
+
+    messages = [record.getMessage() for record in caplog.records if record.name == "applogger.service"]
+    assert "corr=outer, scope=analysis:regression:fit:linear," in messages[0]
+    assert "operation=" not in messages[0]
+    assert "method=" not in messages[0]
+    assert "corr=standalone, operation=overview," in messages[1]
+    assert "scope=" not in messages[1]
+
+
+def test_concurrent_jobs_keep_distinct_scopes(caplog):
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+    barrier = Barrier(2)
+
+    def finish_computation(scope):
+        with analysis_job_scope(scope):
+            barrier.wait()
+            AnalysisDiagnostic("regression", scope, row_count=3, column_count=2).finish("success")
+
+    scopes = ["analysis:regression:fit:linear", "analysis:regression:fit:logistic"]
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        list(executor.map(finish_computation, scopes))
+
+    messages = [record.getMessage() for record in caplog.records if record.name == "applogger.service"]
+    assert len(messages) == 2
+    for scope in scopes:
+        assert sum(f"corr={scope}, scope={scope}," in message for message in messages) == 1
 
 
 def test_computations_nested_in_summary_scope_are_silent(caplog):

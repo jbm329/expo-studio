@@ -5931,6 +5931,7 @@ def test_analysis_chart_factories_share_export_id_without_changing_factory_contr
 
 @pytest.mark.parametrize("category", [AnalysisCategory.OVERVIEW, AnalysisCategory.STATISTICS])
 def test_controller_workers_keep_independent_explicit_correlation_ids(caplog, category):
+    caplog.set_level(logging.DEBUG, logger="applogger.ui")
     frame = pd.DataFrame({"PRIVATE_SCHEMA": [1.0, 2.0, 3.0]})
     source = DatasetRef("tab", "PRIVATE_DATASET", 3, 1)
     operations = DummyAsyncOps()
@@ -5960,8 +5961,70 @@ def test_controller_workers_keep_independent_explicit_correlation_ids(caplog, ca
     assert records
     for identifier in identifiers:
         assert sum(f"corr={identifier}," in record.getMessage() for record in records) >= 1
+        assert any(
+            f"corr={identifier}, scope=analysis:{category.value}," in record.getMessage() for record in records
+        )
+        assert sum(
+            f"computation requested (corr={identifier}," in record.getMessage() for record in caplog.records
+        ) == 1
     for record in records:
         message = record.getMessage()
+        assert "operation=" not in message
+        assert "method=" not in message
         assert sum(identifier in message for identifier in identifiers) == 1
         assert "PRIVATE_SCHEMA" not in message
         assert "PRIVATE_DATASET" not in message
+
+
+@pytest.mark.parametrize("category", list(AnalysisCategory))
+@pytest.mark.parametrize("recompute", [False, True])
+def test_all_sections_log_request_before_scheduling(caplog, category, recompute):
+    from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic
+
+    caplog.set_level(logging.DEBUG, logger="applogger.ui")
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+    frame = pd.DataFrame({"PRIVATE_SCHEMA": [1.0, 2.0, 3.0]})
+    source = DatasetRef("tab", "PRIVATE_DATASET", 3, 1)
+    operations = DummyAsyncOps()
+    controller = AnalysisController(
+        results=DummyResults(datasets=[source], active_tab_id="tab", dfs={"tab": frame}),
+        async_ops=operations,
+    )
+    dialog = DummyAnalysisDialog(source_dataset=source)
+    dialog._selected_category = category
+
+    def finish_computation(df, callbacks):
+        diagnostic = AnalysisDiagnostic("overview", callbacks.corr_id, row_count=len(df), column_count=df.shape[1])
+        diagnostic.finish("success")
+
+    compute = Mock(side_effect=finish_computation)
+
+    if recompute:
+        controller._recompute_content(
+            dialog,
+            category=category,
+            scope_suffix="test",
+            compute=compute,
+            apply_result=Mock(),
+            is_stale=lambda: False,
+        )
+    else:
+        controller._run_analysis(dialog, category, Mock(compute=compute, cancelable=False), "tab", frame)
+
+    assert len(operations.calls) == 1
+    call = operations.calls[0]
+    section = "PCA" if category is AnalysisCategory.PCA else category.value.replace("_", " ").title()
+    messages = [record.getMessage() for record in caplog.records if record.name == "applogger.ui"]
+    assert messages == [
+        f"Advanced analysis ({section}): computation requested "
+        f"(corr={call['corr_id']}, scope={call['scope']}, rows=3, cols=1)"
+    ]
+    compute.assert_not_called()
+    call["work"]()
+    assert compute.call_args.args[1].corr_id == call["corr_id"]
+    completions = [record.getMessage() for record in caplog.records if record.name == "applogger.service"]
+    assert len(completions) == 1
+    assert f"corr={call['corr_id']}, scope={call['scope']}," in completions[0]
+    assert "operation=" not in completions[0]
+    assert "method=" not in completions[0]
+    assert all("PRIVATE_SCHEMA" not in message and "PRIVATE_DATASET" not in message for message in messages)

@@ -13,6 +13,8 @@ from contextvars import ContextVar
 from time import perf_counter
 from typing import TYPE_CHECKING, Literal
 
+from expo_jbm329.services.analysis.categories import AnalysisCategory
+
 if TYPE_CHECKING:
     from collections.abc import Generator
 
@@ -20,11 +22,62 @@ _LOGGER = logging.getLogger("applogger.service")
 _COMPONENT = "AnalysisService"
 AnalysisOutcome = Literal["success", "unavailable", "cancelled"]
 
+_OPERATION_CATEGORIES: dict[str, AnalysisCategory] = {
+    "overview": AnalysisCategory.OVERVIEW,
+    "statistics": AnalysisCategory.STATISTICS,
+    "group_comparison": AnalysisCategory.HYPOTHESIS_TESTS,
+    "chi_square": AnalysisCategory.HYPOTHESIS_TESTS,
+    "paired_comparison": AnalysisCategory.HYPOTHESIS_TESTS,
+    "correlation_matrix": AnalysisCategory.CORRELATION,
+    "correlation_pair": AnalysisCategory.CORRELATION,
+    "regression": AnalysisCategory.REGRESSION,
+    "regression_glm": AnalysisCategory.REGRESSION,
+    "survival_cox": AnalysisCategory.REGRESSION,
+    "outlier_summary": AnalysisCategory.OUTLIERS,
+    "outlier_column": AnalysisCategory.OUTLIERS,
+    "multivariate_outliers": AnalysisCategory.OUTLIERS,
+    "clustering": AnalysisCategory.CLUSTERING,
+    "pca": AnalysisCategory.PCA,
+    "timeseries": AnalysisCategory.TIME_SERIES,
+}
+
+
+def analysis_log_component(category: AnalysisCategory) -> str:
+    """Return a stable English section prefix, independent of the UI locale.
+
+    Args:
+        category: Analysis section owning the operation.
+
+    Returns:
+        Section-qualified prefix shared by request and completion events.
+    """
+    section = "PCA" if category is AnalysisCategory.PCA else category.value.replace("_", " ").title()
+    return f"Advanced analysis ({section})"
+
+
 # Set while a chart batch or report stage owns a summary line. Nested successful
 # computations, batches and stages stay silent so exports log one line per
 # operation instead of one per chart. Context variables are thread-local in
 # worker pools, so concurrent jobs never silence each other.
 _SUMMARY_SCOPE_ACTIVE: ContextVar[bool] = ContextVar("analysis_summary_scope_active", default=False)
+_ANALYSIS_JOB_SCOPE: ContextVar[str | None] = ContextVar("analysis_job_scope", default=None)
+
+
+@contextmanager
+def analysis_job_scope(scope: str) -> Generator[None]:
+    """Expose the controller's exact job scope to diagnostics during computation.
+
+    Args:
+        scope: The same bounded scope supplied to JobManager.
+
+    Yields:
+        Control to the computation, restoring previous context even on failure.
+    """
+    token = _ANALYSIS_JOB_SCOPE.set(scope)
+    try:
+        yield
+    finally:
+        _ANALYSIS_JOB_SCOPE.reset(token)
 
 
 def log_diagnostic(
@@ -107,6 +160,7 @@ class AnalysisDiagnostic:
             selected_count: Number of selected features, if applicable.
         """
         self._operation = operation
+        self._scope = _ANALYSIS_JOB_SCOPE.get()
         self._corr_id = corr_id
         self._method = method
         self._row_count = row_count
@@ -140,11 +194,12 @@ class AnalysisDiagnostic:
         if self._silent:
             return
         log_diagnostic(
-            _COMPONENT,
+            analysis_log_component(_OPERATION_CATEGORIES[self._operation]),
             "computation finished",
             corr=self._corr_id,
-            operation=self._operation,
-            method=self._method,
+            scope=self._scope,
+            operation=self._operation if self._scope is None else None,
+            method=self._method if self._scope is None else None,
             outcome=outcome,
             reason=reason,
             rows=self._row_count,

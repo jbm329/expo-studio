@@ -124,6 +124,8 @@ Every message follows `Component: event (key=value, ...)`:
 
 - `Component` is the owning class or service name in PascalCase, e.g.
   `JobManager`, `FileWriter`, `ExportController`, `AnalysisService`.
+  Interactive analysis requests and computation completions use the
+  section-qualified prefix `Advanced analysis (Section)` described in section 15.
 - `event` is a short lower‑case phrase in past tense or present state, e.g.
   `job started`, `HTML report written`, `settings reloaded`.
 - Metadata goes in one parenthesized list of comma‑separated `key=value` pairs.
@@ -136,7 +138,8 @@ Examples:
 ```text
 JobManager: job finalized (job_id=6341…, runner=thread, scope=load:csv, ms=26.2, corr=6551…)
 FileWriter: HTML report written (corr=fde5…, path=…)
-AnalysisService: computation finished (corr=50813…, operation=overview, outcome=success, rows=624, cols=10, items=10, ms=6.9)
+Advanced analysis (Overview): computation requested (corr=50813..., scope=analysis:overview, rows=624, cols=10)
+Advanced analysis (Overview): computation finished (corr=50813..., scope=analysis:overview, outcome=success, rows=624, cols=10, items=10, ms=6.9)
 ```
 
 ---
@@ -252,6 +255,8 @@ Usually missing `progress_cb` in the signature along the job path, chunk sizes t
 
 ## 14) Changelog
 
+- Restored DEBUG interactive analysis request events and section-qualified
+  `Advanced analysis (Section)` request/completion prefixes across all categories.
 - **1.2** — `Component: event (corr=..., key=value)` naming convention; Advanced
   Analysis diagnostics emit one summary line per computation, chart batch, and
   report instead of nested start/finish pairs.
@@ -268,9 +273,9 @@ not require new settings, handlers, or third-party DEBUG output.
 
 | Owner | Diagnostic responsibility |
 | --- | --- |
-| UI/controller | Operation correlation, scheduling context, stale-result handling, and presentation failures |
+| UI/controller | DEBUG `Advanced analysis (Section): computation requested` before scheduling, operation correlation, stale-result handling, and presentation failures |
 | JobManager | Worker lifecycle, cancellation requests, unexpected exceptions, and total job duration |
-| Analysis services (`AnalysisService`) | DEBUG `computation finished` with duration, typed success/unavailable/cancelled outcome, and safe cohort/feature counts |
+| Analysis services (`Advanced analysis (Section)`) | DEBUG `computation finished` with duration, typed success/unavailable/cancelled outcome, and safe cohort/feature counts |
 | GLM/Cox services (`AnalysisService`) | WARNING `model fit failed` when fitting fails recoverably: exception class, non-convergence, or non-finite estimates |
 | Chart services (`AnalysisChartService`) | DEBUG `chart batch finished` per export batch; raster lines only for standalone rasters or cancelled/failed rasters |
 | Report service (`AnalysisReportService`) | DEBUG `report stage finished` once per report; nested stages only when cancelled or failed |
@@ -286,8 +291,26 @@ ID and pass it to renderers; report rendering passes it through entry preparatio
 and rasterization. Existing callers can omit the optional ID. Correlation is
 never taken from mutable dialog-wide or thread-local context.
 
-**One line per operation.** Computations log a single completion line, never a
-separate start line; JobManager already records job start for hang analysis.
+**Interactive request and computation completion.** Before scheduling an initial
+analysis or configuration-driven recomputation, the controller logs
+`Advanced analysis (Section): computation requested (corr=..., scope=..., rows=..., cols=...)`.
+The computation's existing completion line uses the same section prefix and
+correlation identifier, retaining its outcome and timing metadata.
+Both events use the exact `scope` supplied to JobManager instead of separate
+`operation` and `method` fields. The controller defines this scope once and
+exposes it to diagnostics only while its worker computation runs, using a
+context variable restored in `finally` to isolate concurrent and reused workers.
+Correlation identifiers remain explicitly passed arguments. Standalone service
+calls without a controller job retain operation/method metadata rather than
+inventing a JobManager scope.
+Section labels are stable English: Overview, Statistics, Hypothesis Tests,
+Correlation, Regression, Outliers, Clustering, PCA and Time Series.
+Hypothesis subtests, regression variants and outlier variants retain their
+distinct job scopes under their parent section.
+Completion means the calculation returned, not that its result was displayed.
+JobManager retains worker lifecycle and unexpected-exception ownership.
+
+**Exports and reports remain summarized.**
 A chart batch or report stage opens a summary scope (`summary_scope()` in
 `services/analysis/diagnostics.py`, backed by a per-thread context variable).
 Inside it, successful nested computations (for example per-chart outlier or
