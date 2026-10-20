@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 from PyQt6.QtWidgets import QWidget
 
 from expo_jbm329.utils.dialog_state import DialogState
+from expo_jbm329.utils.format_utils import fmt_path
 from expo_jbm329.workbench.controllers.document_controller import DocumentController
 from expo_jbm329.workbench.controllers.editor_tab_manager import EditorTab
 
@@ -124,10 +126,11 @@ def test_save_sql_as_writes_file_and_updates_tab(tmp_path: Path):
     mocks["update_tab_ui"].assert_called_once_with(tab)
 
 
-def test_open_html_file_returns_browser_result(tmp_path: Path, monkeypatch):
+def test_open_html_file_returns_browser_result(tmp_path: Path, monkeypatch, caplog):
     ctrl, mocks = make_controller(tmp_path)
     html_path = tmp_path / "page.html"
     html_path.write_text("<html></html>", encoding="utf-8")
+    caplog.set_level(logging.INFO, logger=ctrl._logger.name)
     monkeypatch.setattr(
         "webbrowser.open",
         lambda uri: True,
@@ -135,3 +138,6 @@ def test_open_html_file_returns_browser_result(tmp_path: Path, monkeypatch):
 
     assert ctrl.open_html_file(path=html_path) is True
     assert mocks["status"].called
+    messages = [record.getMessage() for record in caplog.records]
+    assert f"DocumentController: opening HTML file (path={fmt_path(html_path)})" in messages
+    assert f"DocumentController: HTML file opened (path={fmt_path(html_path)})" in messages
