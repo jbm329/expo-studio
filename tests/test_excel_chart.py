@@ -106,11 +106,7 @@ def test_named_workbook_logged_sheet_counts_match_saved_workbook(
         "FileWriter: named Excel workbook written",
         "FileWriter: excel written (streaming)",
     )
-    messages = [
-        record.getMessage()
-        for record in caplog.records
-        if record.getMessage().startswith(prefixes)
-    ]
+    messages = [record.getMessage() for record in caplog.records if record.getMessage().startswith(prefixes)]
     assert len(messages) == (2 if streaming else 1)
     assert all(f"sheets={expected_count}," in message for message in messages)
 

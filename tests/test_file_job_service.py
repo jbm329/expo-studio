@@ -154,6 +154,8 @@ def test_on_data_loaded_without_pending_tab_displays_dataframe(service, tmp_path
 
 def test_loaded_dataframe_logs_raw_counts_but_preserves_localized_status(service, tmp_path, monkeypatch, caplog):
     svc, _, _, _, status_messages, _ = service
+    dispatch_status = MagicMock()
+    monkeypatch.setattr("expo_jbm329.services.file_job_service.ui_invoke", dispatch_status)
     monkeypatch.setattr(
         "expo_jbm329.services.file_job_service.fmt_shape",
         lambda df: ("38\u00a0555", "1"),
@@ -170,6 +172,11 @@ def test_loaded_dataframe_logs_raw_counts_but_preserves_localized_status(service
     )
     assert "rows=38555, cols=1" in message
     assert "38\u00a0555" not in message
+    dispatch_status.assert_called_once()
+    callback, text, timeout = dispatch_status.call_args.args
+    assert callback == svc._set_status
+    assert timeout == 10000
+    callback(text, timeout)
     assert any("38\u00a0555" in text for text, _ in status_messages)
 
 

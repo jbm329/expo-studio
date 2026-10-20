@@ -200,10 +200,10 @@ def test_section_prefix_is_stable_english(category):
 
 def test_job_scope_is_restored_after_nested_failure(caplog):
     caplog.set_level(logging.DEBUG, logger="applogger.service")
+    message = "test failure"
     with analysis_job_scope("analysis:regression:fit:linear"):
-        with pytest.raises(ValueError, match="test failure"):
-            with analysis_job_scope("analysis:regression:fit:logistic"):
-                raise ValueError("test failure")
+        with pytest.raises(ValueError, match=message), analysis_job_scope("analysis:regression:fit:logistic"):
+            raise ValueError(message)
         diagnostic = AnalysisDiagnostic("regression", "outer", row_count=3, column_count=2, method="ols")
     diagnostic.finish("success")
     AnalysisDiagnostic("overview", "standalone", row_count=3, column_count=2).finish("success")

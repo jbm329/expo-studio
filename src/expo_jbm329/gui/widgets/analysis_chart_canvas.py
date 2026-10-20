@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from math import ceil
 from typing import TYPE_CHECKING
 
@@ -21,6 +22,7 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
 CHART_RETRY_INTERVAL_MS = 25
+_COLLAPSED_CONSTRAINED_LAYOUT_WARNING = "constrained_layout not applied because axes sizes collapsed to zero."
 
 
 class SerializedAnalysisCanvas(FigureCanvasQTAgg):
@@ -82,8 +84,34 @@ class SerializedAnalysisCanvas(FigureCanvasQTAgg):
             return
         try:
             self._draw_pending = False
-            super().draw()  # type: ignore[no-untyped-call]
-            self._measure_content_minimum()
+            with warnings.catch_warnings(record=True) as draw_warnings:
+                warnings.filterwarnings(
+                    "always",
+                    message=_COLLAPSED_CONSTRAINED_LAYOUT_WARNING,
+                    category=UserWarning,
+                )
+                super().draw()  # type: ignore[no-untyped-call]
+                self._measure_content_minimum()
+            layout_recovery_handled = self._content_limit_reported or (
+                self._content_size_timer.isActive()
+                and self._content_minimum is not None
+                and self._content_minimum != self._original_minimum
+            )
+            for warning in draw_warnings:
+                is_recoverable_layout_warning = (
+                    layout_recovery_handled
+                    and issubclass(warning.category, UserWarning)
+                    and str(warning.message).startswith(_COLLAPSED_CONSTRAINED_LAYOUT_WARNING)
+                )
+                if is_recoverable_layout_warning:
+                    continue
+                warnings.warn_explicit(
+                    warning.message,
+                    warning.category,
+                    warning.filename,
+                    warning.lineno,
+                    source=warning.source,
+                )
         finally:
             STATISTICS_CHART_LOCK.release()
 

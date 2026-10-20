@@ -5962,12 +5962,10 @@ def test_controller_workers_keep_independent_explicit_correlation_ids(caplog, ca
     assert records
     for identifier in identifiers:
         assert sum(f"corr={identifier}," in record.getMessage() for record in records) >= 1
-        assert any(
-            f"corr={identifier}, scope=analysis:{category.value}," in record.getMessage() for record in records
+        assert any(f"corr={identifier}, scope=analysis:{category.value}," in record.getMessage() for record in records)
+        assert (
+            sum(f"computation requested (corr={identifier}," in record.getMessage() for record in caplog.records) == 1
         )
-        assert sum(
-            f"computation requested (corr={identifier}," in record.getMessage() for record in caplog.records
-        ) == 1
     for record in records:
         message = record.getMessage()
         assert "operation=" not in message
@@ -6017,8 +6015,10 @@ def test_all_sections_log_request_before_scheduling(caplog, category, recompute)
     section = "PCA" if category is AnalysisCategory.PCA else category.value.replace("_", " ").title()
     messages = [record.getMessage() for record in caplog.records if record.name == "applogger.ui"]
     assert messages == [
-        f"Advanced analysis ({section}): computation requested "
-        f"(corr={call['corr_id']}, scope={call['scope']}, rows=3, cols=1)"
+        (
+            f"Advanced analysis ({section}): computation requested "
+            f"(corr={call['corr_id']}, scope={call['scope']}, rows=3, cols=1)"
+        )
     ]
     compute.assert_not_called()
     call["work"]()

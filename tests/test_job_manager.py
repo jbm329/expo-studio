@@ -200,17 +200,13 @@ def test_abort_all_log_level_and_idle_pool_cleanup(caplog, job_count, with_pool)
     caplog.set_level(logging.DEBUG)
     manager = JobManager()
     manager._cancel_flags = {f"job-{index}": False for index in range(job_count)}
-    manager._jobs = {job_id: (None, None) for job_id in manager._cancel_flags}
+    manager._jobs = dict.fromkeys(manager._cancel_flags, (None, None))
     pool = MagicMock() if with_pool else None
     manager._pool = pool
 
     assert manager.abort_all() == []
 
-    records = [
-        record
-        for record in caplog.records
-        if record.getMessage().startswith("JobManager: abort all requested")
-    ]
+    records = [record for record in caplog.records if record.getMessage().startswith("JobManager: abort all requested")]
     assert len(records) == 1
     assert records[0].levelno == (logging.WARNING if job_count else logging.INFO)
     assert records[0].getMessage().endswith(f"(count={job_count})")

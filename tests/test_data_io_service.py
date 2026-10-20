@@ -78,9 +78,7 @@ def test_single_dataframe_export_start_retains_shape(io_service, tmp_path, caplo
 
     assert result.ok
     start = next(
-        record.getMessage()
-        for record in caplog.records
-        if record.getMessage().startswith(f"DataIOService: {event}")
+        record.getMessage() for record in caplog.records if record.getMessage().startswith(f"DataIOService: {event}")
     )
     assert "rows=2, cols=1" in start
 
