@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import uuid
 from dataclasses import dataclass, replace
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Protocol, cast
 
 from PyQt6.QtCore import QT_TR_NOOP, QT_TRANSLATE_NOOP, QTimer
 from PyQt6.QtWidgets import QMessageBox
@@ -36,7 +36,7 @@ from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.chi_square import analyze_chi_square, initialize_chi_square
 from expo_jbm329.services.analysis.clustering import MIN_SELECTED_COLUMNS as CLUSTERING_MIN_SELECTED_COLUMNS
-from expo_jbm329.services.analysis.clustering import ClusteringMethod, analyze_clustering, initialize_clustering
+from expo_jbm329.services.analysis.clustering import analyze_clustering, initialize_clustering
 from expo_jbm329.services.analysis.clustering_charts import render_clustering_charts
 from expo_jbm329.services.analysis.clustering_export import (
     ClusteringExportComponent,
@@ -57,6 +57,7 @@ from expo_jbm329.services.analysis.correlation_export import (
     CorrelationExportRequest,
     CorrelationExportSnapshot,
 )
+from expo_jbm329.services.analysis.diagnostics import analysis_job_scope, analysis_log_component
 from expo_jbm329.services.analysis.group_comparison import analyze_group_comparison, initialize_group_comparison
 from expo_jbm329.services.analysis.hypothesis_charts import (
     build_hypothesis_chart_presentation,
@@ -70,7 +71,6 @@ from expo_jbm329.services.analysis.hypothesis_export import (
 )
 from expo_jbm329.services.analysis.limits import CORRELATION_MAX_SELECTED_COLUMNS as MAX_SELECTED_COLUMNS
 from expo_jbm329.services.analysis.multivariate_outliers import (
-    MultivariateOutlierMethod,
     analyze_multivariate_outliers,
     initialize_multivariate_outliers,
 )
@@ -545,17 +545,25 @@ class _JobCallbacks:
     Attributes:
         progress_cb: Receives the completed percentage (0-100), or `None`.
         cancel_cb: Returns True once the user has asked to cancel, or `None`.
+        corr_id: Identifier shared with the worker and service diagnostics.
     """
 
     progress_cb: Callable[[int], None] | None = None
     cancel_cb: Callable[[], bool] | None = None
+    corr_id: str | None = None
 
 
-def _ignore_callbacks(compute: Callable[[pd.DataFrame], object]) -> Callable[[pd.DataFrame, _JobCallbacks], object]:
+class _AnalysisCompute(Protocol):
+    """Computation accepting an explicitly propagated diagnostic identifier."""
+
+    def __call__(self, df: pd.DataFrame, *, corr_id: str | None = None) -> object: ...
+
+
+def _ignore_callbacks(compute: _AnalysisCompute) -> Callable[[pd.DataFrame, _JobCallbacks], object]:
     """Adapt a computation that neither reports progress nor supports cancellation."""
 
-    def _compute(df: pd.DataFrame, _callbacks: _JobCallbacks) -> object:
-        return compute(df)
+    def _compute(df: pd.DataFrame, callbacks: _JobCallbacks) -> object:
+        return compute(df, corr_id=callbacks.corr_id)
 
     return _compute
 
@@ -716,7 +724,7 @@ class AnalysisController:
                 render=self._render_statistics,
             ),
             AnalysisCategory.HYPOTHESIS_TESTS: _CategoryHandler(
-                compute=_ignore_callbacks(self._initialize_hypothesis_tests),
+                compute=lambda df, _callbacks: self._initialize_hypothesis_tests(df),
                 render=self._render_hypothesis_tests,
                 initialize=self._initialize_hypothesis_tests,
             ),
@@ -879,6 +887,7 @@ class AnalysisController:
             page.set_preview_status("")
             page.set_preview_busy(True)
             labels = capture_report_labels(translate, fmt_num, fmt_int)
+            corr_id = uuid.uuid4().hex
 
             def stale() -> bool:
                 return closed or generation != revision
@@ -894,6 +903,7 @@ class AnalysisController:
 
                 return render_report_html(
                     request,
+                    corr_id=corr_id,
                     labels=labels,
                     progress_cb=progress_cb,
                     cancel_cb=cancelled,
@@ -908,7 +918,7 @@ class AnalysisController:
                 try:
                     return render(progress_cb=progress_cb, cancel_cb=cancel_cb)
                 except ExcelChartCancelledError:
-                    self._logger.info("Report preview preparation cancelled.")
+                    self._logger.debug("Report preview preparation cancelled (corr=%s).", corr_id)
                     return None
 
             def on_result(html: str | None) -> None:
@@ -934,6 +944,7 @@ class AnalysisController:
                 if save and exporter is not None:
                     started = exporter.export_html_report(
                         html_factory=render,
+                        corr_id=corr_id,
                         suggested_name=request.title,
                         parent_widget=dialog,
                         operation_target=page,
@@ -951,10 +962,10 @@ class AnalysisController:
                     on_error=on_error,
                     on_finished=on_finished,
                     busy_message=self._tr(self.TR_REPORT_PREPARING),
-                    scope=f"analysis:report-preview:{id(dialog)}",
+                    scope="analysis:report-preview",
                     operation_name=self._tr(self.TR_REPORT_OPERATION),
                     stale_check=stale,
-                    corr_id=uuid.uuid4().hex,
+                    corr_id=corr_id,
                     cancelable=True,
                     indeterminate=False,
                     timeout_ms=self._overlay_timeout_ms(cancelable=True),
@@ -1001,11 +1012,13 @@ class AnalysisController:
         except (TypeError, ValueError):
             self._logger.warning("Rejected unavailable Overview export selection.")
             return
+        corr_id = uuid.uuid4().hex
         # Frames belong to this export only and remain stable for the async job.
         match request.format:
             case OverviewExportFormat.EXCEL:
                 exporter.export_excel(
                     sheets=sheets,
+                    corr_id=corr_id,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1013,6 +1026,7 @@ class AnalysisController:
             case OverviewExportFormat.CSV:
                 exporter.export_csv(
                     df=next(iter(sheets.values())),
+                    corr_id=corr_id,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1020,6 +1034,7 @@ class AnalysisController:
             case OverviewExportFormat.BINARY:
                 exporter.export_data(
                     df=next(iter(sheets.values())),
+                    corr_id=corr_id,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1029,6 +1044,7 @@ class AnalysisController:
         """Route validated Statistics snapshots to existing asynchronous exporters."""
         if not isinstance(request, StatisticsExportRequest) or request.result is not dialog.exportable_statistics():
             return
+        corr_id = uuid.uuid4().hex
         if request.format not in tuple(StatisticsExportFormat):
             return
         if len(set(request.tables)) != len(request.tables):
@@ -1077,6 +1093,7 @@ class AnalysisController:
                         return render_statistics_charts(
                             request.result.columns,
                             presentations,
+                            corr_id=corr_id,
                             progress_cb=progress_cb,
                             cancel_cb=cancel_cb,
                         )
@@ -1085,6 +1102,7 @@ class AnalysisController:
 
                 exporter.export_excel(
                     sheets=localized_sheets,
+                    corr_id=corr_id,
                     chart_factory=chart_factory,
                     chart_sheet_name=chart_sheet_name if charts_selected else None,
                     parent_widget=dialog,
@@ -1094,6 +1112,7 @@ class AnalysisController:
             case StatisticsExportFormat.CSV:
                 exporter.export_csv(
                     df=next(iter(localized_sheets.values())),
+                    corr_id=corr_id,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1101,6 +1120,7 @@ class AnalysisController:
             case StatisticsExportFormat.BINARY:
                 exporter.export_data(
                     df=next(iter(localized_sheets.values())),
+                    corr_id=corr_id,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1110,6 +1130,7 @@ class AnalysisController:
         """Localize owned applied-result tables and render worker-owned Excel charts."""
         if not isinstance(request, HypothesisExportRequest) or request.snapshot is not dialog.exportable_hypothesis():
             return
+        corr_id = uuid.uuid4().hex
         snapshot = request.snapshot
         charts = HypothesisExportComponent.CHARTS in request.components
         table_choices = tuple(item for item in request.components if item is not HypothesisExportComponent.CHARTS)
@@ -1138,12 +1159,14 @@ class AnalysisController:
                 return render_hypothesis_charts(
                     snapshot,
                     presentation,
+                    corr_id=corr_id,
                     progress_cb=progress_cb,
                     cancel_cb=cancel_cb,
                 )
 
             exporter.export_excel(
                 sheets=sheets,
+                corr_id=corr_id,
                 chart_factory=make_images if charts else None,
                 chart_sheet_name=(
                     hypothesis_component_label(snapshot, HypothesisExportComponent.CHARTS, translate)
@@ -1157,6 +1180,7 @@ class AnalysisController:
         elif request.format is StatisticsExportFormat.CSV:
             exporter.export_csv(
                 df=next(iter(sheets.values())),
+                corr_id=corr_id,
                 parent_widget=dialog,
                 operation_target=dialog.content_panel(),
                 show_success_dialog=True,
@@ -1164,6 +1188,7 @@ class AnalysisController:
         else:
             exporter.export_data(
                 df=next(iter(sheets.values())),
+                corr_id=corr_id,
                 parent_widget=dialog,
                 operation_target=dialog.content_panel(),
                 show_success_dialog=True,
@@ -1185,6 +1210,7 @@ class AnalysisController:
         """Export applied tables and worker-owned chart images from one snapshot."""
         if not isinstance(request, CorrelationExportRequest) or request.snapshot is not dialog.exportable_correlation():
             return
+        corr_id = uuid.uuid4().hex
         snapshot = request.snapshot
         sheet_name = translate_presentation_label(PresentationLabel.STRONGEST_CORRELATIONS, translate)
         sheets = (
@@ -1202,12 +1228,15 @@ class AnalysisController:
         def make_images(
             progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
         ) -> tuple[ExcelChartImage, ...]:
-            return render_correlation_charts(snapshot, charts, labels, progress_cb=progress_cb, cancel_cb=cancel_cb)
+            return render_correlation_charts(
+                snapshot, charts, labels, progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id
+            )
 
         match request.format:
             case StatisticsExportFormat.EXCEL:
                 exporter.export_excel(
                     sheets=sheets,
+                    corr_id=corr_id,
                     chart_factory=make_images if charts else None,
                     chart_sheet_name=(
                         translate_presentation_label(PresentationLabel.CORRELATION_PLOTS, translate) if charts else None
@@ -1219,6 +1248,7 @@ class AnalysisController:
             case StatisticsExportFormat.CSV:
                 exporter.export_csv(
                     df=next(iter(sheets.values())),
+                    corr_id=corr_id,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1226,6 +1256,7 @@ class AnalysisController:
             case StatisticsExportFormat.BINARY:
                 exporter.export_data(
                     df=next(iter(sheets.values())),
+                    corr_id=corr_id,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1250,6 +1281,7 @@ class AnalysisController:
         """Export the displayed model's localized tables and worker-rendered charts."""
         if not isinstance(request, RegressionExportRequest) or request.snapshot is not dialog.exportable_regression():
             return
+        corr_id = uuid.uuid4().hex
         snapshot = request.snapshot
         charts = RegressionExportComponent.CHARTS in request.components
         sheets = self._localized_regression_tables(snapshot, request.components)
@@ -1257,12 +1289,13 @@ class AnalysisController:
         def make_images(
             progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
         ) -> tuple[ExcelChartImage, ...]:
-            return render_regression_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+            return render_regression_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id)
 
         match request.format:
             case StatisticsExportFormat.EXCEL:
                 exporter.export_excel(
                     sheets=sheets,
+                    corr_id=corr_id,
                     chart_factory=make_images if charts else None,
                     chart_sheet_name=(
                         regression_component_label(
@@ -1280,6 +1313,7 @@ class AnalysisController:
             case StatisticsExportFormat.CSV:
                 exporter.export_csv(
                     df=next(iter(sheets.values())),
+                    corr_id=corr_id,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1287,6 +1321,7 @@ class AnalysisController:
             case StatisticsExportFormat.BINARY:
                 exporter.export_data(
                     df=next(iter(sheets.values())),
+                    corr_id=corr_id,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1323,6 +1358,7 @@ class AnalysisController:
         """Export the displayed screening's localized tables and worker-rendered charts."""
         if not isinstance(request, OutlierExportRequest) or request.snapshot is not dialog.exportable_outliers():
             return
+        corr_id = uuid.uuid4().hex
         snapshot = request.snapshot
         charts = OutlierExportComponent.CHARTS in request.components
         sheets = self._localized_outlier_tables(snapshot, request.components)
@@ -1331,13 +1367,18 @@ class AnalysisController:
             progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
         ) -> tuple[ExcelChartImage, ...]:
             if isinstance(snapshot, UnivariateOutlierExportSnapshot):
-                return render_univariate_outlier_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
-            return render_multivariate_outlier_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+                return render_univariate_outlier_charts(
+                    snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id
+                )
+            return render_multivariate_outlier_charts(
+                snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id
+            )
 
         match request.format:
             case StatisticsExportFormat.EXCEL:
                 exporter.export_excel(
                     sheets=sheets,
+                    corr_id=corr_id,
                     chart_factory=make_images if charts else None,
                     chart_sheet_name=(
                         outlier_component_label(
@@ -1355,6 +1396,7 @@ class AnalysisController:
             case StatisticsExportFormat.CSV:
                 exporter.export_csv(
                     df=next(iter(sheets.values())),
+                    corr_id=corr_id,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1362,6 +1404,7 @@ class AnalysisController:
             case StatisticsExportFormat.BINARY:
                 exporter.export_data(
                     df=next(iter(sheets.values())),
+                    corr_id=corr_id,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1389,6 +1432,7 @@ class AnalysisController:
         """Export the displayed clustering's localized tables and worker-rendered projection."""
         if not isinstance(request, ClusteringExportRequest) or request.snapshot is not dialog.exportable_clustering():
             return
+        corr_id = uuid.uuid4().hex
         snapshot = request.snapshot
         charts = ClusteringExportComponent.CHARTS in request.components
         sheets = self._localized_clustering_tables(request.components, snapshot)
@@ -1396,12 +1440,13 @@ class AnalysisController:
         def make_images(
             progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
         ) -> tuple[ExcelChartImage, ...]:
-            return render_clustering_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+            return render_clustering_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id)
 
         match request.format:
             case StatisticsExportFormat.EXCEL:
                 exporter.export_excel(
                     sheets=sheets,
+                    corr_id=corr_id,
                     chart_factory=make_images if charts else None,
                     chart_sheet_name=clustering_component_label(ClusteringExportComponent.CHARTS, translate)
                     if charts
@@ -1413,6 +1458,7 @@ class AnalysisController:
             case StatisticsExportFormat.CSV:
                 exporter.export_csv(
                     df=next(iter(sheets.values())),
+                    corr_id=corr_id,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1420,6 +1466,7 @@ class AnalysisController:
             case StatisticsExportFormat.BINARY:
                 exporter.export_data(
                     df=next(iter(sheets.values())),
+                    corr_id=corr_id,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
                     show_success_dialog=True,
@@ -1447,6 +1494,7 @@ class AnalysisController:
         """Export the displayed PCA's localized tables and worker-rendered plots."""
         if not isinstance(request, PCAExportRequest) or request.snapshot is not dialog.exportable_pca():
             return
+        corr_id = uuid.uuid4().hex
         snapshot = request.snapshot
         presentation = build_analysis_presentation(AnalysisCategory.PCA, snapshot, translate)
         charts = PCAExportComponent.CHARTS in request.components
@@ -1455,12 +1503,13 @@ class AnalysisController:
         def make_images(
             progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
         ) -> tuple[ExcelChartImage, ...]:
-            return render_pca_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+            return render_pca_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id)
 
         match request.format:
             case StatisticsExportFormat.EXCEL:
                 exporter.export_excel(
                     sheets=sheets,
+                    corr_id=corr_id,
                     chart_factory=make_images if charts else None,
                     chart_sheet_name=(pca_component_label(PCAExportComponent.CHARTS, translate) if charts else None),
                     suggested_name=presentation.title,
@@ -1471,6 +1520,7 @@ class AnalysisController:
             case StatisticsExportFormat.CSV:
                 exporter.export_csv(
                     df=next(iter(sheets.values())),
+                    corr_id=corr_id,
                     suggested_name=presentation.title,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
@@ -1479,6 +1529,7 @@ class AnalysisController:
             case StatisticsExportFormat.BINARY:
                 exporter.export_data(
                     df=next(iter(sheets.values())),
+                    corr_id=corr_id,
                     suggested_name=presentation.title,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
@@ -1504,6 +1555,7 @@ class AnalysisController:
         """Export the displayed time series' localized tables and worker-rendered plots."""
         if not isinstance(request, TimeSeriesExportRequest) or request.snapshot is not dialog.exportable_time_series():
             return
+        corr_id = uuid.uuid4().hex
         snapshot = request.snapshot
         presentation = build_analysis_presentation(AnalysisCategory.TIME_SERIES, snapshot, translate)
         charts = TimeSeriesExportComponent.CHARTS in request.components
@@ -1512,12 +1564,13 @@ class AnalysisController:
         def make_images(
             progress_cb: Callable[[int], None] | None, cancel_cb: Callable[[], bool] | None
         ) -> tuple[ExcelChartImage, ...]:
-            return render_time_series_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+            return render_time_series_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id)
 
         match request.format:
             case StatisticsExportFormat.EXCEL:
                 exporter.export_excel(
                     sheets=sheets,
+                    corr_id=corr_id,
                     chart_factory=make_images if charts else None,
                     chart_sheet_name=(
                         time_series_component_label(TimeSeriesExportComponent.CHARTS, translate) if charts else None
@@ -1530,6 +1583,7 @@ class AnalysisController:
             case StatisticsExportFormat.CSV:
                 exporter.export_csv(
                     df=next(iter(sheets.values())),
+                    corr_id=corr_id,
                     suggested_name=presentation.title,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
@@ -1538,6 +1592,7 @@ class AnalysisController:
             case StatisticsExportFormat.BINARY:
                 exporter.export_data(
                     df=next(iter(sheets.values())),
+                    corr_id=corr_id,
                     suggested_name=presentation.title,
                     parent_widget=dialog,
                     operation_target=dialog.content_panel(),
@@ -1634,8 +1689,10 @@ class AnalysisController:
             self._recompute_content(
                 dialog,
                 category=AnalysisCategory.HYPOTHESIS_TESTS,
-                scope_suffix=":".join((test.value, *(selection or ()))),
-                compute=lambda df, _callbacks: self._compute_hypothesis_test(df, test, selection),
+                scope_suffix=test.value,
+                compute=lambda df, callbacks: self._compute_hypothesis_test(
+                    df, test, selection, corr_id=callbacks.corr_id
+                ),
                 apply_result=apply_displayed_result,
                 is_stale=lambda: (
                     config.applied_configuration() is not configuration
@@ -1663,21 +1720,25 @@ class AnalysisController:
         df: pd.DataFrame,
         test: HypothesisTest,
         selection: tuple[str, ...] | None,
+        *,
+        corr_id: str | None = None,
     ) -> object:
         """Compute one hypothesis test for `selection`, or its defaults when `None`."""
         match test:
             case HypothesisTest.GROUP_COMPARISON:
                 return (
-                    analyze_group_comparison(df)
+                    analyze_group_comparison(df, corr_id=corr_id)
                     if selection is None
-                    else analyze_group_comparison(df, selection[0], selection[1])
+                    else analyze_group_comparison(df, selection[0], selection[1], corr_id=corr_id)
                 )
             case HypothesisTest.CHI_SQUARE:
                 return (
-                    analyze_chi_square(df) if selection is None else analyze_chi_square(df, selection[0], selection[1])
+                    analyze_chi_square(df, corr_id=corr_id)
+                    if selection is None
+                    else analyze_chi_square(df, selection[0], selection[1], corr_id=corr_id)
                 )
             case HypothesisTest.PAIRED_COMPARISON:
-                return analyze_paired_comparison(df, selection or ())
+                return analyze_paired_comparison(df, selection or (), corr_id=corr_id)
 
     @staticmethod
     def _render_hypothesis_test_content(test: HypothesisTest, result: object) -> QWidget:
@@ -1728,6 +1789,7 @@ class AnalysisController:
                 method,
                 progress_cb=callbacks.progress_cb,
                 cancel_cb=callbacks.cancel_cb,
+                corr_id=callbacks.corr_id,
             )
             if matrix is None:
                 return None
@@ -1740,6 +1802,7 @@ class AnalysisController:
             method,
             progress_cb=callbacks.progress_cb,
             cancel_cb=callbacks.cancel_cb,
+            corr_id=callbacks.corr_id,
         )
         if matrix is None:
             return None
@@ -1752,7 +1815,11 @@ class AnalysisController:
             if pair is not None and pair[0] != pair[1] and all(column in matrix.columns for column in pair)
             else default_pair(matrix)
         )
-        pair_detail = analyze_correlation_pair(matrix_data, *detail_pair, method) if detail_pair is not None else None
+        pair_detail = (
+            analyze_correlation_pair(matrix_data, *detail_pair, method, corr_id=callbacks.corr_id)
+            if detail_pair is not None
+            else None
+        )
         snapshot = CorrelationExportSnapshot(matrix=matrix, matrix_data=matrix_data)
         return _CorrelationOutcome(matrix=matrix, pair_detail=pair_detail, export_snapshot=snapshot)
 
@@ -1867,8 +1934,10 @@ class AnalysisController:
         self._recompute_content(
             dialog,
             category=AnalysisCategory.CORRELATION,
-            scope_suffix=f"pair:{method.value}:{x_column}:{y_column}",
-            compute=lambda df, _callbacks: analyze_correlation_pair(df, x_column, y_column, method),
+            scope_suffix=f"pair:{method.value}",
+            compute=lambda df, callbacks: analyze_correlation_pair(
+                df, x_column, y_column, method, corr_id=callbacks.corr_id
+            ),
             apply_result=_apply,
             is_stale=lambda: (
                 dialog.content_widget() is not view
@@ -1902,19 +1971,13 @@ class AnalysisController:
             model, target, predictors = configuration
             event = config.applied_event()
             revision = config.configuration_revision()
-            if model is RegressionModel.LINEAR:
-                scope_parts = (target, *predictors)
-            elif model is RegressionModel.COX:
-                scope_parts = (model.value, target, event, *predictors)
-            else:
-                scope_parts = (model.value, target, *predictors)
 
-            def _compute(df: pd.DataFrame, _callbacks: _JobCallbacks) -> object:
+            def _compute(df: pd.DataFrame, callbacks: _JobCallbacks) -> object:
                 if model is RegressionModel.LINEAR:
-                    return analyze_regression(df, target, predictors)
+                    return analyze_regression(df, target, predictors, corr_id=callbacks.corr_id)
                 if model is RegressionModel.COX:
-                    return analyze_cox_regression(df, target, event, predictors)
-                return analyze_generalized_regression(df, model, target, predictors)
+                    return analyze_cox_regression(df, target, event, predictors, corr_id=callbacks.corr_id)
+                return analyze_generalized_regression(df, model, target, predictors, corr_id=callbacks.corr_id)
 
             def _apply_result(computed: object) -> None:
                 view: RegressionView | SurvivalRegressionView | GeneralizedRegressionView
@@ -1934,7 +1997,7 @@ class AnalysisController:
             self._recompute_content(
                 dialog,
                 category=AnalysisCategory.REGRESSION,
-                scope_suffix=":".join(scope_parts),
+                scope_suffix=f"fit:{model.value}",
                 compute=_compute,
                 apply_result=_apply_result,
                 is_stale=lambda: (
@@ -1964,6 +2027,8 @@ class AnalysisController:
         method: OutlierMethod = OutlierMethod.IQR,
         threshold: float | None = None,
         column: str | None = None,
+        *,
+        corr_id: str | None = None,
     ) -> _OutliersOutcome:
         """Compute an outlier summary and one column's detail (background-safe).
 
@@ -1973,17 +2038,20 @@ class AnalysisController:
             threshold: The method's threshold, or `None` for its default.
             column: The column to detail, or `None` for the summary's
                 top-ranked one.
+            corr_id: Identifier shared with the analysis worker.
 
         Returns:
             The outcome.
         """
-        summary = analyze_outlier_summary(df, method, threshold)
+        summary = analyze_outlier_summary(df, method, threshold, corr_id=corr_id)
         if summary.error is not None:
             return _OutliersOutcome(summary=summary, detail=None)
 
         detail_column = column if column is not None else default_column(summary)
         detail = (
-            analyze_outlier_column(df, detail_column, method, summary.threshold) if detail_column is not None else None
+            analyze_outlier_column(df, detail_column, method, summary.threshold, corr_id=corr_id)
+            if detail_column is not None
+            else None
         )
         # The export renders every column's histogram later, so it needs data
         # that later edits of the dataset tab cannot change.
@@ -2070,8 +2138,10 @@ class AnalysisController:
         self._recompute_content(
             dialog,
             category=AnalysisCategory.OUTLIERS,
-            scope_suffix=f"summary:{method.value}:{threshold}",
-            compute=lambda df, _callbacks: self._compute_outliers(df, method, threshold, column),
+            scope_suffix=f"summary:{method.value}",
+            compute=lambda df, callbacks: self._compute_outliers(
+                df, method, threshold, column, corr_id=callbacks.corr_id
+            ),
             apply_result=_apply,
             is_stale=lambda: (
                 dialog.config_widget() is not config
@@ -2107,8 +2177,10 @@ class AnalysisController:
         self._recompute_content(
             dialog,
             category=AnalysisCategory.OUTLIERS,
-            scope_suffix=f"column:{method.value}:{threshold}:{column}",
-            compute=lambda df, _callbacks: analyze_outlier_column(df, column, method, threshold),
+            scope_suffix=f"column:{method.value}",
+            compute=lambda df, callbacks: analyze_outlier_column(
+                df, column, method, threshold, corr_id=callbacks.corr_id
+            ),
             apply_result=_apply,
             is_stale=lambda: (
                 dialog.content_widget() is not view
@@ -2154,15 +2226,6 @@ class AnalysisController:
         configuration = config.analysis_configuration()
         revision = config.configuration_revision()
         columns, method, standardize, contamination, lof_neighbors = configuration
-        scope_parts = [
-            "multivariate",
-            method.value,
-            "standardized" if standardize else "raw",
-            f"contamination:{contamination}",
-        ]
-        if method is MultivariateOutlierMethod.LOCAL_OUTLIER_FACTOR:
-            scope_parts.append(f"neighbors:{lof_neighbors}")
-        scope_parts.extend(columns)
 
         def _apply_result(result: object) -> None:
             view = MultivariateOutliersView(cast("MultivariateOutlierResult", result))
@@ -2177,14 +2240,15 @@ class AnalysisController:
         self._recompute_content(
             dialog,
             category=AnalysisCategory.OUTLIERS,
-            scope_suffix=":".join(scope_parts),
-            compute=lambda df, _callbacks: analyze_multivariate_outliers(
+            scope_suffix=f"multivariate:{method.value}",
+            compute=lambda df, callbacks: analyze_multivariate_outliers(
                 df,
                 columns=columns,
                 method=method,
                 standardize=standardize,
                 contamination=contamination,
                 lof_neighbors=lof_neighbors,
+                corr_id=callbacks.corr_id,
             ),
             apply_result=_apply_result,
             is_stale=lambda: (
@@ -2233,8 +2297,8 @@ class AnalysisController:
         self._recompute_content(
             dialog,
             category=AnalysisCategory.PCA,
-            scope_suffix=f"fit:{'standardized' if standardize else 'raw'}:{':'.join(columns)}",
-            compute=lambda df, _callbacks: analyze_pca(df, columns, standardize=standardize),
+            scope_suffix="fit",
+            compute=lambda df, callbacks: analyze_pca(df, columns, standardize=standardize, corr_id=callbacks.corr_id),
             apply_result=_apply_result,
             is_stale=lambda: (
                 dialog.config_widget() is not config
@@ -2265,13 +2329,6 @@ class AnalysisController:
         configuration = config.analysis_configuration()
         revision = config.configuration_revision()
         columns, method, standardize, cluster_count, dbscan_epsilon, dbscan_min_samples = configuration
-        parameters = (
-            f"eps:{dbscan_epsilon}:min_samples:{dbscan_min_samples}"
-            if method is ClusteringMethod.DBSCAN
-            else f"clusters:{cluster_count}"
-        )
-        scale = "standardized" if standardize else "raw"
-        scope_suffix = f"fit:{method.value}:{scale}:{parameters}:{':'.join(columns)}"
 
         def _apply_result(result: object) -> None:
             view = ClusteringView(cast("ClusteringResult", result))
@@ -2286,8 +2343,8 @@ class AnalysisController:
         self._recompute_content(
             dialog,
             category=AnalysisCategory.CLUSTERING,
-            scope_suffix=scope_suffix,
-            compute=lambda df, _callbacks: analyze_clustering(
+            scope_suffix=f"fit:{method.value}",
+            compute=lambda df, callbacks: analyze_clustering(
                 df,
                 columns,
                 method=method,
@@ -2295,6 +2352,7 @@ class AnalysisController:
                 cluster_count=cluster_count,
                 dbscan_epsilon=dbscan_epsilon,
                 dbscan_min_samples=dbscan_min_samples,
+                corr_id=callbacks.corr_id,
             ),
             apply_result=_apply_result,
             is_stale=lambda: (
@@ -2327,8 +2385,6 @@ class AnalysisController:
         configuration = config.analysis_configuration()
         revision = config.configuration_revision()
         datetime_column, value_column, frequency, period, model = configuration
-        frequency_scope = frequency or "original"
-        period_scope = str(period) if period is not None else "auto"
 
         def _apply_result(result: object) -> None:
             view = TimeSeriesView(cast("TimeSeriesResult", result))
@@ -2355,14 +2411,15 @@ class AnalysisController:
         self._recompute_content(
             dialog,
             category=AnalysisCategory.TIME_SERIES,
-            scope_suffix=f"fit:{datetime_column}:{value_column}:{frequency_scope}:{period_scope}:{model.value}",
-            compute=lambda df, _callbacks: analyze_time_series(
+            scope_suffix=f"fit:{model.value}",
+            compute=lambda df, callbacks: analyze_time_series(
                 df,
                 datetime_column,
                 value_column,
                 resample_frequency=frequency,
                 seasonal_period=period,
                 decomposition_model=model,
+                corr_id=callbacks.corr_id,
             ),
             apply_result=_apply_result,
             is_stale=lambda: (
@@ -2510,6 +2567,7 @@ class AnalysisController:
     ) -> None:
         """Run a category's computation in the background with a busy overlay."""
         corr_id = uuid.uuid4().hex
+        scope = f"analysis:{category.value}"
         dialog.invalidate_overview_export()
         revision = dialog.analysis_revision()
 
@@ -2535,7 +2593,8 @@ class AnalysisController:
         ) -> object:
             if cancel_cb is not None and cancel_cb():
                 return None
-            return handler.compute(df, _JobCallbacks(progress_cb=progress_cb, cancel_cb=cancel_cb))
+            with analysis_job_scope(scope):
+                return handler.compute(df, _JobCallbacks(progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id))
 
         def _on_result(result: object) -> None:
             if _is_stale():
@@ -2557,6 +2616,14 @@ class AnalysisController:
                 return
             self._show_placeholder(dialog, self._tr(self.TR_ANALYSIS_ERROR))
 
+        self._logger.debug(
+            "%s: computation requested (corr=%s, scope=%s, rows=%d, cols=%d)",
+            analysis_log_component(category),
+            corr_id,
+            scope,
+            len(df),
+            df.shape[1],
+        )
         self._async_ops.run_target_overlay_operation(
             target=dialog.content_panel(),
             runner="pool",
@@ -2564,7 +2631,7 @@ class AnalysisController:
             on_result=_on_result,
             on_error=_on_error,
             busy_message=self._tr(self.TR_RUNNING_ANALYSIS),
-            scope=f"analysis:{category.value}",
+            scope=scope,
             operation_name=self._tr(self.TR_ANALYSIS_OPERATION),
             stale_check=_is_stale,
             corr_id=corr_id,
@@ -2611,9 +2678,9 @@ class AnalysisController:
                 (alongside the dataset) to detect that the user has since
                 navigated away entirely, not just changed the
                 configuration again.
-            scope_suffix: Appended to the async job's scope, so each
-                distinct configuration gets its own job identity for
-                cancellation/logging purposes.
+            scope_suffix: Bounded action/method code appended to the job's
+                scope for grouping, without schema names. Job and correlation
+                identifiers distinguish individual configurations.
             compute: Background-safe callable turning the DataFrame (plus
                 the job's progress/cancellation hooks) into a plain (non-Qt)
                 result object for the current configuration, or `None` if
@@ -2640,6 +2707,7 @@ class AnalysisController:
             return
 
         corr_id = uuid.uuid4().hex
+        scope = f"analysis:{category.value}:{scope_suffix}"
         if category is AnalysisCategory.HYPOTHESIS_TESTS:
             dialog.invalidate_overview_export()
         revision = dialog.analysis_revision()
@@ -2664,7 +2732,8 @@ class AnalysisController:
         ) -> object:
             if cancel_cb is not None and cancel_cb():
                 return None
-            return compute(df, _JobCallbacks(progress_cb=progress_cb, cancel_cb=cancel_cb))
+            with analysis_job_scope(scope):
+                return compute(df, _JobCallbacks(progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id))
 
         def _on_result(result: object) -> None:
             if _combined_is_stale():
@@ -2680,6 +2749,14 @@ class AnalysisController:
                 return
             dialog.show_placeholder(self._tr(self.TR_ANALYSIS_ERROR))
 
+        self._logger.debug(
+            "%s: computation requested (corr=%s, scope=%s, rows=%d, cols=%d)",
+            analysis_log_component(category),
+            corr_id,
+            scope,
+            len(df),
+            df.shape[1],
+        )
         self._async_ops.run_target_overlay_operation(
             target=target if target is not None else dialog.content_panel(),
             runner="pool",
@@ -2687,7 +2764,7 @@ class AnalysisController:
             on_result=_on_result,
             on_error=_on_error,
             busy_message=self._tr(self.TR_RUNNING_ANALYSIS),
-            scope=f"analysis:{category.value}:{scope_suffix}",
+            scope=scope,
             operation_name=self._tr(self.TR_ANALYSIS_OPERATION),
             stale_check=_combined_is_stale,
             corr_id=corr_id,

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from expo_jbm329.services.analysis import limits
-from expo_jbm329.services.analysis.chart_export import render_chart_png
+from expo_jbm329.services.analysis.chart_export import chart_render_batch, render_chart_png
 from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.chart_presentation import (
     DEFAULT_WORKSHEET_HEADING,
@@ -251,6 +251,26 @@ def render_hypothesis_charts(
     *,
     progress_cb: Callable[[int], None] | None = None,
     cancel_cb: Callable[[], bool] | None = None,
+    corr_id: str | None = None,
+) -> tuple[ExcelChartImage, ...]:
+    """Render a hypothesis chart batch with bounded diagnostics."""
+    with chart_render_batch("hypothesis", 1, corr_id):
+        return _render_hypothesis_charts(
+            snapshot,
+            presentation,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+            corr_id=corr_id,
+        )
+
+
+def _render_hypothesis_charts(
+    snapshot: HypothesisExportSnapshot,
+    presentation: HypothesisChartPresentation,
+    *,
+    progress_cb: Callable[[int], None] | None,
+    cancel_cb: Callable[[], bool] | None,
+    corr_id: str | None,
 ) -> tuple[ExcelChartImage, ...]:
     """Render exactly one displayed chart (paired charts share one image).
 
@@ -259,6 +279,7 @@ def render_hypothesis_charts(
         presentation: Translated chart semantics captured before worker execution.
         progress_cb: Optional image preparation progress.
         cancel_cb: Optional cancellation callback.
+        corr_id: Optional operation correlation identifier used only for diagnostics.
 
     Returns:
         One PNG image owned by the worker, never a live Qt canvas.
@@ -276,7 +297,7 @@ def render_hypothesis_charts(
             constrained_layout=geometry.constrained_layout,
         )
         draw_hypothesis_charts(figure, snapshot.result, presentation)
-        raster = render_chart_png(figure)
+        raster = render_chart_png(figure, corr_id=corr_id)
     if cancel_cb is not None and cancel_cb():
         raise ExcelChartCancelledError
     if progress_cb is not None:

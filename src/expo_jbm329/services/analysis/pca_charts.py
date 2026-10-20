@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from expo_jbm329.services.analysis.chart_export import render_chart_png
+from expo_jbm329.services.analysis.chart_export import chart_render_batch, render_chart_png
 from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.chart_presentation import (
     DEFAULT_WORKSHEET_HEADING,
@@ -145,6 +145,24 @@ def render_pca_charts(
     *,
     progress_cb: Callable[[int], None] | None = None,
     cancel_cb: Callable[[], bool] | None = None,
+    corr_id: str | None = None,
+) -> tuple[ExcelChartImage, ...]:
+    """Render a PCA chart batch with bounded diagnostics."""
+    with chart_render_batch("pca", 2, corr_id):
+        return _render_pca_charts(
+            snapshot,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+            corr_id=corr_id,
+        )
+
+
+def _render_pca_charts(
+    snapshot: PCAExportSnapshot,
+    *,
+    progress_cb: Callable[[int], None] | None,
+    cancel_cb: Callable[[], bool] | None,
+    corr_id: str | None,
 ) -> tuple[ExcelChartImage, ...]:
     """Render the displayed scree plot and PC1-vs-PC2 plot as two images.
 
@@ -152,6 +170,7 @@ def render_pca_charts(
         snapshot: Successful fit with its score sample and chart text.
         progress_cb: Optional per-image progress (50, then 100).
         cancel_cb: Optional cancellation callback, checked before each image and at the end.
+        corr_id: Optional operation correlation identifier used only for diagnostics.
 
     Returns:
         PNG images owned by the worker, never live Qt canvases.
@@ -176,7 +195,7 @@ def render_pca_charts(
                 constrained_layout=geometry.constrained_layout,
             )
             draw(figure.add_subplot(111), snapshot.result, labels)
-            raster = render_chart_png(figure)
+            raster = render_chart_png(figure, corr_id=corr_id)
         images.append(
             ExcelChartImage(
                 metadata.worksheet_heading,

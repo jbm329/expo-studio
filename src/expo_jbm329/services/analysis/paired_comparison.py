@@ -18,6 +18,7 @@ from scipy.stats import friedmanchisquare, wilcoxon
 
 from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
+from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic
 
 _NAN = float("nan")
 _MIN_OCCASIONS = 2
@@ -142,7 +143,7 @@ def initialize_paired_comparison(df: pd.DataFrame) -> PairedComparisonResult:
     )
 
 
-def analyze_paired_comparison(
+def _compute_paired_comparison(
     df: pd.DataFrame,
     columns: tuple[str, ...] | list[str],
 ) -> PairedComparisonResult:
@@ -312,3 +313,39 @@ def _result_with_error(
         kendall_w=_NAN,
         error=error,
     )
+
+
+def analyze_paired_comparison(
+    df: pd.DataFrame,
+    columns: tuple[str, ...] | list[str],
+    *,
+    corr_id: str | None = None,
+) -> PairedComparisonResult:
+    """Compare repeated measurements and log bounded timing metadata.
+
+    Args:
+        df: DataFrame with one subject per row. Never mutated.
+        columns: Ordered numeric measurement columns.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        Paired test result or a structured unavailable result.
+    """
+    diagnostic = AnalysisDiagnostic(
+        "paired_comparison",
+        corr_id,
+        row_count=len(df),
+        column_count=df.shape[1],
+        method="wilcoxon_or_friedman",
+        selected_count=len(columns),
+    )
+    result = _compute_paired_comparison(df, columns)
+    diagnostic.finish(
+        "success" if result.error is None else "unavailable",
+        reason=result.error.value if result.error is not None else None,
+        rows_used=result.complete_subjects,
+        rows_dropped=result.excluded_subjects,
+        item_count=len(result.columns),
+        sampled=result.plot_data.sampled if result.plot_data is not None else None,
+    )
+    return result

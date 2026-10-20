@@ -14,6 +14,7 @@ from sklearn.preprocessing import StandardScaler
 
 from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
+from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -223,7 +224,7 @@ def initialize_clustering(df: pd.DataFrame) -> ClusteringResult:
     return _unfitted_result(error, configuration=configuration)
 
 
-def analyze_clustering(
+def _compute_clustering(
     df: pd.DataFrame,
     columns: Sequence[str] | None = None,
     *,
@@ -319,3 +320,57 @@ def analyze_clustering(
         sampled=sampled,
         error=None,
     )
+
+
+def analyze_clustering(
+    df: pd.DataFrame,
+    columns: Sequence[str] | None = None,
+    *,
+    method: ClusteringMethod = ClusteringMethod.K_MEANS,
+    standardize: bool = True,
+    cluster_count: int = DEFAULT_CLUSTER_COUNT,
+    dbscan_epsilon: float = DEFAULT_DBSCAN_EPSILON,
+    dbscan_min_samples: int = DEFAULT_DBSCAN_MIN_SAMPLES,
+    corr_id: str | None = None,
+) -> ClusteringResult:
+    """Cluster numeric rows with bounded timing diagnostics.
+
+    Args:
+        df: DataFrame to analyze. Never mutated.
+        columns: Optional numeric feature selection.
+        method: Clustering algorithm.
+        standardize: Whether to standardize selected features.
+        cluster_count: Requested cluster count.
+        dbscan_epsilon: DBSCAN neighborhood radius.
+        dbscan_min_samples: DBSCAN minimum neighborhood size.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        Cluster assignments or structured unavailable result.
+    """
+    diagnostic = AnalysisDiagnostic(
+        "clustering",
+        corr_id,
+        row_count=len(df),
+        column_count=df.shape[1],
+        method=method.value,
+        selected_count=len(columns) if columns is not None else None,
+    )
+    result = _compute_clustering(
+        df,
+        columns,
+        method=method,
+        standardize=standardize,
+        cluster_count=cluster_count,
+        dbscan_epsilon=dbscan_epsilon,
+        dbscan_min_samples=dbscan_min_samples,
+    )
+    diagnostic.finish(
+        "success" if result.error is None else "unavailable",
+        reason=result.error.value if result.error is not None else None,
+        rows_used=result.rows_used,
+        rows_dropped=result.rows_dropped,
+        item_count=len(result.clusters),
+        sampled=result.sampled,
+    )
+    return result

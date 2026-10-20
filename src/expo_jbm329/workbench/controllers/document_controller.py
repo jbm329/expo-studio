@@ -474,7 +474,7 @@ class DocumentController:
             path: The path to the HTML file.
         """
         p = Path(path)
-        self._logger.info("DocumentController: opening HTML file: %s", fmt_path(p))
+        self._logger.info("DocumentController: opening HTML file (path=%s)", fmt_path(p))
         import webbrowser
 
         ok = False
@@ -483,7 +483,7 @@ class DocumentController:
             ok = webbrowser.open(uri)
             status = self._tr_fmt(self.TR_OPENED_HTML_FILE, file_name=p.name)
             self._set_status(status, 5000)
-            self._logger.info("DocumentController: HTML file opened: %s", fmt_path(p))
+            self._logger.info("DocumentController: HTML file opened (path=%s)", fmt_path(p))
 
         except (
             AttributeError,
@@ -500,7 +500,7 @@ class DocumentController:
             status = self._tr(self.TR_OPEN_HTML_FILE_FAILED)
             self._set_status(status, 6000)
             self._logger.exception(
-                "DocumentController: failed to open HTML file '%s'",
+                "DocumentController: failed to open HTML file (path=%s)",
                 fmt_path(p),
             )
             self._dialogs.critical(

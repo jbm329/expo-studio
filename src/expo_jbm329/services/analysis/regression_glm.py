@@ -15,6 +15,7 @@ from statsmodels.tools.sm_exceptions import ConvergenceWarning, PerfectSeparatio
 
 from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
+from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic, log_recoverable_fit_failure
 from expo_jbm329.services.analysis.limits import (
     REGRESSION_MAX_MODEL_TERMS as MAX_MODEL_TERMS,
 )
@@ -191,11 +192,13 @@ def initialize_generalized_targets(df: pd.DataFrame) -> GeneralizedTargetColumns
     return GeneralizedTargetColumns(binary=tuple(binary_targets), count=tuple(count_targets))
 
 
-def analyze_generalized_regression(
+def _compute_generalized_regression(
     df: pd.DataFrame,
     model: RegressionModel,
     target: str,
     predictors: tuple[str, ...] | list[str],
+    *,
+    corr_id: str | None = None,
 ) -> GeneralizedRegressionResult:
     """Fit logistic, Poisson, or negative-binomial regression.
 
@@ -386,7 +389,14 @@ def analyze_generalized_regression(
         ValueError,
         RuntimeError,
         FloatingPointError,
-    ):
+    ) as exc:
+        log_recoverable_fit_failure(
+            corr_id=corr_id,
+            model=model.value,
+            reason="fit_exception",
+            exception_class=type(exc).__name__,
+            rows_used=n_used,
+        )
         return _empty_result(
             model,
             target,
@@ -398,6 +408,12 @@ def analyze_generalized_regression(
             n_dropped,
         )
     if not bool(getattr(fit, "mle_retvals", {}).get("converged", True)):
+        log_recoverable_fit_failure(
+            corr_id=corr_id,
+            model=model.value,
+            reason="non_converged",
+            rows_used=n_used,
+        )
         return _empty_result(
             model,
             target,
@@ -416,6 +432,12 @@ def analyze_generalized_regression(
     p_values = np.asarray(fit.pvalues, dtype=np.float64)[:design_width]
     intervals = np.asarray(fit.conf_int(alpha=1.0 - CONFIDENCE_LEVEL), dtype=np.float64)[:design_width]
     if not all(np.all(np.isfinite(values)) for values in (params, std_errors, z_values, p_values, intervals)):
+        log_recoverable_fit_failure(
+            corr_id=corr_id,
+            model=model.value,
+            reason="non_finite_estimates",
+            rows_used=n_used,
+        )
         return _empty_result(
             model,
             target,
@@ -624,6 +646,46 @@ def _empty_result(
         error=error,
         error_column=error_column,
     )
+
+
+def analyze_generalized_regression(
+    df: pd.DataFrame,
+    model: RegressionModel,
+    target: str,
+    predictors: tuple[str, ...] | list[str],
+    *,
+    corr_id: str | None = None,
+) -> GeneralizedRegressionResult:
+    """Fit a generalized regression model with bounded timing diagnostics.
+
+    Args:
+        df: DataFrame to analyze. Never mutated.
+        model: Logistic, Poisson, or negative-binomial model.
+        target: Target column.
+        predictors: Predictor columns.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        Fitted model result or structured unavailable result.
+    """
+    diagnostic = AnalysisDiagnostic(
+        "regression_glm",
+        corr_id,
+        row_count=len(df),
+        column_count=df.shape[1],
+        method=model.value,
+        selected_count=len(predictors),
+    )
+    result = _compute_generalized_regression(df, model, target, predictors, corr_id=corr_id)
+    diagnostic.finish(
+        "success" if result.error is None else "unavailable",
+        reason=result.error.value if result.error is not None else None,
+        rows_used=result.n_used,
+        rows_dropped=result.n_dropped,
+        item_count=len(result.terms),
+        sampled=result.plot_data.sampled if result.plot_data is not None else None,
+    )
+    return result
 
 
 def _sorted_levels(values: pd.Series) -> list[Any]:

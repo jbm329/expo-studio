@@ -54,6 +54,72 @@ def test_normal_dimensions_and_frozen_actual_png_size():
     assert_inside(figure)
 
 
+def test_raster_diagnostics_include_safe_dimensions_timing_and_correlation_id(caplog):
+    import logging
+
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+    figure = ChartFigure(figsize=(4, 3), dpi=100, constrained_layout=True)
+    figure.suptitle("Private chart title")
+    figure.add_subplot().plot([1, 2], [3, 4])
+
+    raster = render_chart_png(figure, corr_id="corr-raster")
+
+    messages = "\n".join(record.getMessage() for record in caplog.records)
+    assert raster.width_px == 400
+    assert "AnalysisChartService: chart raster finished (corr=corr-raster, outcome=success" in messages
+    assert "passes=" in messages
+    assert " ms=" in messages
+    assert "width_px=400" in messages
+    assert "Private chart title" not in messages
+    assert raster.image_data.hex() not in messages
+
+
+def test_batch_logs_one_summary_line_and_silences_successful_rasters(caplog):
+    import logging
+
+    from expo_jbm329.services.analysis.chart_export import chart_render_batch
+
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+    with chart_render_batch("pca", 2, "corr-batch"):
+        for _ in range(2):
+            figure = ChartFigure(figsize=(4, 3), dpi=100, constrained_layout=True)
+            figure.add_subplot().plot([1, 2], [3, 4])
+            render_chart_png(figure, corr_id="corr-batch")
+
+    messages = [record.getMessage() for record in caplog.records if record.name == "applogger.service"]
+    assert len(messages) == 1
+    assert messages[0].startswith(
+        "AnalysisChartService: chart batch finished (corr=corr-batch, operation=pca, charts=2, outcome=success, ms="
+    )
+
+
+def test_cancelled_raster_and_batch_log_debug_cancellation_without_failure(caplog):
+    import logging
+
+    from expo_jbm329.services.analysis.chart_export import chart_render_batch
+    from expo_jbm329.services.excel_chart import ExcelChartCancelledError
+
+    cancellation = ExcelChartCancelledError("private cancellation detail")
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+    figure = ChartFigure(figsize=(4, 3), dpi=100, constrained_layout=True)
+    figure.add_subplot().plot([1, 2], [3, 4])
+
+    def cancel() -> None:
+        raise cancellation
+
+    with pytest.raises(ExcelChartCancelledError) as raised, chart_render_batch("pca", 2, "corr-cancel"):
+        render_chart_png(figure, check_cancelled=cancel, corr_id="corr-cancel")
+
+    messages = "\n".join(record.getMessage() for record in caplog.records)
+    assert raised.value is cancellation
+    assert "AnalysisChartService: chart raster finished (corr=corr-cancel, outcome=cancelled" in messages
+    assert "operation=pca, charts=2, outcome=cancelled" in messages
+    assert "outcome=failed" not in messages
+    assert "private cancellation detail" not in messages
+    assert {record.levelno for record in caplog.records} == {logging.DEBUG}
+    assert all(record.exc_info is None for record in caplog.records)
+
+
 def test_png_preserves_verified_renderer_rgba_pixels() -> None:
     figure = ChartFigure(figsize=(4, 3), dpi=100, constrained_layout=True)
     figure.patch.set_alpha(0)

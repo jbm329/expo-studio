@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from unittest.mock import patch
+import logging
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from expo_jbm329.services.job_manager import JobManager, Worker, run_in_thread
 
@@ -170,6 +173,48 @@ def test_abort_all_and_shutdown(monkeypatch):
 
     assert jm.abort_all() == []
     jm.shutdown()
+
+
+@pytest.mark.parametrize("job_count", [0, 1])
+def test_cancel_all_log_level_depends_on_tracked_jobs(caplog, job_count):
+    caplog.set_level(logging.DEBUG)
+    manager = JobManager()
+    manager._cancel_flags = {f"job-{index}": False for index in range(job_count)}
+
+    assert manager.cancel_all() == job_count
+
+    records = [
+        record
+        for record in caplog.records
+        if record.getMessage().startswith("JobManager: cancellation requested for all jobs")
+    ]
+    assert len(records) == 1
+    assert records[0].levelno == (logging.WARNING if job_count else logging.INFO)
+    assert records[0].getMessage().endswith(f"(count={job_count})")
+    assert all(manager._cancel_flags.values())
+
+
+@pytest.mark.parametrize("job_count", [0, 1])
+@pytest.mark.parametrize("with_pool", [False, True])
+def test_abort_all_log_level_and_idle_pool_cleanup(caplog, job_count, with_pool):
+    caplog.set_level(logging.DEBUG)
+    manager = JobManager()
+    manager._cancel_flags = {f"job-{index}": False for index in range(job_count)}
+    manager._jobs = dict.fromkeys(manager._cancel_flags, (None, None))
+    pool = MagicMock() if with_pool else None
+    manager._pool = pool
+
+    assert manager.abort_all() == []
+
+    records = [record for record in caplog.records if record.getMessage().startswith("JobManager: abort all requested")]
+    assert len(records) == 1
+    assert records[0].levelno == (logging.WARNING if job_count else logging.INFO)
+    assert records[0].getMessage().endswith(f"(count={job_count})")
+    if not job_count:
+        assert not any(record.levelno >= logging.WARNING for record in caplog.records)
+    if pool is not None:
+        pool.shutdown.assert_called_once_with(wait=False, cancel_futures=True)
+    assert manager._pool is None
 
 
 def test_worker_reports_import_error_instead_of_propagating():

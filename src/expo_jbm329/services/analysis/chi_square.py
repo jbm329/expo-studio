@@ -25,6 +25,7 @@ import pandas as pd
 from scipy.stats import chi2_contingency, fisher_exact
 from scipy.stats.contingency import association
 
+from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic
 from expo_jbm329.services.analysis.group_comparison import (
     MIN_GROUPS,
     ExcludedColumn,
@@ -206,7 +207,7 @@ def initialize_chi_square(df: pd.DataFrame) -> ChiSquareResult:
     )
 
 
-def analyze_chi_square(
+def _compute_chi_square(
     df: pd.DataFrame,
     row_column: str | None = None,
     column_column: str | None = None,
@@ -321,3 +322,38 @@ def analyze_chi_square(
         error=None,
         excluded_columns=columns.excluded,
     )
+
+
+def analyze_chi_square(
+    df: pd.DataFrame,
+    row_column: str | None = None,
+    column_column: str | None = None,
+    *,
+    corr_id: str | None = None,
+) -> ChiSquareResult:
+    """Test independence and log bounded timing metadata.
+
+    Args:
+        df: DataFrame to analyze. Never mutated.
+        row_column: Optional categorical row feature.
+        column_column: Optional categorical column feature.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        Chi-square result, including structured unavailable reasons.
+    """
+    diagnostic = AnalysisDiagnostic(
+        "chi_square",
+        corr_id,
+        row_count=len(df),
+        column_count=df.shape[1],
+        selected_count=int(row_column is not None) + int(column_column is not None),
+    )
+    result = _compute_chi_square(df, row_column, column_column)
+    diagnostic.finish(
+        "success" if result.error is None else "unavailable",
+        reason=result.error.value if result.error is not None else None,
+        rows_used=result.total if result.error is None else None,
+        item_count=len(result.observed),
+    )
+    return result

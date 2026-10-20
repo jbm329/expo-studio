@@ -25,6 +25,7 @@ from scipy.stats import kendalltau, norm, pearsonr, rankdata
 
 from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
+from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -396,7 +397,7 @@ def initialize_correlation(df: pd.DataFrame) -> CorrelationMatrixResult:
     return _matrix_error(None, CorrelationMethod.PEARSON, available[:DEFAULT_SELECTED_COLUMNS], available)
 
 
-def analyze_correlation_matrix(
+def _compute_correlation_matrix(
     df: pd.DataFrame,
     columns: Sequence[str] | None = None,
     method: CorrelationMethod = CorrelationMethod.PEARSON,
@@ -540,7 +541,7 @@ def _pair_error(
     )
 
 
-def analyze_correlation_pair(
+def _compute_correlation_pair(
     df: pd.DataFrame,
     x_column: str,
     y_column: str,
@@ -608,3 +609,94 @@ def analyze_correlation_pair(
         sampled=len(sample_x) < n,
         error=None,
     )
+
+
+def analyze_correlation_matrix(
+    df: pd.DataFrame,
+    columns: Sequence[str] | None = None,
+    method: CorrelationMethod = CorrelationMethod.PEARSON,
+    *,
+    progress_cb: Callable[[int], None] | None = None,
+    cancel_cb: Callable[[], bool] | None = None,
+    corr_id: str | None = None,
+) -> CorrelationMatrixResult | None:
+    """Compute a correlation matrix with bounded timing diagnostics.
+
+    Args:
+        df: DataFrame to analyze. Never mutated.
+        columns: Optional numeric feature selection.
+        method: Correlation coefficient to compute.
+        progress_cb: Optional progress callback.
+        cancel_cb: Optional cooperative cancellation callback.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        Matrix result, structured unavailable result, or ``None`` on cancel.
+    """
+    diagnostic = AnalysisDiagnostic(
+        "correlation_matrix",
+        corr_id,
+        row_count=len(df),
+        column_count=df.shape[1],
+        method=method.value,
+        selected_count=len(columns) if columns is not None else None,
+    )
+    result = _compute_correlation_matrix(
+        df,
+        columns,
+        method,
+        progress_cb=progress_cb,
+        cancel_cb=cancel_cb,
+    )
+    if result is None:
+        diagnostic.finish("cancelled", reason="cancelled")
+    else:
+        diagnostic.finish(
+            "success" if result.error is None else "unavailable",
+            reason=result.error.value if result.error is not None else None,
+            item_count=len(result.pairs),
+        )
+    return result
+
+
+def analyze_correlation_pair(
+    df: pd.DataFrame,
+    x_column: str,
+    y_column: str,
+    method: CorrelationMethod = CorrelationMethod.PEARSON,
+    *,
+    statistics: CorrelationPair | None = None,
+    corr_id: str | None = None,
+) -> CorrelationPairDetail:
+    """Analyze one correlation pair with bounded timing diagnostics.
+
+    Args:
+        df: DataFrame to analyze. Never mutated.
+        x_column: Numeric feature on the x axis.
+        y_column: Numeric feature on the y axis.
+        method: Correlation coefficient to compute.
+        statistics: Optional precomputed statistics for the same pair.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        Pair detail or a structured unavailable result.
+
+    Raises:
+        ValueError: If supplied statistics do not match the pair and cohort.
+    """
+    diagnostic = AnalysisDiagnostic(
+        "correlation_pair",
+        corr_id,
+        row_count=len(df),
+        column_count=df.shape[1],
+        method=method.value,
+        selected_count=2,
+    )
+    result = _compute_correlation_pair(df, x_column, y_column, method, statistics=statistics)
+    diagnostic.finish(
+        "success" if result.error is None else "unavailable",
+        reason=result.error.value if result.error is not None else None,
+        rows_used=result.pair.n if result.error is None else None,
+        sampled=result.sampled,
+    )
+    return result

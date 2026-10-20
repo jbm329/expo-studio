@@ -237,7 +237,8 @@ class AnalysisDialog(QDialog):
         workspace.setSpacing(12)
         content_panel = self._build_content_panel()
         config_panel = self._build_config_panel()
-        workspace.addWidget(content_panel, 4)
+        # A quarter-width configuration pane accommodates native control minimums.
+        workspace.addWidget(content_panel, 3)
         workspace.addWidget(config_panel, 1)
         analysis_layout.addLayout(workspace, 1)
 

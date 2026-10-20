@@ -546,15 +546,24 @@ class DataIOService:
             self._logger.error("DataIOService: %s (corr=%s, path=%s)", message, corr_id, fmt_path(dest_str))
             return JobResult(ok=False, elapsed=None, path=dest_str, error=message, corr_id=corr_id)
 
-        self._logger.debug(
-            "DataIOService: export excel start (corr=%s, path=%s, rows=%s, cols=%s, job_id=%s, scope=%s)",
-            corr_id,
-            fmt_path(dest_str),
-            rows,
-            columns,
-            job_id,
-            job_scope,
-        )
+        if named:
+            self._logger.debug(
+                "DataIOService: export excel start (corr=%s, path=%s, job_id=%s, scope=%s)",
+                corr_id,
+                fmt_path(dest_str),
+                job_id,
+                job_scope,
+            )
+        else:
+            self._logger.debug(
+                "DataIOService: export excel start (corr=%s, path=%s, rows=%s, cols=%s, job_id=%s, scope=%s)",
+                corr_id,
+                fmt_path(dest_str),
+                rows,
+                columns,
+                job_id,
+                job_scope,
+            )
 
         # Early cancellation before any I/O
         if cancel_cb and cancel_cb():

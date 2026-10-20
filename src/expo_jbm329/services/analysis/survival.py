@@ -15,6 +15,7 @@ from statsmodels.tools.sm_exceptions import ConvergenceWarning
 
 from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
+from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic, log_recoverable_fit_failure
 from expo_jbm329.services.analysis.limits import (
     REGRESSION_MAX_MODEL_TERMS as MAX_MODEL_TERMS,
 )
@@ -138,11 +139,13 @@ def initialize_survival_columns(df: pd.DataFrame) -> SurvivalColumns:
     return SurvivalColumns(durations=numeric, events=tuple(events))
 
 
-def analyze_cox_regression(
+def _compute_cox_regression(
     df: pd.DataFrame,
     duration: str,
     event: str,
     predictors: tuple[str, ...] | list[str],
+    *,
+    corr_id: str | None = None,
 ) -> SurvivalResult:
     """Fit a Cox proportional-hazards model with Efron handling of tied events.
 
@@ -325,7 +328,21 @@ def analyze_cox_regression(
             z_values = np.asarray(fit.tvalues, dtype=np.float64)
             p_values = np.asarray(fit.pvalues, dtype=np.float64)
             intervals = np.asarray(fit.conf_int(alpha=1.0 - CONFIDENCE_LEVEL), dtype=np.float64)
-    except (ConvergenceWarning, RuntimeWarning, np.linalg.LinAlgError, ValueError, RuntimeError, FloatingPointError):
+    except (
+        ConvergenceWarning,
+        RuntimeWarning,
+        np.linalg.LinAlgError,
+        ValueError,
+        RuntimeError,
+        FloatingPointError,
+    ) as exc:
+        log_recoverable_fit_failure(
+            corr_id=corr_id,
+            model="cox",
+            reason="fit_exception",
+            exception_class=type(exc).__name__,
+            rows_used=n_used,
+        )
         return _empty_result(
             duration,
             event,
@@ -340,6 +357,12 @@ def analyze_cox_regression(
         )
 
     if not all(np.all(np.isfinite(values)) for values in (params, std_errors, z_values, p_values, intervals)):
+        log_recoverable_fit_failure(
+            corr_id=corr_id,
+            model="cox",
+            reason="non_finite_estimates",
+            rows_used=n_used,
+        )
         return _empty_result(
             duration,
             event,
@@ -374,6 +397,12 @@ def analyze_cox_regression(
         for term in terms
         for value in (term.hazard_ratio, term.hazard_ratio_ci_low, term.hazard_ratio_ci_high)
     ):
+        log_recoverable_fit_failure(
+            corr_id=corr_id,
+            model="cox",
+            reason="non_finite_effects",
+            rows_used=n_used,
+        )
         return _empty_result(
             duration,
             event,
@@ -474,3 +503,42 @@ def _safe_exp(value: float) -> float:
         return math.exp(value)
     except OverflowError:
         return math.inf
+
+
+def analyze_cox_regression(
+    df: pd.DataFrame,
+    duration: str,
+    event: str,
+    predictors: tuple[str, ...] | list[str],
+    *,
+    corr_id: str | None = None,
+) -> SurvivalResult:
+    """Fit Cox regression with bounded timing diagnostics.
+
+    Args:
+        df: DataFrame to analyze. Never mutated.
+        duration: Duration column.
+        event: Binary event column.
+        predictors: Predictor columns.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        Fitted model result or structured unavailable result.
+    """
+    diagnostic = AnalysisDiagnostic(
+        "survival_cox",
+        corr_id,
+        row_count=len(df),
+        column_count=df.shape[1],
+        method="cox",
+        selected_count=len(predictors),
+    )
+    result = _compute_cox_regression(df, duration, event, predictors, corr_id=corr_id)
+    diagnostic.finish(
+        "success" if result.error is None else "unavailable",
+        reason=result.error.value if result.error is not None else None,
+        rows_used=result.n_used,
+        rows_dropped=result.n_dropped,
+        item_count=len(result.terms),
+    )
+    return result

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -149,6 +150,34 @@ def test_on_data_loaded_without_pending_tab_displays_dataframe(service, tmp_path
 
     assert not results.fulfilled
     display_dataframe.assert_called_once()
+
+
+def test_loaded_dataframe_logs_raw_counts_but_preserves_localized_status(service, tmp_path, monkeypatch, caplog):
+    svc, _, _, _, status_messages, _ = service
+    dispatch_status = MagicMock()
+    monkeypatch.setattr("expo_jbm329.services.file_job_service.ui_invoke", dispatch_status)
+    monkeypatch.setattr(
+        "expo_jbm329.services.file_job_service.fmt_shape",
+        lambda df: ("38\u00a0555", "1"),
+    )
+    caplog.set_level(logging.INFO, logger=svc._logger.name)
+    payload = JobResult(ok=True, elapsed=None, data=pd.DataFrame({"A": range(38555)}), corr_id="raw-counts")
+
+    svc._on_data_loaded(payload, str(tmp_path / "data.csv"), pending_tab_id="tab-1")
+
+    message = next(
+        record.getMessage()
+        for record in caplog.records
+        if record.getMessage().startswith("FileJobService: displayed DataFrame")
+    )
+    assert "rows=38555, cols=1" in message
+    assert "38\u00a0555" not in message
+    dispatch_status.assert_called_once()
+    callback, text, timeout = dispatch_status.call_args.args
+    assert callback == svc._set_status
+    assert timeout == 10000
+    callback(text, timeout)
+    assert any("38\u00a0555" in text for text, _ in status_messages)
 
 
 def test_on_data_loaded_cancelled_removes_pending_tab(service, tmp_path: Path):

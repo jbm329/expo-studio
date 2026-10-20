@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import replace
 from datetime import UTC, datetime
 from html import escape
@@ -297,6 +298,99 @@ def test_pca_notes_follow_component_selection_without_capturing_entry_notes_or_c
     assert components[1].paragraphs == ()
     assert components[1].charts[1].captions == snapshot.chart_labels.scatter_metadata.captions
     assert entry.note == "Entry note"
+
+
+def test_report_correlation_id_reaches_worker_raster_without_logging_report_content(monkeypatch, caplog):
+    from expo_jbm329.services.analysis import pca_charts
+
+    correlation_id = "corr-report-continuity"
+    private_values = ("private report title", "private report description", "private report note")
+    snapshot = pca_snapshot()
+    entry = _entry(AnalysisCategory.PCA, snapshot, ("charts",)).with_selection(("charts",), private_values[2])
+    document = ReportDocument(title=private_values[0], description=private_values[1])
+    document.upsert(entry)
+    raster_correlation_ids = []
+    original_render = pca_charts.render_chart_png
+
+    def inspect_png(figure, *, check_cancelled=None, corr_id=None):
+        raster_correlation_ids.append(corr_id)
+        return original_render(figure, check_cancelled=check_cancelled, corr_id=corr_id)
+
+    monkeypatch.setattr(pca_charts, "render_chart_png", inspect_png)
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+
+    html = render_report_html(document, corr_id=correlation_id)
+
+    messages = "\n".join(record.getMessage() for record in caplog.records)
+    report_lines = [
+        record.getMessage()
+        for record in caplog.records
+        if record.getMessage().startswith("AnalysisReportService: report stage finished")
+    ]
+    assert all(value in html for value in private_values)
+    assert raster_correlation_ids == [correlation_id, correlation_id]
+    assert len(report_lines) == 1
+    assert report_lines[0].startswith(
+        f"AnalysisReportService: report stage finished (corr={correlation_id}, stage=render_html,"
+    )
+    assert "outcome=success" in report_lines[0]
+    assert "AnalysisChartService" not in messages
+    assert all(value not in messages for value in private_values)
+    assert "data:image/png" not in messages
+
+
+def test_report_failed_chart_stage_logs_only_structural_metadata(monkeypatch, caplog):
+    import expo_jbm329.services.analysis.report as report_module
+
+    private_exception = "sensitive exception message"
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.PCA, pca_snapshot(), ("charts",)))
+
+    def fail_renderer(*args, **kwargs):
+        raise RuntimeError(private_exception)
+
+    monkeypatch.setattr(report_module, "render_pca_charts", fail_renderer)
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+
+    with pytest.raises(RuntimeError, match=private_exception):
+        prepare_report_content(document, corr_id="corr-report-failure")
+
+    messages = "\n".join(record.getMessage() for record in caplog.records)
+    assert "stage=charts" in messages
+    assert "entry=1" in messages
+    assert "category=pca" in messages
+    assert "outcome=failed" in messages
+    assert private_exception not in messages
+
+
+def test_report_cancelled_chart_stage_logs_debug_cancellation_without_failure(monkeypatch, caplog):
+    import expo_jbm329.services.analysis.report as report_module
+
+    cancellation = ExcelChartCancelledError("private cancellation detail")
+    document = ReportDocument()
+    document.upsert(_entry(AnalysisCategory.PCA, pca_snapshot(), ("charts",)))
+
+    def cancel_renderer(*args, **kwargs):
+        raise cancellation
+
+    monkeypatch.setattr(report_module, "render_pca_charts", cancel_renderer)
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+
+    with pytest.raises(ExcelChartCancelledError) as raised:
+        render_report_html(document, corr_id="corr-report-cancel")
+
+    messages = "\n".join(record.getMessage() for record in caplog.records)
+    assert raised.value is cancellation
+    finished = {
+        message.split("stage=", 1)[1].split(",", 1)[0]: message.split("outcome=", 1)[1].split(",", 1)[0]
+        for message in (record.getMessage() for record in caplog.records)
+        if message.startswith("AnalysisReportService: report stage finished")
+    }
+    assert finished == {"charts": "cancelled", "prepare": "cancelled", "render_html": "cancelled"}
+    assert "outcome=failed" not in messages
+    assert "private cancellation detail" not in messages
+    assert {record.levelno for record in caplog.records} == {logging.DEBUG}
+    assert all(record.exc_info is None for record in caplog.records)
 
 
 @pytest.mark.parametrize("method", list(ClusteringMethod))
