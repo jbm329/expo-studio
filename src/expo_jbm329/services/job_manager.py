@@ -869,7 +869,11 @@ class JobManager:
             self._cancel_flags[job_id] = True
             count += 1
 
-        self._logger.warning("JobManager: cancellation requested for all jobs (count=%s)", count)
+        self._logger.log(
+            logging.WARNING if count else logging.INFO,
+            "JobManager: cancellation requested for all jobs (count=%s)",
+            count,
+        )
         return count
 
     def abort_all(self, wait_ms: int = 1500) -> list[str]:
@@ -886,10 +890,15 @@ class JobManager:
             A list of job ids that were still running after the wait timeout.
         """
         if not self._jobs and self._pool is None:
-            self._logger.debug("JobManager: abort_all ignored; no active jobs.")
+            self._logger.info("JobManager: abort all requested (count=0)")
             return []
 
-        self._logger.warning("JobManager: ABORT ALL REQUESTED")
+        count = len(self._cancel_flags)
+        self._logger.log(
+            logging.WARNING if count else logging.INFO,
+            "JobManager: abort all requested (count=%s)",
+            count,
+        )
         self.cancel_all()
 
         still_running: list[str] = []
