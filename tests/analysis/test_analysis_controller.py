@@ -715,6 +715,7 @@ def test_report_preview_runs_in_background_without_reading_active_datasets(monke
     assert not dialog.report_page()._preview_button.isEnabled()
     call = operations.last_call
     assert call["runner"] == "pool"
+    assert call["scope"] == "analysis:report-preview"
     assert call["target"] is dialog.report_page()
     assert call["cancelable"]
     assert not call["indeterminate"]

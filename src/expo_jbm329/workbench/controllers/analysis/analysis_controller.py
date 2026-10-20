@@ -962,7 +962,7 @@ class AnalysisController:
                     on_error=on_error,
                     on_finished=on_finished,
                     busy_message=self._tr(self.TR_REPORT_PREPARING),
-                    scope=f"analysis:report-preview:{id(dialog)}",
+                    scope="analysis:report-preview",
                     operation_name=self._tr(self.TR_REPORT_OPERATION),
                     stale_check=stale,
                     corr_id=corr_id,
