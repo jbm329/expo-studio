@@ -41,6 +41,13 @@ _OPERATION_CATEGORIES: dict[str, AnalysisCategory] = {
     "timeseries": AnalysisCategory.TIME_SERIES,
 }
 
+_COMPUTATION_STEPS: dict[str, str] = {
+    "correlation_matrix": "matrix",
+    "correlation_pair": "pair",
+    "outlier_summary": "summary",
+    "outlier_column": "column",
+}
+
 
 def analysis_log_component(category: AnalysisCategory) -> str:
     """Return a stable English section prefix, independent of the UI locale.
@@ -198,6 +205,7 @@ class AnalysisDiagnostic:
             "computation finished",
             corr=self._corr_id,
             scope=self._scope,
+            step=_COMPUTATION_STEPS.get(self._operation) if self._scope is not None else None,
             operation=self._operation if self._scope is None else None,
             method=self._method if self._scope is None else None,
             outcome=outcome,

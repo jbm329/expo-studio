@@ -307,6 +307,10 @@ Section labels are stable English: Overview, Statistics, Hypothesis Tests,
 Correlation, Regression, Outliers, Clustering, PCA and Time Series.
 Hypothesis subtests, regression variants and outlier variants retain their
 distinct job scopes under their parent section.
+Correlation matrix jobs also compute the selected pair, and outlier summary
+jobs also compute the selected column. Their completion events retain the same
+job scope but add `step=matrix` / `step=pair` or `step=summary` / `step=column`
+so these calculations remain distinguishable without additional log lines.
 Completion means the calculation returned, not that its result was displayed.
 JobManager retains worker lifecycle and unexpected-exception ownership.
 

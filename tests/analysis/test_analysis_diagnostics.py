@@ -235,6 +235,29 @@ def test_concurrent_jobs_keep_distinct_scopes(caplog):
         assert sum(f"corr={scope}, scope={scope}," in message for message in messages) == 1
 
 
+@pytest.mark.parametrize(
+    ("scope", "operations", "steps"),
+    [
+        ("analysis:correlation:matrix:pearson", ("correlation_matrix", "correlation_pair"), ("matrix", "pair")),
+        ("analysis:outliers:summary:iqr", ("outlier_summary", "outlier_column"), ("summary", "column")),
+    ],
+)
+@pytest.mark.parametrize("outcome", ["success", "unavailable", "cancelled"])
+def test_shared_job_computations_have_distinct_steps(caplog, scope, operations, steps, outcome):
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+
+    with analysis_job_scope(scope):
+        for operation in operations:
+            AnalysisDiagnostic(operation, "shared-job", row_count=3, column_count=2).finish(outcome)
+
+    messages = [record.getMessage() for record in caplog.records if record.name == "applogger.service"]
+    assert len(messages) == 2
+    for message, step in zip(messages, steps, strict=True):
+        assert f"corr=shared-job, scope={scope}, step={step}, outcome={outcome}," in message
+        assert "operation=" not in message
+        assert "method=" not in message
+
+
 def test_computations_nested_in_summary_scope_are_silent(caplog):
     from expo_jbm329.services.analysis.diagnostics import summary_scope
 
