@@ -413,11 +413,11 @@ class FileJobService:
         ui_invoke(self._set_status, txt, 10000)
 
         self._logger.info(
-            "FileJobService: displayed DataFrame (corr=%s, path=%s, rows=%s, cols=%s, elapsed=%s)",
+            "FileJobService: displayed DataFrame (corr=%s, path=%s, rows=%d, cols=%d, elapsed=%s)",
             corr_eff,
             fmt_path(path),
-            rows,
-            columns,
+            df.shape[0],
+            df.shape[1],
             (fmt_time(elapsed_s) if elapsed_s else None),
         )
 
