@@ -387,6 +387,39 @@ def test_export_excel_runs_with_scope_and_suffix():
     assert async_ops.calls[0]["scope"] == "export:excel"
 
 
+@pytest.mark.parametrize("method", ["export_csv", "export_excel", "export_data"])
+def test_export_preserves_explicit_correlation_through_worker(method, monkeypatch):
+    ctrl, _, files, _, _, _, _ = make_controller(df=pd.DataFrame({"private_feature": [1]}))
+    ctrl._async_ops = Mock()
+    ctrl._data_io = Mock()
+    monkeypatch.setattr(ExportController, "_new_corr", Mock(side_effect=AssertionError("Unexpected correlation")))
+    files.enqueue_save_response("C:/tmp/output.df", "All data files (*.df)")
+
+    getattr(ctrl, method)(corr_id="captured-export")
+
+    job = ctrl._async_ops.run_target_overlay_operation.call_args.kwargs
+    assert job["corr_id"] == "captured-export"
+    job["work"]()
+    writer = {
+        "export_csv": ctrl._data_io.export_df_csv,
+        "export_excel": ctrl._data_io.export_df_excel,
+        "export_data": ctrl._data_io.export_df_datafile,
+    }[method]
+    assert writer.call_args.kwargs["corr_id"] == "captured-export"
+
+
+def test_html_export_preserves_explicit_correlation(tmp_path, monkeypatch):
+    ctrl, _, files, _ = make_html_controller(tmp_path)
+    monkeypatch.setattr(ExportController, "_new_corr", Mock(side_effect=AssertionError("Unexpected correlation")))
+    files.enqueue_save_response(str(tmp_path / "report.html"), "HTML files (*.html)")
+
+    assert request_html(ctrl, corr_id="captured-report")[0]
+    job = ctrl._async_ops.run_target_overlay_operation.call_args.kwargs
+    assert job["corr_id"] == "captured-report"
+    job["work"]()
+    assert ctrl._data_io.export_html_report.call_args.kwargs["corr_id"] == "captured-report"
+
+
 @pytest.mark.parametrize(
     "chosen_path, expected_scope",
     [

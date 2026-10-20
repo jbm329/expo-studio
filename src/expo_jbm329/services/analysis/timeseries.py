@@ -12,6 +12,7 @@ from statsmodels.tsa.stattools import acf
 
 from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
+from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic
 from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
 
 MIN_OBSERVATIONS = 3
@@ -244,7 +245,7 @@ def initialize_time_series(df: pd.DataFrame) -> TimeSeriesResult:
     return _unfitted_result(error, configuration=configuration)
 
 
-def analyze_time_series(
+def _compute_time_series(
     df: pd.DataFrame,
     datetime_column: str | None = None,
     value_column: str | None = None,
@@ -336,3 +337,53 @@ def analyze_time_series(
         decomposition_note=decomposition_note,
         error=None,
     )
+
+
+def analyze_time_series(
+    df: pd.DataFrame,
+    datetime_column: str | None = None,
+    value_column: str | None = None,
+    *,
+    resample_frequency: str | None = None,
+    seasonal_period: int | None = None,
+    decomposition_model: DecompositionModel = DecompositionModel.ADDITIVE,
+    corr_id: str | None = None,
+) -> TimeSeriesResult:
+    """Analyze a time series with bounded timing diagnostics.
+
+    Args:
+        df: DataFrame to analyze. Never mutated.
+        datetime_column: Optional datetime feature.
+        value_column: Optional numeric feature.
+        resample_frequency: Optional pandas offset alias.
+        seasonal_period: Optional observations per seasonal cycle.
+        decomposition_model: Additive or multiplicative decomposition.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        Prepared values and available diagnostics, or a structured error.
+    """
+    diagnostic = AnalysisDiagnostic(
+        "timeseries",
+        corr_id,
+        row_count=len(df),
+        column_count=df.shape[1],
+        method=decomposition_model.value,
+        selected_count=int(datetime_column is not None) + int(value_column is not None),
+    )
+    result = _compute_time_series(
+        df,
+        datetime_column,
+        value_column,
+        resample_frequency=resample_frequency,
+        seasonal_period=seasonal_period,
+        decomposition_model=decomposition_model,
+    )
+    diagnostic.finish(
+        "success" if result.error is None else "unavailable",
+        reason=result.error.value if result.error is not None else None,
+        rows_used=len(result.values) if result.error is None else None,
+        rows_dropped=result.invalid_rows if result.error is None else None,
+        item_count=result.duplicate_rows if result.error is None else None,
+    )
+    return result

@@ -464,6 +464,7 @@ class ExportController:
         parent_widget: QWidget | None = None,
         operation_target: QWidget | None = None,
         show_success_dialog: bool = False,
+        corr_id: str | None = None,
     ) -> None:
         """Export the supplied or active DataFrame to CSV format.
 
@@ -479,6 +480,7 @@ class ExportController:
             parent_widget: Dialog owner override. None uses the default parent.
             operation_target: Overlay target override. None uses the default target.
             show_success_dialog: Show a confirmation with the output path on success.
+            corr_id: Optional identifier shared with output preparation diagnostics.
         """
         parent, target = self._resolve_context(parent_widget=parent_widget, operation_target=operation_target)
         if df is None:
@@ -486,7 +488,7 @@ class ExportController:
         if self._df_is_empty(df, parent_widget=parent):
             return
 
-        corr = self._new_corr()
+        corr = corr_id if corr_id is not None else self._new_corr()
 
         start_dir = self._dialog_state.get_dir(
             "dialogs/export_csv_dir",
@@ -590,6 +592,7 @@ class ExportController:
         parent_widget: QWidget | None = None,
         operation_target: QWidget | None = None,
         show_success_dialog: bool = False,
+        corr_id: str | None = None,
     ) -> None:
         """Export the supplied or active DataFrame to Excel format.
 
@@ -607,6 +610,7 @@ class ExportController:
             parent_widget: Dialog owner override. None uses the default parent.
             operation_target: Overlay target override. None uses the default target.
             show_success_dialog: Show a confirmation with the output path on success.
+            corr_id: Optional identifier shared with output preparation diagnostics.
         """
         parent, target = self._resolve_context(parent_widget=parent_widget, operation_target=operation_target)
         source: pd.DataFrame | Mapping[str, pd.DataFrame]
@@ -654,7 +658,7 @@ class ExportController:
                 return
             source = df
 
-        corr = self._new_corr()
+        corr = corr_id if corr_id is not None else self._new_corr()
 
         start_dir = self._dialog_state.get_dir(
             "dialogs/export_excel_dir",
@@ -776,6 +780,7 @@ class ExportController:
         parent_widget: QWidget | None = None,
         operation_target: QWidget | None = None,
         show_success_dialog: bool = False,
+        corr_id: str | None = None,
     ) -> None:
         """Export the supplied or active DataFrame to a binary data format.
 
@@ -788,6 +793,7 @@ class ExportController:
             parent_widget: Dialog owner override. None uses the default parent.
             operation_target: Overlay target override. None uses the default target.
             show_success_dialog: Show a confirmation with the output path on success.
+            corr_id: Optional identifier shared with output preparation diagnostics.
         """
         parent, target = self._resolve_context(parent_widget=parent_widget, operation_target=operation_target)
         if df is None:
@@ -795,7 +801,7 @@ class ExportController:
         if self._df_is_empty(df, parent_widget=parent):
             return
 
-        corr = self._new_corr()
+        corr = corr_id if corr_id is not None else self._new_corr()
 
         start_dir = self._dialog_state.get_dir(
             "dialogs/export_data_dir",
@@ -894,6 +900,7 @@ class ExportController:
         operation_target: QWidget,
         stale_check: Callable[[], bool],
         on_finished: Callable[[], None],
+        corr_id: str | None = None,
     ) -> bool:
         """Choose a report destination, then prepare and save in a worker.
 
@@ -904,6 +911,7 @@ class ExportController:
             operation_target: Owner of the busy overlay.
             stale_check: Thread-safe guard returning True for a closed owner.
             on_finished: Worker-finished callback, including stale/error outcomes.
+            corr_id: Optional identifier shared with report preparation diagnostics.
 
         Returns:
             True if scheduled. False on dialog cancellation, overwrite refusal,
@@ -936,7 +944,7 @@ class ExportController:
             if not confirmed or stale_check():
                 return False
         self._dialog_state.set_dir("dialogs/save_report_dir", destination.parent)
-        corr_id = self._new_corr()
+        corr_id = corr_id if corr_id is not None else self._new_corr()
 
         def work(
             *,

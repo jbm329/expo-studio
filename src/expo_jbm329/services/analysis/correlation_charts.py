@@ -11,7 +11,7 @@ import numpy as np
 
 from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.chart_config import AxisPolicy, AxisRole, RotationMode
-from expo_jbm329.services.analysis.chart_export import render_chart_png
+from expo_jbm329.services.analysis.chart_export import chart_render_batch, render_chart_png
 from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.chart_presentation import (
     DEFAULT_CHART_NUMERIC_LOCALE,
@@ -256,6 +256,28 @@ def render_correlation_charts(
     *,
     progress_cb: Callable[[int], None] | None = None,
     cancel_cb: Callable[[], bool] | None = None,
+    corr_id: str | None = None,
+) -> tuple[ExcelChartImage, ...]:
+    """Render a correlation chart batch with bounded diagnostics."""
+    with chart_render_batch("correlation", len(components), corr_id):
+        return _render_correlation_charts(
+            snapshot,
+            components,
+            labels,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+            corr_id=corr_id,
+        )
+
+
+def _render_correlation_charts(
+    snapshot: CorrelationExportSnapshot,
+    components: Sequence[CorrelationExportComponent],
+    labels: CorrelationChartLabels,
+    *,
+    progress_cb: Callable[[int], None] | None,
+    cancel_cb: Callable[[], bool] | None,
+    corr_id: str | None,
 ) -> tuple[ExcelChartImage, ...]:
     """Render matrix first, then each unordered pair once in applied column order.
 
@@ -265,6 +287,7 @@ def render_correlation_charts(
         labels: Translated text and caption templates.
         progress_cb: Optional preparation percentage callback.
         cancel_cb: Optional cooperative cancellation callback.
+        corr_id: Optional operation correlation identifier used only for diagnostics.
 
     Returns:
         Worker-owned PNG images with below-image captions.
@@ -301,7 +324,7 @@ def render_correlation_charts(
             )
             try:
                 builder(figure)
-                raster = render_chart_png(figure, check_cancelled=check_cancel)
+                raster = render_chart_png(figure, check_cancelled=check_cancel, corr_id=corr_id)
             finally:
                 figure.clear()
         check_cancel()
@@ -332,6 +355,7 @@ def render_correlation_charts(
             y_column,
             matrix.method,
             statistics=pair_statistics[x_column, y_column],
+            corr_id=corr_id,
         )
         presentation = build_correlation_pair_presentation(detail, labels)
 

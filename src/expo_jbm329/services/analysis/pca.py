@@ -18,6 +18,7 @@ from sklearn.preprocessing import StandardScaler
 
 from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
+from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -156,7 +157,7 @@ def initialize_pca(df: pd.DataFrame) -> PCAResult:
     )
 
 
-def analyze_pca(
+def _compute_pca(
     df: pd.DataFrame,
     columns: Sequence[str] | None = None,
     *,
@@ -258,3 +259,41 @@ def analyze_pca(
         sampled=sampled,
         error=None,
     )
+
+
+def analyze_pca(
+    df: pd.DataFrame,
+    columns: Sequence[str] | None = None,
+    *,
+    standardize: bool = True,
+    corr_id: str | None = None,
+) -> PCAResult:
+    """Fit PCA with bounded timing diagnostics.
+
+    Args:
+        df: DataFrame to analyze. Never mutated.
+        columns: Optional numeric feature selection.
+        standardize: Whether to standardize selected features.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        PCA result or structured unavailable result.
+    """
+    diagnostic = AnalysisDiagnostic(
+        "pca",
+        corr_id,
+        row_count=len(df),
+        column_count=df.shape[1],
+        method="principal_components",
+        selected_count=len(columns) if columns is not None else None,
+    )
+    result = _compute_pca(df, columns, standardize=standardize)
+    diagnostic.finish(
+        "success" if result.error is None else "unavailable",
+        reason=result.error.value if result.error is not None else None,
+        rows_used=result.rows_used,
+        rows_dropped=result.rows_dropped,
+        item_count=len(result.columns),
+        sampled=result.sampled,
+    )
+    return result

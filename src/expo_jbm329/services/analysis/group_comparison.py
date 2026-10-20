@@ -26,6 +26,7 @@ from scipy.stats import f_oneway, kruskal, mannwhitneyu, ttest_ind
 
 from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns as find_numeric_columns
+from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic, AnalysisOutcome
 from expo_jbm329.services.analysis.normality import shapiro_normality
 
 _NAN = float("nan")
@@ -492,7 +493,7 @@ def initialize_group_comparison(df: pd.DataFrame) -> GroupComparisonResult:
     )
 
 
-def analyze_group_comparison(
+def _compute_group_comparison(
     df: pd.DataFrame,
     numeric_column: str | None = None,
     grouping_column: str | None = None,
@@ -627,3 +628,39 @@ def analyze_group_comparison(
         error=None,
         excluded_grouping_columns=grouping_columns.excluded,
     )
+
+
+def analyze_group_comparison(
+    df: pd.DataFrame,
+    numeric_column: str | None = None,
+    grouping_column: str | None = None,
+    *,
+    corr_id: str | None = None,
+) -> GroupComparisonResult:
+    """Compare groups and log bounded timing metadata.
+
+    Args:
+        df: DataFrame to analyze. Never mutated.
+        numeric_column: Optional numeric feature to compare.
+        grouping_column: Optional column defining groups.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        Comparison result, including structured unavailable reasons.
+    """
+    diagnostic = AnalysisDiagnostic(
+        "group_comparison",
+        corr_id,
+        row_count=len(df),
+        column_count=df.shape[1],
+        selected_count=int(numeric_column is not None) + int(grouping_column is not None),
+    )
+    result = _compute_group_comparison(df, numeric_column, grouping_column)
+    outcome: AnalysisOutcome = "success" if result.error is None else "unavailable"
+    diagnostic.finish(
+        outcome,
+        reason=result.error.value if result.error is not None else None,
+        rows_used=sum(group.count for group in result.groups) if result.error is None else None,
+        item_count=len(result.groups),
+    )
+    return result

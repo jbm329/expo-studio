@@ -27,6 +27,7 @@ import pandas as pd
 
 from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
+from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -369,7 +370,7 @@ def initialize_outlier_summary(df: pd.DataFrame) -> OutlierSummaryResult:
     )
 
 
-def analyze_outlier_summary(
+def _compute_outlier_summary(
     df: pd.DataFrame,
     method: OutlierMethod = OutlierMethod.IQR,
     threshold: float | None = None,
@@ -455,7 +456,7 @@ def _statistic(array: np.ndarray, compute: Callable[[np.ndarray], float]) -> flo
     return compute(array) if len(array) else _NAN
 
 
-def analyze_outlier_column(
+def _compute_outlier_column(
     df: pd.DataFrame,
     column: str,
     method: OutlierMethod = OutlierMethod.IQR,
@@ -528,3 +529,74 @@ def analyze_outlier_column(
         extremes=_extremes(df, screening, mask),
         error=None,
     )
+
+
+def analyze_outlier_summary(
+    df: pd.DataFrame,
+    method: OutlierMethod = OutlierMethod.IQR,
+    threshold: float | None = None,
+    *,
+    corr_id: str | None = None,
+) -> OutlierSummaryResult:
+    """Screen numeric columns and log bounded timing metadata.
+
+    Args:
+        df: DataFrame to analyze. Never mutated.
+        method: Detection method.
+        threshold: Optional method threshold.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        Per-column outlier summary or structured unavailable result.
+    """
+    diagnostic = AnalysisDiagnostic(
+        "outlier_summary",
+        corr_id,
+        row_count=len(df),
+        column_count=df.shape[1],
+        method=method.value,
+    )
+    result = _compute_outlier_summary(df, method, threshold)
+    diagnostic.finish(
+        "success" if result.error is None else "unavailable",
+        reason=result.error.value if result.error is not None else None,
+        item_count=len(result.columns),
+    )
+    return result
+
+
+def analyze_outlier_column(
+    df: pd.DataFrame,
+    column: str,
+    method: OutlierMethod = OutlierMethod.IQR,
+    threshold: float | None = None,
+    *,
+    corr_id: str | None = None,
+) -> OutlierColumnDetail:
+    """Screen one numeric column and log bounded timing metadata.
+
+    Args:
+        df: DataFrame to analyze. Never mutated.
+        column: Numeric column to screen.
+        method: Detection method.
+        threshold: Optional method threshold.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        Detailed outlier result or structured unavailable result.
+    """
+    diagnostic = AnalysisDiagnostic(
+        "outlier_column",
+        corr_id,
+        row_count=len(df),
+        column_count=df.shape[1],
+        method=method.value,
+        selected_count=1,
+    )
+    result = _compute_outlier_column(df, column, method, threshold)
+    diagnostic.finish(
+        "success" if result.error is None else "unavailable",
+        reason=result.error.value if result.error is not None else None,
+        item_count=len(result.extremes),
+    )
+    return result

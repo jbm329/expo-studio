@@ -17,6 +17,7 @@ import pandas as pd
 
 from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import NUMERIC_DTYPES
+from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic
 from expo_jbm329.services.analysis.outliers_export import unique_headers
 from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
 
@@ -372,7 +373,7 @@ def _sample_rows(df: pd.DataFrame) -> tuple[tuple[object, ...], ...]:
     return tuple(tuple(row) for row in head.itertuples(index=False, name=None))
 
 
-def analyze_dataset_overview(df: pd.DataFrame) -> DatasetOverviewResult:
+def _compute_dataset_overview(df: pd.DataFrame) -> DatasetOverviewResult:
     """Compute a structural Dataset Overview for a DataFrame.
 
     Args:
@@ -432,3 +433,23 @@ def analyze_dataset_overview(df: pd.DataFrame) -> DatasetOverviewResult:
         ),
         sample_last_frame=df.tail(SAMPLE_DISPLAY_ROW_LIMIT).copy(deep=True),
     )
+
+
+def analyze_dataset_overview(
+    df: pd.DataFrame,
+    *,
+    corr_id: str | None = None,
+) -> DatasetOverviewResult:
+    """Compute a structural overview and log bounded timing metadata.
+
+    Args:
+        df: DataFrame to analyze. Never mutated.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        Structural overview data for the input.
+    """
+    diagnostic = AnalysisDiagnostic("overview", corr_id, row_count=len(df), column_count=df.shape[1])
+    result = _compute_dataset_overview(df)
+    diagnostic.finish("success", item_count=result.column_count)
+    return result

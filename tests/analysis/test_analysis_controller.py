@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import dataclasses
+import logging
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from itertools import combinations
 from pathlib import Path
 from types import ModuleType
@@ -110,6 +112,7 @@ from expo_jbm329.services.analysis.timeseries_export import (
 )
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError
 from expo_jbm329.services.file_writer import FileWriter
+from expo_jbm329.services.job_manager import Worker
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.analysis import analysis_controller as analysis_controller_module
 from expo_jbm329.workbench.controllers.analysis.analysis_controller import AnalysisController
@@ -153,12 +156,12 @@ def test_overview_export_routes_explicit_frames_and_never_reads_active_data(form
     assert kwargs["operation_target"] is dialog.content_panel()
     assert kwargs["show_success_dialog"] is True
     if format_choice is OverviewExportFormat.EXCEL:
-        assert set(kwargs) == {"sheets", "parent_widget", "operation_target", "show_success_dialog"}
+        assert set(kwargs) == {"sheets", "parent_widget", "operation_target", "show_success_dialog", "corr_id"}
         assert list(kwargs["sheets"]) == ["First (2)", "Last (2)"]
         pd.testing.assert_frame_equal(kwargs["sheets"]["Last (2)"], expected)
         actual = kwargs["sheets"]["First (2)"]
     else:
-        assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+        assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog", "corr_id"}
         actual = kwargs["df"]
         expected = pd.concat([expected, expected], ignore_index=True)
         expected.insert(0, "Sample group", pd.array(["First (2)"] * 2 + ["Last (2)"] * 2, dtype="string"))
@@ -719,6 +722,7 @@ def test_report_preview_runs_in_background_without_reading_active_datasets(monke
     html = call["work"](progress_cb=progress)
     assert renderer.call_args.args == (document,)
     assert renderer.call_args.kwargs["progress_cb"] is progress
+    assert renderer.call_args.kwargs["corr_id"] == call["corr_id"]
     assert not renderer.call_args.kwargs["cancel_cb"]()
     call["on_result"](html)
     preview.assert_called_once_with(dialog, "<html>Report</html>")
@@ -838,6 +842,7 @@ def test_report_save_routes_captured_factory_and_shares_preview_busy_guard(monke
     assert not arguments["stale_check"]()
     assert not renderer.called
     assert arguments["html_factory"]() == "<html>Saved snapshot</html>"
+    assert renderer.call_args.kwargs["corr_id"] == arguments["corr_id"]
     assert renderer.call_args.args == (document,)
     assert not dialog.report_page()._generate_button.isEnabled()
     dialog.report_preview_requested.emit(document)
@@ -1904,7 +1909,7 @@ def test_applying_a_hypothesis_test_runs_a_background_job_and_keeps_the_config(d
     call = _apply_hypothesis_test(async_ops, dlg)
 
     assert len(async_ops.calls) == 1
-    assert call["scope"] == "analysis:hypothesis_tests:group_comparison:other:grp"
+    assert call["scope"] == "analysis:hypothesis_tests:group_comparison"
     assert call["target"] is dlg.content_panel()
     assert call["cancelable"] is False
     assert call["indeterminate"] is True
@@ -2050,7 +2055,7 @@ def test_applying_chi_square_runs_a_chi_square_background_job(dialog_factory):
 
     call = _apply_hypothesis_test(async_ops, dlg)
 
-    assert call["scope"] == "analysis:hypothesis_tests:chi_square:grp:color"
+    assert call["scope"] == "analysis:hypothesis_tests:chi_square"
     _simulate_success(call)
     assert isinstance(dlg.content_widget(), ChiSquareView)
 
@@ -2063,7 +2068,7 @@ def test_applying_paired_comparison_runs_and_renders_a_background_job(dialog_fac
 
     call = _apply_hypothesis_test(async_ops, dlg)
 
-    assert call["scope"] == "analysis:hypothesis_tests:paired_comparison:value:other"
+    assert call["scope"] == "analysis:hypothesis_tests:paired_comparison"
     _simulate_success(call)
     assert isinstance(dlg.content_widget(), PairedComparisonView)
     assert len(dlg.config_widgets) == 1
@@ -2105,7 +2110,7 @@ def test_switching_back_to_group_comparison_keeps_its_pending_selection(dialog_f
     _select_test(config, HypothesisTest.GROUP_COMPARISON)
 
     _assert_apply_prompt(ctrl, dlg)
-    assert _apply_hypothesis_test(async_ops, dlg)["scope"] == "analysis:hypothesis_tests:group_comparison:other:grp"
+    assert _apply_hypothesis_test(async_ops, dlg)["scope"] == "analysis:hypothesis_tests:group_comparison"
 
 
 def test_changing_the_chi_square_column_is_applied_with_the_new_pair(dialog_factory):
@@ -2120,7 +2125,7 @@ def test_changing_the_chi_square_column_is_applied_with_the_new_pair(dialog_fact
 
     assert async_ops.calls == []
     call = _apply_hypothesis_test(async_ops, dlg)
-    assert call["scope"] == "analysis:hypothesis_tests:chi_square:color:grp"
+    assert call["scope"] == "analysis:hypothesis_tests:chi_square"
     _simulate_success(call)
     assert isinstance(dlg.content_widget(), ChiSquareView)
 
@@ -2255,13 +2260,14 @@ def test_correlation_export_routes_only_localized_ranked_table(
             "parent_widget",
             "operation_target",
             "show_success_dialog",
+            "corr_id",
         }
         assert list(kwargs["sheets"]) == ["Starkaste korrelationer"]
         assert kwargs["chart_factory"] is None
         assert kwargs["chart_sheet_name"] is None
         frame = kwargs["sheets"]["Starkaste korrelationer"]
     else:
-        assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+        assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog", "corr_id"}
         frame = kwargs["df"]
     assert frame.columns.tolist() == [
         "Variabel 1",
@@ -2544,9 +2550,9 @@ def test_pair_recompute_keeps_export_but_column_and_method_edits_show_prompt(dia
     assert snapshot is not None
     config = _correlation_config(dlg)
 
-    pair = _click_correlation_pair(_correlation_view(dlg), "c", "a")
+    _click_correlation_pair(_correlation_view(dlg), "c", "a")
     pair_call = async_ops.last_call
-    assert pair_call["scope"] == f"analysis:correlation:pair:pearson:{pair[0]}:{pair[1]}"
+    assert pair_call["scope"] == "analysis:correlation:pair:pearson"
     assert dlg.exportable_correlation() is snapshot
     _simulate_success(pair_call)
     assert dlg.exportable_correlation() is snapshot
@@ -2865,7 +2871,7 @@ def test_pair_change_recomputes_only_the_pair_detail_over_the_pair_panel(dialog_
     selected_pair = _click_correlation_pair(view, "c", "a")
 
     call = async_ops.last_call
-    assert call["scope"] == f"analysis:correlation:pair:pearson:{selected_pair[0]}:{selected_pair[1]}"
+    assert call["scope"] == "analysis:correlation:pair:pearson"
     assert call["target"] is view.pair_panel()
     assert call["cancelable"] is False
 
@@ -2888,7 +2894,7 @@ def test_clicking_a_table_row_selects_the_pair_and_recomputes_it(dialog_factory)
 
     selected_pair = (table.item(2, 0).text(), table.item(2, 1).text())
     assert view.selected_pair() == selected_pair
-    assert async_ops.last_call["scope"] == (f"analysis:correlation:pair:pearson:{selected_pair[0]}:{selected_pair[1]}")
+    assert async_ops.last_call["scope"] == "analysis:correlation:pair:pearson"
 
 
 def test_stale_pair_recompute_is_discarded_when_the_pair_changes_again(dialog_factory):
@@ -2944,11 +2950,11 @@ def test_table_pair_change_while_matrix_computes_is_preserved_on_replacement(dia
     matrix_call = _apply_correlation(async_ops, dlg)
     selected_pair = _click_correlation_pair(view, "c", "a")
     pair_call = async_ops.last_call
-    assert pair_call["scope"] == f"analysis:correlation:pair:pearson:{selected_pair[0]}:{selected_pair[1]}"
+    assert pair_call["scope"] == "analysis:correlation:pair:pearson"
 
     _simulate_success(matrix_call)
     catchup_call = async_ops.last_call
-    assert catchup_call["scope"] == f"analysis:correlation:pair:pearson:{selected_pair[0]}:{selected_pair[1]}"
+    assert catchup_call["scope"] == "analysis:correlation:pair:pearson"
     _simulate_success(pair_call)
     _simulate_success(catchup_call)
 
@@ -3130,7 +3136,7 @@ def test_applying_predictors_refits_the_model_in_a_background_job(dialog_factory
     config._apply_button.click()  # noqa: SLF001
 
     call = async_ops.last_call
-    assert call["scope"] == "analysis:regression:y:x:g"
+    assert call["scope"] == "analysis:regression:fit:linear"
     assert call["cancelable"] is False
     _simulate_success(call)
 
@@ -3156,7 +3162,7 @@ def test_changing_the_target_waits_for_apply_and_excludes_it_as_a_predictor(dial
     assert not isinstance(dlg.content_widget(), RegressionView)
     config._apply_button.click()  # noqa: SLF001
     call = async_ops.last_call
-    assert call["scope"] == "analysis:regression:x:z"
+    assert call["scope"] == "analysis:regression:fit:linear"
     _simulate_success(call)
     assert _regression_view(dlg).result().target == "x"
     assert _regression_view(dlg).result().predictors == ("z",)
@@ -3298,7 +3304,7 @@ def test_applying_logistic_regression_uses_glm_view_and_keeps_linear_defaults(di
     config._apply_button.click()  # noqa: SLF001
 
     call = async_ops.last_call
-    assert call["scope"] == "analysis:regression:logistic:binary:x"
+    assert call["scope"] == "analysis:regression:fit:logistic"
     _simulate_success(call)
 
     view = dlg.content_widget()
@@ -3388,7 +3394,7 @@ def test_cox_regression_uses_apply_first_background_path_and_survival_view(dialo
     config._apply_button.click()  # noqa: SLF001
 
     call = async_ops.last_call
-    assert call["scope"] == "analysis:regression:cox:duration:event:x"
+    assert call["scope"] == "analysis:regression:fit:cox"
     _simulate_success(call)
 
     view = dlg.content_widget()
@@ -3570,7 +3576,7 @@ def test_outlier_apply_runs_as_a_background_job_with_a_standard_overlay(dialog_f
 
     call = _apply_outliers(async_ops, dlg)
 
-    assert call["scope"] == "analysis:outliers:summary:iqr:1.5"
+    assert call["scope"] == "analysis:outliers:summary:iqr"
     assert call["target"] is dlg.content_panel()
     assert call["cancelable"] is False
     assert call["indeterminate"] is True
@@ -3585,7 +3591,7 @@ def test_first_outlier_apply_details_the_top_ranked_column(dialog_factory):
     view = _outliers_view(dlg)
     assert _detail_column(view) == "a"
     assert view.selected_column() == "a"
-    assert async_ops.last_call["scope"] == "analysis:outliers:summary:iqr:1.5"  # no extra column job
+    assert async_ops.last_call["scope"] == "analysis:outliers:summary:iqr"  # no extra column job
 
 
 def test_outliers_without_numeric_columns_show_error_without_config(dialog_factory):
@@ -3753,7 +3759,7 @@ def test_first_multivariate_apply_fits_the_default_configuration(dialog_factory)
     config._apply_button.click()  # noqa: SLF001
 
     call = async_ops.last_call
-    assert call["scope"] == "analysis:outliers:multivariate:isolation_forest:standardized:contamination:0.05:a:b"
+    assert call["scope"] == "analysis:outliers:multivariate:isolation_forest"
     assert call["target"] is dlg.content_panel()
     assert call["cancelable"] is False
     _simulate_success(call)
@@ -3771,10 +3777,7 @@ def test_applying_multivariate_configuration_refits_and_retains_config(dialog_fa
     config._apply_button.click()  # noqa: SLF001
 
     call = async_ops.last_call
-    assert (
-        call["scope"]
-        == "analysis:outliers:multivariate:local_outlier_factor:standardized:contamination:0.1:neighbors:3:a:b"
-    )
+    assert call["scope"] == "analysis:outliers:multivariate:local_outlier_factor"
     _simulate_success(call)
 
     assert dlg.config_widget() is config
@@ -3832,7 +3835,7 @@ def test_applied_outlier_method_recomputes_the_summary_and_keeps_the_config(dial
     _select_outlier_method(config, OutlierMethod.Z_SCORE)
     call = _apply_outliers(async_ops, dlg)
 
-    assert call["scope"] == "analysis:outliers:summary:z_score:3.0"
+    assert call["scope"] == "analysis:outliers:summary:z_score"
     _simulate_success(call)
 
     view = _outliers_view(dlg)
@@ -3873,7 +3876,7 @@ def test_outlier_column_change_recomputes_only_the_detail_over_the_detail_panel(
     view.select_column("b")
 
     call = async_ops.last_call
-    assert call["scope"] == "analysis:outliers:column:iqr:1.5:b"
+    assert call["scope"] == "analysis:outliers:column:iqr"
     assert call["target"] is view.detail_panel()
     assert call["cancelable"] is False
 
@@ -3894,7 +3897,7 @@ def test_clicking_an_outlier_summary_row_selects_the_column(dialog_factory):
 
     assert view.selected_column() == "b"
     assert view.column_selection_revision() == 1
-    assert async_ops.last_call["scope"] == "analysis:outliers:column:iqr:1.5:b"
+    assert async_ops.last_call["scope"] == "analysis:outliers:column:iqr"
 
 
 def test_stale_outlier_column_recompute_is_discarded_when_the_column_changes_again(dialog_factory):
@@ -3958,7 +3961,7 @@ def test_outlier_column_change_during_summary_recompute_is_caught_up(dialog_fact
 
     caught_up_call = async_ops.last_call
     assert caught_up_call is not old_detail_call
-    assert caught_up_call["scope"] == "analysis:outliers:column:iqr:1.5:b"
+    assert caught_up_call["scope"] == "analysis:outliers:column:iqr"
     _simulate_success(old_detail_call)
     assert _detail_column(updated_view) == "a"
     _simulate_success(caught_up_call)
@@ -3978,7 +3981,7 @@ def test_outlier_configuration_edit_disables_old_table_requests(dialog_factory):
     view.select_column("b")
 
     assert len(async_ops.calls) == jobs_before
-    assert async_ops.last_call["scope"].startswith("analysis:outliers:summary:z_score:")
+    assert async_ops.last_call["scope"] == "analysis:outliers:summary:z_score"
 
 
 # ----------------------------------------------------------------------
@@ -4103,7 +4106,7 @@ def test_first_pca_apply_fits_the_default_configuration(dialog_factory):
     _pca_config(dlg)._apply_button.click()  # noqa: SLF001
 
     call = async_ops.last_call
-    assert call["scope"] == "analysis:pca:fit:standardized:a:b:c"
+    assert call["scope"] == "analysis:pca:fit"
     _simulate_success(call)
     assert _pca_view(dlg).configuration() == (("a", "b", "c"), True)
 
@@ -4131,7 +4134,7 @@ def test_apply_recomputes_pca_and_keeps_the_config(dialog_factory):
     config._apply_button.click()  # noqa: SLF001
 
     call = async_ops.last_call
-    assert call["scope"] == "analysis:pca:fit:raw:a:b"
+    assert call["scope"] == "analysis:pca:fit"
     assert call["target"] is dlg.content_panel()
     assert call["cancelable"] is False
 
@@ -4294,7 +4297,7 @@ def test_first_clustering_apply_fits_the_default_configuration(dialog_factory):
     _clustering_config(dlg)._apply_button.click()  # noqa: SLF001
 
     call = async_ops.last_call
-    assert call["scope"] == "analysis:clustering:fit:k_means:standardized:clusters:3:x:y:z"
+    assert call["scope"] == "analysis:clustering:fit:k_means"
     _simulate_success(call)
     assert _clustering_view(dlg).configuration() == (("x", "y", "z"), ClusteringMethod.K_MEANS, True, 3, 0.5, 5)
 
@@ -4324,7 +4327,7 @@ def test_clustering_apply_recomputes_dbscan_and_keeps_config(dialog_factory):
     config._apply_button.click()  # noqa: SLF001
 
     call = async_ops.last_call
-    assert call["scope"] == "analysis:clustering:fit:dbscan:raw:eps:0.75:min_samples:2:x:y"
+    assert call["scope"] == "analysis:clustering:fit:dbscan"
     assert call["target"] is dlg.content_panel()
     assert call["cancelable"] is False
 
@@ -4472,7 +4475,7 @@ def test_first_time_series_apply_analyzes_the_default_configuration(dialog_facto
     _time_series_config(dlg)._apply_button.click()  # noqa: SLF001
 
     call = async_ops.last_call
-    assert call["scope"] == "analysis:time_series:fit:when:value:original:auto:additive"
+    assert call["scope"] == "analysis:time_series:fit:additive"
     _simulate_success(call)
     assert _time_series_view(dlg).configuration() == ("when", "value", None, 7, DecompositionModel.ADDITIVE)
 
@@ -4500,7 +4503,7 @@ def test_time_series_apply_recomputes_and_keeps_config(dialog_factory):
     config._apply_button.click()  # noqa: SLF001
 
     call = async_ops.last_call
-    assert call["scope"] == "analysis:time_series:fit:when:other:W:3:multiplicative"
+    assert call["scope"] == "analysis:time_series:fit:multiplicative"
     _simulate_success(call)
     assert _time_series_view(dlg).configuration() == ("when", "other", "W", 3, DecompositionModel.MULTIPLICATIVE)
     assert len(dlg.config_widgets) == configs_before
@@ -4682,7 +4685,7 @@ def test_regression_single_table_routes_to_non_excel_exporters(format_choice, me
     method = getattr(exporter, method_name)
     assert method.call_count == 1
     kwargs = method.call_args.kwargs
-    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog", "corr_id"}
     first_column = "Term" if component is RegressionExportComponent.COEFFICIENTS else "Metric"
     assert kwargs["df"].columns[0] == first_column
     assert exporter.export_excel.call_count == 0
@@ -5039,7 +5042,7 @@ def test_outlier_single_table_routes_to_non_excel_exporters(
     method = getattr(exporter, method_name)
     assert method.call_count == 1
     kwargs = method.call_args.kwargs
-    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog", "corr_id"}
     assert kwargs["df"].columns[0] == first_column
     assert exporter.export_excel.call_count == 0
 
@@ -5255,7 +5258,7 @@ def test_clustering_single_table_routes_to_non_excel_exporters(format_choice, me
     method = getattr(exporter, method_name)
     assert method.call_count == 1
     kwargs = method.call_args.kwargs
-    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog"}
+    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog", "corr_id"}
     assert kwargs["df"].columns[0] == first_column
     assert exporter.export_excel.call_count == 0
 
@@ -5474,7 +5477,14 @@ def test_pca_single_table_routes_to_non_excel_exporters(format_choice, method_na
     method = getattr(exporter, method_name)
     assert method.call_count == 1
     kwargs = method.call_args.kwargs
-    assert set(kwargs) == {"df", "parent_widget", "operation_target", "show_success_dialog", "suggested_name"}
+    assert set(kwargs) == {
+        "df",
+        "parent_widget",
+        "operation_target",
+        "show_success_dialog",
+        "suggested_name",
+        "corr_id",
+    }
     assert kwargs["suggested_name"] == "PCA"
     assert kwargs["df"].columns[0] == first_column
     assert exporter.export_excel.call_count == 0
@@ -5748,7 +5758,14 @@ def test_time_series_single_table_routes_to_non_excel_exporters(format_choice, m
     method = getattr(exporter, method_name)
     assert method.call_count == 1
     kwargs = method.call_args.kwargs
-    assert set(kwargs) == {"df", "suggested_name", "parent_widget", "operation_target", "show_success_dialog"}
+    assert set(kwargs) == {
+        "df",
+        "suggested_name",
+        "parent_widget",
+        "operation_target",
+        "show_success_dialog",
+        "corr_id",
+    }
     assert kwargs["suggested_name"] == "Time Series"
     assert kwargs["df"].columns[0] == first_column
     assert exporter.export_excel.call_count == 0
@@ -5807,3 +5824,144 @@ def test_time_series_export_uses_compiled_swedish_labels() -> None:
         "Tidpunkter",
         "Säsongsperiod",
     ]
+
+
+@pytest.mark.parametrize(
+    ("context_factory", "snapshot_factory", "request_type", "component", "renderer_name", "method"),
+    [
+        (
+            _statistics_export_context,
+            None,
+            StatisticsExportRequest,
+            StatisticsExportTable.CHARTS,
+            "render_statistics_charts",
+            "_export_statistics",
+        ),
+        (
+            _hypothesis_export_context,
+            group_snapshot,
+            HypothesisExportRequest,
+            Component.CHARTS,
+            "render_hypothesis_charts",
+            "_export_hypothesis",
+        ),
+        (
+            _correlation_export_context,
+            None,
+            CorrelationExportRequest,
+            CorrelationExportComponent.MATRIX_PLOT,
+            "render_correlation_charts",
+            "_export_correlation",
+        ),
+        (
+            _regression_export_context,
+            logistic_snapshot,
+            RegressionExportRequest,
+            RegressionExportComponent.CHARTS,
+            "render_regression_charts",
+            "_export_regression",
+        ),
+        (
+            _outliers_export_context,
+            univariate_snapshot,
+            OutlierExportRequest,
+            OutlierExportComponent.CHARTS,
+            "render_univariate_outlier_charts",
+            "_export_outliers",
+        ),
+        (
+            _outliers_export_context,
+            multivariate_outliers_snapshot,
+            OutlierExportRequest,
+            OutlierExportComponent.CHARTS,
+            "render_multivariate_outlier_charts",
+            "_export_outliers",
+        ),
+        (
+            _clustering_export_context,
+            clustering_snapshot,
+            ClusteringExportRequest,
+            ClusteringExportComponent.CHARTS,
+            "render_clustering_charts",
+            "_export_clustering",
+        ),
+        (
+            _pca_export_context,
+            pca_snapshot,
+            PCAExportRequest,
+            PCAExportComponent.CHARTS,
+            "render_pca_charts",
+            "_export_pca",
+        ),
+        (
+            _time_series_export_context,
+            time_series_snapshot,
+            TimeSeriesExportRequest,
+            TimeSeriesExportComponent.CHARTS,
+            "render_time_series_charts",
+            "_export_time_series",
+        ),
+    ],
+)
+def test_analysis_chart_factories_share_export_id_without_changing_factory_contract(
+    monkeypatch, context_factory, snapshot_factory, request_type, component, renderer_name, method
+):
+    snapshot = snapshot_factory() if snapshot_factory is not None else None
+    context = context_factory(snapshot) if snapshot is not None else context_factory()
+    if len(context) == 4:
+        controller, dialog, snapshot, exporter = context
+    else:
+        controller, dialog, exporter = context
+    renderer = Mock(return_value=())
+    monkeypatch.setattr(analysis_controller_module, renderer_name, renderer)
+    request = request_type(snapshot, (component,), StatisticsExportFormat.EXCEL)
+    previous_id = None
+    for _ in range(2):
+        getattr(controller, method)(dialog, exporter, request)
+        export = exporter.export_excel.call_args.kwargs
+        corr_id = export["corr_id"]
+        assert corr_id and corr_id != previous_id
+        previous_id = corr_id
+        progress, cancel = Mock(), Mock(return_value=False)
+        export["chart_factory"](progress, cancel)
+        assert renderer.call_args.kwargs["corr_id"] == corr_id
+        assert renderer.call_args.kwargs["progress_cb"] is progress
+        assert renderer.call_args.kwargs["cancel_cb"] is cancel
+
+
+@pytest.mark.parametrize("category", [AnalysisCategory.OVERVIEW, AnalysisCategory.STATISTICS])
+def test_controller_workers_keep_independent_explicit_correlation_ids(caplog, category):
+    frame = pd.DataFrame({"PRIVATE_SCHEMA": [1.0, 2.0, 3.0]})
+    source = DatasetRef("tab", "PRIVATE_DATASET", 3, 1)
+    operations = DummyAsyncOps()
+    controller = AnalysisController(
+        results=DummyResults(datasets=[source], active_tab_id="tab", dfs={"tab": frame}),
+        async_ops=operations,
+    )
+    dialogs = [DummyAnalysisDialog(source_dataset=source) for _ in range(2)]
+    for dialog in dialogs:
+        dialog._selected_category = category
+        controller._refresh_content(dialog)
+    identifiers = [call["corr_id"] for call in operations.calls]
+    assert len(set(identifiers)) == 2
+    errors: list[str] = []
+    workers = [
+        Worker(call["work"], job_id=f"job-{index}", job_scope=call["scope"], corr_id=call["corr_id"])
+        for index, call in enumerate(operations.calls)
+    ]
+    for worker in workers:
+        worker.error.connect(errors.append)
+    with caplog.at_level(logging.DEBUG, logger="applogger.service"):
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            list(executor.map(lambda worker: worker.run(), workers))
+        QApplication.processEvents()
+    assert not errors
+    records = [record for record in caplog.records if record.name == "applogger.service"]
+    assert records
+    for identifier in identifiers:
+        assert sum(f"corr={identifier}," in record.getMessage() for record in records) >= 1
+    for record in records:
+        message = record.getMessage()
+        assert sum(identifier in message for identifier in identifiers) == 1
+        assert "PRIVATE_SCHEMA" not in message
+        assert "PRIVATE_DATASET" not in message

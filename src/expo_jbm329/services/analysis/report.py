@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import math
 import numbers
+import time
 from base64 import b64encode
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from enum import Enum
@@ -34,6 +36,7 @@ from expo_jbm329.services.analysis.correlation_export import (
     CorrelationExportSnapshot,
     correlation_export_table,
 )
+from expo_jbm329.services.analysis.diagnostics import elapsed_ms, log_diagnostic, summary_scope
 from expo_jbm329.services.analysis.hypothesis_charts import (
     build_hypothesis_chart_presentation,
     render_hypothesis_charts,
@@ -111,7 +114,7 @@ from expo_jbm329.services.excel_chart import ExcelChartCancelledError, ExcelChar
 from expo_jbm329.utils.format_utils import capture_chart_numeric_locale, fmt_int, fmt_num, fmt_pct
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping, Sequence
+    from collections.abc import Callable, Generator, Mapping, Sequence
 
     from expo_jbm329.utils.dataset_ref import DatasetRef
 
@@ -128,6 +131,54 @@ type ReportSnapshot = (
 )
 
 _PROGRESS_COMPLETE = 100
+
+
+@contextmanager
+def _report_stage(
+    stage: str,
+    corr_id: str | None,
+    *,
+    entry_ordinal: int | None = None,
+    category: str | None = None,
+    component_count: int | None = None,
+    table_count: int | None = None,
+    chart_count: int | None = None,
+) -> Generator[None]:
+    """Log a report stage using only bounded structural metadata.
+
+    Only the outermost stage logs success, so a rendered report produces one
+    summary line. Nested stages log cancellation or failure to locate the
+    stage and entry where the operation stopped.
+    """
+    started = time.perf_counter()
+
+    def log_outcome(outcome: str) -> None:
+        log_diagnostic(
+            "AnalysisReportService",
+            "report stage finished",
+            corr=corr_id,
+            stage=stage,
+            entry=entry_ordinal,
+            category=category,
+            components=component_count,
+            tables=table_count,
+            charts=chart_count,
+            outcome=outcome,
+            ms=elapsed_ms(started),
+        )
+
+    with summary_scope() as outermost:
+        try:
+            yield
+        except ExcelChartCancelledError:
+            log_outcome("cancelled")
+            raise
+        except Exception:
+            # Exception details remain owned by the existing worker boundary.
+            log_outcome("failed")
+            raise
+        if outermost:
+            log_outcome("success")
 
 
 @dataclass(frozen=True, slots=True)
@@ -1773,7 +1824,7 @@ def _localized_report_tables(
     return frames
 
 
-def prepare_report_content(
+def _prepare_report_content_impl(
     document: ReportDocument,
     *,
     translate: Callable[[str, str], str] = _identity_translate,
@@ -1782,6 +1833,7 @@ def prepare_report_content(
     progress_cb: Callable[[int], None] | None = None,
     cancel_cb: Callable[[], bool] | None = None,
     labels: ReportRenderOptions | None = None,
+    corr_id: str | None = None,
 ) -> PreparedReportDocument:
     """Prepare selected tables and charts from immutable applied snapshots.
 
@@ -1796,6 +1848,7 @@ def prepare_report_content(
         progress_cb: Optional monotonic callback receiving percentages 0-100.
         cancel_cb: Optional cooperative cancellation callback.
         labels: Optional translations and locale formatters captured before worker execution.
+        corr_id: Optional operation correlation identifier used only for diagnostics.
 
     Returns:
         Structured report content with raw cell values and PNG image bytes.
@@ -1831,7 +1884,7 @@ def prepare_report_content(
                 last_progress = percent
                 progress_cb(percent)
 
-    for entry in entries:
+    for entry_ordinal, entry in enumerate(entries, start=1):
         check_cancel()
         selected = tuple(
             next(component for component in entry.components if component.key == key)
@@ -1843,44 +1896,62 @@ def prepare_report_content(
             for component in selected
             if component.kind == "table" and not (overview is not None and component.key in {"Summary", "Sample"})
         )
-        localized_tables = iter(
-            _localized_report_tables(
-                entry.category,
-                entry.snapshot,
-                table_keys,
-                translate=translate,
-                number_format=number_format,
-                count_format=count_format,
-                hypothesis_test_results=_hypothesis_report_rows(entry.snapshot, table_keys),
-                regression_model_metrics=_regression_report_rows(entry.snapshot, table_keys),
-                clustering_model_summary=_clustering_report_rows(entry.snapshot, table_keys),
-                pca_model_summary=_pca_report_rows(entry.snapshot, table_keys),
-                time_series_model_summary=_time_series_report_rows(entry.snapshot, table_keys),
-                outlier_report_tables=(
-                    _outlier_report_rows(entry.snapshot, table_keys, translate)
-                    if isinstance(entry.snapshot, OutlierExportSnapshot)
-                    else None
-                ),
-                include_correlation_explanation=False,
-                combine_statistics_percentages=True,
-            ).items()
-        )
         chart_keys = tuple(component.key for component in selected if component.kind == "chart")
-        rendered_charts = (
-            _render_entry_charts(
-                entry.category,
-                entry.snapshot,
-                chart_keys,
-                translate=translate,
-                progress_cb=report_progress,
-                cancel_cb=cancel_cb,
-                correlation_numeric_locale=(
-                    labels.correlation_numeric_locale if labels is not None else DEFAULT_CHART_NUMERIC_LOCALE
-                ),
+        category_code = entry.category.value
+        with _report_stage(
+            "tables",
+            corr_id,
+            entry_ordinal=entry_ordinal,
+            category=category_code,
+            component_count=len(selected),
+            table_count=len(table_keys),
+        ):
+            localized_tables = iter(
+                _localized_report_tables(
+                    entry.category,
+                    entry.snapshot,
+                    table_keys,
+                    translate=translate,
+                    number_format=number_format,
+                    count_format=count_format,
+                    hypothesis_test_results=_hypothesis_report_rows(entry.snapshot, table_keys),
+                    regression_model_metrics=_regression_report_rows(entry.snapshot, table_keys),
+                    clustering_model_summary=_clustering_report_rows(entry.snapshot, table_keys),
+                    pca_model_summary=_pca_report_rows(entry.snapshot, table_keys),
+                    time_series_model_summary=_time_series_report_rows(entry.snapshot, table_keys),
+                    outlier_report_tables=(
+                        _outlier_report_rows(entry.snapshot, table_keys, translate)
+                        if isinstance(entry.snapshot, OutlierExportSnapshot)
+                        else None
+                    ),
+                    include_correlation_explanation=False,
+                    combine_statistics_percentages=True,
+                ).items()
             )
-            if chart_keys
-            else {}
-        )
+        with _report_stage(
+            "charts",
+            corr_id,
+            entry_ordinal=entry_ordinal,
+            category=category_code,
+            component_count=len(selected),
+            chart_count=len(chart_keys),
+        ):
+            rendered_charts = (
+                _render_entry_charts(
+                    entry.category,
+                    entry.snapshot,
+                    chart_keys,
+                    translate=translate,
+                    progress_cb=report_progress,
+                    cancel_cb=cancel_cb,
+                    correlation_numeric_locale=(
+                        labels.correlation_numeric_locale if labels is not None else DEFAULT_CHART_NUMERIC_LOCALE
+                    ),
+                    corr_id=corr_id,
+                )
+                if chart_keys
+                else {}
+            )
         prepared_components: list[PreparedReportComponent] = []
         for component in selected:
             check_cancel()
@@ -2019,6 +2090,35 @@ def prepare_report_content(
         ),
         report_date,
     )
+
+
+def prepare_report_content(
+    document: ReportDocument,
+    *,
+    translate: Callable[[str, str], str] = _identity_translate,
+    number_format: Callable[[float], str] = fmt_num,
+    count_format: Callable[[int], str] = fmt_int,
+    progress_cb: Callable[[int], None] | None = None,
+    cancel_cb: Callable[[], bool] | None = None,
+    labels: ReportRenderOptions | None = None,
+    corr_id: str | None = None,
+) -> PreparedReportDocument:
+    """Prepare selected report content and log its bounded outcome."""
+    with _report_stage(
+        "prepare",
+        corr_id,
+        component_count=sum(len(entry.selected_components) for entry in document.entries),
+    ):
+        return _prepare_report_content_impl(
+            document,
+            translate=translate,
+            number_format=number_format,
+            count_format=count_format,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+            labels=labels,
+            corr_id=corr_id,
+        )
 
 
 def _prepare_overview_summary(
@@ -2356,6 +2456,7 @@ def _render_entry_charts(
     progress_cb: Callable[[int], None] | None,
     cancel_cb: Callable[[], bool] | None,
     correlation_numeric_locale: ChartNumericLocale = DEFAULT_CHART_NUMERIC_LOCALE,
+    corr_id: str | None = None,
 ) -> dict[str, tuple[ExcelChartImage, ...]]:
     """Render only selected chart components and associate their PNGs by key."""
     if not component_keys:
@@ -2363,11 +2464,23 @@ def _render_entry_charts(
     images: tuple[ExcelChartImage, ...]
     if category is AnalysisCategory.STATISTICS and isinstance(snapshot, DescriptiveStatisticsResult):
         presentations = build_statistics_chart_presentations(snapshot.columns, translate)
-        images = render_statistics_charts(snapshot.columns, presentations, progress_cb=progress_cb, cancel_cb=cancel_cb)
+        images = render_statistics_charts(
+            snapshot.columns,
+            presentations,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+            corr_id=corr_id,
+        )
         return {"Charts": images}
     if category is AnalysisCategory.HYPOTHESIS_TESTS and isinstance(snapshot, HypothesisExportSnapshot):
         presentation = build_hypothesis_chart_presentation(snapshot.result, translate)
-        images = render_hypothesis_charts(snapshot, presentation, progress_cb=progress_cb, cancel_cb=cancel_cb)
+        images = render_hypothesis_charts(
+            snapshot,
+            presentation,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+            corr_id=corr_id,
+        )
         return {"charts": images}
     if category is AnalysisCategory.CORRELATION and isinstance(snapshot, CorrelationExportSnapshot):
         chart_keys = tuple(
@@ -2384,6 +2497,7 @@ def _render_entry_charts(
             correlation_labels,
             progress_cb=progress_cb,
             cancel_cb=cancel_cb,
+            corr_id=corr_id,
         )
         output: dict[str, list[ExcelChartImage]] = {key: [] for key in component_keys}
         matrix_heading = correlation_labels.matrix_title
@@ -2399,28 +2513,38 @@ def _render_entry_charts(
                 raise ValueError(message)
         return {key: tuple(value) for key, value in output.items()}
     if category is AnalysisCategory.REGRESSION and isinstance(snapshot, RegressionExportSnapshot):
-        images = render_regression_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+        images = render_regression_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id)
         return {"charts": images}
     if category is AnalysisCategory.OUTLIERS and isinstance(snapshot, OutlierExportSnapshot):
         if isinstance(snapshot, UnivariateOutlierExportSnapshot):
-            images = render_univariate_outlier_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+            images = render_univariate_outlier_charts(
+                snapshot,
+                progress_cb=progress_cb,
+                cancel_cb=cancel_cb,
+                corr_id=corr_id,
+            )
         else:
-            images = render_multivariate_outlier_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+            images = render_multivariate_outlier_charts(
+                snapshot,
+                progress_cb=progress_cb,
+                cancel_cb=cancel_cb,
+                corr_id=corr_id,
+            )
         return {"charts": images}
     if category is AnalysisCategory.CLUSTERING and isinstance(snapshot, ClusteringExportSnapshot):
-        images = render_clustering_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+        images = render_clustering_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id)
         return {"charts": images}
     if category is AnalysisCategory.PCA and isinstance(snapshot, PCAExportSnapshot):
-        images = render_pca_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+        images = render_pca_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id)
         return {"charts": images}
     if category is AnalysisCategory.TIME_SERIES and isinstance(snapshot, TimeSeriesExportSnapshot):
-        images = render_time_series_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb)
+        images = render_time_series_charts(snapshot, progress_cb=progress_cb, cancel_cb=cancel_cb, corr_id=corr_id)
         return {"charts": images}
     message = "The analysis category and applied report snapshot do not match."
     raise TypeError(message)
 
 
-def render_report_html(
+def _render_report_html_impl(
     document: ReportDocument,
     *,
     translate: Callable[[str, str], str] = _identity_translate,
@@ -2429,6 +2553,7 @@ def render_report_html(
     progress_cb: Callable[[int], None] | None = None,
     cancel_cb: Callable[[], bool] | None = None,
     labels: ReportRenderOptions | None = None,
+    corr_id: str | None = None,
 ) -> str:
     """Prepare and render a self-contained, accessible HTML report.
 
@@ -2440,6 +2565,7 @@ def render_report_html(
         progress_cb: Optional preparation progress callback, receiving 0-100.
         cancel_cb: Optional cooperative cancellation callback.
         labels: Optional translations and locale formatters captured before worker execution.
+        corr_id: Optional operation correlation identifier used only for diagnostics.
 
     Returns:
         Complete HTML5 markup with inline responsive and print styles.
@@ -2475,6 +2601,7 @@ def render_report_html(
         progress_cb=preparation_progress if progress_cb is not None else None,
         cancel_cb=cancel_cb,
         labels=labels,
+        corr_id=corr_id,
     )
     return render_prepared_report_html(
         prepared,
@@ -2482,10 +2609,40 @@ def render_report_html(
         count_format=count_format,
         progress_cb=serialization_progress if progress_cb is not None else None,
         cancel_cb=cancel_cb,
+        corr_id=corr_id,
     )
 
 
-def render_prepared_report_html(
+def render_report_html(
+    document: ReportDocument,
+    *,
+    translate: Callable[[str, str], str] = _identity_translate,
+    number_format: Callable[[float], str] = fmt_num,
+    count_format: Callable[[int], str] = fmt_int,
+    progress_cb: Callable[[int], None] | None = None,
+    cancel_cb: Callable[[], bool] | None = None,
+    labels: ReportRenderOptions | None = None,
+    corr_id: str | None = None,
+) -> str:
+    """Prepare and render a report with one correlated diagnostic operation."""
+    with _report_stage(
+        "render_html",
+        corr_id,
+        component_count=sum(len(entry.selected_components) for entry in document.entries),
+    ):
+        return _render_report_html_impl(
+            document,
+            translate=translate,
+            number_format=number_format,
+            count_format=count_format,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+            labels=labels,
+            corr_id=corr_id,
+        )
+
+
+def _render_prepared_report_html_impl(
     document: PreparedReportDocument,
     *,
     number_format: Callable[[float], str] = fmt_num,
@@ -2642,6 +2799,32 @@ def render_prepared_report_html(
         progress_cb(_PROGRESS_COMPLETE)
     parts.extend(["</main>", "</body>", "</html>"])
     return "\n".join(parts)
+
+
+def render_prepared_report_html(
+    document: PreparedReportDocument,
+    *,
+    number_format: Callable[[float], str] = fmt_num,
+    count_format: Callable[[int], str] = fmt_int,
+    progress_cb: Callable[[int], None] | None = None,
+    cancel_cb: Callable[[], bool] | None = None,
+    corr_id: str | None = None,
+) -> str:
+    """Serialize a prepared report with bounded stage diagnostics."""
+    with _report_stage(
+        "serialization",
+        corr_id,
+        component_count=sum(len(entry.components) for entry in document.entries),
+        table_count=sum(len(component.tables) for entry in document.entries for component in entry.components),
+        chart_count=sum(len(component.charts) for entry in document.entries for component in entry.components),
+    ):
+        return _render_prepared_report_html_impl(
+            document,
+            number_format=number_format,
+            count_format=count_format,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+        )
 
 
 def _same_heading(title: str, component_label: str) -> bool:

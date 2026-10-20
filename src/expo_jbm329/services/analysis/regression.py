@@ -28,6 +28,7 @@ from statsmodels.stats.stattools import durbin_watson, jarque_bera
 
 from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
+from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic
 from expo_jbm329.services.analysis.group_comparison import ExcludedColumn, classify_grouping_columns
 from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
 
@@ -564,7 +565,7 @@ def _term_count(data: pd.DataFrame, predictors: tuple[str, ...], kinds: dict[str
 # ----------------------------------------------------------------------
 
 
-def analyze_regression(
+def _compute_regression(
     df: pd.DataFrame,
     target: str | None = None,
     predictors: Sequence[str] = (),
@@ -731,3 +732,40 @@ def _fitted_result(
         plot=_plot_data(y, fitted, residuals, rmse),
         error=None,
     )
+
+
+def analyze_regression(
+    df: pd.DataFrame,
+    target: str | None = None,
+    predictors: Sequence[str] = (),
+    *,
+    corr_id: str | None = None,
+) -> RegressionResult:
+    """Fit ordinary least squares with bounded timing diagnostics.
+
+    Args:
+        df: DataFrame to analyze. Never mutated.
+        target: Optional numeric target column.
+        predictors: Predictor columns.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        Fitted model result or structured unavailable result.
+    """
+    diagnostic = AnalysisDiagnostic(
+        "regression",
+        corr_id,
+        row_count=len(df),
+        column_count=df.shape[1],
+        method="ols",
+        selected_count=len(predictors),
+    )
+    result = _compute_regression(df, target, predictors)
+    diagnostic.finish(
+        "success" if result.error is None else "unavailable",
+        reason=result.error.value if result.error is not None else None,
+        rows_used=result.n_used,
+        rows_dropped=result.n_dropped,
+        item_count=len(result.terms),
+    )
+    return result

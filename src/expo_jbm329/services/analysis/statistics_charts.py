@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from expo_jbm329.services.analysis.chart_export import render_chart_png
+from expo_jbm329.services.analysis.chart_export import chart_render_batch, render_chart_png
 from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.chart_presentation import (
     DEFAULT_WORKSHEET_HEADING,
@@ -140,6 +140,26 @@ def render_statistics_charts(
     *,
     progress_cb: Callable[[int], None] | None = None,
     cancel_cb: Callable[[], bool] | None = None,
+    corr_id: str | None = None,
+) -> tuple[ExcelChartImage, ...]:
+    """Render the worker chart batch with bounded diagnostics."""
+    with chart_render_batch("statistics", len(columns), corr_id):
+        return _render_statistics_charts(
+            columns,
+            presentations,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+            corr_id=corr_id,
+        )
+
+
+def _render_statistics_charts(
+    columns: Sequence[ColumnDescriptiveStatistics],
+    presentations: Sequence[StatisticsChartPresentation],
+    *,
+    progress_cb: Callable[[int], None] | None,
+    cancel_cb: Callable[[], bool] | None,
+    corr_id: str | None,
 ) -> tuple[ExcelChartImage, ...]:
     """Render a histogram/boxplot image for every numeric column.
 
@@ -152,6 +172,7 @@ def render_statistics_charts(
         presentations: Matching translated presentations, also in display order.
         progress_cb: Optional callback receiving percentage completion.
         cancel_cb: Optional cooperative cancellation callback.
+        corr_id: Optional operation correlation identifier used only for diagnostics.
 
     Returns:
         Worker-owned PNG images in column order.
@@ -180,7 +201,7 @@ def render_statistics_charts(
                 constrained_layout=geometry.constrained_layout,
             )
             draw_statistics_charts(figure, stats, presentation)
-            raster = render_chart_png(figure)
+            raster = render_chart_png(figure, corr_id=corr_id)
         images.append(
             ExcelChartImage(
                 presentation.metadata.worksheet_heading,

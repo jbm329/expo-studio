@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from expo_jbm329.services.analysis.chart_export import ChartRaster, render_chart_png
+from expo_jbm329.services.analysis.chart_export import ChartRaster, chart_render_batch, render_chart_png
 from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.chart_presentation import (
     DEFAULT_WORKSHEET_HEADING,
@@ -193,6 +193,24 @@ def render_univariate_outlier_charts(
     *,
     progress_cb: Callable[[int], None] | None = None,
     cancel_cb: Callable[[], bool] | None = None,
+    corr_id: str | None = None,
+) -> tuple[ExcelChartImage, ...]:
+    """Render a univariate outlier chart batch with bounded diagnostics."""
+    with chart_render_batch("outliers_univariate", len(snapshot.chart_columns), corr_id):
+        return _render_univariate_outlier_charts(
+            snapshot,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+            corr_id=corr_id,
+        )
+
+
+def _render_univariate_outlier_charts(
+    snapshot: UnivariateOutlierExportSnapshot,
+    *,
+    progress_cb: Callable[[int], None] | None,
+    cancel_cb: Callable[[], bool] | None,
+    corr_id: str | None,
 ) -> tuple[ExcelChartImage, ...]:
     """Render one histogram image per screened column, in summary order.
 
@@ -204,6 +222,7 @@ def render_univariate_outlier_charts(
         snapshot: Applied summary with owned numeric data and chart text.
         progress_cb: Optional per-column progress (0-100).
         cancel_cb: Optional cancellation callback, checked for every column.
+        corr_id: Optional operation correlation identifier used only for diagnostics.
 
     Returns:
         PNG images owned by the worker.
@@ -221,7 +240,7 @@ def render_univariate_outlier_charts(
     for index, column in enumerate(columns):
         if cancel_cb is not None and cancel_cb():
             raise ExcelChartCancelledError
-        detail = analyze_outlier_column(snapshot.data, column, summary.method, summary.threshold)
+        detail = analyze_outlier_column(snapshot.data, column, summary.method, summary.threshold, corr_id=corr_id)
         if detail.error is not None:
             message = f"Column {column!r} could not be screened for the chart export."
             raise ValueError(message)
@@ -234,7 +253,7 @@ def render_univariate_outlier_charts(
                 constrained_layout=geometry.constrained_layout,
             )
             draw_outlier_histogram(figure.add_subplot(111), detail, presentation)
-            raster = render_chart_png(figure)
+            raster = render_chart_png(figure, corr_id=corr_id)
         images.append(_image(presentation.metadata, raster))
         if progress_cb is not None:
             progress_cb(math.ceil((index + 1) * 100 / len(columns)))
@@ -248,6 +267,24 @@ def render_multivariate_outlier_charts(
     *,
     progress_cb: Callable[[int], None] | None = None,
     cancel_cb: Callable[[], bool] | None = None,
+    corr_id: str | None = None,
+) -> tuple[ExcelChartImage, ...]:
+    """Render a multivariate outlier chart batch with bounded diagnostics."""
+    with chart_render_batch("outliers_multivariate", 1, corr_id):
+        return _render_multivariate_outlier_charts(
+            snapshot,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+            corr_id=corr_id,
+        )
+
+
+def _render_multivariate_outlier_charts(
+    snapshot: MultivariateOutlierExportSnapshot,
+    *,
+    progress_cb: Callable[[int], None] | None,
+    cancel_cb: Callable[[], bool] | None,
+    corr_id: str | None,
 ) -> tuple[ExcelChartImage, ...]:
     """Render the displayed PCA projection as one image.
 
@@ -255,6 +292,7 @@ def render_multivariate_outlier_charts(
         snapshot: Successful fit with its projected sample and chart text.
         progress_cb: Optional image preparation progress.
         cancel_cb: Optional cancellation callback.
+        corr_id: Optional operation correlation identifier used only for diagnostics.
 
     Returns:
         One PNG image owned by the worker, never a live Qt canvas.
@@ -273,7 +311,7 @@ def render_multivariate_outlier_charts(
             constrained_layout=geometry.constrained_layout,
         )
         draw_outlier_projection(figure.add_subplot(111), snapshot.result, labels)
-        raster = render_chart_png(figure)
+        raster = render_chart_png(figure, corr_id=corr_id)
     if cancel_cb is not None and cancel_cb():
         raise ExcelChartCancelledError
     if progress_cb is not None:

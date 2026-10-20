@@ -248,7 +248,7 @@ def test_maximum_matrix_has_all_435_unique_ordered_pairs_without_rendering(monke
     seen = []
     original = charts.analyze_correlation_pair
 
-    def record(df, x, y, method, *, statistics):
+    def record(df, x, y, method, *, statistics, corr_id=None):
         seen.append((x, y))
         return original(df, x, y, method, statistics=statistics)
 

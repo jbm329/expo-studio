@@ -14,6 +14,7 @@ from sklearn.preprocessing import StandardScaler
 
 from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
+from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -204,7 +205,7 @@ def initialize_multivariate_outliers(df: pd.DataFrame) -> MultivariateOutlierRes
     return _unfitted_result(error, configuration=configuration)
 
 
-def analyze_multivariate_outliers(
+def _compute_multivariate_outliers(
     df: pd.DataFrame,
     columns: Sequence[str] | None = None,
     *,
@@ -313,3 +314,54 @@ def analyze_multivariate_outliers(
         extremes=extremes,
         error=None,
     )
+
+
+def analyze_multivariate_outliers(
+    df: pd.DataFrame,
+    columns: Sequence[str] | None = None,
+    *,
+    method: MultivariateOutlierMethod = MultivariateOutlierMethod.ISOLATION_FOREST,
+    standardize: bool = True,
+    contamination: float = DEFAULT_CONTAMINATION,
+    lof_neighbors: int = DEFAULT_LOF_NEIGHBORS,
+    corr_id: str | None = None,
+) -> MultivariateOutlierResult:
+    """Screen multivariate anomalies with bounded timing diagnostics.
+
+    Args:
+        df: DataFrame to analyze. Never mutated.
+        columns: Optional numeric feature selection.
+        method: Anomaly detection method.
+        standardize: Whether to standardize selected features.
+        contamination: Expected fraction of flagged observations.
+        lof_neighbors: Number of neighbors for Local Outlier Factor.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        Fit result, plot data, or structured unavailable result.
+    """
+    diagnostic = AnalysisDiagnostic(
+        "multivariate_outliers",
+        corr_id,
+        row_count=len(df),
+        column_count=df.shape[1],
+        method=method.value,
+        selected_count=len(columns) if columns is not None else None,
+    )
+    result = _compute_multivariate_outliers(
+        df,
+        columns,
+        method=method,
+        standardize=standardize,
+        contamination=contamination,
+        lof_neighbors=lof_neighbors,
+    )
+    diagnostic.finish(
+        "success" if result.error is None else "unavailable",
+        reason=result.error.value if result.error is not None else None,
+        rows_used=result.rows_used,
+        rows_dropped=result.rows_dropped,
+        item_count=result.outlier_count,
+        sampled=result.sampled,
+    )
+    return result

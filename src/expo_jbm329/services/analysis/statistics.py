@@ -23,6 +23,7 @@ from enum import StrEnum
 import pandas as pd
 
 from expo_jbm329.services.analysis.columns import numeric_columns
+from expo_jbm329.services.analysis.diagnostics import AnalysisDiagnostic
 from expo_jbm329.services.analysis.limits import CATEGORICAL_MAX_DISTINCT_VALUES as MAX_GROUPS
 from expo_jbm329.services.analysis.normality import shapiro_normality
 from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
@@ -476,7 +477,7 @@ def _categorical_columns(df: pd.DataFrame) -> tuple[str, ...]:
     return tuple(eligible)
 
 
-def analyze_descriptive_statistics(df: pd.DataFrame) -> DescriptiveStatisticsResult:
+def _compute_descriptive_statistics(df: pd.DataFrame) -> DescriptiveStatisticsResult:
     """Compute continuous summaries and categorical frequencies for a DataFrame.
 
     Args:
@@ -492,3 +493,23 @@ def analyze_descriptive_statistics(df: pd.DataFrame) -> DescriptiveStatisticsRes
     categorical_names = _categorical_columns(df)
     categorical_columns = tuple(_categorical_statistics(df, column) for column in categorical_names)
     return DescriptiveStatisticsResult(columns=columns, categorical_columns=categorical_columns)
+
+
+def analyze_descriptive_statistics(
+    df: pd.DataFrame,
+    *,
+    corr_id: str | None = None,
+) -> DescriptiveStatisticsResult:
+    """Compute descriptive summaries and log bounded timing metadata.
+
+    Args:
+        df: DataFrame to analyze. Never mutated.
+        corr_id: Optional operation correlation identifier.
+
+    Returns:
+        Continuous and categorical summaries for the input.
+    """
+    diagnostic = AnalysisDiagnostic("statistics", corr_id, row_count=len(df), column_count=df.shape[1])
+    result = _compute_descriptive_statistics(df)
+    diagnostic.finish("success", item_count=len(result.columns) + len(result.categorical_columns))
+    return result

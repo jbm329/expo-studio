@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import math
+import time
 import warnings
+from contextlib import contextmanager
 from dataclasses import dataclass
 from io import BytesIO
 from itertools import pairwise
@@ -13,8 +15,16 @@ import numpy as np
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from PIL import Image
 
+from expo_jbm329.services.analysis.diagnostics import (
+    elapsed_ms,
+    log_diagnostic,
+    summary_scope,
+    summary_scope_active,
+)
+from expo_jbm329.services.excel_chart import ExcelChartCancelledError
+
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping
+    from collections.abc import Callable, Generator, Mapping
 
     from matplotlib.axes import Axes
     from matplotlib.axis import Axis
@@ -25,6 +35,52 @@ if TYPE_CHECKING:
 
 _MINIMUM_LAYOUT_FRACTION = 0.05
 _LAYOUT_REFERENCE_DPI = 100.0
+_COMPONENT = "AnalysisChartService"
+
+
+@contextmanager
+def chart_render_batch(
+    operation: str,
+    item_count: int,
+    corr_id: str | None,
+) -> Generator[None]:
+    """Log one bounded summary line for a worker chart batch.
+
+    Per-chart computations and rasters inside the batch stay silent on success.
+    A successful batch nested in a report stage is summarized by that stage;
+    cancellations and failures are always logged.
+    """
+    started = time.perf_counter()
+    with summary_scope() as outermost:
+        try:
+            yield
+        except ExcelChartCancelledError:
+            _log_chart_batch_outcome(corr_id, operation, item_count, "cancelled", started)
+            raise
+        except Exception:
+            _log_chart_batch_outcome(corr_id, operation, item_count, "failed", started)
+            raise
+        if outermost:
+            _log_chart_batch_outcome(corr_id, operation, item_count, "success", started)
+
+
+def _log_chart_batch_outcome(
+    corr_id: str | None,
+    operation: str,
+    item_count: int,
+    outcome: str,
+    started: float,
+) -> None:
+    """Log one bounded chart batch outcome without exception details."""
+    log_diagnostic(
+        _COMPONENT,
+        "chart batch finished",
+        corr=corr_id,
+        operation=operation,
+        charts=item_count,
+        outcome=outcome,
+        ms=elapsed_ms(started),
+    )
 
 
 def _edge_growth(lower: float, upper: float, size: float) -> float:
@@ -201,6 +257,7 @@ def render_chart_png(
     figure: ChartFigure,
     *,
     check_cancelled: Callable[[], None] | None = None,
+    corr_id: str | None = None,
 ) -> ChartRaster:
     """Render all decorations and tick labels within a bounded Agg raster.
 
@@ -213,6 +270,7 @@ def render_chart_png(
     Args:
         figure: Worker-owned figure with frozen content layout configuration.
         check_cancelled: Optional callback raising the caller's cancellation error.
+        corr_id: Optional operation correlation identifier used only for diagnostics.
 
     Returns:
         Frozen PNG bytes with dimensions read from the PNG header.
@@ -220,7 +278,6 @@ def render_chart_png(
     Raises:
         ValueError: If content cannot fit within the configured raster limits.
     """
-    config = figure.config.content_layout
     canvas = FigureCanvasAgg(figure)
     initial_width, initial_height = canvas.get_width_height()
     minimum_width, minimum_height = _minimum_plot_size(figure)
@@ -231,7 +288,69 @@ def render_chart_png(
         )
         for axis in _plot_axes(figure)
     }
+    passes = [0]
+    started = time.perf_counter()
+    try:
+        raster = _render_chart_png(
+            figure,
+            canvas,
+            minimums,
+            check_cancelled=check_cancelled,
+            passes=passes,
+        )
+    except ExcelChartCancelledError:
+        _log_unfinished_raster(corr_id, "cancelled", initial_width, initial_height, passes[0], started)
+        raise
+    except Exception:
+        _log_unfinished_raster(corr_id, "failed", initial_width, initial_height, passes[0], started)
+        raise
+    if not summary_scope_active():
+        log_diagnostic(
+            _COMPONENT,
+            "chart raster finished",
+            corr=corr_id,
+            outcome="success",
+            width_px=raster.width_px,
+            height_px=raster.height_px,
+            passes=passes[0],
+            ms=elapsed_ms(started),
+        )
+    return raster
+
+
+def _log_unfinished_raster(
+    corr_id: str | None,
+    outcome: str,
+    width_px: int,
+    height_px: int,
+    pass_count: int,
+    started: float,
+) -> None:
+    """Log a cancelled or failed raster using its initial bounded dimensions."""
+    log_diagnostic(
+        _COMPONENT,
+        "chart raster finished",
+        corr=corr_id,
+        outcome=outcome,
+        width_px=width_px,
+        height_px=height_px,
+        passes=pass_count,
+        ms=elapsed_ms(started),
+    )
+
+
+def _render_chart_png(
+    figure: ChartFigure,
+    canvas: FigureCanvasAgg,
+    minimums: Mapping[Axes, tuple[float, float]],
+    *,
+    check_cancelled: Callable[[], None] | None,
+    passes: list[int],
+) -> ChartRaster:
+    """Render a chart after the public entry point has recorded its start."""
+    config = figure.config.content_layout
     for _ in range(config.max_passes):
+        passes[0] += 1
         if check_cancelled is not None:
             check_cancelled()
         width, height = canvas.get_width_height()
