@@ -667,6 +667,8 @@ class FileWriter:
                 written = total
                 limit = self._excel_max_rows_per_sheet if max_rows_per_sheet is None else max_rows_per_sheet
                 completed = sum(self._excel_sheet_count(frame, limit) for frame in captured.values())
+                if chart_images:
+                    completed += 1
             else:
                 with temporary.open("wb") as workbook_file:
                     excel_writer = pd.ExcelWriter(workbook_file, engine="openpyxl")

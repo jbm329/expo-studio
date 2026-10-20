@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
@@ -71,6 +72,47 @@ def test_named_excel_embeds_one_image_per_numeric_column_in_single_charts_sheet(
             assert workbook["Continuous"].cell(2, 1).value == "First"
     finally:
         workbook.close()
+
+
+@pytest.mark.parametrize("streaming", [True, False])
+@pytest.mark.parametrize("include_charts", [True, False])
+@pytest.mark.parametrize("table_rows", [None, 0, 5])
+def test_named_workbook_logged_sheet_counts_match_saved_workbook(
+    tmp_path, chart_images, streaming, include_charts, table_rows, caplog
+):
+    if table_rows is None and not include_charts:
+        pytest.skip("A workbook must contain tables or charts.")
+    caplog.set_level(logging.INFO, logger="applogger.service")
+    tables = {} if table_rows is None else {"Data": pd.DataFrame({"value": range(table_rows)})}
+    path = tmp_path / "sheet-counts.xlsx"
+
+    FileWriter().save_excel_sheets(
+        tables,
+        path,
+        streaming=streaming,
+        max_rows_per_sheet=3 if streaming else None,
+        chart_images=chart_images if include_charts else (),
+        chart_sheet_name="Charts" if include_charts else None,
+    )
+
+    workbook = load_workbook(path)
+    try:
+        data_sheet_count = 0 if table_rows is None else (3 if streaming and table_rows == 5 else 1)
+        expected_count = data_sheet_count + int(include_charts)
+        assert len(workbook.sheetnames) == expected_count
+    finally:
+        workbook.close()
+    prefixes = (
+        "FileWriter: named Excel workbook written",
+        "FileWriter: excel written (streaming)",
+    )
+    messages = [
+        record.getMessage()
+        for record in caplog.records
+        if record.getMessage().startswith(prefixes)
+    ]
+    assert len(messages) == (2 if streaming else 1)
+    assert all(f"sheets={expected_count}," in message for message in messages)
 
 
 @pytest.mark.parametrize("streaming", [True, False])
