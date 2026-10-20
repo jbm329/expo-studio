@@ -7,10 +7,14 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import QCoreApplication, pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QDoubleSpinBox, QFormLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
+from expo_jbm329.services.analysis.limits import (
+    OUTLIERS_MAX_THRESHOLD as MAX_THRESHOLD,
+)
+from expo_jbm329.services.analysis.limits import (
+    OUTLIERS_MIN_THRESHOLD as MIN_THRESHOLD,
+)
 from expo_jbm329.services.analysis.outliers import (
     DEFAULT_THRESHOLDS,
-    MAX_THRESHOLD,
-    MIN_THRESHOLD,
     OutlierMethod,
 )
 from expo_jbm329.services.analysis.presentation import outlier_method_label

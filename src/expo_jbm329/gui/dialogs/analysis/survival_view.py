@@ -16,8 +16,14 @@ from expo_jbm329.gui.dialogs.analysis.section_layout import (
 )
 from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.limits import (
+    REGRESSION_MAX_MODEL_TERMS as MAX_MODEL_TERMS,
+)
+from expo_jbm329.services.analysis.limits import (
+    REGRESSION_MAX_PREDICTORS as MAX_PREDICTORS,
+)
 from expo_jbm329.services.analysis.presentation import regression_component_label, regression_intercept_label
-from expo_jbm329.services.analysis.regression import MAX_MODEL_TERMS, MAX_PREDICTORS, TermKind
+from expo_jbm329.services.analysis.regression import TermKind
 from expo_jbm329.services.analysis.regression_charts import (
     CoxChartLabels,
     RegressionChartLabels,

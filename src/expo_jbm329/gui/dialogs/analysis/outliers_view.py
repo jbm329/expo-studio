@@ -25,10 +25,14 @@ from expo_jbm329.gui.dialogs.analysis.section_layout import (
 )
 from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.limits import (
+    OUTLIERS_MAX_THRESHOLD as MAX_THRESHOLD,
+)
+from expo_jbm329.services.analysis.limits import (
+    OUTLIERS_MIN_THRESHOLD as MIN_THRESHOLD,
+)
 from expo_jbm329.services.analysis.outliers import (
-    MAX_THRESHOLD,
     MIN_OBSERVATIONS,
-    MIN_THRESHOLD,
     ColumnOutlierStatus,
     OutlierError,
     OutlierMethod,

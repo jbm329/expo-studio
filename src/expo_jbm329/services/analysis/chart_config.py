@@ -59,6 +59,13 @@ class ChartContentLayoutConfig:
 
     Plot minimums are logical pixels at 100 DPI (120 means 1.2 inches), not
     device pixels. Raster limits, padding and tolerance use renderer pixels.
+
+    Used by chart_export to bound renderer-driven image expansion: max_passes
+    limits layout retries, max_width_px/max_height_px bound each dimension,
+    and max_pixels bounds total raster area. These safeguards bound image
+    resource use, not analytical rows or chart sampling. Plot minimums protect
+    readable axes; padding and tolerance control clipping/fit measurements.
+    The specific budgets are product defaults, not statistical requirements.
     """
 
     max_passes: int = 12

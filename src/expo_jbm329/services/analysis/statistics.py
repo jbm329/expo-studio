@@ -23,7 +23,7 @@ from enum import StrEnum
 import pandas as pd
 
 from expo_jbm329.services.analysis.columns import numeric_columns
-from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS
+from expo_jbm329.services.analysis.limits import CATEGORICAL_MAX_DISTINCT_VALUES as MAX_GROUPS
 from expo_jbm329.services.analysis.normality import shapiro_normality
 from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
 from expo_jbm329.services.data_profile.column_data_profile import profile_series
@@ -459,7 +459,12 @@ def _categorical_statistics(df: pd.DataFrame, column: str) -> CategoricalColumnS
 
 
 def _categorical_columns(df: pd.DataFrame) -> tuple[str, ...]:
-    """Return low-cardinality categorical and coded-numeric columns."""
+    """Return columns eligible for frequencies, not an inferred category dtype.
+
+    The shared categorical distinct-value maximum applies to text, category,
+    boolean and numeric columns. Numeric continuous summaries are independent.
+    Unlike Overview's dtype counts, this selection excludes high cardinality.
+    """
     eligible: list[str] = []
     for column in df.columns:
         series = df[column]

@@ -21,10 +21,16 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.services.analysis.limits import (
+    MULTIVARIATE_OUTLIERS_MAX_CONTAMINATION as MAX_CONTAMINATION,
+)
+from expo_jbm329.services.analysis.limits import (
+    MULTIVARIATE_OUTLIERS_MAX_LOF_NEIGHBORS as MAX_LOF_NEIGHBORS,
+)
+from expo_jbm329.services.analysis.limits import (
+    MULTIVARIATE_OUTLIERS_MIN_CONTAMINATION as MIN_CONTAMINATION,
+)
 from expo_jbm329.services.analysis.multivariate_outliers import (
-    MAX_CONTAMINATION,
-    MAX_LOF_NEIGHBORS,
-    MIN_CONTAMINATION,
     MIN_LOF_NEIGHBORS,
     MIN_SELECTED_COLUMNS,
     MultivariateOutlierMethod,

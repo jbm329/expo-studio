@@ -12,7 +12,6 @@ from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSectio
 from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.group_comparison import (
-    MAX_GROUPS,
     MIN_GROUPS,
     GroupComparisonError,
     GroupComparisonResult,
@@ -24,6 +23,7 @@ from expo_jbm329.services.analysis.hypothesis_charts import (
     build_hypothesis_chart_presentation,
     draw_hypothesis_charts,
 )
+from expo_jbm329.services.analysis.limits import CATEGORICAL_MAX_DISTINCT_VALUES as MAX_GROUPS
 from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
 

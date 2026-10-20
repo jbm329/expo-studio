@@ -10,13 +10,14 @@ import pandas as pd
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.tsa.stattools import acf
 
+from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
 from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
 
 MIN_OBSERVATIONS = 3
 MIN_SEASONAL_CYCLES = 2
 MIN_SEASONAL_PERIOD = 2
-MAX_ACF_LAGS = 40
+MAX_ACF_LAGS = limits.TIME_SERIES_MAX_ACF_LAGS
 
 
 class DecompositionModel(StrEnum):

@@ -19,10 +19,10 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.services.analysis.correlation import (
-    MAX_SELECTED_COLUMNS,
     MIN_SELECTED_COLUMNS,
     CorrelationMethod,
 )
+from expo_jbm329.services.analysis.limits import CORRELATION_MAX_SELECTED_COLUMNS as MAX_SELECTED_COLUMNS
 from expo_jbm329.services.analysis.presentation import correlation_method_label
 from expo_jbm329.utils.format_utils import fmt_int
 

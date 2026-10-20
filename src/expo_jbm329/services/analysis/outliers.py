@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
+from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
 
 if TYPE_CHECKING:
@@ -44,18 +45,17 @@ class OutlierMethod(StrEnum):
 # Conventional defaults: Tukey's 1.5 IQR fences, |z| > 3 and the
 # Iglewicz-Hoaglin |modified z| > 3.5.
 DEFAULT_THRESHOLDS: dict[OutlierMethod, float] = {
-    OutlierMethod.IQR: 1.5,
-    OutlierMethod.Z_SCORE: 3.0,
-    OutlierMethod.MODIFIED_Z_SCORE: 3.5,
+    OutlierMethod.IQR: limits.OUTLIERS_DEFAULT_IQR_THRESHOLD,
+    OutlierMethod.Z_SCORE: limits.OUTLIERS_DEFAULT_Z_SCORE_THRESHOLD,
+    OutlierMethod.MODIFIED_Z_SCORE: limits.OUTLIERS_DEFAULT_MODIFIED_Z_SCORE_THRESHOLD,
 }
-MIN_THRESHOLD = 0.1
-MAX_THRESHOLD = 100.0
+MIN_THRESHOLD = limits.OUTLIERS_MIN_THRESHOLD
+MAX_THRESHOLD = limits.OUTLIERS_MAX_THRESHOLD
 
 # Fewer values than this give no meaningful spread estimate.
 MIN_OBSERVATIONS = 3
-# The most extreme flagged rows listed in a column's detail.
-MAX_EXTREME_OBSERVATIONS = 100
-HISTOGRAM_BINS = 50
+MAX_EXTREME_OBSERVATIONS = limits.OUTLIERS_MAX_EXTREME_OBSERVATIONS
+HISTOGRAM_BINS = limits.OUTLIERS_HISTOGRAM_BINS
 
 # 0.6745 is the 0.75 quantile of the standard normal distribution, making
 # MAD / 0.6745 a consistent estimator of the standard deviation.

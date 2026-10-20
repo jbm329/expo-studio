@@ -13,12 +13,19 @@ import pandas as pd
 import statsmodels.api as sm
 from statsmodels.tools.sm_exceptions import ConvergenceWarning, PerfectSeparationError, PerfectSeparationWarning
 
+from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
+from expo_jbm329.services.analysis.limits import (
+    REGRESSION_MAX_MODEL_TERMS as MAX_MODEL_TERMS,
+)
+from expo_jbm329.services.analysis.limits import (
+    REGRESSION_MAX_PREDICTORS as MAX_PREDICTORS,
+)
+from expo_jbm329.services.analysis.limits import (
+    REGRESSION_PLOT_SAMPLE_SIZE as PLOT_SAMPLE_SIZE,
+)
 from expo_jbm329.services.analysis.regression import (
     CONFIDENCE_LEVEL,
-    MAX_MODEL_TERMS,
-    MAX_PREDICTORS,
-    PLOT_SAMPLE_SIZE,
     CategoricalReference,
     PredictorColumns,
     PredictorKind,
@@ -33,7 +40,7 @@ _MIN_DISTINCT = 2
 _MIN_RESIDUAL_DF = 1
 OVERDISPERSION_THRESHOLD = 1.5
 _PLOT_SEED = 0
-_CALIBRATION_MAX_BINS = 10
+_CALIBRATION_MAX_BINS = limits.LOGISTIC_CALIBRATION_MAX_BINS
 
 
 class RegressionModel(StrEnum):
@@ -364,11 +371,13 @@ def analyze_generalized_regression(
             warnings.simplefilter("error", ConvergenceWarning)
             warnings.simplefilter("error", PerfectSeparationWarning)
             if model is RegressionModel.LOGISTIC:
-                fit = sm.Logit(y, design.matrix).fit(disp=False, maxiter=200)
+                fit = sm.Logit(y, design.matrix).fit(disp=False, maxiter=limits.LOGISTIC_MAX_ITERATIONS)
             elif model is RegressionModel.POISSON:
-                fit = sm.Poisson(y, design.matrix).fit(disp=False, maxiter=200)
+                fit = sm.Poisson(y, design.matrix).fit(disp=False, maxiter=limits.POISSON_MAX_ITERATIONS)
             else:
-                fit = sm.NegativeBinomial(y, design.matrix).fit(disp=False, maxiter=200)
+                fit = sm.NegativeBinomial(y, design.matrix).fit(
+                    disp=False, maxiter=limits.NEGATIVE_BINOMIAL_MAX_ITERATIONS
+                )
     except (
         ConvergenceWarning,
         PerfectSeparationWarning,

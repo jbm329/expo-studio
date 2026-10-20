@@ -22,14 +22,22 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.services.analysis.clustering import (
-    MAX_CLUSTER_COUNT,
-    MAX_DBSCAN_EPSILON,
-    MAX_DBSCAN_MIN_SAMPLES,
     MIN_CLUSTER_COUNT,
-    MIN_DBSCAN_EPSILON,
     MIN_DBSCAN_MIN_SAMPLES,
     MIN_SELECTED_COLUMNS,
     ClusteringMethod,
+)
+from expo_jbm329.services.analysis.limits import (
+    CLUSTERING_MAX_CLUSTER_COUNT as MAX_CLUSTER_COUNT,
+)
+from expo_jbm329.services.analysis.limits import (
+    CLUSTERING_MAX_DBSCAN_EPSILON as MAX_DBSCAN_EPSILON,
+)
+from expo_jbm329.services.analysis.limits import (
+    CLUSTERING_MAX_DBSCAN_MIN_SAMPLES as MAX_DBSCAN_MIN_SAMPLES,
+)
+from expo_jbm329.services.analysis.limits import (
+    CLUSTERING_MIN_DBSCAN_EPSILON as MIN_DBSCAN_EPSILON,
 )
 from expo_jbm329.services.analysis.presentation import (
     PresentationLabel,

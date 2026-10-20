@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.chart_config import AxisPolicy, AxisRole, RotationMode
 from expo_jbm329.services.analysis.chart_export import render_chart_png
 from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
@@ -47,7 +48,7 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.correlation import CorrelationMatrixResult, CorrelationPairDetail
     from expo_jbm329.services.analysis.correlation_export import CorrelationExportSnapshot
 
-MAX_ANNOTATED_COLUMNS = 12
+MAX_ANNOTATED_COLUMNS = limits.CORRELATION_MAX_ANNOTATED_COLUMNS
 _LIGHT_TEXT_THRESHOLD = 0.6
 
 

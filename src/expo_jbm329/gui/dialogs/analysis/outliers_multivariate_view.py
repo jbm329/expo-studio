@@ -22,9 +22,13 @@ from expo_jbm329.gui.dialogs.analysis.section_layout import (
 )
 from expo_jbm329.gui.widgets.analysis_chart_canvas import SerializedAnalysisCanvas
 from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
+from expo_jbm329.services.analysis.limits import (
+    MULTIVARIATE_OUTLIERS_MAX_CONTAMINATION as MAX_CONTAMINATION,
+)
+from expo_jbm329.services.analysis.limits import (
+    MULTIVARIATE_OUTLIERS_MIN_CONTAMINATION as MIN_CONTAMINATION,
+)
 from expo_jbm329.services.analysis.multivariate_outliers import (
-    MAX_CONTAMINATION,
-    MIN_CONTAMINATION,
     MIN_LOF_NEIGHBORS,
     MIN_SELECTED_COLUMNS,
     MultivariateOutlierError,

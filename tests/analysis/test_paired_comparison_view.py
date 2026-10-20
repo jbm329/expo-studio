@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget
 from expo_jbm329.gui.dialogs.analysis.paired_comparison_view import PairedComparisonView
 from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection
 from expo_jbm329.services.analysis.paired_comparison import (
+    MAX_PAIRED_TRAJECTORIES,
     PairedComparisonError,
     PairedComparisonMethod,
     PairedComparisonResult,
@@ -178,17 +179,18 @@ def test_table_charts_and_comments_follow_hypothesis_test_layout(columns: tuple[
 
 
 def test_sampled_trajectory_notice_preserves_full_cohort_counts():
-    df = pd.DataFrame({"a": range(250), "b": range(1, 251)})
+    size = MAX_PAIRED_TRAJECTORIES + 50
+    df = pd.DataFrame({"a": range(size), "b": range(1, size + 1)})
     view = PairedComparisonView(analyze_paired_comparison(df, ("a", "b")))
     text = "\n".join(label.text() for label in view.findChildren(QLabel))
-    assert "sample of 200 of 250 complete subjects" in text
+    assert f"sample of {MAX_PAIRED_TRAJECTORIES} of {size} complete subjects" in text
     assert "Tables, boxplots and tests use all complete subjects" in text
     table = view.findChild(QTableWidget)
     assert table is not None
-    assert table.item(0, 1).text() == "250"
+    assert table.item(0, 1).text() == str(size)
     canvas = view.findChild(FigureCanvasQTAgg)
     assert canvas is not None
-    assert len(canvas.figure.axes[1].lines) == 200
+    assert len(canvas.figure.axes[1].lines) == MAX_PAIRED_TRAJECTORIES
 
 
 def test_unfitted_result_shows_apply_prompt_without_charts():

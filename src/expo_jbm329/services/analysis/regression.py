@@ -26,6 +26,7 @@ from scipy.stats import norm
 from statsmodels.stats.diagnostic import het_breuschpagan
 from statsmodels.stats.stattools import durbin_watson, jarque_bera
 
+from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
 from expo_jbm329.services.analysis.group_comparison import ExcludedColumn, classify_grouping_columns
 from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
@@ -35,10 +36,8 @@ if TYPE_CHECKING:
 
 _NAN = float("nan")
 
-MAX_PREDICTORS = 20
-# Dummy coding can multiply the number of model terms; cap the design
-# matrix width to keep memory and fitting time reasonable on large data.
-MAX_MODEL_TERMS = 50
+MAX_PREDICTORS = limits.REGRESSION_MAX_PREDICTORS
+MAX_MODEL_TERMS = limits.REGRESSION_MAX_MODEL_TERMS
 
 CONFIDENCE_LEVEL = 0.95
 SIGNIFICANCE_LEVEL = 0.05
@@ -50,7 +49,7 @@ HIGH_VIF_THRESHOLD = 10.0
 DURBIN_WATSON_LOW = 1.5
 DURBIN_WATSON_HIGH = 2.5
 
-PLOT_SAMPLE_SIZE = 5_000
+PLOT_SAMPLE_SIZE = limits.REGRESSION_PLOT_SAMPLE_SIZE
 # A fixed seed keeps the plotted sample identical across runs.
 _PLOT_SEED = 0
 

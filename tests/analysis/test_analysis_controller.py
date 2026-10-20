@@ -60,6 +60,7 @@ from expo_jbm329.services.analysis.hypothesis_export import (
     HypothesisExportComponent as Component,
 )
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportRequest
+from expo_jbm329.services.analysis.limits import CATEGORICAL_MAX_DISTINCT_VALUES
 from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierError, MultivariateOutlierMethod
 from expo_jbm329.services.analysis.outliers import OutlierError, OutlierMethod
 from expo_jbm329.services.analysis.outliers_export import MULTIVARIATE_COMPONENTS as MULTIVARIATE_OUTLIER_COMPONENTS
@@ -1732,15 +1733,16 @@ def test_no_category_selected_does_not_touch_the_dialog(dialog_factory):
 
 
 def _hypothesis_tests_df() -> pd.DataFrame:
-    # 24 rows with fully distinct "value"/"other" values (> MAX_GROUPS) so
+    # Keep numeric columns above the configured category limit so
     # only "grp" and "color" are eligible categorical columns - Group
     # Comparison defaults to ("value", "grp") with two numeric choices to
     # switch between, and chi-square defaults to ("grp", "color").
+    size = (CATEGORICAL_MAX_DISTINCT_VALUES // 6 + 1) * 6
     return pd.DataFrame({
-        "value": [float(i) for i in range(24)],
-        "other": [float(i) * 10 for i in range(24)],
-        "grp": ["A", "B"] * 12,
-        "color": ["r", "g", "b"] * 8,
+        "value": [float(i) for i in range(size)],
+        "other": [float(i) * 10 for i in range(size)],
+        "grp": ["A", "B"] * (size // 2),
+        "color": ["r", "g", "b"] * (size // 3),
     })
 
 
@@ -1751,12 +1753,13 @@ def _gc_numeric_combo(config: HypothesisTestsConfigWidget) -> QComboBox:
 
 
 def _open_hypothesis_tests(async_ops: DummyAsyncOps, dialog_factory, df: pd.DataFrame | None = None):
-    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=24, column_count=4)
+    data = _hypothesis_tests_df() if df is None else df
+    dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=len(data), column_count=len(data.columns))
     ctrl = AnalysisController(
         results=DummyResults(
             datasets=[dataset],
             active_tab_id="t1",
-            dfs={"t1": _hypothesis_tests_df() if df is None else df},
+            dfs={"t1": data},
         ),
         async_ops=async_ops,
     )
@@ -2152,7 +2155,7 @@ def test_stale_paired_result_is_discarded_after_switching_test(dialog_factory):
 
 def test_switching_to_an_unavailable_test_shows_its_error_and_disables_apply(dialog_factory):
     # Only "grp" is categorical: Group Comparison works, chi-square has no column pair.
-    df = pd.DataFrame({"value": [float(i) for i in range(24)], "grp": ["A", "B"] * 12})
+    df = _hypothesis_tests_df()[["value", "grp"]]
     async_ops = DummyAsyncOps()
     _, dlg = _open_hypothesis_tests(async_ops, dialog_factory, df)
     config = _hypothesis_tests_config(dlg)

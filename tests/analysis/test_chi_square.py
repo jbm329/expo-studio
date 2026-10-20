@@ -44,7 +44,7 @@ def test_defaults_to_the_first_two_eligible_columns():
 
 
 def test_high_cardinality_columns_are_not_eligible():
-    df = _two_by_three_df()
+    df = pd.concat([_two_by_three_df()] * (MAX_GROUPS // 105 + 1), ignore_index=True)
     df["id"] = [str(i) for i in range(len(df))]
 
     result = analyze_chi_square(df)
@@ -82,7 +82,8 @@ def test_too_few_categories_after_dropping_missing_values():
 
 
 def test_explicit_column_with_too_many_categories_is_validated_as_given():
-    df = pd.DataFrame({"a": ["x", "y"] * 30, "id": [str(i) for i in range(60)]})
+    size = (MAX_GROUPS // 2 + 1) * 2
+    df = pd.DataFrame({"a": ["x", "y"] * (size // 2), "id": [str(i) for i in range(size)]})
 
     result = analyze_chi_square(df, "a", "id")
 
@@ -213,16 +214,17 @@ def test_cochran_rule_is_violated_when_any_expected_count_is_below_one():
 
 
 def test_result_reports_excluded_columns_on_success_and_on_error():
+    size = (MAX_GROUPS // 6 + 1) * 6
     df = pd.DataFrame({
-        "id": list(range(24)),
-        "grp": ["A", "B"] * 12,
-        "color": ["r", "g", "b"] * 8,
+        "id": list(range(size)),
+        "grp": ["A", "B"] * (size // 2),
+        "color": ["r", "g", "b"] * (size // 3),
     })
 
     success = analyze_chi_square(df)
     error = analyze_chi_square(df, "grp", "grp")
 
-    expected = (ExcludedColumn("id", 24, ColumnExclusionReason.TOO_MANY_VALUES),)
+    expected = (ExcludedColumn("id", size, ColumnExclusionReason.TOO_MANY_VALUES),)
     assert success.error is None
     assert success.excluded_columns == expected
     assert error.error is ChiSquareError.INVALID_COLUMN
@@ -230,10 +232,11 @@ def test_result_reports_excluded_columns_on_success_and_on_error():
 
 
 def test_initialize_chi_square_uses_the_first_two_eligible_columns_without_testing():
+    size = (MAX_GROUPS // 6 + 1) * 6
     df = pd.DataFrame({
-        "id": [float(i) for i in range(24)],
-        "grp": ["A", "B"] * 12,
-        "color": ["r", "g", "b"] * 8,
+        "id": [float(i) for i in range(size)],
+        "grp": ["A", "B"] * (size // 2),
+        "color": ["r", "g", "b"] * (size // 3),
     })
 
     result = initialize_chi_square(df)

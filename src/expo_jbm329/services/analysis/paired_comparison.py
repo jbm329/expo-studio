@@ -16,12 +16,13 @@ import numpy as np
 import pandas as pd
 from scipy.stats import friedmanchisquare, wilcoxon
 
+from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import numeric_columns
 
 _NAN = float("nan")
 _MIN_OCCASIONS = 2
 _MIN_FRIEDMAN_SUBJECTS = 3
-MAX_PAIRED_TRAJECTORIES = 200
+MAX_PAIRED_TRAJECTORIES = limits.PAIRED_MAX_TRAJECTORIES
 _PLOT_SEED = 0
 
 

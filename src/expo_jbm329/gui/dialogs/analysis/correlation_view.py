@@ -26,7 +26,6 @@ from expo_jbm329.services.analysis import correlation_charts
 from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.correlation import (
     CONFIDENCE_LEVEL,
-    MAX_SELECTED_COLUMNS,
     MIN_OBSERVATIONS,
     MIN_SELECTED_COLUMNS,
     SIGNIFICANCE_LEVEL,
@@ -42,6 +41,7 @@ from expo_jbm329.services.analysis.correlation_charts import (
     draw_correlation_matrix,
     draw_correlation_scatter,
 )
+from expo_jbm329.services.analysis.limits import CORRELATION_MAX_SELECTED_COLUMNS as MAX_SELECTED_COLUMNS
 from expo_jbm329.services.analysis.presentation import (
     PresentationLabel,
     build_correlation_presentation,

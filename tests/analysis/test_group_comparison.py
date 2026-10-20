@@ -41,7 +41,8 @@ def _three_group_df() -> pd.DataFrame:
 
 
 def test_defaults_to_first_numeric_and_first_eligible_grouping_column():
-    df = _two_group_df()
+    size = (MAX_GROUPS // 2 + 1) * 2
+    df = pd.DataFrame({"value": range(size), "grp": ["A", "B"] * (size // 2)})
 
     result = analyze_group_comparison(df)
 
@@ -59,12 +60,12 @@ def test_available_numeric_columns_lists_every_numeric_column_in_order():
 
 
 def test_available_grouping_columns_excludes_columns_outside_the_group_count_range():
-    # "const" has 1 distinct value (< MIN_GROUPS), "id" has 60 (> MAX_GROUPS).
+    size = max(MAX_GROUPS + 1, 4)
     df = pd.DataFrame({
-        "value": range(60),
-        "const": [1] * 60,
-        "grp": (["A"] * 30 + ["B"] * 30),
-        "id": range(60),
+        "value": range(size),
+        "const": [1] * size,
+        "grp": ["A" if i % 2 else "B" for i in range(size)],
+        "id": range(size),
     })
 
     result = analyze_group_comparison(df)
@@ -83,9 +84,9 @@ def test_grouping_candidate_columns_allow_any_dtype_including_numeric_flags():
 def test_classify_grouping_columns_splits_by_distinct_value_count_in_column_order():
     df = pd.DataFrame({
         "id": range(MAX_GROUPS + 1),
-        "b": ["x", "y"] * 10 + ["x"],
+        "b": ["x" if i % 2 else "y" for i in range(MAX_GROUPS + 1)],
         "const": [1] * (MAX_GROUPS + 1),
-        "a": [0, 1, 2] * 7,
+        "a": [i % 3 for i in range(MAX_GROUPS + 1)],
         "empty": [None] * (MAX_GROUPS + 1),
     })
 
@@ -100,12 +101,13 @@ def test_classify_grouping_columns_splits_by_distinct_value_count_in_column_orde
 
 
 def test_result_reports_excluded_grouping_columns_on_success_and_on_error():
-    df = pd.DataFrame({"value": [float(i) for i in range(24)], "grp": ["A", "B"] * 12})
+    size = (MAX_GROUPS // 2 + 1) * 2
+    df = pd.DataFrame({"value": [float(i) for i in range(size)], "grp": ["A", "B"] * (size // 2)})
 
     success = analyze_group_comparison(df)
     error = analyze_group_comparison(df, "value", "missing")
 
-    expected = (ExcludedColumn("value", 24, ColumnExclusionReason.TOO_MANY_VALUES),)
+    expected = (ExcludedColumn("value", size, ColumnExclusionReason.TOO_MANY_VALUES),)
     assert success.error is None
     assert success.excluded_grouping_columns == expected
     assert error.error is not None
@@ -140,7 +142,7 @@ def test_no_numeric_column_available():
 
 
 def test_no_eligible_grouping_column_available():
-    df = pd.DataFrame({"value": range(60), "id": range(60)})
+    df = pd.DataFrame({"value": range(MAX_GROUPS + 1), "id": range(MAX_GROUPS + 1)})
 
     result = analyze_group_comparison(df)
 
@@ -429,10 +431,11 @@ def test_minimum_allowed_group_count_is_accepted():
 
 
 def test_initialize_group_comparison_uses_default_columns_without_comparing():
+    size = (MAX_GROUPS // 2 + 1) * 2
     df = pd.DataFrame({
-        "value": [float(i) for i in range(24)],
-        "other": [float(i) * 10 for i in range(24)],
-        "grp": ["A", "B"] * 12,
+        "value": [float(i) for i in range(size)],
+        "other": [float(i) * 10 for i in range(size)],
+        "grp": ["A", "B"] * (size // 2),
     })
 
     result = initialize_group_comparison(df)

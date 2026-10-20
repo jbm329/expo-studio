@@ -10,9 +10,10 @@ import pytest
 import statsmodels.formula.api as smf
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
-from expo_jbm329.services.analysis.group_comparison import ColumnExclusionReason
+from expo_jbm329.services.analysis import group_comparison as grouping_service
+from expo_jbm329.services.analysis import regression as regression_service
+from expo_jbm329.services.analysis.group_comparison import MAX_GROUPS, ColumnExclusionReason
 from expo_jbm329.services.analysis.regression import (
-    MAX_MODEL_TERMS,
     MAX_PREDICTORS,
     PLOT_SAMPLE_SIZE,
     CategoricalReference,
@@ -50,12 +51,12 @@ def _term(result: RegressionResult, name: str) -> RegressionTerm:
 
 
 def test_classify_predictor_columns_splits_by_kind_and_skips_datetimes():
-    size = 30
+    size = (MAX_GROUPS // 6 + 1) * 6
     df = pd.DataFrame({
         "num": np.arange(size, dtype=float),
-        "text": ["a", "b", "c"] * 10,
-        "cat": pd.Categorical(["x", "y"] * 15),
-        "flag": [True, False] * 15,
+        "text": ["a", "b", "c"] * (size // 3),
+        "cat": pd.Categorical(["x", "y"] * (size // 2)),
+        "flag": [True, False] * (size // 2),
         "id": [str(i) for i in range(size)],
         "single": ["same"] * size,
         "when": pd.date_range("2024-01-01", periods=size),
@@ -315,10 +316,11 @@ def test_initialize_regression_reports_when_no_numeric_target_exists():
     assert result.predictor_columns.categorical == ("g",)
 
 
-def test_too_many_predictors_error():
+def test_too_many_predictors_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(regression_service, "MAX_MODEL_TERMS", MAX_PREDICTORS)
     rng = np.random.default_rng(0)
     names = [f"n{i}" for i in range(MAX_PREDICTORS + 1)]
-    df = pd.DataFrame({name: rng.normal(size=60) for name in [*names, "y"]})
+    df = pd.DataFrame({name: rng.normal(size=max(60, MAX_PREDICTORS * 3)) for name in [*names, "y"]})
 
     _assert_error(analyze_regression(df, "y", names), RegressionError.TOO_MANY_PREDICTORS)
     assert analyze_regression(df, "y", names[:MAX_PREDICTORS]).error is None
@@ -336,13 +338,16 @@ def test_too_many_predictors_error():
     ],
 )
 def test_invalid_column_error(target, predictors):
-    df = _frame()
+    df = _frame(size=max(300, MAX_GROUPS + 1))
     df["id"] = [str(i) for i in range(len(df))]
 
     _assert_error(analyze_regression(df, target, predictors), RegressionError.INVALID_COLUMN)
 
 
-def test_too_many_terms_error():
+def test_too_many_terms_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(grouping_service, "MAX_GROUPS", 20)
+    monkeypatch.setattr(regression_service, "MAX_PREDICTORS", 3)
+    monkeypatch.setattr(regression_service, "MAX_MODEL_TERMS", 50)
     rng = np.random.default_rng(0)
     size = 2_000
     df = pd.DataFrame({f"c{i}": rng.choice([f"l{j}" for j in range(20)], size=size) for i in range(3)})
@@ -350,7 +355,6 @@ def test_too_many_terms_error():
 
     result = analyze_regression(df, "y", ["c0", "c1", "c2"])
 
-    assert MAX_MODEL_TERMS < 3 * 19
     _assert_error(result, RegressionError.TOO_MANY_TERMS)
     assert result.n_used == size
 

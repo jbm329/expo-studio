@@ -15,6 +15,7 @@ from enum import StrEnum
 
 import pandas as pd
 
+from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.columns import NUMERIC_DTYPES
 from expo_jbm329.services.analysis.outliers_export import unique_headers
 from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_series_dtype
@@ -25,12 +26,8 @@ from expo_jbm329.services.data_operations.dtypes import SemanticDType, classify_
 # avoid flagging every column in typically-messy real-world datasets.
 HIGH_MISSING_FRACTION_THRESHOLD = 0.2
 
-# Number of leading rows kept as a preview of the raw data. Enough to spot
-# encoding/parsing problems and get a feel for the values without turning
-# the overview into a second data grid.
-SAMPLE_ROW_LIMIT = 100
-# Number of rows at either end of the dataset in Overview previews and exports.
-SAMPLE_DISPLAY_ROW_LIMIT = 10
+SAMPLE_ROW_LIMIT = limits.OVERVIEW_SAMPLE_ROW_LIMIT
+SAMPLE_DISPLAY_ROW_LIMIT = limits.OVERVIEW_SAMPLE_DISPLAY_ROW_LIMIT
 
 
 class OverviewExportTable(StrEnum):
@@ -383,6 +380,12 @@ def analyze_dataset_overview(df: pd.DataFrame) -> DatasetOverviewResult:
 
     Returns:
         A populated `DatasetOverviewResult`.
+
+    Notes:
+        Categorical column counts reflect string/category dtypes, regardless
+        of distinct-value count. Booleans are counted separately. The
+        categorical eligibility maximum used by Statistics and hypothesis
+        tests does not apply to these structural counts.
     """
     row_count = int(df.shape[0])
     column_count = int(df.shape[1])

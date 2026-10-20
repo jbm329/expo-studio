@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from expo_jbm329.services.analysis import limits
 from expo_jbm329.services.analysis.chart_export import render_chart_png
 from expo_jbm329.services.analysis.chart_layout import ChartFigure as Figure
 from expo_jbm329.services.analysis.chart_presentation import (
@@ -34,7 +35,7 @@ if TYPE_CHECKING:
     from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportSnapshot, HypothesisResult
 
 RESIDUAL_SIGNIFICANCE_THRESHOLD = 1.96
-MAX_ANNOTATED_CELLS = 100
+MAX_ANNOTATED_CELLS = limits.HYPOTHESIS_MAX_ANNOTATED_CELLS
 
 
 def _format_residual_annotation(value: float) -> str:
