@@ -13,6 +13,7 @@ from PyQt6.QtCore import QCoreApplication
 
 from expo_jbm329.build import build_i18n, build_locales
 from expo_jbm329.i18n import translation_service
+from expo_jbm329.i18n.language import Language
 from expo_jbm329.services.analysis.outliers_charts import (
     build_outlier_histogram_labels,
     build_outlier_projection_labels,
@@ -26,7 +27,7 @@ from tests.analysis.test_outliers_export import multivariate_result
 def check_call(monkeypatch, tmp_path):
     mock = MagicMock()
     monkeypatch.setattr(build_i18n.subprocess, "check_call", mock)
-    monkeypatch.setattr(build_i18n, "TS_FILES", [tmp_path / "app_en.ts", tmp_path / "app_sv.ts"])
+    monkeypatch.setattr(build_i18n, "TS_FILES", [tmp_path / f"app_{language.value}.ts" for language in Language])
     monkeypatch.setattr(build_i18n, "ensure_locales_dir", lambda: None)
     return mock
 
@@ -34,7 +35,10 @@ def check_call(monkeypatch, tmp_path):
 def test_main_does_not_remove_obsolete(check_call):
     build_i18n.main()
 
-    assert check_call.call_count == 2
+    assert check_call.call_count == len(Language)
+    assert [Path(call.args[0][3]).name for call in check_call.call_args_list] == [
+        f"app_{language.value}.ts" for language in Language
+    ]
     for call in check_call.call_args_list:
         assert "--no-obsolete" not in call.args[0]
 
@@ -42,7 +46,7 @@ def test_main_does_not_remove_obsolete(check_call):
 def test_main_clean_removes_obsolete(check_call):
     build_i18n.main_clean()
 
-    assert check_call.call_count == 2
+    assert check_call.call_count == len(Language)
     for call in check_call.call_args_list:
         assert "--no-obsolete" in call.args[0]
 

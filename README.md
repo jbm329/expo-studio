@@ -207,7 +207,7 @@ The REST feature is intended primarily for:
 
 ### 🌍 Internationalization
 - **Multilingual UI**: Built-in i18n support using Qt translations.
-- **Languages**: Swedish and English.
+- **Languages**: English, Swedish, German, French, Italian, Spanish, and Polish.
 
 
 ## 🛠️ Installation
@@ -327,7 +327,25 @@ Expo Studio uses Qt's translation system for internationalization, with all user
 The i18n workflow consists of three main steps:
 
 #### 1️⃣ Extract translatable strings
-`build-i18n` collects strings tagged for translation from the Python sources and updates `app_en.ts` and `app_sv.ts` in `src/expo_jbm329/i18n/locales`. Existing translations are retained, and messages no longer used by the sources are kept as vanished entries.
+`build-i18n` collects strings tagged for translation from the Python sources and
+updates every supported language catalog in `src/expo_jbm329/i18n/locales`.
+The `Language` enum defines extraction targets and the language options in
+Settings. Existing translations are retained, and messages no longer used by
+the sources are kept as vanished entries.
+
+| Language | Settings label | Catalog | Translation locale |
+|---|---|---|---|
+| English (source) | English | `app_en.ts` | English source fallback |
+| Swedish | Svenska | `app_sv.ts` | `sv_SE` |
+| German | Deutsch | `app_de.ts` | `de_DE` |
+| French | Français | `app_fr.ts` | `fr_FR` |
+| Italian | Italiano | `app_it.ts` | `it_IT` |
+| Spanish | Español | `app_es.ts` | `es_ES` |
+| Polish | Polski | `app_pl.ts` | `pl_PL` |
+
+Select a language by its native name in Settings. Settings and runtime loading
+use the short codes (`en`, `sv`, `de`, `fr`, `it`, `es`, `pl`). UI language
+selection does not change the system locale used for number/date formatting.
 
 ```sh
 uv run build-i18n
@@ -353,16 +371,19 @@ compiled and shipped because the language loader expects it. If numerus
 messages are introduced, review their English plural forms separately rather
 than applying the empty-translation convention blindly.
 
-All user-facing strings must support English and Swedish. After adding or changing
-strings, run `uv run build-i18n`, review and finish the Swedish translations in
-`app_sv.ts`, then run `uv run build-locales`. Preserve named placeholders such as
-`{component}` exactly and verify the compiled translations in the affected UI or
-report.
+All user-facing strings must support every language listed above. After adding
+or changing strings, run `uv run build-i18n`, review and finish translations in
+each non-English catalog, then run `uv run build-locales`. Non-English catalogs
+use nonempty, finished translations, following the Swedish catalog's pattern.
+Preserve named placeholders such as `{component}` (including format specs),
+markup, links, and significant whitespace. Verify compiled translations in the
+affected UI or report. New translations are authored translations, not a
+substitute for native-speaker review of terminology and phrasing.
 
 Separate complete sentences with periods and capitalize
 the following sentence. Use commas between short labels, values, or parenthetical
 phrases instead of semicolons, and apply the same convention to English sources
-and Swedish translations, including chart captions and report text. Separate
+and all translations, including chart captions and report text. Separate
 chart titles in accessible names with periods. Preserve technical semicolons in
 HTML entities and styles, and never rewrite punctuation in user-provided data.
 
