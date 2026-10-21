@@ -3,7 +3,8 @@
 Expo Studio is a PyQt6-based SQL editor and data exploration tool built primarily for my own workflows and learning.  
 It is shared publicly in case others find it useful.
 
-The application focuses on interactive SQL development, dataset inspection, and lightweight data preparation in a desktop environment.
+Connect to databases, load files, and retrieve data from REST APIs. Inspect and
+prepare datasets, then analyze them with a range of statistical methods.
 
 
 ![Expo Studio Splash](src/expo_jbm329/workbench/splash/splash.png)
@@ -309,7 +310,7 @@ uv sync --extra dev
 uv sync --extra dev --extra build
 ```
 
-Run the commands below from the repository root. The `dev` extra includes the Qt tools used by `build-resources` and `build-locales` (`pyside6-rcc` and `pyside6-lrelease`). String extraction uses `pylupdate6`, supplied by PyQt6. The `build` extra supplies build dependencies such as Pillow, PyInstaller, and `pip-licenses`.
+Run the commands below from the repository root. The `dev` extra includes the Qt tools used by `build-resources` and `build-locales` (`pyside6-rcc` and `pyside6-lrelease`). String extraction uses `pylupdate6`, supplied by PyQt6. The `build` extra supplies build dependencies such as Pillow and PyInstaller.
 
 ### Running Tests
 The project uses `pytest` for automated unit testing.
