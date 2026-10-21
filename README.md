@@ -374,9 +374,25 @@ named values, so translators can reorder values without changing their meaning.
 Names such as `{file}` and `{count}` explain each value's role and avoid fragile
 chains of positional replacements such as `.replace("%1", ...)`.
 
+For ordinary widget messages, retain `self.tr` and format the translated
+literal directly:
+
+```python
+message = self.tr("Could not find {document}.").format(document=document_name)
+```
+
+Keep the template literal inside `self.tr` so Qt can extract it and retain the
+widget's translation context. Do not format the source before translation
+(including with an f-string). Use descriptive named fields instead of `%1`, `%2`,
+or positional `{}` fields so translators can identify and reorder values.
+Literal braces in a format template must be doubled (`{{` and `}}`); braces
+inside inserted values need no special treatment. Formatting does not escape
+HTML or localize values, so preserve any required escaping and locale formatting.
+No shared helper or local wrapper is needed for this widget pattern.
+
 Choose the formatting-call style by the translation contexts used across the
-**whole module**. For a single-context module, reuse or create a local `_tr_fmt`
-wrapper bound to that context:
+**whole module** for explicit-context marker-based messages. For a single-context
+module, reuse or create a local `_tr_fmt` wrapper bound to that context:
 
 ```python
 from PyQt6.QtCore import QT_TR_NOOP

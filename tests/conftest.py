@@ -1,11 +1,18 @@
 from __future__ import annotations
 
+from pathlib import Path
+from typing import TYPE_CHECKING
+
 import pytest
 from platformdirs import PlatformDirs
+from PyQt6.QtCore import QTranslator
 from PyQt6.QtWidgets import QApplication
 
 from expo_jbm329.app.settings import config_store
 from expo_jbm329.utils import path_manager
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -15,6 +22,20 @@ def qt_app():
     if app is None:
         app = QApplication([])
     return app
+
+
+@pytest.fixture(params=["en", "sv"])
+def widget_language(request: pytest.FixtureRequest, qt_app: QApplication) -> Iterator[str]:
+    """Install a compiled catalog for widget formatting tests."""
+    language = str(request.param)
+    translator = QTranslator()
+    catalog = Path(__file__).parents[1] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{language}.qm"
+    assert translator.load(str(catalog))
+    qt_app.installTranslator(translator)
+    try:
+        yield language
+    finally:
+        qt_app.removeTranslator(translator)
 
 
 # Ensure we import the correct package root

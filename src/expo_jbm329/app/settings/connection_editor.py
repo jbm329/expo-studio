@@ -621,7 +621,7 @@ class ConnectionEditor(QDialog):
         confirm = self._dialogs.prompt_yes_no(
             parent=self,
             title=self.tr("Delete"),
-            text=self.tr("Do you want to delete the connection '%1'?").replace("%1", name),
+            text=self.tr("Do you want to delete the connection '{name}'?").format(name=name),
             informative=None,
             default_yes=False,
         )
@@ -692,5 +692,5 @@ class ConnectionEditor(QDialog):
             self._dialogs.critical(
                 parent=self,
                 title=self.tr("Connection error"),
-                text=self.tr("Could not connect.\n\n%1").replace("%1", msg),
+                text=self.tr("Could not connect.\n\n{error}").format(error=msg),
             )

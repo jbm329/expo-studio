@@ -255,18 +255,28 @@ def test_settings_editor_sniff_toggle_updates_separator_enabled(
     assert dialog.cmb_csv_default_sep.isEnabled() is True
 
 
-def test_settings_editor_save_handles_error(monkeypatch, mock_dialogs, mock_file_dialogs, mock_highlighter_service):
+def test_settings_editor_save_handles_error(
+    monkeypatch: pytest.MonkeyPatch,
+    mock_dialogs: MagicMock,
+    mock_file_dialogs: MagicMock,
+    mock_highlighter_service: MagicMock,
+    widget_language: str,
+) -> None:
     dialog = SettingsEditor(
         dialogs=mock_dialogs,
         file_dialogs=mock_file_dialogs,
         highlighter_theme_service=mock_highlighter_service,
     )
 
-    def _fail_save(*args, **kwargs):
-        msg = "Permission denied"
+    error = "Permission denied {error} %1"
+
+    def _fail_save(*args: object, **kwargs: object) -> None:
+        msg = error
         raise OSError(msg)
 
     monkeypatch.setattr("expo_jbm329.app.settings.settings_editor.save_settings", _fail_save)
 
     dialog._on_save()
-    assert mock_dialogs.critical.call_count == 1
+    prefix = "Kunde inte spara inställningar: " if widget_language == "sv" else "Could not save settings:\n"
+    mock_dialogs.critical.assert_called_once_with(dialog, dialog.tr("Failure"), f"{prefix}{error}")
+    mock_dialogs.info.assert_not_called()

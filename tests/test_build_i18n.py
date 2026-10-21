@@ -85,6 +85,62 @@ def test_english_catalog_uses_unfinished_source_fallback(
         assert len(translation) == 0, key
 
 
+@pytest.mark.parametrize(
+    ("context", "old_source", "source"),
+    [
+        ("AboutDialog", "Copyright © %1 %2", "Copyright © {year} {author}"),
+        (
+            "AboutDialog",
+            "The application uses third-party software distributed under various licenses. See <b>%1</b> for details.",
+            "The application uses third-party software distributed under various licenses. See <b>{notices}</b> for details.",
+        ),
+        ("AboutDialog", "Python: %1", "Python: {python_version}"),
+        ("AboutDialog", "Qt: %1 | PyQt: %2", "Qt: {qt_version} | PyQt: {pyqt_version}"),
+        ("AboutDialog", "Platform: %1 %2 (%3)", "Platform: {system} {release} ({machine})"),
+        ("AboutDialog", "Could not find %1.", "Could not find {document}."),
+        (
+            "ConnectionEditor",
+            "Do you want to delete the connection '%1'?",
+            "Do you want to delete the connection '{name}'?",
+        ),
+        ("ConnectionEditor", "Could not connect.\n\n%1", "Could not connect.\n\n{error}"),
+        ("SettingsEditor", "Could not save settings:\n%1", "Could not save settings:\n{error}"),
+    ],
+)
+def test_widget_named_fields_survive_extraction_and_compiled_translation(
+    extracted_messages: dict[tuple[str, str, str], ElementTree.Element],
+    widget_language: str,
+    context: str,
+    old_source: str,
+    source: str,
+) -> None:
+    key = (context, source, "")
+    old_key = (context, old_source, "")
+    assert key in extracted_messages
+    assert old_key not in extracted_messages
+    catalog = _catalog_messages(
+        ElementTree.parse(build_i18n.locales_dir() / f"app_{widget_language}.ts").getroot()
+    )
+    assert old_key not in catalog
+    translation = catalog[key].find("translation")
+    assert translation is not None
+    if widget_language == "en":
+        assert translation.get("type") == "unfinished"
+        assert not translation.text
+        expected = source
+    else:
+        assert translation.get("type") is None
+        assert translation.text
+        expected = translation.text
+
+    formatter = Formatter()
+    source_fields = sorted(field for _, field, _, _ in formatter.parse(source) if field is not None)
+    translated_fields = sorted(field for _, field, _, _ in formatter.parse(expected) if field is not None)
+    assert translated_fields == source_fields
+    assert all(field.isidentifier() for field in source_fields)
+    assert QCoreApplication.translate(context, source) == expected
+
+
 def test_compiled_catalogs_switch_from_english_to_swedish_and_back(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

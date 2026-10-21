@@ -20,8 +20,8 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="79" />
-        <source>Copyright © %1 %2</source>
-        <translation>Copyright © %1 %2</translation>
+        <source>Copyright © {year} {author}</source>
+        <translation>Copyright © {year} {author}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="88" />
@@ -40,8 +40,8 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="110" />
-        <source>The application uses third-party software distributed under various licenses. See &lt;b&gt;%1&lt;/b&gt; for details.</source>
-        <translation>Applikationen använder programvara från tredje part som distribueras under olika licenser. Se &lt;b&gt;%1&lt;/b&gt; för mer information.</translation>
+        <source>The application uses third-party software distributed under various licenses. See &lt;b&gt;{notices}&lt;/b&gt; for details.</source>
+        <translation>Applikationen använder programvara från tredje part som distribueras under olika licenser. Se &lt;b&gt;{notices}&lt;/b&gt; för mer information.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="119" />
@@ -50,18 +50,18 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="129" />
-        <source>Python: %1</source>
-        <translation>Python: %1</translation>
+        <source>Python: {python_version}</source>
+        <translation>Python: {python_version}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="130" />
-        <source>Qt: %1 | PyQt: %2</source>
-        <translation>Qt: %1 | PyQt: %2</translation>
+        <source>Qt: {qt_version} | PyQt: {pyqt_version}</source>
+        <translation>Qt: {qt_version} | PyQt: {pyqt_version}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="131" />
-        <source>Platform: %1 %2 (%3)</source>
-        <translation>Plattform: %1 %2 (%3)</translation>
+        <source>Platform: {system} {release} ({machine})</source>
+        <translation>Plattform: {system} {release} ({machine})</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="146" />
@@ -85,8 +85,8 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="184" />
-        <source>Could not find %1.</source>
-        <translation>Kunde inte hitta %1.</translation>
+        <source>Could not find {document}.</source>
+        <translation>Kunde inte hitta {document}.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="192" />
@@ -2423,8 +2423,8 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <location filename="..\..\app\settings\connection_editor.py" line="624" />
-        <source>Do you want to delete the connection '%1'?</source>
-        <translation>Vill du radera anslutningen '%1'?</translation>
+        <source>Do you want to delete the connection '{name}'?</source>
+        <translation>Vill du radera anslutningen '{name}'?</translation>
     </message>
     <message>
         <location filename="..\..\app\settings\connection_editor.py" line="651" />
@@ -2465,10 +2465,10 @@ Vänligen se loggfil för mer information.</translation>
         <location filename="..\..\app\settings\connection_editor.py" line="695" />
         <source>Could not connect.
 
-%1</source>
+{error}</source>
         <translation>Kunde inte ansluta.
 
-%1</translation>
+{error}</translation>
     </message>
 </context><context>
     <name>CorrelationConfigWidget</name>
@@ -9639,8 +9639,8 @@ Tid: {sec:.2f}s{sample}</translation>
     <message>
         <location filename="..\..\app\settings\settings_editor.py" line="574" />
         <source>Could not save settings:
-%1</source>
-        <translation>Kunde inte spara inställningar: %1</translation>
+{error}</source>
+        <translation>Kunde inte spara inställningar: {error}</translation>
     </message>
     <message>
         <location filename="..\..\app\settings\settings_editor.py" line="578" />

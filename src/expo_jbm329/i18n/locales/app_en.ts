@@ -20,7 +20,7 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="79" />
-        <source>Copyright © %1 %2</source>
+        <source>Copyright © {year} {author}</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -40,7 +40,7 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="110" />
-        <source>The application uses third-party software distributed under various licenses. See &lt;b&gt;%1&lt;/b&gt; for details.</source>
+        <source>The application uses third-party software distributed under various licenses. See &lt;b&gt;{notices}&lt;/b&gt; for details.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -50,17 +50,17 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="129" />
-        <source>Python: %1</source>
+        <source>Python: {python_version}</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="130" />
-        <source>Qt: %1 | PyQt: %2</source>
+        <source>Qt: {qt_version} | PyQt: {pyqt_version}</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="131" />
-        <source>Platform: %1 %2 (%3)</source>
+        <source>Platform: {system} {release} ({machine})</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -85,7 +85,7 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="184" />
-        <source>Could not find %1.</source>
+        <source>Could not find {document}.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -2417,7 +2417,7 @@ Please see logs for more information.</source>
     </message>
     <message>
         <location filename="..\..\app\settings\connection_editor.py" line="624" />
-        <source>Do you want to delete the connection '%1'?</source>
+        <source>Do you want to delete the connection '{name}'?</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -2459,7 +2459,7 @@ Please see logs for more information.</source>
         <location filename="..\..\app\settings\connection_editor.py" line="695" />
         <source>Could not connect.
 
-%1</source>
+{error}</source>
         <translation type="unfinished" />
     </message>
 </context><context>
@@ -9570,7 +9570,7 @@ Time: {sec:.2f}s{sample}</source>
     <message>
         <location filename="..\..\app\settings\settings_editor.py" line="574" />
         <source>Could not save settings:
-%1</source>
+{error}</source>
         <translation type="unfinished" />
     </message>
     <message>

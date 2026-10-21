@@ -571,7 +571,7 @@ class SettingsEditor(QDialog):
             ValueError,
         ) as e:
             title = self.tr("Failure")
-            msg = self.tr("Could not save settings:\n%1").replace("%1", str(e))
+            msg = self.tr("Could not save settings:\n{error}").format(error=str(e))
             self._dialogs.critical(self, title, msg)
             return
 
