@@ -5,7 +5,7 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection, build_section_scroll_area
@@ -26,6 +26,7 @@ from expo_jbm329.services.analysis.hypothesis_charts import (
 from expo_jbm329.services.analysis.limits import CATEGORICAL_MAX_DISTINCT_VALUES as MAX_GROUPS
 from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.group_comparison import (
@@ -111,7 +112,7 @@ class GroupComparisonView(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(
             self._build_section_title(
-                translate_presentation_label(PresentationLabel.GROUP_SUMMARY, QCoreApplication.translate),
+                translate_presentation_label(PresentationLabel.GROUP_SUMMARY, translate),
                 panel,
             )
         )
@@ -189,7 +190,7 @@ class GroupComparisonView(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(
             self._build_section_title(
-                translate_presentation_label(PresentationLabel.GROUP_DISTRIBUTIONS, QCoreApplication.translate),
+                translate_presentation_label(PresentationLabel.GROUP_DISTRIBUTIONS, translate),
                 panel,
             )
         )
@@ -201,7 +202,7 @@ class GroupComparisonView(QWidget):
         figure = Figure(constrained_layout=True)
         canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(260)
-        presentation = build_hypothesis_chart_presentation(result, QCoreApplication.translate)
+        presentation = build_hypothesis_chart_presentation(result, translate)
         canvas.build_chart(lambda: draw_hypothesis_charts(figure, result, presentation))
         return canvas
 
@@ -239,7 +240,7 @@ class GroupComparisonView(QWidget):
             content_layout.addWidget(self._build_warnings_label(result.warnings))
         content_layout.addStretch(1)
         return AnalysisResultSection(
-            translate_presentation_label(PresentationLabel.TEST_RESULTS, QCoreApplication.translate),
+            translate_presentation_label(PresentationLabel.TEST_RESULTS, translate),
             content,
             self,
         )

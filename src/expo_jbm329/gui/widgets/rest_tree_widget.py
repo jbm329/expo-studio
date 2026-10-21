@@ -22,7 +22,7 @@ from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QMenu, QTreeWidget, QTreeWidgetItem, QWidget
 
 from expo_jbm329.services.rest.registry import RestConnectionEntry, rest_registry
-from expo_jbm329.utils.i18n_utils import tr
+from expo_jbm329.utils.i18n_utils import translate
 
 
 class RestTreeWidget(QTreeWidget):
@@ -36,7 +36,7 @@ class RestTreeWidget(QTreeWidget):
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("RestTreeWidget", text)
+        return translate("RestTreeWidget", text)
 
     FOLDER_ROLE = "__rest_folder__"
     SAMPLES_FOLDER_KEY = "samples"

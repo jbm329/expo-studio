@@ -82,6 +82,22 @@ def make_html_controller(tmp_path):
     return ctrl, dialogs, file_dialogs, status
 
 
+def test_excel_chart_configuration_uses_translated_formatted_reason(monkeypatch):
+    from expo_jbm329.utils import i18n_utils
+
+    ctrl, _, _, _, _, _, async_ops = make_controller()
+    ctrl._dialogs = Mock()
+    lookup = Mock(return_value="Translated reason: {reason}")
+    monkeypatch.setattr(i18n_utils, "QCoreApplication", type("App", (), {"translate": lookup}))
+
+    ctrl.export_excel(df=pd.DataFrame({"a": [1]}), chart_factory=lambda *_: ())
+
+    assert ctrl._dialogs.warn.call_args.kwargs["text"] == (
+        "Translated reason: A chart producer and worksheet name must be supplied together."
+    )
+    assert any(call.args[0] == "ExportController" for call in lookup.call_args_list)
+
+
 def test_suggested_export_filename_uses_safe_unique_and_length_limited_stems(tmp_path):
     controller, _, _, _, _, _, _ = make_controller()
     controller._file_jobs = object.__new__(FileJobService)

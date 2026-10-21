@@ -760,6 +760,24 @@ def test_report_preview_rejects_invalid_empty_and_duplicate_requests(monkeypatch
     assert len(operations.calls) == 2
 
 
+def test_report_save_start_error_formats_in_explicit_analysis_context(monkeypatch):
+    controller, dialog, document, _, _ = _report_preview_context(monkeypatch)
+    exporter = Mock()
+    exporter.export_html_report.side_effect = RuntimeError("Cannot save {literal} %1")
+    controller._export_controller = exporter
+    formatter = Mock(wraps=analysis_controller_module.translate_fmt)
+    monkeypatch.setattr(analysis_controller_module, "translate_fmt", formatter)
+    dialog.report_page().set_entries(document.entries)
+
+    dialog.report_save_requested.emit(document)
+
+    formatter.assert_called_once_with(
+        "AnalysisController", controller.TR_REPORT_SAVE_ERROR, error="Cannot save {literal} %1"
+    )
+    assert dialog.report_page()._preview_status.text() == "Could not save HTML report.\nCannot save {literal} %1"
+    assert dialog.report_page()._preview_button.isEnabled()
+
+
 def test_report_preview_reports_errors_and_cancellation_and_restores_button(monkeypatch):
     _, dialog, document, operations, preview = _report_preview_context(monkeypatch)
     dialog.report_page().set_entries(document.entries)
@@ -771,8 +789,10 @@ def test_report_preview_reports_errors_and_cancellation_and_restores_button(monk
     assert call["work"](cancel_cb=lambda: True) is None
     call["on_result"](None)
     assert dialog.report_page()._preview_status.text() == "Report preview cancelled."
-    call["on_error"]("Rendering failed")
-    assert "Rendering failed" in dialog.report_page()._preview_status.text()
+    call["on_error"]("Rendering failed {literal} %1")
+    assert dialog.report_page()._preview_status.text() == (
+        "Could not prepare report preview.\nRendering failed {literal} %1"
+    )
     call["on_finished"]()
     assert dialog.report_page()._preview_button.isEnabled()
     preview.assert_not_called()

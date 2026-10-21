@@ -1,4 +1,8 @@
-"""Build Qt translation (.qm) files from .ts sources using pyside6-lrelease."""
+"""Compile all app_*.ts catalogs, including every supported UI language.
+
+Catalog discovery also includes additional app_*.ts files in the locales
+directory without requiring a second list of language codes.
+"""
 
 import pathlib
 import subprocess

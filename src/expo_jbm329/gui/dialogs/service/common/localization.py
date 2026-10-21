@@ -1,13 +1,20 @@
 """Localization functions for dialogs."""
 
-from PyQt6.QtCore import QT_TRANSLATE_NOOP, QCoreApplication
+from PyQt6.QtCore import QT_TRANSLATE_NOOP
 from PyQt6.QtWidgets import QDialogButtonBox, QMessageBox
+
+from expo_jbm329.utils.i18n_utils import translate
 
 TR_OK = QT_TRANSLATE_NOOP("QtDialogService", "OK")
 TR_CANCEL = QT_TRANSLATE_NOOP("QtDialogService", "Cancel")
 TR_YES = QT_TRANSLATE_NOOP("QtDialogService", "Yes")
 TR_NO = QT_TRANSLATE_NOOP("QtDialogService", "No")
 TR_CLOSE = QT_TRANSLATE_NOOP("QtDialogService", "Close")
+
+
+def _tr(text: str) -> str:
+    """Translate a message in this module's context."""
+    return translate("QtDialogService", text)
 
 
 def localize_dialog_buttons(buttons: QDialogButtonBox) -> None:
@@ -26,7 +33,7 @@ def localize_dialog_buttons(buttons: QDialogButtonBox) -> None:
     for btn, text in mapping.items():
         b = buttons.button(btn)
         if b:
-            b.setText(QCoreApplication.translate("QtDialogService", text))
+            b.setText(_tr(text))
 
 
 def localize_messagebox_buttons(msg: QMessageBox) -> None:
@@ -42,4 +49,4 @@ def localize_messagebox_buttons(msg: QMessageBox) -> None:
     ):
         b = msg.button(btn)
         if b:
-            b.setText(QCoreApplication.translate("QtDialogService", text))
+            b.setText(_tr(text))

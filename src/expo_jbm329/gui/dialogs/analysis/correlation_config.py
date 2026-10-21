@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QFormLayout,
@@ -25,6 +25,7 @@ from expo_jbm329.services.analysis.correlation import (
 from expo_jbm329.services.analysis.limits import CORRELATION_MAX_SELECTED_COLUMNS as MAX_SELECTED_COLUMNS
 from expo_jbm329.services.analysis.presentation import correlation_method_label
 from expo_jbm329.utils.format_utils import fmt_int
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.correlation import CorrelationMatrixResult
@@ -97,7 +98,7 @@ class CorrelationConfigWidget(QWidget):
     def _build_method_combo(self, method: CorrelationMethod) -> QComboBox:
         """Build the method picker with `method` selected."""
         combo = QComboBox(self)
-        translate = QCoreApplication.translate
+
         combo.addItem(correlation_method_label(CorrelationMethod.PEARSON, translate), CorrelationMethod.PEARSON)
         combo.addItem(correlation_method_label(CorrelationMethod.SPEARMAN, translate), CorrelationMethod.SPEARMAN)
         combo.addItem(correlation_method_label(CorrelationMethod.KENDALL, translate), CorrelationMethod.KENDALL)

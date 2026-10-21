@@ -5,7 +5,7 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection, build_section_scroll_area
@@ -31,6 +31,7 @@ from expo_jbm329.services.analysis.limits import (
 )
 from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     import numpy as np
@@ -112,7 +113,7 @@ class ChiSquareView(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(
             self._build_section_title(
-                translate_presentation_label(PresentationLabel.CONTINGENCY_TABLE, QCoreApplication.translate),
+                translate_presentation_label(PresentationLabel.CONTINGENCY_TABLE, translate),
                 panel,
             )
         )
@@ -187,7 +188,7 @@ class ChiSquareView(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(
             self._build_section_title(
-                translate_presentation_label(PresentationLabel.ASSOCIATION_PLOTS, QCoreApplication.translate),
+                translate_presentation_label(PresentationLabel.ASSOCIATION_PLOTS, translate),
                 panel,
             )
         )
@@ -199,7 +200,7 @@ class ChiSquareView(QWidget):
         figure = Figure(constrained_layout=True)
         canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(260)
-        presentation = build_hypothesis_chart_presentation(result, QCoreApplication.translate)
+        presentation = build_hypothesis_chart_presentation(result, translate)
         canvas.build_chart(lambda: draw_hypothesis_charts(figure, result, presentation))
         return canvas
 
@@ -233,7 +234,7 @@ class ChiSquareView(QWidget):
         if result.fisher_p_value is not None and result.fisher_odds_ratio is not None:
             notes.append(
                 self
-                .tr("<b>Fisher's exact test</b> (exact; useful when expected counts are small):")
+                .tr("<b>Fisher's exact test</b> (exact, useful when expected counts are small):")
                 .replace("<b>", "")
                 .replace("</b>", "")
             )
@@ -255,7 +256,7 @@ class ChiSquareView(QWidget):
             content_layout.addWidget(self._build_cochran_warning_label(result))
         content_layout.addStretch(1)
         return AnalysisResultSection(
-            translate_presentation_label(PresentationLabel.TEST_RESULTS, QCoreApplication.translate),
+            translate_presentation_label(PresentationLabel.TEST_RESULTS, translate),
             content,
             self,
         )
@@ -297,7 +298,7 @@ class ChiSquareView(QWidget):
         if result.fisher_odds_ratio is not None and result.fisher_p_value is not None:
             lines += [
                 "",
-                self.tr("<b>Fisher's exact test</b> (exact; useful when expected counts are small):"),
+                self.tr("<b>Fisher's exact test</b> (exact, useful when expected counts are small):"),
                 self.tr("Odds ratio = {odds_ratio}, p = {p}").format(
                     odds_ratio=fmt_num(result.fisher_odds_ratio),
                     p=html.escape(fmt_p_value(result.fisher_p_value)),

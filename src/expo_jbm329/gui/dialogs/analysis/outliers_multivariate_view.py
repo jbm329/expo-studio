@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
@@ -41,6 +41,7 @@ from expo_jbm329.services.analysis.outliers_charts import (
 )
 from expo_jbm329.services.analysis.presentation import multivariate_outlier_method_label
 from expo_jbm329.utils.format_utils import fmt_cell, fmt_int, fmt_num, fmt_pct
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.multivariate_outliers import MultivariateOutlierResult
@@ -56,7 +57,7 @@ class MultivariateOutliersView(QWidget):
         """Initialize the view from a multivariate anomaly fit."""
         super().__init__(parent)
         self._result = result
-        self._chart_labels = build_outlier_projection_labels(result, QCoreApplication.translate, count_format=fmt_int)
+        self._chart_labels = build_outlier_projection_labels(result, translate, count_format=fmt_int)
         self._extremes_table: QTableWidget | None = None
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -111,7 +112,7 @@ class MultivariateOutliersView(QWidget):
 
     def method_name(self, method: MultivariateOutlierMethod) -> str:
         """Return the translated display name for `method`."""
-        return multivariate_outlier_method_label(method, QCoreApplication.translate)
+        return multivariate_outlier_method_label(method, translate)
 
     def result(self) -> MultivariateOutlierResult:
         """Return the displayed multivariate fit."""

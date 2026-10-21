@@ -3,13 +3,14 @@ from __future__ import annotations
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QStandardItemModel
 
-from expo_jbm329.gui.dialogs.analysis.column_combo_box import ColumnComboBox
+from expo_jbm329.gui.dialogs.analysis.column_combo_box import ColumnComboBox, exclusion_tooltip
 from expo_jbm329.services.analysis.group_comparison import (
     MAX_GROUPS,
     MIN_GROUPS,
     ColumnExclusionReason,
     ExcludedColumn,
 )
+from expo_jbm329.utils.format_utils import fmt_int
 
 _TOO_MANY = ExcludedColumn("id", 57, ColumnExclusionReason.TOO_MANY_VALUES)
 _TOO_FEW = ExcludedColumn("const", 1, ColumnExclusionReason.TOO_FEW_VALUES)
@@ -61,6 +62,29 @@ def test_excluded_items_explain_the_reason_in_their_tooltip():
     assert str(MIN_GROUPS) in too_few
     assert too_many != too_few
     assert _tooltip(combo, 0) is None
+
+
+def test_exclusion_tooltips_use_compiled_translations_and_formatted_counts(widget_language: str) -> None:
+    count_many = fmt_int(_TOO_MANY.distinct_count)
+    count_few = fmt_int(_TOO_FEW.distinct_count)
+    minimum = fmt_int(MIN_GROUPS)
+    maximum = fmt_int(MAX_GROUPS)
+
+    if widget_language == "sv":
+        assert (
+            exclusion_tooltip(_TOO_FEW) == f"Inte tillgängligt: {count_few} distinkta värden (minst {minimum} krävs)."
+        )
+        assert (
+            exclusion_tooltip(_TOO_MANY)
+            == f"Inte tillgängligt: {count_many} distinkta värden (högst {maximum} tillåts)."
+        )
+    else:
+        assert exclusion_tooltip(_TOO_FEW) == (
+            f"Not available: {count_few} distinct values (at least {minimum} are needed)."
+        )
+        assert exclusion_tooltip(_TOO_MANY) == (
+            f"Not available: {count_many} distinct values (at most {maximum} are allowed)."
+        )
 
 
 def test_select_picks_the_requested_eligible_column():

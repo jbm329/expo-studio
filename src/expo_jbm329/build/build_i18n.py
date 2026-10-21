@@ -7,14 +7,12 @@ import sys
 from typing import TYPE_CHECKING
 
 from expo_jbm329.build.build_utils import locales_dir, src_root
+from expo_jbm329.i18n.language import Language
 
 if TYPE_CHECKING:
     import pathlib
 
-TS_FILES = [
-    locales_dir() / "app_en.ts",
-    locales_dir() / "app_sv.ts",
-]
+TS_FILES = [locales_dir() / f"app_{language.value}.ts" for language in Language]
 
 
 def ensure_locales_dir() -> None:

@@ -12,7 +12,7 @@ from __future__ import annotations
 from html import escape
 from typing import TYPE_CHECKING, Literal, override
 
-from PyQt6.QtCore import QCoreApplication, QEvent, QObject, Qt, pyqtSignal
+from PyQt6.QtCore import QEvent, QObject, Qt, pyqtSignal
 from PyQt6.QtGui import QHelpEvent
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -69,6 +69,7 @@ from expo_jbm329.services.analysis.report import (
 from expo_jbm329.services.analysis.statistics import StatisticsExportRequest
 from expo_jbm329.services.analysis.timeseries_export import TimeSeriesExportRequest, TimeSeriesExportSnapshot
 from expo_jbm329.utils.format_utils import fmt_int
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.overview import DatasetOverviewResult
@@ -671,7 +672,7 @@ class AnalysisDialog(QDialog):
         presentation = build_analysis_presentation(
             candidate.category,
             candidate.snapshot,
-            QCoreApplication.translate,
+            translate,
         )
         existing_components = set() if existing is None else set(existing.selected_components)
         available_components = {component.key for component in components}
@@ -688,7 +689,7 @@ class AnalysisDialog(QDialog):
         }:
             unavailable_context = _report_component_translation_context(candidate.category)
             unavailable_components.extend(
-                QCoreApplication.translate(unavailable_context, component.label)
+                translate(unavailable_context, component.label)
                 for component in existing.components
                 if component.key in existing_components and component.key not in available_components
             )
@@ -698,7 +699,7 @@ class AnalysisDialog(QDialog):
             old_presentation = build_analysis_presentation(
                 existing.category,
                 existing.snapshot,
-                QCoreApplication.translate,
+                translate,
             )
             review = (
                 (old_presentation.title, *old_presentation.summary_lines),
@@ -974,7 +975,7 @@ class AnalysisDialog(QDialog):
     def _category_label(self, category: AnalysisCategory) -> str:
         """Return the translated display label for an analysis category."""
         if category is AnalysisCategory.CORRELATION:
-            return translate_presentation_label(PresentationLabel.CORRELATION, QCoreApplication.translate)
+            return translate_presentation_label(PresentationLabel.CORRELATION, translate)
         if category is AnalysisCategory.REGRESSION:
-            return translate_presentation_label(PresentationLabel.REGRESSION, QCoreApplication.translate)
+            return translate_presentation_label(PresentationLabel.REGRESSION, translate)
         return self.tr(analysis_category_source(category))

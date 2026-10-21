@@ -23,7 +23,7 @@ from expo_jbm329.services.data_operations.derived_column.derived_column_service 
     validate_derived_column_spec,
 )
 from expo_jbm329.services.data_operations.dtypes import get_numeric_columns
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -110,11 +110,11 @@ class DerivedColumnController:
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("DerivedColumnController", text)
+        return translate("DerivedColumnController", text)
 
     @staticmethod
     def _tr_fmt(text: str, **kwargs: object) -> str:
-        return tr_fmt("DerivedColumnController", text, **kwargs)
+        return translate_fmt("DerivedColumnController", text, **kwargs)
 
     __slots__ = (
         "_apply_to_active_tab",

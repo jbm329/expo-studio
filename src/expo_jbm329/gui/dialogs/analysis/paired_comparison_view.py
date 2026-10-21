@@ -6,7 +6,7 @@ import html
 import math
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection, build_section_scroll_area
@@ -19,6 +19,7 @@ from expo_jbm329.services.analysis.hypothesis_charts import (
 from expo_jbm329.services.analysis.paired_comparison import PairedComparisonError, PairedComparisonMethod
 from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.paired_comparison import PairedComparisonResult
@@ -75,7 +76,7 @@ class PairedComparisonView(QWidget):
                 statistic=fmt_num(result.statistic),
                 p=html.escape(fmt_p_value(result.p_value)),
             ),
-            self.tr("Complete subjects: {complete} of {total}; excluded for missing values: {excluded}").format(
+            self.tr("Complete subjects: {complete} of {total}, excluded for missing values: {excluded}").format(
                 complete=fmt_int(result.complete_subjects),
                 total=fmt_int(result.total_subjects),
                 excluded=fmt_int(result.excluded_subjects),
@@ -88,7 +89,7 @@ class PairedComparisonView(QWidget):
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         return AnalysisResultSection(
-            translate_presentation_label(PresentationLabel.TEST_RESULTS, QCoreApplication.translate),
+            translate_presentation_label(PresentationLabel.TEST_RESULTS, translate),
             label,
             self,
         )
@@ -97,8 +98,8 @@ class PairedComparisonView(QWidget):
         """Share displayed complete-cohort, ordering and trajectory-sampling guidance."""
         notes = [
             self.tr("Rows are treated as paired subjects across the selected measurement columns."),
-            self.tr("Occasions follow the selected column order; chronological order is not inferred."),
-            self.tr("Boxplots use all complete subjects; whiskers show the minimum and maximum."),
+            self.tr("Occasions follow the selected column order. Chronological order is not inferred."),
+            self.tr("Boxplots use all complete subjects. Whiskers show the minimum and maximum."),
         ]
         if result.plot_data is not None and result.plot_data.sampled:
             notes.append(
@@ -126,7 +127,7 @@ class PairedComparisonView(QWidget):
     def _build_table_section(self, result: PairedComparisonResult) -> QWidget:
         """Build one non-editable summary row per selected occasion."""
         panel, layout = self._build_section(
-            translate_presentation_label(PresentationLabel.MEASUREMENT_SUMMARY, QCoreApplication.translate)
+            translate_presentation_label(PresentationLabel.MEASUREMENT_SUMMARY, translate)
         )
         table = QTableWidget(len(result.summaries), 7, panel)
         table.setHorizontalHeaderLabels([
@@ -166,12 +167,12 @@ class PairedComparisonView(QWidget):
     def _build_chart_section(self, result: PairedComparisonResult) -> QWidget:
         """Render prepared distributions and paired trajectories without processing data."""
         panel, layout = self._build_section(
-            translate_presentation_label(PresentationLabel.PAIRED_MEASUREMENT_PLOTS, QCoreApplication.translate)
+            translate_presentation_label(PresentationLabel.PAIRED_MEASUREMENT_PLOTS, translate)
         )
         figure = Figure(constrained_layout=True)
         canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(260)
-        presentation = build_hypothesis_chart_presentation(result, QCoreApplication.translate)
+        presentation = build_hypothesis_chart_presentation(result, translate)
         canvas.build_chart(lambda: draw_hypothesis_charts(figure, result, presentation))
         layout.addWidget(build_section_scroll_area(canvas, panel), 1)
         return panel
@@ -195,7 +196,7 @@ class PairedComparisonView(QWidget):
                 "There are not enough subjects with complete measurements for this paired test."
             ),
             PairedComparisonError.NO_DIFFERENCES: self.tr(
-                "The two measurements are identical for every complete subject; the Wilcoxon test is undefined."
+                "The two measurements are identical for every complete subject. The Wilcoxon test is undefined."
             ),
             PairedComparisonError.NO_VARIATION: self.tr(
                 "The selected measurements do not vary across occasions, so the Friedman test is undefined."

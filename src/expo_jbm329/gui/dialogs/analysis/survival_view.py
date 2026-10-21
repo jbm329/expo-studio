@@ -5,7 +5,7 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.regression_view import build_regression_presentation_header
@@ -34,6 +34,7 @@ from expo_jbm329.services.analysis.regression_export import RegressionExportComp
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.survival import SurvivalError, survival_term_name
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.survival import SurvivalResult
@@ -53,7 +54,7 @@ class SurvivalRegressionView(QWidget):
         self._result = result
         self._chart_labels = build_regression_chart_labels(
             result,
-            QCoreApplication.translate,
+            translate,
             number_format=fmt_num,
             count_format=fmt_int,
             tick_format=lambda value: fmt_num(value, sig=2),
@@ -83,7 +84,7 @@ class SurvivalRegressionView(QWidget):
             regression_component_label(
                 RegressionModel.COX,
                 RegressionExportComponent.COEFFICIENTS,
-                QCoreApplication.translate,
+                translate,
             )
         )
         table_layout.addWidget(self._table)
@@ -91,7 +92,7 @@ class SurvivalRegressionView(QWidget):
             regression_component_label(
                 RegressionModel.COX,
                 RegressionExportComponent.MODEL_METRICS,
-                QCoreApplication.translate,
+                translate,
             ),
             self._summary_label,
             self,
@@ -124,7 +125,7 @@ class SurvivalRegressionView(QWidget):
             regression_component_label(
                 RegressionModel.COX,
                 RegressionExportComponent.CHARTS,
-                QCoreApplication.translate,
+                translate,
             )
         )
         figure = Figure(constrained_layout=True)
@@ -181,7 +182,7 @@ class SurvivalRegressionView(QWidget):
                 ).format(column=column)
             case SurvivalError.INVALID_EVENT:
                 return self.tr(
-                    "Event {column} must contain only 0 and 1 or boolean values; 1 means event and 0 means censored."
+                    "Event {column} must contain only 0 and 1 or boolean values. 1 means event and 0 means censored."
                 ).format(column=column)
             case SurvivalError.TOO_MANY_TERMS:
                 return self.tr(
@@ -226,9 +227,7 @@ class SurvivalRegressionView(QWidget):
             header.setStretchLastSection(False)
         for row, term in enumerate(self._result.terms):
             name = (
-                regression_intercept_label(QCoreApplication.translate)
-                if term.kind is TermKind.INTERCEPT
-                else survival_term_name(term)
+                regression_intercept_label(translate) if term.kind is TermKind.INTERCEPT else survival_term_name(term)
             )
             values = (
                 name,
@@ -247,16 +246,16 @@ class SurvivalRegressionView(QWidget):
         result = self._result
         lines = [
             self.tr("<b>Cox proportional-hazards regression</b>"),
-            self.tr("Duration: <b>{duration}</b>; event: <b>{event}</b>").format(
+            self.tr("Duration: <b>{duration}</b>, event: <b>{event}</b>").format(
                 duration=html.escape(result.duration),
                 event=html.escape(result.event),
             ),
-            self.tr("Event coding: 1 = event; 0 = censored."),
+            self.tr("Event coding: 1 = event, 0 = censored."),
             self.tr("Rows used: {used} ({dropped} excluded by listwise missing-value handling)").format(
                 used=fmt_int(result.n_used),
                 dropped=fmt_int(result.n_dropped),
             ),
-            self.tr("Events: {events}; censored: {censored}").format(
+            self.tr("Events: {events}, censored: {censored}").format(
                 events=fmt_int(result.n_events),
                 censored=fmt_int(result.n_censored),
             ),
@@ -278,7 +277,7 @@ class SurvivalRegressionView(QWidget):
                     "Kaplan-Meier uses the same complete-case subjects as the Cox fit, without covariate adjustment."
                 ),
                 self.tr("The survival curve is not a Cox prediction or a proportional-hazards diagnostic."),
-                self.tr("Plus signs mark censoring times; tied censor marks may overlap."),
-                self.tr("All complete subjects are used; no survival sampling or confidence bands are applied."),
+                self.tr("Plus signs mark censoring times. Tied censor marks may overlap."),
+                self.tr("All complete subjects are used. No survival sampling or confidence bands are applied."),
             ])
         return "<br>".join(lines)

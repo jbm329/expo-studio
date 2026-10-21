@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QT_TRANSLATE_NOOP, QCoreApplication, Qt, QTimer
+from PyQt6.QtCore import QT_TRANSLATE_NOOP, Qt, QTimer
 from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
@@ -40,7 +40,7 @@ from expo_jbm329.services.analysis.statistics_charts import (
     draw_statistics_charts,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
-from expo_jbm329.utils.i18n_utils import tr
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.statistics import (
@@ -145,12 +145,12 @@ class StatisticsView(QWidget):
         if result.columns:
             tabs.addTab(
                 self._build_continuous_page(result),
-                statistics_component_label(StatisticsExportTable.CONTINUOUS, QCoreApplication.translate),
+                statistics_component_label(StatisticsExportTable.CONTINUOUS, translate),
             )
         if result.categorical_columns:
             tabs.addTab(
                 self._build_categorical_page(result.categorical_columns),
-                statistics_component_label(StatisticsExportTable.CATEGORICAL, QCoreApplication.translate),
+                statistics_component_label(StatisticsExportTable.CATEGORICAL, translate),
             )
         layout.addWidget(tabs)
         return container
@@ -330,7 +330,7 @@ class StatisticsView(QWidget):
         """Explain the selected column's suggestion without making a reporting choice."""
         if not self._has_recommendation(stats):
             return self.tr(
-                "{column}: Shapiro-Wilk could not provide a recommendation; neither summary is starred."
+                "{column}: Shapiro-Wilk could not provide a recommendation. Neither summary is starred."
             ).format(
                 column=stats.column,
             )
@@ -368,7 +368,7 @@ class StatisticsView(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(
             self._build_section_title(
-                statistics_component_label(StatisticsExportTable.CHARTS, QCoreApplication.translate),
+                statistics_component_label(StatisticsExportTable.CHARTS, translate),
                 container,
             )
         )
@@ -454,7 +454,7 @@ class StatisticsView(QWidget):
                     raise RuntimeError(message)
                 self._distribution_layout.addWidget(build_section_scroll_area(self._canvas, container), 1)
             self._figure.clear()
-            presentation = build_statistics_chart_presentation(stats, tr)
+            presentation = build_statistics_chart_presentation(stats, translate)
             draw_statistics_charts(self._figure, stats, presentation)
             self._pending_distribution = None
             self._distribution_timer.stop()

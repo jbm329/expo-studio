@@ -168,7 +168,7 @@ def build_regression_chart_labels(
                 if plot is not None and plot.sampled
                 else ()
             )
-            accessible_name = f"{linear_labels.residuals_title}; {linear_labels.actual_title}; {linear_labels.qq_title}"
+            accessible_name = f"{linear_labels.residuals_title}. {linear_labels.actual_title}. {linear_labels.qq_title}"
             labels: ModelChartLabels = linear_labels
         case GeneralizedRegressionResult(model=RegressionModel.LOGISTIC):
             if result.logistic_plot_error is LogisticPlotError.INVALID_PREDICTIONS:
@@ -187,7 +187,7 @@ def build_regression_chart_labels(
                 odds_title=translate(
                     "GeneralizedRegressionView", "Predictor odds ratios with 95% confidence intervals"
                 ),
-                odds_axis=translate("GeneralizedRegressionView", "Odds ratio (logarithmic scale; reference = 1)"),
+                odds_axis=translate("GeneralizedRegressionView", "Odds ratio (logarithmic scale, reference = 1)"),
                 no_predictors=translate("GeneralizedRegressionView", "No predictor effects: intercept-only model."),
                 unavailable_effect=translate(
                     "GeneralizedRegressionView", "Unavailable: non-finite, non-positive or invalid odds ratio / CI"
@@ -213,7 +213,7 @@ def build_regression_chart_labels(
                 ),
             )
             captions = ()
-            accessible_name = f"{labels.odds_title}; {labels.roc_title}; {labels.calibration_title}"
+            accessible_name = f"{labels.odds_title}. {labels.roc_title}. {labels.calibration_title}"
         case GeneralizedRegressionResult():
             labels = CountChartLabels(
                 comparison_title=translate("GeneralizedRegressionView", "Observed versus fitted counts"),
@@ -233,7 +233,7 @@ def build_regression_chart_labels(
                 if count_data is not None and count_data.sampled
                 else ()
             )
-            accessible_name = f"{labels.comparison_title}; {labels.residuals_title}"
+            accessible_name = f"{labels.comparison_title}. {labels.residuals_title}"
         case SurvivalResult():
             labels = CoxChartLabels(
                 forest_title=translate("SurvivalRegressionView", "Hazard ratios with 95% intervals"),
@@ -252,7 +252,7 @@ def build_regression_chart_labels(
                 count_format=count_format,
             )
             captions = ()
-            accessible_name = f"{labels.forest_title}; {labels.survival_title}; {labels.risk_title}"
+            accessible_name = f"{labels.forest_title}. {labels.survival_title}. {labels.risk_title}"
         case _:
             message = "A regression chart presentation requires a supported fitted model."
             raise TypeError(message)

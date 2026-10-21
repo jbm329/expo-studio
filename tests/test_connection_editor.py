@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
+import pytest
 from PyQt6.QtWidgets import QListWidgetItem
 
+from expo_jbm329.app.settings import connection_editor
 from expo_jbm329.app.settings.connection_editor import ConnectionEditor
+from expo_jbm329.db.core.models import SqlError, SqlResult
 from expo_jbm329.gui.dialogs.service.null_dialog_service import NullDialogService
 
 
@@ -184,3 +189,48 @@ def test_saved_connection_custom_port_preserved():
     editor.list_widget.setCurrentItem(item2)
     assert editor.db_type_combo.currentData() == "mssql"
     assert editor.port_edit.text() == "14333"
+
+
+def test_delete_connection_formats_confirmation(widget_language: str) -> None:
+    dialogs = MagicMock(spec=NullDialogService)
+    dialogs.prompt_yes_no.return_value = False
+    editor = ConnectionEditor(dialogs=dialogs)
+    name = "Database {name} %1"
+    editor.list_widget.addItem(name)
+    editor.list_widget.setCurrentRow(editor.list_widget.count() - 1)
+
+    editor.delete_connection()
+
+    expected = (
+        f"Vill du radera anslutningen '{name}'?"
+        if widget_language == "sv"
+        else f"Do you want to delete the connection '{name}'?"
+    )
+    dialogs.prompt_yes_no.assert_called_once_with(
+        parent=editor, title=editor.tr("Delete"), text=expected, informative=None, default_yes=False
+    )
+    assert editor.list_widget.currentItem().text() == name
+
+
+@pytest.mark.parametrize("with_hint", [False, True])
+def test_connection_failure_formats_error(
+    monkeypatch: pytest.MonkeyPatch, widget_language: str, with_hint: bool
+) -> None:
+    dialogs = MagicMock(spec=NullDialogService)
+    editor = ConnectionEditor(dialogs=dialogs)
+    editor.list_widget.addItem("Test connection")
+    editor.list_widget.setCurrentRow(editor.list_widget.count() - 1)
+    error = "Database error {error} %1 %2"
+    hint = "Hint {name} %1" if with_hint else None
+    monkeypatch.setattr(connection_editor, "write_connections", MagicMock())
+    execute = MagicMock(return_value=SqlResult(ok=False, error=SqlError("connection", None, error, hint)))
+    monkeypatch.setattr(connection_editor, "execute_sql_safe", execute)
+
+    editor.test_connection()
+
+    message = f"{error}\n\n{hint}" if with_hint else error
+    prefix = "Kunde inte ansluta." if widget_language == "sv" else "Could not connect."
+    dialogs.critical.assert_called_once_with(
+        parent=editor, title=editor.tr("Connection error"), text=f"{prefix}\n\n{message}"
+    )
+    execute.assert_called_once()

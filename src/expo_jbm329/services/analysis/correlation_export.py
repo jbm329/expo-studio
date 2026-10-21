@@ -125,7 +125,7 @@ class CorrelationExportRequest:
         if self.format is not StatisticsExportFormat.EXCEL and self.components != (
             CorrelationExportComponent.STRONGEST_CORRELATIONS,
         ):
-            message = "CSV and binary exports require the ranked table only; charts require Excel."
+            message = "CSV and binary exports require the ranked table only. Charts require Excel."
             raise ValueError(message)
 
 

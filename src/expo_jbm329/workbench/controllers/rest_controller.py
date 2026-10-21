@@ -18,7 +18,7 @@ from expo_jbm329.services.job_result import JobResult
 from expo_jbm329.services.rest.registry import rest_registry
 from expo_jbm329.services.rest.rest_job import fetch_rest_dataset
 from expo_jbm329.utils.format_utils import fmt_shape, fmt_time
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -57,14 +57,15 @@ class RestController:
 
     TR_DIALOG_ERROR_TITLE = QT_TR_NOOP("REST API error")
     TR_DIALOG_ERROR_TEXT = QT_TR_NOOP("Could not load data from API:\n{error}")
+    TR_CONNECTION_NAME_EXISTS = QT_TR_NOOP("A connection named '{name}' already exists.")
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("RestController", text)
+        return translate("RestController", text)
 
     @staticmethod
     def _tr_fmt(text: str, **kwargs: str) -> str:
-        return tr_fmt("RestController", text, **kwargs)
+        return translate_fmt("RestController", text, **kwargs)
 
     def reload_settings(self, _settings: dict[str, object]) -> None:
         """Handle workbench settings changes.
@@ -300,7 +301,7 @@ class RestController:
             self._dialogs.warn(
                 parent=self._parent,
                 title=self._tr("Name already exists"),
-                text=self._tr("A connection named '{name}' already exists.").format(name=new_name),
+                text=self._tr_fmt(self.TR_CONNECTION_NAME_EXISTS, name=new_name),
             )
             return None
 

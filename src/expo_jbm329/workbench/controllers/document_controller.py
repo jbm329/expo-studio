@@ -20,7 +20,7 @@ from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import (
 )
 from expo_jbm329.services.file_types import FileType, classify_file
 from expo_jbm329.utils.format_utils import fmt_path
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 from expo_jbm329.utils.path_manager import get_documents_dir
 
 if TYPE_CHECKING:
@@ -75,11 +75,11 @@ class DocumentController:
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("DocumentController", text)
+        return translate("DocumentController", text)
 
     @staticmethod
     def _tr_fmt(text: str, **kwargs: str) -> str:
-        return tr_fmt("DocumentController", text, **kwargs)
+        return translate_fmt("DocumentController", text, **kwargs)
 
     __slots__ = (
         "__weakref__",

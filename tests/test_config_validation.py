@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import pytest
+
 from expo_jbm329.app.settings.config_store import (
     DEFAULT_SETTINGS,
     _validate_settings_inplace,
     merge_defaults,
 )
+from expo_jbm329.i18n.language import Language
 
 
 def test_settings_validation_clamps_numeric_bounds():
@@ -39,7 +42,7 @@ def test_settings_validation_normalizes_chunk_sizes_and_schema_cache():
 
 def test_settings_validation_normalizes_strings_and_booleans():
     cfg = merge_defaults(DEFAULT_SETTINGS, {})
-    cfg["workbench"]["language"] = "  de  "
+    cfg["workbench"]["language"] = "  xx  "
     cfg["workbench"]["theme"] = "invalid"
     cfg["csv"]["default_encoding"] = "  UTF-16  "
     cfg["csv"]["sniff_delimiter"] = "yes"
@@ -54,6 +57,26 @@ def test_settings_validation_normalizes_strings_and_booleans():
     assert cfg["csv"]["sniff_delimiter"] is True
     assert cfg["csv"]["default_sep"] == ";"
     assert cfg["documents_dir"] is None
+
+
+@pytest.mark.parametrize("language", list(Language))
+def test_settings_validation_accepts_supported_languages(language: Language) -> None:
+    cfg = merge_defaults(DEFAULT_SETTINGS, {})
+    cfg["workbench"]["language"] = f"  {language.value.upper()}  "
+
+    _validate_settings_inplace(cfg)
+
+    assert cfg["workbench"]["language"] == language.value
+
+
+@pytest.mark.parametrize("language", ["xx", "", "de_DE", "pt", None])
+def test_settings_validation_falls_back_for_unsupported_languages(language: object) -> None:
+    cfg = merge_defaults(DEFAULT_SETTINGS, {})
+    cfg["workbench"]["language"] = language
+
+    _validate_settings_inplace(cfg)
+
+    assert cfg["workbench"]["language"] == "en"
 
 
 def test_settings_validation_ensures_missing_blocks():

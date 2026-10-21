@@ -36,7 +36,7 @@ from expo_jbm329.app.settings.config_store import read_connections, write_connec
 from expo_jbm329.app.settings.json_types import JsonObject, string_value
 from expo_jbm329.db.base import execute_sql_safe
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
-from expo_jbm329.utils.i18n_utils import tr
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
@@ -621,7 +621,7 @@ class ConnectionEditor(QDialog):
         confirm = self._dialogs.prompt_yes_no(
             parent=self,
             title=self.tr("Delete"),
-            text=self.tr("Do you want to delete the connection '%1'?").replace("%1", name),
+            text=self.tr("Do you want to delete the connection '{name}'?").format(name=name),
             informative=None,
             default_yes=False,
         )
@@ -683,14 +683,14 @@ class ConnectionEditor(QDialog):
             self._dialogs.info(self, self.tr("OK"), self.tr("Connection succeeded!"))
         else:
             err = res.error
-            msg = tr("DbErrors", err.message) if err else self.tr("Unknown error.")
+            msg = translate("DbErrors", err.message) if err else self.tr("Unknown error.")
             hint_text = err.hint if err and isinstance(err.hint, str) else None
             if hint_text:
-                hint = tr("DbErrors", hint_text)
+                hint = translate("DbErrors", hint_text)
                 msg = f"{msg}\n\n{hint}"
 
             self._dialogs.critical(
                 parent=self,
                 title=self.tr("Connection error"),
-                text=self.tr("Could not connect.\n\n%1").replace("%1", msg),
+                text=self.tr("Could not connect.\n\n{error}").format(error=msg),
             )

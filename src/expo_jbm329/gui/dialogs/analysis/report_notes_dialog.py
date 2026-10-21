@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.report import ReportComponent
@@ -108,7 +109,7 @@ class ReportNotesDialog(QDialog):
             )
             for component in components:
                 label = (
-                    QCoreApplication.translate(component_translation_context, component.label)
+                    translate(component_translation_context, component.label)
                     if component_translation_context is not None
                     else self.tr(component.label)
                 )

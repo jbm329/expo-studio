@@ -62,7 +62,7 @@ from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QMenu, QWidget
 
-from expo_jbm329.utils.i18n_utils import tr
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.gui.menus.result_tab_header_context import ResultTabHeaderContext
@@ -136,7 +136,7 @@ class ResultTabColumnHeaderContextMenu:
     @staticmethod
     def _tr(text: str) -> str:
         """Translate a string for the context menu."""
-        return tr("ResultTabColumnHeaderContextMenu", text)
+        return translate("ResultTabColumnHeaderContextMenu", text)
 
     def __init__(self, parent: QWidget) -> None:
         """Initialize the ResultTabColumnHeaderContextMenu."""

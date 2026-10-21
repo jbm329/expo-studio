@@ -20,8 +20,8 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="79" />
-        <source>Copyright © %1 %2</source>
-        <translation>Copyright © %1 %2</translation>
+        <source>Copyright © {year} {author}</source>
+        <translation>Copyright © {year} {author}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="88" />
@@ -40,8 +40,8 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="110" />
-        <source>The application uses third-party software distributed under various licenses. See &lt;b&gt;%1&lt;/b&gt; for details.</source>
-        <translation>Applikationen använder programvara från tredje part som distribueras under olika licenser. Se &lt;b&gt;%1&lt;/b&gt; för mer information.</translation>
+        <source>The application uses third-party software distributed under various licenses. See &lt;b&gt;{notices}&lt;/b&gt; for details.</source>
+        <translation>Applikationen använder programvara från tredje part som distribueras under olika licenser. Se &lt;b&gt;{notices}&lt;/b&gt; för mer information.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="119" />
@@ -50,18 +50,18 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="129" />
-        <source>Python: %1</source>
-        <translation>Python: %1</translation>
+        <source>Python: {python_version}</source>
+        <translation>Python: {python_version}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="130" />
-        <source>Qt: %1 | PyQt: %2</source>
-        <translation>Qt: %1 | PyQt: %2</translation>
+        <source>Qt: {qt_version} | PyQt: {pyqt_version}</source>
+        <translation>Qt: {qt_version} | PyQt: {pyqt_version}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="131" />
-        <source>Platform: %1 %2 (%3)</source>
-        <translation>Plattform: %1 %2 (%3)</translation>
+        <source>Platform: {system} {release} ({machine})</source>
+        <translation>Plattform: {system} {release} ({machine})</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="146" />
@@ -85,8 +85,8 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="184" />
-        <source>Could not find %1.</source>
-        <translation>Kunde inte hitta %1.</translation>
+        <source>Could not find {document}.</source>
+        <translation>Kunde inte hitta {document}.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\about_dialog.py" line="192" />
@@ -113,76 +113,76 @@
 </context><context>
     <name>AnalysisController</name>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="668" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="676" />
         <source>This analysis is not implemented yet.</source>
         <translation>Denna analys är inte implementerad än.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="669" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="677" />
         <source>An error occurred while generating this analysis.</source>
         <translation>Ett fel inträffade när den här analysen skulle köras.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="670" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="678" />
         <source>Running analysis…</source>
         <translation>Kör analys…</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="671" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="679" />
         <source>generate analysis</source>
         <translation>generera analys</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="672" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="680" />
         <source>Analysis cancelled.</source>
         <translation>Analys avbruten.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="673" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="681" />
         <source>Choose settings and click Apply.</source>
         <translation>Välj inställningar och klicka på Tillämpa</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="674" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="682" />
         <source>Preparing report preview...</source>
         <translation>Förbereder rapportförhandsvisning...</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="675" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="683" />
         <source>prepare report preview</source>
         <translation>förbereda rapportförhandsvisning</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="676" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="684" />
         <source>Report preview cancelled.</source>
         <translation>Rapportförhandsvisningen avbröts.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="677" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="685" />
         <source>Could not prepare report preview.
 {error}</source>
         <translation>Kunde inte förbereda rapportförhandsvisningen.
 {error}</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="678" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="686" />
         <source>HTML report saving is unavailable.</source>
         <translation>Det går inte att spara HTML-rapporter.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="679" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="687" />
         <source>Could not save HTML report.
 {error}</source>
         <translation>Kunde inte spara HTML-rapporten.
 {error}</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="680" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="688" />
         <source>Select a ready dataset before opening Advanced Analysis.</source>
         <translation>Välj en datauppsättning som är klar innan du öppnar Avancerad analys.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="681" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="689" />
         <source>Advanced analysis unavailable</source>
         <translation>Avancerad analys är inte tillgänglig</translation>
     </message>
@@ -194,65 +194,65 @@
         <translation>Avancerad analys — {dataset} ({rows} rader × {columns} kolumner)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="282" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="283" />
         <source>Analysis</source>
         <translation>Analys</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="295" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="296" />
         <source>Reports(0)</source>
         <translation>Rapporter(0)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="794" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="591" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="588" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="795" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="592" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="589" />
         <source>Add to report</source>
         <translation>Lägg till i rapport</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="614" />
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="596" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="615" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="597" />
         <source>Replace report result</source>
         <translation>Ersätt rapportresultat</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="616" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="617" />
         <source>Update report result</source>
         <translation>Uppdatera rapportresultat</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="619" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="620" />
         <source>Remove from report</source>
         <translation>Ta bort från rapporten</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="706" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="707" />
         <source>Replace in report</source>
         <translation>Ersätt i rapporten</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="706" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="707" />
         <source>Update result</source>
         <translation>Uppdatera resultat</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="755" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="756" />
         <source>Reports({count})</source>
         <translation>Rapporter({count})</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="760" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="761" />
         <source>Result</source>
         <translation>Resultat</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="774" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="775" />
         <source>Configuration</source>
         <translation>Konfiguration</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="791" />
+        <location filename="..\..\gui\dialogs\analysis\analysis_dialog.py" line="792" />
         <source>Export</source>
         <translation>Exportera</translation>
     </message>
@@ -551,8 +551,8 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="853" />
-        <source>Choose exactly one table for CSV or binary export. Charts are available only in Excel; uncheck Charts to continue.</source>
-        <translation>Välj exakt en tabell för CSV- eller binärexport. Diagram är endast tillgängliga i Excel; avmarkera Diagram för att fortsätta.</translation>
+        <source>Choose exactly one table for CSV or binary export. Charts are available only in Excel. Uncheck Charts to continue.</source>
+        <translation>Välj exakt en tabell för CSV- eller binärexport. Diagram är endast tillgängliga i Excel. Avmarkera Diagram för att fortsätta.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="861" />
@@ -561,8 +561,8 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="865" />
-        <source>Choose exactly one table for CSV or binary export. {component} is available only in Excel; uncheck {component} to continue.</source>
-        <translation>Välj exakt en tabell för CSV- eller binärexport. {component} är endast tillgänglig i Excel; avmarkera {component} för att fortsätta.</translation>
+        <source>Choose exactly one table for CSV or binary export. {component} is available only in Excel. Uncheck {component} to continue.</source>
+        <translation>Välj exakt en tabell för CSV- eller binärexport. {component} är endast tillgänglig i Excel. Avmarkera {component} för att fortsätta.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="933" />
@@ -581,82 +581,82 @@
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="431" />
-        <location filename="..\..\services\analysis\correlation_charts.py" line="111" />
+        <location filename="..\..\services\analysis\correlation_charts.py" line="119" />
         <source>Least-squares line: y = ({slope}) x + ({intercept})</source>
         <translation>Minsta kvadratlinje: y = ({slope}) x + ({intercept})</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="205" />
-        <location filename="..\..\services\analysis\report.py" line="1356" />
+        <location filename="..\..\services\analysis\report.py" line="1407" />
         <source>Test</source>
         <translation>Test</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="212" />
-        <location filename="..\..\services\analysis\report.py" line="1357" />
+        <location filename="..\..\services\analysis\report.py" line="1408" />
         <source>Effect size</source>
         <translation>Effektstorlek</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="223" />
-        <location filename="..\..\services\analysis\report.py" line="1413" />
+        <location filename="..\..\services\analysis\report.py" line="1464" />
         <source>Odds ratio</source>
         <translation>Oddskvot</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="443" />
-        <location filename="..\..\services\analysis\report.py" line="1415" />
-        <location filename="..\..\services\analysis\report.py" line="1414" />
+        <location filename="..\..\services\analysis\report.py" line="1466" />
+        <location filename="..\..\services\analysis\report.py" line="1465" />
         <source>Rate ratio</source>
         <translation>Incidenskvot</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="444" />
-        <location filename="..\..\services\analysis\report.py" line="1418" />
+        <location filename="..\..\services\analysis\report.py" line="1469" />
         <source>Hazard ratio</source>
         <translation>Hazardkvot</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="445" />
-        <location filename="..\..\services\analysis\report.py" line="1419" />
+        <location filename="..\..\services\analysis\report.py" line="1470" />
         <source>{name}, 95% CI lower</source>
         <translation>{name}, 95 % KI nedre</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="446" />
-        <location filename="..\..\services\analysis\report.py" line="1420" />
+        <location filename="..\..\services\analysis\report.py" line="1471" />
         <source>{name}, 95% CI upper</source>
         <translation>{name}, 95 % KI övre</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="453" />
-        <location filename="..\..\services\analysis\report.py" line="1437" />
+        <location filename="..\..\services\analysis\report.py" line="1488" />
         <source>Significant at p &lt; {alpha}</source>
         <translation>Signifikant vid p &lt; {alpha}</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2014" />
+        <location filename="..\..\services\analysis\report.py" line="2085" />
         <source>N/A</source>
         <translation>Ej tillgängligt</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2016" />
+        <location filename="..\..\services\analysis\report.py" line="2087" />
         <source>Dataset</source>
         <translation>Dataset</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2017" />
+        <location filename="..\..\services\analysis\report.py" line="2088" />
         <source>Report date</source>
         <translation>Rapportdatum</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2018" />
+        <location filename="..\..\services\analysis\report.py" line="2089" />
         <source>Expo version</source>
         <translation>Expo-version</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="436" />
-        <location filename="..\..\services\analysis\report.py" line="2151" />
+        <location filename="..\..\services\analysis\report.py" line="2251" />
         <source>Pairs are ranked by absolute coefficient. Significance is based on p &lt; {alpha} after Holm adjustment for {count} tests.</source>
         <translation>Paren rangordnas efter absolutvärdet av koefficienten. Signifikans baseras på p &lt; {alpha} efter Holm-korrigering för {count} tester.</translation>
     </message>
@@ -1485,105 +1485,105 @@ Vänligen se loggfil för mer information.</translation>
 </context><context>
     <name>ChiSquareView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="87" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="90" />
         <source>A chi-square test needs two categorical columns, each with between {minimum} and {maximum} distinct values.</source>
         <translation>Ett chi-två-test kräver två kategoriska kolumner, vardera med mellan {minimum} och {maximum} distinkta värden.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="91" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="94" />
         <source>Select two different columns to test for independence.</source>
         <translation>Välj två olika kolumner för att testa oberoende.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="92" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="95" />
         <source>Each selected column needs at least {minimum} categories with valid data.</source>
         <translation>Varje vald kolumn måste ha minst {minimum} kategorier med giltiga data.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="95" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="98" />
         <source>A selected column has more than {maximum} categories. Choose a column with fewer categories.</source>
         <translation>En vald kolumn har fler än {maximum} kategorier. Välj en kolumn med färre kategorier.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="123" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="126" />
         <source>Observed counts: {rows} (rows) by {columns} (columns)</source>
         <translation>Observerade frekvenser: {rows} (rader) × {columns} (kolumner)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="136" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="139" />
         <source>Total</source>
         <translation>Totalt</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="279" />
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="221" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="282" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="224" />
         <source>&lt;b&gt;Pearson's chi-square test&lt;/b&gt; (with Yates' continuity correction):</source>
         <translation>&lt;b&gt;Pearsons chi-två-test&lt;/b&gt; (med Yates kontinuitetskorrigering):</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="281" />
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="223" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="284" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="226" />
         <source>&lt;b&gt;Pearson's chi-square test&lt;/b&gt;:</source>
         <translation>&lt;b&gt;Pearsons chi-två-test&lt;/b&gt;:</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="297" />
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="232" />
-        <source>&lt;b&gt;Fisher's exact test&lt;/b&gt; (exact; useful when expected counts are small):</source>
-        <translation>&lt;b&gt;Fishers exakta test&lt;/b&gt; (exakt; användbart när förväntade frekvenser är låga):</translation>
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="300" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="235" />
+        <source>&lt;b&gt;Fisher's exact test&lt;/b&gt; (exact, useful when expected counts are small):</source>
+        <translation>&lt;b&gt;Fishers exakta test&lt;/b&gt; (exakt, användbart när förväntade frekvenser är låga):</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="285" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="288" />
         <source>χ² = {chi2}, df = {df}, p = {p}</source>
         <translation>χ² = {chi2}, df = {df}, p = {p}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="290" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="293" />
         <source>Cramér's V: {v}</source>
         <translation>Cramérs V: {v}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="291" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="294" />
         <source>N = {n}</source>
         <translation>N = {n}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="298" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="301" />
         <source>Odds ratio = {odds_ratio}, p = {p}</source>
         <translation>Odds-kvot = {odds_ratio}, p = {p}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="310" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="313" />
         <source>→ p &lt; 0.05: the two variables appear to be associated (not independent).</source>
         <translation>→ p &lt; 0.05: de två variablerna verkar vara associerade (inte oberoende).</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="311" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="314" />
         <source>→ p ≥ 0.05: no significant association between the two variables was found.</source>
         <translation>→ p ≥ 0.05: ingen signifikant association mellan variablerna påvisades.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="315" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="318" />
         <source>Cells with an adjusted residual beyond ±{threshold} deviate significantly from independence: red cells occur more often than expected, blue cells less often.</source>
         <translation>Celler med en justerad residual utanför ±{threshold} avviker signifikant från oberoende: röda celler förekommer oftare än förväntat, blå celler mer sällan.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="341" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="344" />
         <source>⚠ {fraction} of expected counts are below {low} and the smallest expected count is {minimum} (the chi-square approximation needs at most {max_fraction} below {low} and none below {floor}). The chi-square p-value may be unreliable.</source>
         <translation>⚠ {fraction} av de förväntade frekvenserna ligger under {low} och den minsta förväntade frekvensen är {minimum} (chi-två-approximationen tillåter högst {max_fraction} under {low} och ingen under {floor}). Chi-två p-värde kan vara opålitligt.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="353" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="356" />
         <source>Prefer Fisher's exact test above.</source>
         <translation>Använd hellre Fishers exakta test ovan.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="354" />
+        <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="357" />
         <source>Consider merging sparse categories.</source>
         <translation>Överväg att slå samman glesa kategorier.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\hypothesis_charts.py" line="104" />
+        <location filename="..\..\services\analysis\hypothesis_charts.py" line="111" />
         <source>Adjusted standardized residuals</source>
         <translation>Justerade standardiserade residualer</translation>
     </message>
@@ -1610,57 +1610,57 @@ Vänligen se loggfil för mer information.</translation>
 </context><context>
     <name>ClusteringConfigWidget</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="71" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="79" />
         <source>Method</source>
         <translation>Metod</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="78" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="86" />
         <source>Scale each selected feature to zero mean and unit variance before clustering.</source>
         <translation>Skala varje vald variabel till medelvärde noll och standardavvikelse ett före klustring.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="100" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="108" />
         <source>Parameters</source>
         <translation>Parametrar</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="102" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="110" />
         <source>Number of clusters</source>
         <translation>Antal kluster</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="103" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="111" />
         <source>Neighborhood radius (eps)</source>
         <translation>Grannskapsradie (eps)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="104" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="112" />
         <source>Minimum samples</source>
         <translation>Minsta antal observationer</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="123" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="131" />
         <source>Select all</source>
         <translation>Välj alla</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="124" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="132" />
         <source>Clear</source>
         <translation>Rensa</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="134" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="142" />
         <source>Apply</source>
         <translation>Tillämpa</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="221" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="229" />
         <source>{count} selected.</source>
         <translation>{count} markerade.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="224" />
+        <location filename="..\..\gui\dialogs\analysis\clustering_config.py" line="232" />
         <source>{count} selected - select at least {minimum}.</source>
         <translation>{count} markerade – markera minst {minimum}.</translation>
     </message>
@@ -1668,22 +1668,22 @@ Vänligen se loggfil för mer information.</translation>
     <name>ClusteringPresentation</name>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="286" />
-        <location filename="..\..\services\analysis\clustering_charts.py" line="69" />
+        <location filename="..\..\services\analysis\clustering_charts.py" line="73" />
         <source>Cluster projection (internal PCA)</source>
         <translation>Klusterprojektion (intern PCA)</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\clustering_charts.py" line="72" />
+        <location filename="..\..\services\analysis\clustering_charts.py" line="76" />
         <source>The plot shows a deterministic sample of {count} rows.</source>
         <translation>Diagrammet visar ett deterministiskt urval av {count} rader.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\clustering_charts.py" line="81" />
+        <location filename="..\..\services\analysis\clustering_charts.py" line="87" />
         <source>PC1</source>
         <translation>PC1</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\clustering_charts.py" line="82" />
+        <location filename="..\..\services\analysis\clustering_charts.py" line="88" />
         <source>PC2</source>
         <translation>PC2</translation>
     </message>
@@ -1825,13 +1825,13 @@ Vänligen se loggfil för mer information.</translation>
         <translation>Rader</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\clustering_charts.py" line="83" />
+        <location filename="..\..\services\analysis\clustering_charts.py" line="89" />
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="229" />
         <source>Cluster {number}</source>
         <translation>Kluster {number}</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\clustering_charts.py" line="84" />
+        <location filename="..\..\services\analysis\clustering_charts.py" line="90" />
         <location filename="..\..\gui\dialogs\analysis\clustering_view.py" line="235" />
         <source>Noise</source>
         <translation>Brus</translation>
@@ -1839,12 +1839,12 @@ Vänligen se loggfil för mer information.</translation>
 </context><context>
     <name>ColumnComboBox</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\column_combo_box.py" line="30" />
+        <location filename="..\..\gui\dialogs\analysis\column_combo_box.py" line="31" />
         <source>Not available: {count} distinct values (at least {minimum} are needed).</source>
         <translation>Inte tillgängligt: {count} distinkta värden (minst {minimum} krävs).</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\column_combo_box.py" line="34" />
+        <location filename="..\..\gui\dialogs\analysis\column_combo_box.py" line="35" />
         <source>Not available: {count} distinct values (at most {maximum} are allowed).</source>
         <translation>Inte tillgängligt: {count} distinkta värden (högst {maximum} tillåts).</translation>
     </message>
@@ -1901,7 +1901,7 @@ Vänligen se loggfil för mer information.</translation>
         <translation>Unika</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="405" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="413" />
         <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="170" />
         <source>Sample values</source>
         <translation>Exempel</translation>
@@ -1922,267 +1922,267 @@ Vänligen se loggfil för mer information.</translation>
         <translation>Graf inte tillgänglig (matplotlib saknas).</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="290" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="298" />
         <source>Histogram</source>
         <translation>Histogram</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="303" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="311" />
         <source>Top values</source>
         <translation>Toppvärden</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="311" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="319" />
         <source>Weekday distribution</source>
         <translation>Fördelning veckodagar</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="319" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="325" />
         <source>Distribution</source>
         <translation>Fördelning</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="330" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="338" />
         <source>Copy as Markdown</source>
         <translation>Kopiera som Markdown</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="359" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="367" />
         <source>Count (n)</source>
         <translation>Antal (n)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="360" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="368" />
         <source>Missing (n)</source>
         <translation>Saknade (n)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="361" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="369" />
         <source>Missing (%)</source>
         <translation>Saknade (%)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="362" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="370" />
         <source>Unique (n)</source>
         <translation>Unika (n)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="363" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="371" />
         <source>Unique (%)</source>
         <translation>Unika (%)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="364" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="372" />
         <source>Memory (bytes)</source>
         <translation>Minne (bytes)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="365" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="373" />
         <source>Constant</source>
         <translation>Konstant</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="367" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="375" />
         <source>Min</source>
         <translation>Min</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="368" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="376" />
         <source>Q1</source>
         <translation>Q1</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="369" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="377" />
         <source>Median</source>
         <translation>Median</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="370" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="378" />
         <source>Q3</source>
         <translation>Q3</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="371" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="379" />
         <source>Max</source>
         <translation>Max</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="372" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="380" />
         <source>Mean</source>
         <translation>Medelvärde</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="373" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="381" />
         <source>Std deviation</source>
         <translation>Standardavvikelse</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="374" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="382" />
         <source>MAD (median absolute deviation)</source>
         <translation>MAD (medianabsolutavvikelse)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="375" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="383" />
         <source>Skewness</source>
         <translation>Skevhet</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="376" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="384" />
         <source>Kurtosis</source>
         <translation>Kurtosis</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="377" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="385" />
         <source>Zeros (n)</source>
         <translation>Nollvärden (n)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="378" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="386" />
         <source>Zeros (%)</source>
         <translation>Nollvärden (%)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="379" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="387" />
         <source>Negatives (n)</source>
         <translation>Negativa värden (n)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="380" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="388" />
         <source>Negatives (%)</source>
         <translation>Negativa värden (%)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="381" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="389" />
         <source>Positives (n)</source>
         <translation>Positiva värden (n)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="382" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="390" />
         <source>Positives (%)</source>
         <translation>Positiva värden (%)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="384" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="392" />
         <source>True (n)</source>
         <translation>Sant (n)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="385" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="393" />
         <source>True (%)</source>
         <translation>Sant (%)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="386" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="394" />
         <source>False (n)</source>
         <translation>Falskt (n)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="387" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="395" />
         <source>False (%)</source>
         <translation>Falskt (%)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="389" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="397" />
         <source>Top 3</source>
         <translation>Topp 3</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="390" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="398" />
         <source>Length min</source>
         <translation>Min längd</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="391" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="399" />
         <source>Length median</source>
         <translation>Median längd</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="392" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="400" />
         <source>Length max</source>
         <translation>Max längd</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="393" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="401" />
         <source>Length mean</source>
         <translation>Medellängd</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="394" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="402" />
         <source>Empty strings (n)</source>
         <translation>Tomma strängar (n)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="396" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="404" />
         <source>Min datetime</source>
         <translation>Min datum</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="397" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="405" />
         <source>Max datetime</source>
         <translation>Max datum</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="398" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="406" />
         <source>Span (seconds)</source>
         <translation>Spann (sekunder)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="400" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="408" />
         <source>Categories (n)</source>
         <translation>Kategorier (n)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="401" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="409" />
         <source>Categories ordered</source>
         <translation>Ordnade kategorier</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="403" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="411" />
         <source>Column contains binary data (bytes) and cannot be profiled.</source>
         <translation>Kolumnen innehåller binär data (bytes) och kan inte profileras.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="411" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="419" />
         <source>Mon</source>
         <translation>Mån</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="412" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="420" />
         <source>Tue</source>
         <translation>Tis</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="413" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="421" />
         <source>Wed</source>
         <translation>Ons</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="414" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="422" />
         <source>Thu</source>
         <translation>Tor</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="415" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="423" />
         <source>Fri</source>
         <translation>Fre</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="416" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="424" />
         <source>Sat</source>
         <translation>Lör</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="417" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="425" />
         <source>Sun</source>
         <translation>Sön</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="418" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="426" />
         <source>True</source>
         <translation>Sant</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="419" />
+        <location filename="..\..\gui\dialogs\column_properties_dialog.py" line="427" />
         <source>False</source>
         <translation>Falskt</translation>
     </message>
@@ -2423,8 +2423,8 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <location filename="..\..\app\settings\connection_editor.py" line="624" />
-        <source>Do you want to delete the connection '%1'?</source>
-        <translation>Vill du radera anslutningen '%1'?</translation>
+        <source>Do you want to delete the connection '{name}'?</source>
+        <translation>Vill du radera anslutningen '{name}'?</translation>
     </message>
     <message>
         <location filename="..\..\app\settings\connection_editor.py" line="651" />
@@ -2465,10 +2465,10 @@ Vänligen se loggfil för mer information.</translation>
         <location filename="..\..\app\settings\connection_editor.py" line="695" />
         <source>Could not connect.
 
-%1</source>
+{error}</source>
         <translation>Kunde inte ansluta.
 
-%1</translation>
+{error}</translation>
     </message>
 </context><context>
     <name>CorrelationConfigWidget</name>
@@ -2540,13 +2540,13 @@ Vänligen se loggfil för mer information.</translation>
         <translation>Välj två eller fler olika numeriska kolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\correlation_charts.py" line="120" />
+        <location filename="..\..\services\analysis\correlation_charts.py" line="128" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="265" />
         <source>Fewer than {minimum} rows have values in both columns, so no correlation can be computed.</source>
         <translation>Färre än {minimum} rader har värden i båda kolumnerna, så ingen korrelation kan beräknas.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\correlation_charts.py" line="124" />
+        <location filename="..\..\services\analysis\correlation_charts.py" line="132" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="268" />
         <source>At least one of the columns is constant over the rows with values in both, so no correlation can be computed.</source>
         <translation>Minst en av kolumnerna är konstant bland raderna med värden i båda kolumnerna, så ingen korrelation kan beräknas.</translation>
@@ -2567,32 +2567,32 @@ Vänligen se loggfil för mer information.</translation>
         <translation>tau</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1380" />
+        <location filename="..\..\services\analysis\report.py" line="1431" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="429" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="293" />
         <source>N/A</source>
         <translation>Ej tillämpligt</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1374" />
+        <location filename="..\..\services\analysis\report.py" line="1425" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="295" />
         <source>Negligible</source>
         <translation>Försumbar</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1375" />
+        <location filename="..\..\services\analysis\report.py" line="1426" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="297" />
         <source>Weak</source>
         <translation>Svag</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1376" />
+        <location filename="..\..\services\analysis\report.py" line="1427" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="299" />
         <source>Moderate</source>
         <translation>Måttlig</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1377" />
+        <location filename="..\..\services\analysis\report.py" line="1428" />
         <location filename="..\..\gui\dialogs\analysis\correlation_view.py" line="301" />
         <source>Strong</source>
         <translation>Stark</translation>
@@ -2659,13 +2659,13 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="301" />
-        <location filename="..\..\services\analysis\correlation_charts.py" line="112" />
+        <location filename="..\..\services\analysis\correlation_charts.py" line="120" />
         <source>The line is a linear fit shown for reference. {method} measures monotonic, not necessarily linear, association.</source>
         <translation>Linjen är en linjär anpassning som visas som referens. {method} mäter monotona, men inte nödvändigtvis linjära, samband.</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="306" />
-        <location filename="..\..\services\analysis\correlation_charts.py" line="117" />
+        <location filename="..\..\services\analysis\correlation_charts.py" line="125" />
         <source>Showing a random sample of {shown} of {total} points. Statistics use all points.</source>
         <translation>Visar ett slumpmässigt urval av {shown} av {total} punkter. Statistiken baseras på samtliga punkter.</translation>
     </message>
@@ -2789,252 +2789,307 @@ Vänligen se loggfil för mer information.</translation>
 </context><context>
     <name>DbErrors</name>
     <message>
-        <location filename="..\..\db\core\errors.py" line="84" />
-        <location filename="..\..\db\core\errors.py" line="50" />
+        <location filename="..\..\services\schema_cache.py" line="182" />
+        <source>Settings for schema cache updated.</source>
+        <translation>Inställningarna för schemacachen har uppdaterats.</translation>
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="99" />
+        <location filename="..\..\db\core\errors.py" line="61" />
         <source>The stored procedure does not exist.</source>
         <translation>Stored procedure finns inte.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="51" />
+        <location filename="..\..\db\core\errors.py" line="62" />
         <source>Check name and schema (ex: EXEC dbo.MyProc ...).</source>
         <translation>Kontrollera namn och schema (ex: EXEC dbo.MinProc ...).</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="100" />
-        <location filename="..\..\db\core\errors.py" line="80" />
-        <location filename="..\..\db\core\errors.py" line="54" />
+        <location filename="..\..\db\core\errors.py" line="133" />
+        <location filename="..\..\db\core\errors.py" line="115" />
+        <location filename="..\..\db\core\errors.py" line="95" />
+        <location filename="..\..\db\core\errors.py" line="65" />
         <source>The table or view does not exist.</source>
         <translation>Tabellen eller vyn finns inte.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="55" />
+        <location filename="..\..\db\core\errors.py" line="66" />
         <source>Check name and schema (ex: dbo.MyTable).</source>
         <translation>Kontrollera namn och schema (ex: dbo.MinTabell).</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="98" />
-        <location filename="..\..\db\core\errors.py" line="78" />
-        <location filename="..\..\db\core\errors.py" line="57" />
+        <location filename="..\..\db\core\errors.py" line="131" />
+        <location filename="..\..\db\core\errors.py" line="113" />
+        <location filename="..\..\db\core\errors.py" line="93" />
+        <location filename="..\..\db\core\errors.py" line="68" />
         <source>SQL syntax error.</source>
         <translation>SQL syntaxfel.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="99" />
-        <location filename="..\..\db\core\errors.py" line="79" />
-        <location filename="..\..\db\core\errors.py" line="58" />
+        <location filename="..\..\db\core\errors.py" line="132" />
+        <location filename="..\..\db\core\errors.py" line="114" />
+        <location filename="..\..\db\core\errors.py" line="94" />
+        <location filename="..\..\db\core\errors.py" line="69" />
         <source>Check keywords, commas and parentheses.</source>
         <translation>Kontrollera nyckelord, kommatecken och parenteser.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="86" />
-        <location filename="..\..\db\core\errors.py" line="59" />
+        <location filename="..\..\db\core\errors.py" line="139" />
+        <location filename="..\..\db\core\errors.py" line="101" />
+        <location filename="..\..\db\core\errors.py" line="70" />
         <source>Permission denied.</source>
         <translation>Behörighet nekad.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="60" />
+        <location filename="..\..\db\core\errors.py" line="71" />
         <source>Check SELECT/EXEC permissions or use another connection.</source>
         <translation>Kontrollera SELECT/EXEC behörighet eller använd en annan anslutning.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="63" />
+        <location filename="..\..\db\core\errors.py" line="143" />
+        <location filename="..\..\db\core\errors.py" line="74" />
         <source>Timeout exceeded.</source>
         <translation>Tidsgräns uppnådd.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="64" />
+        <location filename="..\..\db\core\errors.py" line="75" />
         <source>Try reducing the result set (TOP) or adding filters.</source>
         <translation>Begränsa resultat (TOP) eller lägg på filter.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="90" />
-        <location filename="..\..\db\core\errors.py" line="65" />
+        <location filename="..\..\db\core\errors.py" line="145" />
+        <location filename="..\..\db\core\errors.py" line="105" />
+        <location filename="..\..\db\core\errors.py" line="76" />
         <source>Connection failed.</source>
         <translation>Anslutningen misslyckades.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="91" />
-        <location filename="..\..\db\core\errors.py" line="66" />
+        <location filename="..\..\db\core\errors.py" line="146" />
+        <location filename="..\..\db\core\errors.py" line="106" />
+        <location filename="..\..\db\core\errors.py" line="77" />
         <source>Check network, host/port and firewall settings.</source>
         <translation>Kontrollera nätverk, värd/port och brandväggsinställningar.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="102" />
-        <location filename="..\..\db\core\errors.py" line="82" />
-        <location filename="..\..\db\core\errors.py" line="67" />
+        <location filename="..\..\db\core\errors.py" line="135" />
+        <location filename="..\..\db\core\errors.py" line="117" />
+        <location filename="..\..\db\core\errors.py" line="97" />
+        <location filename="..\..\db\core\errors.py" line="78" />
         <source>Unknown column.</source>
         <translation>Okänd kolumn.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="103" />
-        <location filename="..\..\db\core\errors.py" line="83" />
-        <location filename="..\..\db\core\errors.py" line="68" />
+        <location filename="..\..\db\core\errors.py" line="136" />
+        <location filename="..\..\db\core\errors.py" line="118" />
+        <location filename="..\..\db\core\errors.py" line="98" />
+        <location filename="..\..\db\core\errors.py" line="79" />
         <source>Check spelling/alias or qualify the column.</source>
         <translation>Kontrollera stavning/alias eller kvalificera kolumnen.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="69" />
+        <location filename="..\..\db\core\errors.py" line="80" />
         <source>Unknown SQL identifier/alias.</source>
         <translation>Ogiltig identifier/alias i SQL.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="70" />
+        <location filename="..\..\db\core\errors.py" line="81" />
         <source>Check table/column alias and qualification (schema.table.column).</source>
         <translation>Kontrollera tabell-/kolumnalias och kvalificering (schema.tabell.kolumn).</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="118" />
-        <location filename="..\..\db\core\errors.py" line="108" />
-        <location filename="..\..\db\core\errors.py" line="94" />
-        <location filename="..\..\db\core\errors.py" line="74" />
+        <location filename="..\..\db\core\errors.py" line="157" />
+        <location filename="..\..\db\core\errors.py" line="147" />
+        <location filename="..\..\db\core\errors.py" line="123" />
+        <location filename="..\..\db\core\errors.py" line="109" />
+        <location filename="..\..\db\core\errors.py" line="85" />
         <source>Unknown database failure.</source>
         <translation>Okänt databasmisstag.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="119" />
-        <location filename="..\..\db\core\errors.py" line="109" />
-        <location filename="..\..\db\core\errors.py" line="95" />
-        <location filename="..\..\db\core\errors.py" line="75" />
+        <location filename="..\..\db\core\errors.py" line="158" />
+        <location filename="..\..\db\core\errors.py" line="148" />
+        <location filename="..\..\db\core\errors.py" line="124" />
+        <location filename="..\..\db\core\errors.py" line="110" />
+        <location filename="..\..\db\core\errors.py" line="86" />
         <source>Show details in log (DEBUG) or try again.</source>
         <translation>Visa detaljer i logg (DEBUG) eller försök igen.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="81" />
+        <location filename="..\..\db\core\errors.py" line="127" />
+        <location filename="..\..\db\core\errors.py" line="89" />
+        <source>Required database driver module is missing.</source>
+        <translation>Nödvändig databasdrivrutin saknas.</translation>
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="90" />
+        <source>Install 'pymysql' or 'mysql-connector-python' or check your Python environment.</source>
+        <translation>Install 'pymysql' or 'mysql-connector-python' or check your Python environment.</translation>
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="96" />
         <source>Check database and object name.</source>
         <translation>Kontrollera databas och objektets namn.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="85" />
+        <location filename="..\..\db\core\errors.py" line="100" />
         <source>Check name and schema (database).</source>
         <translation>Kontrollera namn och schema (databas).</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="87" />
+        <location filename="..\..\db\core\errors.py" line="140" />
+        <location filename="..\..\db\core\errors.py" line="102" />
         <source>Check user/password and permissions.</source>
         <translation>Kontrollera användare/lösenord och rättigheter.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="88" />
+        <location filename="..\..\db\core\errors.py" line="141" />
+        <location filename="..\..\db\core\errors.py" line="103" />
         <source>Unknown database.</source>
         <translation>Okänd databas.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="89" />
+        <location filename="..\..\db\core\errors.py" line="142" />
+        <location filename="..\..\db\core\errors.py" line="104" />
         <source>Check connection 'database' and permissions.</source>
         <translation>Kontrollera anslutningens 'database' och rättigheter.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="92" />
+        <location filename="..\..\db\core\errors.py" line="107" />
         <source>Locked table - timeout exceeded.</source>
         <translation>Låst tabell - tidsgräns uppnådd.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="93" />
+        <location filename="..\..\db\core\errors.py" line="108" />
         <source>Try reducing locks or splitting transactions.</source>
         <translation>Försök igen, minska låsningar eller dela upp transaktioner.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="101" />
+        <location filename="..\..\db\core\errors.py" line="116" />
         <source>Check file/database and table name.</source>
         <translation>Kontrollera fil/databas och tabellens namn.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="104" />
+        <location filename="..\..\db\core\errors.py" line="119" />
         <source>Database is locked.</source>
         <translation>Databasen är låst.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="105" />
+        <location filename="..\..\db\core\errors.py" line="120" />
         <source>Try again later or close other database processes.</source>
         <translation>Försök igen senare eller stäng andra processer som håller lås.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="106" />
+        <location filename="..\..\db\core\errors.py" line="121" />
         <source>Could not open database file.</source>
         <translation>Kunde inte öppna databasfilen.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="107" />
+        <location filename="..\..\db\core\errors.py" line="122" />
         <source>Check database file path and permissions.</source>
         <translation>Kontrollera filsökväg och filrättigheter.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="112" />
+        <location filename="..\..\db\core\errors.py" line="128" />
+        <source>Install 'psycopg' (or 'psycopg[binary]') or check your Python environment.</source>
+        <translation>Installera psycopg (eller psycopg[binary]) eller kontrollera din Python-miljö.</translation>
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="134" />
+        <source>Check schema and table name.</source>
+        <translation>Kontrollera schema- och tabellnamnet.</translation>
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="137" />
+        <source>The function does not exist.</source>
+        <translation>Funktionen finns inte.</translation>
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="138" />
+        <source>Check function name and parameter types.</source>
+        <translation>Kontrollera funktionsnamnet och parametertyperna.</translation>
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="144" />
+        <source>Try reducing the result set (LIMIT) or adding filters.</source>
+        <translation>Försök minska resultatmängden med LIMIT eller lägg till filter.</translation>
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="151" />
         <source>SQL statement is empty.</source>
         <translation>SQL-sats är tom.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="113" />
+        <location filename="..\..\db\core\errors.py" line="152" />
         <source>Write a SELECT or EXEC.</source>
         <translation>Skriv en SELECT eller EXEC.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="114" />
+        <location filename="..\..\db\core\errors.py" line="153" />
         <source>Only SELECT, WITH (CTE) and EXEC are supported here.</source>
         <translation>Bara SELECT, WITH (CTE) och EXEC stöds här.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="115" />
+        <location filename="..\..\db\core\errors.py" line="154" />
         <source>Start with SELECT/WITH or run procedure with EXEC.</source>
         <translation>Börja med SELECT/WITH eller kör procedur med EXEC.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="116" />
+        <location filename="..\..\db\core\errors.py" line="155" />
         <source>EXEC is disabled in this mode.</source>
         <translation>EXEC är inaktiverat i detta läge.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="117" />
+        <location filename="..\..\db\core\errors.py" line="156" />
         <source>Enable EXEC in settings or run a SELECT.</source>
         <translation>Aktivera EXEC eller kör SELECT.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="120" />
+        <location filename="..\..\db\core\errors.py" line="159" />
         <source>Could not initialize connection.</source>
         <translation>Kunde inte initiera en anslutning.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="121" />
+        <location filename="..\..\db\core\errors.py" line="160" />
         <source>Ambiguous column reference.</source>
         <translation>Tvetydig kolumnreferens.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="122" />
+        <location filename="..\..\db\core\errors.py" line="161" />
         <source>Qualify the column with its table name or alias.</source>
         <translation>Kvalificera kolumnen med dess tabellnamn eller alias.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="125" />
+        <location filename="..\..\db\core\errors.py" line="164" />
         <source>Preparing autocomplete (bulk)…</source>
         <translation>Förbereder autocomplete (bulk)…</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="126" />
+        <location filename="..\..\db\core\errors.py" line="165" />
         <source>Could not read schema in bulk - trying batch.</source>
         <translation>Kunde inte läsa in schemat i ett steg. Försöker i batchar.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="127" />
+        <location filename="..\..\db\core\errors.py" line="166" />
         <source>Autocomplete for columns ready ({count} objects via bulk).</source>
         <translation>Autocomplete för kolumner klar ({count} objekt via bulk).</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="128" />
+        <location filename="..\..\db\core\errors.py" line="167" />
         <source>Autocomplete for columns ready.</source>
         <translation>Autocomplete för kolumner klar.</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="129" />
+        <location filename="..\..\db\core\errors.py" line="168" />
         <source>Preparing autocomplete… {done}/{total}</source>
         <translation>Förbereder autocomplete… {done}/{total}</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="130" />
+        <location filename="..\..\db\core\errors.py" line="169" />
         <source>Loading schema…</source>
         <translation>Laddar schema…</translation>
     </message>
     <message>
-        <location filename="..\..\db\core\errors.py" line="131" />
+        <location filename="..\..\db\core\errors.py" line="170" />
         <source>Schema ready.</source>
         <translation>Schema klart.</translation>
     </message>
@@ -3992,307 +4047,307 @@ Sparad till:
 </context><context>
     <name>GeneralizedRegressionView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="186" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="191" />
         <source>Charts unavailable: fitted counts are not finite and strictly positive.</source>
         <translation>Diagrammen är inte tillgängliga: de anpassade antalen är inte ändliga och strikt positiva.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="188" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="193" />
         <source>Charts unavailable: Pearson residuals are not finite.</source>
         <translation>Diagrammen är inte tillgängliga: Pearsonresidualerna är inte ändliga.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="190" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="195" />
         <source>Charts unavailable: the fitted Negative Binomial variance is invalid.</source>
         <translation>Diagrammen är inte tillgängliga: den anpassade negativa binomialvariansen är ogiltig.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="192" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="197" />
         <source>No count-model chart data are available.</source>
         <translation>Inga diagramdata för räknemodellen är tillgängliga.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="241" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="246" />
         <source>Select an outcome column for this regression model.</source>
         <translation>Välj en utfallskolumn för den här regressionsmodellen.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="243" />
-        <source>The selected outcome is invalid. Logistic regression needs two outcome levels; count regression needs non-negative integer values.</source>
-        <translation>Det valda utfallet är ogiltigt. Logistisk regression kräver två utfallsnivåer; regression för räknevariabler kräver icke-negativa heltalsvärden.</translation>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="248" />
+        <source>The selected outcome is invalid. Logistic regression needs two outcome levels. Count regression needs non-negative integer values.</source>
+        <translation>Det valda utfallet är ogiltigt. Logistisk regression kräver två utfallsnivåer. Regression för räknevariabler kräver icke-negativa heltalsvärden.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="248" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="253" />
         <source>Select one or more predictors and click Apply.</source>
         <translation>Markera en eller flera prediktorer och klicka på Tillämpa.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="250" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="255" />
         <source>Select at most {maximum} predictors.</source>
         <translation>Markera högst {maximum} prediktorer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="252" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="257" />
         <source>Choose a valid outcome and one or more other columns as predictors.</source>
         <translation>Välj ett giltigt utfall och en eller flera andra kolumner som prediktorer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="254" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="259" />
         <source>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</source>
         <translation>Modellen skulle ha fler än {maximum} termer efter att kategoriska prediktorer dummy-kodats. Ta bort prediktorer eller använd kolumner med färre nivåer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="259" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="264" />
         <source>Only {count} complete rows are available, which is too few to fit this model.</source>
         <translation>Endast {count} kompletta rader är tillgängliga, vilket är för få för att anpassa modellen.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="263" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="268" />
         <source>The outcome {column} has only one value in the complete rows.</source>
         <translation>Utfallet {column} har bara ett värde bland de kompletta raderna.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="265" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="270" />
         <source>The predictor {column} has the same value in every complete row.</source>
         <translation>Prediktorn {column} har samma värde i alla kompletta rader.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="267" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="272" />
         <source>Some predictors are exact linear combinations of others, so the model cannot be estimated.</source>
         <translation>Vissa prediktorer är exakta linjära kombinationer av andra, så modellen kan inte skattas.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="271" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="276" />
         <source>The model could not be fitted. Check for sparse outcomes, separation, or redundant predictors.</source>
         <translation>Modellen kunde inte anpassas. Kontrollera om utfallet är glest, om separation förekommer eller om prediktorer är redundanta.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="280" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="285" />
         <source>Odds ratio</source>
         <translation>Oddskvot</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="282" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="287" />
         <source>Rate ratio</source>
         <translation>Incidenskvot</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="285" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="290" />
         <source>Term</source>
         <translation>Term</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="286" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="291" />
         <source>Coefficient</source>
         <translation>Koefficient</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="288" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="293" />
         <source>95% effect CI</source>
         <translation>95 % KI för effekt</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="289" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="294" />
         <source>p-value</source>
         <translation>p-värde</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="320" />
-        <source>Outcome coding: {zero} = 0; {one} = 1.</source>
-        <translation>Utfallskodning: {zero} = 0; {one} = 1.</translation>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="325" />
+        <source>Outcome coding: {zero} = 0, {one} = 1.</source>
+        <translation>Utfallskodning: {zero} = 0, {one} = 1.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="327" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="332" />
         <source>&lt;b&gt;{model}&lt;/b&gt;</source>
         <translation>&lt;b&gt;{model}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="328" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="333" />
         <source>Target: &lt;b&gt;{target}&lt;/b&gt;</source>
         <translation>Målvariabel: &lt;b&gt;{target}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="329" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="334" />
         <source>Rows used: {used} ({dropped} dropped because of missing values)</source>
         <translation>Använda rader: {used} ({dropped} borttagna på grund av saknade värden)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="337" />
-        <source>Log-likelihood = {value}; McFadden pseudo R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</source>
-        <translation>Log-likelihood = {value}; McFaddens pseudo-R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</translation>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="342" />
+        <source>Log-likelihood = {value}, McFadden pseudo R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</source>
+        <translation>Log-likelihood = {value}, McFaddens pseudo-R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="341" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="346" />
         <source>AIC = {aic}</source>
         <translation>AIC = {aic}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="345" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="350" />
         <source>Unknown</source>
         <translation>Okänd</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="346" />
-        <source>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins; identical probabilities stay together.</source>
-        <translation>Positiv händelse: {event} (kodad 1). ROC/AUC och kalibrering är diagnostik på anpassningsdata, inte prestanda på separat testdata. Alla {count} fullständiga rader som modellen anpassades till används. Kalibreringen använder upp till 10 kvantilgrupper; identiska sannolikheter hålls samman.</translation>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="351" />
+        <source>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins. Identical probabilities stay together.</source>
+        <translation>Positiv händelse: {event} (kodad 1). ROC/AUC och kalibrering är diagnostik på anpassningsdata, inte prestanda på separat testdata. Alla {count} fullständiga rader som modellen anpassades till används. Kalibreringen använder upp till 10 kvantilgrupper. Identiska sannolikheter hålls samman.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="353" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="358" />
         <source>Diagnostic interpretation</source>
         <translation>Tolkning av diagnostik</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="359" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="364" />
         <source>Calibration bin counts: {counts}.</source>
         <translation>Antal rader per kalibreringsgrupp: {counts}.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="367" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="372" />
         <source>Dispersion diagnostic unavailable because fitted counts or residuals are invalid.</source>
         <translation>Dispersionsdiagnostiken är inte tillgänglig eftersom de anpassade antalen eller residualerna är ogiltiga.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="371" />
-        <source>Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial.</source>
-        <translation>Pearson-dispersion = {value}, över riktvärdet {threshold}; överväg negativ binomial regression.</translation>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="376" />
+        <source>Pearson dispersion = {value}, above the {threshold} guideline. Consider Negative Binomial.</source>
+        <translation>Pearson-dispersion = {value}, över riktvärdet {threshold}. Överväg negativ binomial regression.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="375" />
-        <source>Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion.</source>
-        <translation>Pearson-dispersion = {value}; den överskrider inte riktvärdet {threshold} för överdispersion.</translation>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="380" />
+        <source>Pearson dispersion = {value}. It does not exceed the {threshold} guideline for overdispersion.</source>
+        <translation>Pearson-dispersion = {value}. Den överskrider inte riktvärdet {threshold} för överdispersion.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="384" />
-        <source>This diagnostic is advisory; the selected model was not changed.</source>
-        <translation>Diagnostiken är vägledande; den valda modellen ändrades inte.</translation>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="389" />
+        <source>This diagnostic is advisory. The selected model was not changed.</source>
+        <translation>Diagnostiken är vägledande. Den valda modellen ändrades inte.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="387" />
-        <source>Fitted NB2 alpha = {alpha}; this is distinct from the advisory Pearson dispersion.</source>
-        <translation>Skattat NB2-alfa = {alpha}; detta skiljer sig från den vägledande Pearsondispersionen.</translation>
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="392" />
+        <source>Fitted NB2 alpha = {alpha}. This is distinct from the advisory Pearson dispersion.</source>
+        <translation>Skattat NB2-alfa = {alpha}. Detta skiljer sig från den vägledande Pearsondispersionen.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="396" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="401" />
         <source>Charts describe the fitted rows (in-sample), not out-of-sample predictive performance.</source>
         <translation>Diagrammen beskriver de rader som modellen anpassats till, inte prediktionsförmågan för nya observationer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="399" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="404" />
         <source>Poisson Pearson residuals use variance equal to the fitted count.</source>
         <translation>Pearsonresidualerna för Poisson använder en varians som är lika med det anpassade antalet.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="402" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="407" />
         <source>Negative Binomial Pearson residuals use NB2 variance: fitted count + alpha * fitted count squared.</source>
         <translation>Pearsonresidualerna för negativ binomialregression använder NB2-varians: anpassat antal + alfa * anpassat antal i kvadrat.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="409" />
+        <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="414" />
         <source>Coefficient estimates and dispersion diagnostics use all fitted rows.</source>
         <translation>Koefficientskattningar och dispersionsdiagnostik använder alla rader som modellen anpassats till.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="164" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="175" />
         <source>Diagnostics unavailable: fitted probabilities must be finite and between 0 and 1.</source>
         <translation>Diagnostiken är inte tillgänglig: anpassade sannolikheter måste vara ändliga och mellan 0 och 1.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="169" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="180" />
         <source>Diagnostics unavailable: outcomes must contain both binary classes.</source>
         <translation>Diagnostiken är inte tillgänglig: utfallen måste innehålla båda binära klasserna.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="173" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="184" />
         <source>No logistic diagnostic data are available.</source>
         <translation>Inga diagnostikdata för logistisk regression är tillgängliga.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="176" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="187" />
         <source>Predictor odds ratios with 95% confidence intervals</source>
         <translation>Prediktorernas oddskvoter med 95 % konfidensintervall</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="179" />
-        <source>Odds ratio (logarithmic scale; reference = 1)</source>
-        <translation>Oddskvot (logaritmisk skala; referens = 1)</translation>
+        <location filename="..\..\services\analysis\regression_charts.py" line="190" />
+        <source>Odds ratio (logarithmic scale, reference = 1)</source>
+        <translation>Oddskvot (logaritmisk skala, referens = 1)</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="180" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="191" />
         <source>No predictor effects: intercept-only model.</source>
         <translation>Inga prediktoreffekter: modellen har endast intercept.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="181" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="192" />
         <source>Unavailable: non-finite, non-positive or invalid odds ratio / CI</source>
         <translation>Ej tillgänglig: icke-ändlig, icke-positiv eller ogiltig oddskvot / konfidensintervall</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="184" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="195" />
         <source>ROC (in-sample)</source>
         <translation>ROC (anpassningsdata)</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="185" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="196" />
         <source>False positive rate</source>
         <translation>Andel falskt positiva</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="186" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="197" />
         <source>True positive rate</source>
         <translation>Andel sant positiva</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="187" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="198" />
         <source>AUC = {value} (in-sample)</source>
         <translation>AUC = {value} (anpassningsdata)</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="190" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="201" />
         <source>Calibration (in-sample)</source>
         <translation>Kalibrering (anpassningsdata)</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="191" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="202" />
         <source>Mean fitted event probability</source>
         <translation>Genomsnittlig anpassad händelsesannolikhet</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="192" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="203" />
         <source>Observed event fraction</source>
         <translation>Observerad händelseandel</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="195" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="206" />
         <source>{effect} [{low}, {high}]</source>
         <translation>{effect} [{low}, {high}]</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="208" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="219" />
         <source>Observed versus fitted counts</source>
         <translation>Observerade mot anpassade antal</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="209" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="220" />
         <source>Fitted count</source>
         <translation>Anpassat antal</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="210" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="221" />
         <source>Observed count</source>
         <translation>Observerat antal</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="211" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="222" />
         <source>Pearson residuals versus fitted counts</source>
         <translation>Pearsonresidualer mot anpassade antal</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="212" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="223" />
         <source>Pearson residual</source>
         <translation>Pearsonresidual</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="217" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="228" />
         <source>Charts show a deterministic sample of {shown} of {total} fitted rows.</source>
         <translation>Diagrammen visar ett deterministiskt urval av {shown} av {total} rader som modellen anpassats till.</translation>
     </message>
@@ -4483,7 +4538,7 @@ Sparad till:
         <translation>⚠ Grupp '{label}' har färre än 3 observationer: dess normalitet kunde inte testas.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\hypothesis_charts.py" line="94" />
+        <location filename="..\..\services\analysis\hypothesis_charts.py" line="101" />
         <source>Distribution by group</source>
         <translation>Fördelning per grupp</translation>
     </message>
@@ -5096,240 +5151,240 @@ Sparad till:
 </context><context>
     <name>MultivariateOutliersConfigWidget</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="61" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="67" />
         <source>Univariate (by column)</source>
         <translation>Univariat (per kolumn)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="62" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="68" />
         <source>Multivariate (by row)</source>
         <translation>Multivariat (per rad)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="64" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="70" />
         <source>Mode</source>
         <translation>Läge (mode)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="70" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="76" />
         <source>Method</source>
         <translation>Metod</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="72" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="78" />
         <source>Standardize features</source>
         <translation>Standardisera variabler</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="78" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="84" />
         <source>%</source>
         <translation>%</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="83" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="89" />
         <source>Expected outliers</source>
         <translation>Förväntad andel avvikande observationer</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="89" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="95" />
         <source>LOF neighbors</source>
         <translation>LOF-grannar</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="93" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="99" />
         <source>Features</source>
         <translation>Variabler</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="105" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="111" />
         <source>Select all</source>
         <translation>Välj alla</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="106" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="112" />
         <source>Clear</source>
         <translation>Rensa</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="114" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="120" />
         <source>Apply</source>
         <translation>Tillämpa</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="192" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="198" />
         <source>{count} selected.</source>
         <translation>{count} markerade.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="195" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_config.py" line="201" />
         <source>{count} selected - select at least {minimum}.</source>
         <translation>{count} markerade – markera minst {minimum}.</translation>
     </message>
 </context><context>
     <name>MultivariateOutliersView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="86" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="90" />
         <source>Multivariate screening needs at least {minimum} numeric columns.</source>
         <translation>Multivariat screening kräver minst {minimum} numeriska kolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="89" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="93" />
         <source>Select at least {minimum} features.</source>
         <translation>Markera minst {minimum} variabler.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="92" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="96" />
         <source>Choose two or more different numeric columns.</source>
         <translation>Välj två eller fler olika numeriska kolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="93" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="97" />
         <source>At least {minimum} complete rows are needed for multivariate screening.</source>
         <translation>Minst {minimum} fullständiga rader krävs för multivariat screening.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="96" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="100" />
         <source>The selected features have no variation across the complete rows.</source>
         <translation>De valda variablerna har ingen variation över de fullständiga raderna.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="99" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="103" />
         <source>Choose an expected outlier fraction between {minimum} and {maximum}.</source>
         <translation>Välj en förväntad andel avvikande observationer mellan {minimum} och {maximum}.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="102" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="106" />
         <source>Choose at least {minimum} LOF neighbors and fewer than the complete rows.</source>
         <translation>Välj minst {minimum} LOF-grannar och färre än antalet fullständiga rader.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="129" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="133" />
         <source>Features: {columns}</source>
         <translation>Variabler: {columns}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="134" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="138" />
         <source>Model comments</source>
         <translation>Modellkommentarer</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="147" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="151" />
         <source>standardized</source>
         <translation>standardiserade</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="147" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="151" />
         <source>not standardized</source>
         <translation>inte standardiserade</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="148" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="152" />
         <source>&lt;b&gt;{method}&lt;/b&gt; on {features} features ({scaling}): {outliers} of {used} complete rows ({percent}) are potential outliers. {dropped} rows were dropped for missing or infinite values.</source>
         <translation>&lt;b&gt;{method}&lt;/b&gt; på {features} variabler ({scaling}): {outliers} av {used} fullständiga rader ({percent}) är potentiella avvikare. {dropped} rader togs bort på grund av saknade eller oändliga värden.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="162" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="166" />
         <source>&lt;i&gt;Scores rank observations within this fit. Potential outliers are not necessarily errors.&lt;/i&gt;</source>
         <translation>&lt;i&gt;Poängen rangordnar observationerna inom denna modellanpassning. Potentiella avvikare är inte nödvändigtvis felaktiga värden.&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\outliers_charts.py" line="121" />
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="191" />
+        <location filename="..\..\services\analysis\outliers_charts.py" line="132" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="195" />
         <source>Potential outliers</source>
         <translation>Potentiella avvikare</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="192" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="196" />
         <source>No potential outliers</source>
         <translation>Inga potentiella avvikare</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="200" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="204" />
         <source>Potential outliers, most anomalous first</source>
         <translation>Potentiella avvikare, mest avvikande först</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="201" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="205" />
         <source>Row</source>
         <translation>Rad</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1299" />
-        <location filename="..\..\services\analysis\report.py" line="2281" />
-        <location filename="..\..\services\analysis\report.py" line="1540" />
-        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="201" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1334" />
+        <location filename="..\..\services\analysis\report.py" line="2381" />
+        <location filename="..\..\services\analysis\report.py" line="1591" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_multivariate_view.py" line="205" />
         <source>Anomaly score</source>
         <translation>Avvikelsepoäng</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\outliers_charts.py" line="105" />
+        <location filename="..\..\services\analysis\outliers_charts.py" line="114" />
         <source>PCA projection (visualization only)</source>
         <translation>PCA-projektion (endast visualisering)</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\outliers_charts.py" line="108" />
+        <location filename="..\..\services\analysis\outliers_charts.py" line="117" />
         <source>The projection shows a deterministic sample of {count} rows.</source>
         <translation>Projektionen visar ett deterministiskt urval av {count} rader.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\outliers_charts.py" line="118" />
+        <location filename="..\..\services\analysis\outliers_charts.py" line="129" />
         <source>PC1</source>
         <translation>PC1</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\outliers_charts.py" line="119" />
+        <location filename="..\..\services\analysis\outliers_charts.py" line="130" />
         <source>PC2</source>
         <translation>PC2</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\outliers_charts.py" line="120" />
+        <location filename="..\..\services\analysis\outliers_charts.py" line="131" />
         <source>Inliers</source>
         <translation>Inomliggande observationer</translation>
     </message>
 </context><context>
     <name>OutliersConfigWidget</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="65" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="69" />
         <source>Univariate (by column)</source>
         <translation>Univariat (per kolumn)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="66" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="70" />
         <source>Multivariate (by row)</source>
         <translation>Multivariat (per rad)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="67" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="71" />
         <source>Mode</source>
         <translation>Läge (mode)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="73" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="77" />
         <source>Method</source>
         <translation>Metod</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="87" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="91" />
         <source>Apply</source>
         <translation>Tillämpa</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="131" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="135" />
         <source>IQR multiplier</source>
         <translation>IQR-multiplikator</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="133" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="137" />
         <source>Values more than this many IQRs below Q1 or above Q3 are flagged.</source>
         <translation>Värden som ligger mer än detta antal IQR under Q1 eller över Q3 flaggas.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="136" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="140" />
         <source>Score threshold</source>
         <translation>Tröskel för poäng</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="137" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_config.py" line="141" />
         <source>Values whose absolute score exceeds this are flagged.</source>
         <translation>Värden vars absoluta poäng överstiger detta värde flaggas.</translation>
     </message>
@@ -5337,7 +5392,7 @@ Sparad till:
     <name>OutliersPresentation</name>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="350" />
-        <location filename="..\..\services\analysis\outliers_charts.py" line="75" />
+        <location filename="..\..\services\analysis\outliers_charts.py" line="82" />
         <source>Column distribution</source>
         <translation>Kolumnfördelning</translation>
     </message>
@@ -5464,208 +5519,208 @@ Sparad till:
 </context><context>
     <name>OutliersView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="207" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="211" />
         <source>Flagged values are potential outliers, not necessarily errors - check them before excluding anything.</source>
         <translation>Flaggade värden är potentiella avvikare, inte nödvändigtvis felaktiga värden – kontrollera dem innan något exkluderas.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="306" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="310" />
         <source>An outlier analysis needs at least one numeric column.</source>
         <translation>En avvikaranalys kräver minst en numerisk kolumn.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="308" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="312" />
         <source>Choose a numeric column.</source>
         <translation>Välj en numerisk kolumn.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="310" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="314" />
         <source>Choose a threshold between {minimum} and {maximum}.</source>
         <translation>Välj en tröskel mellan {minimum} och {maximum}.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="322" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="326" />
         <source>Too few values</source>
         <translation>För få värden</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="324" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="328" />
         <source>No spread</source>
         <translation>Ingen spridning</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1301" />
-        <location filename="..\..\services\analysis\report.py" line="2284" />
-        <location filename="..\..\services\analysis\report.py" line="1543" />
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="330" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1336" />
+        <location filename="..\..\services\analysis\report.py" line="2384" />
+        <location filename="..\..\services\analysis\report.py" line="1594" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="334" />
         <source>Distance past fence</source>
         <translation>Avstånd förbi gränsen</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1302" />
-        <location filename="..\..\services\analysis\report.py" line="2285" />
-        <location filename="..\..\services\analysis\report.py" line="1544" />
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="332" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1337" />
+        <location filename="..\..\services\analysis\report.py" line="2385" />
+        <location filename="..\..\services\analysis\report.py" line="1595" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="336" />
         <source>z</source>
         <translation>z</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1303" />
-        <location filename="..\..\services\analysis\report.py" line="2286" />
-        <location filename="..\..\services\analysis\report.py" line="1545" />
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="334" />
+        <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="1338" />
+        <location filename="..\..\services\analysis\report.py" line="2386" />
+        <location filename="..\..\services\analysis\report.py" line="1596" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="338" />
         <source>Modified z</source>
         <translation>Modifierad z</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="345" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="349" />
         <source>Columns</source>
         <translation>Kolumner</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="362" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="366" />
         <source>Flagged values are potential outliers, not necessarily errors - check them before excluding anything. Click a row to show the column below.</source>
         <translation>Flaggade värden är potentiella avvikare, inte nödvändigtvis felaktiga värden – kontrollera dem innan något exkluderas. Klicka på en rad för att visa kolumnen nedan.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="385" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="389" />
         <source>&lt;b&gt;{method}&lt;/b&gt;, threshold {threshold}: {flagged} of {rows} rows ({percent}) have a potential outlier in at least one of {columns} numeric columns.</source>
         <translation>&lt;b&gt;{method}&lt;/b&gt;, tröskel {threshold}: {flagged} av {rows} rader ({percent}) har en potentiell avvikare i minst en av {columns} numeriska kolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="400" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="404" />
         <source>Column</source>
         <translation>Kolumn</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="401" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="405" />
         <source>Values</source>
         <translation>Värden</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="402" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="406" />
         <source>Missing</source>
         <translation>Saknade</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="403" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="407" />
         <source>Outliers</source>
         <translation>Avvikare</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="404" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="408" />
         <source>Share</source>
         <translation>Andel</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="405" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="409" />
         <source>Low</source>
         <translation>Låg</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="406" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="410" />
         <source>High</source>
         <translation>Hög</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="407" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="411" />
         <source>Lower fence</source>
         <translation>Nedre gräns</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="408" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="412" />
         <source>Upper fence</source>
         <translation>Övre gräns</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="497" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="501" />
         <source>&lt;b&gt;{column}&lt;/b&gt; - {method}, threshold {threshold}</source>
         <translation>&lt;b&gt;{column}&lt;/b&gt; – {method}, tröskel {threshold}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="509" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="513" />
         <source>Fences: {lower} to {upper}</source>
         <translation>Gränser: {lower} till {upper}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="512" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="516" />
         <source>{count} potential outliers ({percent}): {low} low, {high} high</source>
         <translation>{count} potentiella avvikare ({percent}): {low} låga, {high} höga</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="526" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="530" />
         <source>At least {minimum} values are needed to screen a column.</source>
         <translation>Minst {minimum} värden krävs för att screena en kolumn.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="530" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="534" />
         <source>All values are identical, so no value can stand out.</source>
         <translation>Alla värden är identiska, så inget värde kan sticka ut.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="537" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="541" />
         <source>Q1 = {q1}, Q3 = {q3}, IQR = {iqr}</source>
         <translation>Q1 = {q1}, Q3 = {q3}, IQR = {iqr}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="543" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="547" />
         <source>Mean = {mean}, standard deviation = {std}</source>
         <translation>Medelvärde = {mean}, standardavvikelse = {std}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="546" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="550" />
         <source>&lt;i&gt;Extreme values inflate the mean and standard deviation themselves. The modified Z-score is more robust.&lt;/i&gt;</source>
         <translation>&lt;i&gt;Extrema värden påverkar själva medelvärdet och standardavvikelsen. Det modifierade Z-värdet är mer robust.&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="554" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="558" />
         <source>&lt;i&gt;With {count} values no |z| can exceed {bound}, so this threshold can't flag anything.&lt;/i&gt;</source>
         <translation>&lt;i&gt;Med {count} värden kan inget |z|-värde överstiga {bound}, så denna tröskel kan inte identifiera några avvikare.&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="562" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="566" />
         <source>Median = {median}, MAD = {mad}</source>
         <translation>Median = {median}, MAD = {mad}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="568" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="572" />
         <source>&lt;i&gt;The MAD is zero (more than half the values are identical), so the scaled mean absolute deviation is used instead.&lt;/i&gt;</source>
         <translation>&lt;i&gt;MAD är noll (mer än hälften av värdena är identiska), så den skalade genomsnittliga absoluta avvikelsen används i stället.&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="598" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="602" />
         <source>&lt;b&gt;No potential outliers&lt;/b&gt;</source>
         <translation>&lt;b&gt;Inga potentiella avvikare&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="600" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="604" />
         <source>&lt;b&gt;The {shown} most extreme of {total} potential outliers&lt;/b&gt;</source>
         <translation>&lt;b&gt;De {shown} mest extrema av {total} potentiella avvikare&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="603" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="607" />
         <source>&lt;b&gt;Potential outliers, most extreme first&lt;/b&gt;</source>
         <translation>&lt;b&gt;Potentiella avvikare, mest extrema först&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2292" />
-        <location filename="..\..\services\analysis\report.py" line="1560" />
-        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="610" />
+        <location filename="..\..\services\analysis\report.py" line="2392" />
+        <location filename="..\..\services\analysis\report.py" line="1611" />
+        <location filename="..\..\gui\dialogs\analysis\outliers_view.py" line="614" />
         <source>Row</source>
         <translation>Rad</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\outliers_charts.py" line="72" />
+        <location filename="..\..\services\analysis\outliers_charts.py" line="79" />
         <source>Inside the fences</source>
         <translation>Inom gränserna</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\outliers_charts.py" line="73" />
+        <location filename="..\..\services\analysis\outliers_charts.py" line="80" />
         <source>Potential outliers</source>
         <translation>Potentiella avvikare</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\outliers_charts.py" line="74" />
+        <location filename="..\..\services\analysis\outliers_charts.py" line="81" />
         <source>Count</source>
         <translation>Antal</translation>
     </message>
@@ -5787,14 +5842,14 @@ Sparad till:
         <translation>Unika</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1190" />
+        <location filename="..\..\services\analysis\report.py" line="1241" />
         <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="237" />
         <source>Sample</source>
         <translation>Urval</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2133" />
-        <location filename="..\..\services\analysis\report.py" line="1175" />
+        <location filename="..\..\services\analysis\report.py" line="2233" />
+        <location filename="..\..\services\analysis\report.py" line="1226" />
         <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="242" />
         <source>First ({count})</source>
         <translation>Första ({count})</translation>
@@ -5805,14 +5860,14 @@ Sparad till:
         <translation>Sista (otillgängligt)</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2137" />
+        <location filename="..\..\services\analysis\report.py" line="2237" />
         <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="254" />
         <source>Last sample is unavailable in this captured result.</source>
         <translation>Det sista urvalet är inte tillgängligt i det här sparade resultatet.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="2139" />
-        <location filename="..\..\services\analysis\report.py" line="1178" />
+        <location filename="..\..\services\analysis\report.py" line="2239" />
+        <location filename="..\..\services\analysis\report.py" line="1229" />
         <location filename="..\..\gui\dialogs\analysis\overview_view.py" line="258" />
         <source>Last ({count})</source>
         <translation>Sista ({count})</translation>
@@ -5858,7 +5913,7 @@ Sparad till:
         <translation>Annan</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\report.py" line="1187" />
+        <location filename="..\..\services\analysis\report.py" line="1238" />
         <source>Sample group</source>
         <translation>Urvalsgrupp</translation>
     </message>
@@ -5994,19 +6049,19 @@ Sparad till:
         <translation>Förklarad varians (%)</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\pca_charts.py" line="91" />
+        <location filename="..\..\services\analysis\pca_charts.py" line="92" />
         <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="47" />
         <source>PC1 vs PC2</source>
         <translation>PC1 mot PC2</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\pca_charts.py" line="94" />
+        <location filename="..\..\services\analysis\pca_charts.py" line="96" />
         <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="48" />
         <source>PC1 ({variance})</source>
         <translation>PC1 ({variance})</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\pca_charts.py" line="97" />
+        <location filename="..\..\services\analysis\pca_charts.py" line="99" />
         <location filename="..\..\gui\dialogs\analysis\pca_view.py" line="49" />
         <source>PC2 ({variance})</source>
         <translation>PC2 ({variance})</translation>
@@ -6071,8 +6126,8 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="61" />
-        <source>Select at least two numeric columns. They are used in the order shown; each row is one subject.</source>
-        <translation>Välj minst två numeriska kolumner. De används i den ordning de visas; varje rad motsvarar en individ.</translation>
+        <source>Select at least two numeric columns. They are used in the order shown. Each row is one subject.</source>
+        <translation>Välj minst två numeriska kolumner. De används i den ordning de visas. Varje rad motsvarar en individ.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="77" />
@@ -6138,8 +6193,8 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="78" />
-        <source>Complete subjects: {complete} of {total}; excluded for missing values: {excluded}</source>
-        <translation>Kompletta individer: {complete} av {total}; exkluderade på grund av saknade värden: {excluded}</translation>
+        <source>Complete subjects: {complete} of {total}, excluded for missing values: {excluded}</source>
+        <translation>Kompletta individer: {complete} av {total}, exkluderade på grund av saknade värden: {excluded}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="85" />
@@ -6153,13 +6208,13 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="100" />
-        <source>Occasions follow the selected column order; chronological order is not inferred.</source>
-        <translation>Mättillfällena följer den valda kolumnordningen; kronologisk ordning härleds inte.</translation>
+        <source>Occasions follow the selected column order. Chronological order is not inferred.</source>
+        <translation>Mättillfällena följer den valda kolumnordningen. Kronologisk ordning härleds inte.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="101" />
-        <source>Boxplots use all complete subjects; whiskers show the minimum and maximum.</source>
-        <translation>Lådagrammen använder alla individer med kompletta mätningar; spröten visar minimum och maximum.</translation>
+        <source>Boxplots use all complete subjects. Whiskers show the minimum and maximum.</source>
+        <translation>Lådagrammen använder alla individer med kompletta mätningar. Spröten visar minimum och maximum.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="105" />
@@ -6223,8 +6278,8 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="197" />
-        <source>The two measurements are identical for every complete subject; the Wilcoxon test is undefined.</source>
-        <translation>De två mätningarna är identiska för alla individer med kompletta värden; Wilcoxontestet är odefinierat.</translation>
+        <source>The two measurements are identical for every complete subject. The Wilcoxon test is undefined.</source>
+        <translation>De två mätningarna är identiska för alla individer med kompletta värden. Wilcoxontestet är odefinierat.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="200" />
@@ -6232,22 +6287,22 @@ Sparad till:
         <translation>De valda mätningarna varierar inte mellan tillfällena, så Friedmans test är odefinierat.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\hypothesis_charts.py" line="113" />
+        <location filename="..\..\services\analysis\hypothesis_charts.py" line="120" />
         <source>Distribution by occasion</source>
         <translation>Fördelning per mättillfälle</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\hypothesis_charts.py" line="114" />
+        <location filename="..\..\services\analysis\hypothesis_charts.py" line="121" />
         <source>Subject trajectories</source>
         <translation>Individuella mätförlopp</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\hypothesis_charts.py" line="115" />
+        <location filename="..\..\services\analysis\hypothesis_charts.py" line="122" />
         <source>Value</source>
         <translation>Värde</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\hypothesis_charts.py" line="116" />
+        <location filename="..\..\services\analysis\hypothesis_charts.py" line="123" />
         <source>Measurement occasion</source>
         <translation>Mättillfälle</translation>
     </message>
@@ -6292,16 +6347,16 @@ Sparad till:
         <location filename="..\..\gui\dialogs\service\prompts\choice.py" line="197" />
         <source>Do you want to permanently delete:
 
-%1%2</source>
+{name}{size_hint}</source>
         <translation>Vill du radera permanent:
 
-%1%2</translation>
+{name}{size_hint}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\service\prompts\text.py" line="218" />
         <location filename="..\..\gui\dialogs\service\prompts\column_operations.py" line="57" />
-        <source>Column: %1</source>
-        <translation>Kolumn: %1</translation>
+        <source>Column: {column}</source>
+        <translation>Kolumn: {column}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\service\prompts\column_operations.py" line="66" />
@@ -6465,8 +6520,8 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\service\prompts\text.py" line="225" />
-        <source>Current value: %1</source>
-        <translation>Nuvarande värde: %1</translation>
+        <source>Current value: {current_value}</source>
+        <translation>Nuvarande värde: {current_value}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\service\prompts\text.py" line="232" />
@@ -6767,297 +6822,297 @@ Tips: {error_hint}</translation>
 </context><context>
     <name>RegressionView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="184" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="194" />
         <source>A linear regression needs at least one numeric column to use as the target.</source>
         <translation>En linjär regression kräver minst en numerisk kolumn som målvariabel.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="186" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="196" />
         <source>Select one or more predictors and click Apply.</source>
         <translation>Markera en eller flera prediktorer och klicka på Tillämpa.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="188" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="198" />
         <source>Select at most {maximum} predictors.</source>
         <translation>Markera högst {maximum} prediktorer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="190" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="200" />
         <source>Choose a numeric target and one or more other columns as predictors.</source>
         <translation>Välj en numerisk målvariabel och en eller flera andra kolumner som prediktorer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="192" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="202" />
         <source>The model would have more than {maximum} terms once the categorical predictors are dummy-coded. Remove predictors, or use categorical predictors with fewer levels.</source>
         <translation>Modellen skulle ha fler än {maximum} termer när de kategoriska prediktorerna dummy-kodas. Ta bort prediktorer eller använd kategoriska prediktorer med färre nivåer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="197" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="207" />
         <source>Only {count} rows have values in the target and every predictor, which is too few to fit this model.</source>
         <translation>Endast {count} rader har värden för målvariabeln och alla prediktorer, vilket är för få för att anpassa denna modell.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="202" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="212" />
         <source>The target {column} has the same value in every row used, so there is nothing to explain.</source>
         <translation>Målvariabeln {column} har samma värde i varje använd rad, så det finns inget att förklara.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="206" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="216" />
         <source>The predictor {column} has the same value in every row used, so its effect can't be estimated.</source>
         <translation>Prediktorn {column} har samma värde i varje använd rad, så dess effekt kan inte skattas.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="210" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="220" />
         <source>Some predictors are exact linear combinations of others (perfect multicollinearity), so the coefficients can't be estimated. Remove the redundant predictors.</source>
         <translation>Vissa prediktorer är exakta linjära kombinationer av andra (perfekt multikollinearitet), så koefficienterna kan inte skattas. Ta bort de redundanta prediktorerna.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="221" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="231" />
         <source>High multicollinearity (VIF above {threshold}) for: {terms}. Their coefficients and p-values are unstable.</source>
         <translation>Hög multikollinearitet (VIF över {threshold}) för: {terms}. Deras koefficienter och p-värden är instabila.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="226" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="236" />
         <source>The residual variance is not constant (heteroscedasticity), so standard errors and p-values may be unreliable.</source>
         <translation>Residualvariansen är inte konstant (heteroskedasticitet), så standardfel och p-värden kan vara otillförlitliga.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="231" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="241" />
         <source>The residuals are not normally distributed. With few rows, p-values and confidence intervals may be unreliable.</source>
         <translation>Residualerna är inte normalfördelade. Med få rader kan p-värden och konfidensintervall vara otillförlitliga.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="236" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="246" />
         <source>The residuals appear autocorrelated in row order, so standard errors may be too small.</source>
         <translation>Residualerna verkar vara autokorrelerade i radordningen, så standardfelen kan vara för små.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="266" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="276" />
         <source>Linear regression</source>
         <translation>Linjär regression</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="267" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="277" />
         <source>Target: &lt;b&gt;{target}&lt;/b&gt;</source>
         <translation>Målvariabel: &lt;b&gt;{target}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="268" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="278" />
         <source>Rows used: {used} ({dropped} dropped because of missing values)</source>
         <translation>Använda rader: {used} ({dropped} borttagna på grund av saknade värden)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="271" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="281" />
         <source>R&lt;sup&gt;2&lt;/sup&gt; = {r2}, adjusted R&lt;sup&gt;2&lt;/sup&gt; = {adjusted}</source>
         <translation>R&lt;sup&gt;2&lt;/sup&gt; = {r2}, justerat R&lt;sup&gt;2&lt;/sup&gt; = {adjusted}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="274" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="284" />
         <source>F({df_model}, {df_residual}) = {f}, p {p}</source>
         <translation>F({df_model}, {df_residual}) = {f}, p {p}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="280" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="290" />
         <source>RMSE = {rmse}, AIC = {aic}</source>
         <translation>RMSE = {rmse}, AIC = {aic}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="284" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="294" />
         <source>&lt;b&gt;Diagnostics&lt;/b&gt;</source>
         <translation>&lt;b&gt;Diagnostik&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="289" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="299" />
         <source>⚠ {warning}</source>
         <translation>⚠ {warning}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="293" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="303" />
         <source>&lt;b&gt;Warnings&lt;/b&gt;</source>
         <translation>&lt;b&gt;Varningar&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="303" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="313" />
         <source>Breusch-Pagan: LM = {statistic}, p {p} - {verdict}</source>
         <translation>Breusch-Pagan: LM = {statistic}, p {p} – {verdict}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="306" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="316" />
         <source>non-constant residual variance</source>
         <translation>icke-konstant residualvarians</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="308" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="318" />
         <source>no evidence of non-constant residual variance</source>
         <translation>inga belägg för icke-konstant residualvarians</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="310" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="320" />
         <source>Jarque-Bera: JB = {statistic}, p {p} - {verdict}</source>
         <translation>Jarque-Bera: JB = {statistic}, p = {p} – {verdict}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="313" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="323" />
         <source>residuals not normally distributed</source>
         <translation>residualerna är inte normalfördelade</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="315" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="325" />
         <source>residuals consistent with a normal distribution</source>
         <translation>residualerna är förenliga med en normalfördelning</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="320" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="330" />
         <source>&lt;i&gt;With many rows even negligible deviations from normality are significant. Judge by the Q-Q plot instead.&lt;/i&gt;</source>
         <translation>&lt;i&gt;Vid många observationer blir även mycket små avvikelser från normalfördelning statistiskt signifikanta. Bedöm därför normaliteten utifrån Q-Q-diagrammet i stället.&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="327" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="337" />
         <source>Durbin-Watson = {statistic} - {verdict}</source>
         <translation>Durbin-Watson = {statistic} – {verdict}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="331" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="341" />
         <source>&lt;i&gt;Durbin-Watson is only meaningful when the row order is meaningful (e.g. rows sorted by time).&lt;/i&gt;</source>
         <translation>&lt;i&gt;Durbin-Watson är endast meningsfullt när radordningen är meningsfull (t.ex. när raderna är sorterade efter tid).&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="334" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="344" />
         <source>Largest VIF = {vif} - {verdict}</source>
         <translation>Största VIF = {vif} – {verdict}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="336" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="346" />
         <source>high multicollinearity</source>
         <translation>hög multikollinearitet</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="338" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="348" />
         <source>no problematic multicollinearity</source>
         <translation>ingen problematisk multikollinearitet</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="346" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="356" />
         <source>positive autocorrelation</source>
         <translation>positiv autokorrelation</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="348" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="358" />
         <source>negative autocorrelation</source>
         <translation>negativ autokorrelation</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="349" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="359" />
         <source>no evidence of autocorrelation</source>
         <translation>inga belägg för autokorrelation</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="396" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="406" />
         <source>Term</source>
         <translation>Term</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="397" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="407" />
         <source>Estimate</source>
         <translation>Skattning</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="398" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="408" />
         <source>Std. error</source>
         <translation>Std.fel</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="399" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="409" />
         <source>t</source>
         <translation>t</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="400" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="410" />
         <source>p</source>
         <translation>p</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="401" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="411" />
         <source>{confidence}% CI</source>
         <translation>{confidence} % KI</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="402" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="412" />
         <source>VIF</source>
         <translation>VIF</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="451" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="461" />
         <source>N/A</source>
         <translation>Ej tillämpligt</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="452" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="462" />
         <source>{low} to {high}</source>
         <translation>{low} till {high}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="457" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="467" />
         <source>* marks coefficients significant at p &amp;lt; {alpha}.</source>
         <translation>* markerar koefficienter som är statistiskt signifikanta vid p &amp;lt; {alpha}.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="467" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="477" />
         <source>Each categorical level is compared with its column's reference level (the most frequent level):</source>
         <translation>Varje kategorinivå jämförs med kolumnens referensnivå (den vanligaste nivån):</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="469" />
+        <location filename="..\..\gui\dialogs\analysis\regression_view.py" line="479" />
         <source>{column}: reference level &lt;b&gt;{level}&lt;/b&gt; ({count} levels)</source>
         <translation>{column}: referensnivå &lt;b&gt;{level}&lt;/b&gt; ({count} nivåer)</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="140" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="151" />
         <source>Residuals vs fitted</source>
         <translation>Residualer mot skattade värden</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="141" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="152" />
         <source>Fitted value</source>
         <translation>Skattat värde</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="142" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="153" />
         <source>Residual</source>
         <translation>Residual</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="143" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="154" />
         <source>Actual vs predicted</source>
         <translation>Faktiskt mot predicerat</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="144" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="155" />
         <source>Predicted {target}</source>
         <translation>Predicerat {target}</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="145" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="156" />
         <source>Actual {target}</source>
         <translation>Faktiskt {target}</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="146" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="157" />
         <source>Normal Q-Q plot of residuals</source>
         <translation>Normal Q-Q-diagram för residualer</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="147" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="158" />
         <source>Theoretical quantile</source>
         <translation>Teoretisk kvantil</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="148" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="159" />
         <source>Standardized residual</source>
         <translation>Standardiserad residual</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="152" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="163" />
         <source>Plots show a random sample of {shown} of {total} rows. Statistics use all rows.</source>
         <translation>Visar ett slumpmässigt urval av {shown} av {total} rader i diagrammen. Statistiken baseras på samtliga rader.</translation>
     </message>
@@ -7612,6 +7667,11 @@ Tid: {sec:.2f}s{sample}</translation>
     </message>
 </context><context>
     <name>RestController</name>
+    <message>
+        <location filename="..\..\workbench\controllers\rest_controller.py" line="60" />
+        <source>A connection named '{name}' already exists.</source>
+        <translation>Det finns redan en anslutning med namnet '{name}'.</translation>
+    </message>
     <message>
         <location filename="..\..\workbench\controllers\rest_controller.py" line="53" />
         <source>Fetching data from API {name}…</source>
@@ -9169,47 +9229,47 @@ Tid: {sec:.2f}s{sample}</translation>
         <translation>Stäng alla</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="196" />
+        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="198" />
         <source>Derived column…</source>
         <translation>Beräknad kolumn…</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="197" />
+        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="199" />
         <source>Join…</source>
         <translation>Join…</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="198" />
+        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="200" />
         <source>Concatenate…</source>
         <translation>Konkatenera…</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="201" />
+        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="203" />
         <source>Processing data…</source>
         <translation>Processar data…</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="202" />
+        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="204" />
         <source>Updating table…</source>
         <translation>Uppdaterar tabell…</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="203" />
+        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="205" />
         <source>Loading data…</source>
         <translation>Laddar data…</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="204" />
+        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="206" />
         <source>Preparing dataset…</source>
         <translation>Förbereder dataset…</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="205" />
+        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="207" />
         <source>pending…</source>
         <translation>pågår…</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="206" />
+        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="208" />
         <source>Formatting cell values…</source>
         <translation>Formaterar värden i celler…</translation>
     </message>
@@ -9341,14 +9401,6 @@ Tid: {sec:.2f}s{sample}</translation>
         <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="436" />
         <source>SCB query error</source>
         <translation>SCB fråga fel</translation>
-    </message>
-</context><context>
-    <name>SchemaCacheManager</name>
-    <message>
-        <location filename="..\..\services\schema_cache.py" line="182" />
-        <source>DbErrors</source>
-        <comment>Settings for schema cache updated.</comment>
-        <translation>DbErrors</translation>
     </message>
 </context><context>
     <name>SchemaController</name>
@@ -9587,8 +9639,8 @@ Tid: {sec:.2f}s{sample}</translation>
     <message>
         <location filename="..\..\app\settings\settings_editor.py" line="574" />
         <source>Could not save settings:
-%1</source>
-        <translation>Kunde inte spara inställningar: %1</translation>
+{error}</source>
+        <translation>Kunde inte spara inställningar: {error}</translation>
     </message>
     <message>
         <location filename="..\..\app\settings\settings_editor.py" line="578" />
@@ -9603,256 +9655,256 @@ Tid: {sec:.2f}s{sample}</translation>
 </context><context>
     <name>StatisticsView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="58" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="56" />
         <source>Count (% non-missing)</source>
         <translation>Antal (% icke-saknade)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="59" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="57" />
         <source>Continuous</source>
         <translation>Kontinuerliga</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="60" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="58" />
         <source>Categorical</source>
         <translation>Kategoriska</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\statistics_charts.py" line="59" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="61" />
+        <location filename="..\..\services\analysis\statistics_charts.py" line="60" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="59" />
         <source>Distribution</source>
         <translation>Fördelning</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="62" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="60" />
         <source>Fraction (non-missing)</source>
         <translation>Andel (icke-saknade)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="63" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="61" />
         <source>Missing fraction</source>
         <translation>Andel saknade värden</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="64" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="62" />
         <source>Valid count</source>
         <translation>Antal giltiga</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="65" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="63" />
         <source>Shapiro-Wilk W</source>
         <translation>Shapiro-Wilk W</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="66" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="64" />
         <source>Shapiro-Wilk p-value</source>
         <translation>Shapiro-Wilk p-värde</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="67" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="65" />
         <source>Recommended summary</source>
         <translation>Rekommenderad sammanfattning</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="232" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="132" />
         <source>No numeric columns or eligible categorical columns in this dataset.</source>
         <translation>Datasetet innehåller inga numeriska kolumner eller lämpliga kategorikolumner.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="242" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="142" />
         <source>Descriptive statistics</source>
         <translation>Deskriptiv statistik</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="265" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="165" />
         <source>* marks the summary suggested by Shapiro-Wilk. No star means no recommendation is available.</source>
         <translation>* markerar sammanfattningen som Shapiro-Wilk föreslår. Ingen stjärna betyder att ingen rekommendation är tillgänglig.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="367" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="280" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="267" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="180" />
         <source>Column</source>
         <translation>Kolumn</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="369" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="281" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="269" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="181" />
         <source>Count</source>
         <translation>Antal</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="282" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="182" />
         <source>Missing</source>
         <translation>Saknade</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="283" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="183" />
         <source>Mean</source>
         <translation>Medelvärde</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="284" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="184" />
         <source>Median</source>
         <translation>Median</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="285" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="185" />
         <source>Std Dev</source>
         <translation>Standardavvikelse</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="286" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="186" />
         <source>Variance</source>
         <translation>Varians</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="287" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="187" />
         <source>Min</source>
         <translation>Min</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="288" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="188" />
         <source>Max</source>
         <translation>Max</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="289" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="189" />
         <source>Range</source>
         <translation>Spann</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="290" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="190" />
         <source>Q1</source>
         <translation>Q1</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="291" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="191" />
         <source>Q3</source>
         <translation>Q3</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="292" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="192" />
         <source>IQR</source>
         <translation>IQR</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="293" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="193" />
         <source>Skewness</source>
         <translation>Skevhet</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="294" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="194" />
         <source>Kurtosis</source>
         <translation>Kurtosis</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="438" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="295" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="338" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="195" />
         <source>Mean ± SD</source>
         <translation>Medelvärde ± standardavvikelse</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="438" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="296" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="338" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="196" />
         <source>Median (Q1 to Q3)</source>
         <translation>Median (Q1 till Q3)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="354" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="254" />
         <source>Columns with more than {maximum} distinct values are omitted.</source>
         <translation>Kolumner med fler än {maximum} unika värden visas inte.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="368" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="268" />
         <source>Category</source>
         <translation>Kategori</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="370" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="270" />
         <source>Percent (non-missing)</source>
         <translation>Procent (icke-saknade)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="371" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="271" />
         <source>Missing count</source>
         <translation>Antal saknade</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="376" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="276" />
         <source>No non-missing values</source>
         <translation>Inga icke-saknade värden</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="432" />
-        <source>{column}: Shapiro-Wilk could not provide a recommendation; neither summary is starred.</source>
-        <translation>{column}: Shapiro-Wilk kunde inte ge någon rekommendation; ingen av sammanfattningarna är markerad med en stjärna.</translation>
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="332" />
+        <source>{column}: Shapiro-Wilk could not provide a recommendation. Neither summary is starred.</source>
+        <translation>{column}: Shapiro-Wilk kunde inte ge någon rekommendation. Ingen av sammanfattningarna är markerad med en stjärna.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="439" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="339" />
         <source>{column}: Shapiro-Wilk suggests {summary} as a starting point. This is a guide, not proof of normality.</source>
         <translation>{column}: Shapiro-Wilk föreslår {summary} som utgångspunkt. Detta är vägledning, inte ett bevis på normalfördelning.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="443" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="343" />
         <source>Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</source>
         <translation>Stickprovsstorleken överstiger {threshold}. P-värdet kan vara osäkert för mycket stora stickprov.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="482" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="382" />
         <source>No numeric columns are available for distributions.</source>
         <translation>Inga numeriska kolumner är tillgängliga för fördelningsdiagram.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="508" />
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="495" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="408" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="395" />
         <source>&lt;b&gt;Shapiro-Wilk&lt;/b&gt;:</source>
         <translation>&lt;b&gt;Shapiro-Wilk&lt;/b&gt;:</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="504" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="404" />
         <source>Normality testing applies to continuous variables.</source>
         <translation>Normalitetstestning gäller kontinuerliga variabler.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="565" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="469" />
         <source>Not enough data to test for normality.</source>
         <translation>Inte tillräckligt med data för att testa normalfördelning.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="568" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="472" />
         <source>W = {w}, p = {p}</source>
         <translation>W = {w}, p = {p}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="575" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="479" />
         <source>→ Significant evidence against normality (α = 0.05).</source>
         <translation>→ Statistiskt signifikanta belägg mot normalfördelning (α = 0,05).</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="577" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="481" />
         <source>→ No significant evidence against normality (α = 0.05).</source>
         <translation>→ Inga statistiskt signifikanta belägg mot normalfördelning (α = 0,05).</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="581" />
+        <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="485" />
         <source>⚠ Sample size exceeds {threshold}. The p-value may not be accurate for very large samples.</source>
         <translation>⚠ Antalet observationer överstiger {threshold}. P-värdet kan vara mindre tillförlitligt för mycket stora stickprov.</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="421" />
-        <location filename="..\..\services\analysis\statistics_charts.py" line="54" />
+        <location filename="..\..\services\analysis\statistics_charts.py" line="55" />
         <source>Histogram</source>
         <translation>Histogram</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="422" />
-        <location filename="..\..\services\analysis\statistics_charts.py" line="55" />
+        <location filename="..\..\services\analysis\statistics_charts.py" line="56" />
         <source>Boxplot</source>
         <translation>Boxplot</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="423" />
-        <location filename="..\..\services\analysis\statistics_charts.py" line="56" />
+        <location filename="..\..\services\analysis\statistics_charts.py" line="57" />
         <source>No data</source>
         <translation>Ingen data</translation>
     </message>
@@ -9876,194 +9928,194 @@ Tid: {sec:.2f}s{sample}</translation>
 </context><context>
     <name>SurvivalRegressionView</name>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="163" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="169" />
         <source>Select a duration column for Cox regression.</source>
         <translation>Välj en durationkolumn för Cox-regression.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="165" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="171" />
         <source>Select a binary event column for Cox regression.</source>
         <translation>Välj en binär händelsekolumn för Cox-regression.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="167" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="173" />
         <source>Select one or more predictors and click Apply.</source>
         <translation>Välj en eller flera prediktorer och klicka på Tillämpa.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="169" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="175" />
         <source>Select at most {maximum} predictors.</source>
         <translation>Välj högst {maximum} prediktorer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="171" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="177" />
         <source>Choose valid, distinct duration and event columns and other columns as predictors.</source>
         <translation>Välj giltiga, olika duration- och händelsekolumner samt andra kolumner som prediktorer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="173" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="179" />
         <source>Duration {column} contains a non-missing value that is not finite and strictly positive.</source>
         <translation>Duration {column} innehåller ett värde som inte saknas men som inte är ändligt och strikt positivt.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="177" />
-        <source>Event {column} must contain only 0 and 1 or boolean values; 1 means event and 0 means censored.</source>
-        <translation>Händelsen {column} får endast innehålla 0 och 1 eller booleska värden; 1 betyder händelse och 0 betyder censurerad.</translation>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="183" />
+        <source>Event {column} must contain only 0 and 1 or boolean values. 1 means event and 0 means censored.</source>
+        <translation>Händelsen {column} får endast innehålla 0 och 1 eller booleska värden. 1 betyder händelse och 0 betyder censurerad.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="181" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="187" />
         <source>The model would have more than {maximum} terms after categorical predictors are dummy-coded. Remove predictors or use columns with fewer levels.</source>
         <translation>Modellen skulle ha fler än {maximum} termer efter dummy-kodning av kategoriska prediktorer. Ta bort prediktorer eller använd kolumner med färre nivåer.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="186" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="192" />
         <source>Only {count} complete rows are available, which is too few to fit this model.</source>
         <translation>Endast {count} kompletta rader är tillgängliga, vilket är för få för att anpassa modellen.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="190" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="196" />
         <source>There are too few events relative to the model terms to estimate this model.</source>
         <translation>Det finns för få händelser i förhållande till modellens termer för att skatta modellen.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="192" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="198" />
         <source>The predictor {column} has the same value in every complete row.</source>
         <translation>Prediktorn {column} har samma värde i varje komplett rad.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="194" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="200" />
         <source>Some predictors are exact linear combinations of others, so the model cannot be estimated.</source>
         <translation>Vissa prediktorer är exakta linjära kombinationer av andra, så modellen kan inte skattas.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="198" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="204" />
         <source>The model could not be fitted reliably. Check for sparse events, separation, redundant predictors, or numerical problems.</source>
         <translation>Modellen kunde inte anpassas tillförlitligt. Kontrollera om händelserna är glesa, om separation eller redundanta prediktorer förekommer eller om det finns numeriska problem.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="209" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="215" />
         <source>Term</source>
         <translation>Term</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="210" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="216" />
         <source>Coefficient</source>
         <translation>Koefficient</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="211" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="217" />
         <source>Hazard ratio</source>
         <translation>Hazardkvot</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="212" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="218" />
         <source>95% hazard-ratio CI</source>
         <translation>95 % KI för hazardkvot</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="213" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="219" />
         <source>p-value</source>
         <translation>p-värde</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="243" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="249" />
         <source>&lt;b&gt;Cox proportional-hazards regression&lt;/b&gt;</source>
         <translation>&lt;b&gt;Cox-regression med proportionella hazarder&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="244" />
-        <source>Duration: &lt;b&gt;{duration}&lt;/b&gt;; event: &lt;b&gt;{event}&lt;/b&gt;</source>
-        <translation>Duration: &lt;b&gt;{duration}&lt;/b&gt;; händelse: &lt;b&gt;{event}&lt;/b&gt;</translation>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="250" />
+        <source>Duration: &lt;b&gt;{duration}&lt;/b&gt;, event: &lt;b&gt;{event}&lt;/b&gt;</source>
+        <translation>Duration: &lt;b&gt;{duration}&lt;/b&gt;, händelse: &lt;b&gt;{event}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="248" />
-        <source>Event coding: 1 = event; 0 = censored.</source>
-        <translation>Händelsekodning: 1 = händelse; 0 = censurerad.</translation>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="254" />
+        <source>Event coding: 1 = event, 0 = censored.</source>
+        <translation>Händelsekodning: 1 = händelse, 0 = censurerad.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="249" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="255" />
         <source>Rows used: {used} ({dropped} excluded by listwise missing-value handling)</source>
         <translation>Använda rader: {used} ({dropped} exkluderade genom komplettfallsanalys av saknade värden)</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="253" />
-        <source>Events: {events}; censored: {censored}</source>
-        <translation>Händelser: {events}; censurerade: {censored}</translation>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="259" />
+        <source>Events: {events}, censored: {censored}</source>
+        <translation>Händelser: {events}, censurerade: {censored}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="259" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="265" />
         <source>Reference for {column}: {level}</source>
         <translation>Referens för {column}: {level}</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="266" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="272" />
         <source>Efron method was used to handle tied event times.</source>
         <translation>Efrons metod användes för att hantera bundna händelsetider.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="267" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="273" />
         <source>The proportional-hazards assumption was not assessed.</source>
         <translation>Antagandet om proportionella hazarder har inte utvärderats.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="271" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="277" />
         <source>Kaplan-Meier uses the same complete-case subjects as the Cox fit, without covariate adjustment.</source>
         <translation>Kaplan-Meier använder samma individer med kompletta värden som Cox-modellen, utan justering för kovariater.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="274" />
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="280" />
         <source>The survival curve is not a Cox prediction or a proportional-hazards diagnostic.</source>
         <translation>Överlevnadskurvan är inte en Cox-prediktion eller en diagnostik av antagandet om proportionella hazarder.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="275" />
-        <source>Plus signs mark censoring times; tied censor marks may overlap.</source>
-        <translation>Plustecken markerar censureringstidpunkter; markeringar vid samma tidpunkt kan överlappa.</translation>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="281" />
+        <source>Plus signs mark censoring times. Tied censor marks may overlap.</source>
+        <translation>Plustecken markerar censureringstidpunkter. Markeringar vid samma tidpunkt kan överlappa.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="276" />
-        <source>All complete subjects are used; no survival sampling or confidence bands are applied.</source>
-        <translation>Alla individer med kompletta värden används; inget urval eller konfidensband för överlevnad används.</translation>
+        <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="282" />
+        <source>All complete subjects are used. No survival sampling or confidence bands are applied.</source>
+        <translation>Alla individer med kompletta värden används. Inget urval eller konfidensband för överlevnad används.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="228" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="239" />
         <source>Hazard ratios with 95% intervals</source>
         <translation>Hazardkvoter med 95 % intervall</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="229" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="240" />
         <source>Forest plot unavailable:
 all hazard ratios and intervals must be finite and positive.</source>
         <translation>Forestdiagrammet är inte tillgängligt:
 alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="233" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="244" />
         <source>Hazard ratio (log scale)</source>
         <translation>Hazardkvot (logaritmisk skala)</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="234" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="245" />
         <source>Overall Kaplan-Meier survival (unadjusted)</source>
         <translation>Övergripande Kaplan-Meier-överlevnad (ojusterad)</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="235" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="246" />
         <source>No survival chart data are available.</source>
         <translation>Inga diagramdata för överlevnad är tillgängliga.</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="236" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="247" />
         <source>Duration: {column}</source>
         <translation>Tid: {column}</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="237" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="248" />
         <source>Survival probability</source>
         <translation>Överlevnadssannolikhet</translation>
     </message>
     <message>
-        <location filename="..\..\services\analysis\regression_charts.py" line="238" />
+        <location filename="..\..\services\analysis\regression_charts.py" line="249" />
         <source>At risk immediately before time</source>
         <translation>Antal i riskpopulationen omedelbart före tidpunkten</translation>
     </message>
@@ -10090,50 +10142,50 @@ alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
     <name>TimeSeriesPresentation</name>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="379" />
-        <location filename="..\..\services\analysis\timeseries_charts.py" line="75" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="81" />
         <source>Series</source>
         <translation>Serie</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="380" />
-        <location filename="..\..\services\analysis\timeseries_charts.py" line="82" />
-        <location filename="..\..\services\analysis\timeseries_charts.py" line="79" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="89" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="86" />
         <source>Autocorrelation</source>
         <translation>Autokorrelation</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="388" />
-        <location filename="..\..\services\analysis\timeseries_charts.py" line="81" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="88" />
         <source>Lag</source>
         <translation>Fördröjning</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="383" />
-        <location filename="..\..\services\analysis\timeseries_charts.py" line="84" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="92" />
         <source>Seasonal decomposition</source>
         <translation>Säsongsdekomponering</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="384" />
-        <location filename="..\..\services\analysis\timeseries_charts.py" line="86" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="94" />
         <source>Observed</source>
         <translation>Observerad</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="385" />
-        <location filename="..\..\services\analysis\timeseries_charts.py" line="87" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="95" />
         <source>Trend</source>
         <translation>Trend</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="386" />
-        <location filename="..\..\services\analysis\timeseries_charts.py" line="88" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="96" />
         <source>Seasonal</source>
         <translation>Säsong</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\analysis\analysis_controller.py" line="387" />
-        <location filename="..\..\services\analysis\timeseries_charts.py" line="89" />
+        <location filename="..\..\services\analysis\timeseries_charts.py" line="97" />
         <source>Residual</source>
         <translation>Residual</translation>
     </message>
@@ -10266,8 +10318,8 @@ alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="132" />
-        <source>No seasonal period could be detected; choose one to decompose the series.</source>
-        <translation>Ingen säsongsperiod kunde identifieras; välj en för att dekomponera serien.</translation>
+        <source>No seasonal period could be detected. Choose one to decompose the series.</source>
+        <translation>Ingen säsongsperiod kunde identifieras. Välj en för att dekomponera serien.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="135" />

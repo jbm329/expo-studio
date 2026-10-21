@@ -175,6 +175,23 @@ def test_on_worker_error_shows_critical():
     assert dialogs.critical.called
 
 
+def test_worker_error_formats_named_trace_in_query_context(monkeypatch):
+    from expo_jbm329.utils.i18n_utils import translate_fmt
+    from expo_jbm329.workbench.controllers import query_controller
+
+    qc, _, async_ops, _, _, dialogs = make_qc()
+    formatter = MagicMock(wraps=translate_fmt)
+    monkeypatch.setattr(query_controller, "translate_fmt", formatter)
+    qc.run_full()
+    async_ops.last_call["on_error"]("trace {literal} %1")
+
+    formatter.assert_called_once_with(
+        "QueryController", qc.TR_FAILED_TO_RUN_SQL_TRACE, traceback_str="trace {literal} %1"
+    )
+    assert dialogs.critical.call_args.kwargs["text"] == "Failed to run SQL.\n\ntrace {literal} %1"
+    assert not hasattr(QueryController, "_tr_fmt")
+
+
 def test_ambiguous_column_failure_shows_actionable_dialog_and_log():
     qc, _, async_ops, results, _, dialogs = make_qc(sql_text="SELECT id FROM users u JOIN orders o ON o.user_id = u.id")
     qc._logger = MagicMock()

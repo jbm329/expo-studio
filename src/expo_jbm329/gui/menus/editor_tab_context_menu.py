@@ -17,7 +17,7 @@ from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QMenu, QWidget
 
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -51,11 +51,11 @@ class EditorTabContextMenu:
 
     @staticmethod
     def _tr(tr_text: str) -> str:
-        return tr("EditorTabContextMenu", tr_text)
+        return translate("EditorTabContextMenu", tr_text)
 
     @staticmethod
     def _tr_fmt(tr_text: str, **kwargs: str) -> str:
-        return tr_fmt("EditorTabContextMenu", tr_text, **kwargs)
+        return translate_fmt("EditorTabContextMenu", tr_text, **kwargs)
 
     __slots__ = (
         "_bind_tab_to_connection",

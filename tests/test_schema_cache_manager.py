@@ -39,6 +39,40 @@ def test_reload_settings_clamps_values() -> None:
     assert any("updated" in msg.lower() for msg, _ in rec.status)
 
 
+def test_bulk_status_uses_db_errors_formatting_wrapper(monkeypatch):
+    from expo_jbm329.services import schema_cache
+    from expo_jbm329.utils.i18n_utils import translate_fmt
+
+    mgr, rec = make_manager()
+    mgr._cache["Conn1"] = SchemaCacheEntry(tables=[{"schema": "dbo", "name": "A"}])
+    token = mgr._make_token("Conn1")
+    formatter = MagicMock(wraps=translate_fmt)
+    monkeypatch.setattr(schema_cache, "translate_fmt", formatter)
+    mgr._on_bulk_done("Conn1", token, {("dbo", "A"): [{"COLUMN_NAME": "id"}]})
+
+    formatter.assert_called_once_with("DbErrors", schema_cache.TR_AUTOCOMPLETE_READY_BULK, count="1")
+    assert rec.status[-1] == (translate_fmt("DbErrors", schema_cache.TR_AUTOCOMPLETE_READY_BULK, count="1"), 8000)
+
+
+def test_batch_status_uses_db_errors_formatting_wrapper(monkeypatch):
+    from expo_jbm329.services import schema_cache
+    from expo_jbm329.utils.i18n_utils import translate_fmt
+
+    mgr, _ = make_manager()
+    token = mgr._make_token("Conn1")
+    formatter = MagicMock(wraps=translate_fmt)
+    monkeypatch.setattr(schema_cache, "translate_fmt", formatter)
+    runner = MagicMock()
+    mgr.set_job_runner(runner)
+
+    mgr._run_next_batch("Conn1", token, [("dbo", "A")], 1, 2, 3)
+
+    formatter.assert_called_once_with("DbErrors", schema_cache.TR_PREPARING_AUTOCOMPLETE_BATCH, done="2", total="3")
+    assert runner.call_args.kwargs["started_msg"] == translate_fmt(
+        "DbErrors", schema_cache.TR_PREPARING_AUTOCOMPLETE_BATCH, done="2", total="3"
+    )
+
+
 def test_load_schema_uses_cache_and_status():
     mgr, rec = make_manager()
     mgr.reload_settings({"schema_cache": {"ttl_seconds": 300}})

@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import QT_TR_NOOP
 
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -74,11 +74,11 @@ class ResultTabHeaderFillActions:
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("ResultTabHeaderFillActions", text)
+        return translate("ResultTabHeaderFillActions", text)
 
     @staticmethod
     def _tr_fmt(text: str, **kwargs: object) -> str:
-        return tr_fmt("ResultTabHeaderFillActions", text, **kwargs)
+        return translate_fmt("ResultTabHeaderFillActions", text, **kwargs)
 
     # ------------------------------------------------------------------
     # Init

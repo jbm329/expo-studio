@@ -10,6 +10,7 @@ from expo_jbm329.app.settings.config_store import (
     save_settings,
 )
 from expo_jbm329.app.settings.settings_editor import SettingsEditor
+from expo_jbm329.i18n.language import Language
 
 
 @pytest.fixture
@@ -41,6 +42,47 @@ def test_settings_editor_gui_theme_disabled_and_system(mock_dialogs, mock_file_d
     )
     assert dialog.cmb_theme.isEnabled() is False
     assert dialog.cmb_theme.currentText() == "system"
+
+
+@pytest.mark.parametrize("language", list(Language))
+def test_settings_editor_language_selection_round_trip(
+    language: Language,
+    mock_dialogs: MagicMock,
+    mock_file_dialogs: MagicMock,
+    mock_highlighter_service: MagicMock,
+) -> None:
+    settings = load_settings()
+    settings["workbench"]["language"] = language.value
+    save_settings(settings)
+    dialog = SettingsEditor(
+        dialogs=mock_dialogs,
+        file_dialogs=mock_file_dialogs,
+        highlighter_theme_service=mock_highlighter_service,
+    )
+
+    options = [
+        (dialog.cmb_language.itemText(index), dialog.cmb_language.itemData(index))
+        for index in range(dialog.cmb_language.count())
+    ]
+    assert options == [
+        ("Svenska", "sv"),
+        ("English", "en"),
+        ("Deutsch", "de"),
+        ("Français", "fr"),
+        ("Italiano", "it"),
+        ("Español", "es"),
+        ("Polski", "pl"),
+    ]
+    assert dialog.cmb_language.currentData() == language.value
+    assert dialog.cmb_language.currentText() == language.display_name
+
+    next_language = list(Language)[(list(Language).index(language) + 1) % len(Language)]
+    dialog.cmb_language.setCurrentIndex(dialog.cmb_language.findData(next_language.value))
+    dialog._on_save()
+
+    assert load_settings()["workbench"]["language"] == next_language.value
+    mock_dialogs.info.assert_called_once()
+    mock_dialogs.critical.assert_not_called()
 
 
 def test_settings_editor_init_populates_controls(tmp_path, mock_dialogs, mock_file_dialogs, mock_highlighter_service):
@@ -255,18 +297,28 @@ def test_settings_editor_sniff_toggle_updates_separator_enabled(
     assert dialog.cmb_csv_default_sep.isEnabled() is True
 
 
-def test_settings_editor_save_handles_error(monkeypatch, mock_dialogs, mock_file_dialogs, mock_highlighter_service):
+def test_settings_editor_save_handles_error(
+    monkeypatch: pytest.MonkeyPatch,
+    mock_dialogs: MagicMock,
+    mock_file_dialogs: MagicMock,
+    mock_highlighter_service: MagicMock,
+    widget_language: str,
+) -> None:
     dialog = SettingsEditor(
         dialogs=mock_dialogs,
         file_dialogs=mock_file_dialogs,
         highlighter_theme_service=mock_highlighter_service,
     )
 
-    def _fail_save(*args, **kwargs):
-        msg = "Permission denied"
+    error = "Permission denied {error} %1"
+
+    def _fail_save(*args: object, **kwargs: object) -> None:
+        msg = error
         raise OSError(msg)
 
     monkeypatch.setattr("expo_jbm329.app.settings.settings_editor.save_settings", _fail_save)
 
     dialog._on_save()
-    assert mock_dialogs.critical.call_count == 1
+    prefix = "Kunde inte spara inställningar: " if widget_language == "sv" else "Could not save settings:\n"
+    mock_dialogs.critical.assert_called_once_with(dialog, dialog.tr("Failure"), f"{prefix}{error}")
+    mock_dialogs.info.assert_not_called()

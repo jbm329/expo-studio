@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtCore import QT_TRANSLATE_NOOP
 from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.common.window_hints import apply_dialog_window_hints
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
     from expo_jbm329.gui.dialogs.service.dialog_service import (
@@ -26,6 +27,30 @@ if TYPE_CHECKING:
         TextReplaceResult,
         ValueReplaceResult,
     )
+
+
+# ----------------------------------------------------------------------
+# i18n
+# ----------------------------------------------------------------------
+TR_TEXT_TO_REPLACE = QT_TRANSLATE_NOOP("QtDialogService", "Text/string to replace:")
+TR_REPLACE_WITH = QT_TRANSLATE_NOOP("QtDialogService", "Replace with:")
+TR_CASE_SENSITIVE = QT_TRANSLATE_NOOP("QtDialogService", "Case sensitive")
+TR_TEXT_TO_INSERT = QT_TRANSLATE_NOOP("QtDialogService", "Text to insert:")
+TR_POSITION = QT_TRANSLATE_NOOP("QtDialogService", "Position (0-based):")
+TR_COLUMN = QT_TRANSLATE_NOOP("QtDialogService", "Column: {column}")
+TR_CURRENT_VALUE = QT_TRANSLATE_NOOP("QtDialogService", "Current value: {current_value}")
+TR_NEW_VALUE = QT_TRANSLATE_NOOP("QtDialogService", "New value:")
+TR_REPLACE_ALL = QT_TRANSLATE_NOOP("QtDialogService", "Replace value in all cells")
+
+
+def _tr(text: str) -> str:
+    """Translate a message in this module's context."""
+    return translate("QtDialogService", text)
+
+
+def _tr_fmt(text: str, **kwargs: object) -> str:
+    """Translate and format a message in this module's context."""
+    return translate_fmt("QtDialogService", text, **kwargs)
 
 
 # ----------------------------------------------------------------------
@@ -85,8 +110,8 @@ def prompt_text_replace(
     root = QVBoxLayout(dlg)
 
     # Labels (normalize width)
-    lbl_old = QLabel(QCoreApplication.translate("QtDialogService", "Text/string to replace:"), dlg)
-    lbl_new = QLabel(QCoreApplication.translate("QtDialogService", "Replace with:"), dlg)
+    lbl_old = QLabel(_tr(TR_TEXT_TO_REPLACE), dlg)
+    lbl_new = QLabel(_tr(TR_REPLACE_WITH), dlg)
 
     max_w = max(lbl_old.sizeHint().width(), lbl_new.sizeHint().width())
     lbl_old.setFixedWidth(max_w)
@@ -108,7 +133,7 @@ def prompt_text_replace(
     row_new.addWidget(txt_new, stretch=1)
     root.addLayout(row_new)
 
-    chk_case = QCheckBox(QCoreApplication.translate("QtDialogService", "Case sensitive"), dlg)
+    chk_case = QCheckBox(_tr(TR_CASE_SENSITIVE), dlg)
     chk_case.setChecked(default_case)
     root.addWidget(chk_case)
 
@@ -155,7 +180,7 @@ def prompt_text_insert(
 
     # Insert text
     row_text = QHBoxLayout()
-    row_text.addWidget(QLabel(QCoreApplication.translate("QtDialogService", "Text to insert:"), dlg))
+    row_text.addWidget(QLabel(_tr(TR_TEXT_TO_INSERT), dlg))
     txt_insert = QLineEdit(dlg)
     txt_insert.setText(default_insert)
     row_text.addWidget(txt_insert)
@@ -163,7 +188,7 @@ def prompt_text_insert(
 
     # Position
     row_pos = QHBoxLayout()
-    row_pos.addWidget(QLabel(QCoreApplication.translate("QtDialogService", "Position (0-based):"), dlg))
+    row_pos.addWidget(QLabel(_tr(TR_POSITION), dlg))
     spin_pos = QSpinBox(dlg)
     spin_pos.setMinimum(-99999)
     spin_pos.setMaximum(99999)
@@ -215,21 +240,21 @@ def prompt_value_replace(
 
     root.addWidget(
         QLabel(
-            QCoreApplication.translate("QtDialogService", "Column: %1").replace("%1", column),
+            _tr_fmt(TR_COLUMN, column=column),
             dlg,
         )
     )
 
     root.addWidget(
         QLabel(
-            QCoreApplication.translate("QtDialogService", "Current value: %1").replace("%1", current_value),
+            _tr_fmt(TR_CURRENT_VALUE, current_value=current_value),
             dlg,
         )
     )
 
     # New value
     row = QHBoxLayout()
-    lbl = QLabel(QCoreApplication.translate("QtDialogService", "New value:"), dlg)
+    lbl = QLabel(_tr(TR_NEW_VALUE), dlg)
     txt = QLineEdit(dlg)
     txt.setText(default_new_value)
 
@@ -238,7 +263,7 @@ def prompt_value_replace(
     row.addWidget(txt, stretch=1)
     root.addLayout(row)
 
-    chk_all = QCheckBox(QCoreApplication.translate("QtDialogService", "Replace value in all cells"), dlg)
+    chk_all = QCheckBox(_tr(TR_REPLACE_ALL), dlg)
     chk_all.setChecked(default_replace_all)
     root.addWidget(chk_all)
 

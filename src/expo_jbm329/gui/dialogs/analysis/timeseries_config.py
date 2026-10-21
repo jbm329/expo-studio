@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
 from expo_jbm329.gui.dialogs.analysis.column_combo_box import ColumnComboBox
 from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.services.analysis.timeseries import DecompositionModel
-from expo_jbm329.utils.i18n_utils import tr
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.timeseries import TimeSeriesResult
@@ -93,20 +93,20 @@ class TimeSeriesConfigWidget(QWidget):
         self._datetime_combo = ColumnComboBox(self)
         self._datetime_combo.set_columns(result.available_datetime_columns, select=result.datetime_column)
         form.addRow(
-            QLabel(translate_presentation_label(PresentationLabel.TIME_SERIES_TIME_COLUMN, tr), self),
+            QLabel(translate_presentation_label(PresentationLabel.TIME_SERIES_TIME_COLUMN, translate), self),
             self._datetime_combo,
         )
 
         self._value_combo = ColumnComboBox(self)
         self._value_combo.set_columns(result.available_value_columns, select=result.value_column)
         form.addRow(
-            QLabel(translate_presentation_label(PresentationLabel.TIME_SERIES_VALUE_COLUMN, tr), self),
+            QLabel(translate_presentation_label(PresentationLabel.TIME_SERIES_VALUE_COLUMN, translate), self),
             self._value_combo,
         )
 
         self._frequency_combo = QComboBox(self)
         self._frequency_combo.addItem(
-            translate_presentation_label(PresentationLabel.TIME_SERIES_ORIGINAL_FREQUENCY, tr), None
+            translate_presentation_label(PresentationLabel.TIME_SERIES_ORIGINAL_FREQUENCY, translate), None
         )
         for frequency, label in (
             ("D", PresentationLabel.TIME_SERIES_DAILY),
@@ -115,15 +115,15 @@ class TimeSeriesConfigWidget(QWidget):
             ("QS", PresentationLabel.TIME_SERIES_QUARTERLY),
             ("YS", PresentationLabel.TIME_SERIES_YEARLY),
         ):
-            self._frequency_combo.addItem(translate_presentation_label(label, tr), frequency)
+            self._frequency_combo.addItem(translate_presentation_label(label, translate), frequency)
         self._frequency_combo.setCurrentIndex(self._frequency_combo.findData(result.resample_frequency))
         form.addRow(
-            QLabel(translate_presentation_label(PresentationLabel.TIME_SERIES_RESAMPLING, tr), self),
+            QLabel(translate_presentation_label(PresentationLabel.TIME_SERIES_RESAMPLING, translate), self),
             self._frequency_combo,
         )
 
         self._auto_period = _WrappingCheckBox(
-            translate_presentation_label(PresentationLabel.TIME_SERIES_AUTO_DETECT_PERIOD, tr), self
+            translate_presentation_label(PresentationLabel.TIME_SERIES_AUTO_DETECT_PERIOD, translate), self
         )
         self._auto_period.setChecked(result.seasonal_period is None)
         form.addRow(self._auto_period)
@@ -133,21 +133,21 @@ class TimeSeriesConfigWidget(QWidget):
         self._period_spin.setValue(result.seasonal_period or 7)
         self._period_spin.setEnabled(not self._auto_period.isChecked())
         form.addRow(
-            QLabel(translate_presentation_label(PresentationLabel.TIME_SERIES_SEASONAL_PERIOD, tr), self),
+            QLabel(translate_presentation_label(PresentationLabel.TIME_SERIES_SEASONAL_PERIOD, translate), self),
             self._period_spin,
         )
 
         self._model_combo = QComboBox(self)
         self._model_combo.addItem(
-            translate_presentation_label(PresentationLabel.TIME_SERIES_ADDITIVE, tr), DecompositionModel.ADDITIVE
+            translate_presentation_label(PresentationLabel.TIME_SERIES_ADDITIVE, translate), DecompositionModel.ADDITIVE
         )
         self._model_combo.addItem(
-            translate_presentation_label(PresentationLabel.TIME_SERIES_MULTIPLICATIVE, tr),
+            translate_presentation_label(PresentationLabel.TIME_SERIES_MULTIPLICATIVE, translate),
             DecompositionModel.MULTIPLICATIVE,
         )
         self._model_combo.setCurrentIndex(self._model_combo.findData(result.decomposition_model))
         form.addRow(
-            QLabel(translate_presentation_label(PresentationLabel.TIME_SERIES_DECOMPOSITION_MODEL, tr), self),
+            QLabel(translate_presentation_label(PresentationLabel.TIME_SERIES_DECOMPOSITION_MODEL, translate), self),
             self._model_combo,
         )
         layout.addLayout(form)

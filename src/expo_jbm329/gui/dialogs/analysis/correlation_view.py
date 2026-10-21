@@ -6,7 +6,7 @@ import html
 import math
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import (
     QFrame,
@@ -49,6 +49,7 @@ from expo_jbm329.services.analysis.presentation import (
     translate_presentation_label,
 )
 from expo_jbm329.utils.format_utils import capture_chart_numeric_locale, fmt_int, fmt_num, fmt_p_value
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -95,9 +96,7 @@ class CorrelationView(QWidget):
         super().__init__(parent)
 
         self._result = result
-        self._chart_labels = build_correlation_chart_labels(
-            result, QCoreApplication.translate, capture_chart_numeric_locale()
-        )
+        self._chart_labels = build_correlation_chart_labels(result, translate, capture_chart_numeric_locale())
         self._pair_detail: CorrelationPairDetail | None = None
         self._selected_pair: tuple[str, str] | None = None
         self._pair_selection_revision = 0
@@ -126,7 +125,7 @@ class CorrelationView(QWidget):
         presentation = build_correlation_presentation(
             result.method,
             result.columns,
-            QCoreApplication.translate,
+            translate,
         )
         layout.addWidget(AppliedConfigurationHeader(presentation, self))
 
@@ -137,7 +136,7 @@ class CorrelationView(QWidget):
             self._build_section_title(
                 translate_presentation_label(
                     PresentationLabel.CORRELATION_PLOTS,
-                    QCoreApplication.translate,
+                    translate,
                 ),
                 charts_section,
             )
@@ -284,7 +283,7 @@ class CorrelationView(QWidget):
 
     def method_name(self, method: CorrelationMethod) -> str:
         """Return the translated display name for `method`."""
-        return correlation_method_label(method, QCoreApplication.translate)
+        return correlation_method_label(method, translate)
 
     def strength_text(self, strength: CorrelationStrength | None) -> str:
         """Return the translated strength label, or "N/A" when undefined."""
@@ -335,7 +334,7 @@ class CorrelationView(QWidget):
 
         heading = translate_presentation_label(
             PresentationLabel.STRONGEST_CORRELATIONS,
-            QCoreApplication.translate,
+            translate,
         )
         title = QLabel(f"<b>{html.escape(heading)}</b>", panel)
         title.setTextFormat(Qt.TextFormat.RichText)

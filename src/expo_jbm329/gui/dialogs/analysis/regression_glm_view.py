@@ -5,7 +5,7 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.regression_view import build_regression_presentation_header
@@ -44,6 +44,7 @@ from expo_jbm329.services.analysis.regression_glm import (
     generalized_term_name,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.regression_glm import GeneralizedRegressionResult
@@ -65,7 +66,7 @@ class GeneralizedRegressionView(QWidget):
         self._result = result
         self._chart_labels = build_regression_chart_labels(
             result,
-            QCoreApplication.translate,
+            translate,
             number_format=fmt_num,
             count_format=fmt_int,
         )
@@ -96,7 +97,7 @@ class GeneralizedRegressionView(QWidget):
                 regression_component_label(
                     result.model,
                     RegressionExportComponent.COEFFICIENTS,
-                    QCoreApplication.translate,
+                    translate,
                 )
             )
             table_layout.addWidget(self._table)
@@ -104,7 +105,7 @@ class GeneralizedRegressionView(QWidget):
                 regression_component_label(
                     result.model,
                     RegressionExportComponent.MODEL_METRICS,
-                    QCoreApplication.translate,
+                    translate,
                 ),
                 self._summary_label,
                 self,
@@ -125,9 +126,7 @@ class GeneralizedRegressionView(QWidget):
             layout.addWidget(self._table, 2)
             layout.addWidget(
                 AnalysisResultSection(
-                    regression_component_label(
-                        result.model, RegressionExportComponent.MODEL_METRICS, QCoreApplication.translate
-                    ),
+                    regression_component_label(result.model, RegressionExportComponent.MODEL_METRICS, translate),
                     self._summary_label,
                     self,
                 ),
@@ -140,7 +139,7 @@ class GeneralizedRegressionView(QWidget):
             regression_component_label(
                 self._result.model,
                 RegressionExportComponent.CHARTS,
-                QCoreApplication.translate,
+                translate,
             )
         )
         result = self._result
@@ -182,7 +181,7 @@ class GeneralizedRegressionView(QWidget):
             regression_component_label(
                 self._result.model,
                 RegressionExportComponent.CHARTS,
-                QCoreApplication.translate,
+                translate,
             )
         )
         data = self._result.plot_data
@@ -236,7 +235,7 @@ class GeneralizedRegressionView(QWidget):
 
     def _model_name(self) -> str:
         """Return the translated name of the fitted model."""
-        return regression_model_label(self._result.model, QCoreApplication.translate)
+        return regression_model_label(self._result.model, translate)
 
     def error_text(self, result: GeneralizedRegressionResult) -> str:
         """Translate a structured fitting error."""
@@ -246,8 +245,8 @@ class GeneralizedRegressionView(QWidget):
                 return self.tr("Select an outcome column for this regression model.")
             case GeneralizedRegressionError.INVALID_TARGET:
                 return self.tr(
-                    "The selected outcome is invalid. Logistic regression needs two outcome levels; "
-                    "count regression needs non-negative integer values."
+                    "The selected outcome is invalid. Logistic regression needs two outcome levels. "
+                    "Count regression needs non-negative integer values."
                 )
             case GeneralizedRegressionError.NO_PREDICTORS_SELECTED:
                 return self.tr("Select one or more predictors and click Apply.")
@@ -301,7 +300,7 @@ class GeneralizedRegressionView(QWidget):
             header.setStretchLastSection(False)
         for row, term in enumerate(self._result.terms):
             name = (
-                regression_intercept_label(QCoreApplication.translate)
+                regression_intercept_label(translate)
                 if term.kind is TermKind.INTERCEPT
                 else generalized_term_name(term)
             )
@@ -322,7 +321,7 @@ class GeneralizedRegressionView(QWidget):
         result = self._result
         model_name = self._model_name()
         if result.model is RegressionModel.LOGISTIC:
-            outcome_note = self.tr("Outcome coding: {zero} = 0; {one} = 1.").format(
+            outcome_note = self.tr("Outcome coding: {zero} = 0, {one} = 1.").format(
                 zero=html.escape(result.target_levels[0]),
                 one=html.escape(result.target_levels[1]),
             )
@@ -339,7 +338,7 @@ class GeneralizedRegressionView(QWidget):
         if outcome_note:
             lines.append(outcome_note)
         lines.extend([
-            self.tr("Log-likelihood = {value}; McFadden pseudo R<sup>2</sup> = {pseudo}").format(
+            self.tr("Log-likelihood = {value}, McFadden pseudo R<sup>2</sup> = {pseudo}").format(
                 value=fmt_num(result.log_likelihood),
                 pseudo=fmt_num(result.pseudo_r_squared, sig=3),
             ),
@@ -351,7 +350,7 @@ class GeneralizedRegressionView(QWidget):
             interpretation = self.tr(
                 "Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, "
                 "not holdout performance. All {count} complete-case fitted rows are used. "
-                "Calibration uses up to 10 quantile bins; identical probabilities stay together."
+                "Calibration uses up to 10 quantile bins. Identical probabilities stay together."
             ).format(event=event, count=fmt_int(data.n_used if data is not None else result.n_used))
             lines.extend([
                 "",
@@ -374,11 +373,11 @@ class GeneralizedRegressionView(QWidget):
             else:
                 if result.overdispersed:
                     dispersion_text = self.tr(
-                        "Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial."
+                        "Pearson dispersion = {value}, above the {threshold} guideline. Consider Negative Binomial."
                     )
                 else:
                     dispersion_text = self.tr(
-                        "Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion."
+                        "Pearson dispersion = {value}. It does not exceed the {threshold} guideline for overdispersion."
                     )
                 lines.append(
                     dispersion_text.format(
@@ -386,10 +385,10 @@ class GeneralizedRegressionView(QWidget):
                         threshold=fmt_num(OVERDISPERSION_THRESHOLD),
                     )
                 )
-            lines.append(self.tr("This diagnostic is advisory; the selected model was not changed."))
+            lines.append(self.tr("This diagnostic is advisory. The selected model was not changed."))
         if result.model is RegressionModel.NEGATIVE_BINOMIAL and result.negative_binomial_alpha is not None:
             lines.append(
-                self.tr("Fitted NB2 alpha = {alpha}; this is distinct from the advisory Pearson dispersion.").format(
+                self.tr("Fitted NB2 alpha = {alpha}. This is distinct from the advisory Pearson dispersion.").format(
                     alpha=fmt_num(result.negative_binomial_alpha),
                 )
             )

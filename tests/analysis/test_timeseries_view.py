@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import dataclasses
+from pathlib import Path
 
 import pandas as pd
 import pytest
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QCoreApplication, Qt, QTranslator
 from PyQt6.QtWidgets import QLabel, QSplitter
 
 from expo_jbm329.gui.dialogs.analysis import timeseries_view as timeseries_view_module
@@ -154,7 +155,7 @@ def test_chart_labels_use_value_column_and_translated_titles():
 def test_chart_labels_use_the_shared_presentation_translation_context(monkeypatch):
     monkeypatch.setattr(
         timeseries_view_module,
-        "tr",
+        "translate",
         lambda context, text: f"sv:{text}" if context == "TimeSeriesPresentation" else text,
     )
 
@@ -219,7 +220,7 @@ def test_autocorrelation_note_explains_unavailable_acf():
         "The autocorrelation is unavailable while the series has gaps.",
         "Seasonal decomposition requires a regular time frequency.",
         "Seasonal decomposition is unavailable while the series has gaps.",
-        "No seasonal period could be detected; choose one to decompose the series.",
+        "No seasonal period could be detected. Choose one to decompose the series.",
         "Seasonal decomposition needs at least two complete seasonal cycles.",
         "Multiplicative decomposition requires all values to be greater than zero.",
     ],
@@ -232,7 +233,29 @@ def test_note_text_translates_known_service_notes(monkeypatch, note):
 
 
 def test_note_text_keeps_unknown_notes():
-    assert TimeSeriesView(_result()).note_text("Something else.") == "Something else."
+    assert TimeSeriesView(_result()).note_text("Something else; keep punctuation.") == (
+        "Something else; keep punctuation."
+    )
+
+
+@pytest.mark.parametrize(
+    ("language", "expected"),
+    [
+        ("en", "No seasonal period could be detected. Choose one to decompose the series."),
+        ("sv", "Ingen säsongsperiod kunde identifieras. Välj en för att dekomponera serien."),
+    ],
+)
+def test_seasonal_note_uses_compiled_translation_with_sentence_capitalization(language: str, expected: str) -> None:
+    translator = QTranslator()
+    locales = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales"
+    assert translator.load(str(locales / f"app_{language}.qm"))
+    assert QCoreApplication.installTranslator(translator)
+    view = TimeSeriesView(_result())
+    try:
+        assert view.note_text("No seasonal period could be detected. Choose one to decompose the series.") == expected
+    finally:
+        view.close()
+        QCoreApplication.removeTranslator(translator)
 
 
 def test_unavailable_placeholders_show_translated_notes(monkeypatch):

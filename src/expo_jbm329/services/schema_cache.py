@@ -29,7 +29,7 @@ from expo_jbm329.db.core.errors import (
     TR_PREPARING_AUTOCOMPLETE_BULK,
     TR_SCHEMA_READY,
 )
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 SCHEMA_KEY_PART_COUNT = 2
 
@@ -75,6 +75,10 @@ class SchemaCacheManager:
         _progress_cb: Callback for progress updates.
         _autocomplete_cb: Callback for autocomplete rebuilding.
     """
+
+    @staticmethod
+    def _tr_fmt(text: str, **kwargs: object) -> str:
+        return translate_fmt("DbErrors", text, **kwargs)
 
     def __init__(
         self,
@@ -179,7 +183,7 @@ class SchemaCacheManager:
             )
 
             if self._status_cb:
-                self._status_cb(tr("DbErrors", "Settings for schema cache updated."), 4000)
+                self._status_cb(translate("DbErrors", "Settings for schema cache updated."), 4000)
         except (
             AttributeError,
             ConnectionError,
@@ -229,7 +233,7 @@ class SchemaCacheManager:
             return self._cache[connection_name]
 
         if self._status_cb:
-            self._status_cb(tr("DbErrors", TR_LOADING_SCHEMA), 0)
+            self._status_cb(translate("DbErrors", TR_LOADING_SCHEMA), 0)
 
         db_name = get_db_name(connection_name, corr_id=corr_id)
         tables = list_tables(connection_name, corr_id=corr_id) or []
@@ -245,7 +249,7 @@ class SchemaCacheManager:
         self._cache[connection_name] = entry
 
         if self._status_cb:
-            self._status_cb(tr("DbErrors", TR_SCHEMA_READY), 4000)
+            self._status_cb(translate("DbErrors", TR_SCHEMA_READY), 4000)
 
         self._logger.info(
             "SchemaCacheManager: schema loaded: '%s' (%d tables, %d views, corr=%s).",
@@ -307,7 +311,7 @@ class SchemaCacheManager:
             None,
             _load_all_columns,
             connection_name,
-            started_msg=tr("DbErrors", TR_PREPARING_AUTOCOMPLETE_BULK),
+            started_msg=translate("DbErrors", TR_PREPARING_AUTOCOMPLETE_BULK),
             corr_id=corr_id,
         )
 
@@ -374,7 +378,7 @@ class SchemaCacheManager:
         self._logger.warning("SchemaCacheManager: bulk error (conn=%s, corr=%s): %s", connection_name, corr_id, err)
 
         if self._status_cb:
-            self._status_cb(tr("DbErrors", TR_BULK_FAILED_TRYING_BATCH), 5000)
+            self._status_cb(translate("DbErrors", TR_BULK_FAILED_TRYING_BATCH), 5000)
 
         self._start_batch_prefetch(connection_name, token, corr_id)
 
@@ -491,7 +495,7 @@ class SchemaCacheManager:
             )
 
         if self._status_cb:
-            msg = tr_fmt("DbErrors", TR_AUTOCOMPLETE_READY_BULK, count=str(merged))
+            msg = self._tr_fmt(TR_AUTOCOMPLETE_READY_BULK, count=str(merged))
             self._status_cb(msg, 8000)
 
         if self._progress_cb:
@@ -521,7 +525,7 @@ class SchemaCacheManager:
             if self._progress_cb:
                 self._progress_cb(1, 1)
             if self._status_cb:
-                self._status_cb(tr("DbErrors", TR_AUTOCOMPLETE_READY), 6000)
+                self._status_cb(translate("DbErrors", TR_AUTOCOMPLETE_READY), 6000)
             return
 
         if self._prefetch_limit > 0:
@@ -556,7 +560,7 @@ class SchemaCacheManager:
                 )
 
             if self._status_cb:
-                self._status_cb(tr("DbErrors", TR_AUTOCOMPLETE_READY), 6000)
+                self._status_cb(translate("DbErrors", TR_AUTOCOMPLETE_READY), 6000)
 
             if self._progress_cb:
                 self._progress_cb(total, total)
@@ -618,7 +622,7 @@ class SchemaCacheManager:
             batch_job,
             connection_name,
             batch,
-            started_msg=tr_fmt("DbErrors", TR_PREPARING_AUTOCOMPLETE_BATCH, done=str(done), total=str(total)),
+            started_msg=self._tr_fmt(TR_PREPARING_AUTOCOMPLETE_BATCH, done=str(done), total=str(total)),
             corr_id=corr_id,
         )
 

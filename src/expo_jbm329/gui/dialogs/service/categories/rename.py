@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtCore import QT_TRANSLATE_NOOP
 from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -22,11 +22,24 @@ from expo_jbm329.gui.dialogs.service.common.localization import (
 from expo_jbm329.gui.dialogs.service.common.window_hints import (
     apply_dialog_window_hints,
 )
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.gui.dialogs.service.dialog_service import (
         CategoryRenameResult,
     )
+
+
+# ------------------------------------------------------------------
+# i18n
+# ------------------------------------------------------------------
+TR_CATEGORY = QT_TRANSLATE_NOOP("CategoryRename", "Category:")
+TR_NEW_NAME = QT_TRANSLATE_NOOP("CategoryRename", "New name:")
+
+
+def _tr(text: str) -> str:
+    """Translate a message in this module's context."""
+    return translate("CategoryRename", text)
 
 
 # ------------------------------------------------------------------
@@ -50,7 +63,7 @@ def prompt_category_rename(
     # Old value (dropdown)
     # --------------------------------------------------
 
-    lbl_old = QLabel(QCoreApplication.translate("CategoryRename", "Category:"), dlg)
+    lbl_old = QLabel(_tr(TR_CATEGORY), dlg)
     cmb_old = QComboBox(dlg)
     cmb_old.addItems(categories)
 
@@ -66,7 +79,7 @@ def prompt_category_rename(
     # New value
     # --------------------------------------------------
 
-    lbl_new = QLabel(QCoreApplication.translate("CategoryRename", "New name:"), dlg)
+    lbl_new = QLabel(_tr(TR_NEW_NAME), dlg)
     txt_new = QLineEdit(dlg)
     txt_new.setText(default_new_value)
 

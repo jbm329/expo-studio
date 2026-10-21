@@ -93,6 +93,23 @@ def make_ctrl(resolve_dialect=None):
     return ctrl, tree, schema_mgr, inserted_sql, status_msgs, dialogs, connect_connection, disconnect_connection
 
 
+def test_schema_error_and_progress_use_explicit_formatting_context(monkeypatch):
+    from expo_jbm329.utils.i18n_utils import translate_fmt
+    from expo_jbm329.workbench.controllers import schema_controller
+
+    ctrl, _, _, _, status, dialogs, _, _ = make_ctrl()
+    formatter = MagicMock(wraps=translate_fmt)
+    monkeypatch.setattr(schema_controller, "translate_fmt", formatter)
+    monkeypatch.setattr(SchemaController, "_reset_connection_state", lambda _self, _connection: None)
+
+    ctrl._handle_schema_error(ValueError("failure {literal} %1"), "Conn1", "Failed")
+    assert dialogs.critical.call_args.kwargs["text"] == "Could not load schema. \n\nfailure {literal} %1"
+    ctrl._on_schema_progress_ui(2, 5)
+    assert status[-1] == ("Preloading schema… 2/5", 1500)
+    assert [call.args[0] for call in formatter.call_args_list] == ["SchemaController", "SchemaController"]
+    assert not hasattr(SchemaController, "_tr_fmt")
+
+
 def test_refresh_connections_builds_tree():
     ctrl, tree, *_ = make_ctrl()
 

@@ -14,7 +14,7 @@ from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QMenu, QMenuBar
 
-from expo_jbm329.utils.i18n_utils import tr
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -57,7 +57,7 @@ class MenuController:
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("MenuController", text)
+        return translate("MenuController", text)
 
     def __init__(
         self,

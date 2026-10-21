@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+from dataclasses import replace
+from unittest.mock import MagicMock
+
+import pandas as pd
 import pytest
 from PyQt6.QtWidgets import QLabel, QLineEdit, QListWidget, QPlainTextEdit, QPushButton
 
+from expo_jbm329.gui.dialogs.analysis import report_page
 from expo_jbm329.gui.dialogs.analysis.report_page import ReportPage
 from expo_jbm329.services.analysis.categories import AnalysisCategory
 from expo_jbm329.services.analysis.clustering import ClusteringMethod
+from expo_jbm329.services.analysis.overview import analyze_dataset_overview
 from expo_jbm329.services.analysis.presentation import build_analysis_presentation
 from expo_jbm329.services.analysis.report import ReportComponent, ReportEntry, create_report_entry
 from expo_jbm329.utils.dataset_ref import DatasetRef
@@ -101,6 +107,33 @@ def test_report_page_lists_metadata_and_enables_entry_actions():
     assert page._preview_button.isEnabled()  # noqa: SLF001
     assert page._generate_button.isEnabled()  # noqa: SLF001
     assert not page._empty_message.isVisible()  # noqa: SLF001
+
+
+def test_report_page_translates_tooltip_and_preserves_callback_contexts(
+    monkeypatch: pytest.MonkeyPatch, widget_language: str
+) -> None:
+    translate = MagicMock(wraps=report_page.translate)
+    monkeypatch.setattr(report_page, "translate", translate)
+    overview = create_report_entry(
+        AnalysisCategory.OVERVIEW,
+        DatasetRef("overview", "Source", 3, 1),
+        analyze_dataset_overview(pd.DataFrame({"value": [1, 2, 3]})),
+    )
+    date = "2026-10-21 {rows} %1"
+    pca = replace(_entry("pca", "Data {date} %2"), analysis_date=date)
+    page = ReportPage()
+
+    page.set_entries((overview, pca))
+
+    translate.assert_any_call("ReportPage", "Overview")
+    translate.assert_any_call("PCAPresentation", "PCA")
+    assert not any(call.args[0] == "AnalysisDialog" for call in translate.call_args_list)
+    listing = page.findChild(QListWidget)
+    # This dynamic ReportPage label retains its existing English source fallback.
+    assert listing.item(0).text() == "Overview - Source"
+    expected_tooltip = f"10 rader x 2 kolumner - {date}" if widget_language == "sv" else f"10 rows x 2 columns - {date}"
+    assert listing.item(1).toolTip().splitlines()[0] == expected_tooltip
+    assert listing.item(1).text().startswith("PCA - Data {date} %2\n")
 
 
 def test_correlation_report_list_shows_configured_title_and_ordered_columns():

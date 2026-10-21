@@ -3,10 +3,14 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pandas as pd
+import pytest
+from PyQt6.QtCore import QCoreApplication, QTranslator
 from PyQt6.QtWidgets import QWidget
 
+from expo_jbm329.build.build_utils import locales_dir
 from expo_jbm329.services.job_result import JobResult
 from expo_jbm329.services.rest.models import RestRequestConfig
+from expo_jbm329.workbench.controllers import rest_controller
 from expo_jbm329.workbench.controllers.rest_controller import RestController
 
 
@@ -78,3 +82,26 @@ def test_on_rest_loaded_successful_payload():
     ctrl._on_rest_loaded(payload, "Example", pending_tab_id="pending-1")
 
     assert ctrl._results.fulfill_calls
+
+
+@pytest.mark.parametrize(
+    ("language", "template"),
+    [
+        ("en", "A connection named '{name}' already exists."),
+        ("sv", "Det finns redan en anslutning med namnet '{name}'."),
+    ],
+)
+def test_duplicate_preset_name_uses_translated_named_formatting(monkeypatch, language, template):
+    ctrl = make_controller()
+    name = "Copy {literal} %1"
+    ctrl._dialogs.prompt_text.return_value = (name, True)
+    monkeypatch.setattr(rest_controller.rest_registry, "get", lambda _name: object())
+    monkeypatch.setattr(rest_controller.rest_registry, "exists", lambda candidate: candidate == name)
+    translator = QTranslator()
+    assert translator.load(str(locales_dir() / f"app_{language}.qm"))
+    assert QCoreApplication.installTranslator(translator)
+    try:
+        assert ctrl.copy_preset("Example") is None
+        assert ctrl._dialogs.warn.call_args.kwargs["text"] == template.format(name=name)
+    finally:
+        QCoreApplication.removeTranslator(translator)

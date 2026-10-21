@@ -74,7 +74,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.gui_utils import ui_invoke
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 
 class StatusBarController:
@@ -92,11 +92,11 @@ class StatusBarController:
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("StatusBarController", text)
+        return translate("StatusBarController", text)
 
     @staticmethod
     def _tr_fmt(text: str, **kwargs: str) -> str:
-        return tr_fmt("StatusBarController", text, **kwargs)
+        return translate_fmt("StatusBarController", text, **kwargs)
 
     def __init__(self, parent: QWidget, status_bar: QStatusBar) -> None:
         """Initialize the StatusBarController.

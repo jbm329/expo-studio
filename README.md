@@ -207,7 +207,7 @@ The REST feature is intended primarily for:
 
 ### 🌍 Internationalization
 - **Multilingual UI**: Built-in i18n support using Qt translations.
-- **Languages**: Swedish and English.
+- **Languages**: English, Swedish, German, French, Italian, Spanish, and Polish.
 
 
 ## 🛠️ Installation
@@ -327,7 +327,25 @@ Expo Studio uses Qt's translation system for internationalization, with all user
 The i18n workflow consists of three main steps:
 
 #### 1️⃣ Extract translatable strings
-`build-i18n` collects strings tagged for translation from the Python sources and updates `app_en.ts` and `app_sv.ts` in `src/expo_jbm329/i18n/locales`. Existing translations are retained, and messages no longer used by the sources are kept as vanished entries.
+`build-i18n` collects strings tagged for translation from the Python sources and
+updates every supported language catalog in `src/expo_jbm329/i18n/locales`.
+The `Language` enum defines extraction targets and the language options in
+Settings. Existing translations are retained, and messages no longer used by
+the sources are kept as vanished entries.
+
+| Language | Settings label | Catalog | Translation locale |
+|---|---|---|---|
+| English (source) | English | `app_en.ts` | English source fallback |
+| Swedish | Svenska | `app_sv.ts` | `sv_SE` |
+| German | Deutsch | `app_de.ts` | `de_DE` |
+| French | Français | `app_fr.ts` | `fr_FR` |
+| Italian | Italiano | `app_it.ts` | `it_IT` |
+| Spanish | Español | `app_es.ts` | `es_ES` |
+| Polish | Polski | `app_pl.ts` | `pl_PL` |
+
+Select a language by its native name in Settings. Settings and runtime loading
+use the short codes (`en`, `sv`, `de`, `fr`, `it`, `es`, `pl`). UI language
+selection does not change the system locale used for number/date formatting.
 
 ```sh
 uv run build-i18n
@@ -344,18 +362,145 @@ This runs the same extraction with `pylupdate6 --no-obsolete`. It deletes transl
 #### 2️⃣ Edit translations
 The extracted strings are then manually edited in the `src/expo_jbm329/i18n/locales` directory using Qt Linguist (e.g. `app_sv.ts`).
 
-All user-facing strings must support English and Swedish. After adding or changing
-strings, run `uv run build-i18n`, review and finish the Swedish translations in
-`app_sv.ts`, then run `uv run build-locales`. Preserve named placeholders such as
-`{component}` exactly and verify the compiled translations in the affected UI or
-report.
+English is the source language: edit English wording in the Python sources, not
+in `app_en.ts`. Keep its translation elements empty and marked unfinished
+(`<translation type="unfinished" />`) so Qt uses the source text. Do not copy
+English source strings into translation elements or mark them finished.
+`app_en.ts` remains a source-language catalog, and `app_en.qm` must still be
+compiled and shipped because the language loader expects it. If numerus
+messages are introduced, review their English plural forms separately rather
+than applying the empty-translation convention blindly.
 
-For explicit contexts, use `QCoreApplication.translate(context, text)` or import
-the shared wrapper as `from expo_jbm329.utils.i18n_utils import tr as translate`.
-Do not call that two-argument wrapper by the name `tr` in new extraction-sensitive
-code: `pylupdate6` interprets `tr(context, text)` as Qt's `tr(source, comment)`,
-creating incorrect source strings and disambiguation comments in Linguist.
+All user-facing strings must support every language listed above. After adding
+or changing strings, run `uv run build-i18n`, review and finish translations in
+each non-English catalog, then run `uv run build-locales`. Non-English catalogs
+use nonempty, finished translations, following the Swedish catalog's pattern.
+Preserve named placeholders such as `{component}` (including format specs),
+markup, links, and significant whitespace. Verify compiled translations in the
+affected UI or report. New translations are authored translations, not a
+substitute for native-speaker review of terminology and phrasing.
+
+Separate complete sentences with periods and capitalize
+the following sentence. Use commas between short labels, values, or parenthetical
+phrases instead of semicolons, and apply the same convention to English sources
+and all translations, including chart captions and report text. Separate
+chart titles in accessible names with periods. Preserve technical semicolons in
+HTML entities and styles, and never rewrite punctuation in user-provided data.
+
+For explicit contexts, import the shared helper with
+`from expo_jbm329.utils.i18n_utils import translate` rather than calling Qt's
+translation API directly. Use `translate(context, "Text")` for plain messages.
+For marker-based messages with substitutions, import `translate_fmt` from the
+same module. It translates the template **before** substituting descriptive
+named values, so translators can reorder values without changing their meaning.
+Names such as `{file}` and `{count}` explain each value's role and avoid fragile
+chains of positional replacements such as `.replace("%1", ...)`.
+
+For ordinary widget messages, retain `self.tr` and format the translated
+literal directly:
+
+```python
+message = self.tr("Could not find {document}.").format(document=document_name)
+```
+
+Keep the template literal inside `self.tr` so Qt can extract it and retain the
+widget's translation context. Do not format the source before translation
+(including with an f-string). Use descriptive named fields instead of `%1`, `%2`,
+or positional `{}` fields so translators can identify and reorder values.
+Literal braces in a format template must be doubled (`{{` and `}}`); braces
+inside inserted values need no special treatment. Formatting does not escape
+HTML or localize values, so preserve any required escaping and locale formatting.
+No shared helper or local wrapper is needed for this widget pattern.
+
+Choose the call style by the translation contexts used across the **whole
+module** for explicit-context messages. For a single-context module, reuse or
+create a local `_tr` wrapper for plain messages and `_tr_fmt` for formatted
+messages, as needed. Bind both to that context and retain literal extraction
+markers:
+
+```python
+from PyQt6.QtCore import QT_TRANSLATE_NOOP
+
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
+
+TR_READY = QT_TRANSLATE_NOOP("FilePanelController", "Ready")
+TR_LOADING = QT_TRANSLATE_NOOP("FilePanelController", "Loading {file}")
+
+
+def _tr(text: str) -> str:
+    return translate("FilePanelController", text)
+
+
+def _tr_fmt(text: str, **kwargs: object) -> str:
+    return translate_fmt("FilePanelController", text, **kwargs)
+
+
+status = _tr(TR_READY)
+message = _tr_fmt(TR_LOADING, file=filename)
+```
+
+For class-local markers in their matching Qt context, the same pattern can use
+`QT_TR_NOOP` and static wrappers:
+
+```python
+from PyQt6.QtCore import QT_TR_NOOP
+
+from expo_jbm329.utils.i18n_utils import translate_fmt
+
+
+class FilePanelController:
+    TR_LOADING = QT_TR_NOOP("Loading {file}")
+
+    @staticmethod
+    def _tr_fmt(text: str, **kwargs: object) -> str:
+        return translate_fmt("FilePanelController", text, **kwargs)
+
+    def loading_message(self, filename: str) -> str:
+        return self._tr_fmt(self.TR_LOADING, file=filename)
+```
+
+For a module using multiple contexts, call `translate` and `translate_fmt`
+directly instead of adding fixed-context wrappers:
+
+```python
+from PyQt6.QtCore import QT_TRANSLATE_NOOP
+
+from expo_jbm329.utils.i18n_utils import translate_fmt
+
+TR_FAILURE = QT_TRANSLATE_NOOP("QueryController", "Failed to run SQL.\n\n{traceback_str}")
+
+message = translate_fmt("QueryController", TR_FAILURE, traceback_str=error_details)
+```
+
+Use these examples for explicit-context, marker-based messages, not as a reason
+to replace ordinary widget `self.tr("Text")` calls. Keep injected translation
+callbacks and captured-template formatting in Qt-free chart/report services:
+calling the shared helper there would bypass the caller's translation source.
+At the UI boundary, pass the shared `translate` helper instead of Qt's method
+when a service needs a two-argument `(context, source) -> str` callback:
+
+```python
+labels = build_outlier_histogram_labels(translate)
+```
+
+The service still uses the injected callback and can request different contexts.
+Do not pass a single-context `_tr(text)` wrapper in its place.
+
+`translate_fmt` leaves the translated template unchanged if formatting fails.
+It does not localize numbers or paths, escape HTML, or validate placeholders:
+preserve the appropriate formatters and escaping before passing values, and
+check placeholder consistency in translations. Braces or positional-looking
+tokens inside inserted values are preserved, not formatted again.
+
+`pylupdate6` recognizes literal `translate(context, "Text")` calls, but
+`translate_fmt` and calls with variable source text still require literal
+`QT_TRANSLATE_NOOP` markers (or class-local `QT_TR_NOOP` markers in the matching
+context). Do not alias the two-argument helper to `tr`: the extractor interprets
+that spelling as Qt's `tr(source, comment)` instead.
 Widget calls such as `self.tr("Text")` are unaffected and remain appropriate.
+Local wrappers do not make strings extractable: retain the markers for both
+plain and formatted messages. Keep existing markers for dynamically selected
+sources in their canonical context.
 
 Shared labels resolved dynamically need literal `QT_TRANSLATE_NOOP` extraction
 markers in their canonical context. Advanced Analysis keeps these alongside its

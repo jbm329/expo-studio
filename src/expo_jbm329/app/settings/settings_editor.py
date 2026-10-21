@@ -4,7 +4,7 @@ This module provides the SettingsEditor class, which is a comprehensive dialog
 for editing Expo user settings (settings.json). It handles configurations for
 themes, documents directory, undo limits, CSV/Excel processing, and schema cache.
 
-The user interface text is in Swedish, while comments and docstrings
+User interface strings are translated from English. Comments and docstrings
 follow Google-style English conventions.
 """
 
@@ -42,6 +42,7 @@ from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import (
     FileDialogService,
     QtFileDialogService,
 )
+from expo_jbm329.i18n.language import Language
 from expo_jbm329.utils.path_manager import (
     ensure_all_dirs,
     get_documents_dir,
@@ -57,10 +58,7 @@ THEMES = ["system"]
 CSV_ENCODINGS = ["utf-8", "utf-8-sig", "latin-1", "cp1252"]
 
 
-LANGUAGES = [
-    ("Svenska", "sv"),
-    ("English", "en"),
-]
+LANGUAGES = [(language.display_name, language.value) for language in Language]
 
 
 class SettingsEditor(QDialog):
@@ -70,7 +68,7 @@ class SettingsEditor(QDialog):
     file paths, undo history, data import/export parameters, and database
     metadata caching.
 
-    The UI text is Swedish, while comments and docstrings are in English.
+    The UI supports the languages defined by the application language registry.
     """
 
     def __init__(
@@ -571,7 +569,7 @@ class SettingsEditor(QDialog):
             ValueError,
         ) as e:
             title = self.tr("Failure")
-            msg = self.tr("Could not save settings:\n%1").replace("%1", str(e))
+            msg = self.tr("Could not save settings:\n{error}").format(error=str(e))
             self._dialogs.critical(self, title, msg)
             return
 

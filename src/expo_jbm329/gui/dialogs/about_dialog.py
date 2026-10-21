@@ -76,9 +76,11 @@ class AboutDialog(QDialog):
         name_label.setStyleSheet("font-size: 16pt; font-weight: bold;")
         info_layout.addWidget(name_label)
 
-        copyright_text = self.tr("Copyright © %1 %2")
-        copyright_text = copyright_text.replace("%1", str(datetime.now(UTC).astimezone().year))
-        copyright_label = QLabel(copyright_text.replace("%2", str(author)))
+        copyright_text = self.tr("Copyright © {year} {author}").format(
+            year=datetime.now(UTC).astimezone().year,
+            author=str(author),
+        )
+        copyright_label = QLabel(copyright_text)
         info_layout.addWidget(copyright_label)
 
         content_layout.addWidget(info_widget, 1)
@@ -109,8 +111,8 @@ class AboutDialog(QDialog):
         third_party_label = QLabel(
             self.tr(
                 "The application uses third-party software distributed under various licenses. "
-                "See <b>%1</b> for details."
-            ).replace("%1", self._third_party_notices)
+                "See <b>{notices}</b> for details."
+            ).format(notices=self._third_party_notices)
         )
         third_party_label.setWordWrap(True)
         layout.addWidget(third_party_label)
@@ -126,12 +128,16 @@ class AboutDialog(QDialog):
         icons_label.setStyleSheet("color: #777; font-size: 9pt;")
         layout.addWidget(icons_label)
 
-        python_info = self.tr("Python: %1").replace("%1", platform.python_version())
-        qt_info = self.tr("Qt: %1 | PyQt: %2").replace("%1", QT_VERSION_STR).replace("%2", PYQT_VERSION_STR)
-        platform_info = self.tr("Platform: %1 %2 (%3)")
-        platform_info = platform_info.replace("%1", platform.system())
-        platform_info = platform_info.replace("%2", platform.release())
-        platform_info = platform_info.replace("%3", platform.machine())
+        python_info = self.tr("Python: {python_version}").format(python_version=platform.python_version())
+        qt_info = self.tr("Qt: {qt_version} | PyQt: {pyqt_version}").format(
+            qt_version=QT_VERSION_STR,
+            pyqt_version=PYQT_VERSION_STR,
+        )
+        platform_info = self.tr("Platform: {system} {release} ({machine})").format(
+            system=platform.system(),
+            release=platform.release(),
+            machine=platform.machine(),
+        )
         sys_info = f"{python_info}<br/>{qt_info}<br/>{platform_info}"
         sys_info_label = QLabel(sys_info)
         sys_info_label.setStyleSheet("color: #777; font-size: 9pt;")
@@ -181,7 +187,7 @@ class AboutDialog(QDialog):
                 QMessageBox.warning(
                     self,
                     self.tr("Document unavailable"),
-                    self.tr("Could not find %1.").replace("%1", document_name),
+                    self.tr("Could not find {document}.").format(document=document_name),
                 )
                 return
             url = QUrl.fromLocalFile(str(document_path))

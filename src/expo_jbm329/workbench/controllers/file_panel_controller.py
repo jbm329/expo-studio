@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import QMenu, QTreeView, QWidget
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.services.file_types import classify_file
 from expo_jbm329.utils.format_utils import fmt_path, fmt_path_size
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -54,11 +54,11 @@ class FilePanelController:
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("FilePanelController", text)
+        return translate("FilePanelController", text)
 
     @staticmethod
     def _tr_fmt(text: str, **kwargs: str) -> str:
-        return tr_fmt("FilePanelController", text, **kwargs)
+        return translate_fmt("FilePanelController", text, **kwargs)
 
     __slots__ = (
         "__weakref__",

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import math
+from html import escape
 from pathlib import Path
 from unittest.mock import patch
 
@@ -22,10 +23,14 @@ from expo_jbm329.services.analysis.chart_profiles import (
     ChartGeometry,
     regression_logistic_profile,
 )
+from expo_jbm329.services.analysis.logistic_charts import LogisticChartLabels
 from expo_jbm329.services.analysis.regression import RegressionResult
 from expo_jbm329.services.analysis.regression_charts import (
     COUNT_POINT_SIZE,
+    CountChartLabels,
     CoxChartLabels,
+    LinearChartLabels,
+    build_regression_chart_labels,
     draw_actual_vs_predicted,
     draw_count_charts,
     draw_cox_charts,
@@ -129,6 +134,18 @@ def test_regression_views_and_exports_share_axes_and_hide_redundant_headings(fac
         view = GeneralizedRegressionView(result)
     try:
         labels = view.chart_labels()
+        match labels.model:
+            case LinearChartLabels() as model:
+                titles = (model.residuals_title, model.actual_title, model.qq_title)
+            case LogisticChartLabels() as model:
+                titles = (model.odds_title, model.roc_title, model.calibration_title)
+            case CountChartLabels() as model:
+                titles = (model.comparison_title, model.residuals_title)
+            case CoxChartLabels() as model:
+                titles = (model.forest_title, model.survival_title, model.risk_title)
+            case _:
+                pytest.fail("Unexpected regression chart labels")
+        assert labels.metadata.accessible_name == ". ".join(titles)
         snapshot = RegressionExportSnapshot(result, labels)
         app_axes = [
             (axis.get_title(), axis.get_xlabel(), axis.get_ylabel())
@@ -161,14 +178,30 @@ def test_regression_views_and_exports_share_axes_and_hide_redundant_headings(fac
                 AnalysisCategory.REGRESSION,
                 DatasetRef("source", "Dataset", 100, 3),
                 snapshot,
-            ).with_selection(("charts",), "")
+            ).with_selection(("charts",), "User note; keep punctuation.")
         )
         html = render_report_html(document)
         assert "<figcaption>" not in html
         assert 'alt=""' not in html
+        assert f'alt="{escape(labels.metadata.accessible_name, quote=True)}"' in html
+        assert "User note; keep punctuation." in html
     finally:
         view.close()
         QCoreApplication.removeTranslator(translator)
+
+
+def test_regression_chart_labels_preserve_semicolons_in_column_names() -> None:
+    result = dataclasses.replace(linear_result(), target="sales; net")
+    labels = build_regression_chart_labels(result, lambda _context, source: source)
+
+    assert isinstance(labels.model, LinearChartLabels)
+    assert labels.model.predicted_axis == "Predicted sales; net"
+    assert labels.model.actual_axis == "Actual sales; net"
+    assert result.plot is not None
+    figure = Figure()
+    draw_linear_charts(figure, result.plot, labels.model)
+    assert any(axis.get_xlabel() == "Predicted sales; net" for axis in figure.axes)
+    assert any(axis.get_ylabel() == "Actual sales; net" for axis in figure.axes)
 
 
 # ----------------------------------------------------------------------

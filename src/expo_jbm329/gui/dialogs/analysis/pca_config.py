@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QGroupBox,
@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 from expo_jbm329.services.analysis.pca import MIN_SELECTED_COLUMNS
 from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.utils.format_utils import fmt_int
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.pca import PCAResult
@@ -56,7 +57,7 @@ class PCAConfigWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self._standardize_checkbox = QCheckBox(
-            translate_presentation_label(PresentationLabel.STANDARDIZE_FEATURES_SELECTOR, QCoreApplication.translate),
+            translate_presentation_label(PresentationLabel.STANDARDIZE_FEATURES_SELECTOR, translate),
             self,
         )
         self._standardize_checkbox.setChecked(result.standardize)
@@ -66,7 +67,7 @@ class PCAConfigWidget(QWidget):
         layout.addWidget(self._standardize_checkbox)
 
         group = QGroupBox(
-            translate_presentation_label(PresentationLabel.FEATURES_SELECTOR, QCoreApplication.translate),
+            translate_presentation_label(PresentationLabel.FEATURES_SELECTOR, translate),
             self,
         )
         group_layout = QVBoxLayout(group)

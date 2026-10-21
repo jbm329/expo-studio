@@ -48,7 +48,7 @@ def test_columns_metadata_header_uses_shared_label(monkeypatch):
         return f"Localized {text}"
 
     monkeypatch.setattr(
-        "expo_jbm329.gui.dialogs.analysis.overview_view.QCoreApplication.translate",
+        "expo_jbm329.gui.dialogs.analysis.overview_view.translate",
         translate,
     )
     view = OverviewView(_make_result())
