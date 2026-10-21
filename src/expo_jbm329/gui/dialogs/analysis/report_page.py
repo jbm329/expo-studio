@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, QRect, QSize, Qt, pyqtSignal
+from PyQt6.QtCore import QT_TRANSLATE_NOOP, QRect, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QFontMetrics
 from PyQt6.QtWidgets import (
     QFormLayout,
@@ -21,9 +21,13 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.services.analysis.presentation import build_analysis_presentation
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.report import ReportEntry
+
+
+TR_DATASET_TOOLTIP = QT_TRANSLATE_NOOP("ReportPage", "{rows} rows x {columns} columns - {date}")
 
 
 class ReportPage(QWidget):
@@ -136,7 +140,7 @@ class ReportPage(QWidget):
             presentation = build_analysis_presentation(
                 entry.category,
                 entry.snapshot,
-                lambda context, source: QCoreApplication.translate(
+                lambda context, source: translate(
                     "ReportPage" if context == "AnalysisDialog" else context,
                     source,
                 ),
@@ -146,7 +150,9 @@ class ReportPage(QWidget):
                 text = "\n".join((text, *presentation.summary_lines))
             item = QListWidgetItem(text, self._entries)
             item.setData(Qt.ItemDataRole.UserRole, entry.entry_id)
-            tooltip = QCoreApplication.translate("ReportPage", "{rows} rows x {columns} columns - {date}").format(
+            tooltip = translate_fmt(
+                "ReportPage",
+                TR_DATASET_TOOLTIP,
                 rows=entry.dataset_rows,
                 columns=entry.dataset_columns,
                 date=entry.analysis_date,

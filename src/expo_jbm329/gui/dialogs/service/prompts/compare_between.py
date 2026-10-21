@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtCore import QT_TRANSLATE_NOOP
 from PyQt6.QtWidgets import (
     QComboBox,
     QDateEdit,
@@ -26,6 +26,7 @@ from expo_jbm329.gui.dialogs.service.common.localization import (
 from expo_jbm329.gui.dialogs.service.common.window_hints import (
     apply_dialog_window_hints,
 )
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.gui.dialogs.service.dialog_service import BetweenResult, CompareResult
@@ -35,13 +36,31 @@ if TYPE_CHECKING:
 # operator labels
 # ----------------------------------------------------------------------
 
+TR_GREATER_THAN = QT_TRANSLATE_NOOP("QtDialogService", "Greater than")
+TR_GREATER_OR_EQUAL = QT_TRANSLATE_NOOP("QtDialogService", "Greater than or equal to")
+TR_LESS_THAN = QT_TRANSLATE_NOOP("QtDialogService", "Less than")
+TR_LESS_OR_EQUAL = QT_TRANSLATE_NOOP("QtDialogService", "Less than or equal to")
+TR_EQUAL = QT_TRANSLATE_NOOP("QtDialogService", "Equal to")
+TR_NOT_EQUAL = QT_TRANSLATE_NOOP("QtDialogService", "Not equal to")
+TR_BOTH_LIMITS = QT_TRANSLATE_NOOP("QtDialogService", "Both limits")
+TR_LOWER_LIMIT = QT_TRANSLATE_NOOP("QtDialogService", "Only lower limit")
+TR_UPPER_LIMIT = QT_TRANSLATE_NOOP("QtDialogService", "Only upper limit")
+TR_NO_LIMITS = QT_TRANSLATE_NOOP("QtDialogService", "No limits")
+TR_INCLUSIVITY = QT_TRANSLATE_NOOP("QtDialogService", "Inclusivity:")
+
+
+def _tr(text: str) -> str:
+    """Translate a message in this module's context."""
+    return translate("QtDialogService", text)
+
+
 _OPERATOR_LABELS = {
-    ">": QCoreApplication.translate("QtDialogService", "Greater than"),
-    ">=": QCoreApplication.translate("QtDialogService", "Greater than or equal to"),
-    "<": QCoreApplication.translate("QtDialogService", "Less than"),
-    "<=": QCoreApplication.translate("QtDialogService", "Less than or equal to"),
-    "==": QCoreApplication.translate("QtDialogService", "Equal to"),
-    "!=": QCoreApplication.translate("QtDialogService", "Not equal to"),
+    ">": _tr(TR_GREATER_THAN),
+    ">=": _tr(TR_GREATER_OR_EQUAL),
+    "<": _tr(TR_LESS_THAN),
+    "<=": _tr(TR_LESS_OR_EQUAL),
+    "==": _tr(TR_EQUAL),
+    "!=": _tr(TR_NOT_EQUAL),
 }
 
 
@@ -184,15 +203,15 @@ def prompt_between(
 
     # Inclusivity
     incl_map: dict[str, str] = {
-        QCoreApplication.translate("QtDialogService", "Both limits"): "both",
-        QCoreApplication.translate("QtDialogService", "Only lower limit"): "left",
-        QCoreApplication.translate("QtDialogService", "Only upper limit"): "right",
-        QCoreApplication.translate("QtDialogService", "No limits"): "neither",
+        _tr(TR_BOTH_LIMITS): "both",
+        _tr(TR_LOWER_LIMIT): "left",
+        _tr(TR_UPPER_LIMIT): "right",
+        _tr(TR_NO_LIMITS): "neither",
     }
     rev_map = {v: k for k, v in incl_map.items()}
 
     row_incl = QHBoxLayout()
-    row_incl.addWidget(QLabel(QCoreApplication.translate("QtDialogService", "Inclusivity:"), dlg))
+    row_incl.addWidget(QLabel(_tr(TR_INCLUSIVITY), dlg))
     cmb_incl = QComboBox(dlg)
     cmb_incl.addItems(incl_map.keys())
     if inclusive_default in rev_map:

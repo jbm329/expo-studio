@@ -163,9 +163,7 @@ def test_about_dialog_formats_metadata_and_runtime_labels(
         ) in texts
 
 
-def test_missing_document_formats_warning(
-    monkeypatch: pytest.MonkeyPatch, widget_language: str
-) -> None:
+def test_missing_document_formats_warning(monkeypatch: pytest.MonkeyPatch, widget_language: str) -> None:
     document = "LICENSE {document} %1.txt"
     monkeypatch.setitem(about_dialog.LOCAL_DOCUMENTS, "license", document)
     monkeypatch.setattr(AboutDialog, "_find_document", staticmethod(lambda _name: None))
@@ -189,6 +187,4 @@ def test_about_dialog_formats_reordered_translated_fields(monkeypatch: pytest.Mo
     dialog = AboutDialog()
     texts = [label.text() for label in dialog.findChildren(about_dialog.QLabel)]
 
-    assert any(
-        f"PyQt: {about_dialog.PYQT_VERSION_STR} | Qt: {about_dialog.QT_VERSION_STR}" in text for text in texts
-    )
+    assert any(f"PyQt: {about_dialog.PYQT_VERSION_STR} | Qt: {about_dialog.QT_VERSION_STR}" in text for text in texts)

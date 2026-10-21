@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHeaderView, QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.section_layout import (
@@ -31,6 +31,7 @@ from expo_jbm329.services.analysis.presentation import (
     translate_presentation_label,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.clustering import ClusteringResult
@@ -84,7 +85,7 @@ class ClusteringView(QWidget):
         """Return the translated projection text used by the view and its export."""
         return build_cluster_projection_labels(
             self._result,
-            QCoreApplication.translate,
+            translate,
             count_format=fmt_int,
         )
 
@@ -128,7 +129,7 @@ class ClusteringView(QWidget):
 
     def method_name(self, method: ClusteringMethod) -> str:
         """Return the translated display name of `method`."""
-        return clustering_method_label(method, QCoreApplication.translate)
+        return clustering_method_label(method, translate)
 
     def _summary_text(self, result: ClusteringResult) -> str:
         """Return the rich-text summary of method, preprocessing, rows, silhouette and sampling."""
@@ -169,7 +170,7 @@ class ClusteringView(QWidget):
     def _build_comments_section(self, result: ClusteringResult) -> QWidget:
         """Build the titled model-comments section with a scrollable summary."""
         return AnalysisResultSection(
-            translate_presentation_label(PresentationLabel.CLUSTER_MODEL_SUMMARY, QCoreApplication.translate),
+            translate_presentation_label(PresentationLabel.CLUSTER_MODEL_SUMMARY, translate),
             self._summary_label(result),
             self,
         )
@@ -177,16 +178,14 @@ class ClusteringView(QWidget):
     def _build_plot_section(self, result: ClusteringResult) -> QWidget:
         """Build the titled, scrollable cluster projection section."""
         panel, layout = self._build_section(
-            translate_presentation_label(PresentationLabel.CLUSTER_PROJECTION, QCoreApplication.translate)
+            translate_presentation_label(PresentationLabel.CLUSTER_PROJECTION, translate)
         )
         layout.addWidget(build_section_scroll_area(self._build_plot(result), panel), 1)
         return panel
 
     def _build_table_section(self, result: ClusteringResult) -> QWidget:
         """Build the titled cluster-size table section."""
-        panel, layout = self._build_section(
-            translate_presentation_label(PresentationLabel.CLUSTER_SIZES, QCoreApplication.translate)
-        )
+        panel, layout = self._build_section(translate_presentation_label(PresentationLabel.CLUSTER_SIZES, translate))
         layout.addWidget(self._build_cluster_table(result), 1)
         return panel
 

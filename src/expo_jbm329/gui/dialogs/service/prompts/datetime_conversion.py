@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtCore import QT_TRANSLATE_NOOP
 from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -22,6 +22,7 @@ from expo_jbm329.gui.dialogs.service.common.localization import (
 from expo_jbm329.gui.dialogs.service.common.window_hints import (
     apply_dialog_window_hints,
 )
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.gui.dialogs.service.dialog_service import (
@@ -31,10 +32,32 @@ if TYPE_CHECKING:
     from expo_jbm329.services.data_operations.datetime_formats import DateFormatKey
 
 # ======================================================================
-# Public API
+# i18n
 # ======================================================================
 
 
+TR_INPUT_FORMAT = QT_TRANSLATE_NOOP("DateTimeConversion", "Input format:")
+TR_AUTO_DETECT = QT_TRANSLATE_NOOP("DateTimeConversion", "Auto-detect")
+TR_ISO_DATE = QT_TRANSLATE_NOOP("DateTimeConversion", "ISO date (2024-03-15)")
+TR_ISO_DATETIME = QT_TRANSLATE_NOOP("DateTimeConversion", "ISO datetime (2024-03-15 13:45:00)")
+TR_DMY_SLASH = QT_TRANSLATE_NOOP("DateTimeConversion", "DD/MM/YYYY (15/03/2024)")
+TR_MDY_SLASH = QT_TRANSLATE_NOOP("DateTimeConversion", "MM/DD/YYYY (03/15/2024)")
+TR_DMY_DOT = QT_TRANSLATE_NOOP("DateTimeConversion", "DD.MM.YYYY (15.03.2024)")
+TR_YMD_SLASH = QT_TRANSLATE_NOOP("DateTimeConversion", "YYYY/MM/DD (2024/03/15)")
+TR_YMD_COMPACT = QT_TRANSLATE_NOOP("DateTimeConversion", "YYYYMMDD (20240315)")
+TR_CONVERT_TO = QT_TRANSLATE_NOOP("DateTimeConversion", "Convert to:")
+TR_DATE = QT_TRANSLATE_NOOP("DateTimeConversion", "Date (drop time)")
+TR_DATETIME = QT_TRANSLATE_NOOP("DateTimeConversion", "Datetime (keep time)")
+
+
+def _tr(text: str) -> str:
+    """Translate a message in this module's context."""
+    return translate("DateTimeConversion", text)
+
+
+# ======================================================================
+# Public API
+# ======================================================================
 def prompt_datetime_conversion(
     parent: QWidget,
     *,
@@ -59,19 +82,19 @@ def prompt_datetime_conversion(
     # Format selection
     # --------------------------------------------------
 
-    root.addWidget(QLabel(QCoreApplication.translate("DateTimeConversion", "Input format:"), dlg))
+    root.addWidget(QLabel(_tr(TR_INPUT_FORMAT), dlg))
 
     cmb_format = QComboBox(dlg)
 
     format_options: list[tuple[DateFormatKey, str]] = [
-        ("auto", QCoreApplication.translate("DateTimeConversion", "Auto-detect")),
-        ("iso_date", QCoreApplication.translate("DateTimeConversion", "ISO date (2024-03-15)")),
-        ("iso_datetime", QCoreApplication.translate("DateTimeConversion", "ISO datetime (2024-03-15 13:45:00)")),
-        ("dmy_slash", QCoreApplication.translate("DateTimeConversion", "DD/MM/YYYY (15/03/2024)")),
-        ("mdy_slash", QCoreApplication.translate("DateTimeConversion", "MM/DD/YYYY (03/15/2024)")),
-        ("dmy_dot", QCoreApplication.translate("DateTimeConversion", "DD.MM.YYYY (15.03.2024)")),
-        ("ymd_slash", QCoreApplication.translate("DateTimeConversion", "YYYY/MM/DD (2024/03/15)")),
-        ("ymd_compact", QCoreApplication.translate("DateTimeConversion", "YYYYMMDD (20240315)")),
+        ("auto", _tr(TR_AUTO_DETECT)),
+        ("iso_date", _tr(TR_ISO_DATE)),
+        ("iso_datetime", _tr(TR_ISO_DATETIME)),
+        ("dmy_slash", _tr(TR_DMY_SLASH)),
+        ("mdy_slash", _tr(TR_MDY_SLASH)),
+        ("dmy_dot", _tr(TR_DMY_DOT)),
+        ("ymd_slash", _tr(TR_YMD_SLASH)),
+        ("ymd_compact", _tr(TR_YMD_COMPACT)),
     ]
 
     for key, label in format_options:
@@ -89,12 +112,12 @@ def prompt_datetime_conversion(
     # Target selection (date vs datetime)
     # --------------------------------------------------
 
-    root.addWidget(QLabel(QCoreApplication.translate("DateTimeConversion", "Convert to:"), dlg))
+    root.addWidget(QLabel(_tr(TR_CONVERT_TO), dlg))
 
     row_target = QHBoxLayout()
 
-    rb_date = QRadioButton(QCoreApplication.translate("DateTimeConversion", "Date (drop time)"), dlg)
-    rb_datetime = QRadioButton(QCoreApplication.translate("DateTimeConversion", "Datetime (keep time)"), dlg)
+    rb_date = QRadioButton(_tr(TR_DATE), dlg)
+    rb_datetime = QRadioButton(_tr(TR_DATETIME), dlg)
 
     if default_target == "date":
         rb_date.setChecked(True)

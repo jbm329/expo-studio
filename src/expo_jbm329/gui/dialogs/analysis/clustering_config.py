@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -45,6 +45,7 @@ from expo_jbm329.services.analysis.presentation import (
     translate_presentation_label,
 )
 from expo_jbm329.utils.format_utils import fmt_int
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.clustering import ClusteringResult
@@ -78,7 +79,7 @@ class ClusteringConfigWidget(QWidget):
         self._method_combo = self._build_method_combo(result.method)
         form.addRow(QLabel(self.tr("Method"), self), self._method_combo)
         self._standardize_checkbox = QCheckBox(
-            translate_presentation_label(PresentationLabel.STANDARDIZE_FEATURES_SELECTOR, QCoreApplication.translate),
+            translate_presentation_label(PresentationLabel.STANDARDIZE_FEATURES_SELECTOR, translate),
             self,
         )
         self._standardize_checkbox.setChecked(result.standardize)
@@ -114,7 +115,7 @@ class ClusteringConfigWidget(QWidget):
         self._update_parameter_visibility()
 
         features = QGroupBox(
-            translate_presentation_label(PresentationLabel.FEATURES_SELECTOR, QCoreApplication.translate),
+            translate_presentation_label(PresentationLabel.FEATURES_SELECTOR, translate),
             self,
         )
         features_layout = QVBoxLayout(features)
@@ -162,7 +163,7 @@ class ClusteringConfigWidget(QWidget):
         """Build the algorithm selector."""
         combo = QComboBox(self)
         for algorithm in ClusteringMethod:
-            combo.addItem(clustering_method_label(algorithm, QCoreApplication.translate), algorithm)
+            combo.addItem(clustering_method_label(algorithm, translate), algorithm)
         combo.setCurrentIndex(combo.findData(method))
         return combo
 

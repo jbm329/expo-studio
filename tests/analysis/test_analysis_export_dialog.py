@@ -250,7 +250,7 @@ def test_statistics_export_component_labels_use_shared_translation_context(monke
         return f"Localized {text}" if context == "StatisticsView" else text
 
     monkeypatch.setattr(
-        "expo_jbm329.gui.dialogs.analysis.analysis_export_dialog.QCoreApplication.translate",
+        "expo_jbm329.gui.dialogs.analysis.analysis_export_dialog.translate",
         translate,
     )
     dialog = AnalysisExportDialog(statistics=result)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QFormLayout,
@@ -24,6 +24,7 @@ from expo_jbm329.gui.dialogs.analysis.group_comparison_config import GroupCompar
 from expo_jbm329.services.analysis.categories import HypothesisTest
 from expo_jbm329.services.analysis.presentation import hypothesis_family_label
 from expo_jbm329.utils.format_utils import fmt_int
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.chi_square import ChiSquareResult
@@ -190,7 +191,7 @@ class HypothesisTestsConfigWidget(QWidget):
 
         self._test_combo = QComboBox(self)
         for test in HypothesisTest:
-            self._test_combo.addItem(hypothesis_family_label(test, QCoreApplication.translate), test.value)
+            self._test_combo.addItem(hypothesis_family_label(test, translate), test.value)
 
         form = QFormLayout()
         form.addRow(QLabel(self.tr("Test"), self), self._test_combo)

@@ -6307,13 +6307,13 @@ Saved to:
         <location filename="..\..\gui\dialogs\service\prompts\choice.py" line="197" />
         <source>Do you want to permanently delete:
 
-%1%2</source>
+{name}{size_hint}</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\service\prompts\text.py" line="218" />
         <location filename="..\..\gui\dialogs\service\prompts\column_operations.py" line="57" />
-        <source>Column: %1</source>
+        <source>Column: {column}</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -6478,7 +6478,7 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\service\prompts\text.py" line="225" />
-        <source>Current value: %1</source>
+        <source>Current value: {current_value}</source>
         <translation type="unfinished" />
     </message>
     <message>

@@ -6,7 +6,7 @@ import html
 import math
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection, build_section_scroll_area
@@ -19,6 +19,7 @@ from expo_jbm329.services.analysis.hypothesis_charts import (
 from expo_jbm329.services.analysis.paired_comparison import PairedComparisonError, PairedComparisonMethod
 from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.paired_comparison import PairedComparisonResult
@@ -88,7 +89,7 @@ class PairedComparisonView(QWidget):
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         return AnalysisResultSection(
-            translate_presentation_label(PresentationLabel.TEST_RESULTS, QCoreApplication.translate),
+            translate_presentation_label(PresentationLabel.TEST_RESULTS, translate),
             label,
             self,
         )
@@ -126,7 +127,7 @@ class PairedComparisonView(QWidget):
     def _build_table_section(self, result: PairedComparisonResult) -> QWidget:
         """Build one non-editable summary row per selected occasion."""
         panel, layout = self._build_section(
-            translate_presentation_label(PresentationLabel.MEASUREMENT_SUMMARY, QCoreApplication.translate)
+            translate_presentation_label(PresentationLabel.MEASUREMENT_SUMMARY, translate)
         )
         table = QTableWidget(len(result.summaries), 7, panel)
         table.setHorizontalHeaderLabels([
@@ -166,12 +167,12 @@ class PairedComparisonView(QWidget):
     def _build_chart_section(self, result: PairedComparisonResult) -> QWidget:
         """Render prepared distributions and paired trajectories without processing data."""
         panel, layout = self._build_section(
-            translate_presentation_label(PresentationLabel.PAIRED_MEASUREMENT_PLOTS, QCoreApplication.translate)
+            translate_presentation_label(PresentationLabel.PAIRED_MEASUREMENT_PLOTS, translate)
         )
         figure = Figure(constrained_layout=True)
         canvas = SerializedAnalysisCanvas(figure)
         canvas.setMinimumHeight(260)
-        presentation = build_hypothesis_chart_presentation(result, QCoreApplication.translate)
+        presentation = build_hypothesis_chart_presentation(result, translate)
         canvas.build_chart(lambda: draw_hypothesis_charts(figure, result, presentation))
         layout.addWidget(build_section_scroll_area(canvas, panel), 1)
         return panel

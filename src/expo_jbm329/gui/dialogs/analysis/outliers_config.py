@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, pyqtSignal
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QDoubleSpinBox, QFormLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from expo_jbm329.services.analysis.limits import (
@@ -18,6 +18,7 @@ from expo_jbm329.services.analysis.outliers import (
     OutlierMethod,
 )
 from expo_jbm329.services.analysis.presentation import outlier_method_label
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.outliers import OutlierSummaryResult
@@ -72,7 +73,7 @@ class OutliersConfigWidget(QWidget):
 
         self._method_combo = QComboBox(self)
         for method in OutlierMethod:
-            self._method_combo.addItem(outlier_method_label(method, QCoreApplication.translate), method)
+            self._method_combo.addItem(outlier_method_label(method, translate), method)
         self._method_combo.setCurrentIndex(self._method_combo.findData(result.method))
         form.addRow(QLabel(self.tr("Method"), self), self._method_combo)
 

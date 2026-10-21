@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QT_TRANSLATE_NOOP, QCoreApplication, Qt, QTimer
+from PyQt6.QtCore import QT_TRANSLATE_NOOP, Qt, QTimer
 from PyQt6.QtWidgets import (
     QHeaderView,
     QLabel,
@@ -145,12 +145,12 @@ class StatisticsView(QWidget):
         if result.columns:
             tabs.addTab(
                 self._build_continuous_page(result),
-                statistics_component_label(StatisticsExportTable.CONTINUOUS, QCoreApplication.translate),
+                statistics_component_label(StatisticsExportTable.CONTINUOUS, translate),
             )
         if result.categorical_columns:
             tabs.addTab(
                 self._build_categorical_page(result.categorical_columns),
-                statistics_component_label(StatisticsExportTable.CATEGORICAL, QCoreApplication.translate),
+                statistics_component_label(StatisticsExportTable.CATEGORICAL, translate),
             )
         layout.addWidget(tabs)
         return container
@@ -368,7 +368,7 @@ class StatisticsView(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(
             self._build_section_title(
-                statistics_component_label(StatisticsExportTable.CHARTS, QCoreApplication.translate),
+                statistics_component_label(StatisticsExportTable.CHARTS, translate),
                 container,
             )
         )

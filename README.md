@@ -366,8 +366,9 @@ and Swedish translations, including chart captions and report text. Separate
 chart titles in accessible names with periods. Preserve technical semicolons in
 HTML entities and styles, and never rewrite punctuation in user-provided data.
 
-For explicit contexts, use `QCoreApplication.translate(context, text)` or import
-the shared helper with `from expo_jbm329.utils.i18n_utils import translate`.
+For explicit contexts, import the shared helper with
+`from expo_jbm329.utils.i18n_utils import translate` rather than calling Qt's
+translation API directly. Use `translate(context, "Text")` for plain messages.
 For marker-based messages with substitutions, import `translate_fmt` from the
 same module. It translates the template **before** substituting descriptive
 named values, so translators can reorder values without changing their meaning.
@@ -390,9 +391,35 @@ inside inserted values need no special treatment. Formatting does not escape
 HTML or localize values, so preserve any required escaping and locale formatting.
 No shared helper or local wrapper is needed for this widget pattern.
 
-Choose the formatting-call style by the translation contexts used across the
-**whole module** for explicit-context marker-based messages. For a single-context
-module, reuse or create a local `_tr_fmt` wrapper bound to that context:
+Choose the call style by the translation contexts used across the **whole
+module** for explicit-context messages. For a single-context module, reuse or
+create a local `_tr` wrapper for plain messages and `_tr_fmt` for formatted
+messages, as needed. Bind both to that context and retain literal extraction
+markers:
+
+```python
+from PyQt6.QtCore import QT_TRANSLATE_NOOP
+
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
+
+TR_READY = QT_TRANSLATE_NOOP("FilePanelController", "Ready")
+TR_LOADING = QT_TRANSLATE_NOOP("FilePanelController", "Loading {file}")
+
+
+def _tr(text: str) -> str:
+    return translate("FilePanelController", text)
+
+
+def _tr_fmt(text: str, **kwargs: object) -> str:
+    return translate_fmt("FilePanelController", text, **kwargs)
+
+
+status = _tr(TR_READY)
+message = _tr_fmt(TR_LOADING, file=filename)
+```
+
+For class-local markers in their matching Qt context, the same pattern can use
+`QT_TR_NOOP` and static wrappers:
 
 ```python
 from PyQt6.QtCore import QT_TR_NOOP
@@ -411,8 +438,8 @@ class FilePanelController:
         return self._tr_fmt(self.TR_LOADING, file=filename)
 ```
 
-For a module using multiple contexts, call `translate_fmt` directly instead of
-adding a fixed-context formatting wrapper:
+For a module using multiple contexts, call `translate` and `translate_fmt`
+directly instead of adding fixed-context wrappers:
 
 ```python
 from PyQt6.QtCore import QT_TRANSLATE_NOOP
@@ -428,6 +455,15 @@ Use these examples for explicit-context, marker-based messages, not as a reason
 to replace ordinary widget `self.tr("Text")` calls. Keep injected translation
 callbacks and captured-template formatting in Qt-free chart/report services:
 calling the shared helper there would bypass the caller's translation source.
+At the UI boundary, pass the shared `translate` helper instead of Qt's method
+when a service needs a two-argument `(context, source) -> str` callback:
+
+```python
+labels = build_outlier_histogram_labels(translate)
+```
+
+The service still uses the injected callback and can request different contexts.
+Do not pass a single-context `_tr(text)` wrapper in its place.
 
 `translate_fmt` leaves the translated template unchanged if formatting fails.
 It does not localize numbers or paths, escape HTML, or validate placeholders:
@@ -441,8 +477,9 @@ tokens inside inserted values are preserved, not formatted again.
 context). Do not alias the two-argument helper to `tr`: the extractor interprets
 that spelling as Qt's `tr(source, comment)` instead.
 Widget calls such as `self.tr("Text")` are unaffected and remain appropriate.
-Local wrappers do not make strings extractable: retain the markers in both
-call styles. Plain `_tr` wrappers are independent of the formatting-wrapper rule.
+Local wrappers do not make strings extractable: retain the markers for both
+plain and formatted messages. Keep existing markers for dynamically selected
+sources in their canonical context.
 
 Shared labels resolved dynamically need literal `QT_TRANSLATE_NOOP` extraction
 markers in their canonical context. Advanced Analysis keeps these alongside its

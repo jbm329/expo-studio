@@ -28,7 +28,7 @@ def test_localize_dialog_buttons_sets_close_button_text():
     assert close_button.text() == _translated(TR_CLOSE)
 
 
-def test_localize_dialog_buttons_sets_ok_cancel_yes_no_text():
+def test_localize_dialog_buttons_sets_ok_cancel_yes_no_text(widget_language: str) -> None:
     standard_buttons = (
         QDialogButtonBox.StandardButton.Ok
         | QDialogButtonBox.StandardButton.Cancel
@@ -54,7 +54,7 @@ def test_localize_dialog_buttons_ignores_buttons_not_present():
     assert buttons.button(QDialogButtonBox.StandardButton.Ok) is None
 
 
-def test_localize_messagebox_buttons_sets_ok_yes_no_text():
+def test_localize_messagebox_buttons_sets_ok_yes_no_text(widget_language: str) -> None:
     msg = QMessageBox()
     msg.setStandardButtons(
         QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No

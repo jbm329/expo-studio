@@ -6347,16 +6347,16 @@ Sparad till:
         <location filename="..\..\gui\dialogs\service\prompts\choice.py" line="197" />
         <source>Do you want to permanently delete:
 
-%1%2</source>
+{name}{size_hint}</source>
         <translation>Vill du radera permanent:
 
-%1%2</translation>
+{name}{size_hint}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\service\prompts\text.py" line="218" />
         <location filename="..\..\gui\dialogs\service\prompts\column_operations.py" line="57" />
-        <source>Column: %1</source>
-        <translation>Kolumn: %1</translation>
+        <source>Column: {column}</source>
+        <translation>Kolumn: {column}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\service\prompts\column_operations.py" line="66" />
@@ -6520,8 +6520,8 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\service\prompts\text.py" line="225" />
-        <source>Current value: %1</source>
-        <translation>Nuvarande värde: %1</translation>
+        <source>Current value: {current_value}</source>
+        <translation>Nuvarande värde: {current_value}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\service\prompts\text.py" line="232" />

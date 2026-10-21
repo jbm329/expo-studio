@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import pytest
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtWidgets import QCheckBox, QDialog, QLabel, QLineEdit, QMessageBox, QRadioButton, QWidget
 
 from expo_jbm329.gui.dialogs.service.dialog_service import (
     BooleanConversionResult,
@@ -17,6 +18,7 @@ from expo_jbm329.gui.dialogs.service.dialog_service import (
 from expo_jbm329.gui.dialogs.service.null_dialog_service import (
     NullDialogService,
 )
+from expo_jbm329.gui.dialogs.service.prompts import choice, column_operations, text
 
 
 # ----------------------------------------------------------------------
@@ -58,6 +60,111 @@ def test_qt_info_displays_path_as_literal_plain_text(monkeypatch, parent: QWidge
     monkeypatch.setattr(QMessageBox, "exec", inspect_message)
     QtDialogService().info(parent, "Export completed", text)
     assert observed == [(Qt.TextFormat.PlainText, text)]
+
+
+@pytest.mark.parametrize("accepted", [False, True])
+@pytest.mark.parametrize("size_hint", [None, "", " (size {name} %1 %2)"])
+def test_confirm_delete_formats_compiled_translation(
+    monkeypatch: pytest.MonkeyPatch,
+    parent: QWidget,
+    widget_language: str,
+    accepted: bool,
+    size_hint: str | None,
+) -> None:
+    name = "Dataset {size_hint} %1 %2"
+    path = r"C:\data\Dataset {name} %2.csv"
+    prefix = "Vill du radera permanent:" if widget_language == "sv" else "Do you want to permanently delete:"
+    observed: list[str] = []
+
+    def inspect_message(message: QMessageBox) -> int:
+        observed.append(message.text())
+        assert message.windowTitle() == ("Bekräfta radera" if widget_language == "sv" else "Confirm delete")
+        assert message.informativeText() == path
+        assert message.defaultButton() is message.button(QMessageBox.StandardButton.No)
+        assert message.button(QMessageBox.StandardButton.Yes).text() == ("Ja" if widget_language == "sv" else "Yes")
+        return QMessageBox.StandardButton.Yes if accepted else QMessageBox.StandardButton.No
+
+    monkeypatch.setattr(QMessageBox, "exec", inspect_message)
+
+    result = choice.confirm_delete(parent, name=name, full_path=path, size_hint=size_hint)
+
+    assert result is accepted
+    assert observed == [f"{prefix}\n\n{name}{size_hint or ''}"]
+
+
+def test_confirm_delete_supports_reordered_fields_and_custom_title(
+    monkeypatch: pytest.MonkeyPatch, parent: QWidget
+) -> None:
+    def reordered_translate(context: str, source: str) -> str:
+        if context == "QtDialogService" and source == choice.TR_DELETE_CONFIRMATION:
+            return "{size_hint}: {name}"
+        return source
+
+    monkeypatch.setattr(QCoreApplication, "translate", reordered_translate)
+    observed: list[tuple[str, str]] = []
+
+    def inspect_message(message: QMessageBox) -> int:
+        observed.append((message.windowTitle(), message.text()))
+        return QMessageBox.StandardButton.No
+
+    monkeypatch.setattr(QMessageBox, "exec", inspect_message)
+    choice.confirm_delete(parent, title="Custom title", name="Name %2 {name}", full_path="path", size_hint="Size")
+
+    assert observed == [("Custom title", "Size: Name %2 {name}")]
+
+
+@pytest.mark.parametrize("accepted", [False, True])
+def test_split_column_formats_compiled_labels_and_preserves_defaults(
+    monkeypatch: pytest.MonkeyPatch, parent: QWidget, widget_language: str, accepted: bool
+) -> None:
+    column = "Column {column} %1"
+    observed: list[str] = []
+
+    def inspect_dialog(dialog: QDialog) -> int:
+        observed.extend(label.text() for label in dialog.findChildren(QLabel))
+        assert dialog.findChild(QLineEdit).text() == r"\t"
+        assert dialog.findChild(QCheckBox).isChecked() is False
+        radios = dialog.findChildren(QRadioButton)
+        assert [radio.isChecked() for radio in radios] == [False, True]
+        return QDialog.DialogCode.Accepted if accepted else QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(QDialog, "exec", inspect_dialog)
+    result = column_operations.prompt_split_column(
+        parent, title="Split", column=column, default_delimiter=r"\t", default_keep_original=False, default_mode="last"
+    )
+
+    assert f"{'Kolumn' if widget_language == 'sv' else 'Column'}: {column}" in observed
+    assert ("Avgränsare / sträng:" if widget_language == "sv" else "Delimiter / string:") in observed
+    assert result == {"delimiter": "\t" if accepted else "", "keep_original": False, "mode": "last", "ok": accepted}
+
+
+@pytest.mark.parametrize("accepted", [False, True])
+def test_value_replace_formats_compiled_labels_and_preserves_defaults(
+    monkeypatch: pytest.MonkeyPatch, parent: QWidget, widget_language: str, accepted: bool
+) -> None:
+    column = "Column {column} %1"
+    value = "Value {current_value} %1 %2"
+    observed: list[str] = []
+
+    def inspect_dialog(dialog: QDialog) -> int:
+        observed.extend(label.text() for label in dialog.findChildren(QLabel))
+        assert dialog.findChild(QLineEdit).text() == "Replacement {value} %1"
+        assert dialog.findChild(QCheckBox).isChecked() is True
+        return QDialog.DialogCode.Accepted if accepted else QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(QDialog, "exec", inspect_dialog)
+    result = text.prompt_value_replace(
+        parent,
+        title="Replace",
+        column=column,
+        current_value=value,
+        default_new_value="Replacement {value} %1",
+        default_replace_all=True,
+    )
+
+    assert f"{'Kolumn' if widget_language == 'sv' else 'Column'}: {column}" in observed
+    assert f"{'Nuvarande värde' if widget_language == 'sv' else 'Current value'}: {value}" in observed
+    assert result == {"new_value": "Replacement {value} %1" if accepted else "", "replace_all": True, "ok": accepted}
 
 
 def test_warn_is_logged(dialogs: NullDialogService, parent: QWidget) -> None:
