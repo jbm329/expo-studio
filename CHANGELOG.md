@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.1.0] - 2026-10-21
 
 ### Changed
 - Result tabs now support Close, Close others, Close all to the right, and Close all, with reliable bulk closing and pending-job cleanup
@@ -14,6 +14,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Advanced Analysis stays bound to the selected dataset, with its name and dimensions shown in the window title
 
 ### Added
+- Standardized localization and added support for German, French, Spanish, Italian and Polish languages
 - MySQL/MariaDB support via bundled PyMySQL and MySQL Connector/Python drivers, and PostgreSQL support via bundled psycopg, in addition to ODBC connectivity; tested on Linux (Fedora 44), with Windows support not yet tested
 - Categorical tab in Statistics with frequency counts, percentages, and separate missing-value counts
 - Continuous mean/SD and median/quartile summaries with Shapiro-Wilk reporting guidance
