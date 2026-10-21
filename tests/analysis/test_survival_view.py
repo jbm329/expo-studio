@@ -56,8 +56,8 @@ def test_cox_view_shows_hazard_ratio_table_counts_reference_and_caveats():
     assert "Duration:\nduration" in text
     assert "Event:\nevent" in text
     assert "Predictors:\nx, group" in text
-    assert "Event coding: 1 = event; 0 = censored." in text
-    assert f"Events: {result.n_events}; censored: {result.n_censored}" in text
+    assert "Event coding: 1 = event, 0 = censored." in text
+    assert f"Events: {result.n_events}, censored: {result.n_censored}" in text
     assert "Reference for group:" in text
     assert "Efron" in text
     assert "proportional-hazards assumption was not assessed" in text
@@ -197,7 +197,7 @@ def test_cox_table_charts_comments_layout_and_exact_plot_contents():
         text = _text(view)
         assert "without covariate adjustment" in text
         assert "not a Cox prediction" in text
-        assert "no survival sampling or confidence bands" in text
+        assert "No survival sampling or confidence bands" in text
     finally:
         view.close()
 

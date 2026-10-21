@@ -549,7 +549,7 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="853" />
-        <source>Choose exactly one table for CSV or binary export. Charts are available only in Excel; uncheck Charts to continue.</source>
+        <source>Choose exactly one table for CSV or binary export. Charts are available only in Excel. Uncheck Charts to continue.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -559,7 +559,7 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="865" />
-        <source>Choose exactly one table for CSV or binary export. {component} is available only in Excel; uncheck {component} to continue.</source>
+        <source>Choose exactly one table for CSV or binary export. {component} is available only in Excel. Uncheck {component} to continue.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -1523,7 +1523,7 @@ Please see logs for more information.</source>
     <message>
         <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="300" />
         <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="235" />
-        <source>&lt;b&gt;Fisher's exact test&lt;/b&gt; (exact; useful when expected counts are small):</source>
+        <source>&lt;b&gt;Fisher's exact test&lt;/b&gt; (exact, useful when expected counts are small):</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -4030,7 +4030,7 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="248" />
-        <source>The selected outcome is invalid. Logistic regression needs two outcome levels; count regression needs non-negative integer values.</source>
+        <source>The selected outcome is invalid. Logistic regression needs two outcome levels. Count regression needs non-negative integer values.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -4110,7 +4110,7 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="325" />
-        <source>Outcome coding: {zero} = 0; {one} = 1.</source>
+        <source>Outcome coding: {zero} = 0, {one} = 1.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -4130,7 +4130,7 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="342" />
-        <source>Log-likelihood = {value}; McFadden pseudo R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</source>
+        <source>Log-likelihood = {value}, McFadden pseudo R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -4145,7 +4145,7 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="351" />
-        <source>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins; identical probabilities stay together.</source>
+        <source>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins. Identical probabilities stay together.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -4165,22 +4165,22 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="376" />
-        <source>Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial.</source>
+        <source>Pearson dispersion = {value}, above the {threshold} guideline. Consider Negative Binomial.</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="380" />
-        <source>Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion.</source>
+        <source>Pearson dispersion = {value}. It does not exceed the {threshold} guideline for overdispersion.</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="389" />
-        <source>This diagnostic is advisory; the selected model was not changed.</source>
+        <source>This diagnostic is advisory. The selected model was not changed.</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="392" />
-        <source>Fitted NB2 alpha = {alpha}; this is distinct from the advisory Pearson dispersion.</source>
+        <source>Fitted NB2 alpha = {alpha}. This is distinct from the advisory Pearson dispersion.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -4225,7 +4225,7 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\services\analysis\regression_charts.py" line="190" />
-        <source>Odds ratio (logarithmic scale; reference = 1)</source>
+        <source>Odds ratio (logarithmic scale, reference = 1)</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -6081,7 +6081,7 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="61" />
-        <source>Select at least two numeric columns. They are used in the order shown; each row is one subject.</source>
+        <source>Select at least two numeric columns. They are used in the order shown. Each row is one subject.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -6148,7 +6148,7 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="78" />
-        <source>Complete subjects: {complete} of {total}; excluded for missing values: {excluded}</source>
+        <source>Complete subjects: {complete} of {total}, excluded for missing values: {excluded}</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -6163,12 +6163,12 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="100" />
-        <source>Occasions follow the selected column order; chronological order is not inferred.</source>
+        <source>Occasions follow the selected column order. Chronological order is not inferred.</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="101" />
-        <source>Boxplots use all complete subjects; whiskers show the minimum and maximum.</source>
+        <source>Boxplots use all complete subjects. Whiskers show the minimum and maximum.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -6233,7 +6233,7 @@ Saved to:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="197" />
-        <source>The two measurements are identical for every complete subject; the Wilcoxon test is undefined.</source>
+        <source>The two measurements are identical for every complete subject. The Wilcoxon test is undefined.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -9765,7 +9765,7 @@ Time: {sec:.2f}s{sample}</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="332" />
-        <source>{column}: Shapiro-Wilk could not provide a recommendation; neither summary is starred.</source>
+        <source>{column}: Shapiro-Wilk could not provide a recommendation. Neither summary is starred.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -9888,7 +9888,7 @@ Time: {sec:.2f}s{sample}</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="183" />
-        <source>Event {column} must contain only 0 and 1 or boolean values; 1 means event and 0 means censored.</source>
+        <source>Event {column} must contain only 0 and 1 or boolean values. 1 means event and 0 means censored.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -9953,12 +9953,12 @@ Time: {sec:.2f}s{sample}</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="250" />
-        <source>Duration: &lt;b&gt;{duration}&lt;/b&gt;; event: &lt;b&gt;{event}&lt;/b&gt;</source>
+        <source>Duration: &lt;b&gt;{duration}&lt;/b&gt;, event: &lt;b&gt;{event}&lt;/b&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="254" />
-        <source>Event coding: 1 = event; 0 = censored.</source>
+        <source>Event coding: 1 = event, 0 = censored.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -9968,7 +9968,7 @@ Time: {sec:.2f}s{sample}</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="259" />
-        <source>Events: {events}; censored: {censored}</source>
+        <source>Events: {events}, censored: {censored}</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -9998,12 +9998,12 @@ Time: {sec:.2f}s{sample}</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="281" />
-        <source>Plus signs mark censoring times; tied censor marks may overlap.</source>
+        <source>Plus signs mark censoring times. Tied censor marks may overlap.</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="282" />
-        <source>All complete subjects are used; no survival sampling or confidence bands are applied.</source>
+        <source>All complete subjects are used. No survival sampling or confidence bands are applied.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -10246,7 +10246,7 @@ all hazard ratios and intervals must be finite and positive.</source>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="132" />
-        <source>No seasonal period could be detected; choose one to decompose the series.</source>
+        <source>No seasonal period could be detected. Choose one to decompose the series.</source>
         <translation type="unfinished" />
     </message>
     <message>

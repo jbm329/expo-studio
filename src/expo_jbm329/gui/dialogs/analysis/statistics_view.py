@@ -330,7 +330,7 @@ class StatisticsView(QWidget):
         """Explain the selected column's suggestion without making a reporting choice."""
         if not self._has_recommendation(stats):
             return self.tr(
-                "{column}: Shapiro-Wilk could not provide a recommendation; neither summary is starred."
+                "{column}: Shapiro-Wilk could not provide a recommendation. Neither summary is starred."
             ).format(
                 column=stats.column,
             )

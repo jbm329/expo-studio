@@ -58,7 +58,7 @@ class PairedComparisonConfigWidget(QWidget):
         group = QGroupBox(self.tr("Measurement columns"), self)
         group_layout = QVBoxLayout(group)
         label = QLabel(
-            self.tr("Select at least two numeric columns. They are used in the order shown; each row is one subject."),
+            self.tr("Select at least two numeric columns. They are used in the order shown. Each row is one subject."),
             group,
         )
         label.setWordWrap(True)

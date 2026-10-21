@@ -359,6 +359,13 @@ strings, run `uv run build-i18n`, review and finish the Swedish translations in
 `{component}` exactly and verify the compiled translations in the affected UI or
 report.
 
+Separate complete sentences with periods and capitalize
+the following sentence. Use commas between short labels, values, or parenthetical
+phrases instead of semicolons, and apply the same convention to English sources
+and Swedish translations, including chart captions and report text. Separate
+chart titles in accessible names with periods. Preserve technical semicolons in
+HTML entities and styles, and never rewrite punctuation in user-provided data.
+
 For explicit contexts, use `QCoreApplication.translate(context, text)` or import
 the shared wrapper as `from expo_jbm329.utils.i18n_utils import tr as translate`.
 Do not call that two-argument wrapper by the name `tr` in new extraction-sensitive

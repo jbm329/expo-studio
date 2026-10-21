@@ -195,7 +195,7 @@ def _decomposition(
     if bool(np.isnan(values).any()):
         return (), (), (), "Seasonal decomposition is unavailable while the series has gaps."
     if seasonal_period is None:
-        return (), (), (), "No seasonal period could be detected; choose one to decompose the series."
+        return (), (), (), "No seasonal period could be detected. Choose one to decompose the series."
     if len(values) < MIN_SEASONAL_CYCLES * seasonal_period:
         return (), (), (), "Seasonal decomposition needs at least two complete seasonal cycles."
     if model is DecompositionModel.MULTIPLICATIVE and bool(np.any(values <= 0)):

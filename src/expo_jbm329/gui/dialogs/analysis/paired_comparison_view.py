@@ -75,7 +75,7 @@ class PairedComparisonView(QWidget):
                 statistic=fmt_num(result.statistic),
                 p=html.escape(fmt_p_value(result.p_value)),
             ),
-            self.tr("Complete subjects: {complete} of {total}; excluded for missing values: {excluded}").format(
+            self.tr("Complete subjects: {complete} of {total}, excluded for missing values: {excluded}").format(
                 complete=fmt_int(result.complete_subjects),
                 total=fmt_int(result.total_subjects),
                 excluded=fmt_int(result.excluded_subjects),
@@ -97,8 +97,8 @@ class PairedComparisonView(QWidget):
         """Share displayed complete-cohort, ordering and trajectory-sampling guidance."""
         notes = [
             self.tr("Rows are treated as paired subjects across the selected measurement columns."),
-            self.tr("Occasions follow the selected column order; chronological order is not inferred."),
-            self.tr("Boxplots use all complete subjects; whiskers show the minimum and maximum."),
+            self.tr("Occasions follow the selected column order. Chronological order is not inferred."),
+            self.tr("Boxplots use all complete subjects. Whiskers show the minimum and maximum."),
         ]
         if result.plot_data is not None and result.plot_data.sampled:
             notes.append(
@@ -195,7 +195,7 @@ class PairedComparisonView(QWidget):
                 "There are not enough subjects with complete measurements for this paired test."
             ),
             PairedComparisonError.NO_DIFFERENCES: self.tr(
-                "The two measurements are identical for every complete subject; the Wilcoxon test is undefined."
+                "The two measurements are identical for every complete subject. The Wilcoxon test is undefined."
             ),
             PairedComparisonError.NO_VARIATION: self.tr(
                 "The selected measurements do not vary across occasions, so the Friedman test is undefined."

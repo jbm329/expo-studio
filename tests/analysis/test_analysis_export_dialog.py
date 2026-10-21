@@ -173,9 +173,9 @@ def test_overview_sample_compiled_translations(locale, sample_label, group_label
     try:
         dialog = AnalysisExportDialog(overview=analyze_dataset_overview(pd.DataFrame({"value": [1]})))
         assert dialog.findChildren(QCheckBox)[1].text() == sample_label
-        assert translator.translate("OverviewView", "Sample group") == group_label
-        assert translator.translate("OverviewView", "First ({count})") == first_label
-        assert translator.translate("OverviewView", "Last ({count})") == last_label
+        assert app.translate("OverviewView", "Sample group") == group_label
+        assert app.translate("OverviewView", "First ({count})") == first_label
+        assert app.translate("OverviewView", "Last ({count})") == last_label
     finally:
         if dialog is not None:
             dialog.close()

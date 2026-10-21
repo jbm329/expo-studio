@@ -98,7 +98,7 @@ def test_displays_wilcoxon_result_and_complete_subject_counts():
 
     assert "Wilcoxon signed-rank test" in text
     assert "Measurement columns: before, after" in text
-    assert "Complete subjects: 8 of 10; excluded for missing values: 2" in text
+    assert "Complete subjects: 8 of 10, excluded for missing values: 2" in text
     assert "paired subjects" in text
 
 
@@ -171,8 +171,8 @@ def test_table_charts_and_comments_follow_hypothesis_test_layout(columns: tuple[
         for line, values in zip(trajectories.lines, result.plot_data.trajectories, strict=True):
             assert list(line.get_ydata()) == list(values)
         comments = "\n".join(label.text() for label in splitter.widget(2).findChildren(QLabel))
-        assert "chronological order is not inferred" in comments
-        assert "whiskers show the minimum and maximum" in comments
+        assert "Chronological order is not inferred" in comments
+        assert "Whiskers show the minimum and maximum" in comments
         assert "deterministic sample" not in comments
     finally:
         view.close()

@@ -129,8 +129,8 @@ class TimeSeriesView(QWidget):
             "Seasonal decomposition is unavailable while the series has gaps.": self.tr(
                 "Seasonal decomposition is unavailable while the series has gaps."
             ),
-            "No seasonal period could be detected; choose one to decompose the series.": self.tr(
-                "No seasonal period could be detected; choose one to decompose the series."
+            "No seasonal period could be detected. Choose one to decompose the series.": self.tr(
+                "No seasonal period could be detected. Choose one to decompose the series."
             ),
             "Seasonal decomposition needs at least two complete seasonal cycles.": self.tr(
                 "Seasonal decomposition needs at least two complete seasonal cycles."

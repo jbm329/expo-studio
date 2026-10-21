@@ -276,7 +276,7 @@ def test_decomposition_explains_a_missing_seasonal_period():
         DecompositionModel.ADDITIVE,
     )
 
-    assert note == "No seasonal period could be detected; choose one to decompose the series."
+    assert note == "No seasonal period could be detected. Choose one to decompose the series."
 
 
 def test_initialize_time_series_selects_first_columns_without_analyzing() -> None:

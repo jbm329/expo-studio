@@ -246,8 +246,8 @@ class GeneralizedRegressionView(QWidget):
                 return self.tr("Select an outcome column for this regression model.")
             case GeneralizedRegressionError.INVALID_TARGET:
                 return self.tr(
-                    "The selected outcome is invalid. Logistic regression needs two outcome levels; "
-                    "count regression needs non-negative integer values."
+                    "The selected outcome is invalid. Logistic regression needs two outcome levels. "
+                    "Count regression needs non-negative integer values."
                 )
             case GeneralizedRegressionError.NO_PREDICTORS_SELECTED:
                 return self.tr("Select one or more predictors and click Apply.")
@@ -322,7 +322,7 @@ class GeneralizedRegressionView(QWidget):
         result = self._result
         model_name = self._model_name()
         if result.model is RegressionModel.LOGISTIC:
-            outcome_note = self.tr("Outcome coding: {zero} = 0; {one} = 1.").format(
+            outcome_note = self.tr("Outcome coding: {zero} = 0, {one} = 1.").format(
                 zero=html.escape(result.target_levels[0]),
                 one=html.escape(result.target_levels[1]),
             )
@@ -339,7 +339,7 @@ class GeneralizedRegressionView(QWidget):
         if outcome_note:
             lines.append(outcome_note)
         lines.extend([
-            self.tr("Log-likelihood = {value}; McFadden pseudo R<sup>2</sup> = {pseudo}").format(
+            self.tr("Log-likelihood = {value}, McFadden pseudo R<sup>2</sup> = {pseudo}").format(
                 value=fmt_num(result.log_likelihood),
                 pseudo=fmt_num(result.pseudo_r_squared, sig=3),
             ),
@@ -351,7 +351,7 @@ class GeneralizedRegressionView(QWidget):
             interpretation = self.tr(
                 "Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, "
                 "not holdout performance. All {count} complete-case fitted rows are used. "
-                "Calibration uses up to 10 quantile bins; identical probabilities stay together."
+                "Calibration uses up to 10 quantile bins. Identical probabilities stay together."
             ).format(event=event, count=fmt_int(data.n_used if data is not None else result.n_used))
             lines.extend([
                 "",
@@ -374,11 +374,11 @@ class GeneralizedRegressionView(QWidget):
             else:
                 if result.overdispersed:
                     dispersion_text = self.tr(
-                        "Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial."
+                        "Pearson dispersion = {value}, above the {threshold} guideline. Consider Negative Binomial."
                     )
                 else:
                     dispersion_text = self.tr(
-                        "Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion."
+                        "Pearson dispersion = {value}. It does not exceed the {threshold} guideline for overdispersion."
                     )
                 lines.append(
                     dispersion_text.format(
@@ -386,10 +386,10 @@ class GeneralizedRegressionView(QWidget):
                         threshold=fmt_num(OVERDISPERSION_THRESHOLD),
                     )
                 )
-            lines.append(self.tr("This diagnostic is advisory; the selected model was not changed."))
+            lines.append(self.tr("This diagnostic is advisory. The selected model was not changed."))
         if result.model is RegressionModel.NEGATIVE_BINOMIAL and result.negative_binomial_alpha is not None:
             lines.append(
-                self.tr("Fitted NB2 alpha = {alpha}; this is distinct from the advisory Pearson dispersion.").format(
+                self.tr("Fitted NB2 alpha = {alpha}. This is distinct from the advisory Pearson dispersion.").format(
                     alpha=fmt_num(result.negative_binomial_alpha),
                 )
             )

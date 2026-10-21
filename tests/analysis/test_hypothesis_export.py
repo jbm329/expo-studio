@@ -270,7 +270,7 @@ def test_export_notes_share_displayed_normality_warnings_assumptions_and_samplin
     paired = paired_snapshot(3, 250)
     paired_view = PairedComparisonView(paired.result)
     paired_notes = paired_view.export_notes(paired.result)
-    assert any("chronological order is not inferred" in note for note in paired_notes)
+    assert any("Chronological order is not inferred" in note for note in paired_notes)
     assert any("sample of 200 of 250" in note for note in paired_notes)
     assert any("all complete subjects" in note for note in paired_notes)
 

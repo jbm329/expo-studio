@@ -1,5 +1,6 @@
 import subprocess
 from dataclasses import replace
+from html import unescape
 from pathlib import Path
 from shutil import copyfile
 from string import Formatter
@@ -131,6 +132,25 @@ def test_shared_analysis_and_report_labels_survive_real_extraction(extracted_mes
     assert not missing
 
 
+def test_analysis_catalog_punctuation_preserves_entities_without_prose_semicolons(
+    extracted_messages: dict[tuple[str, str, str], ElementTree.Element],
+) -> None:
+    swedish = _catalog_messages(ElementTree.parse(build_i18n.locales_dir() / "app_sv.ts").getroot())
+    for key, message in extracted_messages.items():
+        if not any(
+            "/analysis/" in location.get("filename", "").replace("\\", "/") for location in message.findall("location")
+        ):
+            continue
+        assert ";" not in unescape(key[1]), key
+        translated = swedish[key].findtext("translation")
+        assert translated, key
+        assert ";" not in unescape(translated), key
+
+    entity_key = ("RegressionView", "* marks coefficients significant at p &lt; {alpha}.", "")
+    assert entity_key in extracted_messages
+    assert "&lt;" in swedish[entity_key].findtext("translation", "")
+
+
 def test_outlier_chart_builders_survive_real_extraction_with_finished_swedish(extracted_messages):
     sources: set[tuple[str, str, str]] = set()
 
@@ -171,9 +191,7 @@ def test_active_analysis_swedish_translations_are_finished_and_preserve_placehol
     formatter = Formatter()
     for key, message in extracted_messages.items():
         if not any(
-            "/dialogs/analysis/" in location.get("filename", "").replace("\\", "/")
-            or "/controllers/analysis/" in location.get("filename", "").replace("\\", "/")
-            for location in message.findall("location")
+            "/analysis/" in location.get("filename", "").replace("\\", "/") for location in message.findall("location")
         ):
             continue
         assert key in swedish, key

@@ -551,8 +551,8 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="853" />
-        <source>Choose exactly one table for CSV or binary export. Charts are available only in Excel; uncheck Charts to continue.</source>
-        <translation>Välj exakt en tabell för CSV- eller binärexport. Diagram är endast tillgängliga i Excel; avmarkera Diagram för att fortsätta.</translation>
+        <source>Choose exactly one table for CSV or binary export. Charts are available only in Excel. Uncheck Charts to continue.</source>
+        <translation>Välj exakt en tabell för CSV- eller binärexport. Diagram är endast tillgängliga i Excel. Avmarkera Diagram för att fortsätta.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="861" />
@@ -561,8 +561,8 @@
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="865" />
-        <source>Choose exactly one table for CSV or binary export. {component} is available only in Excel; uncheck {component} to continue.</source>
-        <translation>Välj exakt en tabell för CSV- eller binärexport. {component} är endast tillgänglig i Excel; avmarkera {component} för att fortsätta.</translation>
+        <source>Choose exactly one table for CSV or binary export. {component} is available only in Excel. Uncheck {component} to continue.</source>
+        <translation>Välj exakt en tabell för CSV- eller binärexport. {component} är endast tillgänglig i Excel. Avmarkera {component} för att fortsätta.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\analysis_export_dialog.py" line="933" />
@@ -1529,8 +1529,8 @@ Vänligen se loggfil för mer information.</translation>
     <message>
         <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="300" />
         <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="235" />
-        <source>&lt;b&gt;Fisher's exact test&lt;/b&gt; (exact; useful when expected counts are small):</source>
-        <translation>&lt;b&gt;Fishers exakta test&lt;/b&gt; (exakt; användbart när förväntade frekvenser är låga):</translation>
+        <source>&lt;b&gt;Fisher's exact test&lt;/b&gt; (exact, useful when expected counts are small):</source>
+        <translation>&lt;b&gt;Fishers exakta test&lt;/b&gt; (exakt, användbart när förväntade frekvenser är låga):</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\chi_square_view.py" line="288" />
@@ -4068,8 +4068,8 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="248" />
-        <source>The selected outcome is invalid. Logistic regression needs two outcome levels; count regression needs non-negative integer values.</source>
-        <translation>Det valda utfallet är ogiltigt. Logistisk regression kräver två utfallsnivåer; regression för räknevariabler kräver icke-negativa heltalsvärden.</translation>
+        <source>The selected outcome is invalid. Logistic regression needs two outcome levels. Count regression needs non-negative integer values.</source>
+        <translation>Det valda utfallet är ogiltigt. Logistisk regression kräver två utfallsnivåer. Regression för räknevariabler kräver icke-negativa heltalsvärden.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="253" />
@@ -4148,8 +4148,8 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="325" />
-        <source>Outcome coding: {zero} = 0; {one} = 1.</source>
-        <translation>Utfallskodning: {zero} = 0; {one} = 1.</translation>
+        <source>Outcome coding: {zero} = 0, {one} = 1.</source>
+        <translation>Utfallskodning: {zero} = 0, {one} = 1.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="332" />
@@ -4168,8 +4168,8 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="342" />
-        <source>Log-likelihood = {value}; McFadden pseudo R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</source>
-        <translation>Log-likelihood = {value}; McFaddens pseudo-R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</translation>
+        <source>Log-likelihood = {value}, McFadden pseudo R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</source>
+        <translation>Log-likelihood = {value}, McFaddens pseudo-R&lt;sup&gt;2&lt;/sup&gt; = {pseudo}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="346" />
@@ -4183,8 +4183,8 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="351" />
-        <source>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins; identical probabilities stay together.</source>
-        <translation>Positiv händelse: {event} (kodad 1). ROC/AUC och kalibrering är diagnostik på anpassningsdata, inte prestanda på separat testdata. Alla {count} fullständiga rader som modellen anpassades till används. Kalibreringen använder upp till 10 kvantilgrupper; identiska sannolikheter hålls samman.</translation>
+        <source>Positive event: {event} (coded 1). ROC/AUC and calibration are in-sample diagnostics, not holdout performance. All {count} complete-case fitted rows are used. Calibration uses up to 10 quantile bins. Identical probabilities stay together.</source>
+        <translation>Positiv händelse: {event} (kodad 1). ROC/AUC och kalibrering är diagnostik på anpassningsdata, inte prestanda på separat testdata. Alla {count} fullständiga rader som modellen anpassades till används. Kalibreringen använder upp till 10 kvantilgrupper. Identiska sannolikheter hålls samman.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="358" />
@@ -4203,23 +4203,23 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="376" />
-        <source>Pearson dispersion = {value}, above the {threshold} guideline; consider Negative Binomial.</source>
-        <translation>Pearson-dispersion = {value}, över riktvärdet {threshold}; överväg negativ binomial regression.</translation>
+        <source>Pearson dispersion = {value}, above the {threshold} guideline. Consider Negative Binomial.</source>
+        <translation>Pearson-dispersion = {value}, över riktvärdet {threshold}. Överväg negativ binomial regression.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="380" />
-        <source>Pearson dispersion = {value}; it does not exceed the {threshold} guideline for overdispersion.</source>
-        <translation>Pearson-dispersion = {value}; den överskrider inte riktvärdet {threshold} för överdispersion.</translation>
+        <source>Pearson dispersion = {value}. It does not exceed the {threshold} guideline for overdispersion.</source>
+        <translation>Pearson-dispersion = {value}. Den överskrider inte riktvärdet {threshold} för överdispersion.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="389" />
-        <source>This diagnostic is advisory; the selected model was not changed.</source>
-        <translation>Diagnostiken är vägledande; den valda modellen ändrades inte.</translation>
+        <source>This diagnostic is advisory. The selected model was not changed.</source>
+        <translation>Diagnostiken är vägledande. Den valda modellen ändrades inte.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="392" />
-        <source>Fitted NB2 alpha = {alpha}; this is distinct from the advisory Pearson dispersion.</source>
-        <translation>Skattat NB2-alfa = {alpha}; detta skiljer sig från den vägledande Pearsondispersionen.</translation>
+        <source>Fitted NB2 alpha = {alpha}. This is distinct from the advisory Pearson dispersion.</source>
+        <translation>Skattat NB2-alfa = {alpha}. Detta skiljer sig från den vägledande Pearsondispersionen.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\regression_glm_view.py" line="401" />
@@ -4263,8 +4263,8 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\services\analysis\regression_charts.py" line="190" />
-        <source>Odds ratio (logarithmic scale; reference = 1)</source>
-        <translation>Oddskvot (logaritmisk skala; referens = 1)</translation>
+        <source>Odds ratio (logarithmic scale, reference = 1)</source>
+        <translation>Oddskvot (logaritmisk skala, referens = 1)</translation>
     </message>
     <message>
         <location filename="..\..\services\analysis\regression_charts.py" line="191" />
@@ -6121,8 +6121,8 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="61" />
-        <source>Select at least two numeric columns. They are used in the order shown; each row is one subject.</source>
-        <translation>Välj minst två numeriska kolumner. De används i den ordning de visas; varje rad motsvarar en individ.</translation>
+        <source>Select at least two numeric columns. They are used in the order shown. Each row is one subject.</source>
+        <translation>Välj minst två numeriska kolumner. De används i den ordning de visas. Varje rad motsvarar en individ.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\hypothesis_tests_config.py" line="77" />
@@ -6188,8 +6188,8 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="78" />
-        <source>Complete subjects: {complete} of {total}; excluded for missing values: {excluded}</source>
-        <translation>Kompletta individer: {complete} av {total}; exkluderade på grund av saknade värden: {excluded}</translation>
+        <source>Complete subjects: {complete} of {total}, excluded for missing values: {excluded}</source>
+        <translation>Kompletta individer: {complete} av {total}, exkluderade på grund av saknade värden: {excluded}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="85" />
@@ -6203,13 +6203,13 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="100" />
-        <source>Occasions follow the selected column order; chronological order is not inferred.</source>
-        <translation>Mättillfällena följer den valda kolumnordningen; kronologisk ordning härleds inte.</translation>
+        <source>Occasions follow the selected column order. Chronological order is not inferred.</source>
+        <translation>Mättillfällena följer den valda kolumnordningen. Kronologisk ordning härleds inte.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="101" />
-        <source>Boxplots use all complete subjects; whiskers show the minimum and maximum.</source>
-        <translation>Lådagrammen använder alla individer med kompletta mätningar; spröten visar minimum och maximum.</translation>
+        <source>Boxplots use all complete subjects. Whiskers show the minimum and maximum.</source>
+        <translation>Lådagrammen använder alla individer med kompletta mätningar. Spröten visar minimum och maximum.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="105" />
@@ -6273,8 +6273,8 @@ Sparad till:
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="197" />
-        <source>The two measurements are identical for every complete subject; the Wilcoxon test is undefined.</source>
-        <translation>De två mätningarna är identiska för alla individer med kompletta värden; Wilcoxontestet är odefinierat.</translation>
+        <source>The two measurements are identical for every complete subject. The Wilcoxon test is undefined.</source>
+        <translation>De två mätningarna är identiska för alla individer med kompletta värden. Wilcoxontestet är odefinierat.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\paired_comparison_view.py" line="200" />
@@ -9834,8 +9834,8 @@ Tid: {sec:.2f}s{sample}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="332" />
-        <source>{column}: Shapiro-Wilk could not provide a recommendation; neither summary is starred.</source>
-        <translation>{column}: Shapiro-Wilk kunde inte ge någon rekommendation; ingen av sammanfattningarna är markerad med en stjärna.</translation>
+        <source>{column}: Shapiro-Wilk could not provide a recommendation. Neither summary is starred.</source>
+        <translation>{column}: Shapiro-Wilk kunde inte ge någon rekommendation. Ingen av sammanfattningarna är markerad med en stjärna.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\statistics_view.py" line="339" />
@@ -9957,8 +9957,8 @@ Tid: {sec:.2f}s{sample}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="183" />
-        <source>Event {column} must contain only 0 and 1 or boolean values; 1 means event and 0 means censored.</source>
-        <translation>Händelsen {column} får endast innehålla 0 och 1 eller booleska värden; 1 betyder händelse och 0 betyder censurerad.</translation>
+        <source>Event {column} must contain only 0 and 1 or boolean values. 1 means event and 0 means censored.</source>
+        <translation>Händelsen {column} får endast innehålla 0 och 1 eller booleska värden. 1 betyder händelse och 0 betyder censurerad.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="187" />
@@ -10022,13 +10022,13 @@ Tid: {sec:.2f}s{sample}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="250" />
-        <source>Duration: &lt;b&gt;{duration}&lt;/b&gt;; event: &lt;b&gt;{event}&lt;/b&gt;</source>
-        <translation>Duration: &lt;b&gt;{duration}&lt;/b&gt;; händelse: &lt;b&gt;{event}&lt;/b&gt;</translation>
+        <source>Duration: &lt;b&gt;{duration}&lt;/b&gt;, event: &lt;b&gt;{event}&lt;/b&gt;</source>
+        <translation>Duration: &lt;b&gt;{duration}&lt;/b&gt;, händelse: &lt;b&gt;{event}&lt;/b&gt;</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="254" />
-        <source>Event coding: 1 = event; 0 = censored.</source>
-        <translation>Händelsekodning: 1 = händelse; 0 = censurerad.</translation>
+        <source>Event coding: 1 = event, 0 = censored.</source>
+        <translation>Händelsekodning: 1 = händelse, 0 = censurerad.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="255" />
@@ -10037,8 +10037,8 @@ Tid: {sec:.2f}s{sample}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="259" />
-        <source>Events: {events}; censored: {censored}</source>
-        <translation>Händelser: {events}; censurerade: {censored}</translation>
+        <source>Events: {events}, censored: {censored}</source>
+        <translation>Händelser: {events}, censurerade: {censored}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="265" />
@@ -10067,13 +10067,13 @@ Tid: {sec:.2f}s{sample}</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="281" />
-        <source>Plus signs mark censoring times; tied censor marks may overlap.</source>
-        <translation>Plustecken markerar censureringstidpunkter; markeringar vid samma tidpunkt kan överlappa.</translation>
+        <source>Plus signs mark censoring times. Tied censor marks may overlap.</source>
+        <translation>Plustecken markerar censureringstidpunkter. Markeringar vid samma tidpunkt kan överlappa.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\survival_view.py" line="282" />
-        <source>All complete subjects are used; no survival sampling or confidence bands are applied.</source>
-        <translation>Alla individer med kompletta värden används; inget urval eller konfidensband för överlevnad används.</translation>
+        <source>All complete subjects are used. No survival sampling or confidence bands are applied.</source>
+        <translation>Alla individer med kompletta värden används. Inget urval eller konfidensband för överlevnad används.</translation>
     </message>
     <message>
         <location filename="..\..\services\analysis\regression_charts.py" line="239" />
@@ -10316,8 +10316,8 @@ alla hazardkvoter och intervall måste vara ändliga och positiva.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="132" />
-        <source>No seasonal period could be detected; choose one to decompose the series.</source>
-        <translation>Ingen säsongsperiod kunde identifieras; välj en för att dekomponera serien.</translation>
+        <source>No seasonal period could be detected. Choose one to decompose the series.</source>
+        <translation>Ingen säsongsperiod kunde identifieras. Välj en för att dekomponera serien.</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\analysis\timeseries_view.py" line="135" />

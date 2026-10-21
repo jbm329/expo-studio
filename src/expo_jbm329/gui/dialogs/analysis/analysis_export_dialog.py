@@ -852,7 +852,7 @@ class AnalysisExportDialog(QDialog):
             if excel
             else self.tr(
                 "Choose exactly one table for CSV or binary export. "
-                "Charts are available only in Excel; uncheck Charts to continue."
+                "Charts are available only in Excel. Uncheck Charts to continue."
             )
         )
         if self._statistics_mode:
@@ -864,7 +864,7 @@ class AnalysisExportDialog(QDialog):
                 if excel
                 else self.tr(
                     "Choose exactly one table for CSV or binary export. "
-                    "{component} is available only in Excel; uncheck {component} to continue."
+                    "{component} is available only in Excel. Uncheck {component} to continue."
                 ).format(component=distribution)
             )
         request = self.export_request()

@@ -181,7 +181,7 @@ class SurvivalRegressionView(QWidget):
                 ).format(column=column)
             case SurvivalError.INVALID_EVENT:
                 return self.tr(
-                    "Event {column} must contain only 0 and 1 or boolean values; 1 means event and 0 means censored."
+                    "Event {column} must contain only 0 and 1 or boolean values. 1 means event and 0 means censored."
                 ).format(column=column)
             case SurvivalError.TOO_MANY_TERMS:
                 return self.tr(
@@ -247,16 +247,16 @@ class SurvivalRegressionView(QWidget):
         result = self._result
         lines = [
             self.tr("<b>Cox proportional-hazards regression</b>"),
-            self.tr("Duration: <b>{duration}</b>; event: <b>{event}</b>").format(
+            self.tr("Duration: <b>{duration}</b>, event: <b>{event}</b>").format(
                 duration=html.escape(result.duration),
                 event=html.escape(result.event),
             ),
-            self.tr("Event coding: 1 = event; 0 = censored."),
+            self.tr("Event coding: 1 = event, 0 = censored."),
             self.tr("Rows used: {used} ({dropped} excluded by listwise missing-value handling)").format(
                 used=fmt_int(result.n_used),
                 dropped=fmt_int(result.n_dropped),
             ),
-            self.tr("Events: {events}; censored: {censored}").format(
+            self.tr("Events: {events}, censored: {censored}").format(
                 events=fmt_int(result.n_events),
                 censored=fmt_int(result.n_censored),
             ),
@@ -278,7 +278,7 @@ class SurvivalRegressionView(QWidget):
                     "Kaplan-Meier uses the same complete-case subjects as the Cox fit, without covariate adjustment."
                 ),
                 self.tr("The survival curve is not a Cox prediction or a proportional-hazards diagnostic."),
-                self.tr("Plus signs mark censoring times; tied censor marks may overlap."),
-                self.tr("All complete subjects are used; no survival sampling or confidence bands are applied."),
+                self.tr("Plus signs mark censoring times. Tied censor marks may overlap."),
+                self.tr("All complete subjects are used. No survival sampling or confidence bands are applied."),
             ])
         return "<br>".join(lines)
