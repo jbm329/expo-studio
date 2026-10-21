@@ -1,12 +1,16 @@
 import subprocess
 from dataclasses import replace
+from pathlib import Path
+from shutil import copyfile
 from string import Formatter
 from unittest.mock import MagicMock
 from xml.etree import ElementTree
 
 import pytest
+from PyQt6.QtCore import QCoreApplication
 
-from expo_jbm329.build import build_i18n
+from expo_jbm329.build import build_i18n, build_locales
+from expo_jbm329.i18n import translation_service
 from expo_jbm329.services.analysis.outliers_charts import (
     build_outlier_histogram_labels,
     build_outlier_projection_labels,
@@ -63,6 +67,59 @@ def extracted_messages(tmp_path_factory):
     catalog = tmp_path_factory.mktemp("analysis-i18n") / "extracted.ts"
     build_i18n.run_pylupdate(catalog)
     return _catalog_messages(ElementTree.parse(catalog).getroot())
+
+
+def test_english_catalog_uses_unfinished_source_fallback(
+    extracted_messages: dict[tuple[str, str, str], ElementTree.Element],
+) -> None:
+    english = _catalog_messages(ElementTree.parse(build_i18n.locales_dir() / "app_en.ts").getroot())
+
+    assert english.keys() == extracted_messages.keys()
+    for key, message in english.items():
+        assert message.get("numerus") != "yes", "Review English plural forms before extending this policy."
+        translation = message.find("translation")
+        assert translation is not None, key
+        assert translation.get("type") == "unfinished", key
+        assert not translation.text, key
+        assert len(translation) == 0, key
+
+
+def test_compiled_catalogs_switch_from_english_to_swedish_and_back(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    locales = tmp_path / "locales"
+    locales.mkdir()
+    for language in ("en", "sv"):
+        catalog = locales / f"app_{language}.ts"
+        copyfile(build_i18n.locales_dir() / catalog.name, catalog)
+        build_locales.compile_ts(catalog)
+
+    monkeypatch.setattr(translation_service, "get_i18n_root", lambda: tmp_path)
+    service = translation_service.TranslationService(logger=None)
+    swedish = _catalog_messages(ElementTree.parse(locales / "app_sv.ts").getroot())
+    keys = (
+        ("AboutDialog", "Close", ""),
+        (
+            "SurvivalRegressionView",
+            "There are too few events relative to the model terms to estimate this model.",
+            "",
+        ),
+    )
+
+    try:
+        for language in ("en", "sv", "en"):
+            service.switch_language(language)
+            assert service._current_language == language
+            assert service._translator.isEmpty() == (language == "en")
+            for key in keys:
+                expected = key[1] if language == "en" else swedish[key].findtext("translation")
+                assert expected
+                if language == "sv":
+                    assert expected != key[1]
+                assert QCoreApplication.translate(key[0], key[1]) == expected
+            assert QCoreApplication.translate("UncataloguedContext", "Uncatalogued source") == "Uncatalogued source"
+    finally:
+        QCoreApplication.removeTranslator(service._translator)
 
 
 def test_shared_analysis_and_report_labels_survive_real_extraction(extracted_messages):

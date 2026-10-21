@@ -344,6 +344,15 @@ This runs the same extraction with `pylupdate6 --no-obsolete`. It deletes transl
 #### 2️⃣ Edit translations
 The extracted strings are then manually edited in the `src/expo_jbm329/i18n/locales` directory using Qt Linguist (e.g. `app_sv.ts`).
 
+English is the source language: edit English wording in the Python sources, not
+in `app_en.ts`. Keep its translation elements empty and marked unfinished
+(`<translation type="unfinished" />`) so Qt uses the source text. Do not copy
+English source strings into translation elements or mark them finished.
+`app_en.ts` remains a source-language catalog, and `app_en.qm` must still be
+compiled and shipped because the language loader expects it. If numerus
+messages are introduced, review their English plural forms separately rather
+than applying the empty-translation convention blindly.
+
 All user-facing strings must support English and Swedish. After adding or changing
 strings, run `uv run build-i18n`, review and finish the Swedish translations in
 `app_sv.ts`, then run `uv run build-locales`. Preserve named placeholders such as
