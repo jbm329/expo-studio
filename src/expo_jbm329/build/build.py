@@ -9,7 +9,7 @@ import subprocess
 import sys
 import sysconfig
 import time
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import TYPE_CHECKING
 
 from PIL import Image
@@ -26,10 +26,58 @@ APP_NAME = "expo"
 
 
 def _onedir_environment() -> dict[str, str]:
-    """Return a subprocess environment that forces the PyInstaller spec to onedir mode."""
+    """Return a clean PyInstaller environment that forces onedir mode."""
     env = os.environ.copy()
     env.pop("EXPO_ONEFILE", None)
+    path_entries = env.get("PATH", "").split(os.pathsep)
+    env["PATH"] = os.pathsep.join(entry for entry in path_entries if not _is_mysql_server_path(entry))
     return env
+
+
+def _is_mysql_server_path(path_entry: str) -> bool:
+    """Return whether a PATH entry points into a MySQL Server installation."""
+    return any(part.casefold().startswith("mysql server ") for part in PureWindowsPath(path_entry).parts)
+
+
+def _verify_mysql_connector_bundle(onedir_dir: Path) -> bool:
+    """Verify the frozen connector extension loads using only bundled OpenSSL DLLs."""
+    internal_dir = onedir_dir / "_internal"
+    required_dlls = ("libcrypto-3-x64.dll", "libssl-3-x64.dll")
+    missing = [internal_dir / name for name in required_dlls if not (internal_dir / name).is_file()]
+    if missing:
+        print("[build-onedir] Missing bundled MySQL Connector/Python runtime files:", file=sys.stderr)
+        for path in missing:
+            print(f" - {path}", file=sys.stderr)
+        return False
+
+    script = (
+        "import sys; "
+        "from pathlib import Path; "
+        "bundle = Path(sys.argv[1]).resolve(); "
+        "sys.path.insert(0, str(bundle)); "
+        "import _mysql_connector; "
+        "from mysql.connector import connection_cext; "
+        "extension = Path(_mysql_connector.__file__).resolve(); "
+        "assert extension.is_relative_to(bundle), extension; "
+        "assert connection_cext.CMySQLConnection is not None"
+    )
+    env = _onedir_environment()
+    env.pop("PYTHONPATH", None)
+    result = subprocess.run(  # noqa: S603 - fixed smoke test executed with the current interpreter
+        [sys.executable, "-c", script, str(internal_dir)],
+        check=False,
+        capture_output=True,
+        cwd=internal_dir,
+        env=env,
+        text=True,
+    )
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout).strip()
+        print(f"[build-onedir] Bundled MySQL Connector/Python smoke test failed: {detail}", file=sys.stderr)
+        return False
+
+    print("[build-onedir] Bundled MySQL Connector/Python smoke test passed.")
+    return True
 
 
 def site_packages() -> str | None:
@@ -218,6 +266,8 @@ def build_onedir() -> int:
         return result.returncode
 
     if exe_path.exists():
+        if platform_name == "windows" and not _verify_mysql_connector_bundle(dist_root / APP_NAME):
+            return 1
         print(f"[build-onedir] SUCCESS: {exe_path}")
         return 0
 

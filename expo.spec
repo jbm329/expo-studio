@@ -13,6 +13,7 @@ from PyInstaller.utils.hooks import (
 
 from typing import TYPE_CHECKING
 
+from expo_jbm329.build.mysql_binaries import collect_mysql_connector_openssl_binaries
 from expo_jbm329.build.qt_binaries import filter_qt_binaries
 
 if TYPE_CHECKING:
@@ -62,6 +63,9 @@ qt6_libs = filter_qt_binaries(collect_dynamic_libs("PyQt6.Qt6")) if IS_WIN else 
 
 datas += qt6_plugins
 binaries += qt6_libs
+if IS_WIN:
+    # Prefer the connector's own OpenSSL DLLs over same-named runner software.
+    binaries += collect_mysql_connector_openssl_binaries()
 # QtWebEngine runtime data and license metadata are loaded dynamically by Chromium
 # and must be present in frozen builds and third-party notices.
 datas += copy_metadata("PyQt6-WebEngine")
