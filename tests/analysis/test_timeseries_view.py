@@ -155,7 +155,7 @@ def test_chart_labels_use_value_column_and_translated_titles():
 def test_chart_labels_use_the_shared_presentation_translation_context(monkeypatch):
     monkeypatch.setattr(
         timeseries_view_module,
-        "tr",
+        "translate",
         lambda context, text: f"sv:{text}" if context == "TimeSeriesPresentation" else text,
     )
 

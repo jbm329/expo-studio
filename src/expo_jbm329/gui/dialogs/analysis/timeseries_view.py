@@ -27,7 +27,7 @@ from expo_jbm329.services.analysis.timeseries_charts import (
     has_decomposition,
 )
 from expo_jbm329.utils.format_utils import fmt_int
-from expo_jbm329.utils.i18n_utils import tr
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -42,7 +42,7 @@ class TimeSeriesView(QWidget):
         """Initialize a view from one complete time-series result."""
         super().__init__(parent)
         self._result = result
-        self._chart_labels = build_time_series_chart_labels(result, tr)
+        self._chart_labels = build_time_series_chart_labels(result, translate)
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         if result.error is not None:
@@ -87,15 +87,17 @@ class TimeSeriesView(QWidget):
         if result.error is not None:
             return ()
         models = {
-            DecompositionModel.ADDITIVE: translate_presentation_label(PresentationLabel.TIME_SERIES_ADDITIVE, tr),
+            DecompositionModel.ADDITIVE: translate_presentation_label(
+                PresentationLabel.TIME_SERIES_ADDITIVE, translate
+            ),
             DecompositionModel.MULTIPLICATIVE: translate_presentation_label(
-                PresentationLabel.TIME_SERIES_MULTIPLICATIVE, tr
+                PresentationLabel.TIME_SERIES_MULTIPLICATIVE, translate
             ),
         }
         lines = [
             *rich_text_lines([self._summary_text(result)]),
             (
-                f"{translate_presentation_label(PresentationLabel.TIME_SERIES_DECOMPOSITION_MODEL, tr)} "
+                f"{translate_presentation_label(PresentationLabel.TIME_SERIES_DECOMPOSITION_MODEL, translate)} "
                 f"{models[result.decomposition_model]}"
             ),
         ]

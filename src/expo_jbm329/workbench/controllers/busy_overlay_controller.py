@@ -33,7 +33,7 @@ from PyQt6.QtWidgets import QApplication, QTableView, QWidget
 
 from expo_jbm329.gui.busy_overlay import BusyOverlayWidget
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
-from expo_jbm329.utils.i18n_utils import tr
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -55,7 +55,7 @@ class BusyOverlayController:
     # ------------------------------------------------------------------
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("BusyOverlayController", text)
+        return translate("BusyOverlayController", text)
 
     # ------------------------------------------------------------------
     __slots__ = (

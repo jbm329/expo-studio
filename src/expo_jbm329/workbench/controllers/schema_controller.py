@@ -34,7 +34,7 @@ from expo_jbm329.db.identifier_formatting import build_identifier_text
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.gui_utils import ui_invoke
 from expo_jbm329.utils.format_utils import fmt_int
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 TOP_N_DISPLAY_FORMAT_THRESHOLD = 1000
 
@@ -75,11 +75,11 @@ class SchemaController:
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("SchemaController", text)
+        return translate("SchemaController", text)
 
     @staticmethod
     def _tr_fmt(text: str, **kwargs: str) -> str:
-        return tr_fmt("SchemaController", text, **kwargs)
+        return translate_fmt("SchemaController", text, **kwargs)
 
     __slots__ = (
         "__weakref__",
@@ -948,9 +948,9 @@ class SchemaController:
         raw_err = str(e)
         if "\n\n" in raw_err:
             parts = raw_err.split("\n\n", 1)
-            translated = f"{tr('DbErrors', parts[0])}\n\n{tr('DbErrors', parts[1])}"
+            translated = f"{translate('DbErrors', parts[0])}\n\n{translate('DbErrors', parts[1])}"
         else:
-            translated = tr("DbErrors", raw_err)
+            translated = translate("DbErrors", raw_err)
 
         text = self._tr_fmt(self.TR_COULD_NOT_LOAD_SCHEMA, error=translated)
         self._dialogs.critical(parent=self._parent, title=self._tr(self.TR_FAILURE), text=text)

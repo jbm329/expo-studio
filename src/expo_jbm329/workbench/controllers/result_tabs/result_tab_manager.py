@@ -41,7 +41,7 @@ from expo_jbm329.gui.menus.result_tab_header_context import (
 )
 from expo_jbm329.services.data_profile.semantics import SeriesSemantics, infer_series_semantics
 from expo_jbm329.utils.dataset_ref import DatasetRef
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 from expo_jbm329.utils.models import DataFrameModel
 from expo_jbm329.workbench.controllers.result_tabs.reslut_tab_header_clean_actions import (
     ResultTabHeaderCleanActions,
@@ -209,11 +209,11 @@ class ResultTabManager:
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("ResultTabManager", text)
+        return translate("ResultTabManager", text)
 
     @staticmethod
     def _tr_fmt(text: str, **kwargs: object) -> str:
-        return tr_fmt("ResultTabManager", text, **kwargs)
+        return translate_fmt("ResultTabManager", text, **kwargs)
 
     __slots__ = (
         "__weakref__",

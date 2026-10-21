@@ -18,7 +18,7 @@ from PyQt6.QtCore import QT_TR_NOOP, QObject
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.gui_utils import ui_invoke
 from expo_jbm329.utils.format_utils import fmt_path, fmt_shape, fmt_time
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -80,11 +80,11 @@ class FileJobService:
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("FileJobService", text)
+        return translate("FileJobService", text)
 
     @staticmethod
     def _tr_fmt(text: str, **kwargs: str) -> str:
-        return tr_fmt("FileJobService", text, **kwargs)
+        return translate_fmt("FileJobService", text, **kwargs)
 
     __slots__ = (
         "_async_ops",

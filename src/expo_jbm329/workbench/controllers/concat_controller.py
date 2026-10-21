@@ -20,7 +20,7 @@ from expo_jbm329.gui.dialogs.workflows.concat.concat_dialog import (
     ConcatDialogResult,
 )
 from expo_jbm329.services.data_operations.concat import ConcatRequest, concat_dataframes
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -46,11 +46,11 @@ class ConcatController:
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("ConcatController", text)
+        return translate("ConcatController", text)
 
     @staticmethod
     def _tr_fmt(text: str, **kwargs: object) -> str:
-        return tr_fmt("ConcatController", text, **kwargs)
+        return translate_fmt("ConcatController", text, **kwargs)
 
     __slots__ = (
         "__weakref__",

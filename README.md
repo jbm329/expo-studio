@@ -367,11 +367,16 @@ chart titles in accessible names with periods. Preserve technical semicolons in
 HTML entities and styles, and never rewrite punctuation in user-provided data.
 
 For explicit contexts, use `QCoreApplication.translate(context, text)` or import
-the shared wrapper as `from expo_jbm329.utils.i18n_utils import tr as translate`.
-Do not call that two-argument wrapper by the name `tr` in new extraction-sensitive
-code: `pylupdate6` interprets `tr(context, text)` as Qt's `tr(source, comment)`,
-creating incorrect source strings and disambiguation comments in Linguist.
+the shared helper with `from expo_jbm329.utils.i18n_utils import translate`.
+For named formatting, import `translate_fmt` from the same module.
+`pylupdate6` recognizes literal `translate(context, "Text")` calls, but
+`translate_fmt` and calls with variable source text still require literal
+`QT_TRANSLATE_NOOP` markers (or class-local `QT_TR_NOOP` markers in the matching
+context). Do not alias the two-argument helper to `tr`: the extractor interprets
+that spelling as Qt's `tr(source, comment)` instead.
 Widget calls such as `self.tr("Text")` are unaffected and remain appropriate.
+Existing local `_tr` and `_tr_fmt` wrappers may continue binding a fixed context
+to the shared helpers; their marker requirements are unchanged.
 
 Shared labels resolved dynamically need literal `QT_TRANSLATE_NOOP` extraction
 markers in their canonical context. Advanced Analysis keeps these alongside its

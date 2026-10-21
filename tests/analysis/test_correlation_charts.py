@@ -284,7 +284,7 @@ def test_real_correlation_workbook_contains_matrix_pairs_and_below_image_caption
 def test_request_accepts_independent_and_combined_excel_charts(components):
     assert CorrelationExportRequest(snapshot(), components, StatisticsExportFormat.EXCEL).components == components
     for format_choice in (StatisticsExportFormat.CSV, StatisticsExportFormat.BINARY):
-        with pytest.raises(ValueError, match="charts require Excel"):
+        with pytest.raises(ValueError, match="Charts require Excel"):
             CorrelationExportRequest(snapshot(), components, format_choice)
 
 

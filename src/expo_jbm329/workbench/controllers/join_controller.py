@@ -26,7 +26,7 @@ from expo_jbm329.services.data_operations.joins import (
     JoinRequest,
     join_dataframes,
 )
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 LARGE_JOIN_ROW_WARNING_THRESHOLD = 5_000_000
 JOIN_ROW_BLOCK_THRESHOLD = 100_000_000
@@ -74,11 +74,11 @@ class JoinController:
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("JoinController", text)
+        return translate("JoinController", text)
 
     @staticmethod
     def _tr_fmt(text: str, **kwargs: object) -> str:
-        return tr_fmt("JoinController", text, **kwargs)
+        return translate_fmt("JoinController", text, **kwargs)
 
     __slots__ = (
         "__weakref__",

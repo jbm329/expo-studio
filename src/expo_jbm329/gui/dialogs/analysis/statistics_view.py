@@ -40,7 +40,7 @@ from expo_jbm329.services.analysis.statistics_charts import (
     draw_statistics_charts,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value, fmt_pct
-from expo_jbm329.utils.i18n_utils import tr
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.statistics import (
@@ -454,7 +454,7 @@ class StatisticsView(QWidget):
                     raise RuntimeError(message)
                 self._distribution_layout.addWidget(build_section_scroll_area(self._canvas, container), 1)
             self._figure.clear()
-            presentation = build_statistics_chart_presentation(stats, tr)
+            presentation = build_statistics_chart_presentation(stats, translate)
             draw_statistics_charts(self._figure, stats, presentation)
             self._pending_distribution = None
             self._distribution_timer.stop()

@@ -1695,7 +1695,7 @@ def test_narrow_correlation_and_time_series_keep_controls_and_full_labels_access
         "Decomposition model:": "Applied decomposition model",
     }
     if translated:
-        monkeypatch.setattr(timeseries_config_module, "tr", lambda _context, text: translations.get(text, text))
+        monkeypatch.setattr(timeseries_config_module, "translate", lambda _context, text: translations.get(text, text))
     frame = pd.DataFrame({
         "when": pd.date_range("2025-01-01", periods=30),
         "a": range(30),

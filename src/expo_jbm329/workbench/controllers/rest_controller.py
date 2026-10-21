@@ -18,7 +18,7 @@ from expo_jbm329.services.job_result import JobResult
 from expo_jbm329.services.rest.registry import rest_registry
 from expo_jbm329.services.rest.rest_job import fetch_rest_dataset
 from expo_jbm329.utils.format_utils import fmt_shape, fmt_time
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -60,11 +60,11 @@ class RestController:
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("RestController", text)
+        return translate("RestController", text)
 
     @staticmethod
     def _tr_fmt(text: str, **kwargs: str) -> str:
-        return tr_fmt("RestController", text, **kwargs)
+        return translate_fmt("RestController", text, **kwargs)
 
     def reload_settings(self, _settings: dict[str, object]) -> None:
         """Handle workbench settings changes.

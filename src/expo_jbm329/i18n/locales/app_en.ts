@@ -2781,6 +2781,11 @@ Please see logs for more information.</source>
 </context><context>
     <name>DbErrors</name>
     <message>
+        <location filename="..\..\services\schema_cache.py" line="182" />
+        <source>Settings for schema cache updated.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
         <location filename="..\..\db\core\errors.py" line="99" />
         <location filename="..\..\db\core\errors.py" line="61" />
         <source>The stored procedure does not exist.</source>
@@ -9323,14 +9328,6 @@ Time: {sec:.2f}s{sample}</source>
     <message>
         <location filename="..\..\gui\dialogs\rest\scb_browser_dialog.py" line="436" />
         <source>SCB query error</source>
-        <translation type="unfinished" />
-    </message>
-</context><context>
-    <name>SchemaCacheManager</name>
-    <message>
-        <location filename="..\..\services\schema_cache.py" line="182" />
-        <source>DbErrors</source>
-        <comment>Settings for schema cache updated.</comment>
         <translation type="unfinished" />
     </message>
 </context><context>

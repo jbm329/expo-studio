@@ -170,7 +170,7 @@ from expo_jbm329.services.analysis.timeseries_export import (
 )
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError
 from expo_jbm329.utils.format_utils import capture_chart_numeric_locale, fmt_int, fmt_num
-from expo_jbm329.utils.i18n_utils import tr as translate
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from collections.abc import Callable

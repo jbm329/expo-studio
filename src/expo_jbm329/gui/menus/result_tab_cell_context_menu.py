@@ -7,7 +7,7 @@ Design principles:
 ------------------
 • UI construction only (no data mutation)
 • No dependency on ResultTabManager internals
-• i18n-safe (QT_TR_NOOP + tr / tr_fmt)
+• i18n-safe (QT_TR_NOOP + translate / translate_fmt)
 • Defensive programming
 • Matches header context menu pattern
 """
@@ -18,7 +18,7 @@ from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QMenu, QWidget
 
-from expo_jbm329.utils.i18n_utils import tr
+from expo_jbm329.utils.i18n_utils import translate
 
 MAX_CELL_PREVIEW_LENGTH = 80
 
@@ -40,7 +40,7 @@ class ResultTabCellContextMenu:
     # ------------------------------------------------------------------
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("ResultTabCellContextMenu", text)
+        return translate("ResultTabCellContextMenu", text)
 
     # ------------------------------------------------------------------
     def __init__(self, *, parent: QWidget) -> None:

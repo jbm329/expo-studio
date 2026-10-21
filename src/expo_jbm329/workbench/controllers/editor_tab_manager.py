@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP
 
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -79,11 +79,11 @@ class EditorTabManager:
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("EditorTabManager", text)
+        return translate("EditorTabManager", text)
 
     @staticmethod
     def _tr_fmt(text: str, **kwargs: str) -> str:
-        return tr_fmt("EditorTabManager", text, **kwargs)
+        return translate_fmt("EditorTabManager", text, **kwargs)
 
     __slots__ = (
         "_active_tab_id",

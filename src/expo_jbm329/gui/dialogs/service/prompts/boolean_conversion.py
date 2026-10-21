@@ -20,7 +20,7 @@ from expo_jbm329.gui.dialogs.service.common.localization import (
 from expo_jbm329.gui.dialogs.service.common.window_hints import (
     apply_dialog_window_hints,
 )
-from expo_jbm329.utils.i18n_utils import tr
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.gui.dialogs.service.dialog_service import (
@@ -65,13 +65,13 @@ def prompt_boolean_conversion(
     # Help text
     # --------------------------------------------------
 
-    layout.addWidget(QLabel(tr("BooleanConversion", TR_HELP_TEXT), dlg))
+    layout.addWidget(QLabel(translate("BooleanConversion", TR_HELP_TEXT), dlg))
 
     # --------------------------------------------------
     # True values
     # --------------------------------------------------
 
-    layout.addWidget(QLabel(tr("BooleanConversion", TR_LABEL_TRUE_VALUES), dlg))
+    layout.addWidget(QLabel(translate("BooleanConversion", TR_LABEL_TRUE_VALUES), dlg))
 
     edit_true = QLineEdit(dlg)
     edit_true.setText(", ".join(default_true_values))
@@ -81,7 +81,7 @@ def prompt_boolean_conversion(
     # False values
     # --------------------------------------------------
 
-    layout.addWidget(QLabel(tr("BooleanConversion", TR_LABEL_FALSE_VALUES), dlg))
+    layout.addWidget(QLabel(translate("BooleanConversion", TR_LABEL_FALSE_VALUES), dlg))
 
     edit_false = QLineEdit(dlg)
     edit_false.setText(", ".join(default_false_values))

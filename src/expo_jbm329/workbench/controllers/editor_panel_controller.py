@@ -32,7 +32,7 @@ from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.linting.sql_lint_controller import SqlLintController
 from expo_jbm329.gui.menus.editor_tab_context_menu import EditorTabContextMenu
 from expo_jbm329.gui.widgets.editor_widget import EditorWidget
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 from expo_jbm329.workbench.controllers.editor_tab_manager import (
     EditorTab,
     EditorTabManager,
@@ -66,11 +66,11 @@ class EditorPanelController(QWidget):
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("EditorPanelController", text)
+        return translate("EditorPanelController", text)
 
     @staticmethod
     def _tr_fmt(text: str, **kwargs: str) -> str:
-        return tr_fmt("EditorPanelController", text, **kwargs)
+        return translate_fmt("EditorPanelController", text, **kwargs)
 
     # ------------------------------------------------------------------
     # Construction

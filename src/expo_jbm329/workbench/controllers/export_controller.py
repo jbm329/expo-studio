@@ -26,7 +26,7 @@ from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import (
 )
 from expo_jbm329.services.job_result import JobResult
 from expo_jbm329.utils.format_utils import fmt_path, fmt_shape, fmt_time
-from expo_jbm329.utils.i18n_utils import tr, tr_fmt
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 from expo_jbm329.utils.path_manager import get_documents_dir
 
 if TYPE_CHECKING:
@@ -132,11 +132,11 @@ class ExportController:
 
     @staticmethod
     def _tr(text: str) -> str:
-        return tr("ExportController", text)
+        return translate("ExportController", text)
 
     @staticmethod
     def _tr_fmt(text: str, **kwargs: object) -> str:
-        return tr_fmt("ExportController", text, **kwargs)
+        return translate_fmt("ExportController", text, **kwargs)
 
     _EXPORT_LABELS: Final[dict[ExportKind, str]] = {
         ExportKind.CSV: TR_KIND_CSV,

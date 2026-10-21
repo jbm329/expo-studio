@@ -186,6 +186,18 @@ def test_explicit_context_analysis_calls_are_not_extracted_as_comments(extracted
         assert key in extracted_messages
 
 
+def test_schema_cache_status_uses_explicit_database_error_context(extracted_messages):
+    key = ("DbErrors", "Settings for schema cache updated.", "")
+    assert key in extracted_messages
+    assert ("SchemaCacheManager", "DbErrors", "Settings for schema cache updated.") not in extracted_messages
+    for language in ("en", "sv"):
+        catalog = _catalog_messages(ElementTree.parse(build_i18n.locales_dir() / f"app_{language}.ts").getroot())
+        assert key in catalog
+        assert ("SchemaCacheManager", "DbErrors", "Settings for schema cache updated.") not in catalog
+    swedish = _catalog_messages(ElementTree.parse(build_i18n.locales_dir() / "app_sv.ts").getroot())
+    assert swedish[key].findtext("translation") == "Inställningarna för schemacachen har uppdaterats."
+
+
 def test_active_analysis_swedish_translations_are_finished_and_preserve_placeholders(extracted_messages):
     swedish = _catalog_messages(ElementTree.parse(build_i18n.locales_dir() / "app_sv.ts").getroot())
     formatter = Formatter()
