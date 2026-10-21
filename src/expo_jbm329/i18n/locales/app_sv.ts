@@ -9160,6 +9160,16 @@ Tid: {sec:.2f}s{sample}</translation>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="196" />
+        <source>Close all to the right</source>
+        <translation>Stäng alla till höger</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="197" />
+        <source>Close all</source>
+        <translation>Stäng alla</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="196" />
         <source>Derived column…</source>
         <translation>Beräknad kolumn…</translation>
     </message>

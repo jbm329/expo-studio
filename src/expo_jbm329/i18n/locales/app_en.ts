@@ -9103,6 +9103,16 @@ Time: {sec:.2f}s{sample}</source>
     </message>
     <message>
         <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="196" />
+        <source>Close all to the right</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="197" />
+        <source>Close all</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\result_tabs\result_tab_manager.py" line="196" />
         <source>Derived column…</source>
         <translation type="unfinished" />
     </message>
