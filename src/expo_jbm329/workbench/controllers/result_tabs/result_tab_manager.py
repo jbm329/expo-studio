@@ -193,6 +193,8 @@ class ResultTabManager:
     TR_RENAME = QT_TR_NOOP("Rename…")
     TR_CLOSE = QT_TR_NOOP("Close")
     TR_CLOSE_OTHERS = QT_TR_NOOP("Close others")
+    TR_CLOSE_RIGHT = QT_TR_NOOP("Close all to the right")
+    TR_CLOSE_ALL = QT_TR_NOOP("Close all")
     TR_DERIVED_COLUMN = QT_TR_NOOP("Derived column…")
     TR_JOIN = QT_TR_NOOP("Join…")
     TR_CONCATENATE = QT_TR_NOOP("Concatenate…")
@@ -770,6 +772,37 @@ class ResultTabManager:
         """
         self._close_tab_internal(index, request_cancel=True)
 
+    def close_other_tabs(self, tab_id: str) -> None:
+        """Close all result tabs except the identified tab.
+
+        Args:
+            tab_id: Stable identifier of the tab to keep.
+        """
+        index = self._find_tab_index_by_id(tab_id)
+        if index is None:
+            self._logger.debug("ResultTabManager: close others ignored for missing tab id=%s.", tab_id)
+            return
+        self._close_tabs_internal(
+            [i for i in reversed(range(self._tabs.count())) if i != index],
+            request_cancel=True,
+        )
+
+    def close_tabs_to_right(self, tab_id: str) -> None:
+        """Close result tabs visually to the right of the identified tab.
+
+        Args:
+            tab_id: Stable identifier of the boundary tab to keep.
+        """
+        index = self._find_tab_index_by_id(tab_id)
+        if index is None:
+            self._logger.debug("ResultTabManager: close right ignored for missing tab id=%s.", tab_id)
+            return
+        self._close_tabs_internal(list(reversed(range(index + 1, self._tabs.count()))), request_cancel=True)
+
+    def close_all_tabs(self) -> None:
+        """Close every result tab through the normal cancellation and cleanup path."""
+        self._close_tabs_internal(list(reversed(range(self._tabs.count()))), request_cancel=True)
+
     def rename_tab(self, index: int) -> None:
         """Renames the tab at the given index.
 
@@ -1095,6 +1128,7 @@ class ResultTabManager:
             return
 
         global_pos = tabbar.mapToGlobal(pos)
+        tab_id = tabbar.tabData(index)
 
         menu = QMenu(self._parent)
         header = QAction(self._tabs.tabText(index), menu)
@@ -1108,6 +1142,14 @@ class ResultTabManager:
         menu.addAction(act_close)
         act_close_others = QAction(self._tr(self.TR_CLOSE_OTHERS), menu)
         menu.addAction(act_close_others)
+        has_multiple = self._tabs.count() > 1
+        act_close_others.setEnabled(has_multiple)
+        act_close_right = QAction(self._tr(self.TR_CLOSE_RIGHT), menu)
+        menu.addAction(act_close_right)
+        act_close_right.setEnabled(has_multiple)
+        act_close_all = QAction(self._tr(self.TR_CLOSE_ALL), menu)
+        menu.addAction(act_close_all)
+        act_close_all.setEnabled(has_multiple)
         menu.addSeparator()
 
         act_derived = QAction(self._tr(self.TR_DERIVED_COLUMN), menu)
@@ -1124,14 +1166,25 @@ class ResultTabManager:
         if not chosen:
             return
 
+        if not isinstance(tab_id, str):
+            self._logger.warning("ResultTabManager: context menu target has no stable tab identifier.")
+            return
+        current_index = self._find_tab_index_by_id(tab_id)
+        if current_index is None:
+            self._logger.debug("ResultTabManager: context menu target was removed.")
+            return
+        index = current_index
+
         if chosen == act_rename:
             self.rename_tab(index)
         elif chosen == act_close:
             self.close_tab(index)
         elif chosen == act_close_others:
-            self._logger.info("ResultTabManager: closing all tabs except index=%s.", index)
-            for i in sorted((i for i in range(self._tabs.count()) if i != index), reverse=True):
-                self.close_tab(i)
+            self.close_other_tabs(tab_id)
+        elif chosen == act_close_right:
+            self.close_tabs_to_right(tab_id)
+        elif chosen == act_close_all:
+            self.close_all_tabs()
 
         elif chosen == act_derived:
             if self._derived_column_controller is None:
@@ -2483,23 +2536,10 @@ class ResultTabManager:
 
         Used by FilePanelController when deleting files.
         """
-        try:
-            for i in reversed(range(self._tabs.count())):
-                if self._tabs.tabText(i).strip() == title.strip():
-                    self.close_tab(i)
-        except (
-            AttributeError,
-            ConnectionError,
-            FileNotFoundError,
-            IndexError,
-            KeyError,
-            LookupError,
-            OSError,
-            RuntimeError,
-            TypeError,
-            ValueError,
-        ):
-            pass
+        self._close_tabs_internal(
+            [i for i in reversed(range(self._tabs.count())) if self._tabs.tabText(i).strip() == title.strip()],
+            request_cancel=True,
+        )
 
     def _has_any_data(self) -> bool:
         """Return True if ANY tab contains a non-empty DataFrame."""
@@ -2573,70 +2613,76 @@ class ResultTabManager:
             request_cancel: Whether closing a pending tab should request cancellation
                 of its associated job.
         """
+        self._close_tabs_internal([index], request_cancel=request_cancel)
+
+    def _close_tabs_internal(self, indices: list[int], *, request_cancel: bool) -> None:
+        """Close a stable widget snapshot under one reentrancy guard."""
         if self._closing_tabs:
             self._logger.debug("ResultTabManager: close_tab - reentrant call ignored.")
             return
 
+        widgets = [widget for index in indices if (widget := self._tabs.widget(index)) is not None]
+        if not widgets:
+            return
+
         self._closing_tabs = True
         try:
-            self._logger.debug(
-                "ResultTabManager: closing tab request for index=%s (request_cancel=%s).",
-                index,
-                request_cancel,
-            )
-
-            widget = self._tabs.widget(index)
-            if widget is None:
-                return
-
-            index = self._tabs.indexOf(widget)
-            if index < 0:
-                return
-
-            tab_bar = self._tabs.tabBar()
-            if tab_bar is None:
-                return
-
-            tab_id_raw = tab_bar.tabData(index)
-            tab_id = tab_id_raw if isinstance(tab_id_raw, str) else None
-            record = self._get_tab_record(tab_id)
-
-            if record is not None and request_cancel:
-                self._maybe_cancel_pending_tab_job(record)
-
-            if record is not None:
-                self._tabs_by_id.pop(record.tab_id, None)
-                self._undo.unregister_tab(record.tab_id)
-                self._logger.info("ResultTabManager: closed tab id=%s.", record.tab_id)
-            else:
-                self._logger.debug(
-                    "ResultTabManager: closing tab with no matching record (index=%s).",
-                    index,
-                )
-
-            if isinstance(widget, QTableView):
-                with contextlib.suppress(Exception):
-                    widget.setModel(None)
-
-            self._tabs.removeTab(index)
-
-            with contextlib.suppress(Exception):
-                widget.deleteLater()
-
-            if self._tabs.count() == 0:
-                self._tabs_by_id.clear()
-                self._undo.clear()
-                self._last_df = None
-            else:
-                self._last_df = self.current_df()
-
-            self._notify_undo_state_changed()
-            self._emit_shape(self._last_df)
-            self._emit_toolbar_data_state()
-            self._emit_toolbar_multi_dataset_state()
-
+            for widget in widgets:
+                self._remove_tab_widget(widget, request_cancel=request_cancel)
         finally:
             ui_invoke(lambda: setattr(self, "_closing_tabs", False))
+
+    def _remove_tab_widget(self, widget: QWidget, *, request_cancel: bool) -> None:
+        """Remove one snapshotted widget while its caller owns the close guard."""
+        index = self._tabs.indexOf(widget)
+        if index < 0:
+            self._logger.debug("ResultTabManager: close target was already removed.")
+            return
+
+        tab_bar = self._tabs.tabBar()
+        if tab_bar is None:
+            return
+
+        tab_id_raw = tab_bar.tabData(index)
+        tab_id = tab_id_raw if isinstance(tab_id_raw, str) else None
+        record = self._get_tab_record(tab_id)
+
+        if record is not None and request_cancel:
+            self._maybe_cancel_pending_tab_job(record)
+
+        if record is not None:
+            self._tabs_by_id.pop(record.tab_id, None)
+            self._undo.unregister_tab(record.tab_id)
+            self._logger.info("ResultTabManager: closed tab id=%s.", record.tab_id)
+        else:
+            self._logger.debug(
+                "ResultTabManager: closing tab with no matching record (index=%s).",
+                index,
+            )
+
+        if isinstance(widget, QTableView):
+            with contextlib.suppress(Exception):
+                widget.setModel(None)
+
+        # Cancellation and undo callbacks can change the visual tab order.
+        index = self._tabs.indexOf(widget)
+        if index >= 0:
+            self._tabs.removeTab(index)
+
+        with contextlib.suppress(Exception):
+            widget.deleteLater()
+
+        if self._tabs.count() == 0:
+            self._tabs_by_id.clear()
+            self._undo.clear()
+            self._last_df = None
+        else:
+            self._last_df = self.current_df()
+
+        self._notify_undo_state_changed()
+        self._emit_shape(self._last_df)
+        self._emit_toolbar_data_state()
+        self._emit_toolbar_multi_dataset_state()
 
     def _maybe_cancel_pending_tab_job(self, record: ResultTabRecord) -> None:
         """Request cancellation for an associated pending job if configured.

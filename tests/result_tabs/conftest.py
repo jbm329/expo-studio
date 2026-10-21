@@ -229,6 +229,9 @@ class StubTabs:
             return self._widgets[index]
         return None
 
+    def indexOf(self, widget: object) -> int:
+        return self._widgets.index(widget) if widget in self._widgets else -1
+
     def removeTab(self, index):
         if 0 <= index < len(self._widgets):
             self._widgets.pop(index)

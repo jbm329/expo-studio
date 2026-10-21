@@ -8,6 +8,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- Result tabs now support Close, Close others, Close all to the right, and Close all, with reliable bulk closing and pending-job cleanup
 - Improved Advanced Analysis layouts with consistent settings summaries, result sections, and scrolling
 - Charts adapt to long labels, keeping text readable in the app, Excel exports, and HTML reports
 - Advanced Analysis stays bound to the selected dataset, with its name and dimensions shown in the window title
