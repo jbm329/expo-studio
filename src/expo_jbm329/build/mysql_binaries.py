@@ -29,7 +29,7 @@ def collect_mysql_connector_openssl_binaries() -> list[tuple[str, str]]:
         message = f"{CONNECTOR_DISTRIBUTION} does not provide an installed file list"
         raise RuntimeError(message)
 
-    site_packages = Path(connector.locate_file("")).resolve()
+    site_packages = Path(str(connector.locate_file(""))).resolve()
     expected_names = {name.casefold() for name in OPENSSL_DLLS}
     source_by_name: dict[str, Path] = {}
 
@@ -37,7 +37,7 @@ def collect_mysql_connector_openssl_binaries() -> list[tuple[str, str]]:
         if recorded_file.name.casefold() not in expected_names:
             continue
 
-        source = Path(connector.locate_file(recorded_file)).resolve()
+        source = Path(str(connector.locate_file(recorded_file))).resolve()
         if source.parent == site_packages and source.is_file():
             source_by_name[source.name.casefold()] = source
 
