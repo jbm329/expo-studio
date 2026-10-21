@@ -7610,6 +7610,11 @@ Time: {sec:.2f}s{sample}</source>
 </context><context>
     <name>RestController</name>
     <message>
+        <location filename="..\..\workbench\controllers\rest_controller.py" line="60" />
+        <source>A connection named '{name}' already exists.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
         <location filename="..\..\workbench\controllers\rest_controller.py" line="53" />
         <source>Fetching data from API {name}…</source>
         <translation type="unfinished" />

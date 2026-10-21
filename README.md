@@ -368,15 +368,65 @@ HTML entities and styles, and never rewrite punctuation in user-provided data.
 
 For explicit contexts, use `QCoreApplication.translate(context, text)` or import
 the shared helper with `from expo_jbm329.utils.i18n_utils import translate`.
-For named formatting, import `translate_fmt` from the same module.
+For marker-based messages with substitutions, import `translate_fmt` from the
+same module. It translates the template **before** substituting descriptive
+named values, so translators can reorder values without changing their meaning.
+Names such as `{file}` and `{count}` explain each value's role and avoid fragile
+chains of positional replacements such as `.replace("%1", ...)`.
+
+Choose the formatting-call style by the translation contexts used across the
+**whole module**. For a single-context module, reuse or create a local `_tr_fmt`
+wrapper bound to that context:
+
+```python
+from PyQt6.QtCore import QT_TR_NOOP
+
+from expo_jbm329.utils.i18n_utils import translate_fmt
+
+
+class FilePanelController:
+    TR_LOADING = QT_TR_NOOP("Loading {file}")
+
+    @staticmethod
+    def _tr_fmt(text: str, **kwargs: object) -> str:
+        return translate_fmt("FilePanelController", text, **kwargs)
+
+    def loading_message(self, filename: str) -> str:
+        return self._tr_fmt(self.TR_LOADING, file=filename)
+```
+
+For a module using multiple contexts, call `translate_fmt` directly instead of
+adding a fixed-context formatting wrapper:
+
+```python
+from PyQt6.QtCore import QT_TRANSLATE_NOOP
+
+from expo_jbm329.utils.i18n_utils import translate_fmt
+
+TR_FAILURE = QT_TRANSLATE_NOOP("QueryController", "Failed to run SQL.\n\n{traceback_str}")
+
+message = translate_fmt("QueryController", TR_FAILURE, traceback_str=error_details)
+```
+
+Use these examples for explicit-context, marker-based messages, not as a reason
+to replace ordinary widget `self.tr("Text")` calls. Keep injected translation
+callbacks and captured-template formatting in Qt-free chart/report services:
+calling the shared helper there would bypass the caller's translation source.
+
+`translate_fmt` leaves the translated template unchanged if formatting fails.
+It does not localize numbers or paths, escape HTML, or validate placeholders:
+preserve the appropriate formatters and escaping before passing values, and
+check placeholder consistency in translations. Braces or positional-looking
+tokens inside inserted values are preserved, not formatted again.
+
 `pylupdate6` recognizes literal `translate(context, "Text")` calls, but
 `translate_fmt` and calls with variable source text still require literal
 `QT_TRANSLATE_NOOP` markers (or class-local `QT_TR_NOOP` markers in the matching
 context). Do not alias the two-argument helper to `tr`: the extractor interprets
 that spelling as Qt's `tr(source, comment)` instead.
 Widget calls such as `self.tr("Text")` are unaffected and remain appropriate.
-Existing local `_tr` and `_tr_fmt` wrappers may continue binding a fixed context
-to the shared helpers; their marker requirements are unchanged.
+Local wrappers do not make strings extractable: retain the markers in both
+call styles. Plain `_tr` wrappers are independent of the formatting-wrapper rule.
 
 Shared labels resolved dynamically need literal `QT_TRANSLATE_NOOP` extraction
 markers in their canonical context. Advanced Analysis keeps these alongside its

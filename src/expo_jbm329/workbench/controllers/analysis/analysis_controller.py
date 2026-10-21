@@ -170,7 +170,7 @@ from expo_jbm329.services.analysis.timeseries_export import (
 )
 from expo_jbm329.services.excel_chart import ExcelChartCancelledError
 from expo_jbm329.utils.format_utils import capture_chart_numeric_locale, fmt_int, fmt_num
-from expo_jbm329.utils.i18n_utils import translate
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -932,7 +932,7 @@ class AnalysisController:
             def on_error(error: str) -> None:
                 if not stale():
                     message = self.TR_REPORT_SAVE_ERROR if save else self.TR_REPORT_ERROR
-                    page.set_preview_status(self._tr(message).format(error=error))
+                    page.set_preview_status(translate_fmt("AnalysisController", message, error=error))
 
             def on_finished() -> None:
                 nonlocal busy

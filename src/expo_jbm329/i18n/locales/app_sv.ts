@@ -7668,6 +7668,11 @@ Tid: {sec:.2f}s{sample}</translation>
 </context><context>
     <name>RestController</name>
     <message>
+        <location filename="..\..\workbench\controllers\rest_controller.py" line="60" />
+        <source>A connection named '{name}' already exists.</source>
+        <translation>Det finns redan en anslutning med namnet '{name}'.</translation>
+    </message>
+    <message>
         <location filename="..\..\workbench\controllers\rest_controller.py" line="53" />
         <source>Fetching data from API {name}…</source>
         <translation>Hämtar data från API {name}…</translation>

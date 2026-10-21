@@ -57,6 +57,7 @@ class RestController:
 
     TR_DIALOG_ERROR_TITLE = QT_TR_NOOP("REST API error")
     TR_DIALOG_ERROR_TEXT = QT_TR_NOOP("Could not load data from API:\n{error}")
+    TR_CONNECTION_NAME_EXISTS = QT_TR_NOOP("A connection named '{name}' already exists.")
 
     @staticmethod
     def _tr(text: str) -> str:
@@ -300,7 +301,7 @@ class RestController:
             self._dialogs.warn(
                 parent=self._parent,
                 title=self._tr("Name already exists"),
-                text=self._tr("A connection named '{name}' already exists.").format(name=new_name),
+                text=self._tr_fmt(self.TR_CONNECTION_NAME_EXISTS, name=new_name),
             )
             return None
 

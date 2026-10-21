@@ -76,6 +76,10 @@ class SchemaCacheManager:
         _autocomplete_cb: Callback for autocomplete rebuilding.
     """
 
+    @staticmethod
+    def _tr_fmt(text: str, **kwargs: object) -> str:
+        return translate_fmt("DbErrors", text, **kwargs)
+
     def __init__(
         self,
         *,
@@ -491,7 +495,7 @@ class SchemaCacheManager:
             )
 
         if self._status_cb:
-            msg = translate_fmt("DbErrors", TR_AUTOCOMPLETE_READY_BULK, count=str(merged))
+            msg = self._tr_fmt(TR_AUTOCOMPLETE_READY_BULK, count=str(merged))
             self._status_cb(msg, 8000)
 
         if self._progress_cb:
@@ -618,7 +622,7 @@ class SchemaCacheManager:
             batch_job,
             connection_name,
             batch,
-            started_msg=translate_fmt("DbErrors", TR_PREPARING_AUTOCOMPLETE_BATCH, done=str(done), total=str(total)),
+            started_msg=self._tr_fmt(TR_PREPARING_AUTOCOMPLETE_BATCH, done=str(done), total=str(total)),
             corr_id=corr_id,
         )
 

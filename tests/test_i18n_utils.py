@@ -55,6 +55,10 @@ def test_translate_fmt_keeps_context_and_text_positional_only() -> None:
         translate_fmt(context="ExampleContext", text="Source")
 
 
+def test_translate_fmt_does_not_reinterpret_inserted_values() -> None:
+    assert translate_fmt("UncataloguedContext", "Value: {value}", value="{other} %1 %2") == ("Value: {other} %1 %2")
+
+
 @pytest.mark.parametrize(
     ("language", "expected", "formatted"),
     [

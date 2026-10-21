@@ -70,10 +70,6 @@ class QueryController:
     def _tr(text: str) -> str:
         return translate("QueryController", text)
 
-    @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
-        return translate_fmt("QueryController", text, **kwargs)
-
     def reload_settings(self, _settings: dict[str, object]) -> None:
         """Handle workbench settings changes.
 
@@ -297,7 +293,7 @@ class QueryController:
                 msg = translate("DbErrors", err.message) if err is not None else self._tr(self.TR_SQL_FAILED)
 
                 hint_str = translate("DbErrors", err.hint) if err is not None and err.hint else ""
-                hint = self._tr_fmt(self.TR_SQL_ERROR_HINT, error_hint=hint_str) if hint_str else ""
+                hint = translate_fmt("QueryController", self.TR_SQL_ERROR_HINT, error_hint=hint_str) if hint_str else ""
 
                 self._set_status(self._tr(self.TR_FAILED_TO_RUN_SQL), 6000)
 
@@ -349,7 +345,8 @@ class QueryController:
             rows_fmt, cols_fmt = fmt_shape(df)
             elapsed_time = fmt_time(res.elapsed_s)
 
-            msg = self._tr_fmt(
+            msg = translate_fmt(
+                "QueryController",
                 self.TR_SQL_COMPLETED,
                 rows=rows_fmt,
                 cols=cols_fmt,
@@ -365,7 +362,8 @@ class QueryController:
             self._dialogs.critical(
                 parent=self._parent,
                 title=self._tr(self.TR_FAILURE),
-                text=self._tr_fmt(
+                text=translate_fmt(
+                    "QueryController",
                     self.TR_FAILED_TO_RUN_SQL_TRACE,
                     traceback_str=traceback_str,
                 ),

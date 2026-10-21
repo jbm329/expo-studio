@@ -618,8 +618,9 @@ class ExportController:
             self._dialogs.warn(
                 parent=parent,
                 title=self._tr(self.TR_KIND_EXCEL),
-                text=self._tr(self.TR_EXCEL_INVALID_SHEETS).format(
-                    reason="A chart producer and worksheet name must be supplied together."
+                text=self._tr_fmt(
+                    self.TR_EXCEL_INVALID_SHEETS,
+                    reason="A chart producer and worksheet name must be supplied together.",
                 ),
             )
             return

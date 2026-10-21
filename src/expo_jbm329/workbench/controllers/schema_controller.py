@@ -77,10 +77,6 @@ class SchemaController:
     def _tr(text: str) -> str:
         return translate("SchemaController", text)
 
-    @staticmethod
-    def _tr_fmt(text: str, **kwargs: str) -> str:
-        return translate_fmt("SchemaController", text, **kwargs)
-
     __slots__ = (
         "__weakref__",
         "_async_ops",
@@ -952,7 +948,7 @@ class SchemaController:
         else:
             translated = translate("DbErrors", raw_err)
 
-        text = self._tr_fmt(self.TR_COULD_NOT_LOAD_SCHEMA, error=translated)
+        text = translate_fmt("SchemaController", self.TR_COULD_NOT_LOAD_SCHEMA, error=translated)
         self._dialogs.critical(parent=self._parent, title=self._tr(self.TR_FAILURE), text=text)
         self._set_status(status_text, 6000)
 
@@ -1275,7 +1271,10 @@ class SchemaController:
         """
         if total > 1:
             self._logger.debug("SchemaController: schema prefetch progress: %s/%s", done, total)
-            self._set_status(self._tr_fmt(self.TR_PRELOADING_SCHEMA_STATUS, done=str(done), total=str(total)), 1500)
+            self._set_status(
+                translate_fmt("SchemaController", self.TR_PRELOADING_SCHEMA_STATUS, done=str(done), total=str(total)),
+                1500,
+            )
         else:
             self._restore_baseline_status()
 
