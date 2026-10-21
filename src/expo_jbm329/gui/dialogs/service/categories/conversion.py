@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtCore import QT_TRANSLATE_NOOP
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
@@ -23,12 +23,29 @@ from expo_jbm329.gui.dialogs.service.common.localization import (
 from expo_jbm329.gui.dialogs.service.common.window_hints import (
     apply_dialog_window_hints,
 )
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.gui.dialogs.service.dialog_service import (
         CategoryConversionResult,
     )
     from expo_jbm329.services.data_operations.category_orders import CategoryOrderKey
+
+
+# ------------------------------------------------------------------
+# i18n
+# ------------------------------------------------------------------
+TR_CATEGORY_ORDER = QT_TRANSLATE_NOOP("CategoryConversion", "Category order:")
+TR_ALPHABETICALLY = QT_TRANSLATE_NOOP("CategoryConversion", "Alphabetically")
+TR_BY_FREQUENCY = QT_TRANSLATE_NOOP("CategoryConversion", "By frequency")
+TR_PRESERVE_ORDER = QT_TRANSLATE_NOOP("CategoryConversion", "Preserve existing order")
+TR_CATEGORIES_ORDERED = QT_TRANSLATE_NOOP("CategoryConversion", "Categories should be ordered")
+TR_STRICT_MODE = QT_TRANSLATE_NOOP("CategoryConversion", "Strict mode (unknown values → NA)")
+
+
+def _tr(text: str) -> str:
+    """Translate a message in this module's context."""
+    return translate("CategoryConversion", text)
 
 
 # ------------------------------------------------------------------
@@ -52,11 +69,11 @@ def prompt_category_conversion(
     # Order selection
     # --------------------------------------------------
 
-    root.addWidget(QLabel(QCoreApplication.translate("CategoryConversion", "Category order:"), dlg))
+    root.addWidget(QLabel(_tr(TR_CATEGORY_ORDER), dlg))
 
-    rb_alpha = QRadioButton(QCoreApplication.translate("CategoryConversion", "Alphabetically"), dlg)
-    rb_freq = QRadioButton(QCoreApplication.translate("CategoryConversion", "By frequency"), dlg)
-    rb_preserve = QRadioButton(QCoreApplication.translate("CategoryConversion", "Preserve existing order"), dlg)
+    rb_alpha = QRadioButton(_tr(TR_ALPHABETICALLY), dlg)
+    rb_freq = QRadioButton(_tr(TR_BY_FREQUENCY), dlg)
+    rb_preserve = QRadioButton(_tr(TR_PRESERVE_ORDER), dlg)
 
     grp = QButtonGroup(dlg)
     grp.addButton(rb_alpha)
@@ -82,14 +99,14 @@ def prompt_category_conversion(
     # --------------------------------------------------
 
     chk_ordered = QCheckBox(
-        QCoreApplication.translate("CategoryConversion", "Categories should be ordered"),
+        _tr(TR_CATEGORIES_ORDERED),
         dlg,
     )
     chk_ordered.setChecked(default_ordered)
     root.addWidget(chk_ordered)
 
     chk_strict = QCheckBox(
-        QCoreApplication.translate("CategoryConversion", "Strict mode (unknown values → NA)"),
+        _tr(TR_STRICT_MODE),
         dlg,
     )
     chk_strict.setChecked(default_strict)

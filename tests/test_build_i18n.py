@@ -1,3 +1,4 @@
+import ast
 import subprocess
 from dataclasses import replace
 from html import unescape
@@ -105,6 +106,13 @@ def test_english_catalog_uses_unfinished_source_fallback(
         ),
         ("ConnectionEditor", "Could not connect.\n\n%1", "Could not connect.\n\n{error}"),
         ("SettingsEditor", "Could not save settings:\n%1", "Could not save settings:\n{error}"),
+        (
+            "QtDialogService",
+            "Do you want to permanently delete:\n\n%1%2",
+            "Do you want to permanently delete:\n\n{name}{size_hint}",
+        ),
+        ("QtDialogService", "Column: %1", "Column: {column}"),
+        ("QtDialogService", "Current value: %1", "Current value: {current_value}"),
     ],
 )
 def test_widget_named_fields_survive_extraction_and_compiled_translation(
@@ -118,9 +126,7 @@ def test_widget_named_fields_survive_extraction_and_compiled_translation(
     old_key = (context, old_source, "")
     assert key in extracted_messages
     assert old_key not in extracted_messages
-    catalog = _catalog_messages(
-        ElementTree.parse(build_i18n.locales_dir() / f"app_{widget_language}.ts").getroot()
-    )
+    catalog = _catalog_messages(ElementTree.parse(build_i18n.locales_dir() / f"app_{widget_language}.ts").getroot())
     assert old_key not in catalog
     translation = catalog[key].find("translation")
     assert translation is not None
@@ -139,6 +145,66 @@ def test_widget_named_fields_survive_extraction_and_compiled_translation(
     assert translated_fields == source_fields
     assert all(field.isidentifier() for field in source_fields)
     assert QCoreApplication.translate(context, source) == expected
+
+
+@pytest.mark.parametrize(
+    "relative_path",
+    [
+        r"analysis\column_combo_box.py",
+        r"analysis\report_page.py",
+        r"service\categories\conversion.py",
+        r"service\categories\order.py",
+        r"service\categories\rename.py",
+        r"service\common\localization.py",
+        r"service\prompts\choice.py",
+        r"service\prompts\column_operations.py",
+        r"service\prompts\compare_between.py",
+        r"service\prompts\datetime_conversion.py",
+        r"service\prompts\filter_match.py",
+        r"service\prompts\text.py",
+    ],
+)
+def test_explicit_context_wrapper_markers_survive_extraction(
+    extracted_messages: dict[tuple[str, str, str], ElementTree.Element], relative_path: str
+) -> None:
+    dialogs = Path(__file__).parents[1] / "src" / "expo_jbm329" / "gui" / "dialogs"
+    module = dialogs.joinpath(*relative_path.split("\\"))
+    markers = [
+        node
+        for node in ast.walk(ast.parse(module.read_text(encoding="utf-8")))
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "QT_TRANSLATE_NOOP"
+    ]
+    assert markers
+    swedish = _catalog_messages(ElementTree.parse(build_i18n.locales_dir() / "app_sv.ts").getroot())
+    for marker in markers:
+        key = (ast.literal_eval(marker.args[0]), ast.literal_eval(marker.args[1]), "")
+        assert key in extracted_messages
+        assert any(
+            location.get("filename", "").replace("\\", "/").endswith(relative_path.replace("\\", "/"))
+            for location in extracted_messages[key].findall("location")
+        )
+        translation = swedish[key].find("translation")
+        assert translation is not None and translation.text
+        assert translation.get("type") is None
+
+
+def test_direct_qt_translation_is_confined_to_shared_helpers() -> None:
+    package = Path(__file__).parents[1] / "src" / "expo_jbm329"
+    unexpected: list[tuple[str, int]] = []
+    for module in package.rglob("*.py"):
+        if module.name.endswith("_rc.py") or module == package / "utils" / "i18n_utils.py":
+            continue
+        unexpected.extend(
+            (str(module.relative_to(package)), node.lineno)
+            for node in ast.walk(ast.parse(module.read_text(encoding="utf-8-sig")))
+            if (
+                isinstance(node, ast.Attribute)
+                and isinstance(node.value, ast.Name)
+                and node.value.id == "QCoreApplication"
+                and node.attr == "translate"
+            )
+        )
+    assert not unexpected
 
 
 def test_compiled_catalogs_switch_from_english_to_swedish_and_back(

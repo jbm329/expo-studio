@@ -5,7 +5,7 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.regression_view import build_regression_presentation_header
@@ -34,6 +34,7 @@ from expo_jbm329.services.analysis.regression_export import RegressionExportComp
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.services.analysis.survival import SurvivalError, survival_term_name
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.survival import SurvivalResult
@@ -53,7 +54,7 @@ class SurvivalRegressionView(QWidget):
         self._result = result
         self._chart_labels = build_regression_chart_labels(
             result,
-            QCoreApplication.translate,
+            translate,
             number_format=fmt_num,
             count_format=fmt_int,
             tick_format=lambda value: fmt_num(value, sig=2),
@@ -83,7 +84,7 @@ class SurvivalRegressionView(QWidget):
             regression_component_label(
                 RegressionModel.COX,
                 RegressionExportComponent.COEFFICIENTS,
-                QCoreApplication.translate,
+                translate,
             )
         )
         table_layout.addWidget(self._table)
@@ -91,7 +92,7 @@ class SurvivalRegressionView(QWidget):
             regression_component_label(
                 RegressionModel.COX,
                 RegressionExportComponent.MODEL_METRICS,
-                QCoreApplication.translate,
+                translate,
             ),
             self._summary_label,
             self,
@@ -124,7 +125,7 @@ class SurvivalRegressionView(QWidget):
             regression_component_label(
                 RegressionModel.COX,
                 RegressionExportComponent.CHARTS,
-                QCoreApplication.translate,
+                translate,
             )
         )
         figure = Figure(constrained_layout=True)
@@ -226,9 +227,7 @@ class SurvivalRegressionView(QWidget):
             header.setStretchLastSection(False)
         for row, term in enumerate(self._result.terms):
             name = (
-                regression_intercept_label(QCoreApplication.translate)
-                if term.kind is TermKind.INTERCEPT
-                else survival_term_name(term)
+                regression_intercept_label(translate) if term.kind is TermKind.INTERCEPT else survival_term_name(term)
             )
             values = (
                 name,

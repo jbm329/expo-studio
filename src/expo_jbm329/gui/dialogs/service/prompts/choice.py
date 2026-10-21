@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import QT_TRANSLATE_NOOP, Qt
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QComboBox,
@@ -23,6 +23,23 @@ from expo_jbm329.gui.dialogs.service.common.localization import (
 )
 from expo_jbm329.gui.dialogs.service.common.window_hints import apply_dialog_window_hints
 from expo_jbm329.gui.dialogs.service.dialog_service import ProfileChoice
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
+
+# ----------------------------------------------------------------------
+# i18n
+# ----------------------------------------------------------------------
+TR_CONFIRM_DELETE = QT_TRANSLATE_NOOP("QtDialogService", "Confirm delete")
+TR_DELETE_CONFIRMATION = QT_TRANSLATE_NOOP("QtDialogService", "Do you want to permanently delete:\n\n{name}{size_hint}")
+
+
+def _tr(text: str) -> str:
+    """Translate a message in this module's context."""
+    return translate("QtDialogService", text)
+
+
+def _tr_fmt(text: str, **kwargs: object) -> str:
+    """Translate and format a message in this module's context."""
+    return translate_fmt("QtDialogService", text, **kwargs)
 
 
 # ----------------------------------------------------------------------
@@ -186,22 +203,14 @@ def confirm_delete(
 ) -> bool:
     """Ask the user to confirm deletion of a file or folder."""
     if title is None:
-        title = QCoreApplication.translate("QtDialogService", "Confirm delete")
+        title = _tr(TR_CONFIRM_DELETE)
 
     msg = QMessageBox(parent)
     msg.setIcon(QMessageBox.Icon.Warning)
     msg.setWindowTitle(title)
 
     size_str = size_hint or ""
-    msg.setText(
-        QCoreApplication
-        .translate(
-            "QtDialogService",
-            "Do you want to permanently delete:\n\n%1%2",
-        )
-        .replace("%1", name)
-        .replace("%2", size_str)
-    )
+    msg.setText(_tr_fmt(TR_DELETE_CONFIRMATION, name=name, size_hint=size_str))
 
     msg.setInformativeText(full_path)
 

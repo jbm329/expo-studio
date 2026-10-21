@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtCore import QT_TRANSLATE_NOOP
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -25,11 +25,30 @@ from expo_jbm329.gui.dialogs.service.common.localization import (
 from expo_jbm329.gui.dialogs.service.common.window_hints import (
     apply_dialog_window_hints,
 )
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.gui.dialogs.service.dialog_service import (
         CategoryOrderResult,
     )
+
+
+# ------------------------------------------------------------------
+# i18n
+# ------------------------------------------------------------------
+TR_ORDER_CATEGORIES = QT_TRANSLATE_NOOP("CategorySetOrder", "Order categories (drag and drop):")
+TR_UP = QT_TRANSLATE_NOOP("CategorySetOrder", "Up")
+TR_DOWN = QT_TRANSLATE_NOOP("CategorySetOrder", "Down")
+TR_SORT_ALPHABETICALLY = QT_TRANSLATE_NOOP("CategorySetOrder", "Sort alphabetically")
+TR_RESTORE_ORDER = QT_TRANSLATE_NOOP("CategorySetOrder", "Restore original order")
+TR_ORDERED_CATEGORY = QT_TRANSLATE_NOOP("CategorySetOrder", "Ordered category")
+TR_STRICT_MODE = QT_TRANSLATE_NOOP("CategorySetOrder", "Strict mode (unknown values → NA)")
+TR_ADD_MISSING_LAST = QT_TRANSLATE_NOOP("CategorySetOrder", "Add missing values last")
+
+
+def _tr(text: str) -> str:
+    """Translate a message in this module's context."""
+    return translate("CategorySetOrder", text)
 
 
 # ------------------------------------------------------------------
@@ -55,7 +74,7 @@ def prompt_category_set_order(
 
     root.addWidget(
         QLabel(
-            QCoreApplication.translate("CategorySetOrder", "Order categories (drag and drop):"),
+            _tr(TR_ORDER_CATEGORIES),
             dlg,
         )
     )
@@ -78,10 +97,10 @@ def prompt_category_set_order(
 
     row_btns = QHBoxLayout()
 
-    btn_up = QPushButton(QCoreApplication.translate("CategorySetOrder", "Up"), dlg)
-    btn_down = QPushButton(QCoreApplication.translate("CategorySetOrder", "Down"), dlg)
-    btn_alpha = QPushButton(QCoreApplication.translate("CategorySetOrder", "Sort alphabetically"), dlg)
-    btn_reset = QPushButton(QCoreApplication.translate("CategorySetOrder", "Restore original order"), dlg)
+    btn_up = QPushButton(_tr(TR_UP), dlg)
+    btn_down = QPushButton(_tr(TR_DOWN), dlg)
+    btn_alpha = QPushButton(_tr(TR_SORT_ALPHABETICALLY), dlg)
+    btn_reset = QPushButton(_tr(TR_RESTORE_ORDER), dlg)
 
     row_btns.addWidget(btn_up)
     row_btns.addWidget(btn_down)
@@ -118,21 +137,21 @@ def prompt_category_set_order(
     # --------------------------------------------------
 
     chk_ordered = QCheckBox(
-        QCoreApplication.translate("CategorySetOrder", "Ordered category"),
+        _tr(TR_ORDERED_CATEGORY),
         dlg,
     )
     chk_ordered.setChecked(default_ordered)
     root.addWidget(chk_ordered)
 
     chk_strict = QCheckBox(
-        QCoreApplication.translate("CategorySetOrder", "Strict mode (unknown values → NA)"),
+        _tr(TR_STRICT_MODE),
         dlg,
     )
     chk_strict.setChecked(default_strict)
     root.addWidget(chk_strict)
 
     chk_append = QCheckBox(
-        QCoreApplication.translate("CategorySetOrder", "Add missing values last"),
+        _tr(TR_ADD_MISSING_LAST),
         dlg,
     )
     chk_append.setChecked(default_append_missing_tail)

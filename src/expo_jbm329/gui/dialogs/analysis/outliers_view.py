@@ -5,7 +5,7 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import (
     QFrame,
@@ -50,6 +50,7 @@ from expo_jbm329.services.analysis.presentation import (
     translate_presentation_label,
 )
 from expo_jbm329.utils.format_utils import fmt_cell, fmt_int, fmt_num, fmt_pct
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.outliers import (
@@ -133,7 +134,7 @@ class OutliersView(QWidget):
         super().__init__(parent)
 
         self._result = result
-        self._histogram_labels = build_outlier_histogram_labels(QCoreApplication.translate)
+        self._histogram_labels = build_outlier_histogram_labels(translate)
         self._detail: OutlierColumnDetail | None = None
         self._selected_column: str | None = None
         self._column_selection_revision = 0
@@ -294,7 +295,7 @@ class OutliersView(QWidget):
 
         self._statistics_layout.addWidget(
             AnalysisResultSection(
-                translate_presentation_label(PresentationLabel.MODEL_SUMMARY, QCoreApplication.translate),
+                translate_presentation_label(PresentationLabel.MODEL_SUMMARY, translate),
                 label,
                 self._statistics_panel,
             ),
@@ -317,7 +318,7 @@ class OutliersView(QWidget):
 
     def method_name(self, method: OutlierMethod) -> str:
         """Return the translated display name for `method`."""
-        return outlier_method_label(method, QCoreApplication.translate)
+        return outlier_method_label(method, translate)
 
     def status_text(self, status: ColumnOutlierStatus) -> str:
         """Return the translated short explanation of why a column wasn't screened."""

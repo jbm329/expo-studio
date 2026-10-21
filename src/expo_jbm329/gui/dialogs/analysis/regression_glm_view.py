@@ -5,7 +5,7 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.regression_view import build_regression_presentation_header
@@ -44,6 +44,7 @@ from expo_jbm329.services.analysis.regression_glm import (
     generalized_term_name,
 )
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.regression_glm import GeneralizedRegressionResult
@@ -65,7 +66,7 @@ class GeneralizedRegressionView(QWidget):
         self._result = result
         self._chart_labels = build_regression_chart_labels(
             result,
-            QCoreApplication.translate,
+            translate,
             number_format=fmt_num,
             count_format=fmt_int,
         )
@@ -96,7 +97,7 @@ class GeneralizedRegressionView(QWidget):
                 regression_component_label(
                     result.model,
                     RegressionExportComponent.COEFFICIENTS,
-                    QCoreApplication.translate,
+                    translate,
                 )
             )
             table_layout.addWidget(self._table)
@@ -104,7 +105,7 @@ class GeneralizedRegressionView(QWidget):
                 regression_component_label(
                     result.model,
                     RegressionExportComponent.MODEL_METRICS,
-                    QCoreApplication.translate,
+                    translate,
                 ),
                 self._summary_label,
                 self,
@@ -125,9 +126,7 @@ class GeneralizedRegressionView(QWidget):
             layout.addWidget(self._table, 2)
             layout.addWidget(
                 AnalysisResultSection(
-                    regression_component_label(
-                        result.model, RegressionExportComponent.MODEL_METRICS, QCoreApplication.translate
-                    ),
+                    regression_component_label(result.model, RegressionExportComponent.MODEL_METRICS, translate),
                     self._summary_label,
                     self,
                 ),
@@ -140,7 +139,7 @@ class GeneralizedRegressionView(QWidget):
             regression_component_label(
                 self._result.model,
                 RegressionExportComponent.CHARTS,
-                QCoreApplication.translate,
+                translate,
             )
         )
         result = self._result
@@ -182,7 +181,7 @@ class GeneralizedRegressionView(QWidget):
             regression_component_label(
                 self._result.model,
                 RegressionExportComponent.CHARTS,
-                QCoreApplication.translate,
+                translate,
             )
         )
         data = self._result.plot_data
@@ -236,7 +235,7 @@ class GeneralizedRegressionView(QWidget):
 
     def _model_name(self) -> str:
         """Return the translated name of the fitted model."""
-        return regression_model_label(self._result.model, QCoreApplication.translate)
+        return regression_model_label(self._result.model, translate)
 
     def error_text(self, result: GeneralizedRegressionResult) -> str:
         """Translate a structured fitting error."""
@@ -301,7 +300,7 @@ class GeneralizedRegressionView(QWidget):
             header.setStretchLastSection(False)
         for row, term in enumerate(self._result.terms):
             name = (
-                regression_intercept_label(QCoreApplication.translate)
+                regression_intercept_label(translate)
                 if term.kind is TermKind.INTERCEPT
                 else generalized_term_name(term)
             )

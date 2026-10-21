@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QT_TRANSLATE_NOOP, QCoreApplication, Qt
+from PyQt6.QtCore import QT_TRANSLATE_NOOP, Qt
 from PyQt6.QtWidgets import (
     QFrame,
     QHeaderView,
@@ -23,6 +23,7 @@ from expo_jbm329.services.analysis.overview import overview_sample_frames
 from expo_jbm329.services.analysis.presentation import PresentationLabel, translate_presentation_label
 from expo_jbm329.services.data_operations.dtypes import SemanticDType
 from expo_jbm329.utils.format_utils import fmt_cell, fmt_int, fmt_pct
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -189,7 +190,7 @@ class OverviewView(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(
             self._build_section_header(
-                translate_presentation_label(PresentationLabel.OVERVIEW_COLUMNS_METADATA, QCoreApplication.translate)
+                translate_presentation_label(PresentationLabel.OVERVIEW_COLUMNS_METADATA, translate)
             )
         )
 

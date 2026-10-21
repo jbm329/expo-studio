@@ -4,18 +4,32 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import QT_TRANSLATE_NOOP, Qt
 from PyQt6.QtGui import QStandardItemModel
 from PyQt6.QtWidgets import QComboBox, QWidget
 
 from expo_jbm329.services.analysis.group_comparison import MIN_GROUPS, ColumnExclusionReason
 from expo_jbm329.services.analysis.limits import CATEGORICAL_MAX_DISTINCT_VALUES as MAX_GROUPS
 from expo_jbm329.utils.format_utils import fmt_int
+from expo_jbm329.utils.i18n_utils import translate_fmt
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from expo_jbm329.services.analysis.group_comparison import ExcludedColumn
+
+
+TR_TOO_FEW_VALUES = QT_TRANSLATE_NOOP(
+    "ColumnComboBox", "Not available: {count} distinct values (at least {minimum} are needed)."
+)
+TR_TOO_MANY_VALUES = QT_TRANSLATE_NOOP(
+    "ColumnComboBox", "Not available: {count} distinct values (at most {maximum} are allowed)."
+)
+
+
+def _tr_fmt(text: str, **kwargs: object) -> str:
+    """Translate and format a message in this module's context."""
+    return translate_fmt("ColumnComboBox", text, **kwargs)
 
 
 def exclusion_tooltip(column: ExcludedColumn) -> str:
@@ -28,14 +42,8 @@ def exclusion_tooltip(column: ExcludedColumn) -> str:
         Translated tooltip text.
     """
     if column.reason is ColumnExclusionReason.TOO_FEW_VALUES:
-        return QCoreApplication.translate(
-            "ColumnComboBox",
-            "Not available: {count} distinct values (at least {minimum} are needed).",
-        ).format(count=fmt_int(column.distinct_count), minimum=fmt_int(MIN_GROUPS))
-    return QCoreApplication.translate(
-        "ColumnComboBox",
-        "Not available: {count} distinct values (at most {maximum} are allowed).",
-    ).format(count=fmt_int(column.distinct_count), maximum=fmt_int(MAX_GROUPS))
+        return _tr_fmt(TR_TOO_FEW_VALUES, count=fmt_int(column.distinct_count), minimum=fmt_int(MIN_GROUPS))
+    return _tr_fmt(TR_TOO_MANY_VALUES, count=fmt_int(column.distinct_count), maximum=fmt_int(MAX_GROUPS))
 
 
 class ColumnComboBox(QComboBox):

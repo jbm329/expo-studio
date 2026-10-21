@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QFormLayout,
@@ -24,6 +24,7 @@ from expo_jbm329.services.analysis.presentation import regression_model_label
 from expo_jbm329.services.analysis.regression_glm import GeneralizedTargetColumns, RegressionModel
 from expo_jbm329.services.analysis.survival import SurvivalColumns
 from expo_jbm329.utils.format_utils import fmt_int
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.services.analysis.regression import RegressionResult
@@ -87,7 +88,7 @@ class RegressionConfigWidget(QWidget):
         self._model_combo = QComboBox(self)
         for model in RegressionModel:
             self._model_combo.addItem(
-                regression_model_label(model, QCoreApplication.translate),
+                regression_model_label(model, translate),
                 model.value,
             )
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtCore import QT_TRANSLATE_NOOP
 from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -21,11 +21,23 @@ from expo_jbm329.gui.dialogs.service.common.localization import (
 from expo_jbm329.gui.dialogs.service.common.window_hints import (
     apply_dialog_window_hints,
 )
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from expo_jbm329.gui.dialogs.service.dialog_service import (
         TextFilterMatchResult,
     )
+
+
+# ------------------------------------------------------------------
+# i18n
+# ------------------------------------------------------------------
+TR_CASE_SENSITIVE = QT_TRANSLATE_NOOP("TextMatchFilter", "Case sensitive")
+
+
+def _tr(text: str) -> str:
+    """Translate a message in this module's context."""
+    return translate("TextMatchFilter", text)
 
 
 # ------------------------------------------------------------------
@@ -52,7 +64,7 @@ def prompt_filter_match(
     layout.addWidget(txt_value)
 
     chk_case = QCheckBox(
-        QCoreApplication.translate("TextMatchFilter", "Case sensitive"),
+        _tr(TR_CASE_SENSITIVE),
         dlg,
     )
     chk_case.setChecked(default_case_sensitive)

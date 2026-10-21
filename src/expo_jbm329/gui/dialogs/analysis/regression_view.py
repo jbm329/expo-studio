@@ -6,7 +6,7 @@ import html
 import math
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import (
     QFrame,
@@ -69,6 +69,7 @@ from expo_jbm329.services.analysis.regression_charts import (
 from expo_jbm329.services.analysis.regression_export import RegressionExportComponent
 from expo_jbm329.services.analysis.regression_glm import RegressionModel
 from expo_jbm329.utils.format_utils import fmt_int, fmt_num, fmt_p_value
+from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -100,7 +101,7 @@ def build_regression_presentation_header(
     parent: QWidget,
 ) -> AppliedConfigurationHeader:
     """Adapt a fitted regression result to the shared applied header."""
-    presentation = build_regression_result_presentation(result, QCoreApplication.translate)
+    presentation = build_regression_result_presentation(result, translate)
     return AppliedConfigurationHeader(presentation, parent)
 
 
@@ -125,7 +126,7 @@ class RegressionView(QWidget):
         self._result = result
         self._chart_labels = build_regression_chart_labels(
             result,
-            QCoreApplication.translate,
+            translate,
             number_format=fmt_num,
             count_format=fmt_int,
         )
@@ -262,7 +263,7 @@ class RegressionView(QWidget):
             regression_component_label(
                 RegressionModel.LINEAR,
                 RegressionExportComponent.MODEL_METRICS,
-                QCoreApplication.translate,
+                translate,
             ),
             label,
             self,
@@ -377,7 +378,7 @@ class RegressionView(QWidget):
         coefficient_label = regression_component_label(
             RegressionModel.LINEAR,
             RegressionExportComponent.COEFFICIENTS,
-            QCoreApplication.translate,
+            translate,
         )
         title = QLabel(f"<b>{_esc(coefficient_label)}</b>", panel)
         title.setTextFormat(Qt.TextFormat.RichText)
@@ -444,9 +445,7 @@ class RegressionView(QWidget):
         """Return the formatted table cells for one term."""
         significant = not math.isnan(term.p_value) and term.p_value < SIGNIFICANCE_LEVEL
         return [
-            regression_intercept_label(QCoreApplication.translate)
-            if term.kind is TermKind.INTERCEPT
-            else term_name(term),
+            regression_intercept_label(translate) if term.kind is TermKind.INTERCEPT else term_name(term),
             fmt_num(term.estimate),
             fmt_num(term.std_error),
             fmt_num(term.t_statistic, sig=3),
@@ -499,7 +498,7 @@ class RegressionView(QWidget):
                 regression_component_label(
                     RegressionModel.LINEAR,
                     RegressionExportComponent.CHARTS,
-                    QCoreApplication.translate,
+                    translate,
                 ),
                 panel,
             )

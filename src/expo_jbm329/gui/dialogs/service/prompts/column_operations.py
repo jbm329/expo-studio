@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtCore import QT_TRANSLATE_NOOP
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QButtonGroup,
@@ -28,9 +28,42 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.common.window_hints import apply_dialog_window_hints
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
     from expo_jbm329.gui.dialogs.service.dialog_service import MergeColumnsResult, SplitColumnResult
+
+
+# ----------------------------------------------------------------------
+# i18n
+# ----------------------------------------------------------------------
+TR_COLUMN = QT_TRANSLATE_NOOP("QtDialogService", "Column: {column}")
+TR_DELIMITER_STRING = QT_TRANSLATE_NOOP("QtDialogService", "Delimiter / string:")
+TR_DELIMITER_EXAMPLE = QT_TRANSLATE_NOOP("QtDialogService", "Example: ; , | space  \\t (tab)")
+TR_KEEP_ORIGINAL_COLUMN = QT_TRANSLATE_NOOP("QtDialogService", "Keep original column")
+TR_SPLIT_AT = QT_TRANSLATE_NOOP("QtDialogService", "Split at:")
+TR_FIRST_OCCURRENCE = QT_TRANSLATE_NOOP("QtDialogService", "First occurrence")
+TR_LAST_OCCURRENCE = QT_TRANSLATE_NOOP("QtDialogService", "Last occurrence")
+TR_MERGE_INSTRUCTIONS = QT_TRANSLATE_NOOP("QtDialogService", "Select columns to merge and define their order:")
+TR_AVAILABLE_COLUMNS = QT_TRANSLATE_NOOP("QtDialogService", "Available columns")
+TR_ADD_COLUMN = QT_TRANSLATE_NOOP("QtDialogService", ">")
+TR_REMOVE_COLUMN = QT_TRANSLATE_NOOP("QtDialogService", "<")
+TR_SELECTED_COLUMNS = QT_TRANSLATE_NOOP("QtDialogService", "Selected columns (merge order)")
+TR_MOVE_UP = QT_TRANSLATE_NOOP("QtDialogService", "Move up")
+TR_MOVE_DOWN = QT_TRANSLATE_NOOP("QtDialogService", "Move down")
+TR_DELIMITER = QT_TRANSLATE_NOOP("QtDialogService", "Delimiter:")
+TR_NEW_COLUMN_NAME = QT_TRANSLATE_NOOP("QtDialogService", "New column name:")
+TR_KEEP_ORIGINAL_COLUMNS = QT_TRANSLATE_NOOP("QtDialogService", "Keep original columns")
+
+
+def _tr(text: str) -> str:
+    """Translate a message in this module's context."""
+    return translate("QtDialogService", text)
+
+
+def _tr_fmt(text: str, **kwargs: object) -> str:
+    """Translate and format a message in this module's context."""
+    return translate_fmt("QtDialogService", text, **kwargs)
 
 
 # ----------------------------------------------------------------------
@@ -54,7 +87,7 @@ def prompt_split_column(
     # Context
     root.addWidget(
         QLabel(
-            QCoreApplication.translate("QtDialogService", "Column: %1").replace("%1", column),
+            _tr_fmt(TR_COLUMN, column=column),
             dlg,
         )
     )
@@ -63,20 +96,20 @@ def prompt_split_column(
     row_delim = QHBoxLayout()
     row_delim.addWidget(
         QLabel(
-            QCoreApplication.translate("QtDialogService", "Delimiter / string:"),
+            _tr(TR_DELIMITER_STRING),
             dlg,
         )
     )
 
     txt_delim = QLineEdit(dlg)
     txt_delim.setText(default_delimiter or "")
-    txt_delim.setPlaceholderText(QCoreApplication.translate("QtDialogService", "Example: ; , | space  \\t (tab)"))
+    txt_delim.setPlaceholderText(_tr(TR_DELIMITER_EXAMPLE))
     row_delim.addWidget(txt_delim)
     root.addLayout(row_delim)
 
     # Keep original column
     chk_keep = QCheckBox(
-        QCoreApplication.translate("QtDialogService", "Keep original column"),
+        _tr(TR_KEEP_ORIGINAL_COLUMN),
         dlg,
     )
     chk_keep.setChecked(bool(default_keep_original))
@@ -85,17 +118,17 @@ def prompt_split_column(
     # Split mode
     root.addWidget(
         QLabel(
-            QCoreApplication.translate("QtDialogService", "Split at:"),
+            _tr(TR_SPLIT_AT),
             dlg,
         )
     )
 
     rb_first = QRadioButton(
-        QCoreApplication.translate("QtDialogService", "First occurrence"),
+        _tr(TR_FIRST_OCCURRENCE),
         dlg,
     )
     rb_last = QRadioButton(
-        QCoreApplication.translate("QtDialogService", "Last occurrence"),
+        _tr(TR_LAST_OCCURRENCE),
         dlg,
     )
 
@@ -186,10 +219,7 @@ def prompt_merge_columns(
 
     root.addWidget(
         QLabel(
-            QCoreApplication.translate(
-                "QtDialogService",
-                "Select columns to merge and define their order:",
-            ),
+            _tr(TR_MERGE_INSTRUCTIONS),
             dlg,
         )
     )
@@ -205,7 +235,7 @@ def prompt_merge_columns(
     col_available = QVBoxLayout()
     col_available.addWidget(
         QLabel(
-            QCoreApplication.translate("QtDialogService", "Available columns"),
+            _tr(TR_AVAILABLE_COLUMNS),
             dlg,
         )
     )
@@ -220,11 +250,11 @@ def prompt_merge_columns(
     col_transfer.addStretch(1)
 
     btn_add = QPushButton(
-        QCoreApplication.translate("QtDialogService", ">"),
+        _tr(TR_ADD_COLUMN),
         dlg,
     )
     btn_remove = QPushButton(
-        QCoreApplication.translate("QtDialogService", "<"),
+        _tr(TR_REMOVE_COLUMN),
         dlg,
     )
 
@@ -237,7 +267,7 @@ def prompt_merge_columns(
     col_selected = QVBoxLayout()
     col_selected.addWidget(
         QLabel(
-            QCoreApplication.translate("QtDialogService", "Selected columns (merge order)"),
+            _tr(TR_SELECTED_COLUMNS),
             dlg,
         )
     )
@@ -250,11 +280,11 @@ def prompt_merge_columns(
 
     row_move = QHBoxLayout()
     btn_up = QPushButton(
-        QCoreApplication.translate("QtDialogService", "Move up"),
+        _tr(TR_MOVE_UP),
         dlg,
     )
     btn_down = QPushButton(
-        QCoreApplication.translate("QtDialogService", "Move down"),
+        _tr(TR_MOVE_DOWN),
         dlg,
     )
     row_move.addWidget(btn_up)
@@ -289,7 +319,7 @@ def prompt_merge_columns(
     row_delim = QHBoxLayout()
     row_delim.addWidget(
         QLabel(
-            QCoreApplication.translate("QtDialogService", "Delimiter:"),
+            _tr(TR_DELIMITER),
             dlg,
         )
     )
@@ -305,7 +335,7 @@ def prompt_merge_columns(
     row_name = QHBoxLayout()
     row_name.addWidget(
         QLabel(
-            QCoreApplication.translate("QtDialogService", "New column name:"),
+            _tr(TR_NEW_COLUMN_NAME),
             dlg,
         )
     )
@@ -319,7 +349,7 @@ def prompt_merge_columns(
     # --------------------------------------------------
 
     chk_keep = QCheckBox(
-        QCoreApplication.translate("QtDialogService", "Keep original columns"),
+        _tr(TR_KEEP_ORIGINAL_COLUMNS),
         dlg,
     )
     chk_keep.setChecked(default_keep_original)
