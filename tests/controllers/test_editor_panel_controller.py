@@ -139,6 +139,7 @@ def controller(monkeypatch):
     )
     tab_manager = EditorTabManager()
     tab_widget = QTabWidget()
+    parent = QWidget()
     ctrl = EditorPanelController(
         tab_manager=tab_manager,
         tab_widget=tab_widget,
@@ -147,9 +148,9 @@ def controller(monkeypatch):
         get_cache_for=lambda conn: {},
         build_schema_dict=lambda schema: schema,
         dialogs=DummyDialogService(),
-        parent=QWidget(),
+        parent=parent,
     )
-    return ctrl, tab_manager, tab_widget
+    yield ctrl, tab_manager, tab_widget
 
 
 def test_create_tab_and_get_active_sql(controller):
@@ -222,6 +223,64 @@ def test_update_autocomplete_without_connection_resets_highlighter(controller):
 
     assert highlighter.dialect is None
     assert highlighter.schema_names == (set(), set())
+
+
+def test_bound_connection_controls_all_editor_metadata_on_tab_switch(controller):
+    from expo_jbm329.services.schema_cache import SchemaCacheEntry
+    from expo_jbm329.services.schema_model import build_schema_dict
+
+    ctrl, manager, tabs = controller
+    caches = {
+        name: SchemaCacheEntry(
+            tables=[{"schema": schema, "name": "orders"}],
+            columns={(schema, "orders"): [{"COLUMN_NAME": column}]},
+        )
+        for name, schema, column in [("duck", "sales", "id"), ("other", "main", "other_id")]
+    }
+    ctrl._get_cache_for = caches.get
+    ctrl._build_schema_dict = build_schema_dict
+    ctrl._get_connection_engine = lambda name: "duckdb" if name == "duck" else "sqlite"
+    duck_tab = ctrl.create_tab(connection_name="duck")
+    other_tab = ctrl.create_tab(connection_name="other")
+    unbound = ctrl.create_tab()
+    for tab in [duck_tab, other_tab, unbound]:
+        ctrl._widgets[tab.tab_id]._autocomplete = MagicMock()
+        ctrl._lint_controllers[tab.tab_id] = MagicMock()
+    tabs.currentChanged.connect(ctrl.on_current_tab_changed)
+    ctrl.on_active_tab_changed(ctrl.update_autocomplete_for_active_tab)
+
+    for index, tab, dialect, schema, column in [
+        (0, duck_tab, "duckdb", "sales", "id"),
+        (1, other_tab, "sqlite", "main", "other_id"),
+        (0, duck_tab, "duckdb", "sales", "id"),
+    ]:
+        tabs.setCurrentIndex(index)
+        assert manager.get_active_tab() == tab
+        widget = ctrl._widgets[tab.tab_id]
+        widget._autocomplete.set_dialect.assert_called_with(dialect)
+        lint = ctrl._lint_controllers[tab.tab_id]
+        lint.set_dialect.assert_called_with(dialect)
+        lint.set_schema.assert_called_with({schema: {"orders": [column]}})
+        assert widget.get_autocomplete_engine().get_suggestions(f"{schema}.orders.") == [column]
+        assert widget.get_highlighter().dialect == dialect
+        assert widget.get_highlighter().schema_names == ({schema, "orders"}, {column})
+
+    lint = ctrl._lint_controllers[duck_tab.tab_id]
+    lint.reset_mock()
+    ctrl.update_autocomplete_for_connection("other")
+    lint.set_schema.assert_not_called()
+    ctrl.update_autocomplete_for_connection("duck")
+    lint.set_schema.assert_called_once_with({"sales": {"orders": ["id"]}})
+
+    tabs.setCurrentIndex(2)
+    widget = ctrl._widgets[unbound.tab_id]
+    lint = ctrl._lint_controllers[unbound.tab_id]
+    widget._autocomplete.set_dialect.assert_called_with(None)
+    lint.set_dialect.assert_called_with(None)
+    lint.set_schema.assert_called_with({})
+    assert lint.clear_diagnostics.called
+    assert widget.get_autocomplete_engine().get_all_objects() == []
+    assert widget.get_highlighter().schema_names == (set(), set())
 
 
 def test_invalidation_clears_all_bound_tabs_without_touching_other_connections(controller):

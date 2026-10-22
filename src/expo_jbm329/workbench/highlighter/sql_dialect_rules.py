@@ -132,6 +132,19 @@ BASE_FUNCTIONS: frozenset[str] = frozenset({
 })
 
 _DIALECT_KEYWORDS: dict[str, frozenset[str]] = {
+    "duckdb": frozenset({
+        "ASOF",
+        "EXCLUDE",
+        "ILIKE",
+        "LATERAL",
+        "LIMIT",
+        "PIVOT",
+        "QUALIFY",
+        "REPLACE",
+        "RETURNING",
+        "SAMPLE",
+        "UNPIVOT",
+    }),
     "tsql": frozenset({
         "APPLY",
         "DECLARE",
@@ -184,6 +197,22 @@ _DIALECT_KEYWORDS: dict[str, frozenset[str]] = {
 }
 
 _DIALECT_FUNCTIONS: dict[str, frozenset[str]] = {
+    "duckdb": frozenset({
+        "ARG_MAX",
+        "ARG_MIN",
+        "ARRAY_AGG",
+        "DATE_PART",
+        "DATE_TRUNC",
+        "IFNULL",
+        "LIST",
+        "LIST_TRANSFORM",
+        "REGEXP_MATCHES",
+        "STRFTIME",
+        "STRING_AGG",
+        "STRUCT_PACK",
+        "TRY_CAST",
+        "UNNEST",
+    }),
     "tsql": frozenset({
         "CHARINDEX",
         "CONVERT",
@@ -310,7 +339,7 @@ def rules_for_dialect(dialect: str | None) -> SqlDialectRules:
 
     Args:
         dialect: sqlglot dialect name such as "tsql", "mysql", "sqlite",
-            "postgres" or "oracle", or None.
+            "postgres", "duckdb" or "oracle", or None.
 
     Returns:
         The lexical rules for the dialect.
@@ -331,6 +360,8 @@ def rules_for_dialect(dialect: str | None) -> SqlDialectRules:
             return _rules("sqlite", identifier_quotes=(DOUBLE_QUOTE, BRACKET_QUOTE, BACKTICK_QUOTE))
         case "postgres":
             return _rules("postgres", identifier_quotes=(DOUBLE_QUOTE,))
+        case "duckdb":
+            return _rules("duckdb", identifier_quotes=(DOUBLE_QUOTE,))
         case "oracle":
             return _rules("oracle", identifier_quotes=(DOUBLE_QUOTE,))
         case _:

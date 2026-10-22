@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import pytest
+from sqlglot.optimizer.scope import build_scope
+
 from expo_jbm329.db.sql_analysis import (
     ColumnRef,
     ResolvedTable,
@@ -67,6 +70,7 @@ def test_sqlglot_dialect_maps_known_engines() -> None:
     assert sqlglot_dialect("mssql") == "tsql"
     assert sqlglot_dialect("postgresql") == "postgres"
     assert sqlglot_dialect("sqlite") == "sqlite"
+    assert sqlglot_dialect("duckdb") == "duckdb"
     assert sqlglot_dialect("custom") == "custom"
     assert sqlglot_dialect(" ") is None
     assert sqlglot_dialect(None) is None
@@ -231,19 +235,22 @@ def test_dedupe_diagnostics_keeps_first_unique_entries() -> None:
 def test_schema_context_helpers_resolve_tables_and_columns() -> None:
     expression = parse_one_safe("SELECT u.id, missing_col FROM dbo.users AS u JOIN sales.orders o ON o.user_id = u.id")
     assert expression is not None
+    scope = build_scope(expression)
+    assert scope is not None
 
-    context = _build_schema_lint_context(expression, _normalize_schema_for_lint(SCHEMA))
+    context = _build_schema_lint_context(scope, _normalize_schema_for_lint(SCHEMA))
     assert context == SchemaLintContext(
         known_schemas={"dbo", "sales"},
-        visible_tables={"users", "orders"},
+        visible_tables={"u", "o"},
         resolved_tables={
-            "users": ResolvedTable(schema_name="dbo", table_name="users", columns={"id", "name"}),
-            "orders": ResolvedTable(schema_name="sales", table_name="orders", columns={"id", "user_id"}),
+            "u": ResolvedTable(schema_name="dbo", table_name="users", columns={"id", "name"}),
+            "o": ResolvedTable(schema_name="sales", table_name="orders", columns={"id", "user_id"}),
         },
         unresolved_tables=set(),
+        unknown_tables=set(),
     )
 
-    assert _is_known_column("id", "users", context)
+    assert _is_known_column("id", "u", context)
     assert _is_known_column("id", None, context)
     assert not _is_known_column("missing_col", None, context)
     assert not _is_known_column("id", "unknown_alias", context)
@@ -253,6 +260,8 @@ def test_schema_lint_helpers_report_unknown_schema_table_and_column() -> None:
     normalized_schema = _normalize_schema_for_lint(SCHEMA)
 
     unknown_schema_expression = parse_one_safe("SELECT * FROM bad.users")
+    assert unknown_schema_expression is not None
+    unknown_schema_expression = build_scope(unknown_schema_expression)
     assert unknown_schema_expression is not None
     unknown_schema_context = _build_schema_lint_context(unknown_schema_expression, normalized_schema)
     assert _lint_unknown_tables("SELECT * FROM bad.users", unknown_schema_expression, unknown_schema_context) == [
@@ -266,6 +275,8 @@ def test_schema_lint_helpers_report_unknown_schema_table_and_column() -> None:
     ]
 
     unknown_table_expression = parse_one_safe("SELECT * FROM dbo.unknown_table")
+    assert unknown_table_expression is not None
+    unknown_table_expression = build_scope(unknown_table_expression)
     assert unknown_table_expression is not None
     unknown_table_context = _build_schema_lint_context(unknown_table_expression, normalized_schema)
     assert _lint_unknown_tables(
@@ -283,6 +294,8 @@ def test_schema_lint_helpers_report_unknown_schema_table_and_column() -> None:
     ]
 
     unknown_column_expression = parse_one_safe("SELECT users.id, missing_col FROM dbo.users")
+    assert unknown_column_expression is not None
+    unknown_column_expression = build_scope(unknown_column_expression)
     assert unknown_column_expression is not None
     unknown_column_context = _build_schema_lint_context(unknown_column_expression, normalized_schema)
     assert _lint_unknown_columns(
@@ -440,3 +453,113 @@ def test_extract_refs_format_sql_and_multiple_statements() -> None:
     assert formatted.upper().startswith("SELECT")
     assert format_sql("   ", pretty=False) == "   "
     assert has_multiple_statements("SELECT 1; SELECT 2")
+
+
+@pytest.mark.parametrize("dialect", ["tsql", "postgres", "mysql", "sqlite", "oracle", "duckdb"])
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "WITH chosen AS (SELECT id FROM sales.orders) SELECT id FROM chosen",
+        "WITH chosen(renamed) AS (SELECT id FROM sales.orders) SELECT renamed FROM chosen",
+        "SELECT d.renamed FROM (SELECT id AS renamed FROM sales.orders) AS d",
+        "SELECT u.id FROM dbo.users u WHERE EXISTS (SELECT 1 FROM sales.orders o WHERE o.user_id = u.id)",
+        "SELECT id AS renamed FROM sales.orders ORDER BY renamed",
+        "WITH chosen AS (SELECT * FROM sales.orders) SELECT id FROM chosen",
+        "SELECT id FROM dbo.users WHERE EXISTS (SELECT name FROM sales.orders)",
+        "WITH unused AS (SELECT id FROM dbo.users) SELECT id FROM sales.orders",
+    ],
+)
+def test_schema_lint_resolves_query_scopes(dialect: str, sql: str) -> None:
+    assert lint_syntax(sql, dialect, schema=SCHEMA) == []
+
+
+@pytest.mark.parametrize("dialect", ["tsql", "postgres", "mysql", "sqlite", "oracle", "duckdb"])
+@pytest.mark.parametrize(
+    ("sql", "message"),
+    [
+        ("SELECT u.absent FROM dbo.users u", "Unknown column 'absent'"),
+        ("WITH c AS (SELECT id FROM dbo.users) SELECT missing FROM c", "Unknown column 'missing'"),
+        ("SELECT name FROM sales.orders WHERE EXISTS (SELECT name FROM dbo.users)", "Unknown column 'name'"),
+        ("SELECT * FROM bad.users u", "Unknown schema 'bad'"),
+        ("SELECT * FROM dbo.absent u", "Unknown table 'absent'"),
+        (
+            "SELECT s.other_id FROM sales.orders s JOIN main.orders m ON s.id = m.other_id",
+            "Unknown column 'other_id'",
+        ),
+    ],
+)
+def test_schema_lint_does_not_leak_sources_between_scopes(dialect: str, sql: str, message: str) -> None:
+    schema = {**SCHEMA["by_schema"], "main": {"orders": ["other_id"]}}
+    assert any(d.message.startswith(message) for d in lint_syntax(sql, dialect, schema=schema))
+
+
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "SELECT id, row_number() OVER (ORDER BY id) AS rn FROM sales.orders QUALIFY rn = 1",
+        "SELECT id FROM sales.orders WHERE label ILIKE 'a%'",
+        "SELECT id::VARCHAR AS text_id FROM sales.orders",
+        "SELECT [1, 2, 3] AS items",
+        "SELECT {'name': 'a', 'value': 1} AS record",
+        "SELECT * EXCLUDE (label) FROM sales.orders",
+        "SELECT * REPLACE (amount * 2 AS amount) FROM sales.orders",
+        "SELECT id AS key_id FROM sales.orders WHERE key_id > 1",
+        "WITH chosen AS (SELECT id FROM sales.orders) SELECT id FROM chosen",
+    ],
+)
+def test_duckdb_syntax_and_formatting(sql: str) -> None:
+    schema = {"sales": {"orders": ["id", "label", "amount"]}}
+    assert lint_syntax(sql, "duckdb", schema=schema) == []
+    formatted = format_sql(sql, "duckdb")
+    assert lint_syntax(formatted, "duckdb", schema=schema) == []
+    original = parse_one_safe(sql, "duckdb")
+    assert original is not None
+    assert parse_one_safe(formatted, "duckdb") == original
+
+
+def test_table_refs_exclude_cte_references_but_keep_physical_sources() -> None:
+    sql = "WITH chosen AS (SELECT id FROM sales.orders) SELECT c.id FROM chosen c JOIN main.orders m ON true"
+    assert extract_table_refs(sql, "duckdb") == [
+        TableRef(name="orders", schema="main", alias="m"),
+        TableRef(name="orders", schema="sales"),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("sql", "message"),
+    [
+        ("UPDATE dbo.users SET missing = 1", "Unknown column 'missing'"),
+        ("INSERT INTO dbo.absent VALUES (1)", "Unknown table 'absent'"),
+    ],
+)
+def test_non_query_schema_lint_is_preserved(sql: str, message: str) -> None:
+    assert any(d.message.startswith(message) for d in lint_syntax(sql, schema=SCHEMA))
+    assert extract_table_refs(sql)[0].schema == "dbo"
+
+
+def test_unknown_column_diagnostic_targets_its_query_scope() -> None:
+    sql = "SELECT name FROM dbo.users WHERE EXISTS (\nSELECT name FROM sales.orders)"
+    assert lint_syntax(sql, "duckdb", schema=SCHEMA) == []
+    sql = "SELECT name FROM dbo.users WHERE EXISTS (\nSELECT missing FROM sales.orders)"
+    assert lint_syntax(sql, "duckdb", schema=SCHEMA) == [
+        SqlDiagnostic("error", "Unknown column 'missing' for the current schema context.", 2, 8, 7)
+    ]
+
+
+def test_repeated_column_diagnostic_uses_the_failing_scope_location() -> None:
+    sql = "SELECT (SELECT name FROM sales.orders) AS value FROM dbo.users"
+    assert lint_syntax(sql, "duckdb", schema=SCHEMA) == []
+    sql = "WITH c AS (SELECT name FROM dbo.users)\nSELECT name FROM sales.orders"
+    assert lint_syntax(sql, "duckdb", schema=SCHEMA) == [
+        SqlDiagnostic("error", "Unknown column 'name' for the current schema context.", 2, 8, 4)
+    ]
+
+
+def test_schema_lint_does_not_label_ambiguous_or_unloaded_metadata_as_unknown_tables() -> None:
+    schema = {"main": {"orders": ["other_id"], "loading": []}, "sales": {"orders": ["id"]}}
+    assert lint_syntax("SELECT other_id FROM orders", "duckdb", schema=schema) == []
+    assert lint_syntax("SELECT * FROM main.loading", "duckdb", schema=schema) == []
+    assert any(
+        d.message == "Unknown table 'missing'."
+        for d in lint_syntax("SELECT * FROM main.missing", "duckdb", schema=schema)
+    )

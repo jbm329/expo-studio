@@ -4,9 +4,10 @@ import json
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import replace
+from dataclasses import asdict, replace
 from threading import Barrier
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 import duckdb
 import pandas as pd
@@ -24,6 +25,11 @@ from expo_jbm329.db.core.models import ConnectionConfig
 from expo_jbm329.db.dialects.duckdb import DuckDbDialect
 from expo_jbm329.db.drivers.sa_duckdb import SqlAlchemyDuckDbDriver
 from expo_jbm329.db.service import DbService
+from expo_jbm329.db.sql_analysis import format_sql, lint_syntax
+from expo_jbm329.gui.autocomplete.engine import SqlAutoCompleter
+from expo_jbm329.services import schema_cache
+from expo_jbm329.services.schema_cache import SchemaCacheManager
+from expo_jbm329.services.schema_model import build_schema_dict
 
 
 @pytest.fixture
@@ -145,6 +151,37 @@ def test_limit_parser_failure_keeps_valid_sql_and_client_row_cap(duckdb_connecti
         result = base.execute_sql_safe(duckdb_connection, sql, top_n=2)
     assert result.ok and result.rows == 2
     assert "limit injection failed" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("sql", "expected"),
+    [
+        (
+            "SELECT id, row_number() OVER (ORDER BY id) AS rn FROM sales.orders QUALIFY rn = 1",
+            [(1, 1)],
+        ),
+        ("SELECT id FROM sales.orders WHERE label ILIKE 'F%' ORDER BY id", [(1,)]),
+        ("SELECT id::VARCHAR AS text_id FROM sales.orders ORDER BY id", [("1",), ("2",), ("3",)]),
+        ("SELECT [1, 2, 3] AS items", [([1, 2, 3],)]),
+        ("SELECT {'name': 'a', 'value': 1} AS record", [({"name": "a", "value": 1},)]),
+        ("SELECT * EXCLUDE (label, amount, created, enabled) FROM sales.orders ORDER BY id", [(1,), (2,), (3,)]),
+        (
+            "SELECT * EXCLUDE (label, amount, created, enabled) REPLACE (id * 2 AS id) FROM sales.orders ORDER BY id",
+            [(2,), (4,), (6,)],
+        ),
+        ("WITH c AS (SELECT id FROM sales.orders) SELECT id FROM c ORDER BY id", [(1,), (2,), (3,)]),
+    ],
+)
+def test_duckdb_formatted_queries_keep_real_results(duckdb_connection, duckdb_file, sql, expected):
+    formatted = format_sql(sql, "duckdb")
+    with duckdb.connect(str(duckdb_file), read_only=True) as connection:
+        original_rows = connection.execute(sql).fetchall()
+        assert connection.execute(formatted).fetchall() == original_rows
+        assert original_rows == expected
+    original = base.execute_sql_safe(duckdb_connection, sql)
+    formatted_result = base.execute_sql_safe(duckdb_connection, formatted)
+    assert original.ok and formatted_result.ok
+    pd.testing.assert_frame_equal(original.data, formatted_result.data)
 
 
 @pytest.mark.parametrize(
@@ -300,3 +337,98 @@ def test_cancellation_and_disposal_follow_existing_service_contract(duckdb_conne
     assert cancelled.cancelled and not cancelled.ok
     base.close_connection(duckdb_connection)
     assert duckdb_connection not in base._services
+
+
+@pytest.mark.parametrize("prefetch", ["bulk", "fallback"])
+def test_real_schema_cache_drives_completion_lint_and_reconnect(
+    duckdb_connection, duckdb_file, tmp_path, monkeypatch, prefetch
+):
+    # Other cache unit tests replace these module aliases directly.
+    for name in [
+        "get_db_name",
+        "list_tables",
+        "list_views",
+        "list_columns",
+        "list_all_columns_map",
+        "supports_bulk_column_listing",
+    ]:
+        monkeypatch.setattr(schema_cache, name, getattr(base, name))
+    rebuilt = []
+    manager = SchemaCacheManager(autocomplete_cb=rebuilt.append)
+    monkeypatch.setattr(manager, "_invoke_ui", lambda callback: callback())
+    jobs = []
+
+    def runner(_parent, function, connection, *args, **kwargs):
+        jobs.append(function.__name__)
+        if prefetch == "fallback" and function.__name__ == "_load_all_columns":
+            return SimpleNamespace(
+                result=MagicMock(),
+                error=SimpleNamespace(connect=lambda callback: callback("bulk unavailable")),
+            )
+        payload = function(connection, *args)
+        return SimpleNamespace(
+            result=SimpleNamespace(connect=lambda callback: callback(payload)),
+            error=MagicMock(),
+        )
+
+    manager.set_job_runner(runner)
+    entry = manager.load_schema(duckdb_connection)
+    manager.prefetch_columns_async(duckdb_connection)
+    assert entry.columns == base.list_all_columns_map(duckdb_connection)
+    assert rebuilt and set(rebuilt) == {duckdb_connection}
+    assert jobs[0] == "_load_all_columns"
+    assert len(jobs) == (1 if prefetch == "bulk" else 2)
+    schema = build_schema_dict(asdict(entry))
+    completer = SqlAutoCompleter()
+    completer.set_schema(schema)
+    assert completer.get_suggestions("sales.") == ["orders", "order_view"]
+    assert completer.get_suggestions("sales.orders.") == ["id", "label", "amount", "created", "enabled"]
+    assert completer.get_suggestions("main.orders.") == ["other_id"]
+    assert completer.get_suggestions("sales.order_view.") == ["id", "label"]
+    assert "sales" in completer.get_suggestions("sa")
+    for table, column in [("sales.orders", "label"), ("main.orders", "other_id"), ("sales.order_view", "label")]:
+        sql = f"SELECT o. FROM {table} o"
+        assert column in completer.get_contextual_suggestions(sql, len("SELECT o."), "o.", dialect="duckdb")
+    assert lint_syntax("SELECT id FROM sales.orders", "duckdb", schema=schema) == []
+    assert lint_syntax("WITH c AS (SELECT id FROM sales.orders) SELECT id FROM c", "duckdb", schema=schema) == []
+    assert any(
+        "Unknown column 'other_id'" in diagnostic.message
+        for diagnostic in lint_syntax("SELECT s.other_id FROM sales.orders s", "duckdb", schema=schema)
+    )
+
+    other_file = tmp_path / "isolated.duckdb"
+    with duckdb.connect(str(other_file)) as connection:
+        connection.execute("CREATE TABLE isolated (unique_column INTEGER)")
+    configs = {
+        duckdb_connection: {"db_type": "duckdb", "database": str(duckdb_file)},
+        "other-duck": {"db_type": "duckdb", "database": str(other_file)},
+    }
+    with patch("expo_jbm329.db.base.read_connections", return_value=configs):
+        try:
+            other = manager.load_schema("other-duck")
+            manager.prefetch_columns_async("other-duck")
+            other_schema = build_schema_dict(asdict(other))
+            completer.set_schema(other_schema)
+            assert completer.get_suggestions("main.isolated.") == ["unique_column"]
+            assert completer.get_suggestions("sales.") == []
+            assert manager.get_cache_for(duckdb_connection) is entry
+
+            manager.clear_for(duckdb_connection)
+            base.close_connection(duckdb_connection)
+            assert manager.get_cache_for(duckdb_connection) is None
+            with duckdb.connect(str(duckdb_file)) as connection:
+                connection.execute("ALTER TABLE sales.orders ADD COLUMN refreshed INTEGER")
+            refreshed = manager.load_schema(duckdb_connection, force_refresh=True)
+            manager.prefetch_columns_async(duckdb_connection)
+            assert refreshed is not entry
+            assert manager.get_cache_for("other-duck") is other
+            completer.set_schema(build_schema_dict(asdict(refreshed)))
+            assert "refreshed" in completer.get_suggestions("sales.orders.")
+            assert "unique_column" not in completer.get_all_objects()
+            assert (
+                lint_syntax("SELECT refreshed FROM sales.orders", "duckdb", schema=build_schema_dict(asdict(refreshed)))
+                == []
+            )
+        finally:
+            base.close_connection("other-duck")
+            manager.clear_all()

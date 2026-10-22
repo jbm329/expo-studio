@@ -873,6 +873,8 @@ class EditorPanelController(QWidget):
                 lint_controller = self._lint_controllers.get(tab.tab_id)
                 if lint_controller is not None:
                     lint_controller.set_dialect(None)
+                    lint_controller.set_schema({})
+                    lint_controller.clear_diagnostics()
             return
 
         dialect = self._resolve_autocomplete_dialect(tab.connection_name)

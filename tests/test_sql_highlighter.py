@@ -30,6 +30,21 @@ def test_initial_state(highlighter):
     assert len(highlighter._functions) > 0
 
 
+def test_duckdb_highlighting_uses_native_keywords_functions_and_list_tokens(highlighter):
+    highlighter.set_dialect("duckdb")
+    highlighter.setFormat = MagicMock()
+    text = 'SELECT list_transform([1, 2], x -> x), "Order" FROM t QUALIFY rn = 1'
+    highlighter.highlightBlock(text)
+    formats = {call.args[0]: call.args[2] for call in highlighter.setFormat.call_args_list}
+    for fragment, color in [
+        ("list_transform", highlighter._theme.func),
+        ("1", highlighter._theme.number),
+        ('"Order"', highlighter._theme.quoted_ident),
+        ("QUALIFY", highlighter._theme.kw),
+    ]:
+        assert formats[text.index(fragment)].foreground().color() == color
+
+
 def test_highlight_keywords(editor, highlighter):
     highlighter.setFormat = MagicMock()
     highlighter.highlightBlock("SELECT * FROM table")
