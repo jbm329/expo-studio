@@ -58,6 +58,18 @@ class SqlAlchemyDuckDbDriver(DriverProtocol):
         for engine in engines:
             engine.dispose()
 
+    def validate_configuration(self, cfg: ConnectionConfig) -> None:
+        """Validate local file settings without opening a database connection.
+
+        Args:
+            cfg: DuckDB connection configuration to validate.
+
+        Raises:
+            ValueError: If protocol, path or extra options are unsupported.
+            OSError: If the path is missing, inaccessible or not a regular file.
+        """
+        self._url_for(cfg)
+
     def _url_for(self, cfg: ConnectionConfig) -> URL:
         """Validate the configuration and build a URL for an existing file.
 

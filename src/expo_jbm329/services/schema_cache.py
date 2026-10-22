@@ -375,6 +375,8 @@ class SchemaCacheManager:
     # BULK HANDLER
     # -----------------------------------------------------------------------------
     def _handle_bulk_error(self, connection_name: str, token: str, err: str, corr_id: str | None = None) -> None:
+        if not self._token_matches(connection_name, token):
+            return
         self._logger.warning("SchemaCacheManager: bulk error (conn=%s, corr=%s): %s", connection_name, corr_id, err)
 
         if self._status_cb:
@@ -505,6 +507,8 @@ class SchemaCacheManager:
     # BATCH HANDLER
     # -----------------------------------------------------------------------------
     def _start_batch_prefetch(self, connection_name: str, token: str, corr_id: str | None = None) -> None:
+        if not self._token_matches(connection_name, token):
+            return
         entry = self._cache.get(connection_name)
         if not entry:
             return
@@ -551,6 +555,8 @@ class SchemaCacheManager:
         total: int,
         corr_id: str | None = None,
     ) -> None:
+        if not self._token_matches(connection_name, token):
+            return
         if not remaining:
             if self._request_autocomplete_rebuild(connection_name):
                 self._logger.debug(
@@ -627,6 +633,8 @@ class SchemaCacheManager:
         )
 
         def _on_ok(payload: object) -> None:
+            if not self._token_matches(connection_name, token):
+                return
             entry = self._cache.get(connection_name) or None
             if entry and isinstance(payload, dict):
                 entry.columns.update(cast("dict[tuple[str, str], list[dict[str, str]]]", payload))
@@ -665,6 +673,8 @@ class SchemaCacheManager:
                 self._run_next_batch(connection_name, token, rest, batch_size, new_done, total, corr_id)
 
         def _on_err(err: str) -> None:
+            if not self._token_matches(connection_name, token):
+                return
             self._logger.warning(
                 "SchemaCacheManager: batch error (conn=%s, corr=%s): %s", connection_name, corr_id, err
             )

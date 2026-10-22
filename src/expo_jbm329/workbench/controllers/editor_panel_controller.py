@@ -933,6 +933,26 @@ class EditorPanelController(QWidget):
             by_schema=by_schema if isinstance(by_schema, dict) else {},
         )
 
+    def invalidate_connection_metadata(self, connection_name: str) -> None:
+        """Clear stale metadata in every tab bound to an edited connection."""
+        self._tab_manager.on_connection_disconnected(connection_name)
+        for tab in self._tab_manager.iter_tabs():
+            if tab.connection_name != connection_name:
+                continue
+            widget = self._widgets.get(tab.tab_id)
+            if widget is None:
+                continue
+            dialect = self._resolve_autocomplete_dialect(connection_name)
+            widget.get_autocomplete_engine().set_schema({})
+            widget.get_autocomplete().set_dialect(dialect)
+            self._update_highlighter(widget, dialect=dialect, by_schema={})
+            lint_controller = self._lint_controllers.get(tab.tab_id)
+            if lint_controller is not None:
+                lint_controller.set_schema({})
+                lint_controller.set_dialect(dialect)
+                lint_controller.clear_diagnostics()
+        self.on_tab_state_changed()
+
     @staticmethod
     def _update_highlighter(
         widget: EditorWidget,

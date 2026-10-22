@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 import pytest
 from PyQt6.QtWidgets import QTabWidget, QWidget
@@ -221,3 +222,33 @@ def test_update_autocomplete_without_connection_resets_highlighter(controller):
 
     assert highlighter.dialect is None
     assert highlighter.schema_names == (set(), set())
+
+
+def test_invalidation_clears_all_bound_tabs_without_touching_other_connections(controller):
+    from expo_jbm329.workbench.controllers.editor_tab_manager import EditorTabState
+
+    ctrl, manager, _ = controller
+    affected = [ctrl.create_tab(connection_name="duck") for _ in range(2)]
+    other = ctrl.create_tab(connection_name="other")
+    ctrl._get_connection_engine = lambda name: "duckdb" if name == "duck" else "sqlite"
+    for tab in [*affected, other]:
+        widget = ctrl._widgets[tab.tab_id]
+        widget.set_sql_text("SELECT * FROM original")
+        widget._autocomplete_engine = MagicMock()
+        widget._autocomplete = MagicMock()
+        ctrl._lint_controllers[tab.tab_id] = MagicMock()
+        widget.get_highlighter().set_schema_names({"original"}, {"id"})
+    ctrl.invalidate_connection_metadata("duck")
+    for tab in affected:
+        widget = ctrl._widgets[tab.tab_id]
+        widget._autocomplete_engine.set_schema.assert_called_once_with({})
+        widget._autocomplete.set_dialect.assert_called_once_with("duckdb")
+        ctrl._lint_controllers[tab.tab_id].set_schema.assert_called_once_with({})
+        ctrl._lint_controllers[tab.tab_id].clear_diagnostics.assert_called_once_with()
+        assert widget.get_highlighter().schema_names == (set(), set())
+        assert manager.get_tab(tab.tab_id).state == EditorTabState.DISCONNECTED
+        assert widget.get_sql_text() == "SELECT * FROM original"
+    other_widget = ctrl._widgets[other.tab_id]
+    other_widget._autocomplete_engine.set_schema.assert_not_called()
+    assert other_widget.get_highlighter().schema_names == ({"original"}, {"id"})
+    assert manager.get_tab(other.tab_id).state == EditorTabState.BOUND

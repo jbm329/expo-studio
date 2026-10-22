@@ -49,6 +49,20 @@ def test_build_connection_config_duckdb():
     assert base._registry.create_driver("duckdb") is not None
 
 
+def test_duckdb_form_validation_does_not_open_file(tmp_path):
+    path = tmp_path / "data.duckdb"
+    path.touch()
+    with patch("expo_jbm329.db.drivers.sa_duckdb.create_engine") as create:
+        assert base.validate_duckdb_connection(str(path)) is None
+        assert base.validate_duckdb_connection(str(path), protocol="sqlite").message == base.TR_INVALID_CONFIG_DUCKDB
+        assert (
+            base.validate_duckdb_connection(str(path), extra={"read_only": False}).message
+            == base.TR_INVALID_CONFIG_DUCKDB
+        )
+        assert base.validate_duckdb_connection(str(tmp_path / "missing.duckdb")).category == "connection"
+    create.assert_not_called()
+
+
 @pytest.mark.parametrize(
     ("engine", "protocol"),
     [("duckdb", "sqlite"), ("duckdb", "odbc"), ("sqlite", "duckdb")],

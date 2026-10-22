@@ -29,7 +29,12 @@ from typing import TYPE_CHECKING, cast
 
 from expo_jbm329.app.settings.config_store import read_connections
 from expo_jbm329.db.core.di import ServiceRegistry
-from expo_jbm329.db.core.errors import TR_COULD_NOT_INIT_CONN, TR_INVALID_CONFIG_DUCKDB
+from expo_jbm329.db.core.errors import (
+    TR_COULD_NOT_INIT_CONN,
+    TR_INVALID_CONFIG_DUCKDB,
+    TR_INVALID_CONFIG_HINT_DUCKDB,
+    classify_duckdb,
+)
 from expo_jbm329.db.core.models import ConnectionConfig, EngineKey, ProtocolKey, SqlError, SqlResult, TimeoutConfig
 from expo_jbm329.db.dialects.ansi import AnsiDialect
 from expo_jbm329.db.dialects.duckdb import DuckDbDialect
@@ -120,6 +125,33 @@ def configure_timeouts(*, login_timeout_s: int | None = None, query_timeout_s: i
 # =============================================================================
 # ConnectionConfig Builder
 # =============================================================================
+
+
+def validate_duckdb_connection(
+    database: str | None,
+    *,
+    protocol: str = "duckdb",
+    extra: dict[str, object] | None = None,
+) -> SqlError | None:
+    """Validate DuckDB form settings without opening or creating a database.
+
+    Args:
+        database: Existing local database file path.
+        protocol: Selected protocol, which must be DuckDB.
+        extra: Extra options, which must be empty for read-only file connections.
+
+    Returns:
+        A translatable error descriptor for invalid settings, otherwise None.
+    """
+    if protocol != "duckdb":
+        return SqlError("connection", None, TR_INVALID_CONFIG_DUCKDB, TR_INVALID_CONFIG_HINT_DUCKDB)
+    cfg = ConnectionConfig(name="validation", engine="duckdb", protocol="duckdb", database=database, extra=extra)
+    try:
+        SqlAlchemyDuckDbDriver().validate_configuration(cfg)
+    except (OSError, ValueError) as exc:
+        logger.warning("Invalid DuckDB connection settings: %s", exc)
+        return classify_duckdb(exc)
+    return None
 
 
 def _normalize_engine_key(raw_engine: object) -> EngineKey:

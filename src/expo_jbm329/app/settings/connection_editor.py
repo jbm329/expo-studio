@@ -2,8 +2,8 @@
 
 This module provides the ConnectionEditor class, which is a unified,
 protocol-aware connection workbench for Expo. It supports various database
-types (SQL Server, PostgreSQL, MySQL, Oracle, SQLite) and protocols
-(ODBC, psycopg, pymysql, mysqlconnector, sqlite).
+types (SQL Server, PostgreSQL, MySQL, Oracle, SQLite, DuckDB) and protocols
+(ODBC, psycopg, pymysql, mysqlconnector, sqlite, duckdb).
 """
 
 from __future__ import annotations
@@ -33,12 +33,16 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.app.settings.config_store import read_connections, write_connections
-from expo_jbm329.app.settings.json_types import JsonObject, string_value
-from expo_jbm329.db.base import execute_sql_safe
+from expo_jbm329.app.settings.json_types import JsonObject, is_json_object, string_value
+from expo_jbm329.db.base import close_connection, execute_sql_safe, validate_duckdb_connection
+from expo_jbm329.db.core.errors import TR_INVALID_CONFIG_DUCKDB, TR_INVALID_CONFIG_HINT_DUCKDB
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from expo_jbm329.db.core.models import SqlError
     from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
     from expo_jbm329.workbench.icon.icon_service import IconService
 
@@ -58,6 +62,7 @@ _DEFAULT_PROTOCOL = {
     "mysql": "pymysql",
     "mariadb": "pymysql",
     "sqlite": "sqlite",
+    "duckdb": "duckdb",
     "oracle": "odbc",
     "other": "odbc",
 }
@@ -112,7 +117,6 @@ class ConnectionEditor(QDialog):
     """Enterprise-level connection workbench.
 
     Provides a unified interface for managing database connections for various protocols.
-    The UI text is Swedish, while comments and docstrings are in English.
 
     Attributes:
         connections_changed (pyqtSignal): Signal emitted when connections are added,
@@ -130,6 +134,7 @@ class ConnectionEditor(QDialog):
         parent: QWidget | None = None,
         dialogs: DialogService | None = None,
         icon_service: IconService | None = None,
+        invalidate_connection: Callable[[str], None] | None = None,
     ) -> None:
         """Initializes the ConnectionEditor dialog.
 
@@ -137,11 +142,14 @@ class ConnectionEditor(QDialog):
             parent: The parent widget.
             dialogs: Service for showing dialog boxes. Defaults to QtDialogService if None.
             icon_service: Service for retrieving icons.
+            invalidate_connection: Callback invalidating changed DuckDB connections.
+                Defaults to closing the backend when no workbench is attached.
         """
         super().__init__(parent)
 
         self._dialogs = dialogs or QtDialogService()
         self._icon_service = icon_service
+        self._invalidate_connection = invalidate_connection if invalidate_connection is not None else close_connection
 
         # --- Dialog setup ---
         self.setWindowTitle(self.tr("Database connections"))
@@ -173,13 +181,14 @@ class ConnectionEditor(QDialog):
         self.db_type_combo.addItem(self.tr("MySQL / MariaDB"), userData="mysql")
         self.db_type_combo.addItem(self.tr("Oracle"), userData="oracle")
         self.db_type_combo.addItem(self.tr("SQLite (file-based)"), userData="sqlite")
+        self.db_type_combo.addItem(self.tr("DuckDB (file-based)"), userData="duckdb")
         self.db_type_combo.addItem(self.tr("Other"), userData="other")
 
         self.db_type_combo.currentIndexChanged.connect(self.on_db_type_changed)
 
         # Protocol
         self.protocol_combo = QComboBox()
-        self.protocol_combo.addItems(["odbc", "psycopg", "pymysql", "mysqlconnector", "sqlite"])
+        self.protocol_combo.addItems(["odbc", "psycopg", "pymysql", "mysqlconnector", "sqlite", "duckdb"])
         self.protocol_combo.currentIndexChanged.connect(self.on_protocol_changed)
 
         # ODBC drivers
@@ -215,7 +224,7 @@ class ConnectionEditor(QDialog):
         self.password_edit = QLineEdit()
         self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
 
-        # SQLite browse
+        # File-based database browse
         self.sqlite_browse_btn = QPushButton(self.tr("Browse…"))
         self.sqlite_browse_btn.clicked.connect(self.on_sqlite_browse)
 
@@ -365,7 +374,24 @@ class ConnectionEditor(QDialog):
         # First enable everything (baseline)
         self._set_fields_enabled(True)
 
-        if protocol == "odbc":
+        if self.db_type_combo.currentData() == "duckdb":
+            for widget in (
+                self.protocol_combo,
+                self.server_edit,
+                self.port_edit,
+                self.user_edit,
+                self.password_edit,
+                self.trusted_checkbox,
+                self.system_drivers,
+                self.btn_add_driver,
+                self.driver_edit,
+                self.dsn_edit,
+                self.extra_edit,
+            ):
+                widget.setEnabled(False)
+            self.sqlite_browse_btn.setEnabled(True)
+
+        elif protocol == "odbc":
             self.sqlite_browse_btn.setEnabled(False)
 
         elif protocol in ("psycopg", "pymysql", "mysqlconnector"):
@@ -400,6 +426,9 @@ class ConnectionEditor(QDialog):
         """Updates default protocol and port when the database type changes."""
         db_type = self.db_type_combo.currentData()
 
+        if db_type == "duckdb":
+            self.extra_edit.clear()
+
         # Default protocol
         default_proto = _DEFAULT_PROTOCOL.get(db_type, "odbc")
         ix = self.protocol_combo.findText(default_proto)
@@ -431,6 +460,10 @@ class ConnectionEditor(QDialog):
 
     def on_trusted_changed(self) -> None:
         """Enables or disables credential fields if Trusted Connection is toggled."""
+        if self.db_type_combo.currentData() == "duckdb":
+            self.user_edit.setEnabled(False)
+            self.password_edit.setEnabled(False)
+            return
         if self.trusted_checkbox.isChecked():
             self.user_edit.clear()
             self.password_edit.clear()
@@ -441,12 +474,18 @@ class ConnectionEditor(QDialog):
             self.password_edit.setEnabled(True)
 
     def on_sqlite_browse(self) -> None:
-        """Opens a file dialog to select an SQLite database file."""
+        """Select an existing SQLite or DuckDB database file."""
+        if self.db_type_combo.currentData() == "duckdb":
+            title = self.tr("Select DuckDB database file")
+            file_filter = self.tr("DuckDB files (*.duckdb *.ddb *.db);;All files (*.*)")
+        else:
+            title = self.tr("Select SQLite database file")
+            file_filter = self.tr("SQLite files (*.db *.sqlite *.sqlite3);;All files (*.*)")
         path, _ = QFileDialog.getOpenFileName(
             self,
-            self.tr("Select SQLite database file"),
+            title,
             "",
-            self.tr("SQLite files (*.db *.sqlite *.sqlite3);;All files (*.*)"),
+            file_filter,
         )
 
         if path:
@@ -466,6 +505,8 @@ class ConnectionEditor(QDialog):
         conn = self.data.get(name, {})
 
         db_type = string_value(conn.get("db_type"), "mssql")
+        if db_type.lower() == "duckdb":
+            db_type = "duckdb"
         proto = string_value(conn.get("protocol"), _DEFAULT_PROTOCOL.get(db_type, "odbc"))
 
         # DB type
@@ -573,6 +614,46 @@ class ConnectionEditor(QDialog):
 
         return d
 
+    def _validated_current_form(self) -> JsonObject | None:
+        """Validate DuckDB settings before dispatching save or test actions."""
+        db_type = self.db_type_combo.currentData()
+        protocol = self.protocol_combo.currentText()
+        if db_type != "duckdb" and protocol != "duckdb":
+            return self._gather_current_form()
+        if db_type != "duckdb":
+            self._show_invalid_duckdb_settings()
+            return None
+        extra_text = self.extra_edit.text().strip()
+        try:
+            extra: object = json.loads(extra_text) if extra_text else {}
+        except json.JSONDecodeError:
+            self._show_invalid_duckdb_settings()
+            return None
+        if not is_json_object(extra):
+            self._show_invalid_duckdb_settings()
+            return None
+        database = self.db_edit.text().strip()
+        error = validate_duckdb_connection(database, protocol=protocol, extra=extra)
+        if error is not None:
+            self._show_invalid_duckdb_settings(error)
+            return None
+        return {"db_type": "duckdb", "protocol": "duckdb", "database": database, "extra": {}}
+
+    def _show_invalid_duckdb_settings(self, error: SqlError | None = None) -> None:
+        """Display a validation failure using the shared database error context."""
+        message = translate("DbErrors", error.message if error is not None else TR_INVALID_CONFIG_DUCKDB)
+        hint = error.hint if error is not None else TR_INVALID_CONFIG_HINT_DUCKDB
+        if hint is not None:
+            message = f"{message}\n\n{translate('DbErrors', hint)}"
+        self._dialogs.warn(parent=self, title=self.tr("Connection error"), text=message)
+
+    def _involves_duckdb(self, name: str, replacement: JsonObject | None) -> bool:
+        """Return whether a persisted edit changes to, from or within DuckDB."""
+        previous = self.data.get(name, {})
+        return string_value(previous.get("db_type")).lower() == "duckdb" or (
+            replacement is not None and replacement.get("db_type") == "duckdb"
+        )
+
     def add_connection(self) -> None:
         """Prompts for a name and adds a new connection entry with default values."""
         name, ok = self._dialogs.prompt_text(
@@ -629,8 +710,11 @@ class ConnectionEditor(QDialog):
         if not confirm:
             return
 
+        involves_duckdb = self._involves_duckdb(name, None)
         self.data.pop(name, None)
         write_connections(self.data)
+        if involves_duckdb:
+            self._invalidate_connection(name)
         self.connections_changed.emit()
 
         self.list_widget.takeItem(self.list_widget.row(item))
@@ -645,9 +729,15 @@ class ConnectionEditor(QDialog):
             return
 
         name = item.text()
-        self.data[name] = self._gather_current_form()
+        form = self._validated_current_form()
+        if form is None:
+            return
+        involves_duckdb = self._involves_duckdb(name, form)
+        self.data[name] = form
 
         write_connections(self.data)
+        if involves_duckdb:
+            self._invalidate_connection(name)
         self._dialogs.info(parent=self, title=self.tr("Saved"), text=self.tr("Changes saved successfully."))
         self.connections_changed.emit()
 
@@ -666,8 +756,15 @@ class ConnectionEditor(QDialog):
 
         corr_id = uuid.uuid4().hex
 
-        self.data[name] = self._gather_current_form()
+        form = self._validated_current_form()
+        if form is None:
+            return
+        involves_duckdb = self._involves_duckdb(name, form)
+        self.data[name] = form
         write_connections(self.data)
+        if involves_duckdb:
+            self._invalidate_connection(name)
+            self.connections_changed.emit()
 
         engine = self.data[name].get("db_type")
         test_sql = "SELECT 1 FROM DUAL" if engine == "oracle" else "SELECT 1"

@@ -458,12 +458,13 @@ class ExpoStudio(QMainWindow):
 
     def _open_connection_dialog(self) -> None:
         """Open the database connection editor dialog."""
+        workbench = self._require_workbench_services()
         dlg = ConnectionEditor(
             parent=self,
             dialogs=self._require_dialogs(),
             icon_service=self._require_workbench_services().icon_service,
+            invalidate_connection=workbench.invalidate_connection_configuration,
         )
-        workbench = self._require_workbench_services()
         connection_controller = self.connection_controller
         if connection_controller is None:
             message = "Connection controller has not been initialized."

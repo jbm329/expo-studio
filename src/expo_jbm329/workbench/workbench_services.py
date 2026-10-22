@@ -125,6 +125,11 @@ class WorkbenchServices:
         self.concat = concat
         self.dialog_state = dialog_state
 
+    def invalidate_connection_configuration(self, connection_name: str) -> None:
+        """Invalidate an edited connection through its owning controllers."""
+        self.connections.invalidate_configuration(connection_name)
+        self.editor_panel.invalidate_connection_metadata(connection_name)
+
     @classmethod
     def build(cls: type[Self], app: AppServices, ui: WorkbenchUIRefs, settings_service: SettingsService) -> Self:
         """Construct all workbench-level controllers and services.
