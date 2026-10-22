@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 
+import duckdb
 import pytest
+from PyQt6.QtCore import QTranslator
+from sqlalchemy.exc import OperationalError
 
 from expo_jbm329.db.core.errors import (
     ORACLE_AMBIGUOUS_COLUMN,
@@ -10,23 +14,30 @@ from expo_jbm329.db.core.errors import (
     TR_AMBIGUOUS_COLUMN,
     TR_AMBIGUOUS_COLUMN_HINT,
     TR_CONNECTION_FAILED_POSTGRES,
+    TR_DRIVER_MISSING_HINT_DUCKDB,
     TR_DRIVER_MISSING_HINT_MYSQL,
     TR_DRIVER_MISSING_HINT_POSTGRES,
     TR_DRIVER_MISSING_MYSQL,
     TR_DRIVER_MISSING_POSTGRES,
     TR_FUNCTION_NOT_EXISTS_POSTGRES,
+    TR_INVALID_CONFIG_DUCKDB,
+    TR_INVALID_CONFIG_HINT_DUCKDB,
+    TR_LOCKED_HINT_DUCKDB,
     TR_PERMISSION_DENIED_POSTGRES,
+    TR_PERMISSION_HINT_DUCKDB,
     TR_SQL_SYNTAX_ERROR_POSTGRES,
     TR_TABLE_OR_VIEW_NOT_EXISTS_POSTGRES,
     TR_TIMEOUT_POSTGRES,
     TR_UNKNOWN_COLUMN_POSTGRES,
     TR_UNKNOWN_DATABASE_POSTGRES,
+    classify_duckdb,
     classify_mssql,
     classify_mysql,
     classify_oracle,
     classify_postgresql,
     classify_sqlite,
 )
+from expo_jbm329.i18n.language import Language
 
 
 @pytest.mark.parametrize(
@@ -72,6 +83,51 @@ def test_postgresql_classifier_reads_wrapped_sqlstate():
 
     assert error.category == "ambiguous_column"
     assert error.code == POSTGRES_AMBIGUOUS_COLUMN
+
+
+@pytest.mark.parametrize(
+    ("exception", "category"),
+    [
+        (ValueError("invalid configuration"), "connection"),
+        (FileNotFoundError("missing.duckdb"), "connection"),
+        (IsADirectoryError("directory"), "connection"),
+        (PermissionError("file denied"), "permission"),
+        (duckdb.PermissionException("Cannot write"), "permission"),
+        (duckdb.IOException("Could not set lock on file: Conflicting lock is held"), "connection"),
+        (duckdb.IOException("file is not a valid DuckDB database file"), "connection"),
+        (duckdb.CatalogException("Schema with name missing does not exist!"), "missing_object"),
+        (ModuleNotFoundError("No module named duckdb_engine"), "driver_missing"),
+        (RuntimeError("Can't load plugin: sqlalchemy.dialects:duckdb"), "driver_missing"),
+        (RuntimeError("unrecognized database failure"), "unknown"),
+    ],
+)
+def test_duckdb_classification_handles_native_and_wrapped_errors(exception, category):
+    for error in (exception, OperationalError("SELECT 1", {}, exception)):
+        classified = classify_duckdb(error)
+        assert classified.category == category
+        assert classified.code is None
+        assert classified.message
+        assert classified.hint
+
+
+@pytest.mark.parametrize("language", list(Language))
+def test_duckdb_error_messages_have_compiled_translations(language):
+    catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{language.value}.qm"
+    translator = QTranslator()
+    assert translator.load(str(catalog))
+    sources = [
+        TR_INVALID_CONFIG_DUCKDB,
+        TR_INVALID_CONFIG_HINT_DUCKDB,
+        TR_LOCKED_HINT_DUCKDB,
+        TR_PERMISSION_HINT_DUCKDB,
+        TR_DRIVER_MISSING_HINT_DUCKDB,
+    ]
+    for source in sources:
+        translated = translator.translate("DbErrors", source)
+        if language.value == "en":
+            assert not translated
+        else:
+            assert translated and translated != source
 
 
 @pytest.mark.parametrize(

@@ -123,6 +123,19 @@ TR_UNKNOWN_DATABASE_HINT_SQLITE = QT_TRANSLATE_NOOP("DbErrors", "Check database 
 TR_UNKNOWN_FAILURE_SQLITE = QT_TRANSLATE_NOOP("DbErrors", "Unknown database failure.")
 TR_UNKNOWN_FAILURE_HINT_SQLITE = QT_TRANSLATE_NOOP("DbErrors", "Show details in log (DEBUG) or try again.")
 
+# DuckDB
+TR_INVALID_CONFIG_DUCKDB = QT_TRANSLATE_NOOP("DbErrors", "Invalid DuckDB connection configuration.")
+TR_INVALID_CONFIG_HINT_DUCKDB = QT_TRANSLATE_NOOP(
+    "DbErrors", "Select an existing local DuckDB file. Only read-only connections without extra options are supported."
+)
+TR_LOCKED_HINT_DUCKDB = QT_TRANSLATE_NOOP(
+    "DbErrors", "Close other applications using this DuckDB file in read/write mode and try again."
+)
+TR_PERMISSION_HINT_DUCKDB = QT_TRANSLATE_NOOP("DbErrors", "Check file permissions. DuckDB connections are read-only.")
+TR_DRIVER_MISSING_HINT_DUCKDB = QT_TRANSLATE_NOOP(
+    "DbErrors", "Install 'duckdb' and 'duckdb-engine' or check your Python environment."
+)
+
 # PostgreSQL
 TR_DRIVER_MISSING_POSTGRES = QT_TRANSLATE_NOOP("DbErrors", "Required database driver module is missing.")
 TR_DRIVER_MISSING_HINT_POSTGRES = QT_TRANSLATE_NOOP(
@@ -443,6 +456,55 @@ def classify_sqlite(exc: Exception) -> SqlError:
         return SqlError("connection", None, TR_UNKNOWN_DATABASE_SQLITE, TR_UNKNOWN_DATABASE_HINT_SQLITE)
 
     return SqlError("unknown", None, TR_UNKNOWN_FAILURE_SQLITE, TR_UNKNOWN_FAILURE_HINT_SQLITE)
+
+
+def classify_duckdb(exc: Exception) -> SqlError:
+    """Map DuckDB and SQLAlchemy-wrapped failures to translated messages.
+
+    Args:
+        exc: A configuration, native driver or SQLAlchemy-wrapped exception.
+
+    Returns:
+        A categorized error using the existing DbErrors translation context.
+    """
+    original = getattr(exc, "orig", exc)
+    message = str(original).lower()
+    error_type = type(original).__name__
+
+    if isinstance(original, ImportError) or (
+        ("no module named" in message or "can't load plugin" in message) and "duckdb" in message
+    ):
+        return SqlError("driver_missing", None, TR_DRIVER_MISSING_MYSQL, TR_DRIVER_MISSING_HINT_DUCKDB)
+    if isinstance(original, ValueError):
+        return SqlError("connection", None, TR_INVALID_CONFIG_DUCKDB, TR_INVALID_CONFIG_HINT_DUCKDB)
+    if "lock" in message and ("could not set" in message or "conflicting" in message or "locked" in message):
+        return SqlError("connection", None, TR_LOCK_WAIT_TIMEOUT_SQLITE, TR_LOCKED_HINT_DUCKDB)
+    if (
+        isinstance(original, PermissionError)
+        or error_type == "PermissionException"
+        or any(text in message for text in ("permission denied", "read-only", "read only", "access denied"))
+    ):
+        return SqlError("permission", None, TR_PERMISSION_DENIED_MSSQL, TR_PERMISSION_HINT_DUCKDB)
+    if isinstance(original, OSError) or error_type in ("IOException", "ConnectionException"):
+        return SqlError("connection", None, TR_UNKNOWN_DATABASE_SQLITE, TR_UNKNOWN_DATABASE_HINT_SQLITE)
+    if error_type == "BinderException" and "ambiguous" in message and "column" in message:
+        return _ambiguous_column_error(None)
+    if error_type == "CatalogException":
+        if "function" in message and "does not exist" in message:
+            return SqlError("missing_proc", None, TR_FUNCTION_NOT_EXISTS_POSTGRES, TR_FUNCTION_NOT_EXISTS_HINT_POSTGRES)
+        if any(text in message for text in ("table with name", "view with name", "schema with name")):
+            return SqlError(
+                "missing_object", None, TR_TABLE_OR_VIEW_NOT_EXISTS_SQLITE, TR_TABLE_OR_VIEW_NOT_EXISTS_HINT_SQLITE
+            )
+    if (
+        error_type == "BinderException"
+        and "column" in message
+        and ("not found" in message or "does not have" in message)
+    ):
+        return SqlError("syntax", None, TR_UNKNOWN_COLUMN_SQLITE, TR_UNKNOWN_COLUMN_HINT_SQLITE)
+    if error_type in ("ParserException", "BinderException"):
+        return SqlError("syntax", None, TR_SQL_SYNTAX_ERROR_SQLITE, TR_SQL_SYNTAX_ERROR_HINT_SQLITE)
+    return SqlError("unknown", None, TR_UNKNOWN_DATABASE_FAIL, TR_UNKNOWN_DATABASE_FAIL_HINT)
 
 
 def classify_postgresql(exc: Exception) -> SqlError:

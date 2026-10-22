@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Literal
 if TYPE_CHECKING:
     import pandas as pd
 
-EngineKey = Literal["mssql", "postgresql", "mysql", "mariadb", "sqlite", "oracle"]
-ProtocolKey = Literal["odbc", "psycopg", "pymysql", "mysqlconnector", "pytds", "pymssql", "sqlite"]
+EngineKey = Literal["mssql", "postgresql", "mysql", "mariadb", "sqlite", "oracle", "duckdb"]
+ProtocolKey = Literal["odbc", "psycopg", "pymysql", "mysqlconnector", "pytds", "pymssql", "sqlite", "duckdb"]
 
 
 @dataclass(frozen=True)

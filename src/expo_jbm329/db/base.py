@@ -29,13 +29,15 @@ from typing import TYPE_CHECKING, cast
 
 from expo_jbm329.app.settings.config_store import read_connections
 from expo_jbm329.db.core.di import ServiceRegistry
-from expo_jbm329.db.core.errors import TR_COULD_NOT_INIT_CONN
+from expo_jbm329.db.core.errors import TR_COULD_NOT_INIT_CONN, TR_INVALID_CONFIG_DUCKDB
 from expo_jbm329.db.core.models import ConnectionConfig, EngineKey, ProtocolKey, SqlError, SqlResult, TimeoutConfig
 from expo_jbm329.db.dialects.ansi import AnsiDialect
+from expo_jbm329.db.dialects.duckdb import DuckDbDialect
 from expo_jbm329.db.dialects.mssql import MssqlDialect
 from expo_jbm329.db.dialects.mysql import MySqlDialect
 from expo_jbm329.db.dialects.postgres import PostgresDialect
 from expo_jbm329.db.dialects.sqlite import SqliteDialect
+from expo_jbm329.db.drivers.sa_duckdb import SqlAlchemyDuckDbDriver
 from expo_jbm329.db.drivers.sa_mysql import SqlAlchemyMySqlDriver
 from expo_jbm329.db.drivers.sa_odbc import SqlAlchemyOdbcDriver
 from expo_jbm329.db.drivers.sa_postgres import SqlAlchemyPostgresDriver
@@ -63,6 +65,7 @@ _registry.register_driver("psycopg", partial(SqlAlchemyPostgresDriver, "psycopg"
 _registry.register_driver("pymysql", partial(SqlAlchemyMySqlDriver, "pymysql"))
 _registry.register_driver("mysqlconnector", partial(SqlAlchemyMySqlDriver, "mysqlconnector"))
 _registry.register_driver("sqlite", SqlAlchemySqliteDriver)
+_registry.register_driver("duckdb", SqlAlchemyDuckDbDriver)
 
 # Dialects
 _registry.register_dialect("postgresql", PostgresDialect)
@@ -71,6 +74,7 @@ _registry.register_dialect("mysql", MySqlDialect)
 _registry.register_dialect("mariadb", MySqlDialect)
 _registry.register_dialect("mssql", MssqlDialect)
 _registry.register_dialect("sqlite", SqliteDialect)
+_registry.register_dialect("duckdb", DuckDbDialect)
 
 # =============================================================================
 # Global Service Cache (per connection)
@@ -139,6 +143,8 @@ def _normalize_engine_key(raw_engine: object) -> EngineKey:
             return "mariadb"
         case "sqlite":
             return "sqlite"
+        case "duckdb":
+            return "duckdb"
         case "oracle":
             return "oracle"
         case _:
@@ -149,11 +155,12 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
     """Construct a ConnectionConfig from user configuration.
 
     Responsibilities:
-        * Normalize engine names (mssql/mysql/mariadb/sqlite/postgresql/oracle).
-        * Determine protocol (odbc/pymysql/sqlite/mysqlconnector).
+        * Normalize engine names (mssql/mysql/mariadb/sqlite/postgresql/oracle/duckdb).
+        * Determine protocol (odbc/pymysql/sqlite/mysqlconnector/duckdb).
         * Build ODBC connection string *only* when protocol == 'odbc'.
         * Keep discrete fields for all non-ODBC drivers.
         * SQLite: treat "database" as file path or ':memory:'; no ODBC used.
+        * DuckDB: require an existing file and enforce read-only access in its driver.
 
     Args:
         connection_name: The name of the connection to build.
@@ -181,10 +188,15 @@ def _build_connection_config(connection_name: str) -> ConnectionConfig:
             protocol = "psycopg"
     elif engine_key == "sqlite":
         protocol = "sqlite"
+    elif engine_key == "duckdb":
+        protocol = "duckdb"
     elif engine_key == "postgresql":
         protocol = "psycopg"
     else:
         protocol = "odbc"
+
+    if (engine_key == "duckdb" or protocol == "duckdb") and not (engine_key == "duckdb" and protocol == "duckdb"):
+        raise ValueError(TR_INVALID_CONFIG_DUCKDB)
 
     # --- Common fields --------------------------------------------------------
     raw_server = rec.get("server", "")

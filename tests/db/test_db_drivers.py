@@ -7,6 +7,7 @@ import pytest
 
 from expo_jbm329.db.core.di import ServiceRegistry
 from expo_jbm329.db.core.models import ConnectionConfig
+from expo_jbm329.db.drivers.sa_duckdb import SqlAlchemyDuckDbDriver
 from expo_jbm329.db.drivers.sa_mysql import SqlAlchemyMySqlDriver
 from expo_jbm329.db.drivers.sa_odbc import SqlAlchemyOdbcDriver
 from expo_jbm329.db.drivers.sa_postgres import SqlAlchemyPostgresDriver
@@ -255,3 +256,46 @@ def test_postgres_driver_create_engine_failure_logs_and_raises():
 def test_postgres_driver_cancel_execution():
     driver = SqlAlchemyPostgresDriver()
     assert driver.cancel_execution("job-pg-1") is False
+
+
+def test_duckdb_driver_reuses_engine_enforces_read_only_and_disposes(tmp_path):
+    from sqlalchemy.pool import NullPool
+
+    path = tmp_path / "existing.duckdb"
+    path.touch()
+    cfg = ConnectionConfig(name="duck", engine="duckdb", protocol="duckdb", database=str(path))
+    driver = SqlAlchemyDuckDbDriver()
+    driver.initialize(timeouts={"login_timeout_s": 5})
+    driver.set_query_timeout(9)
+    engine = MagicMock()
+    engine.connect.return_value.__enter__.return_value = object()
+
+    with (
+        patch("expo_jbm329.db.drivers.sa_duckdb.create_engine", return_value=engine) as create,
+        patch("expo_jbm329.db.drivers.sa_duckdb.pd.read_sql", return_value=pd.DataFrame({"x": [1]})),
+    ):
+        first = driver.execute_df(cfg, "SELECT 1", job_id="job", corr_id="correlation")
+        second = driver.execute_df(cfg, "SELECT 1")
+
+    assert first.equals(second)
+    create.assert_called_once()
+    args, kwargs = create.call_args
+    assert args[0].drivername == "duckdb"
+    assert args[0].database == str(path.resolve())
+    assert kwargs["connect_args"] == {"read_only": True}
+    assert kwargs["poolclass"] is NullPool
+    assert driver.cancel_execution("job") is False
+    driver.dispose()
+    engine.dispose.assert_called_once()
+    assert driver._engines == {}
+
+
+def test_duckdb_driver_does_not_hide_engine_creation_failure(tmp_path):
+    path = tmp_path / "existing.duckdb"
+    path.touch()
+    cfg = ConnectionConfig(name="duck", engine="duckdb", protocol="duckdb", database=str(path))
+    with (
+        patch("expo_jbm329.db.drivers.sa_duckdb.create_engine", side_effect=ModuleNotFoundError("duckdb_engine")),
+        pytest.raises(ModuleNotFoundError, match="duckdb_engine"),
+    ):
+        SqlAlchemyDuckDbDriver().execute_df(cfg, "SELECT 1")

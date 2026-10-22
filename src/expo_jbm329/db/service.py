@@ -685,6 +685,11 @@ class DbService:
 
             return classify_sqlite(exc)
 
+        if name == "duckdb":
+            from expo_jbm329.db.core.errors import classify_duckdb
+
+            return classify_duckdb(exc)
+
         if name in ("postgres", "postgresql"):
             from expo_jbm329.db.core.errors import classify_postgresql
 

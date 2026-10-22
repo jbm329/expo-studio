@@ -3085,6 +3085,31 @@ Please see logs for more information.</source>
         <source>Schema ready.</source>
         <translation type="unfinished" />
     </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="127" />
+        <source>Invalid DuckDB connection configuration.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="128" />
+        <source>Select an existing local DuckDB file. Only read-only connections without extra options are supported.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="131" />
+        <source>Close other applications using this DuckDB file in read/write mode and try again.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="134" />
+        <source>Check file permissions. DuckDB connections are read-only.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="137" />
+        <source>Install 'duckdb' and 'duckdb-engine' or check your Python environment.</source>
+        <translation type="unfinished" />
+    </message>
 </context><context>
     <name>DerivedColumnController</name>
     <message>

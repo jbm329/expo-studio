@@ -3093,6 +3093,31 @@ Vänligen se loggfil för mer information.</translation>
         <source>Schema ready.</source>
         <translation>Schema klart.</translation>
     </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="127" />
+        <source>Invalid DuckDB connection configuration.</source>
+        <translation>Ogiltig konfiguration för DuckDB-anslutning.</translation>
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="128" />
+        <source>Select an existing local DuckDB file. Only read-only connections without extra options are supported.</source>
+        <translation>Välj en befintlig lokal DuckDB-fil. Endast skrivskyddade anslutningar utan extra alternativ stöds.</translation>
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="131" />
+        <source>Close other applications using this DuckDB file in read/write mode and try again.</source>
+        <translation>Stäng andra program som använder den här DuckDB-filen i läs- och skrivläge och försök igen.</translation>
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="134" />
+        <source>Check file permissions. DuckDB connections are read-only.</source>
+        <translation>Kontrollera filbehörigheterna. DuckDB-anslutningar är skrivskyddade.</translation>
+    </message>
+    <message>
+        <location filename="..\..\db\core\errors.py" line="137" />
+        <source>Install 'duckdb' and 'duckdb-engine' or check your Python environment.</source>
+        <translation>Installera 'duckdb' och 'duckdb-engine' eller kontrollera din Python-miljö.</translation>
+    </message>
 </context><context>
     <name>DerivedColumnController</name>
     <message>

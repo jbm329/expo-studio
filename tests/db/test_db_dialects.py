@@ -1,6 +1,7 @@
 import pytest
 
 from expo_jbm329.db.dialects.ansi import AnsiDialect
+from expo_jbm329.db.dialects.duckdb import DuckDbDialect
 from expo_jbm329.db.dialects.mssql import MssqlDialect
 from expo_jbm329.db.dialects.mysql import MySqlDialect
 from expo_jbm329.db.dialects.postgres import PostgresDialect
@@ -125,6 +126,7 @@ def test_postgres_dialect():
         (MySqlDialect(), "LIMIT"),
         (PostgresDialect(), "LIMIT"),
         (SqliteDialect(), "LIMIT"),
+        (DuckDbDialect(), "LIMIT"),
         (AnsiDialect(), "FETCH FIRST"),
     ],
 )
@@ -139,6 +141,7 @@ def test_limit_keyword(dialect, expected_keyword):
         (MySqlDialect(), "a`b", "`a``b`"),
         (PostgresDialect(), 'a"b', '"a""b"'),
         (SqliteDialect(), 'a"b', '"a""b"'),
+        (DuckDbDialect(), 'a"b', '"a""b"'),
         (AnsiDialect(), 'a"b', '"a""b"'),
     ],
 )
@@ -155,6 +158,8 @@ def test_quote_ident_escapes_closing_quote(dialect, raw, expected):
         (PostgresDialect(), "", '"T"."C"'),
         (SqliteDialect(), "main", '"main"."T"."C"'),
         (SqliteDialect(), "aux", '"aux"."T"."C"'),
+        (DuckDbDialect(), "sales", '"sales"."T"."C"'),
+        (DuckDbDialect(), "", '"T"."C"'),
         (AnsiDialect(), "public", '"public"."T"."C"'),
         (AnsiDialect(), "", '"T"."C"'),
     ],
@@ -177,3 +182,35 @@ def test_ansi_dialect():
     assert "information_schema.views" in dialect.sql_list_views().lower()
     assert "TABLE_NAME='o''x'" in dialect.sql_list_columns("s", "o'x")
     assert dialect.sql_all_columns() is not None
+
+
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "SELECT * FROM t LIMIT 5;",
+        "SELECT * FROM t LIMIT 10%;",
+        "SELECT * FROM t FETCH FIRST 5 ROWS ONLY",
+        "UPDATE t SET x = 1",
+    ],
+)
+def test_duckdb_limit_preserves_existing_limits_and_nonqueries(sql):
+    assert DuckDbDialect().apply_limit(sql, 10) == sql
+
+
+def test_duckdb_limit_invalid_and_multiple_statements():
+    dialect = DuckDbDialect()
+    assert dialect.apply_limit("", 10) == ""
+    assert dialect.apply_limit("SELECT 1", 0) == "SELECT 1"
+    assert dialect.apply_limit("SELECT * FROM t LIMIT ALL", 10) == "SELECT * FROM t LIMIT 10"
+    with pytest.raises(ValueError, match="exactly one"):
+        dialect.apply_limit("SELECT 1; SELECT 2", 10)
+
+
+def test_duckdb_metadata_filters_and_literal_escaping():
+    dialect = DuckDbDialect()
+    for sql in (dialect.sql_list_tables(), dialect.sql_list_views(), dialect.sql_all_columns()):
+        assert "table_catalog = current_database()" in sql
+        assert "table_schema NOT IN ('information_schema', 'pg_catalog')" in sql
+    columns = dialect.sql_list_columns("it's", "o'x")
+    assert "table_schema = 'it''s'" in columns
+    assert "table_name = 'o''x'" in columns

@@ -3116,6 +3116,31 @@ Consulte los registros para obtener más información.</translation>
             <source>Schema ready.</source>
             <translation>Esquema listo.</translation>
         </message>
+        <message>
+            <location filename="..\..\db\core\errors.py" line="127" />
+            <source>Invalid DuckDB connection configuration.</source>
+            <translation>Configuración de conexión DuckDB no válida.</translation>
+        </message>
+        <message>
+            <location filename="..\..\db\core\errors.py" line="128" />
+            <source>Select an existing local DuckDB file. Only read-only connections without extra options are supported.</source>
+            <translation>Seleccione un archivo DuckDB local existente. Solo se admiten conexiones de solo lectura sin opciones adicionales.</translation>
+        </message>
+        <message>
+            <location filename="..\..\db\core\errors.py" line="131" />
+            <source>Close other applications using this DuckDB file in read/write mode and try again.</source>
+            <translation>Cierre las otras aplicaciones que utilizan este archivo DuckDB en modo de lectura y escritura e inténtelo de nuevo.</translation>
+        </message>
+        <message>
+            <location filename="..\..\db\core\errors.py" line="134" />
+            <source>Check file permissions. DuckDB connections are read-only.</source>
+            <translation>Compruebe los permisos del archivo. Las conexiones DuckDB son de solo lectura.</translation>
+        </message>
+        <message>
+            <location filename="..\..\db\core\errors.py" line="137" />
+            <source>Install 'duckdb' and 'duckdb-engine' or check your Python environment.</source>
+            <translation>Instale 'duckdb' y 'duckdb-engine' o compruebe su entorno de Python.</translation>
+        </message>
     </context>
     <context>
         <name>DerivedColumnController</name>
