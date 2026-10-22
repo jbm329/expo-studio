@@ -27,7 +27,7 @@ def _token_at(text: str, fragment: str, dialect: str | None = None) -> SqlToken:
 
 @pytest.mark.parametrize(
     ("dialect", "quoted"),
-    [("sqlite", '"Order"'), ("tsql", "[Order]"), ("mysql", "`Order`"), (None, '"Table"')],
+    [("sqlite", '"Order"'), ("tsql", "[Order]"), ("mysql", "`Order`"), ("duckdb", '"Order"'), (None, '"Table"')],
 )
 def test_quoted_keywords_are_identifiers(dialect: str | None, quoted: str) -> None:
     text = f"SELECT * FROM {quoted}"
@@ -176,3 +176,14 @@ def test_unclosed_quoted_identifier_ends_at_line_end() -> None:
 
 def test_empty_text() -> None:
     assert tokenize_line("", rules_for_dialect(None)) == ([], STATE_NONE)
+
+
+def test_duckdb_lists_functions_and_quoted_identifiers() -> None:
+    text = 'SELECT list_transform([1, 2], x -> x + 1), "a""b" FROM t QUALIFY rn = 1'
+    kinds = _kinds(text, "duckdb")
+    assert (TokenKind.FUNCTION, "list_transform") in kinds
+    assert (TokenKind.NUMBER, "1") in kinds
+    assert (TokenKind.NUMBER, "2") in kinds
+    assert (TokenKind.KEYWORD, "QUALIFY") in kinds
+    assert _token_at(text, '"a""b"', "duckdb").name == 'a"b'
+    assert not any(kind == TokenKind.QUOTED_IDENTIFIER and fragment.startswith("[") for kind, fragment in kinds)

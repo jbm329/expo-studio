@@ -61,6 +61,7 @@ SQLGLOT_DIALECT_BY_ENGINE: dict[str, str] = {
     "mysql": "mysql",
     "mariadb": "mysql",
     "sqlite": "sqlite",
+    "duckdb": "duckdb",
     "oracle": "oracle",
 }
 
@@ -137,6 +138,7 @@ class SchemaLintContext:
     visible_tables: set[str]
     resolved_tables: dict[str, ResolvedTable]
     unresolved_tables: set[str]
+    unknown_tables: set[str]
 
 
 def sqlglot_dialect(engine_or_dialect: str | None) -> str | None:
@@ -718,67 +720,65 @@ def _normalize_schema_for_lint(
 
 
 def _build_schema_lint_context(
-    expression: Expression,
+    scope: Scope,
     normalized_schema: dict[str, dict[str, set[str]]],
 ) -> SchemaLintContext:
-    """Resolve visible tables from a parsed SQL statement."""
+    """Resolve only the sources referenced in one query scope."""
     visible_tables: set[str] = set()
     resolved_tables: dict[str, ResolvedTable] = {}
     unresolved_tables: set[str] = set()
+    unknown_tables: set[str] = set()
     known_schemas = set(normalized_schema.keys())
 
-    for table in expression.find_all(exp.Table):
-        table_name = str(table.name or "").strip()
-        if not table_name:
+    for alias, _reference in scope.references:
+        source = scope.sources.get(alias)
+        if source is None:
             continue
-
-        table_key = _normalize_identifier(table_name)
+        table_key = _normalize_identifier(alias)
         visible_tables.add(table_key)
-
-        schema_name = str(table.db or table.catalog or "").strip() or None
-        schema_key = _normalize_identifier(schema_name) if schema_name else ""
-
-        if schema_key:
-            if schema_key not in known_schemas:
-                unresolved_tables.add(table_key)
-                continue
-
-            table_columns = normalized_schema.get(schema_key, {}).get(table_key, set())
-            if table_columns:
-                resolved_tables[table_key] = ResolvedTable(
-                    schema_name=schema_name,
-                    table_name=table_name,
-                    columns=table_columns,
-                )
-            else:
-                unresolved_tables.add(table_key)
-            continue
-
-        matched_schema_name: str | None = None
-        matched_columns: set[str] = set()
-
-        for candidate_schema_name, tables in normalized_schema.items():
-            candidate_columns = tables.get(table_key, set())
-            if candidate_columns:
-                matched_schema_name = candidate_schema_name
-                matched_columns = candidate_columns
-                break
-
-        if matched_columns:
+        columns = _columns_for_scope_source(source, normalized_schema)
+        if columns is not None:
             resolved_tables[table_key] = ResolvedTable(
-                schema_name=matched_schema_name,
-                table_name=table_name,
-                columns=matched_columns,
+                schema_name=(source.db or None) if isinstance(source, exp.Table) else None,
+                table_name=source.name if isinstance(source, exp.Table) else alias,
+                columns=columns,
             )
         else:
             unresolved_tables.add(table_key)
+            if isinstance(source, exp.Table) and source.name:
+                schema_name = _normalize_identifier(str(source.db or source.catalog or ""))
+                candidates = [normalized_schema.get(schema_name, {})] if schema_name else normalized_schema.values()
+                if not any(_normalize_identifier(source.name) in tables for tables in candidates):
+                    unknown_tables.add(table_key)
 
     return SchemaLintContext(
         known_schemas=known_schemas,
         visible_tables=visible_tables,
         resolved_tables=resolved_tables,
         unresolved_tables=unresolved_tables,
+        unknown_tables=unknown_tables,
     )
+
+
+def _analysis_scopes(expression: Expression) -> list[Scope]:
+    """Collect query scopes while retaining non-query statement sources."""
+    scopes = traverse_scope(expression)
+    if not isinstance(expression, exp.Query):
+        statement_scope = Scope(expression)
+        statement_scope.sources.update({
+            alias: reference for alias, reference in statement_scope.references if isinstance(reference, exp.Table)
+        })
+        scopes.append(statement_scope)
+    return scopes
+
+
+def _identifier_span(sql: str, identifier: Expression) -> tuple[int, int]:
+    """Use parser offsets to distinguish repeated identifiers across scopes."""
+    start = identifier.meta.get("start")
+    end = identifier.meta.get("end")
+    if isinstance(start, int) and isinstance(end, int):
+        return start, max(1, end - start + 1)
+    return _find_identifier_span_in_sql(sql, identifier.name)
 
 
 def _is_known_column(
@@ -798,23 +798,25 @@ def _is_known_column(
 
 def _lint_unknown_tables(
     sql: str,
-    expression: Expression,
+    scope: Scope,
     context: SchemaLintContext,
 ) -> list[SqlDiagnostic]:
     """Return diagnostics for unknown schemas and tables."""
     diagnostics: list[SqlDiagnostic] = []
 
-    for table in expression.find_all(exp.Table):
+    for alias, table in scope.references:
+        if not isinstance(table, exp.Table) or not isinstance(scope.sources.get(alias), exp.Table):
+            continue
         table_name = str(table.name or "").strip()
         if not table_name:
             continue
 
-        table_key = _normalize_identifier(table_name)
+        table_key = _normalize_identifier(alias)
         schema_name = str(table.db or table.catalog or "").strip()
         schema_key = _normalize_identifier(schema_name) if schema_name else ""
 
         if schema_key and schema_key not in context.known_schemas:
-            start, length = _find_identifier_span_in_sql(sql, schema_name)
+            start, length = _identifier_span(sql, table.args.get("db") or table.args["catalog"])
             line, column = _offset_to_line_column(sql, start)
 
             diagnostics.append(
@@ -828,8 +830,8 @@ def _lint_unknown_tables(
             )
             continue
 
-        if table_key in context.unresolved_tables:
-            start, length = _find_identifier_span_in_sql(sql, table_name)
+        if table_key in context.unknown_tables:
+            start, length = _identifier_span(sql, table.this)
             line, column = _offset_to_line_column(sql, start)
 
             diagnostics.append(
@@ -847,13 +849,16 @@ def _lint_unknown_tables(
 
 def _lint_unknown_columns(
     sql: str,
-    expression: Expression,
+    scope: Scope,
     context: SchemaLintContext,
+    *,
+    dialect: str | None = None,
+    outer_contexts: tuple[SchemaLintContext, ...] = (),
 ) -> list[SqlDiagnostic]:
     """Return diagnostics for unknown columns in the current statement context."""
     diagnostics: list[SqlDiagnostic] = []
 
-    for column in expression.find_all(exp.Column):
+    for column in scope.columns:
         name = str(column.name or "").strip()
         if not name or name == "*":
             continue
@@ -865,14 +870,32 @@ def _lint_unknown_columns(
 
         if _is_known_column(normalized_name, table_qualifier, context):
             continue
+        if table_qualifier is None and any(
+            _is_known_column(normalized_name, None, outer_context) or outer_context.unresolved_tables
+            for outer_context in outer_contexts
+        ):
+            continue
+
+        # DuckDB permits SELECT aliases in WHERE/HAVING and later projections.
+        # sqlglot already excludes ORDER BY/QUALIFY alias references from columns.
+        if dialect == "duckdb" and table_qualifier is None and isinstance(scope.expression, exp.Select):
+            aliases = {
+                _normalize_identifier(selection.alias)
+                for selection in scope.expression.selects
+                if isinstance(selection, exp.Alias)
+                and selection.this is not column
+                and column not in selection.this.walk()
+            }
+            if normalized_name in aliases and column.find_ancestor(exp.Join) is None:
+                continue
 
         if table_qualifier is not None:
             if table_qualifier not in context.visible_tables:
                 continue
-        elif not context.resolved_tables:
+        elif not context.resolved_tables or context.unresolved_tables:
             continue
 
-        start, length = _find_identifier_span_in_sql(sql, name)
+        start, length = _identifier_span(sql, column.this)
         line, column_no = _offset_to_line_column(sql, start)
 
         diagnostics.append(
@@ -895,6 +918,11 @@ def _columns_for_scope_source(
     """Resolve the available columns for one source in a query scope."""
     if isinstance(source, Scope):
         if not isinstance(source.expression, exp.Query):
+            return None
+        if source.outer_columns:
+            return {_normalize_identifier(name) for name in source.outer_columns}
+        if any(selection.is_star for selection in source.expression.selects):
+            # Wildcard expansion is not complete without qualifying the query.
             return None
         names = {_normalize_identifier(name) for name in source.expression.named_selects if name and name != "*"}
         return names or None
@@ -937,8 +965,9 @@ def _ambiguous_columns(
 
         source_columns = [
             columns
-            for source in scope.sources.values()
-            if (columns := _columns_for_scope_source(source, normalized_schema)) is not None
+            for alias, _reference in scope.references
+            if (source := scope.sources.get(alias)) is not None
+            and (columns := _columns_for_scope_source(source, normalized_schema)) is not None
         ]
         if len(source_columns) < _MIN_AMBIGUOUS_SOURCE_COUNT:
             continue
@@ -1022,11 +1051,21 @@ def _lint_schema(
     if not normalized_schema:
         return []
 
-    context = _build_schema_lint_context(expression, normalized_schema)
-
+    scopes = _analysis_scopes(expression)
+    contexts = {scope: _build_schema_lint_context(scope, normalized_schema) for scope in scopes}
     diagnostics: list[SqlDiagnostic] = []
-    diagnostics.extend(_lint_unknown_tables(sql, expression, context))
-    diagnostics.extend(_lint_unknown_columns(sql, expression, context))
+    for scope, context in contexts.items():
+        outer_contexts: list[SchemaLintContext] = []
+        parent = scope.parent if scope.can_be_correlated else None
+        while parent is not None:
+            outer_contexts.append(contexts[parent])
+            parent = parent.parent if parent.can_be_correlated else None
+        diagnostics.extend(_lint_unknown_tables(sql, scope, context))
+        diagnostics.extend(
+            _lint_unknown_columns(
+                sql, scope, context, dialect=sqlglot_dialect(dialect), outer_contexts=tuple(outer_contexts)
+            )
+        )
     diagnostics.extend(_lint_ambiguous_columns(sql, expression, normalized_schema))
     return diagnostics
 
@@ -1199,7 +1238,16 @@ def extract_table_refs(sql: str, dialect: str | None = None) -> list[TableRef]:
     refs: list[TableRef] = []
 
     for expression in expressions:
+        scopes = _analysis_scopes(expression)
+        physical_tables = {
+            id(reference)
+            for scope in scopes
+            for alias, reference in scope.references
+            if isinstance(scope.sources.get(alias), exp.Table)
+        }
         for table in expression.find_all(exp.Table):
+            if scopes and id(table) not in physical_tables:
+                continue
             name = table.name
             if not name:
                 continue

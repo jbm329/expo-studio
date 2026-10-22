@@ -3,11 +3,14 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+import duckdb
 import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QTreeWidgetItem, QWidget
 
+from expo_jbm329.db import base
+from expo_jbm329.db.dialects.duckdb import DuckDbDialect
 from expo_jbm329.db.dialects.mssql import MssqlDialect
 from expo_jbm329.db.dialects.mysql import MySqlDialect
 from expo_jbm329.db.dialects.postgres import PostgresDialect
@@ -209,6 +212,7 @@ def test_init_registers_drag_text_provider():
         (MySqlDialect(), "`dbo`.`Tbl`", "`dbo`.`Tbl`.`A`"),
         (PostgresDialect(), '"dbo"."Tbl"', '"dbo"."Tbl"."A"'),
         (SqliteDialect(), '"dbo"."Tbl"', '"dbo"."Tbl"."A"'),
+        (DuckDbDialect(), '"dbo"."Tbl"', '"dbo"."Tbl"."A"'),
     ],
 )
 def test_build_drag_text_uses_connection_dialect(dialect, expected_table, expected_column):
@@ -265,6 +269,7 @@ def test_build_drag_text_without_connection_uses_ansi():
         (PostgresDialect(), 1000, ("SELECT * LIMIT 1000", "SELECT LIMIT 1000", "SELECT LIMIT 1000 (schema)")),
         (PostgresDialect(), 500, ("SELECT * LIMIT 500", "SELECT LIMIT 500", "SELECT LIMIT 500 (schema)")),
         (SqliteDialect(), 0, ("SELECT *", "SELECT", "SELECT (schema)")),
+        (DuckDbDialect(), 500, ("SELECT * LIMIT 500", "SELECT LIMIT 500", "SELECT LIMIT 500 (schema)")),
     ],
 )
 def test_select_menu_labels_are_dialect_aware(dialect, top_n, expected):
@@ -274,8 +279,9 @@ def test_select_menu_labels_are_dialect_aware(dialect, top_n, expected):
     assert ctrl._select_menu_labels(dialect) == expected
 
 
-def test_postgres_table_double_click_and_context_menu_queries(monkeypatch):
-    ctrl, tree, schema_mgr, inserted_sql, *_ = make_ctrl(resolve_dialect=lambda _conn: PostgresDialect())
+@pytest.mark.parametrize("dialect", [PostgresDialect(), DuckDbDialect()])
+def test_ansi_table_double_click_and_context_menu_queries(monkeypatch, dialect):
+    ctrl, tree, schema_mgr, inserted_sql, *_ = make_ctrl(resolve_dialect=lambda _conn: dialect)
     ctrl.refresh_connections(["Conn1"])
     ctrl.load_schema_tree("Conn1")
     tbl_item = tree.topLevelItem(0).child(0).child(0).child(0)
@@ -319,3 +325,48 @@ def test_postgres_table_double_click_and_context_menu_queries(monkeypatch):
     assert inserted_sql[-1] == (
         'SELECT\n    "public"."users"."id",\n    "public"."users"."name"\nFROM "public"."users" LIMIT 1000;'
     )
+
+
+def test_duckdb_drag_text_escapes_quoted_schema_table_and_column():
+    ctrl, tree, *_ = make_ctrl(resolve_dialect=lambda _conn: DuckDbDialect())
+    table = _loaded_table_item(ctrl, tree)
+    table.setData(0, Qt.ItemDataRole.UserRole, {"type": "table", "schema": 'a"b', "name": "it's"})
+    column = QTreeWidgetItem(table, ['c"d'])
+    column.setData(0, Qt.ItemDataRole.UserRole, {"type": "column", "schema": 'a"b', "table": "it's", "column": 'c"d'})
+    assert ctrl.build_drag_text([table]) == '"a""b"."it\'s"'
+    assert ctrl.build_drag_text([column]) == '"a""b"."it\'s"."c""d"'
+
+
+def test_duckdb_schema_actions_generate_executable_queries(tmp_path, monkeypatch):
+    path = tmp_path / "schema-actions.duckdb"
+    with duckdb.connect(str(path)) as connection:
+        connection.execute("""
+            CREATE SCHEMA "s""q";
+            CREATE TABLE "s""q"."o'x" ("c""q" INTEGER);
+            INSERT INTO "s""q"."o'x" VALUES (7), (7), (7);
+        """)
+    monkeypatch.setattr(base, "read_connections", lambda: {"Conn1": {"db_type": "duckdb", "database": str(path)}})
+    try:
+        ctrl, tree, manager, inserted_sql, *_ = make_ctrl(resolve_dialect=lambda _conn: DuckDbDialect())
+        ctrl.reload_settings({"workbench": {"gen_top_n": 2}})
+        manager.entry.tables = base.list_tables("Conn1")
+        manager.entry.views = []
+        manager.entry.columns = base.list_all_columns_map("Conn1")
+        table = _loaded_table_item(ctrl, tree)
+        meta = table.data(0, Qt.ItemDataRole.UserRole)
+        ctrl._on_item_double_clicked(table)
+        ctrl._insert_select_star(table, meta)
+        ctrl._insert_select_columns(table, meta, with_schema=True)
+        ctrl._on_item_expanded(table)
+        ctrl._on_item_double_clicked(table.child(0))
+
+        assert len(inserted_sql) == 4
+        for sql in inserted_sql:
+            assert '"s""q"."o\'x"' in sql
+            result = base.execute_sql_safe("Conn1", sql)
+            assert result.ok
+            assert list(result.data.columns) == ['c"q']
+            assert result.data.iloc[:, 0].tolist() == ([7] if "DISTINCT" in sql else [7, 7])
+        assert all("LIMIT 2" in sql for sql in inserted_sql[:3])
+    finally:
+        base.close_connection("Conn1")

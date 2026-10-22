@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+import pytest
+
 from expo_jbm329.services.schema_cache import SchemaCacheEntry, SchemaCacheManager
 
 
@@ -29,6 +31,45 @@ def make_manager() -> tuple[SchemaCacheManager, Recorder]:
         autocomplete_cb=rec.autocomplete_cb,
     )
     return mgr, rec
+
+
+@pytest.mark.parametrize("outcome", ["result", "error"])
+def test_stale_batch_callbacks_do_not_modify_reloaded_cache(monkeypatch, outcome):
+    manager, recorder = make_manager()
+    worker = MagicMock()
+    runner = MagicMock(return_value=worker)
+    manager.set_job_runner(runner)
+    manager._cache["Duck"] = SchemaCacheEntry(tables=[{"schema": "main", "name": "old"}])
+    token = manager._make_token("Duck")
+    manager._run_next_batch("Duck", token, [("main", "old")], 1, 0, 1)
+    callback = getattr(worker, outcome).connect.call_args.args[0]
+    manager.clear_for("Duck")
+    replacement = SchemaCacheEntry(tables=[{"schema": "main", "name": "new"}])
+    manager._cache["Duck"] = replacement
+    manager._make_token("Duck")
+    callback({("main", "old"): [{"COLUMN_NAME": "stale"}]} if outcome == "result" else "old failure")
+    assert replacement.columns == {}
+    assert recorder.autocomplete == []
+    assert recorder.progress == []
+    assert recorder.status == []
+    runner.assert_called_once()
+
+
+def test_stale_bulk_error_does_not_launch_batch_for_new_configuration(monkeypatch):
+    manager, recorder = make_manager()
+    token = manager._make_token("Duck")
+    manager.clear_for("Duck")
+    manager._cache["Duck"] = SchemaCacheEntry(tables=[{"schema": "main", "name": "new"}])
+    runner = MagicMock()
+    manager.set_job_runner(runner)
+    manager._make_token("Duck")
+    manager._handle_bulk_error("Duck", token, "old failure")
+    manager._run_next_batch("Duck", token, [], 1, 1, 1)
+    manager._start_batch_prefetch("Duck", token)
+    runner.assert_not_called()
+    assert recorder.status == []
+    assert recorder.progress == []
+    assert recorder.autocomplete == []
 
 
 def test_reload_settings_clamps_values() -> None:

@@ -17,6 +17,7 @@ from .base import (
     list_columns,
     list_tables,
     list_views,
+    validate_duckdb_connection,
 )
 
 __all__ = [
@@ -32,4 +33,5 @@ __all__ = [
     "list_columns",
     "list_tables",
     "list_views",
+    "validate_duckdb_connection",
 ]

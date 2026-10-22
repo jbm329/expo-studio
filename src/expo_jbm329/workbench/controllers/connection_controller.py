@@ -186,6 +186,19 @@ class ConnectionController:
         """Return available connection names."""
         return list(self._get_connection_names())
 
+    def invalidate_configuration(self, name: str) -> None:
+        """Invalidate backend and schema state after a connection edit.
+
+        Unlike a best-effort user disconnect, failures propagate to the caller
+        so a connection test cannot report success using stale configuration.
+        """
+        self._close_db(name)
+        self._clear_schema_cache(name)
+        if self._active_connection == name:
+            self._active_connection = None
+            for callback in self._on_active_connection_changed:
+                callback(name, None)
+
     def on_connection_list_changed(self, callback: Callable[[], None]) -> None:
         """Register a callback to be invoked when connection state changes."""
         self._on_connection_list_changed.append(callback)

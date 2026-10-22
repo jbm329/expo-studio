@@ -113,14 +113,14 @@ Database support has been tested on Windows and Linux (Fedora 44). The tested
 platform and database combinations are:
 
 - **Windows**: Microsoft SQL Server (MSSQL) and SQLite
-- **Linux (Fedora 44)**: MariaDB/MySQL, PostgreSQL, and SQLite
+- **Linux (Fedora 44)**: MariaDB/MySQL, PostgreSQL, SQLite and DuckDB (read-only local files)
 
 On Linux, MariaDB and MySQL connections are supported through the bundled
 PyMySQL and MySQL Connector/Python drivers. PostgreSQL connections are supported
-through the bundled `psycopg` driver. Users of the packaged application do not
+through the bundled `psycopg` driver and DuckDB connections are supported through the bundled `duckdb-engine` and `duckdb` drivers. Users of the packaged application do not
 need to install these drivers separately.
 
-Windows is expected to support MariaDB/MySQL and PostgreSQL through the same
+Windows is expected to support MariaDB/MySQL, PostgreSQL and SQLite through the same
 drivers, but those combinations have not yet been tested. Support for other
 databases is experimental and may require additional configuration.
 
@@ -129,6 +129,7 @@ databases is experimental and may require additional configuration.
 - **MariaDB**
 - **PostgreSQL**
 - **SQLite**
+- **DuckDB** (existing local files, read-only)
 
 Database connections use SQLAlchemy with standard DBAPI drivers.
 
@@ -137,6 +138,7 @@ Recommended drivers:
 - SQLite: sqlite3 (built-in)
 - MySQL / MariaDB: PyMySQL or MySQL Connector/Python (bundled)
 - PostgreSQL: psycopg (bundled)
+- DuckDB: duckdb-engine and duckdb (bundled)
 
 ### 🌐 REST API Support
 
@@ -538,6 +540,13 @@ uv run build-resources
 ```sh
 uv run build-exe
 ```
+
+`expo.spec` includes DuckDB's SQLAlchemy entry-point metadata and collects its
+native `_duckdb` extension through PyInstaller's dependency analysis, using the
+installed platform's `.pyd` on Windows or `.so` on Linux. Build on each target
+OS with that OS's dependencies; a Linux build does not verify Windows DLL
+loading. Third-party notices include the bundled `duckdb` and `duckdb-engine`
+distributions and their license files.
 
 #### Stage an existing build
 

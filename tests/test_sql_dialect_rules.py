@@ -15,8 +15,8 @@ from expo_jbm329.workbench.highlighter.sql_dialect_rules import (
 def test_generic_rules_cover_all_dialects(dialect: str | None) -> None:
     rules = rules_for_dialect(dialect)
     assert rules.name == "generic"
-    assert {"TOP", "LIMIT", "PRAGMA", "ILIKE", "ROWNUM"} <= rules.keywords
-    assert {"GETDATE", "IFNULL", "NVL", "DATE_TRUNC"} <= rules.functions
+    assert {"TOP", "LIMIT", "PRAGMA", "ILIKE", "ROWNUM", "QUALIFY", "EXCLUDE"} <= rules.keywords
+    assert {"GETDATE", "IFNULL", "NVL", "DATE_TRUNC", "STRUCT_PACK"} <= rules.functions
     assert set(rules.identifier_quotes) == {BRACKET_QUOTE, DOUBLE_QUOTE, BACKTICK_QUOTE}
 
 
@@ -45,11 +45,21 @@ def test_mysql_rules() -> None:
     assert rules.backslash_escapes is True
 
 
-@pytest.mark.parametrize("dialect", ["postgres", "oracle"])
+@pytest.mark.parametrize("dialect", ["postgres", "oracle", "duckdb"])
 def test_ansi_style_dialects_use_double_quotes(dialect: str) -> None:
     rules = rules_for_dialect(dialect)
     assert rules.identifier_quotes == (DOUBLE_QUOTE,)
     assert "SELECT" in rules.keywords
+
+
+def test_duckdb_rules() -> None:
+    rules = rules_for_dialect("DUCKDB")
+    assert rules.name == "duckdb"
+    assert {"QUALIFY", "ILIKE", "EXCLUDE", "REPLACE", "ASOF", "LIMIT"} <= rules.keywords
+    assert {"LIST_TRANSFORM", "STRUCT_PACK", "UNNEST", "TRY_CAST"} <= rules.functions
+    assert "TOP" not in rules.keywords
+    assert rules.string_quotes == ("'",)
+    assert not rules.backslash_escapes
 
 
 def test_collect_schema_highlight_names() -> None:

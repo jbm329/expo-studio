@@ -36,6 +36,49 @@ def test_build_connection_config_sqlite():
     assert cfg.database == "test.db"
 
 
+def test_build_connection_config_duckdb():
+    with patch(
+        "expo_jbm329.db.base.read_connections", return_value={"duck": {"db_type": "DuCkDb", "database": "data.duckdb"}}
+    ):
+        cfg = base._build_connection_config("duck")
+
+    assert cfg.engine == "duckdb"
+    assert cfg.protocol == "duckdb"
+    assert cfg.database == "data.duckdb"
+    assert cfg.odbc_connect is None
+    assert base._registry.create_driver("duckdb") is not None
+
+
+def test_duckdb_form_validation_does_not_open_file(tmp_path):
+    path = tmp_path / "data.duckdb"
+    path.touch()
+    with patch("expo_jbm329.db.drivers.sa_duckdb.create_engine") as create:
+        assert base.validate_duckdb_connection(str(path)) is None
+        assert base.validate_duckdb_connection(str(path), protocol="sqlite").message == base.TR_INVALID_CONFIG_DUCKDB
+        assert (
+            base.validate_duckdb_connection(str(path), extra={"read_only": False}).message
+            == base.TR_INVALID_CONFIG_DUCKDB
+        )
+        assert base.validate_duckdb_connection(str(tmp_path / "missing.duckdb")).category == "connection"
+    create.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("engine", "protocol"),
+    [("duckdb", "sqlite"), ("duckdb", "odbc"), ("sqlite", "duckdb")],
+)
+def test_duckdb_rejects_mismatched_protocol(engine, protocol):
+    with patch(
+        "expo_jbm329.db.base.read_connections",
+        return_value={"duck": {"db_type": engine, "protocol": protocol}},
+    ):
+        result = base.execute_sql_safe("duck", "SELECT 1")
+
+    assert not result.ok
+    assert result.error.category == "connection"
+    assert result.error.hint == base.TR_INVALID_CONFIG_DUCKDB
+
+
 def test_build_connection_config_mysql():
     with patch("expo_jbm329.db.base.read_connections") as mock_read:
         mock_read.return_value = {
@@ -184,6 +227,7 @@ def test_fetch_df_returns_none_on_failure():
         ("mysql", "mysql"),
         ("mariadb", "mysql"),
         ("sqlite", "sqlite"),
+        ("duckdb", "duckdb"),
         ("postgresql", "postgresql"),
         ("postgres", "postgresql"),
         ("oracle", "ansi"),
@@ -225,6 +269,7 @@ def test_get_dialect_prefers_cached_service_dialect():
     [
         ("mysql", "SELECT * FROM `s`.`t`", "SELECT DISTINCT `c`\nFROM `s`.`t`"),
         ("postgresql", 'SELECT * FROM "s"."t"', 'SELECT DISTINCT "c"\nFROM "s"."t"'),
+        ("duckdb", 'SELECT * FROM "s"."t"', 'SELECT DISTINCT "c"\nFROM "s"."t"'),
     ],
 )
 def test_select_builders_fallback_is_dialect_aware(db_type, expected_star, expected_distinct):

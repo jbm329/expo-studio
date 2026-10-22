@@ -96,3 +96,29 @@ def test_connect_without_schema_loader_raises():
 
     with pytest.raises(RuntimeError, match="load_schema is missing"):
         ctrl.connect("Conn1")
+
+
+@pytest.mark.parametrize("active", [True, False])
+def test_invalidate_configuration_closes_backend_and_clears_schema(controller, active):
+    ctrl, mocks = controller
+    ctrl.connect("Conn1" if active else "Conn2")
+    callback = MagicMock()
+    ctrl.on_active_connection_changed(callback)
+    ctrl.invalidate_configuration("Conn1")
+    mocks["close"].assert_called_once_with("Conn1")
+    mocks["clear_cache"].assert_called_once_with("Conn1")
+    if active:
+        assert ctrl.active_connection is None
+        callback.assert_called_once_with("Conn1", None)
+    else:
+        assert ctrl.active_connection == "Conn2"
+        callback.assert_not_called()
+
+
+def test_invalidate_configuration_propagates_disposal_failure(controller):
+    ctrl, mocks = controller
+    ctrl.connect("Conn1")
+    mocks["close"].side_effect = RuntimeError("disposal failed")
+    with pytest.raises(RuntimeError, match="disposal failed"):
+        ctrl.invalidate_configuration("Conn1")
+    assert ctrl.active_connection == "Conn1"

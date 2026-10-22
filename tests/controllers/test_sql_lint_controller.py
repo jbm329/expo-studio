@@ -115,6 +115,24 @@ def test_set_dialect_schedules_lint(controller: SqlLintController):
     controller.schedule_lint.assert_called_once_with()
 
 
+def test_duckdb_lint_renders_real_schema_errors_without_qualify_false_positive():
+    editor = QPlainTextEdit()
+    controller = SqlLintController(editor, delay_ms=100)
+    controller.set_dialect("duckdb")
+    controller.set_schema({"sales": {"orders": ["id"]}})
+    try:
+        editor.setPlainText("SELECT id, row_number() OVER (ORDER BY id) AS rn FROM sales.orders QUALIFY rn = 1")
+        controller._run_lint()
+        assert controller._rendered_diagnostics == []
+        editor.setPlainText("SELECT missing FROM sales.orders")
+        controller._run_lint()
+        assert controller._diagnostic_at_offset(7) == SqlDiagnostic(
+            "error", "Unknown column 'missing' for the current schema context.", 1, 8, 7
+        )
+    finally:
+        controller.dispose()
+
+
 def test_run_lint_renders_diagnostics_and_publishes_status(editor: DummyEditor):
     controller = SqlLintController(editor, delay_ms=100, set_status=MagicMock())
     controller._render_diagnostics = MagicMock()
