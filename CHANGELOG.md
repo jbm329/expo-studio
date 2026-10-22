@@ -7,6 +7,9 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- DuckDB datasource support for existing local files in read-only mode
+
 ### Fixed
 - The cancel-process toolbar action now updates its translation when the language changes
 
