@@ -461,6 +461,9 @@ def classify_sqlite(exc: Exception) -> SqlError:
 def classify_duckdb(exc: Exception) -> SqlError:
     """Map DuckDB and SQLAlchemy-wrapped failures to translated messages.
 
+    Lock detection covers Linux lock conflicts and DuckDB's Windows
+    file-sharing marker independently of the localized OS error text.
+
     Args:
         exc: A configuration, native driver or SQLAlchemy-wrapped exception.
 
@@ -477,7 +480,9 @@ def classify_duckdb(exc: Exception) -> SqlError:
         return SqlError("driver_missing", None, TR_DRIVER_MISSING_MYSQL, TR_DRIVER_MISSING_HINT_DUCKDB)
     if isinstance(original, ValueError):
         return SqlError("connection", None, TR_INVALID_CONFIG_DUCKDB, TR_INVALID_CONFIG_HINT_DUCKDB)
-    if "lock" in message and ("could not set" in message or "conflicting" in message or "locked" in message):
+    if "file is already open in" in message or (
+        "lock" in message and ("could not set" in message or "conflicting" in message or "locked" in message)
+    ):
         return SqlError("connection", None, TR_LOCK_WAIT_TIMEOUT_SQLITE, TR_LOCKED_HINT_DUCKDB)
     if (
         isinstance(original, PermissionError)

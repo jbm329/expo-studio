@@ -29,6 +29,7 @@ from expo_jbm329.db.core.errors import (
     TR_TABLE_OR_VIEW_NOT_EXISTS_POSTGRES,
     TR_TIMEOUT_POSTGRES,
     TR_UNKNOWN_COLUMN_POSTGRES,
+    TR_UNKNOWN_DATABASE_HINT_SQLITE,
     TR_UNKNOWN_DATABASE_POSTGRES,
     classify_duckdb,
     classify_mssql,
@@ -108,6 +109,52 @@ def test_duckdb_classification_handles_native_and_wrapped_errors(exception, cate
         assert classified.code is None
         assert classified.message
         assert classified.hint
+
+
+@pytest.mark.parametrize("wrapped", [False, True], ids=["native", "sqlalchemy"])
+@pytest.mark.parametrize(
+    ("message", "expected_hint"),
+    [
+        pytest.param(
+            "IO Error: Could not set lock on file: Conflicting lock is held",
+            TR_LOCKED_HINT_DUCKDB,
+            id="linux-lock",
+        ),
+        pytest.param(
+            'IO Error: Cannot open file "sample.duckdb": '
+            "The process cannot access the file because it is being used by another process.\n"
+            "File is already open in\npython.exe (PID 1234)",
+            TR_LOCKED_HINT_DUCKDB,
+            id="windows-lock",
+        ),
+        pytest.param(
+            'IO Error: Cannot open file "sample.duckdb": '
+            "Det g\u00e5r inte att komma \u00e5t filen eftersom den\r\n"
+            "anv\u00e4nds av en annan process.\r\n\n"
+            "File is already open in\npython.exe (PID 1234)",
+            TR_LOCKED_HINT_DUCKDB,
+            id="windows-localized-lock",
+        ),
+        pytest.param(
+            'IO Error: Cannot open file "sample.duckdb": No such file or directory',
+            TR_UNKNOWN_DATABASE_HINT_SQLITE,
+            id="missing-file",
+        ),
+        pytest.param(
+            'IO Error: The file "sample.duckdb" exists, but it is not a valid DuckDB database file!',
+            TR_UNKNOWN_DATABASE_HINT_SQLITE,
+            id="invalid-file",
+        ),
+    ],
+)
+def test_duckdb_io_errors_have_specific_hints(message: str, expected_hint: str, wrapped: bool) -> None:
+    exception = duckdb.IOException(message)
+    error = OperationalError("SELECT 1", {}, exception) if wrapped else exception
+
+    classified = classify_duckdb(error)
+
+    assert classified.category == "connection"
+    assert classified.hint == expected_hint
 
 
 @pytest.mark.parametrize("language", list(Language))
