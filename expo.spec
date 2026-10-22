@@ -92,6 +92,12 @@ hiddenimports += collect_submodules("mysql.connector")
 # dialect loads psycopg on demand.
 hiddenimports += collect_submodules("psycopg")
 hiddenimports += ["psycopg_binary"]
+# SQLAlchemy discovers this external dialect through distribution entry points.
+# _duckdb is a top-level native extension (.pyd on Windows, .so on Linux);
+# collecting it as an import lets PyInstaller resolve its platform dependencies.
+hiddenimports += ["duckdb_engine", "duckdb", "_duckdb"]
+datas += copy_metadata("duckdb-engine")
+datas += copy_metadata("duckdb")
 
 try:
     import data_profiling  # noqa: F401
