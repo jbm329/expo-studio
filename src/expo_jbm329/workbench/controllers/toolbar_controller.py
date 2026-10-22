@@ -376,6 +376,8 @@ class ToolbarController:
         self._action_run10.setText(self._tr(self.TR_RUN_TOP10))
         self._action_run10.setToolTip(self._tr(self.TR_RUN_TOP10_SHORTCUT))
 
+        self._action_cancel_job.setText(self._tr(self.TR_CANCEL_JOB))
+
         self._action_export_csv.setText(self._tr(self.TR_EXPORT_CSV))
         self._action_export_excel.setText(self._tr(self.TR_EXPORT_EXCEL))
         self._action_export_data.setText(self._tr(self.TR_EXPORT_DATA))
