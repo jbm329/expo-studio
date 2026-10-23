@@ -121,7 +121,27 @@ def test_remove_multiple_selected_metrics_and_reopen_discards_configuration():
     reopened.close()
 
 
-def test_empty_source_and_close_button():
+def test_button_labels_and_alignment_match_join(qt_app) -> None:
+    dialog = make_dialog()
+    buttons = dialog.findChild(QDialogButtonBox)
+    assert buttons is not None
+    cancel_button = buttons.button(QDialogButtonBox.StandardButton.Cancel)
+    assert cancel_button is not None
+    assert dialog.apply_button is buttons.button(QDialogButtonBox.StandardButton.Ok)
+    assert dialog.apply_button.text() == "OK"
+    assert cancel_button.text() == "Cancel"
+    dialog.show()
+    qt_app.processEvents()
+    preview = dialog.preview_button.mapTo(dialog, dialog.preview_button.rect().topLeft())
+    ok = dialog.apply_button.mapTo(dialog, dialog.apply_button.rect().topLeft())
+    cancel = cancel_button.mapTo(dialog, cancel_button.rect().topLeft())
+    assert preview.x() < ok.x() < cancel.x()
+    assert preview.y() == ok.y() == cancel.y()
+    assert ok.x() - preview.x() > dialog.width() // 2
+    dialog.close()
+
+
+def test_empty_source_and_cancel_button():
     dialog = make_dialog((), ())
     assert dialog.dimensions.count() == 0
     columns = dialog.metrics.cellWidget(0, 2)
@@ -130,11 +150,11 @@ def test_empty_source_and_close_button():
     assert not dialog.apply_button.isEnabled()
     buttons = dialog.findChild(QDialogButtonBox)
     assert buttons is not None
-    close_button = buttons.button(QDialogButtonBox.StandardButton.Close)
-    assert close_button is not None
+    cancel_button = buttons.button(QDialogButtonBox.StandardButton.Cancel)
+    assert cancel_button is not None
     closed: list[bool] = []
     dialog.rejected.connect(lambda: closed.append(True))
-    close_button.click()
+    cancel_button.click()
     assert closed == [True]
 
 
@@ -164,7 +184,7 @@ def test_compiled_reshape_translations(qt_app, language):
         if language != "en":
             assert diagnostic != diagnostic_source
             assert title != source_title
-            assert dialog.apply_button.text() != "Apply"
+            assert dialog.apply_button.text() == translate("QtDialogService", "OK")
             assert dialog.preview_placeholder.text() != (
                 "Configure metrics and press Preview to calculate up to five output rows."
             )

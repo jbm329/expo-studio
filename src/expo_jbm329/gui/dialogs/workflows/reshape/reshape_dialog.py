@@ -190,20 +190,26 @@ class ReshapeDialog(QDialog):
         self.preview_model: DataFrameModel | None = None
         root.addWidget(preview_box, 1)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close, self)
+        button_row = QHBoxLayout()
         self.preview_button = QPushButton(self.tr("Preview"), self)
         self.preview_button.setAutoDefault(False)
-        buttons.addButton(self.preview_button, QDialogButtonBox.ButtonRole.ActionRole)
         self.preview_button.clicked.connect(self._request_preview)
-        self.apply_button = QPushButton(self.tr("Apply"), self)
+        button_row.addWidget(self.preview_button)
+        button_row.addStretch(1)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel, self)
+        ok_button = buttons.button(QDialogButtonBox.StandardButton.Ok)
+        if ok_button is None:
+            message = "Reshape requires an OK button."
+            raise RuntimeError(message)
+        self.apply_button = ok_button
         self.apply_button.setAutoDefault(False)
         self.apply_button.setEnabled(False)
         self.apply_button.setToolTip(notice.text())
-        buttons.addButton(self.apply_button, QDialogButtonBox.ButtonRole.ApplyRole)
         self.apply_button.clicked.connect(self._apply)
         localize_dialog_buttons(buttons)
         buttons.rejected.connect(self.reject)
-        root.addWidget(buttons)
+        button_row.addWidget(buttons)
+        root.addLayout(button_row)
 
         self.add_metric_button.clicked.connect(self._add_metric)
         self.remove_metric_button.clicked.connect(self._remove_selected_metrics)
