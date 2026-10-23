@@ -9,6 +9,7 @@ from PyQt6.QtCore import QEvent, QPoint, QSignalBlocker, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QFocusEvent, QHelpEvent, QKeyEvent, QTextCharFormat, QTextCursor
 from PyQt6.QtWidgets import (
     QApplication,
+    QCompleter,
     QFrame,
     QHBoxLayout,
     QLineEdit,
@@ -20,6 +21,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.services.data_operations.reshape_condition_completion import column_completion
 from expo_jbm329.services.data_operations.reshape_condition_lint import (
     ConditionDiagnostic,
     ConditionLintCode,
@@ -90,6 +92,61 @@ class ConditionEditor(QWidget):
         self.text.textChanged.connect(self._update_collapsed_display)
         self.text.textChanged.connect(self._schedule_lint)
         self.expanded_text.textChanged.connect(self._sync_inline_text)
+        names: list[str] = sorted({column.name for column in self._columns if column.available}, key=str.casefold)
+        self.completer = QCompleter(names, self)
+        self.completer.setWidget(self.expanded_text)
+        self.completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        self.completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+        self.completer.activated[str].connect(self._insert_completion)
+        self.expanded_text.textChanged.connect(self._update_completion)
+        self.expanded_text.cursorPositionChanged.connect(self._update_completion)
+
+    def _completion_context(self) -> tuple[str, int]:
+        value = self.expanded_text.toPlainText()
+        qt_position = self.expanded_text.textCursor().position()
+        position = len(value.encode("utf-16-le")[: qt_position * 2].decode("utf-16-le"))
+        return value, position
+
+    def _update_completion(self) -> None:
+        popup = self.completer.popup()
+        if popup is None:
+            return
+        value, position = self._completion_context()
+        context = column_completion(value, position)
+        if not self.popup.isVisible() or context is None or self.expanded_text.textCursor().hasSelection():
+            popup.hide()
+            return
+        self.completer.setCompletionPrefix(context.prefix)
+        if self.completer.completionCount() == 0:
+            popup.hide()
+            return
+        model = self.completer.completionModel()
+        if model is None:
+            return
+        popup.setCurrentIndex(model.index(0, 0))
+        rectangle = self.expanded_text.cursorRect()
+        scrollbar = popup.verticalScrollBar()
+        scrollbar_width = scrollbar.sizeHint().width() if scrollbar is not None else 0
+        width = max(240, popup.sizeHintForColumn(0) + scrollbar_width + 2 * popup.frameWidth())
+        screen = self.expanded_text.screen()
+        if screen is not None:
+            width = min(width, screen.availableGeometry().width())
+        rectangle.setWidth(width)
+        self.completer.complete(rectangle)
+
+    def _insert_completion(self, name: str) -> None:
+        value, position = self._completion_context()
+        context = column_completion(value, position)
+        if context is None:
+            return
+        cursor = self.expanded_text.textCursor()
+        cursor.setPosition(self._qt_position(value, context.start))
+        cursor.setPosition(self._qt_position(value, context.end), QTextCursor.MoveMode.KeepAnchor)
+        cursor.insertText("[" + name.replace("]", "]]") + "]")
+        self.expanded_text.setTextCursor(cursor)
+        popup = self.completer.popup()
+        if popup is not None:
+            popup.hide()
 
     @property
     def condition_valid(self) -> bool:
@@ -181,6 +238,7 @@ class ConditionEditor(QWidget):
     def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
         """Open on deliberate field focus and close on Escape without reverting."""
         app = QApplication.instance()
+        completion_popup = self.completer.popup()
         if (
             a0 is self.expanded_text.viewport()
             and isinstance(a1, QHelpEvent)
@@ -193,6 +251,8 @@ class ConditionEditor(QWidget):
             if a1.type() == QEvent.Type.Show:
                 app.installEventFilter(self)
             elif a1.type() == QEvent.Type.Hide:
+                if completion_popup is not None:
+                    completion_popup.hide()
                 app.removeEventFilter(self)
                 self.text.setCursorPosition(0)
         if (
@@ -202,6 +262,8 @@ class ConditionEditor(QWidget):
             and isinstance(a0, QWidget)
             and a0 is not self.popup
             and not self.popup.isAncestorOf(a0)
+            and a0 is not completion_popup
+            and not (completion_popup is not None and completion_popup.isAncestorOf(a0))
         ):
             self.popup.hide()
         if (
@@ -218,13 +280,20 @@ class ConditionEditor(QWidget):
         ):
             self._open_timer.start(0)
         if (
-            a0 is self.expanded_text
+            (a0 is self.expanded_text or a0 is completion_popup)
             and isinstance(a1, QKeyEvent)
             and a1.type() == QEvent.Type.KeyPress
-            and a1.key() == Qt.Key.Key_Escape
         ):
-            self.popup.hide()
-            return True
+            if completion_popup is not None and completion_popup.isVisible():
+                if a1.key() in {Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Tab}:
+                    self._insert_completion(completion_popup.currentIndex().data())
+                    return True
+                if a1.key() == Qt.Key.Key_Escape:
+                    completion_popup.hide()
+                    return True
+            elif a0 is self.expanded_text and a1.key() == Qt.Key.Key_Escape:
+                self.popup.hide()
+                return True
         return super().eventFilter(a0, a1)
 
     @override

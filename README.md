@@ -78,7 +78,11 @@ The project is still in its infancy and may change significantly.
   editor also underlines errors. Empty conditions are valid. Pending or invalid
   conditions fail the independent condition-validity gate for future execution.
   Quoted values are not evaluated, looked up, or type-checked against their operators.
-  Autocomplete is not available yet.
+  Typing `[` opens column autocomplete; further typing filters names without
+  regard to case. Choose with the arrow keys and Enter/Tab or click a suggestion
+  to insert `[column name]`. Names containing `]` are escaped automatically.
+  Ambiguous duplicate names are excluded, and quoted values never trigger suggestions.
+  Escape dismisses suggestions without closing the expanded editor.
   The main Reshape Apply remains disabled, and the inline preview is a placeholder.
   SUM and AVG offer existing integer/float columns only. MIN and MAX also offer
   datetime columns, including timezone-aware timestamps, while COUNT and
