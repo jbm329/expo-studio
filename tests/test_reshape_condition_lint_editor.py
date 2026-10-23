@@ -208,3 +208,28 @@ def test_dialog_aggregates_pending_errors_removal_and_builder_readiness():
     assert not dialog.apply_button.isEnabled()
     assert "UI only" in dialog.apply_button.toolTip()
     dialog.close()
+
+
+def test_dialog_passes_source_dtypes_to_manual_linting():
+    dialog = ReshapeDialog(
+        parent=None,
+        source_dataset=DatasetRef("source", "Source", 2, 3),
+        source_columns=("age", "flag", "code"),
+        source_dtypes=("Int64", "boolean", "object"),
+        numeric_column_positions=(0,),
+        datetime_column_positions=(),
+    )
+    editor = dialog.metrics.cellWidget(0, 3)
+    editor.text.setText("[age] >= 18 AND [flag] = True AND [code] = '0018'")
+    assert dialog.validate_conditions()
+    editor.text.setText("[age] = False")
+    assert not dialog.validate_conditions()
+    assert "Expected a number" in editor.text.toolTip()
+    editor.text.setText("[flag] = 1")
+    assert not dialog.validate_conditions()
+    assert "Expected True, False" in editor.text.toolTip()
+    editor.text.setText("[code] = 18")
+    assert not dialog.validate_conditions()
+    editor.text.setText("[age] = 'anything' AND [flag] = 'legacy'")
+    assert dialog.validate_conditions()
+    dialog.close()

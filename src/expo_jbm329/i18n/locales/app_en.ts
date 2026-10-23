@@ -2283,87 +2283,97 @@ Please see logs for more information.</source>
 </context><context>
     <name>ConditionEditor</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="55" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="57" />
         <source>Condition</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="56" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="58" />
         <source>Edit condition syntax or use the builder. Syntax and column names are checked; values are not evaluated.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="63" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="65" />
         <source>Build condition</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="64" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="66" />
         <source>Condition builder</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="120" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="177" />
         <source>Expected a column name enclosed in [brackets].</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="121" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="178" />
         <source>Column '{name}' does not exist.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="122" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="179" />
         <source>Column '{name}' is ambiguous. Rename duplicate columns first.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="125" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="182" />
         <source>Missing closing ] in column name. Escape a literal ] as ]].</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="126" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="183" />
         <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="130" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="187" />
         <source>Expected =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL or IS NOT NULL.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="131" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="188" />
         <source>Expected a single-quoted value, for example 'value'.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="132" />
-        <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="189" />
+        <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="133" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="192" />
+        <source>Expected True, False or a single-quoted value.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="193" />
+        <source>IN and NOT IN require a nonempty, comma-separated list in parentheses.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="194" />
         <source>Expected a closing parenthesis ).</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="134" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="195" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="135" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="196" />
         <source>Unmatched closing parenthesis ). Add a matching opening ( or remove this ).</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="138" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="199" />
         <source>Expected a condition or a parenthesized group.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="139" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="200" />
         <source>Expected AND or OR between conditions, or the end of the expression.</source>
         <translation type="unfinished" />
     </message>

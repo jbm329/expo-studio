@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 import math
+import re
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
@@ -73,6 +74,17 @@ class ConditionValue:
     text: str
 
 
+class ConditionLiteralType(StrEnum):
+    """Unquoted literal syntax permitted by a column's storage dtype."""
+
+    QUOTED = "quoted"
+    NUMBER = "number"
+    BOOLEAN = "boolean"
+
+
+NUMBER_LITERAL = re.compile(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?")
+
+
 @dataclass(frozen=True, slots=True)
 class ConditionColumn:
     """Source position and syntax name, with ambiguous names disabled."""
@@ -80,6 +92,7 @@ class ConditionColumn:
     position: int
     name: str
     available: bool
+    literal_type: ConditionLiteralType = ConditionLiteralType.QUOTED
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,13 +112,26 @@ class ConditionGroup:
     match: ConditionMatch = ConditionMatch.ALL
 
 
-def condition_columns(labels: Sequence[object]) -> tuple[ConditionColumn, ...]:
-    """Capture positional names, disabling any identical serialized names."""
+def condition_columns(labels: Sequence[object], dtypes: Sequence[object] | None = None) -> tuple[ConditionColumn, ...]:
+    """Capture names and optional storage dtypes, disabling ambiguous names."""
     from collections import Counter
 
     names = tuple(str(label) for label in labels)
+    if dtypes is not None and len(dtypes) != len(names):
+        message = "Source dtype metadata must match the number of source columns."
+        raise ValueError(message)
     counts = Counter(names)
-    return tuple(ConditionColumn(index, name, counts[name] == 1) for index, name in enumerate(names))
+    columns: list[ConditionColumn] = []
+    for index, name in enumerate(names):
+        literal_type = ConditionLiteralType.QUOTED
+        if dtypes is not None:
+            dtype = str(dtypes[index])
+            if pd.api.types.is_bool_dtype(dtype):
+                literal_type = ConditionLiteralType.BOOLEAN
+            elif pd.api.types.is_integer_dtype(dtype) or pd.api.types.is_float_dtype(dtype):
+                literal_type = ConditionLiteralType.NUMBER
+        columns.append(ConditionColumn(index, name, counts[name] == 1, literal_type))
+    return tuple(columns)
 
 
 def condition_value(value: object) -> ConditionValue | None:
@@ -188,7 +214,19 @@ def format_condition(group: ConditionGroup) -> str:
             raise ConditionError(ConditionProblem.AMBIGUOUS_VALUE)
         name = "[" + rule.column.name.replace("]", "]]") + "]"
         expression = f"{name} {operator.value}"
-        literals = ["'" + value.text.replace("'", "''") + "'" for value in rule.operands]
+        literals = []
+        for value in rule.operands:
+            numeric = (
+                rule.column.literal_type == ConditionLiteralType.NUMBER
+                and value.kind in {"integer", "float", "decimal"}
+                and NUMBER_LITERAL.fullmatch(value.text) is not None
+            )
+            boolean = (
+                rule.column.literal_type == ConditionLiteralType.BOOLEAN
+                and value.kind == "boolean"
+                and value.text in {"True", "False"}
+            )
+            literals.append(value.text if numeric or boolean else "'" + value.text.replace("'", "''") + "'")
         if operator.is_membership:
             expression += " (" + ", ".join(literals) + ")"
         elif not operator.is_null_test:

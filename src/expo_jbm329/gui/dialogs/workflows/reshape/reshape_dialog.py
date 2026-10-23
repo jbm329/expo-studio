@@ -63,7 +63,7 @@ class ReshapeDialog(QDialog):
         """
         super().__init__(parent)
         self._source_columns = tuple(source_columns)
-        self._condition_columns = condition_columns(self._source_columns)
+        self._condition_columns = condition_columns(self._source_columns, source_dtypes)
         if len(source_dtypes) != len(self._source_columns):
             message = "Source dtype metadata must match the number of source columns."
             raise ValueError(message)

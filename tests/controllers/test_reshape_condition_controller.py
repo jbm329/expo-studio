@@ -12,8 +12,38 @@ from PyQt6.QtWidgets import QDialog, QWidget
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
 from expo_jbm329.services.data_operations.reshape_condition_tree import ConditionDrop
 from expo_jbm329.services.data_operations.reshape_condition_values import ValuePage, ValuePageRequest
-from expo_jbm329.services.data_operations.reshape_conditions import ConditionOperator, ConditionProblem, ConditionValue
+from expo_jbm329.services.data_operations.reshape_conditions import (
+    ConditionOperator,
+    ConditionProblem,
+    ConditionValue,
+    condition_columns,
+)
 from expo_jbm329.workbench.controllers import reshape_condition_controller as module
+
+
+def test_builder_captures_dtype_and_applies_unquoted_numeric_literal(monkeypatch):
+    parent = QWidget()
+    source = pd.DataFrame({"age": pd.Series([18], dtype="Int64")})
+    editor = ConditionEditor(parent, condition_columns(list(source.columns), list(source.dtypes)))
+    async_ops = MagicMock()
+    async_ops.job_mgr.get_job_id.return_value = "typed"
+
+    def execute(dialog):
+        rule = dialog.rules[0]
+        rule.column.setCurrentIndex(1)
+        rule.picker._timer.stop()
+        dialog.page_requested.emit(rule.picker, ValuePageRequest(0))
+        callbacks = async_ops.run_operation.call_args.kwargs
+        callbacks["on_result"](callbacks["work"]())
+        rule.picker.values_list.item(0).setCheckState(Qt.CheckState.Checked)
+        dialog.accept()
+        return dialog.result()
+
+    monkeypatch.setattr(module.ConditionDialog, "exec", execute)
+    module.ReshapeConditionController(async_ops, MagicMock()).open_dialog(parent, editor, source)
+    assert editor.text.text() == "[age] = 18"
+    assert editor.condition_valid
+    assert editor.restorable_group() is not None
 
 
 def test_out_of_order_jobs_search_close_and_cancellation(monkeypatch) -> None:

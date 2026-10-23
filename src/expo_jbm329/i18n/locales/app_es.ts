@@ -2301,89 +2301,103 @@ Consulte los registros para obtener más información.</translation>
 </context><context>
     <name>ConditionEditor</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="55" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="57" />
         <source>Condition</source>
         <translation>Condición</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="56" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="58" />
         <source>Edit condition syntax or use the builder. Syntax and column names are checked; values are not evaluated.</source>
         <translation>Edita la sintaxis de la condición o usa el generador. Se comprueban la sintaxis y los nombres de columnas; los valores no se evalúan.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="63" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="65" />
         <source>Build condition</source>
         <translation>Crear condición</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="64" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="66" />
         <source>Condition builder</source>
         <translation>Generador de condiciones</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="120" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="177" />
         <source>Expected a column name enclosed in [brackets].</source>
         <translation>Se esperaba un nombre de columna entre [corchetes].</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="121" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="178" />
         <source>Column '{name}' does not exist.</source>
         <translation>La columna '{name}' no existe.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="122" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="179" />
         <source>Column '{name}' is ambiguous. Rename duplicate columns first.</source>
         <translation>La columna '{name}' es ambigua. Cambia primero el nombre de las columnas duplicadas.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="125" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="182" />
         <source>Missing closing ] in column name. Escape a literal ] as ]].</source>
         <translation>Falta el ] de cierre en el nombre de columna. Escribe ]] para un ] literal.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="126" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="183" />
         <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
         <translation>Valor entre comillas sin terminar. Comprueba si falta una comilla simple o est? mal colocada en una parte anterior de la condici?n. Escribe '' para un ap?strofo.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="130" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="187" />
         <source>Expected =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL or IS NOT NULL.</source>
         <translation>Se esperaba =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL o IS NOT NULL.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="131" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="188" />
         <source>Expected a single-quoted value, for example 'value'.</source>
         <translation>Se esperaba un valor entre comillas simples, por ejemplo 'valor'.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="132" />
-        <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
-        <translation>IN y NOT IN requieren una lista no vacía como ('valor1', 'valor2').</translation>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="189" />
+        <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
+        <translation>Se esperaba un n?mero o un valor entre comillas simples, por ejemplo 18 o '18'.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="133" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="192" />
+        <source>Expected True, False or a single-quoted value.</source>
+        <translation>Se esperaba True, False o un valor entre comillas simples.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="193" />
+        <source>IN and NOT IN require a nonempty, comma-separated list in parentheses.</source>
+        <translation>IN y NOT IN requieren una lista no vac?a entre par?ntesis, separada por comas.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="194" />
         <source>Expected a closing parenthesis ).</source>
         <translation>Se esperaba un paréntesis de cierre ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="134" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="195" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
         <translation>Se esperaba AND, OR o un par?ntesis de cierre ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="135" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="196" />
         <source>Unmatched closing parenthesis ). Add a matching opening ( or remove this ).</source>
         <translation>Paréntesis de cierre ) sin correspondencia. Añade un paréntesis de apertura ( correspondiente o elimina este ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="138" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="199" />
         <source>Expected a condition or a parenthesized group.</source>
         <translation>Se esperaba una condición o un grupo entre paréntesis.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="139" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="200" />
         <source>Expected AND or OR between conditions, or the end of the expression.</source>
         <translation>Se esperaba AND u OR entre condiciones, o el final de la expresión.</translation>
+    </message>
+    <message>
+        <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
+        <translation type="vanished">IN y NOT IN requieren una lista no vacía como ('valor1', 'valor2').</translation>
     </message>
     <message>
         <source>Missing closing single quote. Escape an apostrophe as ''.</source>

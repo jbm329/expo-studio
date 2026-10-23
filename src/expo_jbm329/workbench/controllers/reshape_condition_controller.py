@@ -61,7 +61,7 @@ class ReshapeConditionController:
         initial = editor.restorable_group()
         dialog = ConditionDialog(
             parent=parent,
-            columns=condition_columns(list(source.columns)),
+            columns=condition_columns(list(source.columns), list(source.dtypes)),
             initial=initial,
             replaces_manual_text=bool(editor.text.text()) and initial is None,
         )

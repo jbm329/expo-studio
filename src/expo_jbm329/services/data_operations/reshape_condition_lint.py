@@ -6,7 +6,12 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import TYPE_CHECKING, NoReturn
 
-from expo_jbm329.services.data_operations.reshape_conditions import ConditionColumn, ConditionOperator
+from expo_jbm329.services.data_operations.reshape_conditions import (
+    NUMBER_LITERAL,
+    ConditionColumn,
+    ConditionLiteralType,
+    ConditionOperator,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -22,6 +27,8 @@ class ConditionLintCode(StrEnum):
     QUOTE = "quote"
     OPERATOR = "operator"
     VALUE = "value"
+    NUMBER_VALUE = "number_value"
+    BOOLEAN_VALUE = "boolean_value"
     LIST = "list"
     CLOSE = "close"
     UNMATCHED_CLOSE = "unmatched_close"
@@ -75,6 +82,9 @@ def _tokens(text: str) -> tuple[list[_Token], ConditionDiagnostic | None]:
             else:
                 code = ConditionLintCode.BRACKET if character == "[" else ConditionLintCode.QUOTE
                 return result, ConditionDiagnostic(code, start, len(text))
+        elif character in "+-.0123456789" and (number := NUMBER_LITERAL.match(text, position)) is not None:
+            position = number.end()
+            result.append(_Token("number", number[0], start, position))
         elif character.isalpha():
             position += 1
             while position < len(text) and (text[position].isalnum() or text[position] == "_"):
@@ -152,15 +162,18 @@ class _Parser:
                 ConditionDiagnostic(ConditionLintCode.AMBIGUOUS_COLUMN, token.start, token.end, token.text)
             )
         self.index += 1
+        literal_type = (
+            matches[0].literal_type if len(matches) == 1 and matches[0].available else ConditionLiteralType.QUOTED
+        )
         operator = self.operator()
         if operator.is_null_test:
             return
         if operator.is_membership and not self.take("("):
             self.fail(ConditionLintCode.LIST)
-        self.value()
+        self.value(literal_type)
         if operator.is_membership:
             while self.take(","):
-                self.value()
+                self.value(literal_type)
             if not self.take(")"):
                 self.fail(ConditionLintCode.LIST)
 
@@ -173,9 +186,17 @@ class _Parser:
         self.index = start
         return self.fail(ConditionLintCode.OPERATOR)
 
-    def value(self) -> None:
-        if self.current.kind != "value":
-            self.fail(ConditionLintCode.VALUE)
+    def value(self, literal_type: ConditionLiteralType) -> None:
+        token = self.current
+        if token.kind != "value":
+            if literal_type == ConditionLiteralType.NUMBER:
+                if token.kind != "number":
+                    self.fail(ConditionLintCode.NUMBER_VALUE)
+            elif literal_type == ConditionLiteralType.BOOLEAN:
+                if token.kind != "word" or token.text not in {"TRUE", "FALSE"}:
+                    self.fail(ConditionLintCode.BOOLEAN_VALUE)
+            else:
+                self.fail(ConditionLintCode.VALUE)
         self.index += 1
 
 
