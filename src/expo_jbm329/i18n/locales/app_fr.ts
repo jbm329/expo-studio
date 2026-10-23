@@ -2245,34 +2245,24 @@ Consultez les journaux pour plus d'informations.</translation>
 </context><context>
     <name>ConditionDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="152" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="153" />
         <source>Build condition</source>
         <translation>Créer une condition</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="160" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="162" />
         <source>This text was edited manually. Apply will replace it. Cancel keeps the original text.</source>
         <translation>Ce texte a été modifié manuellement. Appliquer le remplacera. Annuler conserve le texte initial.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="166" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="168" />
         <source>Ambiguous column names are unavailable. Rename them before building conditions.</source>
         <translation>Les noms de colonnes ambigus ne sont pas disponibles. Renommez-les avant de créer des conditions.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="171" />
-        <source>All rules (AND)</source>
-        <translation>Toutes les règles (AND)</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="172" />
-        <source>Any rule (OR)</source>
-        <translation>Au moins une règle (OR)</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="181" />
-        <source>Add rule</source>
-        <translation>Ajouter une règle</translation>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="175" />
+        <source>Drag a handle onto a rule to create an AND group. Drop onto a group to add to it; use row edges to reorder.</source>
+        <translation>Glissez une poignée sur une règle pour créer un groupe AND. Déposez-la sur un groupe pour l'y ajouter ; utilisez les bords des lignes pour réordonner.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="188" />
@@ -2280,9 +2270,33 @@ Consultez les journaux pour plus d'informations.</translation>
         <translation>Appliquer</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="254" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="284" />
         <source>Complete every rule before applying.</source>
         <translation>Complétez toutes les règles avant d'appliquer.</translation>
+    </message>
+    <message>
+        <source>Add rule</source>
+        <translation type="vanished">Ajouter une règle</translation>
+    </message>
+    <message>
+        <source>All rules (AND)</source>
+        <translation type="vanished">Toutes les règles (AND)</translation>
+    </message>
+    <message>
+        <source>Any rule (OR)</source>
+        <translation type="vanished">Au moins une règle (OR)</translation>
+    </message>
+</context><context>
+    <name>ConditionDragHandle</name>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="51" />
+        <source>Move rule or group</source>
+        <translation>Déplacer une règle ou un groupe</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="52" />
+        <source>Drag to move or group. Click for more actions.</source>
+        <translation>Glissez pour déplacer ou regrouper. Cliquez pour plus d'actions.</translation>
     </message>
 </context><context>
     <name>ConditionEditor</name>
@@ -2382,6 +2396,58 @@ Consultez les journaux pour plus d'informations.</translation>
         <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="81" />
         <source>Remove rule</source>
         <translation>Supprimer la règle</translation>
+    </message>
+</context><context>
+    <name>ConditionTreeWidget</name>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="307" />
+        <source>All rules (AND)</source>
+        <translation>Toutes les règles (AND)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="308" />
+        <source>Any rule (OR)</source>
+        <translation>Au moins une règle (OR)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="310" />
+        <source>Group operator</source>
+        <translation>Opérateur du groupe</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="311" />
+        <source>Choose how the rules in this group are combined.</source>
+        <translation>Choisissez comment combiner les règles de ce groupe.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="321" />
+        <source>Add rule</source>
+        <translation>Ajouter une règle</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="387" />
+        <source>Move up</source>
+        <translation>Monter</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="388" />
+        <source>Move down</source>
+        <translation>Descendre</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="389" />
+        <source>Group with previous (AND)</source>
+        <translation>Regrouper avec l'élément précédent (AND)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="390" />
+        <source>Move out of group</source>
+        <translation>Sortir du groupe</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="391" />
+        <source>Ungroup (use parent operator)</source>
+        <translation>Dissocier (utiliser l'opérateur parent)</translation>
     </message>
 </context><context>
     <name>ConditionValuePicker</name>

@@ -14,18 +14,18 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
+from expo_jbm329.gui.dialogs.workflows.reshape.condition_tree_widget import ConditionTreeWidget
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_value_picker import ConditionValuePicker
+from expo_jbm329.services.data_operations.reshape_condition_tree import ConditionNode
 from expo_jbm329.services.data_operations.reshape_conditions import (
     ConditionColumn,
     ConditionError,
     ConditionGroup,
-    ConditionMatch,
     ConditionOperator,
     ConditionRule,
     format_condition,
@@ -114,7 +114,8 @@ class ConditionRuleWidget(QWidget):
 
     def restore(self, rule: ConditionRule) -> None:
         """Restore an applied rule without parsing its generated expression."""
-        self.column.setCurrentIndex(self.column.findData(rule.column))
+        index = next((index for index in range(self.column.count()) if self.column.itemData(index) == rule.column), -1)
+        self.column.setCurrentIndex(index)
         self.operator.setCurrentIndex(self.operator.findData(rule.operator))
         self._configure()
         self.picker.configure(
@@ -154,6 +155,7 @@ class ConditionDialog(QDialog):
         self._columns = tuple(columns)
         self.applied_group: ConditionGroup | None = None
         self.rules: list[ConditionRuleWidget] = []
+        self._rule_nodes: dict[str, ConditionRuleWidget] = {}
         root = QVBoxLayout(self)
         if replaces_manual_text:
             warning = QLabel(
@@ -167,20 +169,18 @@ class ConditionDialog(QDialog):
             )
             warning.setWordWrap(True)
             root.addWidget(warning)
-        self.match = QComboBox(self)
-        self.match.addItem(self.tr("All rules (AND)"), ConditionMatch.ALL)
-        self.match.addItem(self.tr("Any rule (OR)"), ConditionMatch.ANY)
-        root.addWidget(self.match)
-        scroll = QScrollArea(self)
-        scroll.setWidgetResizable(True)
-        self._rule_panel = QWidget(scroll)
-        self._rule_layout = QVBoxLayout(self._rule_panel)
-        self._rule_layout.addStretch()
-        scroll.setWidget(self._rule_panel)
-        root.addWidget(scroll, 1)
-        self.add_button = QPushButton(self.tr("Add rule"), self)
-        self.add_button.setAutoDefault(False)
-        root.addWidget(self.add_button)
+        self.tree = ConditionTreeWidget(self)
+        self.match = self.tree.connectors[self.tree.model.root.key]
+        guidance = QLabel(
+            self.tr(
+                "Drag a handle onto a rule to create an AND group. "
+                "Drop onto a group to add to it; use row edges to reorder."
+            ),
+            self,
+        )
+        guidance.setWordWrap(True)
+        root.addWidget(guidance)
+        root.addWidget(self.tree, 1)
         self.validation = QLabel(self)
         self.validation.setWordWrap(True)
         root.addWidget(self.validation)
@@ -191,22 +191,46 @@ class ConditionDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         root.addWidget(buttons)
-        self.add_button.clicked.connect(self.add_rule)
-        self.match.currentIndexChanged.connect(self._validate)
+        self.tree.add_requested.connect(self._add_to_group)
+        self.tree.changed.connect(self._validate)
         self.finished.connect(self._invalidate_all)
         if initial is not None:
+            self.tree.model.root.match = initial.match
             self.match.setCurrentIndex(self.match.findData(initial.match))
-            for rule in initial.rules:
-                self.add_rule().restore(rule)
+            self._restore(initial, self.tree.model.root)
+            self.tree.refresh()
         else:
             self.add_rule()
         self._validate()
 
-    def add_rule(self) -> ConditionRuleWidget:
+    def _add_to_group(self, candidate: object) -> None:
+        if not isinstance(candidate, ConditionNode):
+            message = "A condition rule requires a group destination."
+            raise TypeError(message)
+        self.add_rule(candidate)
+
+    def _restore(self, group: ConditionGroup, parent: ConditionNode) -> None:
+        for child in group.rules:
+            if isinstance(child, ConditionGroup):
+                node = ConditionNode(child.match)
+                parent.children.append(node)
+                self._restore(child, node)
+            else:
+                node = self.tree.model.add_rule(parent)
+                self._create_rule(node).restore(child)
+
+    def add_rule(self, parent: ConditionNode | None = None) -> ConditionRuleWidget:
         """Append an independent rule and connect its request signals."""
-        rule = ConditionRuleWidget(self._columns, self._rule_panel)
+        node = self.tree.model.add_rule(parent if parent is not None else self.tree.insertion_group())
+        rule = self._create_rule(node)
+        self.tree.refresh()
+        return rule
+
+    def _create_rule(self, node: ConditionNode) -> ConditionRuleWidget:
+        rule = ConditionRuleWidget(self._columns, self.tree.panel)
         self.rules.append(rule)
-        self._rule_layout.insertWidget(self._rule_layout.count() - 1, rule)
+        self._rule_nodes[node.key] = rule
+        self.tree.attach_rule(node, rule)
 
         def request_page(request: object) -> None:
             self.page_requested.emit(rule.picker, request)
@@ -222,22 +246,28 @@ class ConditionDialog(QDialog):
         """Remove a rule and invalidate its outstanding requests immediately."""
         rule.picker.invalidate()
         self.rules.remove(rule)
-        self._rule_layout.removeWidget(rule)
-        rule.deleteLater()
-        self._validate()
+        key = next(key for key, editor in self._rule_nodes.items() if editor is rule)
+        node = next(node for node in self.tree.model.nodes() if node.key == key)
+        self.tree.model.remove_rule(node)
+        del self._rule_nodes[key]
+        self.tree.refresh()
 
     def build_group(self) -> ConditionGroup | None:
         """Capture complete rules without accepting incomplete/loading state."""
-        rules: list[ConditionRule] = []
-        for widget in self.rules:
-            rule = widget.build_rule()
-            if rule is None:
-                return None
-            rules.append(rule)
-        mode = self.match.currentData()
-        if not rules or not isinstance(mode, ConditionMatch):
-            return None
-        return ConditionGroup(tuple(rules), mode)
+
+        def capture(node: ConditionNode) -> ConditionRule | ConditionGroup | None:
+            if node.match is None:
+                return self._rule_nodes[node.key].build_rule()
+            children: list[ConditionRule | ConditionGroup] = []
+            for child in node.children:
+                value = capture(child)
+                if value is None:
+                    return None
+                children.append(value)
+            return ConditionGroup(tuple(children), node.match) if children else None
+
+        group = capture(self.tree.model.root)
+        return group if isinstance(group, ConditionGroup) else None
 
     def accept(self) -> None:
         """Capture valid state before closing invalidates pending requests."""
@@ -254,5 +284,6 @@ class ConditionDialog(QDialog):
         self.validation.setText("" if group is not None else self.tr("Complete every rule before applying."))
 
     def _invalidate_all(self) -> None:
+        self.tree.stop_drag_scroll()
         for rule in self.rules:
             rule.picker.invalidate()

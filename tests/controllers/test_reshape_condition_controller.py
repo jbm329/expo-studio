@@ -6,9 +6,11 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 from PyQt6 import sip
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QWidget
 
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
+from expo_jbm329.services.data_operations.reshape_condition_tree import ConditionDrop
 from expo_jbm329.services.data_operations.reshape_condition_values import ValuePage, ValuePageRequest
 from expo_jbm329.services.data_operations.reshape_conditions import ConditionOperator, ConditionProblem, ConditionValue
 from expo_jbm329.workbench.controllers import reshape_condition_controller as module
@@ -161,3 +163,52 @@ def test_independent_rule_jobs_and_destroyed_dialog(monkeypatch) -> None:
         callback["on_finished"]()
     assert editor.text.text() == ""
     assert async_ops.job_mgr.cancel_job.call_count == 2
+
+
+def test_nested_loading_rules_move_without_restarting_jobs_and_close_cancels_all(monkeypatch):
+    parent = QWidget()
+    editor = ConditionEditor(parent)
+    editor.text.setText("manual")
+    async_ops = MagicMock()
+    async_ops.job_mgr.get_job_id.side_effect = ["first", "second", "third"]
+    callbacks = []
+
+    def execute(dialog):
+        dialog.add_rule()
+        dialog.add_rule()
+        for rule in dialog.rules:
+            rule.column.setCurrentIndex(1)
+            rule.picker._timer.stop()
+            dialog.page_requested.emit(rule.picker, ValuePageRequest(0))
+            callbacks.append(async_ops.run_operation.call_args.kwargs)
+        tree = dialog.tree
+        first, second, third = tree.model.root.children
+        generations = [rule.picker.generation for rule in dialog.rules]
+        tree.move_node(second, first, ConditionDrop.INTO)
+        inner = tree.model.parent(first)
+        tree.move_node(inner, third, ConditionDrop.INTO)
+        assert [rule.picker.generation for rule in dialog.rules] == generations
+        assert async_ops.run_operation.call_count == 3
+        async_ops.job_mgr.cancel_job.assert_not_called()
+        assert not dialog.apply_button.isEnabled()
+        callbacks[0]["on_result"](callbacks[0]["work"]())
+        picker = dialog.rules[0].picker
+        picker.values_list.item(0).setCheckState(Qt.CheckState.Checked)
+        assert picker.selected_values() == (ConditionValue("string", "x"),)
+        tree.perform_action(first, "outdent")
+        assert picker.selected_values() == (ConditionValue("string", "x"),)
+        removed = dialog.rules[1]
+        dialog.remove_rule(removed)
+        async_ops.job_mgr.cancel_job.assert_called_once_with("second")
+        assert callbacks[1]["stale_check"]()
+        callbacks[1]["on_error"]("removed")
+        dialog.reject()
+        return dialog.result()
+
+    monkeypatch.setattr(module.ConditionDialog, "exec", execute)
+    module.ReshapeConditionController(async_ops, MagicMock()).open_dialog(parent, editor, pd.DataFrame({"a": ["x"]}))
+    assert {call.args[0] for call in async_ops.job_mgr.cancel_job.call_args_list} == {"first", "second", "third"}
+    for callback in callbacks:
+        assert callback["stale_check"]()
+        callback["on_result"](ValuePage((), False))
+    assert editor.text.text() == "manual"

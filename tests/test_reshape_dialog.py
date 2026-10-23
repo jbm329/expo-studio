@@ -172,6 +172,8 @@ def test_compiled_reshape_translations(qt_app, language):
             assert builder.validation.text() != "Complete every rule before applying."
             assert builder.rules[0].operator.itemText(4) != "Greater than"
             assert builder.rules[0].picker.search.placeholderText() != "Search values"
+            assert builder.match.itemText(0) != "All rules (AND)"
+            assert builder.tree.action_menu(builder.tree.model.root).actions()[0].text() != "Move up"
             assert translate("ReshapeConditionController", "Loading condition values") != "Loading condition values"
         builder.reject()
         dialog.close()
@@ -195,6 +197,8 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
                 "ConditionEditor",
                 "ConditionRuleWidget",
                 "ConditionValuePicker",
+                "ConditionTreeWidget",
+                "ConditionDragHandle",
                 "ReshapeConditionController",
             } and (name, source) not in {
                 ("ToolbarController", "Reshape"),
@@ -214,7 +218,7 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
                 for placeholder in ("{dataset}", "{rows}", "{columns}", "{page}", "{count}"):
                     assert source.count(placeholder) == translation.text.count(placeholder)
             checked += 1
-    assert checked == 61
+    assert checked == 71
 
 
 def test_dimension_search_preserves_checks_order_and_identity():

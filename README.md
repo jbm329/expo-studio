@@ -42,16 +42,25 @@ The project is still in its infancy and may change significantly.
   The builder button requires a nonblank metric name and a selected source column.
   Add metric is available only when every existing metric meets those requirements
   (or no metrics remain).
-  Combine rules using All (AND) or Any (OR), choose a column and operator, and select
+  Combine rules in nested AND/OR groups, choose a column and operator, and select
   distinct values from a searchable dropdown (100 values per page, loaded in the background).
   Values sort ascending across all pages: numbers numerically, followed by other
   values in case-insensitive natural text order (for example, Item 2 before Item 10).
   Each request scans all matching distinct values before sorting and paging.
   IN and NOT IN retain selections across pages and searches; missing values use
   IS NULL or IS NOT NULL, while empty strings remain selectable.
+  Each group has its own AND/OR selector; indentation and branch lines show its scope.
+  Drag a row's handle onto another rule to create an AND group, onto a group to add
+  to it, or onto a row edge to reorder. Entire groups can be moved as well.
+  Click a handle or use the row context menu for move up/down, group with previous,
+  move out of group, and ungroup actions. Ungrouping uses the parent group's operator.
+  Empty and one-child nested groups simplify automatically. Moving rules retains
+  their selections and pending value requests.
   The builder supports `=`, `!=`, `IN`, `NOT IN`, `>`, `>=`, `<`, and `<=`.
   Generated syntax brackets column names and quotes all values, for example
   `[Region] IN ('North', 'South')`; `]` and apostrophes are escaped by doubling.
+  Nested groups generate explicit parentheses, for example
+  `(([Year] = '2019' AND [Clinic] = 'Medicine') OR [Role] = 'Doctor')`.
   Ambiguous column names must be renamed. Unsupported structured values and
   distinct values with identical serialized text are reported when encountered during loading.
   Reopening unchanged generated text restores the builder; manually edited syntax is not parsed,

@@ -95,7 +95,7 @@ class ConditionRule:
 class ConditionGroup:
     """Applied builder state, independent of widgets and manual text."""
 
-    rules: tuple[ConditionRule, ...]
+    rules: tuple[ConditionRule | ConditionGroup, ...]
     match: ConditionMatch = ConditionMatch.ALL
 
 
@@ -171,6 +171,9 @@ def format_condition(group: ConditionGroup) -> str:
         raise ConditionError(ConditionProblem.INVALID_RULE)
     expressions: list[str] = []
     for rule in group.rules:
+        if isinstance(rule, ConditionGroup):
+            expressions.append(format_condition(rule))
+            continue
         if not rule.column.available or rule.column.position < 0:
             raise ConditionError(ConditionProblem.INVALID_RULE)
         operator = rule.operator
