@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 - DuckDB datasource support for existing local files in read-only mode
+- Reshape datasets by dimensions with named SUM, AVG, MIN, MAX, COUNT, and COUNT DISTINCT metrics, optional per-metric conditions with a visual builder, syntax linting and column autocomplete, a five-row preview, and asynchronous result-tab creation with cancellation
 
 ### Fixed
 - The cancel-process toolbar action now updates its translation when the language changes
