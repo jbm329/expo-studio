@@ -7318,93 +7318,98 @@ Sugerencia: {error_hint}</translation>
 </context><context>
     <name>ReshapeController</name>
     <message>
-        <location filename="../../workbench/controllers/reshape_controller.py" line="24" />
+        <location filename="../../workbench/controllers/reshape_controller.py" line="25" />
         <source>Reshape unavailable</source>
         <translation>Remodelación no disponible</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/reshape_controller.py" line="25" />
+        <location filename="../../workbench/controllers/reshape_controller.py" line="26" />
         <source>Select a ready result dataset before opening Reshape.</source>
         <translation>Selecciona un conjunto de datos de resultados listo antes de abrir Remodelar.</translation>
     </message>
 </context><context>
     <name>ReshapeDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="57" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="60" />
         <source>Reshape — {dataset} ({rows} rows × {columns} columns)</source>
         <translation>Remodelar — {dataset} ({rows} filas × {columns} columnas)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="68" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="71" />
         <source>UI only. Aggregation and preview are not available yet.</source>
         <translation>Solo interfaz. La agregación y la vista previa aún no están disponibles.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="74" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="77" />
         <source>Dimensions</source>
         <translation>Dimensiones</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="88" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="91" />
         <source>Metrics</source>
         <translation>Métricas</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="92" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="94" />
+        <source>SUM, AVG, MAX and MIN accept integer and floating-point columns only. COUNT and COUNT DISTINCT accept any column. Changing the function clears an incompatible source selection.</source>
+        <translation>SUM, AVG, MAX y MIN solo aceptan columnas de enteros y de números de coma flotante. COUNT y COUNT DISTINCT aceptan cualquier columna. Al cambiar de función se borra una selección de columna de origen incompatible.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="105" />
         <source>Output column name</source>
         <translation>Nombre de la columna de resultado</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="151" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="93" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="164" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="106" />
         <source>Function</source>
         <translation>Función</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="160" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="94" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="169" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="107" />
         <source>Source column</source>
         <translation>Columna de origen</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="95" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="108" />
         <source>Condition (optional)</source>
         <translation>Condición (opcional)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="108" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="121" />
         <source>Add metric</source>
         <translation>Añadir métrica</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="109" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="122" />
         <source>Remove selected metrics</source>
         <translation>Eliminar métricas seleccionadas</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="118" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="131" />
         <source>Preview (5 rows)</source>
         <translation>Vista previa (5 filas)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="121" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="134" />
         <source>A five-row output preview will be available here in a later step.</source>
         <translation>Aquí estará disponible una vista previa de cinco filas de resultado en una etapa posterior.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="129" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="142" />
         <source>Apply</source>
         <translation>Aplicar</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="156" />
-        <source>Select column</source>
-        <translation>Seleccionar columna</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="166" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="180" />
         <source>SQL-style condition text only. Not validated or executed.</source>
         <translation>Solo texto de condición de estilo SQL. No se valida ni se ejecuta.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="186" />
+        <source>Select column</source>
+        <translation>Seleccionar columna</translation>
     </message>
 </context><context>
     <name>RestAuthWidget</name>

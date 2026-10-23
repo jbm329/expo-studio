@@ -41,6 +41,7 @@ class ReshapeDialog(QDialog):
         parent: QWidget | None,
         source_dataset: DatasetRef,
         source_columns: Sequence[object],
+        numeric_column_positions: Sequence[int],
     ) -> None:
         """Initialize the UI-only aggregation workspace.
 
@@ -48,9 +49,11 @@ class ReshapeDialog(QDialog):
             parent: Parent widget.
             source_dataset: Fixed ready dataset captured when opening the dialog.
             source_columns: Source column labels in their original positional order.
+            numeric_column_positions: Positions with integer or floating-point dtypes.
         """
         super().__init__(parent)
         self._source_columns = tuple(source_columns)
+        self._numeric_column_positions = frozenset(numeric_column_positions)
         self.setWindowFlag(Qt.WindowType.WindowMaximizeButtonHint, True)
         self.setWindowFlag(Qt.WindowType.WindowMinimizeButtonHint, False)
         self.setWindowTitle(
@@ -87,6 +90,16 @@ class ReshapeDialog(QDialog):
 
         metrics_box = QGroupBox(self.tr("Metrics"), self)
         metrics_layout = QVBoxLayout(metrics_box)
+        self.source_column_guidance = QLabel(
+            self.tr(
+                "SUM, AVG, MAX and MIN accept integer and floating-point columns only. "
+                "COUNT and COUNT DISTINCT accept any column. "
+                "Changing the function clears an incompatible source selection."
+            ),
+            metrics_box,
+        )
+        self.source_column_guidance.setWordWrap(True)
+        metrics_layout.addWidget(self.source_column_guidance)
         self.metrics = QTableWidget(0, 4, metrics_box)
         self.metrics.setHorizontalHeaderLabels([
             self.tr("Output column name"),
@@ -153,18 +166,33 @@ class ReshapeDialog(QDialog):
 
         columns = QComboBox(self.metrics)
         columns.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
-        columns.addItem(self.tr("Select column"), None)
-        for position, column in enumerate(self._source_columns):
-            columns.addItem(str(column), position)
-            columns.setItemData(columns.count() - 1, str(column), Qt.ItemDataRole.ToolTipRole)
         columns.setAccessibleName(self.tr("Source column"))
-        columns.setToolTip(columns.currentText())
         columns.currentTextChanged.connect(columns.setToolTip)
         self.metrics.setCellWidget(row, 2, columns)
+
+        def update_source_columns() -> None:
+            self._populate_source_columns(columns, functions.currentText())
+
+        functions.currentIndexChanged.connect(update_source_columns)
+        update_source_columns()
 
         condition = QTableWidgetItem("")
         condition.setToolTip(self.tr("SQL-style condition text only. Not validated or executed."))
         self.metrics.setItem(row, 3, condition)
+
+    def _populate_source_columns(self, columns: QComboBox, function: str) -> None:
+        selected_position = columns.currentData()
+        columns.clear()
+        columns.addItem(self.tr("Select column"), None)
+        all_columns = function in {"COUNT", "COUNT DISTINCT"}
+        for position, column in enumerate(self._source_columns):
+            if all_columns or position in self._numeric_column_positions:
+                columns.addItem(str(column), position)
+                columns.setItemData(columns.count() - 1, str(column), Qt.ItemDataRole.ToolTipRole)
+        if selected_position is not None:
+            selected_index = columns.findData(selected_position)
+            if selected_index >= 0:
+                columns.setCurrentIndex(selected_index)
 
     def _remove_selected_metrics(self) -> None:
         rows = {index.row() for index in self.metrics.selectedIndexes()}

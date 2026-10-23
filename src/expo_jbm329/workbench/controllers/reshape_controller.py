@@ -9,6 +9,7 @@ from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtWidgets import QMessageBox
 
 from expo_jbm329.gui.dialogs.workflows.reshape.reshape_dialog import ReshapeDialog
+from expo_jbm329.services.data_operations.dtypes import get_numeric_column_positions
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.utils.i18n_utils import translate
 
@@ -69,5 +70,6 @@ class ReshapeController:
             parent=self._parent,
             source_dataset=dataset,
             source_columns=list(record.df.columns),
+            numeric_column_positions=get_numeric_column_positions(record.df),
         )
         dialog.exec()

@@ -150,6 +150,10 @@ def test_reshape_context_opens_real_dialog_for_clicked_source(result_tabs_env, m
         assert mgr.active_tab_id() == source_id
         assert "Source" in dialog.windowTitle()
         assert [dialog.dimensions.item(i).text() for i in range(dialog.dimensions.count())] == ["PatientId", "VisitId"]
+        columns = dialog.metrics.cellWidget(0, 2)
+        assert [columns.itemData(i) for i in range(1, columns.count())] == [0]
+        dialog.metrics.cellWidget(0, 1).setCurrentText("COUNT DISTINCT")
+        assert [columns.itemData(i) for i in range(1, columns.count())] == [0, 1]
         assert not dialog.apply_button.isEnabled()
         opened.append(dialog.windowTitle())
         return 0

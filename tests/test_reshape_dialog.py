@@ -13,11 +13,15 @@ from expo_jbm329.utils.format_utils import fmt_int
 from expo_jbm329.utils.i18n_utils import translate
 
 
-def make_dialog(columns: tuple[object, ...] = ("PatientId", "VisitId", "Value")) -> ReshapeDialog:
+def make_dialog(
+    columns: tuple[object, ...] = ("PatientId", "VisitId", "Value"),
+    numeric_positions: tuple[int, ...] = (0, 2),
+) -> ReshapeDialog:
     return ReshapeDialog(
         parent=None,
         source_dataset=DatasetRef("source", "Source <dataset>", 1234, len(columns)),
         source_columns=columns,
+        numeric_column_positions=numeric_positions,
     )
 
 
@@ -56,6 +60,7 @@ def test_metrics_edit_add_remove_and_column_identity():
         "MIN",
     ]
     assert functions.currentData() == "SUM"
+    functions.setCurrentText("COUNT")
     columns = metrics.cellWidget(0, 2)
     assert isinstance(columns, QComboBox)
     assert columns.currentData() is None
@@ -107,7 +112,7 @@ def test_remove_multiple_selected_metrics_and_reopen_discards_configuration():
 
 
 def test_empty_source_and_close_button():
-    dialog = make_dialog(())
+    dialog = make_dialog((), ())
     assert dialog.dimensions.count() == 0
     columns = dialog.metrics.cellWidget(0, 2)
     assert isinstance(columns, QComboBox)
@@ -148,6 +153,7 @@ def test_compiled_reshape_translations(qt_app, language):
             ):
                 assert translate(context, source) != source
             assert "Metrics" not in [box.title() for box in dialog.findChildren(QGroupBox)]
+            assert dialog.source_column_guidance.text() != translate_guidance_source()
         dialog.close()
     finally:
         qt_app.removeTranslator(translator)
@@ -178,4 +184,119 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
                 for placeholder in ("{dataset}", "{rows}", "{columns}"):
                     assert source.count(placeholder) == translation.text.count(placeholder)
             checked += 1
-    assert checked == 19
+    assert checked == 20
+
+
+def translate_guidance_source() -> str:
+    return (
+        "SUM, AVG, MAX and MIN accept integer and floating-point columns only. "
+        "COUNT and COUNT DISTINCT accept any column. "
+        "Changing the function clears an incompatible source selection."
+    )
+
+
+def metric_controls(dialog, row=0):
+    functions = dialog.metrics.cellWidget(row, 1)
+    columns = dialog.metrics.cellWidget(row, 2)
+    assert isinstance(functions, QComboBox)
+    assert isinstance(columns, QComboBox)
+    return functions, columns
+
+
+def offered_positions(columns):
+    return [columns.itemData(index) for index in range(1, columns.count())]
+
+
+@pytest.mark.parametrize("function", ["SUM", "AVG", "MAX", "MIN", "COUNT", "COUNT DISTINCT"])
+def test_function_filters_source_columns_without_changing_dimensions(function):
+    dialog = make_dialog()
+    functions, columns = metric_controls(dialog)
+    assert offered_positions(columns) == [0, 2]
+    assert columns.currentData() is None
+    functions.setCurrentText(function)
+    assert offered_positions(columns) == ([0, 1, 2] if function.startswith("COUNT") else [0, 2])
+    assert columns.currentData() is None
+    assert [dialog.dimensions.item(i).data(Qt.ItemDataRole.UserRole) for i in range(3)] == [0, 1, 2]
+    assert not dialog.apply_button.isEnabled()
+    dialog.close()
+
+
+def test_switch_preserves_eligible_selection_and_clears_incompatible_selection():
+    dialog = make_dialog((1, "1", "duplicate", "duplicate"), (0, 3))
+    functions, columns = metric_controls(dialog)
+    assert offered_positions(columns) == [0, 3]
+    columns.setCurrentIndex(columns.findData(0))
+    for function in ("AVG", "COUNT", "MAX", "MIN", "COUNT DISTINCT", "SUM"):
+        functions.setCurrentText(function)
+        assert columns.currentData() == 0
+        assert columns.toolTip() == "1"
+    functions.setCurrentText("COUNT")
+    columns.setCurrentIndex(columns.findData(1))
+    functions.setCurrentText("AVG")
+    assert columns.currentData() is None
+    assert columns.currentIndex() == 0
+    assert columns.toolTip() == "Select column"
+    functions.setCurrentText("COUNT DISTINCT")
+    assert columns.currentData() is None
+    columns.setCurrentIndex(columns.findData(3))
+    functions.setCurrentText("SUM")
+    assert columns.currentData() == 3
+    assert columns.currentText() == "duplicate"
+    assert offered_positions(columns) == [0, 3]
+    dialog.close()
+
+
+@pytest.mark.parametrize("source_columns", [(), ("text", "flag")])
+def test_no_numeric_columns_still_allows_count_functions(source_columns):
+    dialog = make_dialog(source_columns, ())
+    functions, columns = metric_controls(dialog)
+    assert functions.isEnabled()
+    for function in ("SUM", "AVG", "MIN", "MAX"):
+        functions.setCurrentText(function)
+        assert offered_positions(columns) == []
+        assert columns.currentIndex() == 0
+    for function in ("COUNT", "COUNT DISTINCT"):
+        functions.setCurrentText(function)
+        assert offered_positions(columns) == list(range(len(source_columns)))
+    assert not dialog.apply_button.isEnabled()
+    dialog.close()
+
+
+def test_metric_callbacks_remain_independent_after_removing_earlier_row():
+    dialog = make_dialog()
+    dialog.add_metric_button.click()
+    dialog.add_metric_button.click()
+    first_function, first_columns = metric_controls(dialog)
+    middle_function, middle_columns = metric_controls(dialog, 1)
+    last_function, last_columns = metric_controls(dialog, 2)
+    first_columns.setCurrentIndex(first_columns.findData(0))
+    middle_function.setCurrentText("COUNT")
+    middle_columns.setCurrentIndex(middle_columns.findData(1))
+    dialog.metrics.item(1, 0).setText("Named metric")
+    dialog.metrics.item(1, 3).setText("Value > 0")
+    dialog.dimensions.item(1).setCheckState(Qt.CheckState.Checked)
+    last_columns.setCurrentIndex(last_columns.findData(2))
+    assert first_function.currentText() == "SUM"
+    assert last_function.currentText() == "SUM"
+
+    dialog.metrics.selectRow(0)
+    dialog.remove_metric_button.click()
+    middle_function.setCurrentText("AVG")
+    assert middle_columns.currentData() is None
+    assert last_columns.currentData() == 2
+    assert offered_positions(last_columns) == [0, 2]
+    assert dialog.metrics.item(0, 0).text() == "Named metric"
+    assert dialog.metrics.item(0, 3).text() == "Value > 0"
+    assert dialog.dimensions.item(1).checkState() == Qt.CheckState.Checked
+    last_function.setCurrentText("COUNT DISTINCT")
+    assert last_columns.currentData() == 2
+    assert offered_positions(last_columns) == [0, 1, 2]
+    assert offered_positions(middle_columns) == [0, 2]
+
+    dialog.add_metric_button.click()
+    new_function, new_columns = metric_controls(dialog, 2)
+    assert new_function.currentText() == "SUM"
+    assert offered_positions(new_columns) == [0, 2]
+    assert new_columns.currentData() is None
+    assert not dialog.apply_button.isEnabled()
+    dialog.close()
