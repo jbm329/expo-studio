@@ -205,8 +205,8 @@ def test_dialog_aggregates_pending_errors_removal_and_builder_readiness():
     dialog.metrics.selectRow(1)
     dialog.remove_metric_button.click()
     assert dialog.conditions_valid
-    assert not dialog.apply_button.isEnabled()
-    assert "Creating a result dataset" in dialog.apply_button.toolTip()
+    assert dialog.apply_button.isEnabled()
+    assert "Apply creates a new result dataset" in dialog.apply_button.toolTip()
     dialog.close()
 
 

@@ -4,12 +4,68 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
-from PyQt6.QtCore import QPoint
+from PyQt6.QtCore import QObject, QPoint
 from PyQt6.QtWidgets import QMenu
 
 from expo_jbm329.gui.dialogs.workflows.reshape.reshape_dialog import ReshapeDialog
+from expo_jbm329.services.data_operations.reshape_preview import ReshapeFunction, ReshapeMetric, ReshapeRequest
 from expo_jbm329.workbench.controllers.reshape_controller import ReshapeController
 from tests.result_tabs.conftest import make_manager
+
+
+def test_reshape_fulfills_real_pending_tabs_with_unique_titles_and_all_rows(result_tabs_env) -> None:
+    mgr, parent, tabs, _, _, _, _ = make_manager(result_tabs_env)
+    source = pd.DataFrame({"key": list("gfedcba") * 2, "value": range(14)})
+    mgr.display_dataframe(source, title="Source")
+    source_id = mgr.active_tab_id()
+    async_ops = MagicMock()
+    job = QObject()
+    async_ops.run_target_overlay_operation.return_value = job
+    async_ops.job_mgr.get_job_id.return_value = "reshape-job"
+    controller = ReshapeController(parent_widget=parent, results=mgr, async_ops=async_ops)
+    request = ReshapeRequest((0,), (ReshapeMetric("Total", ReshapeFunction.SUM, 1),))
+    titles: list[str] = []
+    for _ in range(2):
+        controller._run_reshape(source, request)
+        pending_id = mgr.active_tab_id()
+        record = mgr.tabs_by_id[pending_id]
+        assert record.is_pending and record.df is None
+        assert record.origin_type == "reshape" and record.job_id == "reshape-job"
+        titles.append(record.title)
+        call = async_ops.run_target_overlay_operation.call_args.kwargs
+        assert call["target"] is record.view
+        frame = call["work"]()
+        call["on_result"](frame)
+        call["on_finished"]()
+        assert record.is_ready
+        assert len(mgr.get_df_by_tab_id(pending_id)) == 7
+        assert mgr.last_df is frame
+        assert tabs.tabText(tabs.currentIndex()) == record.title
+    assert titles[0] == "Reshaped data"
+    assert titles[1].startswith("Reshaped data") and titles[1] != titles[0]
+    assert tabs.count() == 3
+    pd.testing.assert_frame_equal(mgr.get_df_by_tab_id(source_id), source)
+
+
+def test_reshape_pending_tab_close_cancels_bound_job_and_ignores_late_output(result_tabs_env) -> None:
+    mgr, parent, tabs, _, _, _, _ = make_manager(result_tabs_env)
+    async_ops = MagicMock()
+    job = QObject()
+    async_ops.run_target_overlay_operation.return_value = job
+    async_ops.job_mgr.get_job_id.return_value = "reshape-job"
+    cancellation = MagicMock(return_value=True)
+    mgr._cancel_job = cancellation
+    controller = ReshapeController(parent_widget=parent, results=mgr, async_ops=async_ops)
+    source = pd.DataFrame({"value": [1, 2]})
+    controller._run_reshape(source, ReshapeRequest((), (ReshapeMetric("Total", ReshapeFunction.SUM, 0),)))
+    call = async_ops.run_target_overlay_operation.call_args.kwargs
+    frame = call["work"]()
+    mgr.close_tab(tabs.currentIndex())
+    cancellation.assert_called_once_with("reshape-job")
+    assert call["stale_check"]()
+    call["on_result"](frame)
+    call["on_finished"]()
+    assert tabs.count() == 0
 
 
 def test_display_dataframe_creates_tab(result_tabs_env):

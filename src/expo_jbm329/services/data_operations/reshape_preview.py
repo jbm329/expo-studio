@@ -1,4 +1,4 @@
-"""Full-data Reshape calculations with a bounded, output-independent preview."""
+"""Shared full-data Reshape calculations for previews and result datasets."""
 
 from __future__ import annotations
 
@@ -75,7 +75,7 @@ class ReshapeRequest:
 
 @dataclass(frozen=True, slots=True)
 class ReshapePreview:
-    """At most five calculated output rows and the full output row count."""
+    """Calculated output rows and the full output row count."""
 
     request: ReshapeRequest
     frame: pd.DataFrame
@@ -257,6 +257,42 @@ def compute_reshape_preview(
     Raises:
         ReshapeError: If configuration, literals or source data cannot be processed.
     """
+    return _compute_reshape(source, request, row_limit=5, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
+
+def compute_reshape(
+    source: pd.DataFrame,
+    request: ReshapeRequest,
+    *,
+    progress_cb: Callable[[int], None] | None = None,
+    cancel_cb: Callable[[], bool] | None = None,
+) -> pd.DataFrame | None:
+    """Calculate every output group, returning None on cooperative cancellation.
+
+    Args:
+        source: Captured source frame; never mutated.
+        request: Frozen dimensions, metrics and parsed conditions.
+        progress_cb: Optional phase/metric progress callback.
+        cancel_cb: Cooperative cancellation callback.
+
+    Returns:
+        Complete result dataset, or None if cancelled.
+
+    Raises:
+        ReshapeError: If configuration, literals or source data cannot be processed.
+    """
+    result = _compute_reshape(source, request, row_limit=None, progress_cb=progress_cb, cancel_cb=cancel_cb)
+    return result.frame if result is not None else None
+
+
+def _compute_reshape(
+    source: pd.DataFrame,
+    request: ReshapeRequest,
+    *,
+    row_limit: int | None,
+    progress_cb: Callable[[int], None] | None,
+    cancel_cb: Callable[[], bool] | None,
+) -> ReshapePreview | None:
     columns = condition_columns(list(source.columns), list(source.dtypes))
     validate_reshape(request, columns, [str(dtype) for dtype in source.dtypes])
     if cancel_cb is not None and cancel_cb():
@@ -275,14 +311,14 @@ def compute_reshape_preview(
         except (TypeError, ValueError) as error:
             raise ReshapeError(ReshapeProblem.DATA, ", ".join(str(name) for name in dimensions.columns)) from error
         _, first = np.unique(codes, return_index=True)
-        frame = dimensions.iloc[first[:5]].reset_index(drop=True).copy()
+        frame = dimensions.iloc[first[:row_limit]].reset_index(drop=True).copy()
         frame.columns = [columns[position].name for position in request.dimensions]
     else:
         codes = np.zeros(len(source), dtype=np.int64)
         total_rows = 1
         frame = pd.DataFrame(index=pd.RangeIndex(1))
     group_ids = pd.Series(codes, index=pd.RangeIndex(len(source)))
-    preview_ids = pd.RangeIndex(min(5, total_rows))
+    output_ids = pd.RangeIndex(total_rows if row_limit is None else min(row_limit, total_rows))
     if progress_cb is not None:
         progress_cb(10)
     for index, metric in enumerate(request.metrics):
@@ -309,7 +345,7 @@ def compute_reshape_preview(
                 aggregate = aggregate.astype(
                     "UInt64" if pd.api.types.is_unsigned_integer_dtype(aggregate.dtype) else "Int64"
                 )
-            result = aggregate.reindex(preview_ids)
+            result = aggregate.reindex(output_ids)
             if metric.function in {ReshapeFunction.COUNT, ReshapeFunction.COUNT_DISTINCT}:
                 result = result.fillna(0)
             frame[metric.name] = result

@@ -102,7 +102,7 @@ class ResultTabState(StrEnum):
     READY = "ready"
 
 
-ResultOrigin = Literal["file", "sql", "derived", "join", "concat", "unknown"]
+ResultOrigin = Literal["file", "sql", "derived", "join", "concat", "reshape", "unknown"]
 MIN_MULTI_COLUMN_SELECTION = 2
 
 

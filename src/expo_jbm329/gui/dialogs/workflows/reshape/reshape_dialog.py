@@ -79,6 +79,7 @@ class ReshapeDialog(QDialog):
         self._revision = 0
         self._preview_busy = False
         self._has_preview = False
+        self.applied_request: ReshapeRequest | None = None
         self._source_dtypes = tuple(source_dtypes)
         self._source_columns = tuple(source_columns)
         self._condition_columns = condition_columns(self._source_columns, source_dtypes)
@@ -101,7 +102,7 @@ class ReshapeDialog(QDialog):
         root = QVBoxLayout(self)
         root.setContentsMargins(12, 12, 12, 12)
         root.setSpacing(12)
-        notice = QLabel(self.tr("Preview uses the full dataset. Creating a result dataset is not available yet."), self)
+        notice = QLabel(self.tr("Preview uses the full dataset. Apply creates a new result dataset."), self)
         notice.setWordWrap(True)
         root.addWidget(notice)
 
@@ -195,9 +196,11 @@ class ReshapeDialog(QDialog):
         buttons.addButton(self.preview_button, QDialogButtonBox.ButtonRole.ActionRole)
         self.preview_button.clicked.connect(self._request_preview)
         self.apply_button = QPushButton(self.tr("Apply"), self)
+        self.apply_button.setAutoDefault(False)
         self.apply_button.setEnabled(False)
         self.apply_button.setToolTip(notice.text())
         buttons.addButton(self.apply_button, QDialogButtonBox.ButtonRole.ApplyRole)
+        self.apply_button.clicked.connect(self._apply)
         localize_dialog_buttons(buttons)
         buttons.rejected.connect(self.reject)
         root.addWidget(buttons)
@@ -318,6 +321,17 @@ class ReshapeDialog(QDialog):
             return
         self.preview_requested.emit(request)
 
+    def _apply(self) -> None:
+        if self._preview_busy:
+            return
+        try:
+            request = self.capture_request()
+        except ReshapeError as error:
+            self.show_preview_problem(error)
+            return
+        self.applied_request = request
+        self.accept()
+
     def set_preview_busy(self, busy: bool) -> None:
         """Update request controls without blocking configuration or Close."""
         self._preview_busy = busy
@@ -379,12 +393,6 @@ class ReshapeDialog(QDialog):
         return self.conditions_valid
 
     def _update_apply_button(self) -> None:
-        # Execution remains unavailable independently of condition syntax validity.
-        self.apply_button.setEnabled(False)
-        if not self.conditions_valid:
-            self.apply_button.setToolTip(self.tr("Correct condition errors before applying."))
-        else:
-            self.apply_button.setToolTip(self.tr("Creating a result dataset is not available yet."))
         names = [
             str(self._source_columns[position])
             for position in range(self.dimensions.count())
@@ -405,6 +413,12 @@ class ReshapeDialog(QDialog):
                 names.append(name.text().strip())
         unique = len(set(names)) == len(names)
         self.preview_button.setEnabled(ready and unique and not self._preview_busy)
+        self.apply_button.setEnabled(ready and unique and not self._preview_busy)
+        self.apply_button.setToolTip(
+            self.tr("Correct condition errors before applying.")
+            if not self.conditions_valid
+            else self.tr("Apply creates a new result dataset.")
+        )
         self.preview_button.setToolTip(
             self.tr("Output column names must be unique across dimensions and metrics.")
             if not unique

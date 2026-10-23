@@ -1,4 +1,4 @@
-"""Reshape configuration and asynchronous, source-bound preview orchestration."""
+"""Reshape configuration, preview and asynchronous result-tab orchestration."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6 import sip
 from PyQt6.QtCore import QT_TR_NOOP, QObject
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QDialog, QMessageBox
 
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
 from expo_jbm329.gui.dialogs.workflows.reshape.reshape_dialog import ReshapeDialog
@@ -18,6 +18,7 @@ from expo_jbm329.services.data_operations.reshape_preview import (
     ReshapeError,
     ReshapePreview,
     ReshapeRequest,
+    compute_reshape,
     compute_reshape_preview,
 )
 from expo_jbm329.utils.dataset_ref import DatasetRef
@@ -43,6 +44,8 @@ class ReshapeController:
     TR_OPERATION = QT_TR_NOOP("Reshape preview")
     TR_CANCELLED = QT_TR_NOOP("Preview cancelled. Press Preview to try again.")
     TR_FAILED = QT_TR_NOOP("Preview failed. Check the selected data and conditions, then try again.")
+    TR_RESULT = QT_TR_NOOP("Reshaped data")
+    TR_RESHAPING = QT_TR_NOOP("Reshaping dataset...")
 
     def __init__(
         self,
@@ -57,7 +60,7 @@ class ReshapeController:
         Args:
             parent_widget: Parent for configuration and warning dialogs.
             results: Manager owning dataset readiness and identity.
-            async_ops: Workbench job facade for loading condition values.
+            async_ops: Workbench job facade for condition values, previews and results.
             logger: Optional UI logger.
         """
         self._parent = parent_widget
@@ -107,7 +110,70 @@ class ReshapeController:
 
         dialog.condition_requested.connect(open_condition)
         self._connect_preview(dialog, source)
-        dialog.exec()
+        if dialog.exec() == QDialog.DialogCode.Accepted and dialog.applied_request is not None:
+            self._run_reshape(source, dialog.applied_request)
+
+    def _run_reshape(self, source: pd.DataFrame, request: ReshapeRequest) -> None:
+        """Create a pending result tab and run the captured configuration."""
+        corr_id = uuid.uuid4().hex
+        pending = self._results.create_pending_tab(
+            title=self._tr(self.TR_RESULT),
+            origin_type="reshape",
+            remove_on_cancel=True,
+            remove_on_error=True,
+            close_cancels_job=True,
+        )
+        tab_id = pending.tab_id
+
+        def stale() -> bool:
+            record = self._results.tabs_by_id.get(tab_id)
+            return record is None or not record.is_pending
+
+        def work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
+            return compute_reshape(source, request, progress_cb=progress_cb, cancel_cb=cancel_cb)
+
+        def result(frame: pd.DataFrame | None) -> None:
+            if stale():
+                return
+            if frame is None:
+                self._results.remove_pending_tab(tab_id)
+                self._logger.info("Reshape cancelled (corr=%s, tab_id=%s).", corr_id, tab_id)
+                return
+            self._results.fulfill_pending_tab(tab_id, frame)
+            self._logger.info("Reshape completed (corr=%s, tab_id=%s, rows=%d).", corr_id, tab_id, len(frame))
+
+        def finished() -> None:
+            if not stale():
+                self._results.remove_pending_tab(tab_id)
+
+        job = self._async_ops.run_target_overlay_operation(
+            target=pending.view,
+            runner="pool",
+            work=work,
+            on_result=result,
+            on_finished=finished,
+            busy_message=self._tr(self.TR_RESHAPING),
+            operation_name=self._tr(self.TR_RESULT),
+            scope=f"reshape:{tab_id}",
+            corr_id=corr_id,
+            stale_check=stale,
+            cancelable=True,
+            indeterminate=False,
+            timeout_ms=0,
+            show_status_progress=False,
+            show_started_in_status=False,
+            suppress_error_dialog=False,
+        )
+        job_id = self._async_ops.job_mgr.get_job_id(job if isinstance(job, QObject) else None)
+        if job_id is not None:
+            self._results.bind_job_to_tab(tab_id, job_id)
+        else:
+            self._logger.warning("Reshape job could not be bound (corr=%s, tab_id=%s).", corr_id, tab_id)
 
     def _connect_preview(self, dialog: ReshapeDialog, source: pd.DataFrame) -> None:
         closed = False

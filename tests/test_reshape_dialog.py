@@ -47,7 +47,7 @@ def test_fixed_title_dimensions_and_initial_preview():
         "Configure metrics and press Preview to calculate up to five output rows."
     )
     assert not dialog.apply_button.isEnabled()
-    assert "Creating a result dataset" in dialog.apply_button.toolTip()
+    assert "Apply creates a new result dataset" in dialog.apply_button.toolTip()
     dialog.close()
 
 
@@ -180,6 +180,10 @@ def test_compiled_reshape_translations(qt_app, language):
                 ("ConditionEditor", "Expected AND, OR or a closing parenthesis )."),
                 ("ReshapeDialog", "Preview"),
                 ("ReshapeController", "Calculating Reshape preview..."),
+                ("ReshapeController", "Reshaped data"),
+                ("ReshapeController", "Reshaping dataset..."),
+                ("ReshapeDialog", "Preview uses the full dataset. Apply creates a new result dataset."),
+                ("ReshapeDialog", "Apply creates a new result dataset."),
                 (
                     "ConditionEditor",
                     "Expected an unquoted number, for example 18. Remove single quotes from numeric values.",
@@ -257,7 +261,7 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
                 ):
                     assert source.count(placeholder) == translation.text.count(placeholder)
             checked += 1
-    assert checked == 101
+    assert checked == 103
 
 
 def test_dimension_search_preserves_checks_order_and_identity():

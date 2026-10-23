@@ -11,9 +11,54 @@ from expo_jbm329.services.data_operations.reshape_preview import (
     ReshapeMetric,
     ReshapeProblem,
     ReshapeRequest,
+    compute_reshape,
     compute_reshape_preview,
     evaluate_condition,
 )
+
+
+@pytest.mark.parametrize("dimensions", [(0,), ()])
+def test_full_result_matches_preview_and_includes_every_output_group(dimensions) -> None:
+    source = pd.DataFrame({
+        "group": ["G", "F", None, "E", "D", "C", "B", "A"] * 3,
+        "value": pd.Series(range(24), dtype="Int64"),
+    })
+    original = source.copy(deep=True)
+    request = ReshapeRequest(
+        dimensions, tuple(metric(source, function, "[value] >= 8") for function in ReshapeFunction)
+    )
+    preview = compute_reshape_preview(source, request)
+    progress: list[int] = []
+    result = compute_reshape(source, request, progress_cb=progress.append)
+    assert result is not None and preview is not None
+    assert len(result) == preview.total_rows == (8 if dimensions else 1)
+    pd.testing.assert_frame_equal(result.head(5), preview.frame)
+    assert progress[0] == 0 and progress[-1] == 100
+    if dimensions:
+        assert result["group"].iloc[-1] == "A"
+        assert result["SUM"].iloc[-1] == 38
+        assert result["COUNT"].iloc[-1] == 2
+    pd.testing.assert_frame_equal(source, original)
+
+
+@pytest.mark.parametrize("dimensions", [(0,), ()])
+def test_full_result_empty_source_preserves_preview_semantics(dimensions) -> None:
+    source = pd.DataFrame({"key": pd.Series([], dtype="string"), "value": pd.Series([], dtype="Int64")})
+    request = ReshapeRequest(dimensions, tuple(metric(source, function) for function in ReshapeFunction))
+    result = compute_reshape(source, request)
+    preview = compute_reshape_preview(source, request)
+    assert result is not None and preview is not None
+    pd.testing.assert_frame_equal(result, preview.frame)
+
+
+def test_full_result_cancellation_and_invalid_values_are_not_success_results() -> None:
+    source = pd.DataFrame({"key": ["A"], "value": [1]})
+    request = ReshapeRequest((0,), (metric(source, "SUM"),))
+    assert compute_reshape(source, request, cancel_cb=lambda: True) is None
+    invalid = ReshapeRequest((0,), (metric(source, "SUM", "[value] > 1e999"),))
+    with pytest.raises(ReshapeError) as caught:
+        compute_reshape(source, invalid)
+    assert caught.value.problem == ReshapeProblem.VALUE
 
 
 def program(frame, text):

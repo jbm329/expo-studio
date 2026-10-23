@@ -64,6 +64,7 @@ def test_real_results_overlay_target_and_repeat_requests():
     assert not dialog.apply_button.isEnabled()
     call["on_finished"]()
     assert dialog.preview_button.isEnabled()
+    assert dialog.apply_button.isEnabled()
     second = dispatch(dialog, async_ops)
     assert call["corr_id"] != second["corr_id"]
     assert source["value"].tolist() == [1, 2, 3]

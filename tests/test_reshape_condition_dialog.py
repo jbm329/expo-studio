@@ -220,5 +220,5 @@ def test_metric_button_follows_editor_identity_after_row_deletion_and_resize(qt_
         qt_app.processEvents()
         assert editor.button.geometry().right() == editor.width() - 1
         assert editor.text.geometry().right() < editor.button.geometry().left()
-    assert not dialog.apply_button.isEnabled()
+    assert dialog.apply_button.isEnabled()
     dialog.close()

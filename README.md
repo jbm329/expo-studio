@@ -36,7 +36,7 @@ The project is still in its infancy and may change significantly.
 
 ### 📊 Data Operations
 - **Data Preparation**: Built-in tools for joining and concatenating datasets within the workbench.
-- **Reshape (preview)**: Configure dimensions and named aggregation metrics for the active ready dataset.
+- **Reshape**: Create a grouped dataset with dimensions and named aggregation metrics for the active ready dataset.
   Open Reshape after Concatenate in the toolbar or from a result tab's context menu.
   Each condition is editable text with a right-hand `...` button opening a visual builder.
   Focusing or clicking the condition field opens a floating multiline editor over
@@ -104,13 +104,16 @@ The project is still in its infancy and may change significantly.
   Object/category literals resolve using the picker's canonical scalar text without
   changing source dtypes; ambiguous representations or unsupported comparisons are errors.
   Closing the dialog cancels pending work and discards late callbacks.
-  The main Reshape Apply remains disabled.
+  Apply closes Reshape and calculates all output rows in a new result tab named
+  "Reshaped data" (uniquely numbered when needed). Preview is optional.
+  The pending tab shows a cancellable busy overlay; closing it cancels its job,
+  and cancelled or failed operations remove the pending tab.
   SUM and AVG offer existing integer/float columns only. MIN and MAX also offer
   datetime columns, including timezone-aware timestamps, while COUNT and
   COUNT DISTINCT offer all columns. Changing the function clears an incompatible source selection.
   Dimensions include all columns, show their storage dtypes, and support case-insensitive
   column-name search. Searching preserves checked dimensions, including hidden ones.
-  Result creation, pivot, and unpivot are not available yet.
+  Pivot and unpivot are not available yet.
 - **Data Transformation**: Apply transformations to datasets using a visual interface.
 - **Export Capabilities**: Export query results to multiple formats including **CSV**, **feather**, **parquet**, and more.
 - **Dataset Analysis**: Integrated data profiling (via `fg-data-profiling`) for in-depth dataset statistics.
