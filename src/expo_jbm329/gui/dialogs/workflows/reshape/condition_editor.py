@@ -6,7 +6,7 @@ import html
 from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QEvent, QPoint, QSignalBlocker, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QFocusEvent, QKeyEvent
+from PyQt6.QtGui import QColor, QFocusEvent, QHelpEvent, QKeyEvent, QTextCharFormat, QTextCursor
 from PyQt6.QtWidgets import (
     QApplication,
     QFrame,
@@ -14,13 +14,22 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QPlainTextEdit,
     QPushButton,
+    QTextEdit,
+    QToolTip,
     QVBoxLayout,
     QWidget,
 )
 
-from expo_jbm329.services.data_operations.reshape_conditions import ConditionGroup, format_condition
+from expo_jbm329.services.data_operations.reshape_condition_lint import (
+    ConditionDiagnostic,
+    ConditionLintCode,
+    lint_condition,
+)
+from expo_jbm329.services.data_operations.reshape_conditions import ConditionColumn, ConditionGroup, format_condition
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from PyQt6.QtCore import QObject
     from PyQt6.QtGui import QHideEvent
 
@@ -29,19 +38,23 @@ class ConditionEditor(QWidget):
     """Own manual text and the last applied builder group for one metric."""
 
     builder_requested = pyqtSignal()
+    validity_changed = pyqtSignal()
 
-    def __init__(self, parent: QWidget) -> None:
+    def __init__(self, parent: QWidget, columns: Sequence[ConditionColumn] = ()) -> None:
         """Build the text field and its right-aligned builder button."""
         super().__init__(parent)
         self._applied: ConditionGroup | None = None
         self._expression: str | None = None
+        self._columns = tuple(columns)
+        self.diagnostics: tuple[ConditionDiagnostic, ...] = ()
+        self.lint_pending = False
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         self.text = QLineEdit(self)
         self.text.setAccessibleName(self.tr("Condition"))
         self._empty_tooltip = self.tr(
-            "Edit condition syntax or use the builder. Manual syntax is not validated or executed."
+            "Edit condition syntax or use the builder. Syntax and column names are checked; values are not evaluated."
         )
         self.text.setToolTip(self._empty_tooltip)
         self.button = QPushButton("...", self)
@@ -66,14 +79,112 @@ class ConditionEditor(QWidget):
         self.text.installEventFilter(self)
         self.popup.installEventFilter(self)
         self.expanded_text.installEventFilter(self)
+        viewport = self.expanded_text.viewport()
+        if viewport is not None:
+            viewport.installEventFilter(self)
+        self._lint_timer = QTimer(self)
+        self._lint_timer.setSingleShot(True)
+        self._lint_timer.setInterval(200)
+        self._lint_timer.timeout.connect(self.validate_now)
         self.text.textChanged.connect(self._sync_expanded_text)
         self.text.textChanged.connect(self._update_collapsed_display)
+        self.text.textChanged.connect(self._schedule_lint)
         self.expanded_text.textChanged.connect(self._sync_inline_text)
+
+    @property
+    def condition_valid(self) -> bool:
+        """Return whether diagnostics describe the latest text and contain no errors."""
+        return not self.lint_pending and not self.diagnostics
+
+    def _schedule_lint(self) -> None:
+        self.lint_pending = True
+        self.diagnostics = ()
+        self._render_diagnostics()
+        self.validity_changed.emit()
+        if self.text.text().strip():
+            self._lint_timer.start()
+        else:
+            self.validate_now()
+
+    def validate_now(self) -> bool:
+        """Validate current text synchronously, including edits awaiting debounce."""
+        self._lint_timer.stop()
+        self.diagnostics = lint_condition(self.text.text(), self._columns)
+        self.lint_pending = False
+        self._render_diagnostics()
+        self.validity_changed.emit()
+        return self.condition_valid
+
+    def _diagnostic_message(self, diagnostic: ConditionDiagnostic) -> str:
+        messages = {
+            ConditionLintCode.COLUMN: self.tr("Expected a column name enclosed in [brackets]."),
+            ConditionLintCode.UNKNOWN_COLUMN: self.tr("Column '{name}' does not exist."),
+            ConditionLintCode.AMBIGUOUS_COLUMN: self.tr(
+                "Column '{name}' is ambiguous. Rename duplicate columns first."
+            ),
+            ConditionLintCode.BRACKET: self.tr("Missing closing ] in column name. Escape a literal ] as ]]."),
+            ConditionLintCode.QUOTE: self.tr("Missing closing single quote. Escape an apostrophe as ''."),
+            ConditionLintCode.OPERATOR: self.tr("Expected =, !=, >, >=, <, <=, IN, NOT IN, IS NULL or IS NOT NULL."),
+            ConditionLintCode.VALUE: self.tr("Expected a single-quoted value, for example 'value'."),
+            ConditionLintCode.LIST: self.tr("IN and NOT IN require a nonempty list such as ('value1', 'value2')."),
+            ConditionLintCode.CLOSE: self.tr("Expected a closing parenthesis )."),
+            ConditionLintCode.UNMATCHED_CLOSE: self.tr(
+                "Unmatched closing parenthesis ). Add a matching opening ( or remove this )."
+            ),
+            ConditionLintCode.EXPRESSION: self.tr("Expected a condition or a parenthesized group."),
+            ConditionLintCode.CONNECTOR: self.tr(
+                "Expected AND or OR between conditions, or the end of the expression."
+            ),
+        }
+        return messages[diagnostic.code].format(name=diagnostic.name)
+
+    def _error_tooltip(self) -> str:
+        return "<qt>" + "<br>".join(html.escape(self._diagnostic_message(item)) for item in self.diagnostics) + "</qt>"
+
+    @staticmethod
+    def _qt_position(text: str, position: int) -> int:
+        return len(text[:position].encode("utf-16-le")) // 2
+
+    def _render_diagnostics(self) -> None:
+        error_style = "border: 1px solid #d32f2f;" if self.diagnostics else ""
+        self.text.setStyleSheet(error_style)
+        self.expanded_text.setStyleSheet(error_style)
+        selections: list[QTextEdit.ExtraSelection] = []
+        text = self.expanded_text.toPlainText()
+        for diagnostic in self.diagnostics:
+            start, end = diagnostic.start, diagnostic.end
+            if start == end:
+                start = max(0, start - 1)
+            cursor = self.expanded_text.textCursor()
+            cursor.setPosition(self._qt_position(text, start))
+            cursor.setPosition(self._qt_position(text, end), QTextCursor.MoveMode.KeepAnchor)
+            selection = QTextEdit.ExtraSelection()
+            selection.cursor = cursor
+            selection.format.setUnderlineStyle(QTextCharFormat.UnderlineStyle.WaveUnderline)
+            selection.format.setUnderlineColor(QColor("#d32f2f"))
+            selections.append(selection)
+        self.expanded_text.setExtraSelections(selections)
+        self._update_tooltips()
+
+    def _update_tooltips(self) -> None:
+        value = self.text.text()
+        escaped = html.escape(value).replace("\n", "<br>")
+        tooltip = self._error_tooltip() if self.diagnostics else f"<qt>{escaped}</qt>" if value else self._empty_tooltip
+        self.text.setToolTip(tooltip)
+        self.expanded_text.setToolTip(tooltip)
 
     @override
     def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
         """Open on deliberate field focus and close on Escape without reverting."""
         app = QApplication.instance()
+        if (
+            a0 is self.expanded_text.viewport()
+            and isinstance(a1, QHelpEvent)
+            and a1.type() == QEvent.Type.ToolTip
+            and self.diagnostics
+        ):
+            QToolTip.showText(a1.globalPos(), self._error_tooltip(), self.expanded_text)
+            return True
         if a0 is self.popup and a1 is not None and app is not None:
             if a1.type() == QEvent.Type.Show:
                 app.installEventFilter(self)
@@ -143,11 +254,7 @@ class ConditionEditor(QWidget):
         self.expanded_text.setFocus(Qt.FocusReason.PopupFocusReason)
 
     def _update_collapsed_display(self) -> None:
-        value = self.text.text()
-        escaped = html.escape(value).replace("\n", "<br>")
-        tooltip = f"<qt>{escaped}</qt>" if value else self._empty_tooltip
-        self.text.setToolTip(tooltip)
-        self.expanded_text.setToolTip(tooltip)
+        self._update_tooltips()
         self.text.setCursorPosition(0)
 
     def _sync_expanded_text(self) -> None:
@@ -171,3 +278,4 @@ class ConditionEditor(QWidget):
         self._applied = group
         self._expression = expression
         self.text.setText(expression)
+        self.validate_now()

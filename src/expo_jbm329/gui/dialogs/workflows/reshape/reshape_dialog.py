@@ -27,6 +27,7 @@ from PyQt6.QtWidgets import (
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
 from expo_jbm329.gui.dialogs.workflows.reshape.dimension_delegate import COLUMN_NAME_ROLE, DTYPE_ROLE, DimensionDelegate
+from expo_jbm329.services.data_operations.reshape_conditions import condition_columns
 from expo_jbm329.utils.format_utils import fmt_int
 
 if TYPE_CHECKING:
@@ -62,6 +63,7 @@ class ReshapeDialog(QDialog):
         """
         super().__init__(parent)
         self._source_columns = tuple(source_columns)
+        self._condition_columns = condition_columns(self._source_columns)
         if len(source_dtypes) != len(self._source_columns):
             message = "Source dtype metadata must match the number of source columns."
             raise ValueError(message)
@@ -208,8 +210,9 @@ class ReshapeDialog(QDialog):
         functions.currentIndexChanged.connect(update_source_columns)
         update_source_columns()
 
-        condition = ConditionEditor(self.metrics)
+        condition = ConditionEditor(self.metrics, self._condition_columns)
         condition.builder_requested.connect(lambda: self.condition_requested.emit(condition))
+        condition.validity_changed.connect(self._update_apply_button)
         self.metrics.setCellWidget(row, 3, condition)
 
         def fill_default_name() -> None:
@@ -219,6 +222,30 @@ class ReshapeDialog(QDialog):
         columns.currentIndexChanged.connect(fill_default_name)
         columns.currentIndexChanged.connect(self._update_metric_readiness)
         self._update_metric_readiness()
+
+    @property
+    def conditions_valid(self) -> bool:
+        """Return current aggregate lint validity, treating pending checks as invalid."""
+        return all(
+            isinstance(editor := self.metrics.cellWidget(row, 3), ConditionEditor) and editor.condition_valid
+            for row in range(self.metrics.rowCount())
+        )
+
+    def validate_conditions(self) -> bool:
+        """Flush pending checks before a future execution dispatch."""
+        for row in range(self.metrics.rowCount()):
+            editor = self.metrics.cellWidget(row, 3)
+            if isinstance(editor, ConditionEditor):
+                editor.validate_now()
+        return self.conditions_valid
+
+    def _update_apply_button(self) -> None:
+        # Execution remains unavailable independently of condition syntax validity.
+        self.apply_button.setEnabled(False)
+        if not self.conditions_valid:
+            self.apply_button.setToolTip(self.tr("Correct condition errors before applying."))
+        else:
+            self.apply_button.setToolTip(self.tr("UI only. Aggregation and preview are not available yet."))
 
     def _update_metric_readiness(self) -> None:
         all_ready = True
@@ -236,6 +263,7 @@ class ReshapeDialog(QDialog):
                 condition.button.setEnabled(ready)
             all_ready = all_ready and ready
         self.add_metric_button.setEnabled(all_ready)
+        self._update_apply_button()
 
     def _populate_source_columns(self, columns: QComboBox, function: str) -> None:
         selected_position = columns.currentData()

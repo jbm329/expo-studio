@@ -68,9 +68,17 @@ The project is still in its infancy and may change significantly.
   `(([Year] = '2019' AND [Clinic] = 'Medicine') OR [Role] = 'Doctor')`.
   Ambiguous column names must be renamed. Unsupported structured values and
   distinct values with identical serialized text are reported when encountered during loading.
-  Reopening unchanged generated text restores the builder; manually edited syntax is not parsed,
+  Reopening unchanged generated text restores the builder; manually edited syntax is not imported into it,
   and applying a new builder selection replaces it (Cancel preserves it).
-  Conditions are not evaluated or type-checked against their operators yet.
+  Manual conditions are linted after typing: column names must be bracketed and
+  match an unambiguous source column exactly; comparison values must be single-quoted.
+  IN/NOT IN require a nonempty list of quoted values; IS NULL/IS NOT NULL take no value.
+  Nested parentheses and mixed AND/OR are supported (AND binds before OR).
+  Red borders and error tooltips identify invalid syntax in both editors; the expanded
+  editor also underlines errors. Empty conditions are valid. Pending or invalid
+  conditions fail the independent condition-validity gate for future execution.
+  Quoted values are not evaluated, looked up, or type-checked against their operators.
+  Autocomplete is not available yet.
   The main Reshape Apply remains disabled, and the inline preview is a placeholder.
   SUM and AVG offer existing integer/float columns only. MIN and MAX also offer
   datetime columns, including timezone-aware timestamps, while COUNT and

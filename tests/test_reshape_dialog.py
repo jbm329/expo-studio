@@ -145,6 +145,13 @@ def test_compiled_reshape_translations(qt_app, language):
     try:
         dialog = make_dialog()
         assert dialog.metrics.cellWidget(0, 3).button.toolTip() == translate("ConditionEditor", "Condition builder")
+        editor = dialog.metrics.cellWidget(0, 3)
+        editor.text.setText("[missing] = 'anything'")
+        assert not editor.validate_now()
+        diagnostic_source = "Column '{name}' does not exist."
+        diagnostic = translate("ConditionEditor", diagnostic_source)
+        assert editor._diagnostic_message(editor.diagnostics[0]) == diagnostic.format(name="missing")
+        assert dialog.apply_button.toolTip() == translate("ReshapeDialog", "Correct condition errors before applying.")
         builder = ConditionDialog(parent=dialog, columns=(ConditionColumn(0, "a", True),))
         assert builder.windowTitle() == translate("ConditionDialog", "Build condition")
         assert builder.rules[0].column.itemText(0) == translate("ConditionRuleWidget", "Select column")
@@ -153,6 +160,7 @@ def test_compiled_reshape_translations(qt_app, language):
         title = translate("ReshapeDialog", source_title)
         assert dialog.windowTitle() == title.format(dataset="Source <dataset>", rows=fmt_int(1234), columns=fmt_int(3))
         if language != "en":
+            assert diagnostic != diagnostic_source
             assert title != source_title
             assert dialog.apply_button.text() != "Apply"
             assert dialog.preview_placeholder.text() != (
@@ -163,6 +171,10 @@ def test_compiled_reshape_translations(qt_app, language):
                 ("ResultTabManager", "Reshape…"),
                 ("ReshapeController", "Reshape unavailable"),
                 ("ReshapeController", "Select a ready result dataset before opening Reshape."),
+                (
+                    "ConditionEditor",
+                    "Unmatched closing parenthesis ). Add a matching opening ( or remove this ).",
+                ),
             ):
                 assert translate(context, source) != source
             assert "Metrics" not in [box.title() for box in dialog.findChildren(QGroupBox)]
@@ -216,10 +228,10 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
             else:
                 assert translation.get("type") is None
                 assert translation.text
-                for placeholder in ("{dataset}", "{rows}", "{columns}", "{page}", "{count}"):
+                for placeholder in ("{dataset}", "{rows}", "{columns}", "{page}", "{count}", "{name}"):
                     assert source.count(placeholder) == translation.text.count(placeholder)
             checked += 1
-    assert checked == 71
+    assert checked == 84
 
 
 def test_dimension_search_preserves_checks_order_and_identity():
