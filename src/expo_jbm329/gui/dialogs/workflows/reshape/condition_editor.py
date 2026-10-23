@@ -123,7 +123,10 @@ class ConditionEditor(QWidget):
                 "Column '{name}' is ambiguous. Rename duplicate columns first."
             ),
             ConditionLintCode.BRACKET: self.tr("Missing closing ] in column name. Escape a literal ] as ]]."),
-            ConditionLintCode.QUOTE: self.tr("Missing closing single quote. Escape an apostrophe as ''."),
+            ConditionLintCode.QUOTE: self.tr(
+                "Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. "
+                "Escape an apostrophe as ''."
+            ),
             ConditionLintCode.OPERATOR: self.tr("Expected =, !=, >, >=, <, <=, IN, NOT IN, IS NULL or IS NOT NULL."),
             ConditionLintCode.VALUE: self.tr("Expected a single-quoted value, for example 'value'."),
             ConditionLintCode.LIST: self.tr("IN and NOT IN require a nonempty list such as ('value1', 'value2')."),

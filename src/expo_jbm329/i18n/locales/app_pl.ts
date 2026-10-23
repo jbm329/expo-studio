@@ -2342,48 +2342,52 @@ Więcej informacji można znaleźć w dziennikach.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="126" />
-        <source>Missing closing single quote. Escape an apostrophe as ''.</source>
-        <translation>Brakuje zamykającego apostrofu. Zapisz '' jako dosłowny apostrof.</translation>
+        <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
+        <translation>Niezako?czona warto?? w apostrofach. Sprawd?, czy wcze?niej w warunku nie brakuje apostrofu lub czy nie jest on w niew?a?ciwym miejscu. Zapisz '' jako dos?owny apostrof.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="127" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="130" />
         <source>Expected =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL or IS NOT NULL.</source>
         <translation>Oczekiwano =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL lub IS NOT NULL.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="128" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="131" />
         <source>Expected a single-quoted value, for example 'value'.</source>
         <translation>Oczekiwano wartości w apostrofach, na przykład 'wartość'.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="129" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="132" />
         <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
         <translation>IN i NOT IN wymagają niepustej listy, takiej jak ('wartość1', 'wartość2').</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="130" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="133" />
         <source>Expected a closing parenthesis ).</source>
         <translation>Oczekiwano nawiasu zamykającego ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="131" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="134" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
         <translation>Oczekiwano AND, OR lub nawiasu zamykaj?cego ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="132" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="135" />
         <source>Unmatched closing parenthesis ). Add a matching opening ( or remove this ).</source>
         <translation>Niedopasowany nawias zamykający ). Dodaj pasujący nawias otwierający ( lub usuń ten ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="135" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="138" />
         <source>Expected a condition or a parenthesized group.</source>
         <translation>Oczekiwano warunku lub grupy w nawiasach.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="136" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="139" />
         <source>Expected AND or OR between conditions, or the end of the expression.</source>
         <translation>Oczekiwano AND lub OR między warunkami albo końca wyrażenia.</translation>
+    </message>
+    <message>
+        <source>Missing closing single quote. Escape an apostrophe as ''.</source>
+        <translation type="vanished">Brakuje zamykającego apostrofu. Zapisz '' jako dosłowny apostrof.</translation>
     </message>
     <message>
         <source>Edit condition syntax or use the builder. Manual syntax is not validated or executed.</source>

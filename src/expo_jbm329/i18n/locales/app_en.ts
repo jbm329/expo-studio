@@ -2324,46 +2324,46 @@ Please see logs for more information.</source>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="126" />
-        <source>Missing closing single quote. Escape an apostrophe as ''.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="127" />
-        <source>Expected =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL or IS NOT NULL.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="128" />
-        <source>Expected a single-quoted value, for example 'value'.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="129" />
-        <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
+        <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="130" />
-        <source>Expected a closing parenthesis ).</source>
+        <source>Expected =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL or IS NOT NULL.</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="131" />
-        <source>Expected AND, OR or a closing parenthesis ).</source>
+        <source>Expected a single-quoted value, for example 'value'.</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="132" />
-        <source>Unmatched closing parenthesis ). Add a matching opening ( or remove this ).</source>
+        <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="133" />
+        <source>Expected a closing parenthesis ).</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="134" />
+        <source>Expected AND, OR or a closing parenthesis ).</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="135" />
+        <source>Unmatched closing parenthesis ). Add a matching opening ( or remove this ).</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="138" />
         <source>Expected a condition or a parenthesized group.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="136" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="139" />
         <source>Expected AND or OR between conditions, or the end of the expression.</source>
         <translation type="unfinished" />
     </message>

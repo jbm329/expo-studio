@@ -164,6 +164,18 @@ def test_misspelled_group_connector_hint_and_underline():
     parent.close()
 
 
+def test_misaligned_quotes_hint_explains_possible_earlier_mistake():
+    parent, editor, _other = make_editor()
+    editor.text.setText("(([a] = 'AKUT OR [a] = 'True') AND [a] < '2000')")
+    assert not editor.validate_now()
+    assert "Unterminated quoted value." in editor.text.toolTip()
+    assert "missing or misplaced single quote earlier in the condition" in editor.text.toolTip()
+    assert editor.expanded_text.toolTip() == editor.text.toolTip()
+    editor.text.setText("(([a] = 'AKUT' OR [a] = 'True') AND [a] < '2000')")
+    assert editor.validate_now()
+    parent.close()
+
+
 def test_dialog_aggregates_pending_errors_removal_and_builder_readiness():
     dialog = ReshapeDialog(
         parent=None,

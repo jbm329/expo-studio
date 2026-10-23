@@ -2342,48 +2342,52 @@ Weitere Informationen finden Sie in den Protokollen.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="126" />
-        <source>Missing closing single quote. Escape an apostrophe as ''.</source>
-        <translation>Schließendes einfaches Anführungszeichen fehlt. Schreiben Sie '' für einen Apostroph.</translation>
+        <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
+        <translation>Nicht abgeschlossener Wert in Anf?hrungszeichen. Pr?fen Sie, ob weiter vorne in der Bedingung ein einfaches Anf?hrungszeichen fehlt oder falsch platziert ist. Schreiben Sie '' f?r einen Apostroph.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="127" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="130" />
         <source>Expected =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL or IS NOT NULL.</source>
         <translation>Erwartet: =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL oder IS NOT NULL.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="128" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="131" />
         <source>Expected a single-quoted value, for example 'value'.</source>
         <translation>Ein Wert in einfachen Anführungszeichen wird erwartet, zum Beispiel 'Wert'.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="129" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="132" />
         <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
         <translation>IN und NOT IN erfordern eine nicht leere Liste wie ('Wert1', 'Wert2').</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="130" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="133" />
         <source>Expected a closing parenthesis ).</source>
         <translation>Eine schließende Klammer ) wird erwartet.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="131" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="134" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
         <translation>AND, OR oder eine schlie?ende Klammer ) wird erwartet.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="132" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="135" />
         <source>Unmatched closing parenthesis ). Add a matching opening ( or remove this ).</source>
         <translation>Schließende Klammer ) ohne passende öffnende Klammer. Fügen Sie eine passende öffnende ( hinzu oder entfernen Sie diese ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="135" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="138" />
         <source>Expected a condition or a parenthesized group.</source>
         <translation>Eine Bedingung oder eine geklammerte Gruppe wird erwartet.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="136" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="139" />
         <source>Expected AND or OR between conditions, or the end of the expression.</source>
         <translation>AND oder OR zwischen Bedingungen oder das Ende des Ausdrucks wird erwartet.</translation>
+    </message>
+    <message>
+        <source>Missing closing single quote. Escape an apostrophe as ''.</source>
+        <translation type="vanished">Schließendes einfaches Anführungszeichen fehlt. Schreiben Sie '' für einen Apostroph.</translation>
     </message>
     <message>
         <source>Edit condition syntax or use the builder. Manual syntax is not validated or executed.</source>

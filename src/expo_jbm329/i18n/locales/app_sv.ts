@@ -2342,48 +2342,52 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="126" />
-        <source>Missing closing single quote. Escape an apostrophe as ''.</source>
-        <translation>Avslutande enkelt citattecken saknas. Skriv '' för en apostrof.</translation>
+        <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
+        <translation>Oavslutat citerat v?rde. Kontrollera om ett enkelt citattecken saknas eller ?r felplacerat tidigare i villkoret. Skriv '' f?r en apostrof.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="127" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="130" />
         <source>Expected =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL or IS NOT NULL.</source>
         <translation>Förväntade =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL eller IS NOT NULL.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="128" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="131" />
         <source>Expected a single-quoted value, for example 'value'.</source>
         <translation>Förväntade ett värde inom enkla citattecken, till exempel 'värde'.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="129" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="132" />
         <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
         <translation>IN och NOT IN kräver en icke-tom lista, till exempel ('värde1', 'värde2').</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="130" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="133" />
         <source>Expected a closing parenthesis ).</source>
         <translation>Förväntade en avslutande parentes ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="131" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="134" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
         <translation>F?rv?ntade AND, OR eller en avslutande parentes ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="132" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="135" />
         <source>Unmatched closing parenthesis ). Add a matching opening ( or remove this ).</source>
         <translation>Avslutande parentes ) saknar motsvarande öppnande parentes. Lägg till en öppnande ( eller ta bort denna ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="135" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="138" />
         <source>Expected a condition or a parenthesized group.</source>
         <translation>Förväntade ett villkor eller en grupp inom parenteser.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="136" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="139" />
         <source>Expected AND or OR between conditions, or the end of the expression.</source>
         <translation>Förväntade AND eller OR mellan villkor, eller slutet på uttrycket.</translation>
+    </message>
+    <message>
+        <source>Missing closing single quote. Escape an apostrophe as ''.</source>
+        <translation type="vanished">Avslutande enkelt citattecken saknas. Skriv '' för en apostrof.</translation>
     </message>
     <message>
         <source>Edit condition syntax or use the builder. Manual syntax is not validated or executed.</source>

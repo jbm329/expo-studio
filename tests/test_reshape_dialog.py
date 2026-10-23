@@ -176,6 +176,13 @@ def test_compiled_reshape_translations(qt_app, language):
                     "Unmatched closing parenthesis ). Add a matching opening ( or remove this ).",
                 ),
                 ("ConditionEditor", "Expected AND, OR or a closing parenthesis )."),
+                (
+                    "ConditionEditor",
+                    (
+                        "Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. "
+                        "Escape an apostrophe as ''."
+                    ),
+                ),
             ):
                 assert translate(context, source) != source
             assert "Metrics" not in [box.title() for box in dialog.findChildren(QGroupBox)]
