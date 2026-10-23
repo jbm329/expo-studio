@@ -28,6 +28,7 @@ class ConditionEditor(QWidget):
         self.button.setAutoDefault(False)
         self.button.setFixedWidth(self.button.sizeHint().height() + 8)
         self.button.setAccessibleName(self.tr("Build condition"))
+        self.button.setToolTip(self.tr("Condition builder"))
         layout.addWidget(self.text, 1)
         layout.addWidget(self.button)
         self.button.clicked.connect(self.builder_requested)

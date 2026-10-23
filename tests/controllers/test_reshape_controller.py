@@ -103,6 +103,8 @@ def test_condition_builder_keeps_original_source_after_active_tab_changes(monkey
         results.tabs_by_id["source"].df = pd.DataFrame({"replacement": [2]})
         editor = dialog.metrics.cellWidget(0, 3)
         assert isinstance(editor, ConditionEditor)
+        dialog.metrics.item(0, 0).setText("Total")
+        dialog.metrics.cellWidget(0, 2).setCurrentIndex(1)
         editors.append(editor)
         editor.button.click()
         return 0

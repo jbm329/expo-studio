@@ -173,6 +173,7 @@ class ReshapeDialog(QDialog):
         self.add_metric_button.clicked.connect(self._add_metric)
         self.remove_metric_button.clicked.connect(self._remove_selected_metrics)
         self.metrics.itemSelectionChanged.connect(self._update_remove_button)
+        self.metrics.itemChanged.connect(self._update_metric_readiness)
         self._add_metric()
         self._update_remove_button()
 
@@ -209,6 +210,25 @@ class ReshapeDialog(QDialog):
         condition = ConditionEditor(self.metrics)
         condition.builder_requested.connect(lambda: self.condition_requested.emit(condition))
         self.metrics.setCellWidget(row, 3, condition)
+        columns.currentIndexChanged.connect(self._update_metric_readiness)
+        self._update_metric_readiness()
+
+    def _update_metric_readiness(self) -> None:
+        all_ready = True
+        for row in range(self.metrics.rowCount()):
+            name = self.metrics.item(row, 0)
+            columns = self.metrics.cellWidget(row, 2)
+            condition = self.metrics.cellWidget(row, 3)
+            ready = (
+                name is not None
+                and bool(name.text().strip())
+                and isinstance(columns, QComboBox)
+                and columns.currentData() is not None
+            )
+            if isinstance(condition, ConditionEditor):
+                condition.button.setEnabled(ready)
+            all_ready = all_ready and ready
+        self.add_metric_button.setEnabled(all_ready)
 
     def _populate_source_columns(self, columns: QComboBox, function: str) -> None:
         selected_position = columns.currentData()
@@ -234,6 +254,7 @@ class ReshapeDialog(QDialog):
         for row in sorted(rows, reverse=True):
             self.metrics.removeRow(row)
         self._update_remove_button()
+        self._update_metric_readiness()
 
     def _update_remove_button(self) -> None:
         self.remove_metric_button.setEnabled(bool(self.metrics.selectedIndexes()))

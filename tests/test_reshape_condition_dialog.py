@@ -197,7 +197,11 @@ def test_metric_button_follows_editor_identity_after_row_deletion_and_resize(qt_
         numeric_column_positions=(0,),
         datetime_column_positions=(),
     )
+    dialog.metrics.item(0, 0).setText("First")
+    dialog.metrics.cellWidget(0, 2).setCurrentIndex(1)
     dialog.add_metric_button.click()
+    dialog.metrics.item(1, 0).setText("Second")
+    dialog.metrics.cellWidget(1, 2).setCurrentIndex(1)
     editor = dialog.metrics.cellWidget(1, 3)
     assert isinstance(editor, ConditionEditor)
     group = ConditionGroup((ConditionRule(ConditionColumn(0, "a", True), ConditionOperator.IS_NULL),))

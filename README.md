@@ -39,6 +39,9 @@ The project is still in its infancy and may change significantly.
 - **Reshape (UI skeleton)**: Configure dimensions and named aggregation metrics for the active ready dataset.
   Open Reshape after Concatenate in the toolbar or from a result tab's context menu.
   Each condition is editable text with a right-hand `...` button opening a visual builder.
+  The builder button requires a nonblank metric name and a selected source column.
+  Add metric is available only when every existing metric meets those requirements
+  (or no metrics remain).
   Combine rules using All (AND) or Any (OR), choose a column and operator, and select
   distinct values from a searchable dropdown (100 values per page, loaded in the background).
   Values sort ascending across all pages: numbers numerically, followed by other

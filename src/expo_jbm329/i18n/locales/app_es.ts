@@ -2301,6 +2301,11 @@ Consulte los registros para obtener más información.</translation>
         <source>Build condition</source>
         <translation>Crear condición</translation>
     </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="31" />
+        <source>Condition builder</source>
+        <translation>Generador de condiciones</translation>
+    </message>
 </context><context>
     <name>ConditionRuleWidget</name>
     <message>
@@ -2381,53 +2386,53 @@ Consulte los registros para obtener más información.</translation>
 </context><context>
     <name>ConditionValuePicker</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="58" />
         <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="57" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="56" />
         <source>Search values</source>
         <translation>Buscar valores</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="69" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="68" />
         <source>Previous</source>
         <translation>Anterior</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="70" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="69" />
         <source>Next</source>
         <translation>Siguiente</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="76" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="75" />
         <source>Selected values</source>
         <translation>Valores seleccionados</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="81" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="80" />
         <source>Remove selected values</source>
         <translation>Eliminar valores seleccionados</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="154" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="153" />
         <source>No matching values.</source>
         <translation>No hay valores coincidentes.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="167" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="166" />
         <source>(empty string)</source>
         <translation>(cadena vacía)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="181" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="180" />
         <source>Loading values...</source>
         <translation>Cargando valores...</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="203" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="202" />
         <source>Page {page}</source>
         <translation>Página {page}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="235" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="234" />
         <source>Select values ({count} selected)</source>
         <translation>Seleccionar valores ({count} seleccionados)</translation>
     </message>
@@ -7577,13 +7582,13 @@ Sugerencia: {error_hint}</translation>
         <translation>Nombre de la columna de resultado</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="194" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="195" />
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="129" />
         <source>Function</source>
         <translation>Función</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="199" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="200" />
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="130" />
         <source>Source column</source>
         <translation>Columna de origen</translation>
@@ -7619,7 +7624,7 @@ Sugerencia: {error_hint}</translation>
         <translation>Aplicar</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="216" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="236" />
         <source>Select column</source>
         <translation>Seleccionar columna</translation>
     </message>

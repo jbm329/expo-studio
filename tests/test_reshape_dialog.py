@@ -102,7 +102,9 @@ def test_metrics_edit_add_remove_and_column_identity():
 
 def test_remove_multiple_selected_metrics_and_reopen_discards_configuration():
     dialog = make_dialog()
+    complete_metric(dialog, 0)
     dialog.add_metric_button.click()
+    complete_metric(dialog, 1)
     dialog.add_metric_button.click()
     dialog.metrics.selectAll()
     dialog.remove_metric_button.click()
@@ -141,6 +143,7 @@ def test_compiled_reshape_translations(qt_app, language):
     qt_app.installTranslator(translator)
     try:
         dialog = make_dialog()
+        assert dialog.metrics.cellWidget(0, 3).button.toolTip() == translate("ConditionEditor", "Condition builder")
         builder = ConditionDialog(parent=dialog, columns=(ConditionColumn(0, "a", True),))
         assert builder.windowTitle() == translate("ConditionDialog", "Build condition")
         assert builder.rules[0].column.itemText(0) == translate("ConditionRuleWidget", "Select column")
@@ -164,6 +167,7 @@ def test_compiled_reshape_translations(qt_app, language):
             assert "Metrics" not in [box.title() for box in dialog.findChildren(QGroupBox)]
             assert dialog.source_column_guidance.text() != translate_guidance_source()
             assert dialog.dimension_search.placeholderText() != "Search dimensions"
+            assert dialog.metrics.cellWidget(0, 3).button.toolTip() != "Condition builder"
             assert builder.windowTitle() != "Build condition"
             assert builder.validation.text() != "Complete every rule before applying."
             assert builder.rules[0].operator.itemText(4) != "Greater than"
@@ -210,7 +214,7 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
                 for placeholder in ("{dataset}", "{rows}", "{columns}", "{page}", "{count}"):
                     assert source.count(placeholder) == translation.text.count(placeholder)
             checked += 1
-    assert checked == 60
+    assert checked == 61
 
 
 def test_dimension_search_preserves_checks_order_and_identity():
@@ -276,6 +280,48 @@ def metric_controls(dialog, row=0):
     assert isinstance(functions, QComboBox)
     assert isinstance(columns, QComboBox)
     return functions, columns
+
+
+def complete_metric(dialog: ReshapeDialog, row: int) -> None:
+    dialog.metrics.item(row, 0).setText(f"Metric {row}")
+    dialog.metrics.cellWidget(row, 2).setCurrentIndex(1)
+
+
+def test_metric_actions_require_nonblank_name_and_source_selection():
+    dialog = make_dialog()
+    editor = dialog.metrics.cellWidget(0, 3)
+    columns = dialog.metrics.cellWidget(0, 2)
+    assert editor.button.toolTip() == "Condition builder"
+    assert not editor.button.isEnabled()
+    assert not dialog.add_metric_button.isEnabled()
+    dialog.metrics.item(0, 0).setText("   ")
+    columns.setCurrentIndex(1)
+    assert columns.currentData() == 0
+    assert not editor.button.isEnabled()
+    assert not dialog.add_metric_button.isEnabled()
+    dialog.metrics.item(0, 0).setText("Total")
+    assert editor.button.isEnabled()
+    assert dialog.add_metric_button.isEnabled()
+    editor.text.setText("[Value] > '1'")
+    dialog.add_metric_button.click()
+    assert dialog.metrics.rowCount() == 2
+    assert not dialog.add_metric_button.isEnabled()
+    assert not dialog.metrics.cellWidget(1, 3).button.isEnabled()
+    assert editor.button.isEnabled()
+    complete_metric(dialog, 1)
+    assert dialog.add_metric_button.isEnabled()
+    columns.setCurrentIndex(0)
+    assert not editor.button.isEnabled()
+    assert not dialog.add_metric_button.isEnabled()
+    assert editor.text.text() == "[Value] > '1'"
+    columns.setCurrentIndex(1)
+    dialog.metrics.item(0, 0).setText("")
+    assert not editor.button.isEnabled()
+    assert not dialog.add_metric_button.isEnabled()
+    dialog.metrics.selectRow(0)
+    dialog.remove_metric_button.click()
+    assert dialog.add_metric_button.isEnabled()
+    dialog.close()
 
 
 def offered_positions(columns):
@@ -360,8 +406,11 @@ def test_no_numeric_columns_still_allows_count_functions(source_columns):
 
 def test_metric_callbacks_remain_independent_after_removing_earlier_row():
     dialog = make_dialog()
+    complete_metric(dialog, 0)
     dialog.add_metric_button.click()
+    complete_metric(dialog, 1)
     dialog.add_metric_button.click()
+    complete_metric(dialog, 2)
     first_function, first_columns = metric_controls(dialog)
     middle_function, middle_columns = metric_controls(dialog, 1)
     last_function, last_columns = metric_controls(dialog, 2)
@@ -379,6 +428,8 @@ def test_metric_callbacks_remain_independent_after_removing_earlier_row():
     dialog.remove_metric_button.click()
     middle_function.setCurrentText("AVG")
     assert middle_columns.currentData() is None
+    assert not dialog.metrics.cellWidget(0, 3).button.isEnabled()
+    assert not dialog.add_metric_button.isEnabled()
     assert last_columns.currentData() == 2
     assert offered_positions(last_columns) == [0, 2]
     assert dialog.metrics.item(0, 0).text() == "Named metric"
@@ -389,6 +440,7 @@ def test_metric_callbacks_remain_independent_after_removing_earlier_row():
     assert offered_positions(last_columns) == [0, 1, 2]
     assert offered_positions(middle_columns) == [0, 2]
 
+    middle_columns.setCurrentIndex(1)
     dialog.add_metric_button.click()
     new_function, new_columns = metric_controls(dialog, 2)
     assert new_function.currentText() == "SUM"

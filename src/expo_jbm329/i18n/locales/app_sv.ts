@@ -2301,6 +2301,11 @@ Vänligen se loggfil för mer information.</translation>
         <source>Build condition</source>
         <translation>Skapa villkor</translation>
     </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="31" />
+        <source>Condition builder</source>
+        <translation>Villkorsbyggare</translation>
+    </message>
 </context><context>
     <name>ConditionRuleWidget</name>
     <message>
@@ -2381,53 +2386,53 @@ Vänligen se loggfil för mer information.</translation>
 </context><context>
     <name>ConditionValuePicker</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="58" />
         <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="57" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="56" />
         <source>Search values</source>
         <translation>Sök värden</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="69" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="68" />
         <source>Previous</source>
         <translation>Föregående</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="70" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="69" />
         <source>Next</source>
         <translation>Nästa</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="76" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="75" />
         <source>Selected values</source>
         <translation>Valda värden</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="81" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="80" />
         <source>Remove selected values</source>
         <translation>Ta bort valda värden</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="154" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="153" />
         <source>No matching values.</source>
         <translation>Inga matchande värden.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="167" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="166" />
         <source>(empty string)</source>
         <translation>(tom sträng)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="181" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="180" />
         <source>Loading values...</source>
         <translation>Läser in värden...</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="203" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="202" />
         <source>Page {page}</source>
         <translation>Sida {page}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="235" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="234" />
         <source>Select values ({count} selected)</source>
         <translation>Välj värden ({count} valda)</translation>
     </message>
@@ -7577,13 +7582,13 @@ Tips: {error_hint}</translation>
         <translation>Namn på resultatkolumn</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="194" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="195" />
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="129" />
         <source>Function</source>
         <translation>Funktion</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="199" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="200" />
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="130" />
         <source>Source column</source>
         <translation>Källkolumn</translation>
@@ -7619,7 +7624,7 @@ Tips: {error_hint}</translation>
         <translation>Tillämpa</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="216" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="236" />
         <source>Select column</source>
         <translation>Välj kolumn</translation>
     </message>
