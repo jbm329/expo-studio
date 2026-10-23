@@ -81,7 +81,7 @@ def test_metrics_edit_add_remove_and_column_identity():
     condition = "yrkesroll = 'Läkare' AND Hallänning = 1"
     metrics.cellWidget(0, 3).text.setText(condition)
     assert metrics.cellWidget(0, 3).text.text() == condition
-    assert "not validated or executed" in metrics.cellWidget(0, 3).text.toolTip()
+    assert "yrkesroll" in metrics.cellWidget(0, 3).text.toolTip()
     dialog.add_metric_button.click()
     assert metrics.rowCount() == 2
     assert metrics.item(1, 0).text() == ""

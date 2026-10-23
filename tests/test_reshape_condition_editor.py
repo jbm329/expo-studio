@@ -106,3 +106,27 @@ def test_popup_tracks_external_updates_and_dies_with_editor(qt_app):
     assert sip.isdeleted(popup)
     assert sip.isdeleted(expanded)
     parent.close()
+
+
+def test_collapsed_field_shows_start_and_full_literal_content_tooltip(qt_app):
+    parent, editor, _other = show_editor(qt_app)
+    guidance = editor.text.toolTip()
+    content = "[Column] = '<b>literal</b>'\nOR " + "[Other] = 'value' " * 50
+    editor.text.setText(content)
+    assert editor.text.cursorPosition() == 0
+    assert "&lt;b&gt;literal&lt;/b&gt;" in editor.text.toolTip()
+    assert "<br>" in editor.text.toolTip()
+    assert editor.text.toolTip() == editor.expanded_text.toolTip()
+    editor.text.setFocus(Qt.FocusReason.TabFocusReason)
+    qt_app.processEvents()
+    editor.expanded_text.moveCursor(editor.expanded_text.textCursor().MoveOperation.End)
+    QTest.keyClicks(editor.expanded_text, " changed")
+    assert editor.text.text().endswith(" changed")
+    QTest.keyClick(editor.expanded_text, Qt.Key.Key_Escape)
+    qt_app.processEvents()
+    assert editor.text.cursorPosition() == 0
+    assert " changed" in editor.text.toolTip()
+    editor.text.clear()
+    assert editor.text.toolTip() == guidance
+    assert editor.expanded_text.toolTip() == guidance
+    parent.close()

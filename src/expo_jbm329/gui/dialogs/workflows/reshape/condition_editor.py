@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QEvent, QPoint, QSignalBlocker, Qt, QTimer, pyqtSignal
@@ -39,9 +40,10 @@ class ConditionEditor(QWidget):
         layout.setSpacing(0)
         self.text = QLineEdit(self)
         self.text.setAccessibleName(self.tr("Condition"))
-        self.text.setToolTip(
-            self.tr("Edit condition syntax or use the builder. Manual syntax is not validated or executed.")
+        self._empty_tooltip = self.tr(
+            "Edit condition syntax or use the builder. Manual syntax is not validated or executed."
         )
+        self.text.setToolTip(self._empty_tooltip)
         self.button = QPushButton("...", self)
         self.button.setAutoDefault(False)
         self.button.setFixedWidth(self.button.sizeHint().height() + 8)
@@ -65,6 +67,7 @@ class ConditionEditor(QWidget):
         self.popup.installEventFilter(self)
         self.expanded_text.installEventFilter(self)
         self.text.textChanged.connect(self._sync_expanded_text)
+        self.text.textChanged.connect(self._update_collapsed_display)
         self.expanded_text.textChanged.connect(self._sync_inline_text)
 
     @override
@@ -76,6 +79,7 @@ class ConditionEditor(QWidget):
                 app.installEventFilter(self)
             elif a1.type() == QEvent.Type.Hide:
                 app.removeEventFilter(self)
+                self.text.setCursorPosition(0)
         if (
             a1 is not None
             and a1.type() == QEvent.Type.MouseButtonPress
@@ -137,6 +141,14 @@ class ConditionEditor(QWidget):
         self.expanded_text.setTextCursor(cursor)
         self.popup.show()
         self.expanded_text.setFocus(Qt.FocusReason.PopupFocusReason)
+
+    def _update_collapsed_display(self) -> None:
+        value = self.text.text()
+        escaped = html.escape(value).replace("\n", "<br>")
+        tooltip = f"<qt>{escaped}</qt>" if value else self._empty_tooltip
+        self.text.setToolTip(tooltip)
+        self.expanded_text.setToolTip(tooltip)
+        self.text.setCursorPosition(0)
 
     def _sync_expanded_text(self) -> None:
         value = self.text.text()
