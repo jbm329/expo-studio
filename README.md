@@ -40,6 +40,8 @@ The project is still in its infancy and may change significantly.
   Open Reshape after Concatenate in the toolbar or from a result tab's context menu.
   Each condition is editable text with a right-hand `...` button opening a visual builder.
   The builder button requires a nonblank metric name and a selected source column.
+  Selecting a source column fills a blank metric name with the function and column
+  name (for example, `Sum Sales` or `Count distinct Customer`); existing names are preserved.
   Add metric is available only when every existing metric meets those requirements
   (or no metrics remain).
   Combine rules in nested AND/OR groups, choose a column and operator, and select

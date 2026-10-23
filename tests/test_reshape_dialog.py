@@ -302,6 +302,10 @@ def test_metric_actions_require_nonblank_name_and_source_selection():
     dialog.metrics.item(0, 0).setText("   ")
     columns.setCurrentIndex(1)
     assert columns.currentData() == 0
+    assert dialog.metrics.item(0, 0).text() == "Sum PatientId"
+    assert editor.button.isEnabled()
+    assert dialog.add_metric_button.isEnabled()
+    dialog.metrics.item(0, 0).setText("   ")
     assert not editor.button.isEnabled()
     assert not dialog.add_metric_button.isEnabled()
     dialog.metrics.item(0, 0).setText("Total")
@@ -326,6 +330,47 @@ def test_metric_actions_require_nonblank_name_and_source_selection():
     dialog.metrics.selectRow(0)
     dialog.remove_metric_button.click()
     assert dialog.add_metric_button.isEnabled()
+    dialog.close()
+
+
+@pytest.mark.parametrize("function", ["SUM", "AVG", "COUNT", "COUNT DISTINCT", "MAX", "MIN"])
+def test_selecting_source_fills_only_blank_metric_names(function):
+    dialog = make_dialog(("Sales amount", "Customer"), (0,))
+    functions, columns = metric_controls(dialog)
+    functions.setCurrentText(function)
+    name = dialog.metrics.item(0, 0)
+    assert name.text() == ""
+    columns.setCurrentIndex(columns.findData(0))
+    assert name.text() == f"{function.capitalize()} Sales amount"
+    assert dialog.add_metric_button.isEnabled()
+    name.setText("Custom total")
+    columns.setCurrentIndex(0)
+    columns.setCurrentIndex(columns.findData(0))
+    assert name.text() == "Custom total"
+    name.setText("")
+    assert not dialog.add_metric_button.isEnabled()
+    columns.setCurrentIndex(0)
+    assert name.text() == ""
+    columns.setCurrentIndex(columns.findData(0))
+    assert name.text() == f"{function.capitalize()} Sales amount"
+    functions.setCurrentText("COUNT DISTINCT")
+    assert name.text() == f"{function.capitalize()} Sales amount"
+    dialog.close()
+
+
+def test_default_name_callback_follows_metric_after_earlier_row_removed():
+    dialog = make_dialog((1, "Text"), (0,))
+    columns = dialog.metrics.cellWidget(0, 2)
+    columns.setCurrentIndex(1)
+    assert dialog.metrics.item(0, 0).text() == "Sum 1"
+    dialog.add_metric_button.click()
+    functions, columns = metric_controls(dialog, 1)
+    functions.setCurrentText("COUNT DISTINCT")
+    dialog.metrics.selectRow(0)
+    dialog.remove_metric_button.click()
+    columns.setCurrentIndex(columns.findData(1))
+    assert dialog.metrics.item(0, 0).text() == "Count distinct Text"
+    assert dialog.metrics.cellWidget(0, 3).button.isEnabled()
     dialog.close()
 
 

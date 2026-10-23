@@ -187,7 +187,8 @@ class ReshapeDialog(QDialog):
     def _add_metric(self) -> None:
         row = self.metrics.rowCount()
         self.metrics.insertRow(row)
-        self.metrics.setItem(row, 0, QTableWidgetItem(""))
+        name = QTableWidgetItem("")
+        self.metrics.setItem(row, 0, name)
 
         functions = QComboBox(self.metrics)
         for function in ("SUM", "AVG", "COUNT", "COUNT DISTINCT", "MAX", "MIN"):
@@ -210,6 +211,12 @@ class ReshapeDialog(QDialog):
         condition = ConditionEditor(self.metrics)
         condition.builder_requested.connect(lambda: self.condition_requested.emit(condition))
         self.metrics.setCellWidget(row, 3, condition)
+
+        def fill_default_name() -> None:
+            if not name.text().strip() and columns.currentData() is not None:
+                name.setText(f"{functions.currentText().capitalize()} {columns.currentText()}")
+
+        columns.currentIndexChanged.connect(fill_default_name)
         columns.currentIndexChanged.connect(self._update_metric_readiness)
         self._update_metric_readiness()
 
