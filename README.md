@@ -36,6 +36,10 @@ The project is still in its infancy and may change significantly.
 
 ### 📊 Data Operations
 - **Data Preparation**: Built-in tools for joining and concatenating datasets within the workbench.
+- **Reshape (UI skeleton)**: Configure dimensions and named aggregation metrics for the active ready dataset.
+  Open Reshape after Concatenate in the toolbar or from a result tab's context menu.
+  Conditions are editable text only. Apply is disabled, and the inline preview is a placeholder.
+  Aggregation, result creation, pivot, and unpivot are not available yet.
 - **Data Transformation**: Apply transformations to datasets using a visual interface.
 - **Export Capabilities**: Export query results to multiple formats including **CSV**, **feather**, **parquet**, and more.
 - **Dataset Analysis**: Integrated data profiling (via `fg-data-profiling`) for in-depth dataset statistics.

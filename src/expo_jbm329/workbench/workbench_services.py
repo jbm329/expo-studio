@@ -30,6 +30,7 @@ from expo_jbm329.workbench.controllers.export_controller import ExportController
 from expo_jbm329.workbench.controllers.file_panel_controller import FilePanelController
 from expo_jbm329.workbench.controllers.join_controller import JoinController
 from expo_jbm329.workbench.controllers.query_controller import QueryController
+from expo_jbm329.workbench.controllers.reshape_controller import ReshapeController
 from expo_jbm329.workbench.controllers.rest_controller import RestController
 from expo_jbm329.workbench.controllers.rest_panel_controller import RestPanelController
 from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
@@ -71,6 +72,7 @@ class WorkbenchServices:
         highlighter_theme_service: HighlighterThemeService,
         join: JoinController,
         concat: ConcatController,
+        reshape: ReshapeController,
         dialog_state: DialogState,
     ) -> None:
         """Initialize the workbench service container.
@@ -97,6 +99,7 @@ class WorkbenchServices:
             highlighter_theme_service: Syntax-highlighter theme service.
             join: Controller for JOIN operations.
             concat: Controller for CONCAT operations.
+            reshape: Controller for the Reshape configuration skeleton.
             dialog_state: Service for managing dialog state.
 
         Returns:
@@ -123,6 +126,7 @@ class WorkbenchServices:
         self.highlighter_theme_service = highlighter_theme_service
         self.join = join
         self.concat = concat
+        self.reshape = reshape
         self.dialog_state = dialog_state
 
     def invalidate_connection_configuration(self, connection_name: str) -> None:
@@ -521,6 +525,13 @@ class WorkbenchServices:
         )
         results.set_concat_controller(concat)
 
+        reshape = ReshapeController(
+            parent_widget=ui.parent,
+            results=results,
+            logger=app.log_ui,
+        )
+        results.set_reshape_controller(reshape)
+
         # ============================================================
         # DERIVED COLUMN
         # ============================================================
@@ -578,5 +589,6 @@ class WorkbenchServices:
             highlighter_theme_service=highlighter_theme_service,
             join=join,
             concat=concat,
+            reshape=reshape,
             dialog_state=dialog_state,
         )

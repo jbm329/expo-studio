@@ -1,0 +1,181 @@
+from __future__ import annotations
+
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+import pytest
+from PyQt6.QtCore import Qt, QTranslator
+from PyQt6.QtWidgets import QComboBox, QDialogButtonBox, QGroupBox
+
+from expo_jbm329.gui.dialogs.workflows.reshape.reshape_dialog import ReshapeDialog
+from expo_jbm329.utils.dataset_ref import DatasetRef
+from expo_jbm329.utils.format_utils import fmt_int
+from expo_jbm329.utils.i18n_utils import translate
+
+
+def make_dialog(columns: tuple[object, ...] = ("PatientId", "VisitId", "Value")) -> ReshapeDialog:
+    return ReshapeDialog(
+        parent=None,
+        source_dataset=DatasetRef("source", "Source <dataset>", 1234, len(columns)),
+        source_columns=columns,
+    )
+
+
+def test_fixed_title_dimensions_and_ui_only_preview():
+    dialog = make_dialog()
+    assert dialog.windowTitle() == f"Reshape — Source <dataset> ({fmt_int(1234)} rows × {fmt_int(3)} columns)"
+    assert dialog.windowFlags() & Qt.WindowType.WindowMaximizeButtonHint
+    assert not dialog.windowFlags() & Qt.WindowType.WindowMinimizeButtonHint
+    assert dialog.dimensions.count() == 3
+    for position in range(dialog.dimensions.count()):
+        item = dialog.dimensions.item(position)
+        assert item.checkState() == Qt.CheckState.Unchecked
+        assert item.data(Qt.ItemDataRole.UserRole) == position
+    dialog.dimensions.item(0).setCheckState(Qt.CheckState.Checked)
+    assert dialog.dimensions.item(0).checkState() == Qt.CheckState.Checked
+    assert dialog.preview_placeholder.text() == ("A five-row output preview will be available here in a later step.")
+    assert not dialog.apply_button.isEnabled()
+    assert "UI only" in dialog.apply_button.toolTip()
+    dialog.close()
+
+
+def test_metrics_edit_add_remove_and_column_identity():
+    long_name = "A very long source column name " * 10
+    dialog = make_dialog((1, "1", long_name))
+    metrics = dialog.metrics
+    assert metrics.rowCount() == 1
+    assert not dialog.remove_metric_button.isEnabled()
+    functions = metrics.cellWidget(0, 1)
+    assert isinstance(functions, QComboBox)
+    assert [functions.itemData(index) for index in range(functions.count())] == [
+        "SUM",
+        "AVG",
+        "COUNT",
+        "COUNT DISTINCT",
+        "MAX",
+        "MIN",
+    ]
+    assert functions.currentData() == "SUM"
+    columns = metrics.cellWidget(0, 2)
+    assert isinstance(columns, QComboBox)
+    assert columns.currentData() is None
+    assert [columns.itemData(index) for index in range(1, columns.count())] == [0, 1, 2]
+    assert columns.itemData(3, Qt.ItemDataRole.ToolTipRole) == long_name
+    columns.setCurrentIndex(3)
+    assert columns.toolTip() == long_name
+    assert dialog.dimensions.item(2).toolTip() == long_name
+    metrics.item(0, 0).setText("Distinct visits")
+    functions.setCurrentText("COUNT DISTINCT")
+    columns.setCurrentIndex(2)
+    condition = "yrkesroll = 'Läkare' AND Hallänning = 1"
+    metrics.item(0, 3).setText(condition)
+    assert metrics.item(0, 3).text() == condition
+    assert "Not validated or executed" in metrics.item(0, 3).toolTip()
+    dialog.add_metric_button.click()
+    assert metrics.rowCount() == 2
+    assert metrics.item(1, 0).text() == ""
+    assert metrics.item(1, 3).text() == ""
+    metrics.selectRow(0)
+    assert dialog.remove_metric_button.isEnabled()
+    dialog.remove_metric_button.click()
+    assert metrics.rowCount() == 1
+    assert metrics.item(0, 0).text() == ""
+    metrics.selectRow(0)
+    dialog.remove_metric_button.click()
+    assert metrics.rowCount() == 0
+    assert not dialog.remove_metric_button.isEnabled()
+    assert not dialog.apply_button.isEnabled()
+    dialog.add_metric_button.click()
+    assert metrics.rowCount() == 1
+    dialog.close()
+
+
+def test_remove_multiple_selected_metrics_and_reopen_discards_configuration():
+    dialog = make_dialog()
+    dialog.add_metric_button.click()
+    dialog.add_metric_button.click()
+    dialog.metrics.selectAll()
+    dialog.remove_metric_button.click()
+    assert dialog.metrics.rowCount() == 0
+    dialog.close()
+    reopened = make_dialog()
+    assert reopened.metrics.rowCount() == 1
+    assert reopened.metrics.item(0, 0).text() == ""
+    assert reopened.metrics.item(0, 3).text() == ""
+    assert not reopened.apply_button.isEnabled()
+    reopened.close()
+
+
+def test_empty_source_and_close_button():
+    dialog = make_dialog(())
+    assert dialog.dimensions.count() == 0
+    columns = dialog.metrics.cellWidget(0, 2)
+    assert isinstance(columns, QComboBox)
+    assert columns.count() == 1
+    assert not dialog.apply_button.isEnabled()
+    buttons = dialog.findChild(QDialogButtonBox)
+    assert buttons is not None
+    close_button = buttons.button(QDialogButtonBox.StandardButton.Close)
+    assert close_button is not None
+    closed: list[bool] = []
+    dialog.rejected.connect(lambda: closed.append(True))
+    close_button.click()
+    assert closed == [True]
+
+
+@pytest.mark.parametrize("language", ["en", "sv", "de", "fr", "it", "es", "pl"])
+def test_compiled_reshape_translations(qt_app, language):
+    translator = QTranslator()
+    catalog = Path(__file__).parents[1] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{language}.qm"
+    assert translator.load(str(catalog))
+    qt_app.installTranslator(translator)
+    try:
+        dialog = make_dialog()
+        source_title = "Reshape — {dataset} ({rows} rows × {columns} columns)"
+        title = translate("ReshapeDialog", source_title)
+        assert dialog.windowTitle() == title.format(dataset="Source <dataset>", rows=fmt_int(1234), columns=fmt_int(3))
+        if language != "en":
+            assert title != source_title
+            assert dialog.apply_button.text() != "Apply"
+            assert dialog.preview_placeholder.text() != (
+                "A five-row output preview will be available here in a later step."
+            )
+            for context, source in (
+                ("ToolbarController", "Reshape"),
+                ("ResultTabManager", "Reshape…"),
+                ("ReshapeController", "Reshape unavailable"),
+                ("ReshapeController", "Select a ready result dataset before opening Reshape."),
+            ):
+                assert translate(context, source) != source
+            assert "Metrics" not in [box.title() for box in dialog.findChildren(QGroupBox)]
+        dialog.close()
+    finally:
+        qt_app.removeTranslator(translator)
+
+
+@pytest.mark.parametrize("language", ["en", "sv", "de", "fr", "it", "es", "pl"])
+def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language):
+    catalog = Path(__file__).parents[1] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{language}.ts"
+    root = ET.parse(catalog).getroot()
+    checked = 0
+    for context in root.findall("context"):
+        name = context.findtext("name")
+        for message in context.findall("message"):
+            source = message.findtext("source", "")
+            if name not in {"ReshapeDialog", "ReshapeController"} and (name, source) not in {
+                ("ToolbarController", "Reshape"),
+                ("ResultTabManager", "Reshape…"),
+            }:
+                continue
+            translation = message.find("translation")
+            assert translation is not None
+            if language == "en":
+                assert translation.get("type") == "unfinished"
+                assert not translation.text
+            else:
+                assert translation.get("type") is None
+                assert translation.text
+                for placeholder in ("{dataset}", "{rows}", "{columns}"):
+                    assert source.count(placeholder) == translation.text.count(placeholder)
+            checked += 1
+    assert checked == 19
