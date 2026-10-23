@@ -118,7 +118,7 @@ def test_empty_and_unavailable_rules_and_ambiguous_values() -> None:
 
 @pytest.mark.parametrize("size", [0, 1, 99, 100, 101, 200, 201])
 def test_page_boundaries_and_no_mutation(size: int) -> None:
-    source = pd.DataFrame({"a": range(size)})
+    source = pd.DataFrame({"a": reversed(range(size))})
     original = source.copy(deep=True)
     for page in range(3):
         result = distinct_value_page(source, ValuePageRequest(0, page=page))
@@ -128,10 +128,10 @@ def test_page_boundaries_and_no_mutation(size: int) -> None:
     pd.testing.assert_frame_equal(source, original)
 
 
-def test_search_across_chunks_is_literal_case_insensitive_and_preserves_order() -> None:
+def test_search_across_chunks_is_literal_case_insensitive_and_sorted() -> None:
     source = pd.DataFrame({"a": ["repeat"] * 2050 + ["a[B", "A[b", "tail", "a[B"]})
     result = distinct_value_page(source, ValuePageRequest(0, "[b"))
-    assert result.entries == (ConditionValue("string", "a[B"), ConditionValue("string", "A[b"))
+    assert result.entries == (ConditionValue("string", "A[b"), ConditionValue("string", "a[B"))
     assert not result.has_next
 
 
@@ -141,6 +141,49 @@ def test_null_empty_and_duplicate_values() -> None:
         ConditionValue("string", ""),
         ConditionValue("string", "x"),
     )
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        (["Item 10", "item 2", "Item 1", "Item 2", ""], ["", "Item 1", "Item 2", "item 2", "Item 10"]),
+        ([10, -2, 2, -10, 0], ["-10", "-2", "0", "2", "10"]),
+        ([10.5, -2.5, 2.25, -10.0, 0.0], ["-10.0", "-2.5", "0.0", "2.25", "10.5"]),
+        ([Decimal("10.2"), Decimal(-2), Decimal("2.01")], ["-2", "2.01", "10.2"]),
+        (["10", "2", "1"], ["1", "2", "10"]),
+        ([True, False], ["False", "True"]),
+        ([10, "Item 10", Decimal("-2.5"), "Item 2"], ["-2.5", "10", "Item 2", "Item 10"]),
+        ([pd.Timestamp("2025-10-01"), pd.Timestamp("2025-02-01")], ["2025-02-01T00:00:00", "2025-10-01T00:00:00"]),
+    ],
+)
+def test_alphanumeric_ascending_values(raw: list[object], expected: list[str]) -> None:
+    source = pd.DataFrame({"a": pd.Series(raw, dtype=object)})
+    result = distinct_value_page(source, ValuePageRequest(0))
+    assert [value.text for value in result.entries] == expected
+
+
+def test_natural_sort_is_global_across_pages_and_search() -> None:
+    source = pd.DataFrame({"a": [f"Item {i}" for i in reversed(range(205))]})
+    first = distinct_value_page(source, ValuePageRequest(0))
+    second = distinct_value_page(source, ValuePageRequest(0, page=1))
+    last = distinct_value_page(source, ValuePageRequest(0, page=2))
+    assert [value.text for value in first.entries + second.entries + last.entries] == [f"Item {i}" for i in range(205)]
+    assert first.has_next and second.has_next and not last.has_next
+    filtered = distinct_value_page(source, ValuePageRequest(0, "item 2"))
+    assert [value.text for value in filtered.entries] == [f"Item {i}" for i in (2, *range(20, 30), *range(200, 205))]
+
+
+def test_sorting_checks_cancellation_after_scan() -> None:
+    calls = 0
+
+    def cancelled() -> bool:
+        nonlocal calls
+        calls += 1
+        return calls == 3
+
+    with pytest.raises(ValueRequestCancelledError):
+        distinct_value_page(pd.DataFrame({"a": [2, 1]}), ValuePageRequest(0), cancel_cb=cancelled)
+    assert calls == 3
 
 
 @pytest.mark.parametrize("values", [[1, "1"], ["x", []]])

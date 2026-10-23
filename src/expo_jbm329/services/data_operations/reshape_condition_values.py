@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from expo_jbm329.services.data_operations.reshape_conditions import (
@@ -36,10 +38,21 @@ class ValuePageRequest:
 
 @dataclass(frozen=True, slots=True)
 class ValuePage:
-    """One page without an expensive exact total distinct count."""
+    """One page of globally sorted distinct values."""
 
     entries: tuple[ConditionValue, ...]
     has_next: bool
+
+
+def _value_sort_key(value: ConditionValue) -> tuple[int, Decimal, tuple[tuple[str, int], ...], str, str]:
+    """Order numbers numerically, then other values by natural casefolded text."""
+    if value.kind in {"integer", "float", "decimal"}:
+        return (0, Decimal(value.text), (), value.text, value.kind)
+    parts = tuple(
+        ("", int(part)) if part.isascii() and part.isdecimal() else (part.casefold(), 0)
+        for part in re.split(r"([0-9]+)", value.text)
+    )
+    return (1, Decimal(0), parts, value.text, value.kind)
 
 
 def distinct_value_page(
@@ -56,7 +69,9 @@ def distinct_value_page(
         cancel_cb: Optional cooperative cancellation predicate.
 
     Returns:
-        Up to 100 values in first-occurrence order and whether another exists.
+        Up to 100 globally ascending values and whether another page exists.
+        Numbers sort numerically before other scalar types, whose text uses
+        case-insensitive natural ordering with numeric digit sequences.
 
     Raises:
         ValueError: If the page or column position is invalid.
@@ -71,7 +86,6 @@ def distinct_value_page(
     start = request.page * VALUE_PAGE_SIZE
     stop = start + VALUE_PAGE_SIZE
     seen: dict[str, ConditionValue] = {}
-    result: list[ConditionValue] = []
     for offset in range(0, len(series), _SCAN_CHUNK_SIZE):
         if cancel_cb is not None and cancel_cb():
             raise ValueRequestCancelledError
@@ -85,11 +99,9 @@ def distinct_value_page(
                     raise ConditionError(ConditionProblem.AMBIGUOUS_VALUE)
                 continue
             seen[value.text] = value
-            ordinal = len(seen) - 1
-            if ordinal == stop:
-                return ValuePage(tuple(result), has_next=True)
-            if ordinal >= start:
-                result.append(value)
     if cancel_cb is not None and cancel_cb():
         raise ValueRequestCancelledError
-    return ValuePage(tuple(result), has_next=False)
+    ordered = sorted(seen.values(), key=_value_sort_key)
+    if cancel_cb is not None and cancel_cb():
+        raise ValueRequestCancelledError
+    return ValuePage(tuple(ordered[start:stop]), has_next=len(ordered) > stop)

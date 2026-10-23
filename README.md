@@ -41,6 +41,9 @@ The project is still in its infancy and may change significantly.
   Each condition is editable text with a right-hand `...` button opening a visual builder.
   Combine rules using All (AND) or Any (OR), choose a column and operator, and select
   distinct values from a searchable dropdown (100 values per page, loaded in the background).
+  Values sort ascending across all pages: numbers numerically, followed by other
+  values in case-insensitive natural text order (for example, Item 2 before Item 10).
+  Each request scans all matching distinct values before sorting and paging.
   IN and NOT IN retain selections across pages and searches; missing values use
   IS NULL or IS NOT NULL, while empty strings remain selectable.
   The builder supports `=`, `!=`, `IN`, `NOT IN`, `>`, `>=`, `<`, and `<=`.
