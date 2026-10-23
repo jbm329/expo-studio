@@ -2357,43 +2357,51 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="189" />
-        <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
-        <translation>F?rv?ntade ett tal eller ett v?rde inom enkla citattecken, till exempel 18 eller '18'.</translation>
+        <source>Expected an unquoted number, for example 18. Remove single quotes from numeric values.</source>
+        <translation>Förväntade ett tal utan citattecken, till exempel 18. Ta bort enkla citattecken från numeriska värden.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="192" />
-        <source>Expected True, False or a single-quoted value.</source>
-        <translation>F?rv?ntade True, False eller ett v?rde inom enkla citattecken.</translation>
+        <source>Expected unquoted True or False. Remove single quotes from booleans.</source>
+        <translation>Förväntade True eller False utan citattecken. Ta bort enkla citattecken från booleska värden.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="193" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="195" />
         <source>IN and NOT IN require a nonempty, comma-separated list in parentheses.</source>
         <translation>IN och NOT IN kr?ver en icke-tom, kommaseparerad lista inom parenteser.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="194" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="196" />
         <source>Expected a closing parenthesis ).</source>
         <translation>Förväntade en avslutande parentes ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="195" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="197" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
         <translation>F?rv?ntade AND, OR eller en avslutande parentes ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="196" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="198" />
         <source>Unmatched closing parenthesis ). Add a matching opening ( or remove this ).</source>
         <translation>Avslutande parentes ) saknar motsvarande öppnande parentes. Lägg till en öppnande ( eller ta bort denna ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="199" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="201" />
         <source>Expected a condition or a parenthesized group.</source>
         <translation>Förväntade ett villkor eller en grupp inom parenteser.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="200" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="202" />
         <source>Expected AND or OR between conditions, or the end of the expression.</source>
         <translation>Förväntade AND eller OR mellan villkor, eller slutet på uttrycket.</translation>
+    </message>
+    <message>
+        <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
+        <translation type="vanished">F?rv?ntade ett tal eller ett v?rde inom enkla citattecken, till exempel 18 eller '18'.</translation>
+    </message>
+    <message>
+        <source>Expected True, False or a single-quoted value.</source>
+        <translation type="vanished">F?rv?ntade True, False eller ett v?rde inom enkla citattecken.</translation>
     </message>
     <message>
         <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
@@ -7687,105 +7695,183 @@ Tips: {error_hint}</translation>
 </context><context>
     <name>ReshapeController</name>
     <message>
-        <location filename="../../workbench/controllers/reshape_controller.py" line="28" />
+        <location filename="../../workbench/controllers/reshape_controller.py" line="40" />
         <source>Reshape unavailable</source>
         <translation>Omforma är inte tillgängligt</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/reshape_controller.py" line="29" />
+        <location filename="../../workbench/controllers/reshape_controller.py" line="41" />
         <source>Select a ready result dataset before opening Reshape.</source>
         <translation>Välj ett färdigt resultatdataset innan du öppnar Omforma.</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="42" />
+        <source>Calculating Reshape preview...</source>
+        <translation>Beräknar förhandsvisning av omformning...</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="43" />
+        <source>Reshape preview</source>
+        <translation>Förhandsvisning av omformning</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="44" />
+        <source>Preview cancelled. Press Preview to try again.</source>
+        <translation>Förhandsvisningen avbröts. Tryck på Förhandsvisa för att försöka igen.</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="45" />
+        <source>Preview failed. Check the selected data and conditions, then try again.</source>
+        <translation>Förhandsvisningen misslyckades. Kontrollera valda data och villkor och försök igen.</translation>
     </message>
 </context><context>
     <name>ReshapeDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="75" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="93" />
         <source>Reshape — {dataset} ({rows} rows × {columns} columns)</source>
         <translation>Omforma — {dataset} ({rows} rader × {columns} kolumner)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="248" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="86" />
-        <source>UI only. Aggregation and preview are not available yet.</source>
-        <translation>Endast användargränssnitt. Aggregering och förhandsvisning är ännu inte tillgängliga.</translation>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="104" />
+        <source>Preview uses the full dataset. Creating a result dataset is not available yet.</source>
+        <translation>Förhandsvisningen använder hela datasetet. Det går inte att skapa ett resultatdataset ännu.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="92" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="110" />
         <source>Dimensions</source>
         <translation>Dimensioner</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="96" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="95" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="114" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="113" />
         <source>Search dimensions</source>
         <translation>Sök dimensioner</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="115" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="133" />
         <source>Metrics</source>
         <translation>Mått</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="118" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="136" />
         <source>SUM and AVG accept integer and floating-point columns only. MIN and MAX also accept datetime columns. COUNT and COUNT DISTINCT accept any column. Changing the function clears an incompatible source selection.</source>
         <translation>SUM och AVG accepterar endast heltals- och flyttalskolumner. MIN och MAX accepterar även datum- och tidskolumner. COUNT och COUNT DISTINCT accepterar alla kolumner. Om funktionen ändras rensas ett inkompatibelt val av källkolumn.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="130" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="148" />
         <source>Metric name</source>
         <translation>Måttnamn</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="198" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="131" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="229" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="149" />
         <source>Function</source>
         <translation>Funktion</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="203" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="132" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="234" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="150" />
         <source>Source column</source>
         <translation>Källkolumn</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="133" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="151" />
         <source>Condition (optional)</source>
         <translation>Villkor (valfritt)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="146" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="164" />
         <source>Add metric</source>
         <translation>Lägg till mått</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="147" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="165" />
         <source>Remove selected metrics</source>
         <translation>Ta bort markerade mått</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="156" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="174" />
         <source>Preview (5 rows)</source>
         <translation>Förhandsvisning (5 rader)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="159" />
-        <source>A five-row output preview will be available here in a later step.</source>
-        <translation>En förhandsvisning av fem resultatrader blir tillgänglig här i ett senare steg.</translation>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="178" />
+        <source>Configure metrics and press Preview to calculate up to five output rows.</source>
+        <translation>Konfigurera mått och tryck på Förhandsvisa för att beräkna upp till fem utdatarader.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="167" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="192" />
+        <source>Preview</source>
+        <translation>Förhandsvisa</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="196" />
         <source>Apply</source>
         <translation>Tillämpa</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="246" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="270" />
+        <source>Preview is out of date. Press Preview to recalculate.</source>
+        <translation>Förhandsvisningen är inaktuell. Tryck på Förhandsvisa för att beräkna igen.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="325" />
+        <source>Calculating preview...</source>
+        <translation>Beräknar förhandsvisning...</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="338" />
+        <source>Showing {shown} of {total} output rows.</source>
+        <translation>Visar {shown} av {total} utdatarader.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="353" />
+        <source>Complete every metric and correct condition errors before previewing.</source>
+        <translation>Fyll i alla mått och rätta villkorsfelen före förhandsvisning.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="408" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="356" />
+        <source>Output column names must be unique across dimensions and metrics.</source>
+        <translation>Utdatakolumnernas namn måste vara unika bland dimensioner och mått.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="357" />
+        <source>A condition value cannot be interpreted for column '{name}'.</source>
+        <translation>Ett villkorsvärde kan inte tolkas för kolumnen '{name}'.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="358" />
+        <source>Cannot compare or aggregate the selected data for '{name}'. Check its values and types.</source>
+        <translation>Kan inte jämföra eller aggregera valda data för '{name}'. Kontrollera dess värden och typer.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="384" />
         <source>Correct condition errors before applying.</source>
         <translation>Rätta villkorsfelen innan du tillämpar.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="271" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="386" />
+        <source>Creating a result dataset is not available yet.</source>
+        <translation>Det går inte att skapa ett resultatdataset ännu.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="410" />
+        <source>Calculate up to five output rows from the full dataset.</source>
+        <translation>Beräkna upp till fem utdatarader från hela datasetet.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="434" />
         <source>Select column</source>
         <translation>Välj kolumn</translation>
+    </message>
+    <message>
+        <source>UI only. Aggregation and preview are not available yet.</source>
+        <translation type="vanished">Endast användargränssnitt. Aggregering och förhandsvisning är ännu inte tillgängliga.</translation>
+    </message>
+    <message>
+        <source>A five-row output preview will be available here in a later step.</source>
+        <translation type="vanished">En förhandsvisning av fem resultatrader blir tillgänglig här i ett senare steg.</translation>
     </message>
     <message>
         <source>SQL-style condition text only. Not validated or executed.</source>

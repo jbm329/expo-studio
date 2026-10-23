@@ -30,7 +30,7 @@ def make_dialog(
     )
 
 
-def test_fixed_title_dimensions_and_ui_only_preview():
+def test_fixed_title_dimensions_and_initial_preview():
     dialog = make_dialog()
     assert dialog.metrics.horizontalHeaderItem(0).text() == "Metric name"
     assert dialog.windowTitle() == f"Reshape — Source <dataset> ({fmt_int(1234)} rows × {fmt_int(3)} columns)"
@@ -43,9 +43,11 @@ def test_fixed_title_dimensions_and_ui_only_preview():
         assert item.data(Qt.ItemDataRole.UserRole) == position
     dialog.dimensions.item(0).setCheckState(Qt.CheckState.Checked)
     assert dialog.dimensions.item(0).checkState() == Qt.CheckState.Checked
-    assert dialog.preview_placeholder.text() == ("A five-row output preview will be available here in a later step.")
+    assert dialog.preview_placeholder.text() == (
+        "Configure metrics and press Preview to calculate up to five output rows."
+    )
     assert not dialog.apply_button.isEnabled()
-    assert "UI only" in dialog.apply_button.toolTip()
+    assert "Creating a result dataset" in dialog.apply_button.toolTip()
     dialog.close()
 
 
@@ -164,7 +166,7 @@ def test_compiled_reshape_translations(qt_app, language):
             assert title != source_title
             assert dialog.apply_button.text() != "Apply"
             assert dialog.preview_placeholder.text() != (
-                "A five-row output preview will be available here in a later step."
+                "Configure metrics and press Preview to calculate up to five output rows."
             )
             for context, source in (
                 ("ToolbarController", "Reshape"),
@@ -176,6 +178,13 @@ def test_compiled_reshape_translations(qt_app, language):
                     "Unmatched closing parenthesis ). Add a matching opening ( or remove this ).",
                 ),
                 ("ConditionEditor", "Expected AND, OR or a closing parenthesis )."),
+                ("ReshapeDialog", "Preview"),
+                ("ReshapeController", "Calculating Reshape preview..."),
+                (
+                    "ConditionEditor",
+                    "Expected an unquoted number, for example 18. Remove single quotes from numeric values.",
+                ),
+                ("ConditionEditor", "Expected unquoted True or False. Remove single quotes from booleans."),
                 (
                     "ConditionEditor",
                     (
@@ -236,10 +245,19 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
             else:
                 assert translation.get("type") is None
                 assert translation.text
-                for placeholder in ("{dataset}", "{rows}", "{columns}", "{page}", "{count}", "{name}"):
+                for placeholder in (
+                    "{dataset}",
+                    "{rows}",
+                    "{columns}",
+                    "{page}",
+                    "{count}",
+                    "{name}",
+                    "{shown}",
+                    "{total}",
+                ):
                     assert source.count(placeholder) == translation.text.count(placeholder)
             checked += 1
-    assert checked == 87
+    assert checked == 101
 
 
 def test_dimension_search_preserves_checks_order_and_identity():

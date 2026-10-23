@@ -38,13 +38,13 @@ def test_classification_uses_storage_dtype(dtype, expected):
 
 
 @pytest.mark.parametrize("dtype", ["int64", "Int64", "Float64"])
-@pytest.mark.parametrize("literal", ["18", "-18", "+18", "2.5", ".5", "1.", "-2.5e-3", "1E+12", "'anything'"])
+@pytest.mark.parametrize("literal", ["18", "-18", "+18", "2.5", ".5", "1.", "-2.5e-3", "1E+12"])
 def test_numeric_literals(dtype, literal):
     columns = condition_columns(["a"], [dtype])
-    assert not lint_condition(f"([a] >= {literal} OR [a] IN ({literal}, 'legacy'))", columns)
+    assert not lint_condition(f"([a] >= {literal} OR [a] IN ({literal}, 0))", columns)
 
 
-@pytest.mark.parametrize("literal", ["True", "FALSE", "true", "fAlSe", "'anything'"])
+@pytest.mark.parametrize("literal", ["True", "FALSE", "true", "fAlSe"])
 def test_boolean_literals(literal):
     columns = condition_columns(["a"], ["boolean"])
     assert not lint_condition(f"[a] IN ({literal}, True) AND [a] != false", columns)
@@ -68,6 +68,9 @@ def test_boolean_literals(literal):
         ("category", "1"),
         ("datetime64[ns]", "2026"),
         ("bool", "TrueFalse"),
+        ("Int64", "'18'"),
+        ("Float64", "'anything'"),
+        ("boolean", "'True'"),
     ],
 )
 def test_wrong_or_malformed_unquoted_literal_is_invalid(dtype, literal):

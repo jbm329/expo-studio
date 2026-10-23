@@ -36,7 +36,7 @@ The project is still in its infancy and may change significantly.
 
 ### 📊 Data Operations
 - **Data Preparation**: Built-in tools for joining and concatenating datasets within the workbench.
-- **Reshape (UI skeleton)**: Configure dimensions and named aggregation metrics for the active ready dataset.
+- **Reshape (preview)**: Configure dimensions and named aggregation metrics for the active ready dataset.
   Open Reshape after Concatenate in the toolbar or from a result tab's context menu.
   Each condition is editable text with a right-hand `...` button opening a visual builder.
   Focusing or clicking the condition field opens a floating multiline editor over
@@ -65,36 +65,52 @@ The project is still in its infancy and may change significantly.
   Generated syntax brackets column names and quotes textual values, for example
   `[Region] IN ('North', 'South')`; `]` and apostrophes are escaped by doubling.
   Nested groups generate explicit parentheses, for example
-  `(([Year] = '2019' AND [Clinic] = 'Medicine') OR [Role] = 'Doctor')`.
+  `(([Year] = 2019 AND [Clinic] = 'Medicine') OR [Role] = 'Doctor')`.
   Ambiguous column names must be renamed. Unsupported structured values and
   distinct values with identical serialized text are reported when encountered during loading.
   Reopening unchanged generated text restores the builder; manually edited syntax is not imported into it,
   and applying a new builder selection replaces it (Cancel preserves it).
   Manual conditions are linted after typing: column names must be bracketed and
-  match an unambiguous source column exactly. Numeric columns also accept unquoted
-  numbers (including signs, decimals and scientific notation); boolean columns accept
-  unquoted True/False, case-insensitively. Existing quoted values remain accepted
-  without value/type evaluation. Text, category, object and date/time columns still
+  match an unambiguous source column exactly. Numeric columns require unquoted
+  numbers (including signs, decimals and scientific notation); boolean columns require
+  unquoted True/False, case-insensitively. Quoted numbers/booleans are lint errors.
+  Text, category, object and date/time columns still
   require quotes, even when their values look numeric or boolean. The builder uses
   the same dtype rules when generating literals.
   IN/NOT IN require a nonempty list using the same literal rules; IS NULL/IS NOT NULL take no value.
   Nested parentheses and mixed AND/OR are supported (AND binds before OR).
   Red borders and error tooltips identify invalid syntax in both editors; the expanded
   editor also underlines errors. Empty conditions are valid. Pending or invalid
-  conditions fail the independent condition-validity gate for future execution.
-  Quoted values are not evaluated, looked up, or type-checked against their operators.
+  conditions disable Preview. Linting does not look up values; interpretation and
+  comparison errors are reported explicitly when calculating the preview.
   Typing `[` opens column autocomplete; further typing filters names without
   regard to case. Choose with the arrow keys and Enter/Tab or click a suggestion
   to insert `[column name]`. Names containing `]` are escaped automatically.
   Ambiguous duplicate names are excluded, and quoted values never trigger suggestions.
   Escape dismisses suggestions without closing the expanded editor.
-  The main Reshape Apply remains disabled, and the inline preview is a placeholder.
+  Press Preview to calculate the full dataset asynchronously with a busy overlay,
+  progress and cooperative cancellation. The inline read-only table shows at most
+  five output rows and the full output row count; it never aggregates a five-row input sample.
+  Edits invalidate prior output until Preview is pressed again.
+  Each metric filters its own rows without removing groups or affecting other metrics.
+  COUNT and COUNT DISTINCT exclude missing source values. No matching values produce
+  0 for counts and a blank for SUM/AVG/MIN/MAX. Missing dimensions remain grouped,
+  observed groups keep their first-seen order, and no dimensions produces one total row.
+  Output names must be unique across dimensions and metrics, with at least one complete metric.
+  Comparisons and membership (including != and NOT IN) exclude missing values;
+  use IS NULL/IS NOT NULL explicitly. Quoted date/time values are parsed during execution:
+  a naive timestamp uses the column's timezone, while an aware timestamp cannot be
+  compared to a timezone-naive column. Invalid or ambiguous timestamps are errors.
+  Object/category literals resolve using the picker's canonical scalar text without
+  changing source dtypes; ambiguous representations or unsupported comparisons are errors.
+  Closing the dialog cancels pending work and discards late callbacks.
+  The main Reshape Apply remains disabled.
   SUM and AVG offer existing integer/float columns only. MIN and MAX also offer
   datetime columns, including timezone-aware timestamps, while COUNT and
   COUNT DISTINCT offer all columns. Changing the function clears an incompatible source selection.
   Dimensions include all columns, show their storage dtypes, and support case-insensitive
   column-name search. Searching preserves checked dimensions, including hidden ones.
-  Aggregation, result creation, pivot, and unpivot are not available yet.
+  Result creation, pivot, and unpivot are not available yet.
 - **Data Transformation**: Apply transformations to datasets using a visual interface.
 - **Export Capabilities**: Export query results to multiple formats including **CSV**, **feather**, **parquet**, and more.
 - **Dataset Analysis**: Integrated data profiling (via `fg-data-profiling`) for in-depth dataset statistics.

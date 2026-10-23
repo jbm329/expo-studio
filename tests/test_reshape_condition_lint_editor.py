@@ -206,7 +206,7 @@ def test_dialog_aggregates_pending_errors_removal_and_builder_readiness():
     dialog.remove_metric_button.click()
     assert dialog.conditions_valid
     assert not dialog.apply_button.isEnabled()
-    assert "UI only" in dialog.apply_button.toolTip()
+    assert "Creating a result dataset" in dialog.apply_button.toolTip()
     dialog.close()
 
 
@@ -224,12 +224,12 @@ def test_dialog_passes_source_dtypes_to_manual_linting():
     assert dialog.validate_conditions()
     editor.text.setText("[age] = False")
     assert not dialog.validate_conditions()
-    assert "Expected a number" in editor.text.toolTip()
+    assert "Expected an unquoted number" in editor.text.toolTip()
     editor.text.setText("[flag] = 1")
     assert not dialog.validate_conditions()
-    assert "Expected True, False" in editor.text.toolTip()
+    assert "Expected unquoted True or False" in editor.text.toolTip()
     editor.text.setText("[code] = 18")
     assert not dialog.validate_conditions()
     editor.text.setText("[age] = 'anything' AND [flag] = 'legacy'")
-    assert dialog.validate_conditions()
+    assert not dialog.validate_conditions()
     dialog.close()

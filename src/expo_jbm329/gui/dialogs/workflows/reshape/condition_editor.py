@@ -187,9 +187,11 @@ class ConditionEditor(QWidget):
             ConditionLintCode.OPERATOR: self.tr("Expected =, !=, >, >=, <, <=, IN, NOT IN, IS NULL or IS NOT NULL."),
             ConditionLintCode.VALUE: self.tr("Expected a single-quoted value, for example 'value'."),
             ConditionLintCode.NUMBER_VALUE: self.tr(
-                "Expected a number or a single-quoted value, for example 18 or '18'."
+                "Expected an unquoted number, for example 18. Remove single quotes from numeric values."
             ),
-            ConditionLintCode.BOOLEAN_VALUE: self.tr("Expected True, False or a single-quoted value."),
+            ConditionLintCode.BOOLEAN_VALUE: self.tr(
+                "Expected unquoted True or False. Remove single quotes from booleans."
+            ),
             ConditionLintCode.LIST: self.tr("IN and NOT IN require a nonempty, comma-separated list in parentheses."),
             ConditionLintCode.CLOSE: self.tr("Expected a closing parenthesis )."),
             ConditionLintCode.GROUP_CONNECTOR: self.tr("Expected AND, OR or a closing parenthesis )."),

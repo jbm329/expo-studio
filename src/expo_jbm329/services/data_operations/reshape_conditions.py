@@ -226,6 +226,8 @@ def format_condition(group: ConditionGroup) -> str:
                 and value.kind == "boolean"
                 and value.text in {"True", "False"}
             )
+            if rule.column.literal_type != ConditionLiteralType.QUOTED and not (numeric or boolean):
+                raise ConditionError(ConditionProblem.INVALID_RULE)
             literals.append(value.text if numeric or boolean else "'" + value.text.replace("'", "''") + "'")
         if operator.is_membership:
             expression += " (" + ", ".join(literals) + ")"

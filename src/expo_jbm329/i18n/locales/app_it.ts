@@ -2357,43 +2357,51 @@ Consultare i log per ulteriori informazioni.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="189" />
-        <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
-        <translation>? previsto un numero o un valore tra apici singoli, ad esempio 18 o '18'.</translation>
+        <source>Expected an unquoted number, for example 18. Remove single quotes from numeric values.</source>
+        <translation>È previsto un numero senza apici, ad esempio 18. Rimuovi gli apici singoli dai valori numerici.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="192" />
-        <source>Expected True, False or a single-quoted value.</source>
-        <translation>? previsto True, False o un valore tra apici singoli.</translation>
+        <source>Expected unquoted True or False. Remove single quotes from booleans.</source>
+        <translation>È previsto True o False senza apici. Rimuovi gli apici singoli dai valori booleani.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="193" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="195" />
         <source>IN and NOT IN require a nonempty, comma-separated list in parentheses.</source>
         <translation>IN e NOT IN richiedono un elenco non vuoto tra parentesi, separato da virgole.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="194" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="196" />
         <source>Expected a closing parenthesis ).</source>
         <translation>È prevista una parentesi di chiusura ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="195" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="197" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
         <translation>? previsto AND, OR o una parentesi di chiusura ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="196" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="198" />
         <source>Unmatched closing parenthesis ). Add a matching opening ( or remove this ).</source>
         <translation>Parentesi di chiusura ) senza corrispondenza. Aggiungi una parentesi di apertura ( corrispondente o rimuovi questa ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="199" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="201" />
         <source>Expected a condition or a parenthesized group.</source>
         <translation>È prevista una condizione o un gruppo tra parentesi.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="200" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="202" />
         <source>Expected AND or OR between conditions, or the end of the expression.</source>
         <translation>È previsto AND o OR tra le condizioni, oppure la fine dell'espressione.</translation>
+    </message>
+    <message>
+        <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
+        <translation type="vanished">? previsto un numero o un valore tra apici singoli, ad esempio 18 o '18'.</translation>
+    </message>
+    <message>
+        <source>Expected True, False or a single-quoted value.</source>
+        <translation type="vanished">? previsto True, False o un valore tra apici singoli.</translation>
     </message>
     <message>
         <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
@@ -7687,105 +7695,183 @@ Suggerimento: {error_hint}</translation>
 </context><context>
     <name>ReshapeController</name>
     <message>
-        <location filename="../../workbench/controllers/reshape_controller.py" line="28" />
+        <location filename="../../workbench/controllers/reshape_controller.py" line="40" />
         <source>Reshape unavailable</source>
         <translation>Rimodellamento non disponibile</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/reshape_controller.py" line="29" />
+        <location filename="../../workbench/controllers/reshape_controller.py" line="41" />
         <source>Select a ready result dataset before opening Reshape.</source>
         <translation>Seleziona un dataset di risultati pronto prima di aprire Rimodella.</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="42" />
+        <source>Calculating Reshape preview...</source>
+        <translation>Calcolo dell'anteprima della ristrutturazione...</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="43" />
+        <source>Reshape preview</source>
+        <translation>Anteprima della ristrutturazione</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="44" />
+        <source>Preview cancelled. Press Preview to try again.</source>
+        <translation>Anteprima annullata. Premi Anteprima per riprovare.</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="45" />
+        <source>Preview failed. Check the selected data and conditions, then try again.</source>
+        <translation>Anteprima non riuscita. Controlla i dati e le condizioni selezionati, poi riprova.</translation>
     </message>
 </context><context>
     <name>ReshapeDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="75" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="93" />
         <source>Reshape — {dataset} ({rows} rows × {columns} columns)</source>
         <translation>Rimodella — {dataset} ({rows} righe × {columns} colonne)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="248" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="86" />
-        <source>UI only. Aggregation and preview are not available yet.</source>
-        <translation>Solo interfaccia. Aggregazione e anteprima non sono ancora disponibili.</translation>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="104" />
+        <source>Preview uses the full dataset. Creating a result dataset is not available yet.</source>
+        <translation>L'anteprima usa l'intero dataset. La creazione di un dataset di risultato non è ancora disponibile.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="92" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="110" />
         <source>Dimensions</source>
         <translation>Dimensioni</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="96" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="95" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="114" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="113" />
         <source>Search dimensions</source>
         <translation>Cerca dimensioni</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="115" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="133" />
         <source>Metrics</source>
         <translation>Metriche</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="118" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="136" />
         <source>SUM and AVG accept integer and floating-point columns only. MIN and MAX also accept datetime columns. COUNT and COUNT DISTINCT accept any column. Changing the function clears an incompatible source selection.</source>
         <translation>SUM e AVG accettano solo colonne di numeri interi e a virgola mobile. MIN e MAX accettano anche colonne di data e ora. COUNT e COUNT DISTINCT accettano qualsiasi colonna. Cambiare funzione azzera una selezione della colonna di origine incompatibile.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="130" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="148" />
         <source>Metric name</source>
         <translation>Nome della metrica</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="198" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="131" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="229" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="149" />
         <source>Function</source>
         <translation>Funzione</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="203" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="132" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="234" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="150" />
         <source>Source column</source>
         <translation>Colonna di origine</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="133" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="151" />
         <source>Condition (optional)</source>
         <translation>Condizione (facoltativa)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="146" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="164" />
         <source>Add metric</source>
         <translation>Aggiungi metrica</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="147" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="165" />
         <source>Remove selected metrics</source>
         <translation>Rimuovi metriche selezionate</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="156" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="174" />
         <source>Preview (5 rows)</source>
         <translation>Anteprima (5 righe)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="159" />
-        <source>A five-row output preview will be available here in a later step.</source>
-        <translation>Un’anteprima di cinque righe di risultato sarà disponibile qui in una fase successiva.</translation>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="178" />
+        <source>Configure metrics and press Preview to calculate up to five output rows.</source>
+        <translation>Configura le misure e premi Anteprima per calcolare fino a cinque righe di output.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="167" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="192" />
+        <source>Preview</source>
+        <translation>Anteprima</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="196" />
         <source>Apply</source>
         <translation>Applica</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="246" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="270" />
+        <source>Preview is out of date. Press Preview to recalculate.</source>
+        <translation>L'anteprima non è aggiornata. Premi Anteprima per ricalcolare.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="325" />
+        <source>Calculating preview...</source>
+        <translation>Calcolo dell'anteprima...</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="338" />
+        <source>Showing {shown} of {total} output rows.</source>
+        <translation>Visualizzazione di {shown} righe di output su {total}.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="353" />
+        <source>Complete every metric and correct condition errors before previewing.</source>
+        <translation>Completa ogni misura e correggi gli errori delle condizioni prima dell'anteprima.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="408" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="356" />
+        <source>Output column names must be unique across dimensions and metrics.</source>
+        <translation>I nomi delle colonne di output devono essere univoci tra dimensioni e misure.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="357" />
+        <source>A condition value cannot be interpreted for column '{name}'.</source>
+        <translation>Un valore della condizione non può essere interpretato per la colonna '{name}'.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="358" />
+        <source>Cannot compare or aggregate the selected data for '{name}'. Check its values and types.</source>
+        <translation>Impossibile confrontare o aggregare i dati selezionati per '{name}'. Controlla i valori e i tipi.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="384" />
         <source>Correct condition errors before applying.</source>
         <translation>Correggi gli errori delle condizioni prima di applicare.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="271" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="386" />
+        <source>Creating a result dataset is not available yet.</source>
+        <translation>La creazione di un dataset di risultato non è ancora disponibile.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="410" />
+        <source>Calculate up to five output rows from the full dataset.</source>
+        <translation>Calcola fino a cinque righe di output dall'intero dataset.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="434" />
         <source>Select column</source>
         <translation>Seleziona colonna</translation>
+    </message>
+    <message>
+        <source>UI only. Aggregation and preview are not available yet.</source>
+        <translation type="vanished">Solo interfaccia. Aggregazione e anteprima non sono ancora disponibili.</translation>
+    </message>
+    <message>
+        <source>A five-row output preview will be available here in a later step.</source>
+        <translation type="vanished">Un’anteprima di cinque righe di risultato sarà disponibile qui in una fase successiva.</translation>
     </message>
     <message>
         <source>SQL-style condition text only. Not validated or executed.</source>

@@ -1,4 +1,4 @@
-"""Editable aggregation UI, without transformation or preview execution."""
+"""Reshape configuration and bounded, asynchronously calculated output preview."""
 
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QPushButton,
+    QTableView,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -27,8 +28,19 @@ from PyQt6.QtWidgets import (
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
 from expo_jbm329.gui.dialogs.workflows.reshape.dimension_delegate import COLUMN_NAME_ROLE, DTYPE_ROLE, DimensionDelegate
+from expo_jbm329.services.data_operations.reshape_condition_lint import parse_condition
 from expo_jbm329.services.data_operations.reshape_conditions import condition_columns
+from expo_jbm329.services.data_operations.reshape_preview import (
+    ReshapeError,
+    ReshapeFunction,
+    ReshapeMetric,
+    ReshapePreview,
+    ReshapeProblem,
+    ReshapeRequest,
+    validate_reshape,
+)
 from expo_jbm329.utils.format_utils import fmt_int
+from expo_jbm329.utils.models import DataFrameModel
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -40,6 +52,8 @@ class ReshapeDialog(QDialog):
     """Configure dimensions and named metrics for a fixed source dataset."""
 
     condition_requested = pyqtSignal(object)  # ConditionEditor
+    preview_requested = pyqtSignal(object)  # ReshapeRequest
+    configuration_changed = pyqtSignal()
 
     def __init__(
         self,
@@ -51,7 +65,7 @@ class ReshapeDialog(QDialog):
         numeric_column_positions: Sequence[int],
         datetime_column_positions: Sequence[int],
     ) -> None:
-        """Initialize the UI-only aggregation workspace.
+        """Initialize configuration controls and the preview panel.
 
         Args:
             parent: Parent widget.
@@ -62,6 +76,10 @@ class ReshapeDialog(QDialog):
             datetime_column_positions: Positions with datetime dtypes.
         """
         super().__init__(parent)
+        self._revision = 0
+        self._preview_busy = False
+        self._has_preview = False
+        self._source_dtypes = tuple(source_dtypes)
         self._source_columns = tuple(source_columns)
         self._condition_columns = condition_columns(self._source_columns, source_dtypes)
         if len(source_dtypes) != len(self._source_columns):
@@ -83,7 +101,7 @@ class ReshapeDialog(QDialog):
         root = QVBoxLayout(self)
         root.setContentsMargins(12, 12, 12, 12)
         root.setSpacing(12)
-        notice = QLabel(self.tr("UI only. Aggregation and preview are not available yet."), self)
+        notice = QLabel(self.tr("Preview uses the full dataset. Creating a result dataset is not available yet."), self)
         notice.setWordWrap(True)
         root.addWidget(notice)
 
@@ -154,16 +172,28 @@ class ReshapeDialog(QDialog):
         root.addLayout(configuration, 3)
 
         preview_box = QGroupBox(self.tr("Preview (5 rows)"), self)
+        self.preview_panel = preview_box
         preview_layout = QVBoxLayout(preview_box)
         self.preview_placeholder = QLabel(
-            self.tr("A five-row output preview will be available here in a later step."), preview_box
+            self.tr("Configure metrics and press Preview to calculate up to five output rows."), preview_box
         )
         self.preview_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.preview_placeholder.setTextFormat(Qt.TextFormat.PlainText)
         self.preview_placeholder.setWordWrap(True)
         preview_layout.addWidget(self.preview_placeholder)
+        self.preview_table = QTableView(preview_box)
+        self.preview_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.preview_table.setSortingEnabled(False)
+        self.preview_table.hide()
+        preview_layout.addWidget(self.preview_table)
+        self.preview_model: DataFrameModel | None = None
         root.addWidget(preview_box, 1)
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close, self)
+        self.preview_button = QPushButton(self.tr("Preview"), self)
+        self.preview_button.setAutoDefault(False)
+        buttons.addButton(self.preview_button, QDialogButtonBox.ButtonRole.ActionRole)
+        self.preview_button.clicked.connect(self._request_preview)
         self.apply_button = QPushButton(self.tr("Apply"), self)
         self.apply_button.setEnabled(False)
         self.apply_button.setToolTip(notice.text())
@@ -176,6 +206,8 @@ class ReshapeDialog(QDialog):
         self.remove_metric_button.clicked.connect(self._remove_selected_metrics)
         self.metrics.itemSelectionChanged.connect(self._update_remove_button)
         self.metrics.itemChanged.connect(self._update_metric_readiness)
+        self.metrics.itemChanged.connect(self._configuration_changed)
+        self.dimensions.itemChanged.connect(self._configuration_changed)
         self._add_metric()
         self._update_remove_button()
 
@@ -208,11 +240,13 @@ class ReshapeDialog(QDialog):
             self._populate_source_columns(columns, functions.currentText())
 
         functions.currentIndexChanged.connect(update_source_columns)
+        functions.currentIndexChanged.connect(self._configuration_changed)
         update_source_columns()
 
         condition = ConditionEditor(self.metrics, self._condition_columns)
         condition.builder_requested.connect(lambda: self.condition_requested.emit(condition))
         condition.validity_changed.connect(self._update_apply_button)
+        condition.text.textChanged.connect(self._configuration_changed)
         self.metrics.setCellWidget(row, 3, condition)
 
         def fill_default_name() -> None:
@@ -221,7 +255,112 @@ class ReshapeDialog(QDialog):
 
         columns.currentIndexChanged.connect(fill_default_name)
         columns.currentIndexChanged.connect(self._update_metric_readiness)
+        columns.currentIndexChanged.connect(self._configuration_changed)
         self._update_metric_readiness()
+        self._configuration_changed()
+
+    @property
+    def revision(self) -> int:
+        """Return configuration revision for async stale-result guards."""
+        return self._revision
+
+    def _configuration_changed(self) -> None:
+        self._revision += 1
+        if self._has_preview or self._preview_busy:
+            self.preview_table.hide()
+            self.preview_placeholder.setText(self.tr("Preview is out of date. Press Preview to recalculate."))
+        self._update_apply_button()
+        self.configuration_changed.emit()
+
+    def capture_request(self) -> ReshapeRequest:
+        """Flush lint and capture an immutable, validated execution request."""
+        if not self.validate_conditions():
+            raise ReshapeError(ReshapeProblem.CONFIGURATION)
+        dimensions = tuple(
+            position
+            for position in range(self.dimensions.count())
+            if (item := self.dimensions.item(position)) is not None and item.checkState() == Qt.CheckState.Checked
+        )
+        metrics: list[ReshapeMetric] = []
+        for row in range(self.metrics.rowCount()):
+            name = self.metrics.item(row, 0)
+            function = self.metrics.cellWidget(row, 1)
+            source = self.metrics.cellWidget(row, 2)
+            condition = self.metrics.cellWidget(row, 3)
+            if (
+                name is None
+                or not isinstance(function, QComboBox)
+                or not isinstance(source, QComboBox)
+                or not isinstance(condition, ConditionEditor)
+                or not isinstance(source.currentData(), int)
+            ):
+                raise ReshapeError(ReshapeProblem.CONFIGURATION)
+            parsed = parse_condition(condition.text.text(), self._condition_columns)
+            if parsed.diagnostics:
+                raise ReshapeError(ReshapeProblem.CONFIGURATION)
+            metrics.append(
+                ReshapeMetric(
+                    name.text().strip(),
+                    ReshapeFunction(function.currentText()),
+                    source.currentData(),
+                    parsed.instructions,
+                )
+            )
+        request = ReshapeRequest(dimensions, tuple(metrics))
+        validate_reshape(request, self._condition_columns, self._source_dtypes)
+        return request
+
+    def _request_preview(self) -> None:
+        try:
+            request = self.capture_request()
+        except ReshapeError as error:
+            self.show_preview_problem(error)
+            return
+        self.preview_requested.emit(request)
+
+    def set_preview_busy(self, busy: bool) -> None:
+        """Update request controls without blocking configuration or Close."""
+        self._preview_busy = busy
+        if busy:
+            self.preview_table.hide()
+            self.preview_placeholder.setText(self.tr("Calculating preview..."))
+        self._update_apply_button()
+
+    def show_preview(self, result: ReshapePreview) -> None:
+        """Present a worker result using the read-only dataframe model."""
+        old_model = self.preview_model
+        self.preview_model = DataFrameModel(result.frame, self.preview_table)
+        self.preview_table.setModel(self.preview_model)
+        if old_model is not None:
+            old_model.deleteLater()
+        self.preview_table.resizeColumnsToContents()
+        self.preview_table.show()
+        self.preview_placeholder.setText(
+            self.tr("Showing {shown} of {total} output rows.").format(
+                shown=fmt_int(len(result.frame)), total=fmt_int(result.total_rows)
+            )
+        )
+        self._has_preview = True
+
+    def show_preview_message(self, message: str) -> None:
+        """Present cancellation/failure explicitly rather than stale results."""
+        self.preview_table.hide()
+        self.preview_placeholder.setText(message)
+        self._has_preview = False
+
+    def show_preview_problem(self, error: ReshapeError) -> None:
+        """Translate an expected service failure on the GUI thread."""
+        messages = {
+            ReshapeProblem.CONFIGURATION: self.tr(
+                "Complete every metric and correct condition errors before previewing."
+            ),
+            ReshapeProblem.OUTPUT_NAMES: self.tr("Output column names must be unique across dimensions and metrics."),
+            ReshapeProblem.VALUE: self.tr("A condition value cannot be interpreted for column '{name}'."),
+            ReshapeProblem.DATA: self.tr(
+                "Cannot compare or aggregate the selected data for '{name}'. Check its values and types."
+            ),
+        }
+        self.show_preview_message(messages[error.problem].format(name=error.name))
 
     @property
     def conditions_valid(self) -> bool:
@@ -245,7 +384,32 @@ class ReshapeDialog(QDialog):
         if not self.conditions_valid:
             self.apply_button.setToolTip(self.tr("Correct condition errors before applying."))
         else:
-            self.apply_button.setToolTip(self.tr("UI only. Aggregation and preview are not available yet."))
+            self.apply_button.setToolTip(self.tr("Creating a result dataset is not available yet."))
+        names = [
+            str(self._source_columns[position])
+            for position in range(self.dimensions.count())
+            if (item := self.dimensions.item(position)) is not None and item.checkState() == Qt.CheckState.Checked
+        ]
+        ready = self.metrics.rowCount() > 0 and self.conditions_valid
+        for row in range(self.metrics.rowCount()):
+            name = self.metrics.item(row, 0)
+            source = self.metrics.cellWidget(row, 2)
+            ready = (
+                ready
+                and name is not None
+                and bool(name.text().strip())
+                and isinstance(source, QComboBox)
+                and source.currentData() is not None
+            )
+            if name is not None:
+                names.append(name.text().strip())
+        unique = len(set(names)) == len(names)
+        self.preview_button.setEnabled(ready and unique and not self._preview_busy)
+        self.preview_button.setToolTip(
+            self.tr("Output column names must be unique across dimensions and metrics.")
+            if not unique
+            else self.tr("Calculate up to five output rows from the full dataset.")
+        )
 
     def _update_metric_readiness(self) -> None:
         all_ready = True
@@ -290,6 +454,7 @@ class ReshapeDialog(QDialog):
             self.metrics.removeRow(row)
         self._update_remove_button()
         self._update_metric_readiness()
+        self._configuration_changed()
 
     def _update_remove_button(self) -> None:
         self.remove_metric_button.setEnabled(bool(self.metrics.selectedIndexes()))

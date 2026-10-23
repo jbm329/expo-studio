@@ -10,7 +10,10 @@ from expo_jbm329.services.data_operations.reshape_conditions import (
     NUMBER_LITERAL,
     ConditionColumn,
     ConditionLiteralType,
+    ConditionMatch,
     ConditionOperator,
+    ConditionRule,
+    ConditionValue,
 )
 
 if TYPE_CHECKING:
@@ -45,6 +48,14 @@ class ConditionDiagnostic:
     start: int
     end: int
     name: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class ParsedCondition:
+    """Shared parse result; postfix instructions avoid recursive evaluation."""
+
+    instructions: tuple[ConditionRule | ConditionMatch, ...]
+    diagnostics: tuple[ConditionDiagnostic, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,6 +124,7 @@ class _Parser:
         for column in columns:
             self.columns.setdefault(column.name, []).append(column)
         self.diagnostics: list[ConditionDiagnostic] = []
+        self.instructions: list[ConditionRule | ConditionMatch] = []
 
     @property
     def current(self) -> _Token:
@@ -141,10 +153,14 @@ class _Parser:
                     self.predicate()
             elif production == "and_tail":
                 if self.take("AND"):
-                    pending.extend(("and_tail", "atom"))
+                    pending.extend(("and_tail", "emit_and", "atom"))
             elif production == "or_tail":
                 if self.take("OR"):
-                    pending.extend(("or_tail", "and_tail", "atom"))
+                    pending.extend(("or_tail", "emit_or", "and_tail", "atom"))
+            elif production == "emit_and":
+                self.instructions.append(ConditionMatch.ALL)
+            elif production == "emit_or":
+                self.instructions.append(ConditionMatch.ANY)
             elif not self.take(")"):
                 self.fail(ConditionLintCode.CLOSE if self.current.kind == "eof" else ConditionLintCode.GROUP_CONNECTOR)
 
@@ -166,16 +182,19 @@ class _Parser:
             matches[0].literal_type if len(matches) == 1 and matches[0].available else ConditionLiteralType.QUOTED
         )
         operator = self.operator()
+        column = matches[0] if matches else ConditionColumn(-1, token.text, False)
         if operator.is_null_test:
+            self.instructions.append(ConditionRule(column, operator))
             return
         if operator.is_membership and not self.take("("):
             self.fail(ConditionLintCode.LIST)
-        self.value(literal_type)
+        operands = [self.value(literal_type)]
         if operator.is_membership:
             while self.take(","):
-                self.value(literal_type)
+                operands.append(self.value(literal_type))
             if not self.take(")"):
                 self.fail(ConditionLintCode.LIST)
+        self.instructions.append(ConditionRule(column, operator, tuple(operands)))
 
     def operator(self) -> ConditionOperator:
         start = self.index
@@ -186,32 +205,35 @@ class _Parser:
         self.index = start
         return self.fail(ConditionLintCode.OPERATOR)
 
-    def value(self, literal_type: ConditionLiteralType) -> None:
+    def value(self, literal_type: ConditionLiteralType) -> ConditionValue:
         token = self.current
-        if token.kind != "value":
-            if literal_type == ConditionLiteralType.NUMBER:
-                if token.kind != "number":
-                    self.fail(ConditionLintCode.NUMBER_VALUE)
-            elif literal_type == ConditionLiteralType.BOOLEAN:
-                if token.kind != "word" or token.text not in {"TRUE", "FALSE"}:
-                    self.fail(ConditionLintCode.BOOLEAN_VALUE)
-            else:
-                self.fail(ConditionLintCode.VALUE)
+        kind = "string"
+        if literal_type == ConditionLiteralType.NUMBER:
+            if token.kind != "number":
+                self.fail(ConditionLintCode.NUMBER_VALUE)
+            kind = "number"
+        elif literal_type == ConditionLiteralType.BOOLEAN:
+            if token.kind != "word" or token.text not in {"TRUE", "FALSE"}:
+                self.fail(ConditionLintCode.BOOLEAN_VALUE)
+            kind = "boolean"
+        elif token.kind != "value":
+            self.fail(ConditionLintCode.VALUE)
         self.index += 1
+        return ConditionValue(kind, token.text)
 
 
-def lint_condition(text: str, columns: Sequence[ConditionColumn]) -> tuple[ConditionDiagnostic, ...]:
-    """Check syntax and column references, treating every quoted value as opaque.
+def parse_condition(text: str, columns: Sequence[ConditionColumn]) -> ParsedCondition:
+    """Parse syntax and column references without evaluating literal contents.
 
     Args:
         text: Complete manual condition, including any newlines.
         columns: Captured positional column names and ambiguity metadata.
 
     Returns:
-        Source-ordered diagnostics; empty input has no errors.
+        Postfix instructions on success or positioned diagnostics on failure.
     """
     if not text.strip():
-        return ()
+        return ParsedCondition((), ())
     tokens, lexical_error = _tokens(text)
     parser = _Parser(tokens, len(text), columns)
     try:
@@ -227,4 +249,10 @@ def lint_condition(text: str, columns: Sequence[ConditionColumn]) -> tuple[Condi
         # The truncated token stream cannot provide useful EOF syntax feedback.
         diagnostics = [diagnostic for diagnostic in diagnostics if diagnostic.start < lexical_error.start]
         diagnostics.append(lexical_error)
-    return tuple(sorted(diagnostics, key=lambda diagnostic: diagnostic.start))
+    errors = tuple(sorted(diagnostics, key=lambda diagnostic: diagnostic.start))
+    return ParsedCondition(() if errors else tuple(parser.instructions), errors)
+
+
+def lint_condition(text: str, columns: Sequence[ConditionColumn]) -> tuple[ConditionDiagnostic, ...]:
+    """Return diagnostics from the same parser used for execution."""
+    return parse_condition(text, columns).diagnostics
