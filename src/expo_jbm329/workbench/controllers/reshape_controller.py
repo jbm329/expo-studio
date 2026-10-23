@@ -8,14 +8,17 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtWidgets import QMessageBox
 
+from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
 from expo_jbm329.gui.dialogs.workflows.reshape.reshape_dialog import ReshapeDialog
 from expo_jbm329.services.data_operations.dtypes import get_datetime_column_positions, get_numeric_column_positions
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.utils.i18n_utils import translate
+from expo_jbm329.workbench.controllers.reshape_condition_controller import ReshapeConditionController
 
 if TYPE_CHECKING:
     from PyQt6.QtWidgets import QWidget
 
+    from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
     from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
 
 
@@ -30,6 +33,7 @@ class ReshapeController:
         *,
         parent_widget: QWidget,
         results: ResultTabManager,
+        async_ops: AsyncOperationController,
         logger: logging.Logger | None = None,
     ) -> None:
         """Initialize the controller with explicit workbench dependencies.
@@ -37,11 +41,13 @@ class ReshapeController:
         Args:
             parent_widget: Parent for configuration and warning dialogs.
             results: Manager owning dataset readiness and identity.
+            async_ops: Workbench job facade for loading condition values.
             logger: Optional UI logger.
         """
         self._parent = parent_widget
         self._results = results
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
+        self._conditions = ReshapeConditionController(async_ops, self._logger)
 
     @staticmethod
     def _tr(text: str) -> str:
@@ -66,6 +72,7 @@ class ReshapeController:
             row_count=len(record.df),
             column_count=len(record.df.columns),
         )
+        source = record.df
         dialog = ReshapeDialog(
             parent=self._parent,
             source_dataset=dataset,
@@ -74,4 +81,12 @@ class ReshapeController:
             numeric_column_positions=get_numeric_column_positions(record.df),
             datetime_column_positions=get_datetime_column_positions(record.df),
         )
+
+        def open_condition(candidate: object) -> None:
+            if not isinstance(candidate, ConditionEditor):
+                message = "Condition builder requires a metric condition editor."
+                raise TypeError(message)
+            self._conditions.open_dialog(dialog, candidate, source)
+
+        dialog.condition_requested.connect(open_condition)
         dialog.exec()

@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 from PyQt6.QtWidgets import QWidget
 
+from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers import reshape_controller as module
 
@@ -21,7 +22,7 @@ def test_open_captures_only_active_dataset_metadata_without_mutation(monkeypatch
     dialog_class = MagicMock()
     monkeypatch.setattr(module, "ReshapeDialog", dialog_class)
     parent = QWidget()
-    controller = module.ReshapeController(parent_widget=parent, results=results)
+    controller = module.ReshapeController(parent_widget=parent, results=results, async_ops=MagicMock())
 
     controller.open_reshape_dialog()
 
@@ -53,7 +54,7 @@ def test_open_passes_numeric_positions_from_dtype_metadata(monkeypatch):
     dialog_class = MagicMock()
     monkeypatch.setattr(module, "ReshapeDialog", dialog_class)
     parent = QWidget()
-    module.ReshapeController(parent_widget=parent, results=results).open_reshape_dialog()
+    module.ReshapeController(parent_widget=parent, results=results, async_ops=MagicMock()).open_reshape_dialog()
     assert dialog_class.call_args.kwargs["numeric_column_positions"] == (1, 3)
     assert dialog_class.call_args.kwargs["datetime_column_positions"] == (4,)
     assert dialog_class.call_args.kwargs["source_dtypes"] == [str(dtype) for dtype in dataframe.dtypes]
@@ -75,7 +76,7 @@ def test_unavailable_source_warns_without_opening_dialog(monkeypatch, state):
     monkeypatch.setattr(module, "ReshapeDialog", dialog_class)
     logger = MagicMock()
     parent = QWidget()
-    controller = module.ReshapeController(parent_widget=parent, results=results, logger=logger)
+    controller = module.ReshapeController(parent_widget=parent, results=results, async_ops=MagicMock(), logger=logger)
 
     controller.open_reshape_dialog()
 
@@ -84,3 +85,32 @@ def test_unavailable_source_warns_without_opening_dialog(monkeypatch, state):
     )
     logger.warning.assert_called_once()
     dialog_class.assert_not_called()
+
+
+def test_condition_builder_keeps_original_source_after_active_tab_changes(monkeypatch):
+    dataframe = pd.DataFrame({"original": [1]})
+    results = MagicMock()
+    results.active_tab_id.return_value = "source"
+    results.tabs_by_id = {"source": SimpleNamespace(tab_id="source", title="Source", is_ready=True, df=dataframe)}
+    parent = QWidget()
+    controller = module.ReshapeController(parent_widget=parent, results=results, async_ops=MagicMock())
+    condition_controller = MagicMock()
+    controller._conditions = condition_controller
+    editors = []
+
+    def execute(dialog):
+        results.active_tab_id.return_value = "other"
+        results.tabs_by_id["source"].df = pd.DataFrame({"replacement": [2]})
+        editor = dialog.metrics.cellWidget(0, 3)
+        assert isinstance(editor, ConditionEditor)
+        editors.append(editor)
+        editor.button.click()
+        return 0
+
+    monkeypatch.setattr(module.ReshapeDialog, "exec", execute)
+    controller.open_reshape_dialog()
+    assert condition_controller.open_dialog.call_count == 1
+    args = condition_controller.open_dialog.call_args.args
+    assert args[1] is editors[0]
+    assert args[2] is dataframe
+    results.active_tab_id.assert_called_once()

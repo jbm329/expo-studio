@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -25,6 +25,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
+from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
 from expo_jbm329.gui.dialogs.workflows.reshape.dimension_delegate import COLUMN_NAME_ROLE, DTYPE_ROLE, DimensionDelegate
 from expo_jbm329.utils.format_utils import fmt_int
 
@@ -36,6 +37,8 @@ if TYPE_CHECKING:
 
 class ReshapeDialog(QDialog):
     """Configure dimensions and named metrics for a fixed source dataset."""
+
+    condition_requested = pyqtSignal(object)  # ConditionEditor
 
     def __init__(
         self,
@@ -203,9 +206,9 @@ class ReshapeDialog(QDialog):
         functions.currentIndexChanged.connect(update_source_columns)
         update_source_columns()
 
-        condition = QTableWidgetItem("")
-        condition.setToolTip(self.tr("SQL-style condition text only. Not validated or executed."))
-        self.metrics.setItem(row, 3, condition)
+        condition = ConditionEditor(self.metrics)
+        condition.builder_requested.connect(lambda: self.condition_requested.emit(condition))
+        self.metrics.setCellWidget(row, 3, condition)
 
     def _populate_source_columns(self, columns: QComboBox, function: str) -> None:
         selected_position = columns.currentData()

@@ -528,6 +528,7 @@ class WorkbenchServices:
         reshape = ReshapeController(
             parent_widget=ui.parent,
             results=results,
+            async_ops=async_ops,
             logger=app.log_ui,
         )
         results.set_reshape_controller(reshape)

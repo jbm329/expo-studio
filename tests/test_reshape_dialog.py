@@ -7,7 +7,9 @@ import pytest
 from PyQt6.QtCore import Qt, QTranslator
 from PyQt6.QtWidgets import QComboBox, QDialogButtonBox, QGroupBox
 
+from expo_jbm329.gui.dialogs.workflows.reshape.condition_dialog import ConditionDialog
 from expo_jbm329.gui.dialogs.workflows.reshape.reshape_dialog import ReshapeDialog
+from expo_jbm329.services.data_operations.reshape_conditions import ConditionColumn
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.utils.format_utils import fmt_int
 from expo_jbm329.utils.i18n_utils import translate
@@ -76,13 +78,13 @@ def test_metrics_edit_add_remove_and_column_identity():
     functions.setCurrentText("COUNT DISTINCT")
     columns.setCurrentIndex(2)
     condition = "yrkesroll = 'Läkare' AND Hallänning = 1"
-    metrics.item(0, 3).setText(condition)
-    assert metrics.item(0, 3).text() == condition
-    assert "Not validated or executed" in metrics.item(0, 3).toolTip()
+    metrics.cellWidget(0, 3).text.setText(condition)
+    assert metrics.cellWidget(0, 3).text.text() == condition
+    assert "not validated or executed" in metrics.cellWidget(0, 3).text.toolTip()
     dialog.add_metric_button.click()
     assert metrics.rowCount() == 2
     assert metrics.item(1, 0).text() == ""
-    assert metrics.item(1, 3).text() == ""
+    assert metrics.cellWidget(1, 3).text.text() == ""
     metrics.selectRow(0)
     assert dialog.remove_metric_button.isEnabled()
     dialog.remove_metric_button.click()
@@ -109,7 +111,7 @@ def test_remove_multiple_selected_metrics_and_reopen_discards_configuration():
     reopened = make_dialog()
     assert reopened.metrics.rowCount() == 1
     assert reopened.metrics.item(0, 0).text() == ""
-    assert reopened.metrics.item(0, 3).text() == ""
+    assert reopened.metrics.cellWidget(0, 3).text.text() == ""
     assert not reopened.apply_button.isEnabled()
     reopened.close()
 
@@ -139,6 +141,10 @@ def test_compiled_reshape_translations(qt_app, language):
     qt_app.installTranslator(translator)
     try:
         dialog = make_dialog()
+        builder = ConditionDialog(parent=dialog, columns=(ConditionColumn(0, "a", True),))
+        assert builder.windowTitle() == translate("ConditionDialog", "Build condition")
+        assert builder.rules[0].column.itemText(0) == translate("ConditionRuleWidget", "Select column")
+        assert builder.rules[0].picker.search.placeholderText() == translate("ConditionValuePicker", "Search values")
         source_title = "Reshape — {dataset} ({rows} rows × {columns} columns)"
         title = translate("ReshapeDialog", source_title)
         assert dialog.windowTitle() == title.format(dataset="Source <dataset>", rows=fmt_int(1234), columns=fmt_int(3))
@@ -158,6 +164,12 @@ def test_compiled_reshape_translations(qt_app, language):
             assert "Metrics" not in [box.title() for box in dialog.findChildren(QGroupBox)]
             assert dialog.source_column_guidance.text() != translate_guidance_source()
             assert dialog.dimension_search.placeholderText() != "Search dimensions"
+            assert builder.windowTitle() != "Build condition"
+            assert builder.validation.text() != "Complete every rule before applying."
+            assert builder.rules[0].operator.itemText(4) != "Greater than"
+            assert builder.rules[0].picker.search.placeholderText() != "Search values"
+            assert translate("ReshapeConditionController", "Loading condition values") != "Loading condition values"
+        builder.reject()
         dialog.close()
     finally:
         qt_app.removeTranslator(translator)
@@ -172,7 +184,15 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
         name = context.findtext("name")
         for message in context.findall("message"):
             source = message.findtext("source", "")
-            if name not in {"ReshapeDialog", "ReshapeController"} and (name, source) not in {
+            if name not in {
+                "ReshapeDialog",
+                "ReshapeController",
+                "ConditionDialog",
+                "ConditionEditor",
+                "ConditionRuleWidget",
+                "ConditionValuePicker",
+                "ReshapeConditionController",
+            } and (name, source) not in {
                 ("ToolbarController", "Reshape"),
                 ("ResultTabManager", "Reshape…"),
             }:
@@ -187,10 +207,10 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
             else:
                 assert translation.get("type") is None
                 assert translation.text
-                for placeholder in ("{dataset}", "{rows}", "{columns}"):
+                for placeholder in ("{dataset}", "{rows}", "{columns}", "{page}", "{count}"):
                     assert source.count(placeholder) == translation.text.count(placeholder)
             checked += 1
-    assert checked == 21
+    assert checked == 60
 
 
 def test_dimension_search_preserves_checks_order_and_identity():
@@ -349,7 +369,7 @@ def test_metric_callbacks_remain_independent_after_removing_earlier_row():
     middle_function.setCurrentText("COUNT")
     middle_columns.setCurrentIndex(middle_columns.findData(1))
     dialog.metrics.item(1, 0).setText("Named metric")
-    dialog.metrics.item(1, 3).setText("Value > 0")
+    dialog.metrics.cellWidget(1, 3).text.setText("Value > 0")
     dialog.dimensions.item(1).setCheckState(Qt.CheckState.Checked)
     last_columns.setCurrentIndex(last_columns.findData(2))
     assert first_function.currentText() == "SUM"
@@ -362,7 +382,7 @@ def test_metric_callbacks_remain_independent_after_removing_earlier_row():
     assert last_columns.currentData() == 2
     assert offered_positions(last_columns) == [0, 2]
     assert dialog.metrics.item(0, 0).text() == "Named metric"
-    assert dialog.metrics.item(0, 3).text() == "Value > 0"
+    assert dialog.metrics.cellWidget(0, 3).text.text() == "Value > 0"
     assert dialog.dimensions.item(1).checkState() == Qt.CheckState.Checked
     last_function.setCurrentText("COUNT DISTINCT")
     assert last_columns.currentData() == 2

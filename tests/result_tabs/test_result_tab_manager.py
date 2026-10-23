@@ -142,7 +142,7 @@ def test_reshape_context_opens_real_dialog_for_clicked_source(result_tabs_env, m
     source_id = tabs.tabData(0)
     mgr.display_dataframe(pd.DataFrame({"Other": [3]}), title="Other")
     tabs.setCurrentIndex(1)
-    controller = ReshapeController(parent_widget=parent, results=mgr)
+    controller = ReshapeController(parent_widget=parent, results=mgr, async_ops=MagicMock())
     mgr.set_reshape_controller(controller)
     opened: list[str] = []
 

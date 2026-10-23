@@ -38,7 +38,20 @@ The project is still in its infancy and may change significantly.
 - **Data Preparation**: Built-in tools for joining and concatenating datasets within the workbench.
 - **Reshape (UI skeleton)**: Configure dimensions and named aggregation metrics for the active ready dataset.
   Open Reshape after Concatenate in the toolbar or from a result tab's context menu.
-  Conditions are editable text only. Apply is disabled, and the inline preview is a placeholder.
+  Each condition is editable text with a right-hand `...` button opening a visual builder.
+  Combine rules using All (AND) or Any (OR), choose a column and operator, and select
+  distinct values from a searchable dropdown (100 values per page, loaded in the background).
+  IN and NOT IN retain selections across pages and searches; missing values use
+  IS NULL or IS NOT NULL, while empty strings remain selectable.
+  The builder supports `=`, `!=`, `IN`, `NOT IN`, `>`, `>=`, `<`, and `<=`.
+  Generated syntax brackets column names and quotes all values, for example
+  `[Region] IN ('North', 'South')`; `]` and apostrophes are escaped by doubling.
+  Ambiguous column names must be renamed. Unsupported structured values and
+  distinct values with identical serialized text are reported when encountered during loading.
+  Reopening unchanged generated text restores the builder; manually edited syntax is not parsed,
+  and applying a new builder selection replaces it (Cancel preserves it).
+  Conditions are not evaluated or type-checked against their operators yet.
+  The main Reshape Apply remains disabled, and the inline preview is a placeholder.
   SUM and AVG offer existing integer/float columns only. MIN and MAX also offer
   datetime columns, including timezone-aware timestamps, while COUNT and
   COUNT DISTINCT offer all columns. Changing the function clears an incompatible source selection.
