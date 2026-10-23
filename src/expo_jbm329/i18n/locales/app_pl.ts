@@ -7644,8 +7644,8 @@ Wskazówka: {error_hint}</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="128" />
-        <source>Output column name</source>
-        <translation>Nazwa kolumny wynikowej</translation>
+        <source>Metric name</source>
+        <translation>Nazwa miary</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="195" />

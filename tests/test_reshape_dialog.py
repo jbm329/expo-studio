@@ -32,6 +32,7 @@ def make_dialog(
 
 def test_fixed_title_dimensions_and_ui_only_preview():
     dialog = make_dialog()
+    assert dialog.metrics.horizontalHeaderItem(0).text() == "Metric name"
     assert dialog.windowTitle() == f"Reshape — Source <dataset> ({fmt_int(1234)} rows × {fmt_int(3)} columns)"
     assert dialog.windowFlags() & Qt.WindowType.WindowMaximizeButtonHint
     assert not dialog.windowFlags() & Qt.WindowType.WindowMinimizeButtonHint

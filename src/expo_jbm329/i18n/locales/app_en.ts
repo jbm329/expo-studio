@@ -7586,7 +7586,7 @@ Hint: {error_hint}</source>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="128" />
-        <source>Output column name</source>
+        <source>Metric name</source>
         <translation type="unfinished" />
     </message>
     <message>

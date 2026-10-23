@@ -125,7 +125,7 @@ class ReshapeDialog(QDialog):
         metrics_layout.addWidget(self.source_column_guidance)
         self.metrics = QTableWidget(0, 4, metrics_box)
         self.metrics.setHorizontalHeaderLabels([
-            self.tr("Output column name"),
+            self.tr("Metric name"),
             self.tr("Function"),
             self.tr("Source column"),
             self.tr("Condition (optional)"),
