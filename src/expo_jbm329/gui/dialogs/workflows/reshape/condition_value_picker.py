@@ -13,7 +13,6 @@ from PyQt6.QtWidgets import (
     QListWidgetItem,
     QMenu,
     QPushButton,
-    QToolButton,
     QVBoxLayout,
     QWidget,
     QWidgetAction,
@@ -44,8 +43,8 @@ class ConditionValuePicker(QWidget):
         self._updating = False
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
-        self.button = QToolButton(self)
-        self.button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.button = QPushButton(self)
+        self.button.setAutoDefault(False)
         root.addWidget(self.button)
         menu = QMenu(self.button)
         self.button.setMenu(menu)

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QWidget
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import QLabel, QPushButton, QWidget
 
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_dialog import ConditionDialog
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
@@ -19,6 +19,37 @@ from expo_jbm329.services.data_operations.reshape_conditions import (
     ConditionValue,
 )
 from expo_jbm329.utils.dataset_ref import DatasetRef
+
+
+def test_picker_uses_standard_button_height_and_opens_value_popup(qt_app) -> None:
+    parent = QWidget()
+    dialog = ConditionDialog(parent=parent, columns=(ConditionColumn(0, "a", True),))
+    rule = dialog.rules[0]
+    rule.column.setCurrentIndex(1)
+    rule.picker._timer.stop()
+    rule.picker.receive_page(ValuePage((ConditionValue("string", "x"),), False))
+    dialog.show()
+    qt_app.processEvents()
+    button = rule.picker.button
+    assert isinstance(button, QPushButton)
+    assert not button.autoDefault()
+    assert button.height() == rule.remove_button.height()
+    menu = button.menu()
+    assert menu is not None
+    opened: list[bool] = []
+
+    def select_value() -> None:
+        opened.append(menu.isVisible())
+        rule.picker.values_list.item(0).setCheckState(Qt.CheckState.Checked)
+        menu.close()
+
+    QTimer.singleShot(0, select_value)
+    button.showMenu()
+    qt_app.processEvents()
+    assert opened == [True]
+    assert rule.picker.selected_values() == (ConditionValue("string", "x"),)
+    assert dialog.result() == 0
+    dialog.reject()
 
 
 def test_rules_validation_null_operators_and_apply_capture() -> None:
