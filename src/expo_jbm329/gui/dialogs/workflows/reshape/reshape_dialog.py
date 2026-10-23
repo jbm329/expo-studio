@@ -45,6 +45,7 @@ class ReshapeDialog(QDialog):
         source_columns: Sequence[object],
         source_dtypes: Sequence[str],
         numeric_column_positions: Sequence[int],
+        datetime_column_positions: Sequence[int],
     ) -> None:
         """Initialize the UI-only aggregation workspace.
 
@@ -54,6 +55,7 @@ class ReshapeDialog(QDialog):
             source_columns: Source column labels in their original positional order.
             source_dtypes: Storage dtype labels in the same positional order.
             numeric_column_positions: Positions with integer or floating-point dtypes.
+            datetime_column_positions: Positions with datetime dtypes.
         """
         super().__init__(parent)
         self._source_columns = tuple(source_columns)
@@ -61,6 +63,7 @@ class ReshapeDialog(QDialog):
             message = "Source dtype metadata must match the number of source columns."
             raise ValueError(message)
         self._numeric_column_positions = frozenset(numeric_column_positions)
+        self._datetime_column_positions = frozenset(datetime_column_positions)
         self.setWindowFlag(Qt.WindowType.WindowMaximizeButtonHint, True)
         self.setWindowFlag(Qt.WindowType.WindowMinimizeButtonHint, False)
         self.setWindowTitle(
@@ -108,7 +111,8 @@ class ReshapeDialog(QDialog):
         metrics_layout = QVBoxLayout(metrics_box)
         self.source_column_guidance = QLabel(
             self.tr(
-                "SUM, AVG, MAX and MIN accept integer and floating-point columns only. "
+                "SUM and AVG accept integer and floating-point columns only. "
+                "MIN and MAX also accept datetime columns. "
                 "COUNT and COUNT DISTINCT accept any column. "
                 "Changing the function clears an incompatible source selection."
             ),
@@ -208,8 +212,13 @@ class ReshapeDialog(QDialog):
         columns.clear()
         columns.addItem(self.tr("Select column"), None)
         all_columns = function in {"COUNT", "COUNT DISTINCT"}
+        allow_datetime = function in {"MIN", "MAX"}
         for position, column in enumerate(self._source_columns):
-            if all_columns or position in self._numeric_column_positions:
+            if (
+                all_columns
+                or position in self._numeric_column_positions
+                or (allow_datetime and position in self._datetime_column_positions)
+            ):
                 columns.addItem(str(column), position)
                 columns.setItemData(columns.count() - 1, str(column), Qt.ItemDataRole.ToolTipRole)
         if selected_position is not None:

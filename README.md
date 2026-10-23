@@ -39,7 +39,8 @@ The project is still in its infancy and may change significantly.
 - **Reshape (UI skeleton)**: Configure dimensions and named aggregation metrics for the active ready dataset.
   Open Reshape after Concatenate in the toolbar or from a result tab's context menu.
   Conditions are editable text only. Apply is disabled, and the inline preview is a placeholder.
-  SUM, AVG, MAX, and MIN offer existing integer/float columns only, while COUNT and
+  SUM and AVG offer existing integer/float columns only. MIN and MAX also offer
+  datetime columns, including timezone-aware timestamps, while COUNT and
   COUNT DISTINCT offer all columns. Changing the function clears an incompatible source selection.
   Dimensions include all columns, show their storage dtypes, and support case-insensitive
   column-name search. Searching preserves checked dimensions, including hidden ones.

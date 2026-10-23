@@ -16,6 +16,7 @@ from expo_jbm329.utils.i18n_utils import translate
 def make_dialog(
     columns: tuple[object, ...] = ("PatientId", "VisitId", "Value"),
     numeric_positions: tuple[int, ...] = (0, 2),
+    datetime_positions: tuple[int, ...] = (),
 ) -> ReshapeDialog:
     return ReshapeDialog(
         parent=None,
@@ -23,6 +24,7 @@ def make_dialog(
         source_columns=columns,
         source_dtypes=tuple("int64" if position in numeric_positions else "string" for position in range(len(columns))),
         numeric_column_positions=numeric_positions,
+        datetime_column_positions=datetime_positions,
     )
 
 
@@ -177,6 +179,8 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
                 continue
             translation = message.find("translation")
             assert translation is not None
+            if translation.get("type") in {"vanished", "obsolete"}:
+                continue
             if language == "en":
                 assert translation.get("type") == "unfinished"
                 assert not translation.text
@@ -233,12 +237,14 @@ def test_dimension_dtype_metadata_must_match_columns():
             source_columns=("a",),
             source_dtypes=(),
             numeric_column_positions=(),
+            datetime_column_positions=(),
         )
 
 
 def translate_guidance_source() -> str:
     return (
-        "SUM, AVG, MAX and MIN accept integer and floating-point columns only. "
+        "SUM and AVG accept integer and floating-point columns only. "
+        "MIN and MAX also accept datetime columns. "
         "COUNT and COUNT DISTINCT accept any column. "
         "Changing the function clears an incompatible source selection."
     )
@@ -254,6 +260,27 @@ def metric_controls(dialog, row=0):
 
 def offered_positions(columns):
     return [columns.itemData(index) for index in range(1, columns.count())]
+
+
+def test_datetime_sources_are_available_for_min_max_and_count_only():
+    dialog = make_dialog(("date", "number", "text", "date"), (1,), (0, 3))
+    functions, columns = metric_controls(dialog)
+    assert offered_positions(columns) == [1]
+    for function in ("MIN", "MAX"):
+        functions.setCurrentText(function)
+        assert offered_positions(columns) == [0, 1, 3]
+    columns.setCurrentIndex(columns.findData(3))
+    for function in ("MIN", "COUNT", "MAX", "COUNT DISTINCT", "MIN"):
+        functions.setCurrentText(function)
+        assert columns.currentData() == 3
+    for function in ("SUM", "AVG"):
+        functions.setCurrentText("MAX")
+        columns.setCurrentIndex(columns.findData(0))
+        functions.setCurrentText(function)
+        assert offered_positions(columns) == [1]
+        assert columns.currentData() is None
+    assert not dialog.apply_button.isEnabled()
+    dialog.close()
 
 
 @pytest.mark.parametrize("function", ["SUM", "AVG", "MAX", "MIN", "COUNT", "COUNT DISTINCT"])

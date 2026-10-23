@@ -4,6 +4,7 @@ import pytest
 from expo_jbm329.services.data_operations.dtypes import (
     SemanticDType,
     classify_series_dtype,
+    get_datetime_column_positions,
     get_numeric_column_positions,
     get_numeric_columns,
     is_categorical_series,
@@ -198,3 +199,43 @@ def test_numeric_positions_do_not_access_values_or_semantic_inference(monkeypatc
     monkeypatch.setattr(pd.DataFrame, "values", property(reject_value_access))
     monkeypatch.setattr(dtypes, "classify_series_dtype", reject_value_access)
     assert get_numeric_column_positions(dataframe) == (0,)
+
+
+@pytest.mark.parametrize(
+    ("dtype", "eligible"),
+    [
+        ("datetime64[ns]", True),
+        ("datetime64[ms]", True),
+        ("datetime64[ns, UTC]", True),
+        ("timestamp[ns][pyarrow]", True),
+        ("timestamp[ns, tz=UTC][pyarrow]", True),
+        ("timedelta64[ns]", False),
+        ("object", False),
+        ("string", False),
+        ("int64", False),
+        ("category", False),
+    ],
+)
+def test_datetime_positions_use_dtype_without_values(dtype, eligible):
+    dataframe = pd.DataFrame({"empty": pd.Series([], dtype=dtype)})
+    assert get_datetime_column_positions(dataframe) == ((0,) if eligible else ())
+
+
+def test_datetime_positions_preserve_identity_and_do_not_scan_values(monkeypatch):
+    dataframe = pd.DataFrame({
+        "date": pd.Series([pd.NaT], dtype="datetime64[ns]"),
+        "text": pd.Series(["2026-01-01"]),
+        "tz": pd.Series([pd.NaT], dtype="datetime64[ns, UTC]"),
+    })
+    dataframe.columns = [1, "1", 1]
+    original = dataframe.copy(deep=True)
+
+    def reject_values(*args, **kwargs):
+        message = "Datetime discovery must use dtype metadata only."
+        raise AssertionError(message)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(pd.DataFrame, "__getitem__", reject_values)
+        patch.setattr(pd.DataFrame, "iloc", property(reject_values))
+        assert get_datetime_column_positions(dataframe) == (0, 2)
+    pd.testing.assert_frame_equal(dataframe, original)

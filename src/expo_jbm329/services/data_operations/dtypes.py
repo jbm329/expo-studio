@@ -202,6 +202,19 @@ def get_numeric_column_positions(df: pd.DataFrame) -> tuple[int, ...]:
     )
 
 
+def get_datetime_column_positions(df: pd.DataFrame) -> tuple[int, ...]:
+    """Return datetime column positions using dtype metadata only.
+
+    Args:
+        df: Source DataFrame, which is never mutated.
+
+    Returns:
+        Datetime positions in source order, including timezone-aware timestamps.
+        Object/string dates and timedelta columns are excluded.
+    """
+    return tuple(position for position, dtype in enumerate(df.dtypes) if pdt.is_datetime64_any_dtype(dtype))
+
+
 def get_numeric_columns(
     df: pd.DataFrame,
     *,
