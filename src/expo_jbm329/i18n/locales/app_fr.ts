@@ -7773,13 +7773,13 @@ Conseil : {error_hint}</translation>
         <translation>Nom de la mesure</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="233" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="239" />
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="150" />
         <source>Function</source>
         <translation>Fonction</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="238" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="244" />
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="151" />
         <source>Source column</source>
         <translation>Colonne source</translation>
@@ -7815,65 +7815,64 @@ Conseil : {error_hint}</translation>
         <translation>Aperçu</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="198" />
-        <source>Apply</source>
-        <translation>Appliquer</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="274" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="280" />
         <source>Preview is out of date. Press Preview to recalculate.</source>
         <translation>L'aperçu est obsolète. Cliquez sur Aperçu pour recalculer.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="340" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="346" />
         <source>Calculating preview...</source>
         <translation>Calcul de l'aperçu...</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="353" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="359" />
         <source>Showing {shown} of {total} output rows.</source>
         <translation>Affichage de {shown} lignes de sortie sur {total}.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="368" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="374" />
         <source>Complete every metric and correct condition errors before previewing.</source>
         <translation>Complétez chaque mesure et corrigez les erreurs de condition avant l'aperçu.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="423" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="371" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="429" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="377" />
         <source>Output column names must be unique across dimensions and metrics.</source>
         <translation>Les noms des colonnes de sortie doivent être uniques parmi les dimensions et les mesures.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="372" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="378" />
         <source>A condition value cannot be interpreted for column '{name}'.</source>
         <translation>Une valeur de condition ne peut pas être interprétée pour la colonne '{name}'.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="373" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="379" />
         <source>Cannot compare or aggregate the selected data for '{name}'. Check its values and types.</source>
         <translation>Impossible de comparer ou d'agréger les données sélectionnées pour '{name}'. Vérifiez leurs valeurs et leurs types.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="418" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="424" />
         <source>Correct condition errors before applying.</source>
         <translation>Corrigez les erreurs de condition avant d'appliquer.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="420" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="426" />
         <source>Apply creates a new result dataset.</source>
         <translation>Appliquer crée un nouveau jeu de données résultat.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="425" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="431" />
         <source>Calculate up to five output rows from the full dataset.</source>
         <translation>Calculer jusqu'à cinq lignes de sortie à partir du jeu de données complet.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="449" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="455" />
         <source>Select column</source>
         <translation>Sélectionner une colonne</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="vanished">Appliquer</translation>
     </message>
     <message>
         <source>Preview uses the full dataset. Creating a result dataset is not available yet.</source>
