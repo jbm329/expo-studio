@@ -29,6 +29,7 @@ def test_open_captures_only_active_dataset_metadata_without_mutation(monkeypatch
         parent=parent,
         source_dataset=DatasetRef("stable-id", "Source", 1, 3),
         source_columns=[1, "1", "value"],
+        source_dtypes=["int64", "int64", "int64"],
         numeric_column_positions=(0, 1, 2),
     )
     dialog_class.return_value.exec.assert_called_once_with()
@@ -52,6 +53,7 @@ def test_open_passes_numeric_positions_from_dtype_metadata(monkeypatch):
     parent = QWidget()
     module.ReshapeController(parent_widget=parent, results=results).open_reshape_dialog()
     assert dialog_class.call_args.kwargs["numeric_column_positions"] == (1, 3)
+    assert dialog_class.call_args.kwargs["source_dtypes"] == [str(dtype) for dtype in dataframe.dtypes]
     pd.testing.assert_frame_equal(dataframe, original)
 
 

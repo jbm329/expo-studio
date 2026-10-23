@@ -70,6 +70,7 @@ class ReshapeController:
             parent=self._parent,
             source_dataset=dataset,
             source_columns=list(record.df.columns),
+            source_dtypes=[str(dtype) for dtype in record.df.dtypes],
             numeric_column_positions=get_numeric_column_positions(record.df),
         )
         dialog.exec()

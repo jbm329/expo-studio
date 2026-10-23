@@ -41,6 +41,8 @@ The project is still in its infancy and may change significantly.
   Conditions are editable text only. Apply is disabled, and the inline preview is a placeholder.
   SUM, AVG, MAX, and MIN offer existing integer/float columns only, while COUNT and
   COUNT DISTINCT offer all columns. Changing the function clears an incompatible source selection.
+  Dimensions include all columns, show their storage dtypes, and support case-insensitive
+  column-name search. Searching preserves checked dimensions, including hidden ones.
   Aggregation, result creation, pivot, and unpivot are not available yet.
 - **Data Transformation**: Apply transformations to datasets using a visual interface.
 - **Export Capabilities**: Export query results to multiple formats including **CSV**, **feather**, **parquet**, and more.

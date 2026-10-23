@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
+    QLineEdit,
     QListWidget,
     QListWidgetItem,
     QPushButton,
@@ -24,6 +25,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
+from expo_jbm329.gui.dialogs.workflows.reshape.dimension_delegate import COLUMN_NAME_ROLE, DTYPE_ROLE, DimensionDelegate
 from expo_jbm329.utils.format_utils import fmt_int
 
 if TYPE_CHECKING:
@@ -41,6 +43,7 @@ class ReshapeDialog(QDialog):
         parent: QWidget | None,
         source_dataset: DatasetRef,
         source_columns: Sequence[object],
+        source_dtypes: Sequence[str],
         numeric_column_positions: Sequence[int],
     ) -> None:
         """Initialize the UI-only aggregation workspace.
@@ -49,10 +52,14 @@ class ReshapeDialog(QDialog):
             parent: Parent widget.
             source_dataset: Fixed ready dataset captured when opening the dialog.
             source_columns: Source column labels in their original positional order.
+            source_dtypes: Storage dtype labels in the same positional order.
             numeric_column_positions: Positions with integer or floating-point dtypes.
         """
         super().__init__(parent)
         self._source_columns = tuple(source_columns)
+        if len(source_dtypes) != len(self._source_columns):
+            message = "Source dtype metadata must match the number of source columns."
+            raise ValueError(message)
         self._numeric_column_positions = frozenset(numeric_column_positions)
         self.setWindowFlag(Qt.WindowType.WindowMaximizeButtonHint, True)
         self.setWindowFlag(Qt.WindowType.WindowMinimizeButtonHint, False)
@@ -76,16 +83,25 @@ class ReshapeDialog(QDialog):
         configuration.setSpacing(12)
         dimensions_box = QGroupBox(self.tr("Dimensions"), self)
         dimensions_layout = QVBoxLayout(dimensions_box)
+        self.dimension_search = QLineEdit(dimensions_box)
+        self.dimension_search.setPlaceholderText(self.tr("Search dimensions"))
+        self.dimension_search.setAccessibleName(self.tr("Search dimensions"))
+        self.dimension_search.setClearButtonEnabled(True)
+        dimensions_layout.addWidget(self.dimension_search)
         self.dimensions = QListWidget(dimensions_box)
+        self.dimensions.setItemDelegate(DimensionDelegate(self.dimensions))
         self.dimensions.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        for position, column in enumerate(self._source_columns):
-            item = QListWidgetItem(str(column))
+        for position, (column, dtype) in enumerate(zip(self._source_columns, source_dtypes, strict=True)):
+            item = QListWidgetItem(f"{column} [{dtype}]")
             item.setData(Qt.ItemDataRole.UserRole, position)
-            item.setToolTip(str(column))
+            item.setData(COLUMN_NAME_ROLE, str(column))
+            item.setData(DTYPE_ROLE, dtype)
+            item.setToolTip(f"{column}\n{dtype}")
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             item.setCheckState(Qt.CheckState.Unchecked)
             self.dimensions.addItem(item)
         dimensions_layout.addWidget(self.dimensions)
+        self.dimension_search.textChanged.connect(self._filter_dimensions)
         configuration.addWidget(dimensions_box, 1)
 
         metrics_box = QGroupBox(self.tr("Metrics"), self)
@@ -152,6 +168,13 @@ class ReshapeDialog(QDialog):
         self.metrics.itemSelectionChanged.connect(self._update_remove_button)
         self._add_metric()
         self._update_remove_button()
+
+    def _filter_dimensions(self, text: str) -> None:
+        search = text.casefold()
+        for position, column in enumerate(self._source_columns):
+            item = self.dimensions.item(position)
+            if item is not None:
+                item.setHidden(search not in str(column).casefold())
 
     def _add_metric(self) -> None:
         row = self.metrics.rowCount()

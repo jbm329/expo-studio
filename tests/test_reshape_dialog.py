@@ -21,6 +21,7 @@ def make_dialog(
         parent=None,
         source_dataset=DatasetRef("source", "Source <dataset>", 1234, len(columns)),
         source_columns=columns,
+        source_dtypes=tuple("int64" if position in numeric_positions else "string" for position in range(len(columns))),
         numeric_column_positions=numeric_positions,
     )
 
@@ -68,7 +69,7 @@ def test_metrics_edit_add_remove_and_column_identity():
     assert columns.itemData(3, Qt.ItemDataRole.ToolTipRole) == long_name
     columns.setCurrentIndex(3)
     assert columns.toolTip() == long_name
-    assert dialog.dimensions.item(2).toolTip() == long_name
+    assert dialog.dimensions.item(2).toolTip() == f"{long_name}\nint64"
     metrics.item(0, 0).setText("Distinct visits")
     functions.setCurrentText("COUNT DISTINCT")
     columns.setCurrentIndex(2)
@@ -154,6 +155,7 @@ def test_compiled_reshape_translations(qt_app, language):
                 assert translate(context, source) != source
             assert "Metrics" not in [box.title() for box in dialog.findChildren(QGroupBox)]
             assert dialog.source_column_guidance.text() != translate_guidance_source()
+            assert dialog.dimension_search.placeholderText() != "Search dimensions"
         dialog.close()
     finally:
         qt_app.removeTranslator(translator)
@@ -184,7 +186,54 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
                 for placeholder in ("{dataset}", "{rows}", "{columns}"):
                     assert source.count(placeholder) == translation.text.count(placeholder)
             checked += 1
-    assert checked == 20
+    assert checked == 21
+
+
+def test_dimension_search_preserves_checks_order_and_identity():
+    dialog = make_dialog(("PatientId", "Clinic", "PATIENT code", 1, "1"), (0, 3))
+    assert [dialog.dimensions.item(i).text() for i in range(5)] == [
+        "PatientId [int64]",
+        "Clinic [string]",
+        "PATIENT code [string]",
+        "1 [int64]",
+        "1 [string]",
+    ]
+    dialog.dimensions.item(0).setCheckState(Qt.CheckState.Checked)
+    dialog.dimensions.item(1).setCheckState(Qt.CheckState.Checked)
+    dialog.dimension_search.setText("pAtIeNt")
+    assert [dialog.dimensions.item(i).isHidden() for i in range(5)] == [False, True, False, True, True]
+    assert dialog.dimensions.item(1).checkState() == Qt.CheckState.Checked
+    dialog.dimension_search.setText("int64")
+    assert all(dialog.dimensions.item(i).isHidden() for i in range(5))
+    dialog.dimension_search.setText("1")
+    assert [dialog.dimensions.item(i).isHidden() for i in range(5)] == [True, True, True, False, False]
+    assert dialog.dimensions.item(3).data(Qt.ItemDataRole.UserRole) == 3
+    assert dialog.dimensions.item(4).data(Qt.ItemDataRole.UserRole) == 4
+    dialog.dimension_search.clear()
+    assert all(not dialog.dimensions.item(i).isHidden() for i in range(5))
+    assert dialog.dimensions.item(0).checkState() == Qt.CheckState.Checked
+    assert dialog.dimensions.item(1).checkState() == Qt.CheckState.Checked
+    assert not dialog.apply_button.isEnabled()
+    dialog.close()
+
+
+def test_dimension_search_handles_empty_source():
+    dialog = make_dialog((), ())
+    dialog.dimension_search.setText("anything")
+    assert dialog.dimensions.count() == 0
+    dialog.dimension_search.clear()
+    dialog.close()
+
+
+def test_dimension_dtype_metadata_must_match_columns():
+    with pytest.raises(ValueError, match="Source dtype metadata"):
+        ReshapeDialog(
+            parent=None,
+            source_dataset=DatasetRef("source", "Source", 1, 1),
+            source_columns=("a",),
+            source_dtypes=(),
+            numeric_column_positions=(),
+        )
 
 
 def translate_guidance_source() -> str:
